@@ -1,0 +1,9 @@
+sphinx
+myst-parser
+sphinx_rtd_theme
+pytest
+black
+bumpver
+pip-tools
+pytest
+coverage

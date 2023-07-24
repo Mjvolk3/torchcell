@@ -7,3 +7,17 @@ bumpver
 pip-tools
 pytest
 coverage
+pydantic
+numpy
+pandas
+matplotlib
+plotly
+seaborn
+scipy
+scikit-learn
+torch
+torchvision
+torchaudio
+networkx
+torch_geometric
+ptpython

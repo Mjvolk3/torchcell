@@ -1,0 +1,31 @@
+# pyproject.toml
+
+[build-system]
+requires      = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "my_package"
+version = "0.0.0"
+description = "An example package"
+readme = "README.md"
+authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["An example package", "starving artist"]
+dependencies = [
+]
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["black", "bumpver", "pip-tools", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/Mjvolk3/Dendron-Template"
+
+[project.scripts]
+genPE = "my_package.__main__:main"

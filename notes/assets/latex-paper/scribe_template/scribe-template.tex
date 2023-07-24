@@ -1,0 +1,408 @@
+%
+% This is a borrowed (and modified) LaTeX template file for lecture notes for CS267,
+% Applications of Parallel Computing, UCBerkeley EECS Department.
+% Now being used for UIUC CS 598-BAN (Spring 2023) Deep Generative and Dynamical Models 
+% course taught by Arindam Banerjee.  When preparing LaTeX notes for this class, 
+% please use this template.
+%
+
+\documentclass{article}
+%\documentclass[twoside]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\setlength{\parindent}{0ex}
+\setlength{\parskip}{3pt}
+
+%
+% ADD PACKAGES here:
+%
+
+\usepackage{amsmath,amsfonts,graphicx}
+
+%\usepackage{verbatim}
+%\usepackage{floatflt}
+
+\usepackage{graphicx}
+\usepackage{epstopdf,subfigure}
+\usepackage[font=small,labelfont=sc]{caption}
+\usepackage{amsmath,amssymb,algorithm,algorithmic,float,bbm,bm,enumerate}
+\usepackage[english]{babel}
+\usepackage{amsthm}
+
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{hyperref, footnote}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{booktabs} % for professional tables
+
+% hyperref makes hyperlinks in the resulting PDF.
+\usepackage{hyperref}
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% For theorems and such
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+\usepackage{thmtools,thm-restate}
+\usepackage{bigints}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{prop}{Proposition}
+\newtheorem*{remark}{Remark}
+%\usepackage{natbib}
+
+\usepackage[]{color-edits}
+%\usepackage[suppress]{color-edits}
+\addauthor{ab}{blue}
+\addauthor{abb}{red} % for potential corrections
+
+
+% \input{notation}
+
+%
+% The following commands set up the lecnum (lecture number)
+% counter and make various numbering schemes work relative
+% to the lecture number.
+%
+\newcounter{lecnum}
+\renewcommand{\thepage}{\thelecnum-\arabic{page}}
+\renewcommand{\thesection}{\thelecnum.\arabic{section}}
+\renewcommand{\theequation}{\thelecnum.\arabic{equation}}
+\renewcommand{\thefigure}{\thelecnum.\arabic{figure}}
+\renewcommand{\thetable}{\thelecnum.\arabic{table}}
+
+%
+% The following macro is used to generate the header.
+%
+\newcommand{\lecture}[4]{
+	\pagestyle{myheadings}
+	\thispagestyle{plain}
+	\newpage
+	\setcounter{lecnum}{#1}
+	\setcounter{page}{1}
+	\noindent
+	\begin{center}
+		\framebox{
+			\vbox{\vspace{2mm}
+				\hbox to 6.28in { {\bf CS-598: Deep Generative and Dynamical Models
+						\hfill Spring 2023} }
+				\vspace{4mm}
+				\hbox to 6.28in { {\Large \hfill Topic #1: #2  \hfill} }
+				\vspace{2mm}
+				\hbox to 6.28in { {\it Lecturer: #3 \hfill Scribe: #4} }
+				\vspace{2mm}}
+		}
+	\end{center}
+	\markboth{Topic #1: #2}{Topic #1: #2}
+	
+	%   {\bf Note}: {\it LaTeX template courtesy of UC Berkeley EECS dept.}
+	
+	{\bf Disclaimer}: {\it These notes have not been subjected to the
+		usual scrutiny reserved for formal publications.}  
+	%They may be distributed outside this class only with the permission of the Instructor.}
+\vspace*{2mm}
+}
+%
+% Convention for citations is authors' initials followed by the year.
+% For example, to cite a paper by Leighton and Maggs you would type
+% \cite{LM89}, and to cite a paper by Strassen you would type \cite{S69}.
+% (To avoid bibliography problems, for now we redefine the \cite command.)
+% Also commands that create a suitable format for the reference list.
+\renewcommand{\cite}[1]{[#1]}
+\def\beginrefs{\begin{list}%
+	{[\arabic{equation}]}{\usecounter{equation}
+		\setlength{\leftmargin}{2.0truecm}\setlength{\labelsep}{0.4truecm}%
+		\setlength{\labelwidth}{1.6truecm}}}
+\def\endrefs{\end{list}}
+\def\bibentry#1{\item[\hbox{[#1]}]}
+
+%Use this command for a figure; it puts a figure in wherever you want it.
+%usage: \fig{NUMBER}{SPACE-IN-INCHES}{CAPTION}
+\newcommand{\fig}[3]{
+\vspace{#2}
+\begin{center}
+	Figure \thelecnum.#1:~#3
+\end{center}
+}
+% Use these for theorems, lemmas, proofs, etc.
+% \newtheorem{theorem}{Theorem}[lecnum]
+% \newtheorem{lemma}[theorem]{Lemma}
+% \newtheorem{proposition}[theorem]{Proposition}
+% \newtheorem{claim}[theorem]{Claim}
+% \newtheorem{corollary}[theorem]{Corollary}
+% \newtheorem{definition}[theorem]{Definition}
+% \theoremstyle{definition} 
+% \newtheorem{exam}{Example}[section]
+% \newtheorem{remark}{Remark}[section]
+% \newenvironment{proof}{{\bf Proof:}}{\hfill\rule{2mm}{2mm}}
+
+% **** IF YOU WANT TO DEFINE ADDITIONAL MACROS FOR YOURSELF, PUT THEM HERE:
+
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
+
+\newcommand{\cL}{{\cal L}}
+
+\newcommand{\ttheta}{\boldsymbol{\theta}}
+\newcommand{\pphi}{\boldsymbol{\phi}}
+
+\newcommand\R{\mathbb{R}}
+\newcommand\E{\mathbb{E}}
+
+\begin{document}
+%FILL IN THE RIGHT INFO.
+%\lecture{**LECTURE-NUMBER**}{**DATE**}{**LECTURER**}{**SCRIBE**}
+%\lecture{1}{August 24}{Arindam Banerjee}{Arindam Banerjee}
+\lecture{2}{Energy Based Models (EBMs)}{Arindam Banerjee}{Arindam Banerjee}
+%\footnotetext{These notes are partially based on those of Nigel Mansell.}
+
+% **** YOUR NOTES GO HERE:
+
+% Some general latex examples and examples making use of the
+% macros follow.  
+%**** IN GENERAL, BE BRIEF. LONG SCRIBE NOTES, NO MATTER HOW WELL WRITTEN,
+%**** ARE NEVER READ BY ANYBODY.
+
+% This lecture's notes illustrate some uses of
+% various \LaTeX\ macros.  
+% Take a look at this and imitate.
+
+%Notation: assume configuration (state) $x \in \cX \subset \R^p$, density function $p(x)$, we will assume $\cX$ is compact
+
+\section{Estimating Boltzmann Distributions}
+
+\subsection{Boltzmann (Gibbs) Distributions}
+
+The density/mass function is given by 
+\begin{align}
+	p(x) = \frac{e^{-\beta E(x)}}{Z_{\beta}}
+\end{align}
+where the partition function (normalization constant) is 
+\begin{align}
+	Z_{\beta} = \sum_{x'} e^{-\beta E(x')} 
+\end{align}
+where $E(x)$ is the energy of configuration $x$. 
+
+From the statistical physics perspective, the coefficient $\beta \geq 0$ is represented as
+\begin{align}
+	\beta := \frac{1}{k_{\beta} T} \propto \frac{1}{T}
+\end{align}
+where $k_{\beta}$ is the Boltzman constant and $T \geq 0$ is the absolute thermodynamic temperature in Kelvins. When $T \rightarrow \infty$, then $\beta \rightarrow 0$, then $p(x)$ is the uniform distribution on $X$. When $T \rightarrow 0$, then $\beta \rightarrow \infty$, then the support of $p(x)$ are the minima of $E(x)$. 
+
+
+The Boltzmann distribution can be derived as the maximum (Shannon) entropy distribution under the constraint of a given expected value of the energy function, i.e., $\E[E(X)] = \mu$. 
+\begin{prop}
+	Under the constraint $\E[E(X)] = \mu$, the maximum entropy distribution is given by $p(x) \propto e^{-\beta E(x)}$.
+\end{prop}
+\proof Recall that Shannon entropy is given by $H(X) = - \sum_x p(x) \log p(x)$. The constrained optimization problem of maximizing entropy can be equivalently posed on as minimizing $-H(X)$ posed as:
+\begin{align}
+	\begin{split}
+		\min_{p}~ & \sum_x p(x) \log p(x) \\
+		\text{s.t.}~& \sum_x p(x) E(x) = \mu \\
+		& \sum_{x} p(x) = 1~, ~~p(x) \geq 0~.
+	\end{split}
+\end{align}
+The Lagrangian is given by
+\begin{align*}
+	L(p,\lambda_1, \lambda_2,\gamma) & = \sum_x p(x) \log p(x) + \beta \left(\sum_x p(x) E(x) - \mu \right) + \lambda \left(\sum_x p(x) -1 \right)~,
+\end{align*}
+where $\beta, \lambda$ are Lagrange multipliers corresponding to the equality constraints.\footnote{Note that we do not explicitly introduce a Lagrange multiplier for the inequality constraints $p(x) \geq 0$ because the $\log p(x)$ in the objective would ensure $p(x) \geq 0$. For a more formal treatment, please see \abedit{Topic xx notes on Optimization}.} The first order optimality conditions give:\abmargincomment{$\log_2$ vs $\ln$ in entropy}
+\begin{align}
+	\frac{\partial L}{\partial p(x)} = 0 & \implies \log p(x) + 1 + \beta E(x) + \lambda = 0  \implies p(x) = e^{-\beta E(x) - \lambda - 1} \label{eq:lagpx} \\
+	\frac{\partial L}{\partial \beta} = 0 & \implies \sum_x p(x) E(x) = \mu~, \label{eq:lage1}\\
+	\frac{\partial L}{\partial \lambda} = 0 & \implies  \sum_x p(x) = 1~.\label{eq:lage2}
+\end{align}
+Plugging in \eqref{eq:lagpx} in \eqref{eq:lage2}, we get
+\begin{align*}
+	\sum_x e^{-\beta E(x) - \lambda - 1}  = 1 & \implies e^{\lambda + 1} = \sum_x e^{-\beta E(x)}
+\end{align*}
+which implies
+\begin{align*}
+	p(x) & = \frac{e^{-\beta E(x)}}{\sum_{x'} e^{-\beta E(x')}}~,
+\end{align*}
+the desired form of the Boltzmann distribution.  \qed 
+
+\abcomment{$\beta$ gets determined by \eqref{eq:lage1}.}
+
+\abbcomment{move free + internal energy up, show gradient form of \eqref{eq:lage1}, show how to estimate $\beta$}
+
+The {\em free energy} is defined as:
+\begin{align}
+	F_{\beta} := - \frac{1}{\beta} \log Z_{\beta} = - \frac{1}{\beta} \log \sum_{x} e^{-\beta E(x)}~. 
+	\label{eq:free}
+\end{align}
+The expected energy $\E[E(X)]$ is also referred to as the {\em internal energy} of the model. Now note that the entropy
+\begin{align*}
+	H(X) & = - \sum_x p(x) \log p(x) \\
+	& = - \sum_x p(x) ( - \beta E(x) - \log Z) \\
+	& = \beta \sum_x p(x) E(x) + \log Z \\
+	& = \beta \left[ \E[E(X)] - F_{\beta} \right]~,
+\end{align*}
+where $F_{\beta}$ is the free energy.
+
+
+\begin{remark}[Entropy and Effect of $\beta$]
+	Note that the equation for estimating $\beta$ from \eqref{eq:lage1} is
+	\begin{align*}
+		\sum e^{-\beta E(x)} E(x) & = \mu \sum_{x} e^{-\beta E(x)} \\
+		\Rightarrow \qquad H(X) & = -\beta F_{\beta} + \beta \E[E(X)]
+	\end{align*}
+	\abcomment{unclear}
+\end{remark}
+
+% \begin{exam}[Ising Model]
+% 	test
+% \end{exam}
+
+% \begin{exam}[Potts Model]
+% 	test
+% \end{exam}
+
+% \begin{exam}[Hopfield]
+% 	test
+% \end{exam}
+
+
+\subsection{Parametric Boltzman Distributions}
+
+In general, the energy function $E(x)$ is unknown and one starts with a parametric form $E(x;\theta)$ where $\theta \in \R^p$ are a set of unknown parameters. The corresponding parametric Boltzmann distribution is given by
+\begin{align}
+	p(x;\theta) = \frac{e^{- E(x;\theta)}}{Z(\theta)}~, \qquad Z(\theta) = \sum_{x} e^{-E(x;\theta)}~.
+	\label{eq:paraBol}
+\end{align}
+Note that we are not maintaining $\beta$ explicitly in \eqref{eq:paraBol} and in the sequel (unless explicitly stated) since one can always include such scaling directly in $E(x;\theta)$.
+
+Given a set of $n$ samples $\{x_i, i \in [n]\}$ drawn i.i.d.~from $p(x;\theta)$, the core problem of interest is to do maximum likelihood estimation of $\theta$. The log-likelihood of the observed samples is given by
+\begin{align}
+	L(\theta) = \frac{1}{n} \sum_{i=1}^n \log p_{\theta}(x_i) = - \frac{1}{n} \sum_{i=1}^n E(x_i;\theta) - \log Z(\theta)~.
+\end{align}
+Minimizing the log-likelihood is typically done using a suitable variant of gradient descent. The gradient of the log-likelihood is given by
+\begin{align}
+	\nabla_{\theta} L(\theta) & = - \frac{1}{n} \sum_{i=1}^n \nabla_{\theta} E(x_i;\theta) - \nabla_{\theta} \log Z(\theta)~.
+	\label{eq:ll1}
+\end{align}
+Now note that
+\begin{align*}
+	\nabla_{\theta} \log Z(\theta) & = \frac{1}{Z(\theta)} \nabla_{\theta} Z(\theta) \\
+	& = \frac{1}{Z(\theta)} \nabla_{\theta}  \sum_{x} e^{-E(x;\theta)} \\
+	& = \frac{1}{Z(\theta)} \sum_{x} \nabla_{\theta}   e^{-E(x;\theta)} \\
+	& = - \frac{1}{Z(\theta)} \sum_{x}  e^{-E(x;\theta)} \nabla_{\theta}  E(x;\theta) \\
+	& = - \sum_x p(x;\theta) \nabla_{\theta}  E(x;\theta) \\
+	& = - \E_{p(\cdot;\theta)}[ \nabla_{\theta} E(X;\theta)]~.
+\end{align*}
+Plugging the expression for $\nabla_{\theta} \log Z(\theta)$ in \eqref{eq:ll1}, we get
+\begin{align}
+	\nabla_{\theta} L(\theta) = \E_{p(\cdot;\theta)}[ \nabla_{\theta} E(X;\theta)] - \frac{1}{n} \sum_{i=1}^n \nabla_{\theta} E(x_i;\theta)~.
+	\label{eq:ll2}
+\end{align}
+Thus, the gradient of the log-likelihood is the difference between the expected gradient of the energy function and the observed sample averaged gradient of the energy function. 
+
+The central challenge in computing the gradient of the log-likelihood in \eqref{eq:ll2} is that the expectation in $\E_{p(\cdot;\theta)}[ \nabla_{\theta} E(X;\theta)]$ is typically intractable. The approach which has been widely studied in the literature is to draw a set of samples $\{\tilde{x}_i, i \in \tilde{n} \}$  from $p(x;\theta)$, and replace the expectation with the empirical average over these samples, so that 
+\begin{align}
+	\nabla_{\theta} L(\theta) & = \E_{p(\cdot;\theta)}[ \nabla_{\theta} E(X;\theta)] - \frac{1}{n} \sum_{i=1}^n \nabla_{\theta} E(x_i;\theta) \\
+	& \approx \frac{1}{\tilde{n}} \sum_{i=1}^{\tilde{n}} \nabla_{\theta} E(\tilde{x}_i;\theta)  - \frac{1}{n} \sum_{i=1}^n \nabla_{\theta} E(x_i;\theta) ~.
+	\label{eq:ll3}
+\end{align}
+The above gradients enable a suitable stochastic gradient descent approach for estimating $\theta$.\footnote{For details, please see \abedit{Topic xx notes on Optimization}.} The core challenge reduces to drawing  a set of samples $\{\tilde{x}_i, i \in \tilde{n} \}$  from $p(x;\theta)$, which is done using a suitable Markov chain Monte Carlo (MCMC) method.\footnote{For details, please see \abedit{Topic xx notes on Inference}.}
+
+
+\subsection{Boltzmann Mahines}
+
+We will shortly see examples of such parametric energy functions.
+
+
+
+\newpage 
+
+\section{Variational Inference}
+
+The joint distribution of a latent variable model (LVM) is given by
+\begin{equation}
+	p_{\ttheta}(\x,\z) = p_{\ttheta}(\z) p_{\ttheta}(\x|\z) ~,
+\end{equation}
+where $\x$ denotes the observed variable, $\z$ denotes the latent variable, and $\ttheta$ denotes the parameters.
+
+There are two key related challenges associated with inference (and estimation) in LVMs: first, accurately computing the marginal distribution
+\begin{equation}
+	p_{\ttheta}(\x) = \int_{\z} p_{\ttheta}(\x,\z) d\z~,
+\end{equation}
+and second, accurately computing the posterior distribution
+\begin{equation}
+	p_{\ttheta}(\z|\x) = \frac{p_{\ttheta}(\x,\z)}{p_{\ttheta}(\x)}~.
+\end{equation}
+The intractability of computing the marginal $p_{\ttheta}(\x)$ also makes estimating $\theta$ difficult. The challenge applies to both 
+(a) point estimates, e.g., maximum likelihood estimation (MLE) by maximizing $\log p_{\ttheta}(\x)$ over $\ttheta$, as well as 
+(b) Bayesian estimation which, for a given prior $p(\ttheta)$, needs to compute 
+$p(\ttheta|\x) = \frac{p(\x|\ttheta) p(\ttheta)}{p(\x)}  = \frac{p(\x|\ttheta) p(\ttheta)}{\int_{\ttheta'} p(\x|\ttheta') p(\ttheta') d\ttheta'}$. For the purposes of this exposition, we will focus on the MLE.
+
+In Variational Inference (VI), one constructs a distribution $q_{\pphi}(\z|\x)$ with parameters $\pphi$ with the goal of approximating the true posterior, i.e.,
+\begin{equation}
+	q_{\pphi}(\z|\x) \approx p_{\ttheta}(\z|\x)~.
+\end{equation}
+{\bf Definitions.} In the literature, $q_{\pphi}(\z|\x)$ is referred to as the {\em inference model} or the {\em recognition model}. In some contexts, $q_{\pphi}(\z|\x)$ is referred to as the {\em encoder}. The parameters $\pphi$ for the inference model is usually referred to as {\em variational parameters} to contrast $\phi$ with the {\em model parameters} $\ttheta$. Further, the conditional model $p_{\ttheta}(\x|\z)$ is referred to as the {\em generative model}.
+
+\section{Evidence Lower Bound (ELBO)}
+Given any inference model $q_{\pphi}(\z|\x)$, we have 
+\begin{align*}
+	\log p_{\ttheta}(\x) & = \E_{q_{\pphi}(\z|\x)}\left[ \log p_{\ttheta}(\x) \right] \\
+	& = \E_{q_{\pphi}(\z|\x)}\left[ \log \left( \frac{p_{\ttheta}(\x,\z)}{p_{\ttheta}(\z|\x)} \right) \right] \\    
+	& = \E_{q_{\pphi}(\z|\x)}\left[ \log \left( \frac{p_{\ttheta}(\x,\z)}{q_{\pphi}(\z|\x)} \frac{q_{\pphi}(\z|\x)}{p_{\ttheta}(\z|\x)}\right) \right] \\    
+	& = \underbrace{\E_{q_{\pphi}(\z|\x)}\left[ \log \left( \frac{p_{\ttheta}(\x,\z)}{q_{\pphi}(\z|\x)} \right) \right]}_{\cL_{\ttheta,\pphi}(\x) ~\text{(ELBO)}} + \underbrace{\E_{q_{\pphi}(\z|\x)}\left[ \log \left( \frac{q_{\pphi}(\z|\x)}{p_{\ttheta}(\z|\x)}\right) \right]}_{D_{KL}(q_{\pphi}(\z|\x) \| p_{\ttheta}(\z|\x))}~. \\ 
+\end{align*}
+The first term is referred to as the {\em evidence lower bound (ELBO)} or the {\em variational lower bound}:
+\begin{equation}
+	\cL_{\ttheta,\pphi}(\x) = \E_{q_{\pphi}(\z|\x)}[\log p_{\ttheta}(\x,\z) - \log q_{\pphi}(\z|\x)]~.
+\end{equation}
+The second term is the Kullback Leibler (KL) divergence between the approximate and the true posterior distributions. Since the KL-divergence is non-negative, i.e.,
+\begin{equation}
+	D_{KL}(q_{\pphi}(\z|\x) \| p_{\ttheta}(\z|\x)) = \E_{q_{\pphi}(\z|\x)} \left[ \log \left( \frac{q_{\pphi}(\z|\x)}{p_{\ttheta}(\z|\x)} \right) \right] \geq 0~,
+\end{equation}
+the ELBO forms a lower bound to the log-likelihood:
+\begin{align}
+	\log p_{\ttheta}(\x) & = \cL_{\ttheta,\pphi}(\x) + D_{KL}(q_{\pphi}(\z|\x) \| p_{\ttheta}(\z|\x)) \\
+	& \geq \cL_{\ttheta,\pphi}(\x)~.
+\end{align}
+For Variational Inference (VI), for a given $\ttheta$, one focuses on maximizing the ELBO $\cL_{\ttheta,\pphi}(\x)$ w.r.t.~the variational parameters $\pphi$ for a suitable choice of an inference model $q_{\pphi}(\z|\x)$. Further, maximum likelihood estimation of $\ttheta$ gets translated to maximizing the lower bound ELBO $\cL_{\ttheta,\pphi}(\x)$ w.r.t.~both the variational parameters $\pphi$ and the model parameters $\ttheta$. 
+
+The core idea in VI is thus to convert the {\em high-dimensional integration} $\int_z p_{\ttheta}(\x,\z) d\z$ to a (lower bound) {\em maximizing problem} $\max_{\pphi} \cL_{\ttheta,\pphi}(\x)$ which provides an approximate solution, in particular a lower bound, to the original high-dimensional integration problem. The quality of the approximation is determined by how well $q_{\pphi}(\z|\x)$ approximates the true posterior $p_{\ttheta}(\z|\x)$. If $q_{\pphi}(\z|\x) = p_{\ttheta}(\z|\x)$, then $D_{KL}(q_{\pphi}(\z|\x) \| p_{\ttheta}(\z|\x)) = 0$, and $\log p_{\ttheta}(\x) = \cL_{\ttheta,\pphi}(\x)$, i.e., the ELBO exactly computes the log-likelihood. More generally, the goal is to find a inference model $q_{\pphi}(\z|\x)$ which 
+\begin{itemize}
+	\item is flexible and approximates $p_{\ttheta}(\z|\x)$ accurately for a suitable choice of $\pphi$,
+	\item is easy to optimize w.r.t.~the variational parameters $\pphi$, and
+	\item is easy to sample from.
+\end{itemize} 
+The need for the ease of sampling above is to allow sample approximations of true expectations, and will be made clear in the sequel.
+
+
+{\bf Two Interpretations of the ELBO.} There are two common ways of interpreting the ELBO. The first is in terms of entropy regularized joint likelihood modeling:
+\begin{equation}
+	\cL_{\ttheta,\pphi}(\x) = \E_{q_{\pphi}(\z|\x)} [ \log p_{\ttheta}(\x,\z) ] + \mathbb{H}[q_{\pphi}(\z|\x)]~, 
+\end{equation}
+where $\mathbb{H}[q_{\pphi}(\z|\x)] =  \E_{q_{\pphi}(\z|\x)}[- \log q_{\pphi}(\z|\x)]$ is the Shannon entropy of $q_{\pphi}(\z|\x)$. 
+The first term is high when the approximate posterior $q_{\pphi}(\z|\x)$ assigns more probability mass to regions where the joint distribution $p_{\ttheta}(\x,\z)$ is high. The second term encourages $q_{\pphi}(\z|\x)$ to be more spread out so as to have high entropy. 
+
+The second interpretation is in terms of the reconstruction accuracy while regularizing the approximate posterior $q_{\pphi}(\z|\x)$ to stay close to the true prior $p(\z)$:
+\begin{equation}
+	\cL_{\ttheta,\pphi}(\x) = \E_{q_{\pphi}(\z|\x)}[ \log p_{\ttheta}(\x|\z) ] - D_{KL}(q_{\pphi}(\z|\x) \| p_{\ttheta}(\z) )~.  
+\end{equation}
+The first term is the reconstruction accuracy. Viewing $q_{\pphi}(\z|\x)$ as a stochastic encoder $\x \mapsto \z$ and $p_{\ttheta}(\x|\z)$ as a stochastic decoder $\z \mapsto \x$, the reconstruction accuracy is high when the encoder $q_{\pphi}(\z|\x)$ puts more probability mass on latent $\z$ which when decoded by $p_{\ttheta}(\x|\z)$ yields high probability (e.g., observed) $\x$. The second term encourages the posterior $q_{\pphi}(\z|\x)$ to stay close to the true marginal $p_{\ttheta}(\z)$, and can be viewed as a regularizer. The regularization term has been used to explain the tendency of such latent models to prune out latent dimensions [Burda et al., Hoffman et al.].
+
+\section{Sharpening the ELBO}
+
+\section{Optimizing the ELBO}
+
+
+
+
+
+
+\end{document}
+

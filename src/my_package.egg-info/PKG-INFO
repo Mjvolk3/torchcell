@@ -1,0 +1,21 @@
+Metadata-Version: 2.1
+Name: my-package
+Version: 1.0.0
+Summary: An example package
+Author-email: Michael Volk <michaeljvolk7@gmail.com>
+Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
+Keywords: An example package,starving artist
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+
+# Dendron Template Workspace
+
+A template for starting publishable dendron-code projects.
+
+## Tutorial
+
+Go to [workspace.tutorial](https://mjvolk3.github.io/Dendron-Template/notes/e8kb97d0ku0yblwiraw8wv0/) to find tips on intended usage.

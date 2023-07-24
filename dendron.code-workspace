@@ -1,9 +1,18 @@
 {
     "folders": [
         {
-            "name": "Dendron-Template",
+            "name": "TorchCell",
             "path": "."
         },
+        {
+            "path": "../Gene_Graph"
+        },
+        {
+            "path": "../multi_knockout"
+        },
+        {
+            "path": "../torchgeo"
+        }
     ],
     "settings": {
         "dendron.rootDir": ".",
@@ -19,7 +28,7 @@
         "dendron.enableSelfContainedVaultWorkspace": true,
         "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#0000004b"
+            "titleBar.activeBackground": "#ff5100bc"
         },
         "markdownlint.config":{
             "MD007": { "indent": 2 },

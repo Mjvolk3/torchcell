@@ -1,0 +1,6 @@
+
+[dev]
+black
+bumpver
+pip-tools
+pytest

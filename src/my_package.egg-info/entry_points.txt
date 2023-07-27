@@ -1,0 +1,2 @@
+[console_scripts]
+genPE = my_package.__main__:main

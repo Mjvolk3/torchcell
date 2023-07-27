@@ -1,14 +1,14 @@
 ---
 id: qrpuop083pghmfiqe6va4y7
-title: future
+title: Future
 desc: ''
-updated: 1675887931303
+updated: 1690240310696
 created: 1675887826601
 ---
 ## Future
 
-- A task
+- [ ] Train DCell model.
 
 ## Far Future
 
-- A task
+- [ ] Move over analysis of the mutant datasets from `Gene_Graph`

@@ -1,0 +1,31 @@
+Metadata-Version: 2.1
+Name: torchcell
+Version: 0.0.0
+Summary: An example package
+Author-email: Michael Volk <michaeljvolk7@gmail.com>
+Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
+Keywords: An example package,starving artist
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+
+# Dendron Template Workspace
+
+A template for starting publishable dendron-code projects.
+
+## Tutorial
+
+Go to [workspace.tutorial](https://mjvolk3.github.io/Dendron-Template/notes/e8kb97d0ku0yblwiraw8wv0/) to find tips on intended usage.
+
+## Python
+
+- This python app badge checks for passing tests, use of mypy, and use of black formatting.
+
+![Python application](https://github.com/mjvolk3/Dendron-Template/actions/workflows/python_app.yaml/badge.svg)
+
+- I've left the coverage below 100% to show how this can be useful.
+
+[![codecov](https://codecov.io/gh/mjvolk3/Dendron-Template/branch/main/graph/badge.svg)](https://codecov.io/gh/mjvolk3/Dendron-Template)

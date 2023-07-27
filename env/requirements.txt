@@ -21,3 +21,12 @@ torchaudio
 networkx
 torch_geometric
 ptpython
+goatools
+dask
+intermine
+mypy
+pandas-stubs
+types-tqdm
+flake8
+types-requests
+aiohttp

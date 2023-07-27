@@ -5,7 +5,7 @@ requires      = ["setuptools>=65.5.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "my_package"
+name = "torchcell"
 version = "0.0.0"
 description = "An example package"
 readme = "README.md"
@@ -28,4 +28,4 @@ dev = ["black", "bumpver", "pip-tools", "pytest"]
 Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 
 [project.scripts]
-genPE = "my_package.__main__:main"
+torchcell = "torchcell.__main__:main"

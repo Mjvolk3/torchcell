@@ -12,6 +12,9 @@
         },
         {
             "path": "../torchgeo"
+        },
+        {
+            "path": "../intermine-ws-python"
         }
     ],
     "settings": {
@@ -28,7 +31,7 @@
         "dendron.enableSelfContainedVaultWorkspace": true,
         "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#ff5100bc"
+            "titleBar.activeBackground": "#be2301c4"
         },
         "markdownlint.config":{
             "MD007": { "indent": 2 },
@@ -173,7 +176,7 @@
                 "program": "${file}",
                 "console": "integratedTerminal",
                 "justMyCode": false,
-                "cwd": "${workspaceFolder:Parameter_Estimation}",
+                "cwd": "${workspaceFolder:TorchCell}",
                 "subProcess": true
             },
             {

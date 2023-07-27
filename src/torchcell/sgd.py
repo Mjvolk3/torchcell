@@ -1,129 +1,219 @@
-import requests
-from typing import Any
-from dataclasses import dataclass, field
-import os.path as osp
-import os
+# sgd.py
+import asyncio
 import json
+import os
+import os.path as osp
+import time
+from asyncio import Task
+from dataclasses import dataclass, field
+from typing import Any, Callable, Optional
+
+import aiohttp
+from tqdm import tqdm
+
+from torchcell.sgd.validation.locus_related.locus import (
+    Alias,
+    InteractionOverview,
+    LocusData,
+    LocusDataUrl,
+    PhysicalExperiments,
+    Qualities,
+    Reference,
+    validate_data,
+)
 
 
 @dataclass
 class Gene:
     locusID: str = "YAL001C"
+    is_validated: bool = field(
+        default=True,
+        init=True,
+        repr=False,
+    )
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
     headers: dict[str, str] = field(
         default_factory=lambda: {"accept": "application/json"}
     )
-    _data: dict[str, dict[Any, Any] | list[Any]] = field(default_factory=dict)
     base_data_dir: str = "data/sgd"
+    _data: dict[str, dict[Any, Any] | list[Any]] = field(
+        default_factory=dict, repr=False
+    )
+    _data_task: Optional[Task[Any]] = field(
+        default=None,
+        init=False,
+        repr=False,
+    )
 
     def __post_init__(self) -> None:
         if not osp.exists(self.base_data_dir):
             os.makedirs(self.base_data_dir)
         self.save_path: str = osp.join(self.base_data_dir, f"{self.locusID}.json")
+        if osp.exists(self.save_path):
+            self._data = self.read()
+        else:
+            # No fetch operation scheduled yet
+            self._data_task = None
 
     @property
     def data(self) -> dict[str, dict[Any, Any] | list[Any]]:
         if self._data != {}:
             return self._data
-        elif osp.exists(self.save_path):
-            self._data = self.read()
         else:
-            self._data["locus"] = self.locus()
-            self._data["sequence_details"] = self.sequence_details()
-            self._data["neighbor_sequence_details"] = self.neighbor_sequence_details()
-            self._data["posttranslational_details"] = self.posttranslational_details()
-            self._data["protein_experiment_details"] = self.protein_experiment_details()
-            self._data["protein_domain_details"] = self.protein_domain_details()
-            self._data["go_details"] = self.go_details()
-            self._data["phenotype_details"] = self.phenotype_details()
-            self._data["interaction_details"] = self.interaction_details()
-            self._data["regulation_details"] = self.regulation_details()
-            self._data["literature_details"] = self.literature_details()
-            self.write()
-        return self._data
+            raise ValueError(
+                "No data available. Call fetch_data(), e.g., `asyncio.run(gene.fetch_data())`"
+            )
+
+    async def fetch_data(self) -> None:
+        if self._data_task is None:
+            # Schedule the download
+            self._data_task = asyncio.create_task(self.download_data())
+            await self._data_task
+        elif not self._data_task.done():
+            # Download already scheduled but not yet finished
+            await self._data_task
+        # If task is done and _data is still empty, download_data failed silently
+        if self._data == {}:
+            raise ValueError("Data fetch failed.")
+
+    async def download_data(self) -> None:
+        self._data["locus"] = await self.locus()
+        self._data["sequence_details"] = await self.sequence_details()
+        self._data["neighbor_sequence_details"] = await self.neighbor_sequence_details()
+        self._data["posttranslational_details"] = await self.posttranslational_details()
+        self._data[
+            "protein_experiment_details"
+        ] = await self.protein_experiment_details()
+        self._data["protein_domain_details"] = await self.protein_domain_details()
+        self._data["go_details"] = await self.go_details()
+        self._data["phenotype_details"] = await self.phenotype_details()
+        self._data["interaction_details"] = await self.interaction_details()
+        self._data["regulation_details"] = await self.regulation_details()
+        self._data["literature_details"] = await self.literature_details()
+        self.write()
 
     def write(self) -> None:
         with open(self.save_path, "w") as f:
-            json.dump(self.data, f, indent=4)
+            json.dump(self._data, f, indent=4)
 
     def read(self) -> dict[str, dict[Any, Any] | list[Any]]:
         if not osp.exists(self.save_path):
             raise ValueError(f"File {self.save_path} does not exist")
         with open(self.save_path, "r") as f:
             data_in = json.load(f)
-        for key, value in data_in.items():
-            data_in[key] = value
-        if isinstance(data_in, dict):
-            return data_in
-        else:
-            raise ValueError("Read unexpected data type")
+            if not isinstance(data_in, dict):
+                raise ValueError(f"File {self.save_path} is not a dict")
+        return data_in
 
-    def _get_data(self, url: str) -> dict[Any, Any] | list[Any]:
-        response = requests.get(url, headers=self.headers)
-        data = response.json()
-        if isinstance(data, (dict, list)):
-            return data
-        else:
-            raise ValueError("Unexpected response from server")
+    async def _get_data(self, url: str) -> dict[Any, Any] | list[Any]:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=self.headers) as response:
+                data = await response.json()
+                if not isinstance(data, (dict, list)):
+                    raise ValueError(f"Data is not a dict or list: {data}")
+                return data
 
-    def locus(self) -> dict[Any, Any] | list[Any]:
+    async def locus(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID)
-        data = self._get_data(url)
-        return data
+        data = await self._get_data(url)
+        if self.is_validated:
+            data = validate_data(data).model_dump()
+        return data  # breakpoint, printed out data
 
-    def sequence_details(self) -> dict[Any, Any] | list[Any]:
+    async def sequence_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "sequence_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def neighbor_sequence_details(self) -> dict[Any, Any] | list[Any]:
+    async def neighbor_sequence_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "neighbor_sequence_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def posttranslational_details(self) -> dict[Any, Any] | list[Any]:
+    async def posttranslational_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "posttranslational_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def protein_experiment_details(self) -> dict[Any, Any] | list[Any]:
+    async def protein_experiment_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "protein_experiment_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def protein_domain_details(self) -> dict[Any, Any] | list[Any]:
-        # The only one that returns a list
+    async def protein_domain_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "protein_domain_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def go_details(self) -> dict[Any, Any] | list[Any]:
+    async def go_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "go_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def phenotype_details(self) -> dict[Any, Any] | list[Any]:
+    async def phenotype_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "phenotype_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def interaction_details(self) -> dict[Any, Any] | list[Any]:
+    async def interaction_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "interaction_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def regulation_details(self) -> dict[Any, Any] | list[Any]:
+    async def regulation_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "regulation_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
 
-    def literature_details(self) -> dict[Any, Any] | list[Any]:
+    async def literature_details(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID, "literature_details")
-        data = self._get_data(url)
+        data = await self._get_data(url)
         return data
+
+
+async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[Any]:
+    await gene.fetch_data()
+    data = gene.data
+    progress_bar.update()
+    return data
+
+
+async def download_genes(
+    locus_ids: list[str],
+    gene_factory: Callable[[str], Gene],
+    is_validated: bool,
+) -> None:
+    with tqdm(total=len(locus_ids)) as progress_bar:
+        await asyncio.gather(
+            *(
+                process_gene(gene_factory(id_, is_validated), progress_bar)
+                for id_ in locus_ids
+            )
+        )
+
+
+def create_gene(locusID: str, is_validated: bool) -> Gene:
+    return Gene(locusID=locusID, is_validated=is_validated)
 
 
 if __name__ == "__main__":
-    gene = Gene()
-    gene.data
-    print()
+    start_time = time.time()
+    locus_ids = [
+        "YPR201W",
+        # "YPR202W",
+        # "YPR199C",
+        # "YPR200C",
+        # "YPR198W",
+        # "YPR196W",
+        # "YPR197C",
+        # "YPR194C",
+        # "YPR195C",
+        # "YPR193C",
+        # "YPR192W",
+    ]
+    asyncio.run(download_genes(locus_ids, create_gene, is_validated=True))
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time} seconds")
+    gene = Gene("YDR210W")
+    asyncio.run(gene.fetch_data())
+    # gene.data

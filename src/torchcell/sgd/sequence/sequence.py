@@ -1,5 +1,6 @@
 # src/torchcell/sgd/sequence/sequence.py
 from abc import ABC, abstractmethod
+from ast import Not
 
 import gffutils
 import matplotlib.pyplot as plt
@@ -21,7 +22,14 @@ from pydantic import (
 
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
-from torchcell.sequence import AbcGenome, DnaSelectionResult, get_chr_from_description
+from torchcell.sequence import (
+    AbcGenome,
+    DnaSelectionResult,
+    DnaWindowResult,
+    calculate_window_bounds,
+    calculate_window_bounds_symmetric,
+    get_chr_from_description,
+)
 from torchcell.sgd.sequence.constants import CHROMOSOMES
 
 
@@ -32,6 +40,8 @@ class SCerevisiaeGenome(AbcGenome):
     db = field(init=False, repr=False)
     fasta_sequences = field(init=False, default=None, repr=False)
     chr_to_nc = field(init=False, default=None, repr=False)
+    nc_to_chr = field(init=False, default=None, repr=False)
+    chr_to_len = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
         # Create the database
@@ -49,6 +59,11 @@ class SCerevisiaeGenome(AbcGenome):
         self.chr_to_nc = {
             get_chr_from_description(self.fasta_sequences[key].description): key
             for key in self.fasta_sequences.keys()
+        }
+        self.nc_to_chr = {v: k for k, v in self.chr_to_nc.items()}
+        self.chr_to_len = {
+            self.nc_to_chr[chr]: len(self.fasta_sequences[chr].seq)
+            for chr in self.fasta_sequences.keys()
         }
         print()
 
@@ -71,24 +86,36 @@ class SCerevisiaeGenome(AbcGenome):
         )
 
     def select_feature_window(
-        self, feature: str, window_size: int
-    ) -> DnaSelectionResult:
+        self, feature: str, window_size: int, is_max_size: bool = True
+    ) -> DnaWindowResult:
         feature = self[feature]
         if not feature:
             raise ValueError(f"feature {feature} not found.")
 
-        start = self[feature].start
-        end = self[feature].stop
-        # start_window =
-        # end_window =
-        strand = self[feature].strand
+        start = feature.start
+        end = feature.stop
+        strand = feature.strand
         chr = CHROMOSOMES.index(feature.seqid)
-        dna_selection_result = self.get_seq(chr, start, end, strand)
+        if is_max_size:
+            start_window, end_window = calculate_window_bounds(
+                start, end, window_size, self.chr_to_len[chr]
+            )
 
-        # Make DnaWindowResult which inherits from DnaSelectionResult and has two extra attributes (start_window, end_window, and is_maxed:bool where the window is adjusted to be the maximum size possible without going out of bounds, it will include sequence from the side of str where there won't be an index error. when this is false it will just selec the largest window possible without going out of bounds, this option will always have equal length sequence on both sides of the feature)
-
-        # return DNAWindowResult(
-        pass
+        else:
+            start_window, end_window = calculate_window_bounds_symmetric(
+                start, end, window_size, self.chr_to_len[chr]
+            )
+        seq = self.get_seq(chr, start_window, end_window, strand).seq
+        return DnaWindowResult(
+            seq=seq,
+            chromosome=chr,
+            start=start,
+            end=end,
+            strand=strand,
+            size=window_size,
+            start_window=start_window,
+            end_window=end_window,
+        )
 
     @property
     def gene_attribute_table(self) -> pd.DataFrame:
@@ -128,7 +155,7 @@ def main() -> None:
     genome.get_seq(chr=0, start=10, end=120, strand="+")
     print(genome.gene_attribute_table)
     print(genome.feature_types)
-    print(genome.select_feature_window("YFL039C", 100))
+    print(genome.select_feature_window("YFL039C", 20000, is_max_size=False))
     print()
 
 

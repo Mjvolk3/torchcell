@@ -5,9 +5,8 @@ import os
 import os.path as osp
 import time
 from asyncio import Task
-from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
-
+from attrs import define, field
 import aiohttp
 from tqdm import tqdm
 
@@ -23,7 +22,7 @@ from torchcell.sgd.validation.locus_related.locus import (
 )
 
 
-@dataclass
+@define
 class Gene:
     locusID: str = "YAL001C"
     is_validated: bool = field(
@@ -33,11 +32,12 @@ class Gene:
     )
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
     headers: dict[str, str] = field(
-        default_factory=lambda: {"accept": "application/json"}
+        default={"accept": "application/json"}
     )
-    base_data_dir: str = "data/sgd"
+    base_data_dir: str = "data/sgd/genes"
+    save_path: str = field(default=None, init=False, repr=True)
     _data: dict[str, dict[Any, Any] | list[Any]] = field(
-        default_factory=dict, repr=False
+        default=dict, repr=False
     )
     _data_task: Optional[Task[Any]] = field(
         default=None,
@@ -45,7 +45,7 @@ class Gene:
         repr=False,
     )
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         if not osp.exists(self.base_data_dir):
             os.makedirs(self.base_data_dir)
         self.save_path: str = osp.join(self.base_data_dir, f"{self.locusID}.json")
@@ -117,7 +117,10 @@ class Gene:
         url = osp.join(self.sgd_url, self.locusID)
         data = await self._get_data(url)
         if self.is_validated:
-            data = validate_data(data).model_dump()
+            data = validate_data(data)
+            with open("locus_schema.json", "w") as f:
+                json.dump(data.model_json_schema(), f, indent=4)
+            data = data.model_dump()
         return data  # breakpoint, printed out data
 
     async def sequence_details(self) -> dict[Any, Any] | list[Any]:
@@ -196,7 +199,7 @@ def create_gene(locusID: str, is_validated: bool) -> Gene:
     return Gene(locusID=locusID, is_validated=is_validated)
 
 
-if __name__ == "__main__":
+def main() -> None:
     start_time = time.time()
     locus_ids = [
         "YPR201W",
@@ -211,9 +214,15 @@ if __name__ == "__main__":
         # "YPR193C",
         # "YPR192W",
     ]
-    asyncio.run(download_genes(locus_ids, create_gene, is_validated=True))
+    asyncio.run(
+        download_genes(locus_ids, create_gene, is_validated=True)
+    )  # TODO Change for Dev
     end_time = time.time()
     print(f"Execution time: {end_time - start_time} seconds")
     gene = Gene("YDR210W")
     asyncio.run(gene.fetch_data())
     # gene.data
+
+
+if __name__ == "__main__":
+    main()

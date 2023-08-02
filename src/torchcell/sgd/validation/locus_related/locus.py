@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import Field, validator
 
-from torchcell.sgd.validation.valid_models import BaseModelStrict
+from torchcell.data_models import BaseModelStrict
 
 
 # qualities

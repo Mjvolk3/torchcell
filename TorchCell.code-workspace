@@ -5,23 +5,39 @@
             "path": "."
         },
         {
+            "name": "assets",
+            "path": "notes/assets"
+        },
+        {
+            "name": "data",
+            "path": "data"
+        },
+        {
+            "name": "______________",
+            "path": "../______________"
+        },
+        {
+            "name": "Gene_Graph",
             "path": "../Gene_Graph"
         },
         {
+            "name": "multi_knockout",
             "path": "../multi_knockout"
         },
         {
+            "name": "torchgeo",
             "path": "../torchgeo"
         },
         {
+            "name": "intermine-ws-python",
             "path": "../intermine-ws-python"
-        }
+        },
     ],
     "settings": {
         "dendron.rootDir": ".",
         "files.autoSave": "onFocusChange",
         "pasteImage.path": "${currentFileDir}/assets/images",
-        "pasteImage.prefix": "/",
+        "pasteImage.prefix": "./",
         "markdown-preview-enhanced.enableWikiLinkSyntax": true,
         "markdown-preview-enhanced.wikiLinkFileExtension": ".md",
         "editor.snippetSuggestions": "inline",
@@ -48,7 +64,8 @@
         "editor.codeActionsOnSave": {
             "source.fixAll.markdownlint": true,
          },
-        "git.autoRepositoryDetection": false
+        "git.autoRepositoryDetection": false,
+        "liveServer.settings.multiRootWorkspaceName": "TorchCell"
     },
     "extensions": {
         "recommendations": [

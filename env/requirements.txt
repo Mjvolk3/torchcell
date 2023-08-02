@@ -30,3 +30,14 @@ types-tqdm
 flake8
 types-requests
 aiohttp
+networkx
+matplotlib
+pydot # Don't think I am using this... outdate
+pygraphviz # Don't think I am using this
+graphviz # Don't think I am using this.
+adjustText
+gffutils
+attrs
+
+# conda install -c conda-forge graphviz # conda installed and ...
+# conda install -c conda-forge pygraphviz # conda installed and ...

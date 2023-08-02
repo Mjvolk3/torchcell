@@ -1,0 +1,20 @@
+---
+id: qrpuop083pghmfiqe6va4y7
+title: torchcell.tasks.future
+desc: ''
+updated: 1690926706573
+created: 1675887826601
+---
+## Future
+
+- [ ] Train DCell model.
+
+## Far Future
+
+- [ ] Move over analysis of the mutant datasets from `Gene_Graph`
+- [ ] Language model embedding of gene description. Language model can be pretrained on all of the relevant yeast literature. Then embeddings can be generated for the descriptions. There is probably more text we can pull. With @Heng-Ji we could probably get an ego graph for each gene. Would be nice if could match it to some sort of experimental ontology. If you find these features are important we could try to do additional computation on top of the ego graph from literature. As of now we could use the literature list that his hosted by SGD. These paperms could be scraped, plus there supplementary pdfs.
+
+```python
+genome["YDR210W"].attributes['display'][0]
+'Predicted tail-anchored plasma membrane protein'
+```

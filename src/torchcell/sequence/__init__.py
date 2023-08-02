@@ -2,7 +2,10 @@
 from torchcell.sequence.sequence import (
     AbcGenome,
     DnaSelectionResult,
-    mismatch_positions,
+    DnaWindowResult,
+    calculate_window_bounds,
+    calculate_window_bounds_symmetric,
     get_chr_from_description,
+    mismatch_positions,
     roman_to_int,
 )

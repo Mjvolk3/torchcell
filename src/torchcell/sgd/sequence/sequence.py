@@ -105,6 +105,7 @@ class SCerevisiaeGenome(AbcGenome):
             start_window, end_window = calculate_window_bounds_symmetric(
                 start, end, window_size, self.chr_to_len[chr]
             )
+        size = end_window - start_window
         seq = self.get_seq(chr, start_window, end_window, strand).seq
         return DnaWindowResult(
             seq=seq,
@@ -112,7 +113,7 @@ class SCerevisiaeGenome(AbcGenome):
             start=start,
             end=end,
             strand=strand,
-            size=window_size,
+            size=size,
             start_window=start_window,
             end_window=end_window,
         )

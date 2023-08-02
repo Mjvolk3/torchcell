@@ -11,7 +11,7 @@ Welcome to my_package's documentation!
    :caption: Contents:
 
    introduction
-   my_package
+   torchcell
 
 Indices and tables
 ==================

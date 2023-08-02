@@ -1,5 +1,6 @@
 # src/torchcell/sequence/sequence.py
 from abc import ABC, abstractmethod
+from turtle import st
 
 import gffutils
 import matplotlib.pyplot as plt
@@ -18,6 +19,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from sympy import sequence
 
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
@@ -58,7 +60,7 @@ class DnaSelectionResult(BaseModel):
         sequence_length = len(model.seq)
         if sequence_length <= 0 or sequence_length >= DNA_LLM_MAX_TOKEN_SIZE:
             raise ValueError(
-                "Sequence length must be positive and less than or equal to 60kb"
+                f"Sequence length must be positive and leq {DNA_LLM_MAX_TOKEN_SIZE}bp"
             )
         return model
 
@@ -96,6 +98,25 @@ class DnaSelectionResult(BaseModel):
         if v < 0:
             raise ValueError("End must be positive")
         return v
+
+
+class DnaWindowResult(DnaSelectionResult):
+    size: int
+    start_window: int
+    end_window: int
+
+    @model_validator(mode="after")
+    @classmethod
+    def check_window(cls, model: "DnaWindowResult") -> "DnaWindowResult":
+        if model.start_window < 0:
+            raise ValueError("Start window must be positive")
+        if model.end_window < 0:
+            raise ValueError("End window must be positive")
+        if model.start_window >= model.start:
+            raise ValueError("Start window must be leq start")
+        if model.end_window <= model.end:
+            raise ValueError("End window must be geq end")
+        return model
 
 
 ############
@@ -138,6 +159,75 @@ def roman_to_int(s: str) -> int:
         else:
             result += roman_to_int_mapping[s[i]]
     return result
+
+
+#######
+# selection_feature_window functions
+def calculate_window_bounds(
+    start: int,
+    end: int,
+    window_size: int,
+    seq_length: int,
+    chromosome_length: int,
+) -> tuple[int, int]:
+    seq_length = end - start
+    flank_seq_length = (window_size - seq_length) // 2
+    start_window = start - flank_seq_length
+    end_window = end + flank_seq_length
+
+    # Case where start of window is out of bounds
+    if start_window < 0:
+        difference = abs(start_window)  # Calculate how far out of bounds
+        start_window = 0  # Set start of window to beginning of sequence
+        end_window += difference  # Adjust end of window by the same amount
+
+    # Case where end of window is out of bounds
+    if end_window > chromosome_length:
+        difference = end_window - chromosome_length  # Calculate how far out of bounds
+        end_window = chromosome_length  # Set end of window to end of sequence
+        start_window -= difference  # Adjust start of window by the same amount
+
+    # Edge case for if the adjusted window does not match the window size
+    if (end_window - start_window) - window_size == 1:
+        start_window = -1
+    assert (end_window - start_window) - window_size == 0, "Window sizing is incorrect"
+
+    return start_window, end_window
+
+
+def calculate_window_bounds_symmetric(
+    start: int,
+    end: int,
+    window_size: int,
+    chromosome_length: int,
+) -> tuple[int, int]:
+    seq_length = end - start
+    # Determine symmetric window size, considering boundaries
+    flank_size = (window_size // 2) - seq_length
+    start_flank_pos = start - flank_size
+    end_flank_pos = end + flank_size
+    if start_flank_pos >= 0:
+        start_window = start_flank_pos
+    else:
+        start_window = 0
+    if end_flank_pos <= chromosome_length:
+        end_window = end_flank_pos
+    else:
+        end_window = chromosome_length
+
+    assert (
+        end_window - start_window
+    ) <= window_size, (
+        f"Window sizing is incorrect. Window is larger than {window_size}bp"
+    )
+    assert (
+        end_window - start_window
+    ) >= end - start, (
+        f"Window sizing is incorrect. Window is smaller than sequence {end - start}bp"
+    )
+    assert (start - start_window) == (end_window - end), "sequences are not symmetric"
+
+    return start_window, end_window
 
 
 if __name__ == "__main__":

@@ -58,9 +58,9 @@ class DnaSelectionResult(BaseModel):
     @classmethod
     def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
         sequence_length = len(model.seq)
-        if sequence_length <= 0 or sequence_length >= DNA_LLM_MAX_TOKEN_SIZE:
+        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
             raise ValueError(
-                f"Sequence length must be positive and leq {DNA_LLM_MAX_TOKEN_SIZE}bp"
+                f"Sequence length ({sequence_length}) must be geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}bp"
             )
         return model
 
@@ -167,9 +167,9 @@ def calculate_window_bounds(
     start: int,
     end: int,
     window_size: int,
-    seq_length: int,
     chromosome_length: int,
 ) -> tuple[int, int]:
+    assert end < chromosome_length, "End position is out of bounds of chromosome"
     seq_length = end - start
     flank_seq_length = (window_size - seq_length) // 2
     start_window = start - flank_seq_length
@@ -177,19 +177,25 @@ def calculate_window_bounds(
 
     # Case where start of window is out of bounds
     if start_window < 0:
-        difference = abs(start_window)  # Calculate how far out of bounds
         start_window = 0  # Set start of window to beginning of sequence
-        end_window += difference  # Adjust end of window by the same amount
+        end_window = window_size
 
     # Case where end of window is out of bounds
     if end_window > chromosome_length:
-        difference = end_window - chromosome_length  # Calculate how far out of bounds
         end_window = chromosome_length  # Set end of window to end of sequence
-        start_window -= difference  # Adjust start of window by the same amount
+        start_window = chromosome_length - window_size
 
     # Edge case for if the adjusted window does not match the window size
-    if (end_window - start_window) - window_size == 1:
-        start_window = -1
+    if abs(
+        (end_window - start_window) - window_size == 1
+        and end_window == chromosome_length
+    ):
+        start_window -= 1
+    elif abs((end_window - start_window) - window_size) == 1 and start_window == 0:
+        end_window += 1
+    elif abs((end_window - start_window) - window_size) == 1:
+        # default add one to start and 5utr does more work in general. not that one bp matters
+        start_window -= 1
     assert (end_window - start_window) - window_size == 0, "Window sizing is incorrect"
 
     return start_window, end_window
@@ -201,8 +207,9 @@ def calculate_window_bounds_symmetric(
     window_size: int,
     chromosome_length: int,
 ) -> tuple[int, int]:
+    assert end < chromosome_length, "End position is out of bounds of chromosome"
     seq_length = end - start
-    # Determine symmetric window size, considering boundaries
+    # Find limiting window size
     flank_size = (window_size // 2) - seq_length
     start_flank_pos = start - flank_size
     end_flank_pos = end + flank_size
@@ -214,6 +221,11 @@ def calculate_window_bounds_symmetric(
         end_window = end_flank_pos
     else:
         end_window = chromosome_length
+
+    # Based on limiting window size take symmetric window
+    sym_flank_len = min((start - start_window), (end_window - end))
+    start_window = start - sym_flank_len
+    end_window = end + sym_flank_len
 
     assert (
         end_window - start_window

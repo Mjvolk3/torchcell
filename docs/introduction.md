@@ -10,4 +10,3 @@ We will go over some examples.
 
 - Blah Blah. [Link](index.rst)
 
-![img link](images/sphinxdoc.png)

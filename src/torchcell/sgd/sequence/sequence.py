@@ -139,6 +139,12 @@ class SCerevisiaeGenome(AbcGenome):
     def feature_types(self) -> list[str]:
         return list(self.db.featuretypes())
 
+    @property
+    def gene_list(self) -> list[str]:
+        genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
+        assert len(genes) == len(set(genes)), "Duplicate genes found"
+        return genes
+
     def __getitem__(self, item: str):
         # For now we only support the systematic names
         try:
@@ -157,6 +163,10 @@ def main() -> None:
     print(genome.gene_attribute_table)
     print(genome.feature_types)
     print(genome.select_feature_window("YFL039C", 20000, is_max_size=False))
+    for gene in genome.gene_list:
+        print(genome.select_feature_window(gene, 60000, is_max_size=True))
+    for gene in genome.gene_list:
+        print(genome.select_feature_window(gene, 60000, is_max_size=False))
     print()
 
 

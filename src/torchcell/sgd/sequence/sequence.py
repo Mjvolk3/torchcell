@@ -23,9 +23,9 @@ from pydantic import (
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 from torchcell.sequence import (
-    AbcGenome,
     DnaSelectionResult,
     DnaWindowResult,
+    Genome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
     get_chr_from_description,
@@ -34,7 +34,7 @@ from torchcell.sgd.sequence.constants import CHROMOSOMES
 
 
 @define
-class SCerevisiaeGenome(AbcGenome):
+class SCerevisiaeGenome(Genome):
     _fasta_path: str = "data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa"
     _gff_path: str = "data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/saccharomyces_cerevisiae_R64-3-1_20210421.gff"
     db = field(init=False, repr=False)

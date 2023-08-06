@@ -1,4 +1,4 @@
-# ./torchcell/sequence/test_sequence.py
+# tests/torchcell/sequence/test_sequence.py
 import pandas as pd
 import pytest
 from tqdm import tqdm

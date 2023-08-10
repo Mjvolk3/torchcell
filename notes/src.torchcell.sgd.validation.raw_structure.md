@@ -2,13 +2,13 @@
 id: 9z9iifhdbola3fgtw7ib6mi
 title: Raw_structure
 desc: ''
-updated: 1690751615390
+updated: 1691677811608
 created: 1690506565628
 ---
 
 ## "YPR201W" Structure Graph
 
-![](./assets/images/src/torchcell/sgd/validation/YPR201W_type_graph.png)
+![](./assets/images/src/torchcell/sgd/validation/locus/YPR201W_locus_type_graph.png)
 
 ## Raw Structure Plan
 

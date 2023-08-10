@@ -146,6 +146,24 @@
                 "command": "bash notes/assets/notability/scripts/sync.sh",
                 "problemMatcher": []
             },
+            {
+                "label": "mypy: file",
+                "type": "shell",
+                "command": "bash mypy/mypy.sh ${file}",
+                "problemMatcher": []
+            },
+            {
+                "label": "mypy: workspace",
+                "type": "shell",
+                "command": "bash mypy/mypy.sh .",
+                "problemMatcher": []
+            },
+            {
+                "label": "dmypy: restart",
+                "type": "shell",
+                "command": "bash mypy/dmypy_restart.sh",
+                "problemMatcher": []
+            },
 
         ],
         "inputs" : [
@@ -195,6 +213,17 @@
                 "justMyCode": false,
                 "cwd": "${workspaceFolder:TorchCell}",
                 "subProcess": true
+            },
+            {
+                "name": "Python: torchgeo",
+                "type": "python",
+                "request": "launch",
+                "program": "${file}",
+                "console": "integratedTerminal",
+                "justMyCode": false,
+                "cwd": "${workspaceFolder:torchgeo}",
+                "subProcess": true,
+                "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python",
             },
             {
                 "name": "Python: Attach",

@@ -61,9 +61,10 @@
             "MD045": false,
             "MD050": false,
         },
-        "editor.codeActionsOnSave": {
-            "source.fixAll.markdownlint": true,
-         },
+        // troubleshooting slow python saves
+        // "editor.codeActionsOnSave": {
+        //     "source.fixAll.markdownlint": true,
+        //  },
         "git.autoRepositoryDetection": false,
         "liveServer.settings.multiRootWorkspaceName": "TorchCell"
     },

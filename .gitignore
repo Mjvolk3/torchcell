@@ -15,3 +15,11 @@ src/torchcell/models/pretrained_LLM/*
 
 # Data
 data/
+
+# Dendron
+.dendron.port
+.dendron.ws
+notes/.dendron.cache.json
+
+# ncbi_cli
+ncbi_cli/*

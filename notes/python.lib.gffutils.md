@@ -2,7 +2,7 @@
 id: 54xvyy1nqjie6gku0vryjmh
 title: Gffutils
 desc: ''
-updated: 1690934733762
+updated: 1691020375244
 created: 1690931212390
 ---
 ## Interact with a Database
@@ -19,10 +19,9 @@ created: 1690931212390
 FeatureDB.region(region=None, seqid=None, start=None, end=None, strand=None, featuretype=None, completely_within=False)
 ```
 
-## Why gffutils over Biopython GFF Parsing  
+## Why gffutils over Biopython GFF Parsing
 
-"
-While Biopython is an excellent resource for bioinformatics tasks and provides a variety of functions to handle different data types, as of my knowledge cut-off in September 2021, its functionality for parsing GFF files was not fully integrated and still under development.
+"While Biopython is an excellent resource for bioinformatics tasks and provides a variety of functions to handle different data types, as of my knowledge cut-off in September 2021, its functionality for parsing GFF files was not fully integrated and still under development.
 
 On the other hand, gffutils is a full-featured Python library specifically designed to handle and manipulate GFF and GTF files, two common formats for storing genomic features and annotations. It provides a more advanced set of operations compared to Biopython's GFF parser, including creating feature databases, querying and manipulating those databases, and creating hierarchical relationships between features.
 
@@ -33,4 +32,3 @@ It's also worth mentioning that gffutils is able to handle complex operations li
 While both tools are beneficial for different tasks in bioinformatics, when it comes to handling GFF files specifically, gffutils offers a more comprehensive and specialized set of tools as of my last training cut-off.
 
 Keep in mind that tool choice can depend on the specific needs of your project, and the landscape of bioinformatics software is always evolving, so it's a good idea to check for updates and changes in the capabilities of these tools." #ChatGPT
-

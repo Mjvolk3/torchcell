@@ -24,7 +24,6 @@ ptpython
 goatools
 dask
 intermine
-mypy
 pandas-stubs
 types-tqdm
 flake8
@@ -38,6 +37,20 @@ graphviz # Don't think I am using this.
 adjustText
 gffutils
 attrs
+xlrd
+openpyxl
+transformers # hugging face
+scikit-learn
+pronto
+nxontology
+goatools
 
+# Not required
+black
+mypy
+isort
+
+
+# Install Issues - Not currently needed.
 # conda install -c conda-forge graphviz # conda installed and ...
 # conda install -c conda-forge pygraphviz # conda installed and ...

@@ -1,4 +1,17 @@
+# Node
 node_modules
+.next # TODO check what this is
 
-.next
+# python
 *.pyc
+__pycache__
+
+# NCBI cmdlinetools
+datasets
+dataformat
+
+# Pretrained Models
+src/torchcell/models/pretrained_LLM/*
+
+# Data
+data/

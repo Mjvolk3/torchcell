@@ -1,28 +1,9 @@
 # src/torchcell/models/pretrained_LLM.py
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 from abc import ABC, abstractmethod
 
 import torch
 from attrs import define
 from transformers import AutoModelForMaskedLM, AutoTokenizer
-
-=======
-from abc import ABC, abstractmethod
-
-import torch
-from attrs import define
-from transformers import AutoModelForMaskedLM, AutoTokenizer
-
->>>>>>> Stashed changes
-=======
-from abc import ABC, abstractmethod
-
-import torch
-from attrs import define
-from transformers import AutoModelForMaskedLM, AutoTokenizer
-
->>>>>>> Stashed changes
 
 
 class NucleotideModel(ABC):

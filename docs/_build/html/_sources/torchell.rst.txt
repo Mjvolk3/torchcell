@@ -1,4 +1,4 @@
-TorchCell Package
+torchcell Package
 ==============================
 
 .. automodule:: torchcell

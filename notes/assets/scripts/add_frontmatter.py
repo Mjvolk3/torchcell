@@ -1,0 +1,55 @@
+import os
+import sys
+from dotenv import load_dotenv
+load_dotenv()
+
+WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
+PYTHON_PKG_REL_PATH = os.environ.get("PYTHON_PKG_REL_PATH")
+PYTHON_PKG_TEST_REL_PATH = os.environ.get("PYTHON_PKG_TEST_REL_PATH")
+GIT_REPO_URL = os.environ.get("GIT_REPO_URL")
+
+def add_frontmatter(file_path):
+    # Extract the relative path
+    relative_path = os.path.relpath(
+        file_path, start=WORKSPACE_DIR
+    )
+
+    # Generate the test file path
+    test_file_path = relative_path.replace(PYTHON_PKG_REL_PATH, PYTHON_PKG_TEST_REL_PATH)
+    test_file_path = os.path.join(
+        os.path.dirname(test_file_path), "test_" + os.path.basename(test_file_path)
+    )
+
+    # Generate the frontmatter lines
+    lines = [
+        f"# {relative_path}\n",
+        f"# [[{relative_path.replace('/', '.').replace('.py', '')}]]\n",
+        f"# {GIT_REPO_URL}/tree/main/{relative_path}\n",
+        f"# Test file: {test_file_path}\n",  # Link to the test file
+        "\n",  # Add an extra newline for separation
+    ]
+
+    with open(file_path, "r+") as file:
+        content = file.readlines()
+
+        print(
+            f"Debug: First line of the file: {content[0] if content else 'File is empty'}"
+        )
+
+        # Check if frontmatter already exists
+        if content and content[0].startswith("# " + relative_path):
+            print("Frontmatter already exists.")
+            return
+
+        # Add the frontmatter to the content
+        content = lines + content
+        file.seek(0)
+        file.writelines(content)
+        file.truncate()  # Ensure any leftover content is removed
+
+    print("Frontmatter added successfully.")
+
+
+if __name__ == "__main__":
+    file_path = sys.argv[1]
+    add_frontmatter(file_path)

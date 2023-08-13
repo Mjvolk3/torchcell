@@ -26,7 +26,7 @@ workspace:
     vaults:
         -
             fsPath: .
-            name: TorchCell
+            name: torchcell
             selfContained: true
     journal:
         dailyDomain: daily
@@ -110,8 +110,8 @@ publishing:
     enableTaskNotes: true
     enablePrettyLinks: true
     searchMode: lookup
-    assetsPrefix: /TorchCell
-    siteUrl: https://mjvolk3.github.io/TorchCell/
+    assetsPrefix: /torchcell
+    siteUrl: https://mjvolk3.github.io/torchcell/
     duplicateNoteBehavior:
         action: useVault
         payload:
@@ -119,7 +119,7 @@ publishing:
     theme: light
     giscus:
         id: comments
-        repo: Mjvolk3/TorchCell
+        repo: Mjvolk3/torchcell
         repoId: R_kgDOIfijfA
         category: Announcements
         categoryId: DIC_kwDOIjXV184CTACu

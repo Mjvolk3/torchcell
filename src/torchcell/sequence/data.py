@@ -1,6 +1,8 @@
 # src/torchcell/sequence/data.py
+import logging
 from abc import ABC, abstractmethod
 from turtle import st
+from typing import Set
 
 import gffutils
 import matplotlib.pyplot as plt
@@ -20,50 +22,27 @@ from pydantic import (
     model_validator,
 )
 from sympy import sequence
-import logging
+
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
+from typing import Set
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
 ###########
-# Abstract Base Class for structure
-# CHECK not finished
-class Genome(ABC):
-    # Used elsewhere [[src/torchcell/sgd/validation/valid_models.py]]
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
-
-##########
-# Class holding gene
-@define
-class Gene:
-    name: str
-    seq: str
-    chromosome: int
-    start: int
-    end: int
-    strand: str
-    five_utr: str
-    three_utr: str
-
-    def __attrs_post__init():
-        pass
-
-    # @property()
-    # def
-
-
-###########
 # Classes holding data
 class DnaSelectionResult(BaseModel):
-    seq: str
+    id: str
+    id: str
     chromosome: int
+    strand: str
+    strand: str
     start: int
     end: int
-    strand: str
+    seq: str
+    seq: str
 
     def __len__(self) -> int:
         return len(self.seq)
@@ -77,16 +56,6 @@ class DnaSelectionResult(BaseModel):
         if isinstance(other, DnaSelectionResult):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
-
-    @model_validator(mode="after")  # type : ignore
-    @classmethod
-    def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
-        sequence_length = len(model.seq)
-        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
-            raise ValueError(
-                f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
-            )
-        return model
 
     @model_validator(mode="after")
     @classmethod
@@ -123,11 +92,38 @@ class DnaSelectionResult(BaseModel):
             raise ValueError("End must be positive")
         return v
 
+    @model_validator(mode="after")  # type : ignore
+    @classmethod
+    def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
+        sequence_length = len(model.seq)
+        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
+            raise ValueError(
+                f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
+            )
+        return model
+
+    @model_validator(mode="after")  # type : ignore
+    @classmethod
+    def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
+        sequence_length = len(model.seq)
+        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
+            raise ValueError(
+                f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
+            )
+        return model
+
 
 class DnaWindowResult(DnaSelectionResult):
-    size: int
     start_window: int
     end_window: int
+
+    def __repr__(self) -> str:
+        # Use f-string to create a formatted string
+        return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
+
+    def __repr__(self) -> str:
+        # Use f-string to create a formatted string
+        return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
 
     @model_validator(mode="after")
     @classmethod
@@ -137,6 +133,102 @@ class DnaWindowResult(DnaSelectionResult):
         if model.end_window < 0:
             raise ValueError("End window must be positive")
         return model
+
+
+###########
+# Abstract Base Class for structure
+
+
+##########
+# Class holding gene
+class Gene(ABC):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    @abstractmethod
+    def window(
+        self,
+        window_size: int,
+        is_max_size: bool = True,
+    ) -> DnaWindowResult:
+        pass
+
+    @abstractmethod
+    def window_5utr(
+        self, window_size: int, allow_undersize: bool = False
+    ) -> DnaWindowResult:
+        pass
+
+    @abstractmethod
+    def window_3utr(
+        self, window_size: int, allow_undersize: bool = False
+    ) -> DnaWindowResult:
+        pass
+
+    # name: str
+    # seq: str
+    # chromosome: int
+    # start: int
+    # end: int
+    # strand: str
+    # five_utr: str
+    # three_utr: str
+
+
+class Genome(ABC):
+    # Used elsewhere [[src/torchcell/sgd/validation/valid_models.py]]
+    # CHECK IF THIS IS NEEDED.. I think this is a pydantic thing
+    # model_config = ConfigDict(frozen=True, extra="forbid")
+
+    def __init__(self):
+        self._fasta_path: str = None
+        self._gff_path: str = None
+        self.db: FeatureDB = None
+        self.fasta_sequences: dict = None
+        self.chr_to_nc: dict = None
+        self.nc_to_chr: dict = None
+        self.chr_to_length: dict = None
+
+    # @property
+    # def gene_set(self) -> Set[str]:
+    #     if self._gene_set is None:
+    #         self._gene_set = self.compute_gene_set()
+    #     return self._gene_set
+
+    # @gene_set.setter
+    # def gene_set(self, value: Set[str]):
+    #     self._gene_set = value
+
+    # @abstractmethod
+    # def compute_gene_set(self) -> Set[str]:
+    #     pass  # Abstract methods don't have a body
+
+    # @abstractmethod
+    # def get_seq(self, chr: int | str, start: int, end: int, strand: str) -> DnaSelectionResult:
+    #     pass
+
+    # @abstractmethod
+    # def select_feature_window(
+    #     self, feature: str, window_size: int, is_max_size: bool = True
+    # ) -> DnaWindowResult:
+    #     pass
+
+    # @abstractmethod
+    # @property
+    # def gene_attribute_table(self) -> pd.DataFrame:
+    #     pass
+
+    # @abstractmethod
+    # @property
+    # def feature_types(self) -> list[str]:
+    #     pass
+
+    # @abstractmethod
+    # def __getitem__(self, item: str) -> Gene | None:
+    #     pass
+
+    # # Not sure if it makes more sense to have the number of genes be the length or the sum bp over all chromosomes.
+    # def __len__(self) -> int:
+    #     return len(self.gene_set)
 
 
 ############
@@ -304,7 +396,7 @@ def calculate_window_bounds_symmetric(
             f"Window size {window_size} is smaller than sequence length {end - start}."
         )
         start_window, end_window = calculate_window_undersized_symmetric(
-            start, end, window_size, chromosome_length
+            start, end, window_size
         )
         return start_window, end_window
 

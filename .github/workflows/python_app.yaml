@@ -24,15 +24,25 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f env/requirements.txt ]; then pip install -r env/requirements.txt; fi
         python -m pip install -e .
-        python -m pip install mypy black
+        python -m pip install mypy black isort
 
     - name: Check typing with MyPy
       run: |
         mypy src
 
-    - name: Check formatting with Black
+    - name: Format with Black
       run: |
-        black --check src
+        black src
+
+    - name: Order code with isort
+      run: |
+        isort src
+
+    - name: Commit and push if changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git diff --exit-code || git commit -am "Automatically formatted with Black and isort" && git push
 
     - name: Run pytest with coverage
       run: |

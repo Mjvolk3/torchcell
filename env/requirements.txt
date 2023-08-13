@@ -45,11 +45,18 @@ pronto
 nxontology
 goatools
 
+# Workspace
+python-dotenv
+
 # Not required
 black
 mypy
 isort
 
+# docs
+sphinx
+sphinx_rtd_theme
+myst_parser
 
 # Install Issues - Not currently needed.
 # conda install -c conda-forge graphviz # conda installed and ...

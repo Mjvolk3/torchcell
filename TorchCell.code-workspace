@@ -1,7 +1,7 @@
 {
     "folders": [
         {
-            "name": "TorchCell",
+            "name": "torchcell",
             "path": "."
         },
         {
@@ -66,7 +66,14 @@
         //     "source.fixAll.markdownlint": true,
         //  },
         "git.autoRepositoryDetection": false,
-        "liveServer.settings.multiRootWorkspaceName": "TorchCell"
+        "liveServer.settings.multiRootWorkspaceName": "TorchCell",
+        "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
+        "mypy.enabled": true,
+        "mypy.runUsingActiveInterpreter": false,
+        "mypy.targets": [
+            ".",
+            "${workspaceFolder}/src/*"
+        ]
     },
     "extensions": {
         "recommendations": [
@@ -87,6 +94,7 @@
     "tasks": {
         "version": "2.0.0",
         "tasks": [
+            // Publish
             {
                 "label": "Paper: compile",
                 "type": "shell",
@@ -110,7 +118,8 @@
                 "type": "shell",
                 "command": "./notes/assets/publish/scripts/bib_tex_pdf.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
                 "problemMatcher": []
-              },
+            },
+            // Cluster
             {
                 "label": "nano: Interactive",
                 "type": "shell",
@@ -141,12 +150,14 @@
                 "command": "bash src/genPE/sweep_m1.sh",
                 "problemMatcher": []
             },
+            // Notability
             {
                 "label": "notability: sync",
                 "type": "shell",
                 "command": "bash notes/assets/notability/scripts/sync.sh",
                 "problemMatcher": []
             },
+            // mypy
             {
                 "label": "mypy: file",
                 "type": "shell",
@@ -165,9 +176,103 @@
                 "command": "bash mypy/dmypy_restart.sh",
                 "problemMatcher": []
             },
-
+            //python
+            {
+                "label": "python: add frontmatter",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/add_frontmatter.py",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared",
+                    "showReuseMessage": true,
+                    "clear": false
+                }
+            },
+            {
+                "label": "python: move file (note & test safe)",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/python_move_dendron_pytest.py",
+                    "${file}",
+                    "${input:newFilePath}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "reveal": "always"
+                }
+            },
+            {
+                "label": "python: create test file",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/create_python_test_file.py",
+                    "create",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared",
+                    "showReuseMessage": true,
+                    "clear": false
+                }
+            },
+            {
+                "label": "python: delete src (note & test safe)",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                  "${workspaceFolder}/notes/assets/scripts/delete_file_and_open_related.py",
+                  "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                  "kind": "build",
+                  "isDefault": true
+                },
+                "presentation": {
+                  "reveal": "always",
+                  "focus": true,  // This will focus the terminal after the task is run
+                  "panel": "shared"
+                }
+            },
+            {
+                "label": "python: open related ",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                  "${workspaceFolder}/notes/assets/scripts/open_related.py",
+                  "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                  "kind": "build",
+                  "isDefault": true
+                },
+                "presentation": {
+                  "reveal": "always",
+                  "panel": "shared"
+                }
+            },
         ],
         "inputs" : [
+            {
+                "id": "newFilePath",
+                "type": "promptString",
+                "description": "Enter the new file path:",
+                "default": "src/torchcell/"
+            },
             {
                 "id" : "jobName",
                 "description": "name of nano job",
@@ -226,19 +331,6 @@
                 "subProcess": true,
                 "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python",
             },
-            {
-                "name": "Python: Attach",
-                "type": "python",
-                "request": "attach",
-                "port": 5678,
-                "host": "localhost",
-                "pathMappings": [
-                    {
-                    "localRoot": "${workspaceFolder}",
-                    "remoteRoot": "."
-                    }
-                ]
-            }
         ]
     },
 }

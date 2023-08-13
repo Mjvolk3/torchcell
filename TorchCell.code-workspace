@@ -176,7 +176,15 @@
                 "command": "bash mypy/dmypy_restart.sh",
                 "problemMatcher": []
             },
+            // isort
+            {
+                "label": "isort: file",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
+                "problemMatcher": []
+            },
             //python
+            
             {
                 "label": "python: add frontmatter",
                 "type": "shell",

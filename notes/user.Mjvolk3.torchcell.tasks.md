@@ -6,6 +6,13 @@ updated: 1691682051095
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+## 2023.08.13
+- Might have an issue with pydantic
+  ```bash
+  ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+  lightly 1.4.15 requires pydantic<2,>=1.10.5, but you have pydantic 2.1.1 which is incompatible.
+  lightning 2.0.6 requires pydantic<2.1.0,>=1.7.4, but you have pydantic 2.1.1 which is incompatible.
+```
 
 ## 2023.08.10
 

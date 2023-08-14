@@ -18,7 +18,8 @@ from pydantic import (
     ConfigDict,
     Field,
     ValidationError,
-    validator,
+    field_validator,
+    model_validator,
 )
 from sympy import sequence
 
@@ -34,10 +35,13 @@ log.setLevel(logging.INFO)
 # Classes holding data
 class DnaSelectionResult(BaseModel):
     id: str
+    id: str
     chromosome: int
+    strand: str
     strand: str
     start: int
     end: int
+    seq: str
     seq: str
 
     def __len__(self) -> int:
@@ -53,32 +57,61 @@ class DnaSelectionResult(BaseModel):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
 
-    @validator("start", pre=True, always=True)
-    def start_geq_end(cls, v, values):
-        if 'end' in values and v >= values['end']:
+    @model_validator(mode="after")
+    @classmethod
+    def start_geq_end(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
+        if model.start >= model.end:
             raise ValueError("Start must be less than end")
-        return v
+        return model
 
-    @validator("strand", pre=True, always=True)
-    def check_strand(cls, v):
+    @field_validator("strand")
+    @classmethod
+    def check_strand(cls, v: str) -> str:
         if v not in ["+", "-"]:
             raise ValueError("Strand must be either '+' or '-'")
         return v
 
-    @validator("chromosome", "start", "end", pre=True, always=True)
-    def check_positive(cls, v):
+    @field_validator("chromosome")
+    @classmethod
+    def check_chromosome(cls, v: int) -> int:
         if v < 0:
-            raise ValueError(f"{v} must be positive")
+            raise ValueError("Chromosome must be positive")
         return v
 
-    @validator("seq", pre=True, always=True)
-    def check_seq_len(cls, v):
-        sequence_length = len(v)
+    @field_validator("start")
+    @classmethod
+    def check_start(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("Start must be positive")
+        return v
+
+    @field_validator("end")
+    @classmethod
+    def check_end(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("End must be positive")
+        return v
+
+    @model_validator(mode="after")  # type : ignore
+    @classmethod
+    def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
+        sequence_length = len(model.seq)
         if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
             raise ValueError(
                 f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
             )
-        return v
+        return model
+
+    @model_validator(mode="after")  # type : ignore
+    @classmethod
+    def check_seq_len(cls, model: "DnaSelectionResult") -> "DnaSelectionResult":
+        sequence_length = len(model.seq)
+        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
+            raise ValueError(
+                f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
+            )
+        return model
+
 
 class DnaWindowResult(DnaSelectionResult):
     start_window: int
@@ -88,11 +121,19 @@ class DnaWindowResult(DnaSelectionResult):
         # Use f-string to create a formatted string
         return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
 
-    @validator("start_window", "end_window", pre=True, always=True)
-    def check_window(cls, v):
-        if v < 0:
-            raise ValueError(f"{v} must be positive")
-        return v  
+    def __repr__(self) -> str:
+        # Use f-string to create a formatted string
+        return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
+
+    @model_validator(mode="after")
+    @classmethod
+    def check_window(cls, model: "DnaWindowResult") -> "DnaWindowResult":
+        if model.start_window < 0:
+            raise ValueError("Start window must be positive")
+        if model.end_window < 0:
+            raise ValueError("End window must be positive")
+        return model
+
 
 ###########
 # Abstract Base Class for structure
@@ -147,47 +188,47 @@ class Genome(ABC):
         self.nc_to_chr: dict = None
         self.chr_to_length: dict = None
 
-    @property
-    def gene_set(self) -> Set[str]:
-        if self._gene_set is None:
-            self._gene_set = self.compute_gene_set()
-        return self._gene_set
+    # @property
+    # def gene_set(self) -> Set[str]:
+    #     if self._gene_set is None:
+    #         self._gene_set = self.compute_gene_set()
+    #     return self._gene_set
 
-    @gene_set.setter
-    def gene_set(self, value: Set[str]):
-        self._gene_set = value
+    # @gene_set.setter
+    # def gene_set(self, value: Set[str]):
+    #     self._gene_set = value
 
-    @abstractmethod
-    def compute_gene_set(self) -> Set[str]:
-        pass  # Abstract methods don't have a body
+    # @abstractmethod
+    # def compute_gene_set(self) -> Set[str]:
+    #     pass  # Abstract methods don't have a body
 
-    @abstractmethod
-    def get_seq(self, chr: int | str, start: int, end: int, strand: str) -> DnaSelectionResult:
-        pass
+    # @abstractmethod
+    # def get_seq(self, chr: int | str, start: int, end: int, strand: str) -> DnaSelectionResult:
+    #     pass
 
-    @abstractmethod
-    def select_feature_window(
-        self, feature: str, window_size: int, is_max_size: bool = True
-    ) -> DnaWindowResult:
-        pass
+    # @abstractmethod
+    # def select_feature_window(
+    #     self, feature: str, window_size: int, is_max_size: bool = True
+    # ) -> DnaWindowResult:
+    #     pass
 
-    @property
-    @abstractmethod
-    def gene_attribute_table(self) -> pd.DataFrame:
-        pass
+    # @abstractmethod
+    # @property
+    # def gene_attribute_table(self) -> pd.DataFrame:
+    #     pass
 
-    @property
-    @abstractmethod
-    def feature_types(self) -> list[str]:
-        pass
+    # @abstractmethod
+    # @property
+    # def feature_types(self) -> list[str]:
+    #     pass
 
-    @abstractmethod
-    def __getitem__(self, item: str) -> Gene | None:
-        pass
+    # @abstractmethod
+    # def __getitem__(self, item: str) -> Gene | None:
+    #     pass
 
-    # Not sure if it makes more sense to have the number of genes be the length or the sum bp over all chromosomes.
-    def __len__(self) -> int:
-        return len(self.gene_set)
+    # # Not sure if it makes more sense to have the number of genes be the length or the sum bp over all chromosomes.
+    # def __len__(self) -> int:
+    #     return len(self.gene_set)
 
 
 ############

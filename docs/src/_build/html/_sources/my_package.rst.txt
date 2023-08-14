@@ -1,5 +1,0 @@
-my_package.first_module module
-==============================
-
-.. automodule:: torchcell.sgd
-   :members:

@@ -7,7 +7,7 @@ import requests
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from torchcell.models.llm import NucleotideModel, pretrained_LLM
+from torchcell.models.llm import NucleotideModel
 
 
 class FungalUtrTransformer(NucleotideModel):

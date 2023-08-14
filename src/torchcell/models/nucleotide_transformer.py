@@ -4,7 +4,7 @@ import os
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from torchcell.models.llm import NucleotideModel, pretrained_LLM
+from torchcell.models.llm import NucleotideModel
 
 MODEL_NAME = "InstaDeepAI/nucleotide-transformer-2.5b-multi-species"
 

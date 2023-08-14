@@ -1,5 +1,6 @@
 # DNA_LLM
-DNA_LLM_MAX_TOKEN_SIZE = 60000  # 60kb
+# TODO since all llms are different this will need to change.
+DNA_LLM_MAX_TOKEN_SIZE = 6000  # 6kb
 
 
 if __name__ == "__main__":

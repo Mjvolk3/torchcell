@@ -317,7 +317,6 @@
     "launch": {
         "version": "0.2.0",
         "configurations": [
-
             {
                 "name": "Python: Workspace Folder",
                 "type": "python",
@@ -337,8 +336,14 @@
                 "justMyCode": false,
                 "cwd": "${workspaceFolder:torchgeo}",
                 "subProcess": true,
-                "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python",
+                "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python"
             },
+            {
+                "type": "chrome",
+                "name": "http://127.0.0.1:3000/docs/build/html/index.html",
+                "request": "launch",
+                "url": "http://127.0.0.1:3000/docs/build/html/index.html"
+            }
         ]
     },
 }

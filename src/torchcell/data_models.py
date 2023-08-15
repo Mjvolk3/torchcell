@@ -8,13 +8,27 @@ from typing import Any, List, Optional
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from pydantic import BaseModel, ConfigDict, validator
-
+from pydantic import BaseModel, ConfigDict, Extra
 
 class BaseModelStrict(BaseModel):
-    # I am reusing in the library so it could be backed out as a more primitive class type. [[src/torchcell/ncbi/sequence.py]]
-    model_config = ConfigDict(frozen=True, extra="forbid")
-
+    class Config:
+        extra = Extra.forbid
+        frozen = True
 
 if __name__ == "__main__":
-    pass
+    class Model(BaseModelStrict):
+        a: str
+
+    try:
+        # This will raise an error because of the extra field 'b'
+        model = Model(a="a", b="b")
+    except Exception as e:
+        print(f"Error: {e}")
+
+    try:
+        # Create a valid model instance
+        model = Model(a="a")
+        # Try to modify an attribute (this will raise an error because the model is frozen)
+        model.a = "new value"
+    except Exception as e:
+        print(f"Error: {e}")

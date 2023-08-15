@@ -28,7 +28,14 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+import pytorch_sphinx_theme
+html_theme = "pytorch_sphinx_theme"
+#TODO copied from torchgeo to include all `pytorch_spinix_theme` options
+html_theme_path = [pytorch_sphinx_theme.get_html_theme_path()]
+
+
+
+#
 html_static_path = ["_static"]
 
 import os

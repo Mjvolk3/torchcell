@@ -44,6 +44,7 @@ scikit-learn
 pronto
 nxontology
 goatools
+biopython
 
 # Workspace
 python-dotenv
@@ -52,11 +53,15 @@ python-dotenv
 black
 mypy
 isort
+flake8-black
 
 # docs
 sphinx
 sphinx_rtd_theme
 myst_parser
+pytorch_sphinx_theme
+nbsphinx
+
 
 # Install Issues - Not currently needed.
 # conda install -c conda-forge graphviz # conda installed and ...

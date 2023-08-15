@@ -6,13 +6,32 @@ updated: 1691682051095
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.08.15
+
+
+- [ ] Create an analogous sequence embedding dataset for the nucleotide transformer.
+- [ ] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.nucleotide_embedding]]
+- [ ] Test goings on the nucleotide transformer and the utr transformer.
+- [ ] Run the nucleotide transformer overnight.
+- [ ] DMFCostanzo takes too long to load, consider making it regular dataset, not `InMemory`.
+- [ ] Build a training loop for dmf
+- [ ] Add tiling window functions for nucleotide transformer
+- [ ] Add tiling window functions to nucleotide transformer datasets.
+
+## 2023.08.14
+
+- [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[src.torchcell.datasets.scerevisiae.fungal_utr_transformer]]
+- [x] Aggregate embedding datasets → `join_datasets`[[src.torchcell.datasets.scerevisiae.fungal_utr_transformer]]
+
+
 ## 2023.08.13
 - Might have an issue with pydantic
   ```bash
   ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
   lightly 1.4.15 requires pydantic<2,>=1.10.5, but you have pydantic 2.1.1 which is incompatible.
   lightning 2.0.6 requires pydantic<2.1.0,>=1.7.4, but you have pydantic 2.1.1 which is incompatible.
-```
+  ```
 
 ## 2023.08.10
 

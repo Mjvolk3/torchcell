@@ -324,7 +324,7 @@
                 "program": "${file}",
                 "console": "integratedTerminal",
                 "justMyCode": false,
-                "cwd": "${workspaceFolder:TorchCell}",
+                "cwd": "${workspaceFolder:torchcell}",
                 "subProcess": true
             },
             {

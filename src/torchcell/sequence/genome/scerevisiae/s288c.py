@@ -326,8 +326,10 @@ class SCerevisiaeGenome(Genome):
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         # not yet sure how we will deal with duplicates. There shouldn't be any considering the systematic naming scheme.
         # TODO add test for duplicates.
-        assert len(genes) == len(set(genes)), "Duplicate genes found"
-        return genes
+        assert len(genes) == len(
+            set(genes)
+        ), "Duplicate genes found... havne't decided how to deal with this yet."
+        return set(genes)
 
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
         # For now we only support the systematic names

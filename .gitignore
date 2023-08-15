@@ -7,8 +7,8 @@ node_modules
 __pycache__
 
 # NCBI cmdlinetools
-datasets
-dataformat
+datasets.exe
+dataformat.exe
 
 # Pretrained Models
 src/torchcell/models/pretrained_LLM/*

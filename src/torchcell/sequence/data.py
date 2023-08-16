@@ -96,7 +96,7 @@ class DnaWindowResult(DnaSelectionResult):
 
 ###########
 # Abstract Base Class for structure
-
+p
 
 ##########
 # Class holding gene

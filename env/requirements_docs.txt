@@ -1,0 +1,5 @@
+sphinx
+sphinx_rtd_theme
+myst_parser
+pytorch_sphinx_theme
+nbsphinx

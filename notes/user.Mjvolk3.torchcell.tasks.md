@@ -21,8 +21,8 @@ created: 1690514887023m
 
 ## 2023.08.14
 
-- [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[src.torchcell.datasets.scerevisiae.fungal_utr_transformer]]
-- [x] Aggregate embedding datasets → `join_datasets`[[src.torchcell.datasets.scerevisiae.fungal_utr_transformer]]
+- [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[src.torchcell.datasets.fungal_utr_transformer]]
+- [x] Aggregate embedding datasets → `join_datasets`[[src.torchcell.datasets.fungal_utr_transformer]]
 
 
 ## 2023.08.13

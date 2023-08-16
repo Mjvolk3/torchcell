@@ -55,7 +55,7 @@ class DnaSelectionResult(BaseModel):
 
     @validator("start", pre=True, always=True)
     def start_geq_end(cls, v, values):
-        if 'end' in values and v >= values['end']:
+        if "end" in values and v >= values["end"]:
             raise ValueError("Start must be less than end")
         return v
 
@@ -80,6 +80,7 @@ class DnaSelectionResult(BaseModel):
             )
         return v
 
+
 class DnaWindowResult(DnaSelectionResult):
     start_window: int
     end_window: int
@@ -92,11 +93,12 @@ class DnaWindowResult(DnaSelectionResult):
     def check_window(cls, v):
         if v < 0:
             raise ValueError(f"{v} must be positive")
-        return v  
+        return v
+
 
 ###########
 # Abstract Base Class for structure
-p
+
 
 ##########
 # Class holding gene
@@ -162,7 +164,9 @@ class Genome(ABC):
         pass  # Abstract methods don't have a body
 
     @abstractmethod
-    def get_seq(self, chr: int | str, start: int, end: int, strand: str) -> DnaSelectionResult:
+    def get_seq(
+        self, chr: int | str, start: int, end: int, strand: str
+    ) -> DnaSelectionResult:
         pass
 
     @abstractmethod

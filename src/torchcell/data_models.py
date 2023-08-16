@@ -10,12 +10,15 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from pydantic import BaseModel, ConfigDict, Extra
 
+
 class BaseModelStrict(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
 
+
 if __name__ == "__main__":
+
     class Model(BaseModelStrict):
         a: str
 

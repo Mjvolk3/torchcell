@@ -10,13 +10,14 @@ import pandas as pd
 import torch
 from attrs import define
 from sklearn import experimental
-from torch_geometric.data import (Data, InMemoryDataset, download_url,
-                                  extract_zip)
+from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
 from tqdm import tqdm
 
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.datasets.scerevisiae import (DMFCostanzo2016Dataset,
-                                            SMFCostanzo2016Dataset)
+from torchcell.datasets.scerevisiae import (
+    DMFCostanzo2016Dataset,
+    SMFCostanzo2016Dataset,
+)
 from torchcell.models import FungalUtrTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
 from torchcell.sequence import Genome
@@ -174,7 +175,7 @@ def main():
     #######################################
     # embedding_dataset = nt_dataset + ft_dataset # DNA, protein, etc.
     # experiment_datset = smf_dataset + dmf_dataset # These need to be joined by some ontology. but for now we can move on.
-    # 
+    #
 
 
 if __name__ == "__main__":

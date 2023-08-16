@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Format with Black
+black src/torchcell
+black tests/torchcell
+
+# Order imports with isort
+isort src/torchcell
+isort tests/torchcell
+
+# Add any changes made by Black and isort
+git add -u
+
+exit 0

@@ -174,6 +174,7 @@ def analyze_json(file_path, create_images=False, layout="spring"):
 
 def main():
     import os
+
     file_path = "data/sgd/genes/YPR201W.json"
     analyze_json(file_path, create_images=True, layout="tree")
 

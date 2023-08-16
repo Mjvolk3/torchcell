@@ -27,18 +27,11 @@ jobs:
         python -m pip install --upgrade pip
         if [ -f env/requirements_style.txt ]; then pip install -r env/requirements_style.txt; fi
         python -m pip install -e .
-        python -m pip install black isort
 
-    - name: Format with Black
+    - name: Check formatting with Black
       run: |
-        black src
+        black src --check
 
-    - name: Order code with isort
+    - name: Check import order with isort
       run: |
-        isort src
-
-    - name: Commit and push if changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git diff --exit-code || git commit -am "Automatically formatted with Black and isort" && git push
+        isort src --check-only

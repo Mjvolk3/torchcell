@@ -61,10 +61,9 @@
             "MD045": false,
             "MD050": false,
         },
-        // troubleshooting slow python saves
-        // "editor.codeActionsOnSave": {
-        //     "source.fixAll.markdownlint": true,
-        //  },
+        "editor.codeActionsOnSave": {
+            "source.fixAll.markdownlint": true,
+         },
         "git.autoRepositoryDetection": false,
         "liveServer.settings.multiRootWorkspaceName": "TorchCell",
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",

@@ -18,4 +18,3 @@ class SCerevisiaeS88C(GenomeDataset):
 
 if __name__ == "__main__":
     pass
-

@@ -4,10 +4,25 @@
 import pandas as pd
 
 # Specify column names
-column_names = ["seqid", "source", "type", "start", "end", "score", "strand", "phase", "attributes"]
+column_names = [
+    "seqid",
+    "source",
+    "type",
+    "start",
+    "end",
+    "score",
+    "strand",
+    "phase",
+    "attributes",
+]
 
 # Read the file
-gff_data = pd.read_csv("data/ncbi/s_cerevisiae/ncbi_dataset/data/GCF_000146045.2/genomic.gff", sep="\t", comment="#", names=column_names)
+gff_data = pd.read_csv(
+    "data/ncbi/s_cerevisiae/ncbi_dataset/data/GCF_000146045.2/genomic.gff",
+    sep="\t",
+    comment="#",
+    names=column_names,
+)
 
 # Display the first few rows of the dataframe
 print(gff_data.head())
@@ -35,11 +50,19 @@ import gffutils
 # specify the path to your .fna file
 path_to_gff = "data/ncbi/s_cerevisiae/ncbi_dataset/data/GCF_000146045.2/genomic.gff"
 
-db = gffutils.create_db(path_to_gff, dbfn='data.db', force=True, keep_order=True,
-                         merge_strategy='merge', sort_attribute_values=True)
+db = gffutils.create_db(
+    path_to_gff,
+    dbfn="data.db",
+    force=True,
+    keep_order=True,
+    merge_strategy="merge",
+    sort_attribute_values=True,
+)
 
 genes = []
-for gene_feature in db.features_of_type('gene'):
-    genes.append(gene_feature['Name'][0])  # adjust this depending on the actual structure of your .gff file
+for gene_feature in db.features_of_type("gene"):
+    genes.append(
+        gene_feature["Name"][0]
+    )  # adjust this depending on the actual structure of your .gff file
 
 ####

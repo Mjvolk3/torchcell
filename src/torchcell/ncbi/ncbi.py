@@ -6,12 +6,10 @@ url = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/genome/accession/GCF_000146
 
 params = {
     "include_annotation_type": "GENOME_FASTA,GENOME_GFF,RNA_FASTA,CDS_FASTA,PROT_FASTA,SEQUENCE_REPORT",
-    "filename": "GCF_000146045.2.zip"
+    "filename": "GCF_000146045.2.zip",
 }
 
-headers = {
-    "Accept": "application/zip"
-}
+headers = {"Accept": "application/zip"}
 
 response = requests.get(url, headers=headers, params=params, stream=True)
 
@@ -22,14 +20,14 @@ directory = "data/ncbi/s_cerevisiae/"
 os.makedirs(directory, exist_ok=True)
 
 # Now the file will be saved to the specified directory
-filename = directory + params['filename']
+filename = directory + params["filename"]
 
-with open(filename, 'wb') as d:
+with open(filename, "wb") as d:
     for chunk in response.iter_content(chunk_size=128):
         d.write(chunk)
 
 # Unzip the file in the same location
-with zipfile.ZipFile(filename, 'r') as zip_ref:
+with zipfile.ZipFile(filename, "r") as zip_ref:
     zip_ref.extractall(directory)
 
 # Delete the .zip file

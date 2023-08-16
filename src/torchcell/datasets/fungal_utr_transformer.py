@@ -127,4 +127,3 @@ if __name__ == "__main__":
     combined_dataset = datasets[0] + datasets[1] + datasets[2] + datasets[3]
     some_data = combined_dataset["YDR210W"]
     print(some_data)
-    

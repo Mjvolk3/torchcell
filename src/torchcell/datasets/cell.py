@@ -171,6 +171,10 @@ def main():
     print(cell_dataset)
     print(cell_dataset[0])
     print()
+    #######################################
+    # embedding_dataset = nt_dataset + ft_dataset # DNA, protein, etc.
+    # experiment_datset = smf_dataset + dmf_dataset # These need to be joined by some ontology. but for now we can move on.
+    # 
 
 
 if __name__ == "__main__":

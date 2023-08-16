@@ -47,9 +47,10 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         return []
 
     @property
-    @abstractmethod
     def processed_file_names(self) -> str:
-        pass
+        # if not self.transformer_model_name:
+        # return "dummy_data.pt"
+        return f"{self.transformer_model_name}.pt"
 
     def download(self):
         pass
@@ -92,21 +93,44 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         # Create a dictionary from the current dataset for efficient lookup
         current_data_dict = {data_item.id: data_item for data_item in self}
 
+        # Lists to store duplicate keys
+        duplicate_dna_windows_keys = []
+        duplicate_embeddings_keys = []
+
         # Combine the data from the other dataset
         for data_item in other:
             if data_item.id in current_data_dict:
-                # Merge the dna_windows dictionaries
-                current_data_dict[data_item.id].dna_windows.update(
-                    data_item.dna_windows
-                )
-                # Merge the embeddings dictionaries
-                for key, value in data_item.embeddings.items():
-                    if key in current_data_dict[data_item.id].embeddings:
-                        current_data_dict[data_item.id].embeddings[key] = value
+                # Check for duplicate keys in dna_windows
+                for key in data_item.dna_windows:
+                    if key in current_data_dict[data_item.id].dna_windows:
+                        duplicate_dna_windows_keys.append(key)
                     else:
-                        current_data_dict[data_item.id].embeddings[key] = value
+                        # Merge the dna_windows dictionaries
+                        current_data_dict[data_item.id].dna_windows[
+                            key
+                        ] = data_item.dna_windows[key]
+
+                # Check for duplicate keys in embeddings
+                for key in data_item.embeddings:
+                    if key in current_data_dict[data_item.id].embeddings:
+                        duplicate_embeddings_keys.append(key)
+                    else:
+                        # Merge the embeddings dictionaries
+                        current_data_dict[data_item.id].embeddings[
+                            key
+                        ] = data_item.embeddings[key]
             else:
                 combined_data_list.append(data_item)
+
+        # If there are duplicates, raise an error
+        if duplicate_dna_windows_keys:
+            raise ValueError(
+                f"Duplicate keys found in dna_windows: {', '.join(duplicate_dna_windows_keys)}"
+            )
+        if duplicate_embeddings_keys:
+            raise ValueError(
+                f"Duplicate keys found in embeddings: {', '.join(duplicate_embeddings_keys)}"
+            )
 
         # Add the modified data items from the current dataset to the combined list
         combined_data_list.extend(current_data_dict.values())

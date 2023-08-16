@@ -5,6 +5,7 @@
 
 import os
 from typing import Callable, Optional
+from regex import P
 
 import torch
 from torch_geometric.data import Data
@@ -19,10 +20,14 @@ os.makedirs("data/scerevisiae/fungal_utr_embed", exist_ok=True)
 
 class FungalUtrTransformerDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
-        "downstream_300": ("window_3utr", 300),
-        "species_downstream_300": ("window_3utr", 300),
-        "species_upstream_1000": ("window_5utr", 1000),
-        "upstream_1000": ("window_5utr", 1000),
+        "fut_window_3utr_300_undersize": ("window_3utr", 300, True),
+        "fut_species_window_3utr_300_undersize": ("window_3utr", 300, True),
+        "fut_species_window_5utr_1000_undersize": ("window_5utr", 1000, True),
+        "fut_window_5utr_1000_undersize": ("window_5utr", 1000, True),
+        "fut_window_3utr_300": ("window_3utr", 300, False),
+        "fut_species_window_3utr_300": ("window_3utr", 300, False),
+        "fut_species_window_5utr_1000": ("window_5utr", 1000, False),
+        "fut_window_5utr_1000": ("window_5utr", 1000, False),
     }
 
     def __init__(
@@ -30,50 +35,51 @@ class FungalUtrTransformerDataset(BaseEmbeddingDataset):
         root: str,
         genome: SCerevisiaeGenome,
         transformer_model_name: Optional[str] = None,
-        allow_undersize: bool = True,
         transform: Optional[Callable] = None,
         pre_transform: Optional[Callable] = None,
     ):
         super().__init__(root, transform, pre_transform)
-        print(
-            f"Initializing with transformer_model_name: {transformer_model_name}"
-        )  # TODO  Added
         self.genome = genome
-        self.transformer_model_name = transformer_model_name  # Not None
-        self.allow_undersize = allow_undersize
-        # Only initialize the transformer if a model name is provided
-        if transformer_model_name:
-            self.transformer = FungalUtrTransformer(transformer_model_name)
-        else:
-            self.transformer = None
+        self.transformer_model_name = transformer_model_name
+
         # Conditionally load the data
-        if self.transformer_model_name is not None:
+        if self.transformer_model_name:
             if not os.path.exists(self.processed_paths[0]):
+                # Initialize the language model
+                self.transformer = self.initialize_transformer()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
 
     def initialize_transformer(self):
+        """Initialize the transformer using the valid model name."""
         if self.transformer_model_name:
-            return FungalUtrTransformer(self.transformer_model_name)
+            split_name = self.transformer_model_name.split("_")
+            if "3utr" in split_name and "species" not in split_name:
+                model_name = "downstream_300"
+            elif "3utr" in split_name and "species" in split_name:
+                model_name = "species_downstream_300"
+            elif "5utr" in split_name and "species" not in split_name:
+                model_name = "upstream_1000"
+            elif "5utr" in split_name and "species" in split_name:
+                model_name = "species_upstream_1000"
+            assert (
+                model_name in FungalUtrTransformer.VALID_MODEL_NAMES
+            ), f"{model_name} not in valid model names."
+            return FungalUtrTransformer(model_name)
         return None
 
-    @property
-    def processed_file_names(self) -> str:
-        if self.transformer_model_name is None:
-            return "dummy_data.pt"  # Return a dummy file name
-        window_type, window_size = self.MODEL_TO_WINDOW[self.transformer_model_name]
-        return f"data_{self.transformer_model_name}_{window_type}_{window_size}_undersize{self.allow_undersize}.pt"
-
     def process(self):
-        if self.transformer_model_name is None:
+        if not self.transformer_model_name:
             return
 
         data_list = []
-        window_method, window_size = self.MODEL_TO_WINDOW[self.transformer_model_name]
+        window_method, window_size, allow_undersize = self.MODEL_TO_WINDOW[
+            self.transformer_model_name
+        ]
         for gene_id in tqdm(self.genome.gene_set):
             sequence = self.genome[gene_id]
             dna_selection = getattr(sequence, window_method)(
-                window_size, allow_undersize=self.allow_undersize
+                window_size, allow_undersize=allow_undersize
             )
             embeddings = self.transformer.embed(
                 [dna_selection.seq],
@@ -97,10 +103,14 @@ if __name__ == "__main__":
     genome = SCerevisiaeGenome()
 
     model_names = [
-        "downstream_300",
-        "species_downstream_300",
-        "species_upstream_1000",
-        "upstream_1000",
+        "fut_window_3utr_300_undersize",
+        "fut_species_window_3utr_300_undersize",
+        "fut_species_window_5utr_1000_undersize",
+        "fut_window_5utr_1000_undersize",
+        # "fut_window_3utr_300",
+        # "fut_species_window_3utr_300",
+        # "fut_species_window_5utr_1000",
+        # "fut_window_5utr_1000",
     ]
 
     datasets = []
@@ -117,8 +127,4 @@ if __name__ == "__main__":
     combined_dataset = datasets[0] + datasets[1] + datasets[2] + datasets[3]
     some_data = combined_dataset["YDR210W"]
     print(some_data)
-    dataset = FungalUtrTransformerDataset(
-        root="data/scerevisiae/fungal_utr_embed",
-        genome=genome,
-        transformer_model_name="downstream_window_3utr_300",
-    )
+    

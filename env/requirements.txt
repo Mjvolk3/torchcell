@@ -1,12 +1,4 @@
-sphinx
-myst-parser
-sphinx_rtd_theme
-pytest
-black
-bumpver
 pip-tools
-pytest
-coverage
 pydantic
 numpy
 pandas
@@ -26,7 +18,6 @@ dask
 intermine
 pandas-stubs
 types-tqdm
-flake8
 types-requests
 aiohttp
 networkx
@@ -49,20 +40,5 @@ biopython
 # Workspace
 python-dotenv
 
-# Not required
-black
-mypy
-isort
-flake8-black
-
-# docs
-sphinx
-sphinx_rtd_theme
-myst_parser
-pytorch_sphinx_theme
-nbsphinx
-
-
-# Install Issues - Not currently needed.
-# conda install -c conda-forge graphviz # conda installed and ...
-# conda install -c conda-forge pygraphviz # conda installed and ...
+# package
+bumpver

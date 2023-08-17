@@ -2,18 +2,32 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1691682051095
+updated: 1692275736633
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.08.17
+
+- [ ] Save `DmfCosanzoDataset` small.
+- [ ] Create a lightning data module for `DmfCosanzoDataset`, using small.
+- [ ] Build trainer for fitness prediction.
+- [ ] Add wandb log.
+- [ ] Add fitness prediction plot to wandb log. Just plot on validation.
+- [ ] Transfer compute to `Delta`.
+
+## 2023.08.16
+
+- [x] Update CI → Separated out formatting, tests, and mypy. Could separate out more.
+- [x] `DmfCostanzoDataset` takes too long to load, consider making it regular dataset, not `InMemory`. → Tried making a [[DmfCostanzoDataset Out Memory Dataset|src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzodataset-out-memory-dataset]] and this takes forever to save all files.
+- [x] Recover repo after accidentally deleting instead of deleting cache → missed most recent notes.
+
 ## 2023.08.15
 
-
-- [ ] Create an analogous sequence embedding dataset for the nucleotide transformer.
-- [ ] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.nucleotide_embedding]]
-- [ ] Test goings on the nucleotide transformer and the utr transformer.
-- [ ] Run the nucleotide transformer overnight.
+- [x] Create an analogous sequence embedding dataset for the nucleotide transformer.
+- [x] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.nucleotide_embedding]]
+- [x] Test goings on the nucleotide transformer and the utr transformer. → not yet tested properly.
+- [x] Run the nucleotide transformer overnight. → Still took half of the next day on local. should consider batching on GPU.
 - [ ] DMFCostanzo takes too long to load, consider making it regular dataset, not `InMemory`.
 - [ ] Build a training loop for dmf
 - [ ] Add tiling window functions for nucleotide transformer
@@ -24,9 +38,10 @@ created: 1690514887023m
 - [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[src.torchcell.datasets.fungal_utr_transformer]]
 - [x] Aggregate embedding datasets → `join_datasets`[[src.torchcell.datasets.fungal_utr_transformer]]
 
-
 ## 2023.08.13
+
 - Might have an issue with pydantic
+
   ```bash
   ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
   lightly 1.4.15 requires pydantic<2,>=1.10.5, but you have pydantic 2.1.1 which is incompatible.

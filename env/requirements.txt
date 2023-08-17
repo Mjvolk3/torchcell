@@ -1,44 +1,58 @@
-pip-tools
-pydantic
+# env/requirements.txt
+# scientific computing stack
 numpy
 pandas
+openpyxl # with pandas
+xlrd # with pandas
 matplotlib
+adjustText # with matplotlib
 plotly
 seaborn
 scipy
-scikit-learn
-torch
-torchvision
-torchaudio
 networkx
-torch_geometric
-ptpython
-goatools
 dask
-intermine
-pandas-stubs
-types-tqdm
-types-requests
-aiohttp
-networkx
-matplotlib
 pydot # Don't think I am using this... outdate
 # pygraphviz # Don't think I am using this
 graphviz # Don't think I am using this.
-adjustText
-gffutils
-attrs
-xlrd
-openpyxl
-transformers # hugging face
+
+# torch stack
+torch
+torchvision
+torchaudio
+torch_geometric
+torchmetrics
+
+# ML stack
 scikit-learn
+transformers # hugging face
+
+# Bio stack
+biopython
+goatools
+intermine
+gffutils
+
+# stubs and types
+pandas-stubs
+types-tqdm
+types-requests
+
+# data stack
+attrs
+pydantic
+
+# web stack
+aiohttp
+
+# ontology stack
 pronto
 nxontology
-goatools
-biopython
 
 # Workspace
 python-dotenv
 
-# package
+# dev-tools
 bumpver
+pre-commit
+ptpython
+pip-tools

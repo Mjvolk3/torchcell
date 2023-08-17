@@ -2,11 +2,11 @@
 id: hg6o7t1z649hm6v57ywecwp
 title: Costanzo2016
 desc: ''
-updated: 1692239837601
+updated: 1692275303206
 created: 1692239635047
 ---
 
-## DmfCostanzoDataset
+## DmfCostanzoDataset Out Memory Dataset
 
 - As an alternative I tried to use the out of memory `Dataset` since the `InMemoryDataset` takes a while to load. Using this method takes a ton of time to write the data but could possible pay off during the training, especially since there will be other large objects in memory.
 

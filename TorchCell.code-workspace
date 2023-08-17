@@ -9,10 +9,6 @@
             "path": "notes/assets"
         },
         {
-            "name": "data",
-            "path": "data"
-        },
-        {
             "name": "______________",
             "path": "../______________"
         },
@@ -32,6 +28,9 @@
             "name": "intermine-ws-python",
             "path": "../intermine-ws-python"
         },
+        {
+            "path": "../torchcell_deprecated/data"
+        }
     ],
     "settings": {
         "dendron.rootDir": ".",
@@ -72,7 +71,8 @@
         "mypy.targets": [
             ".",
             "${workspaceFolder}/src/*"
-        ]
+        ],
+        "git.ignoreLimitWarning": true
     },
     "extensions": {
         "recommendations": [
@@ -183,7 +183,6 @@
                 "problemMatcher": []
             },
             //python
-            
             {
                 "label": "python: add frontmatter",
                 "type": "shell",

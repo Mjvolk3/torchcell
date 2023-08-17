@@ -1,4 +1,3 @@
-# src/torchcell/models/nucledotide_transformer.py
 import os
 
 import torch

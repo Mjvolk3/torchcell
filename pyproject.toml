@@ -30,6 +30,12 @@ Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 [project.scripts]
 torchcell = "torchcell.__main__:main"
 
+[tool.isort]
+profile = "black"
+known_first_party = ["docs", "tests", "torchcell", "train"]
+skip_gitignore = true
+color_output = true
+
 [tool.black]
 target-version = ["py310", "py311"]
 color = true

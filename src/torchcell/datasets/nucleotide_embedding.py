@@ -3,12 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/nucleotide_embedding.py
 # Test file: tests/torchcell/datasets/test_nucleotide_embedding.py
 
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import Optional
+
 import torch
 from torch_geometric.data import Data, InMemoryDataset
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from typing import Optional, Callable
 from tqdm import tqdm
-from abc import ABC, abstractmethod
+
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class BaseEmbeddingDataset(InMemoryDataset, ABC):
@@ -16,9 +19,9 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transformer_model_name: Optional[str] = None,
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
+        transformer_model_name: str | None = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
     ):
         if (
             transformer_model_name
@@ -125,11 +128,13 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         # If there are duplicates, raise an error
         if duplicate_dna_windows_keys:
             raise ValueError(
-                f"Duplicate keys found in dna_windows: {', '.join(duplicate_dna_windows_keys)}"
+                "Duplicate keys found in dna_windows:"
+                f"{', '.join(duplicate_dna_windows_keys)}"
             )
         if duplicate_embeddings_keys:
             raise ValueError(
-                f"Duplicate keys found in embeddings: {', '.join(duplicate_embeddings_keys)}"
+                "Duplicate keys found in embeddings:"
+                f"{', '.join(duplicate_embeddings_keys)}"
             )
 
         # Add the modified data items from the current dataset to the combined list

@@ -1,4 +1,5 @@
 import os
+import os.path as osp
 import sys
 from dotenv import load_dotenv
 load_dotenv()
@@ -10,14 +11,15 @@ GIT_REPO_URL = os.environ.get("GIT_REPO_URL")
 
 def add_frontmatter(file_path):
     # Extract the relative path
-    relative_path = os.path.relpath(
+    print(f"file path:{file_path}")
+    relative_path = osp.relpath(
         file_path, start=WORKSPACE_DIR
     )
-
+    print(f"relative path:{relative_path}")
     # Generate the test file path
     test_file_path = relative_path.replace(PYTHON_PKG_REL_PATH, PYTHON_PKG_TEST_REL_PATH)
-    test_file_path = os.path.join(
-        os.path.dirname(test_file_path), "test_" + os.path.basename(test_file_path)
+    test_file_path = osp.join(
+        osp.dirname(test_file_path), "test_" + osp.basename(test_file_path)
     )
 
     # Generate the frontmatter lines

@@ -4,6 +4,9 @@
             "name": "torchcell",
             "path": "."
         },
+        {   "name": "data",
+            "path": "../torchcell/data"
+        },
         {
             "name": "assets",
             "path": "notes/assets"
@@ -28,9 +31,6 @@
             "name": "intermine-ws-python",
             "path": "../intermine-ws-python"
         },
-        {
-            "path": "../torchcell_deprecated/data"
-        }
     ],
     "settings": {
         "dendron.rootDir": ".",
@@ -60,9 +60,11 @@
             "MD045": false,
             "MD050": false,
         },
-        "editor.codeActionsOnSave": {
-            "source.fixAll.markdownlint": true,
-         },
+        "[markdown]": {
+            "editor.codeActionsOnSave": {
+                "source.fixAll.markdownlint": true
+            }
+        },
         "git.autoRepositoryDetection": false,
         "liveServer.settings.multiRootWorkspaceName": "TorchCell",
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",

@@ -6,7 +6,7 @@
 # TODO check how front matter changes when outside src.
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
-
+import os.path as osp
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
 from torchcell.datasets.scerevisiae import (
@@ -18,6 +18,11 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import RegressionTask
 from torchcell.datasets import CellDataset
 from pytorch_lightning.callbacks import ModelCheckpoint
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
 
 
 # Initialize the WandbLogger
@@ -27,24 +32,24 @@ wandb_logger = WandbLogger(project="torchcell", log_model=True)
 genome = SCerevisiaeGenome()
 # nucleotide transformer
 # nt_dataset = NucleotideTransformerDataset(
-#     root="data/scerevisiae/nucleotide_transformer_embed",
+#     root=osp.join(DATA_ROOT,"data/scerevisiae/"),nucleotide_transformer_embed",
 #     genome=genome,
 #     transformer_model_name="nt_window_5979",
 # )
 fut3_dataset = FungalUtrTransformerDataset(
-    root="data/scerevisiae/fungal_utr_embed",
+    root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
     genome=genome,
     transformer_model_name="fut_species_window_3utr_300_undersize",
 )
 # fut5_dataset = FungalUtrTransformerDataset(
-#     root="data/scerevisiae/fungal_utr_embed",
+#     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
 #     genome=genome,
 #     transformer_model_name="fut_species_window_5utr_1000_undersize",
 # )
 # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
 
 cell_dataset = CellDataset(
-    root="data/scerevisiae/cell",
+    root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),
     genome=SCerevisiaeGenome(),
     seq_embeddings=fut3_dataset,
     experiments=DMFCostanzo2016SmallDataset(),
@@ -59,7 +64,9 @@ model = RegressionTask(model=DeepSet(input_dim, instance_layers, set_layers))
 
 checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
 # Initialize the Trainer with the WandbLogger
-trainer = pl.Trainer(logger=wandb_logger, max_epochs=10, callbacks=[checkpoint_callback])
+trainer = pl.Trainer(
+    logger=wandb_logger, max_epochs=10, callbacks=[checkpoint_callback]
+)
 
 # Start the training
 trainer.fit(model, data_module)

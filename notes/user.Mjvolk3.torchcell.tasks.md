@@ -2,17 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1692275736633
+updated: 1692324879941
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.08.17
 
-- [ ] Save `DmfCosanzoDataset` small.
-- [ ] Create a lightning data module for `DmfCosanzoDataset`, using small.
-- [ ] Build trainer for fitness prediction.
-- [ ] Add wandb log.
+- [x] Save `DmfCosanzoDataset` small. → 1000 samples
+- [x] Fix pre-commit [[.pre-commit-config.yaml]] → Needed to add configuration to [[pyproject.toml]] and deleted `mypy.ini`, since the mypy config can be directly recognized from the `toml`. Needed to make sure that `isort` and `black` were compatible. For now ignoring `flake8` and `mypy` settings.
+- [x] Look at `torchgeo` pre-commit → taking a lot of tips from this.o
+- [x] In `cell.py` [[Cell|src.torchcell.datasets.cell]] construct base sequence graph. → It is a set but we add a dummy edge index to make it look more like the standard `pyg` graph. We know there are no edges since it is size `(2,0)`.
+- [x] In `cell.py` [[Cell|src.torchcell.datasets.cell]] allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
+- [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|src.torchcell.datamodules.cell]]
+- [x] Build trainer for fitness prediction. → [[Regression|src.torchcell.trainers.regression]]
+- [x] Add wandb log. → [[Dmf_fitness|experiments.dmf_fitness]]
 - [ ] Add fitness prediction plot to wandb log. Just plot on validation.
 - [ ] Transfer compute to `Delta`.
 

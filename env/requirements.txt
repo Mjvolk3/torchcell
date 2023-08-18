@@ -4,23 +4,28 @@ numpy
 pandas
 openpyxl # with pandas
 xlrd # with pandas
-matplotlib
-adjustText # with matplotlib
-plotly
-seaborn
 scipy
 networkx
 dask
-pydot # Don't think I am using this... outdate
-# pygraphviz # Don't think I am using this
-graphviz # Don't think I am using this.
 
 # torch stack
 torch
 torchvision
 torchaudio
 torch_geometric
+torch-scatter
 torchmetrics
+
+# visualization stack and logging
+wandb
+matplotlib
+adjustText # with matplotlib
+pydot # Don't think I am using this... outdate
+# pygraphviz # Don't think I am using this
+graphviz # Don't think I am using this.
+plotly
+seaborn
+
 
 # ML stack
 scikit-learn

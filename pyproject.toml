@@ -39,7 +39,7 @@ color_output = true
 [tool.black]
 target-version = ["py310", "py311"]
 color = true
-skip_magic_trailing_comma = true
+skip_magic_trailing_comma = true # true in torchgeo
 
 [tool.mypy]
 python_version = "3.11"

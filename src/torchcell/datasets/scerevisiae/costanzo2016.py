@@ -273,7 +273,7 @@ class DMFCostanzo2016Dataset(InMemoryDataset):
         for data in self:
             for genotype in data.genotype:
                 gene_ids.add(genotype["id"])
-            return gene_ids
+        return gene_ids
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
@@ -398,7 +398,7 @@ class DMFCostanzo2016SmallDataset(InMemoryDataset):
         for data in self:
             for genotype in data.genotype:
                 gene_ids.add(genotype["id"])
-            return gene_ids
+        return gene_ids
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"

@@ -16,6 +16,7 @@ src/torchcell/models/pretrained_LLM/*
 # Data
 data/
 wandb/
+models/checkpoints/
 
 # Dendron
 .dendron.port

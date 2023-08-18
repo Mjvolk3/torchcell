@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1692324879941
+updated: 1692325885370
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -18,6 +18,8 @@ created: 1690514887023m
 - [x] Build trainer for fitness prediction. → [[Regression|src.torchcell.trainers.regression]]
 - [x] Add wandb log. → [[Dmf_fitness|experiments.dmf_fitness]]
 - [ ] Add fitness prediction plot to wandb log. Just plot on validation.
+- [ ] Setup `.env` for local and remote
+- [ ] Setup remote workspace
 - [ ] Transfer compute to `Delta`.
 
 ## 2023.08.16

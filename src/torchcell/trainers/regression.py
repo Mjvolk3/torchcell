@@ -2,7 +2,6 @@
 # [[src.torchcell.trainers.regression]]
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression
 # Test file: src/torchcell/trainers/test_regression
-
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -13,6 +12,8 @@ from torchmetrics import (
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
+
+import wandb
 
 
 class RegressionTask(pl.LightningModule):
@@ -91,10 +92,44 @@ class RegressionTask(pl.LightningModule):
         # Logging the correlation coefficients
         self.log("val_pearson", self.pearson_corr(y_hat, y), batch_size=batch_size)
         self.log("val_spearman", self.spearman_corr(y_hat, y), batch_size=batch_size)
+        self.true_values.append(y.detach())
+        self.predictions.append(y_hat.detach())
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute())
         self.val_metrics.reset()
+
+        # Skip plotting during sanity check
+        if self.trainer.sanity_checking:
+            return
+
+        # Convert lists to tensors
+        true_values = torch.cat(self.true_values, dim=0)
+        predictions = torch.cat(self.predictions, dim=0)
+
+        # Define bins
+        bins = [0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
+
+        # Bin predictions and collect corresponding true values
+        binned_true_values = []
+        bin_labels = []
+        for i in range(len(bins) - 1):
+            mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
+            binned_values = true_values[mask].cpu().numpy()
+            binned_true_values.extend(binned_values)
+            bin_labels.extend([f"{bins[i]}-{bins[i+1]}"] * len(binned_values))
+
+        # Create a wandb table and add the binned values
+        table = wandb.Table(columns=["Prediction Bin", "True Values"])
+        for label, value in zip(bin_labels, binned_true_values):
+            table.add_data(label, value)
+
+        # Log the table
+        wandb.log({"binned_values_table": table})
+
+        # Clear the stored values for the next epoch
+        self.true_values = []
+        self.predictions = []
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector

@@ -15,6 +15,7 @@ torchaudio
 torch_geometric
 torch-scatter
 torchmetrics
+pytorch-lightning
 
 # visualization stack and logging
 wandb

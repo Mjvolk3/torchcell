@@ -49,11 +49,14 @@ fut3_dataset = FungalUtrTransformerDataset(
 # )
 # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
 
+experiments = DMFCostanzo2016SmallDataset(
+    root=osp.join(DATA_ROOT, "scerevisiae/costanzo2016")
+)
 cell_dataset = CellDataset(
     root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),
     genome=genome,
     seq_embeddings=fut3_dataset,
-    experiments=DMFCostanzo2016SmallDataset(),
+    experiments=experiments,
 )
 
 # Instantiate your data module and model

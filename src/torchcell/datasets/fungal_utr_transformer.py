@@ -5,7 +5,6 @@
 
 import os
 from typing import Callable, Optional
-from regex import P
 
 import torch
 from torch_geometric.data import Data

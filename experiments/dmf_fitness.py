@@ -27,7 +27,7 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 
 # Initialize the WandbLogger
-wandb_logger = WandbLogger(project="torchcell", log_model=False)
+wandb_logger = WandbLogger(project="torchcell", log_model=True)
 # osp.join(DATA_ROOT,"data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa")
 # Build dataset
 genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
@@ -50,7 +50,7 @@ fut3_dataset = FungalUtrTransformerDataset(
 # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
 
 experiments = DMFCostanzo2016SmallDataset(
-    root=osp.join(DATA_ROOT, "scerevisiae/costanzo2016")
+    root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016")
 )
 cell_dataset = CellDataset(
     root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),

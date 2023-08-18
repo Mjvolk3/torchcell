@@ -16,7 +16,6 @@ import pandas as pd
 import torch
 from attrs import define
 from sklearn import experimental
-from sympy import sequence
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
 from torch_geometric.utils import subgraph

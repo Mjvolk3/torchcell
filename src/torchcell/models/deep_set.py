@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch_scatter import scatter_add
 
 
 class DeepSet(nn.Module):
@@ -8,8 +9,9 @@ class DeepSet(nn.Module):
         input_dim: int,
         instance_layers: list[int],
         set_layers: list[int],
+        output_activation: str = None,  # Default to no activation
     ):
-        super(DeepSet, self).__init__()
+        super().__init__()
 
         # Instance Layers
         instance_modules = []
@@ -31,13 +33,29 @@ class DeepSet(nn.Module):
         # Output layer
         self.output_layer = nn.Linear(in_features, 1)
 
-    def forward(self, x):
-        # x should be of shape (batch_size, num_instances, input_dim)
+        # Output activation
+        if output_activation == "relu":
+            self.output_activation = nn.ReLU()
+        elif output_activation == "softplus":
+            self.output_activation = nn.Softplus()
+        else:
+            self.output_activation = None  # No activation if not specified
+
+    def forward(self, x, batch):
+        # x should be of shape [num_nodes, input_dim]
+        # batch is the batch vector provided by PyG
         x_transformed = self.instance_layers(x)
-        x_summed = x_transformed.sum(dim=1)
+
+        # Sum over nodes belonging to the same graph using scatter_add
+        x_summed = scatter_add(x_transformed, batch, dim=0)
+
         x_processed = self.set_layers(x_summed)
         out = self.output_layer(x_processed)
-        return out
+
+        if self.output_activation:
+            out = self.output_activation(out)
+
+        return out.squeeze(-1)
 
 
 def main():
@@ -45,7 +63,9 @@ def main():
     input_dim = 10
     instance_layers = [64, 32]
     set_layers = [16, 8]
-    model = DeepSet(input_dim, instance_layers, set_layers)
+    model = DeepSet(
+        input_dim, instance_layers, set_layers
+    )  # No output activation specified
     x = torch.rand(
         5, 20, input_dim
     )  # 5 sets, each with 20 instances, and 10 features per instance

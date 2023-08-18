@@ -15,6 +15,7 @@ src/torchcell/models/pretrained_LLM/*
 
 # Data
 data/
+wandb/
 
 # Dendron
 .dendron.port
@@ -26,3 +27,4 @@ ncbi_cli/*
 
 # env
 .env
+

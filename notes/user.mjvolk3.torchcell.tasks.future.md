@@ -2,14 +2,15 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1692275477873
+updated: 1692311812391
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Workspace utils from note open related python file
+- [ ] Consider `BaseEmbeddingDataset` returning a graph instead.
 - [ ] Train DCell model
 - [ ] Separate out CI more, specifically style
-- [ ] Look at `torchgeo` pre-commit
 
 ## Far Future
 

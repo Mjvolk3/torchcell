@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1692311812391
+updated: 1692328826405
 created: 1675887826601
 ---
 ## Future
@@ -11,6 +11,7 @@ created: 1675887826601
 - [ ] Consider `BaseEmbeddingDataset` returning a graph instead.
 - [ ] Train DCell model
 - [ ] Separate out CI more, specifically style
+- [ ] Add args so this goes into data dir `dbfn="data.db",`
 
 ## Far Future
 

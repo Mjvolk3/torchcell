@@ -13,6 +13,7 @@ from torchcell.datasets.scerevisiae import (
     DMFCostanzo2016Dataset,
     DMFCostanzo2016SmallDataset,
 )
+import torch
 from torchcell.models import DeepSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import RegressionTask
@@ -26,10 +27,10 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 
 # Initialize the WandbLogger
-wandb_logger = WandbLogger(project="torchcell", log_model=True)
-
+wandb_logger = WandbLogger(project="torchcell", log_model=False)
+# osp.join(DATA_ROOT,"data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa")
 # Build dataset
-genome = SCerevisiaeGenome()
+genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
 # nucleotide transformer
 # nt_dataset = NucleotideTransformerDataset(
 #     root=osp.join(DATA_ROOT,"data/scerevisiae/"),nucleotide_transformer_embed",
@@ -50,20 +51,24 @@ fut3_dataset = FungalUtrTransformerDataset(
 
 cell_dataset = CellDataset(
     root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),
-    genome=SCerevisiaeGenome(),
+    genome=genome,
     seq_embeddings=fut3_dataset,
     experiments=DMFCostanzo2016SmallDataset(),
 )
 
 # Instantiate your data module and model
-data_module = CellDataModule(dataset=cell_dataset, batch_size=16)
+data_module = CellDataModule(dataset=cell_dataset, batch_size=16, num_workers=0)
 input_dim = cell_dataset.num_features
 instance_layers = [64, 32]
 set_layers = [16, 8]
-model = RegressionTask(model=DeepSet(input_dim, instance_layers, set_layers))
+model = RegressionTask(
+    model=DeepSet(input_dim, instance_layers, set_layers, output_activation="relu")
+)
 
 checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
 # Initialize the Trainer with the WandbLogger
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
 trainer = pl.Trainer(
     logger=wandb_logger, max_epochs=10, callbacks=[checkpoint_callback]
 )

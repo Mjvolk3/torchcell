@@ -26,7 +26,7 @@
         "dendron.enableSelfContainedVaultWorkspace": true,
         "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#be2301c4"
+            "titleBar.activeBackground": "#be2401df"
         },
         "markdownlint.config":{
             "MD007": { "indent": 2 },

@@ -22,6 +22,10 @@ from torch_geometric.data import (
 )
 from tqdm import tqdm
 
+# HACH ... needs to be done in dir.
+os.makedirs("data/scerevisiae/costanzo2016", exist_ok=True)
+os.makedirs("data/scerevisiae/costanzo2016/large", exist_ok=True)
+
 
 class SMFCostanzo2016Dataset(InMemoryDataset):
     url = (
@@ -386,8 +390,8 @@ class DMFCostanzo2016SmallDataset(InMemoryDataset):
 
         # select 1000 random samples from data_list
         random.shuffle(data_list)
-        # TODO this is hack
-        data_list = data_list[:100000]
+        # HACK
+        data_list = data_list[:10000]
         torch.save(self.collate(data_list), self.processed_paths[0])
 
     # in DMFCostanzo2016Dataset
@@ -538,11 +542,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    # HACH ... needs to be done in dir.
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
-    os.makedirs(
-        osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large"), exist_ok=True
-    )
+
     # Process data
 
     # smf_dataset = SMFCostanzo2016Dataset()
@@ -551,19 +551,19 @@ if __name__ == "__main__":
     # print(len(smf_dataset.gene_set))
 
     # DMF Small
-    # dmf_dataset = DMFCostanzo2016SmallDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016")
-    # )
-    # print(dmf_dataset)
-    # print(dmf_dataset[0])
+    dmf_dataset = DMFCostanzo2016SmallDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016")
+    )
+    print(dmf_dataset)
+    print(dmf_dataset[0])
 
     # dmf_dataset = DMFCostanzo2016Dataset()
     # print(dmf_dataset)
     # print(dmf_dataset[0])
     # print()
 
-    dmf_dataset_large = DMFCostanzo2016LargeDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large")
-    )
-    print(dmf_dataset_large)
-    print(dmf_dataset_large[0])
+    # dmf_dataset_large = DMFCostanzo2016LargeDataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large")
+    # )
+    # print(dmf_dataset_large)
+    # print(dmf_dataset_large[0])

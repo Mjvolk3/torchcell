@@ -29,3 +29,6 @@ ncbi_cli/*
 # env
 .env
 
+# slurm
+slurm/output
+slurm/error

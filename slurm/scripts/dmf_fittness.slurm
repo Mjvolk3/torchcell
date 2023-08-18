@@ -13,10 +13,9 @@
 #SBATCH --gpu-bind=none     # <- or closest
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
-### #SBATCH --output=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/output/%x_%j.out
+#SBATCH --output=/projects/bbub/mjvolk3/torchcell/slurm/output/%x_%j.out
 # #SBATCH --output=/dev/null
-### #SBATCH --error=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/error/%x_%j.out
-
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/slurm/error/%x_%j.out
 
 module reset # drop modules and explicitly load the ones needed
              # (good job metadata and reproducibility)
@@ -28,7 +27,7 @@ lscpu
 nvidia-smi
 #module load anaconda3_cpu
 module list  # job documentation and metadata
-conda activate env-param-delta
+conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 srun python experiments/dmf_fitness.py

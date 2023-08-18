@@ -117,12 +117,12 @@ class CellDataset(InMemoryDataset):
                 filtered_data_list.append(data_item)
         #######
         # TODO remove this safety check
-        for item in tqdm(filtered_data_list):
-            if (
-                len(item.genotype) != 1
-                or "smf_fitness" not in item.phenotype["observation"]
-            ):
-                print(item)
+        # for item in tqdm(filtered_data_list):
+        #     if (
+        #         len(item.genotype) != 1
+        #         or "smf_fitness" not in item.phenotype["observation"]
+        #     ):
+        #         print(item)
         #########
         # Save this filtered data to a processed file
         torch.save(

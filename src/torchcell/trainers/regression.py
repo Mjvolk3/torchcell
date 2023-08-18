@@ -2,6 +2,7 @@
 # [[src.torchcell.trainers.regression]]
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression
 # Test file: src/torchcell/trainers/test_regression
+import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -14,6 +15,9 @@ from torchmetrics import (
 )
 
 import wandb
+
+# use the specified style
+plt.style.use("conf/torchcell.mplstyle")
 
 
 class RegressionTask(pl.LightningModule):
@@ -55,7 +59,8 @@ class RegressionTask(pl.LightningModule):
         self.pearson_corr = PearsonCorrCoef()
         self.spearman_corr = SpearmanCorrCoef()
 
-        # Used in end
+        # Used in end for whisker plot
+        self.plot_every_n_epochs = 5
         self.true_values = []
         self.predictions = []
 
@@ -100,7 +105,9 @@ class RegressionTask(pl.LightningModule):
         self.val_metrics.reset()
 
         # Skip plotting during sanity check
-        if self.trainer.sanity_checking:
+        if self.trainer.sanity_checking or (
+            self.current_epoch % self.plot_every_n_epochs != 0
+        ):
             return
 
         # Convert lists to tensors
@@ -116,20 +123,25 @@ class RegressionTask(pl.LightningModule):
         for i in range(len(bins) - 1):
             mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
             binned_values = true_values[mask].cpu().numpy()
-            binned_true_values.extend(binned_values)
-            bin_labels.extend([f"{bins[i]}-{bins[i+1]}"] * len(binned_values))
+            binned_true_values.append(binned_values)
+            bin_labels.append(f"{bins[i]}-{bins[i+1]}")
 
-        # Create a wandb table and add the binned values
-        table = wandb.Table(columns=["Prediction Bin", "True Values"])
-        for label, value in zip(bin_labels, binned_true_values):
-            table.add_data(label, value)
+        # Create a box plot using matplotlib
+        fig, ax = plt.subplots()
+        ax.boxplot(binned_true_values, labels=bin_labels)
+        ax.set_ylabel("True Values")
+        ax.set_xlabel("Prediction Bins")
+        ax.set_title("Box plot of True Values for each Prediction Bin")
 
-        # Log the table
-        wandb.log({"binned_values_table": table})
+        # Log the plot to wandb
+        wandb.log({"binned_values_box_plot": wandb.Image(fig)})
 
         # Clear the stored values for the next epoch
         self.true_values = []
         self.predictions = []
+
+        # Close the matplotlib plot
+        plt.close(fig)
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector

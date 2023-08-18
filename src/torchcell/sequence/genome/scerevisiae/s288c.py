@@ -1,21 +1,23 @@
+import os.path as osp
+from typing import Set
+
+import gffutils
+import pandas as pd
 from attrs import define, field
-from torchcell.sequence import Genome
+from Bio import Seq, SeqIO
+from gffutils.feature import Feature
+
 from torchcell.sequence import (
-    roman_to_int,
+    DnaSelectionResult,
+    DnaWindowResult,
+    Gene,
+    Genome,
     calculate_window_bounds,
+    calculate_window_bounds_symmetric,
     get_chr_from_description,
     mismatch_positions,
-    get_chr_from_description,
-    calculate_window_bounds_symmetric,
-    DnaWindowResult,
-    DnaSelectionResult,
-    Gene,
+    roman_to_int,
 )
-import pandas as pd
-from Bio import SeqIO, Seq
-import gffutils
-from gffutils.feature import Feature
-from typing import Set
 
 # We put MT at 0, because it is circular, and this preserves arabic to roman
 CHROMOSOMES = [
@@ -79,11 +81,7 @@ class SCerevisiaeGene(Gene):
                 .reverse_complement()
             )
 
-    def window(
-        self,
-        window_size: int,
-        is_max_size: bool = True,
-    ) -> DnaWindowResult:
+    def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         if is_max_size:
             start_window, end_window = calculate_window_bounds(
                 start=self.start,
@@ -216,20 +214,29 @@ class SCerevisiaeGene(Gene):
 
 @define
 class SCerevisiaeGenome(Genome):
-    _fasta_path: str = "data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa"
-    _gff_path: str = "data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/saccharomyces_cerevisiae_R64-3-1_20210421.gff"
+    data_root: str = field(init=True, repr=False, default="data/sgd/genome")
     db = field(init=False, repr=False)
     fasta_sequences = field(init=False, default=None, repr=False)
     chr_to_nc = field(init=False, default=None, repr=False)
     nc_to_chr = field(init=False, default=None, repr=False)
     chr_to_len = field(init=False, default=None, repr=False)
     _gene_set = field(init=False, default=None, repr=False)
+    _fasta_path = field(init=False, default=None, repr=False)
+    _gff_path = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        self._fasta_path: str = osp.join(
+            self.data_root,
+            "S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa",
+        )
+        self._gff_path: str = osp.join(
+            self.data_root,
+            "S288C_reference_genome_R64-3-1_20210421/saccharomyces_cerevisiae_R64-3-1_20210421.gff",
+        )
         # Create the database
         self.db = gffutils.create_db(
             self._gff_path,
-            dbfn="data.db",
+            dbfn=osp.join(self.data_root, "data.db"),
             force=True,
             keep_order=True,
             merge_strategy="merge",
@@ -247,7 +254,6 @@ class SCerevisiaeGenome(Genome):
             self.nc_to_chr[chr]: len(self.fasta_sequences[chr].seq)
             for chr in self.fasta_sequences.keys()
         }
-        print()
 
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
@@ -322,7 +328,7 @@ class SCerevisiaeGenome(Genome):
     def feature_types(self) -> list[str]:
         return list(self.db.featuretypes())
 
-    def compute_gene_set(self) -> Set[str]:
+    def compute_gene_set(self) -> set[str]:
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         # not yet sure how we will deal with duplicates. There shouldn't be any considering the systematic naming scheme.
         # TODO add test for duplicates.
@@ -349,7 +355,14 @@ class SCerevisiaeGenome(Genome):
 
 
 def main() -> None:
-    genome = SCerevisiaeGenome()
+    import os
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
     # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters
     print(
         genome["YFL039C"]

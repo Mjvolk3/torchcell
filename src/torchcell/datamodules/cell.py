@@ -9,14 +9,14 @@ from torch_geometric.data import DataLoader
 
 
 class CellDataModule(pl.LightningDataModule):
-    def __init__(self, dataset, batch_size: int = 32):
+    def __init__(self, dataset, batch_size: int = 32, num_workers: int = 0):
         super().__init__()
         self.dataset = dataset
         self.batch_size = batch_size
+        self.num_workers = num_workers
 
     def setup(self, stage=None):
         # Split the dataset into train, val, and test sets
-        # This is just a basic split, you might want to use a more sophisticated method
         num_train = int(0.8 * len(self.dataset))
         num_val = int(0.1 * len(self.dataset))
         num_test = len(self.dataset) - num_train - num_val
@@ -28,13 +28,22 @@ class CellDataModule(pl.LightningDataModule):
         ) = torch.utils.data.random_split(self.dataset, [num_train, num_val, num_test])
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True)
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size)
+        return DataLoader(
+            self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, batch_size=self.batch_size)
+        return DataLoader(
+            self.test_dataset, batch_size=self.batch_size, num_workers=self.num_workers
+        )
 
 
 if __name__ == "__main__":

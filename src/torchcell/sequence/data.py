@@ -13,18 +13,11 @@ from Bio.Seq import Seq
 from gffutils import Feature, FeatureDB
 from gffutils.biopython_integration import to_seqfeature
 from matplotlib import pyplot as plt
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    ValidationError,
-    validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, validator
 from sympy import sequence
 
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
-from typing import Set
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -106,11 +99,7 @@ class Gene(ABC):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     @abstractmethod
-    def window(
-        self,
-        window_size: int,
-        is_max_size: bool = True,
-    ) -> DnaWindowResult:
+    def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         pass
 
     @abstractmethod
@@ -139,28 +128,31 @@ class Genome(ABC):
     # Used elsewhere [[src/torchcell/sgd/validation/valid_models.py]]
     # CHECK IF THIS IS NEEDED.. I think this is a pydantic thing
     # model_config = ConfigDict(frozen=True, extra="forbid")
-
-    def __init__(self):
-        self._fasta_path: str = None
-        self._gff_path: str = None
+    # TODO not sure if we need to specify all vars in the __init__
+    # TODO do we need to set data_root like this?
+    def __init__(self, data_root: str = None):
+        self.data_root: str = data_root
         self.db: FeatureDB = None
         self.fasta_sequences: dict = None
         self.chr_to_nc: dict = None
         self.nc_to_chr: dict = None
-        self.chr_to_length: dict = None
+        self.chr_to_len: dict = None
+        self._gene_set: set[str] = None
+        self._fasta_path: str = None
+        self._gff_path: str = None
 
     @property
-    def gene_set(self) -> Set[str]:
+    def gene_set(self) -> set[str]:
         if self._gene_set is None:
             self._gene_set = self.compute_gene_set()
         return self._gene_set
 
     @gene_set.setter
-    def gene_set(self, value: Set[str]):
+    def gene_set(self, value: set[str]):
         self._gene_set = value
 
     @abstractmethod
-    def compute_gene_set(self) -> Set[str]:
+    def compute_gene_set(self) -> set[str]:
         pass  # Abstract methods don't have a body
 
     @abstractmethod
@@ -242,10 +234,7 @@ def roman_to_int(s: str) -> int:
 
 # selection_feature_window functions
 def calculate_window_undersized(
-    start: int,
-    end: int,
-    strand: str,
-    window_size: int,
+    start: int, end: int, strand: str, window_size: int
 ) -> tuple[int, int]:
     # select from start of gene, since this is such a strong signal for function
     if strand == "+":
@@ -263,11 +252,7 @@ def calculate_window_undersized(
 
 
 def calculate_window_bounds(
-    start: int,
-    end: int,
-    strand: str,
-    window_size: int,
-    chromosome_length: int,
+    start: int, end: int, strand: str, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
     if end >= chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
@@ -321,9 +306,7 @@ def calculate_window_bounds(
 
 
 def calculate_window_undersized_symmetric(
-    start: int,
-    end: int,
-    window_size: int,
+    start: int, end: int, window_size: int
 ) -> tuple[int, int]:
     # find the middle
     middle = (start + end) // 2
@@ -341,10 +324,7 @@ def calculate_window_undersized_symmetric(
 
 
 def calculate_window_bounds_symmetric(
-    start: int,
-    end: int,
-    window_size: int,
-    chromosome_length: int,
+    start: int, end: int, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
     if end >= chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")

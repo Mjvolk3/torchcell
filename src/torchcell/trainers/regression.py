@@ -1,7 +1,9 @@
-# src/torchcell/trainers/regression
+# src/torchcell/trainers/regression.py
 # [[src.torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression
-# Test file: src/torchcell/trainers/test_regression
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
+# Test file: src/torchcell/trainers/test_regression.py
+
+
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch

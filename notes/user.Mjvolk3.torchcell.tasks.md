@@ -2,10 +2,20 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1692328802419
+updated: 1692826197235
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.08.23
+
+## 2023.08.22
+
+- [x] Rerun scripts for dmf fitness → 2023.08.23 3 billion done in a day, when we have 20 billion data points. This won't scale.
+
+## 2023.08.19
+
+- [x] Check dmf data on `Delta`. → Exceeded storage limit, ordered 10 Tb.
 
 ## 2023.08.17
 

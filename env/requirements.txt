@@ -1,6 +1,7 @@
 # env/requirements.txt
 # scientific computing stack
 numpy
+polars
 pandas
 openpyxl # with pandas
 xlrd # with pandas
@@ -62,3 +63,4 @@ bumpver
 pre-commit
 ptpython
 pip-tools
+snakeviz

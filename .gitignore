@@ -36,3 +36,7 @@ slurm/error
 # docx
 CHBE-symposium.docx
 CHBE-symposium-2023.docx
+
+# OWL 
+ontology/TCO.owl
+ontology/TCO.properties

@@ -9,18 +9,22 @@ import random
 import shutil
 import zipfile
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
-from torch_geometric.data import Dataset
+
 import pandas as pd
 import torch
 from torch_geometric.data import (
     Data,
     DataLoader,
+    Dataset,
     InMemoryDataset,
     download_url,
     extract_zip,
 )
 from tqdm import tqdm
+
+from torchcell.prof import prof
 
 
 class SMFCostanzo2016Dataset(InMemoryDataset):
@@ -412,13 +416,12 @@ class DMFCostanzo2016LargeDataset(Dataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/costanzo2016/large",
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
     ):
-        self.root = root
-        self.transform = transform
-        self.pre_transform = pre_transform
-        self.data_list = self.process()
+        self.data_list = []  # set here for len
+        super().__init__(root, transform, pre_transform)
+        self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -443,6 +446,7 @@ class DMFCostanzo2016LargeDataset(Dataset):
             shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
         os.rmdir(sub_dir)
 
+    @prof
     def process(self):
         data_list = []
 
@@ -499,20 +503,46 @@ class DMFCostanzo2016LargeDataset(Dataset):
             ]
 
             # Convert to Data objects and save each instance to a separate file
-            for idx, item in enumerate(combined_data):
-                data = Data()
-                data.genotype = item["genotype"]
-                data.phenotype = item["phenotype"]
-                data_list.append(data)
+            # for idx, item in tqdm(enumerate(combined_data)):
+            #     data = Data()
+            #     data.genotype = item["genotype"]
+            #     data.phenotype = item["phenotype"]
+            #     data_list.append(data)
 
-                # Save each Data object to its own file
-                file_name = f"data_dmf_{idx}.pt"
-                torch.save(data, os.path.join(self.processed_dir, file_name))
+            #     # Save each Data object to its own file
+            #     file_name = f"data_dmf_{idx}.pt"
+            #     torch.save(data, os.path.join(self.processed_dir, file_name))
+            # break
+            # Inside your process function:
+            with ThreadPoolExecutor() as executor:
+                futures = []
+                for idx, item in tqdm(enumerate(combined_data)):
+                    data = Data()
+                    data.genotype = item["genotype"]
+                    data.phenotype = item["phenotype"]
+                    data_list.append(data)  # fill the data_list
 
-        return data_list
+                    # Submit each save operation to the thread pool
+                    future = executor.submit(
+                        self.save_data, data, idx, self.processed_dir
+                    )
+                    futures.append(future)
+
+            # Optionally, wait for all futures to complete
+            for future in futures:
+                future.result()
+
+        self.data_list = data_list  # if you intend to use data_list later
+        return data_list  # if you want to return it
+
+    # make it a static method as it doesn't use any instance attributes
+    @staticmethod
+    def save_data(data, idx, processed_dir):
+        file_name = f"data_dmf_{idx}.pt"
+        torch.save(data, os.path.join(processed_dir, file_name))
 
     def len(self):
-        return len(self.data_list)
+        return len(self.data_list) if self.data_list else 0
 
     def get(self, idx):
         sample = self.data_list[idx]
@@ -534,6 +564,9 @@ class DMFCostanzo2016LargeDataset(Dataset):
 
 if __name__ == "__main__":
     # Load workspace
+    import os
+    import os.path as osp
+
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -563,7 +596,7 @@ if __name__ == "__main__":
     # print()
 
     dmf_dataset_large = DMFCostanzo2016LargeDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large")
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_large_nothread")
     )
     print(dmf_dataset_large)
     print(dmf_dataset_large[0])

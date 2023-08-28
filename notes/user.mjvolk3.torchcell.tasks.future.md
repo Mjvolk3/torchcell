@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1692369178526
+updated: 1693252262030
 created: 1675887826601
 ---
 ## Future
@@ -13,7 +13,7 @@ created: 1675887826601
 - [ ] Separate out CI more, specifically style
 - [ ] Add args so this goes into data dir `dbfn="data.db",`
 - [ ] `torch_geometric/deprecation.py:22: UserWarning: 'data.DataLoader' is deprecated, use 'loader.DataLoader' instead`
-- [ ] Sync notability notes.
+- [ ] Add tiling window functions for nucleotide transformer
 
 ## Far Future
 

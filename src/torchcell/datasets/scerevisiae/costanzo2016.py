@@ -783,6 +783,9 @@ class DMFCostanzo2016LargeDataset(Dataset):
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
             json.dump(config, f)
 
+    # TODO implement key merge
+    # criterion for merge is defined as key, value is the data object itself.
+
     # New method to load existing preprocess configuration
     def load_preprocess_config(self):
         config_path = osp.join(self.preprocess_dir, "preprocess_config.json")

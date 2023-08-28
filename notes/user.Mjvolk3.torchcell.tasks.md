@@ -2,20 +2,26 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1693005673482
+updated: 1693252469258
 created: 1690514887023m
 ---
-![[user.mjvolk3.torchcell.tasks.future#future]
+![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.08.25
+## 2023.08.28
 
-- [ ]
+- [x] Figure how to preprocess data. → This was a bit of a long exploration. I looked into using HD5 but it is relatively difficult to due vectorized operations with HD5. I started to used `polars` thinking it could solve some of my speed issues, but I still don't fully understand the API how to deal with lazy dataframes. My final solution was to add preprocess methods to the dataset. These differ from transforms in that they can operate over the entire dataset, removing duplicates, filtering etc.
+- [ ] Add a dataframe property to the dataset that converts the Data object to a dataframe. This could allow for the joining of experimental datasets.
+- [ ] Run dataset locally
+- [ ] Transfer datset with Globus
+- [ ] 
+
 
 ## 2023.08.22
 
 - [x] Rerun scripts for dmf fitness → 2023.08.23 3 billion done in a day, when we have 20 billion data points. This won't scale.
-- [ ] Restructure data with metadata.
-- [ ] Restructure data with ontology.
+- [x] Sync notability notes.
+- 🔲 Restructure data with metadata. → Holding out on these. While they look like good directions they are a bit difficult ot implement.
+- 🔲 Restructure data with ontology. → Holding out on these. While they look like good directions they are a bit difficult ot implement.
 
 ## 2023.08.19
 
@@ -31,12 +37,12 @@ created: 1690514887023m
 - [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|src.torchcell.datamodules.cell]]
 - [x] Build trainer for fitness prediction. → [[Regression|src.torchcell.trainers.regression]]
 - [x] Add wandb log. → [[Dmf_fitness|experiments.dmf_fitness]]
-- [ ] Add fitness prediction plot to wandb log. Just plot on validation.
+- [x] Add fitness prediction plot to wandb log. Just plot on validation.
 - [x] Setup `.env` for local for data dir
-- [ ] Globus transfer data
-- [ ] Setup `.env` for remote for data dir
-- [ ] Setup remote workspace
-- [ ] Transfer compute to `Delta`.
+- [x] Globus transfer data
+- [x] Setup `.env` for remote for data dir
+- [x] Setup remote workspace
+- [x] Transfer compute to `Delta`.
 
 ## 2023.08.16
 
@@ -52,8 +58,7 @@ created: 1690514887023m
 - [x] Run the nucleotide transformer overnight. → Still took half of the next day on local. should consider batching on GPU.
 - [ ] DMFCostanzo takes too long to load, consider making it regular dataset, not `InMemory`.
 - [ ] Build a training loop for dmf
-- [ ] Add tiling window functions for nucleotide transformer
-- [ ] Add tiling window functions to nucleotide transformer datasets.
+- [ ] Add tiling window functions for nucleotide transformer → [[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.08.14
 
@@ -73,8 +78,8 @@ created: 1690514887023m
 ## 2023.08.10
 
 - [x] Clean up git
-- [ ] Dataset
-- [ ] One big issue is that the embeddings take time to compute. It would be better if we made a `GenomeDataset` that takes the convenience functions from the `Genome` class that is more of a raw sequence manipulation and sequence feature selection class, and we use thsese in conjunction with
+- [x] Dataset
+- [x] One big issue is that the embeddings take time to compute. It would be better if we made a `GenomeDataset` that takes the convenience functions from the `Genome` class that is more of a raw sequence manipulation and sequence feature selection class, and we use thsese in conjunction with
 
 ## 2023.08.09
 

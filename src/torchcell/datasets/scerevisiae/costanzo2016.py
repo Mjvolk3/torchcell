@@ -745,7 +745,7 @@ class DMFCostanzo2016LargeDataset(Dataset):
         duplicate_genotypes = new_df["genotype"].duplicated(keep=False)
         duplicates_df = new_df[duplicate_genotypes].copy()
 
-        # Select which duplicate to keep based on criteria
+        # Select which duplicate to keep based on preprocess
         if preprocess == "low_dmf_std":
             # Keep the row with the lowest 'Double mutant fitness standard deviation'
             idx_to_keep = duplicates_df.groupby("genotype")[
@@ -762,7 +762,7 @@ class DMFCostanzo2016LargeDataset(Dataset):
                 "Double mutant fitness"
             ].idxmin()
         else:
-            raise ValueError("Unknown criteria")
+            raise ValueError("Unknown preprocess")
 
         # Drop duplicates, keeping only the selected rows
         duplicates_df = duplicates_df.loc[idx_to_keep]
@@ -843,7 +843,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    # HACH ... needs to be done in dir.
+    # HACH ... needs to be done in dir
     os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
     os.makedirs(
         osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large"), exist_ok=True
@@ -871,8 +871,8 @@ if __name__ == "__main__":
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_large_nothread")
     # )
     dmf_dataset_large = DMFCostanzo2016LargeDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_meta_small"),
-        preprocess="low_dmf",
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_noload"),
+        preprocess="low_dmf_std",
     )
     print(dmf_dataset_large)
     print(dmf_dataset_large[0])

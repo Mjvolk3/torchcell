@@ -4,9 +4,6 @@
             "name": "torchcell",
             "path": "."
         },
-        {   "name": "data",
-            "path": "../torchcell/data"
-        },
         {
             "name": "assets",
             "path": "notes/assets"

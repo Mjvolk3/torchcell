@@ -47,6 +47,7 @@ types-requests
 # data stack
 attrs
 pydantic==1.10.5 # due to lightning
+h5py
 
 # web stack
 aiohttp

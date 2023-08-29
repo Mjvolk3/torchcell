@@ -22,14 +22,14 @@ from polars import DataFrame, col
 from torch_geometric.data import (
     Data,
     DataLoader,
-    Dataset,
     InMemoryDataset,
     download_url,
     extract_zip,
 )
 from tqdm import tqdm
 
-from torchcell.prof import prof
+from torchcell.data import Dataset
+from torchcell.prof import prof, prof_input
 
 
 class SMFCostanzo2016Dataset(InMemoryDataset):
@@ -576,12 +576,13 @@ class DMFCostanzo2016LargeDataset(Dataset):
 
     def __init__(
         self,
-        root: str = "data/scerevisiae/costanzo2016/large",
+        root: str = "data/scerevisiae/costanzo2016",
         preprocess: str = "low_dmf_std",
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
         self.data_list = []
+        self._length = None
         self.preprocess = preprocess
         self.preprocess_dir = osp.join(root, "preprocess")
         # Check for existing preprocess config
@@ -594,19 +595,10 @@ class DMFCostanzo2016LargeDataset(Dataset):
                     "Or define a new root."
                 )
         super().__init__(root, transform, pre_transform)
-        self.data_list = self.load_processed_data()
-        self.data, self.slices = torch.load(self.processed_paths[0])
 
-    def load_processed_data(self):
-        if self.data_list != []:
-            return self.data_list
-        data_list = []
-        if osp.exists(self.processed_dir):
-            for i in range(self.len()):
-                file_path = osp.join(self.processed_dir, f"data_dmf_{i}.pt")
-                data = torch.load(file_path)
-                data_list.append(data)
-        return data_list
+    @property
+    def skip_file_exist_check(self):
+        return True
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -631,10 +623,10 @@ class DMFCostanzo2016LargeDataset(Dataset):
             shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
         os.rmdir(sub_dir)
 
-    # @prof
+    @prof
     def process(self):
         data_list = []
-
+        self._length = None
         # Initialize an empty DataFrame to hold all raw data
         all_data_df = pd.DataFrame()
 
@@ -644,7 +636,7 @@ class DMFCostanzo2016LargeDataset(Dataset):
             file_path = os.path.join(self.raw_dir, file_name)
 
             # Reading data using Pandas; limit rows for demonstration
-            df = pd.read_csv(file_path, sep="\t").head(1000)
+            df = pd.read_csv(file_path, sep="\t")
 
             # Concatenating data frames
             all_data_df = pd.concat([all_data_df, df], ignore_index=True)
@@ -696,7 +688,7 @@ class DMFCostanzo2016LargeDataset(Dataset):
             for genotype, observation in zip(combined_genotypes, observations)
         ]
 
-        with ThreadPoolExecutor(1) as executor:
+        with ThreadPoolExecutor() as executor:
             futures = []
             for idx, item in tqdm(enumerate(combined_data)):
                 data = Data()
@@ -803,7 +795,23 @@ class DMFCostanzo2016LargeDataset(Dataset):
         file_name = f"data_dmf_{idx}.pt"
         torch.save(data, os.path.join(processed_dir, file_name))
 
+    # def len(self):
+    #     if osp.exists(self.processed_dir):
+    #         num_files = len(
+    #             [
+    #                 f
+    #                 for f in os.listdir(self.processed_dir)
+    #                 if re.match(r"data_dmf_\d+\.pt", f)
+    #             ]
+    #         )
+    #         return num_files
+    #     else:
+    #         return 0
+
     def len(self):
+        if self._length is not None:
+            return self._length
+
         if osp.exists(self.processed_dir):
             num_files = len(
                 [
@@ -812,12 +820,14 @@ class DMFCostanzo2016LargeDataset(Dataset):
                     if re.match(r"data_dmf_\d+\.pt", f)
                 ]
             )
+            self._length = num_files  # cache the length
             return num_files
         else:
             return 0
 
     def get(self, idx):
-        sample = self.data_list[idx]
+        file_path = os.path.join(self.processed_dir, f"data_dmf_{idx}.pt")
+        sample = torch.load(file_path)
         if self.transform:
             sample = self.transform(sample)
         return sample
@@ -834,20 +844,33 @@ class DMFCostanzo2016LargeDataset(Dataset):
         return f"{self.__class__.__name__}({len(self)})"
 
 
-if __name__ == "__main__":
-    # Load workspace
-    import os
-    import os.path as osp
-
+@prof_input
+def main():
     from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    # HACH ... needs to be done in dir
     os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
-    os.makedirs(
-        osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large"), exist_ok=True
+    dmf_dataset_large = DMFCostanzo2016LargeDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+        preprocess="low_dmf_std",
     )
+    # print(dmf_dataset_large)
+    print(dmf_dataset_large[0])
+    print(dmf_dataset_large[1])
+
+
+if __name__ == "__main__":
+    # Load workspace
+    main()
+    # from dotenv import load_dotenv
+
+    # load_dotenv()
+    # DATA_ROOT = os.getenv("DATA_ROOT")
+    # os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
+    # os.makedirs(
+    #     osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016/large"), exist_ok=True
+    # )
     # Process data
 
     # smf_dataset = SMFCostanzo2016Dataset()
@@ -870,10 +893,10 @@ if __name__ == "__main__":
     # dmf_dataset_large = DMFCostanzo2016LargeDataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_large_nothread")
     # )
-    dmf_dataset_large = DMFCostanzo2016LargeDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_noload"),
-        preprocess="low_dmf_std",
-    )
-    print(dmf_dataset_large)
-    print(dmf_dataset_large[0])
-    print(dmf_dataset_large[1])
+    # dmf_dataset_large = DMFCostanzo2016LargeDataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+    #     preprocess="low_dmf_std",
+    # )
+    # print(dmf_dataset_large)
+    # print(dmf_dataset_large[0])
+    # print(dmf_dataset_large[1]

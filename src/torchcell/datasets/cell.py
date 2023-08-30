@@ -2,13 +2,16 @@
 # [[src.torchcell.datasets.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/cell.py
 # Test file: src/torchcell/datasets/test_cell.py
-
 import copy
+import json
 import os
+import os.path as osp
+import re
 import shutil
 import zipfile
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from os import environ
 from typing import List, Optional, Tuple, Union
 
@@ -21,10 +24,12 @@ from torch_geometric.data.separate import separate
 from torch_geometric.utils import subgraph
 from tqdm import tqdm
 
+from torchcell.data import Dataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (  # DMFCostanzo2016Dataset,
+    DMFCostanzo2016LargeDataset,
     DMFCostanzo2016SmallDataset,
     SMFCostanzo2016Dataset,
 )
@@ -43,7 +48,7 @@ class Ontology:
     pass
 
 
-class CellDataset(InMemoryDataset):
+class CellDataset(Dataset):
     """
     Represents a dataset for cellular data.
     """
@@ -66,17 +71,25 @@ class CellDataset(InMemoryDataset):
         self.experiment_datasets: list[InMemoryDataset] | None = None
         self.ontology: Ontology | None = None
 
+        # TODO consider moving to Dataset
+        self.preprocess_dir = osp.join(root, "preprocess")
         # Create the seq graph
         if self.seq_embeddings:
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
 
+        self._length = None
         # This is here because we can't run process without getting gene_set
         super().__init__(root, transform, pre_transform, pre_filter)
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     @property
+    def raw_file_names(self) -> list[str]:
+        # TODO consider return the processed of the experiments, etc.
+        return None  # Specify raw files if needed
+
+    @property
     def processed_file_names(self) -> list[str]:
-        return ["cell.pt"]
+        return [f"data_{i}.pt" for i in range(self.len())]
 
     # TODO think more on this method
     def create_seq_graph(self, seq_embeddings: BaseEmbeddingDataset) -> Data:
@@ -106,49 +119,78 @@ class CellDataset(InMemoryDataset):
 
     def process(self):
         # Start with an empty list for filtered data
-        filtered_data_list = []
-        self.gene_set
+        self._length = None
+        # We call combined, becasue this is where joining will happen
+        combined_data = []
+        self.gene_set = self.compute_gene_set()
         for data_item in tqdm(
             self.experiments
         ):  # assuming experiments contains the data
             # Check if data_item's ID is in the gene_set
             item_id_set = {i["id"] for i in data_item.genotype}
             if len(item_id_set.intersection(self.gene_set)) > 0:
-                filtered_data_list.append(data_item)
-        #######
-        # TODO remove this safety check
-        # for item in tqdm(filtered_data_list):
-        #     if (
-        #         len(item.genotype) != 1
-        #         or "smf_fitness" not in item.phenotype["observation"]
-        #     ):
-        #         print(item)
-        #########
-        # Save this filtered data to a processed file
-        torch.save(
-            self.collate(filtered_data_list),
-            os.path.join(self.processed_dir, "cell.pt"),
-        )
+                combined_data.append(data_item)
+
+        data_list = []
+        with ThreadPoolExecutor() as executor:
+            futures = []
+            for idx, item in tqdm(enumerate(combined_data)):
+                data = Data()
+                data.genotype = item["genotype"]
+                data.phenotype = item["phenotype"]
+                data_list.append(data)  # fill the data_list
+
+                # Submit each save operation to the thread pool
+                future = executor.submit(self.save_data, data, idx, self.processed_dir)
+                futures.append(future)
+
+        # Optionally, wait for all futures to complete
+        for future in futures:
+            future.result()
+
+    @staticmethod
+    def save_data(data, idx, processed_dir):
+        file_name = f"data_{idx}.pt"
+        torch.save(data, os.path.join(processed_dir, file_name))
 
     @property
     def gene_set(self):
-        if self._gene_set is None:
-            self._gene_set = self.compute_gene_set()
-        return self._gene_set
+        try:
+            if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
+                with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
+                    self._gene_set = set(json.load(f))
+            elif self._gene_set is None:
+                raise ValueError(
+                    "gene_set not written during process. "
+                    "Please call compute_gene_set in process."
+                )
+            return self._gene_set
+        except json.JSONDecodeError:
+            raise ValueError("Invalid or empty JSON file found.")
 
     @gene_set.setter
     def gene_set(self, value):
+        if not value:
+            raise ValueError("Cannot set an empty or None value for gene_set")
+        if not osp.exists(self.preprocess_dir):
+            os.makedirs(self.preprocess_dir)
+        with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
+            json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
     def compute_gene_set(self):
         if not self._gene_set:
-            if isinstance(self.experiments, InMemoryDataset):
+            if isinstance(self.experiments, Dataset):
                 experiment_gene_set = self.experiments.gene_set
             else:
                 # TODO: handle other data types for experiments, if necessary
                 raise NotImplementedError(
                     "Expected 'experiments' to be of type InMemoryDataset"
                 )
+            # Not sure we shoudl take the intersection here...
+            # Could use gene_set from genome instead, since this is base
+            # In case of gene addition would need to update the gene_set
+            # then cell_dataset should be max possible.
             cell_gene_set = set(self.genome.gene_set).intersection(experiment_gene_set)
         return cell_gene_set
 
@@ -185,76 +227,80 @@ class CellDataset(InMemoryDataset):
         Returns:
             Data: The modified Data object with the added label.
         """
-        if "dmf_fitness" in original_data.phenotype["observation"]:
-            data.dmf_fitness = original_data.phenotype["observation"]["dmf_fitness"]
+        if "dmf" in original_data.phenotype["observation"]:
+            data.dmf = original_data.phenotype["observation"]["dmf"]
         return data
 
     def get(self, idx: int) -> Data:
-        # If there's only one item in the dataset, return the entire reference graph
-        if self.len() == 1:
-            return copy.copy(self._data)
+        file_path = os.path.join(self.processed_dir, f"data_{idx}.pt")
+        sample = torch.load(file_path)
 
-        # Check if the data list has been initialized or if the item at the current index is already cached
-        if not hasattr(self, "_data_list") or self._data_list is None:
-            self._data_list = self.len() * [None]
-        elif self._data_list[idx] is not None:
-            return copy.copy(self._data_list[idx])
-
-        # Get the data object for the current index
-        data = separate(
-            cls=self._data.__class__,
-            batch=self._data,
-            idx=idx,
-            slice_dict=self.slices,
-            decrement=False,
-        )
+        # Move to below?
+        if self.transform:
+            sample = self.transform(sample)
 
         # Get the subset data using the separate method
-        subset_data = self._subset_graph(data)
+        subset_data = self._subset_graph(sample)
 
         # Add the dmf_fitness label to the subset_data
-        subset_data = self._add_label(subset_data, data)
+        subset_data = self._add_label(subset_data, sample)
 
-        # Cache the subset data for future accesses
-        # breakpoint here, investigating why size of x is same.
-        # TODO if the gene is not in genome, then the node is not removed... this leads to some misrepresentation.
-        # BUG
+        # TODO, can add tests, or build in asserts? not sure..
         # assert len(self.seq_graph.x) - len(data.genotype) == len(
         #     subset_data.x
         # ), "nodes not removed"
-        self._data_list[idx] = copy.copy(subset_data)
+        # self._data_list[idx] = copy.copy(subset_data)
 
         return subset_data
+
+    def len(self):
+        if self._length is not None:
+            return self._length
+
+        if osp.exists(self.processed_dir):
+            num_files = len(
+                [
+                    f
+                    for f in os.listdir(self.processed_dir)
+                    if re.match(r"data_\d+\.pt", f)
+                ]
+            )
+            self._length = num_files  # cache the length
+            return num_files
+        else:
+            return 0
 
 
 def main():
     genome = SCerevisiaeGenome()
     # nucleotide transformer
-    nt_dataset = NucleotideTransformerDataset(
-        root="data/scerevisiae/nucleotide_transformer_embed",
-        genome=genome,
-        transformer_model_name="nt_window_5979",
-    )
+    # nt_dataset = NucleotideTransformerDataset(
+    #     root="data/scerevisiae/nucleotide_transformer_embed",
+    #     genome=genome,
+    #     transformer_model_name="nt_window_5979",
+    # )
     fut3_dataset = FungalUtrTransformerDataset(
         root="data/scerevisiae/fungal_utr_embed",
         genome=genome,
         transformer_model_name="fut_species_window_3utr_300_undersize",
     )
-    fut5_dataset = FungalUtrTransformerDataset(
-        root="data/scerevisiae/fungal_utr_embed",
-        genome=genome,
-        transformer_model_name="fut_species_window_5utr_1000_undersize",
-    )
-    seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
+    # fut5_dataset = FungalUtrTransformerDataset(
+    #     root="data/scerevisiae/fungal_utr_embed",
+    #     genome=genome,
+    #     transformer_model_name="fut_species_window_5utr_1000_undersize",
+    # )
+    # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
+    seq_embeddings = fut3_dataset
 
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell",
         genome=SCerevisiaeGenome(),
         seq_embeddings=seq_embeddings,
-        experiments=DMFCostanzo2016SmallDataset(),
+        experiments=DMFCostanzo2016LargeDataset(root="data/scerevisiae/costanzo2016"),
     )
 
     print(cell_dataset)
+    print(cell_dataset.gene_set)
     print(cell_dataset[0])
     print()
 

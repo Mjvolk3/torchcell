@@ -5,7 +5,7 @@
 
 import pytorch_lightning as pl
 import torch
-from torch_geometric.data import DataLoader
+from torch_geometric.loader import DataLoader
 
 
 class CellDataModule(pl.LightningDataModule):

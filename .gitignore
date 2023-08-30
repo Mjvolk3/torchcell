@@ -43,3 +43,6 @@ ontology/TCO.properties
 
 # Dendron Not needed
 .dendron.port.cli
+
+# hydra
+outputs/

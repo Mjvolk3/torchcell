@@ -414,14 +414,14 @@ def main() -> None:
 
     # Iterate through all gene features and check if they have an Ontology_term attribute
 
-    # genome["YFL039C"].window(1000)
-    # genome["YFL039C"].window(1000, is_max_size=False)
-    # genome["YFL039C"].window_3utr(1000)
-    # genome["YFL039C"].window_3utr(1000, allow_undersize=True)
-    # genome["YFL039C"].window_3utr(1000, allow_undersize=False)
-    # genome["YFL039C"].window_5utr(1000, allow_undersize=True)
-    # genome["YFL039C"].window_5utr(1000, allow_undersize=False)
-    # print()
+    genome["YFL039C"].window(1000)
+    genome["YFL039C"].window(1000, is_max_size=False)
+    genome["YFL039C"].window_3utr(1000)
+    genome["YFL039C"].window_3utr(1000, allow_undersize=True)
+    genome["YFL039C"].window_3utr(1000, allow_undersize=False)
+    genome["YFL039C"].window_5utr(1000, allow_undersize=True)
+    genome["YFL039C"].window_5utr(1000, allow_undersize=False)
+    print()
 
 
 if __name__ == "__main__":

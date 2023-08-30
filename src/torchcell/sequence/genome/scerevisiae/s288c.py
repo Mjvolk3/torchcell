@@ -5,7 +5,9 @@ import gffutils
 import pandas as pd
 from attrs import define, field
 from Bio import Seq, SeqIO
+from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
+from sortedcontainers import SortedSet
 
 from torchcell.sequence import (
     DnaSelectionResult,
@@ -45,9 +47,9 @@ CHROMOSOMES = [
 @define
 class SCerevisiaeGene(Gene):
     feature: Feature = field(repr=False)
-    fasta_sequences: str = field(repr=False)
-    chr_to_nc: dict = field(repr=False)
-    chromosome_lengths: dict = field(repr=False)
+    fasta_sequences: dict[str, SeqRecord] = field(repr=False)
+    chr_to_nc: dict[str, str] = field(repr=False)
+    chromosome_lengths: dict[str, int] = field(repr=False)
     # below are set in __attrs_post_init__
     id: str = field(default=None)
     chromosome: int = field(default=None)
@@ -80,6 +82,21 @@ class SCerevisiaeGene(Gene):
                 .seq[self.start : self.end]
                 .reverse_complement()
             )
+
+        # TODO consider adding these to ABC...
+        # Some might be too specific to S. cerevisiae, but so they coudl be optional
+        self.alias = self.feature.attributes["Alias"]
+        self.name = self.feature.attributes["Name"]
+        self.ontology_term = self.feature.attributes["Ontology_term"]
+        self.note = self.feature.attributes["Note"]
+        self.display = self.feature.attributes["display"]
+        self.dbxref = self.feature.attributes["dbxref"]
+        self.orf_classifcation = self.feature.attributes["orf_classification"]
+        # we give a new attr for GO since most known ontology
+        if self.ontology_term is not None:
+            self.go = [term for term in self.ontology_term if term.startswith("GO:")]
+        else:
+            self.go = None
 
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         if is_max_size:
@@ -215,14 +232,14 @@ class SCerevisiaeGene(Gene):
 @define
 class SCerevisiaeGenome(Genome):
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
-    db = field(init=False, repr=False)
+    db: dict[str, SeqRecord] = field(init=False, repr=False)
     fasta_sequences = field(init=False, default=None, repr=False)
-    chr_to_nc = field(init=False, default=None, repr=False)
-    nc_to_chr = field(init=False, default=None, repr=False)
-    chr_to_len = field(init=False, default=None, repr=False)
-    _gene_set = field(init=False, default=None, repr=False)
-    _fasta_path = field(init=False, default=None, repr=False)
-    _gff_path = field(init=False, default=None, repr=False)
+    chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
+    nc_to_chr: dict[str, str] = field(init=False, default=None, repr=False)
+    chr_to_len: dict[str, int] = field(init=False, default=None, repr=False)
+    _gene_set: SortedSet = field(init=False, default=None, repr=False)
+    _fasta_path: str = field(init=False, default=None, repr=False)
+    _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
         self._fasta_path: str = osp.join(
@@ -254,6 +271,33 @@ class SCerevisiaeGenome(Genome):
             self.nc_to_chr[chr]: len(self.fasta_sequences[chr].seq)
             for chr in self.fasta_sequences.keys()
         }
+
+    @property
+    def go(self) -> SortedSet[str]:
+        go_set = SortedSet()  # Initialize an empty set to hold all GO terms
+        for gene_feature in self.db.features_of_type("gene"):
+            if "Ontology_term" in gene_feature.attributes:
+                go_terms_for_gene = [
+                    term
+                    for term in gene_feature.attributes["Ontology_term"]
+                    if term.startswith("GO:")
+                ]
+                go_set.update(go_terms_for_gene)
+
+        return go_set
+
+    def go_subset(self, gene_set: SortedSet[str]) -> SortedSet[str]:
+        go_subset = SortedSet()
+        for gene_feature in self.db.features_of_type("gene"):
+            if gene_feature.id in gene_set:
+                if "Ontology_term" in gene_feature.attributes:
+                    go_terms_for_gene = [
+                        term
+                        for term in gene_feature.attributes["Ontology_term"]
+                        if term.startswith("GO:")
+                    ]
+                    go_subset.update(go_terms_for_gene)
+        return go_subset
 
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
@@ -328,14 +372,14 @@ class SCerevisiaeGenome(Genome):
     def feature_types(self) -> list[str]:
         return list(self.db.featuretypes())
 
-    def compute_gene_set(self) -> set[str]:
+    def compute_gene_set(self) -> SortedSet[str]:
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
         # not yet sure how we will deal with duplicates. There shouldn't be any considering the systematic naming scheme.
         # TODO add test for duplicates.
         assert len(genes) == len(
             set(genes)
         ), "Duplicate genes found... havne't decided how to deal with this yet."
-        return set(genes)
+        return SortedSet(genes)
 
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
         # For now we only support the systematic names
@@ -367,14 +411,17 @@ def main() -> None:
     print(
         genome["YFL039C"]
     )  # Replace with valid gene... we only support systematic names
-    genome["YFL039C"].window(1000)
-    genome["YFL039C"].window(1000, is_max_size=False)
-    genome["YFL039C"].window_3utr(1000)
-    genome["YFL039C"].window_3utr(1000, allow_undersize=True)
-    genome["YFL039C"].window_3utr(1000, allow_undersize=False)
-    genome["YFL039C"].window_5utr(1000, allow_undersize=True)
-    genome["YFL039C"].window_5utr(1000, allow_undersize=False)
-    print()
+
+    # Iterate through all gene features and check if they have an Ontology_term attribute
+
+    # genome["YFL039C"].window(1000)
+    # genome["YFL039C"].window(1000, is_max_size=False)
+    # genome["YFL039C"].window_3utr(1000)
+    # genome["YFL039C"].window_3utr(1000, allow_undersize=True)
+    # genome["YFL039C"].window_3utr(1000, allow_undersize=False)
+    # genome["YFL039C"].window_5utr(1000, allow_undersize=True)
+    # genome["YFL039C"].window_5utr(1000, allow_undersize=False)
+    # print()
 
 
 if __name__ == "__main__":

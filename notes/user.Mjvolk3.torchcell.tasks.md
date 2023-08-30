@@ -2,14 +2,32 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1693402549898
+updated: 1693424206762
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.08.30
 
-- [ ] Run test run with dmf
+- [x] Run test run with dmf → [[M1 Test Run Batch 16 Very Slow|experiments.dmf_costanzo_deepset#m1-test-run-batch-16-very-slow]]
+- [x] hydra config experiments → [[experiments/conf/dmf_costanzo_deepset.yaml]]
+- [x] Start transfer data to Delta with Globus → This is a bit slow
+- [x] Install lua. → Not compatible with Delta Redhat:
+
+```bash mjvolk3@dt-login02 torch % lsb_release -a                                                                                                                                             13:56
+LSB Version: :core-4.1-amd64:core-4.1-noarch:cxx-4.1-amd64:cxx-4.1-noarch:desktop-4.1-amd64:desktop-4.1-noarch:languages-4.1-amd64:languages-4.1-noarch:printing-4.1-amd64:printing-4.1-noarch
+Distributor ID: RedHatEnterprise
+Description: Red Hat Enterprise Linux release 8.8 (Ootpa)
+Release: 8.8
+Codename: Ootpa
+mjvolk3@dt-login02 torch % bash install-deps                                                                                                                                          13:56
+==> Only Ubuntu, elementary OS, Fedora, Archlinux, OpenSUSE, Debian, CentOS and KDE neon distributions are supported.
+```
+
+- [x] Build ontology... We will build DCell in `torchcell` since DCell requires, both the curation of data and the building of the ontology which couuld be error prone. There model is clear enough to build. → Building ontology requires getting multigraph data.
+- [x] Get all multigraph data from SGD API → Delaying this for `gff`solution
+- [x] Build base multidigraph with no edges and data classes stored in network graph. In future transformations on top of multidigraph, will be used to move node data to edges. Then transformations on edged filled graph are used to get pytorch graphs. All along we only need to be check for not compatibility. → Delaying this for `gff`solution
+- [ ] GO and other useful information also exists in the `gff` file annotating the genome. It will be easier for now to GO out of this. This is probably also more extensible to other organisms too since it is more likely they will have a `gff` than some sort of manually constructed multidigraph. Pull out useful db in an aesthetically appleasing way 🦋.
 
 ## 2023.08.29
 
@@ -25,7 +43,7 @@ created: 1690514887023m
 - [x] Refactor `CellDataset` so it can handle experiments of type `CellDatset`. → copied over the gene set property. I think writing to file is a decent solution, and will save compute. To do this had to make a small dataset `DMFCostanzo2016SmallDataset`
 - [x] Transfer `DMFCostanzo2016SmallDataset` to `DMFCostanzo2016LargeDataset`
 - [x] Rerun `DMFCostanzo2016LargeDataset` to get with new `gene_set`
-- [x] Rerun [[src/torchcell/datasets/cell.py]] to get a new cell dataset
+- [x] Rerun [[src/torchcell/datasets/cell.py]] to get a new cell dataset → [[src.torchcell.datasets.cell.md]]
 
 ## 2023.08.28
 
@@ -55,7 +73,7 @@ created: 1690514887023m
 - [x] In `cell.py` [[Cell|src.torchcell.datasets.cell]] allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
 - [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|src.torchcell.datamodules.cell]]
 - [x] Build trainer for fitness prediction. → [[Regression|src.torchcell.trainers.regression]]
-- [x] Add wandb log. → [[Dmf_fitness|experiments.dmf_fitness]]
+- [x] Add wandb log. → [[Dmf_costanzo_deepset|experiments.dmf_costanzo_deepset]]
 - [x] Add fitness prediction plot to wandb log. Just plot on validation.
 - [x] Setup `.env` for local for data dir
 - [x] Globus transfer data

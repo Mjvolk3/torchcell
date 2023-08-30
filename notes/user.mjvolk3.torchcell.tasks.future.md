@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1693404126046
+updated: 1693426128574
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Convert `gene_set` to `SortedSet`
 - [ ] Workspace utils from note open related python file
 - [ ] Consider `BaseEmbeddingDataset` returning a graph instead.
 - [ ] Train DCell model

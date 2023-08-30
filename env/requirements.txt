@@ -28,7 +28,6 @@ graphviz # Don't think I am using this.
 plotly
 seaborn
 
-
 # ML stack
 scikit-learn
 transformers # hugging face
@@ -45,6 +44,7 @@ types-tqdm
 types-requests
 
 # data stack
+sortedcontainers
 attrs
 pydantic==1.10.5 # due to lightning
 h5py

@@ -2,7 +2,6 @@ import os
 import os.path as osp
 import subprocess
 import sys
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,8 +12,8 @@ VSCODE_PATH = os.environ.get("VSCODE_PATH")
 
 def convert_to_dendron_path(file_path):
     """Convert a file path to Dendron's period-delimited format."""
-    relative_path = file_path.replace(WORKSPACE_DIR, "")
-    dendron_path = relative_path.replace("/", ".").replace(".py", "")
+    relative_path = osp.relpath(file_path, WORKSPACE_DIR)
+    dendron_path = relative_path.replace(osp.sep, ".").replace(".py", "")
     return dendron_path
 
 
@@ -23,23 +22,19 @@ def handle_python_file(file_path, new_file_path):
     ws_root = WORKSPACE_DIR
 
     dendron_new_path = convert_to_dendron_path(new_file_path)
-    dendron_old_path = convert_to_dendron_path(file_path)[1:]
+    dendron_old_path = convert_to_dendron_path(file_path)
 
     dendron_note_exists = osp.exists(
-        osp.join(ws_root, base_dir, dendron_old_path + ".md")
+        osp.join(ws_root, base_dir, f"{dendron_old_path}.md")
     )
 
     new_dir = osp.dirname(new_file_path)
-    if not osp.exists(new_dir):
-        os.makedirs(new_dir)
+    os.makedirs(new_dir, exist_ok=True)
 
-    original_filename = osp.basename(file_path)
-    test_file_path = file_path.replace("src/torchcell", "tests/torchcell").replace(
-        original_filename, "test_" + original_filename
-    )
-    test_new_file_path = new_file_path.replace(
-        "src/torchcell", "tests/torchcell"
-    ).replace(original_filename, "test_" + original_filename)
+    # More dynamic test file path manipulation
+    relative_path = osp.relpath(file_path, WORKSPACE_DIR)
+    test_file_path = osp.join(WORKSPACE_DIR, "tests", relative_path)
+    test_new_file_path = test_file_path.replace(file_path, new_file_path)
 
     # Check if destination test or markdown file exists
     if osp.exists(test_new_file_path):

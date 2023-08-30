@@ -208,7 +208,66 @@
               
   <section id="module-torchcell">
 <span id="torchcell"></span><h1>torchcell<a class="headerlink" href="#module-torchcell" title="Permalink to this heading"></a></h1>
-<span class="target" id="module-torchcell.datasets"></span></section>
+<span class="target" id="module-torchcell.datasets"></span><dl class="py class">
+<dt class="sig sig-object py" id="torchcell.datasets.CellDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchcell.datasets.</span></span><span class="sig-name descname"><span class="pre">CellDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'data/scerevisiae/cell'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Genome</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seq_embeddings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseEmbeddingDataset</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">experiments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">torch_geometric.data.in_memory_dataset.InMemoryDataset</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">InMemoryDataset</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_filter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.CellDataset" title="Permalink to this definition"></a></dt>
+<dd><p>Represents a dataset for cellular data.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.CellDataset.create_seq_graph">
+<span class="sig-name descname"><span class="pre">create_seq_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seq_embeddings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">BaseEmbeddingDataset</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Data</span></span></span><a class="headerlink" href="#torchcell.datasets.CellDataset.create_seq_graph" title="Permalink to this definition"></a></dt>
+<dd><p>Create a graph from seq_embeddings.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.CellDataset.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Data</span></span></span><a class="headerlink" href="#torchcell.datasets.CellDataset.get" title="Permalink to this definition"></a></dt>
+<dd><p>Gets the data object at index <code class="xref py py-obj docutils literal notranslate"><span class="pre">idx</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.CellDataset.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.CellDataset.process" title="Permalink to this definition"></a></dt>
+<dd><p>Processes the dataset to the <code class="xref py py-obj docutils literal notranslate"><span class="pre">self.processed_dir</span></code> folder.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="torchcell.datasets.CellDataset.processed_file_names">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">processed_file_names</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.datasets.CellDataset.processed_file_names" title="Permalink to this definition"></a></dt>
+<dd><p>The name of the files in the <code class="xref py py-obj docutils literal notranslate"><span class="pre">self.processed_dir</span></code> folder that
+must be present in order to skip processing.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.datasets.FungalUtrTransformerDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchcell.datasets.</span></span><span class="sig-name descname"><span class="pre">FungalUtrTransformerDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SCerevisiaeGenome</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformer_model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.FungalUtrTransformerDataset" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.FungalUtrTransformerDataset.initialize_transformer">
+<span class="sig-name descname"><span class="pre">initialize_transformer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.FungalUtrTransformerDataset.initialize_transformer" title="Permalink to this definition"></a></dt>
+<dd><p>Initialize the transformer using the valid model name.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.FungalUtrTransformerDataset.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.FungalUtrTransformerDataset.process" title="Permalink to this definition"></a></dt>
+<dd><p>Processes the dataset to the <code class="xref py py-obj docutils literal notranslate"><span class="pre">self.processed_dir</span></code> folder.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="torchcell.datasets.NucleotideTransformerDataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">torchcell.datasets.</span></span><span class="sig-name descname"><span class="pre">NucleotideTransformerDataset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genome</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">SCerevisiaeGenome</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transformer_model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pre_transform</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.NucleotideTransformerDataset" title="Permalink to this definition"></a></dt>
+<dd><dl class="py method">
+<dt class="sig sig-object py" id="torchcell.datasets.NucleotideTransformerDataset.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#torchcell.datasets.NucleotideTransformerDataset.process" title="Permalink to this definition"></a></dt>
+<dd><p>Processes the dataset to the <code class="xref py py-obj docutils literal notranslate"><span class="pre">self.processed_dir</span></code> folder.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 
 
              </article>
@@ -243,7 +302,25 @@
           <div class="pytorch-right-menu" id="pytorch-right-menu">
             <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
               <ul>
-<li><a class="reference internal" href="#">torchcell</a></li>
+<li><a class="reference internal" href="#">torchcell</a><ul>
+<li><a class="reference internal" href="#torchcell.datasets.CellDataset"><code class="docutils literal notranslate"><span class="pre">CellDataset</span></code></a><ul>
+<li><a class="reference internal" href="#torchcell.datasets.CellDataset.create_seq_graph"><code class="docutils literal notranslate"><span class="pre">CellDataset.create_seq_graph()</span></code></a></li>
+<li><a class="reference internal" href="#torchcell.datasets.CellDataset.get"><code class="docutils literal notranslate"><span class="pre">CellDataset.get()</span></code></a></li>
+<li><a class="reference internal" href="#torchcell.datasets.CellDataset.process"><code class="docutils literal notranslate"><span class="pre">CellDataset.process()</span></code></a></li>
+<li><a class="reference internal" href="#torchcell.datasets.CellDataset.processed_file_names"><code class="docutils literal notranslate"><span class="pre">CellDataset.processed_file_names</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#torchcell.datasets.FungalUtrTransformerDataset"><code class="docutils literal notranslate"><span class="pre">FungalUtrTransformerDataset</span></code></a><ul>
+<li><a class="reference internal" href="#torchcell.datasets.FungalUtrTransformerDataset.initialize_transformer"><code class="docutils literal notranslate"><span class="pre">FungalUtrTransformerDataset.initialize_transformer()</span></code></a></li>
+<li><a class="reference internal" href="#torchcell.datasets.FungalUtrTransformerDataset.process"><code class="docutils literal notranslate"><span class="pre">FungalUtrTransformerDataset.process()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#torchcell.datasets.NucleotideTransformerDataset"><code class="docutils literal notranslate"><span class="pre">NucleotideTransformerDataset</span></code></a><ul>
+<li><a class="reference internal" href="#torchcell.datasets.NucleotideTransformerDataset.process"><code class="docutils literal notranslate"><span class="pre">NucleotideTransformerDataset.process()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
             </div>

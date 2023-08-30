@@ -4,9 +4,6 @@
             "name": "torchcell",
             "path": "."
         },
-        {   "name": "data",
-            "path": "../torchcell/data"
-        },
         {
             "name": "assets",
             "path": "notes/assets"
@@ -155,7 +152,7 @@
             {
                 "label": "notability: sync",
                 "type": "shell",
-                "command": "bash notes/assets/notability/scripts/sync.sh",
+                "command": "bash notes/assets/scripts/notability_sync.sh",
                 "problemMatcher": []
             },
             // mypy

@@ -1,7 +1,9 @@
-# src/torchcell/trainers/regression
+# src/torchcell/trainers/regression.py
 # [[src.torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression
-# Test file: src/torchcell/trainers/test_regression
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
+# Test file: src/torchcell/trainers/test_regression.py
+
+
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl
 import torch
@@ -23,7 +25,7 @@ plt.style.use("conf/torchcell.mplstyle")
 class RegressionTask(pl.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
-    target_key: str = "dmf_fitness"
+    target_key: str = "dmf"
 
     def __init__(
         self, model: nn.Module, learning_rate: float = 1e-3, loss: str = "mse"
@@ -69,7 +71,7 @@ class RegressionTask(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.dmf_fitness, batch.batch
+        x, y, batch_vector = batch.x, batch.dmf, batch.batch
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
@@ -88,7 +90,7 @@ class RegressionTask(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.dmf_fitness, batch.batch
+        x, y, batch_vector = batch.x, batch.dmf, batch.batch
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
@@ -145,7 +147,7 @@ class RegressionTask(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.dmf_fitness, batch.batch
+        x, y, batch_vector = batch.x, batch.dmf, batch.batch
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1

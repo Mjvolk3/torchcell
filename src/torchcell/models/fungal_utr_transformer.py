@@ -2,10 +2,10 @@
 import os
 import zipfile
 from re import T
-from regex import P
 
 import requests
 import torch
+from regex import P
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 from torchcell.models.llm import NucleotideModel
@@ -177,7 +177,7 @@ class FungalUtrTransformer(NucleotideModel):
 
 def main():
     # Initialize the FungalUtr class with a specific model name
-    fungal_utr_model = FungalUtrTransformer("upstream_1000")
+    fungal_utr_model = FungalUtrTransformer("species_upstream_1000")
 
     # Create a dummy dna sequence
     sequences = ["ATTCTG" * 9]

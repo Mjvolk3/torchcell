@@ -14,7 +14,7 @@ dataformat.exe
 src/torchcell/models/pretrained_LLM/*
 
 # Data
-data/
+/data/
 wandb/
 models/checkpoints/
 

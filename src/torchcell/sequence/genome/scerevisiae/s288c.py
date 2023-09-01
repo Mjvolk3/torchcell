@@ -7,7 +7,7 @@ from attrs import define, field
 from Bio import Seq, SeqIO
 from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
-from sortedcontainers import SortedSet
+from sortedcontainers import SortedDict, SortedSet
 
 from torchcell.sequence import (
     DnaSelectionResult,
@@ -299,6 +299,42 @@ class SCerevisiaeGenome(Genome):
                     go_subset.update(go_terms_for_gene)
         return go_subset
 
+    @property
+    def go_genes(self) -> SortedDict[str, SortedSet[str]]:
+        go_genes_dict = SortedDict()
+        for gene_feature in self.db.features_of_type("gene"):
+            if "Ontology_term" in gene_feature.attributes:
+                go_terms_for_gene = [
+                    term
+                    for term in gene_feature.attributes["Ontology_term"]
+                    if term.startswith("GO:")
+                ]
+                gene_id = gene_feature.id
+                for go_term in go_terms_for_gene:
+                    if go_term not in go_genes_dict:
+                        go_genes_dict[go_term] = SortedSet()
+                    go_genes_dict[go_term].add(gene_id)
+        return go_genes_dict
+
+    def go_subset_genes(
+        self, gene_set: SortedSet[str]
+    ) -> SortedDict[str, SortedSet[str]]:
+        go_subset_genes_dict = SortedDict()
+        for gene_feature in self.db.features_of_type("gene"):
+            if gene_feature.id in gene_set:
+                if "Ontology_term" in gene_feature.attributes:
+                    go_terms_for_gene = [
+                        term
+                        for term in gene_feature.attributes["Ontology_term"]
+                        if term.startswith("GO:")
+                    ]
+                    gene_id = gene_feature.id
+                    for go_term in go_terms_for_gene:
+                        if go_term not in go_subset_genes_dict:
+                            go_subset_genes_dict[go_term] = SortedSet()
+                        go_subset_genes_dict[go_term].add(gene_id)
+        return go_subset_genes_dict
+
     def get_seq(
         self, chr: int | str, start: int, end: int, strand: str
     ) -> DnaSelectionResult:
@@ -400,6 +436,7 @@ class SCerevisiaeGenome(Genome):
 
 def main() -> None:
     import os
+    import random
 
     from dotenv import load_dotenv
 
@@ -421,7 +458,7 @@ def main() -> None:
     genome["YFL039C"].window_3utr(1000, allow_undersize=False)
     genome["YFL039C"].window_5utr(1000, allow_undersize=True)
     genome["YFL039C"].window_5utr(1000, allow_undersize=False)
-    print()
+    print(genome.go[:10])
 
 
 if __name__ == "__main__":

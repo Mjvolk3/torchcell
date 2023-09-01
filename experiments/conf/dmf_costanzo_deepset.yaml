@@ -6,8 +6,7 @@ defaults:
 wandb:
   mode: online # disabled, offline, online
   project: torchcell
-  model_watch: false
-  tags: null
+  tags: [poc, subset]
 
 data_module:
   batch_size: 16

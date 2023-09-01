@@ -2,10 +2,52 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1693424206762
+updated: 1693539008741
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.08.31
+
+- [x] Work on deleting files → [[src/torchcell/delete_subset.py]] tried to see if array and mutlithreading could help. Doesn't seem to help that much.
+- [x] Removing the Costanzo folder with  `~2e6` million files. → Done with Globus. I think this is the most robust method moving forward for deleting large set of files.
+- [x] Try to send files with Globus again. → This is still very slow, and warning give no progress message. ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.Globus-warning-file-transfer.png)
+- [x] Cancel Globus Job, no zip. → After cancelling get ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.Globus-transfer-canceled-90p-completed.png) this has happened almost every time I've cancelled even after only cancelling an hour or so after starting the transfer, so it must not be representative of the number of files transferred. We see that no process files were even transferred.
+
+```bash
+mjvolk3@dt-login02 costanzo2016_m1_0 % pwd && ls
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/costanzo2016_m1_0
+preprocess
+```
+
+- [ ] Try to Zip dir. → This ran for 20 minutes...
+
+```bash
+michaelvolk@M1-MV costanzo2016_m1_0 % tar -zcvf /Users/michaelvolk/Documents/projects/torchcell/data/scerevisiae/costanzo2016_zip/costanzo2016_m1_0.tar.gz .                          22:02
+a .
+a ./preprocess
+a ./processed
+a ./raw
+a ./raw/SGA_DAmP.txt
+a ./raw/SGA_ExN_NxE.txt
+a ./raw/SGA_ExE.txt
+a ./raw/strain_ids_and_single_mutant_fitness.xlsx
+a ./raw/SGA_NxN.txt
+a ./processed/data_dmf_1425817.pt
+a ./processed/data_dmf_4284449.pt
+a ./processed/data_dmf_3135821.pt
+a ./processed/data_dmf_4555787.pt
+a ./processed/data_dmf_6869547.pt
+a ./processed/data_dmf_10296944.pt
+a ./processed/data_dmf_7537118.pt
+a ./processed/data_dmf_8137108.pt
+a ./processed/data_dmf_10349129.pt
+a ./processed/data_dmf_12786972.pt
+a ./processed/data_dmf_3292739.pt
+a ./processed/data_dmf_10417150.pt
+```
+
+- [ ] Respond to Jira request.
 
 ## 2023.08.30
 
@@ -27,7 +69,46 @@ mjvolk3@dt-login02 torch % bash install-deps                                    
 - [x] Build ontology... We will build DCell in `torchcell` since DCell requires, both the curation of data and the building of the ontology which couuld be error prone. There model is clear enough to build. → Building ontology requires getting multigraph data.
 - [x] Get all multigraph data from SGD API → Delaying this for `gff`solution
 - [x] Build base multidigraph with no edges and data classes stored in network graph. In future transformations on top of multidigraph, will be used to move node data to edges. Then transformations on edged filled graph are used to get pytorch graphs. All along we only need to be check for not compatibility. → Delaying this for `gff`solution
-- [ ] GO and other useful information also exists in the `gff` file annotating the genome. It will be easier for now to GO out of this. This is probably also more extensible to other organisms too since it is more likely they will have a `gff` than some sort of manually constructed multidigraph. Pull out useful db in an aesthetically appleasing way 🦋.
+- [x] GO and other useful information also exists in the `gff` file annotating the genome. It will be easier for now to GO out of this. This is probably also more extensible to other organisms too since it is more likely they will have a `gff` than some sort of manually constructed multidigraph. Pull out useful db in an aesthetically appleasing way 🦋. → Easier than I thought, all needed info stored in `db.attributes`, added attrs for these.
+- [x] Download GO [GO website](http://geneontology.org/docs/download-ontology/) → We could just download the slim set for yeast, but for now this seems like a more general solution. We can do this this if things are slow.
+- [x] Look into how we can subset GO by date. → From the looks of this is not possible with the `gff`, but this data does exists in SGD. Just showing one term... We would have to cross reference with this data to get the GO subset.
+
+```json
+"go_details": [
+    {
+        "id": 6389520,
+        "annotation_type": "manually curated",
+        "date_created": "2002-11-26",
+        "qualifier": "enables",
+        "locus": {
+            "display_name": "YDR210W",
+            "link": "/locus/S000002618",
+            "id": 1266542,
+            "format_name": "YDR210W"
+        },
+        "go": {
+            "display_name": "molecular function",
+            "link": "/go/GO:0003674",
+            "go_id": "GO:0003674",
+            "go_aspect": "molecular function",
+            "id": 290848
+        },
+        "reference": {
+            "display_name": "SGD (2002)",
+            "link": "/reference/S000069584",
+            "pubmed_id": null
+        },
+        "source": {
+            "display_name": "SGD"
+        },
+        "experiment": {
+            "display_name": "ND",
+            "link": "http://wiki.geneontology.org/index.php/No_biological_Data_available_(ND)_evidence_code"
+        },
+        "properties": []
+    }, 
+]
+```
 
 ## 2023.08.29
 

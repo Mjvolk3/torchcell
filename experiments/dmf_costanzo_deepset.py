@@ -37,6 +37,7 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 #     config_name="config",
 # )
 
+
 @hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -63,25 +64,30 @@ def main(cfg: DictConfig) -> None:
     # Experiments
     experiments = DMFCostanzo2016LargeDataset(
         preprocess="low_dmf_std",
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_0"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
+        subset_n=100000,
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),
+        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e5")),
         genome=genome,
         seq_embeddings=nt_dataset,
         experiments=experiments,
     )
 
     # Instantiate your data module and model
-    data_module = CellDataModule(dataset=cell_dataset, batch_size=16, num_workers=0)
+    data_module = CellDataModule(
+        dataset=cell_dataset,
+        batch_size=wandb.config.data_module["batch_size"],
+        num_workers=wandb.config.data_module["num_workers"],
+    )
     input_dim = cell_dataset.num_features
     model = RegressionTask(
         model=DeepSet(
             input_dim,
-            wandb.model["instance_layers"],
-            wandb.model["set_layers"],
+            wandb.config.model["instance_layers"],
+            wandb.config.model["set_layers"],
             output_activation="relu",
         )
     )
@@ -91,7 +97,9 @@ def main(cfg: DictConfig) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
     trainer = pl.Trainer(
-        logger=wandb_logger, max_epochs=10, callbacks=[checkpoint_callback]
+        logger=wandb_logger,
+        max_epochs=wandb.config.trainer["max_epochs"],
+        callbacks=[checkpoint_callback],
     )
 
     # Start the training

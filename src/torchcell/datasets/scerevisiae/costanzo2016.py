@@ -584,11 +584,13 @@ class DMFCostanzo2016LargeDataset(Dataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/costanzo2016",
+        subset_n: int = None,
         preprocess: str = "low_dmf_std",
         skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.subset_n = subset_n
         self._skip_process_file_exist = skip_process_file_exist
         # TODO consider moving to Dataset
         self.preprocess = preprocess
@@ -649,10 +651,16 @@ class DMFCostanzo2016LargeDataset(Dataset):
 
             # Concatenating data frames
             all_data_df = pd.concat([all_data_df, df], ignore_index=True)
-
         # Functions for data filtering... duplicates selection,
         all_data_df = self.preprocess_raw(all_data_df, self.preprocess)
         self.save_preprocess_config(self.preprocess)
+
+        # Subset
+        if self.subset_n is not None:
+            all_data_df = all_data_df.sample(
+                n=self.subset_n, random_state=42
+            ).reset_index(drop=True)
+
         print("Processing DMF Files...")
 
         # Extract genotype information using Polars syntax

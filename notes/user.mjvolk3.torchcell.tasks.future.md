@@ -27,3 +27,4 @@ created: 1675887826601
 genome["YDR210W"].attributes['display'][0]
 'Predicted tail-anchored plasma membrane protein
 ``` 
+

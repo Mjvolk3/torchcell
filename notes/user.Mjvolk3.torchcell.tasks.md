@@ -2,21 +2,31 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1693945547416
+updated: 1694024978181
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.09.05
+## 2023.09.06
 
-- [x] Summarize major takeaways from meeting → [[Adam Stewart Meeting|meet.Adam-Stewart.2023.09.01]]
-- [ ] Try to archive files in one million at a time.
-- [ ] 10 min reserach on HDF and LMDB
-- [ ] Jira issue followup, include HDF, and LMDB as mentioned by @Yunan-Luo .
+- [ ] Try to archive files in `5e5` at a time. → I was able to write the entire `lmdb` before this finished.
+- [ ] Remove mitochondria genes.
+- [ ] Follow up on Jira issue
 - [ ] Review run and launch another exp.
 - [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
 - [ ] Gene ontology for `DCell`
 - [ ] Add in gene essentiality dataset.
+
+## 2023.09.05
+
+- [x] Summarize major takeaways from meeting → [[Adam Stewart Meeting|meet.Adam-Stewart.2023.09.01]]
+- 🔲 Try to archive files in one million at a time.
+- [x] 10 min reserach on HDF and LMDB → LMDB looks like a good option for quick reads and HDF look like a good option for hierarchy, but will be slower reading. If I am already using hierearcy within the Torch Data object it might be best to try LMDB first.
+- 🔲 Jira issue followup, include HDF, and LMDB as mentioned by @Yunan-Luo .
+- 🔲 Review run and launch another exp.
+- 🔲 WT difference for loss function... thinking dataset should have a reference object at highest level.
+- 🔲 Gene ontology for `DCell`
+- 🔲 Add in gene essentiality dataset.
 
 ## 2023.09.01
 

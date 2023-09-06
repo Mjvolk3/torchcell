@@ -1,5 +1,9 @@
+import glob
+import gzip
 import os
 import os.path as osp
+import shutil
+import tarfile
 from typing import Set
 
 import gffutils
@@ -88,16 +92,21 @@ class SCerevisiaeGene(Gene):
 
         # TODO consider adding these to ABC...
         # Some might be too specific to S. cerevisiae, but so they coudl be optional
-        self.alias = self.feature.attributes["Alias"]
-        self.name = self.feature.attributes["Name"]
-        self.ontology_term = self.feature.attributes["Ontology_term"]
-        self.note = self.feature.attributes["Note"]
-        self.display = self.feature.attributes["display"]
-        self.dbxref = self.feature.attributes["dbxref"]
-        self.orf_classifcation = self.feature.attributes["orf_classification"]
-        # we give a new attr for GO since most known ontology
+        self.alias = self.feature.attributes.get("Alias", None)
+        self.name = self.feature.attributes.get("Name", None)
+        self.ontology_term = self.feature.attributes.get("Ontology_term", None)
+        self.note = self.feature.attributes.get("Note", None)
+        self.display = self.feature.attributes.get("display", None)
+        self.dbxref = self.feature.attributes.get("dbxref", None)
+        self.orf_classification = self.feature.attributes.get(
+            "orf_classification", None
+        )
+
+        # Handle GO terms
         if self.ontology_term is not None:
-            self.go = [term for term in self.ontology_term if term.startswith("GO:")]
+            self.go = SortedSet(
+                [term for term in self.ontology_term if term.startswith("GO:")]
+            )
         else:
             self.go = None
 
@@ -245,14 +254,18 @@ class SCerevisiaeGenome(Genome):
     _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
-        self._fasta_path: str = osp.join(
+        self._fasta_path: str = os.path.join(
             self.data_root,
             "S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa",
         )
-        self._gff_path: str = osp.join(
+        self._gff_path: str = os.path.join(
             self.data_root,
             "S288C_reference_genome_R64-3-1_20210421/saccharomyces_cerevisiae_R64-3-1_20210421.gff",
         )
+
+        # Check if the necessary files exist, if not download them
+        if not os.path.exists(self._fasta_path) or not os.path.exists(self._gff_path):
+            self.download_and_extract_genome_files()
         # Create the database
         self.db = gffutils.create_db(
             self._gff_path,
@@ -285,30 +298,80 @@ class SCerevisiaeGenome(Genome):
             download_url("http://current.geneontology.org/ontology/go.obo", data_dir)
         self.go_dag = GODag(obo_path)
         # Call the method to remove deprecated GO terms
-        # self.remove_deprecated_go_terms()
+        self.remove_deprecated_go_terms()
+
+    def download_and_extract_genome_files(self):
+        """
+        Download and extract genome files if they do not exist.
+        """
+        url = "http://sgd-archive.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-3-1_20210421.tgz"
+        save_dir = self.data_root
+        download_url(url, save_dir)
+        downloaded_file_path = os.path.join(save_dir, url.split("/")[-1])
+        self.untar_tgz_file(downloaded_file_path, save_dir)
+        self.gunzip_all_files_in_dir(save_dir)
+
+    def untar_tgz_file(self, path_to_input_tgz: str, path_to_output_dir: str):
+        """
+        Extract a .tgz file
+        """
+        with tarfile.open(path_to_input_tgz, "r:gz") as tar_ref:
+            tar_ref.extractall(path_to_output_dir)
+        print(f"Extracted .tgz file to {path_to_output_dir}")
+        os.remove(path_to_input_tgz)  # remove the original .tgz file after extraction
+
+    def gunzip_all_files_in_dir(self, directory: str):
+        """
+        Unzip all .gz files in a directory.
+        """
+        gz_files = glob.glob(f"{directory}/**/*.gz", recursive=True)
+        for gz_file in gz_files:
+            with gzip.open(gz_file, "rb") as f_in:
+                with open(
+                    gz_file[:-3], "wb"
+                ) as f_out:  # remove '.gz' from output file name
+                    shutil.copyfileobj(f_in, f_out)
+            print(f"Unzipped {gz_file}")
+            os.remove(gz_file)  # remove the original .gz file
 
     def remove_deprecated_go_terms(self):
-        # Iterate over each feature in the database
-        for feature in self.db.features_of_type("gene"):
-            # Check if the feature has the "Ontology_term" attribute
-            if "Ontology_term" in feature.attributes:
-                # Filter out deprecated GO terms
-                valid_go_terms = [
-                    term
-                    for term in feature.attributes["Ontology_term"]
-                    if term.startswith("GO:")
-                    and (term not in self.go_dag or not self.go_dag[term].is_obsolete)
-                ]
+        try:
+            # Create a list to hold updated features
+            updated_features = []
 
-                # Update the "Ontology_term" attribute for the feature
-                if valid_go_terms:
-                    feature.attributes["Ontology_term"] = valid_go_terms
-                else:
-                    del feature.attributes["Ontology_term"]
+            # Iterate over each feature in the database
+            for feature in self.db.features_of_type("gene"):
+                # Check if the feature has the "Ontology_term" attribute
+                if "Ontology_term" in feature.attributes:
+                    # Filter out deprecated GO terms
+                    valid_go_terms = [
+                        term
+                        for term in feature.attributes["Ontology_term"]
+                        if term.startswith("GO:")
+                        and (
+                            term not in self.go_dag or not self.go_dag[term].is_obsolete
+                        )
+                    ]
+                    # Update the "Ontology_term" attribute for the feature
+                    if valid_go_terms:
+                        feature.attributes["Ontology_term"] = valid_go_terms
+                    else:
+                        del feature.attributes["Ontology_term"]
 
-                # Update the feature in the database
-                # Assuming `feature` is already the correct type
-                self.db.update([feature])
+                    # Add the updated feature to the list
+                    updated_features.append(feature)
+
+            # Update all features in the database at once
+            self.db.update(updated_features, merge_strategy="error")
+
+            # Commit the changes to the database
+            self.db.conn.commit()
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.db.conn.rollback()  # Rollback changes in case of an error
+
+        # Do not close the database connection here if you intend to use it later
 
     @property
     def go(self) -> SortedSet[str]:
@@ -448,12 +511,51 @@ class SCerevisiaeGenome(Genome):
 
     def compute_gene_set(self) -> SortedSet[str]:
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
-        # not yet sure how we will deal with duplicates. There shouldn't be any considering the systematic naming scheme.
-        # TODO add test for duplicates.
         assert len(genes) == len(
             set(genes)
-        ), "Duplicate genes found... havne't decided how to deal with this yet."
+        ), "Duplicate genes found... chekc handled by gff."
         return SortedSet(genes)
+
+    def drop_chrmt(self) -> None:
+        mitochondrial_features = [
+            f for f in self.db.all_features() if f.seqid == "chrmt"
+        ]
+
+        # Remove these features from the gene set cache if it existsc
+        if self._gene_set is not None:
+            for feature in mitochondrial_features:
+                self._gene_set.discard(feature.id)
+
+        # Remove these features from the database
+        for feature in mitochondrial_features:
+            self.db.delete(feature.id, feature_type=feature.featuretype)
+
+        # Commit the changes to the database
+        self.db.conn.commit()
+
+    def drop_empty_go(self) -> None:
+        # Initialize a list to hold genes to be removed
+        genes_to_remove = []
+
+        # Iterate through all genes in the current gene_set
+        for gene_id in self.gene_set:
+            gene = self[gene_id]
+            if gene is not None:
+                # Check if the GO terms are empty
+                # None case for never annotated, 0 for no GO terms
+                if gene.go is None or len(gene.go) == 0:
+                    genes_to_remove.append(gene_id)
+
+        # Remove these genes from the gene set cache
+        for gene_id in genes_to_remove:
+            self._gene_set.discard(gene_id)
+
+        # Remove these genes from the database
+        for gene_id in genes_to_remove:
+            self.db.delete(gene_id, feature_type="gene")
+
+        # Commit the changes to the database
+        self.db.conn.commit()
 
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
         # For now we only support the systematic names
@@ -488,7 +590,11 @@ def main() -> None:
     )  # Replace with valid gene... we only support systematic names
 
     # Iterate through all gene features and check if they have an Ontology_term attribute
-
+    print(len(genome.gene_set))
+    genome.drop_chrmt()
+    print(len(genome.gene_set))
+    genome.drop_empty_go()
+    print(len(genome.gene_set))
     genome["YFL039C"].window(1000)
     genome["YFL039C"].window(1000, is_max_size=False)
     genome["YFL039C"].window_3utr(1000)

@@ -4,8 +4,10 @@
 # Test file: src/torchcell/datasets/test_cell.py
 import copy
 import json
+import logging
 import os
 import os.path as osp
+import pickle
 import re
 import shutil
 import zipfile
@@ -15,6 +17,7 @@ from concurrent.futures import ThreadPoolExecutor
 from os import environ
 from typing import List, Optional, Tuple, Union
 
+import lmdb
 import pandas as pd
 import torch
 from attrs import define
@@ -37,6 +40,8 @@ from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+log = logging.getLogger(__name__)
 
 
 class DiMultiGraph:
@@ -88,7 +93,7 @@ class CellDataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return [f"data_{i}.pt" for i in range(self.len())]
+        return "data.lmdb"
 
     # TODO think more on this method
     def create_seq_graph(self, seq_embeddings: BaseEmbeddingDataset) -> Data:
@@ -117,40 +122,35 @@ class CellDataset(Dataset):
         return data
 
     def process(self):
-        # Start with an empty list for filtered data
         self._length = None
-        # We call combined, becasue this is where joining will happen
         combined_data = []
         self.gene_set = self.compute_gene_set()
-        for data_item in tqdm(
-            self.experiments
-        ):  # assuming experiments contains the data
-            # Check if data_item's ID is in the gene_set
-            item_id_set = {i["id"] for i in data_item.genotype}
-            if len(item_id_set.intersection(self.gene_set)) > 0:
-                combined_data.append(data_item)
 
-        data_list = []
-        with ThreadPoolExecutor() as executor:
-            futures = []
+        # Precompute gene_set for faster lookup
+        gene_set = self.gene_set
+
+        # Use list comprehension and any() for faster filtering
+        combined_data = [
+            item
+            for item in tqdm(self.experiments)
+            if any(i["id"] in gene_set for i in item.genotype)
+        ]
+
+        log.info("creating lmdb database")
+        # Initialize LMDB environment
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+
+        with env.begin(write=True) as txn:
             for idx, item in tqdm(enumerate(combined_data)):
                 data = Data()
                 data.genotype = item["genotype"]
                 data.phenotype = item["phenotype"]
-                data_list.append(data)  # fill the data_list
 
-                # Submit each save operation to the thread pool
-                future = executor.submit(self.save_data, data, idx, self.processed_dir)
-                futures.append(future)
+                # Serialize the data object using pickle
+                serialized_data = pickle.dumps(data)
 
-        # Optionally, wait for all futures to complete
-        for future in futures:
-            future.result()
-
-    @staticmethod
-    def save_data(data, idx, processed_dir):
-        file_name = f"data_{idx}.pt"
-        torch.save(data, os.path.join(processed_dir, file_name))
+                # Save the serialized data in the LMDB environment
+                txn.put(f"{idx}".encode(), serialized_data)
 
     @property
     def gene_set(self):
@@ -231,43 +231,31 @@ class CellDataset(Dataset):
         return data
 
     def get(self, idx: int) -> Data:
-        file_path = os.path.join(self.processed_dir, f"data_{idx}.pt")
-        sample = torch.load(file_path)
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), readonly=True)
+        with env.begin() as txn:
+            serialized_data = txn.get(f"{idx}".encode())
+            if serialized_data is None:
+                return None
+            data = pickle.loads(serialized_data)
+            if self.transform:
+                data = self.transform(data)
 
-        # Move to below?
-        if self.transform:
-            sample = self.transform(sample)
+            # Get the subset data using the separate method
+            subset_data = self._subset_graph(data)
 
-        # Get the subset data using the separate method
-        subset_data = self._subset_graph(sample)
+            # Add the dmf_fitness label to the subset_data
+            subset_data = self._add_label(subset_data, data)
 
-        # Add the dmf_fitness label to the subset_data
-        subset_data = self._add_label(subset_data, sample)
-
-        # TODO, can add tests, or build in asserts? not sure..
-        # assert len(self.seq_graph.x) - len(data.genotype) == len(
-        #     subset_data.x
-        # ), "nodes not removed"
-        # self._data_list[idx] = copy.copy(subset_data)
-
-        return subset_data
+            return subset_data
 
     def len(self):
-        if self._length is not None:
-            return self._length
+        lmdb_path = os.path.join(self.processed_dir, "data.lmdb")
+        if not os.path.exists(lmdb_path):
+            raise FileNotFoundError(f"LMDB directory does not exist: {lmdb_path}")
 
-        if osp.exists(self.processed_dir):
-            num_files = len(
-                [
-                    f
-                    for f in os.listdir(self.processed_dir)
-                    if re.match(r"data_\d+\.pt", f)
-                ]
-            )
-            self._length = num_files  # cache the length
-            return num_files
-        else:
-            return 0
+        env = lmdb.open(lmdb_path, readonly=True)
+        with env.begin() as txn:
+            return txn.stat()["entries"]
 
 
 def main():

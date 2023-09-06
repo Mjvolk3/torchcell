@@ -2,14 +2,33 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1693539008741
+updated: 1693945547416
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.09.05
+
+- [x] Summarize major takeaways from meeting → [[Adam Stewart Meeting|meet.Adam-Stewart.2023.09.01]]
+- [ ] Try to archive files in one million at a time.
+- [ ] 10 min reserach on HDF and LMDB
+- [ ] Jira issue followup, include HDF, and LMDB as mentioned by @Yunan-Luo .
+- [ ] Review run and launch another exp.
+- [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
+- [ ] Gene ontology for `DCell`
+- [ ] Add in gene essentiality dataset.
+
+## 2023.09.01
+
+- [x] Respond to Jira request. → Gave enough info to get the conversation started but need to add a lot more details.
+- u Prepare markdown for Adam
+- 🔲 Cluster nt embeddings of genes and look at smf
+- 🔲 Add in gene essentiality dataset.
+
 ## 2023.08.31
 
 - [x] Work on deleting files → [[src/torchcell/delete_subset.py]] tried to see if array and mutlithreading could help. Doesn't seem to help that much.
+- [x] Submit a Jira Ticket for data transfer issues → [jira-ticket-2023.09.01](https://jira.ncsa.illinois.edu/browse/DELTA-2385)
 - [x] Removing the Costanzo folder with  `~2e6` million files. → Done with Globus. I think this is the most robust method moving forward for deleting large set of files.
 - [x] Try to send files with Globus again. → This is still very slow, and warning give no progress message. ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.Globus-warning-file-transfer.png)
 - [x] Cancel Globus Job, no zip. → After cancelling get ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.Globus-transfer-canceled-90p-completed.png) this has happened almost every time I've cancelled even after only cancelling an hour or so after starting the transfer, so it must not be representative of the number of files transferred. We see that no process files were even transferred.
@@ -20,7 +39,7 @@ mjvolk3@dt-login02 costanzo2016_m1_0 % pwd && ls
 preprocess
 ```
 
-- [ ] Try to Zip dir. → This ran for 20 minutes...
+- [x] Try to Zip dir. → This ran for 20 minutes...
 
 ```bash
 michaelvolk@M1-MV costanzo2016_m1_0 % tar -zcvf /Users/michaelvolk/Documents/projects/torchcell/data/scerevisiae/costanzo2016_zip/costanzo2016_m1_0.tar.gz .                          22:02
@@ -47,7 +66,10 @@ a ./processed/data_dmf_3292739.pt
 a ./processed/data_dmf_10417150.pt
 ```
 
-- [ ] Respond to Jira request.
+- [x] Globus subset dataset of `1e5` `.pt` →  Globus transfer completed. We see here that the number of files was clear. For large transfer attempts we only see 1 or two files. I think these are the `.json` files from other dirs. We also see a `MB/s` rate, whereas the other large runs get stuck and just have a `B/s` rate.
+![](./assets/images/user.Mjvolk3.torchcell.tasks.md.globus-transfer-completed-1e5-2023.08.31.png)
+- [x] Launch Experiment on A40. → [wandb experiment](https://wandb.ai/zhao-group/torchcell/table?workspace=user-mjvolk3) #wandb.tags.poc, #wandb.tags.subset, poc for proof of concept and subset, since for subset of all data.
+- 🔲 Respond to Jira request.
 
 ## 2023.08.30
 

@@ -2,16 +2,17 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694024978181
+updated: 1694032588188
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.09.06
 
-- [ ] Try to archive files in `5e5` at a time. → I was able to write the entire `lmdb` before this finished.
+- [x] Try to archive files in `5e5` at a time. → I was able to write the entire `lmdb` before this finished.
+- [x] Follow up on Jira issue → met with @Craig-Steffen → Suggestion was to write files on Delta to `/tmp` which is essentially an `ssd`, tar on node, then copy to parallel file system `/scrath`. First trying to write database on `delta`.
+- [x] Write database on `delta` → This took 24 mins. Very fast!
 - [ ] Remove mitochondria genes.
-- [ ] Follow up on Jira issue
 - [ ] Review run and launch another exp.
 - [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
 - [ ] Gene ontology for `DCell`

@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 from typing import Set
 
@@ -7,7 +8,9 @@ from attrs import define, field
 from Bio import Seq, SeqIO
 from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
+from goatools.obo_parser import GODag
 from sortedcontainers import SortedDict, SortedSet
+from torch_geometric.data import download_url
 
 from torchcell.sequence import (
     DnaSelectionResult,
@@ -271,6 +274,41 @@ class SCerevisiaeGenome(Genome):
             self.nc_to_chr[chr]: len(self.fasta_sequences[chr].seq)
             for chr in self.fasta_sequences.keys()
         }
+
+        # TODO Not sure if this is now to tightly coupled to GO
+        # We do want to remove inaccurate info as early as possible
+        # Initialize the GO ontology DAG (Directed Acyclic Graph)
+        data_dir = "data/go"
+        obo_path = "data/go/go.obo"
+        if not osp.exists(obo_path):
+            os.makedirs(data_dir, exist_ok=True)
+            download_url("http://current.geneontology.org/ontology/go.obo", data_dir)
+        self.go_dag = GODag(obo_path)
+        # Call the method to remove deprecated GO terms
+        self.remove_deprecated_go_terms()
+
+    def remove_deprecated_go_terms(self):
+        # Iterate over each feature in the database
+        for feature in self.db.features_of_type("gene"):
+            # Check if the feature has the "Ontology_term" attribute
+            if "Ontology_term" in feature.attributes:
+                # Filter out deprecated GO terms
+                valid_go_terms = [
+                    term
+                    for term in feature.attributes["Ontology_term"]
+                    if term.startswith("GO:")
+                    and (term not in self.go_dag or not self.go_dag[term].is_obsolete)
+                ]
+
+                # Update the "Ontology_term" attribute for the feature
+                if valid_go_terms:
+                    feature.attributes["Ontology_term"] = valid_go_terms
+                else:
+                    del feature.attributes["Ontology_term"]
+
+                # Update the feature in the database
+                # Assuming `feature` is already the correct type
+                self.db.update([feature])
 
     @property
     def go(self) -> SortedSet[str]:

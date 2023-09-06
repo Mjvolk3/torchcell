@@ -82,7 +82,7 @@ class PlotFeatureTypeCounts(GenomePlot):
         # Adjust xlim to provide more space for the labels
         plt.xlim(0, max(counts) * 1.1)  # Increase xlim by 10%
 
-    self.plt = plt
+        self.plt = plt
 
     def show(self):
         plt.show()

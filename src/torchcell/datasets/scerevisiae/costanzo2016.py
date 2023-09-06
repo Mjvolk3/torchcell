@@ -881,7 +881,8 @@ def main():
     DATA_ROOT = os.getenv("DATA_ROOT")
     os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
     dmf_dataset = DMFCostanzo2016LargeDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
+        subset_n=100000,
         preprocess="low_dmf_std",
     )
     print(dmf_dataset)

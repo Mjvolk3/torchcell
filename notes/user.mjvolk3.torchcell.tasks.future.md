@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1693540136397
+updated: 1693580716668
 created: 1675887826601
 ---
 ## Future
@@ -25,5 +25,5 @@ created: 1675887826601
 
 ```python
 genome["YDR210W"].attributes['display'][0]
-'Predicted tail-anchored plasma membrane protein'
+'Predicted tail-anchored plasma membrane protein
 ``` 

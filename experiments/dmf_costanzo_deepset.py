@@ -49,6 +49,8 @@ def main(cfg: DictConfig) -> None:
 
     # Get reference genome
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
 
     # Sequence transformers
     nt_dataset = NucleotideTransformerDataset(

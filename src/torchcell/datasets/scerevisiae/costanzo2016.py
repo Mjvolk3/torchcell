@@ -1190,7 +1190,7 @@ def main():
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DMFCostanzo2016LmdbDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_lmdb_all"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_lmdb_delta"),
         preprocess="low_dmf_std",
     )
     print(dmf_dataset)

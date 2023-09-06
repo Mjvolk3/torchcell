@@ -285,7 +285,7 @@ class SCerevisiaeGenome(Genome):
             download_url("http://current.geneontology.org/ontology/go.obo", data_dir)
         self.go_dag = GODag(obo_path)
         # Call the method to remove deprecated GO terms
-        self.remove_deprecated_go_terms()
+        # self.remove_deprecated_go_terms()
 
     def remove_deprecated_go_terms(self):
         # Iterate over each feature in the database

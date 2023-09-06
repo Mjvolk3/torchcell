@@ -28,9 +28,8 @@ from torchcell.data import Dataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
-from torchcell.datasets.scerevisiae import (  # DMFCostanzo2016Dataset,
-    DMFCostanzo2016LargeDataset,
-    DMFCostanzo2016SmallDataset,
+from torchcell.datasets.scerevisiae import (
+    DMFCostanzo2016Dataset,
     SMFCostanzo2016Dataset,
 )
 from torchcell.models import FungalUtrTransformer, NucleotideTransformer
@@ -296,7 +295,7 @@ def main():
         root="data/scerevisiae/cell",
         genome=SCerevisiaeGenome(),
         seq_embeddings=seq_embeddings,
-        experiments=DMFCostanzo2016LargeDataset(root="data/scerevisiae/costanzo2016"),
+        experiments=DMFCostanzo2016Dataset(root="data/scerevisiae/costanzo2016"),
     )
 
     print(cell_dataset)

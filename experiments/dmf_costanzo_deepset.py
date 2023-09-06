@@ -8,11 +8,7 @@ from pytorch_lightning.loggers import WandbLogger
 import os.path as osp
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
-from torchcell.datasets.scerevisiae import (
-    DMFCostanzo2016Dataset,
-    DMFCostanzo2016SmallDataset,
-    DMFCostanzo2016LargeDataset,
-)
+from torchcell.datasets.scerevisiae import DMFCostanzo2016Dataset
 import torch
 from torchcell.models import DeepSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -62,15 +58,14 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Experiments
-    experiments = DMFCostanzo2016LargeDataset(
+    experiments = DMFCostanzo2016Dataset(
         preprocess="low_dmf_std",
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
-        subset_n=100000,
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e5")),
+        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell")),
         genome=genome,
         seq_embeddings=nt_dataset,
         experiments=experiments,

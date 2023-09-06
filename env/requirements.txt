@@ -9,6 +9,9 @@ scipy
 networkx
 dask
 
+# configuration
+hydra-core
+
 # torch stack
 torch
 torchvision

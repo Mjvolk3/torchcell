@@ -4,8 +4,10 @@
 # Test file: src/torchcell/datasets/test_cell.py
 import copy
 import json
+import logging
 import os
 import os.path as osp
+import pickle
 import re
 import shutil
 import zipfile
@@ -15,10 +17,12 @@ from concurrent.futures import ThreadPoolExecutor
 from os import environ
 from typing import List, Optional, Tuple, Union
 
+import lmdb
 import pandas as pd
 import torch
 from attrs import define
 from sklearn import experimental
+from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
 from torch_geometric.utils import subgraph
@@ -37,6 +41,8 @@ from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+log = logging.getLogger(__name__)
 
 
 class DiMultiGraph:
@@ -72,14 +78,16 @@ class CellDataset(Dataset):
 
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
+
+        # This is here because we can't run process without getting gene_set
+        super().__init__(root, transform, pre_transform, pre_filter)
+
         # Create the seq graph
         if self.seq_embeddings:
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
 
-        self._length = None
-        # This is here because we can't run process without getting gene_set
-        super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        # Handle LMDB database
+        self.env = lmdb.open(self.processed_paths[0], readonly=True, lock=False)
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -88,7 +96,7 @@ class CellDataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return [f"data_{i}.pt" for i in range(self.len())]
+        return "data.lmdb"
 
     # TODO think more on this method
     def create_seq_graph(self, seq_embeddings: BaseEmbeddingDataset) -> Data:
@@ -97,60 +105,64 @@ class CellDataset(Dataset):
         """
         # Extract and concatenate embeddings for all items in seq_embeddings
         embeddings = []
+        ids = []
         for item in seq_embeddings:
             keys = item["embeddings"].keys()
-            item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
-            embeddings.append(torch.cat(item_embeddings))
+            if item.id in self.genome.gene_set:
+                # TODO using self.genome.gene_set since this is the super set of genes.
+                ids.append(item.id)
+                item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
+                embeddings.append(torch.cat(item_embeddings))
 
         # Stack the embeddings to get a 2D tensor of shape [num_nodes, num_features]
         embeddings = torch.stack(embeddings, dim=0)
 
-        # Extract ids for all items in seq_embeddings
-        ids = [item["id"] for item in seq_embeddings]
-
         # Create a dummy edge_index (no edges)
         edge_index = torch.empty((2, 0), dtype=torch.long)
 
-        # Create a Data object with embeddings as node features, ids as an attribute, and the dummy edge_index
-        data = Data(x=embeddings, id=ids, edge_index=edge_index)
+        # Create a Data object with embeddings as node features
+        # ids as an attribute, and the dummy edge_index
+        data = Data(x=embeddings, ids=SortedSet(ids), edge_index=edge_index)
 
         return data
 
     def process(self):
-        # Start with an empty list for filtered data
-        self._length = None
-        # We call combined, becasue this is where joining will happen
         combined_data = []
         self.gene_set = self.compute_gene_set()
-        for data_item in tqdm(
-            self.experiments
-        ):  # assuming experiments contains the data
-            # Check if data_item's ID is in the gene_set
-            item_id_set = {i["id"] for i in data_item.genotype}
-            if len(item_id_set.intersection(self.gene_set)) > 0:
-                combined_data.append(data_item)
 
-        data_list = []
-        with ThreadPoolExecutor() as executor:
-            futures = []
+        # Precompute gene_set for faster lookup
+        gene_set = self.gene_set
+
+        # # Use list comprehension and any() for fast filtering
+        combined_data = [
+            item
+            for item in tqdm(self.experiments)
+            if any(i["id"] in gene_set for i in item.genotype)
+        ]
+
+        # TODO remove dev code
+        # combined_data = []
+        # for item in tqdm(self.experiments):
+        #     if any(i["id"] in gene_set for i in item.genotype):
+        #         combined_data.append(item)
+        #     if len(combined_data) >= 100:
+        #         break
+
+        log.info("creating lmdb database")
+        # Initialize LMDB environment
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+
+        with env.begin(write=True) as txn:
             for idx, item in tqdm(enumerate(combined_data)):
                 data = Data()
                 data.genotype = item["genotype"]
                 data.phenotype = item["phenotype"]
-                data_list.append(data)  # fill the data_list
 
-                # Submit each save operation to the thread pool
-                future = executor.submit(self.save_data, data, idx, self.processed_dir)
-                futures.append(future)
+                # Serialize the data object using pickle
+                serialized_data = pickle.dumps(data)
 
-        # Optionally, wait for all futures to complete
-        for future in futures:
-            future.result()
-
-    @staticmethod
-    def save_data(data, idx, processed_dir):
-        file_name = f"data_{idx}.pt"
-        torch.save(data, os.path.join(processed_dir, file_name))
+                # Save the serialized data in the LMDB environment
+                txn.put(f"{idx}".encode(), serialized_data)
 
     @property
     def gene_set(self):
@@ -199,21 +211,23 @@ class CellDataset(Dataset):
         """
         # Nodes to remove based on the genes in data.genotype
         nodes_to_remove = [
-            self.seq_graph.id.index(gene["id"])
+            self.seq_graph.ids.index(gene["id"])
             for gene in data.genotype
-            if gene["id"] in self.seq_graph.id
+            if gene["id"] in self.seq_graph.ids
         ]
-        nodes_to_remove_tensor = torch.tensor(nodes_to_remove, dtype=torch.long)
+        perturbed_nodes = torch.tensor(nodes_to_remove, dtype=torch.long)
 
         # Compute the nodes to keep
         all_nodes = torch.arange(self.seq_graph.num_nodes, dtype=torch.long)
         nodes_to_keep = torch.tensor(
-            [node for node in all_nodes if node not in nodes_to_remove_tensor],
+            [node for node in all_nodes if node not in perturbed_nodes],
             dtype=torch.long,
         )
 
         # Get the induced subgraph using the nodes to keep
-        return self.seq_graph.subgraph(nodes_to_keep)
+        subset_graph = self.seq_graph.subgraph(nodes_to_keep)
+        subset_graph.perturbed_nodes = perturbed_nodes
+        return subset_graph
 
     def _add_label(self, data: Data, original_data: Data) -> Data:
         """
@@ -231,47 +245,38 @@ class CellDataset(Dataset):
         return data
 
     def get(self, idx: int) -> Data:
-        file_path = os.path.join(self.processed_dir, f"data_{idx}.pt")
-        sample = torch.load(file_path)
+        with self.env.begin() as txn:
+            serialized_data = txn.get(f"{idx}".encode())
+            if serialized_data is None:
+                return None
+            data = pickle.loads(serialized_data)
+            if self.transform:
+                data = self.transform(data)
 
-        # Move to below?
-        if self.transform:
-            sample = self.transform(sample)
+            # Get the subset data using the separate method
+            subset_data = self._subset_graph(data)
 
-        # Get the subset data using the separate method
-        subset_data = self._subset_graph(sample)
+            # Add the dmf_fitness label to the subset_data
+            subset_data = self._add_label(subset_data, data)
 
-        # Add the dmf_fitness label to the subset_data
-        subset_data = self._add_label(subset_data, sample)
-
-        # TODO, can add tests, or build in asserts? not sure..
-        # assert len(self.seq_graph.x) - len(data.genotype) == len(
-        #     subset_data.x
-        # ), "nodes not removed"
-        # self._data_list[idx] = copy.copy(subset_data)
-
-        return subset_data
+            return subset_data
 
     def len(self):
-        if self._length is not None:
-            return self._length
+        lmdb_path = os.path.join(self.processed_dir, "data.lmdb")
+        if not os.path.exists(lmdb_path):
+            raise FileNotFoundError(f"LMDB directory does not exist: {lmdb_path}")
 
-        if osp.exists(self.processed_dir):
-            num_files = len(
-                [
-                    f
-                    for f in os.listdir(self.processed_dir)
-                    if re.match(r"data_\d+\.pt", f)
-                ]
-            )
-            self._length = num_files  # cache the length
-            return num_files
-        else:
-            return 0
+        env = lmdb.open(lmdb_path, readonly=True)
+        with env.begin() as txn:
+            return txn.stat()["entries"]
 
 
 def main():
+    # genome
     genome = SCerevisiaeGenome()
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
     # nucleotide transformer
     # nt_dataset = NucleotideTransformerDataset(
     #     root="data/scerevisiae/nucleotide_transformer_embed",
@@ -293,7 +298,7 @@ def main():
 
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell",
-        genome=SCerevisiaeGenome(),
+        genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=DMFCostanzo2016Dataset(root="data/scerevisiae/costanzo2016"),
     )

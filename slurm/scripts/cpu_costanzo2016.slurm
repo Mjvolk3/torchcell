@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --mem=64g
+#SBATCH --mem=32g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1    # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
-#SBATCH --job-name=sm_costanzo
-#SBATCH --time=2:00:00
+#SBATCH --job-name=TC
+#SBATCH --time=48:00:00
 #SBATCH --constraint="projects"
 #SBATCH --mail-user=mjvolk3@illinois.edus
 #SBATCH --mail-type="END"
@@ -25,4 +25,4 @@ conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 ####
-python src/torchcell/datasets/scerevisiae/costanzo2016_small.py
+python src/torchcell/datasets/scerevisiae/costanzo2016.py

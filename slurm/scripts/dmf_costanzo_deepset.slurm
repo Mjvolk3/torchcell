@@ -1,13 +1,13 @@
 #!/bin/bash
-#SBATCH --mem=64g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
+#SBATCH --mem=16g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=single
+#SBATCH --job-name=TC
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, Couldn't do 72 hrs.
-#SBATCH --constraint="projects"
+#SBATCH --constraint="projects&scratch"
 ### GPU options ###
 #SBATCH --gpus-per-node=1
 #SBATCH --gpu-bind=none     # <- or closest
@@ -30,7 +30,5 @@ module list  # job documentation and metadata
 conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
-srun python experiments/dmf_fitness.py
-
-
+srun python experiments/dmf_costanzo_deepset.py
 

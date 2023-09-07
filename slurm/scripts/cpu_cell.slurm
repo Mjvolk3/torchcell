@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=256g
+#SBATCH --mem=128g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=128    # <- match to OMP_NUM_THREADS

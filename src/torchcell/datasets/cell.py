@@ -273,7 +273,12 @@ class CellDataset(Dataset):
 
 def main():
     # genome
-    genome = SCerevisiaeGenome()
+    from dotenv import load_dotenv
+    import os.path as osp
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
     genome.drop_empty_go()
 
@@ -284,7 +289,7 @@ def main():
     #     transformer_model_name="nt_window_5979",
     # )
     fut3_dataset = FungalUtrTransformerDataset(
-        root="data/scerevisiae/fungal_utr_embed",
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
         genome=genome,
         transformer_model_name="fut_species_window_3utr_300_undersize",
     )
@@ -296,11 +301,17 @@ def main():
     # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
     seq_embeddings = fut3_dataset
 
+    # Experiments
+    experiments = DMFCostanzo2016Dataset(
+        preprocess="low_dmf_std",
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+    )
+
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell",
         genome=genome,
         seq_embeddings=seq_embeddings,
-        experiments=DMFCostanzo2016Dataset(root="data/scerevisiae/costanzo2016"),
+        experiments=experiments,
     )
 
     print(cell_dataset)

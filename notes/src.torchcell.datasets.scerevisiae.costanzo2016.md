@@ -2,7 +2,7 @@
 id: rzwif3bimldfvjdtmx712pp
 title: Costanzo2016
 desc: ''
-updated: 1693327847198
+updated: 1694056324081
 created: 1693327811119
 ---
 ## DmfCostanzoDataset Out of Memory Dataset
@@ -454,3 +454,13 @@ Added a property to skip `skip_file_exist_check` in [[src/torchcell/data/dataset
 def skip_file_exist_check(self) -> str:
     return False
 ```
+
+## Rough Plots of Gene Ontology Terms per Gene
+
+```python
+pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
+```
+
+Gene Ontology counts for genes in `SCerevisiaeGenome`.
+
+![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)

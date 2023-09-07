@@ -10,6 +10,7 @@ import os.path as osp
 import pickle
 import re
 import shutil
+import threading
 import zipfile
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -40,6 +41,7 @@ from torchcell.datasets.scerevisiae import (
 from torchcell.models import FungalUtrTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
+from torchcell.prof import prof, prof_input
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -127,12 +129,8 @@ class CellDataset(Dataset):
 
         return data
 
+    @prof
     def process(self):
-        import threading
-        from concurrent.futures import ThreadPoolExecutor
-
-        from tqdm import tqdm
-
         self.gene_set = self.compute_gene_set()
         gene_set = self.gene_set
 

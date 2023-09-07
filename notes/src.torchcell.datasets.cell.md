@@ -2,7 +2,7 @@
 id: mrcmzr371c14cekrqc5038c
 title: Cell
 desc: ''
-updated: 1693393943906
+updated: 1694103777965
 created: 1692304235385
 ---
 
@@ -30,3 +30,8 @@ Processing...
 13294910it [2:32:18, 1454.81it/s]
 Done!
 ```
+
+## Merging Dataset Issues
+
+- I think the cleanest way to avoid merging all together is first to just select the largest non-overlapping datasets. This way each data instances in the dataset can be a single graph and a single label. We could add the other labels associated with duplicate graphs to the same instance but then we have to loop over all graphs to find such instances. This seems like a problem that will inevitably show, but we can start like this and consider functions like `reduce` to join up duplicate graphs.
+- In the case of `dmf` data we also have `smf` available on all of the instances for each of contributing genes, but this would add two more graphs to each of the data instances, or I guess it could return three graphs. This starts to get confusing. I think that each data instance should only return one graph with possibly multiple labels.

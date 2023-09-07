@@ -5,13 +5,14 @@ import os
 import os.path as osp
 import time
 from asyncio import Task
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any, Optional
 
 import aiohttp
 from attrs import define, field
 from tqdm import tqdm
 
-from torchcell.data_prior.validation.locus_related.locus import (
+from torchcell.multidigraph.validation.locus_related.locus import (
     Alias,
     InteractionOverview,
     LocusData,
@@ -26,21 +27,13 @@ from torchcell.data_prior.validation.locus_related.locus import (
 @define
 class Gene:
     locusID: str = "YAL001C"
-    is_validated: bool = field(
-        default=True,
-        init=True,
-        repr=False,
-    )
+    is_validated: bool = field(default=True, init=True, repr=False)
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
     headers: dict[str, str] = field(default={"accept": "application/json"})
     base_data_dir: str = "data/sgd/genes"
     save_path: str = field(default=None, init=False, repr=True)
     _data: dict[str, dict[Any, Any] | list[Any]] = field(factory=dict, init=False)
-    _data_task: Optional[Task[Any]] = field(
-        default=None,
-        init=False,
-        repr=False,
-    )
+    _data_task: Task[Any] | None = field(default=None, init=False, repr=False)
 
     def __attrs_post_init__(self) -> None:
         if not osp.exists(self.base_data_dir):
@@ -96,7 +89,7 @@ class Gene:
     def read(self) -> dict[str, dict[Any, Any] | list[Any]]:
         if not osp.exists(self.save_path):
             raise ValueError(f"File {self.save_path} does not exist")
-        with open(self.save_path, "r") as f:
+        with open(self.save_path) as f:
             data_in = json.load(f)
             if not isinstance(data_in, dict):
                 raise ValueError(f"File {self.save_path} is not a dict")
@@ -179,9 +172,7 @@ async def process_gene(gene: Gene, progress_bar: Any) -> dict[Any, Any] | list[A
 
 
 async def download_genes(
-    locus_ids: list[str],
-    gene_factory: Callable[[str], Gene],
-    is_validated: bool,
+    locus_ids: list[str], gene_factory: Callable[[str], Gene], is_validated: bool
 ) -> None:
     with tqdm(total=len(locus_ids)) as progress_bar:
         await asyncio.gather(
@@ -210,6 +201,7 @@ def main() -> None:
         "YPR195C",
         "YPR193C",
         "YPR192W",
+        "YLR153C",
     ]
     asyncio.run(
         download_genes(locus_ids, create_gene, is_validated=False)

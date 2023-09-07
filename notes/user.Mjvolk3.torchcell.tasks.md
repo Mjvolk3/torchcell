@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694032588188
+updated: 1694048070292
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -12,11 +12,20 @@ created: 1690514887023m
 - [x] Try to archive files in `5e5` at a time. → I was able to write the entire `lmdb` before this finished.
 - [x] Follow up on Jira issue → met with @Craig-Steffen → Suggestion was to write files on Delta to `/tmp` which is essentially an `ssd`, tar on node, then copy to parallel file system `/scrath`. First trying to write database on `delta`.
 - [x] Write database on `delta` → This took 24 mins. Very fast!
-- [ ] Remove mitochondria genes.
+- [x] Remove mitochondria genes. → added methods to [[src/torchcell/sequence/genome/scerevisiae/s288c.py]] `drop_chrmt()` and `drop_empty_go`
+- [x] Move sequence download into scerevisiae genome
+- [ ] Create cell dataset locally.
 - [ ] Review run and launch another exp.
 - [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
 - [ ] Gene ontology for `DCell`
 - [ ] Add in gene essentiality dataset.
+- [ ] Add plotting functionality on genomes:
+
+```python
+pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
+```
+
+![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
 
 ## 2023.09.05
 

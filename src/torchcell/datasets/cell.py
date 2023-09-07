@@ -22,6 +22,7 @@ import pandas as pd
 import torch
 from attrs import define
 from sklearn import experimental
+from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
 from torch_geometric.utils import subgraph
@@ -77,14 +78,16 @@ class CellDataset(Dataset):
 
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
+
+        # This is here because we can't run process without getting gene_set
+        super().__init__(root, transform, pre_transform, pre_filter)
+
         # Create the seq graph
         if self.seq_embeddings:
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
 
-        self._length = None
-        # This is here because we can't run process without getting gene_set
-        super().__init__(root, transform, pre_transform, pre_filter)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        # Handle LMDB database
+        self.env = lmdb.open(self.processed_paths[0], readonly=True, lock=False)
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -102,39 +105,48 @@ class CellDataset(Dataset):
         """
         # Extract and concatenate embeddings for all items in seq_embeddings
         embeddings = []
+        ids = []
         for item in seq_embeddings:
             keys = item["embeddings"].keys()
-            item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
-            embeddings.append(torch.cat(item_embeddings))
+            if item.id in self.genome.gene_set:
+                # TODO using self.genome.gene_set since this is the super set of genes.
+                ids.append(item.id)
+                item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
+                embeddings.append(torch.cat(item_embeddings))
 
         # Stack the embeddings to get a 2D tensor of shape [num_nodes, num_features]
         embeddings = torch.stack(embeddings, dim=0)
 
-        # Extract ids for all items in seq_embeddings
-        ids = [item["id"] for item in seq_embeddings]
-
         # Create a dummy edge_index (no edges)
         edge_index = torch.empty((2, 0), dtype=torch.long)
 
-        # Create a Data object with embeddings as node features, ids as an attribute, and the dummy edge_index
-        data = Data(x=embeddings, id=ids, edge_index=edge_index)
+        # Create a Data object with embeddings as node features
+        # ids as an attribute, and the dummy edge_index
+        data = Data(x=embeddings, ids=SortedSet(ids), edge_index=edge_index)
 
         return data
 
     def process(self):
-        self._length = None
         combined_data = []
         self.gene_set = self.compute_gene_set()
 
         # Precompute gene_set for faster lookup
         gene_set = self.gene_set
 
-        # Use list comprehension and any() for faster filtering
+        # # Use list comprehension and any() for fast filtering
         combined_data = [
             item
             for item in tqdm(self.experiments)
             if any(i["id"] in gene_set for i in item.genotype)
         ]
+
+        # TODO remove dev code
+        # combined_data = []
+        # for item in tqdm(self.experiments):
+        #     if any(i["id"] in gene_set for i in item.genotype):
+        #         combined_data.append(item)
+        #     if len(combined_data) >= 100:
+        #         break
 
         log.info("creating lmdb database")
         # Initialize LMDB environment
@@ -199,21 +211,23 @@ class CellDataset(Dataset):
         """
         # Nodes to remove based on the genes in data.genotype
         nodes_to_remove = [
-            self.seq_graph.id.index(gene["id"])
+            self.seq_graph.ids.index(gene["id"])
             for gene in data.genotype
-            if gene["id"] in self.seq_graph.id
+            if gene["id"] in self.seq_graph.ids
         ]
-        nodes_to_remove_tensor = torch.tensor(nodes_to_remove, dtype=torch.long)
+        perturbed_nodes = torch.tensor(nodes_to_remove, dtype=torch.long)
 
         # Compute the nodes to keep
         all_nodes = torch.arange(self.seq_graph.num_nodes, dtype=torch.long)
         nodes_to_keep = torch.tensor(
-            [node for node in all_nodes if node not in nodes_to_remove_tensor],
+            [node for node in all_nodes if node not in perturbed_nodes],
             dtype=torch.long,
         )
 
         # Get the induced subgraph using the nodes to keep
-        return self.seq_graph.subgraph(nodes_to_keep)
+        subset_graph = self.seq_graph.subgraph(nodes_to_keep)
+        subset_graph.perturbed_nodes = perturbed_nodes
+        return subset_graph
 
     def _add_label(self, data: Data, original_data: Data) -> Data:
         """
@@ -231,8 +245,7 @@ class CellDataset(Dataset):
         return data
 
     def get(self, idx: int) -> Data:
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), readonly=True)
-        with env.begin() as txn:
+        with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
@@ -259,7 +272,11 @@ class CellDataset(Dataset):
 
 
 def main():
+    # genome
     genome = SCerevisiaeGenome()
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
     # nucleotide transformer
     # nt_dataset = NucleotideTransformerDataset(
     #     root="data/scerevisiae/nucleotide_transformer_embed",
@@ -281,7 +298,7 @@ def main():
 
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell",
-        genome=SCerevisiaeGenome(),
+        genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=DMFCostanzo2016Dataset(root="data/scerevisiae/costanzo2016"),
     )

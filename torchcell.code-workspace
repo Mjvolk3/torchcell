@@ -180,6 +180,11 @@
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
                 "problemMatcher": []
+                "presentation": {
+                    "reveal": "never",
+                    "panel": "shared",
+                    "close": true
+                }
             },
             //python
             {

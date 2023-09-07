@@ -2,10 +2,30 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694048070292
+updated: 1694105847492
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.09.07
+
+- [ ] Run test run on `cell.py` on interactive cpu. → `20it/s` very slow, M1 is nearly `2000 it/s`
+- [ ] Filter in cell dataset talking a terribly long time. Can Globus transfer for now but should figure out how we can speed up filtering.
+- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/src.torchcell.datasets.cell#merging-dataset-issues]]
+- [ ] Launch experiment on whole dataset `dmf`
+- [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
+- [ ] Gene ontology for `DCell`
+- [ ] Consider making an `smf` dataset that comes from the `dmf` data.
+- [ ] Write `DCell` network as perturbation to GO graph
+- [ ] Add in gene essentiality dataset `smf`
+- [ ] Add in synthetic lethality dataset `dmf` [synthetic lethality db](https://synlethdb.sist.shanghaitech.edu.cn/v2/#/) this doesn't look like it has media conditions.
+- [ ] Rewrite single cell fitness for `lmdb`
+- [ ] Work on merge single cell fitness data
+- [ ] Add triple mutant fitness dataset `tmf`
+- [ ] Add gene expression for `smf` data
+- [ ] Add gene expression data for `dmf` data
+- [ ] Add morphology dataset
+- [ ] Add plotting functionality on genomes
 
 ## 2023.09.06
 
@@ -14,18 +34,22 @@ created: 1690514887023m
 - [x] Write database on `delta` → This took 24 mins. Very fast!
 - [x] Remove mitochondria genes. → added methods to [[src/torchcell/sequence/genome/scerevisiae/s288c.py]] `drop_chrmt()` and `drop_empty_go`
 - [x] Move sequence download into scerevisiae genome
-- [ ] Create cell dataset locally.
-- [ ] Review run and launch another exp.
-- [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
-- [ ] Gene ontology for `DCell`
-- [ ] Add in gene essentiality dataset.
-- [ ] Add plotting functionality on genomes:
+- [x] Correct `go` methods [[src/torchcell/sequence/genome/scerevisiae/s288c.py]]
+- [x] Create cell dataset locally. → Added `lmdb`
+- [x] Review run and launch another exp. → Reviewed but didn't launch
+- 🔲 WT difference for loss function... thinking dataset should have a reference object at highest level.
+- 🔲 Gene ontology for `DCell`
+- 🔲 Add in gene essentiality dataset.
+- 🔲 Add plotting functionality on genomes [[Rough Plots of Gene Ontology Terms per Gene|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#rough-plots-of-gene-ontology-terms-per-gene]]
+- [ ] Filtering cell takes a long time on `Delta` filter is `123.78it/s` on `M1` filter is `2000it/s`. Try to speed up.
 
 ```python
-pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
+combined_data = [
+    item
+    for item in tqdm(self.experiments)
+    if any(i["id"] in gene_set for i in item.genotype
+]
 ```
-
-![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
 
 ## 2023.09.05
 

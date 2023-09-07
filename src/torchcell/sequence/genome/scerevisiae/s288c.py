@@ -272,7 +272,7 @@ class SCerevisiaeGenome(Genome):
             dbfn=osp.join(self.data_root, "data.db"),
             force=True,
             keep_order=True,
-            merge_strategy="merge",
+            merge_strategy="merge",  # "merge"
             sort_attribute_values=True,
         )
         # Read the fasta file
@@ -335,105 +335,100 @@ class SCerevisiaeGenome(Genome):
             os.remove(gz_file)  # remove the original .gz file
 
     def remove_deprecated_go_terms(self):
-        try:
-            # Create a list to hold updated features
-            updated_features = []
+        # Create a list to hold updated features
+        updated_features = []
 
-            # Iterate over each feature in the database
-            for feature in self.db.features_of_type("gene"):
-                # Check if the feature has the "Ontology_term" attribute
-                if "Ontology_term" in feature.attributes:
-                    # Filter out deprecated GO terms
-                    valid_go_terms = [
-                        term
-                        for term in feature.attributes["Ontology_term"]
-                        if term.startswith("GO:")
-                        and (
-                            term not in self.go_dag or not self.go_dag[term].is_obsolete
-                        )
-                    ]
-                    # Update the "Ontology_term" attribute for the feature
-                    if valid_go_terms:
-                        feature.attributes["Ontology_term"] = valid_go_terms
-                    else:
-                        del feature.attributes["Ontology_term"]
+        # Iterate over each feature in the database
+        for feature in self.db.features_of_type("gene"):
+            # Check if the feature has the "Ontology_term" attribute
+            if "Ontology_term" in feature.attributes:
+                # Filter out deprecated GO terms
+                valid_go_terms = []
+                for term in feature.attributes["Ontology_term"]:
+                    if term.startswith("GO:"):
+                        if term not in self.go_dag:
+                            print(f"Removing GO term not found in go_dag: {term}")
+                            continue
+                        if self.go_dag[term].is_obsolete:
+                            print(f"Removing obsolete GO term: {term}")
+                            continue
+                        valid_go_terms.append(term)
 
-                    # Add the updated feature to the list
-                    updated_features.append(feature)
+                # Update the "Ontology_term" attribute for the feature
+                if valid_go_terms:
+                    feature.attributes["Ontology_term"] = valid_go_terms
+                else:
+                    del feature.attributes["Ontology_term"]
 
-            # Update all features in the database at once
-            self.db.update(updated_features, merge_strategy="error")
+                # Add the updated feature to the list
+                updated_features.append(feature)
 
-            # Commit the changes to the database
-            self.db.conn.commit()
+        # Update all features in the database at once
+        self.db.update(updated_features, merge_strategy="replace")
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            self.db.conn.rollback()  # Rollback changes in case of an error
-
-        # Do not close the database connection here if you intend to use it later
+        # Commit the changes to the database
+        self.db.conn.commit()
 
     @property
     def go(self) -> SortedSet[str]:
-        go_set = SortedSet()  # Initialize an empty set to hold all GO terms
-        for gene_feature in self.db.features_of_type("gene"):
-            if "Ontology_term" in gene_feature.attributes:
-                go_terms_for_gene = [
-                    term
-                    for term in gene_feature.attributes["Ontology_term"]
-                    if term.startswith("GO:")
-                ]
-                go_set.update(go_terms_for_gene)
+        all_go = SortedSet()
 
-        return go_set
+        # Iterate through all genes in self.gene_set
+        for gene_id in self.gene_set:
+            gene = self[gene_id]  # Retrieve the gene object
+
+            # Use the go attribute of the gene object if it exists and is not None
+            if gene and hasattr(gene, "go") and gene.go is not None:
+                all_go.update(gene.go)
+
+        return all_go
 
     def go_subset(self, gene_set: SortedSet[str]) -> SortedSet[str]:
         go_subset = SortedSet()
-        for gene_feature in self.db.features_of_type("gene"):
-            if gene_feature.id in gene_set:
-                if "Ontology_term" in gene_feature.attributes:
-                    go_terms_for_gene = [
-                        term
-                        for term in gene_feature.attributes["Ontology_term"]
-                        if term.startswith("GO:")
-                    ]
-                    go_subset.update(go_terms_for_gene)
+
+        # Iterate through the provided subset of genes
+        for gene_id in gene_set:
+            gene = self[gene_id]  # Retrieve the gene object
+
+            # Use the go attribute of the gene object if it exists and is not None
+            if gene and hasattr(gene, "go") and gene.go is not None:
+                go_subset.update(gene.go)
+
         return go_subset
 
     @property
     def go_genes(self) -> SortedDict[str, SortedSet[str]]:
         go_genes_dict = SortedDict()
-        for gene_feature in self.db.features_of_type("gene"):
-            if "Ontology_term" in gene_feature.attributes:
-                go_terms_for_gene = [
-                    term
-                    for term in gene_feature.attributes["Ontology_term"]
-                    if term.startswith("GO:")
-                ]
-                gene_id = gene_feature.id
-                for go_term in go_terms_for_gene:
+
+        # Iterate through all genes in self.gene_set
+        for gene_id in self.gene_set:
+            gene = self[gene_id]  # Retrieve the gene object
+
+            # Use the go attribute of the gene object if it exists and is not None
+            if gene and hasattr(gene, "go") and gene.go is not None:
+                for go_term in gene.go:
                     if go_term not in go_genes_dict:
                         go_genes_dict[go_term] = SortedSet()
                     go_genes_dict[go_term].add(gene_id)
+
         return go_genes_dict
 
     def go_subset_genes(
         self, gene_set: SortedSet[str]
     ) -> SortedDict[str, SortedSet[str]]:
         go_subset_genes_dict = SortedDict()
-        for gene_feature in self.db.features_of_type("gene"):
-            if gene_feature.id in gene_set:
-                if "Ontology_term" in gene_feature.attributes:
-                    go_terms_for_gene = [
-                        term
-                        for term in gene_feature.attributes["Ontology_term"]
-                        if term.startswith("GO:")
-                    ]
-                    gene_id = gene_feature.id
-                    for go_term in go_terms_for_gene:
-                        if go_term not in go_subset_genes_dict:
-                            go_subset_genes_dict[go_term] = SortedSet()
-                        go_subset_genes_dict[go_term].add(gene_id)
+
+        # Iterate through the provided subset of genes
+        for gene_id in gene_set:
+            gene = self[gene_id]  # Retrieve the gene object
+
+            # Use the go attribute of the gene object if it exists and is not None
+            if gene and hasattr(gene, "go") and gene.go is not None:
+                for go_term in gene.go:
+                    if go_term not in go_subset_genes_dict:
+                        go_subset_genes_dict[go_term] = SortedSet()
+                    go_subset_genes_dict[go_term].add(gene_id)
+
         return go_subset_genes_dict
 
     def get_seq(
@@ -584,7 +579,8 @@ def main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
-    # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters
+    genome.go
+    # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters # 4903
     print(
         genome["YFL039C"]
     )  # Replace with valid gene... we only support systematic names

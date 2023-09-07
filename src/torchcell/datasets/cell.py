@@ -129,77 +129,77 @@ class CellDataset(Dataset):
 
         return data
 
-    @prof
-    def process(self):
-        self.gene_set = self.compute_gene_set()
-        gene_set = self.gene_set
-
-        # Function to filter experiments
-        def filter_experiment(item):
-            result = any(i["id"] in gene_set for i in item.genotype)
-            with lock:
-                pbar.update(1)
-            return result
-
-        # Initialize a thread-safe lock and a tqdm progress bar
-        lock = threading.Lock()
-        pbar = tqdm(total=len(self.experiments))
-
-        # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor() as executor:
-            # Use map to efficiently filter experiments
-            filtered_experiments = list(
-                filter(None, executor.map(filter_experiment, self.experiments))
-            )
-
-        pbar.close()
-
-        # Your existing code to write to LMDB
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-        with env.begin(write=True) as txn:
-            for idx, data in enumerate(filtered_experiments):
-                serialized_data = pickle.dumps(
-                    data
-                )  # Consider using a faster serialization method
-                txn.put(f"{idx}".encode(), serialized_data)
-
+    # @prof_input
     # def process(self):
-    #     combined_data = []
     #     self.gene_set = self.compute_gene_set()
-
-    #     # Precompute gene_set for faster lookup
     #     gene_set = self.gene_set
 
-    #     # # Use list comprehension and any() for fast filtering
-    #     combined_data = [
-    #         item
-    #         for item in tqdm(self.experiments)
-    #         if any(i["id"] in gene_set for i in item.genotype)
-    #     ]
+    #     # Function to filter experiments
+    #     def filter_experiment(item):
+    #         result = any(i["id"] in gene_set for i in item.genotype)
+    #         with lock:
+    #             pbar.update(1)
+    #         return result
 
-    #     # TODO remove dev code
-    #     # combined_data = []
-    #     # for item in tqdm(self.experiments):
-    #     #     if any(i["id"] in gene_set for i in item.genotype):
-    #     #         combined_data.append(item)
-    #     #     if len(combined_data) >= 100:
-    #     #         break
+    #     # Initialize a thread-safe lock and a tqdm progress bar
+    #     lock = threading.Lock()
+    #     pbar = tqdm(total=len(self.experiments))
 
-    #     log.info("creating lmdb database")
-    #     # Initialize LMDB environment
+    #     # Use ThreadPoolExecutor for parallel processing
+    #     with ThreadPoolExecutor() as executor:
+    #         # Use map to efficiently filter experiments
+    #         filtered_experiments = list(
+    #             filter(None, executor.map(filter_experiment, self.experiments))
+    #         )
+
+    #     pbar.close()
+
+    #     # Your existing code to write to LMDB
     #     env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-
     #     with env.begin(write=True) as txn:
-    #         for idx, item in tqdm(enumerate(combined_data)):
-    #             data = Data()
-    #             data.genotype = item["genotype"]
-    #             data.phenotype = item["phenotype"]
-
-    #             # Serialize the data object using pickle
-    #             serialized_data = pickle.dumps(data)
-
-    #             # Save the serialized data in the LMDB environment
+    #         for idx, data in enumerate(filtered_experiments):
+    #             serialized_data = pickle.dumps(
+    #                 data
+    #             )  # Consider using a faster serialization method
     #             txn.put(f"{idx}".encode(), serialized_data)
+
+    def process(self):
+        combined_data = []
+        self.gene_set = self.compute_gene_set()
+
+        # Precompute gene_set for faster lookup
+        gene_set = self.gene_set
+
+        # # Use list comprehension and any() for fast filtering
+        combined_data = [
+            item
+            for item in tqdm(self.experiments)
+            if any(i["id"] in gene_set for i in item.genotype)
+        ]
+
+        # TODO remove dev code
+        # combined_data = []
+        # for item in tqdm(self.experiments):
+        #     if any(i["id"] in gene_set for i in item.genotype):
+        #         combined_data.append(item)
+        #     if len(combined_data) >= 100:
+        #         break
+
+        log.info("creating lmdb database")
+        # Initialize LMDB environment
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+
+        with env.begin(write=True) as txn:
+            for idx, item in tqdm(enumerate(combined_data)):
+                data = Data()
+                data.genotype = item["genotype"]
+                data.phenotype = item["phenotype"]
+
+                # Serialize the data object using pickle
+                serialized_data = pickle.dumps(data)
+
+                # Save the serialized data in the LMDB environment
+                txn.put(f"{idx}".encode(), serialized_data)
 
     # def process(self):
     #     self.gene_set = self.compute_gene_set()
@@ -340,8 +340,9 @@ class CellDataset(Dataset):
 
 def main():
     # genome
-    from dotenv import load_dotenv
     import os.path as osp
+
+    from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -373,9 +374,9 @@ def main():
         preprocess="low_dmf_std",
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
     )
-
+    # experiments = experiments[:2]
     cell_dataset = CellDataset(
-        root="data/scerevisiae/cell_dl",
+        root="data/scerevisiae/cell",
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,

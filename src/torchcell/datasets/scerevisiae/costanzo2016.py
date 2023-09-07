@@ -204,6 +204,7 @@ class DMFCostanzo2016Dataset(Dataset):
                     "Or define a new root."
                 )
         super().__init__(root, transform, pre_transform)
+        self.env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), readonly=True)
 
     @property
     def skip_process_file_exist(self):
@@ -419,9 +420,16 @@ class DMFCostanzo2016Dataset(Dataset):
             raise FileNotFoundError(f"LMDB directory does not exist: {lmdb_path}")
 
         env = lmdb.open(lmdb_path, readonly=True)
+        # @prof
+        # @prof
+        # @prof
+        # @prof
         with env.begin() as txn:
             return txn.stat()["entries"]
 
+    # @prof
+    # @prof
+    # @prof
     def get(self, idx):
         env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), readonly=True)
         with env.begin() as txn:
@@ -475,14 +483,16 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
+    os.makedirs(
+        osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"), exist_ok=True
+    )
     # dmf_dataset = DMFCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     #     subset_n=100000,
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DMFCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"),
         preprocess="low_dmf_std",
     )
     print(dmf_dataset)

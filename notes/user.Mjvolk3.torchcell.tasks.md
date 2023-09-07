@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694043332881
+updated: 1694048070292
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -14,10 +14,18 @@ created: 1690514887023m
 - [x] Write database on `delta` → This took 24 mins. Very fast!
 - [x] Remove mitochondria genes. → added methods to [[src/torchcell/sequence/genome/scerevisiae/s288c.py]] `drop_chrmt()` and `drop_empty_go`
 - [x] Move sequence download into scerevisiae genome
+- [ ] Create cell dataset locally.
 - [ ] Review run and launch another exp.
 - [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
 - [ ] Gene ontology for `DCell`
 - [ ] Add in gene essentiality dataset.
+- [ ] Add plotting functionality on genomes:
+
+```python
+pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
+```
+
+![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
 
 ## 2023.09.05
 

@@ -25,6 +25,7 @@ from sklearn import experimental
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
+from torch_geometric.loader import DataLoader
 from torch_geometric.utils import subgraph
 from tqdm import tqdm
 
@@ -126,6 +127,44 @@ class CellDataset(Dataset):
 
         return data
 
+    def process(self):
+        import threading
+        from concurrent.futures import ThreadPoolExecutor
+
+        from tqdm import tqdm
+
+        self.gene_set = self.compute_gene_set()
+        gene_set = self.gene_set
+
+        # Function to filter experiments
+        def filter_experiment(item):
+            result = any(i["id"] in gene_set for i in item.genotype)
+            with lock:
+                pbar.update(1)
+            return result
+
+        # Initialize a thread-safe lock and a tqdm progress bar
+        lock = threading.Lock()
+        pbar = tqdm(total=len(self.experiments))
+
+        # Use ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor() as executor:
+            # Use map to efficiently filter experiments
+            filtered_experiments = list(
+                filter(None, executor.map(filter_experiment, self.experiments))
+            )
+
+        pbar.close()
+
+        # Your existing code to write to LMDB
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+        with env.begin(write=True) as txn:
+            for idx, data in enumerate(filtered_experiments):
+                serialized_data = pickle.dumps(
+                    data
+                )  # Consider using a faster serialization method
+                txn.put(f"{idx}".encode(), serialized_data)
+
     # def process(self):
     #     combined_data = []
     #     self.gene_set = self.compute_gene_set()
@@ -163,35 +202,36 @@ class CellDataset(Dataset):
 
     #             # Save the serialized data in the LMDB environment
     #             txn.put(f"{idx}".encode(), serialized_data)
-    def process(self):
-        self.gene_set = self.compute_gene_set()
-        gene_set = self.gene_set
 
-        # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor() as executor:
-            # Use filter and map to efficiently filter and process experiments
-            filtered_experiments = filter(
-                lambda item: any(i["id"] in gene_set for i in item.genotype),
-                self.experiments,
-            )
-            processed_data = list(
-                executor.map(self.process_experiment, filtered_experiments)
-            )
+    # def process(self):
+    #     self.gene_set = self.compute_gene_set()
+    #     gene_set = self.gene_set
 
-        # Write to LMDB in one go (or in larger batches)
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-        with env.begin(write=True) as txn:
-            for idx, data in enumerate(processed_data):
-                serialized_data = pickle.dumps(
-                    data
-                )  # Consider using a faster serialization method
-                txn.put(f"{idx}".encode(), serialized_data)
+    #     # Use ThreadPoolExecutor for parallel processing
+    #     with ThreadPoolExecutor() as executor:
+    #         # Use filter and map to efficiently filter and process experiments
+    #         filtered_experiments = filter(
+    #             lambda item: any(i["id"] in gene_set for i in item.genotype),
+    #             self.experiments,
+    #         )
+    #         processed_data = list(
+    #             executor.map(self.process_experiment, filtered_experiments)
+    #         )
 
-    def process_experiment(self, experiment):
-        data = Data()
-        data.genotype = experiment["genotype"]
-        data.phenotype = experiment["phenotype"]
-        return data
+    #     # Write to LMDB in one go (or in larger batches)
+    #     env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+    #     with env.begin(write=True) as txn:
+    #         for idx, data in enumerate(processed_data):
+    #             serialized_data = pickle.dumps(
+    #                 data
+    #             )  # Consider using a faster serialization method
+    #             txn.put(f"{idx}".encode(), serialized_data)
+
+    # def process_experiment(self, experiment):
+    #     data = Data()
+    #     data.genotype = experiment["genotype"]
+    #     data.phenotype = experiment["phenotype"]
+    #     return data
 
     @property
     def gene_set(self):
@@ -326,7 +366,7 @@ def main():
     seq_embeddings = fut3_dataset
 
     cell_dataset = CellDataset(
-        root="data/scerevisiae/cell",
+        root="data/scerevisiae/cell_dl",
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=DMFCostanzo2016Dataset(root="data/scerevisiae/costanzo2016"),

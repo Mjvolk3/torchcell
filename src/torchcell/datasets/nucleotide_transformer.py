@@ -3,7 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/nucleotide_transformer.py
 # Test file: tests/torchcell/datasets/test_nucleotide_transformer.py
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Optional
 
 import torch
 from torch_geometric.data import Data, InMemoryDataset
@@ -34,9 +35,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transformer_model_name: Optional[str] = None,
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
+        transformer_model_name: str | None = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
     ):
         super().__init__(root, transform, pre_transform)
         self.genome = genome
@@ -50,6 +51,8 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
                 self.transformer = self.initialize_transformer()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
+        # HACK for data loader
+        del self.genome
 
     def initialize_transformer(self):
         if self.transformer_model_name:
@@ -78,8 +81,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
                 )
 
             embeddings = self.transformer.embed(
-                [dna_selection.seq],
-                mean_embedding=True,
+                [dna_selection.seq], mean_embedding=True
             )
 
             # Create or update the dna_window dictionary

@@ -90,6 +90,8 @@ class Dataset(torch.utils.data.Dataset, ABC):
         self.pre_transform = pre_transform
         self.pre_filter = pre_filter
         self.log = log
+        # BOOK once we run self._indices, it computes the len
+        # if using lmdb this will instantiate the lmdb and cause issues with pickling
         self._indices: Sequence | None = None
 
         if self.has_download:

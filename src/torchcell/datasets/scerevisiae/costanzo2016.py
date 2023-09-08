@@ -204,6 +204,7 @@ class DMFCostanzo2016Dataset(Dataset):
                     "Or define a new root."
                 )
         super().__init__(root, transform, pre_transform)
+        self.env = None
 
     @property
     def skip_process_file_exist(self):
@@ -232,6 +233,16 @@ class DMFCostanzo2016Dataset(Dataset):
         for filename in os.listdir(sub_dir):
             shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
         os.rmdir(sub_dir)
+
+    def _init_db(self):
+        """Initialize the LMDB environment."""
+        self.env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
 
     def process(self):
         self._length = None
@@ -413,18 +424,29 @@ class DMFCostanzo2016Dataset(Dataset):
         else:
             return None
 
-    def len(self):
-        lmdb_path = os.path.join(self.processed_dir, "data.lmdb")
-        if not os.path.exists(lmdb_path):
-            raise FileNotFoundError(f"LMDB directory does not exist: {lmdb_path}")
+    def len(self) -> int:
+        if self.env is None:
+            self._init_db()
 
-        env = lmdb.open(lmdb_path, readonly=True)
-        with env.begin() as txn:
-            return txn.stat()["entries"]
+        with self.env.begin() as txn:
+            length = txn.stat()["entries"]
+
+        # Must be closed for dataloader num_workers > 0
+        self.close_lmdb()
+
+        return length
+
+    def close_lmdb(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
 
     def get(self, idx):
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), readonly=True)
-        with env.begin() as txn:
+        """Initialize LMDB if it hasn't been initialized yet."""
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
@@ -475,14 +497,16 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
+    os.makedirs(
+        osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"), exist_ok=True
+    )
     # dmf_dataset = DMFCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     #     subset_n=100000,
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DMFCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"),
         preprocess="low_dmf_std",
     )
     print(dmf_dataset)

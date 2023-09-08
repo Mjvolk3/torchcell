@@ -13,7 +13,7 @@ class CellDataModule(pl.LightningDataModule):
         super().__init__()
         self.dataset = dataset
         self.batch_size = batch_size
-        self.num_workers = num_workers
+        self.num_workers = num_workers  # BUG
 
     def setup(self, stage=None):
         # Split the dataset into train, val, and test sets

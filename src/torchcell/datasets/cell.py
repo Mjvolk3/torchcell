@@ -64,7 +64,8 @@ class CellDataset(Dataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/cell",
-        genome: Genome = None,
+        # genome: Genome = None,
+        genome_gene_set: SortedSet = None,
         seq_embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
         transform: Callable | None = None,
@@ -72,7 +73,12 @@ class CellDataset(Dataset):
         pre_filter: Callable | None = None,
     ):
         self._gene_set = None
-        self.genome = genome
+        # HACK start
+        # Extract data from genome object, then remove for pickling with data loader
+        self.genome_gene_set = genome_gene_set
+        # del genome
+        # self.genome = None
+        # HACK end
         self.seq_embeddings = seq_embeddings
         self.experiments = experiments
         self.dimultigraph: DiMultiGraph | None = None
@@ -88,9 +94,8 @@ class CellDataset(Dataset):
         # Create the seq graph
         if self.seq_embeddings:
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
-
-        # Handle LMDB database
-        self.env = lmdb.open(self.processed_paths[0], readonly=True, lock=False)
+        # LMDB env
+        self.env = None
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -111,7 +116,7 @@ class CellDataset(Dataset):
         ids = []
         for item in seq_embeddings:
             keys = item["embeddings"].keys()
-            if item.id in self.genome.gene_set:
+            if item.id in self.genome_gene_set:
                 # TODO using self.genome.gene_set since this is the super set of genes.
                 ids.append(item.id)
                 item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
@@ -129,40 +134,6 @@ class CellDataset(Dataset):
 
         return data
 
-    # @prof_input
-    # def process(self):
-    #     self.gene_set = self.compute_gene_set()
-    #     gene_set = self.gene_set
-
-    #     # Function to filter experiments
-    #     def filter_experiment(item):
-    #         result = any(i["id"] in gene_set for i in item.genotype)
-    #         with lock:
-    #             pbar.update(1)
-    #         return result
-
-    #     # Initialize a thread-safe lock and a tqdm progress bar
-    #     lock = threading.Lock()
-    #     pbar = tqdm(total=len(self.experiments))
-
-    #     # Use ThreadPoolExecutor for parallel processing
-    #     with ThreadPoolExecutor() as executor:
-    #         # Use map to efficiently filter experiments
-    #         filtered_experiments = list(
-    #             filter(None, executor.map(filter_experiment, self.experiments))
-    #         )
-
-    #     pbar.close()
-
-    #     # Your existing code to write to LMDB
-    #     env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-    #     with env.begin(write=True) as txn:
-    #         for idx, data in enumerate(filtered_experiments):
-    #             serialized_data = pickle.dumps(
-    #                 data
-    #             )  # Consider using a faster serialization method
-    #             txn.put(f"{idx}".encode(), serialized_data)
-
     def process(self):
         combined_data = []
         self.gene_set = self.compute_gene_set()
@@ -176,14 +147,6 @@ class CellDataset(Dataset):
             for item in tqdm(self.experiments)
             if any(i["id"] in gene_set for i in item.genotype)
         ]
-
-        # TODO remove dev code
-        # combined_data = []
-        # for item in tqdm(self.experiments):
-        #     if any(i["id"] in gene_set for i in item.genotype):
-        #         combined_data.append(item)
-        #     if len(combined_data) >= 100:
-        #         break
 
         log.info("creating lmdb database")
         # Initialize LMDB environment
@@ -200,36 +163,6 @@ class CellDataset(Dataset):
 
                 # Save the serialized data in the LMDB environment
                 txn.put(f"{idx}".encode(), serialized_data)
-
-    # def process(self):
-    #     self.gene_set = self.compute_gene_set()
-    #     gene_set = self.gene_set
-
-    #     # Use ThreadPoolExecutor for parallel processing
-    #     with ThreadPoolExecutor() as executor:
-    #         # Use filter and map to efficiently filter and process experiments
-    #         filtered_experiments = filter(
-    #             lambda item: any(i["id"] in gene_set for i in item.genotype),
-    #             self.experiments,
-    #         )
-    #         processed_data = list(
-    #             executor.map(self.process_experiment, filtered_experiments)
-    #         )
-
-    #     # Write to LMDB in one go (or in larger batches)
-    #     env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-    #     with env.begin(write=True) as txn:
-    #         for idx, data in enumerate(processed_data):
-    #             serialized_data = pickle.dumps(
-    #                 data
-    #             )  # Consider using a faster serialization method
-    #             txn.put(f"{idx}".encode(), serialized_data)
-
-    # def process_experiment(self, experiment):
-    #     data = Data()
-    #     data.genotype = experiment["genotype"]
-    #     data.phenotype = experiment["phenotype"]
-    #     return data
 
     @property
     def gene_set(self):
@@ -269,7 +202,7 @@ class CellDataset(Dataset):
             # Could use gene_set from genome instead, since this is base
             # In case of gene addition would need to update the gene_set
             # then cell_dataset should be max possible.
-            cell_gene_set = set(self.genome.gene_set).intersection(experiment_gene_set)
+            cell_gene_set = set(self.genome_gene_set).intersection(experiment_gene_set)
         return cell_gene_set
 
     def _subset_graph(self, data: Data) -> Data:
@@ -311,7 +244,29 @@ class CellDataset(Dataset):
             data.dmf = original_data.phenotype["observation"]["dmf"]
         return data
 
-    def get(self, idx: int) -> Data:
+    # def get(self, idx: int) -> Data:
+    #     env = lmdb.open(self.processed_paths[0], readonly=True, lock=False)
+    #     with env.begin() as txn:
+    #         serialized_data = txn.get(f"{idx}".encode())
+    #         if serialized_data is None:
+    #             return None
+    #         data = pickle.loads(serialized_data)
+    #         if self.transform:
+    #             data = self.transform(data)
+
+    #         # Get the subset data using the separate method
+    #         subset_data = self._subset_graph(data)
+
+    #         # Add the dmf_fitness label to the subset_data
+    #         subset_data = self._add_label(subset_data, data)
+
+    #         return subset_data
+
+    def get(self, idx):
+        """Initialize LMDB if it hasn't been initialized yet."""
+        if self.env is None:
+            self._init_db()
+
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
@@ -320,22 +275,36 @@ class CellDataset(Dataset):
             if self.transform:
                 data = self.transform(data)
 
-            # Get the subset data using the separate method
             subset_data = self._subset_graph(data)
-
-            # Add the dmf_fitness label to the subset_data
             subset_data = self._add_label(subset_data, data)
+            return data
 
-            return subset_data
+    def _init_db(self):
+        """Initialize the LMDB environment."""
+        self.env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
 
-    def len(self):
-        lmdb_path = os.path.join(self.processed_dir, "data.lmdb")
-        if not os.path.exists(lmdb_path):
-            raise FileNotFoundError(f"LMDB directory does not exist: {lmdb_path}")
+    def len(self) -> int:
+        if self.env is None:
+            self._init_db()
 
-        env = lmdb.open(lmdb_path, readonly=True)
-        with env.begin() as txn:
-            return txn.stat()["entries"]
+        with self.env.begin() as txn:
+            length = txn.stat()["entries"]
+
+        # Must be closed for dataloader num_workers > 0
+        self.close_lmdb()
+
+        return length
+
+    def close_lmdb(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
 
 
 def main():

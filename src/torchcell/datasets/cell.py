@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/cell.py
 # Test file: src/torchcell/datasets/test_cell.py
 import copy
+import os
 import json
 import logging
 import os
@@ -147,8 +148,11 @@ class CellDataset(Dataset):
         lock = threading.Lock()
         pbar = tqdm(total=len(self.experiments))
 
+        # Default to 1 if the env variable is not set
+        num_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", "1"))
+        log.info(f"num_cpus: {num_cpus}")
         # Use ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=num_cpus) as executor:
             # Use map to efficiently filter experiments
             filtered_experiments = list(
                 filter(None, executor.map(filter_experiment, self.experiments))

@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1693580716668
+updated: 1694211087105
 created: 1675887826601
 ---
 ## Future
@@ -15,6 +15,8 @@ created: 1675887826601
 - [ ] Add args so this goes into data dir `dbfn="data.db",`
 - [ ] `torch_geometric/deprecation.py:22: UserWarning: 'data.DataLoader' is deprecated, use 'loader.DataLoader' instead`
 - [ ] Add tiling window functions for nucleotide transformer
+- [ ] Speed up filtering in `cell.py`, this works well on [[2023.09.07|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230907]] `M1`, but very slow on `Delta`
+- [ ] Consider making an `smf` dataset that comes from the `dmf` data.
 
 ## Far Future
 
@@ -26,5 +28,4 @@ created: 1675887826601
 ```python
 genome["YDR210W"].attributes['display'][0]
 'Predicted tail-anchored plasma membrane protein
-``` 
-
+```

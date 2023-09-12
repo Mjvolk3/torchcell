@@ -2,7 +2,7 @@
 id: rzwif3bimldfvjdtmx712pp
 title: Costanzo2016
 desc: ''
-updated: 1694056324081
+updated: 1694131660648
 created: 1693327811119
 ---
 ## DmfCostanzoDataset Out of Memory Dataset
@@ -464,3 +464,43 @@ pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
 Gene Ontology counts for genes in `SCerevisiaeGenome`.
 
 ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
+
+## Using LMDB with Dataloader num_workers ge 0
+
+[Using LMDB with Dataloader num_workers > 0](https://junyonglee.me/research/pytorch/How-to-use-LMDB-with-PyTorch-DataLoader/)
+
+The heart 💜 of the problem lies in the fact that for `Dataloaders` to use `num_workers > 0` they need to be able to pickle the initialized dataset to distribute it to the other available cores. If we initialized our `lmdb`, creates an error. The more pernicious issues is that the `len` method is called in super, so by defining `len` with a read to the database, we initialize the database then we get an error.
+
+To over come this I have written a method that closes the database in the `len` method. This might create some overhead in the `len` method for since we open and close every time, but it is a good solution for now.
+
+```python
+# This code is modified from https://raw.githubusercontent.com/rmccorm4/PyTorch-LMDB/master
+class my_dataset_LMDB(data.Dataset):
+    def __init__(self, db_path, file_path)
+        self.db_path = db_path
+        self.file_path = file_path
+
+        # Delay loading LMDB data until after initialization to avoid "can't pickle Environment Object error"
+        self.env = None
+        self.txn = None
+
+    def _init_db(self):
+        self.env = lmdb.open(self.db_path, subdir=os.path.isdir(self.db_path),
+            readonly=True, lock=False,
+            readahead=False, meminit=False)
+        self.txn = self.env.begin()
+
+    def read_lmdb(self, key):
+        lmdb_data = self.txn.get(key.encode())
+        lmdb_data = np.frombuffer(lmdb_data)
+
+        return lmdb_data
+
+    def __getitem__(self, index):
+        # Delay loading LMDB data until after initialization
+        if self.env is None:
+            self._init_db()
+
+        file_name = self.file_paths[index]
+        data = self.read_lmdb(file_name)
+```

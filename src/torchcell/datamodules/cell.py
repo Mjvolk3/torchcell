@@ -9,11 +9,18 @@ from torch_geometric.loader import DataLoader
 
 
 class CellDataModule(pl.LightningDataModule):
-    def __init__(self, dataset, batch_size: int = 32, num_workers: int = 0):
+    def __init__(
+        self,
+        dataset,
+        batch_size: int = 32,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+    ):
         super().__init__()
         self.dataset = dataset
         self.batch_size = batch_size
-        self.num_workers = num_workers  # BUG
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
 
     def setup(self, stage=None):
         # Split the dataset into train, val, and test sets
@@ -33,16 +40,23 @@ class CellDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
         )
 
     def val_dataloader(self):
         return DataLoader(
-            self.val_dataset, batch_size=self.batch_size, num_workers=self.num_workers
+            self.val_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
         )
 
     def test_dataloader(self):
         return DataLoader(
-            self.test_dataset, batch_size=self.batch_size, num_workers=self.num_workers
+            self.test_dataset,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
         )
 
 

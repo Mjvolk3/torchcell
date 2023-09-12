@@ -69,6 +69,13 @@ class RegressionTask(pl.LightningModule):
     def forward(self, x, batch):
         return self.model(x, batch)
 
+    def on_train_start(self):
+        # Calculate the model size (number of parameters) 
+        parameter_size = sum(p.numel() for p in self.parameters())
+
+        # Log it using wandb
+        self.log("model/parameters_size", parameter_size)
+
     def training_step(self, batch, batch_idx):
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.dmf, batch.batch
@@ -77,15 +84,25 @@ class RegressionTask(pl.LightningModule):
 
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
-        self.log("train_loss", loss, batch_size=batch_size)
+        self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients
-        self.log("train_pearson", self.pearson_corr(y_hat, y), batch_size=batch_size)
-        self.log("train_spearman", self.spearman_corr(y_hat, y), batch_size=batch_size)
+        self.log(
+            "train_pearson",
+            self.pearson_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "train_spearman",
+            self.spearman_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
         return loss
 
     def on_train_epoch_end(self):
-        self.log_dict(self.train_metrics.compute())
+        self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
 
     def validation_step(self, batch, batch_idx):
@@ -94,16 +111,26 @@ class RegressionTask(pl.LightningModule):
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
-        self.log("val_loss", loss, batch_size=batch_size)
+        self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
         self.val_metrics(y_hat, y)
         # Logging the correlation coefficients
-        self.log("val_pearson", self.pearson_corr(y_hat, y), batch_size=batch_size)
-        self.log("val_spearman", self.spearman_corr(y_hat, y), batch_size=batch_size)
+        self.log(
+            "val_pearson",
+            self.pearson_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "val_spearman",
+            self.spearman_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
     def on_validation_epoch_end(self):
-        self.log_dict(self.val_metrics.compute())
+        self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
 
         # Skip plotting during sanity check
@@ -151,14 +178,24 @@ class RegressionTask(pl.LightningModule):
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
-        self.log("test_loss", loss, batch_size=batch_size)
+        self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
         self.test_metrics(y_hat, y)
         # Logging the correlation coefficients
-        self.log("test_pearson", self.pearson_corr(y_hat, y), batch_size=batch_size)
-        self.log("test_spearman", self.spearman_corr(y_hat, y), batch_size=batch_size)
+        self.log(
+            "test_pearson",
+            self.pearson_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "test_spearman",
+            self.spearman_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
 
     def on_test_epoch_end(self):
-        self.log_dict(self.test_metrics.compute())
+        self.log_dict(self.test_metrics.compute(), sync_dist=True)
         self.test_metrics.reset()
 
     def configure_optimizers(self):

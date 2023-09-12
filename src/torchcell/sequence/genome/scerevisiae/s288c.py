@@ -266,16 +266,19 @@ class SCerevisiaeGenome(Genome):
         # Check if the necessary files exist, if not download them
         if not os.path.exists(self._fasta_path) or not os.path.exists(self._gff_path):
             self.download_and_extract_genome_files()
-        # Create the database
-        self.db = gffutils.create_db(
-            self._gff_path,
-            dbfn=osp.join(self.data_root, "data.db"),
-            force=True,
-            keep_order=True,
-            merge_strategy="merge",  # "merge"
-            sort_attribute_values=True,
-        )
-        # Read the fasta file
+        db_path = osp.join(self.data_root, "data.db")
+
+        if os.path.exists(db_path):
+            self.db = gffutils.FeatureDB(db_path)
+        else:
+            self.db = gffutils.create_db(
+                self._gff_path,
+                dbfn=db_path,
+                force=True,
+                keep_order=True,
+                merge_strategy="merge",
+                sort_attribute_values=True
+            )
         self.fasta_sequences = SeqIO.to_dict(SeqIO.parse(self._fasta_path, "fasta"))
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {

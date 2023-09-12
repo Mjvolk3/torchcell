@@ -59,6 +59,8 @@ def main():
     )
     print(len(cell_dataset))
     data_loader = DataLoader(cell_dataset, batch_size=32, shuffle=True, num_workers=2)
+    print(cell_dataset)
+    print(cell_dataset[0])
 
     for batch in tqdm(data_loader):
         # print(f"Accessing LMDB from process {os.getpid()}")

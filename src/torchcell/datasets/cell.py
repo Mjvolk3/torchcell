@@ -278,6 +278,7 @@ class CellDataset(Dataset):
             subset_data = self._subset_graph(data)
             subset_data = self._add_label(subset_data, data)
             return subset_data
+            return subset_data
 
     def _init_db(self):
         """Initialize the LMDB environment."""
@@ -346,6 +347,8 @@ def main():
     )
     # experiments = experiments[:2]
     cell_dataset = CellDataset(
+        root="data/scerevisiae/cell_1e5",
+        genome_gene_set=genome.gene_set,
         root="data/scerevisiae/cell_1e5",
         genome_gene_set=genome.gene_set,
         seq_embeddings=seq_embeddings,

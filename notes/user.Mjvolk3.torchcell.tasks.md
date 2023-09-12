@@ -2,21 +2,71 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694105847492
+updated: 1694487144324
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.09.07
+## 2023.09.11
 
-- [ ] Run test run on `cell.py` on interactive cpu. → `20it/s` very slow, M1 is nearly `2000 it/s`
-- [ ] Filter in cell dataset talking a terribly long time. Can Globus transfer for now but should figure out how we can speed up filtering.
-- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/src.torchcell.datasets.cell#merging-dataset-issues]]
-- [ ] Launch experiment on whole dataset `dmf`
-- [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
+- [x] Investigate why the prefious `dmf` `1e6` failed. → Ran out of gpu memory. Memory increased gpu process memory increased epochs... my suspicion is that tracking model graidents leads to this, but I am unsure. Trying again without gradient tracking. → Now that I think if this it doesn't make much sense since I was able to track weights for large models. Maybe it has something to do with size of data?
+- [ ] Review system metrics
+
+```yaml
+data_module:
+  batch_size: 24
+  num_workers: 4
+  pin_memory: true
+```
+
+looks like we can to batch_size of 24 if we have fewer num_works (num_workers=4)
+
+- [ ] git clean up across computers
+- [ ] wt difference embedding
+- [ ] optional dimensionality reduction
+- [ ] Downselect by gene interaction scores or `1e5`...
+- [ ] Unify `wandb` when training on multiple gpus prvious is slurm job id and date. Don't this will work across sweeps.
+- [ ] add period delimited time 
+
+## 2023.09.10
+
+- [x] Add job id and date stamp to the grouped runs → cannot easily add date.
+- [x] Find smaller model that can avoid overfitting → Training smaller model, but haven't found one that can avoid overfitting.
+- [x] Unify `wandb` when training on multiple gpus. → slurm job id and date
+- 🔲 Try dimensionality reduction
+- 🔲 Downselect by gene interaction score for `1e5`
+
+## 2023.09.09
+
+- [x] Fix genome sqlite database issue → checking if database already exists and reading in fixes issue with `ddp` over multiple gpus
+- [x] Find max slurm `--mem` for A40x4 → `SBATCH --mem=243g`... this must be because there is some overhead somewhere. [ncsa delta A40x4](https://wiki.ncsa.illinois.edu/display/DSC/Delta+User+Guide#DeltaUserGuide-Table.4-wayNVIDIAA40GPUComputeNodeSpecifications)
+- [x] Adjust number of GPUS on tasks. This is good for interactive, and also serves as documentation.
+- 🔲 Unify `wandb` when training on multiple gpus.
+- 🔲 Launch 100 epochs on `1e4`.
+
+## 2023.09.08
+
+- [x] Recreate the `1e5` dataset, only was able to complete 2e4 data in 10 hrs on 1 A40.
+- [x] Globus transfer data
+- [ ] Run `1e5` training loop speed tests. → [[Training Speedup with 1e5 CellDataset|dendron://torchcell/experiments.dmf_costanzo_deepset#training-speedup-with-1e5-celldataset]]
+- [ ] Profile `1e5`
+- [x] Since `1e5` dataset is taking some time to run through in interactive node, make `1e4` dataset.
+- [x] Globus `1e4` datset to `Delta`.
+
+- [x] Move notes in tasks to proper note
+- [x] Try MI100 interactive → created new task for launch, MI100 is discounted on Delta. → `>>> torch.cuda.is_available(); False`
+
+- [ ] We need reason to believe that using llm should work. Collect `1e5` dataset, `add`, `mean`, vectors of missing data, umap visualize, with dmf overlay
+- [ ] Do same `umap` for `smf` alone.
+- [ ] If both of `smf` and `dmf` umap look to work, do a combined umap, with `smf` as a different shape.
+
 - [ ] Gene ontology for `DCell`
-- [ ] Consider making an `smf` dataset that comes from the `dmf` data.
+- [ ] `DCell` model
 - [ ] Write `DCell` network as perturbation to GO graph
+
+- [ ] WT difference for loss function... thinking dataset should have a reference object at highest level.
+- [ ] WL-Lehman for fitness prediction
+
 - [ ] Add in gene essentiality dataset `smf`
 - [ ] Add in synthetic lethality dataset `dmf` [synthetic lethality db](https://synlethdb.sist.shanghaitech.edu.cn/v2/#/) this doesn't look like it has media conditions.
 - [ ] Rewrite single cell fitness for `lmdb`
@@ -26,6 +76,30 @@ created: 1690514887023m
 - [ ] Add gene expression data for `dmf` data
 - [ ] Add morphology dataset
 - [ ] Add plotting functionality on genomes
+
+## 2023.09.07
+
+- [x] Run test run on `cell.py` on interactive cpu. → `20it/s` very slow, M1 is nearly `2000 it/s`
+- [x] Filter in cell dataset talking a terribly long time. Can Globus transfer for now but should figure out how we can speed up filtering. → Started transfer
+- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/src.torchcell.datasets.cell#merging-dataset-issues]]
+- [x] The limitation again looks like IO from reading data from `lmdb`. We should be able to take advantage of multithreading for this. Try multithreading filtering delta interactive cpu. → There does look to be a speed up to `120it/s` on 16 cpu. With this the job with finish in 30 hrs... For now just going to run things locally and tranfer with Globus, since it takes around 2 hours to transfer the data... This isn't a great solution for the library.
+- [x] Try a cpu slurm job with 32 cpu. → This fails due to some `sqlite3` error. To use `num_workers > 0` we need to be to pickle the dataset for multiprocessing, this cannot be done if there is a database open. `self.genome` is using a `sqlite3` database.
+- [x] Fix `dmf` dataset so it can work with `lmdb` and `num_workers > 0`  → [[Using LMDB with Dataloader num_workers ge 0|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#using-lmdb-with-dataloader-num_workers-ge-0]]
+- [x] Fix `cell` dataset so it can work with `lmdb` and `num_workers > 0`, we will also need to handle removing the genome sql db from the init. → This is a bit Hacky for now. Also had to make sure we removed `seq_embedding` datasets. [[Data Loader Speed with Number of Workers for CellDataset|dendron://torchcell/experiments.dmf_costanzo_deepset#data-loader-speed-with-number-of-workers-for-celldataset]]
+- [x] Launch experiment on whole dataset `dmf` → We have speed issues[[Training Speed with Number of Workers for CellDataset|dendron://torchcell/experiments.dmf_costanzo_deepset#training-speed-with-number-of-workers-for-celldataset]]
+- 🔲 WT difference for loss function... thinking dataset should have a reference object at highest level.
+- 🔲 Gene ontology for `DCell`
+- 🔲 Consider making an `smf` dataset that comes from the `dmf` data. → moving to [[user.mjvolk3.torchcell.tasks.future]]
+- 🔲 Write `DCell` network as perturbation to GO graph
+- 🔲 Add in gene essentiality dataset `smf`
+- 🔲 Add in synthetic lethality dataset `dmf` [synthetic lethality db](https://synlethdb.sist.shanghaitech.edu.cn/v2/#/) this doesn't look like it has media conditions.
+- 🔲 Rewrite single cell fitness for `lmdb`
+- 🔲 Work on merge single cell fitness data
+- 🔲 Add triple mutant fitness dataset `tmf`
+- 🔲 Add gene expression for `smf` data
+- 🔲 Add gene expression data for `dmf` data
+- 🔲 Add morphology dataset
+- 🔲 Add plotting functionality on genomes
 
 ## 2023.09.06
 

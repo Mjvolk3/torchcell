@@ -114,9 +114,21 @@
                 "problemMatcher": []
             },
             {
-                "label": "Delta: Interactive GPU",
+                "label": "Delta: Interactive gpuA40x",
                 "type": "shell",
                 "command": "srun --account=bbtp-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=20g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive gpuA40x",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=${input:A40x4_mem} --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive MI100x8",
+                "type": "shell",
+                "command": "srun --account=bbtp-delta-gpu --partition=gpuMI100x8-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=20g --pty bash",
                 "problemMatcher": []
             },
             {
@@ -279,6 +291,30 @@
                     "8"
 
                 ]
+            },
+            {
+                "id" : "A40x4_num_gpus",
+                "description": "A40x4 num gpus",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                ],
+                "default": "1"
+            },
+            {
+                "id" : "A40x4_mem",
+                "description": "A40x4 memory ordered by SU equivalence (choose same index as num gpus)",
+                "type": "pickString",
+                "options": [
+                    "62g",
+                    "125g",
+                    "187g",
+                    "243g",
+                ],
+                "default": "62.5"
             },
             {
                 "id": "numProcessors",

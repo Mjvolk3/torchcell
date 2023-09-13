@@ -8,6 +8,7 @@ xlrd # with pandas
 scipy
 networkx
 dask
+umap-learn
 
 # configuration
 hydra-core

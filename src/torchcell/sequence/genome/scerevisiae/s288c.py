@@ -277,7 +277,7 @@ class SCerevisiaeGenome(Genome):
                 force=True,
                 keep_order=True,
                 merge_strategy="merge",
-                sort_attribute_values=True
+                sort_attribute_values=True,
             )
         self.fasta_sequences = SeqIO.to_dict(SeqIO.parse(self._fasta_path, "fasta"))
         # Create mapping from chromosome number to sequence identifier

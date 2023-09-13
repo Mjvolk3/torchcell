@@ -194,6 +194,7 @@ class DMFCostanzo2016Dataset(Dataset):
         self.preprocess_dir = osp.join(root, "preprocess")
         self._length = None
         self._gene_set = None
+        self._df = None
         # Check for existing preprocess config
         existing_config = self.load_preprocess_config()
         if existing_config is not None:
@@ -244,6 +245,12 @@ class DMFCostanzo2016Dataset(Dataset):
             meminit=False,
         )
 
+    @property
+    def df(self):
+        if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
+            self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
+        return self._df
+
     def process(self):
         self._length = None
         # Initialize an empty DataFrame to hold all raw data
@@ -268,6 +275,9 @@ class DMFCostanzo2016Dataset(Dataset):
             all_data_df = all_data_df.sample(
                 n=self.subset_n, random_state=42
             ).reset_index(drop=True)
+
+        # Save preprocssed df - mainly for quick stats
+        all_data_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         print("Processing DMF Files...")
 
@@ -506,10 +516,13 @@ def main():
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DMFCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
         preprocess="low_dmf_std",
+        subset_n=10000,
     )
     print(dmf_dataset)
+    print(dmf_dataset.df["Double mutant fitness"].describe())
+    print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
     print(dmf_dataset.gene_set)
     for i in range(10):
         print(dmf_dataset[i])

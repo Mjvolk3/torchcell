@@ -51,7 +51,8 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
                 self.transformer = self.initialize_transformer()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
-        # HACK for data loader
+        # HACK for data loader - Run again to check
+        # Must delete genome to allow pickle
         del self.genome
 
     def initialize_transformer(self):
@@ -68,6 +69,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             self.transformer_model_name
         ]
 
+        # TODO check that genome gene set is SortedSet
         for gene_id in tqdm(self.genome.gene_set):
             sequence = self.genome[gene_id]
 

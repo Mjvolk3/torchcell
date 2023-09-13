@@ -1,7 +1,13 @@
+# src/torchcell/models/deep_set.py
+# [[src.torchcell.models.deep_set]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/deep_set.py
+# Test file: src/torchcell/models/test_deep_set.py
+
 import torch
 import torch.nn as nn
 from torch_scatter import scatter_add
 
+# TODO - Add dropout only after batch norms
 
 # class DeepSet(nn.Module):
 #     def __init__(
@@ -132,6 +138,7 @@ class DeepSet(nn.Module):
 
 # if __name__ == "__main__":
 #     main()
+
 
 class DeepSet(nn.Module):
     def __init__(

@@ -2,31 +2,53 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1694487144324
+updated: 1694585920973
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.09.11
+## 2023.09.15
 
-- [x] Investigate why the prefious `dmf` `1e6` failed. → Ran out of gpu memory. Memory increased gpu process memory increased epochs... my suspicion is that tracking model graidents leads to this, but I am unsure. Trying again without gradient tracking. → Now that I think if this it doesn't make much sense since I was able to track weights for large models. Maybe it has something to do with size of data?
-- [ ] Review system metrics
+- [ ] Make sure dna transformers are using `SortedSet`
+- [ ] Rerun [[src/torchcell/datasets/nucleotide_transformer.py]] to comply with `SortedSet`
+- [ ] We have an issue where where if `drop_mt` isn't changing data. fix this. I found that `drop_mt` and `drop_empty_go` aren't reducing `gene_set` size. This might have to do with the reading and writing of the `db`. This is indeed the case. I am not sure if this is the behavior we want. We should try to go back to always writing the `db`, since I think the `sqlite` errors then double check `ddp`. I think better behavior is to start with the fresh genome each time.
 
-```yaml
-data_module:
-  batch_size: 24
-  num_workers: 4
-  pin_memory: true
-```
+## 2023.09.14
 
-looks like we can to batch_size of 24 if we have fewer num_works (num_workers=4)
+- [ ] Change [[src/torchcell/models/dcell.py]] to have only dropout on last layer - `zendron_citation`
 
-- [ ] git clean up across computers
+After 10pm
+
+- [ ] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
+- [ ] Scale up model training
+- [ ] Launch job.
+
+## 2023.09.12
+
+- [x] Figure out why `Delta` batch job fails → [Jira - Delta Batch Job Failing](https://jira.ncsa.illinois.edu/browse/DELTA-2412) → `Delta` should be Thursday 10 pm.
+- [x] git clean up across computers
+- [x] See if `Dcell` number of layers idea checks out (50 min) →
+- [ ] Add removed vectors to data object
+- [x] Add dataframe cached property to datasets → [[DMF stats dmf and dmf_std with low_dmf_std preprocess|dendron://torchcell/experiments.dmf_costanzo_deepset#dmf-stats-dmf-and-dmf_std-with-low_dmf_std-preprocess]]
+- [ ] visualize the dependency of the library (10 min)
+- [ ] reorganize task list around
+- [ ] UMAP visualization with `dmf` overlay
+- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started.
+- [ ] Make sqlite db removal less hacky
 - [ ] wt difference embedding
 - [ ] optional dimensionality reduction
 - [ ] Downselect by gene interaction scores or `1e5`...
-- [ ] Unify `wandb` when training on multiple gpus prvious is slurm job id and date. Don't this will work across sweeps.
-- [ ] add period delimited time 
+
+## 2023.09.11
+
+- [x] Investigate why the prefious `dmf` `1e6` failed. → Ran out of gpu memory. Memory increased gpu process memory increased epochs... my suspicion is that tracking model graidents leads to this, but I am unsure. Trying again without gradient tracking. → Now that I think if this it doesn't make much sense since I was able to track weights for large models. Maybe it has something to do with size of data?
+- [x] Review system metrics → Still unsure why some models fail with large gpu memory allocation still availble. We get a gpu shut down message, but I think it has to do with running out of cpu memory on the node. Also it looks like the amount of cpu memory used for `num_workers` is much higher than the amount of allocated memory on gpu. Clearly there are gaps in understanding the allocation. Some anecdotal evidence [[2 gpus A40x4-sbatch - Training Speedup with 1e5 CellDataset cont. 1|dendron://torchcell/experiments.dmf_costanzo_deepset#2-gpus-a40x4-sbatch---training-speedup-with-1e5-celldataset-cont-1]]
+- 🔲 git clean up across computers
+- 🔲 wt difference embedding
+- 🔲 optional dimensionality reduction
+- 🔲 Downselect by gene interaction scores or `1e5`...
+- 🔲 Unify `wandb` when training on multiple gpus prvious is slurm job id and date. Don't this will work across sweeps.
+- 🔲 add period delimited time
 
 ## 2023.09.10
 

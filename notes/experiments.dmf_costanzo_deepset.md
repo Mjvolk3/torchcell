@@ -2,7 +2,7 @@
 id: 1l3y78a3l6v6eeiku95qdk6
 title: Dmf_costanzo_deepset
 desc: ''
-updated: 1694474834127
+updated: 1694582137653
 created: 1692324873109
 ---
 Predicting only double mutant fitness using sequence embeddings with a deep set model.
@@ -66,7 +66,7 @@ model:
   set_layers: [128, 32, 16]
 ```
 
-### M1 - Training Speeding with Number of Workers for CellDataset
+### Training Speeding with Number of Workers for CellDataset - M1
 
 ```yaml
 data_module:
@@ -74,7 +74,7 @@ data_module:
   num_workers: 10
 ```
 
-### Delta Interactive GPU - Training Speeding with Number of Workers for CellDataset
+### Training Speeding with Number of Workers for CellDataset - Delta Interactive GPU
 
 failed
 
@@ -126,7 +126,7 @@ data_module:
 Epoch 0:   0%|      | 796/2658973 [05:30<307:01:13,  2.40it/s, v_num=qqfw]
 ```
 
-### Delta 2GPUs sbatch - Training Speeding with Number of Workers for CellDataset
+### Training Speeding with Number of Workers for CellDataset - Delta 2GPUs sbatch
 
 ```yaml
 data_module:
@@ -152,7 +152,7 @@ data_module:
 
 Fails
 
-### Delta 3GPUs sbatch - Training Speeding with Number of Workers for CellDataset
+### Training Speeding with Number of Workers for CellDataset - Delta 3GPUs sbatch
 
 ```yaml
 data_module:
@@ -172,7 +172,7 @@ model:
   set_layers: [128, 32, 16]
 ```
 
-### 1 gpu A40x4-interactive - Training Speedup with 1e5 CellDataset
+### Training Speedup with 1e5 CellDataset - 1 gpu A40x4-interactive
 
 ```yaml
 data_module:
@@ -205,7 +205,7 @@ Fails
 
 Once I pin memory, I `pl` tells me I should only be using one worker, whereas when I don't use pin memory it recommends 12 workers.
 
-### 2 gpus A40x4-interactive - Training Speedup with 1e5 CellDataset
+### Training Speedup with 1e5 CellDataset - 2 gpus A40x4-interactive
 
 ```bash
 Epoch 0:   6%|██       | 615/10000 [08:36<2:11:15,  1.19it/s, v_num=ru49]
@@ -458,7 +458,7 @@ trainer = pl.Trainer(
 
 We are now properly using each GPU.
 
-### 2 gpus A40x4-interactive - Training Speedup with 1e5 CellDataset cont. 1
+### Training Speedup with 1e5 CellDataset cont. 1 - 2 gpus A40x4-interactive
 
 ```yaml
 data_module:
@@ -503,6 +503,8 @@ model:
 
 Models run
 
+### Training Speedup with 1e5 CellDataset cont. 1 - 2 gpus A40x4-sbatch
+
 ```yaml
 data_module:
   batch_size: 16
@@ -511,3 +513,37 @@ data_module:
 ```
 
 Fails, due to I think the `num_workers` being maxed out
+
+```yaml
+data_module:
+  batch_size: 24
+  num_workers: 4
+  pin_memory: true
+```
+
+Works. We can have larger batch sizes if we reduce the number of workers. If we have 12 or 16 `num_workers`, this will fail with a gpu out of memory error, when this in fact seems like a cpu out of memory error. We see with batch size increase the gpu memory increases, yet still far below capacity.
+
+## DMF stats dmf and dmf_std with low_dmf_std preprocess
+
+After `{"preprocess": "low_dmf_std"}`
+
+```bash
+# dmf
+count    1.329536e+07
+mean     8.657942e-01
+std      1.967366e-01
+min     -2.718000e-01
+25%      7.701000e-01
+50%      9.359000e-01
+75%      1.008600e+00
+max      2.332300e+00
+# dmf_std
+count    1.329536e+07
+mean     3.429249e-02
+std      3.119908e-02
+min      0.000000e+00
+25%      1.580000e-02
+50%      2.650000e-02
+75%      4.250000e-02
+max      1.193100e+00
+```

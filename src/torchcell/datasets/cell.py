@@ -130,7 +130,8 @@ class CellDataset(Dataset):
 
         # Create a Data object with embeddings as node features
         # ids as an attribute, and the dummy edge_index
-        data = Data(x=embeddings, ids=SortedSet(ids), edge_index=edge_index)
+        # TODO cannot add SortedSet to ids since need to do for nt dataset
+        data = Data(x=embeddings, ids=ids, edge_index=edge_index)
 
         return data
 
@@ -175,7 +176,7 @@ class CellDataset(Dataset):
                     "gene_set not written during process. "
                     "Please call compute_gene_set in process."
                 )
-            return self._gene_set
+            return SortedSet(self._gene_set)
         except json.JSONDecodeError:
             raise ValueError("Invalid or empty JSON file found.")
 
@@ -198,7 +199,7 @@ class CellDataset(Dataset):
                 raise NotImplementedError(
                     "Expected 'experiments' to be of type InMemoryDataset"
                 )
-            # Not sure we shoudl take the intersection here...
+            # Not sure we should take the intersection here...
             # Could use gene_set from genome instead, since this is base
             # In case of gene addition would need to update the gene_set
             # then cell_dataset should be max possible.
@@ -210,12 +211,14 @@ class CellDataset(Dataset):
         Subset the reference graph based on the genes in data.genotype.
         """
         # Nodes to remove based on the genes in data.genotype
-        nodes_to_remove = [
-            self.seq_graph.ids.index(gene["id"])
-            for gene in data.genotype
-            if gene["id"] in self.seq_graph.ids
-        ]
-        perturbed_nodes = torch.tensor(nodes_to_remove, dtype=torch.long)
+        nodes_to_remove = torch.tensor(
+            [
+                self.seq_graph.ids.index(gene["id"])
+                for gene in data.genotype
+                if gene["id"] in self.seq_graph.ids
+            ]
+        )
+        perturbed_nodes = nodes_to_remove.clone().detach()
 
         # Compute the nodes to keep
         all_nodes = torch.arange(self.seq_graph.num_nodes, dtype=torch.long)
@@ -226,7 +229,10 @@ class CellDataset(Dataset):
 
         # Get the induced subgraph using the nodes to keep
         subset_graph = self.seq_graph.subgraph(nodes_to_keep)
-        subset_graph.perturbed_nodes = perturbed_nodes
+        subset_remove_graph = self.seq_graph.subgraph(nodes_to_remove)
+        subset_graph.x_pert = subset_remove_graph.x
+        subset_graph.ids_pert = subset_remove_graph.ids
+        subset_graph.x_pert_idx = perturbed_nodes
         return subset_graph
 
     def _add_label(self, data: Data, original_data: Data) -> Data:
@@ -242,6 +248,10 @@ class CellDataset(Dataset):
         """
         if "dmf" in original_data.phenotype["observation"]:
             data.dmf = original_data.phenotype["observation"]["dmf"]
+        if "genetic_interaction_score" in original_data.phenotype["observation"]:
+            data.genetic_interaction_score = original_data.phenotype["observation"][
+                "genetic_interaction_score"
+            ]
         return data
 
     # def get(self, idx: int) -> Data:
@@ -321,35 +331,33 @@ def main():
     genome.drop_empty_go()
 
     # nucleotide transformer
-    # nt_dataset = NucleotideTransformerDataset(
-    #     root="data/scerevisiae/nucleotide_transformer_embed",
-    #     genome=genome,
-    #     transformer_model_name="nt_window_5979",
-    # )
-    fut3_dataset = FungalUtrTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
+    nt_dataset = NucleotideTransformerDataset(
+        root="data/scerevisiae/nucleotide_transformer_embed",
         genome=genome,
-        transformer_model_name="fut_species_window_3utr_300_undersize",
+        transformer_model_name="nt_window_5979",
     )
+    # fut3_dataset = FungalUtrTransformerDataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
+    #     genome=genome,
+    #     transformer_model_name="fut_species_window_3utr_300_undersize",
+    # )
     # fut5_dataset = FungalUtrTransformerDataset(
     #     root="data/scerevisiae/fungal_utr_embed",
     #     genome=genome,
     #     transformer_model_name="fut_species_window_5utr_1000_undersize",
     # )
     # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
-    seq_embeddings = fut3_dataset
+    seq_embeddings = nt_dataset
 
     # Experiments
     experiments = DMFCostanzo2016Dataset(
         preprocess="low_dmf_std",
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
-        subset_n=1000000,
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+        # subset_n=1000000,
     )
     # experiments = experiments[:2]
     cell_dataset = CellDataset(
-        root="data/scerevisiae/cell_1e5",
-        genome_gene_set=genome.gene_set,
-        root="data/scerevisiae/cell_1e5",
+        root="data/scerevisiae/cell_1e4",
         genome_gene_set=genome.gene_set,
         seq_embeddings=seq_embeddings,
         experiments=experiments,

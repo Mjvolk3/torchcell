@@ -11,7 +11,6 @@ from torchcell.datamodules import CellDataModule
 from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DMFCostanzo2016Dataset,
-    DMFCostanzo2016SmallDataset,
 )
 import torch
 from torchcell.models import DeepSet
@@ -33,12 +32,12 @@ genome = SCerevisiaeGenome(DATA_ROOT)
 nt_dataset = NucleotideTransformerDataset(
     root=DATA_ROOT, genome=genome, transformer_model_name="nt_window_5979"
 )
-fut3_dataset = FungalUtrTransformerDataset(
+futr3_dataset = FungalUtrTransformerDataset(
     root=DATA_ROOT,
     genome=genome,
     transformer_model_name="fut_species_window_3utr_300_undersize",
 )
-fut5_dataset = FungalUtrTransformerDataset(
+futr5_dataset = FungalUtrTransformerDataset(
     root=DATA_ROOT,
     genome=genome,
     transformer_model_name="fut_species_window_5utr_1000_undersize",
@@ -48,7 +47,6 @@ seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
 
 # EXPERIMENTS
 experiments = DMFCostanzo2016Dataset(root=DATA_ROOT)
-# experiments = join_experiments([experiments, experiments2], ontology=experiment_ontology)
 
 # CELL DATASET
 cell_dataset = CellDataset(
@@ -58,7 +56,7 @@ cell_dataset = CellDataset(
     experiments=experiments,
 )
 
-# data module and model - pytorch_lightning
+# pytorch_lightning - data module and model
 data_module = CellDataModule(dataset=cell_dataset, batch_size=2, num_workers=10)
 model = RegressionTask(
     model=DeepSet(
@@ -69,8 +67,7 @@ model = RegressionTask(
     )
 )
 
-
-# define trainer - pytorch_lightning asdf asdf asdf asdf asdf asdf asdf sfasf asdf asdf asdfsa
+# pytorch_lightning - define trainer
 wandb_logger = WandbLogger(project="torchcell", log_model=True)
 trainer = pl.Trainer(logger=wandb_logger, max_epochs=100)
 

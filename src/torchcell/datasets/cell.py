@@ -22,6 +22,7 @@ import lmdb
 import pandas as pd
 import torch
 from attrs import define
+from pydantic import BaseModel, Extra, Field, ValidationError, validator
 from sklearn import experimental
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
@@ -31,6 +32,7 @@ from torch_geometric.utils import subgraph
 from tqdm import tqdm
 
 from torchcell.data import Dataset
+from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
@@ -42,7 +44,7 @@ from torchcell.models import FungalUtrTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
-from torchcell.sequence import Genome
+from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
@@ -52,8 +54,27 @@ class DiMultiGraph:
     pass
 
 
-class Ontology:
-    pass
+class ParsedGenome(ModelStrictArbitrary):
+    gene_set: GeneSet
+
+    @validator("gene_set")
+    def validate_gene_set(cls, value):
+        if not isinstance(value, GeneSet):
+            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
+        return value
+
+
+# class ParsedGenome(ModelStrictArbitrary):
+#     gene_set: SortedSet  # validator enforces SortedSet[str]
+
+#     @validator("gene_set", pre=True)
+#     def validate_gene_set(cls, value):
+#         if not isinstance(value, SortedSet):
+#             raise ValueError(f"gene_set must be a SortedSet, got {type(value)}")
+#         for item in value:
+#             if not isinstance(item, str):
+#                 raise ValueError(f"All items in gene_set must be str, got {type(item)}")
+#         return value
 
 
 class CellDataset(Dataset):
@@ -65,7 +86,7 @@ class CellDataset(Dataset):
         self,
         root: str = "data/scerevisiae/cell",
         # genome: Genome = None,
-        genome_gene_set: SortedSet = None,
+        genome: Genome = None,
         seq_embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
         transform: Callable | None = None,
@@ -75,15 +96,14 @@ class CellDataset(Dataset):
         self._gene_set = None
         # HACK start
         # Extract data from genome object, then remove for pickling with data loader
-        self.genome_gene_set = genome_gene_set
-        # del genome
+        self.genome = self.parse_genome(genome)
+        del genome
         # self.genome = None
         # HACK end
         self.seq_embeddings = seq_embeddings
         self.experiments = experiments
         self.dimultigraph: DiMultiGraph | None = None
         self.experiment_datasets: list[InMemoryDataset] | None = None
-        self.ontology: Ontology | None = None
 
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
@@ -96,6 +116,13 @@ class CellDataset(Dataset):
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
         # LMDB env
         self.env = None
+
+    @staticmethod
+    def parse_genome(genome) -> ParsedGenome:
+        data = {}
+        # TODO remove GeneSet after GeneSet refactor
+        data["gene_set"] = GeneSet(genome.gene_set)
+        return ParsedGenome(**data)
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -116,7 +143,7 @@ class CellDataset(Dataset):
         ids = []
         for item in seq_embeddings:
             keys = item["embeddings"].keys()
-            if item.id in self.genome_gene_set:
+            if item.id in self.genome.gene_set:
                 # TODO using self.genome.gene_set since this is the super set of genes.
                 ids.append(item.id)
                 item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
@@ -218,6 +245,9 @@ class CellDataset(Dataset):
                 if gene["id"] in self.seq_graph.ids
             ]
         )
+        # BUG not downselecting data properly
+        assert len(nodes_to_remove) == len(data.genotype), "check gene ids"
+
         perturbed_nodes = nodes_to_remove.clone().detach()
 
         # Compute the nodes to keep
@@ -353,12 +383,12 @@ def main():
     experiments = DMFCostanzo2016Dataset(
         preprocess="low_dmf_std",
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
-        # subset_n=1000000,
+        subset_n=10000,
     )
     # experiments = experiments[:2]
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell_1e4",
-        genome_gene_set=genome.gene_set,
+        genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,
     )

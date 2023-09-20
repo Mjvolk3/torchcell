@@ -33,6 +33,7 @@ from tqdm import tqdm
 
 from torchcell.data import Dataset
 from torchcell.prof import prof, prof_input
+from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
 
@@ -161,11 +162,11 @@ class SMFCostanzo2016Dataset(InMemoryDataset):
 
     @property
     def gene_set(self):
-        gene_ids = set()
+        _gene_set = GeneSet()
         for data in self:
             for genotype in data.genotype:
-                gene_ids.add(genotype["id"])
-        return gene_ids
+                _gene_set.add(genotype["id"])
+        return _gene_set
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
@@ -467,11 +468,11 @@ class DMFCostanzo2016Dataset(Dataset):
 
     @staticmethod
     def compute_gene_set(data_list):
-        gene_ids = set()
+        computed_gene_set = GeneSet()
         for data in data_list:
             for genotype in data.genotype:
-                gene_ids.add(genotype["id"])
-        return gene_ids
+                computed_gene_set.add(genotype["id"])
+        return computed_gene_set
 
     # Reading from JSON and setting it to self._gene_set
     @property
@@ -479,13 +480,14 @@ class DMFCostanzo2016Dataset(Dataset):
         try:
             if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
                 with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
-                    self._gene_set = set(json.load(f))
+                    self._gene_set = GeneSet(json.load(f))
             elif self._gene_set is None:
                 raise ValueError(
                     "gene_set not written during process. "
                     "Please call compute_gene_set in process."
                 )
             return self._gene_set
+        # CHECK can probably remove this
         except json.JSONDecodeError:
             raise ValueError("Invalid or empty JSON file found.")
 
@@ -507,16 +509,14 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(
-        osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_init"), exist_ok=True
-    )
+    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_del"), exist_ok=True)
     # dmf_dataset = DMFCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     #     subset_n=100000,
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DMFCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_del"),
         preprocess="low_dmf_std",
         subset_n=10000,
     )

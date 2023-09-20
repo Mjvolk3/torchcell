@@ -1,38 +1,63 @@
 import logging
-from torchcell.sequence.data import (
-    calculate_window_bounds,
-    calculate_window_undersized_symmetric,
-    calculate_window_undersized,
-)
 
 import pytest
 
-log = logging.getLogger()
-
+from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 from torchcell.sequence.data import (
     DnaSelectionResult,
     DnaWindowResult,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
+    calculate_window_undersized,
+    calculate_window_undersized_symmetric,
     mismatch_positions,
     roman_to_int,
 )
 
+log = logging.getLogger()
 
-def test_dna_selection_result():
-    # Test valid input
-    result = DnaSelectionResult(seq="ATGC", chromosome=1, start=0, end=4, strand="+")
+
+def test_valid_dna_selection_result():
+    result = DnaSelectionResult(
+        id="gene_name", seq="ATGC", chromosome=1, start=0, end=4, strand="+"
+    )
     assert len(result) == 4
 
-    # Test invalid input
+
+def test_invalid_chromosome():
     with pytest.raises(ValueError):
-        DnaSelectionResult(seq="ATGC", chromosome=-1, start=0, end=4, strand="+")
+        DnaSelectionResult(
+            id="gene_name", seq="ATGC", chromosome=-1, start=0, end=4, strand="+"
+        )
+
+
+def test_invalid_start():
     with pytest.raises(ValueError):
-        DnaSelectionResult(seq="ATGC", chromosome=1, start=-1, end=4, strand="+")
+        DnaSelectionResult(
+            id="gene_name", seq="ATGC", chromosome=1, start=-1, end=4, strand="+"
+        )
+
+
+def test_invalid_start_end():
     with pytest.raises(ValueError):
-        DnaSelectionResult(seq="ATGC", chromosome=1, start=4, end=0, strand="+")
+        DnaSelectionResult(
+            id="gene_name", seq="ATGC", chromosome=1, start=4, end=0, strand="+"
+        )
+
+
+def test_invalid_strand():
     with pytest.raises(ValueError):
-        DnaSelectionResult(seq="ATGC", chromosome=1, start=0, end=4, strand="x")
+        DnaSelectionResult(
+            id="gene_name", seq="ATGC", chromosome=1, start=0, end=4, strand="x"
+        )
+
+
+def test_invalid_seq_len():
+    with pytest.raises(ValueError):
+        seq = "A" * (DNA_LLM_MAX_TOKEN_SIZE + 1)
+        DnaSelectionResult(
+            id="gene_name", seq=seq, chromosome=1, start=0, end=len(seq), strand="+"
+        )
 
 
 def test_mismatch_positions() -> None:

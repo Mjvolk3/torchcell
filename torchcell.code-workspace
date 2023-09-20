@@ -28,6 +28,10 @@
             "name": "intermine-ws-python",
             "path": "../intermine-ws-python"
         },
+        {
+            "name": "SpeciesLM",
+            "path": "../SpeciesLM",
+        }
     ],
     "settings": {
         "dendron.rootDir": ".",

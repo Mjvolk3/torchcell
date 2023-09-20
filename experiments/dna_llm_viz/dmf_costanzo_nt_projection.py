@@ -44,6 +44,7 @@ from torchcell.prof import prof, prof_input
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.datasets import CellDataset
+from sklearn.manifold import TSNE
 
 log = logging.getLogger(__name__)
 
@@ -129,9 +130,55 @@ def main():
         )
         return umap_transformer.fit_transform(x), settings_str
 
+    # TSNE
+    # Function for t-SNE based dimensionality reduction
+    def dimensionality_reduction_tsne(x: np.ndarray, perplexity: int, n_iter: int):
+        tsne = TSNE(
+            n_components=2, perplexity=perplexity, n_iter=n_iter, random_state=42
+        )  # Create t-SNE object
+        return tsne.fit_transform(x)
+
+    # t-SNE plotting with different perplexities and steps
+    perplexities = [2, 5, 30, 50, 100]
+    # Steps for each perplexity - n_iter
+    steps = [5000, 5000, 5000, 5000, 5000]
+
+    # for perplexity, n_iter in zip(perplexities, steps):
+    #     for embedding_type in ["sum", "mean"]:
+    #         if embedding_type == "sum":
+    #             embedding_data = x_pert_embedding_sum
+    #         elif embedding_type == "mean":
+    #             embedding_data = x_pert_embedding_mean
+
+    #         embedding = dimensionality_reduction_tsne(
+    #             embedding_data, perplexity, n_iter
+    #         )  # Using t-SNE here
+
+    #         plt.figure()
+    #         plt.scatter(
+    #             embedding[:, 0], embedding[:, 1], c=dmf, cmap="viridis", s=5, alpha=0.8
+    #         )
+    #         title = f"DMF Perturbed t-SNE {embedding_type.capitalize()} NT Embeddings (Perplexity: {perplexity}, Steps: {n_iter})"
+    #         plt.title(title)
+    #         plt.colorbar(label="DMF")
+
+    #         # Save both PNG and PDF formats for each plot
+    #         time = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
+    #         file_name_png = "-".join(title.split(" ")).lower() + "-" + time + ".png"
+    #         file_name_pdf = "-".join(title.split(" ")).lower() + "-" + time + ".pdf"
+    #         file_path_png = osp.join("notes/assets/images", file_name_png)
+    #         file_path_pdf = osp.join("notes/assets/images", file_name_pdf)
+
+    #         plt.savefig(file_path_png)
+    #         plt.savefig(file_path_pdf)
+
+    #         plt.close()
+
     # Umap plotting
-    for dimensionality_reduction_type in ["local", "global", "balanced"]:
-        for embedding_type in ["sum", "mean"]:
+    # for dimensionality_reduction_type in ["local", "global", "balanced"]:
+    #     for embedding_type in ["sum", "mean"]:
+    for dimensionality_reduction_type in ["balanced"]:
+        for embedding_type in ["sum"]:
             if embedding_type == "sum":
                 embedding_data = x_pert_embedding_sum
             elif embedding_type == "mean":
@@ -143,16 +190,16 @@ def main():
 
             plt.figure()
             plt.scatter(
-                embedding[:, 0], embedding[:, 1], c=dmf, cmap="viridis", s=10, alpha=0.7
+                embedding[:, 0], embedding[:, 1], c=dmf, cmap="viridis", s=5, alpha=0.8
             )
-            title = f"UMAP {embedding_type.capitalize()} NT Embeddings {settings_str}"
+            title = f"DMF Perturbed UMAP {embedding_type.capitalize()} NT Embeddings {settings_str}"
             plt.title(title)
             plt.colorbar(label="DMF")
 
             # Save both PNG and PDF formats for each plot
             time = datetime.datetime.now().strftime("%Y.%m.%d.%H.%M.%S")
-            file_name_png = "-".join(title.split(" ")).lower() + time + ".png"
-            file_name_pdf = "-".join(title.split(" ")).lower() + time + ".pdf"
+            file_name_png = "-".join(title.split(" ")).lower() + "-" + time + ".png"
+            file_name_pdf = "-".join(title.split(" ")).lower() + "-" + time + ".pdf"
             file_path_png = osp.join("notes/assets/images", file_name_png)
             file_path_pdf = osp.join("notes/assets/images", file_name_pdf)
 
@@ -160,7 +207,7 @@ def main():
             plt.savefig(file_path_pdf)
 
             plt.close()
-
+    
 
 if __name__ == "__main__":
     main()

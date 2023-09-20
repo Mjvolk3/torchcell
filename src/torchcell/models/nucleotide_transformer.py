@@ -58,6 +58,7 @@ class NucleotideTransformer(NucleotideModel):
         tokens_ids = self.tokenizer.batch_encode_plus(sequences, return_tensors="pt")[
             "input_ids"
         ]
+        # TODO check this error handling... looks wrong with 1000
         for token_id, sequence in zip(tokens_ids, sequences):
             if len(token_id) > 1000:
                 raise ValueError(

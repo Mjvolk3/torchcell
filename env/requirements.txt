@@ -5,6 +5,7 @@ polars
 pandas
 openpyxl # with pandas
 xlrd # with pandas
+pyreadr # RDS files
 scipy
 networkx
 dask

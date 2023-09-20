@@ -1,4 +1,8 @@
 # src/torchcell/sequence/data.py
+# [[src.torchcell.sequence.data]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/data.py
+# Test file: /src/torchcell/sequence/test_data.py
+
 import logging
 from abc import ABC, abstractmethod
 from turtle import st
@@ -14,9 +18,10 @@ from gffutils import Feature, FeatureDB
 from gffutils.biopython_integration import to_seqfeature
 from matplotlib import pyplot as plt
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, validator
+from sortedcontainers import SortedSet
 from sympy import sequence
 
-from torchcell.data_models import BaseModelStrict
+from torchcell.datamodels import ModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 
 log = logging.getLogger(__name__)
@@ -25,7 +30,7 @@ log.setLevel(logging.INFO)
 
 ###########
 # Classes holding data
-class DnaSelectionResult(BaseModel):
+class DnaSelectionResult(ModelStrict):
     id: str
     chromosome: int
     strand: str
@@ -46,9 +51,9 @@ class DnaSelectionResult(BaseModel):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
 
-    @validator("start", pre=True, always=True)
-    def start_geq_end(cls, v, values):
-        if "end" in values and v >= values["end"]:
+    @validator("end", pre=True, always=True)
+    def end_leq_start(cls, v, values):
+        if "start" in values and v <= values["start"]:
             raise ValueError("Start must be less than end")
         return v
 
@@ -103,13 +108,13 @@ class Gene(ABC):
         pass
 
     @abstractmethod
-    def window_5utr(
+    def window_five_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         pass
 
     @abstractmethod
-    def window_3utr(
+    def window_three_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         pass
@@ -261,7 +266,8 @@ def calculate_window_bounds(
     if window_size > chromosome_length:
         raise ValueError("Window size should never be greater than chromosome length")
 
-    if window_size < end - start:
+    seq_length = end - start
+    if window_size < seq_length:
         # log info that the window size is smaller than the sequence
         log.info(
             f"Window size {window_size} is smaller than sequence length {end - start}."
@@ -271,7 +277,6 @@ def calculate_window_bounds(
         )
         return start_window, end_window
 
-    seq_length = end - start
     flank_seq_length = (window_size - seq_length) // 2
     start_window = start - flank_seq_length
     end_window = end + flank_seq_length
@@ -379,5 +384,24 @@ def calculate_window_bounds_symmetric(
     return start_window, end_window
 
 
+#
+class GeneSet(SortedSet):
+    def __init__(self, iterable=None, key=None):
+        super().__init__(iterable, key)
+        for item in self:
+            if not isinstance(item, str):
+                raise ValueError(
+                    f"All items in gene_set must be str, got {type(item).__name__}"
+                )
+
+    def __repr__(self):
+        n = len(self)
+        limited_items = (self)[:3]
+        return f"GeneSet(size={n}, items={limited_items}...)"
+
+
 if __name__ == "__main__":
+    DnaSelectionResult(
+        id="gene_name", seq="ATGC", chromosome=1, start=4, end=0, strand="+"
+    )
     pass

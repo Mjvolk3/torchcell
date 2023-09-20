@@ -4,30 +4,30 @@ from typing import Dict, List, Optional, Union
 
 from pydantic import Field, validator
 
-from torchcell.data_models import BaseModelStrict
+from torchcell.datamodels import ModelStrict
 
 
 # qualities
-class ReferenceURL(BaseModelStrict):
+class ReferenceURL(ModelStrict):
     display_name: str
     link: str
 
 
-class Reference(BaseModelStrict):
+class Reference(ModelStrict):
     id: int
     display_name: str
     citation: str
-    pubmed_id: Optional[int]
+    pubmed_id: int | None
     link: str
     year: int
-    urls: Optional[List[ReferenceURL]]
+    urls: list[ReferenceURL] | None
 
 
-class QualitiesAttribute(BaseModelStrict):
-    references: List[Reference]
+class QualitiesAttribute(ModelStrict):
+    references: list[Reference]
 
 
-class Qualities(BaseModelStrict):
+class Qualities(ModelStrict):
     gene_name: QualitiesAttribute
     feature_type: QualitiesAttribute
     qualifier: QualitiesAttribute
@@ -37,114 +37,114 @@ class Qualities(BaseModelStrict):
 
 
 # aliases
-class Alias(BaseModelStrict):
+class Alias(ModelStrict):
     id: int
     display_name: str
-    link: Optional[str]
+    link: str | None
     category: str
-    references: List[Reference]
+    references: list[Reference]
     source: dict[str, str]
-    protein: Optional[bool] = None
+    protein: bool | None = None
 
 
 # urls
-class LocusDataUrl(BaseModelStrict):
+class LocusDataUrl(ModelStrict):
     category: str
     link: str
     display_name: str
 
 
 # alliance_icon_link
-class AllianceIconLink(BaseModelStrict):
+class AllianceIconLink(ModelStrict):
     mod: str
     icon_url: str
 
 
 # protein_overview
-class ProteinOverview(BaseModelStrict):
+class ProteinOverview(ModelStrict):
     length: int
     molecular_weight: float
     pi: float
-    median_value: Optional[int] = None
-    median_abs_dev_value: Optional[int] = None
+    median_value: int | None = None
+    median_abs_dev_value: int | None = None
 
 
 # go_overview
-class EvidenceCode(BaseModelStrict):
+class EvidenceCode(ModelStrict):
     display_name: str
     link: str
 
 
-class GoTerm(BaseModelStrict):
+class GoTerm(ModelStrict):
     namespace: str
-    qualifiers: List[str]
+    qualifiers: list[str]
     term: dict
-    evidence_codes: List[EvidenceCode]
+    evidence_codes: list[EvidenceCode]
 
 
-class GoSlim(BaseModelStrict):
+class GoSlim(ModelStrict):
     slim_name: str
     go_id: int
     link: str
     display_name: str
 
 
-class GoOverview(BaseModelStrict):
-    manual_molecular_function_terms: List[GoTerm]
-    manual_biological_process_terms: List[GoTerm]
-    manual_cellular_component_terms: List[GoTerm]
-    htp_molecular_function_terms: List[GoTerm]
-    htp_biological_process_terms: List[GoTerm]
-    htp_cellular_component_terms: List[GoTerm]
+class GoOverview(ModelStrict):
+    manual_molecular_function_terms: list[GoTerm]
+    manual_biological_process_terms: list[GoTerm]
+    manual_cellular_component_terms: list[GoTerm]
+    htp_molecular_function_terms: list[GoTerm]
+    htp_biological_process_terms: list[GoTerm]
+    htp_cellular_component_terms: list[GoTerm]
     computational_annotation_count: int
-    go_slim: List[GoSlim]
-    go_slim_grouped: List[GoSlim]
+    go_slim: list[GoSlim]
+    go_slim_grouped: list[GoSlim]
     date_last_reviewed: str
     paragraph: str
 
 
 # alleles
-class Allele(BaseModelStrict):
+class Allele(ModelStrict):
     display_name: str
     link_url: str
 
 
 # phenotype_overview
-class Phenotype(BaseModelStrict):
+class Phenotype(ModelStrict):
     display_name: str
     link: str
     id: int
 
 
-class LargeScalePhenotypes(BaseModelStrict):
-    null: List[Phenotype]
-    overexpression: List[Phenotype]
+class LargeScalePhenotypes(ModelStrict):
+    null: list[Phenotype]
+    overexpression: list[Phenotype]
 
 
-class ClassicalPhenotypes(BaseModelStrict):
-    null: Optional[List[Phenotype]] = None
-    overexpression: Optional[List[Phenotype]] = None
-    reuction_of_function: Optional[List[Phenotype]] = Field(
+class ClassicalPhenotypes(ModelStrict):
+    null: list[Phenotype] | None = None
+    overexpression: list[Phenotype] | None = None
+    reuction_of_function: list[Phenotype] | None = Field(
         None, alias="reduction of function"
     )
 
 
-class PhenotypeOverview(BaseModelStrict):
-    paragraph: Optional[str]
+class PhenotypeOverview(ModelStrict):
+    paragraph: str | None
     classical_phenotypes: ClassicalPhenotypes
     large_scale_phenotypes: LargeScalePhenotypes
-    strains: List[List[Union[str, int]]]  # List of lists with either string or integer
-    experiment_categories: List[List[Union[str, int]]]  # Same as above
+    strains: list[list[str | int]]  # List of lists with either string or integer
+    experiment_categories: list[list[str | int]]  # Same as above
 
 
-class PhysicalExperiments(BaseModelStrict):
+class PhysicalExperiments(ModelStrict):
     # We default to 0 to see all possible experiments for any gene.
     affinity_capture_rna: int = Field(0, alias="Affinity Capture-RNA")
     pca: int = Field(0, alias="PCA")
     two_hybrid: int = Field(0, alias="Two-hybrid")
 
 
-class GeneticExperiments(BaseModelStrict):
+class GeneticExperiments(ModelStrict):
     negative_genetic: int = Field(0, alias="Negative Genetic")
     positive_genetic: int = Field(0, alias="Positive Genetic")
     phenotypic_enhancement: int = Field(0, alias="Phenotypic Enhancement")
@@ -153,7 +153,7 @@ class GeneticExperiments(BaseModelStrict):
     dosage_rescue: int = Field(0, alias="Dosage Rescue")
 
 
-class InteractionOverview(BaseModelStrict):
+class InteractionOverview(ModelStrict):
     total_interactions: int
     total_interactors: int
     num_phys_interactors: int
@@ -167,7 +167,7 @@ class InteractionOverview(BaseModelStrict):
 
 
 # literature_overview
-class LiteratureOverview(BaseModelStrict):
+class LiteratureOverview(ModelStrict):
     primary_count: int
     additional_count: int
     review_count: int
@@ -181,37 +181,37 @@ class LiteratureOverview(BaseModelStrict):
 
 
 # disease_overview
-class DiseaseOverview(BaseModelStrict):
-    manual_disease_terms: List[str]  # Update str if you know the type
-    htp_disease_terms: List[str]  # Same as above
+class DiseaseOverview(ModelStrict):
+    manual_disease_terms: list[str]  # Update str if you know the type
+    htp_disease_terms: list[str]  # Same as above
     computational_annotation_count: int
-    date_last_reviewed: Optional[str]  # None
+    date_last_reviewed: str | None  # None
 
 
 # reulation overview
-class RegulationOverview(BaseModelStrict):
+class RegulationOverview(ModelStrict):
     regulator_count: int
     target_count: int
 
 
 # history
-class History(BaseModelStrict):
+class History(ModelStrict):
     category: str
     history_type: str
     note: str
     date_created: str
-    references: List[Reference]
+    references: list[Reference]
 
 
 # reserved_name
-class ReservedNameLocus(BaseModelStrict):
+class ReservedNameLocus(ModelStrict):
     display_name: str
     systematic_name: str
     link: str
 
 
 # ReservedName
-class ReservedName(BaseModelStrict):
+class ReservedName(ModelStrict):
     id: int
     display_name: str
     reservation_date: str
@@ -225,45 +225,45 @@ class ReservedName(BaseModelStrict):
 
 
 # Locus Data
-class LocusData(BaseModelStrict):
+class LocusData(ModelStrict):
     id: int  # 1266542
     display_name: str  # "YDR210W"
     format_name: str  # "YDR210W"
-    gene_name: Optional[str]  # None
+    gene_name: str | None  # None
     link: str  # "/locus/S000002618"
     sgdid: str  # "S000002618"
     qualities: Qualities
-    aliases: List[Alias]
-    references: List[Reference]
+    aliases: list[Alias]
+    references: list[Reference]
     locus_type: str  # "ORF"
     qualifier: str  # "Uncharacterized"
     bioent_status: str  # "Active"
     description: str
     name_description: str
-    paralogs: List[str]
-    complements: List[str]  # Can be None
-    urls: List[LocusDataUrl]
-    alliance_icon_links: List[AllianceIconLink]  # BOOK
+    paralogs: list[str]
+    complements: list[str]  # Can be None
+    urls: list[LocusDataUrl]
+    alliance_icon_links: list[AllianceIconLink]  # BOOK
     protein_overview: ProteinOverview
     go_overview: GoOverview
-    pathways: List[str]  # Can be None
-    alleles: List[Allele]
+    pathways: list[str]  # Can be None
+    alleles: list[Allele]
     sequence_summary: str
     protein_summary: str
     regulation_summary: str
     phenotype_overview: PhenotypeOverview
     interaction_overview: InteractionOverview
-    paragraph: Optional[str]
+    paragraph: str | None
     literature_overview: LiteratureOverview
     disease_overview: DiseaseOverview
-    ecnumbers: List[str]
-    URS_ID: Optional[str]
+    ecnumbers: list[str]
+    URS_ID: str | None
     main_strain: str
     regulation_overview: RegulationOverview
-    reference_mapping: Optional[dict[str, int]]
-    history: List[History]
-    complexes: List[str]
-    reserved_name: Optional[ReservedName] = None
+    reference_mapping: dict[str, int] | None
+    history: list[History]
+    complexes: list[str]
+    reserved_name: ReservedName | None = None
 
 
 # Validation

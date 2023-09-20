@@ -1,7 +1,7 @@
-# src/torchcell/data_models.py
-# [[src.torchcell.data_models]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/data_models.py
-# Test file: tests/torchcell/test_data_models.py
+# src/torchcell/datamodels/pydantic.py
+# [[src.torchcell.datamodels.pydantic]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datamodels/pydantic.py
+# Test file: src/torchcell/datamodels/test_pydantic.py
 
 import json
 from typing import Any, List, Optional
@@ -11,10 +11,17 @@ import networkx as nx
 from pydantic import BaseModel, ConfigDict, Extra
 
 
-class BaseModelStrict(BaseModel):
+class ModelStrict(BaseModel):
     class Config:
         extra = Extra.forbid
         frozen = True
+
+
+class ModelStrictArbitrary(BaseModel):
+    class Config:
+        extra = Extra.forbid
+        frozen = True
+        arbitrary_types_allowed = True
 
 
 if __name__ == "__main__":

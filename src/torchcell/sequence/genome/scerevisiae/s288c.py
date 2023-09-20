@@ -1,5 +1,11 @@
+# src/torchcell/sequence/genome/scerevisiae/s288c.py
+# [[src.torchcell.sequence.genome.scerevisiae.s288c]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/genome/scerevisiae/s288c.py
+# Test file: src/torchcell/sequence/genome/scerevisiae/test_s288c.py
+
 import glob
 import gzip
+import logging
 import os
 import os.path as osp
 import shutil
@@ -11,6 +17,7 @@ import pandas as pd
 from attrs import define, field
 from Bio import Seq, SeqIO
 from Bio.SeqRecord import SeqRecord
+from gffutils import FeatureDB
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
 from sortedcontainers import SortedDict, SortedSet
@@ -20,6 +27,7 @@ from torchcell.sequence import (
     DnaSelectionResult,
     DnaWindowResult,
     Gene,
+    GeneSet,
     Genome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
@@ -27,6 +35,8 @@ from torchcell.sequence import (
     mismatch_positions,
     roman_to_int,
 )
+
+log = logging.getLogger(__name__)
 
 # We put MT at 0, because it is circular, and this preserves arabic to roman
 CHROMOSOMES = [
@@ -51,54 +61,141 @@ CHROMOSOMES = [
 
 
 # IDEA we might be able to move some of the window functions into the ABC... this would be much nicer for the introductino of new genomes.
+# TODO this is actually more like an ORF since we care most about seq between start and stop codons
 @define
 class SCerevisiaeGene(Gene):
-    feature: Feature = field(repr=False)
-    fasta_sequences: dict[str, SeqRecord] = field(repr=False)
+    id: str = field(repr=False)
+    db: str = field(repr=False)
+    fasta_dna: dict[str, SeqRecord] = field(repr=False)
+    fasta_protein: dict[str, SeqRecord] = field(repr=False)
     chr_to_nc: dict[str, str] = field(repr=False)
     chromosome_lengths: dict[str, int] = field(repr=False)
     # below are set in __attrs_post_init__
-    id: str = field(default=None)
     chromosome: int = field(default=None)
     start: int = field(default=None)
     end: int = field(default=None)
-    strand: str = field(default=None)
     seq: str = field(default=None, repr=True)
+    feature: Feature = field(default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
-        self.id = self.feature.id
+        # process the feature region and produce a feature
+        feature_region = self.db.region(
+            region=(
+                self.db[self.id].chrom,
+                self.db[self.id].start,
+                self.db[self.id].end,
+            ),
+            completely_within=True,
+        )
+        features = [feature for feature in feature_region]
+        contains_five_prime_UTR_intron = False
+        no_middle_intron = True
+        not_chrmt = self.db[self.id].chrom != "chrmt"
+        for some_feature in features:
+            if some_feature.featuretype == "five_prime_UTR_intron":
+                contains_five_prime_UTR_intron = True
+                five_prime_UTR_intron_feature = some_feature
+
+        # 4 genes with single bp CDS 5prime
+        no_five_prime_one_bp_cds = True
+        for some_feature in features:
+            if some_feature.featuretype == "CDS":
+                cds_difference = some_feature.start - some_feature.end
+                if (
+                    some_feature.strand == "+"
+                    and cds_difference == 0
+                    and self.db[self.id].start == some_feature.start
+                ):
+                    no_five_prime_one_bp_cds = False
+
+                elif (
+                    some_feature.strand == "-"
+                    and cds_difference == 0
+                    and self.db[self.id].end == some_feature.end
+                ):
+                    no_five_prime_one_bp_cds = False
+
+            self.db[self.id].start
+        # No guarantee introns are same as five_prime_UTR_intron
+        if contains_five_prime_UTR_intron:
+            if (
+                five_prime_UTR_intron_feature.start > self.db[self.id].start
+                and five_prime_UTR_intron_feature.end < self.db[self.id].end
+            ):
+                no_middle_intron = False
+
+        # TODO logic is bit complicated, might want to abstract away.
+        if (
+            contains_five_prime_UTR_intron
+            and no_middle_intron
+            and not_chrmt
+            and no_five_prime_one_bp_cds
+        ):
+            cds_features = [
+                feature for feature in features if feature.featuretype == "CDS"
+            ]
+            if len(cds_features) == 1:
+                feature = cds_features[0]
+            # sometimes we have more than one CDS, we need to select the one we have most confidence in with "Verified" ORF
+            elif len(cds_features) > 1:
+                verified_orfs = [
+                    feature
+                    for feature in cds_features
+                    if feature.attributes["orf_classification"][0] == "Verified"
+                ]
+                if len(verified_orfs) == 1:
+                    feature = verified_orfs[0]
+                if len(verified_orfs) > 1:
+                    feature = Feature()
+                    feature.chrom = self.db[self.id].chrom
+                    feature.strand = self.db[self.id].strand
+                    feature.start = min([feature.start for feature in verified_orfs])
+                    feature.end = max([feature.end for feature in verified_orfs])
+                # assert (
+                #     len(verified_orfs) == 1
+                # ), "probably need relaxed criteria for verified"
+            assert isinstance(feature, Feature), "feature is not a gffutils Feature"
+            log.warning(f"{self.id} - Using CDS Sequence")
+        else:
+            feature = self.db[self.id]
+        gene_feature = self.db[self.id]
+
+        #
+        self.id = self.id
         # chromosome
-        seqid = self.feature.seqid
+        seqid = gene_feature.seqid
         maybe_roman_numeral = seqid.split("chr")[-1]
         if maybe_roman_numeral == "mt":
             self.chromosome = 0
         else:
             self.chromosome = roman_to_int(maybe_roman_numeral)
         # others
-        self.start = self.feature.start
-        self.end = self.feature.end
-        self.strand = self.feature.strand
+        self.start = feature.start
+        self.end = feature.end
+        self.strand = feature.strand
 
-        # sequence
+        # dna sequence
         chr = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
-            self.seq = str(self.fasta_sequences[chr].seq[self.start : self.end])
+            self.seq = str(self.fasta_dna[chr].seq[self.start - 1 : self.end])
         elif self.strand == "-":
             self.seq = str(
-                self.fasta_sequences[chr]
-                .seq[self.start : self.end]
-                .reverse_complement()
+                self.fasta_dna[chr].seq[self.start - 1 : self.end].reverse_complement()
             )
 
+        # protein sequence
+        self.protein = self.fasta_protein.get(self.id)
+
         # TODO consider adding these to ABC...
-        # Some might be too specific to S. cerevisiae, but so they coudl be optional
-        self.alias = self.feature.attributes.get("Alias", None)
-        self.name = self.feature.attributes.get("Name", None)
-        self.ontology_term = self.feature.attributes.get("Ontology_term", None)
-        self.note = self.feature.attributes.get("Note", None)
-        self.display = self.feature.attributes.get("display", None)
-        self.dbxref = self.feature.attributes.get("dbxref", None)
-        self.orf_classification = self.feature.attributes.get(
+        # Some might be too specific to S. cerevisiae, but so they could be optional
+        # Must use the gene since it has all of the annotations, not the OverflowError
+        self.alias = gene_feature.attributes.get("Alias", None)
+        self.name = gene_feature.attributes.get("Name", None)
+        self.ontology_term = gene_feature.attributes.get("Ontology_term", None)
+        self.note = gene_feature.attributes.get("Note", None)
+        self.display = gene_feature.attributes.get("display", None)
+        self.dbxref = gene_feature.attributes.get("dbxref", None)
+        self.orf_classification = gene_feature.attributes.get(
             "orf_classification", None
         )
 
@@ -113,7 +210,7 @@ class SCerevisiaeGene(Gene):
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         if is_max_size:
             start_window, end_window = calculate_window_bounds(
-                start=self.start,
+                start=self.start - 1,
                 end=self.end,
                 strand=self.strand,
                 window_size=window_size,
@@ -122,13 +219,18 @@ class SCerevisiaeGene(Gene):
 
         else:
             start_window, end_window = calculate_window_bounds_symmetric(
-                start=self.start,
+                start=self.start - 1,
                 end=self.end,
                 window_size=window_size,
                 chromosome_length=self.chromosome_lengths[self.chromosome],
             )
         chr_id = self.chr_to_nc[self.chromosome]
-        seq = str(self.fasta_sequences[chr_id].seq[start_window:end_window])
+        if self.strand == "+":
+            seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
+        elif self.strand == "-":
+            seq = str(
+                self.fasta_dna[chr_id].seq[start_window:end_window].reverse_complement()
+            )
         return DnaWindowResult(
             id=self.id,
             chromosome=self.chromosome,
@@ -140,7 +242,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def window_5utr(
+    def window_five_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         chr_id = self.chr_to_nc[self.chromosome]
@@ -155,7 +257,7 @@ class SCerevisiaeGene(Gene):
                 raise ValueError(
                     f"5utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
-            seq = str(self.fasta_sequences[chr_id].seq[start_window:end_window])
+            seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
         elif self.strand == "-":
             start_window = self.end
             end_window = self.end + window_size
@@ -174,9 +276,7 @@ class SCerevisiaeGene(Gene):
                 )
 
             seq = str(
-                self.fasta_sequences[chr_id]
-                .seq[start_window:end_window]
-                .reverse_complement()
+                self.fasta_dna[chr_id].seq[start_window:end_window].reverse_complement()
             )
         return DnaWindowResult(
             id=self.id,
@@ -189,7 +289,7 @@ class SCerevisiaeGene(Gene):
             end_window=end_window,
         )
 
-    def window_3utr(
+    def window_three_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         chr_id = self.chr_to_nc[self.chromosome]
@@ -209,7 +309,7 @@ class SCerevisiaeGene(Gene):
                 raise ValueError(
                     f"3utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
-            seq = str(self.fasta_sequences[chr_id].seq[start_window:end_window])
+            seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
         elif self.strand == "-":
             start_window = self.start - window_size
             end_window = self.start
@@ -221,9 +321,7 @@ class SCerevisiaeGene(Gene):
                     f"3utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
             seq = str(
-                self.fasta_sequences[chr_id]
-                .seq[start_window:end_window]
-                .reverse_complement()
+                self.fasta_dna[chr_id].seq[start_window:end_window].reverse_complement()
             )
 
         return DnaWindowResult(
@@ -245,50 +343,72 @@ class SCerevisiaeGene(Gene):
 class SCerevisiaeGenome(Genome):
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
     db: dict[str, SeqRecord] = field(init=False, repr=False)
-    fasta_sequences = field(init=False, default=None, repr=False)
+    fasta_dna = field(init=False, default=None, repr=False)
     chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
     nc_to_chr: dict[str, str] = field(init=False, default=None, repr=False)
     chr_to_len: dict[str, int] = field(init=False, default=None, repr=False)
-    _gene_set: SortedSet = field(init=False, default=None, repr=False)
-    _fasta_path: str = field(init=False, default=None, repr=False)
+    _gene_set: GeneSet = field(init=False, default=None, repr=False)
+    _dna_fasta_path: str = field(init=False, default=None, repr=False)
+    _protein_fasta_path: str = field(init=False, default=None, repr=False)
     _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
-        self._fasta_path: str = os.path.join(
-            self.data_root,
-            "S288C_reference_genome_R64-3-1_20210421/S288C_reference_sequence_R64-3-1_20210421.fsa",
-        )
-        self._gff_path: str = os.path.join(
-            self.data_root,
-            "S288C_reference_genome_R64-3-1_20210421/saccharomyces_cerevisiae_R64-3-1_20210421.gff",
-        )
+        genome_reference = "S288C_reference_genome"
+        self.genome_version = "R64-4-1_20230830"
+        self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
+        self.sequence_s288c = "sequence/S288C_reference"
+        self.genome_version_full = genome_reference + "_" + self.genome_version
 
-        # Check if the necessary files exist, if not download them
-        if not os.path.exists(self._fasta_path) or not os.path.exists(self._gff_path):
+        self._dna_fasta_path: str = osp.join(
+            self.data_root,
+            self.genome_version_full,
+            "S288C_reference_sequence_" + self.genome_version + ".fsa",
+        )
+        self._gff_path: str = osp.join(
+            self.data_root,
+            self.genome_version_full,
+            "saccharomyces_cerevisiae_" + self.genome_version + ".gff",
+        )
+        self._protein_fasta_path = osp.join(
+            self.data_root,
+            self.genome_version_full,
+            "orf_trans_all_" + self.genome_version + ".fasta",
+        )
+        # Download genome data
+        if not os.path.exists(self._dna_fasta_path) or not os.path.exists(
+            self._gff_path
+        ):
             self.download_and_extract_genome_files()
+
         db_path = osp.join(self.data_root, "data.db")
 
-        if os.path.exists(db_path):
-            self.db = gffutils.FeatureDB(db_path)
-        else:
-            self.db = gffutils.create_db(
-                self._gff_path,
-                dbfn=db_path,
-                force=True,
-                keep_order=True,
-                merge_strategy="merge",
-                sort_attribute_values=True,
-            )
-        self.fasta_sequences = SeqIO.to_dict(SeqIO.parse(self._fasta_path, "fasta"))
+        # CHECK if this works with ddp
+        # if os.path.exists(db_path):
+        #     self.db = gffutils.FeatureDB(db_path)
+        # else:
+        # TODO remove sort_attribute_values since this can be time consuming.
+        self.db = gffutils.create_db(
+            self._gff_path,
+            dbfn=db_path,
+            force=True,
+            keep_order=True,
+            merge_strategy="merge",
+            sort_attribute_values=True,
+        )
+
+        self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))
+        self.fasta_protein = SeqIO.to_dict(
+            SeqIO.parse(self._protein_fasta_path, "fasta")
+        )
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
-            get_chr_from_description(self.fasta_sequences[key].description): key
-            for key in self.fasta_sequences.keys()
+            get_chr_from_description(self.fasta_dna[key].description): key
+            for key in self.fasta_dna.keys()
         }
         self.nc_to_chr = {v: k for k, v in self.chr_to_nc.items()}
         self.chr_to_len = {
-            self.nc_to_chr[chr]: len(self.fasta_sequences[chr].seq)
-            for chr in self.fasta_sequences.keys()
+            self.nc_to_chr[chr]: len(self.fasta_dna[chr].seq)
+            for chr in self.fasta_dna.keys()
         }
 
         # TODO Not sure if this is now to tightly coupled to GO
@@ -307,7 +427,11 @@ class SCerevisiaeGenome(Genome):
         """
         Download and extract genome files if they do not exist.
         """
-        url = "http://sgd-archive.yeastgenome.org/sequence/S288C_reference/genome_releases/S288C_reference_genome_R64-3-1_20210421.tgz"
+        zipped_version = f"{self.genome_version_full}.tgz"
+        url = osp.join(
+            self.sgd_base_url, self.sequence_s288c, "genome_releases", zipped_version
+        )
+
         save_dir = self.data_root
         download_url(url, save_dir)
         downloaded_file_path = os.path.join(save_dir, url.split("/")[-1])
@@ -342,24 +466,28 @@ class SCerevisiaeGenome(Genome):
         updated_features = []
 
         # Iterate over each feature in the database
+        invalid_go_terms = {"not_in_go_dag": [], "obsolete": []}
         for feature in self.db.features_of_type("gene"):
             # Check if the feature has the "Ontology_term" attribute
             if "Ontology_term" in feature.attributes:
                 # Filter out deprecated GO terms
+                valid_onto_terms = []
                 valid_go_terms = []
                 for term in feature.attributes["Ontology_term"]:
                     if term.startswith("GO:"):
                         if term not in self.go_dag:
-                            print(f"Removing GO term not found in go_dag: {term}")
-                            continue
-                        if self.go_dag[term].is_obsolete:
-                            print(f"Removing obsolete GO term: {term}")
-                            continue
-                        valid_go_terms.append(term)
-
+                            invalid_go_terms["not_in_go_dag"].append(term)
+                        elif self.go_dag[term].is_obsolete:
+                            invalid_go_terms["obsolete"].append(term)
+                        else:
+                            valid_go_terms.append(term)
+                    else:
+                        valid_onto_terms.append(term)
                 # Update the "Ontology_term" attribute for the feature
                 if valid_go_terms:
-                    feature.attributes["Ontology_term"] = valid_go_terms
+                    feature.attributes["Ontology_term"] = (
+                        valid_go_terms + valid_onto_terms
+                    )
                 else:
                     del feature.attributes["Ontology_term"]
 
@@ -371,6 +499,9 @@ class SCerevisiaeGenome(Genome):
 
         # Commit the changes to the database
         self.db.conn.commit()
+
+        log.info("Removed deprecated go terms from database")
+        log.info(invalid_go_terms)
 
     @property
     def go(self) -> SortedSet[str]:
@@ -441,9 +572,9 @@ class SCerevisiaeGenome(Genome):
         if isinstance(chr, int):
             chr = self.chr_to_nc[chr]
         if strand == "+":
-            seq = self.fasta_sequences[chr].seq[start:end]
+            seq = self.fasta_dna[chr].seq[start:end]
         elif strand == "-":
-            seq = self.fasta_sequences[chr].seq[start:end].reverse_complement()
+            seq = self.fasta_dna[chr].seq[start:end].reverse_complement()
         return DnaSelectionResult(
             id=self.id,
             chromosome=chr_num,
@@ -512,7 +643,7 @@ class SCerevisiaeGenome(Genome):
         assert len(genes) == len(
             set(genes)
         ), "Duplicate genes found... chekc handled by gff."
-        return SortedSet(genes)
+        return GeneSet(genes)
 
     def drop_chrmt(self) -> None:
         mitochondrial_features = [
@@ -557,10 +688,13 @@ class SCerevisiaeGenome(Genome):
 
     def __getitem__(self, item: str) -> SCerevisiaeGene | None:
         # For now we only support the systematic names
+        # ising region instead, since it give more options on dealing with gene processing in gene class
         try:
             gene = SCerevisiaeGene(
-                feature=self.db[item],
-                fasta_sequences=self.fasta_sequences,
+                id=item,
+                db=self.db,
+                fasta_dna=self.fasta_dna,
+                fasta_protein=self.fasta_protein,
                 chr_to_nc=self.chr_to_nc,
                 chromosome_lengths=self.chr_to_len,
             )
@@ -584,24 +718,37 @@ def main() -> None:
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.go
     # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters # 4903
-    print(
-        genome["YFL039C"]
-    )  # Replace with valid gene... we only support systematic names
+    # print(
+    #     genome["YFL039C"]
+    # )
+    # Replace with valid gene... we only support systematic names
+    # test gene with introns
 
     # Iterate through all gene features and check if they have an Ontology_term attribute
-    print(len(genome.gene_set))
+    # print(len(genome.gene_set))
     genome.drop_chrmt()
-    print(len(genome.gene_set))
+    # print(len(genome.gene_set))
     genome.drop_empty_go()
+    print(genome["YDL061C"].seq)
+    genome["YDL061C"].window(171).seq
+    genome["YDL061C"].window(171, False).seq
+    no_start_codon = []
+    no_stop_codon = []
+    for gene in genome.gene_set:
+        if genome[gene].seq[:3] != "ATG":
+            no_start_codon.append(gene)
+        if genome[gene].seq[-3:] not in ["TAA", "TAG", "TGA"]:
+            no_stop_codon.append(gene)
+
     print(len(genome.gene_set))
-    genome["YFL039C"].window(1000)
-    genome["YFL039C"].window(1000, is_max_size=False)
-    genome["YFL039C"].window_3utr(1000)
-    genome["YFL039C"].window_3utr(1000, allow_undersize=True)
-    genome["YFL039C"].window_3utr(1000, allow_undersize=False)
-    genome["YFL039C"].window_5utr(1000, allow_undersize=True)
-    genome["YFL039C"].window_5utr(1000, allow_undersize=False)
-    print(genome.go[:10])
+    # genome["YFL039C"].window(1000)
+    # genome["YFL039C"].window(1000, is_max_size=False)
+    # genome["YFL039C"].window_three_prime(1000)
+    # genome["YFL039C"].window_three_prime(1000, allow_undersize=True)
+    # genome["YFL039C"].window_three_prime(1000, allow_undersize=False)
+    # genome["YFL039C"].window_five_prime(1000, allow_undersize=True)
+    # genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
+    # print(genome.go[:10])
 
 
 if __name__ == "__main__":

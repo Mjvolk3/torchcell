@@ -1,4 +1,9 @@
-# src/torchcell/sequence/data.py
+# src/torchcell/sequence/data_scratch.py
+# [[src.torchcell.sequence.data_scratch]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/data_scratch.py
+# Test file: src/torchcell/sequence/test_data_scratch.py
+
+
 import logging
 from abc import ABC, abstractmethod
 from turtle import st
@@ -25,7 +30,6 @@ from sympy import sequence
 
 from torchcell.data_models import BaseModelStrict
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
-from typing import Set
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -145,21 +149,17 @@ class Gene(ABC):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     @abstractmethod
-    def window(
-        self,
-        window_size: int,
-        is_max_size: bool = True,
-    ) -> DnaWindowResult:
+    def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         pass
 
     @abstractmethod
-    def window_5utr(
+    def window_five_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         pass
 
     @abstractmethod
-    def window_3utr(
+    def window_three_prime(
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         pass
@@ -279,10 +279,7 @@ def roman_to_int(s: str) -> int:
 
 # selection_feature_window functions
 def calculate_window_undersized(
-    start: int,
-    end: int,
-    strand: str,
-    window_size: int,
+    start: int, end: int, strand: str, window_size: int
 ) -> tuple[int, int]:
     # select from start of gene, since this is such a strong signal for function
     if strand == "+":
@@ -300,11 +297,7 @@ def calculate_window_undersized(
 
 
 def calculate_window_bounds(
-    start: int,
-    end: int,
-    strand: str,
-    window_size: int,
-    chromosome_length: int,
+    start: int, end: int, strand: str, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
     if end >= chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
@@ -358,9 +351,7 @@ def calculate_window_bounds(
 
 
 def calculate_window_undersized_symmetric(
-    start: int,
-    end: int,
-    window_size: int,
+    start: int, end: int, window_size: int
 ) -> tuple[int, int]:
     # find the middle
     middle = (start + end) // 2
@@ -378,10 +369,7 @@ def calculate_window_undersized_symmetric(
 
 
 def calculate_window_bounds_symmetric(
-    start: int,
-    end: int,
-    window_size: int,
-    chromosome_length: int,
+    start: int, end: int, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
     if end >= chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")

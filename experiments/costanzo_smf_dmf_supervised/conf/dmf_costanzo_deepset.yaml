@@ -12,7 +12,7 @@ data_module:
   batch_size: 32
   num_workers: 2
   pin_memory: true
-  
+
 trainer:
   max_epochs: 100
   strategy: ddp

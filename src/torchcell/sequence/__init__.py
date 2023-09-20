@@ -2,13 +2,14 @@
 from .data import (
     DnaSelectionResult,
     DnaWindowResult,
+    Gene,
+    GeneSet,
     Genome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
     get_chr_from_description,
-    roman_to_int,
     mismatch_positions,
-    Gene,
+    roman_to_int,
 )
 
 __all__ = (
@@ -21,4 +22,5 @@ __all__ = (
     roman_to_int,
     mismatch_positions,
     "Gene",
+    "GeneSet",
 )

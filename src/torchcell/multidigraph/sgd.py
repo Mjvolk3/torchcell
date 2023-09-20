@@ -1,4 +1,9 @@
-# sgd.py
+# src/torchcell/multidigraph/sgd.py
+# [[src.torchcell.multidigraph.sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/multidigraph/sgd.py
+# Test file: src/torchcell/multidigraph/test_sgd.py
+
+
 import asyncio
 import json
 import os
@@ -208,10 +213,34 @@ def main() -> None:
     )  # TODO Change for Dev
     end_time = time.time()
     print(f"Execution time: {end_time - start_time} seconds")
-    gene = Gene("YDR210W")
-    asyncio.run(gene.fetch_data())
+    # gene = Gene("YDR210W")
+    # asyncio.run(gene.fetch_data())
     # gene.data
 
 
+def main_median_protein():
+    import os
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    from torchcell.datasets.scerevisiae import DMFCostanzo2016Dataset
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    dmf_dataset = DMFCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+        preprocess="low_dmf_std",
+    )
+    # genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    # genome.drop_chrmt()
+    # genome.drop_empty_go()
+    locus_ids = list(dmf_dataset.gene_set)
+    start_time = time.time()
+    asyncio.run(download_genes(locus_ids, create_gene, is_validated=False))
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time} seconds")
+
+
 if __name__ == "__main__":
-    main()
+    main_median_protein()

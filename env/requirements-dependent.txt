@@ -1,0 +1,3 @@
+# Must me installed after requirements.txt
+# torch stack
+torch-scatter==2.1.1

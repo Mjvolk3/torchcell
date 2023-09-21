@@ -727,6 +727,7 @@ def main() -> None:
     # Iterate through all gene features and check if they have an Ontology_term attribute
     # print(len(genome.gene_set))
     genome.drop_chrmt()
+    print(genome.gene_set)
     # print(len(genome.gene_set))
     genome.drop_empty_go()
     print(genome["YDL061C"].seq)

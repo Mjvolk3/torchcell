@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import patch
 
 import pytest
 
@@ -6,6 +7,7 @@ from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 from torchcell.sequence.data import (
     DnaSelectionResult,
     DnaWindowResult,
+    GeneSet,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
     calculate_window_undersized,
@@ -392,8 +394,45 @@ def test_calculate_window_bounds_symmetric():
         calculate_window_bounds_symmetric(
             start=10, end=20, window_size=101, chromosome_length=100
         )
+    # This test should trigger the condition where window_size < end - start
+    actual_start_window, actual_end_window = calculate_window_bounds_symmetric(
+        start=10, end=20, window_size=5, chromosome_length=100
+    )
+
+    assert actual_start_window, actual_end_window == (13, 17)
 
 
-if __name__ == "__main__":
-    x = calculate_window_undersized_symmetric(start=10, end=20, window_size=5)
-    print(x)
+@pytest.fixture
+def sample_geneset():
+    return GeneSet(["YAL001C", "YAL002W", "YAL003W", "YAL004W"])
+
+
+def test_initialization_with_strings(sample_geneset):
+    assert len(sample_geneset) == 4
+    assert "YAL001C" in sample_geneset
+    assert "YAL002W" in sample_geneset
+    assert "YAL003W" in sample_geneset
+    assert "YAL004W" in sample_geneset
+
+
+def test_initialization_with_non_string():
+    with pytest.raises(ValueError, match="All items in gene_set must be str"):
+        GeneSet([1, 2, 3])
+
+
+def test_repr_method(sample_geneset):
+    expected_repr = "GeneSet(size=4, items=['YAL001C', 'YAL002W', 'YAL003W']...)"
+    assert repr(sample_geneset) == expected_repr
+
+
+def test_empty_initialization():
+    genes = GeneSet()
+    assert len(genes) == 0
+    assert repr(genes) == "GeneSet(size=0, items=[]...)"
+
+
+# Additional test to check the scenario with more items in the GeneSet
+def test_repr_method_with_more_items():
+    genes = GeneSet(["YAL001C", "YAL002W", "YAL003W", "YAL004W", "YAL005C"])
+    expected_repr = "GeneSet(size=5, items=['YAL001C', 'YAL002W', 'YAL003W']...)"
+    assert repr(genes) == expected_repr

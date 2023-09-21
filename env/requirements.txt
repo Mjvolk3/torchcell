@@ -74,4 +74,4 @@ pre-commit
 ptpython
 pip-tools
 snakeviz
-pytest-cov
+

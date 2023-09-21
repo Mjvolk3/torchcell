@@ -344,9 +344,9 @@ def calculate_window_bounds_symmetric(
 
     if window_size < end - start:
         # log info that the window size is smaller than the sequence
-        log.info(
-            f"Window size {window_size} is smaller than sequence length {end - start}."
-        )
+        # log.info(
+        #     f"Window size {window_size} is smaller than sequence length {end - start}."
+        # )
         start_window, end_window = calculate_window_undersized_symmetric(
             start, end, window_size
         )
@@ -402,10 +402,3 @@ class GeneSet(SortedSet):
         n = len(self)
         limited_items = (self)[:3]
         return f"GeneSet(size={n}, items={limited_items}...)"
-
-
-if __name__ == "__main__":
-    DnaSelectionResult(
-        id="gene_name", seq="ATGC", chromosome=1, start=4, end=0, strand="+"
-    )
-    pass

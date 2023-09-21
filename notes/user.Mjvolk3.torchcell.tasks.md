@@ -2,16 +2,22 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1695247072753
+updated: 1695314599634
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.09.21
+
+- [ ] Complete coverage on [[Data|dendron://torchcell/src.torchcell.sequence.data]]
+- [ ] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
 
 ## 2023.09.20
 
 - [x] Email Fungal UTR authors to clarify some of the 5 utr selections
 - [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/src.torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
-
+- [x] Complete coverage on data → [[Data|dendron://torchcell/src.torchcell.sequence.data]] made some progress
+- [ ] Make  `pytest --cov=torchcell --cov-report html tests/` task
 - [ ] Test genome
 - [ ] Write fungal utr model
 - [ ] Write fungal utr dataset

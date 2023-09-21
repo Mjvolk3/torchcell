@@ -46,3 +46,6 @@ ontology/TCO.properties
 
 # hydra
 outputs/
+
+# Pytest Code Coverage
+.coverage

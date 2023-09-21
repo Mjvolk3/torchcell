@@ -21,9 +21,9 @@ torch==2.0.1
 torchvision==0.15.2
 torchaudio==2.0.1
 torch_geometric==1.0.3
-torch-scatter==2.1.1
 torchmetrics==0.11.4
 pytorch-lightning==2.0.6
+torch-scatter==2.1.1
 
 # visualization stack and logging
 wandb==0.15.8

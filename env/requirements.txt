@@ -1,77 +1,83 @@
 # env/requirements.txt
 # scientific computing stack
-numpy
-polars
-pandas
-openpyxl # with pandas
-xlrd # with pandas
-pyreadr # RDS files
-scipy
-networkx
-dask
-umap-learn
+numpy== 1.24.2
+pandas==1.53
+#polars
+openpyxl==3.1.2
+# xlrd with pandas
+xlrd== 2.0.1
+# pyreader use with RDS
+pyreadr==0.4.9
+scipy==1.11.2
+networkx==2.8.8
+#dask
+umap-learn==0.5.3
 
 # configuration
-hydra-core
+hydra-core==1.3.2
 
 # torch stack
-torch
-torchvision
-torchaudio
-torch_geometric
+torch==2.0.1
 torch-scatter
-torchmetrics
-pytorch-lightning
+torchvision==0.15.2
+torchaudio==2.0.1
+torch_geometric==1.0.3
+torchmetrics==0.11.4
+pytorch-lightning==2.0.6
 
 # visualization stack and logging
-wandb
-matplotlib
-adjustText # with matplotlib
-pydot # Don't think I am using this... outdate
-# pygraphviz # Don't think I am using this
-graphviz # Don't think I am using this.
-plotly
-seaborn
+wandb==0.15.8
+matplotlib==3.7.2
+# adjustTest used with with matplotlib
+adjustText== 0.8
+#pydot Don't think I am using this... outdate
+pydot== 1.4.2
+# pygraphviz don't think I am using this
+ # graphviz don't think I am using this.
+graphviz==8.1.0
+plotly==5.13.1
+seaborn==0.12.2
 
 # ML stack
-scikit-learn
-transformers # hugging face
+scikit-learn==1.3.0
+transformers==4.31.0
 
 # Bio stack
-biopython
-goatools
-intermine
-gffutils
+biopython==1.81
+goatools== 1.3.1
+intermine== 1.13.0
+gffutils== 0.12
 
 # stubs and types
-pandas-stubs
-types-tqdm
-types-requests
+pandas-stubs==2.0.2.230605
+types-tqdm==  4.65.0.2
+types-requests== 2.31.0.2
 
 # data stack
-sortedcontainers
-attrs
-pydantic==1.10.5 # due to lightning
-h5py
+sortedcontainers==2.4.0
+attrs== 23.1.0
+# pydantic limited by lightning
+pydantic==1.10.5
+h5py== 3.9.0
 
 # database stack
-lmdb
+lmdb== 1.4.1
 
 
 # web stack
-aiohttp
+aiohttp==3.8.5
 
 # ontology stack
-pronto
-nxontology
+pronto==2.5.4
+nxontology==0.5.0
 
 # Workspace
-python-dotenv
+python-dotenv==1.0.0
 
 # dev-tools
-bumpver
-pre-commit
-ptpython
-pip-tools
-snakeviz
+bumpver== 2023.1125
+pre-commit==  3.3.3
+# ptpython==3.0.23
+pip-tools==7.1.0
+snakeviz== 2.2.0
 

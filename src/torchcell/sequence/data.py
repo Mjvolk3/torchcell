@@ -28,8 +28,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-###########
-# Classes holding data
 class DnaSelectionResult(ModelStrict):
     id: str
     chromosome: int
@@ -94,6 +92,21 @@ class DnaWindowResult(DnaSelectionResult):
         return v
 
 
+class GeneSet(SortedSet):
+    def __init__(self, iterable=None, key=None):
+        super().__init__(iterable, key)
+        for item in self:
+            if not isinstance(item, str):
+                raise ValueError(
+                    f"All items in gene_set must be str, got {type(item).__name__}"
+                )
+
+    def __repr__(self):
+        n = len(self)
+        limited_items = (self)[:3]
+        return f"GeneSet(size={n}, items={limited_items}...)"
+
+
 ###########
 # Abstract Base Class for structure
 
@@ -147,7 +160,7 @@ class Genome(ABC):
         self._gff_path: str = None
 
     @property
-    def gene_set(self) -> set[str]:
+    def gene_set(self) -> GeneSet:
         if self._gene_set is None:
             self._gene_set = self.compute_gene_set()
         return self._gene_set
@@ -386,19 +399,3 @@ def calculate_window_bounds_symmetric(
     assert end_window >= end, "End window must be geq end."
 
     return start_window, end_window
-
-
-#
-class GeneSet(SortedSet):
-    def __init__(self, iterable=None, key=None):
-        super().__init__(iterable, key)
-        for item in self:
-            if not isinstance(item, str):
-                raise ValueError(
-                    f"All items in gene_set must be str, got {type(item).__name__}"
-                )
-
-    def __repr__(self):
-        n = len(self)
-        limited_items = (self)[:3]
-        return f"GeneSet(size={n}, items={limited_items}...)"

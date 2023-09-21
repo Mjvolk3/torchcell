@@ -259,7 +259,7 @@ def calculate_window_undersized(
 def calculate_window_bounds(
     start: int, end: int, strand: str, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
-    if end >= chromosome_length:
+    if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
         raise ValueError("Start position must be less than end position")
@@ -291,16 +291,16 @@ def calculate_window_bounds(
         end_window = chromosome_length  # Set end of window to end of sequence
         start_window = chromosome_length - window_size
 
-    # Edge case for if the adjusted window does not match the window size
-    # Against chromosome ends
-    if abs(
-        (end_window - start_window) - window_size == 1
+    # Edge case if the adjusted window does not match the window size
+    # and is up against chromosome ends
+    if (
+        abs((end_window - start_window) - window_size) == 1
         and end_window == chromosome_length
     ):
         start_window -= 1
     elif abs((end_window - start_window) - window_size) == 1 and start_window == 0:
         end_window += 1
-    # Select more of the 5' UTR
+    # Select more of the upstream
     elif abs((end_window - start_window) - window_size) == 1 and strand == "+":
         start_window -= 1
     elif abs((end_window - start_window) - window_size) == 1 and strand == "-":
@@ -313,6 +313,10 @@ def calculate_window_bounds(
 def calculate_window_undersized_symmetric(
     start: int, end: int, window_size: int
 ) -> tuple[int, int]:
+    if start == end:
+        raise ValueError("Start and end positions are the same")
+    if window_size < 2:
+        raise ValueError("Window size must be at least 2")
     # find the middle
     middle = (start + end) // 2
     # take half above and half below
@@ -331,7 +335,7 @@ def calculate_window_undersized_symmetric(
 def calculate_window_bounds_symmetric(
     start: int, end: int, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
-    if end >= chromosome_length:
+    if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
         raise ValueError("Start position must be less than end position")

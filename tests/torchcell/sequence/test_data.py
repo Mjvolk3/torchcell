@@ -190,48 +190,22 @@ def test_roman_to_int() -> None:
 # Test window functions
 
 
-def test_calculate_window_undersized_positive_strand():
-    start = 10
-    end = 50
-    strand = "+"
-    window_size = 20
-
-    # For a positive strand, the start window should be equal to start, and the end window should be start + window_size
-    expected_start_window = start
-    expected_end_window = start + window_size
-
+def test_calculate_window_undersized_strand():
+    # For a positive strand, the start window should be equal to start,
+    # and the end window should be start + window_size
     actual_start_window, actual_end_window = calculate_window_undersized(
-        start, end, strand, window_size
+        start=10, end=50, strand="+", window_size=20
     )
 
-    assert (
-        actual_start_window == expected_start_window
-    ), f"Expected {expected_start_window}, but got {actual_start_window}"
-    assert (
-        actual_end_window == expected_end_window
-    ), f"Expected {expected_end_window}, but got {actual_end_window}"
+    assert actual_start_window, actual_end_window == (10, 30)
 
-
-def test_calculate_window_undersized_negative_strand():
-    start = 10
-    end = 50
-    strand = "-"
-    window_size = 20
-
-    # For a negative strand, the start window should be end - window_size, and the end window should be equal to end
-    expected_start_window = end - window_size
-    expected_end_window = end
-
+    # For a negative strand, the start window should be end - window_size,
+    # and the end window should be equal to end
     actual_start_window, actual_end_window = calculate_window_undersized(
-        start, end, strand, window_size
+        start=10, end=50, strand="-", window_size=20
     )
 
-    assert (
-        actual_start_window == expected_start_window
-    ), f"Expected {expected_start_window}, but got {actual_start_window}"
-    assert (
-        actual_end_window == expected_end_window
-    ), f"Expected {expected_end_window}, but got {actual_end_window}"
+    assert actual_start_window, actual_end_window == (30, 50)
 
 
 def test_calculate_window_bounds_errors() -> None:

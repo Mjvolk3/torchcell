@@ -2,15 +2,20 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1695314599634
+updated: 1695418633044
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.09.22
+
+- [ ] Make docs → Changed to `pyg` template as it is simpler
+- [ ] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
+
 ## 2023.09.21
 
-- [ ] Complete coverage on [[Data|dendron://torchcell/src.torchcell.sequence.data]]
-- [ ] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
+- [x] Complete coverage on [[Data|dendron://torchcell/src.torchcell.sequence.data]]
+- 🔲 Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
 
 ## 2023.09.20
 

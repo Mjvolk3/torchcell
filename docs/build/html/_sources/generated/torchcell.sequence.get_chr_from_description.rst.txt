@@ -1,0 +1,6 @@
+﻿torchcell.sequence.get\_chr\_from\_description
+==============================================
+
+.. currentmodule:: torchcell.sequence
+
+.. autofunction:: get_chr_from_description

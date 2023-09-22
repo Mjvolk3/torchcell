@@ -1,0 +1,6 @@
+﻿torchcell.sequence.calculate\_window\_bounds
+============================================
+
+.. currentmodule:: torchcell.sequence
+
+.. autofunction:: calculate_window_bounds

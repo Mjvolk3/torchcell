@@ -207,14 +207,63 @@ class Genome(ABC):
 ############
 # Helper functions
 def mismatch_positions(seq1: str, seq2: str) -> list[int]:
+    """
+    Computes the positions at which two sequences differ.
+
+    This function takes two sequences, seq1 and seq2, represented as strings
+    and returns a list of positions at which the two sequences have different
+    characters. The sequences must be of the same length, else a ValueError is raised.
+
+    Args:
+        seq1 (str): The first sequence to compare.
+        seq2 (str): The second sequence to compare.
+
+    Returns:
+        list[str]: A list containing the positions at
+        which the two sequences differ.
+        An empty list is returned if the sequences are identical.
+
+    Raises:
+        ValueError: If the lengths of seq1 and seq2 are not equal.
+
+    Example:
+        >>> mismatch_positions("ATGC", "ATCC")
+        [2]
+    """
+
     if len(seq1) != len(seq2):
         raise ValueError("Sequences must be the same length")
     mismatches = [i for i, (n1, n2) in enumerate(zip(seq1, seq2)) if n1 != n2]
     return mismatches
 
 
-# CHECK - format might be specific yeast
 def get_chr_from_description(description: str) -> int:
+    """
+    Extracts the chromosome number from a given description string.
+
+    Processes a description string containing either a chromosome
+    in Roman numeral (e.g., "[chromosome=IX]").
+    Or a location (e.g., "[location=mitochondrion]").
+    If a chromosome is found, it converts the Roman numeral to an integer.
+    If the location is a mitochondrion, it returns 0.
+    Handles descriptions containing chromosome information in a predefined format.
+
+    Args:
+        description (str): Description string containing chromosome number
+
+    Returns:
+        int: Chromosome number.  Returns 0 if the location is mitochondrion.
+
+    Raises:
+        ValueError: If the Roman numeral conversion fails due to invalid format.
+
+    Example:
+        >>> get_chr_from_description("[chromosome=IX] some other info")
+        9
+        >>> get_chr_from_description("[location=mitochondrion] some other info")
+        0
+    """
+    # CHECK - format might be specific yeast s288c genome
     desc_split = description.split()
     for part in desc_split:
         if part.startswith("[chromosome="):
@@ -229,6 +278,34 @@ def get_chr_from_description(description: str) -> int:
 
 
 def roman_to_int(s: str) -> int:
+    """
+    Converts a Roman numeral string to an integer.
+
+    This function interprets the given string `s` as a Roman numeral and
+    returns its value as an integer. It handles the standard Roman numeral
+    symbols (I, V, X, L, C, D, M) and uses the subtractive notation rule,
+    where placing a smaller numeral to the left of a larger numeral
+    represents subtraction (e.g., IV for 4).
+
+    Args:
+        s (str): The Roman numeral string to convert, consisting of the characters
+                 I, V, X, L, C, D, M. It is assumed to be a valid Roman numeral.
+
+    Returns:
+        int: The integer value of the Roman numeral.
+
+    Raises:
+        KeyError: If input string contains characters without valid Roman numeral.
+
+    Example:
+        >>> roman_to_int("IV")
+        4
+        >>> roman_to_int("IX")
+        9
+        >>> roman_to_int("XIII")
+        13
+
+    """
     roman_to_int_mapping = {
         "I": 1,
         "V": 5,
@@ -247,13 +324,41 @@ def roman_to_int(s: str) -> int:
     return result
 
 
-#######
+# Selection Window functions
 
 
-# selection_feature_window functions
 def calculate_window_undersized(
     start: int, end: int, strand: str, window_size: int
 ) -> tuple[int, int]:
+    """
+    Calculate the start and end points of a genomic window, respecting the given strand.
+
+    For "+" strand, the window is created from the `start` point, and for "-" strand,
+    the window is created from the `end` point. This method ensures that the resulting
+    window is of the specified `window_size`, handling undersized windows in the
+    process. This method is particularly useful when selecting from the start of a gene.
+
+    Args:
+        start (int): The start point of the gene on the genome.
+        end (int): The end point of the gene on the genome.
+        strand (str): The strand of the gene, either "+" or "-".
+        window_size (int): The desired size of the window.
+
+    Returns:
+        tuple[int, int]: The calculated start and end points of the window.
+
+    Raises:
+        AssertionError: If the resulting window size doesn't match the
+            specified `window_size`.
+
+    Example:
+        >>> calculate_window_undersized(10, 50, "+", 20)
+        (10, 30)
+
+        >>> calculate_window_undersized(10, 50, "-", 20)
+        (30, 50)
+
+    """
     # select from start of gene, since this is such a strong signal for function
     if strand == "+":
         start_window = start
@@ -272,6 +377,37 @@ def calculate_window_undersized(
 def calculate_window_bounds(
     start: int, end: int, strand: str, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
+    """
+    Calculate the window bounds for genomic sequences.
+
+    This function calculates window bounds for genomic sequences while considering
+    strand direction. It ensures the window does not exceed the chromosome length.
+
+    Args:
+        start (int): The start point of the sequence on the genome.
+        end (int): The end point of the sequence on the genome.
+        strand (str): The strand of the gene, either "+" or "-".
+        window_size (int): Desired window size.
+        chromosome_length (int): Length of the chromosome.
+
+    Returns:
+        tuple[int, int]: The calculated start and end points of the window.
+
+    Raises:
+        ValueError: If the end position is out of bounds of the chromosome,
+            if the start position is greater than or equal to the end position,
+            or if the window size is greater than the chromosome length.
+
+    Examples:
+        >>> calculate_window_bounds(0, 20, "+", 40, 100)
+        (0, 40)
+        >>> calculate_window_bounds(5, 25, "+", 50, 100)
+        (0, 50)
+        >>> calculate_window_bounds(75, 95, "+", 50, 100)
+        (50, 100)
+        >>> calculate_window_bounds(0, 20, "-", 40, 100)
+        (0, 40)
+    """
     if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
@@ -326,6 +462,34 @@ def calculate_window_bounds(
 def calculate_window_undersized_symmetric(
     start: int, end: int, window_size: int
 ) -> tuple[int, int]:
+    """
+    Calculate symmetric window bounds for genomic sequences.
+
+    This function calculates symmetric window bounds for genomic sequences and
+    ensures that the window size is valid and the start and end are not equal.
+
+    Args:
+        start (int): The start point of the sequence on the genome.
+        end (int): The end point of the sequence on the genome.
+        window_size (int): Desired window size.
+
+    Returns:
+        tuple[int, int]: The calculated start and end points of the window.
+
+    Raises:
+        ValueError: If the start and end positions are the same, or if the
+            window size is less than 2.
+
+    Examples:
+        >>> calculate_window_undersized_symmetric(10, 20, 4)
+        (13, 17)
+        >>> calculate_window_undersized_symmetric(10, 20, 5)
+        (13, 17)
+
+    Note:
+        For odd window sizes, the result will be adjusted to keep the window
+        symmetric around the middle of the start and end points.
+    """
     if start == end:
         raise ValueError("Start and end positions are the same")
     if window_size < 2:
@@ -348,6 +512,41 @@ def calculate_window_undersized_symmetric(
 def calculate_window_bounds_symmetric(
     start: int, end: int, window_size: int, chromosome_length: int
 ) -> tuple[int, int]:
+    r"""
+    Calculate symmetric window bounds considering chromosome limits.
+
+    This function calculates symmetric window bounds for genomic sequences, taking
+    the chromosome length into account to avoid exceeding it, and also ensuring
+    that the window size, start and end positions are valid within these limits.
+
+    Args:
+        start (int): The start point of the sequence on the genome.
+        end (int): The end point of the sequence on the genome.
+        window_size (int): The desired window size.
+        chromosome_length (int): The total length of the chromosome.
+
+    Returns:
+        tuple[int, int]: The calculated start and end points of the symmetric window.
+
+    Raises:
+        ValueError: If the end position is out of chromosome bounds, start position
+            is not less than end position, or window size is greater than chromosome
+            length.
+
+    Examples:
+        >>> calculate_window_bounds_symmetric(5, 15, 30, 100)
+        (0, 20)
+        >>> calculate_window_bounds_symmetric(80, 95, 30, 100)
+        (75, 100)
+        >>> calculate_window_bounds_symmetric(45, 55, 30, 100)
+        (35, 65)
+
+    Note:
+        The function also asserts that the calculated window is within the desired
+        limits, symmetric around the middle of the sequence, and the start and end
+        of the window are appropriately bounded within the sequence limits.
+    """
+
     if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
@@ -356,10 +555,6 @@ def calculate_window_bounds_symmetric(
         raise ValueError("Window size should never be greater than chromosome length")
 
     if window_size < end - start:
-        # log info that the window size is smaller than the sequence
-        # log.info(
-        #     f"Window size {window_size} is smaller than sequence length {end - start}."
-        # )
         start_window, end_window = calculate_window_undersized_symmetric(
             start, end, window_size
         )

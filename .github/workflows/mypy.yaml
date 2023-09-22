@@ -29,7 +29,7 @@ jobs:
 
     - name: Install mypy dependencies
       run: |
-        python -m pip install env/mypy_requirements.txt 
+        python -m pip install env/mypy_requirements.txt
 
     - name: Install torchcell package
       run: |

@@ -1,22 +1,12 @@
-.. docs/index.rst
-.. my_package documentation master file, created by
-   sphinx-quickstart on Mon Jul 24 14:19:05 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+:github_url: https://github.com/pyg-team/pytorch_geometric
 
-Welcome to my_package's documentation!
-======================================
+PyG Documentation
+=================
+
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :caption: Package Reference
 
-   introduction
-   torchcell
+   modules/sequence
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

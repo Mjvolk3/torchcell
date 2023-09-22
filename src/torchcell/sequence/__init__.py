@@ -12,15 +12,14 @@ from .data import (
     roman_to_int,
 )
 
-__all__ = (
-    "Genome",
-    "DnaSelectionResult",
-    "DnaWindowResult",
+data_classes = ["DnaSelectionResult", "DnaWindowResult", "Gene", "GeneSet", "Genome"]
+
+helper_functions = [
     "calculate_window_bounds",
     "calculate_window_bounds_symmetric",
     "get_chr_from_description",
-    roman_to_int,
-    mismatch_positions,
-    "Gene",
-    "GeneSet",
-)
+    "mismatch_positions",
+    "roman_to_int",
+]
+
+__all__ = data_classes + helper_functions

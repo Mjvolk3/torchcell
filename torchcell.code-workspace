@@ -25,6 +25,10 @@
             "path": "../torchgeo"
         },
         {
+            "name": "pytorch_geometric",
+            "path": "../pytorch_geometric"
+        },
+        {
             "name": "intermine-ws-python",
             "path": "../intermine-ws-python"
         },

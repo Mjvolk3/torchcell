@@ -179,12 +179,6 @@ class Genome(ABC):
     ) -> DnaSelectionResult:
         pass
 
-    @abstractmethod
-    def select_feature_window(
-        self, feature: str, window_size: int, is_max_size: bool = True
-    ) -> DnaWindowResult:
-        pass
-
     @property
     @abstractmethod
     def gene_attribute_table(self) -> pd.DataFrame:

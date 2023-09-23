@@ -2,7 +2,7 @@
 id: 28iti10nh2dekhdrwha8y3q
 title: S288c
 desc: ''
-updated: 1695170169852
+updated: 1695501384881
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -80,8 +80,6 @@ This is a summarizing figure of the sequence selection process.
 ![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.YBL092W-five-prime-utr-intron.png)
 
 ### Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence
-
-- [ ] Create a unit test with the following. Then just reference the unit test.
 
 ```python
 genome['YFL039C']
@@ -217,8 +215,6 @@ genome["YDL061C"].window(3000).seq
 
 ### Selecting Gene Sequence - YAL037W Normal Gene Selection
 
-- [ ] Add this to inquiry to authors
-
 [SGD - YAL037W](https://www.yeastgenome.org/locus/S000000035)
 
 [[YAL037W Annotated|/notes/assets/sequence-docx/SpeciesLM-FASTA-S288c_Genome.docx]]
@@ -325,6 +321,15 @@ YNL066W - Using CDS Sequence
 YPL230W - Using CDS Sequence
 ```
 
+### Selecting Gene Sequence - A well behaved gene YAL068C
+
+Removed newline from fasta
+
+```fasta
+>PAU8 YAL068C SGDID:S000002142, Chromosome I:1807..2169
+ATGGTCAAATTAACTTCAATCGCCGCTGGTGTCGCTGCCATCGCTGCTACTGCTTCTGCAACCACCACTCTAGCTCAATCTGACGAAAGAGTCAACTTGGTGGAATTGGGTGTCTACGTCTCTGATATCAGAGCTCACTTAGCCCAATACTACATGTTCCAAGCCGCCCACCCAACTGAAACCTACCCAGTCGAAGTTGCTGAAGCCGTTTTCAACTACGGTGACTTCACCACCATGTTGACCGGTATTGCTCCAGACCAAGTGACCAGAATGATCACCGGTGTTCCATGGTACTCCAGCAGATTAAAGCCAGCCATCTCCAGTGCTCTATCCAAGGACGGTATCTACACTATCGCAAACTAG
+```
+
 ## Adding Protein to Genome
 
 - Automatic download of `orf_trans_all.fasta`. These contain the proper proteins without having to reconstruct them via translation. This is better than using `Bio.Seq` `translate` function since this foces us to deal directly with introns. Can do something like `genome[gene].protein`
@@ -333,3 +338,7 @@ YPL230W - Using CDS Sequence
 ## S288C DNA length for DNA LLMs
 
 Around 32 genes are under 6kb... need to find a way around this. Also made mistake thinking the nucleotide transformer could handle 60kb... whoops. We can still use the Enformer for these large windows. Could also use 3 embeddings to capture the gene with nt transformer. Looks like this is the largest gene in yeast `YKR054C, length: 12278`
+
+## Gene class looks more like ORF
+
+This is actually looks more like an ORF since we care most about seq between start and stop codons. We should be able to move most of the Gene methods into the `ABC` then require an `abstractmethod` for setup where defining dictionaries etc.

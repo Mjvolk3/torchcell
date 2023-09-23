@@ -21,7 +21,7 @@ def convert_to_dendron_path(file_path):
 def open_related_files(src_file_path):
     # Get the dendron path for the related markdown file
     print("src_file_path ", src_file_path)
-    dendron_path = convert_to_dendron_path(src_file_path)
+    dendron_path = convert_to_dendron_path(src_file_path)[1:]
     print("dendron_path: ", dendron_path)
     md_file_path = os.path.join(
         WORKSPACE_DIR, "notes", dendron_path + ".md"

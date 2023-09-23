@@ -2,15 +2,48 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1695418633044
+updated: 1695501504838
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.09.23
+
+- [ ] Test genome [[src.torchcell.sequence.genome.scerevisiae.s288c]] → [[Gene class looks more like ORF|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
+
+- [ ] Write fungal utr model
+- [ ] Write fungal utr dataset
+- [ ] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
+- [ ] Make sure dna transformers are using `SortedSet`
+- [ ] Compute `FungalUtrTransformerDataset`
+- [ ] Recompute `nt dataset` with SortedSet and fixed windows
+
+- [ ] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
+- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+
+- [ ] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
+- [ ] Downselect by `costanzo` gene interaction scores or `1e5`
+
+- [ ] Prepare trainer and run models locally for `FungalUtrTransformer`
+- [ ] Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- [ ] Implement wt difference embedding
+- [ ] Run experiments locally
+- [ ] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
+
+- [ ] Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
+
+- [ ] Write set transformer model
+- [ ] Plot Umap overlays with new datasets
+- [ ] Optional dimensionality reduction of embeddings
+- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+
 ## 2023.09.22
 
-- [ ] Make docs → Changed to `pyg` template as it is simpler
-- [ ] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
+- [x] Make docs → Changed to `pyg` template as it is simpler
+- [x] Make  `pytest --cov=torchcell --cov-report html tests/` task → have to use full paths to executables.
+- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI s288c we cannot compute UTR lengths|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c_ncbi#using-the-ncbi-s288c-we-cannot-compute-utr-lengths]]
+- 🔲 Test genome [[src.torchcell.sequence.genome.scerevisiae.s288c]]
 
 ## 2023.09.21
 
@@ -22,28 +55,25 @@ created: 1690514887023m
 - [x] Email Fungal UTR authors to clarify some of the 5 utr selections
 - [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/src.torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
 - [x] Complete coverage on data → [[Data|dendron://torchcell/src.torchcell.sequence.data]] made some progress
-- [ ] Make  `pytest --cov=torchcell --cov-report html tests/` task
-- [ ] Test genome
-- [ ] Write fungal utr model
-- [ ] Write fungal utr dataset
-- [ ] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
-- [ ] Make sure dna transformers are using `SortedSet`
-- [ ] Recompute `nt dataset` with SortedSet and fixed windows
-- [ ] Compute `f-utr-t dataset`
-- [ ] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
-- [ ] Previous task was to organize Umap visualization overlays. Now delete since these are now invalid.
-- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-- [ ] Plot Umap overlays with new datasets
-
-- [ ] Implement wt difference embedding
-- [ ] Optional dimensionality reduction of embeddings
-- [ ] Downselect by `costanzo` gene interaction scores or `1e5`
-- [ ] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
-
-- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
-- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-
-- [ ] Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- [x] Previous task was to organize Umap visualization overlays. Now delete since these are now invalid.
+- 🔲 Make  `pytest --cov=torchcell --cov-report html tests/` task
+- 🔲 Test genome
+- 🔲 Write fungal utr model
+- 🔲 Write fungal utr dataset
+- 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
+- 🔲 Make sure dna transformers are using `SortedSet`
+- 🔲 Recompute `nt dataset` with SortedSet and fixed windows
+- 🔲 Compute `f-utr-t dataset`
+- 🔲 Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Implement wt difference embedding
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Downselect by `costanzo` gene interaction scores or `1e5`
+- 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
 
 ## 2023.09.19
 

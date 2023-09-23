@@ -187,7 +187,7 @@
                 "label": "isort: file",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
-                "problemMatcher": []
+                "problemMatcher": [],
                 "presentation": {
                     "reveal": "never",
                     "panel": "shared",
@@ -266,22 +266,43 @@
                 }
             },
             {
-                "label": "python: open related ",
+                "label": "python: src open note and test",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
-                  "${workspaceFolder}/notes/assets/scripts/open_related.py",
+                  "${workspaceFolder}/notes/assets/scripts/from_src_open_related_note_and_test.py",
                   "${file}"
                 ],
                 "problemMatcher": [],
                 "group": {
-                  "kind": "build",
-                  "isDefault": true
+                    "kind": "build",
+                    "isDefault": true
                 },
                 "presentation": {
-                  "reveal": "always",
-                  "panel": "shared"
+                    "reveal": "always",
+                    "panel": "shared"
                 }
+            },
+            {
+                "label": "python: open related src file",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/from_note_open_related_src.py",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "reveal": "always",
+                    "panel": "shared"
+                }
+            },
+            // pytest code coverage
+            {
+                "label": "pytest: coverage",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pytest --cov=torchcell --cov-report html tests/ ",
+                "problemMatcher": [],
             },
         ],
         "inputs" : [
@@ -353,6 +374,12 @@
                 "name": "http://127.0.0.1:3000/docs/build/html/index.html",
                 "request": "launch",
                 "url": "http://127.0.0.1:3000/docs/build/html/index.html"
+            },
+            {
+                "type": "chrome",
+                "name": "http://127.0.0.1:3000/htmlcov/index.html",
+                "request": "launch",
+                "url": "http://127.0.0.1:3000/htmlcov/index.html"
             }
         ]
     },

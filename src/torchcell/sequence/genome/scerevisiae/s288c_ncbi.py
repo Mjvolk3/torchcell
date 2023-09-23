@@ -1,7 +1,7 @@
-# src/torchcell/sequence/genome/scerevisiae/s288c.py
-# [[src.torchcell.sequence.genome.scerevisiae.s288c]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/genome/scerevisiae/s288c.py
-# Test file: src/torchcell/sequence/genome/scerevisiae/test_s288c.py
+# src/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
+# [[src.torchcell.sequence.genome.scerevisiae.s288c_ncbi]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
+# Test file: src/torchcell/sequence/genome/scerevisiae/test_s288c_ncbi.py
 
 import glob
 import gzip
@@ -60,6 +60,7 @@ CHROMOSOMES = [
 ]
 
 
+# TODO this is actually more like an ORF since we care most about seq between start and stop codons
 @define
 class SCerevisiaeGene(Gene):
     id: str = field(repr=False)
@@ -241,24 +242,15 @@ class SCerevisiaeGene(Gene):
         )
 
     def window_five_prime(
-        self,
-        window_size: int,
-        include_start_codon: bool = False,
-        allow_undersize: bool = False,
+        self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
-        # offset for gff file 1
-        start = self.start - 1
         chr_id = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
-            if include_start_codon:
-                start = start + 3
-            else:
-                start = self.start
-            start_window = start - window_size
-            end_window = start
+            start_window = self.start - window_size
+            end_window = self.start
             if start_window < 0 and allow_undersize:
                 start_window = 0
-                end_window = start
+                end_window = self.start
             elif start_window < 0 and not allow_undersize:
                 outside = abs(start_window)
                 raise ValueError(
@@ -266,12 +258,8 @@ class SCerevisiaeGene(Gene):
                 )
             seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
         elif self.strand == "-":
-            if include_start_codon:
-                end = self.end - 3
-            else:
-                end = self.end
-            start_window = end
-            end_window = end + window_size
+            start_window = self.end
+            end_window = self.end + window_size
             if (
                 end_window > self.chromosome_lengths[self.chromosome]
                 and allow_undersize
@@ -301,21 +289,12 @@ class SCerevisiaeGene(Gene):
         )
 
     def window_three_prime(
-        self,
-        window_size: int,
-        include_stop_codon: bool = False,
-        allow_undersize: bool = False,
+        self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
-        # offset for gff file 1
-        start = self.start - 1
         chr_id = self.chr_to_nc[self.chromosome]
         if self.strand == "+":
-            if include_stop_codon:
-                end = self.end - 3
-            else:
-                end = self.end
-            start_window = end
-            end_window = end + window_size
+            start_window = self.end
+            end_window = self.end + window_size
             if (
                 end_window > self.chromosome_lengths[self.chromosome]
                 and allow_undersize
@@ -327,24 +306,18 @@ class SCerevisiaeGene(Gene):
             ):
                 outside = abs(end_window - self.chromosome_lengths[self.chromosome])
                 raise ValueError(
-                    f"3utr size ({window_size}) too large"
-                    f"('{self.strand} strand {outside}bp outside.)"
+                    f"3utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
             seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
         elif self.strand == "-":
-            if include_stop_codon:
-                start = start + 3
-            else:
-                start = start
-            start_window = start - window_size
-            end_window = start
+            start_window = self.start - window_size
+            end_window = self.start
             if start_window < 0 and allow_undersize:
                 start_window = 0
             elif start_window < 0 and not allow_undersize:
                 outside = abs(start_window)
                 raise ValueError(
-                    f"3utr size ({window_size}) too large"
-                    f"('{self.strand} strand {outside}bp outside.)"
+                    f"3utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
             seq = str(
                 self.fasta_dna[chr_id].seq[start_window:end_window].reverse_complement()
@@ -391,9 +364,7 @@ class SCerevisiaeGenome(Genome):
             "S288C_reference_sequence_" + self.genome_version + ".fsa",
         )
         self._gff_path: str = osp.join(
-            self.data_root,
-            self.genome_version_full,
-            "saccharomyces_cerevisiae_" + self.genome_version + ".gff",
+            self.data_root, self.genome_version_full, "ncbi_genomic" + ".gff"
         )
         self._protein_fasta_path = osp.join(
             self.data_root,
@@ -700,51 +671,76 @@ class SCerevisiaeGenome(Genome):
 
 
 def main() -> None:
-    import os
-    import random
-
+    import matplotlib.pyplot as plt
     from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
-    genome.go
-    # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters # 4903
-    # print(
-    #     genome["YFL039C"]
-    # )
-    # Replace with valid gene... we only support systematic names
-    # test gene with introns
+    # Open the gffutils database
+    db = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome")).db
 
-    # Iterate through all gene features and check if they have an Ontology_term attribute
-    # print(len(genome.gene_set))
-    genome.drop_chrmt()
-    print(genome.gene_set)
-    # print(len(genome.gene_set))
-    genome.drop_empty_go()
-    print(genome["YDL061C"].seq)
-    genome["YDL061C"].window(171).seq
-    genome["YDL061C"].window(171, False).seq
-    no_start_codon = []
-    no_stop_codon = []
-    for gene in genome.gene_set:
-        if genome[gene].seq[:3] != "ATG":
-            no_start_codon.append(gene)
-        if genome[gene].seq[-3:] not in ["TAA", "TAG", "TGA"]:
-            no_stop_codon.append(gene)
+    # Initialize a dictionary to store UTR lengths for each gene
+    utr_lengths = {}
 
-    print(len(genome.gene_set))
-    # genome["YFL039C"].window(1000)
-    # genome["YFL039C"].window(1000, is_max_size=False)
-    # genome["YFL039C"].window_three_prime(1000)
-    # genome["YFL039C"].window_three_prime(1000, allow_undersize=True)
-    # genome["YFL039C"].window_three_prime(1000, allow_undersize=False)
-    # genome["YFL039C"].window_five_prime(1000, allow_undersize=True)
-    # genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
-    # print(genome.go[:10])
+    # Iterate over each gene in the database
+    for gene in db.features_of_type("gene"):
+        gene_id = (
+            gene.id
+        )  # or gene['ID'] or gene.attributes['ID'][0] based on your gff file format
+
+        # Get the outermost positions of the CDS within the gene
+        cds_list = list(db.children(gene, featuretype="CDS"))
+        if not cds_list:
+            continue  # Skip genes without CDS
+
+        min_cds_start = min(cds.start for cds in cds_list)
+        max_cds_end = max(cds.end for cds in cds_list)
+
+        # Initialize UTR lengths for this gene
+        utr_lengths[gene_id] = {"5utr": 0, "3utr": 0}
+
+        # Iterate over each exon within the gene to calculate UTR lengths
+        for exon in db.children(gene, featuretype="exon"):
+            if gene.strand == "+":
+                utr_lengths[gene_id]["5utr"] += max(0, min_cds_start - exon.start)
+                utr_lengths[gene_id]["3utr"] += max(0, exon.end - max_cds_end)
+            else:  # for genes on the '-' strand, swap 5' and 3' UTRs
+                utr_lengths[gene_id]["3utr"] += max(0, min_cds_start - exon.start)
+                utr_lengths[gene_id]["5utr"] += max(0, exon.end - max_cds_end)
+
+    # Print the resulting UTR lengths
+    # Extract lengths to plot
+    utr_5_lengths = [
+        lengths["5utr"] for lengths in utr_lengths.values() if lengths["5utr"] > 0
+    ]
+    utr_3_lengths = [
+        lengths["3utr"] for lengths in utr_lengths.values() if lengths["3utr"] > 0
+    ]
+
+    # Plot histograms
+    plt.figure(figsize=(12, 6))
+    plt.suptitle(
+        "Histogram S cerevisiae s288c Genome CDS-Exon to get UTR\nTakeaway - All Exons match the CDS\nCannot compute UTRs from GFF"
+    )
+    plt.subplot(1, 2, 1)
+    plt.hist(utr_5_lengths, bins=30, edgecolor="k", color="blue", alpha=0.7)
+    plt.title("5' UTR Lengths")
+    plt.xlabel("Length (bp)")
+    plt.ylabel("Frequency")
+
+    plt.subplot(1, 2, 2)
+    plt.hist(utr_3_lengths, bins=30, edgecolor="k", color="red", alpha=0.7)
+    plt.title("3' UTR Lengths")
+    plt.xlabel("Length (bp)")
+    plt.ylabel("Frequency")
+
+    plt.tight_layout()
+    plt.savefig(
+        "notes/assets/images/Histogram_S_cerevisiae_s288c_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png"
+    )
+    plt.show()
 
 
 if __name__ == "__main__":
     main()
-    pass

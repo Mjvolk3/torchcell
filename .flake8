@@ -4,7 +4,7 @@ extend-ignore =
     # See https://github.com/PyCQA/pycodestyle/issues/373
     E203,
 
-; exclude =
+exclude = tests/torchcell/sequence/genome/scerevisiae/test_s288c.py
 ; # torchcell
 ; data/,
 ; images/,

@@ -10,6 +10,7 @@ import os
 import os.path as osp
 import shutil
 import tarfile
+from itertools import product
 from typing import Set
 
 import gffutils
@@ -31,6 +32,7 @@ from torchcell.sequence import (
     Genome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
+    compute_codon_frequency,
     get_chr_from_description,
     mismatch_positions,
     roman_to_int,
@@ -58,6 +60,10 @@ CHROMOSOMES = [
     "chrXV",
     "chrXVI",
 ]
+
+
+nucleotides = ["A", "T", "G", "C"]
+all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
 
 
 @define
@@ -149,11 +155,8 @@ class SCerevisiaeGene(Gene):
                     feature.strand = self.db[self.id].strand
                     feature.start = min([feature.start for feature in verified_orfs])
                     feature.end = max([feature.end for feature in verified_orfs])
-                # assert (
-                #     len(verified_orfs) == 1
-                # ), "probably need relaxed criteria for verified"
             assert isinstance(feature, Feature), "feature is not a gffutils Feature"
-            log.warning(f"{self.id} - Using CDS Sequence")
+            # log.warning(f"{self.id} - Using CDS Sequence")
         else:
             feature = self.db[self.id]
         gene_feature = self.db[self.id]
@@ -204,6 +207,11 @@ class SCerevisiaeGene(Gene):
             )
         else:
             self.go = None
+
+    @property
+    def codon_frequency(self) -> SortedDict[str, float]:
+        codon_frequency = compute_codon_frequency(self.seq)
+        return codon_frequency
 
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
         if is_max_size:
@@ -526,9 +534,6 @@ class SCerevisiaeGenome(Genome):
         # Commit the changes to the database
         self.db.conn.commit()
 
-        log.info("Removed deprecated go terms from database")
-        log.info(invalid_go_terms)
-
     @property
     def go(self) -> SortedSet[str]:
         all_go = SortedSet()
@@ -720,7 +725,6 @@ def main() -> None:
     # Iterate through all gene features and check if they have an Ontology_term attribute
     # print(len(genome.gene_set))
     genome.drop_chrmt()
-    print(genome.gene_set)
     # print(len(genome.gene_set))
     genome.drop_empty_go()
     print(genome["YDL061C"].seq)
@@ -735,13 +739,13 @@ def main() -> None:
             no_stop_codon.append(gene)
 
     print(len(genome.gene_set))
-    # genome["YFL039C"].window(1000)
-    # genome["YFL039C"].window(1000, is_max_size=False)
-    # genome["YFL039C"].window_three_prime(1000)
-    # genome["YFL039C"].window_three_prime(1000, allow_undersize=True)
-    # genome["YFL039C"].window_three_prime(1000, allow_undersize=False)
-    # genome["YFL039C"].window_five_prime(1000, allow_undersize=True)
-    # genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
+    genome["YFL039C"].window(1000)
+    genome["YFL039C"].window(1000, is_max_size=False)
+    genome["YFL039C"].window_three_prime(1000)
+    genome["YFL039C"].window_three_prime(1000, allow_undersize=True)
+    genome["YFL039C"].window_three_prime(1000, allow_undersize=False)
+    genome["YFL039C"].window_five_prime(1000, allow_undersize=True)
+    genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
     # print(genome.go[:10])
 
 

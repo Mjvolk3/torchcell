@@ -2,6 +2,7 @@ import logging
 from unittest.mock import patch
 
 import pytest
+from sortedcontainers import SortedDict
 
 from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 from torchcell.sequence.data import (
@@ -12,6 +13,7 @@ from torchcell.sequence.data import (
     calculate_window_bounds_symmetric,
     calculate_window_undersized,
     calculate_window_undersized_symmetric,
+    compute_codon_frequency,
     get_chr_from_description,
     mismatch_positions,
     roman_to_int,
@@ -410,3 +412,24 @@ def test_repr_method_with_more_items():
     genes = GeneSet(["YAL001C", "YAL002W", "YAL003W", "YAL004W", "YAL005C"])
     expected_repr = "GeneSet(size=5, items=['YAL001C', 'YAL002W', 'YAL003W']...)"
     assert repr(genes) == expected_repr
+
+
+def test_compute_codon_frequency():
+    cds_str = "ATGGCGGCGCTGAAA"
+    codon_frequency = compute_codon_frequency(cds_str)
+
+    # Asserting that the returned object is a SortedDict
+    assert isinstance(
+        codon_frequency, SortedDict
+    ), "The returned object is not a SortedDict"
+
+    # Asserting that the sum of the frequencies is 1.0
+    assert sum(codon_frequency.values()) == pytest.approx(
+        1.0
+    ), "The sum of the frequencies is not 1.0"
+
+
+if __name__ == "__main__":
+    cds_str = "ATGGCGGCGCTGAAA"
+    codon_frequency_vector = compute_codon_frequency(cds_str)
+    print(codon_frequency_vector)

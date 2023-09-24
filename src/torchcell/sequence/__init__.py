@@ -7,6 +7,7 @@ from .data import (
     Genome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
+    compute_codon_frequency,
     get_chr_from_description,
     mismatch_positions,
     roman_to_int,
@@ -20,6 +21,7 @@ helper_functions = [
     "get_chr_from_description",
     "mismatch_positions",
     "roman_to_int",
+    "compute_codon_frequency",
 ]
 
 __all__ = data_classes + helper_functions

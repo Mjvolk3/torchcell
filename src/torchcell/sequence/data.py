@@ -5,6 +5,8 @@
 
 import logging
 from abc import ABC, abstractmethod
+from collections import defaultdict
+from itertools import product
 from turtle import st
 from typing import Set
 
@@ -18,7 +20,7 @@ from gffutils import Feature, FeatureDB
 from gffutils.biopython_integration import to_seqfeature
 from matplotlib import pyplot as plt
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, validator
-from sortedcontainers import SortedSet
+from sortedcontainers import SortedDict, SortedSet
 from sympy import sequence
 
 from torchcell.datamodels import ModelStrict
@@ -114,7 +116,8 @@ class GeneSet(SortedSet):
 ##########
 # Class holding gene
 class Gene(ABC):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    # model_config = ConfigDict(frozen=True, extra="forbid")
+    seq: str
 
     @abstractmethod
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
@@ -131,6 +134,9 @@ class Gene(ABC):
         self, window_size: int, allow_undersize: bool = False
     ) -> DnaWindowResult:
         pass
+
+    def __len__(self) -> int:
+        return len(self.seq)
 
     # name: str
     # seq: str
@@ -588,3 +594,27 @@ def calculate_window_bounds_symmetric(
     assert end_window >= end, "End window must be geq end."
 
     return start_window, end_window
+
+
+def compute_codon_frequency(cds_str: str) -> SortedDict:
+    nucleotides = ["A", "T", "G", "C"]
+    all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
+    if len(cds_str) % 3 != 0 or not set(cds_str).issubset(set(nucleotides)):
+        raise ValueError(
+            "Invalid CDS string; length must be a multiple of 3 and only contain A, T, G, C."
+        )
+
+    codon_counts = defaultdict(int, {codon: 0 for codon in all_codons})
+
+    for i in range(0, len(cds_str), 3):
+        codon = cds_str[i : i + 3]
+        codon_counts[codon] += 1
+
+    total_codons = len(cds_str) // 3
+
+    # Convert counts to frequency and create a SortedDict
+    codon_frequency = SortedDict(
+        {codon: count / total_codons for codon, count in codon_counts.items()}
+    )
+
+    return codon_frequency

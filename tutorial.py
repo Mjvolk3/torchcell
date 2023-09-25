@@ -1,5 +1,5 @@
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.models import FungalUtrTransformer, NucleotideTransformer
+from torchcell.models import FungalUpDownTransformer, NucleotideTransformer
 
 # Getting Genome Data
 genome = SCerevisiaeGenome()
@@ -16,7 +16,7 @@ genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
 
 # LLMs
 # 4 options - ['downstream_300', 'species_downstream_300', 'species_upstream_1000', 'upstream_1000']
-fungal_utr_transformer = FungalUtrTransformer("downstream_300")
+fungal_utr_transformer = FungalUpDownTransformer("downstream_300")
 # nucleotide_transformer = NucleotideTransformer() #takes a while...
 sequence = [genome["YFL039C"].window_three_prime(300, allow_undersize=True).seq]
 mean_embedding = fungal_utr_transformer.embed(sequence, mean_embedding=True)

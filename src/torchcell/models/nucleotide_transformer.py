@@ -54,7 +54,7 @@ class NucleotideTransformer(NucleotideModel):
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         self.model = AutoModelForMaskedLM.from_pretrained(MODEL_NAME)
 
-    def embed(self, sequences: list, mean_embedding: bool = False) -> torch.Tensor:
+    def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
         tokens_ids = self.tokenizer.batch_encode_plus(sequences, return_tensors="pt")[
             "input_ids"
         ]
@@ -92,7 +92,7 @@ def main():
     transformer = NucleotideTransformer()
 
     # Create a dummy dna sequence
-    sequences = ["ACTACG" * 1000]
+    sequences = ["ACTACG" * 100, "ACTACG" * 100]
     sequences = [i[:5979] for i in sequences]
     print(len(sequences[0]))
     # Get embeddings

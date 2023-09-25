@@ -738,6 +738,15 @@ def main() -> None:
         if genome[gene].seq[-3:] not in ["TAA", "TAG", "TGA"]:
             no_stop_codon.append(gene)
 
+    not_1003_five_prime = {}
+    for gene in genome.gene_set:
+        try:
+            genome[gene].window_five_prime(
+                1003, include_start_codon=True, allow_undersize=False
+            )
+        except ValueError:
+            not_1003_five_prime[gene] = genome[gene]
+
     print(len(genome.gene_set))
     genome["YFL039C"].window(1000)
     genome["YFL039C"].window(1000, is_max_size=False)

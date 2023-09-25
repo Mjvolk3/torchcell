@@ -37,7 +37,7 @@ from torchcell.datasets.scerevisiae import (
     DMFCostanzo2016Dataset,
     SMFCostanzo2016Dataset,
 )
-from torchcell.models import FungalUtrTransformer, NucleotideTransformer
+from torchcell.models import FungalUpDownTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input

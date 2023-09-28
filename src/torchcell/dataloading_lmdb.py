@@ -19,7 +19,7 @@ from torchcell.datasets import (
     FungalUtrTransformerDataset,
     NucleotideTransformerDataset,
 )
-from torchcell.datasets.scerevisiae import DMFCostanzo2016Dataset
+from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import RegressionTask
@@ -44,7 +44,7 @@ def main():
     )
 
     # Experiments
-    experiments = DMFCostanzo2016Dataset(
+    experiments = DmfCostanzo2016Dataset(
         preprocess="low_dmf_std",
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
     )

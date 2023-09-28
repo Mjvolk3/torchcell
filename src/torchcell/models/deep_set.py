@@ -7,218 +7,100 @@ import torch
 import torch.nn as nn
 from torch_scatter import scatter_add
 
-# TODO - Add dropout only after batch norms
-
-# class DeepSet(nn.Module):
-#     def __init__(
-#         self,
-#         input_dim: int,
-#         instance_layers: list[int],
-#         set_layers: list[int],
-#         output_activation: str = None,  # Default to no activation
-#     ):
-#         super().__init__()
-
-#         # Instance Layers
-#         instance_modules = []
-#         in_features = input_dim
-#         for out_features in instance_layers:
-#             instance_modules.append(nn.Linear(in_features, out_features))
-#             instance_modules.append(nn.ReLU())
-#             in_features = out_features
-#         self.instance_layers = nn.Sequential(*instance_modules)
-
-#         # Set Layers
-#         set_modules = []
-#         for out_features in set_layers:
-#             set_modules.append(nn.Linear(in_features, out_features))
-#             set_modules.append(nn.ReLU())
-#             in_features = out_features
-#         self.set_layers = nn.Sequential(*set_modules)
-
-#         # Output layer
-#         self.output_layer = nn.Linear(in_features, 1)
-
-#         # Output activation
-#         if output_activation == "relu":
-#             self.output_activation = nn.ReLU()
-#         elif output_activation == "softplus":
-#             self.output_activation = nn.Softplus()
-#         else:
-#             self.output_activation = None  # No activation if not specified
-
-#     def forward(self, x, batch):
-#         # x should be of shape [num_nodes, input_dim]
-#         # batch is the batch vector provided by PyG
-#         x_transformed = self.instance_layers(x)
-
-#         # Sum over nodes belonging to the same graph using scatter_add
-#         x_summed = scatter_add(x_transformed, batch, dim=0)
-
-#         x_processed = self.set_layers(x_summed)
-#         out = self.output_layer(x_processed)
-
-#         if self.output_activation:
-#             out = self.output_activation(out)
-
-#         return out.squeeze(-1)
-
 
 class DeepSet(nn.Module):
     def __init__(
         self,
         input_dim: int,
-        instance_layers: list[int],
+        node_layers: list[int],
         set_layers: list[int],
-        output_activation: str = None,  # Default to no activation
+        dropout_prob: float = 0.2,
+        with_global: bool = False,
+        global_activation: str = None,
     ):
         super().__init__()
 
-        # Instance Layers
-        instance_modules = []
+        # node Layers
+        node_modules = []
         in_features = input_dim
-        for out_features in instance_layers:
-            instance_modules.append(nn.Linear(in_features, out_features))
-            instance_modules.append(nn.BatchNorm1d(out_features))  # BatchNorm layer
-            instance_modules.append(nn.ReLU())
+        for out_features in node_layers:
+            node_modules.append(nn.Linear(in_features, out_features))
+            node_modules.append(nn.BatchNorm1d(out_features))
+            node_modules.append(nn.GELU())
             in_features = out_features
-        self.instance_layers = nn.Sequential(*instance_modules)
+        self.node_layers = nn.Sequential(*node_modules)
 
         # Set Layers
         set_modules = []
         for out_features in set_layers:
             set_modules.append(nn.Linear(in_features, out_features))
-            set_modules.append(nn.BatchNorm1d(out_features))  # BatchNorm layer
-            set_modules.append(nn.ReLU())
+            set_modules.append(nn.BatchNorm1d(out_features))
+            set_modules.append(nn.GELU())
             in_features = out_features
+
+        set_modules.append(nn.Dropout(dropout_prob))
         self.set_layers = nn.Sequential(*set_modules)
 
-        # Output layer
-        self.output_layer = nn.Linear(in_features, 1)
-
-        # Output activation
-        if output_activation == "relu":
-            self.output_activation = nn.ReLU()
-        elif output_activation == "softplus":
-            self.output_activation = nn.Softplus()
-        else:
-            self.output_activation = None  # No activation if not specified
-
-    def forward(self, x, batch):
-        # x should be of shape [num_nodes, input_dim]
-        # batch is the batch vector provided by PyG
-        x_transformed = self.instance_layers(x)
-
-        # Sum over nodes belonging to the same graph using scatter_add
-        x_summed = scatter_add(x_transformed, batch, dim=0)
-
-        x_processed = self.set_layers(x_summed)
-        out = self.output_layer(x_processed)
-
-        if self.output_activation:
-            out = self.output_activation(out)
-
-        return out.squeeze(-1)
-
-
-# def main():
-#     # Example usage:
-#     input_dim = 10
-#     instance_layers = [64, 32]
-#     set_layers = [16, 8]
-#     model = DeepSet(
-#         input_dim, instance_layers, set_layers
-#     )  # No output activation specified
-#     x = torch.rand(
-#         5, 20, input_dim
-#     )  # 5 sets, each with 20 instances, and 10 features per instance
-#     output = model(x)
-#     print(output)
-
-
-# if __name__ == "__main__":
-#     main()
-
-
-class DeepSet(nn.Module):
-    def __init__(
-        self,
-        input_dim: int,
-        instance_layers: list[int],
-        set_layers: list[int],
-        dropout_prob: float = 0.5,  # Dropout probability
-        output_activation: str = None,  # Default to no activation
-    ):
-        super().__init__()
-
-        # Instance Layers
-        instance_modules = []
-        in_features = input_dim
-        for out_features in instance_layers:
-            instance_modules.append(nn.Linear(in_features, out_features))
-            instance_modules.append(nn.BatchNorm1d(out_features))  # BatchNorm layer
-            instance_modules.append(nn.ReLU())
-            instance_modules.append(nn.Dropout(dropout_prob))  # Dropout layer
-            in_features = out_features
-        self.instance_layers = nn.Sequential(*instance_modules)
-
-        # Set Layers
-        set_modules = []
-        for out_features in set_layers:
-            set_modules.append(nn.Linear(in_features, out_features))
-            set_modules.append(nn.BatchNorm1d(out_features))  # BatchNorm layer
-            set_modules.append(nn.ReLU())
-            set_modules.append(nn.Dropout(dropout_prob))  # Dropout layer
-            in_features = out_features
-        self.set_layers = nn.Sequential(*set_modules)
-
-        # Output layer
-        self.output_layer = nn.Linear(in_features, 1)
-
-        # Output activation
-        if output_activation == "relu":
-            self.output_activation = nn.ReLU()
-        elif output_activation == "softplus":
-            self.output_activation = nn.Softplus()
-        else:
-            self.output_activation = None  # No activation if not specified
+        # Global Predictor Layer
+        self.with_global = with_global
+        if with_global:
+            global_modules = []
+            global_modules.append(nn.Linear(in_features, 1))
+            # Might want to force positive, e.g. Fitness is always positive
+            if global_activation == "relu":
+                self.global_activation = nn.ReLU()
+                global_modules.append(self.global_activation)
+            self.global_layer = nn.Sequential(*global_modules)
 
     def forward(self, x, batch):
-        # x should be of shape [num_nodes, input_dim]
-        # batch is the batch vector provided by PyG
-        x_transformed = self.instance_layers(x)
+        # For Node Layers
+        x_nodes = x
+        for layer in self.node_layers:
+            if isinstance(layer, nn.BatchNorm1d) and x_nodes.size(0) == 1:
+                continue  # skip batch normalization if batch size is 1
+            x_nodes = layer(x_nodes)
 
         # Sum over nodes belonging to the same graph using scatter_add
-        x_summed = scatter_add(x_transformed, batch, dim=0)
+        x_summed = scatter_add(x_nodes, batch, dim=0)
 
-        x_processed = self.set_layers(x_summed)
-        out = self.output_layer(x_processed)
+        # For Set Layers
+        x_set = x_summed
+        for layer in self.set_layers:
+            if isinstance(layer, nn.BatchNorm1d) and x_set.size(0) == 1:
+                continue  # skip batch normalization if batch size is 1
+            x_set = layer(x_set)
 
-        if self.output_activation:
-            out = self.output_activation(out)
+        # For Global Layer
+        if self.with_global:
+            x_global = self.global_layer(x_set).squeeze(-1)
+        else:
+            x_global = None
 
-        return out.squeeze(-1)
+        return x_nodes, x_set, x_global
 
 
 def main():
     # Example usage:
     input_dim = 10
-    instance_layers = [64, 32]
+    node_layers = [64, 32]
     set_layers = [16, 8]
+
     model = DeepSet(
-        input_dim, instance_layers, set_layers
+        input_dim, node_layers, set_layers
     )  # No output activation specified
 
-    # Simulate 5 sets, each with 20 instances, and 10 features per instance
-    x = torch.rand(100, input_dim)  # 100 nodes in total (5 sets * 20 instances)
+    # Simulate 5 sets, each with 20 nodes, and 10 features per node
+    x = torch.rand(100, input_dim)  # 100 nodes in total (5 sets * 20 nodes)
 
     # Create a batch vector
     # This will be [0, 0, ..., 1, 1, ..., 2, 2, ..., ..., 4, 4, ...]
-    # Each number i appears 20 times, indicating that 20 instances belong to set i
+    # Each number i appears 20 times, indicating that 20 nodes belong to set i
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
 
-    output = model(x, batch)
-    print(output)
+    x_global, x_set, x_nodes = model(x, batch)
+    print(x_global)
+    print(x_set)
+    print(x_nodes)
 
 
 if __name__ == "__main__":

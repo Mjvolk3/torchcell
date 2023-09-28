@@ -2,7 +2,7 @@
 id: 8qkvwbscuf4ix0rkmuks886
 title: Fungal_up_down_transformer
 desc: ''
-updated: 1695569156872
+updated: 1695836780604
 created: 1694984769843
 ---
 ## Tokenizing Data Procedure Taken from ModelUsage.py
@@ -90,3 +90,23 @@ I am looking to use the model on some 5’ sequences that have < 1003 bp. When y
 I’ve also considered padding with “N” which would give the token [UNK].
 
 Thanks for your help.
+
+## How input_ids_len Changes with Different Sequences
+
+I believe that we get `input_ids_len==1001` when the `sequnece_length==1003`, because the first 3 bp is tokenized to one token (i.e. `ATG` is cast into one token). This would mean start codon goes to one token, so in terms of total tokens we get `1003 - 2 == 1001`.
+
+```python
+>>>model = FungalUpDownTransformer(model_name="upstream_species_lm", target_layer=(8,))
+>>>sequence = "A" * (1000) + "ATG"
+>>>model.embed([sequence], mean_embedding=True)
+# breakpoint at input_ids_len = tokenized_data["input_ids"].shape[-1]
+>>> input_ids_len = 1001
+```
+
+```python
+>>>model = FungalUpDownTransformer(model_name="upstream_species_lm", target_layer=(8,))
+>>>sequence = "A" * (1000 - 3) + "ATG"
+>>>model.embed([sequence], mean_embedding=True)
+# breakpoint at input_ids_len = tokenized_data["input_ids"].shape[-1]
+>>> input_ids_len = 998
+```

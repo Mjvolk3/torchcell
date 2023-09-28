@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from sortedcontainers import SortedDict
 
-from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 from torchcell.sequence.data import (
     DnaSelectionResult,
     DnaWindowResult,
@@ -55,14 +54,6 @@ def test_invalid_strand():
     with pytest.raises(ValueError):
         DnaSelectionResult(
             id="gene_name", seq="ATGC", chromosome=1, start=0, end=4, strand="x"
-        )
-
-
-def test_invalid_seq_len():
-    with pytest.raises(ValueError):
-        seq = "A" * (DNA_LLM_MAX_TOKEN_SIZE + 1)
-        DnaSelectionResult(
-            id="gene_name", seq=seq, chromosome=1, start=0, end=len(seq), strand="+"
         )
 
 

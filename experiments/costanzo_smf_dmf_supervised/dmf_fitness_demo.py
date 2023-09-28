@@ -10,7 +10,7 @@ import os.path as osp
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
 from torchcell.datasets.scerevisiae import (
-    DMFCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
 )
 import torch
 from torchcell.models import DeepSet
@@ -46,7 +46,7 @@ futr5_dataset = FungalUtrTransformerDataset(
 seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
 
 # EXPERIMENTS
-experiments = DMFCostanzo2016Dataset(root=DATA_ROOT)
+experiments = DmfCostanzo2016Dataset(root=DATA_ROOT)
 
 # CELL DATASET
 cell_dataset = CellDataset(

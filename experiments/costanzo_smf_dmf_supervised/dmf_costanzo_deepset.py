@@ -3,29 +3,34 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/dmf_costanzo_deepset.py
 # Test file: experiments/test_dmf_costanzo_deepset.py
 
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
-import os.path as osp
-from torchcell.datamodules import CellDataModule
-from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
-from torchcell.datasets.scerevisiae import DMFCostanzo2016Dataset
-import torch
-from torchcell.models import DeepSet
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers import RegressionTask
-from torchcell.datasets import CellDataset
-from pytorch_lightning.callbacks import ModelCheckpoint
-import os
-from dotenv import load_dotenv
 import logging
+import os
+import os.path as osp
+
+import hydra
+import pytorch_lightning as pl
+import torch
+from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
 
 import wandb
-import hydra
+from torchcell.datamodules import CellDataModule
+from torchcell.datasets import (
+    CellDataset,
+    FungalUpDownTransformerDataset,
+    NucleotideTransformerDataset,
+)
+from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
+from torchcell.models import DeepSet, Mlp
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.trainers import RegressionTask
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
 def main(cfg: DictConfig) -> None:
@@ -53,15 +58,15 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Experiments
-    experiments = DMFCostanzo2016Dataset(
-        preprocess="low_dmf_std",
+    experiments = DmfCostanzo2016Dataset(
+        preprocess={"duplicate_resolution": "low_dmf_std"},
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
         root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e4")),
-        genome_gene_set=genome.gene_set,
+        genome=genome,
         seq_embeddings=nt_dataset,
         experiments=experiments,
     )
@@ -73,20 +78,28 @@ def main(cfg: DictConfig) -> None:
         num_workers=wandb.config.data_module["num_workers"],
     )
     input_dim = cell_dataset.num_features
-    model = RegressionTask(
-        model=DeepSet(
+    models = {
+        "deep_set": DeepSet(
             input_dim,
-            wandb.config.model["instance_layers"],
-            wandb.config.model["set_layers"],
-            output_activation="relu",
-        )
-    )
+            wandb.config.models["graph"]["instance_layers"],
+            wandb.config.models["graph"]["set_layers"],
+            global_activation="relu",
+        ),
+        "mlp_ref_set": Mlp(
+            input_dim=wandb.config.models["graph"]["set_layers"][-1],
+            layer_dims=wandb.config.models["mlp_refset"]["layer_dims"],
+        ),
+    }
+    # could also have mlp_ref_nodes
+
+    model = RegressionTask(models=models, wt=cell_dataset.wt)
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
     # Initialize the Trainer with the WandbLogger
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
     trainer = pl.Trainer(
+        # strategy=wandb.config.trainer["strategy"],
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

@@ -34,8 +34,8 @@ from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDatase
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
-    DMFCostanzo2016Dataset,
-    SMFCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
 )
 from torchcell.models import FungalUpDownTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
@@ -73,7 +73,7 @@ def main():
     )
 
     # Experiments
-    experiments = SMFCostanzo2016Dataset(
+    experiments = SmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf")
     )
 

@@ -11,12 +11,14 @@ import random
 import re
 import shutil
 import zipfile
+from abc import ABC, abstractproperty
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
+from typing import Literal, Optional
 
 import h5py
 import lmdb
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -32,13 +34,14 @@ from torch_geometric.data import (
 from tqdm import tqdm
 
 from torchcell.data import Dataset
+from torchcell.datamodels import ModelStrict
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)
 
 
-class SMFCostanzo2016Dataset(InMemoryDataset):
+class SmfCostanzo2016Dataset(InMemoryDataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -172,7 +175,21 @@ class SMFCostanzo2016Dataset(InMemoryDataset):
         return f"{self.__class__.__name__}({len(self)})"
 
 
-class DMFCostanzo2016Dataset(Dataset):
+class DatasetConfig(ABC):
+    @abstractproperty
+    def resolution_order(self) -> list[str]:
+        pass
+
+
+class DmfCostanzo2016Config(ModelStrict, DatasetConfig):
+    duplicate_resolution: Literal["low_dmf_std", "high_dmf", "low_dmf"] | None = None
+
+    @property
+    def resolution_order(self):
+        return [str(self.duplicate_resolution)]
+
+
+class DmfCostanzo2016Dataset(Dataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -182,7 +199,7 @@ class DMFCostanzo2016Dataset(Dataset):
         self,
         root: str = "data/scerevisiae/costanzo2016",
         subset_n: int = None,
-        preprocess: str = "low_dmf_std",
+        preprocess: dict | None = None,
         skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
@@ -199,7 +216,7 @@ class DMFCostanzo2016Dataset(Dataset):
         # Check for existing preprocess config
         existing_config = self.load_preprocess_config()
         if existing_config is not None:
-            if existing_config["preprocess"] != self.preprocess:
+            if existing_config != self.preprocess:
                 raise ValueError(
                     "New preprocess does not match existing config."
                     "Delete the processed and process dir for a new Dataset."
@@ -251,6 +268,19 @@ class DMFCostanzo2016Dataset(Dataset):
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
             self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
         return self._df
+
+    @property
+    def wt(self):
+        wt = {}
+        wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
+        wt["phenotype"] = {
+            "observation": {"fitness": 1.0},
+            "environment": {"media": "YPD", "temperature": 30},
+        }
+        data = Data()
+        data.genotype = wt["genotype"]
+        data.phenotype = wt["phenotype"]
+        return data
 
     def process(self):
         self._length = None
@@ -353,9 +383,7 @@ class DMFCostanzo2016Dataset(Dataset):
         # cache gene property
         self.gene_set = self.compute_gene_set(data_list)
 
-    def preprocess_raw(
-        self, all_data_df: pd.DataFrame, preprocess: str = "low_dmf_std"
-    ):
+    def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
         # Function to extract gene name
         def extract_gene_name(x):
             return x.apply(lambda y: y.split("_")[0])
@@ -384,17 +412,17 @@ class DMFCostanzo2016Dataset(Dataset):
         duplicates_df = new_df[duplicate_genotypes].copy()
 
         # Select which duplicate to keep based on preprocess
-        if preprocess == "low_dmf_std":
+        if preprocess["duplicate_resolution"] == "low_dmf_std":
             # Keep the row with the lowest 'Double mutant fitness standard deviation'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness standard deviation"
             ].idxmin()
-        elif preprocess == "high_dmf":
+        elif preprocess["duplicate_resolution"] == "high_dmf":
             # Keep the row with the highest 'Double mutant fitness'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness"
             ].idxmax()
-        elif preprocess == "low_dmf":
+        elif preprocess["duplicate_resolution"] == "low_dmf":
             # Keep the row with the lowest 'Double mutant fitness'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness"
@@ -415,11 +443,8 @@ class DMFCostanzo2016Dataset(Dataset):
     def save_preprocess_config(self, preprocess):
         if not osp.exists(self.preprocess_dir):
             os.makedirs(self.preprocess_dir)
-
-        config = {"preprocess": preprocess}
-
         with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
-            json.dump(config, f)
+            json.dump(preprocess, f)
 
     # TODO implement key merge
     # criterion for merge is defined as key, value is the data object itself.
@@ -509,23 +534,23 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_del"), exist_ok=True)
+    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"), exist_ok=True)
     # dmf_dataset = DMFCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     #     subset_n=100000,
     #     preprocess="low_dmf_std",
     # )
-    dmf_dataset = DMFCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_del"),
-        preprocess="low_dmf_std",
-        subset_n=10000,
+    dmf_dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
+        preprocess={"duplicate_resolution": "low_dmf_std"},
+        # subset_n=10000,
     )
     print(dmf_dataset)
     print(dmf_dataset.df["Double mutant fitness"].describe())
     print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
     print(dmf_dataset.gene_set)
-    for i in range(10):
-        print(dmf_dataset[i])
+    # for i in range(10):
+    #     print(dmf_dataset[i])
 
 
 if __name__ == "__main__":

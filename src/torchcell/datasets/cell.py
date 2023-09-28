@@ -24,7 +24,6 @@ import torch
 from attrs import define
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
 from sklearn import experimental
-from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
 from torch_geometric.loader import DataLoader
@@ -38,8 +37,8 @@ from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
-    DMFCostanzo2016Dataset,
-    SMFCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
 )
 from torchcell.models import FungalUpDownTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
@@ -63,19 +62,6 @@ class ParsedGenome(ModelStrictArbitrary):
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
         return value
-
-
-# class ParsedGenome(ModelStrictArbitrary):
-#     gene_set: SortedSet  # validator enforces SortedSet[str]
-
-#     @validator("gene_set", pre=True)
-#     def validate_gene_set(cls, value):
-#         if not isinstance(value, SortedSet):
-#             raise ValueError(f"gene_set must be a SortedSet, got {type(value)}")
-#         for item in value:
-#             if not isinstance(item, str):
-#                 raise ValueError(f"All items in gene_set must be str, got {type(item)}")
-#         return value
 
 
 class CellDataset(Dataset):
@@ -112,6 +98,8 @@ class CellDataset(Dataset):
         # This is here because we can't run process without getting gene_set
         super().__init__(root, transform, pre_transform, pre_filter)
 
+        # Create WT
+
         # Create the seq graph
         if self.seq_embeddings:
             self.seq_graph = self.create_seq_graph(self.seq_embeddings)
@@ -121,18 +109,28 @@ class CellDataset(Dataset):
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
         data = {}
-        # TODO remove GeneSet after GeneSet refactor
-        data["gene_set"] = GeneSet(genome.gene_set)
+        data["gene_set"] = genome.gene_set
         return ParsedGenome(**data)
 
     @property
     def raw_file_names(self) -> list[str]:
         # TODO consider return the processed of the experiments, etc.
+        # This might cause an issue because there is expected behavior for raw,# and this is not it.
         return None  # Specify raw files if needed
 
     @property
     def processed_file_names(self) -> list[str]:
         return "data.lmdb"
+
+    @property
+    def wt(self):
+        # Need to be able to combine WTs into one WT
+        # wts = [experiment.wt for experiment in self.experiments]
+        # TODO aggregate WTS. For now just return the first one.
+        wt = self.experiments.wt
+        subset_data = self._subset_graph(wt)
+        data = self._add_label(subset_data, wt)
+        return data
 
     # TODO think more on this method
     def create_seq_graph(self, seq_embeddings: BaseEmbeddingDataset) -> Data:
@@ -145,7 +143,6 @@ class CellDataset(Dataset):
         for item in seq_embeddings:
             keys = item["embeddings"].keys()
             if item.id in self.genome.gene_set:
-                # TODO using self.genome.gene_set since this is the super set of genes.
                 ids.append(item.id)
                 item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
                 embeddings.append(torch.cat(item_embeddings))
@@ -174,7 +171,7 @@ class CellDataset(Dataset):
         combined_data = [
             item
             for item in tqdm(self.experiments)
-            if any(i["id"] in gene_set for i in item.genotype)
+            if all(i["id"] in gene_set for i in item.genotype)
         ]
 
         log.info("creating lmdb database")
@@ -204,7 +201,7 @@ class CellDataset(Dataset):
                     "gene_set not written during process. "
                     "Please call compute_gene_set in process."
                 )
-            return SortedSet(self._gene_set)
+            return GeneSet(self._gene_set)
         except json.JSONDecodeError:
             raise ValueError("Invalid or empty JSON file found.")
 
@@ -231,7 +228,7 @@ class CellDataset(Dataset):
             # Could use gene_set from genome instead, since this is base
             # In case of gene addition would need to update the gene_set
             # then cell_dataset should be max possible.
-            cell_gene_set = set(self.genome_gene_set).intersection(experiment_gene_set)
+            cell_gene_set = set(self.genome.gene_set).intersection(experiment_gene_set)
         return cell_gene_set
 
     def _subset_graph(self, data: Data) -> Data:
@@ -244,10 +241,9 @@ class CellDataset(Dataset):
                 self.seq_graph.ids.index(gene["id"])
                 for gene in data.genotype
                 if gene["id"] in self.seq_graph.ids
-            ]
+            ],
+            dtype=torch.long,
         )
-        # BUG not downselecting data properly
-        assert len(nodes_to_remove) == len(data.genotype), "check gene ids"
 
         perturbed_nodes = nodes_to_remove.clone().detach()
 
@@ -278,7 +274,11 @@ class CellDataset(Dataset):
             Data: The modified Data object with the added label.
         """
         if "dmf" in original_data.phenotype["observation"]:
-            data.dmf = original_data.phenotype["observation"]["dmf"]
+            # TODO change dmf in costanzo to be fitness - need to standardize
+            data.fitness = original_data.phenotype["observation"]["dmf"]
+        if "fitness" in original_data.phenotype["observation"]:
+            # TODO change dmf in costanzo to be fitness - need to standardize
+            data.fitness = original_data.phenotype["observation"]["fitness"]
         if "genetic_interaction_score" in original_data.phenotype["observation"]:
             data.genetic_interaction_score = original_data.phenotype["observation"][
                 "genetic_interaction_score"
@@ -358,8 +358,8 @@ def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    genome.drop_chrmt()
-    genome.drop_empty_go()
+    # genome.drop_chrmt()
+    # genome.drop_empty_go()
 
     # nucleotide transformer
     nt_dataset = NucleotideTransformerDataset(
@@ -381,10 +381,10 @@ def main():
     seq_embeddings = nt_dataset
 
     # Experiments
-    experiments = DMFCostanzo2016Dataset(
-        preprocess="low_dmf_std",
+    experiments = DmfCostanzo2016Dataset(
+        preprocess={"duplicate_resolution": "low_dmf_std"},
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
-        subset_n=10000,
+        # subset_n=10000,
     )
     # experiments = experiments[:2]
     cell_dataset = CellDataset(
@@ -397,6 +397,7 @@ def main():
     print(cell_dataset)
     print(cell_dataset.gene_set)
     print(cell_dataset[0])
+    print(cell_dataset.wt)
     print()
 
 

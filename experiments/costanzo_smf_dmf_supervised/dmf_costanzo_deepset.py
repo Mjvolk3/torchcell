@@ -51,11 +51,22 @@ def main(cfg: DictConfig) -> None:
     genome.drop_empty_go()
 
     # Sequence transformers
-    nt_dataset = NucleotideTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
+    # nt_dataset = NucleotideTransformerDataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
+    #     genome=genome,
+    #     transformer_model_name="nt_window_5979",
+    # )
+    fungal_down_dataset = FungalUpDownTransformerDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
         genome=genome,
-        transformer_model_name="nt_window_5979",
+        transformer_model_name="species_downstream",
     )
+    fungal_up_dataset = FungalUpDownTransformerDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+        genome=genome,
+        transformer_model_name="species_upstream",
+    )
+    seq_embeddings = fungal_down_dataset + fungal_up_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
@@ -67,7 +78,7 @@ def main(cfg: DictConfig) -> None:
     cell_dataset = CellDataset(
         root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e4")),
         genome=genome,
-        seq_embeddings=nt_dataset,
+        seq_embeddings=seq_embeddings,
         experiments=experiments,
     )
 

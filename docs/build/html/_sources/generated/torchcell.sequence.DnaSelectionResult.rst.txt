@@ -1,8 +1,0 @@
-﻿torchcell.sequence.DnaSelectionResult
-=====================================
-
-.. currentmodule:: torchcell.sequence
-
-.. autoclass:: DnaSelectionResult
-   :show-inheritance:
-   :members:

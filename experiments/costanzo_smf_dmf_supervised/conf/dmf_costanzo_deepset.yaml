@@ -14,7 +14,7 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 100
+  max_epochs: 2
   strategy: auto #ddp
 
 models:

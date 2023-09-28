@@ -24,7 +24,6 @@ from sortedcontainers import SortedDict, SortedSet
 from sympy import sequence
 
 from torchcell.datamodels import ModelStrict
-from torchcell.models.constants import DNA_LLM_MAX_TOKEN_SIZE
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -69,13 +68,12 @@ class DnaSelectionResult(ModelStrict):
             raise ValueError(f"{v} must be positive")
         return v
 
+    # TODO consider adding chromosome length
     @validator("seq", pre=True, always=True)
     def check_seq_len(cls, v):
         sequence_length = len(v)
-        if sequence_length < 0 or sequence_length > DNA_LLM_MAX_TOKEN_SIZE:
-            raise ValueError(
-                f"Sequence length ({sequence_length}) not geq 0 and leq {DNA_LLM_MAX_TOKEN_SIZE}"
-            )
+        if sequence_length < 0:
+            raise ValueError(f"Sequence length ({sequence_length}) not geq 0")
         return v
 
 

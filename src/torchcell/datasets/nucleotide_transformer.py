@@ -17,6 +17,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 os.makedirs("data/scerevisiae/nucleotide_transformer_embed", exist_ok=True)
 
 
+# TODO rename utr to up and down
 class NucleotideTransformerDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
         "nt_window_5979_max": ("window", 5979, True),

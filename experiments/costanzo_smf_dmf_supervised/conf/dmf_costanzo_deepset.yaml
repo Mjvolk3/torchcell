@@ -15,8 +15,11 @@ data_module:
 
 trainer:
   max_epochs: 100
-  strategy: ddp
+  strategy: auto #ddp
 
-model:
-  instance_layers: [256, 64] #[1024, 256, 128] testing overfitting
-  set_layers: [32, 8]
+models:
+  graph:
+    instance_layers: [256, 64] #[1024, 256, 128] testing overfitting
+    set_layers: [32, 8]
+  mlp_refset:
+    layer_dims: [1]

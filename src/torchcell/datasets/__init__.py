@@ -6,8 +6,10 @@ from .cell import CellDataset
 from .fungal_up_down_transformer import FungalUpDownTransformerDataset
 from .nucleotide_transformer import NucleotideTransformerDataset
 
-__all__ = [
+datasets = [
     "CellDataset",
     "NucleotideTransformerDataset",
     "FungalUpDownTransformerDataset",
 ]
+
+__all__ = datasets

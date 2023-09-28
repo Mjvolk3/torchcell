@@ -2,7 +2,7 @@
 id: 28iti10nh2dekhdrwha8y3q
 title: S288c
 desc: ''
-updated: 1695671027247
+updated: 1695842025918
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -417,6 +417,8 @@ not_1003_upstream = ['YAL068W-A', 'YAL069W', 'YBL113W-A', 'YCR108C', 'YDR545C-A'
 
 `dataset_five_prime` reads "SpeciesLM/data/Sequences/Annotation/Assembled/five_prime.parquet".
 
+24 genes total
+
 ```python
 >>> print({i:len(dataset_five_prime.loc[dataset_five_prime['gene_id'] == i, "five_prime_seq"].iloc[0]) for i in not_1003_upstream})
 {'YAL068W-A': 540
@@ -443,4 +445,52 @@ not_1003_upstream = ['YAL068W-A', 'YAL069W', 'YBL113W-A', 'YCR108C', 'YDR545C-A'
 'YNR077C': 795
 'YOL166W-A': 587
 'YOR396C-A': 797}
+```
+
+### Window Five Prime S288c Genes Less Than 1003 bp
+
+26 genes total
+
+```python
+>>>print(
+    {
+        gene: len(
+            genome[gene]
+            .window_five_prime(1003, include_start_codon=True, allow_undersize=True)
+            .seq
+        )
+        for gene in genome.gene_set
+        if len(
+            genome[gene]
+            .window_five_prime(1003, include_start_codon=True, allow_undersize=True)
+            .seq
+        )
+        < 1003
+    }
+)
+{'YAL068W-A': 540, 'YAL069W': 337, 'YBL113W-A': 648, 'YCR108C': 435, 'YDR545C-A': 594, 'YEL077W-A': 632, 'YER190C-B': 715, 'YFL067W': 838, 'YFL068W': 55, 'YGR296C-B': 715, 'YHL050W-A': 813, 'YHR219C-A': 965, 'YIL177W-A': 848, 'YJL225W-A': 831, 'YJR162C': 493, 'YKL225W': 453, 'YLL067W-A': 845, 'YLR467C-A': 648, 'YML133W-B': 829, 'YMR326C': 632, 'YNL339W-B': 736, 'YNR077C': 795, 'YOL166W-A': 587, 'YOR396C-A': 797, 'YPL283W-B': 645, 'YPR204C-A': 731}
+```
+
+### Window Three Prime S288c Genes Less Than 300 bp
+
+5 genes total. We don't really need to worry about these becuase [[Fungal_up_down_transformer|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer]] can encode them.
+
+```python
+>>>print(
+    {
+        gene: len(
+            genome[gene]
+            .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
+            .seq
+        )
+        for gene in genome.gene_set
+        if len(
+            genome[gene]
+            .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
+            .seq
+        )
+        < 300
+    }
+)
+{'YBL113C': 282, 'YDR545W': 225, 'YEL077C': 266, 'YLR467W': 282, 'YPL283C': 282}
 ```

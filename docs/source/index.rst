@@ -9,4 +9,4 @@ PyG Documentation
    :caption: Package Reference
 
    modules/sequence
-
+   modules/models

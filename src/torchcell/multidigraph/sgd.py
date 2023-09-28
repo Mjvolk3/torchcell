@@ -225,10 +225,10 @@ def main_median_protein():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    from torchcell.datasets.scerevisiae import DMFCostanzo2016Dataset
+    from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-    dmf_dataset = DMFCostanzo2016Dataset(
+    dmf_dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
         preprocess="low_dmf_std",
     )

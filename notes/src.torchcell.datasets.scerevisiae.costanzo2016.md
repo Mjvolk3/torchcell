@@ -2,7 +2,7 @@
 id: rzwif3bimldfvjdtmx712pp
 title: Costanzo2016
 desc: ''
-updated: 1694131660648
+updated: 1695848089721
 created: 1693327811119
 ---
 ## DmfCostanzoDataset Out of Memory Dataset
@@ -504,3 +504,36 @@ class my_dataset_LMDB(data.Dataset):
         file_name = self.file_paths[index]
         data = self.read_lmdb(file_name)
 ```
+
+## DmfCostanzo2016Dataset Genetic Interaction Score Histogram
+
+![](./assets/images/DmfCostanzo2016Dataset(13295364)-genetic-interaction-score-duplicate-resolution-low-dmf-std-2023.09.26.png)
+
+## DmfCostanzo2016Dataset Double Mutant Fitness Score Histogram
+
+28.78 % of the double mutants have a fitness > 1.
+
+![](./assets/images/DmfCostanzo2016Dataset(13295364)-double-mutant-fitness-duplicate-resolution-low-dmf-std-2023.09.26.png)
+
+## Wildtype Property
+
+Each dataset will need to implement a wildtype property, these wildtype properties can then be aggregated in [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]. They need to follow the general strucutre of the other `Data` objects within the dataset, so graph data generation in `CellDataset` won't need to handle this special case.
+
+```python
+@property
+def wildtype(self):
+    wt = {}
+    wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
+    wt["phenotype"] = {
+        "observation": {"fitness": 1.0},
+        "environment": {"media": "YPD", "temperature": 30},
+    }
+    data = Data()
+    data.genotype = wt["genotype"]
+    data.phenotype = wt["phenotype"]
+    return data
+```
+
+## Adding Fitness Labels
+
+The names `smf`, `dmf`, or even `tmf` for when we include triple mutant fitness, are informative, but these should be able to be recovered by the genotype specification. They should probably just be named, fitness. This would lead to easier joining in [[src.torchcell.datasets.cell]]

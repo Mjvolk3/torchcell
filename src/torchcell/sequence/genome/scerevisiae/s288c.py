@@ -757,6 +757,23 @@ def main() -> None:
     genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
     # print(genome.go[:10])
 
+    print(
+        {
+            gene: len(
+                genome[gene]
+                .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
+                .seq
+            )
+            for gene in genome.gene_set
+            if len(
+                genome[gene]
+                .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
+                .seq
+            )
+            < 300
+        }
+    )
+
 
 if __name__ == "__main__":
     main()

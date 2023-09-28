@@ -3,8 +3,9 @@ import os
 import shutil
 import zipfile
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from os import environ
-from typing import Callable, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import pandas as pd
 import torch
@@ -13,8 +14,8 @@ from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zi
 
 from torchcell.data_prior.sequence import SCerevisiaeGenome
 from torchcell.datasets.scerevisiae import (
-    DMFCostanzo2016Dataset,
-    SMFCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
 )
 from torchcell.sequence import Genome
 
@@ -45,14 +46,14 @@ class CellDataset(InMemoryDataset):
     def __init__(
         self,
         root: str,
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
-        pre_filter: Optional[Callable] = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
+        pre_filter: Callable | None = None,
     ):
-        super(CellDataset, self).__init__(root, transform, pre_transform, pre_filter)
+        super().__init__(root, transform, pre_transform, pre_filter)
         self.genome: Genome
-        self.dimultigraph: Optional[DiMultiGraph] = None
-        self.experiment_datasets: Optional[List[InMemoryDataset]] = None
+        self.dimultigraph: DiMultiGraph | None = None
+        self.experiment_datasets: list[InMemoryDataset] | None = None
         self.ontology: Ontology | None = None
 
     @property
@@ -127,7 +128,7 @@ def main():
     genome = SCerevisiaeGenome()
     cell = CellDataset(root="data/scerevisiae")
     cell.genome = genome
-    cell.experiment_datasets = [DMFCostanzo2016Dataset()]
+    cell.experiment_datasets = [DmfCostanzo2016Dataset()]
 
 
 if __name__ == "__main__":

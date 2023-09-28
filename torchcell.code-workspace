@@ -25,6 +25,10 @@
             "path": "../torchgeo"
         },
         {
+            "name": "GraphGym",
+            "path": "../GraphGym"
+        },
+        {
             "name": "pytorch_geometric",
             "path": "../pytorch_geometric"
         },
@@ -79,7 +83,8 @@
             ".",
             "${workspaceFolder}/src/*"
         ],
-        "git.ignoreLimitWarning": true
+        "git.ignoreLimitWarning": true,
+        "esbonio.sphinx.confDir": ""
     },
     "extensions": {
         "recommendations": [

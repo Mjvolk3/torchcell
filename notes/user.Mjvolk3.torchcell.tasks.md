@@ -2,34 +2,31 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1695671696870
+updated: 1695866725480
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.09.24
+## 2023.09.27
 
-- [x] GitHub issue response since used incorrect query `dataset_five_prime.loc[dataset[dataset['gene_id'] == "YDL061C"].index.tolist()]` → [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2)
-- [x] GitHub issue response. There are genes that don't have 1003 `bp` upstream because they are against a chromosome. → [Github Issue Upstream less than 1003 bp](https://github.com/gagneurlab/SpeciesLM/issues/1)
+- [x] Respose to [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2) → [[How input_ids_len Changes with Different Sequences|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#how-input_ids_len-changes-with-different-sequences]], [[Window Five Prime S288c Genes Less Than 1003 bp|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#window-five-prime-s288c-genes-less-than-1003-bp]], [[Window Three Prime S288c Genes Less Than 300 bp|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#window-three-prime-s288c-genes-less-than-300-bp]]
+- [x] [[Test_fungal_up_down_transformer|dendron://torchcell/tests.torchcell.models.test_fungal_up_down_transformer]]
+- [x] Document [[Fungal_up_down_transformer|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer]] → Added some documentation and made docs. Still difficult for me to tell how the raw strings will render using sphinx.
+- [x] Generate new embeddings using upstream model change.
+- [x] Think more on label adding → [[Adding Fitness Labels|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#adding-fitness-labels]] using a temporary solution for now to handle multiple different cases `dmf`, 'fitness', and mapping them all to `fitness`.
+- [x] Implement wt difference embedding → This has gotten a bit complicated, I am often running into this error `Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed)` when trying to embed the wild type and instances from the batch. I overcame this with explicityly handling the optimization. → [[Explicitly Optimising the training_step and train_wt|dendron://torchcell/src.torchcell.trainers.regression#explicitly-optimising-the-training_step-and-train_wt]]
+- [x] Change [[src.torchcell.models.deep_set]] to have only dropout on last layer - [[Dropout on Last Layer Only|dendron://torchcell/src.torchcell.models.deep_set#dropout-on-last-layer-only]]
 
-- [ ] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
-- [ ] Make sure dna transformers are using `SortedSet`
-- [ ] Compute `FungalUtrTransformerDataset`
-- [ ] Recompute `nt dataset` with SortedSet and fixed windows
-
-- [ ] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
-- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-
-- [ ] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
-- [ ] Downselect by `costanzo` gene interaction scores or `1e5`
-
-- [ ] Prepare trainer and run models locally for `FungalUtrTransformer`
-- [ ] Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
-- [ ] Implement wt difference embedding
+- [ ] Prepare trainer and run models locally for `FungalUpDownTransformer`
 - [ ] Run experiments locally
-- [ ] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
 
+- [ ] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
 - [ ] Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
+
+- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+
+- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 
 - [ ] Write set transformer model
 - [ ] Plot Umap overlays with new datasets
@@ -40,19 +37,66 @@ created: 1690514887023m
 - [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
 - [ ] Test speed of nucleotide transformer speed up.
 
+## 2023.09.26
+
+- [x] Downselect by `costanzo` gene interaction scores or `1e5` → Tabling this for now. This would bias training. Unseen data would then be expected to have interactions, when they were specificially selected to not have an interaction. Also this doesn't make much sense. It would make more sense to takes the `abs` then select upper quantiles of high interaction scores, dropping low interaction. → [[DmfCostanzo2016Dataset Genetic Interaction Score Histogram|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-genetic-interaction-score-histogram]]
+- [x] Check how many genes now are outside of the [[nucleotide_transformer|src.torchcell.datasets.nucleotide_transformer]] window. → [[Genes Larger than Nucleotide Transformer Window|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer#genes-larger-than-nucleotide-transformer-window]]
+- [x] Plot `Dmf` fitness → [[DmfCostanzo2016Dataset Double Mutant Fitness Score Histogram|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-double-mutant-fitness-score-histogram]]
+- [x] Check dna transformers are using `SortedSet`
+- [x] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]` →  This only makes sense for more generic types of datasets like embeddings datasets, [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]. We cannot do this for things like `DmfCostanzo2016Dataset` becuase there are two genes being removed and we cannot index on both.
+- [x] Implement wildtype property → [[Wildtype Property|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#wildtype-property]]
+- [x] Implement wt difference embedding → Got decently far writing a [[src.torchcell.models.mlp]] so this can be used on top of aggegated embeddings from `wt` and instance.
+- 🔲 Prepare trainer and run models locally for `FungalUpDownTransformer`
+- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Run experiments locally
+- 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
+- 🔲 Write set transformer model
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
+
+## 2023.09.25
+
+- [x] GitHub issue response since used incorrect query `dataset_five_prime.loc[dataset[dataset['gene_id'] == "YDL061C"].index.tolist()]` → [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2)
+- [x] GitHub issue response. There are genes that don't have 1003 `bp` upstream because they are against a chromosome. → [Github Issue Upstream less than 1003 bp](https://github.com/gagneurlab/SpeciesLM/issues/1)
+- [x] In plotting we have some `dmf` data that has only one perturbation on the gene set. fix. → changed `any()` to `all()`
+- 🔲 Check dna transformers are using `SortedSet`
+- 🔲 Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Downselect by `costanzo` gene interaction scores or `1e5`
+- 🔲 Prepare trainer and run models locally for `FungalUtrTransformer`
+- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Implement wt difference embedding
+- 🔲 Run experiments locally
+- 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
+- 🔲 Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
+- 🔲 Write set transformer model
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
+
 ## 2023.09.23
 
 - [x] Test genome [[src.torchcell.sequence.genome.scerevisiae.s288c]] → [[Gene class looks more like ORF|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
 - [x] Write fungal utr model → done but there are still some issues with deciding how to pad the upstream sequence. [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
 - [x] Email `SpeciesLM` Model authors about this [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
 - [x] Write fungal utr dataset → [[Model Variants Support|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#model-variants-support]]
+- [x] Recompute `nt dataset` with SortedSet and fixed windows
+- [x] Compute `FungalUtrTransformerDataset`
 - 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
 - 🔲 Make sure dna transformers are using `SortedSet`
-- 🔲 Compute `FungalUtrTransformerDataset`
-- 🔲 Recompute `nt dataset` with SortedSet and fixed windows
 - 🔲 Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-- 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
 - 🔲 Downselect by `costanzo` gene interaction scores or `1e5`
 - 🔲 Prepare trainer and run models locally for `FungalUtrTransformer`
 - 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`

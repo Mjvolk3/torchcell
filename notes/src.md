@@ -2,7 +2,7 @@
 id: 2cr5blex47wahra8n5e1zhr
 title: Src
 desc: ''
-updated: 1691091501124
+updated: 1695842690560
 created: 1690915802174
 ---
 ## src Drawio
@@ -78,3 +78,6 @@ class Fitness26C(Fitness):
 ```
 
 This should allow us to group up experiments. SGD already has a phenotpye ontology we can use as reference.
+
+## Gene Probing Hypothesis
+

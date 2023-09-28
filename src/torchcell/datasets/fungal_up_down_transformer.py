@@ -107,3 +107,5 @@ if __name__ == "__main__":
 
     some_data = datasets[0][genome.gene_set[42]]
     print(some_data)
+    some_data = datasets[1][genome.gene_set[42]]
+    print(some_data)

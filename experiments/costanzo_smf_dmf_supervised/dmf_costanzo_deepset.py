@@ -112,7 +112,11 @@ def main(cfg: DictConfig) -> None:
     }
     # could also have mlp_ref_nodes
 
-    model = RegressionTask(models=models, wt=cell_dataset.wt)
+    model = RegressionTask(
+        models=models,
+        wt=cell_dataset.wt,
+        wt_step_freq=wandb.config.regression_task["wt_step_freq"],
+    )
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
     # Initialize the Trainer with the WandbLogger

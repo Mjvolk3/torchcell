@@ -9,17 +9,17 @@ wandb:
   tags: [poc, subset]
 
 data_module:
-  batch_size: 32
+  batch_size: 16
   num_workers: 2
   pin_memory: true
 
 trainer:
-  max_epochs: 100
+  max_epochs: 2
   strategy: auto #ddp
 
 models:
   graph:
-    instance_layers: [256, 64] #[1024, 256, 128] testing overfitting
-    set_layers: [32, 8]
+    instance_layers: [1024, 512]
+    set_layers: [256, 128]
   mlp_refset:
     layer_dims: [1]

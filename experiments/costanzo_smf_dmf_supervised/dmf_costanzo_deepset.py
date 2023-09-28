@@ -71,12 +71,12 @@ def main(cfg: DictConfig) -> None:
     # Experiments
     experiments = DmfCostanzo2016Dataset(
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e4")),
+        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e5")),
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,

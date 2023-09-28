@@ -3,6 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/dmf_costanzo_deepset.py
 # Test file: experiments/test_dmf_costanzo_deepset.py
 
+import datetime
+import hashlib
+import json
 import logging
 import os
 import os.path as osp
@@ -35,11 +38,16 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 @hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", "no-slurm")
+    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+    group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
         mode=wandb_cfg["wandb"]["mode"],
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         tags=wandb_cfg["wandb"]["tags"],
+        group=group,
     )
 
     # Initialize the WandbLogger

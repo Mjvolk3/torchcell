@@ -1,6 +1,0 @@
-﻿torchcell.sequence.calculate\_window\_bounds\_symmetric
-=======================================================
-
-.. currentmodule:: torchcell.sequence
-
-.. autofunction:: calculate_window_bounds_symmetric

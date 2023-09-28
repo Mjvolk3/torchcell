@@ -1,6 +1,0 @@
-﻿torchcell.sequence.mismatch\_positions
-======================================
-
-.. currentmodule:: torchcell.sequence
-
-.. autofunction:: mismatch_positions

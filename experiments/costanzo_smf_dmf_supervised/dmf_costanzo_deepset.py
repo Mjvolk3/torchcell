@@ -80,12 +80,12 @@ def main(cfg: DictConfig) -> None:
     # Experiments
     experiments = DmfCostanzo2016Dataset(
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e3")),
+        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e4")),
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,
@@ -112,7 +112,11 @@ def main(cfg: DictConfig) -> None:
     }
     # could also have mlp_ref_nodes
 
-    model = RegressionTask(models=models, wt=cell_dataset.wt)
+    model = RegressionTask(
+        models=models,
+        wt=cell_dataset.wt,
+        wt_step_freq=wandb.config.regression_task["wt_step_freq"],
+    )
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
     # Initialize the Trainer with the WandbLogger

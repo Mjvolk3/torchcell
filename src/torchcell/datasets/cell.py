@@ -383,12 +383,12 @@ def main():
     # Experiments
     experiments = DmfCostanzo2016Dataset(
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016"),
-        # subset_n=100000,
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
+        subset_n=1000,
     )
     # experiments = experiments[:2]
     cell_dataset = CellDataset(
-        root="data/scerevisiae/cell",
+        root="data/scerevisiae/cell_1e3",
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,

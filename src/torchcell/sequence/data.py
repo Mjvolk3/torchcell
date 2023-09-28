@@ -616,3 +616,50 @@ def compute_codon_frequency(cds_str: str) -> SortedDict:
     )
 
     return codon_frequency
+
+
+class CodonFrequency(SortedDict):
+    def __repr__(self):
+        if len(self) != 64:
+            return "Invalid CodonFrequency: Expected 64 codons"
+
+        sum_freq = sum(self.values())
+        if not 0.99 <= sum_freq <= 1.01:  # Allowing a small deviation
+            return (
+                f"Invalid CodonFrequency: Frequencies do not sum to 1 (sum={sum_freq})"
+            )
+
+        # Sort by frequency in descending order and get the 3 most frequent codons
+        most_frequent_codons = sorted(self.items(), key=lambda x: x[1], reverse=True)[
+            :3
+        ]
+        return f"CodonFrequency(size={len(self)}, most_frequent_codons={most_frequent_codons}...)"
+
+
+def compute_codon_frequency(cds_str: str) -> CodonFrequency:
+    nucleotides = ["A", "T", "G", "C"]
+    all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
+    if len(cds_str) % 3 != 0 or not set(cds_str).issubset(set(nucleotides)):
+        raise ValueError(
+            "Invalid CDS string; length must be a multiple of 3 and only contain A, T, G, C."
+        )
+
+    codon_counts = defaultdict(int, {codon: 0 for codon in all_codons})
+
+    for i in range(0, len(cds_str), 3):
+        codon = cds_str[i : i + 3]
+        codon_counts[codon] += 1
+
+    total_codons = len(cds_str) // 3
+
+    # Convert counts to frequency and create a CodonFrequency object
+    codon_frequency = CodonFrequency(
+        {codon: count / total_codons for codon, count in codon_counts.items()}
+    )
+
+    return codon_frequency
+
+
+if __name__ == "__main__":
+    gene_freq = compute_codon_frequency("ATGCGAC")
+    print(gene_freq)

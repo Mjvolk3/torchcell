@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import os.path as osp
+import uuid
 
 import hydra
 import pytorch_lightning as pl
@@ -38,7 +39,7 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 @hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-    slurm_job_id = os.environ.get("SLURM_JOB_ID", "no-slurm")
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
@@ -79,12 +80,12 @@ def main(cfg: DictConfig) -> None:
     # Experiments
     experiments = DmfCostanzo2016Dataset(
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e4")),
+        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e3")),
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,

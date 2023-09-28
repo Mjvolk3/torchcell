@@ -49,14 +49,14 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             print(self.processed_paths[0])
             if not os.path.exists(self.processed_paths[0]):
                 # Initialize the language model
-                self.transformer = self.initialize_transformer()
+                self.transformer = self.initialize_model()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
         # HACK for data loader - Run again to check
         # Must delete genome to allow pickle
         del self.genome
 
-    def initialize_transformer(self):
+    def initialize_model(self):
         if self.transformer_model_name:
             return NucleotideTransformer()
         return None

@@ -715,66 +715,26 @@ def main() -> None:
 
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.go
-    # print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters # 4903
-    # print(
-    #     genome["YFL039C"]
-    # )
-    # Replace with valid gene... we only support systematic names
-    # test gene with introns
-
-    # Iterate through all gene features and check if they have an Ontology_term attribute
-    # print(len(genome.gene_set))
     genome.drop_chrmt()
     # print(len(genome.gene_set))
     genome.drop_empty_go()
-    print(genome["YDL061C"].seq)
-    genome["YDL061C"].window(171).seq
-    genome["YDL061C"].window(171, False).seq
-    no_start_codon = []
-    no_stop_codon = []
-    for gene in genome.gene_set:
-        if genome[gene].seq[:3] != "ATG":
-            no_start_codon.append(gene)
-        if genome[gene].seq[-3:] not in ["TAA", "TAG", "TGA"]:
-            no_stop_codon.append(gene)
 
-    not_1003_five_prime = {}
-    for gene in genome.gene_set:
-        try:
-            genome[gene].window_five_prime(
-                1003, include_start_codon=True, allow_undersize=False
-            )
-        except ValueError:
-            not_1003_five_prime[gene] = genome[gene]
+    genes_not_divisible_by_3 = [
+        gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0
+    ]
+    print(len(genes_not_divisible_by_3))
+    print(genes_not_divisible_by_3)
+    genes_no_start = [
+        gene for gene in genes_not_divisible_by_3 if genome[gene].seq[:3] != "ATG"
+    ]
+    print(len(genes_no_start))
+    print(genes_no_start)
+    print()
 
-    print(len(genome.gene_set))
-    genome["YFL039C"].window(1000)
-    genome["YFL039C"].window(1000, is_max_size=False)
-    genome["YFL039C"].window_three_prime(1000)
-    genome["YFL039C"].window_three_prime(1000, allow_undersize=True)
-    genome["YFL039C"].window_three_prime(1000, allow_undersize=False)
-    genome["YFL039C"].window_five_prime(1000, allow_undersize=True)
-    genome["YFL039C"].window_five_prime(1000, allow_undersize=False)
-    # print(genome.go[:10])
-
-    print(
-        {
-            gene: len(
-                genome[gene]
-                .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
-                .seq
-            )
-            for gene in genome.gene_set
-            if len(
-                genome[gene]
-                .window_three_prime(300, include_stop_codon=True, allow_undersize=True)
-                .seq
-            )
-            < 300
-        }
-    )
+    genes_no_start = [gene for gene in genome.gene_set if gene.seq[:3] != "ATG"]
+    print(len(genes_no_start))
+    print(genes_no_start)
 
 
 if __name__ == "__main__":
     main()
-    pass

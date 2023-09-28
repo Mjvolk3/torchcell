@@ -34,7 +34,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
             )
         self.genome = genome
         self.transformer_model_name = transformer_model_name
-        self.transformer = self.initialize_transformer()
+        self.transformer = self.initialize_model()
         super().__init__(root, transform, pre_transform)
         if self.transformer_model_name:
             self.data, self.slices = torch.load(self.processed_paths[0])
@@ -42,7 +42,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
             self.data, self.slices = None, None
 
     @abstractmethod
-    def initialize_transformer(self):
+    def initialize_model(self):
         pass
 
     @property

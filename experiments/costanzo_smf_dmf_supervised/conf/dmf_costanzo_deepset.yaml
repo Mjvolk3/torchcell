@@ -9,7 +9,7 @@ wandb:
   tags: [poc, subset]
 
 data_module:
-  batch_size: 32
+  batch_size: 16 #32
   num_workers: 2
   pin_memory: true
 
@@ -19,7 +19,7 @@ trainer:
 
 models:
   graph:
-    instance_layers: [256, 64] #[1024, 256, 128] testing overfitting
-    set_layers: [32, 8]
+    instance_layers: [32, 16] # [1024, 512]
+    set_layers: [16, 4] # [256, 128]
   mlp_refset:
     layer_dims: [1]

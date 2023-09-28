@@ -17,6 +17,9 @@ trainer:
   max_epochs: 2
   strategy: auto #ddp
 
+regression_task:
+  wt_step_freq: 10
+
 models:
   graph:
     instance_layers: [32, 16] # [1024, 512]

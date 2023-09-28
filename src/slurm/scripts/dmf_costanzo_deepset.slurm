@@ -25,5 +25,5 @@ pwd
 conda activate /projects/bbub/miniconda3/envs/torchcell
 #echo "job is starting on `hostname`"
 #wandb artifact cache cleanup 1GB
-srun python experiments/dmf_costanzo_deepset.py
+srun python experiments/costanzo_smf_dmf_supervised/dmf_costanzo_deepset.py
 

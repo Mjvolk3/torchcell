@@ -2,7 +2,7 @@
 id: 28iti10nh2dekhdrwha8y3q
 title: S288c
 desc: ''
-updated: 1695842025918
+updated: 1695949261923
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -493,4 +493,20 @@ not_1003_upstream = ['YAL068W-A', 'YAL069W', 'YBL113W-A', 'YCR108C', 'YDR545C-A'
     }
 )
 {'YBL113C': 282, 'YDR545W': 225, 'YEL077C': 266, 'YLR467W': 282, 'YPL283C': 282}
+```
+
+## DDP sqlite gff error
+
+```python
+if os.path.exists(db_path):
+    self.db = gffutils.FeatureDB(db_path)
+else:
+self.db = gffutils.create_db(
+    self._gff_path,
+    dbfn=db_path,
+    force=True,
+    keep_order=True,
+    merge_strategy="merge",
+    sort_attribute_values=True,
+)
 ```

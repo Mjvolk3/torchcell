@@ -8,17 +8,17 @@ from collections.abc import Callable
 from typing import Optional
 
 import torch
+from pydantic import validator
 from torch_geometric.data import Data
 from tqdm import tqdm
 
+from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.sequence import GeneSet
-from torchcell.datamodels import ModelStrictArbitrary
-from pydantic import validator
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 os.makedirs("data/scerevisiae/fungal_utr_embed", exist_ok=True)
 
@@ -47,7 +47,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
-        super().__init__(root, genome, transformer_model_name, transform, pre_transform)
+        super().__init__(root, transformer_model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
         del genome
 
@@ -61,9 +61,14 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
-        data = {}
-        data["gene_set"] = genome.gene_set
-        return ParsedGenome(**data)
+        # BUG we have to do this black magic because when you merge datasets with +
+        # the genome is None
+        if genome is None:
+            return None
+        else:
+            data = {}
+            data["gene_set"] = genome.gene_set
+            return ParsedGenome(**data)
 
     def initialize_model(self) -> FungalUpDownTransformer | None:
         if self.transformer_model_name:

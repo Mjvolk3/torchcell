@@ -19,6 +19,7 @@ trainer:
 
 regression_task:
   wt_step_freq: 10
+  boxplot_every_n_epochs: 1
 
 models:
   graph:

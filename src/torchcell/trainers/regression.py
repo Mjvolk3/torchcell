@@ -33,6 +33,7 @@ class RegressionTask(pl.LightningModule):
         models: dict[str, nn.Module],
         wt: Data,
         wt_step_freq: int = 10,
+        boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         loss: str = "mse",
     ):
@@ -76,7 +77,7 @@ class RegressionTask(pl.LightningModule):
         self.spearman_corr = SpearmanCorrCoef()
 
         # Used in end for whisker plot
-        self.plot_every_n_epochs = 5
+        self.boxplot_every_n_epochs = boxplot_every_n_epochs
         self.true_values = []
         self.predictions = []
 
@@ -199,7 +200,7 @@ class RegressionTask(pl.LightningModule):
 
         # Skip plotting during sanity check
         if self.trainer.sanity_checking or (
-            self.current_epoch % self.plot_every_n_epochs != 0
+            self.current_epoch % self.boxplot_every_n_epochs != 0
         ):
             return
 

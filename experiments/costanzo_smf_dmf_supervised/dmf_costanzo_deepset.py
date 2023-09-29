@@ -116,6 +116,7 @@ def main(cfg: DictConfig) -> None:
         models=models,
         wt=cell_dataset.wt,
         wt_step_freq=wandb.config.regression_task["wt_step_freq"],
+        boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
     )
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")

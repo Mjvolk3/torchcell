@@ -20,6 +20,8 @@ trainer:
 regression_task:
   wt_step_freq: 10
   boxplot_every_n_epochs: 1
+  learning_rate: 1e-3
+  weight_decay: 1e-5
 
 models:
   graph:

@@ -14,7 +14,7 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 2
+  max_epochs: 500
   strategy: auto #ddp
 
 regression_task:

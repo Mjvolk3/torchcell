@@ -541,14 +541,20 @@ def main():
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        subset_n=100000,
     )
-    print(dmf_dataset)
-    print(dmf_dataset.df["Double mutant fitness"].describe())
-    print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
-    print(dmf_dataset.gene_set)
+
+    plt.style.use("conf/torchcell.mplstyle")
+    dmf_dataset.df["Double mutant fitness"].hist(bins=100)
+    plt.show
+    plt.savefig("tex-image-example.png")
+    plt.close()
+
+    # print(dmf_dataset)
+    # print(dmf_dataset.df["Double mutant fitness"].describe())
+    # print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
+    # print(dmf_dataset.gene_set)
     # for i in range(10):
     #     print(dmf_dataset[i])
 

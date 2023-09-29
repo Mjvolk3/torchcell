@@ -1,0 +1,29 @@
+# experiments/config/dmf_costanzo_deepset.yaml
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: torchcell
+  tags: [poc, subset]
+
+data_module:
+  batch_size: 16 #32
+  num_workers: 4
+  pin_memory: true
+
+trainer:
+  max_epochs: 500
+  strategy: ddp #ddp
+
+regression_task:
+  wt_step_freq: 4
+  boxplot_every_n_epochs: 1
+
+models:
+  graph:
+    instance_layers: [1024, 512] # 
+    set_layers: [256, 128] # 
+  mlp_refset:
+    layer_dims: [1]

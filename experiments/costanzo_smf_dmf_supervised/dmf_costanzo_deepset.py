@@ -124,7 +124,7 @@ def main(cfg: DictConfig) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
     trainer = pl.Trainer(
-        # strategy=wandb.config.trainer["strategy"],
+        strategy=wandb.config.trainer["strategy"],
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

@@ -417,18 +417,18 @@ class SCerevisiaeGenome(Genome):
         db_path = osp.join(self.data_root, "data.db")
 
         # CHECK if this works with ddp
-        # if os.path.exists(db_path):
-        #     self.db = gffutils.FeatureDB(db_path)
-        # else:
-        # TODO remove sort_attribute_values since this can be time consuming.
-        self.db = gffutils.create_db(
-            self._gff_path,
-            dbfn=db_path,
-            force=True,
-            keep_order=True,
-            merge_strategy="merge",
-            sort_attribute_values=True,
-        )
+        if os.path.exists(db_path):
+            self.db = gffutils.FeatureDB(db_path)
+        else:
+            # TODO remove sort_attribute_values since this can be time consuming.
+            self.db = gffutils.create_db(
+                self._gff_path,
+                dbfn=db_path,
+                force=True,
+                keep_order=True,
+                merge_strategy="merge",
+                sort_attribute_values=True,
+            )
 
         self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))
         self.fasta_protein = SeqIO.to_dict(

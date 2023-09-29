@@ -16,8 +16,21 @@ from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence import GeneSet
+from torchcell.datamodels import ModelStrictArbitrary
+from pydantic import validator
 
 os.makedirs("data/scerevisiae/fungal_utr_embed", exist_ok=True)
+
+
+class ParsedGenome(ModelStrictArbitrary):
+    gene_set: GeneSet
+
+    @validator("gene_set")
+    def validate_gene_set(cls, value):
+        if not isinstance(value, GeneSet):
+            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
+        return value
 
 
 class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
@@ -35,7 +48,9 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
     ):
         super().__init__(root, genome, transformer_model_name, transform, pre_transform)
-        self.genome = genome
+        self.genome = self.parse_genome(genome)
+        del genome
+
         self.transformer_model_name = transformer_model_name
 
         if self.transformer_model_name:
@@ -43,6 +58,12 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
                 self.transformer = self.initialize_transformer()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
+
+    @staticmethod
+    def parse_genome(genome) -> ParsedGenome:
+        data = {}
+        data["gene_set"] = genome.gene_set
+        return ParsedGenome(**data)
 
     def initialize_model(self) -> FungalUpDownTransformer | None:
         if self.transformer_model_name:

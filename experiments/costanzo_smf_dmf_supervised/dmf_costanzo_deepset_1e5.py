@@ -36,7 +36,9 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
+@hydra.main(
+    version_base=None, config_path="conf", config_name="dmf_costanzo_deepset_1e5"
+)
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -53,6 +55,13 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize the WandbLogger
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
+    # dist.
+    if wandb.config.trainer["strategy"] == "ddp":
+        import torch.distributed as dist
+
+        if dist.is_available() and dist.is_initialized():
+            device_index = dist.get_rank()
+            print(f"Process is using device {device_index}")
 
     # Get reference genome
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
@@ -122,8 +131,16 @@ def main(cfg: DictConfig) -> None:
     # Initialize the Trainer with the WandbLogger
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
+
+    num_devices = torch.cuda.device_count()
+    if num_devices == 0:  # if there are no GPUs available, use 1 CPU
+        devices = 1
+    else:
+        devices = num_devices
+
     trainer = pl.Trainer(
-        # strategy=wandb.config.trainer["strategy"],
+        strategy=wandb.config.trainer["strategy"],
+        devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

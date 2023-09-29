@@ -35,6 +35,7 @@ class RegressionTask(pl.LightningModule):
         wt_step_freq: int = 10,
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
+        weight_decay: float = 1e-5,
         loss: str = "mse",
     ):
         super().__init__()
@@ -59,7 +60,9 @@ class RegressionTask(pl.LightningModule):
                 "Currently, supports 'mse' or 'mae' loss."
             )
 
+        # optimizer
         self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
 
         self.train_metrics = MetricCollection(
             {
@@ -265,5 +268,7 @@ class RegressionTask(pl.LightningModule):
 
     def configure_optimizers(self):
         params = list(self.model_ds.parameters()) + list(self.model_lin.parameters())
-        optimizer = torch.optim.Adam(params, lr=self.learning_rate)
+        optimizer = torch.optim.Adam(
+            params, lr=self.learning_rate, weight_decay=self.weight_decay
+        )
         return optimizer

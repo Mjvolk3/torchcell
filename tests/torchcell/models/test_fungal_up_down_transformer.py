@@ -45,9 +45,11 @@ class TestFungalUpDownTransformerUpstream:
             "token_type_ids": torch.Tensor([[1]]),
             "attention_mask": torch.Tensor([[1]]),
         }
-        result, pad_length = model._pad_sequence(tokenized_data, mean_embedding=True)
+        result, pad_start, pad_end = model._pad_sequence(
+            tokenized_data, mean_embedding=True
+        )
 
-        assert pad_length == 1000
+        assert pad_end - pad_start == 1000
 
     def test_embed_raises_value_error_for_upstream(self, model):
         sequences = ["A" * 1004]

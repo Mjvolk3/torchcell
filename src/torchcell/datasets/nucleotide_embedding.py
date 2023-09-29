@@ -18,7 +18,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
     def __init__(
         self,
         root: str,
-        genome: SCerevisiaeGenome,
+        # genome: SCerevisiaeGenome, If we include this we get ddp error
         transformer_model_name: str | None = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
@@ -32,7 +32,8 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                 f"Invalid transformer_model_name '{transformer_model_name}'."
                 f"Valid options are: {valid_model_names}"
             )
-        self.genome = genome
+        # BUG
+        # self.genome = genome # If we include this we get ddp error
         self.transformer_model_name = transformer_model_name
         self.transformer = self.initialize_model()
         super().__init__(root, transform, pre_transform)

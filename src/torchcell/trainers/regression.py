@@ -48,7 +48,7 @@ class RegressionTask(pl.LightningModule):
         self.wt = wt
         self.wt_step_freq = wt_step_freq
         self.is_wt_init = False
-        self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
+        self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
 
         if loss == "mse":
             self.loss = nn.MSELoss()
@@ -107,7 +107,7 @@ class RegressionTask(pl.LightningModule):
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
             wt_batch = Batch.from_data_list([self.wt]).to(self.device)
-            self.wt_global_hat, self.wt_set_hat, _ = self.model_ds(
+            self.wt_nodes_hat, self.wt_set_hat, _ = self.model_ds(
                 wt_batch.x, wt_batch.batch
             )
             self.is_wt_init = True
@@ -127,7 +127,7 @@ class RegressionTask(pl.LightningModule):
 
             # get updated wt reference
             with torch.no_grad():
-                self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = self.model_ds(
+                self.wt_nodes_hat, self.wt_set_hat, _ = self.model_ds(
                     wt_batch.x, wt_batch.batch
                 )
             # Revert the model back to training mode

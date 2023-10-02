@@ -115,7 +115,13 @@ def main(cfg: DictConfig) -> None:
         ),
     }
     # could also have mlp_ref_nodes
-
+    if wandb.config.regression_task["loss"]:
+        mean_value = experiments.df["Double mutant fitness"].mean()
+        penalty = wandb.config.regression_task["penalty"]
+    else:
+        penalty = None
+        mean_value = None
+    kwargs = {"mean_value": mean_value, "penalty": penalty}
     model = RegressionTask(
         models=models,
         wt=cell_dataset.wt,
@@ -124,6 +130,8 @@ def main(cfg: DictConfig) -> None:
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
         loss=wandb.config.regression_task["loss"],
+        batch_size=wandb.config.data_module["batch_size"],
+        **kwargs,
     )
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")

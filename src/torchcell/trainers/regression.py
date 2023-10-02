@@ -86,8 +86,6 @@ class RegressionTask(pl.LightningModule):
         )
         self.val_metrics = self.train_metrics.clone(prefix="val_")
         self.test_metrics = self.train_metrics.clone(prefix="test_")
-        # batch
-        self.batch_size = batch_size
 
         # Separate attributes for Pearson and Spearman correlation coefficients
         self.pearson_corr = PearsonCorrCoef()

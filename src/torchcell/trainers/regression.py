@@ -73,6 +73,9 @@ class RegressionTask(pl.LightningModule):
         self.learning_rate = learning_rate
         self.weight_decay = weight_decay
 
+        # batch_size
+        self.batch_size = batch_size
+
         self.train_metrics = MetricCollection(
             {
                 "RMSE": MeanSquaredError(squared=False),

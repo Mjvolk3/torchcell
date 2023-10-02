@@ -24,7 +24,7 @@ from torchcell.losses import WeightedMSELoss
 plt.style.use("conf/torchcell.mplstyle")
 
 
-class RegressionTask(pl.LightningModule):
+class RegressionTaskDeepSetTransformer(pl.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     target_key: str = "fitness"
@@ -44,16 +44,16 @@ class RegressionTask(pl.LightningModule):
         # Lightning settings, doing this for WT embedding
         self.automatic_optimization = False
 
-        self.model_ds = models["deep_set"]
+        self.model_dst = models["deep_set_transformer"]
         self.model_lin = models["mlp_ref_set"]
         self.wt = wt
         self.wt_step_freq = wt_step_freq
         self.is_wt_init = False
-        self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
+        self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
 
         if loss == "mse":
             self.loss = nn.MSELoss()
-        elif loss == "weighted_mse":
+        if loss == "weighted_mse":
             self.loss = WeightedMSELoss(mean_value=0.868812)
         elif loss == "mae":
             self.loss = nn.L1Loss()
@@ -63,6 +63,8 @@ class RegressionTask(pl.LightningModule):
                 "Currently, supports 'mse' or 'mae' loss."
             )
         self.loss_node = nn.MSELoss()
+
+        self.l1_lambda = 1e-7  # 0.001
 
         # optimizer
         self.learning_rate = learning_rate
@@ -89,17 +91,17 @@ class RegressionTask(pl.LightningModule):
         self.predictions = []
 
     def setup(self, stage=None):
-        self.model_ds = self.model_ds.to(self.device)
+        self.model_dst = self.model_dst.to(self.device)
         self.model_lin = self.model_lin.to(self.device)
 
     def forward(self, x, batch):
-        inst_nodes_hat, inst_set_hat = self.model_ds(x, batch)
+        inst_nodes_hat, inst_set_hat, _, attn_weights = self.model_dst(x, batch)
         # This case is only for sanity checking
         if self.wt_set_hat is None:
             self.wt_set_hat = torch.ones_like(inst_set_hat)
         y_set_hat = self.wt_set_hat.mean(dim=0) - inst_set_hat
         y_hat = self.model_lin(y_set_hat)
-        return y_hat
+        return y_hat, attn_weights
 
     def on_train_start(self):
         # Calculate the model size (number of parameters)
@@ -111,45 +113,73 @@ class RegressionTask(pl.LightningModule):
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
             wt_batch = Batch.from_data_list([self.wt, self.wt]).to(self.device)
-            self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+            self.wt_nodes_hat, self.wt_set_hat, _, attn_weights = self.model_dst(
                 wt_batch.x, wt_batch.batch
             )
 
             self.is_wt_init = True
         if self.global_step == 0 or self.global_step % self.wt_step_freq == 0:
-            # Global Loss
+            ################ Global
             # set up optimizer
             opt = self.optimizers()
             opt.zero_grad()
-
+            # train on wt
             wt_batch = Batch.from_data_list([self.wt] * 16).to(self.device)
-            self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
+            self.wt_y_hat, attn_weights = self(wt_batch.x, wt_batch.batch)
+            # rand_pert = torch.FloatTensor(16).uniform_(1.00001, 1.0001).to(self.device)
             loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
             self.log("wt loss", loss_wt)
             self.log("wt mean", self.wt_y_hat.detach().mean())
+            # self.manual_backward(loss)  # error on this line
+            # nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
 
-            # get updated wt reference
-            self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+            # opt.step()
+            opt.zero_grad()
+            # Get updated wt reference
+            # Set the model to evaluation mode
+            # self.model_dst.eval()
+
+            # # get updated wt reference
+            # with torch.no_grad():
+            self.wt_nodes_hat, self.wt_set_hat, _, attn_weights = self.model_dst(
                 wt_batch.x, wt_batch.batch
             )
-            # Node Loss
+            # Revert the model back to training mode
+            # self.model_dst.train()
+            ######### Node
+            # opt = self.optimizers()
+            # opt.zero_grad()
+
             loss_nodes = self.loss_node(
                 self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
             )
             self.log("wt loss_nodes", loss_nodes)
-            self.manual_backward(loss_wt + loss_nodes)
+
+            total_loss = (
+                loss_wt + loss_nodes + self.l1_lambda * attn_weights.abs().sum()
+            )
+            self.manual_backward(total_loss)
             nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
-            # finish optimization
             opt.step()
             opt.zero_grad()
-
             # Get updated wt reference
-            self.model_ds.eval()
+            # Set the model to evaluation mode
+            self.model_dst.eval()
+
+            # get updated wt reference
             with torch.no_grad():
-                self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+                self.wt_nodes_hat, self.wt_set_hat, _, attn_weights = self.model_dst(
                     wt_batch.x, wt_batch.batch
                 )
-            self.model_ds.train()
+            # Revert the model back to training mode
+            self.model_dst.train()
+            ########## Break after overfit
+            # if self.current_epoch < 2:
+            #     break
+
+            # elif loss_global < 1:
+            #     print(f"Broke WT overfit on: {i}")
+            #     break
 
     def training_step(self, batch, batch_idx):
         # Train on wt reference
@@ -157,11 +187,12 @@ class RegressionTask(pl.LightningModule):
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
         # Pass the batch vector to the forward method
-        y_hat = self(x, batch_vector)
+        y_hat, attn_weights = self(x, batch_vector)
 
         opt = self.optimizers()
         opt.zero_grad()
-        loss = self.loss(y, y_hat)
+        l1_attn_loss = self.l1_lambda * attn_weights.abs().sum()
+        loss = self.loss(y, y_hat) + l1_attn_loss
         self.manual_backward(loss)  # error on this line
         nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
         opt.step()
@@ -169,6 +200,12 @@ class RegressionTask(pl.LightningModule):
         # logging
         batch_size = batch_vector[-1].item() + 1
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            "train_loss_l1",
+            l1_attn_loss.detach(),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
@@ -192,7 +229,7 @@ class RegressionTask(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
-        y_hat = self(x, batch_vector)
+        y_hat, attn_weights = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
@@ -259,7 +296,7 @@ class RegressionTask(pl.LightningModule):
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
         x, y, batch_vector = batch.x, batch.fitness, batch.batch
-        y_hat = self(x, batch_vector)
+        y_hat, attn_weights = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
@@ -283,7 +320,7 @@ class RegressionTask(pl.LightningModule):
         self.test_metrics.reset()
 
     def configure_optimizers(self):
-        params = list(self.model_ds.parameters()) + list(self.model_lin.parameters())
+        params = list(self.model_dst.parameters()) + list(self.model_lin.parameters())
         optimizer = torch.optim.Adam(
             params, lr=self.learning_rate, weight_decay=self.weight_decay
         )

@@ -5,4 +5,9 @@
 
 from torch import nn
 
-act_register = {"relu": nn.ReLU(), "gelu": nn.GELU(), "sigmoid": nn.Sigmoid()}
+act_register = {
+    "relu": nn.ReLU(),
+    "gelu": nn.GELU(),
+    "sigmoid": nn.Sigmoid(),
+    "tanh": nn.Tanh(),
+}

@@ -549,11 +549,11 @@ def main():
     print(dmf_dataset.df["Double mutant fitness"].describe())
     print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
     print(dmf_dataset.gene_set)
-    # import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
 
-    # plt.style.use("conf/torchcell.mplstyle")
-    # dmf_dataset.df["Double mutant fitness"].hist(bins=100)
-    # plt.show()
+    plt.style.use("conf/torchcell.mplstyle")
+    dmf_dataset.df["Double mutant fitness"].hist(bins=100)
+    plt.show()
 
     # for i in range(10):
     #     print(dmf_dataset[i])

@@ -137,30 +137,32 @@ class FungalUpDownTransformer(NucleotideModel):
         ), "sequences must be 1003 bp if not using meaning embedding"
         # Find out how much we need to pad
         pad_length = 1001 - tokenized_data["input_ids"].shape[-1]
-
+        pad_start = 2
+        pad_end = pad_length + pad_start
         # Padding input_ids, token_type_ids, and attention_mask
+
         tokenized_data["input_ids"] = torch.cat(
             [
-                torch.zeros((1, pad_length), dtype=torch.long),
-                tokenized_data["input_ids"],
-            ],
-            dim=1,
-        )
+                tokenized_data["input_ids"][0][:2],
+                torch.zeros((pad_length), dtype=torch.long),
+                tokenized_data["input_ids"][0][2:],
+            ]
+        ).unsqueeze(0)
         tokenized_data["token_type_ids"] = torch.cat(
             [
-                torch.zeros((1, pad_length), dtype=torch.long),
-                tokenized_data["token_type_ids"],
-            ],
-            dim=1,
-        )
+                tokenized_data["token_type_ids"][0][:2],
+                torch.zeros((pad_length), dtype=torch.long),
+                tokenized_data["token_type_ids"][0][2:],
+            ]
+        ).unsqueeze(0)
         tokenized_data["attention_mask"] = torch.cat(
             [
-                torch.zeros((1, pad_length), dtype=torch.long),
-                tokenized_data["attention_mask"],
-            ],
-            dim=1,
-        )
-        return tokenized_data, pad_length
+                tokenized_data["attention_mask"][0][:2],
+                torch.zeros((pad_length), dtype=torch.long),
+                tokenized_data["attention_mask"][0][2:],
+            ]
+        ).unsqueeze(0)
+        return tokenized_data, pad_start, pad_end
 
     def embed(
         self,
@@ -211,7 +213,7 @@ class FungalUpDownTransformer(NucleotideModel):
             input_ids_len = tokenized_data["input_ids"].shape[-1]
 
             if self.model_name.startswith("upstream") and input_ids_len < 1001:
-                tokenized_data, pad_length = self._pad_sequence(
+                tokenized_data, pad_start, pad_end = self._pad_sequence(
                     tokenized_data, mean_embedding
                 )
 
@@ -240,7 +242,9 @@ class FungalUpDownTransformer(NucleotideModel):
                 )[0]
 
             if self.model_name.startswith("upstream") and input_ids_len < 1001:
-                embedding = embedding[pad_length:, :]
+                embedding = torch.concat(
+                    [embedding[:pad_start, :], embedding[pad_end:, :]]
+                )
 
             if mean_embedding:
                 embedding = embedding.mean(dim=0).cpu()
@@ -253,3 +257,8 @@ class FungalUpDownTransformer(NucleotideModel):
             else torch.cat(embeddings).view(len(sequences), -1)
         )
         return embeddings_tensor
+
+
+if __name__ == "__main__":
+    model = FungalUpDownTransformer(model_name="upstream_species_lm")
+    model.embed(["A" * 500 + "ATG"], mean_embedding=True)

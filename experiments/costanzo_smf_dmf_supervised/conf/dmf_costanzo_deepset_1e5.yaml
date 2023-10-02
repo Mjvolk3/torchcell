@@ -14,16 +14,18 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 500
-  strategy: ddp #ddp
+  max_epochs: 1000
+  strategy: ddp_find_unused #ddp, ddp_find_unused, auto
 
 regression_task:
-  wt_step_freq: 4
+  wt_step_freq: 10
   boxplot_every_n_epochs: 1
+  learning_rate: 1e-3
+  weight_decay: 1e-5
 
 models:
   graph:
-    instance_layers: [1024, 512] # 
-    set_layers: [256, 128] # 
+    instance_layers: [32, 16] #[1024, 512] # 
+    set_layers: [8, 4] # 
   mlp_refset:
     layer_dims: [1]

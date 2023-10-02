@@ -6,7 +6,7 @@
 #SBATCH --partition=gpuA100x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
 #SBATCH --job-name=TC
-#SBATCH --time=48:00:00      # hh:mm:ss for the job
+#SBATCH --time=12:00:00      # hh:mm:ss for the job
 #SBATCH --constraint="projects&scratch"
 ### GPU options ###
 #SBATCH --gpus-per-node=4

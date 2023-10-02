@@ -133,8 +133,12 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    # BUG unused
+    pytorch_lightning.strategies import DDPStrategy
+
     trainer = pl.Trainer(
-        strategy=wandb.config.trainer["strategy"],
+        # strategy=wandb.config.trainer["strategy"],
+        strategy=DDPStrategy(find_unused_parameters=True),
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],

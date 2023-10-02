@@ -51,9 +51,7 @@ class RegressionTask(pl.LightningModule):
         self.wt = wt
         self.wt_step_freq = wt_step_freq
         self.is_wt_init = False
-        self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
-        # Batch
-        self.batch_size = batch_size
+        self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
 
         # loss
         if loss == "mse":

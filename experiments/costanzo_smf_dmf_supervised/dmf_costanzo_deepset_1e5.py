@@ -40,6 +40,9 @@ DATA_ROOT = os.getenv("DATA_ROOT")
     version_base=None, config_path="conf", config_name="dmf_costanzo_deepset_1e5"
 )
 def main(cfg: DictConfig) -> None:
+    # BUG Issues with ddp
+    os.environ["TORCH_DISTRIBUTED_DEBUG"] = "DETAIL"
+    # BUG end
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
@@ -133,12 +136,14 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
-    # BUG unused
-    pytorch_lightning.strategies import DDPStrategy
+    if wandb.config.trainer["strategy"] == "ddp_find_unused":
+        from pytorch_lightning.strategies import DDPStrategy
 
+        strategy = DDPStrategy(find_unused_parameters=True)
+    else:
+        strategy = wandb.config.trainer["strategy"]
     trainer = pl.Trainer(
-        # strategy=wandb.config.trainer["strategy"],
-        strategy=DDPStrategy(find_unused_parameters=True),
+        strategy=strategy,
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],

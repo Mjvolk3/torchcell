@@ -98,8 +98,8 @@ def main():
     x = torch.rand(100, input_dim)
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
     x_nodes, x_set = model(x, batch)
-    print(x_set)
-    print(x_nodes)
+    print(x_set.shape)
+    print(x_nodes.shape)
 
 
 if __name__ == "__main__":

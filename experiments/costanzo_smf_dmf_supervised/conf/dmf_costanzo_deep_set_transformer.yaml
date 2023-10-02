@@ -22,7 +22,7 @@ regression_task:
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
-  loss: mse
+  loss : weighted_mse
 
 models:
   graph:
@@ -32,5 +32,7 @@ models:
     activation: gelu
     skip_node: true
     skip_set: true
+    num_heads: 1
+    is_concat_attention: true
   mlp_refset:
     layer_dims: [1]

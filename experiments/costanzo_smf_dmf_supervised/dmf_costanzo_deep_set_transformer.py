@@ -27,16 +27,20 @@ from torchcell.datasets import (
     NucleotideTransformerDataset,
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
-from torchcell.models import DeepSet, Mlp
+from torchcell.models import DeepSetTransformer, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers import RegressionTask
+from torchcell.trainers import RegressionTaskDeepSetTransformer
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
+@hydra.main(
+    version_base=None,
+    config_path="conf",
+    config_name="dmf_costanzo_deep_set_transformer",
+)
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -60,23 +64,17 @@ def main(cfg: DictConfig) -> None:
     genome.drop_empty_go()
 
     # Sequence transformers
-    # nt_dataset = NucleotideTransformerDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
-    #     genome=genome,
-    #     transformer_model_name="nt_window_5979",
-    # )
     fungal_down_dataset = FungalUpDownTransformerDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
         genome=genome,
         transformer_model_name="species_downstream",
     )
-    # fungal_up_dataset = FungalUpDownTransformerDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
-    #     genome=genome,
-    #     transformer_model_name="species_upstream",
-    # )
-    # seq_embeddings = fungal_down_dataset + fungal_up_dataset
-    seq_embeddings = fungal_down_dataset
+    fungal_up_dataset = FungalUpDownTransformerDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+        genome=genome,
+        transformer_model_name="species_upstream",
+    )
+    seq_embeddings = fungal_down_dataset + fungal_up_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
@@ -100,7 +98,7 @@ def main(cfg: DictConfig) -> None:
     )
     input_dim = cell_dataset.num_features
     models = {
-        "deep_set": DeepSet(
+        "deep_set_transformer": DeepSetTransformer(
             input_dim=input_dim,
             node_layers=wandb.config.models["graph"]["node_layers"],
             set_layers=wandb.config.models["graph"]["set_layers"],
@@ -108,6 +106,8 @@ def main(cfg: DictConfig) -> None:
             activation=wandb.config.models["graph"]["activation"],
             skip_node=wandb.config.models["graph"]["skip_node"],
             skip_set=wandb.config.models["graph"]["skip_set"],
+            num_heads=wandb.config.models["graph"]["num_heads"],
+            is_concat_attention=wandb.config.models["graph"]["is_concat_attention"],
         ),
         "mlp_ref_set": Mlp(
             input_dim=wandb.config.models["graph"]["set_layers"][-1],
@@ -116,7 +116,7 @@ def main(cfg: DictConfig) -> None:
     }
     # could also have mlp_ref_nodes
 
-    model = RegressionTask(
+    model = RegressionTaskDeepSetTransformer(
         models=models,
         wt=cell_dataset.wt,
         wt_step_freq=wandb.config.regression_task["wt_step_freq"],

@@ -38,6 +38,8 @@ class RegressionTask(pl.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
+        batch_size: int = None,
+        **kwargs,
     ):
         super().__init__()
 
@@ -50,11 +52,16 @@ class RegressionTask(pl.LightningModule):
         self.wt_step_freq = wt_step_freq
         self.is_wt_init = False
         self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
+        # Batch
+        self.batch_size = batch_size
 
+        # loss
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "weighted_mse":
-            self.loss = WeightedMSELoss(mean_value=0.868812)
+            mean_value = kwargs.get("mean_value")
+            penalty = kwargs.get("penalty", 1.0)
+            self.loss = WeightedMSELoss(mean_value=mean_value, penalty=penalty)
         elif loss == "mae":
             self.loss = nn.L1Loss()
         else:
@@ -110,7 +117,7 @@ class RegressionTask(pl.LightningModule):
     def train_wt(self):
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
-            wt_batch = Batch.from_data_list([self.wt, self.wt]).to(self.device)
+            wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
             self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
                 wt_batch.x, wt_batch.batch
             )
@@ -122,7 +129,7 @@ class RegressionTask(pl.LightningModule):
             opt = self.optimizers()
             opt.zero_grad()
 
-            wt_batch = Batch.from_data_list([self.wt] * 16).to(self.device)
+            wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
             self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
             loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
             self.log("wt loss", loss_wt)

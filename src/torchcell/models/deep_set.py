@@ -7,6 +7,8 @@ import torch
 import torch.nn as nn
 from torch_scatter import scatter_add
 
+from torchcell.models.act import act_register
+
 
 class DeepSet(nn.Module):
     def __init__(
@@ -15,90 +17,87 @@ class DeepSet(nn.Module):
         node_layers: list[int],
         set_layers: list[int],
         dropout_prob: float = 0.2,
-        with_global: bool = False,
-        global_activation: str = None,
+        norm: str = "batch",
+        activation: str = "relu",
+        skip_node: bool = False,  # Parameter to add skip connections in node_layers
+        skip_set: bool = False,  # Parameter to add skip connections in set_layers
     ):
         super().__init__()
 
-        # node Layers
+        assert norm in ["batch", "instance", "layer"], "Invalid norm type"
+        activations = {
+            "relu": nn.ReLU(),
+            "gelu": nn.GELU(),
+            "leaky_relu": nn.LeakyReLU(),
+            "sigmoid": nn.Sigmoid(),
+        }
+        assert activation in activations.keys(), "Invalid activation type"
+
+        self.skip_node = skip_node
+        self.skip_set = skip_set
+
+        def create_block(in_dim, out_dim, norm, activation):
+            block = [nn.Linear(in_dim, out_dim)]
+            if norm == "batch":
+                block.append(nn.BatchNorm1d(out_dim))
+            elif norm == "instance":
+                block.append(nn.InstanceNorm1d(out_dim, affine=True))
+            elif norm == "layer":
+                block.append(nn.LayerNorm(out_dim))
+            block.append(activations[activation])
+            return nn.Sequential(*block)
+
+        in_dim = input_dim
         node_modules = []
-        in_features = input_dim
-        for out_features in node_layers:
-            node_modules.append(nn.Linear(in_features, out_features))
-            node_modules.append(nn.BatchNorm1d(out_features))
-            node_modules.append(nn.GELU())
-            in_features = out_features
-        self.node_layers = nn.Sequential(*node_modules)
+        for out_dim in node_layers:
+            node_modules.append(create_block(in_dim, out_dim, norm, activation))
+            in_dim = out_dim
+        self.node_layers = nn.ModuleList(node_modules)
 
-        # Set Layers
         set_modules = []
-        for out_features in set_layers:
-            set_modules.append(nn.Linear(in_features, out_features))
-            set_modules.append(nn.BatchNorm1d(out_features))
-            set_modules.append(nn.GELU())
-            in_features = out_features
-
+        for out_dim in set_layers:
+            set_modules.append(create_block(in_dim, out_dim, norm, activation))
+            in_dim = out_dim
         set_modules.append(nn.Dropout(dropout_prob))
-        self.set_layers = nn.Sequential(*set_modules)
-
-        # Global Predictor Layer
-        self.with_global = with_global
-        if with_global:
-            global_modules = []
-            global_modules.append(nn.Linear(in_features, 1))
-            # Might want to force positive, e.g. Fitness is always positive
-            if global_activation == "relu":
-                self.global_activation = nn.ReLU()
-                global_modules.append(self.global_activation)
-            self.global_layer = nn.Sequential(*global_modules)
+        self.set_layers = nn.ModuleList(set_modules)
 
     def forward(self, x, batch):
-        # For Node Layers
-        x_nodes = x
-        for layer in self.node_layers:
-            if isinstance(layer, nn.BatchNorm1d) and x_nodes.size(0) == 1:
-                continue  # skip batch normalization if batch size is 1
-            x_nodes = layer(x_nodes)
+        x_node = x
+        for i, layer in enumerate(self.node_layers):
+            out_node = layer(x_node)
+            if self.skip_node and x_node.shape[-1] == out_node.shape[-1]:
+                out_node += x_node  # Skip connection
+            x_node = out_node
 
-        # Sum over nodes belonging to the same graph using scatter_add
-        x_summed = scatter_add(x_nodes, batch, dim=0)
+        x_summed = scatter_add(x_node, batch, dim=0)
 
-        # For Set Layers
         x_set = x_summed
-        for layer in self.set_layers:
-            if isinstance(layer, nn.BatchNorm1d) and x_set.size(0) == 1:
-                continue  # skip batch normalization if batch size is 1
-            x_set = layer(x_set)
+        for i, layer in enumerate(self.set_layers):
+            out_set = layer(x_set)
+            if self.skip_set and x_set.shape[-1] == out_set.shape[-1]:
+                out_set += x_set  # Skip connection
+            x_set = out_set
 
-        # For Global Layer
-        if self.with_global:
-            x_global = self.global_layer(x_set).squeeze(-1)
-        else:
-            x_global = None
-
-        return x_nodes, x_set, x_global
+        return x_node, x_set
 
 
 def main():
-    # Example usage:
     input_dim = 10
-    node_layers = [64, 32]
-    set_layers = [16, 8]
-
+    node_layers = [64, 32, 32, 32]
+    set_layers = [16, 8, 8]
     model = DeepSet(
-        input_dim, node_layers, set_layers
-    )  # No output activation specified
+        input_dim,
+        node_layers,
+        set_layers,
+        norm="layer",
+        activation="gelu",
+        skip_node=True,
+        skip_set=True,
+    )
 
-    # Simulate 5 sets, each with 20 nodes, and 10 features per node
-    x = torch.rand(100, input_dim)  # 100 nodes in total (5 sets * 20 nodes)
-
-    # Create a batch vector
-    # This will be [0, 0, ..., 1, 1, ..., 2, 2, ..., ..., 4, 4, ...]
-    # Each number i appears 20 times, indicating that 20 nodes belong to set i
+    x = torch.rand(100, input_dim)
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
-
-    x_global, x_set, x_nodes = model(x, batch)
-    print(x_global)
+    x_nodes, x_set = model(x, batch)
     print(x_set)
     print(x_nodes)
 

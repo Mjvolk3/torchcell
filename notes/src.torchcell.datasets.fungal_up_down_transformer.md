@@ -2,7 +2,7 @@
 id: ga2dbwqtac7m5imc0lw8kll
 title: Fungal_up_down_transformer
 desc: ''
-updated: 1695956613474
+updated: 1696010759598
 created: 1695537019509
 ---
 
@@ -62,4 +62,54 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 ...
+```
+
+### Parse Genome and Return None For Dunder Add - Need Genome in Process
+
+We need the `Genome` object to be able to run
+
+```python
+for gene_id in tqdm(self.genome.gene_set):
+    sequence = self.genome[gene_id]
+```
+
+yet if we have this object, we cannot run adds
+
+This solution seems to work. The logic is as follows, set genome, and if process isn't run yet, run it, then convert the genome to `ParsedGenome`, and delete the genome to remove any potential reference to `sqlite` database. If we look at [[Parse Genome and Return None For Dunder Add|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add]] there is some ambiguity as to what the true issue is. Unfortunately, it is difficult to test all of these at once.
+
+```python
+def __init__(
+    self,
+    root: str,
+    genome: SCerevisiaeGenome,
+    transformer_model_name: str | None = None,
+    transform: Callable | None = None,
+    pre_transform: Callable | None = None,
+):
+    self.genome = genome
+    super().__init__(root, transformer_model_name, transform, pre_transform)
+    # convert genome to parsed genome after process, so have potential issue
+    # with sqlite database
+    # TODO try without parsed_genome on ddp to see if issue was
+    # BaseEmbeddingDataset previously taking genome as a parameter
+    self.genome = self.parse_genome(genome)
+    del genome
+```
+
+I have successfully tested with this implementation that we can still add datasets.
+
+```python
+nt_dataset = NucleotideTransformerDataset(
+    root="data/scerevisiae/nucleotide_transformer_embed",
+    genome=genome,
+    transformer_model_name="nt_window_5979",
+)
+
+fud3_dataset = FungalUpDownTransformerDataset(
+    root="data/scerevisiae/fungal_up_down_embed",
+    genome=genome,
+    transformer_model_name="species_downstream",
+)
+
+seq_embeddings = nt_dataset + fud3_dataset
 ```

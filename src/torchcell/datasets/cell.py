@@ -32,15 +32,13 @@ from tqdm import tqdm
 
 from torchcell.data import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
-
-# from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
+from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
     SmfCostanzo2016Dataset,
 )
-from torchcell.models import FungalUpDownTransformer, NucleotideTransformer
 from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
@@ -367,18 +365,16 @@ def main():
         genome=genome,
         transformer_model_name="nt_window_5979",
     )
-    # fut3_dataset = FungalUtrTransformerDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_utr_embed"),
-    #     genome=genome,
-    #     transformer_model_name="fut_species_window_3utr_300_undersize",
-    # )
-    # fut5_dataset = FungalUtrTransformerDataset(
-    #     root="data/scerevisiae/fungal_utr_embed",
-    #     genome=genome,
-    #     transformer_model_name="fut_species_window_5utr_1000_undersize",
-    # )
-    # seq_embeddings = nt_dataset + fut3_dataset + fut5_dataset
-    seq_embeddings = nt_dataset
+
+    fud3_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fungal_up_down_embed",
+        genome=genome,
+        transformer_model_name="species_downstream",
+    )
+
+    # seq_embeddings = nt_dataset + fud3_dataset + fud5_dataset
+    # seq_embeddings = nt_dataset
+    seq_embeddings = nt_dataset + fud3_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(

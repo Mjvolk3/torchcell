@@ -89,11 +89,11 @@ class RegressionTask(pl.LightningModule):
         self.model_lin = self.model_lin.to(self.device)
 
     def forward(self, x, batch):
-        inst_global_hat, inst_set_hat, inst_nodes_hat = self.model_ds(x, batch)
+        inst_nodes_hat, inst_set_hat = self.model_ds(x, batch)
         # This case is only for sanity checking
         if self.wt_set_hat is None:
             self.wt_set_hat = torch.ones_like(inst_set_hat)
-        y_set_hat = self.wt_set_hat - inst_set_hat
+        y_set_hat = self.wt_set_hat.mean(dim=0) - inst_set_hat
         y_hat = self.model_lin(y_set_hat)
         return y_hat
 
@@ -106,32 +106,69 @@ class RegressionTask(pl.LightningModule):
     def train_wt(self):
         # CHECK on definition of global_step - refresh with epoch?
         if self.global_step == 0 and not self.is_wt_init:
-            wt_batch = Batch.from_data_list([self.wt]).to(self.device)
-            self.wt_global_hat, self.wt_set_hat, _ = self.model_ds(
+            wt_batch = Batch.from_data_list([self.wt, self.wt]).to(self.device)
+            self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
                 wt_batch.x, wt_batch.batch
             )
+
             self.is_wt_init = True
         if self.global_step == 0 or self.global_step % self.wt_step_freq == 0:
-            # set up optimizer
-            opt = self.optimizers()
-            opt.zero_grad()
-            # train on wt
-            wt_batch = Batch.from_data_list([self.wt]).to(self.device)
-            self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
-            loss = self.loss(self.wt_y_hat, wt_batch.fitness)
-            self.manual_backward(loss)
-            opt.step()
-            # Get updated wt reference
-            # Set the model to evaluation mode
-            self.model_ds.eval()
+            for i in range(1000):
+                ################ Global
+                # set up optimizer
+                opt = self.optimizers()
+                opt.zero_grad()
+                # train on wt
+                wt_batch = Batch.from_data_list([self.wt] * 16).to(self.device)
+                self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
+                rand_pert = (
+                    torch.FloatTensor(16).uniform_(1.00001, 1.0001).to(self.device)
+                )
+                loss = self.loss(self.wt_y_hat, wt_batch.fitness * rand_pert)
+                self.log("wt loss", loss)
+                self.manual_backward(loss)  # error on this line
+                opt.step()
+                opt.zero_grad()
+                # Get updated wt reference
+                # Set the model to evaluation mode
+                # self.model_ds.eval()
 
-            # get updated wt reference
-            with torch.no_grad():
-                self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = self.model_ds(
+                # # get updated wt reference
+                # with torch.no_grad():
+                self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
                     wt_batch.x, wt_batch.batch
                 )
-            # Revert the model back to training mode
-            self.model_ds.train()
+                # Revert the model back to training mode
+                # self.model_ds.train()
+                ######### Node
+                opt = self.optimizers()
+                opt.zero_grad()
+
+                loss_global = self.loss(
+                    self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
+                )
+                self.log("wt global loss", loss_global)
+                self.manual_backward(loss_global)  # error on this line
+                opt.step()
+                opt.zero_grad()
+                # Get updated wt reference
+                # Set the model to evaluation mode
+                self.model_ds.eval()
+
+                # get updated wt reference
+                with torch.no_grad():
+                    self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+                        wt_batch.x, wt_batch.batch
+                    )
+                # Revert the model back to training mode
+                self.model_ds.train()
+                ########## Break after overfit
+                if self.current_epoch < 2:
+                    break
+
+                elif loss_global < 1:
+                    print(f"Broke WT overfit on: {i}")
+                    break
 
     def training_step(self, batch, batch_idx):
         # Train on wt reference
@@ -151,7 +188,9 @@ class RegressionTask(pl.LightningModule):
         #
         # logging
         batch_size = batch_vector[-1].item() + 1
-        self.log("wt_y_hat", self.wt_y_hat, sync_dist=True)
+        self.log("wt_y_hat", self.wt_y_hat.mean(dim=0), sync_dist=True)
+        self.log("wt_y_hat_0", self.wt_y_hat[0], sync_dist=True)
+        self.log("wt_y_hat_1", self.wt_y_hat[1], sync_dist=True)
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients

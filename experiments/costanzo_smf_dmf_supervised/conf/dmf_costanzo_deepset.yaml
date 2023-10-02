@@ -4,17 +4,17 @@ defaults:
   - _self_ # append to end for overriding duplicate configs in default
 
 wandb:
-  mode: offline # disabled, offline, online
+  mode: online # disabled, offline, online
   project: torchcell
   tags: [poc, subset]
 
 data_module:
   batch_size: 16 #32
-  num_workers: 2
+  num_workers: 4
   pin_memory: true
 
 trainer:
-  max_epochs: 500
+  max_epochs: 1000
   strategy: auto #ddp
 
 regression_task:
@@ -25,7 +25,7 @@ regression_task:
 
 models:
   graph:
-    instance_layers: [32, 16] # [1024, 512]
-    set_layers: [16, 4] # [256, 128]
+    instance_layers: [64, 32] # [1024, 512]
+    set_layers: [16, 8] # [256, 128]
   mlp_refset:
     layer_dims: [1]

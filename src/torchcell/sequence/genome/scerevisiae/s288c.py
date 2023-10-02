@@ -719,19 +719,19 @@ def main() -> None:
     # print(len(genome.gene_set))
     genome.drop_empty_go()
 
-    genes_not_divisible_by_3 = [
-        gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0
-    ]
-    print(len(genes_not_divisible_by_3))
-    print(genes_not_divisible_by_3)
-    genes_no_start = [
-        gene for gene in genes_not_divisible_by_3 if genome[gene].seq[:3] != "ATG"
-    ]
-    print(len(genes_no_start))
-    print(genes_no_start)
-    print()
+    # genes_not_divisible_by_3 = [
+    #     gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0
+    # ]
+    # print(len(genes_not_divisible_by_3))
+    # print(genes_not_divisible_by_3)
+    # genes_no_start = [
+    #     gene for gene in genes_not_divisible_by_3 if genome[gene].seq[:3] != "ATG"
+    # ]
+    # print(len(genes_no_start))
+    # print(genes_no_start)
+    # print()
 
-    genes_no_start = [gene for gene in genome.gene_set if gene.seq[:3] != "ATG"]
+    genes_no_start = [gene for gene in genome.gene_set if genome[gene].seq[:3] != "ATG"]
     print(len(genes_no_start))
     print(genes_no_start)
 

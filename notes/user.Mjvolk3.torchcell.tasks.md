@@ -2,10 +2,29 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1695957952801
+updated: 1696268607647
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.10.02
+
+- [x] Implement `LayerNorm` normalization and activation parameterization
+- [x] Implement gradient clipping. → No implementation needed. This is easy on pytorch lightning as it can be done by simply passing args to the `Trainer`
+- [x] Add option to include skip connections in instance layers and set layers of [[src.torchcell.models.deep_set]]. Of course skip connections can only be applied to layers of the same dimension so the boolean corresponds to layers with repeat of the same dimension.
+
+- [ ] Look up if we can apply attention over an window of different sizes.
+
+- [ ] Try to regularize by forcing `wt` embedding to 1, can also try 0 which should be fine because you can get to 1 with bias from linear.
+
+## 2023.09.29
+
+- [x] Send query to @Yunan-Luo about [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/src.torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
+- [x] Kill run → [Wandb Run](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3), some sides notes on this run [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/src.torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
+- [x] [[Fixing Padding on Upstream Model to Match GitHub Issue Recommendation|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#fixing-padding-on-upstream-model-to-match-github-issue-recommendation]]
+- [x] Delete old upstream embeddings and rerun [[Fungal_up_down_transformer|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer]]. → Tried running but there is an issue [[Parse Genome and Return None For Dunder Add - Need Genome in Process|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add---need-genome-in-process]]
+
+- [ ] Try to regularize by forcing `wt` embedding to 1, can also try 0 which should be fine because you can get to 1 with bias from linear.
 
 ## 2023.09.28
 

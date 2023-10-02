@@ -2,7 +2,7 @@
 id: 446105d7i4yx5l77gmhysfk
 title: Regression
 desc: ''
-updated: 1695865860685
+updated: 1696005202251
 created: 1692324783767
 ---
 In first instantiation build for regression on double mutant fitness.
@@ -79,3 +79,15 @@ def training_step(self, batch, batch_idx):
     )
     return loss
 ```
+
+## Training Instability with Wildtype Embedding Difference
+
+![](./assets/drawio/wildtype-difference-batch-overfit.drawio.png)
+
+We see training instability when we don't estimate `wt_y_hat` accurately. The highlighted spike has a corresponding spike in `train_loss`.
+
+![](./assets/images/src.torchcell.trainers.regression.md.Cell_Costanzo_1e3_training-instability-with-wildtype-embedding-difference.png)
+
+We see much more dramatic instabilities with a larger network and more data (`1e5`) data points. It took about 10 hours to complete 50 epochs, thats 5 epochs per hour. If we scale up to `1e6` we can expect 2 hr/epoch, and finally to `1e7` (max data size) would be 20 hr/epoch, which we should be able to cut in half with A100x8 nodes to 5hr/epoch, and further speed things up by eliminating `ddp` error about some weights not being used by loss calculation.
+
+![](./assets/images/src.torchcell.trainers.regression.md.Cell_Costanzo_1e5_training_A100x4_ddp_training-instability-with-wildtype-embedding-difference.png)

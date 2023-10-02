@@ -70,12 +70,13 @@ def main(cfg: DictConfig) -> None:
         genome=genome,
         transformer_model_name="species_downstream",
     )
-    fungal_up_dataset = FungalUpDownTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
-        genome=genome,
-        transformer_model_name="species_upstream",
-    )
-    seq_embeddings = fungal_down_dataset + fungal_up_dataset
+    # fungal_up_dataset = FungalUpDownTransformerDataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+    #     genome=genome,
+    #     transformer_model_name="species_upstream",
+    # )
+    # seq_embeddings = fungal_down_dataset + fungal_up_dataset
+    seq_embeddings = fungal_down_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
@@ -103,7 +104,6 @@ def main(cfg: DictConfig) -> None:
             input_dim,
             wandb.config.models["graph"]["instance_layers"],
             wandb.config.models["graph"]["set_layers"],
-            global_activation="relu",
         ),
         "mlp_ref_set": Mlp(
             input_dim=wandb.config.models["graph"]["set_layers"][-1],
@@ -125,8 +125,16 @@ def main(cfg: DictConfig) -> None:
     # Initialize the Trainer with the WandbLogger
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
+
+    num_devices = torch.cuda.device_count()
+    if num_devices == 0:  # if there are no GPUs available, use 1 CPU
+        devices = 1
+    else:
+        devices = num_devices
+
     trainer = pl.Trainer(
         strategy=wandb.config.trainer["strategy"],
+        devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

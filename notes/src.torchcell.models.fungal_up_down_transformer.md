@@ -2,7 +2,7 @@
 id: 8qkvwbscuf4ix0rkmuks886
 title: Fungal_up_down_transformer
 desc: ''
-updated: 1695836780604
+updated: 1696005432914
 created: 1694984769843
 ---
 ## Tokenizing Data Procedure Taken from ModelUsage.py
@@ -110,3 +110,9 @@ I believe that we get `input_ids_len==1001` when the `sequnece_length==1003`, be
 # breakpoint at input_ids_len = tokenized_data["input_ids"].shape[-1]
 >>> input_ids_len = 998
 ```
+
+## Fixing Padding on Upstream Model to Match GitHub Issue Recommendation
+
+[GitHub Issue Recommendation](https://github.com/gagneurlab/SpeciesLM/issues/1#issuecomment-1740531872)
+
+Previous padding did something like `[0,0,0,2,4424,64,...,3]`] instead of `[2,4424,0,0,0,64,...,3]`. This is supposed to preserve the location of the `2` which is id for speical token `[CLS]`, which helps indicate the species label `4424`, which in the case of yeast corresponds with `"candida_glabrata"`.

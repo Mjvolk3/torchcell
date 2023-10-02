@@ -105,17 +105,27 @@ def main(cfg: DictConfig) -> None:
     input_dim = cell_dataset.num_features
     models = {
         "deep_set": DeepSet(
-            input_dim,
-            wandb.config.models["graph"]["instance_layers"],
-            wandb.config.models["graph"]["set_layers"],
+            input_dim=input_dim,
+            node_layers=wandb.config.models["graph"]["node_layers"],
+            set_layers=wandb.config.models["graph"]["set_layers"],
+            norm=wandb.config.models["graph"]["norm"],
+            activation=wandb.config.models["graph"]["activation"],
+            skip_node=wandb.config.models["graph"]["skip_node"],
+            skip_set=wandb.config.models["graph"]["skip_set"],
         ),
         "mlp_ref_set": Mlp(
             input_dim=wandb.config.models["graph"]["set_layers"][-1],
             layer_dims=wandb.config.models["mlp_refset"]["layer_dims"],
         ),
     }
-
     # could also have mlp_ref_nodes
+    if wandb.config.regression_task["loss"]:
+        mean_value = experiments.df["Double mutant fitness"].mean()
+        penalty = wandb.config.regression_task["penalty"]
+    else:
+        penalty = None
+        mean_value = None
+    kwargs = {"mean_value": mean_value, "penalty": penalty}
     model = RegressionTask(
         models=models,
         wt=cell_dataset.wt,
@@ -123,6 +133,9 @@ def main(cfg: DictConfig) -> None:
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
+        loss=wandb.config.regression_task["loss"],
+        batch_size=wandb.config.data_module["batch_size"],
+        **kwargs,
     )
 
     checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")

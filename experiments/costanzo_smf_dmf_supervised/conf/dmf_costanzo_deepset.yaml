@@ -18,17 +18,17 @@ trainer:
   strategy: auto #ddp
 
 regression_task:
-  wt_step_freq: 10
+  wt_step_freq: 100
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
-  loss: weighted_mse
-  penalty: 10
+  loss: mse
+  # penalty: 10
 
 models:
   graph:
     node_layers: [64, 32] # [1024, 512]
-    set_layers: [16, 8] # [256, 128]
+    set_layers: [16, 16, 16] # [256, 128]
     norm: layer
     activation: gelu
     skip_node: true

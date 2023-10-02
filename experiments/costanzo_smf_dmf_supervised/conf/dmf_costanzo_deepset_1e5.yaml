@@ -15,17 +15,23 @@ data_module:
 
 trainer:
   max_epochs: 1000
-  strategy: ddp_find_unused #ddp, ddp_find_unused, auto
+  strategy: ddp #ddp, ddp_find_unused, auto
 
 regression_task:
   wt_step_freq: 10
   boxplot_every_n_epochs: 1
   learning_rate: 1e-3
   weight_decay: 1e-5
+  loss: mse
+  penalty: null # weighted_mse only
 
 models:
   graph:
-    instance_layers: [32, 16] #[1024, 512] # 
-    set_layers: [8, 4] # 
+    node_layers: [64, 32] # [1024, 512]
+    set_layers: [16, 16, 16] # [256, 128]
+    norm: layer
+    activation: gelu
+    skip_node: true
+    skip_set: true
   mlp_refset:
     layer_dims: [1]

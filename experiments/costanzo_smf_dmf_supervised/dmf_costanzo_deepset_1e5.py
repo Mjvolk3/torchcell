@@ -1,7 +1,7 @@
-# experiments/dmf_costanzo_deepset.py
-# [[experiments.dmf_costanzo_deepset]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/dmf_costanzo_deepset.py
-# Test file: experiments/test_dmf_costanzo_deepset.py
+# experiments/costanzo_smf_dmf_supervised/dmf_costanzo_deepset_1e5.py
+# [[experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/costanzo_smf_dmf_supervised/dmf_costanzo_deepset_1e5.py
+# Test file: experiments/costanzo_smf_dmf_supervised/test_dmf_costanzo_deepset_1e5.py
 
 import datetime
 import hashlib
@@ -58,13 +58,6 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize the WandbLogger
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
-    # dist.
-    if wandb.config.trainer["strategy"] == "ddp":
-        import torch.distributed as dist
-
-        if dist.is_available() and dist.is_initialized():
-            device_index = dist.get_rank()
-            print(f"Process is using device {device_index}")
 
     # Get reference genome
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
@@ -115,15 +108,14 @@ def main(cfg: DictConfig) -> None:
             input_dim,
             wandb.config.models["graph"]["instance_layers"],
             wandb.config.models["graph"]["set_layers"],
-            global_activation="relu",
         ),
         "mlp_ref_set": Mlp(
             input_dim=wandb.config.models["graph"]["set_layers"][-1],
             layer_dims=wandb.config.models["mlp_refset"]["layer_dims"],
         ),
     }
-    # could also have mlp_ref_nodes
 
+    # could also have mlp_ref_nodes
     model = RegressionTask(
         models=models,
         wt=cell_dataset.wt,

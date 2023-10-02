@@ -47,7 +47,12 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.genome = genome
         super().__init__(root, transformer_model_name, transform, pre_transform)
+        # convert genome to parsed genome after process, so have potential issue
+        # with sqlite database
+        # TODO try without parsed_genome on ddp to see if issue was
+        # BaseEmbeddingDataset previously taking genome as a parameter
         self.genome = self.parse_genome(genome)
         del genome
 
@@ -119,7 +124,8 @@ if __name__ == "__main__":
     genome = SCerevisiaeGenome()
 
     # Adjust the model names accordingly.
-    model_names = ["species_downstream", "species_upstream"]
+    # model_names = ["species_downstream", "species_upstream"]
+    model_names = ["species_upstream"]
 
     datasets = []
     for model_name in model_names:

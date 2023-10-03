@@ -135,6 +135,7 @@ class RegressionTask(pl.LightningModule):
             loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
             self.log("wt loss", loss_wt)
             self.log("wt mean", self.wt_y_hat.detach().mean())
+            self.log("wt batch fitness mean", wt_batch.fitness.mean())
 
             # get updated wt reference
             self.wt_nodes_hat, self.wt_set_hat = self.model_ds(

@@ -25,13 +25,7 @@ class DeepSet(nn.Module):
         super().__init__()
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
-        activations = {
-            "relu": nn.ReLU(),
-            "gelu": nn.GELU(),
-            "leaky_relu": nn.LeakyReLU(),
-            "sigmoid": nn.Sigmoid(),
-        }
-        assert activation in activations.keys(), "Invalid activation type"
+        assert activation in act_register.keys(), "Invalid activation type"
 
         self.skip_node = skip_node
         self.skip_set = skip_set
@@ -44,7 +38,7 @@ class DeepSet(nn.Module):
                 block.append(nn.InstanceNorm1d(out_dim, affine=True))
             elif norm == "layer":
                 block.append(nn.LayerNorm(out_dim))
-            block.append(activations[activation])
+            block.append(act_register[activation])
             return nn.Sequential(*block)
 
         in_dim = input_dim
@@ -66,7 +60,7 @@ class DeepSet(nn.Module):
         for i, layer in enumerate(self.node_layers):
             out_node = layer(x_node)
             if self.skip_node and x_node.shape[-1] == out_node.shape[-1]:
-                out_node += x_node  # Skip connection
+                out_node = out_node + x_node  # Skip connection
             x_node = out_node
 
         x_summed = scatter_add(x_node, batch, dim=0)
@@ -75,31 +69,52 @@ class DeepSet(nn.Module):
         for i, layer in enumerate(self.set_layers):
             out_set = layer(x_set)
             if self.skip_set and x_set.shape[-1] == out_set.shape[-1]:
-                out_set += x_set  # Skip connection
+                out_set = out_set + x_set  # Skip connection
             x_set = out_set
 
         return x_node, x_set
 
 
 def main():
+    torch.autograd.set_detect_anomaly(True)
+
+    # Model configuration
     input_dim = 10
     node_layers = [64, 32, 32, 32]
     set_layers = [16, 8, 8]
+
     model = DeepSet(
         input_dim,
         node_layers,
         set_layers,
         norm="layer",
-        activation="gelu",
+        activation="tanh",
         skip_node=True,
         skip_set=True,
     )
 
+    # Dummy data
     x = torch.rand(100, input_dim)
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
+
+    # Forward pass
     x_nodes, x_set = model(x, batch)
     print(x_set.shape)
     print(x_nodes.shape)
+
+    # Let's assume you want to predict some values for each set.
+    # So, we'll create a dummy target tensor for demonstration purposes.
+    target = torch.rand(5, set_layers[-1])
+
+    # Simple mean squared error loss
+    criterion = nn.MSELoss()
+    loss = criterion(x_set, target)
+    print("Loss:", loss.item())
+
+    # Backpropagation
+    model.zero_grad()
+    loss.backward()
+    print("Gradients computed successfully!")
 
 
 if __name__ == "__main__":

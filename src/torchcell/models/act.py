@@ -9,5 +9,6 @@ act_register = {
     "relu": nn.ReLU(),
     "gelu": nn.GELU(),
     "sigmoid": nn.Sigmoid(),
+    "leaky_relu": nn.LeakyReLU(),  # TODO add params, look at graph gym
     "tanh": nn.Tanh(),
 }

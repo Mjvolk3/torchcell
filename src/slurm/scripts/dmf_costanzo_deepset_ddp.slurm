@@ -3,10 +3,10 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
-#SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
+#SBATCH --partition=gpuA100x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
 #SBATCH --job-name=TC
-#SBATCH --time=48:00:00      # hh:mm:ss for the job
+#SBATCH --time=16:00:00      # hh:mm:ss for the job
 #SBATCH --constraint="projects&scratch"
 ### GPU options ###
 #SBATCH --gpus-per-node=4
@@ -25,5 +25,5 @@ pwd
 conda activate /projects/bbub/miniconda3/envs/torchcell
 #echo "job is starting on `hostname`"
 #wandb artifact cache cleanup 1GB
-srun python experiments/dmf_costanzo_deepset.py
+srun python experiments/costanzo_smf_dmf_supervised/dmf_costanzo_deepset.py
 

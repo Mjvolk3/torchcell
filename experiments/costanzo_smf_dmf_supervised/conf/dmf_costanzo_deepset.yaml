@@ -8,28 +8,37 @@ wandb:
   project: torchcell
   tags: [poc, subset]
 
+cell_dataset:
+  experiments: costanzo2016_1e3
+  name: cell_1e3
+
 data_module:
   batch_size: 16 #32
   num_workers: 4
   pin_memory: true
 
 trainer:
-  max_epochs: 1000
+  max_epochs: 100
   strategy: auto #ddp
 
 regression_task:
-  wt_step_freq: 100
+  wt_train_ratio: 0.1
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
   loss: mse
-  # penalty: 10
+  weighted_mse_penalty: null # only for weighted mse
+  train_wt_node_loss: true
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 0.01
+  order_penalty: true
+  lambda_order: 1.0
 
 models:
   graph:
-    node_layers: [64, 32, 32] # [1024, 512]
-    set_layers: [16, 8, 8] # [256, 128]
-    norm: layer
+    node_layers: [128, 64] # [1024, 512]
+    set_layers: [32, 32] # [256, 128]
+    norm: batch
     activation: gelu
     skip_node: true
     skip_set: true

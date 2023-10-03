@@ -33,7 +33,7 @@ class RegressionTask(pl.LightningModule):
         self,
         models: dict[str, nn.Module],
         wt: Data,
-        wt_train_ratio: float = 10,
+        wt_train_per_epoch: float = 10,
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
@@ -55,7 +55,7 @@ class RegressionTask(pl.LightningModule):
         self.model_ds = models["deep_set"]
         self.model_lin = models["mlp_ref_set"]
         self.wt = wt
-        self.wt_train_ratio = wt_train_ratio
+        self.wt_train_per_epoch = wt_train_per_epoch
         self.is_wt_init = False
         self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
 
@@ -144,10 +144,9 @@ class RegressionTask(pl.LightningModule):
             )
 
             self.is_wt_init = True
-        if (
-            self.global_step == 0
-            or self.global_step % int(self.wt_train_ratio * self.train_epoch_size) == 0
-        ):
+        if (self.global_step == 0) or self.global_step % int(
+            (self.train_epoch_size + 1) / self.wt_train_per_epoch
+        ) == 0:
             # Global Loss
             # set up optimizer
             opt = self.optimizers()

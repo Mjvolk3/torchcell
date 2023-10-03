@@ -28,18 +28,18 @@ regression_task:
   weight_decay: 1e-5
   loss: mse
   weighted_mse_penalty: null # only for weighted mse
-  train_wt_node_loss: true
-  clip_grad_norm: true
+  train_wt_node_loss: false
+  clip_grad_norm: false
   clip_grad_norm_max_norm: 0.01
-  order_penalty: true
+  order_penalty: false
   lambda_order: 1.0
 
 models:
   graph:
-    node_layers: [1024, 512, 256, 128, 64, 32] # [1024, 512]
+    node_layers: [256, 128] # [1024, 512]
     set_layers: [32, 32, 32, 32] # [256, 128]
     norm: layer
-    activation: gelu
+    activation: tanh
     skip_node: true
     skip_set: true
   mlp_refset:

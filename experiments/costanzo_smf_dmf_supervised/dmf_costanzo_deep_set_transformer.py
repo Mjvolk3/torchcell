@@ -119,7 +119,7 @@ def main(cfg: DictConfig) -> None:
     model = RegressionTaskDeepSetTransformer(
         models=models,
         wt=cell_dataset.wt,
-        wt_step_freq=wandb.config.regression_task["wt_step_freq"],
+        wt_train_ratio=wandb.config.regression_task["wt_train_ratio"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],

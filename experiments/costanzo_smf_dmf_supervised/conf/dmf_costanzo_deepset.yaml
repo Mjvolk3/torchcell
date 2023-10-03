@@ -22,7 +22,7 @@ trainer:
   strategy: auto #ddp
 
 regression_task:
-  wt_train_ratio: 0.1
+  wt_train_per_epoch: 2
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5

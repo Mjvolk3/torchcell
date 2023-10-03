@@ -33,7 +33,7 @@ class RegressionTaskDeepSetTransformer(pl.LightningModule):
         self,
         models: dict[str, nn.Module],
         wt: Data,
-        wt_step_freq: int = 10,
+        wt_train_ratio: int = 10,
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
@@ -47,7 +47,7 @@ class RegressionTaskDeepSetTransformer(pl.LightningModule):
         self.model_dst = models["deep_set_transformer"]
         self.model_lin = models["mlp_ref_set"]
         self.wt = wt
-        self.wt_step_freq = wt_step_freq
+        self.wt_train_ratio = wt_train_ratio
         self.is_wt_init = False
         self.wt_global_hat, self.wt_set_hat, self.wt_nodes_hat = None, None, None
 
@@ -118,7 +118,7 @@ class RegressionTaskDeepSetTransformer(pl.LightningModule):
             )
 
             self.is_wt_init = True
-        if self.global_step == 0 or self.global_step % self.wt_step_freq == 0:
+        if self.global_step == 0 or self.global_step % self.wt_train_ratio == 0:
             ################ Global
             # set up optimizer
             opt = self.optimizers()

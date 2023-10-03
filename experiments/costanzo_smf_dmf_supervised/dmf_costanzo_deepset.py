@@ -60,33 +60,32 @@ def main(cfg: DictConfig) -> None:
     genome.drop_empty_go()
 
     # Sequence transformers
-    # nt_dataset = NucleotideTransformerDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
-    #     genome=genome,
-    #     transformer_model_name="nt_window_5979",
-    # )
     fungal_down_dataset = FungalUpDownTransformerDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
         genome=genome,
         transformer_model_name="species_downstream",
     )
-    # fungal_up_dataset = FungalUpDownTransformerDataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
-    #     genome=genome,
-    #     transformer_model_name="species_upstream",
-    # )
-    # seq_embeddings = fungal_down_dataset + fungal_up_dataset
+    fungal_up_dataset = FungalUpDownTransformerDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+        genome=genome,
+        transformer_model_name="species_upstream",
+    )
+    seq_embeddings = fungal_down_dataset + fungal_up_dataset
     seq_embeddings = fungal_down_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
+        root=osp.join(
+            DATA_ROOT, "data/scerevisiae", wandb.config.cell_dataset["experiments"]
+        ),
     )
 
     # Gather into CellDatset
     cell_dataset = CellDataset(
-        root=osp.join(osp.join(DATA_ROOT, "data/scerevisiae/cell_1e3")),
+        root=osp.join(
+            osp.join(DATA_ROOT, "data/scerevisiae", wandb.config.cell_dataset["name"])
+        ),
         genome=genome,
         seq_embeddings=seq_embeddings,
         experiments=experiments,
@@ -116,21 +115,26 @@ def main(cfg: DictConfig) -> None:
     }
     # could also have mlp_ref_nodes
     if wandb.config.regression_task["loss"]:
-        mean_value = experiments.df["Double mutant fitness"].mean()
-        penalty = wandb.config.regression_task["penalty"]
+        fitness_mean_value = experiments.df["Double mutant fitness"].mean()
     else:
-        penalty = None
-        mean_value = None
-    kwargs = {"mean_value": mean_value, "penalty": penalty}
+        fitness_mean_value = None
+    kwargs = {"fitness_mean_value": fitness_mean_value}
+
+    len(experiments)
     model = RegressionTask(
         models=models,
         wt=cell_dataset.wt,
-        wt_step_freq=wandb.config.regression_task["wt_step_freq"],
+        wt_train_ratio=wandb.config.regression_task["wt_train_ratio"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
         loss=wandb.config.regression_task["loss"],
+        weighted_mse_penalty=wandb.config.regression_task["weighted_mse_penalty"],
         batch_size=wandb.config.data_module["batch_size"],
+        train_wt_node_loss=wandb.config.regression_task["train_wt_node_loss"],
+        train_epoch_size=data_module.train_epoch_size,
+        order_penalty=wandb.config.regression_task["order_penalty"],
+        lambda_order=wandb.config.regression_task["lambda_order"],
         **kwargs,
     )
 

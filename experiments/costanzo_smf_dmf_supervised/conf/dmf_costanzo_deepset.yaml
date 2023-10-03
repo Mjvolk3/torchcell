@@ -39,7 +39,7 @@ models:
     node_layers: [512, 256, 128, 64] # [1024, 512]
     set_layers: [32, 32, 32, 32] # [256, 128]
     norm: layer
-    activation: gelu
+    activation: tanh
     skip_node: true
     skip_set: true
   mlp_refset:

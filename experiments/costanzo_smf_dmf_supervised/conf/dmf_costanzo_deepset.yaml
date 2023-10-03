@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e3
-  name: cell_1e3
+  experiments: costanzo2016_1e5
+  name: cell_1e5
 
 data_module:
   batch_size: 16 #32
@@ -18,8 +18,8 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 100
-  strategy: auto #ddp
+  max_epochs: 1000
+  strategy: ddp # ddp, auto
 
 regression_task:
   wt_train_per_epoch: 2
@@ -36,8 +36,8 @@ regression_task:
 
 models:
   graph:
-    node_layers: [256, 128] # [1024, 512]
-    set_layers: [32, 32, 32, 32] # [256, 128]
+    node_layers: [1024, 512, 256, 128, 64] # [1024, 512]
+    set_layers: [32, 32, 32, 32, 32] # [256, 128]
     norm: layer
     activation: tanh
     skip_node: true

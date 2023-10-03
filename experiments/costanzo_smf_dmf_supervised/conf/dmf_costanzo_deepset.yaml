@@ -36,9 +36,9 @@ regression_task:
 
 models:
   graph:
-    node_layers: [128, 64] # [1024, 512]
-    set_layers: [32, 32] # [256, 128]
-    norm: batch
+    node_layers: [1024, 512, 256, 128, 64, 32] # [1024, 512]
+    set_layers: [32, 32, 32, 32] # [256, 128]
+    norm: layer
     activation: gelu
     skip_node: true
     skip_set: true

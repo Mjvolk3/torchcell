@@ -21,11 +21,17 @@ class CellDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.train_epoch_size = None
+        self.train_ratio = 0.8
+        self.val_ratio = 0.1
+        self.train_epoch_size = int(
+            len(self.dataset) * self.train_ratio / self.batch_size
+        )
 
     def setup(self, stage=None):
         # Split the dataset into train, val, and test sets
-        num_train = int(0.8 * len(self.dataset))
-        num_val = int(0.1 * len(self.dataset))
+        num_train = int(self.train_ratio * len(self.dataset))
+        num_val = int(self.val_ratio * len(self.dataset))
         num_test = len(self.dataset) - num_train - num_val
 
         (

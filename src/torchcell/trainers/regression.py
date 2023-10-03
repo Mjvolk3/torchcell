@@ -33,12 +33,18 @@ class RegressionTask(pl.LightningModule):
         self,
         models: dict[str, nn.Module],
         wt: Data,
-        wt_step_freq: int = 10,
+        wt_train_ratio: float = 10,
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
         batch_size: int = None,
+        train_wt_node_loss: bool = False,
+        train_epoch_size: int = None,
+        clip_grad_norm: bool = False,
+        clip_grad_norm_max_norm: float = 0.1,
+        order_penalty: bool = False,
+        lambda_order: float = 1.0,
         **kwargs,
     ):
         super().__init__()
@@ -49,15 +55,23 @@ class RegressionTask(pl.LightningModule):
         self.model_ds = models["deep_set"]
         self.model_lin = models["mlp_ref_set"]
         self.wt = wt
-        self.wt_step_freq = wt_step_freq
+        self.wt_train_ratio = wt_train_ratio
         self.is_wt_init = False
         self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
+
+        # clip grad norm
+        self.clip_grad_norm = clip_grad_norm
+        self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
+
+        # order loss
+        self.order_penalty = order_penalty
+        self.lambda_order = lambda_order
 
         # loss
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "weighted_mse":
-            mean_value = kwargs.get("mean_value")
+            mean_value = kwargs.get("fitness_mean_value")
             penalty = kwargs.get("penalty", 1.0)
             self.loss = WeightedMSELoss(mean_value=mean_value, penalty=penalty)
         elif loss == "mae":
@@ -68,6 +82,12 @@ class RegressionTask(pl.LightningModule):
                 "Currently, supports 'mse' or 'mae' loss."
             )
         self.loss_node = nn.MSELoss()
+
+        # Node Loss Regularization to Unit Vector
+        self.train_wt_node_loss = train_wt_node_loss
+
+        # train epoch size for wt frequency
+        self.train_epoch_size = train_epoch_size
 
         # optimizer
         self.learning_rate = learning_rate
@@ -124,7 +144,10 @@ class RegressionTask(pl.LightningModule):
             )
 
             self.is_wt_init = True
-        if self.global_step == 0 or self.global_step % self.wt_step_freq == 0:
+        if (
+            self.global_step == 0
+            or self.global_step % int(self.wt_train_ratio * self.train_epoch_size) == 0
+        ):
             # Global Loss
             # set up optimizer
             opt = self.optimizers()
@@ -132,22 +155,28 @@ class RegressionTask(pl.LightningModule):
 
             wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
             self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
-            loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
+            loss_wt = 100 * self.loss(self.wt_y_hat, wt_batch.fitness)
             self.log("wt loss", loss_wt)
             self.log("wt mean", self.wt_y_hat.detach().mean())
             self.log("wt batch fitness mean", wt_batch.fitness.mean())
-
             # get updated wt reference
-            self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
-                wt_batch.x, wt_batch.batch
-            )
-            # Node Loss
-            loss_nodes = self.loss_node(
-                self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
-            )
-            self.log("wt loss_nodes", loss_nodes)
-            self.manual_backward(loss_wt + loss_nodes)
-            nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+            if self.train_wt_node_loss:
+                self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+                    wt_batch.x, wt_batch.batch
+                )
+                # Node Loss
+                loss_nodes = self.loss_node(
+                    self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
+                )
+                self.log("wt loss_nodes", loss_nodes)
+                self.manual_backward(loss_wt + loss_nodes)
+            else:
+                self.manual_backward(loss_wt)
+
+            if self.clip_grad_norm:
+                nn.utils.clip_grad_norm_(
+                    self.parameters(), max_norm=self.clip_grad_norm_max_norm
+                )
             # finish optimization
             opt.step()
             opt.zero_grad()
@@ -160,6 +189,20 @@ class RegressionTask(pl.LightningModule):
                 )
             self.model_ds.train()
 
+    def ordering_penalty(self, y_hat, y):
+        # Step 1: Obtain the indices that would sort y
+        _, sorted_indices = torch.sort(y, descending=False)
+
+        # Step 2: Use these indices to rearrange y_hat
+        y_hat_sorted = torch.gather(y_hat, 0, sorted_indices)
+
+        # Step 3: Compute the penalty based on rearranged y_hat
+        diffs = y_hat_sorted[1:] - y_hat_sorted[:-1]
+        violations = torch.clamp(diffs, max=0)
+        penalty = -torch.sum(violations)
+
+        return penalty
+
     def training_step(self, batch, batch_idx):
         # Train on wt reference
         self.train_wt()
@@ -170,9 +213,20 @@ class RegressionTask(pl.LightningModule):
 
         opt = self.optimizers()
         opt.zero_grad()
-        loss = self.loss(y, y_hat)
+        if self.order_penalty:
+            order_penalty_value = self.ordering_penalty(y_hat, y)
+            # Hyperparameter to adjust the weight of ordering penalty
+            order_penalty_loss = self.lambda_order * order_penalty_value
+            self.log("order_penalty_loss", order_penalty_loss)
+            loss = self.loss(y, y_hat) + self.lambda_order * order_penalty_loss
+        else:
+            loss = self.loss(y_hat, y)
+
         self.manual_backward(loss)  # error on this line
-        nn.utils.clip_grad_norm_(self.parameters(), max_norm=1.0)
+        if self.clip_grad_norm:
+            nn.utils.clip_grad_norm_(
+                self.parameters(), max_norm=self.clip_grad_norm_max_norm
+            )
         opt.step()
         opt.zero_grad()
         # logging

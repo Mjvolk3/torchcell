@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e5
-  name: cell_1e5
+  experiments: costanzo2016_1e3
+  name: cell_1e3
 
 data_module:
   batch_size: 16 #32
@@ -19,7 +19,7 @@ data_module:
 
 trainer:
   max_epochs: 1000
-  strategy: ddp # ddp, auto
+  strategy: auto # ddp, auto
 
 regression_task:
   wt_train_per_epoch: 2
@@ -29,17 +29,18 @@ regression_task:
   loss: mse
   weighted_mse_penalty: null # only for weighted mse
   train_wt_node_loss: false
-  clip_grad_norm: false
-  clip_grad_norm_max_norm: 0.01
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 0.1
   order_penalty: false
   lambda_order: 1.0
+  train_wt_diff: true
 
 models:
   graph:
-    node_layers: [1024, 512, 256, 128, 64] # [1024, 512]
-    set_layers: [32, 32, 32, 32, 32] # [256, 128]
+    node_layers: [1024, 512] #[1024, 512, 256, 128, 64] # 
+    set_layers: [256, 128] #[32, 32, 32, 32, 32] # 
     norm: layer
-    activation: tanh
+    activation: gelu
     skip_node: true
     skip_set: true
   mlp_refset:

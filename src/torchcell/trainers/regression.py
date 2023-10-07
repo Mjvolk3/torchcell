@@ -45,6 +45,7 @@ class RegressionTask(pl.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         order_penalty: bool = False,
         lambda_order: float = 1.0,
+        train_wt_diff: bool = True,
         **kwargs,
     ):
         super().__init__()
@@ -66,6 +67,15 @@ class RegressionTask(pl.LightningModule):
         # order loss
         self.order_penalty = order_penalty
         self.lambda_order = lambda_order
+
+        # train wt diff
+        self.train_wt_diff = train_wt_diff
+        if self.train_wt_diff:
+            self.x_name = "x"
+            self.x_batch_name = "batch"
+        else:
+            self.x_name = "x_pert"
+            self.x_batch_name = "x_pert_batch"
 
         # loss
         if loss == "mse":
@@ -123,9 +133,12 @@ class RegressionTask(pl.LightningModule):
     def forward(self, x, batch):
         inst_nodes_hat, inst_set_hat = self.model_ds(x, batch)
         # This case is only for sanity checking
-        if self.wt_set_hat is None:
+        if self.wt_set_hat is None and self.train_wt_diff:
             self.wt_set_hat = torch.ones_like(inst_set_hat)
-        y_set_hat = self.wt_set_hat.mean(dim=0) - inst_set_hat
+        if self.train_wt_diff:
+            y_set_hat = self.wt_set_hat.mean(dim=0) - inst_set_hat
+        else:
+            y_set_hat = inst_set_hat
         y_hat = self.model_lin(y_set_hat)
         return y_hat
 
@@ -154,7 +167,7 @@ class RegressionTask(pl.LightningModule):
 
             wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
             self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
-            loss_wt = 100 * self.loss(self.wt_y_hat, wt_batch.fitness)
+            loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
             self.log("wt loss", loss_wt)
             self.log("wt mean", self.wt_y_hat.detach().mean())
             self.log("wt batch fitness mean", wt_batch.fitness.mean())
@@ -204,9 +217,14 @@ class RegressionTask(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         # Train on wt reference
-        self.train_wt()
+        if self.train_wt_diff:
+            self.train_wt()
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.fitness, batch.batch
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch.fitness,
+            batch[self.x_batch_name],
+        )
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
@@ -253,7 +271,11 @@ class RegressionTask(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.fitness, batch.batch
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch.fitness,
+            batch[self.x_batch_name],
+        )
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
@@ -320,7 +342,11 @@ class RegressionTask(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = batch.x, batch.fitness, batch.batch
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch.fitness,
+            batch[self.x_batch_name],
+        )
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1

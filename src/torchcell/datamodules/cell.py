@@ -47,6 +47,7 @@ class CellDataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            follow_batch=["x", "x_pert"],
         )
 
     def val_dataloader(self):
@@ -55,6 +56,7 @@ class CellDataModule(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            follow_batch=["x", "x_pert"],
         )
 
     def test_dataloader(self):

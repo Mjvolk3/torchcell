@@ -135,6 +135,7 @@ def main(cfg: DictConfig) -> None:
         train_epoch_size=data_module.train_epoch_size,
         order_penalty=wandb.config.regression_task["order_penalty"],
         lambda_order=wandb.config.regression_task["lambda_order"],
+        train_wt_diff=wandb.config.regression_task["train_wt_diff"],
         **kwargs,
     )
 

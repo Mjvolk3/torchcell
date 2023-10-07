@@ -22,7 +22,7 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  wt_train_per_epoch: 2
+  wt_train_per_epoch: 10
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
@@ -37,8 +37,8 @@ regression_task:
 
 models:
   graph:
-    node_layers: [1024, 512] #[1024, 512, 256, 128, 64] # 
-    set_layers: [256, 128] #[32, 32, 32, 32, 32] # 
+    node_layers: [512, 256, 128, 64] # [1024, 512]
+    set_layers: [32, 32, 32, 32] # [256, 128]
     norm: layer
     activation: gelu
     skip_node: true

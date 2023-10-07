@@ -19,7 +19,7 @@ data_module:
 
 trainer:
   max_epochs: 1000
-  strategy: auto # ddp, auto
+  strategy: ddp # ddp, auto
 
 regression_task:
   wt_train_per_epoch: 10
@@ -29,8 +29,8 @@ regression_task:
   loss: mse
   weighted_mse_penalty: null # only for weighted mse
   train_wt_node_loss: false
-  clip_grad_norm: false
-  clip_grad_norm_max_norm: 0.1
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10
   order_penalty: false
   lambda_order: 1.0
   train_wt_diff: true
@@ -39,7 +39,7 @@ models:
   graph:
     node_layers: [512, 256, 128, 64] # [1024, 512]
     set_layers: [32, 32, 32, 32] # [256, 128]
-    norm: layer
+    norm: batch
     activation: gelu
     skip_node: true
     skip_set: true

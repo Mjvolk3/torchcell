@@ -455,7 +455,8 @@ class SCerevisiaeGenome(Genome):
             download_url("http://current.geneontology.org/ontology/go.obo", data_dir)
         self.go_dag = GODag(obo_path)
         # Call the method to remove deprecated GO terms
-        self.remove_deprecated_go_terms()
+        # BUG this line doesn't work with ddp, I think the issue is merge=replace
+        # self.remove_deprecated_go_terms()
 
     def download_and_extract_genome_files(self):
         """

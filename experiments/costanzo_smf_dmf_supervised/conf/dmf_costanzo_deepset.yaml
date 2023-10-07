@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e3
-  name: cell_1e3
+  experiments: costanzo2016_1e6
+  name: cell_1e6
 
 data_module:
   batch_size: 16 #32
@@ -29,7 +29,7 @@ regression_task:
   loss: mse
   weighted_mse_penalty: null # only for weighted mse
   train_wt_node_loss: false
-  clip_grad_norm: true
+  clip_grad_norm: false
   clip_grad_norm_max_norm: 0.1
   order_penalty: false
   lambda_order: 1.0

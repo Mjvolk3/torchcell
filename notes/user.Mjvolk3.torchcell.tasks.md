@@ -2,15 +2,20 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1696634797124
+updated: 1696714255353
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.10.07
+
+- [ ] Summarize some of the successful run. [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]]
+- [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+
 ## 2023.10.06
 
-- [ ] Try training on `x_pert`. Allow for easy switching between `x` and `x_pert`.
-
+- [x] Try training on `x_pert`. Allow for easy switching between `x` and `x_pert`.
+- [x] Launch experiment on Delta for `x_pert`
 
 ## 2023.10.02
 
@@ -20,7 +25,7 @@ created: 1690514887023m
 - [x] Automatic clipping only works if we don't use manual backward... [[Manual Backward with Forcing Node Wt to Ones|dendron://torchcell/src.torchcell.trainers.regression#manual-backward-with-forcing-node-wt-to-ones]] → This along with layer norm has appeared to smooth out the loss.
 - [x] Implement set transformer → [[Deep_set_transformer|dendron://torchcell/src.torchcell.models.deep_set_transformer]]
 - [x] Add weighted MSE in case the models don't learn distribution but instead just predict the mean. → [[Weighted_mse|dendron://torchcell/src.torchcell.losses.weighted_mse]]
-- [ ] Create a sweep locally for `1e4` data.
+- 🔲 Create a sweep locally for `1e4` data.
 
 ## 2023.09.29
 

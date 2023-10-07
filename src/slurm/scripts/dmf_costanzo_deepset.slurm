@@ -17,7 +17,7 @@
 # #SBATCH --output=/dev/null
 #SBATCH --error=/projects/bbub/mjvolk3/torchcell/slurm/error/%x_%j.out
 
-module reset # drop modules and explicitly load the ones needed
+module reset # drop modules and explicitly load thes ones needed
 source ~/.bashrc
 cd /projects/bbub/mjvolk3/torchcell
 pwd

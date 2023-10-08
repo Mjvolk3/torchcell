@@ -72,7 +72,6 @@ def main(cfg: DictConfig) -> None:
         transformer_model_name="species_upstream",
     )
     seq_embeddings = fungal_down_dataset + fungal_up_dataset
-    seq_embeddings = fungal_down_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(

@@ -17,20 +17,8 @@ from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
-from torchcell.sequence import GeneSet
+from torchcell.sequence import GeneSet, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-os.makedirs("data/scerevisiae/fungal_utr_embed", exist_ok=True)
-
-
-class ParsedGenome(ModelStrictArbitrary):
-    gene_set: GeneSet
-
-    @validator("gene_set")
-    def validate_gene_set(cls, value):
-        if not isinstance(value, GeneSet):
-            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
-        return value
 
 
 class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
@@ -43,12 +31,12 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transformer_model_name: str | None = None,
+        model_name: str | None = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
         self.genome = genome
-        super().__init__(root, transformer_model_name, transform, pre_transform)
+        super().__init__(root, model_name, transform, pre_transform)
         # convert genome to parsed genome after process, so have potential issue
         # with sqlite database
         # TODO try without parsed_genome on ddp to see if issue was
@@ -56,9 +44,9 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
-        self.transformer_model_name = transformer_model_name
+        self.model_name = model_name
 
-        if self.transformer_model_name:
+        if self.model_name:
             if not os.path.exists(self.processed_paths[0]):
                 self.transformer = self.initialize_transformer()
                 self.process()
@@ -76,8 +64,8 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             return ParsedGenome(**data)
 
     def initialize_model(self) -> FungalUpDownTransformer | None:
-        if self.transformer_model_name:
-            split_name = self.transformer_model_name.split("_")
+        if self.model_name:
+            split_name = self.model_name.split("_")
             if "downstream" in split_name and "species" in split_name:
                 model_name = "downstream_species_lm"
             elif "upstream" in split_name and "species" in split_name:
@@ -89,7 +77,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         return None
 
     def process(self):
-        if not self.transformer_model_name:
+        if not self.model_name:
             return
 
         data_list = []
@@ -98,7 +86,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             window_size,
             include_cds_codon,
             allow_undersize,
-        ) = self.MODEL_TO_WINDOW[self.transformer_model_name]
+        ) = self.MODEL_TO_WINDOW[self.model_name]
         for gene_id in tqdm(self.genome.gene_set):
             sequence = self.genome[gene_id]
             dna_selection = getattr(sequence, window_method)(
@@ -108,10 +96,10 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
                 [dna_selection.seq], mean_embedding=True
             )
 
-            dna_window_dict = {self.transformer_model_name: dna_selection}
+            dna_window_dict = {self.model_name: dna_selection}
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)
-            data.embeddings = {self.transformer_model_name: embeddings}
+            data.embeddings = {self.model_name: embeddings}
             data_list.append(data)
 
         if self.pre_transform:
@@ -132,7 +120,7 @@ if __name__ == "__main__":
         dataset = FungalUpDownTransformerDataset(
             root="data/scerevisiae/fungal_up_down_embed",
             genome=genome,
-            transformer_model_name=model_name,
+            model_name=model_name,
         )
         datasets.append(dataset)
         print(f"Dataset for {model_name}: {dataset}")

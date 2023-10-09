@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e6
-  name: cell_1e6
+  experiments: costanzo2016_1e3
+  name: cell_1e3
 
 data_module:
   batch_size: 16 #32
@@ -19,7 +19,7 @@ data_module:
 
 trainer:
   max_epochs: 1000
-  strategy: ddp # ddp, auto
+  strategy: auto # ddp, auto
 
 regression_task:
   wt_train_per_epoch: 10

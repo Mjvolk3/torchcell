@@ -23,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, validator
 from sortedcontainers import SortedDict, SortedSet
 from sympy import sequence
 
-from torchcell.datamodels import ModelStrict
+from torchcell.datamodels import ModelStrict, ModelStrictArbitrary
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -594,46 +594,32 @@ def calculate_window_bounds_symmetric(
     return start_window, end_window
 
 
-def compute_codon_frequency(cds_str: str) -> SortedDict:
-    nucleotides = ["A", "T", "G", "C"]
-    all_codons = ["".join(codon) for codon in product(nucleotides, repeat=3)]
-    if len(cds_str) % 3 != 0 or not set(cds_str).issubset(set(nucleotides)):
-        raise ValueError(
-            "Invalid CDS string; length must be a multiple of 3 and only contain A, T, G, C."
-        )
-
-    codon_counts = defaultdict(int, {codon: 0 for codon in all_codons})
-
-    for i in range(0, len(cds_str), 3):
-        codon = cds_str[i : i + 3]
-        codon_counts[codon] += 1
-
-    total_codons = len(cds_str) // 3
-
-    # Convert counts to frequency and create a SortedDict
-    codon_frequency = SortedDict(
-        {codon: count / total_codons for codon, count in codon_counts.items()}
-    )
-
-    return codon_frequency
-
-
 class CodonFrequency(SortedDict):
     def __repr__(self):
         if len(self) != 64:
             return "Invalid CodonFrequency: Expected 64 codons"
 
         sum_freq = sum(self.values())
-        if not 0.99 <= sum_freq <= 1.01:  # Allowing a small deviation
+        if not 0.9999 <= sum_freq <= 1.0001:  # Allowing a small deviation
             return (
-                f"Invalid CodonFrequency: Frequencies do not sum to 1 (sum={sum_freq})"
+                f"Invalid CodonFrequency: Frequencies do not sum to 1 "
+                f"(sum={sum_freq})"
             )
 
         # Sort by frequency in descending order and get the 3 most frequent codons
         most_frequent_codons = sorted(self.items(), key=lambda x: x[1], reverse=True)[
             :3
         ]
-        return f"CodonFrequency(size={len(self)}, most_frequent_codons={most_frequent_codons}...)"
+
+        # Round the frequencies to the 4th decimal
+        rounded_codons = [
+            (codon, round(freq, 4)) for codon, freq in most_frequent_codons
+        ]
+
+        return (
+            f"CodonFrequency(size={len(self)}, "
+            f"most_frequent_codons={rounded_codons}...)"
+        )
 
 
 def compute_codon_frequency(cds_str: str) -> CodonFrequency:
@@ -660,6 +646,11 @@ def compute_codon_frequency(cds_str: str) -> CodonFrequency:
     return codon_frequency
 
 
-if __name__ == "__main__":
-    gene_freq = compute_codon_frequency("ATGCGAC")
-    print(gene_freq)
+class ParsedGenome(ModelStrictArbitrary):
+    gene_set: GeneSet
+
+    @validator("gene_set")
+    def validate_gene_set(cls, value):
+        if not isinstance(value, GeneSet):
+            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
+        return value

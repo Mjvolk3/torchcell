@@ -1,8 +1,7 @@
-# src/torchcell/trainers/regression.py
-# [[src.torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
-# Test file: src/torchcell/trainers/test_regression.py
-
+# src/torchcell/trainers/regression_deep_set_transformer.py
+# [[src.torchcell.trainersu.regression_deep_set_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression_deep_set_transformer.py
+# Test file: src/torchcell/trainers/test_regression_deep_set_transformer.py
 
 import matplotlib.pyplot as plt
 import pytorch_lightning as pl

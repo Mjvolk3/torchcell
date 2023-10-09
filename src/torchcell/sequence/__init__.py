@@ -5,6 +5,7 @@ from .data import (
     Gene,
     GeneSet,
     Genome,
+    ParsedGenome,
     calculate_window_bounds,
     calculate_window_bounds_symmetric,
     compute_codon_frequency,
@@ -13,7 +14,14 @@ from .data import (
     roman_to_int,
 )
 
-data_classes = ["DnaSelectionResult", "DnaWindowResult", "Gene", "GeneSet", "Genome"]
+data_classes = [
+    "DnaSelectionResult",
+    "DnaWindowResult",
+    "Gene",
+    "GeneSet",
+    "Genome",
+    "ParsedGenome",
+]
 
 helper_functions = [
     "calculate_window_bounds",

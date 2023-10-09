@@ -2,15 +2,54 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1696714255353
+updated: 1696794804009
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.10.08
+
+- [ ] On train wt try to overfit the wt before moving to train batch.
+
+- [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
+- [ ] Add codon frequency dataset.
+
+- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+
+- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+
+- [ ] Plot Umap overlays with new datasets
+- [ ] Optional dimensionality reduction of embeddings
+- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+
+- [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- [ ] Test speed of nucleotide transformer speed up.
+- [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+
 ## 2023.10.07
 
-- [ ] Summarize some of the successful run. [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]]
+- [x] Summarize some of the successful run. [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]]
+- [x] Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA. → paritally finished.
+
+- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+
+- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+
+- [ ] Plot Umap overlays with new datasets
+- [ ] Optional dimensionality reduction of embeddings
+- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+
+- [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- [ ] Test speed of nucleotide transformer speed up.
 - [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 
 ## 2023.10.06
 
@@ -44,26 +83,19 @@ created: 1690514887023m
 - [x] Fix issue related to combining data. → There is some dark magic 🪄 that I am unfamiliar with here, but I found a workable solution for now. [[Parse Genome and Return None For Dunder Add|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add]]
 - [x] Configure `weight_decay` and `learning_rate`
 - [x] Launch [Wandb - 1e5 Deep Set DDP Find Unused](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3)
-
-- [ ] Try to fix forced ddp find unused by passing two `wt` instances and only computing the loss for one. We lose significant speedups according to [GitHub Issue](https://github.com/Lightning-AI/lightning/issues/17212) [[Deep Set Model Only Works with DDP Find Unused|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused]]
-
-- [ ] Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA.
-
-- [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
-
-- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-
-- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-
-- [ ] Write set transformer model
-- [ ] Plot Umap overlays with new datasets
-- [ ] Optional dimensionality reduction of embeddings
-- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
-- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-
-- [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
-- [ ] Test speed of nucleotide transformer speed up.
+- [x] Try to fix forced ddp find unused by passing two `wt` instances and only computing the loss for one. We lose significant speedups according to [GitHub Issue](https://github.com/Lightning-AI/lightning/issues/17212) [[Deep Set Model Only Works with DDP Find Unused|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused]] → This works, using a batch of `wt` [[Deep Set Model Only Works with DDP Find Unused - Solution|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused---solution]]
+- [x] Write set transformer model → Threw something quick together [[Regression_deep_set_transformer|dendron://torchcell/src.torchcell.trainers.regression_deep_set_transformer]]
+- 🔲 Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA.
+- 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
 
 ## 2023.09.27
 

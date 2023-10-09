@@ -80,4 +80,3 @@ class Fitness26C(Fitness):
 This should allow us to group up experiments. SGD already has a phenotpye ontology we can use as reference.
 
 ## Gene Probing Hypothesis
-

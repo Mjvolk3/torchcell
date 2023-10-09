@@ -32,6 +32,7 @@ from tqdm import tqdm
 
 from torchcell.data import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
+from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
@@ -363,18 +364,24 @@ def main():
     nt_dataset = NucleotideTransformerDataset(
         root="data/scerevisiae/nucleotide_transformer_embed",
         genome=genome,
-        transformer_model_name="nt_window_5979",
+        model_name="nt_window_5979",
     )
 
     fud3_dataset = FungalUpDownTransformerDataset(
         root="data/scerevisiae/fungal_up_down_embed",
         genome=genome,
-        transformer_model_name="species_downstream",
+        model_name="species_downstream",
+    )
+    fud5_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fungal_up_down_embed",
+        genome=genome,
+        model_name="species_upstream",
+    )
+    codon_frequency_dataset = CodonFrequencyDataset(
+        root="data/scerevisiae/codon_frequency", genome=genome
     )
 
-    # seq_embeddings = nt_dataset + fud3_dataset + fud5_dataset
-    # seq_embeddings = nt_dataset
-    seq_embeddings = nt_dataset + fud3_dataset
+    seq_embeddings = nt_dataset + fud3_dataset + fud5_dataset + codon_frequency_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(

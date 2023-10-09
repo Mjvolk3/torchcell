@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
+from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 os.makedirs("data/scerevisiae/nucleotide_transformer_embed", exist_ok=True)
@@ -36,39 +37,47 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         self,
         root: str,
         genome: SCerevisiaeGenome,
-        transformer_model_name: str | None = None,
+        model_name: str | None = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
-        super().__init__(root, transform, pre_transform)
         self.genome = genome
-        self.transformer_model_name = transformer_model_name
+        super().__init__(root, transform, pre_transform)
+        self.model_name = model_name
 
         # Conditionally load the data
-        if self.transformer_model_name:
+        if self.model_name:
             print(self.processed_paths[0])
             if not os.path.exists(self.processed_paths[0]):
                 # Initialize the language model
                 self.transformer = self.initialize_model()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
-        # HACK for data loader - Run again to check
-        # Must delete genome to allow pickle
-        del self.genome
+        self.genome = self.parse_genome(genome)
+        del genome
+
+    @staticmethod
+    def parse_genome(genome) -> ParsedGenome:
+        # BUG we have to do this black magic because when you merge datasets with +
+        # the genome is None
+        if genome is None:
+            return None
+        else:
+            data = {}
+            data["gene_set"] = genome.gene_set
+            return ParsedGenome(**data)
 
     def initialize_model(self):
-        if self.transformer_model_name:
+        if self.model_name:
             return NucleotideTransformer()
         return None
 
     def process(self):
-        if self.transformer_model_name is None:
+        if self.model_name is None:
             return
 
         data_list = []
-        window_method, window_size, flag = self.MODEL_TO_WINDOW[
-            self.transformer_model_name
-        ]
+        window_method, window_size, flag = self.MODEL_TO_WINDOW[self.model_name]
 
         # TODO check that genome gene set is SortedSet
         for gene_id in tqdm(self.genome.gene_set):
@@ -88,10 +97,10 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             )
 
             # Create or update the dna_window dictionary
-            dna_window_dict = {self.transformer_model_name: dna_selection}
+            dna_window_dict = {self.model_name: dna_selection}
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)
-            data.embeddings = {self.transformer_model_name: embeddings}
+            data.embeddings = {self.model_name: embeddings}
             data_list.append(data)
 
         if self.pre_transform:
@@ -119,7 +128,7 @@ if __name__ == "__main__":
         dataset = NucleotideTransformerDataset(
             root="data/scerevisiae/nucleotide_transformer_embed",
             genome=genome,
-            transformer_model_name=model_name,
+            model_name=model_name,
         )
         datasets.append(dataset)
         print(f"Dataset for {model_name}: {dataset}")

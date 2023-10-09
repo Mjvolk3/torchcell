@@ -15,12 +15,17 @@ from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
+from torchcell.sequence import compute_codon_frequency
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-os.makedirs("data/scerevisiae/fungal_utr_embed", exist_ok=True)
+os.makedirs("data/scerevisiae/codon_frequency", exist_ok=True)
 
 
 class CodonFrequencyDataset(BaseEmbeddingDataset):
+    # Could add frequency for other parts of sequence
+    # but this doesn't make much sense
+    MODEL_TO_WINDOW = {"cds_codon_frequency": None}
+
     def __init__(
         self,
         root: str,
@@ -28,37 +33,27 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
-        super().__init__(root, genome, transform, pre_transform)
         self.genome = genome
+        self.model_name = "cds_codon_frequency"
+        super().__init__(root, self.model_name, transform, pre_transform)
 
-    def initialize_model(self) -> None:
+    def initialize_model(self):
         return None
 
     def process(self):
-        if not self.transformer_model_name:
-            return
-
         data_list = []
-        (
-            window_method,
-            window_size,
-            include_cds_codon,
-            allow_undersize,
-        ) = self.MODEL_TO_WINDOW[self.transformer_model_name]
 
         for gene_id in tqdm(self.genome.gene_set):
-            sequence = self.genome[gene_id]
-            dna_selection = getattr(sequence, window_method)(
-                window_size, include_cds_codon, allow_undersize=allow_undersize
-            )
-            embeddings = self.transformer.embed(
-                [dna_selection.seq], mean_embedding=True
-            )
+            sequence = str(self.genome[gene_id].cds.seq)
 
-            dna_window_dict = {self.transformer_model_name: dna_selection}
+            # Check if the sequence is valid for codon frequency computation
+            try:
+                codon_frequency = compute_codon_frequency(sequence)
+            except ValueError:
+                continue
 
-            data = Data(id=gene_id, dna_windows=dna_window_dict)
-            data.embeddings = {self.transformer_model_name: embeddings}
+            # Create a Data object
+            data = Data(id=gene_id, codon_frequency=list(codon_frequency.values()))
             data_list.append(data)
 
         if self.pre_transform:
@@ -69,9 +64,9 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
 
 if __name__ == "__main__":
     genome = SCerevisiaeGenome()
-
     dataset = CodonFrequencyDataset(
         root="data/scerevisiae/codon_frequency", genome=genome
     )
-    some_data = dataset[0][genome.gene_set[42]]
+
+    some_data = dataset[0]  # Should give you the first dataset item
     print(some_data)

@@ -18,26 +18,23 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
     def __init__(
         self,
         root: str,
-        # genome: SCerevisiaeGenome, If we include this we get ddp error
-        transformer_model_name: str | None = None,
+        # genome: SCerevisiaeGenome,  # If we include this we get ddp error
+        model_name: str | None = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
-        if (
-            transformer_model_name
-            and transformer_model_name not in self.MODEL_TO_WINDOW
-        ):
+        if model_name and model_name not in self.MODEL_TO_WINDOW:
             valid_model_names = ", ".join(self.MODEL_TO_WINDOW.keys())
             raise ValueError(
-                f"Invalid transformer_model_name '{transformer_model_name}'."
+                f"Invalid model_name '{model_name}'."
                 f"Valid options are: {valid_model_names}"
             )
         # BUG
         # self.genome = genome # If we include this we get ddp error
-        self.transformer_model_name = transformer_model_name
+        self.model_name = model_name
         self.transformer = self.initialize_model()
         super().__init__(root, transform, pre_transform)
-        if self.transformer_model_name:
+        if self.model_name:
             self.data, self.slices = torch.load(self.processed_paths[0])
         else:
             self.data, self.slices = None, None
@@ -52,9 +49,9 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
 
     @property
     def processed_file_names(self) -> str:
-        # if not self.transformer_model_name:
+        # if not self.model_name:
         # return "dummy_data.pt"
-        return f"{self.transformer_model_name}.pt"
+        return f"{self.model_name}.pt"
 
     def download(self):
         pass
@@ -145,9 +142,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         data, slices = self.collate(combined_data_list)
 
         # Create a new dataset instance with the combined data
-        combined_dataset = self.__class__(
-            root=self.root, genome=None, transformer_model_name=None
-        )
+        combined_dataset = self.__class__(root=self.root, genome=None, model_name=None)
         combined_dataset.data, combined_dataset.slices = data, slices
 
         return combined_dataset

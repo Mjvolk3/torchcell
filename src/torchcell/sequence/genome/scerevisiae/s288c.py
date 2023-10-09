@@ -72,6 +72,7 @@ class SCerevisiaeGene(Gene):
     db: str = field(repr=False)
     fasta_dna: dict[str, SeqRecord] = field(repr=False)
     fasta_protein: dict[str, SeqRecord] = field(repr=False)
+    fasta_cds: dict[str, SeqRecord] = field(repr=False)
     chr_to_nc: dict[str, str] = field(repr=False)
     chromosome_lengths: dict[str, int] = field(repr=False)
     # below are set in __attrs_post_init__
@@ -186,6 +187,8 @@ class SCerevisiaeGene(Gene):
 
         # protein sequence
         self.protein = self.fasta_protein.get(self.id)
+        # cds sequence
+        self.cds = self.fasta_cds.get(self.id)
 
         # TODO consider adding these to ABC...
         # Some might be too specific to S. cerevisiae, but so they could be optional
@@ -384,6 +387,7 @@ class SCerevisiaeGenome(Genome):
     _gene_set: GeneSet = field(init=False, default=None, repr=False)
     _dna_fasta_path: str = field(init=False, default=None, repr=False)
     _protein_fasta_path: str = field(init=False, default=None, repr=False)
+    _cds_fasta_path: str = field(init=False, default=None, repr=False)
     _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
@@ -407,6 +411,11 @@ class SCerevisiaeGenome(Genome):
             self.data_root,
             self.genome_version_full,
             "orf_trans_all_" + self.genome_version + ".fasta",
+        )
+        self._cds_fasta_path = osp.join(
+            self.data_root,
+            self.genome_version_full,
+            "orf_coding_all_" + self.genome_version + ".fasta",
         )
         # Download genome data
         if not os.path.exists(self._dna_fasta_path) or not os.path.exists(
@@ -434,6 +443,7 @@ class SCerevisiaeGenome(Genome):
         self.fasta_protein = SeqIO.to_dict(
             SeqIO.parse(self._protein_fasta_path, "fasta")
         )
+        self.fasta_cds = SeqIO.to_dict(SeqIO.parse(self._cds_fasta_path, "fasta"))
         # Create mapping from chromosome number to sequence identifier
         self.chr_to_nc = {
             get_chr_from_description(self.fasta_dna[key].description): key
@@ -694,6 +704,7 @@ class SCerevisiaeGenome(Genome):
                 db=self.db,
                 fasta_dna=self.fasta_dna,
                 fasta_protein=self.fasta_protein,
+                fasta_cds=self.fasta_cds,
                 chr_to_nc=self.chr_to_nc,
                 chromosome_lengths=self.chr_to_len,
             )
@@ -732,9 +743,13 @@ def main() -> None:
     # print(genes_no_start)
     # print()
 
-    genes_no_start = [gene for gene in genome.gene_set if genome[gene].seq[:3] != "ATG"]
-    print(len(genes_no_start))
-    print(genes_no_start)
+    not_divisible_by_3 = []
+    for gene in genome.gene_set:
+        if len(str(genome["YIL111W"].cds.seq)) % 3 != 0:
+            not_divisible_by_3.append(gene)
+    print(len(not_divisible_by_3))
+    print(compute_codon_frequency(str(genome["YIL111W"].cds.seq)))
+    print()
 
 
 if __name__ == "__main__":

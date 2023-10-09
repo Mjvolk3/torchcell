@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
 # Test file: src/torchcell/trainers/test_regression.py
 
-
 import matplotlib.pyplot as plt
+import numpy as np
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -16,6 +16,7 @@ from torchmetrics import (
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
+from tqdm import tqdm
 
 import wandb
 from torchcell.losses import WeightedMSELoss
@@ -160,46 +161,67 @@ class RegressionTask(pl.LightningModule):
         if (self.global_step == 0) or self.global_step % int(
             (self.train_epoch_size + 1) / self.wt_train_per_epoch
         ) == 0:
-            # Global Loss
-            # set up optimizer
-            opt = self.optimizers()
-            opt.zero_grad()
+            wt_y_hats = []
+            loss_wts = []
 
-            wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(self.device)
-            self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
-            loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
-            self.log("wt loss", loss_wt)
-            self.log("wt mean", self.wt_y_hat.detach().mean())
-            self.log("wt batch fitness mean", wt_batch.fitness.mean())
-            # get updated wt reference
-            if self.train_wt_node_loss:
-                self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
-                    wt_batch.x, wt_batch.batch
-                )
-                # Node Loss
-                loss_nodes = self.loss_node(
-                    self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
-                )
-                self.log("wt loss_nodes", loss_nodes)
-                self.manual_backward(loss_wt + loss_nodes)
-            else:
-                self.manual_backward(loss_wt)
+            progress_bar = tqdm(desc="Processing", position=0, leave=True)
 
-            if self.clip_grad_norm:
-                nn.utils.clip_grad_norm_(
-                    self.parameters(), max_norm=self.clip_grad_norm_max_norm
-                )
-            # finish optimization
-            opt.step()
-            opt.zero_grad()
+            wt_y_hat_mean = np.nan
+            while True:
+                # Global Loss
+                # set up optimizer
+                opt = self.optimizers()
+                opt.zero_grad()
 
-            # Get updated wt reference
-            self.model_ds.eval()
-            with torch.no_grad():
-                self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
-                    wt_batch.x, wt_batch.batch
+                wt_batch = Batch.from_data_list([self.wt] * self.batch_size).to(
+                    self.device
                 )
-            self.model_ds.train()
+                self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
+                loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
+                self.log("wt loss", loss_wt)
+                self.log("wt mean", self.wt_y_hat.detach().mean())
+                self.log("wt batch fitness mean", wt_batch.fitness.mean())
+                # get updated wt reference
+                if self.train_wt_node_loss:
+                    self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+                        wt_batch.x, wt_batch.batch
+                    )
+                    # Node Loss
+                    loss_nodes = self.loss_node(
+                        self.wt_nodes_hat, torch.ones_like(self.wt_nodes_hat)
+                    )
+                    self.log("wt loss_nodes", loss_nodes)
+                    self.manual_backward(loss_wt + loss_nodes)
+                else:
+                    self.manual_backward(loss_wt)
+
+                if self.clip_grad_norm:
+                    nn.utils.clip_grad_norm_(
+                        self.parameters(), max_norm=self.clip_grad_norm_max_norm
+                    )
+                # finish optimization
+                opt.step()
+                opt.zero_grad()
+
+                # Get updated wt reference
+                self.model_ds.eval()
+                with torch.no_grad():
+                    self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
+                        wt_batch.x, wt_batch.batch
+                    )
+                self.model_ds.train()
+                ###
+                wt_y_hat_mean = self.wt_y_hat.mean().cpu().detach().numpy()
+                wt_y_hats.append(wt_y_hat_mean)
+                loss_wts.append(loss_wt.cpu().detach().numpy())
+                progress_bar.update(1)
+                if 0.99 < wt_y_hat_mean < 1.01 or self.current_epoch < 10:
+                    plt.plot(wt_y_hats)
+                    plt.show()
+                    plt.plot(loss_wts)
+                    plt.show()
+                    break
+            progress_bar.close()
 
     def ordering_penalty(self, y_hat, y):
         # Step 1: Obtain the indices that would sort y

@@ -2,7 +2,7 @@
 id: elr05cfappvsttrp4t5spgn
 title: Dmf_costanzo_deepset_1e5
 desc: ''
-updated: 1695957002875
+updated: 1696714673673
 created: 1695956733137
 ---
 ## Deep Set Model Only Works with DDP Find Unused
@@ -26,3 +26,7 @@ if wandb.config.trainer["strategy"] == "ddp_find_unused":
     from pytorch_lightning.strategies import DDPStrategy
     strategy = DDPStrategy(find_unused_parameters=True)
 ```
+
+### Deep Set Model Only Works with DDP Find Unused - Solution
+
+- By default we now train on a batch of wt to avoid conditional logic in model for batch size of one. This allows for more efficient DDP.

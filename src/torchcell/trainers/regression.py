@@ -216,10 +216,11 @@ class RegressionTask(pl.LightningModule):
                 loss_wts.append(loss_wt.cpu().detach().numpy())
                 progress_bar.update(1)
                 if 0.99 < wt_y_hat_mean < 1.01 or self.current_epoch < 10:
-                    plt.plot(wt_y_hats)
-                    plt.show()
-                    plt.plot(loss_wts)
-                    plt.show()
+                    if self.current_epoch >= 10:
+                        plt.plot(wt_y_hats)
+                        plt.show()
+                        plt.plot(loss_wts)
+                        plt.show()
                     break
             progress_bar.close()
 

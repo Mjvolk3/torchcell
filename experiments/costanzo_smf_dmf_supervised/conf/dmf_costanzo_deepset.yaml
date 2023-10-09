@@ -22,7 +22,7 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  wt_train_per_epoch: 10
+  wt_train_per_epoch: 1000 # 100
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
@@ -33,7 +33,7 @@ regression_task:
   clip_grad_norm_max_norm: 10
   order_penalty: false
   lambda_order: 1.0
-  train_wt_diff: true
+  train_wt_diff: false
 
 models:
   graph:

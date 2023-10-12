@@ -10,7 +10,7 @@ import logging
 import os
 import os.path as osp
 import uuid
-from pytorch_lightning.callbacks import ModelCheckpoint
+
 import hydra
 import pytorch_lightning as pl
 import torch
@@ -153,7 +153,7 @@ def main(cfg: DictConfig) -> None:
     # Checkpoint Callback
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"models/checkpoints/{group}",
-        save_top_k=3,
+        save_top_k=1,
         verbose=True,
         monitor="val_loss",
         mode="min",

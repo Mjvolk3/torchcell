@@ -131,6 +131,9 @@ class RegressionTask(pl.LightningModule):
         self.true_values = []
         self.predictions = []
 
+        # wandb model artifact logging
+        self.last_logged_best_step = None
+
     def setup(self, stage=None):
         self.model_ds = self.model_ds.to(self.device)
         self.model_lin = self.model_lin.to(self.device)
@@ -345,6 +348,24 @@ class RegressionTask(pl.LightningModule):
         self.true_values = []
         self.predictions = []
 
+        current_global_step = self.global_step
+        if (
+            self.trainer.checkpoint_callback.best_model_path
+            and current_global_step != self.last_logged_best_step
+        ):
+            # Save model as a W&B artifact
+            artifact = wandb.Artifact(
+                name=f"model-global_step-{current_global_step}",
+                type="model",
+                description=f"Model on validation epoch end step - {current_global_step}",
+                metadata=dict(self.hparams),
+            )
+            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+            wandb.log_artifact(artifact)
+            self.last_logged_best_step = (
+                current_global_step  # update the last logged step
+            )
+
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
         x, y, batch_vector = (
@@ -370,17 +391,6 @@ class RegressionTask(pl.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
-
-    def on_epoch_end(self):
-        # Save model as a W&B artifact after each epoch
-        artifact = wandb.Artifact(
-            name=f"model-epoch-{self.current_epoch}",
-            type="model",
-            description=f"Model after epoch {self.current_epoch}",
-            metadata=dict(self.hparams),
-        )
-        artifact.add_file(self.trainer.checkpoint_callback.last_checkpoint_path)
-        wandb.log_artifact(artifact)
 
     def on_test_epoch_end(self):
         self.log_dict(self.test_metrics.compute(), sync_dist=True)

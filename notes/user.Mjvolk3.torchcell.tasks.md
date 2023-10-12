@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697047236476
+updated: 1697091539483
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -10,8 +10,11 @@ created: 1690514887023m
 ## 2023.10.11
 
 - [x] Cancel run on `upstream + downstream` → [wandb upstream and downstream](https://wandb.ai/zhao-group/torchcell/groups/2498195_6e7d3de812c0282976a4afcf00b099283e3b054397d8d3b967a99dc89cba9fea/workspace?workspace=user-mjvolk3)
-- [ ] Start run on all `costanzo`
-
+- [x] Start run on all `costanzo`
+- [x] Fix plotting of box plots to match `Dcell` → ![](./assets/drawio/dcell-boxplot.drawio.png) used template to adjust figures [[torchcell.viz.fitness|dendron://torchcell/src.torchcell.viz.fitness]] should be publication qualtiy now.
+- [x] log wandb artifacts in training.
+- [x] Check if 'Arial' is on `Delta`. → `conda install -c conda-forge mscorefonts`
+- [x] Start run on all `costanzo`, with artifact logging and new box plots.
 - [ ] Add assertion in the addition to make sure that at least the sizes are the same.
 
 ## 2023.10.10

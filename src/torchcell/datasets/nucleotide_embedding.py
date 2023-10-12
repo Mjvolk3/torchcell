@@ -84,7 +84,16 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         else:
             return super().__getitem__(idx)
 
+    def __radd__(self, other):
+        # if 'other' is the default integer 0, return the current instance
+        if isinstance(other, int) and other == 0:
+            return self
+        # Otherwise, just fall back to the normal add operation
+        return self.__add__(other)
+
     def __add__(self, other):
+        if isinstance(other, int) and other == 0:
+            return self
         # Ensure the other object is of the same type
         if not isinstance(other, BaseEmbeddingDataset):
             raise ValueError("Can only add datasets of the same type.")
@@ -110,7 +119,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].dna_windows[
                             key
                         ] = data_item.dna_windows[key]
-
+                    print()
                 # Check for duplicate keys in embeddings
                 for key in data_item.embeddings:
                     if key in current_data_dict[data_item.id].embeddings:
@@ -120,6 +129,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].embeddings[
                             key
                         ] = data_item.embeddings[key]
+                    print()
             else:
                 combined_data_list.append(data_item)
 
@@ -146,6 +156,14 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         combined_dataset.data, combined_dataset.slices = data, slices
 
         return combined_dataset
+
+
+class NeutralEmbeddingDataset(BaseEmbeddingDataset):
+    def initialize_model(self):
+        pass
+
+    def process(self):
+        pass
 
 
 if __name__ == "__main__":

@@ -154,7 +154,6 @@ def main(cfg: DictConfig) -> None:
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"models/checkpoints/{group}",
         save_top_k=1,
-        verbose=True,
         monitor="val_loss",
         mode="min",
     )

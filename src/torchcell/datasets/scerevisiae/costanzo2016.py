@@ -534,26 +534,21 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"), exist_ok=True)
+    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"), exist_ok=True)
     # dmf_dataset = DMFCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
     #     subset_n=100000,
     #     preprocess="low_dmf_std",
     # )
     dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e3"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"),
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        # subset_n=100000,
+        subset_n=100,
     )
     print(dmf_dataset)
     print(dmf_dataset.df["Double mutant fitness"].describe())
     print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
     print(dmf_dataset.gene_set)
-    import matplotlib.pyplot as plt
-
-    plt.style.use("conf/torchcell.mplstyle")
-    dmf_dataset.df["Double mutant fitness"].hist(bins=100)
-    plt.show()
 
     # for i in range(10):
     #     print(dmf_dataset[i])

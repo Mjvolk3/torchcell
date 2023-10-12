@@ -2,7 +2,7 @@
 id: 1l3y78a3l6v6eeiku95qdk6
 title: Dmf_costanzo_deepset
 desc: ''
-updated: 1694582137653
+updated: 1696878099984
 created: 1692324873109
 ---
 Predicting only double mutant fitness using sequence embeddings with a deep set model.
@@ -547,3 +547,6 @@ min      0.000000e+00
 75%      4.250000e-02
 max      1.193100e+00
 ```
+
+## Instabilities in Overfitting Wildtype Before Training Batch
+

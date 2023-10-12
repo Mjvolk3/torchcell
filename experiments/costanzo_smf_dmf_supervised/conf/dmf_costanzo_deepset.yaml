@@ -11,6 +11,7 @@ wandb:
 cell_dataset:
   experiments: costanzo2016_1e3
   name: cell_1e3
+  embeddings: [fungal_down, fungal_up]
 
 data_module:
   batch_size: 16 #32

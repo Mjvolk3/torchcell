@@ -60,18 +60,28 @@ def main(cfg: DictConfig) -> None:
     genome.drop_chrmt()
     genome.drop_empty_go()
 
-    # Sequence transformers
-    fungal_down_dataset = FungalUpDownTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
-        genome=genome,
-        model_name="species_downstream",
-    )
-    fungal_up_dataset = FungalUpDownTransformerDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
-        genome=genome,
-        model_name="species_upstream",
-    )
-    seq_embeddings = fungal_down_dataset + fungal_up_dataset
+    # Embeddings datasets
+    embeddings = []
+    if "fungal_down" in wandb.config.cell_dataset["embeddings"]:
+        # Sequence transformers
+        embeddings.append(
+            FungalUpDownTransformerDataset(
+                root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+                genome=genome,
+                model_name="species_downstream",
+            )
+        )
+
+    if "fungal_up" in wandb.config.cell_dataset["embeddings"]:
+        embeddings.append(
+            FungalUpDownTransformerDataset(
+                root=osp.join(DATA_ROOT, "data/scerevisiae/fungal_up_down_embed"),
+                genome=genome,
+                model_name="species_upstream",
+            )
+        )
+
+    seq_embeddings = sum(embeddings)
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(

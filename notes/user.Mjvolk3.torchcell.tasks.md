@@ -2,54 +2,81 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1696794804009
+updated: 1697047236476
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.10.08
+## 2023.10.11
 
-- [ ] On train wt try to overfit the wt before moving to train batch.
+- [x] Cancel run on `upstream + downstream` → [wandb upstream and downstream](https://wandb.ai/zhao-group/torchcell/groups/2498195_6e7d3de812c0282976a4afcf00b099283e3b054397d8d3b967a99dc89cba9fea/workspace?workspace=user-mjvolk3)
+- [ ] Start run on all `costanzo`
+
+- [ ] Add assertion in the addition to make sure that at least the sizes are the same.
+
+## 2023.10.10
+
+- [x] Launch experiment with all `FungalCRE` features.
+- [ ] Add assertion in the addition to make sure that at least the sizes are the same.
+- [ ] Check if pytorch collate works if the Data Objects are different. This is important for eventually combining datasets.
 
 - [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 - [ ] Add codon frequency dataset.
-
 - [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
 - [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-
 - [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-
 - [ ] Plot Umap overlays with new datasets
 - [ ] Optional dimensionality reduction of embeddings
 - [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
 - [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-
 - [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
 - [ ] Test speed of nucleotide transformer speed up.
 - [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
 - [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
 - [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+
+## 2023.10.09
+
+- [x] Launch experiment with just upstream features and add to [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]] → Delta login is currently down.
+- [x] Write report for @Yunan-Luo → [[results.01.report|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report]]
+- [x] Send report to @Yunan-Luo
+- [x] Rerun embeddings on full `s288c`genome. This allows for the proper collation when combining datasets with add. → This can lead to some pernicious bugs, where you don't recognize that the dataset is smaller and if the designed net always adapts to feature size you never catch this bug. [[Perturbation Nodes Benchmark Model - Adding Bug|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report#perturbation-nodes-benchmark-model---adding-bug]]. Might want to consider adding some sort of assertion in the addition to make sure that at least the sizes are the same.
+- [x] Configure type of dataset to train on. → got paritally there but it is difficult to add datasets with `sum` → [[Difficult to Add Datasets with Sum operator|dendron://torchcell/src.torchcell.datasets.nucleotide_embedding#difficult-to-add-datasets-with-sum-operator]]
+
+## 2023.10.08
+
+- [x] On train wt try to overfit the wt before moving to train batch. → Tried this but doesn't seem to work very well. There are a lot of instabilities.
+- 🔲 Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
+- 🔲 Add codon frequency dataset.
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
+- 🔲 Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- 🔲 Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 
 ## 2023.10.07
 
 - [x] Summarize some of the successful run. [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]]
 - [x] Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA. → paritally finished.
-
-- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-
-- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
-
-- [ ] Plot Umap overlays with new datasets
-- [ ] Optional dimensionality reduction of embeddings
-- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
-- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-
-- [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
-- [ ] Test speed of nucleotide transformer speed up.
-- [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
-- [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
-- [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
+- 🔲 Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- 🔲 Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 
 ## 2023.10.06
 

@@ -2,7 +2,7 @@
 id: 28iti10nh2dekhdrwha8y3q
 title: S288c
 desc: ''
-updated: 1695949261923
+updated: 1696974349987
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -496,6 +496,8 @@ not_1003_upstream = ['YAL068W-A', 'YAL069W', 'YBL113W-A', 'YCR108C', 'YDR545C-A'
 ```
 
 ## DDP sqlite gff error
+
+This solves some of the issues with `ddp` but I think it general it is a bad setting. Default to overwriting is a better setting so you don't do a bunch of manipulations to a genome and then accidentally load this genome. We could save strains as a path taken from a given genome.
 
 ```python
 if os.path.exists(db_path):

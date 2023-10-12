@@ -3,11 +3,28 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
 # Test file: src/torchcell/trainers/test_regression.py
 
+import math
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
+from plotnine import (
+    aes,
+    element_blank,
+    element_line,
+    element_rect,
+    element_text,
+    geom_boxplot,
+    ggplot,
+    labs,
+    scale_x_discrete,
+    scale_y_continuous,
+    theme,
+    theme_minimal,
+)
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -20,6 +37,7 @@ from tqdm import tqdm
 
 import wandb
 from torchcell.losses import WeightedMSELoss
+from torchcell.viz import box_plot
 
 # use the specified style
 plt.style.use("conf/torchcell.mplstyle")
@@ -158,7 +176,7 @@ class RegressionTask(pl.LightningModule):
             )
 
             self.is_wt_init = True
-        if (self.global_step == 0) or self.global_step % int(
+        if (self.global_step == 0) or self.global_step % math.ceil(
             (self.train_epoch_size + 1) / self.wt_train_per_epoch
         ) == 0:
             wt_y_hats = []
@@ -216,11 +234,11 @@ class RegressionTask(pl.LightningModule):
                 loss_wts.append(loss_wt.cpu().detach().numpy())
                 progress_bar.update(1)
                 if 0.99 < wt_y_hat_mean < 1.01 or self.current_epoch < 10:
-                    if self.current_epoch >= 10:
-                        plt.plot(wt_y_hats)
-                        plt.show()
-                        plt.plot(loss_wts)
-                        plt.show()
+                    # if self.current_epoch >= 2:
+                    #     plt.plot(wt_y_hats)
+                    #     plt.show()
+                    #     plt.plot(loss_wts)
+                    #     plt.show()
                     break
             progress_bar.close()
 
@@ -334,34 +352,12 @@ class RegressionTask(pl.LightningModule):
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
-        # Define bins
-        bins = [0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
-
-        # Bin predictions and collect corresponding true values
-        binned_true_values = []
-        bin_labels = []
-        for i in range(len(bins) - 1):
-            mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
-            binned_values = true_values[mask].cpu().numpy()
-            binned_true_values.append(binned_values)
-            bin_labels.append(f"{bins[i]}-{bins[i+1]}")
-
-        # Create a box plot using matplotlib
-        fig, ax = plt.subplots()
-        ax.boxplot(binned_true_values, labels=bin_labels)
-        ax.set_ylabel("True Values")
-        ax.set_xlabel("Prediction Bins")
-        ax.set_title("Box plot of True Values for each Prediction Bin")
-
-        # Log the plot to wandb
+        fig = box_plot(true_values, predictions)
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
-
+        plt.close(fig)
         # Clear the stored values for the next epoch
         self.true_values = []
         self.predictions = []
-
-        # Close the matplotlib plot
-        plt.close(fig)
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector

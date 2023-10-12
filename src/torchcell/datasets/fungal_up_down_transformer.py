@@ -112,8 +112,8 @@ if __name__ == "__main__":
     genome = SCerevisiaeGenome()
 
     # Adjust the model names accordingly.
-    # model_names = ["species_downstream", "species_upstream"]
-    model_names = ["species_upstream"]
+    model_names = ["species_downstream", "species_upstream"]
+    # model_names = ["species_upstream"]
 
     datasets = []
     for model_name in model_names:
@@ -124,8 +124,9 @@ if __name__ == "__main__":
         )
         datasets.append(dataset)
         print(f"Dataset for {model_name}: {dataset}")
-
-    some_data = datasets[0][genome.gene_set[42]]
-    print(some_data)
-    some_data = datasets[1][genome.gene_set[42]]
-    print(some_data)
+    print()
+    # seq_embeddings = datasets[0] + datasets[1]
+    # some_data = datasets[0][genome.gene_set[42]]
+    # print(some_data)
+    # some_data = datasets[1][genome.gene_set[42]]
+    # print(some_data)

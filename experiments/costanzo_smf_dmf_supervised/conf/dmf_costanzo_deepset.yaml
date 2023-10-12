@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e3
-  name: cell_1e3
+  experiments: costanzo2016_1e2
+  name: cell_1e2
   embeddings: [fungal_down, fungal_up]
 
 data_module:

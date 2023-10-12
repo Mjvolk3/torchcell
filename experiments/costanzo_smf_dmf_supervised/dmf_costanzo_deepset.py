@@ -10,7 +10,7 @@ import logging
 import os
 import os.path as osp
 import uuid
-
+from pytorch_lightning.callbacks import ModelCheckpoint
 import hydra
 import pytorch_lightning as pl
 import torch
@@ -123,6 +123,7 @@ def main(cfg: DictConfig) -> None:
             layer_dims=wandb.config.models["mlp_refset"]["layer_dims"],
         ),
     }
+
     # could also have mlp_ref_nodes
     if wandb.config.regression_task["loss"]:
         fitness_mean_value = experiments.df["Double mutant fitness"].mean()
@@ -149,7 +150,15 @@ def main(cfg: DictConfig) -> None:
         **kwargs,
     )
 
-    checkpoint_callback = ModelCheckpoint(dirpath="models/checkpoints")
+    # Checkpoint Callback
+    checkpoint_callback = ModelCheckpoint(
+        dirpath=f"models/checkpoints/{group}",
+        save_top_k=3,
+        verbose=True,
+        monitor="val_loss",
+        mode="min",
+    )
+
     # Initialize the Trainer with the WandbLogger
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)

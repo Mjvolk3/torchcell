@@ -11,20 +11,6 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-from plotnine import (
-    aes,
-    element_blank,
-    element_line,
-    element_rect,
-    element_text,
-    geom_boxplot,
-    ggplot,
-    labs,
-    scale_x_discrete,
-    scale_y_continuous,
-    theme,
-    theme_minimal,
-)
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -384,6 +370,17 @@ class RegressionTask(pl.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
+
+    def on_epoch_end(self):
+        # Save model as a W&B artifact after each epoch
+        artifact = wandb.Artifact(
+            name=f"model-epoch-{self.current_epoch}",
+            type="model",
+            description=f"Model after epoch {self.current_epoch}",
+            metadata=dict(self.hparams),
+        )
+        artifact.add_file(self.trainer.checkpoint_callback.last_checkpoint_path)
+        wandb.log_artifact(artifact)
 
     def on_test_epoch_end(self):
         self.log_dict(self.test_metrics.compute(), sync_dist=True)

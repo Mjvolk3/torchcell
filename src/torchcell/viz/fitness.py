@@ -1,3 +1,8 @@
+# src/torchcell/viz/fitness.py
+# [[src.torchcell.viz.fitness]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/viz/fitness.py
+# Test file: src/torchcell/viz/test_fitness.py
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch

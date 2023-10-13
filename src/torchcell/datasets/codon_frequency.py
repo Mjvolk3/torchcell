@@ -53,7 +53,10 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
                 continue
 
             # Create a Data object
-            data = Data(id=gene_id, codon_frequency=list(codon_frequency.values()))
+            data = Data(id=gene_id, dna_windows={})
+            data.embeddings = {
+                self.model_name: torch.tensor(codon_frequency.values()).unsqueeze(0)
+            }
             data_list.append(data)
 
         if self.pre_transform:

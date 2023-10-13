@@ -36,15 +36,14 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
     ):
         self.genome = genome
-        super().__init__(root, model_name, transform, pre_transform)
+        self.model_name = model_name
+        super().__init__(root, self.model_name, transform, pre_transform)
         # convert genome to parsed genome after process, so have potential issue
         # with sqlite database
         # TODO try without parsed_genome on ddp to see if issue was
         # BaseEmbeddingDataset previously taking genome as a parameter
         self.genome = self.parse_genome(genome)
         del genome
-
-        self.model_name = model_name
 
         if self.model_name:
             if not os.path.exists(self.processed_paths[0]):

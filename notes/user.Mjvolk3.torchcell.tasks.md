@@ -2,10 +2,18 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697160710137
+updated: 1697215422129
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.10.13
+
+- [ ] Add codon frequency dataset.
+- [ ] Add one-hot positional encoding dataset, this will make task transductive (check).
+- [ ] Train codon frequency `1e6`
+- [ ] Add cell morphology dataset
+- [ ] Add ESM2 dataset
 
 ## 2023.10.12
 
@@ -14,8 +22,8 @@ created: 1690514887023m
 - [x] `dmf + smf` dataset. → This creates some issues. I've pursued it some, but the main issue is that another database should be constructed. I think this is the most straightforward way, although it will create duplicate data. This is the easiest solution for now.
 - [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/src.torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/src.torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
 - [x] Fix dmf data_list iteration.
-
-- [ ] Train `1e6` on interaction.
+- [x] Make box plot for [[Genetic_interaction_score|dendron://torchcell/src.torchcell.viz.genetic_interaction_score]] → If we want a closer match we could make a few more adjustments.
+- [x] Train `1e6` on interaction. → queued priority.
 
 - [ ] Add codon frequency dataset.
 
@@ -25,15 +33,19 @@ created: 1690514887023m
 - [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 
 - [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+
 - [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+
 - [ ] Plot Umap overlays with new datasets
 - [ ] Optional dimensionality reduction of embeddings
+
 - [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
 - [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+
 - [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
-- [ ] Test speed of nucleotide transformer speed up.
+
 - [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+
 - [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
 - [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 

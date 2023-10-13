@@ -8,6 +8,7 @@ from .codon_frequency import CodonFrequencyDataset
 # from .costanzo2016 import DmfCostanzo2016Dataset, SmfCostanzo2016Dataset # in scerevisiae
 from .fungal_up_down_transformer import FungalUpDownTransformerDataset
 from .nucleotide_transformer import NucleotideTransformerDataset
+from .one_hot_gene import OneHotGeneDataset
 
 core_datasets = ["CellDataset"]
 
@@ -15,6 +16,7 @@ embedding_datasets = [
     "NucleotideTransformerDataset",
     "FungalUpDownTransformerDataset",
     "CodonFrequencyDataset",
+    "OneHotGeneDataset",
 ]
 # experiment_datasets = ["SmfCostanzo2016Dataset", "DmfCostanzo2016Dataset"]
 

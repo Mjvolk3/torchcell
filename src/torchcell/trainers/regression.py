@@ -32,12 +32,11 @@ plt.style.use("conf/torchcell.mplstyle")
 class RegressionTask(pl.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
-    target_key: str = "fitness"
-
     def __init__(
         self,
         models: dict[str, nn.Module],
         wt: Data,
+        target: str,
         wt_train_per_epoch: float = 10,
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
@@ -54,6 +53,9 @@ class RegressionTask(pl.LightningModule):
         **kwargs,
     ):
         super().__init__()
+
+        # target for training
+        self.target = target
 
         # Lightning settings, doing this for WT embedding
         self.automatic_optimization = False
@@ -184,10 +186,10 @@ class RegressionTask(pl.LightningModule):
                     self.device
                 )
                 self.wt_y_hat = self(wt_batch.x, wt_batch.batch)
-                loss_wt = self.loss(self.wt_y_hat, wt_batch.fitness)
+                loss_wt = self.loss(self.wt_y_hat, wt_batch[self.target])
                 self.log("wt loss", loss_wt)
                 self.log("wt mean", self.wt_y_hat.detach().mean())
-                self.log("wt batch fitness mean", wt_batch.fitness.mean())
+                self.log("wt batch fitness mean", wt_batch[self.target].mean())
                 # get updated wt reference
                 if self.train_wt_node_loss:
                     self.wt_nodes_hat, self.wt_set_hat = self.model_ds(
@@ -252,7 +254,7 @@ class RegressionTask(pl.LightningModule):
         # Extract the batch vector
         x, y, batch_vector = (
             batch[self.x_name],
-            batch.fitness,
+            batch[self.target],
             batch[self.x_batch_name],
         )
         # Pass the batch vector to the forward method
@@ -303,7 +305,7 @@ class RegressionTask(pl.LightningModule):
         # Extract the batch vector
         x, y, batch_vector = (
             batch[self.x_name],
-            batch.fitness,
+            batch[self.target],
             batch[self.x_batch_name],
         )
         y_hat = self(x, batch_vector)
@@ -341,6 +343,12 @@ class RegressionTask(pl.LightningModule):
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
+        # TODO delete when done
+        torch.save(true_values, "true_values.pt")
+        torch.save(predictions, "predictions.pt")
+
+        #
+
         fig = box_plot(true_values, predictions)
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
@@ -370,7 +378,7 @@ class RegressionTask(pl.LightningModule):
         # Extract the batch vector
         x, y, batch_vector = (
             batch[self.x_name],
-            batch.fitness,
+            batch[self.target],
             batch[self.x_batch_name],
         )
         y_hat = self(x, batch_vector)

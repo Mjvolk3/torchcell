@@ -525,7 +525,7 @@ class DmfCostanzo2016Dataset(Dataset):
         wt = {}
         wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
         wt["phenotype"] = {
-            "observation": {"fitness": 1.0},
+            "observation": {"fitness": 1.0, "genetic_interaction_score": 0},
             "environment": {"media": "YPD", "temperature": 30},
         }
         data = Data()

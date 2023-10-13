@@ -135,6 +135,7 @@ def main(cfg: DictConfig) -> None:
     model = RegressionTask(
         models=models,
         wt=cell_dataset.wt,
+        target=wandb.config.regression_task["target"],
         wt_train_per_epoch=wandb.config.regression_task["wt_train_per_epoch"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],

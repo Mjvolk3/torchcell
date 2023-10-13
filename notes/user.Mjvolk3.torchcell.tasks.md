@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697155778783
+updated: 1697160710137
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -13,13 +13,17 @@ created: 1690514887023m
 - [x] Check for duplicates in `SmfCostanzoDataset` → Add many duplicate methods. I thing the `both_` methods might abuse the `duplicate` notation.
 - [x] `dmf + smf` dataset. → This creates some issues. I've pursued it some, but the main issue is that another database should be constructed. I think this is the most straightforward way, although it will create duplicate data. This is the easiest solution for now.
 - [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/src.torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/src.torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
+- [x] Fix dmf data_list iteration.
 
-- [ ] Fix dmf data_list iteration.
+- [ ] Train `1e6` on interaction.
+
+- [ ] Add codon frequency dataset.
+
 - [ ] Add assertion in the addition to make sure that at least the sizes are the same.
 - [ ] Read about `pyg` collate to see if all data objects must be same
 
 - [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
-- [ ] Add codon frequency dataset.
+
 - [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
 - [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
 - [ ] Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.

@@ -119,7 +119,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].dna_windows[
                             key
                         ] = data_item.dna_windows[key]
-                    print()
                 # Check for duplicate keys in embeddings
                 for key in data_item.embeddings:
                     if key in current_data_dict[data_item.id].embeddings:
@@ -129,7 +128,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].embeddings[
                             key
                         ] = data_item.embeddings[key]
-                    print()
             else:
                 combined_data_list.append(data_item)
 
@@ -152,10 +150,39 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         data, slices = self.collate(combined_data_list)
 
         # Create a new dataset instance with the combined data
-        combined_dataset = self.__class__(root=self.root, genome=None, model_name=None)
+        combined_dataset = CombinedEmbedding(root=self.root, model_name=None)
+
         combined_dataset.data, combined_dataset.slices = data, slices
 
         return combined_dataset
+
+
+# TODO, not sure if necessary but it renames dataset which is nice and clear,
+# might not need ot inherit from BaseEmbeddingDataset since we have to implement
+# initialize_model and process with pass
+class CombinedEmbedding(BaseEmbeddingDataset):
+    """
+    This class represents the combined dataset which can
+    be the result of combining two other datasets.
+    """
+
+    # No need to override the `__init__` method if it's going
+    # to be the same as the parent class. However, if you need
+    # any specialized initialization, you can define the method here.
+
+    def initialize_model(self):
+        """
+        Implementation of abstract method.
+        """
+        # Provide a proper implementation if needed or just pass.
+        pass
+
+    def process(self):
+        """
+        Implementation of abstract method.
+        """
+        # Provide a proper implementation if needed or just pass.
+        pass
 
 
 if __name__ == "__main__":

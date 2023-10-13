@@ -15,10 +15,8 @@ from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
-from torchcell.sequence import compute_codon_frequency
+from torchcell.sequence import GeneSet, ParsedGenome, compute_codon_frequency
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-os.makedirs("data/scerevisiae/codon_frequency", exist_ok=True)
 
 
 class CodonFrequencyDataset(BaseEmbeddingDataset):
@@ -34,8 +32,23 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
         pre_transform: Callable | None = None,
     ):
         self.genome = genome
+
         self.model_name = "cds_codon_frequency"
         super().__init__(root, self.model_name, transform, pre_transform)
+        # self.genome = self.parse_genome(genome)
+        # del genome
+
+    # This is done to avoid pkl error when since genome uses sqlite
+    # @staticmethod
+    # def parse_genome(genome) -> ParsedGenome:
+    #     # BUG we have to do this black magic because when you merge datasets with +
+    #     # the genome is None
+    #     if genome is None:
+    #         return None
+    #     else:
+    #         data = {}
+    #         data["gene_set"] = genome.gene_set
+    #         return ParsedGenome(**data)
 
     def initialize_model(self):
         return None
@@ -53,7 +66,10 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
                 continue
 
             # Create a Data object
-            data = Data(id=gene_id, codon_frequency=list(codon_frequency.values()))
+            data = Data(id=gene_id, dna_windows={})
+            data.embeddings = {
+                self.model_name: torch.tensor(codon_frequency.values()).unsqueeze(0)
+            }
             data_list.append(data)
 
         if self.pre_transform:

@@ -26,6 +26,7 @@ from torchcell.datasets import (
     CellDataset,
     FungalUpDownTransformerDataset,
     NucleotideTransformerDataset,
+    OneHotGeneDataset,
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet, Mlp
@@ -79,6 +80,10 @@ def main(cfg: DictConfig) -> None:
                 genome=genome,
                 model_name="species_upstream",
             )
+        )
+    if "one_hot_gene" in wandb.config.cell_dataset["embeddings"]:
+        embeddings.append(
+            OneHotGeneDataset(root="data/scerevisiae/gene_one_hot", genome=genome)
         )
 
     seq_embeddings = sum(embeddings)

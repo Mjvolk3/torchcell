@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 import wandb
 from torchcell.losses import WeightedMSELoss
-from torchcell.viz import box_plot
+from torchcell.viz import fitness, genetic_interaction_score
 
 # use the specified style
 plt.style.use("conf/torchcell.mplstyle")
@@ -347,9 +347,10 @@ class RegressionTask(pl.LightningModule):
         torch.save(true_values, "true_values.pt")
         torch.save(predictions, "predictions.pt")
 
-        #
-
-        fig = box_plot(true_values, predictions)
+        if self.target == "fitness":
+            fig = fitness.box_plot(true_values, predictions)
+        elif self.target == "genetic_interaction_score":
+            fig = genetic_interaction_score.box_plot(true_values, predictions)
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
         # Clear the stored values for the next epoch

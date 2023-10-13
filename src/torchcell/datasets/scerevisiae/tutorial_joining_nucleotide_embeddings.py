@@ -4,17 +4,18 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test_nucleotide_transformer.py
 
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Optional
 
 import torch
 from torch_geometric.data import Data, InMemoryDataset
 from tqdm import tqdm
 
-from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
+from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
+from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
-from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 
 if __name__ == "__main__":
     # genome

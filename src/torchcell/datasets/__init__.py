@@ -4,15 +4,21 @@
 # Test file: tests/torchcell/datasets/test___init__.py
 from .cell import CellDataset
 from .codon_frequency import CodonFrequencyDataset
+
+# from .costanzo2016 import DmfCostanzo2016Dataset, SmfCostanzo2016Dataset # in scerevisiae
 from .fungal_up_down_transformer import FungalUpDownTransformerDataset
 from .nucleotide_transformer import NucleotideTransformerDataset
 
-core_dataset = ["CellDataset"]
+core_datasets = ["CellDataset"]
 
-sequence_embedding_datasets = [
+embedding_datasets = [
     "NucleotideTransformerDataset",
     "FungalUpDownTransformerDataset",
     "CodonFrequencyDataset",
 ]
+# experiment_datasets = ["SmfCostanzo2016Dataset", "DmfCostanzo2016Dataset"]
 
-__all__ = core_dataset + sequence_embedding_datasets
+
+# + experiment_datasets
+
+__all__ = core_datasets + embedding_datasets

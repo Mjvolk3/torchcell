@@ -33,8 +33,8 @@ from tqdm import tqdm
 from torchcell.data import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.codon_frequency import CodonFrequencyDataset
+from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,

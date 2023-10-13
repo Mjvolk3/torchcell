@@ -41,7 +41,7 @@ from torchcell.sequence import GeneSet
 log = logging.getLogger(__name__)
 
 
-class SmfCostanzo2016Dataset(InMemoryDataset):
+class SmfCostanzo2016Dataset(Dataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -50,11 +50,34 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/costanzo2016",
+        subset_n: int = None,
+        preprocess: dict | None = None,
+        skip_process_file_exist_check: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.subset_n = subset_n
+        self._skip_process_file_exist = skip_process_file_exist_check
+        self.preprocess = preprocess
+        self.preprocess_dir = osp.join(root, "preprocess")
+        self._length = None
+        self._gene_set = None
+        self._df = None
+        # Check for existing preprocess config
+        existing_config = self.load_preprocess_config()
+        if existing_config is not None:
+            if existing_config != self.preprocess:
+                raise ValueError(
+                    "New preprocess does not match existing config."
+                    "Delete the processed and process dir for a new Dataset."
+                    "Or define a new root."
+                )
         super().__init__(root, transform, pre_transform)
-        self.data, self.slices = torch.load(self.processed_paths[0])
+        self.env = None
+
+    @property
+    def skip_process_file_exist(self):
+        return self._skip_process_file_exist
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -62,7 +85,7 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return ["data_smf.pt"]
+        return "data.lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -79,22 +102,71 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
             shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
         os.rmdir(sub_dir)
 
+    def _init_db(self):
+        """Initialize the LMDB environment."""
+        self.env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
+
+    def close_lmdb(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
+
+    # TODO implement
+    @property
+    def df(self):
+        if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
+            self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
+        return self._df
+
+    @property
+    def wt(self):
+        wt = {}
+        wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
+        wt["phenotype"] = {
+            "observation": {"fitness": 1.0},
+            "environment": {"media": "YPD", "temperature": 30},
+        }
+        data = Data()
+        data.genotype = wt["genotype"]
+        data.phenotype = wt["phenotype"]
+        return data
+
     def process(self):
+        os.makedirs(self.preprocess_dir, exist_ok=True)
         # Process the Excel file for mutant fitness
         excel_file_path = os.path.join(
             self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx"
         )
         df_excel = pd.read_excel(excel_file_path)
 
+        # Preproecess
+        all_data_df = self.preprocess_raw(df_excel, self.preprocess)
+        self.save_preprocess_config(self.preprocess)
+
+        # Subset
+        if self.subset_n is not None:
+            all_data_df = all_data_df.sample(
+                n=self.subset_n, random_state=42
+            ).reset_index(drop=True)
+
+        # Save preprocssed df - mainly for quick stats
+        all_data_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
+
         print("Processing SMF data...")
 
         # Extract genotypes
-        df_excel["genotype_id"] = df_excel["Strain ID"].str.split("_").str[0]
-        genotypes = df_excel[["genotype_id", "Strain ID"]].to_dict("records")
+        all_data_df["genotype_id"] = all_data_df["Strain ID"].str.split("_").str[0]
+        genotypes = all_data_df[["genotype_id", "Strain ID"]].to_dict("records")
 
         # Create 26° observations
         observations_26 = (
-            df_excel[
+            all_data_df[
                 ["Single mutant fitness (26°)", "Single mutant fitness (26°) stddev"]
             ]
             .rename(
@@ -106,12 +178,12 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
             .to_dict("records")
         )
         environments_26 = [
-            {"media": "YPD", "temperature": 26} for _ in range(len(df_excel))
+            {"media": "YPD", "temperature": 26} for _ in range(len(all_data_df))
         ]
 
         # Create 30° observations
         observations_30 = (
-            df_excel[
+            all_data_df[
                 ["Single mutant fitness (30°)", "Single mutant fitness (30°) stddev"]
             ]
             .rename(
@@ -123,7 +195,7 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
             .to_dict("records")
         )
         environments_30 = [
-            {"media": "YPD", "temperature": 30} for _ in range(len(df_excel))
+            {"media": "YPD", "temperature": 30} for _ in range(len(all_data_df))
         ]
 
         data_list = []
@@ -158,18 +230,193 @@ class SmfCostanzo2016Dataset(InMemoryDataset):
             data.phenotype = {"observation": obs_30, "environment": env_30}
             data_list.append(data)
 
-        if self.pre_transform:
-            data_list = [self.pre_transform(data) for data in data_list]
+        # Initialize LMDB environment
+        log.info("lmdb begin")
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
 
-        torch.save(self.collate(data_list), self.processed_paths[0])
+        with env.begin(write=True) as txn:
+            # Iterate through each data item
+            for idx, item in tqdm(enumerate(data_list)):
+                serialized_data = pickle.dumps(item)
+                txn.put(f"{idx}".encode(), serialized_data)
 
+        # cache gene property
+        self.gene_set = self.compute_gene_set(data_list)
+
+    def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
+        # We use the 'Systematic gene name' column as 'genotype' directly
+        all_data_df["genotype"] = all_data_df["Systematic gene name"]
+
+        # Find duplicate genotypes
+        duplicate_genotypes = all_data_df["genotype"].duplicated(keep=False)
+        duplicates_df = all_data_df[duplicate_genotypes].copy()
+
+        # Select which duplicate to keep based on preprocess
+        if preprocess is None:
+            idx_to_keep = duplicates_df.index
+        elif preprocess.get("duplicate_resolution") == "low_std_30":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°) stddev"])
+                .groupby("genotype")["Single mutant fitness (30°) stddev"]
+                .idxmin()
+            )
+        elif preprocess.get("duplicate_resolution") == "high_fitness_30":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°)"])
+                .groupby("genotype")["Single mutant fitness (30°)"]
+                .idxmax()
+            )
+        elif preprocess.get("duplicate_resolution") == "low_fitness_30":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°)"])
+                .groupby("genotype")["Single mutant fitness (30°)"]
+                .idxmin()
+            )
+        elif preprocess.get("duplicate_resolution") == "low_std_26":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°) stddev"])
+                .groupby("genotype")["Single mutant fitness (26°) stddev"]
+                .idxmin()
+            )
+        elif preprocess.get("duplicate_resolution") == "high_fitness_26":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°)"])
+                .groupby("genotype")["Single mutant fitness (26°)"]
+                .idxmax()
+            )
+        elif preprocess.get("duplicate_resolution") == "low_fitness_26":
+            idx_to_keep = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°)"])
+                .groupby("genotype")["Single mutant fitness (26°)"]
+                .idxmin()
+            )
+        # HACK both abuses the idea of duplicates
+        elif preprocess.get("duplicate_resolution") == "low_std_both":
+            idx26 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°) stddev"])
+                .groupby("genotype")["Single mutant fitness (26°) stddev"]
+                .idxmin()
+            )
+            idx30 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°) stddev"])
+                .groupby("genotype")["Single mutant fitness (30°) stddev"]
+                .idxmin()
+            )
+            idx_to_keep = list(set(idx26).union(set(idx30)))
+        # HACK both abuses the idea of duplicates
+        elif preprocess.get("duplicate_resolution") == "low_fitness_both":
+            idx26 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°)"])
+                .groupby("genotype")["Single mutant fitness (26°)"]
+                .idxmin()
+            )
+            idx30 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°)"])
+                .groupby("genotype")["Single mutant fitness (30°)"]
+                .idxmin()
+            )
+            idx_to_keep = idx26.append(idx30).unique()
+        # HACK both abuses the idea of duplicates
+        elif preprocess.get("duplicate_resolution") == "high_fitness_both":
+            idx26 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (26°)"])
+                .groupby("genotype")["Single mutant fitness (26°)"]
+                .idxmax()
+            )
+            idx30 = (
+                duplicates_df.dropna(subset=["Single mutant fitness (30°)"])
+                .groupby("genotype")["Single mutant fitness (30°)"]
+                .idxmax()
+            )
+            idx_to_keep = idx26.append(idx30).unique()
+        else:
+            raise ValueError("Unknown preprocess")
+
+        # Drop duplicates, keeping only the selected rows
+        duplicates_df = duplicates_df.loc[idx_to_keep]
+
+        # Combine the non-duplicate and selected duplicate rows
+        non_duplicates_df = all_data_df[~duplicate_genotypes]
+        final_df = pd.concat([non_duplicates_df, duplicates_df], ignore_index=True)
+
+        return final_df
+
+    # New method to save preprocess configuration to a JSON file
+    def save_preprocess_config(self, preprocess):
+        if not osp.exists(self.preprocess_dir):
+            os.makedirs(self.preprocess_dir)
+        with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
+            json.dump(preprocess, f)
+
+    # New method to load existing preprocess configuration
+    def load_preprocess_config(self):
+        config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
+
+        if osp.exists(config_path):
+            with open(config_path) as f:
+                config = json.load(f)
+            return config
+        else:
+            return None
+
+    def len(self) -> int:
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
+            length = txn.stat()["entries"]
+
+        # Must be closed for dataloader num_workers > 0
+        self.close_lmdb()
+
+        return length
+
+    def get(self, idx):
+        """Initialize LMDB if it hasn't been initialized yet."""
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
+            serialized_data = txn.get(f"{idx}".encode())
+            if serialized_data is None:
+                return None
+            data = pickle.loads(serialized_data)
+            if self.transform:
+                data = self.transform(data)
+            return data
+
+    @staticmethod
+    def compute_gene_set(data_list):
+        computed_gene_set = GeneSet()
+        for data in data_list:
+            for genotype in data.genotype:
+                computed_gene_set.add(genotype["id"])
+        return computed_gene_set
+
+    # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
-        _gene_set = GeneSet()
-        for data in self:
-            for genotype in data.genotype:
-                _gene_set.add(genotype["id"])
-        return _gene_set
+        try:
+            if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
+                with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
+                    self._gene_set = GeneSet(json.load(f))
+            elif self._gene_set is None:
+                raise ValueError(
+                    "gene_set not written during process. "
+                    "Please call compute_gene_set in process."
+                )
+            return self._gene_set
+        # CHECK can probably remove this
+        except json.JSONDecodeError:
+            raise ValueError("Invalid or empty JSON file found.")
+
+    @gene_set.setter
+    def gene_set(self, value):
+        if not value:
+            raise ValueError("Cannot set an empty or None value for gene_set")
+        with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
+            json.dump(list(sorted(value)), f, indent=0)
+        self._gene_set = value
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
@@ -206,7 +453,7 @@ class DmfCostanzo2016Dataset(Dataset):
     ):
         self.subset_n = subset_n
         self._skip_process_file_exist = skip_process_file_exist
-        # TODO consider moving to Dataset
+        # TODO consider moving to a well defined Dataset class
         self.preprocess = preprocess
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
@@ -235,7 +482,6 @@ class DmfCostanzo2016Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        # return [f"data_dmf_{i}.pt" for i in range(self.len())]
         return "data.lmdb"
 
     def download(self):
@@ -263,6 +509,11 @@ class DmfCostanzo2016Dataset(Dataset):
             meminit=False,
         )
 
+    def close_lmdb(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
+
     @property
     def df(self):
         if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
@@ -283,6 +534,7 @@ class DmfCostanzo2016Dataset(Dataset):
         return data
 
     def process(self):
+        os.makedirs(self.preprocess_dir, exist_ok=True)
         self._length = None
         # Initialize an empty DataFrame to hold all raw data
         all_data_df = pd.DataFrame()
@@ -354,9 +606,6 @@ class DmfCostanzo2016Dataset(Dataset):
             for genotype, observation in zip(combined_genotypes, observations)
         ]
 
-        # Initialize LMDB environment
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-
         data_list = []
         for idx, item in tqdm(enumerate(combined_data)):
             data = Data()
@@ -364,20 +613,17 @@ class DmfCostanzo2016Dataset(Dataset):
             data.phenotype = item["phenotype"]
             data_list.append(data)  # fill the data_list
 
+        # Initialize LMDB environment
         log.info("lmdb begin")
-        # Open a new write transaction
         # TODO make map_size size of disk partition, only virtual address space.
+        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+
+        # Open a new write transaction
         with env.begin(write=True) as txn:
             # Iterate through each data item
-            for idx, item in tqdm(enumerate(combined_data)):
-                data = Data()
-                data.genotype = item["genotype"]
-                data.phenotype = item["phenotype"]
-
-                # Serialize the data object using pickle
-                serialized_data = pickle.dumps(data)
-
-                # Save the serialized data in the LMDB environment
+            # TODO loop data_list instead...
+            for idx, item in tqdm(enumerate(data_list)):
+                serialized_data = pickle.dumps(item)
                 txn.put(f"{idx}".encode(), serialized_data)
 
         # cache gene property
@@ -412,17 +658,17 @@ class DmfCostanzo2016Dataset(Dataset):
         duplicates_df = new_df[duplicate_genotypes].copy()
 
         # Select which duplicate to keep based on preprocess
-        if preprocess["duplicate_resolution"] == "low_dmf_std":
+        if preprocess.get("duplicate_resolution") == "low_dmf_std":
             # Keep the row with the lowest 'Double mutant fitness standard deviation'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness standard deviation"
             ].idxmin()
-        elif preprocess["duplicate_resolution"] == "high_dmf":
+        elif preprocess.get("duplicate_resolution") == "high_dmf":
             # Keep the row with the highest 'Double mutant fitness'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness"
             ].idxmax()
-        elif preprocess["duplicate_resolution"] == "low_dmf":
+        elif preprocess.get("duplicate_resolution") == "low_dmf":
             # Keep the row with the lowest 'Double mutant fitness'
             idx_to_keep = duplicates_df.groupby("genotype")[
                 "Double mutant fitness"
@@ -471,11 +717,6 @@ class DmfCostanzo2016Dataset(Dataset):
         self.close_lmdb()
 
         return length
-
-    def close_lmdb(self):
-        if self.env is not None:
-            self.env.close()
-            self.env = None
 
     def get(self, idx):
         """Initialize LMDB if it hasn't been initialized yet."""
@@ -535,23 +776,25 @@ def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"), exist_ok=True)
-    # dmf_dataset = DMFCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
-    #     subset_n=100000,
-    #     preprocess="low_dmf_std",
-    # )
+
     dmf_dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"),
         preprocess={"duplicate_resolution": "low_dmf_std"},
         subset_n=100,
     )
-    print(dmf_dataset)
-    print(dmf_dataset.df["Double mutant fitness"].describe())
-    print(dmf_dataset.df["Double mutant fitness standard deviation"].describe())
-    print(dmf_dataset.gene_set)
+    print(dmf_dataset[0])
+    print(len(dmf_dataset.gene_set))
 
-    # for i in range(10):
-    #     print(dmf_dataset[i])
+    smf_dataset = SmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf"),
+        preprocess={"duplicate_resolution": "low_std_both"},
+        skip_process_file_exist_check=True,
+        # subset_n=100,
+    )
+
+    print(smf_dataset)
+    print(smf_dataset[0])
+    print(len(smf_dataset.gene_set))
 
 
 if __name__ == "__main__":

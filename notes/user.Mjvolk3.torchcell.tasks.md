@@ -2,26 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697091539483
+updated: 1697155778783
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.10.11
+## 2023.10.12
 
-- [x] Cancel run on `upstream + downstream` → [wandb upstream and downstream](https://wandb.ai/zhao-group/torchcell/groups/2498195_6e7d3de812c0282976a4afcf00b099283e3b054397d8d3b967a99dc89cba9fea/workspace?workspace=user-mjvolk3)
-- [x] Start run on all `costanzo`
-- [x] Fix plotting of box plots to match `Dcell` → ![](./assets/drawio/dcell-boxplot.drawio.png) used template to adjust figures [[torchcell.viz.fitness|dendron://torchcell/src.torchcell.viz.fitness]] should be publication qualtiy now.
-- [x] log wandb artifacts in training.
-- [x] Check if 'Arial' is on `Delta`. → `conda install -c conda-forge mscorefonts`
-- [x] Start run on all `costanzo`, with artifact logging and new box plots.
+- [x] Rewrite `SmfCostanzoDataset` [[Costanzo2016|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016]] to use `Dataset`instead of in memory dataset. This might be unnecessary overkill, but it should allow for inheritance from a generalized `Dataset` class and will make `+` and merges easier. [[Summing vs. Merging Experiment Datasets|dendron://torchcell/src#summing-vs-merging-experiment-datasets]] → converted over, but haven't done any testing.
+- [x] Check for duplicates in `SmfCostanzoDataset` → Add many duplicate methods. I thing the `both_` methods might abuse the `duplicate` notation.
+- [x] `dmf + smf` dataset. → This creates some issues. I've pursued it some, but the main issue is that another database should be constructed. I think this is the most straightforward way, although it will create duplicate data. This is the easiest solution for now.
+- [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/src.torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/src.torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
+
+- [ ] Fix dmf data_list iteration.
 - [ ] Add assertion in the addition to make sure that at least the sizes are the same.
-
-## 2023.10.10
-
-- [x] Launch experiment with all `FungalCRE` features.
-- [ ] Add assertion in the addition to make sure that at least the sizes are the same.
-- [ ] Check if pytorch collate works if the Data Objects are different. This is important for eventually combining datasets.
+- [ ] Read about `pyg` collate to see if all data objects must be same
 
 - [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 - [ ] Add codon frequency dataset.
@@ -38,13 +33,43 @@ created: 1690514887023m
 - [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
 - [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 
+## 2023.10.11
+
+- [x] Cancel run on `upstream + downstream` → [wandb upstream and downstream](https://wandb.ai/zhao-group/torchcell/groups/2498195_6e7d3de812c0282976a4afcf00b099283e3b054397d8d3b967a99dc89cba9fea/workspace?workspace=user-mjvolk3)
+- [x] Start run on all `costanzo`
+- [x] Fix plotting of box plots to match `Dcell` → ![](./assets/drawio/dcell-boxplot.drawio.png) used template to adjust figures [[torchcell.viz.fitness|dendron://torchcell/src.torchcell.viz.fitness]] should be publication qualtiy now.
+- [x] log wandb artifacts in training.
+- [x] Check if 'Arial' is on `Delta`. → `conda install -c conda-forge mscorefonts`
+- [x] Start run on all `costanzo`, with artifact logging and new box plots.
+- 🔲 Add assertion in the addition to make sure that at least the sizes are the same.
+
+## 2023.10.10
+
+- [x] Launch experiment with all `FungalCRE` features.
+- [x] Check if pytorch collate works if the Data Objects are different. This is important for eventually combining datasets. → It looks like add only works if all objects have the same data types and sizes, but need to look into more
+- 🔲 Add assertion in the addition to make sure that at least the sizes are the same.
+- 🔲 Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
+- 🔲 Add codon frequency dataset.
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Test speed of nucleotide transformer speed up.
+- 🔲 Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- 🔲 Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+
 ## 2023.10.09
 
 - [x] Launch experiment with just upstream features and add to [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]] → Delta login is currently down.
 - [x] Write report for @Yunan-Luo → [[results.01.report|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report]]
 - [x] Send report to @Yunan-Luo
 - [x] Rerun embeddings on full `s288c`genome. This allows for the proper collation when combining datasets with add. → This can lead to some pernicious bugs, where you don't recognize that the dataset is smaller and if the designed net always adapts to feature size you never catch this bug. [[Perturbation Nodes Benchmark Model - Adding Bug|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report#perturbation-nodes-benchmark-model---adding-bug]]. Might want to consider adding some sort of assertion in the addition to make sure that at least the sizes are the same.
-- [x] Configure type of dataset to train on. → got paritally there but it is difficult to add datasets with `sum` → [[Difficult to Add Datasets with Sum operator|dendron://torchcell/src.torchcell.datasets.nucleotide_embedding#difficult-to-add-datasets-with-sum-operator]]
+- [x] Configure type of dataset to train on. → got paritally there but it is difficult to add datasets with `sum` → [[Difficult to Add Datasets with Sum operator|dendron://torchcell/src.torchcell.datasets.embedding#difficult-to-add-datasets-with-sum-operator]]
 
 ## 2023.10.08
 
@@ -531,7 +556,7 @@ created: 1690514887023m
 ## 2023.08.15
 
 - [x] Create an analogous sequence embedding dataset for the nucleotide transformer.
-- [x] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.nucleotide_embedding]]
+- [x] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.embedding]]
 - [x] Test goings on the nucleotide transformer and the utr transformer. → not yet tested properly.
 - [x] Run the nucleotide transformer overnight. → Still took half of the next day on local. should consider batching on GPU.
 - 🔲 DMFCostanzo takes too long to load, consider making it regular dataset, not `InMemory`.

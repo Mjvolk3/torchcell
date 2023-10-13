@@ -33,8 +33,12 @@ if __name__ == "__main__":
     )
 
     one_hot_gene = OneHotGeneDataset(
-        root="data/scerevisiae/gene_one_hot_encoded", genome=genome
+        root="data/scerevisiae/gene_one_hot", genome=genome
     )
-    dataset = fud_downstream + fud_upstream + codon_freq + one_hot_gene
+    print(fud_downstream)
+    print(fud_downstream[100])
+    print(one_hot_gene)
+    print(one_hot_gene[100])
+    dataset = fud_downstream + one_hot_gene
     print(dataset)
     print(dataset[100])

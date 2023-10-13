@@ -83,9 +83,7 @@ def main(cfg: DictConfig) -> None:
         )
     if "one_hot_gene" in wandb.config.cell_dataset["embeddings"]:
         embeddings.append(
-            OneHotGeneDataset(
-                root="data/scerevisiae/gene_one_hot_encoded", genome=genome
-            )
+            OneHotGeneDataset(root="data/scerevisiae/gene_one_hot", genome=genome)
         )
 
     seq_embeddings = sum(embeddings)

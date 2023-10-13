@@ -119,7 +119,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].dna_windows[
                             key
                         ] = data_item.dna_windows[key]
-                    print()
                 # Check for duplicate keys in embeddings
                 for key in data_item.embeddings:
                     if key in current_data_dict[data_item.id].embeddings:
@@ -129,7 +128,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         current_data_dict[data_item.id].embeddings[
                             key
                         ] = data_item.embeddings[key]
-                    print()
             else:
                 combined_data_list.append(data_item)
 

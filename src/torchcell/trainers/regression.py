@@ -343,10 +343,6 @@ class RegressionTask(pl.LightningModule):
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
-        # TODO delete when done
-        torch.save(true_values, "true_values.pt")
-        torch.save(predictions, "predictions.pt")
-
         if self.target == "fitness":
             fig = fitness.box_plot(true_values, predictions)
         elif self.target == "genetic_interaction_score":

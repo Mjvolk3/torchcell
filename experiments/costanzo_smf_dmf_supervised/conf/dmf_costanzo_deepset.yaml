@@ -9,8 +9,8 @@ wandb:
   tags: [poc, subset]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
+  experiments: costanzo2016_1e6
+  name: cell_1e6
   embeddings: [fungal_down, fungal_up]
 
 data_module:
@@ -23,7 +23,7 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  target: genetic_interaction_score # fitness, genetic_interaction_score
+  target: fitness # fitness, genetic_interaction_score
   wt_train_per_epoch: null # 100
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
@@ -39,7 +39,7 @@ regression_task:
 
 models:
   graph:
-    node_layers: [1024, 512, 256, 128, 64] # [1024, 512]
+    node_layers: [512, 256, 128, 64] # [1024, 512]
     set_layers: [32, 32, 32, 32] # [256, 128]
     norm: batch
     activation: gelu

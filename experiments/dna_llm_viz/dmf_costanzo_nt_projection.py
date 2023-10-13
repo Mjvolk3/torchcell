@@ -1,4 +1,5 @@
 import copy
+import datetime
 import json
 import logging
 import os
@@ -13,15 +14,16 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from os import environ
 from typing import List, Optional, Tuple, Union
-import umap
+
+import lmdb
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime
-import lmdb
 import pandas as pd
 import torch
+import umap
 from attrs import define
 from sklearn import experimental
+from sklearn.manifold import TSNE
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
@@ -30,8 +32,9 @@ from torch_geometric.utils import subgraph
 from tqdm import tqdm
 
 from torchcell.data import Dataset
+from torchcell.datasets import CellDataset
+from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
-from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
@@ -43,8 +46,6 @@ from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.datasets import CellDataset
-from sklearn.manifold import TSNE
 
 log = logging.getLogger(__name__)
 
@@ -207,7 +208,7 @@ def main():
             plt.savefig(file_path_pdf)
 
             plt.close()
-    
+
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
-# src/torchcell/datasets/nucleotide_embedding.py
-# [[src.torchcell.datasets.nucleotide_embedding]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/nucleotide_embedding.py
-# Test file: tests/torchcell/datasets/test_nucleotide_embedding.py
+# src/torchcell/datasets/embedding.py
+# [[src.torchcell.datasets.embedding]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/embedding.py
+# Test file: src/torchcell/datasets/test_embedding.py
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
@@ -156,14 +156,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         combined_dataset.data, combined_dataset.slices = data, slices
 
         return combined_dataset
-
-
-class NeutralEmbeddingDataset(BaseEmbeddingDataset):
-    def initialize_model(self):
-        pass
-
-    def process(self):
-        pass
 
 
 if __name__ == "__main__":

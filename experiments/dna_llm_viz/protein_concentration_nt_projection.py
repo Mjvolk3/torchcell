@@ -1,4 +1,5 @@
 import copy
+import datetime
 import json
 import logging
 import os
@@ -13,15 +14,17 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from os import environ
 from typing import List, Optional, Tuple, Union
-import umap
-import matplotlib.pyplot as plt
-import numpy as np
-import datetime
+
 import lmdb
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
 import pandas as pd
 import torch
+import umap
 from attrs import define
 from sklearn import experimental
+from sklearn.manifold import TSNE
 from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
@@ -30,8 +33,9 @@ from torch_geometric.utils import subgraph
 from tqdm import tqdm
 
 from torchcell.data import Dataset
+from torchcell.datasets import CellDataset
+from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
-from torchcell.datasets.nucleotide_embedding import BaseEmbeddingDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
@@ -43,10 +47,6 @@ from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.datasets import CellDataset
-from sklearn.manifold import TSNE
-import networkx as nx
-import pickle
 
 log = logging.getLogger(__name__)
 
@@ -173,7 +173,10 @@ def main():
     # Keys to be removed - gene_embeds_half_life
     keys_to_remove_half_life = []
     for k, v in gene_embeds_half_life.items():
-        if "proteins.proteinHalfLife.value" in v and v["proteins.proteinHalfLife.value"] >= 150:
+        if (
+            "proteins.proteinHalfLife.value" in v
+            and v["proteins.proteinHalfLife.value"] >= 150
+        ):
             keys_to_remove_half_life.append(k)
 
     # Remove keys - gene_embeds_half_life
@@ -196,7 +199,9 @@ def main():
         tsne = TSNE(n_components=2, perplexity=perplexity, n_iter=5000)
         X_tsne = tsne.fit_transform(X)
 
-        plot_title = f"Protein Median Concentration t-SNE plot (perplexity={perplexity})"
+        plot_title = (
+            f"Protein Median Concentration t-SNE plot (perplexity={perplexity})"
+        )
         plot_embedding(X_tsne, proteins_median, plot_title, "proteins median", save_dir)
 
     # UMAP Plotting

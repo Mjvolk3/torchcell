@@ -12,7 +12,7 @@ Since the complexity increased with encoding, and the `species` model looks bett
 
 ## Parse Genome and Return None For Dunder Add
 
-When we add two `BaseEmbeddingDataset` it goes though the `__init__` again yet genome was deleted so there is no state. It is not needed for combining datasets. In fact this forced me to comment it out for the time being [[Disabling Genome Due to Sqlite and Parsed Genome|dendron://torchcell/src.torchcell.datasets.nucleotide_embedding#disabling-genome-due-to-sqlite-and-parsed-genome]].
+When we add two `BaseEmbeddingDataset` it goes though the `__init__` again yet genome was deleted so there is no state. It is not needed for combining datasets. In fact this forced me to comment it out for the time being [[Disabling Genome Due to Sqlite and Parsed Genome|dendron://torchcell/src.torchcell.datasets.embedding#disabling-genome-due-to-sqlite-and-parsed-genome]].
 
 ```python
 class ParsedGenome(ModelStrictArbitrary):

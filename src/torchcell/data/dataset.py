@@ -108,7 +108,7 @@ class Dataset(torch.utils.data.Dataset, ABC):
         return osp.join(self.root, "raw")
 
     @property
-    def skip_process_file_exist(self) -> str:
+    def skip_process_file_exist_check(self) -> str:
         return False
 
     @property
@@ -235,7 +235,7 @@ class Dataset(torch.utils.data.Dataset, ABC):
             )
 
         # HACK to speed dev
-        if self.skip_process_file_exist:
+        if self.skip_process_file_exist_check:
             return
         elif files_exist(self.processed_paths):  # pragma: no cover
             return

@@ -13,7 +13,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
 
     # font name
-    font_name = "Arial"
+    font_name = "Helvetica"
 
     # Bin predictions and collect corresponding true values
     binned_true_values = []
@@ -29,7 +29,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     height = 6
     width = height * aspect_ratio
 
-    fig, ax = plt.subplots(figsize=(width, height))
+    fig, ax = plt.subplots(figsize=(width, height), dpi=140)
 
     # Equally spaced box positions
     box_positions = [i + 0.5 for i in range(len(bins) - 1)]
@@ -48,7 +48,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # set the spine - outside box
     for spine in ax.spines.values():
-        spine.set_linewidth(1.3)
+        spine.set_linewidth(1.4)
 
     # Set zorder to 1 to be above the horizontal line
     # Adjust for box width
@@ -88,23 +88,23 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Add a black horizontal line at y=1.0
     # Set zorder to 0 to be behind boxes
-    ax.axhline(y=1, color="black", linewidth=1.3, zorder=2)
+    ax.axhline(y=1, color="black", linewidth=1.4, zorder=2)
 
     # Add a black vertical line at x=7.0 (1.0 on the tick label)
     # Set zorder to 2 to be above boxes
-    ax.axvline(x=7.0, color="black", linewidth=1.3, zorder=0)
+    ax.axvline(x=7.0, color="black", linewidth=1.4, zorder=2)
 
     # Add "(WT)" labels to x and y axes
-    ax.text(-0.96, 0.995, "(WT)", fontsize=16.8, va="center", ha="right")
-    ax.text(7.48, -0.08, "(WT)", fontsize=16.8, va="center", ha="right")
+    ax.text(-0.96, 0.995, "(WT)", fontsize=17.0, va="center", ha="right")
+    ax.text(7.48, -0.08, "(WT)", fontsize=17.0, va="center", ha="right")
 
     # Set tick labels
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(xticks, ha="center")
 
     # Adjust x and y label positions
-    ax.set_xlabel("Predicted growth", labelpad=34, size=16.8, fontname=font_name)
-    ax.set_ylabel("Measured growth", labelpad=29, size=16.8, fontname=font_name)
+    ax.set_xlabel("Predicted growth", labelpad=34, size=17.0, fontname=font_name)
+    ax.set_ylabel("Measured growth", labelpad=29, size=17.0, fontname=font_name)
 
     # Set y-axis limits and ticks
     ax.set_ylim(0.05, 1.25)
@@ -113,7 +113,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Set the size of xticks and yticks
     ax.tick_params(axis="x", length=4, width=0, labelsize=16.0)
-    ax.tick_params(axis="y", length=7, width=1.6, labelsize=16.0)
+    ax.tick_params(axis="y", length=7, width=1.4, labelsize=16.0)
 
     # For x-ticks
     for label in ax.get_xticklabels():

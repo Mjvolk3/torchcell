@@ -2,18 +2,19 @@
 # [[src.torchcell.multidigraph.sgd]]
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/multidigraph/sgd.py
 # Test file: src/torchcell/multidigraph/test_sgd.py
-
-
 import asyncio
 import json
+import logging
 import os
 import os.path as osp
+import tempfile
 import time
 from asyncio import Task
 from collections.abc import Callable
 from typing import Any, Optional
 
 import aiohttp
+from aiohttp import ClientError, ContentTypeError
 from attrs import define, field
 from tqdm import tqdm
 
@@ -27,6 +28,8 @@ from torchcell.multidigraph.validation.locus_related.locus import (
     Reference,
     validate_data,
 )
+
+log = logging.getLogger(__name__)
 
 
 @define
@@ -100,13 +103,50 @@ class Gene:
                 raise ValueError(f"File {self.save_path} is not a dict")
         return data_in
 
-    async def _get_data(self, url: str) -> dict[Any, Any] | list[Any]:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=self.headers) as response:
-                data = await response.json()
-                if not isinstance(data, (dict, list)):
-                    raise ValueError(f"Data is not a dict or list: {data}")
-                return data
+    # With error handling
+    async def _get_data(
+        self, url: str, max_retries: int = 10
+    ) -> dict[Any, Any] | list[Any] | None:
+        for retry in range(max_retries):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, headers=self.headers) as response:
+                        content_type = response.headers.get("Content-Type")
+
+                        # Check if the content type indicates a JSON response
+                        if "application/json" in content_type:
+                            data = await response.json()
+                            if not isinstance(data, (dict, list)):
+                                raise ValueError(f"Data is not a dict or list: {data}")
+                            return data
+                        else:
+                            # Save unexpected content (e.g., HTML) to a temporary file for debugging
+                            content = await response.text()
+                            with tempfile.NamedTemporaryFile(
+                                delete=False, suffix=".html"
+                            ) as temp:
+                                temp.write(content.encode())
+                                logging.error(
+                                    f"Saved unexpected response to: {temp.name}"
+                                )
+
+                            error_message = (
+                                f"Unexpected content type: {content_type}. URL: {url}"
+                            )
+                            logging.error(error_message)
+                            raise ContentTypeError(error_message)
+
+            except (ClientError, ContentTypeError) as e:
+                if retry == max_retries - 1:  # If it's the last retry and still fails
+                    logging.error(
+                        f"Failed to fetch data after {max_retries} attempts. Error: {e}"
+                    )
+                    return None
+                else:
+                    logging.warning(f"Attempt {retry + 1} failed. Retrying...")
+                    await asyncio.sleep(2**retry)  # Exponential backoff
+
+        return None
 
     async def locus(self) -> dict[Any, Any] | list[Any]:
         url = osp.join(self.sgd_url, self.locusID)
@@ -180,67 +220,133 @@ async def download_genes(
     locus_ids: list[str], gene_factory: Callable[[str], Gene], is_validated: bool
 ) -> None:
     with tqdm(total=len(locus_ids)) as progress_bar:
-        await asyncio.gather(
-            *(
-                process_gene(gene_factory(id_, is_validated), progress_bar)
-                for id_ in locus_ids
-            )
-        )
+        tasks = []
+        for id_ in locus_ids:
+            # Check if the file for the gene already exists
+            file_path = f"data/sgd/genes/{id_}.json"
+
+            if os.path.exists(file_path):
+                logging.info(f"Data for gene {id_} already exists. Skipping...")
+                progress_bar.update(1)
+                continue
+
+            gene = gene_factory(id_, is_validated)
+            tasks.append(process_gene(gene, progress_bar))
+
+        await asyncio.gather(*tasks)
 
 
 def create_gene(locusID: str, is_validated: bool) -> Gene:
     return Gene(locusID=locusID, is_validated=is_validated)
 
 
-def main() -> None:
-    start_time = time.time()
-    locus_ids = [
-        "YPR201W",
-        "YPR202W",
-        "YPR199C",
-        "YPR200C",
-        "YPR198W",
-        "YPR196W",
-        "YPR197C",
-        "YPR194C",
-        "YPR195C",
-        "YPR193C",
-        "YPR192W",
-        "YLR153C",
-    ]
-    asyncio.run(
-        download_genes(locus_ids, create_gene, is_validated=False)
-    )  # TODO Change for Dev
-    end_time = time.time()
-    print(f"Execution time: {end_time - start_time} seconds")
-    # gene = Gene("YDR210W")
-    # asyncio.run(gene.fetch_data())
-    # gene.data
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]
 
 
-def main_median_protein():
-    import os
+async def download_gene_chunk(chunk, create_gene_fn, validate_flag):
+    """Download a chunk of genes with a delay before starting."""
+    await asyncio.sleep(1)  # Give a small break between chunks
+    await download_genes(chunk, create_gene_fn, validate_flag)
 
-    from dotenv import load_dotenv
 
-    load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
+def main_get_all_genes():
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-    dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
-        preprocess="low_dmf_std",
-    )
-    # genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
-    # genome.drop_chrmt()
-    # genome.drop_empty_go()
-    locus_ids = list(dmf_dataset.gene_set)
-    start_time = time.time()
-    asyncio.run(download_genes(locus_ids, create_gene, is_validated=False))
-    end_time = time.time()
-    print(f"Execution time: {end_time - start_time} seconds")
+    genome = SCerevisiaeGenome()
+    locus_ids = list(genome.gene_set)
+
+    CHUNK_SIZE = 50  # Adjust this value based on what works best for you
+    locus_id_chunks = list(chunks(locus_ids, CHUNK_SIZE))
+
+    for chunk in locus_id_chunks:
+        asyncio.run(download_gene_chunk(chunk, create_gene, False))
 
 
 if __name__ == "__main__":
-    main_median_protein()
+    main_get_all_genes()
+    # main_median_protein()
+    # main()
+
+
+# def main_get_all_genes():
+#     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+#     genome = SCerevisiaeGenome()
+#     # genome.drop_chrmt()
+#     locus_ids = list(genome.gene_set)
+
+#     # Chunk the locus_ids list by every 10 items
+#     # locus_id_chunks = chunks(locus_ids, 10)
+
+#     asyncio.run(download_genes(locus_ids[:100], create_gene, is_validated=False))
+
+# def main_median_protein():
+#     import os
+
+#     from dotenv import load_dotenv
+
+#     load_dotenv()
+#     DATA_ROOT = os.getenv("DATA_ROOT")
+#     from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
+#     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+#     dmf_dataset = DmfCostanzo2016Dataset(
+#         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),
+#         preprocess="low_dmf_std",
+#     )
+#     # genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+#     # genome.drop_chrmt()
+#     # genome.drop_empty_go()
+#     locus_ids = list(dmf_dataset.gene_set)
+#     start_time = time.time()
+#     asyncio.run(download_genes(locus_ids, create_gene, is_validated=False))
+#     end_time = time.time()
+#     print(f"Execution time: {end_time - start_time} seconds")
+
+# def main() -> None:
+#     start_time = time.time()
+#     locus_ids = [
+#         "YPR201W",
+#         "YPR202W",
+#         "YPR199C",
+#         "YPR200C",
+#         "YPR198W",
+#         "YPR196W",
+#         "YPR197C",
+#         "YPR194C",
+#         "YPR195C",
+#         "YPR193C",
+#         "YPR192W",
+#         "YLR153C",
+#     ]
+#     asyncio.run(
+#         download_genes(locus_ids, create_gene, is_validated=False)
+#     )  # TODO Change for Dev
+#     end_time = time.time()
+#     print(f"Execution time: {end_time - start_time} seconds")
+#     # gene = Gene("YDR210W")
+#     # asyncio.run(gene.fetch_data())
+#     # gene.data
+
+
+# async def download_genes(
+#     locus_ids: list[str], gene_factory: Callable[[str], Gene], is_validated: bool
+# ) -> None:
+#     with tqdm(total=len(locus_ids)) as progress_bar:
+#         await asyncio.gather(
+#             *(
+#                 process_gene(gene_factory(id_, is_validated), progress_bar)
+#                 for id_ in locus_ids
+#             )
+#         )
+
+# async def _get_data(self, url: str) -> dict[Any, Any] | list[Any]:
+#     async with aiohttp.ClientSession() as session:
+#         async with session.get(url, headers=self.headers) as response:
+#             data = await response.json()
+#             if not isinstance(data, (dict, list)):
+#                 raise ValueError(f"Data is not a dict or list: {data}")
+#             return data

@@ -211,9 +211,10 @@ class SCerevisiaeGene(Gene):
         else:
             self.go = None
 
+    # use
     @property
     def codon_frequency(self) -> SortedDict[str, float]:
-        codon_frequency = compute_codon_frequency(self.seq)
+        codon_frequency = compute_codon_frequency(self.cds.seq)
         return codon_frequency
 
     def window(self, window_size: int, is_max_size: bool = True) -> DnaWindowResult:
@@ -379,6 +380,7 @@ class SCerevisiaeGene(Gene):
 @define
 class SCerevisiaeGenome(Genome):
     data_root: str = field(init=True, repr=False, default="data/sgd/genome")
+    overwrite: bool = field(init=True, repr=True, default=True)
     db: dict[str, SeqRecord] = field(init=False, repr=False)
     fasta_dna = field(init=False, default=None, repr=False)
     chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
@@ -426,9 +428,9 @@ class SCerevisiaeGenome(Genome):
         db_path = osp.join(self.data_root, "data.db")
 
         # CHECK if this works with ddp
-        if os.path.exists(db_path):
+        if os.path.exists(db_path) and not self.overwrite:
             self.db = gffutils.FeatureDB(db_path)
-        else:
+        elif self.overwrite:
             # TODO remove sort_attribute_values since this can be time consuming.
             self.db = gffutils.create_db(
                 self._gff_path,
@@ -725,30 +727,32 @@ def main() -> None:
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+    )
     genome.go
     genome.drop_chrmt()
-    # print(len(genome.gene_set))
-    genome.drop_empty_go()
+    print(len(genome.gene_set))
+    # genome.drop_empty_go()
 
-    # genes_not_divisible_by_3 = [
-    #     gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0
-    # ]
-    # print(len(genes_not_divisible_by_3))
-    # print(genes_not_divisible_by_3)
-    # genes_no_start = [
-    #     gene for gene in genes_not_divisible_by_3 if genome[gene].seq[:3] != "ATG"
-    # ]
-    # print(len(genes_no_start))
-    # print(genes_no_start)
-    # print()
+    # # genes_not_divisible_by_3 = [
+    # #     gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0
+    # # ]
+    # # print(len(genes_not_divisible_by_3))
+    # # print(genes_not_divisible_by_3)
+    # # genes_no_start = [
+    # #     gene for gene in genes_not_divisible_by_3 if genome[gene].seq[:3] != "ATG"
+    # # ]
+    # # print(len(genes_no_start))
+    # # print(genes_no_start)
+    # # print()
 
-    not_divisible_by_3 = []
-    for gene in genome.gene_set:
-        if len(str(genome["YIL111W"].cds.seq)) % 3 != 0:
-            not_divisible_by_3.append(gene)
-    print(len(not_divisible_by_3))
-    print(compute_codon_frequency(str(genome["YIL111W"].cds.seq)))
+    # not_divisible_by_3 = []
+    # for gene in genome.gene_set:
+    #     if len(str(genome["YIL111W"].cds.seq)) % 3 != 0:
+    #         not_divisible_by_3.append(gene)
+    # print(len(not_divisible_by_3))
+    # print(compute_codon_frequency(str(genome["YIL111W"].cds.seq)))
     print()
 
 

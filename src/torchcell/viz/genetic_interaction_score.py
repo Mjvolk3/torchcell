@@ -25,7 +25,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     ]
 
     # font name
-    font_name = "Arial"
+    font_name = "Helvetica"
 
     # Bin predictions and collect corresponding true values
     binned_true_values = []
@@ -41,7 +41,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     height = 6
     width = height * aspect_ratio
 
-    fig, ax = plt.subplots(figsize=(width, height))
+    fig, ax = plt.subplots(figsize=(width, height), dpi=140)
 
     # Equally spaced box positions
     box_positions = [i + 0.5 for i in range(len(bins) - 1)]
@@ -61,7 +61,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Set spines
     for spine in ax.spines.values():
-        spine.set_linewidth(1.3)
+        spine.set_linewidth(1.4)
 
     # Boxplots
     boxplots = ax.boxplot(
@@ -93,10 +93,10 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
         median.set_xdata(x)
 
     # Add a black horizontal line at y=0
-    ax.axhline(y=0, color="black", linewidth=1.3, zorder=2)
+    ax.axhline(y=0, color="black", linewidth=1.4, zorder=2)
     # Add a vertical black line at x=0
     x_position_for_zero_bin = bins.index(0.00)
-    ax.axvline(x=x_position_for_zero_bin, color="black", linewidth=1.3, zorder=2)
+    ax.axvline(x=x_position_for_zero_bin, color="black", linewidth=1.4, zorder=2)
     # Set tick labels
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(xticks, ha="center", rotation=45, fontsize=16.0)
@@ -109,10 +109,10 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Adjust x and y label positions
     ax.set_xlabel(
-        "Predicted genetic interaction", labelpad=8, size=16.8, fontname=font_name
+        "Predicted genetic interaction", labelpad=8, size=17.0, fontname=font_name
     )
     ax.set_ylabel(
-        "Measured genetic interaction", labelpad=8, size=16.8, fontname=font_name
+        "Measured genetic interaction", labelpad=8, size=17.0, fontname=font_name
     )
 
     # Set y-axis limits and ticks
@@ -135,13 +135,3 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     plt.tight_layout()
 
     return fig
-
-
-if __name__ == "__main__":
-    import torch
-
-    true_values = torch.load("true_values.pt")
-    predictions = torch.load("predictions.pt")
-    fig = box_plot(true_values, predictions)
-    plt.savefig("box_plot.png", dpi=600)
-    plt.close()

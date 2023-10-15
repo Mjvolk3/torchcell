@@ -39,6 +39,7 @@ if __name__ == "__main__":
     print(fud_downstream[100])
     print(one_hot_gene)
     print(one_hot_gene[100])
+    # BUG if the datasets are not the same size they will not be added properly. Should make sure that all datasets are the same size. Add.
     dataset = fud_downstream + one_hot_gene
     print(dataset)
     print(dataset[100])

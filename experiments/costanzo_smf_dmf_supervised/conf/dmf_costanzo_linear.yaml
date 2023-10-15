@@ -1,0 +1,24 @@
+# experiments/costanzo_smf_dmf_supervised/conf/dmf_costanzo_linear.yaml
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: torchcell
+  tags: [linear, pert]
+
+# we sha has the data for unique identificiation of the data config.
+cell_dataset:
+  experiments: costanzo2016
+  name: cell
+  embeddings: [fungal_down, fungal_up] # fungal_down, fungal_up, one_hot_gene
+
+data_module:
+  batch_size: 16 #32
+  num_workers: 4
+  pin_memory: true
+
+regression_task:
+  aggregation_method: sum # sum, mean, concat
+  cv: 5

@@ -35,20 +35,20 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
 
         self.model_name = "cds_codon_frequency"
         super().__init__(root, self.model_name, transform, pre_transform)
-        # self.genome = self.parse_genome(genome)
-        # del genome
+        self.genome = self.parse_genome(genome)
+        del genome
 
     # This is done to avoid pkl error when since genome uses sqlite
-    # @staticmethod
-    # def parse_genome(genome) -> ParsedGenome:
-    #     # BUG we have to do this black magic because when you merge datasets with +
-    #     # the genome is None
-    #     if genome is None:
-    #         return None
-    #     else:
-    #         data = {}
-    #         data["gene_set"] = genome.gene_set
-    #         return ParsedGenome(**data)
+    @staticmethod
+    def parse_genome(genome) -> ParsedGenome:
+        # BUG we have to do this black magic because when you merge datasets with +
+        # the genome is None
+        if genome is None:
+            return None
+        else:
+            data = {}
+            data["gene_set"] = genome.gene_set
+            return ParsedGenome(**data)
 
     def initialize_model(self):
         return None

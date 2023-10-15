@@ -2,16 +2,30 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697215422129
+updated: 1697408691679
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.10.15
+
+- [ ] Launch linear on delta.
+
+## 2023.10.14
+
+Big results to report. one hot is best on fitness, can't learn epistatic interactions. Linear  models for fitness on one hot. Add to report
+
+- [x] Set up linear models → [[Dmf_costanzo_linear|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_linear]]
+- [ ] DCell model
+- [ ] Run full linear model.
+- [ ] Add full dataset with `smf` and `dmf`.
+- [ ] Joint prediction of fitness and genetic interaction
+
 ## 2023.10.13
 
-- [ ] Add codon frequency dataset.
-- [ ] Add one-hot positional encoding dataset, this will make task transductive (check).
-- [ ] Train codon frequency `1e6`
+- [x] Add codon frequency dataset.
+- [x] Add one-hot positional encoding dataset, this will make task transductive (check).
+- [ ] Train one hot on `1e6` → wandb log we get much better correlation compared to any of the previous models
 - [ ] Add cell morphology dataset
 - [ ] Add ESM2 dataset
 

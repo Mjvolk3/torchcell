@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697491670124
+updated: 1697492148590
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -10,7 +10,8 @@ created: 1690514887023m
 ## 2023.10.16
 
 - [x] Make a simple SGD linear model. We use a linear model because the dataset won't fit into memory otherwise.
-- [ ] Launch linear model on Delta. → Probably could use cpu for this.
+- [x] Launch linear `fitness` model on Delta. → Probably could use cpu for this.
+- [ ] Launch linear `genetic_interaction_score` model on Delta.
 - [ ] Bring in ESM embeddings
 
 ## 2023.10.15

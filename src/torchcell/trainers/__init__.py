@@ -1,4 +1,4 @@
 from .regression import RegressionTask
-from .regression_deep_set_transformer import RegressionTaskDeepSetTransformer
+from .simple_linear_regression import SimpleLinearRegressionTask
 
-__all__ = ["RegressionTask", "RegressionTaskDeepSetTransformer"]
+__all__ = ["RegressionTask", "SimpleLinearRegressionTask"]

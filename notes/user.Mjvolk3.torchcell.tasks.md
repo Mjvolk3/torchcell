@@ -2,14 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697488173715
+updated: 1697491670124
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.10.16
 
-- [ ] Make a simple SGD linear model
+- [x] Make a simple SGD linear model. We use a linear model because the dataset won't fit into memory otherwise.
+- [ ] Launch linear model on Delta. → Probably could use cpu for this.
+- [ ] Bring in ESM embeddings
 
 ## 2023.10.15
 

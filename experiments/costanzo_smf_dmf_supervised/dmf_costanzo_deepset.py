@@ -150,6 +150,8 @@ def main(cfg: DictConfig) -> None:
         batch_size=wandb.config.data_module["batch_size"],
         train_wt_node_loss=wandb.config.regression_task["train_wt_node_loss"],
         train_epoch_size=data_module.train_epoch_size,
+        clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
+        clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         order_penalty=wandb.config.regression_task["order_penalty"],
         lambda_order=wandb.config.regression_task["lambda_order"],
         train_wt_diff=wandb.config.regression_task["train_wt_diff"],

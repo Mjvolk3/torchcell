@@ -2,14 +2,19 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697408691679
+updated: 1697488173715
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.10.16
+
+- [ ] Make a simple SGD linear model
+
 ## 2023.10.15
 
-- [ ] Launch linear on delta.
+- [x] Launch linear on delta. → Failed due to memory error.
+- [x] Make a simple SGD linear model. → started... the issue is with the dataloader, so we could probably append to some file instead of keeping every in memory. Try SGD first.
 
 ## 2023.10.14
 

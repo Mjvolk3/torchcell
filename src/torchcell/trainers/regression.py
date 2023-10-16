@@ -347,7 +347,6 @@ class RegressionTask(pl.LightningModule):
             fig = fitness.box_plot(true_values, predictions)
         elif self.target == "genetic_interaction_score":
             fig = genetic_interaction_score.box_plot(true_values, predictions)
-
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
         # Clear the stored values for the next epoch

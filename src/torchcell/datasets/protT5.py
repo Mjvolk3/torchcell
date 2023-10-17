@@ -1,9 +1,14 @@
+# src/torchcell/datasets/protT5.py
+# [[src.torchcell.datasets.protT5]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/protT5.py
+# Test file: src/torchcell/datasets/test_protT5.py
+
 import os
 from collections.abc import Callable
 
 import torch
-from tqdm import tqdm
 from torch_geometric.data import Data
+from tqdm import tqdm
 
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.embedding import BaseEmbeddingDataset
@@ -23,6 +28,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.genome = genome
         self.model_name = model_name
         super().__init__(root, self.model_name, transform, pre_transform)
@@ -33,7 +39,9 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             if not os.path.exists(self.processed_paths[0]):
                 self.transformer = self.initialize_transformer()
                 self.process()
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], map_location=self.device
+            )
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -63,7 +71,9 @@ class ProtT5Dataset(BaseEmbeddingDataset):
 
             protein_data_dict = {self.model_name: protein_sequence}
 
-            data = Data(id=gene_id, protein_data=protein_data_dict)
+            # HACK changed protein_data to dna_windows so data can be combined.abs
+            # Need a more general solution.
+            data = Data(id=gene_id, dna_windows=protein_data_dict)
             data.embeddings = {self.model_name: embeddings}
             data_list.append(data)
 
@@ -74,8 +84,9 @@ class ProtT5Dataset(BaseEmbeddingDataset):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
     import os.path as osp
+
+    from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/embedding.py
 # Test file: src/torchcell/datasets/test_embedding.py
 
+import os.path as osp
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Optional
@@ -31,11 +32,15 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
             )
         # BUG
         # self.genome = genome # If we include this we get ddp error
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = model_name
-        self.transformer = self.initialize_model()
         super().__init__(root, transform, pre_transform)
+        if not osp.exists(self.processed_paths[0]):
+            self.transformer = self.initialize_model()
         if self.model_name:
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], map_location=self.device
+            )
         else:
             self.data, self.slices = None, None
 

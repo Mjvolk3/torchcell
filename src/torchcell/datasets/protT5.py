@@ -18,7 +18,15 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class ProtT5Dataset(BaseEmbeddingDataset):
-    MODEL_TO_WINDOW = {"prot_t5_xl_uniref50": None}
+    MODEL_TO_WINDOW = {
+        "prot_t5_xl_uniref50_all": None,
+        "prot_t5_xl_uniref50_no_dubious_uncharacterized": [
+            "dubious",
+            "uncharacterized",
+        ],
+        "prot_t5_xl_uniref50_no_dubious": ["dubious"],
+        "prot_t5_xl_uniref50_no_uncharacterized": ["uncharacterized"],
+    }
 
     def __init__(
         self,
@@ -48,27 +56,34 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             data["gene_set"] = genome.gene_set
             return ParsedGenome(**data)
 
-    def initialize_model(self) -> ProtT5 | None:
-        if self.model_name:
-            assert (
-                self.model_name in ProtT5.VALID_MODEL_NAMES
-            ), f"{self.model_name} not in valid model names."
-            return ProtT5(self.model_name)
-        return None
+    def initialize_model(self) -> ProtT5:
+        return ProtT5("prot_t5_xl_uniref50")
 
     def process(self):
-        if not self.model_name:
-            return
         self.transformer = self.initialize_model()
         data_list = []
+
+        exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)
+
         for gene_id in tqdm(self.genome.gene_set):
+            orf_classification = self.genome[gene_id].orf_classification[0]
+
             protein_sequence = str(self.genome[gene_id].protein.seq)
-            embeddings = self.transformer.embed([protein_sequence], mean_embedding=True)
+
+            if (
+                exclude_classifications
+                and orf_classification in exclude_classifications
+            ):
+                print(f"zeros for {gene_id}")
+                embeddings = torch.zeros(1, 1024)
+            else:
+                embeddings = self.transformer.embed(
+                    [protein_sequence], mean_embedding=True
+                )
 
             protein_data_dict = {self.model_name: protein_sequence}
 
-            # HACK changed protein_data to dna_windows so data can be combined.abs
-            # Need a more general solution.
+            # Using 'dna_windows' for compatibility, but this might need a more general solution in the future
             data = Data(id=gene_id, dna_windows=protein_data_dict)
             data.embeddings = {self.model_name: embeddings}
             data_list.append(data)
@@ -91,10 +106,10 @@ if __name__ == "__main__":
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
 
-    model_name = "prot_t5_xl_uniref50"
+    model_name = "prot_t5_xl_uniref50_no_dubious"
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed_no_dubious"),
         genome=genome,
         model_name=model_name,
     )

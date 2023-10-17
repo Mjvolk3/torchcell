@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1695169717405
+updated: 1697580479754
 created: 1675887826601
 ---
 ## Future
@@ -38,7 +38,7 @@ created: 1675887826601
 - [ ] Add plotting functionality on genomes
 - [ ] I am thinking that `CellDataset` is going to be so complex that we will need some sort of configuration
 - [ ] When I do joins of data I want to know what types of data were excluded and which were included. I think that there operations need to be part of something like `Cell.join`
-
+- [ ] Sort out inconsistencies with embedding datasets. Try to unify with `abc`.
 
 ## Far Future
 

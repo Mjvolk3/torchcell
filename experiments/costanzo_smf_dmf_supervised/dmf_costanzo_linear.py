@@ -57,7 +57,9 @@ def main(cfg: DictConfig) -> None:
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
     # Get reference genome
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
+    )
     genome.drop_chrmt()
     genome.drop_empty_go()
 

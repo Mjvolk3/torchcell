@@ -35,8 +35,6 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model_name = model_name
         super().__init__(root, transform, pre_transform)
-        if not osp.exists(self.processed_paths[0]):
-            self.transformer = self.initialize_model()
         if self.model_name:
             self.data, self.slices = torch.load(
                 self.processed_paths[0], map_location=self.device

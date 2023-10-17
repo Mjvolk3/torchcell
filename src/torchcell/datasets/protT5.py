@@ -35,13 +35,9 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
-        if self.model_name:
-            if not os.path.exists(self.processed_paths[0]):
-                self.transformer = self.initialize_transformer()
-                self.process()
-            self.data, self.slices = torch.load(
-                self.processed_paths[0], map_location=self.device
-            )
+        self.data, self.slices = torch.load(
+            self.processed_paths[0], map_location=self.device
+        )
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -63,7 +59,7 @@ class ProtT5Dataset(BaseEmbeddingDataset):
     def process(self):
         if not self.model_name:
             return
-
+        self.transformer = self.initialize_model()
         data_list = []
         for gene_id in tqdm(self.genome.gene_set):
             protein_sequence = str(self.genome[gene_id].protein.seq)

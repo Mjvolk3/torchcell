@@ -5,6 +5,7 @@ from torchcell.datasets import (
     CodonFrequencyDataset,
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
+    ProtT5Dataset,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -35,11 +36,17 @@ if __name__ == "__main__":
     one_hot_gene = OneHotGeneDataset(
         root="data/scerevisiae/gene_one_hot", genome=genome
     )
-    print(fud_downstream)
-    print(fud_downstream[100])
-    print(one_hot_gene)
-    print(one_hot_gene[100])
-    # BUG if the datasets are not the same size they will not be added properly. Should make sure that all datasets are the same size. Add.
-    dataset = fud_downstream + one_hot_gene
-    print(dataset)
-    print(dataset[100])
+    prot_T5_dataset = ProtT5Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        genome=genome,
+        model_name="prot_t5_xl_uniref50",
+    )
+    print()
+    # print(fud_downstream)
+    # print(fud_downstream[100])
+    # print(one_hot_gene)
+    # print(one_hot_gene[100])
+    # # BUG if the datasets are not the same size they will not be added properly. Should make sure that all datasets are the same size. Add.
+    # dataset = fud_downstream + one_hot_gene
+    # print(dataset)
+    # print(dataset[100])

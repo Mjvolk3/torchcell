@@ -2,7 +2,7 @@
 id: 28iti10nh2dekhdrwha8y3q
 title: S288c
 desc: ''
-updated: 1696974349987
+updated: 1697572209673
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -511,4 +511,32 @@ self.db = gffutils.create_db(
     merge_strategy="merge",
     sort_attribute_values=True,
 )
+```
+
+## 6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta
+
+SGD YAR064W Pseudogene with Regulation Interactions. We should keep genes if there are in anyway tied to other genes via any of the biological networks. This isn't absolutely necessary, but for now it is a nice heuristic with yeast.
+
+![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.sgd-YAR064W-pseudogene-with-regulation-interactions.png)
+
+## Dubious ORFs are Unlikley to Encode an Expressed Protein
+
+According to the [Yeast OrFan Gene Project](https://www.yeastorfanproject.com/orfans/) dubious open reading frames are unlikely to encode an expressed protein and should therefore not be encoded by the protein language models for embedding proteins.
+
+```python
+>>> load_dotenv()
+>>> DATA_ROOT = os.getenv("DATA_ROOT")
+>>>
+>>> genome = SCerevisiaeGenome(
+>>>     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+>>> )
+>>> orf_classes = []
+>>> for gene in genome.gene_set:
+>>>     orf_classes.append(genome[gene].orf_classification[0])
+>>> print(pd.Series(orf_classes).value_counts())
+
+Verified           5255
+Dubious             684
+Uncharacterized     668
+Name: count, dtype: int64
 ```

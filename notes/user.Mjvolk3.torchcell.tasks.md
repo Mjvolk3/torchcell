@@ -2,17 +2,35 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697492148590
+updated: 1697581033446
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.10.17
+
+- [x] [[455 Proteins in s288c that are geq 1022 Amino Acids|dendron://torchcell/src.torchcell.models.esm2#455-proteins-in-s288c-that-are-geq-1022-amino-acids]]
+- [x] See if T5 Model can handle max protein size. "Here, we trained models that were affected by this limitations (ProtBERT, ProtAlbert, ProtElectra) first on proteins of length 512, then on proteins 1024. Only setting the length of the positional encoding to 40k after pre-training allowed the models to process protein sequences up to a length of 40k. ([Elnaggar et al., 2022, p. 7114](zotero://select/library/items/6FEQEKR6)) ([pdf](zotero://open-pdf/library/items/HMD9SDQ2?page=3&annotation=PTEJIYQC))" → We can embed all proteins with this.
+- [x] Figure out how to handle pseudogenes [[6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#6-pseudogenes-from-cmd-f-orf_trans_all_r64-4-1_20230830fasta]]
+- [x] Figure out how to identify noncoding → [[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
+- [x] Compute protT5 embeddings → This had to be done on `Delta` because the model is not working for me on cpu currently. [Github Issue](https://github.com/agemagician/ProtTrans/issues/130). More on embeddings - [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
+- [x] Check if we can add in protein embeddings. → We used `protein_data` as an attribute, which prevents us from adding embeddings datasets.
+- [x] Close `genetic_interaction_score`,`dmf_costanzo_linear` [Wandb_Log](https://wandb.ai/zhao-group/torchcell/groups/2514760_3e78b6beb5b847285ef128c72f402d96b88fbb592e9ecb98a745b43db0a857c1/workspace?workspace=user-mjvolk3). You cannot learn the `genetic_interaction_score` by simply `one_hot` encoding the genes.
+- [x] Recompute `ProtT5Dataset` → Had to debug `self.initialize`. There are not some inconsistencies with the embeddings models. I can sort this out later. Added to [[user.mjvolk3.torchcell.tasks.future]]
+- [x] Check we can add the `ProtT5Dataset` to the other datasets. → This is works since we are using the `dna_windows` hack. [[ProtT5 Embedding Input and Output|dendron://torchcell/src.torchcell.models.protT5#prott5-embedding-input-and-output]]
+
+- [ ] Add option to combine zero-like out non-expressing proteins denoted as `'dubious'`.
+- [ ] Launch `genetic_interaction_score` model with
+- [ ] Create multigraph starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data.
+- [ ] Set default font to `Helvetica`
+- [ ] Embedding overlay plot for `FungalCis` and `mean expression`
 
 ## 2023.10.16
 
 - [x] Make a simple SGD linear model. We use a linear model because the dataset won't fit into memory otherwise.
 - [x] Launch linear `fitness` model on Delta. → Probably could use cpu for this.
-- [ ] Launch linear `genetic_interaction_score` model on Delta.
-- [ ] Bring in ESM embeddings
+- [x] Launch linear `genetic_interaction_score` model on Delta.
+- [x] Bring in ESM embeddings → Brought in models but not sure if we should bring in embeddings yet since they can't handle 455 protines in that are > 1022 amino acids [[Esm2|dendron://torchcell/src.torchcell.models.esm2]]
 
 ## 2023.10.15
 

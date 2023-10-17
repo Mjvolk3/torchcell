@@ -1,3 +1,8 @@
+# src/torchcell/models/protT5.py
+# [[src.torchcell.models.protT5]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/protT5.py
+# Test file: src/torchcell/models/test_protT5.py
+
 import os
 import os.path as osp
 import re

@@ -10,18 +10,18 @@ wandb:
 
 # we sha has the data for unique identificiation of the data config.
 cell_dataset:
-  experiments: costanzo2016_1e3
-  name: cell_1e3
+  experiments: costanzo2016_1e6
+  name: cell_1e6
   embeddings: [one_hot_gene] #[fungal_down, fungal_up] # fungal_down, fungal_up, one_hot_gene
 
 data_module:
   batch_size: 16 #32
-  num_workers: 60
+  num_workers: 4
   pin_memory: true
 
 trainer:
   max_epochs: 100
-  strategy: auto # ddp, auto
+  strategy: ddp # ddp, auto
 
 regression_task:
   target: fitness # fitness, genetic_interaction_score
@@ -30,7 +30,7 @@ regression_task:
   weight_decay: 1e-5
   loss: mse
   weighted_mse_penalty: null # only for weighted mse
-  clip_grad_norm: true
+  clip_grad_norm: false
   clip_grad_norm_max_norm: 10
 
 model:

@@ -95,6 +95,6 @@ class ProtT5(PeptideModel):
 
 if __name__ == "__main__":
     model = ProtT5(model_name="prot_t5_xl_uniref50")
-    sample_sequences = ["PRTEINO", "SEQWENCE"]
+    sample_sequences = ["P" * 4911]
     embeddings = model.embed(sample_sequences, mean_embedding=True)
     print(embeddings.shape)

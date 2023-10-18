@@ -24,8 +24,8 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             "dubious",
             "uncharacterized",
         ],
-        "prot_t5_xl_uniref50_no_dubious": ["dubious"],
-        "prot_t5_xl_uniref50_no_uncharacterized": ["uncharacterized"],
+        "prot_t5_xl_uniref50_no_dubious": ["Dubious"],
+        "prot_t5_xl_uniref50_no_uncharacterized": ["Uncharacterized"],
     }
 
     def __init__(
@@ -64,7 +64,6 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         data_list = []
 
         exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)
-
         for gene_id in tqdm(self.genome.gene_set):
             orf_classification = self.genome[gene_id].orf_classification[0]
 
@@ -75,11 +74,11 @@ class ProtT5Dataset(BaseEmbeddingDataset):
                 and orf_classification in exclude_classifications
             ):
                 print(f"zeros for {gene_id}")
-                embeddings = torch.zeros(1, 1024)
+                embeddings = torch.zeros(1, 1024, dtype=torch.float32).to(self.device)
             else:
                 embeddings = self.transformer.embed(
                     [protein_sequence], mean_embedding=True
-                )
+                ).to(torch.float32)
 
             protein_data_dict = {self.model_name: protein_sequence}
 
@@ -106,11 +105,14 @@ if __name__ == "__main__":
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
 
-    model_name = "prot_t5_xl_uniref50_no_dubious"
+    dataset = ProtT5Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        genome=genome,
+        model_name="prot_t5_xl_uniref50_all",
+    )
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed_no_dubious"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
         genome=genome,
-        model_name=model_name,
+        model_name="prot_t5_xl_uniref50_no_dubious",
     )
-    print(f"Dataset for {model_name}: {dataset}")

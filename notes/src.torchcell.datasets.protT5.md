@@ -2,12 +2,12 @@
 id: vtnlvfypudrp5102nrrmgk3
 title: protT5
 desc: ''
-updated: 1697576855434
+updated: 1697584045043
 created: 1697574717834
 ---
 ## Embed all Proteins Can Like 0 Non Expressed Protein
 
-Instead of computing multiple different embedding datasets where the there are 0's for `'dubious'` or `'uncharacterized'` proteins and embedding vectors for `'verified'` proteins. We compute all embeddings, and leave the down selection to pipeline design. This allows us to only compute one set of embeddings.
+Instead of computing multiple different embedding datasets where the there are 0's for `'dubious'` or `'uncharacterized'` proteins and embedding vectors for `'verified'` proteins. ~~We compute all embeddings, and leave the down selection to pipeline design. This allows us to only compute one set of embeddings.~~ I changed my mind. This adds to much overhead into the modeling side of things. This really should belong to datasets. In the future we can make `no_dubious` the default, as it probably should be, and we can just call this dataset `ProtT5`.
 
 ## Protein_Data vs Dna_Windows
 

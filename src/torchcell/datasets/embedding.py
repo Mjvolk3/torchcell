@@ -68,7 +68,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
 
     def __getitem__(self, idx):
         if isinstance(idx, str):
-            # Use _data instead of data to suprress warning. might be dangerous.
+            # Use _data instead of data to suppress warning. might be dangerous.
             if idx in self._data.id:
                 index = self._data.id.index(idx)
                 return Data(
@@ -78,7 +78,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         for key, value in self._data.dna_windows.items()
                     },
                     embeddings={
-                        key: value[index]
+                        key: value[index : index + 1]  # Ensure 2D shape
                         for key, value in self._data.embeddings.items()
                     },
                 )

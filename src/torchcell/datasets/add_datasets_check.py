@@ -36,10 +36,15 @@ if __name__ == "__main__":
     one_hot_gene = OneHotGeneDataset(
         root="data/scerevisiae/gene_one_hot", genome=genome
     )
-    prot_T5_dataset = ProtT5Dataset(
+    prot_T5_dataset_no_dubious = ProtT5Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
         genome=genome,
-        model_name="prot_t5_xl_uniref50",
+        model_name="prot_t5_xl_uniref50_no_dubious",
+    )
+    prot_T5_dataset_all = ProtT5Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        genome=genome,
+        model_name="prot_t5_xl_uniref50_all",
     )
     print()
     # print(fud_downstream)

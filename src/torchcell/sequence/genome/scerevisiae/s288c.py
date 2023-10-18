@@ -732,12 +732,13 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
-    orf_classes = []
-    lengths = []
-    for gene in genome.gene_set:
-        orf_classes.append(genome[gene].orf_classification[0])
-        lengths.append(len(genome[gene].protein.seq))
-    print(pd.Series(orf_classes).value_counts())
+    print()
+    # orf_classes = []
+    # lengths = []
+    # for gene in genome.gene_set:
+    #     orf_classes.append(genome[gene].orf_classification[0])
+    #     lengths.append(len(genome[gene].protein.seq))
+    # print(pd.Series(orf_classes).value_counts())
     # genome.go
     # genome.drop_chrmt()
     # print(len(genome.gene_set))

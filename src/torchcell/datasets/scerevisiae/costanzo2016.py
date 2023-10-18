@@ -775,7 +775,7 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"), exist_ok=True)
+    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e6"), exist_ok=True)
 
     dmf_dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"),

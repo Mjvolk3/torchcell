@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697586093886
+updated: 1697605998523
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -22,11 +22,15 @@ created: 1690514887023m
 - [x] Compute `"prot_t5_xl_uniref50_all"` and `"prot_t5_xl_uniref50_no_dubious"` and globus transfer. → Changed my mind on making these separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
 - [x] Add option to combine zero-like out non-expressing proteins denoted as `'dubious'`. → Separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
 - [x] Fix bug "dubious" to "Dubious" and "uncharacterized" to "Uncharacterized" and recompute and transfer embeddings.
+- [x] Test `dmf_costanzo_deepset` with different protein embeddings.
+- [x] Launch `dmf_costanzo_deepset` with `no_dubious` protein embeddings.
+- [x] Check [[dmf Genetic Interaction Score Mean|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmf-genetic-interaction-score-mean]]
+- [x] Check `PyG` → [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]
 
-- [ ] Test `dmf_costanzo_deepset` with different protein embeddings.
-- [ ] Launch `dmf_costanzo_deepset` with `no_dubious` protein embeddings.
 
-- [ ] Create multigraph starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data.
+- [ ] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
+
+
 - [ ] Set default font to `Helvetica`
 - [ ] Embedding overlay plot for `FungalCis` and `mean expression`
 
@@ -36,6 +40,7 @@ created: 1690514887023m
 - [x] Launch linear `fitness` model on Delta. → Probably could use cpu for this.
 - [x] Launch linear `genetic_interaction_score` model on Delta.
 - [x] Bring in ESM embeddings → Brought in models but not sure if we should bring in embeddings yet since they can't handle 455 protines in that are > 1022 amino acids [[Esm2|dendron://torchcell/src.torchcell.models.esm2]]
+
 
 ## 2023.10.15
 

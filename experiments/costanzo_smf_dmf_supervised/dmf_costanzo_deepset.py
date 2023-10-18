@@ -86,12 +86,20 @@ def main(cfg: DictConfig) -> None:
         embeddings.append(
             OneHotGeneDataset(root="data/scerevisiae/gene_one_hot", genome=genome)
         )
-    if "prot_T5" in wandb.config.cell_dataset["embeddings"]:
+    if "prot_T5_all" in wandb.config.cell_dataset["embeddings"]:
         embeddings.append(
             ProtT5Dataset(
                 root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
                 genome=genome,
-                model_name="prot_t5_xl_uniref50",
+                model_name="prot_t5_xl_uniref50_all",
+            )
+        )
+    if "prot_T5_no_dubious" in wandb.config.cell_dataset["embeddings"]:
+        embeddings.append(
+            ProtT5Dataset(
+                root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+                genome=genome,
+                model_name="prot_t5_xl_uniref50_no_dubious",
             )
         )
 

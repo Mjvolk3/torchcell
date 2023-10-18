@@ -43,9 +43,19 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
-        self.data, self.slices = torch.load(
-            self.processed_paths[0], map_location=self.device
-        )
+        # self.data, self.slices = torch.load(self.processed_paths[0])
+        # self.data, self.slices = torch.load(
+        #     self.processed_paths[0], map_location=self.device
+        # )
+        if self.model_name:
+            if not os.path.exists(self.processed_paths[0]):
+                self.transformer = self.initialize_transformer()
+                self.process()
+            # HACK we send cpu because all data needs to be on cpu for lightning
+            # lightning automatically moves
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], map_location="cpu"
+            )
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -60,7 +70,11 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         return ProtT5("prot_t5_xl_uniref50")
 
     def process(self):
-        self.transformer = self.initialize_model()
+        # HACK
+        # self.transformer = self.initialize_model()
+        if not self.model_name:
+            return
+
         data_list = []
 
         exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)

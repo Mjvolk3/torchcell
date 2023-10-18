@@ -2,7 +2,7 @@
 id: rzwif3bimldfvjdtmx712pp
 title: Costanzo2016
 desc: ''
-updated: 1695848089721
+updated: 1697600646551
 created: 1693327811119
 ---
 ## DmfCostanzoDataset Out of Memory Dataset
@@ -537,3 +537,10 @@ def wildtype(self):
 ## Adding Fitness Labels
 
 The names `smf`, `dmf`, or even `tmf` for when we include triple mutant fitness, are informative, but these should be able to be recovered by the genotype specification. They should probably just be named, fitness. This would lead to easier joining in [[src.torchcell.datasets.cell]]
+
+## dmf Genetic Interaction Score Mean
+
+```python
+>>>dmf_dataset.df['Genetic interaction score (ε)'].mean()
+-0.002914725734474059
+```

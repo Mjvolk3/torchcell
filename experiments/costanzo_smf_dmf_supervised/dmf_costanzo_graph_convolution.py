@@ -130,6 +130,7 @@ def main(cfg: DictConfig) -> None:
         graph=graph,
         embeddings=embeddings,
         experiments=experiments,
+        zero_pert=wandb.config.cell_dataset["zero_pert"],
     )
 
     # Instantiate your data module and model

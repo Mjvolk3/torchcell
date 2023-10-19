@@ -45,7 +45,7 @@ models:
     set_layers: [32, 32, 32] # [32, 32, 32, 32] # [256, 128]
     hidden_channels: 64
     num_layers: 1
-    norm: batch
+    norm: layer
     activation: gelu
     skip_node: true
     skip_set: true

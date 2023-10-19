@@ -2,14 +2,14 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697692755613
+updated: 1697695493326
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.10.20
 
-- [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc.
+- [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc... This might be an issue with num_workers instead.
 
 ## 2023.10.19
 
@@ -22,9 +22,11 @@ created: 1690514887023m
 - [x] Something looks strange with the interaction distribution. → 0.04 is about one std away so the genetic interaction score plots show the range of one std.
 - [x] In `nx.compose` the second graph will overwrite data if there are duplicate keys. →
 - [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]
-- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]], when using `genome` things get hung up on `Sanity Checking`.
+- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
 - [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/src.torchcell.trainers.graph_convolution_regression]]
 - [x] Implement option to train on fitness and interaction simultaneously → set up the beginnings of this, but it is going to be a lot of work.
+- [x] Issue with `genome.gene_set` vs `genome` might instead be an issue with `num_workers`. When I set `num_workers=0` things run. `num_workers=4` things don't run. Gets hung up at `Sanity Checking:` → `num_workers=2` works but it takes a very long time to get going. `num_workers=4` probably also works
+- [ ] Launch on `Delta`.
 
 - [ ] Add in single fitness
 - [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]

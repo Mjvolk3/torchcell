@@ -15,7 +15,7 @@ cell_dataset:
 
 data_module:
   batch_size: 16 #32
-  num_workers: 4 # 4
+  num_workers: 2 # 4
   pin_memory: true
 
 trainer:

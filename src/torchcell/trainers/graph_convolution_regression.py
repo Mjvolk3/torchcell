@@ -84,8 +84,11 @@ class GraphConvRegressionTask(pl.LightningModule):
             self.x_name = "x_pert"
             self.x_batch_name = "x_pert_batch"
         elif self.train_mode == "one_hop_pert":
-            self.x_name = "x_one_hop_pert"
-            self.x_batch_name = "x_one_hop_pert_batch"
+            # HACK
+            # self.x_name = "x_one_hop_pert"
+            self.x_name = "x"
+            # self.x_batch_name = "x_one_hop_pert_batch"
+            self.x_batch_name = "x_batch"
 
         # loss
         if loss == "mse":
@@ -258,7 +261,7 @@ class GraphConvRegressionTask(pl.LightningModule):
         y_hat = self(
             x=batch[self.x_name],
             batch=batch[self.x_batch_name],
-            edge_index=batch["edge_index_one_hop_pert"],
+            edge_index=batch["edge_index"],
         )
         opt = self.optimizers()
         opt.zero_grad()
@@ -319,7 +322,7 @@ class GraphConvRegressionTask(pl.LightningModule):
         y_hat = self(
             x=batch[self.x_name],
             batch=batch[self.x_batch_name],
-            edge_index=batch["edge_index_one_hop_pert"],
+            edge_index=batch["edge_index"],
         )
         loss = self.loss(y_hat, y)
         batch_size = batch[self.x_batch_name][-1].item() + 1
@@ -390,7 +393,7 @@ class GraphConvRegressionTask(pl.LightningModule):
         y_hat = self(
             x=batch[self.x_name],
             batch=batch[self.x_batch_name],
-            edge_index=batch["edge_index_one_hop_pert"],
+            edge_index=batch["edge_index"],
         )
         batch_size = batch[self.x_batch_name][-1].item() + 1
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)

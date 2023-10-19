@@ -3,6 +3,7 @@ from .constants import DNA_LLM_MAX_TOKEN_SIZE
 from .deep_set import DeepSet
 from .deep_set_transformer import DeepSetTransformer
 from .fungal_up_down_transformer import FungalUpDownTransformer
+from .graph_attention import GraphAttention
 from .graph_convolution import GraphConvolution
 from .linear import SimpleLinearModel
 from .mlp import Mlp
@@ -21,6 +22,7 @@ models = [
     "DeepSetTransformer",
     "SimpleLinearModel",
     "GraphConvolution",
+    "GraphAttention",
 ]
 
 __all__ = model_constants + simple_models + model_building_blocks + models

@@ -31,6 +31,7 @@ from torch_geometric.data.separate import separate
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import (
     add_self_loops,
+    coalesce,
     from_networkx,
     k_hop_subgraph,
     subgraph,
@@ -80,6 +81,7 @@ class CellDataset(Dataset):
         graph: nx.Graph = None,
         embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
+        zero_pert: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
@@ -95,6 +97,9 @@ class CellDataset(Dataset):
         self.embeddings = embeddings
         self.experiments = experiments
         self.experiment_datasets = None
+
+        # HACK zero out embedding of pert hack
+        self.zero_pert = zero_pert
 
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
@@ -376,22 +381,24 @@ class CellDataset(Dataset):
         # Extract subgraphs for nodes in x_pert_idx
         if len(subset_graph.x_pert_idx) > 0 and self.graph:
             edge_indices = []
+            pert_indices = []
             for idx in subset_graph.x_pert_idx:
                 extracted_subgraph = self.extract_subgraph(int(idx), subset_graph)
+                # edge_indices.append(coalesce(extracted_subgraph.edge_index))
                 edge_indices.append(extracted_subgraph.edge_index)
-
+                pert_indices.append(idx)
             # Concatenate all edge indices and get unique nodes
             unique_k_hop_nodes = torch.cat(edge_indices, dim=1).unique()
 
             # Get the induced subgraph based on these unique node indices
-
-            combined_subgraph_new = subgraph(
-                subset=unique_k_hop_nodes,
-                edge_index=self.cell_graph.edge_index,
-                relabel_nodes=True,
-            )
             combined_subgraph = self.cell_graph.subgraph(unique_k_hop_nodes)
-
+            # HACK
+            if self.zero_pert:
+                matching_indices = [
+                    (unique_k_hop_nodes == idx).nonzero().item() for idx in pert_indices
+                ]
+                combined_subgraph.x[matching_indices] = 0
+            # HACK
             subset_graph.x_one_hop_pert = combined_subgraph.x
             subset_graph.edge_index_one_hop_pert = combined_subgraph.edge_index
             assert len(subset_graph.x_one_hop_pert) > 0, "x_one_hop_pert is empty"

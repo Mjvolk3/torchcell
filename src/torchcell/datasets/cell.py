@@ -142,15 +142,19 @@ class CellDataset(Dataset):
     def processed_file_names(self) -> list[str]:
         return "data.lmdb"
 
+    # HACK comment out for now
+    # @property
+    # def wt(self):
+    #     # Need to be able to combine WTs into one WT
+    #     # wts = [experiment.wt for experiment in self.experiments]
+    #     # TODO aggregate WTS. For now just return the first one.
+    #     wt = self.experiments.wt
+    #     subset_data = self._subset_graph(wt)
+    #     data = self._add_label(subset_data, wt)
+    #     return data
     @property
     def wt(self):
-        # Need to be able to combine WTs into one WT
-        # wts = [experiment.wt for experiment in self.experiments]
-        # TODO aggregate WTS. For now just return the first one.
-        wt = self.experiments.wt
-        subset_data = self._subset_graph(wt)
-        data = self._add_label(subset_data, wt)
-        return data
+        return None
 
     # TODO remove
     # def create_embedding_graph(self, embeddings: BaseEmbeddingDataset) -> Data:
@@ -380,7 +384,14 @@ class CellDataset(Dataset):
             unique_k_hop_nodes = torch.cat(edge_indices, dim=1).unique()
 
             # Get the induced subgraph based on these unique node indices
+
+            combined_subgraph_new = subgraph(
+                subset=unique_k_hop_nodes,
+                edge_index=self.cell_graph.edge_index,
+                relabel_nodes=True,
+            )
             combined_subgraph = self.cell_graph.subgraph(unique_k_hop_nodes)
+
             subset_graph.x_one_hop_pert = combined_subgraph.x
             subset_graph.edge_index_one_hop_pert = combined_subgraph.edge_index
             assert len(subset_graph.x_one_hop_pert) > 0, "x_one_hop_pert is empty"
@@ -390,7 +401,13 @@ class CellDataset(Dataset):
         else:
             subset_graph.x_one_hop_pert = None
             subset_graph.edge_index_one_hop_pert = None
-        return subset_graph
+        # HACK
+        data = Data(
+            x=subset_graph.x_one_hop_pert,
+            edge_index=subset_graph.edge_index_one_hop_pert,
+        )
+        # return subset_graph
+        return data
 
     # HACK
     @staticmethod

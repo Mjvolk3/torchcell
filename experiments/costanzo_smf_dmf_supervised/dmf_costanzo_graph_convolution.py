@@ -25,7 +25,7 @@ from torchcell.datasets import (
     ProtT5Dataset,
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
-from torchcell.models import GraphConvolution, Mlp
+from torchcell.models import GraphAttention, GraphConvolution, Mlp
 from torchcell.multidigraph.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import GraphConvRegressionTask
@@ -140,8 +140,14 @@ def main(cfg: DictConfig) -> None:
     )
 
     input_dim = cell_dataset.num_features
+
+    if wandb.config.models["cell"]["name"] == "GCN":
+        cell_model = GraphConvolution
+    elif wandb.config.models["cell"]["name"] == "GAT":
+        cell_model = GraphAttention
+
     models = {
-        "cell": GraphConvolution(
+        "cell": cell_model(
             input_dim=input_dim,
             node_layers=wandb.config.models["cell"]["node_layers"],
             hidden_channels=wandb.config.models["cell"]["hidden_channels"],
@@ -210,6 +216,7 @@ def main(cfg: DictConfig) -> None:
     trainer = pl.Trainer(
         strategy=wandb.config.trainer["strategy"],
         devices=devices,
+        accelerator=wandb.config.trainer["accelerator"],
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

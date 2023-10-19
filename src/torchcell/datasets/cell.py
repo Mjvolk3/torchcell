@@ -414,6 +414,7 @@ class CellDataset(Dataset):
             edge_index=subset_graph.edge_index_one_hop_pert,
         )
         # return subset_graph
+        # TODO consider adding virutal node
         return data
 
     # HACK

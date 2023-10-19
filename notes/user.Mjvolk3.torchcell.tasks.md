@@ -2,19 +2,23 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697736741353
+updated: 1697752109494
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.10.20
 
-
+- [ ] Read on data batching [PyG data batch](https://pytorch-geometric.readthedocs.io/en/latest/advanced/batching.html)
+- [ ] Regroup
+- [ ] Graph object, get other relevant networks including PPI, Reg, GGI, GO, Met.
+- [ ] Workout saving graphs objects, this will greatly reduce dev time
+- [ ] Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object. The subset graph procedure that interacts with all data is probably
 - [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc... This might be an issue with num_workers instead.
 
 ## 2023.10.19
 
-- [ ] Models didn't work with one hop neighborhood. Try to zero out the embeddings...o
+- [x] Models didn't work with one hop neighborhood. Try to zero out the embeddings. → `zero_pert` bool, this doesn't seem to work either. I suspect that the issue is that we are using the embedding of 1 hop neighborhood which can be quite large. We could possibly pull out the embedding of the perturbed nodes themselves, but this would require keeping indices in the data object. After now going through 3-4 modelling designs, I think I the subset of data is the key part. It would be nice to specify a very specific transformations like the `pert_graph`, while building out a key to track `edge_index` and ed,
 - [ ] Prepare presentation
 
 ## 2023.10.18

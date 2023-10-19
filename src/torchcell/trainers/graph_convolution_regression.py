@@ -136,8 +136,11 @@ class GraphConvRegressionTask(pl.LightningModule):
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        self.true_values = []
-        self.predictions = []
+        self.true_values = {}
+        self.predictions = {}
+        for target in self.target:
+            self.true_values[target] = []
+            self.predictions[target] = []
 
         # wandb model artifact logging
         self.last_logged_best_step = None
@@ -257,6 +260,7 @@ class GraphConvRegressionTask(pl.LightningModule):
         # Train on wt reference
         if self.train_mode == "wt_diff":
             self.train_wt()
+
         y = self.compose_target(batch)
         y_hat = self(
             x=batch[self.x_name],
@@ -267,39 +271,54 @@ class GraphConvRegressionTask(pl.LightningModule):
         opt.zero_grad()
         assert y_hat.size() == y.size(), "y_hat and y should have the same size"
 
+        losses = {}
+        batch_size = batch[self.x_batch_name][-1].item() + 1
+
+        # Calculate loss for each target
+        for target in self.target:
+            i = self.target.index(target)
+            losses[target] = self.loss(y_hat[:, i], y[:, i])
+            self.log(
+                f"{target}/train_loss",
+                losses[target],
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.train_metrics(y_hat[:, i], y[:, i])
+            self.log(
+                f"{target}/train_pearson",
+                self.pearson_corr(y_hat[:, i], y[:, i]),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.log(
+                f"{target}/train_spearman",
+                self.spearman_corr(y_hat[:, i], y[:, i]),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+
+        # Overall loss
         if self.order_penalty:
             order_penalty_value = self.ordering_penalty(y_hat, y)
-            # Hyperparameter to adjust the weight of ordering penalty
             order_penalty_loss = self.lambda_order * order_penalty_value
             self.log("order_penalty_loss", order_penalty_loss)
-            loss = self.loss(y, y_hat) + self.lambda_order * order_penalty_loss
+            loss = sum(losses.values()) + self.lambda_order * order_penalty_loss
         else:
-            loss = self.loss(y_hat, y)
+            loss = sum(losses.values())
 
-        self.manual_backward(loss)  # error on this line
+        self.manual_backward(loss)
         if self.clip_grad_norm:
             nn.utils.clip_grad_norm_(
                 self.parameters(), max_norm=self.clip_grad_norm_max_norm
             )
         opt.step()
         opt.zero_grad()
-        # logging
-        batch_size = batch[self.x_batch_name][-1].item() + 1
+
+        # Log overall metrics
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat, y)
-        # Logging the correlation coefficients
-        self.log(
-            "train_pearson",
-            self.pearson_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "train_spearman",
-            self.spearman_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
+
         return loss
 
     def on_train_epoch_end(self):
@@ -324,26 +343,39 @@ class GraphConvRegressionTask(pl.LightningModule):
             batch=batch[self.x_batch_name],
             edge_index=batch["edge_index"],
         )
-        loss = self.loss(y_hat, y)
+        losses = {}
         batch_size = batch[self.x_batch_name][-1].item() + 1
+        for target in self.target:
+            i = self.target.index(target)
+            losses[target] = self.loss(y_hat[:, i], y[:, i])
+            self.log(
+                f"{target}/val_loss",
+                losses[target],
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.val_metrics(y_hat[:, i], y[:, i])
+            self.log(
+                f"{target}/val_pearson",
+                self.pearson_corr(y_hat[:, i], y[:, i]),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.log(
+                f"{target}/val_spearman",
+                self.spearman_corr(y_hat[:, i], y[:, i]),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+        loss = sum(losses.values())
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
-        # for i in enumerate(self.target):
         self.val_metrics(y_hat, y)
+        # for i in enumerate(self.target):
         # Logging the correlation coefficients
-        self.log(
-            "val_pearson",
-            self.pearson_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "val_spearman",
-            self.spearman_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.true_values.append(y.detach())
-        self.predictions.append(y_hat.detach())
+        for target in self.target:
+            i = self.target.index(target)
+            self.true_values[target].append(y[:, i].detach())
+            self.predictions[target].append(y_hat[:, i].detach())
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -356,36 +388,39 @@ class GraphConvRegressionTask(pl.LightningModule):
             return
 
         # Convert lists to tensors
-        true_values = torch.cat(self.true_values, dim=0)
-        predictions = torch.cat(self.predictions, dim=0)
+        for target in self.target:
+            target_true_value = torch.cat(self.true_values[target], dim=0)
+            target_predictions = torch.cat(self.predictions[target], dim=0)
 
-        if "fitness" in self.target:
-            fig = fitness.box_plot(true_values, predictions)
-        if "genetic_interaction_score" in self.target:
-            fig = genetic_interaction_score.box_plot(true_values, predictions)
-        wandb.log({"binned_values_box_plot": wandb.Image(fig)})
-        plt.close(fig)
-        # Clear the stored values for the next epoch
-        self.true_values = []
-        self.predictions = []
+            if target == "fitness":
+                fig = fitness.box_plot(target_true_value, target_predictions)
+            if target == "genetic_interaction_score":
+                fig = genetic_interaction_score.box_plot(
+                    target_true_value, target_predictions
+                )
+            wandb.log({"binned_values_box_plot": wandb.Image(fig)})
+            plt.close(fig)
+            # Clear the stored values for the next epoch
+            self.true_values[target] = []
+            self.predictions[target] = []
 
-        current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
-            # Save model as a W&B artifact
-            artifact = wandb.Artifact(
-                name=f"model-global_step-{current_global_step}",
-                type="model",
-                description=f"Model on validation epoch end step - {current_global_step}",
-                metadata=dict(self.hparams),
-            )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
-            wandb.log_artifact(artifact)
-            self.last_logged_best_step = (
-                current_global_step  # update the last logged step
-            )
+            current_global_step = self.global_step
+            if (
+                self.trainer.checkpoint_callback.best_model_path
+                and current_global_step != self.last_logged_best_step
+            ):
+                # Save model as a W&B artifact
+                artifact = wandb.Artifact(
+                    name=f"model-global_step-{current_global_step}",
+                    type="model",
+                    description=f"Model on validation epoch end step - {current_global_step}",
+                    metadata=dict(self.hparams),
+                )
+                artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
+                wandb.log_artifact(artifact)
+                self.last_logged_best_step = (
+                    current_global_step  # update the last logged step
+                )
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
@@ -395,6 +430,7 @@ class GraphConvRegressionTask(pl.LightningModule):
             batch=batch[self.x_batch_name],
             edge_index=batch["edge_index"],
         )
+        loss = self.loss(y_hat, y)
         batch_size = batch[self.x_batch_name][-1].item() + 1
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
         self.test_metrics(y_hat, y)

@@ -2,17 +2,19 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697695493326
+updated: 1697736741353
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2023.10.20
 
+
 - [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc... This might be an issue with num_workers instead.
 
 ## 2023.10.19
 
+- [ ] Models didn't work with one hop neighborhood. Try to zero out the embeddings...o
 - [ ] Prepare presentation
 
 ## 2023.10.18

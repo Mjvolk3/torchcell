@@ -1,8 +1,3 @@
-# experiments/dmf_costanzo_deepset.py
-# [[experiments.dmf_costanzo_deepset]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/dmf_costanzo_deepset.py
-# Test file: experiments/test_dmf_costanzo_deepset.py
-
 import datetime
 import hashlib
 import json
@@ -30,16 +25,19 @@ from torchcell.datasets import (
     ProtT5Dataset,
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
-from torchcell.models import DeepSet, Mlp
+from torchcell.models import GraphConvolution, Mlp
+from torchcell.multidigraph.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers import RegressionTask
+from torchcell.trainers import GraphConvRegressionTask
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="dmf_costanzo_deepset")
+@hydra.main(
+    version_base=None, config_path="conf", config_name="dmf_costanzo_graph_convolution"
+)
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -58,7 +56,9 @@ def main(cfg: DictConfig) -> None:
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
     # Get reference genome
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
+    )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
@@ -113,12 +113,21 @@ def main(cfg: DictConfig) -> None:
         ),
     )
 
-    # Gather into CellDatset
+    # Graph Data
+    # graph = SCerevisiaeGraph(
+    #     data_root=osp.join(DATA_ROOT, "data/sgd/genes"), genome=genome
+    # )
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genes"), gene_set=genome.gene_set
+    )
+
+    # Gather into CellDataset
     cell_dataset = CellDataset(
         root=osp.join(
             osp.join(DATA_ROOT, "data/scerevisiae", wandb.config.cell_dataset["name"])
         ),
         genome=genome,
+        graph=graph,
         embeddings=embeddings,
         experiments=experiments,
     )
@@ -129,20 +138,24 @@ def main(cfg: DictConfig) -> None:
         batch_size=wandb.config.data_module["batch_size"],
         num_workers=wandb.config.data_module["num_workers"],
     )
+
     input_dim = cell_dataset.num_features
     models = {
-        "deep_set": DeepSet(
+        "cell": GraphConvolution(
             input_dim=input_dim,
-            node_layers=wandb.config.models["graph"]["node_layers"],
-            set_layers=wandb.config.models["graph"]["set_layers"],
-            norm=wandb.config.models["graph"]["norm"],
-            activation=wandb.config.models["graph"]["activation"],
-            skip_node=wandb.config.models["graph"]["skip_node"],
-            skip_set=wandb.config.models["graph"]["skip_set"],
+            node_layers=wandb.config.models["cell"]["node_layers"],
+            hidden_channels=wandb.config.models["cell"]["hidden_channels"],
+            num_layers=wandb.config.models["cell"]["num_layers"],
+            set_layers=wandb.config.models["cell"]["set_layers"],
+            norm=wandb.config.models["cell"]["norm"],
+            activation=wandb.config.models["cell"]["activation"],
+            skip_node=wandb.config.models["cell"]["skip_node"],
+            skip_set=wandb.config.models["cell"]["skip_set"],
+            skip_mp=wandb.config.models["cell"]["skip_mp"],
         ),
-        "mlp_ref_set": Mlp(
-            input_dim=wandb.config.models["graph"]["set_layers"][-1],
-            layer_dims=wandb.config.models["mlp_refset"]["layer_dims"],
+        "readout": Mlp(
+            input_dim=wandb.config.models["cell"]["set_layers"][-1],
+            layer_dims=[len(wandb.config.regression_task["target"])],
         ),
     }
 
@@ -154,7 +167,7 @@ def main(cfg: DictConfig) -> None:
     kwargs = {"fitness_mean_value": fitness_mean_value}
 
     len(experiments)
-    model = RegressionTask(
+    model = GraphConvRegressionTask(
         models=models,
         wt=cell_dataset.wt,
         target=wandb.config.regression_task["target"],
@@ -171,7 +184,7 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         order_penalty=wandb.config.regression_task["order_penalty"],
         lambda_order=wandb.config.regression_task["lambda_order"],
-        train_wt_diff=wandb.config.regression_task["train_wt_diff"],
+        train_mode=wandb.config.regression_task["train_mode"],
         **kwargs,
     )
 
@@ -193,6 +206,7 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    # TODO remove num_sanity_val_steps=0
     trainer = pl.Trainer(
         strategy=wandb.config.trainer["strategy"],
         devices=devices,

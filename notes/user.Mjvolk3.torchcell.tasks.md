@@ -2,10 +2,37 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697605998523
+updated: 1697692755613
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.10.20
+
+- [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc.
+
+## 2023.10.19
+
+- [ ] Prepare presentation
+
+## 2023.10.18
+
+`funal_up` and `fungal_down` work. `one_hot_gene` and the `prot_T5` datasets don't work
+
+- [x] Something looks strange with the interaction distribution. → 0.04 is about one std away so the genetic interaction score plots show the range of one std.
+- [x] In `nx.compose` the second graph will overwrite data if there are duplicate keys. →
+- [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]
+- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]], when using `genome` things get hung up on `Sanity Checking`.
+- [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/src.torchcell.trainers.graph_convolution_regression]]
+- [x] Implement option to train on fitness and interaction simultaneously → set up the beginnings of this, but it is going to be a lot of work.
+
+- [ ] Add in single fitness
+- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]
+- [ ] Plan graph merge
+- [ ] Add single fitness data
+- [ ] Embedding overlay plot for `FungalCis` and `mean expression`
+- [ ] switch to `torch_geometric.utils.scatter`
+- [ ] I think in order to have general graph composition we
 
 ## 2023.10.17
 
@@ -26,13 +53,14 @@ created: 1690514887023m
 - [x] Launch `dmf_costanzo_deepset` with `no_dubious` protein embeddings.
 - [x] Check [[dmf Genetic Interaction Score Mean|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmf-genetic-interaction-score-mean]]
 - [x] Check `PyG` → [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]
+- [x] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
+- [x] Launch `prot_T5_no_dubious`, `costanzo_1e6
 
+- [ ] Add multigraph to prediction
 
-- [ ] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
-
-
-- [ ] Set default font to `Helvetica`
+- [ ] Add double prediction of `fitness` and `gene_interaction_score`
 - [ ] Embedding overlay plot for `FungalCis` and `mean expression`
+- [ ] Set default font to `Helvetica`
 
 ## 2023.10.16
 
@@ -40,7 +68,6 @@ created: 1690514887023m
 - [x] Launch linear `fitness` model on Delta. → Probably could use cpu for this.
 - [x] Launch linear `genetic_interaction_score` model on Delta.
 - [x] Bring in ESM embeddings → Brought in models but not sure if we should bring in embeddings yet since they can't handle 455 protines in that are > 1022 amino acids [[Esm2|dendron://torchcell/src.torchcell.models.esm2]]
-
 
 ## 2023.10.15
 

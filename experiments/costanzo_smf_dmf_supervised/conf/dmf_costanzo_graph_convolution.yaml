@@ -4,18 +4,18 @@ defaults:
   - _self_ # append to end for overriding duplicate configs in default
 
 wandb:
-  mode: offline # disabled, offline, online
+  mode: online # disabled, offline, online
   project: torchcell
-  tags: [poc, subset]
+  tags: [delete]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
-  embeddings: [prot_T5_no_dubious] # fungal_down, fungal_up, one_hot_gene, prot_T5_all, prot_T5_no_dubious
+  experiments: costanzo2016_1e4
+  name: cell_1e4
+  embeddings: [one_hot_gene, prot_T5_all] # fungal_down, fungal_up, one_hot_gene, prot_T5_all, prot_T5_no_dubious
 
 data_module:
   batch_size: 16 #32
-  num_workers: 4
+  num_workers: 4 # 4
   pin_memory: true
 
 trainer:
@@ -23,7 +23,7 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  target: genetic_interaction_score # fitness, genetic_interaction_score
+  target: [genetic_interaction_score] # fitness, genetic_interaction_score
   wt_train_per_epoch: null # 100
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
@@ -35,15 +35,16 @@ regression_task:
   clip_grad_norm_max_norm: 10
   order_penalty: false
   lambda_order: 1.0
-  train_wt_diff: false
+  train_mode: one_hop_pert # wt_diff, pert, one_hop_pert
 
 models:
-  graph:
-    node_layers: [512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
-    set_layers: [32, 32, 32, 32] # [256, 128]
+  cell:
+    node_layers: [512, 256, 128, 64] #[512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
+    set_layers: [32, 32, 32] # [32, 32, 32, 32] # [256, 128]
+    hidden_channels: 64
+    num_layers: 1
     norm: batch
     activation: gelu
     skip_node: true
     skip_set: true
-  mlp_refset:
-    layer_dims: [1]
+    skip_mp: true

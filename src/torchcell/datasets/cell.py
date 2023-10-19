@@ -19,6 +19,8 @@ from os import environ
 from typing import List, Optional, Tuple, Union
 
 import lmdb
+import networkx as nx
+import numpy as np
 import pandas as pd
 import torch
 from attrs import define
@@ -27,7 +29,12 @@ from sklearn import experimental
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
 from torch_geometric.loader import DataLoader
-from torch_geometric.utils import subgraph
+from torch_geometric.utils import (
+    add_self_loops,
+    from_networkx,
+    k_hop_subgraph,
+    subgraph,
+)
 from tqdm import tqdm
 
 from torchcell.data import Dataset
@@ -49,10 +56,6 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 log = logging.getLogger(__name__)
 
 
-class DiMultiGraph:
-    pass
-
-
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
@@ -68,12 +71,14 @@ class CellDataset(Dataset):
     Represents a dataset for cellular data.
     """
 
+    # TODO type change experiments
     def __init__(
         self,
         root: str = "data/scerevisiae/cell",
         # genome: Genome = None,
         genome: Genome = None,
-        seq_embeddings: BaseEmbeddingDataset | None = None,
+        graph: nx.Graph = None,
+        embeddings: BaseEmbeddingDataset | None = None,
         experiments: list[InMemoryDataset] | InMemoryDataset = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
@@ -86,10 +91,10 @@ class CellDataset(Dataset):
         del genome
         # self.genome = None
         # HACK end
-        self.seq_embeddings = seq_embeddings
+        self.graph = graph
+        self.embeddings = embeddings
         self.experiments = experiments
-        self.dimultigraph: DiMultiGraph | None = None
-        self.experiment_datasets: list[InMemoryDataset] | None = None
+        self.experiment_datasets = None
 
         # TODO consider moving to Dataset
         self.preprocess_dir = osp.join(root, "preprocess")
@@ -100,10 +105,26 @@ class CellDataset(Dataset):
         # Create WT
 
         # Create the seq graph
-        if self.seq_embeddings:
-            self.seq_graph = self.create_seq_graph(self.seq_embeddings)
+        graphs = []
+        if self.embeddings:
+            G_embedding = self.create_embedding_graph(self.genome, self.embeddings)
+            graphs.append(G_embedding)
+        if self.graph:
+            G_physical = self.graph.G_physical
+            graphs.append(G_physical)
+        self.cell_graph = self.to_cell_data(graphs)
+        # HACK to try and get ride of no edge index issue.
+        # Self loops fixes the batching problem for no edges.
+        self.cell_graph.edge_index = add_self_loops(self.cell_graph.edge_index)[0]
         # LMDB env
         self.env = None
+
+    def to_cell_data(self, graphs: list[nx.Graph]) -> Data:
+        G = self.safe_compose(graphs)
+        # drop nodes that don't belong to genome.gene_set
+        data = from_networkx(G)
+        data.ids = list(G.nodes())
+        return data
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -131,33 +152,121 @@ class CellDataset(Dataset):
         data = self._add_label(subset_data, wt)
         return data
 
-    # TODO think more on this method
-    def create_seq_graph(self, seq_embeddings: BaseEmbeddingDataset) -> Data:
+    # TODO remove
+    # def create_embedding_graph(self, embeddings: BaseEmbeddingDataset) -> Data:
+    #     """
+    #     Create a graph from embeddings.
+    #     """
+    #     # Extract and concatenate embeddings for all items in embeddings
+    #     embeddings = []
+    #     ids = []
+    #     for item in embeddings:
+    #         keys = item["embeddings"].keys()
+    #         if item.id in self.genome.gene_set:
+    #             ids.append(item.id)
+    #             item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
+    #             embeddings.append(torch.cat(item_embeddings))
+
+    #     # Stack the embeddings to get a 2D tensor of shape [num_nodes, num_features]
+    #     embeddings = torch.stack(embeddings, dim=0)
+
+    #     # Create a dummy edge_index (no edges)
+    #     edge_index = torch.empty((2, 0), dtype=torch.long)
+
+    #     # Create a Data object with embeddings as node features
+    #     # ids as an attribute, and the dummy edge_index
+    #     data = Data(x=embeddings, ids=ids, edge_index=edge_index)
+
+    #     return data
+    # IDEA this is really about composing node features with edge features... we will need something more sophisticated for multigraphs.
+    @staticmethod
+    def safe_compose(graphs):
+        if any(isinstance(G, nx.DiGraph) for G in graphs):
+            # Convert all graphs to DiGraph if at least one is directed
+            graphs = [
+                G if isinstance(G, nx.DiGraph) else G.to_directed() for G in graphs
+            ]
+
+        # Start with an empty graph of the appropriate type
+        composed_graph = (
+            nx.DiGraph() if isinstance(graphs[0], nx.DiGraph) else nx.Graph()
+        )
+
+        for G in graphs:
+            # Check for overlapping node data
+            for node, data in G.nodes(data=True):
+                if node in composed_graph:
+                    for key, value in data.items():
+                        if key in composed_graph.nodes[node]:
+                            if isinstance(value, np.ndarray):
+                                if not np.array_equal(
+                                    value, composed_graph.nodes[node][key]
+                                ):
+                                    raise ValueError(
+                                        f"Overlapping node data found for node {node}: {key}"
+                                    )
+                            elif composed_graph.nodes[node][key] != value:
+                                raise ValueError(
+                                    f"Overlapping node data found for node {node}: {key}"
+                                )
+
+            # Check for overlapping edge data
+            for node1, node2, data in G.edges(data=True):
+                if composed_graph.has_edge(node1, node2):
+                    for key, value in data.items():
+                        if key in composed_graph.edges[node1, node2]:
+                            if isinstance(value, np.ndarray):
+                                if not np.array_equal(
+                                    value, composed_graph.edges[node1, node2][key]
+                                ):
+                                    raise ValueError(
+                                        f"Overlapping edge data found for edge {(node1, node2)}: {key}"
+                                    )
+                            elif composed_graph.edges[node1, node2][key] != value:
+                                raise ValueError(
+                                    f"Overlapping edge data found for edge {(node1, node2)}: {key}"
+                                )
+
+            composed_graph = nx.compose(composed_graph, G)
+        # After all graphs are composed unify nodes attrs into x
+        # probably need to unify edge attrs too
+        for node, data in composed_graph.nodes(data=True):
+            attributes_list = []
+            for key, value in data.items():
+                if isinstance(value, np.ndarray):
+                    attributes_list.append(value)
+                # You can handle other types as needed
+
+            # For simplicity, assuming all attributes are numpy arrays
+            concatenated_attributes = np.concatenate(attributes_list)
+
+            # Set the concatenated attributes to 'x' and remove other attributes
+            composed_graph.nodes[node]["x"] = concatenated_attributes
+            keys_to_remove = [key for key in data.keys() if key != "x"]
+            for key in keys_to_remove:
+                del composed_graph.nodes[node][key]
+
+        return composed_graph
+
+    @staticmethod
+    def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
         """
-        Create a graph from seq_embeddings.
+        Create a NetworkX graph from embeddings.
         """
-        # Extract and concatenate embeddings for all items in seq_embeddings
-        embeddings = []
-        ids = []
-        for item in seq_embeddings:
+        # Create an empty NetworkX graph
+        G = nx.Graph()
+
+        # Extract and concatenate embeddings for all items in embeddings
+        for item in embeddings:
             keys = item["embeddings"].keys()
-            if item.id in self.genome.gene_set:
-                ids.append(item.id)
+            if item.id in genome.gene_set:
                 item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
-                embeddings.append(torch.cat(item_embeddings))
+                concatenated_embedding = torch.cat(item_embeddings)
 
-        # Stack the embeddings to get a 2D tensor of shape [num_nodes, num_features]
-        embeddings = torch.stack(embeddings, dim=0)
+                # Add nodes to the graph with embeddings as node attributes
+                G.add_node(item.id, embedding=concatenated_embedding.numpy())
 
-        # Create a dummy edge_index (no edges)
-        edge_index = torch.empty((2, 0), dtype=torch.long)
-
-        # Create a Data object with embeddings as node features
-        # ids as an attribute, and the dummy edge_index
-        # TODO cannot add SortedSet to ids since need to do for nt dataset
-        data = Data(x=embeddings, ids=ids, edge_index=edge_index)
-
-        return data
+        return G
 
     def process(self):
         combined_data = []
@@ -237,9 +346,9 @@ class CellDataset(Dataset):
         # Nodes to remove based on the genes in data.genotype
         nodes_to_remove = torch.tensor(
             [
-                self.seq_graph.ids.index(gene["id"])
+                self.cell_graph.ids.index(gene["id"])
                 for gene in data.genotype
-                if gene["id"] in self.seq_graph.ids
+                if gene["id"] in self.cell_graph.ids
             ],
             dtype=torch.long,
         )
@@ -247,19 +356,52 @@ class CellDataset(Dataset):
         perturbed_nodes = nodes_to_remove.clone().detach()
 
         # Compute the nodes to keep
-        all_nodes = torch.arange(self.seq_graph.num_nodes, dtype=torch.long)
+        all_nodes = torch.arange(self.cell_graph.num_nodes, dtype=torch.long)
         nodes_to_keep = torch.tensor(
             [node for node in all_nodes if node not in perturbed_nodes],
             dtype=torch.long,
         )
 
         # Get the induced subgraph using the nodes to keep
-        subset_graph = self.seq_graph.subgraph(nodes_to_keep)
-        subset_remove_graph = self.seq_graph.subgraph(nodes_to_remove)
+        subset_graph = self.cell_graph.subgraph(nodes_to_keep)
+        subset_remove_graph = self.cell_graph.subgraph(nodes_to_remove)
         subset_graph.x_pert = subset_remove_graph.x
         subset_graph.ids_pert = subset_remove_graph.ids
         subset_graph.x_pert_idx = perturbed_nodes
+        # HACK 1 hop hop graph
+        # Extract subgraphs for nodes in x_pert_idx
+        if len(subset_graph.x_pert_idx) > 0 and self.graph:
+            edge_indices = []
+            for idx in subset_graph.x_pert_idx:
+                extracted_subgraph = self.extract_subgraph(int(idx), subset_graph)
+                edge_indices.append(extracted_subgraph.edge_index)
+
+            # Concatenate all edge indices and get unique nodes
+            unique_k_hop_nodes = torch.cat(edge_indices, dim=1).unique()
+
+            # Get the induced subgraph based on these unique node indices
+            combined_subgraph = self.cell_graph.subgraph(unique_k_hop_nodes)
+            subset_graph.x_one_hop_pert = combined_subgraph.x
+            subset_graph.edge_index_one_hop_pert = combined_subgraph.edge_index
+            assert len(subset_graph.x_one_hop_pert) > 0, "x_one_hop_pert is empty"
+            assert (
+                subset_graph.edge_index_one_hop_pert.size()[-1] > 0
+            ), "edge_index_one_hop_pert is empty"
+        else:
+            subset_graph.x_one_hop_pert = None
+            subset_graph.edge_index_one_hop_pert = None
         return subset_graph
+
+    # HACK
+    @staticmethod
+    def extract_subgraph(node_idx, full_graph):
+        subset, edge_index, _, _ = k_hop_subgraph(
+            node_idx=node_idx,
+            edge_index=full_graph.edge_index,
+            relabel_nodes=False,
+            num_hops=1,
+        )
+        return Data(x=full_graph.x[subset], edge_index=edge_index)
 
     def _add_label(self, data: Data, original_data: Data) -> Data:
         """
@@ -354,34 +496,36 @@ def main():
 
     from dotenv import load_dotenv
 
+    from torchcell.multidigraph import SCerevisiaeGraph
+
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    # genome.drop_chrmt()
-    # genome.drop_empty_go()
+    genome.drop_chrmt()
+    genome.drop_empty_go()
 
     # nucleotide transformer
-    nt_dataset = NucleotideTransformerDataset(
-        root="data/scerevisiae/nucleotide_transformer_embed",
-        genome=genome,
-        model_name="nt_window_5979",
-    )
+    # nt_dataset = NucleotideTransformerDataset(
+    #     root="data/scerevisiae/nucleotide_transformer_embed",
+    #     genome=genome,
+    #     model_name="nt_window_5979",
+    # )
 
-    fud3_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fungal_up_down_embed",
-        genome=genome,
-        model_name="species_downstream",
-    )
-    fud5_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fungal_up_down_embed",
-        genome=genome,
-        model_name="species_upstream",
-    )
+    # fud3_dataset = FungalUpDownTransformerDataset(
+    #     root="data/scerevisiae/fungal_up_down_embed",
+    #     genome=genome,
+    #     model_name="species_downstream",
+    # )
+    # fud5_dataset = FungalUpDownTransformerDataset(
+    #     root="data/scerevisiae/fungal_up_down_embed",
+    #     genome=genome,
+    #     model_name="species_upstream",
+    # )
     codon_frequency_dataset = CodonFrequencyDataset(
         root="data/scerevisiae/codon_frequency", genome=genome
     )
 
-    seq_embeddings = nt_dataset + fud3_dataset + fud5_dataset + codon_frequency_dataset
+    embeddings = codon_frequency_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
@@ -390,10 +534,16 @@ def main():
         subset_n=1000,
     )
     # experiments = experiments[:2]
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genes"), gene_set=genome.gene_set
+    )
+
     cell_dataset = CellDataset(
         root="data/scerevisiae/cell_1e3",
         genome=genome,
-        seq_embeddings=seq_embeddings,
+        graph=graph,
+        embeddings=embeddings,
         experiments=experiments,
     )
 

@@ -775,12 +775,11 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    os.makedirs(osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e6"), exist_ok=True)
 
     dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e2"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e6"),
         preprocess={"duplicate_resolution": "low_dmf_std"},
-        subset_n=100,
+        # subset_n=100,
     )
     print(dmf_dataset[0])
     print(len(dmf_dataset.gene_set))

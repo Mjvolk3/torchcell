@@ -84,7 +84,9 @@ def main(cfg: DictConfig) -> None:
         )
     if "one_hot_gene" in wandb.config.cell_dataset["embeddings"]:
         embeddings.append(
-            OneHotGeneDataset(root="data/scerevisiae/gene_one_hot", genome=genome)
+            OneHotGeneDataset(
+                root=osp.join(DATA_ROOT, "data/scerevisiae/gene_one_hot"), genome=genome
+            )
         )
     if "prot_T5_all" in wandb.config.cell_dataset["embeddings"]:
         embeddings.append(

@@ -460,7 +460,6 @@ class CellDataset(Dataset):
             subset_data = self._subset_graph(data)
             subset_data = self._add_label(subset_data, data)
             return subset_data
-            return subset_data
 
     def _init_db(self):
         """Initialize the LMDB environment."""

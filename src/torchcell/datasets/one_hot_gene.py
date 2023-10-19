@@ -4,7 +4,7 @@
 # Test file: src/torchcell/datasets/test_one_hot_gene.py
 
 from collections.abc import Callable
-
+import os
 import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
@@ -35,6 +35,13 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
+        # HACK
+        if self.model_name:
+            if not os.path.exists(self.processed_paths[0]):
+                self.transformer = self.initialize_transformer()
+                self.process()
+            self.data, self.slices = torch.load(self.processed_paths[0])
+
     # This is done to avoid pkl error when since genome uses sqlite
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -57,6 +64,10 @@ class OneHotGeneDataset(BaseEmbeddingDataset):
         return encoded
 
     def process(self):
+        # HACK
+        if not self.model_name:
+            return
+
         data_list = []
 
         for gene_id in tqdm(self.genome.gene_set):

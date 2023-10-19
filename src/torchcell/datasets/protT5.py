@@ -24,8 +24,8 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             "dubious",
             "uncharacterized",
         ],
-        "prot_t5_xl_uniref50_no_dubious": ["dubious"],
-        "prot_t5_xl_uniref50_no_uncharacterized": ["uncharacterized"],
+        "prot_t5_xl_uniref50_no_dubious": ["Dubious"],
+        "prot_t5_xl_uniref50_no_uncharacterized": ["Uncharacterized"],
     }
 
     def __init__(
@@ -43,9 +43,19 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         self.genome = self.parse_genome(genome)
         del genome
 
-        self.data, self.slices = torch.load(
-            self.processed_paths[0], map_location=self.device
-        )
+        # self.data, self.slices = torch.load(self.processed_paths[0])
+        # self.data, self.slices = torch.load(
+        #     self.processed_paths[0], map_location=self.device
+        # )
+        if self.model_name:
+            if not os.path.exists(self.processed_paths[0]):
+                self.transformer = self.initialize_transformer()
+                self.process()
+            # HACK we send cpu because all data needs to be on cpu for lightning
+            # lightning automatically moves
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], map_location="cpu"
+            )
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -60,11 +70,14 @@ class ProtT5Dataset(BaseEmbeddingDataset):
         return ProtT5("prot_t5_xl_uniref50")
 
     def process(self):
-        self.transformer = self.initialize_model()
+        # HACK
+        # self.transformer = self.initialize_model()
+        if not self.model_name:
+            return
+
         data_list = []
 
         exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)
-
         for gene_id in tqdm(self.genome.gene_set):
             orf_classification = self.genome[gene_id].orf_classification[0]
 
@@ -75,11 +88,11 @@ class ProtT5Dataset(BaseEmbeddingDataset):
                 and orf_classification in exclude_classifications
             ):
                 print(f"zeros for {gene_id}")
-                embeddings = torch.zeros(1, 1024)
+                embeddings = torch.zeros(1, 1024, dtype=torch.float32).to(self.device)
             else:
                 embeddings = self.transformer.embed(
                     [protein_sequence], mean_embedding=True
-                )
+                ).to(torch.float32)
 
             protein_data_dict = {self.model_name: protein_sequence}
 
@@ -106,11 +119,14 @@ if __name__ == "__main__":
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
 
-    model_name = "prot_t5_xl_uniref50_no_dubious"
+    dataset = ProtT5Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        genome=genome,
+        model_name="prot_t5_xl_uniref50_all",
+    )
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed_no_dubious"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
         genome=genome,
-        model_name=model_name,
+        model_name="prot_t5_xl_uniref50_no_dubious",
     )
-    print(f"Dataset for {model_name}: {dataset}")

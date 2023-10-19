@@ -55,23 +55,30 @@ class DeepSet(nn.Module):
         set_modules.append(nn.Dropout(dropout_prob))
         self.set_layers = nn.ModuleList(set_modules)
 
-    def forward(self, x, batch):
+    def node_layers_forward(self, x):
+        """Process node features through node layers."""
         x_node = x
         for i, layer in enumerate(self.node_layers):
             out_node = layer(x_node)
             if self.skip_node and x_node.shape[-1] == out_node.shape[-1]:
                 out_node = out_node + x_node  # Skip connection
             x_node = out_node
+        return x_node
 
-        x_summed = scatter_add(x_node, batch, dim=0)
-
+    def set_layers_forward(self, x_summed):
+        """Process aggregated features through set layers."""
         x_set = x_summed
         for i, layer in enumerate(self.set_layers):
             out_set = layer(x_set)
             if self.skip_set and x_set.shape[-1] == out_set.shape[-1]:
                 out_set = out_set + x_set  # Skip connection
             x_set = out_set
+        return x_set
 
+    def forward(self, x, batch):
+        x_node = self.node_layers_forward(x)
+        x_summed = scatter_add(x_node, batch, dim=0)
+        x_set = self.set_layers_forward(x_summed)
         return x_node, x_set
 
 
@@ -115,6 +122,7 @@ def main():
     model.zero_grad()
     loss.backward()
     print("Gradients computed successfully!")
+    print(x_set.size())
 
 
 if __name__ == "__main__":

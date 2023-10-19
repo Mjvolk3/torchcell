@@ -740,9 +740,9 @@ def main() -> None:
     #     lengths.append(len(genome[gene].protein.seq))
     # print(pd.Series(orf_classes).value_counts())
     # genome.go
-    # genome.drop_chrmt()
+    genome.drop_chrmt()
     # print(len(genome.gene_set))
-    # genome.drop_empty_go()
+    genome.drop_empty_go()
 
     # # genes_not_divisible_by_3 = [
     # #     gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0

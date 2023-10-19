@@ -28,23 +28,26 @@ from torch_geometric.data import download_url
 from torch_geometric.utils import from_networkx
 from tqdm import tqdm
 
-from torchcell.sequence import Genome
+from torchcell.sequence import GeneSet, Genome, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 @define
 class SCerevisiaeGraph:
     data_root: str = field(init=True, repr=False, default="data/sgd/genes")
-    genome: Genome = field(init=True, repr=True, default=None)
+    # genome: Genome = field(init=True, repr=False, default=None)
+    gene_set: GeneSet = field(init=True, repr=False, default=None)
     G_raw: nx.Graph = field(init=False, repr=False, default=None)
     G_gene: nx.Graph = field(init=False, repr=False, default=None)
     G_physical: nx.Graph = field(init=False, repr=False, default=None)
     G_genetic: nx.Graph = field(init=False, repr=False, default=None)
     G_regulatory: nx.DiGraph = field(init=False, repr=False, default=None)
     json_files: list[str] = field(init=False, repr=False, default=None)
+    # parsed_genome: ParsedGenome = field(init=True, repr=False, default=None)
 
     def __attrs_post_init__(self) -> None:
-        self.json_files = [f"{gene}.json" for gene in self.genome.gene_set]
+        # self.genome = self.parse_genome(self.genome)
+        self.json_files = [f"{gene}.json" for gene in self.gene_set]
         self.G_raw = nx.Graph()
         self.G_raw = self.add_json_data_to_graph(
             data_root=self.data_root, json_files=self.json_files
@@ -60,6 +63,18 @@ class SCerevisiaeGraph:
             G_raw=self.G_raw, G_physical=self.G_physical
         )
 
+    # # TODO maybe remove
+    # @staticmethod
+    # def parse_genome(genome) -> ParsedGenome:
+    #     # BUG we have to do this black magic because when you merge datasets with +
+    #     # the genome is None
+    #     if genome is None:
+    #         return None
+    #     else:
+    #         data = {}
+    #         data["gene_set"] = genome.gene_set
+    #         return ParsedGenome(**data)
+
     @staticmethod
     def add_json_data_to_graph(data_root: str, json_files: list[str]) -> nx.Graph:
         G = nx.Graph()  # This is the node graph
@@ -69,8 +84,9 @@ class SCerevisiaeGraph:
                 data = json.load(file)
                 node_name = json_file.split(".")[0]
                 G.add_node(node_name, **data)
-                if i > 500:
-                    break
+                if i > 100:
+                    # break
+                    pass
         return G
 
     @staticmethod
@@ -137,8 +153,8 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
-    cell_graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genes"), genome=genome
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genes"), gene_set=genome.gene_set
     )
 
     print()

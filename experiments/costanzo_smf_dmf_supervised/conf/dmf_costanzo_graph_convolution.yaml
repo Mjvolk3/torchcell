@@ -12,6 +12,7 @@ cell_dataset:
   experiments: costanzo2016_1e5
   name: cell_1e5
   embeddings: [fungal_down, fungal_up, prot_T5_no_dubious] # fungal_down, fungal_up, one_hot_gene, prot_T5_all, prot_T5_no_dubious
+  zero_pert : true
 
 data_module:
   batch_size: 16 #32

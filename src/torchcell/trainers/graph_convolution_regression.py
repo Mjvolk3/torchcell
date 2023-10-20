@@ -277,23 +277,30 @@ class GraphConvRegressionTask(pl.LightningModule):
         # Calculate loss for each target
         for target in self.target:
             i = self.target.index(target)
-            losses[target] = self.loss(y_hat[:, i], y[:, i])
+            y_hat_target = y_hat[:, i]
+            y_target = y[:, i]
+            if target == "genetic_interaction_score":
+                y_hat_target = 4.20 * y_hat_target
+                y_target = 4.20 * y_target
+                losses[target] = self.loss(y_hat_target, y_target)
+                y_hat_target = 4.20 * y_hat_target
+                y_target = 4.20 * y_target
             self.log(
                 f"{target}/train_loss",
                 losses[target],
                 batch_size=batch_size,
                 sync_dist=True,
             )
-            self.train_metrics(y_hat[:, i], y[:, i])
+            self.train_metrics(y_hat_target, y_target)
             self.log(
                 f"{target}/train_pearson",
-                self.pearson_corr(y_hat[:, i], y[:, i]),
+                self.pearson_corr(y_hat_target, y_target),
                 batch_size=batch_size,
                 sync_dist=True,
             )
             self.log(
                 f"{target}/train_spearman",
-                self.spearman_corr(y_hat[:, i], y[:, i]),
+                self.spearman_corr(y_hat_target, y_target),
                 batch_size=batch_size,
                 sync_dist=True,
             )
@@ -347,23 +354,30 @@ class GraphConvRegressionTask(pl.LightningModule):
         batch_size = batch[self.x_batch_name][-1].item() + 1
         for target in self.target:
             i = self.target.index(target)
-            losses[target] = self.loss(y_hat[:, i], y[:, i])
+            y_hat_target = y_hat[:, i]
+            y_target = y[:, i]
+            if target == "genetic_interaction_score":
+                y_hat_target = 4.20 * y_hat_target
+                y_target = 4.20 * y_target
+                losses[target] = self.loss(y_hat_target, y_target)
+                y_hat_target = 4.20 * y_hat_target
+                y_target = 4.20 * y_target
             self.log(
                 f"{target}/val_loss",
                 losses[target],
                 batch_size=batch_size,
                 sync_dist=True,
             )
-            self.val_metrics(y_hat[:, i], y[:, i])
+            self.val_metrics(y_hat_target, y_target)
             self.log(
                 f"{target}/val_pearson",
-                self.pearson_corr(y_hat[:, i], y[:, i]),
+                self.pearson_corr(y_hat_target, y_target),
                 batch_size=batch_size,
                 sync_dist=True,
             )
             self.log(
                 f"{target}/val_spearman",
-                self.spearman_corr(y_hat[:, i], y[:, i]),
+                self.spearman_corr(y_hat_target, y_target),
                 batch_size=batch_size,
                 sync_dist=True,
             )
@@ -374,8 +388,8 @@ class GraphConvRegressionTask(pl.LightningModule):
         # Logging the correlation coefficients
         for target in self.target:
             i = self.target.index(target)
-            self.true_values[target].append(y[:, i].detach())
-            self.predictions[target].append(y_hat[:, i].detach())
+            self.true_values[target].append(y_target.detach())
+            self.predictions[target].append(y_hat_target.detach())
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)

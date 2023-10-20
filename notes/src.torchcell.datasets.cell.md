@@ -2,7 +2,7 @@
 id: mrcmzr371c14cekrqc5038c
 title: Cell
 desc: ''
-updated: 1695169561385
+updated: 1697763661183
 created: 1692304235385
 ---
 
@@ -69,21 +69,24 @@ Done!
 
 ## Supported Datasets
 
-| Dataset Name      | genotypes  | environment | phenotype (label)             | label type             | description                | supported |
-| :---------------- | :--------- | :---------- | :---------------------------- | :--------------------- | :------------------------- | :-------: |
-| baryshnikovna2010 | 6,022      | 1           | $\text{smf}$                  | global                 | growth rate                |     ✔️     |
-| costanzo2016smf   | 21,718     | 2           | $\text{smf}$                  | global                 | growth rate                |     ✔️     |
-| costanzo2016dmf   | 20,705,612 | 1           | $\text{smf}$                  | global                 | growth rate                |     ✔️     |
-| kuzmin2018        | 91,111     | 1           | $\text{tmf}$                  | global                 | growth rate                |     ✔️     |
-| scmd2_2005        | 4,718      | 1           | $\text{ellipse } (e_1, e_2)$  | global                 | cell morphology            |     ✔️     |
-| scmd2_2018        | 1,112      | 1           | $\text{ellipse } (e_1, e_2)$  | global                 | cell morphology            |           |
-| scmd2_2022        | 1,982      | 1           | $\text{ellipse } (e_1, e_2)$  | global                 | cell morphology            |           |
-| ODuibhir2014      | 1,312      | 1           | $\text{smf}$                  | global, node           | growth rate                |     ✔️     |
-| Kemmeren2014      | 6,022      | 1           | $\text{expr}$                 | global, node           | sm microarray expression   |     ✔️     |
-| Sameith2015       | 72         | 1           | $\text{expr}$                 | global, node           | dm microarray expression   |     ✔️     |
-| Zelezniak2018     | 97         | 1           | $\text{prot abund, met conc}$ | global, incidence node | sm kinase deletion mutants |           |
-| Wildenhain2015    | 195        | 4,915       | $\text{smf}$                  | global                 | smf drug tolerance         |           |
-| Lian2017          | ~18,000    | 1           | $\text{AIDf}$                 | global                 | AID furfural tolderance    |           |
+| $\textbf{Dataset Name}$ | $\textbf{genotypes}$ | \textbf{environment} | $\textbf{phenotype (label)}$      | $\textbf{label type}$ | description                | supported |
+| :---------------------- | :------------------- | :------------------- | :------------------------------ | :-------------------- | :------------------------- | :-------: |
+| baryshnikovna_2010      | 6,022                | 1                    | $\text{smf}$                    | global                | growth rate                |     ✔️     |
+| costanzo_2016_smf       | 21,718               | 2                    | $\text{smf}$                    | global                | growth rate                |     ✔️     |
+| costanzo_2016_dmf       | 20,705,612           | 1                    | $\text{smf}$                    | global                | growth rate                |     ✔️     |
+| kuzmin_2018             | 91,111               | 1                    | $\text{tmf}$                    | global                | growth rate                |     ✔️     |
+| sdg_essential           | 1,101                | 1                    | $\text{viable}$                 | global                | viability                  |     ✔️     |
+| SynthLethalDb           | 1,400                | 1                    | $\text{viable}$                 | global                | viability                  |     ✔️     |
+| scmd2_2005              | 4,718                | 1                    | $\text{ellipse } (e_1, e_2)$    | global                | cell morphology            |     ✔️     |
+| scmd2_2018              | 1,112                | 1                    | $\text{ellipse } (e_1, e_2)$    | global                | cell morphology            |     ✔️     |
+| scmd2_2022              | 1,982                | 1                    | $\text{ellipse } (e_1, e_2)$    | global                | cell morphology            |     ✔️     |
+| ODuibhir_2014           | 1,312                | 1                    | $\text{smf}$                    | global, node          | growth rate                |     ✔️     |
+| Kemmeren_2014           | 1,484                | 1                    | $\text{expr}$                   | global, node          | sm microarray expression   |     ✔️     |
+| Sameith_2015            | 72                   | 1                    | $\text{expr}$                   | global, node          | dm microarray expression   |     ✔️     |
+| Zelezniak_2018          | 97                   | 1                    | $\text{prot abund., met conc.}$ | global, node          | sm kinase deletion mutants |     ✔️     |
+| Wildenhain_2015         | 195                  | 4,915                | $\text{smf}$                    | global                | smf drug tolerance         |     ✔️     |
+| Lian_2017               | 18,000               | 1                    | $\text{AID}$                    | global                | AID furfural tolderance    |     ✔️     |
+| FitDb                   | ~6,000               | 1,144                | $\text{smf}$                    | global                | growth rate                |           |
 
 - Others
   - @heckmannKineticProfilingMetabolic2020 - ecoli kcat km

@@ -41,7 +41,7 @@ regression_task:
 
 models:
   cell:
-    name: GAT # GCN
+    name: GCN # GCN
     node_layers: [1028, 512, 256] #[512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
     set_layers: [32, 32, 32] # [32, 32, 32, 32] # [256, 128]
     hidden_channels: 64

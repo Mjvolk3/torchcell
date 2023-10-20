@@ -777,7 +777,7 @@ def main():
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e6"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
         preprocess={"duplicate_resolution": "low_dmf_std"},
         # subset_n=100,
     )

@@ -2,7 +2,7 @@
 id: fpgsoq4b7jr8f8c2m7oh2jt
 title: Graph
 desc: ''
-updated: 1697604409696
+updated: 1697763177830
 created: 1697604307905
 ---
 ## Not using MultiDiGraph
@@ -18,3 +18,13 @@ def from_networkx(
     r"""Converts a :obj:`networkx.Graph` or :obj:`networkx.DiGraph` to a
     :class:`torch_geometric.data.Data` instance.
 ```
+
+## Supported Graphs
+
+| $\textbf{Dataset Name}$ | genotypes  | environment | phenotype (label)             | label type             | description                | supported |
+| :---------------------- | :--------- | :---------- | :---------------------------- | :--------------------- | :------------------------- | :-------: |
+| baryshnikovna2010       | 6,022      | 1           | $\text{smf}$                  | global                 | growth rate                |     ✔️     |
+| YeastTract              | ~6,000     | 1,144       | $\text{smf}$                    | global       | growth rate                |           |
+
+YeastTract
+356,180

@@ -119,6 +119,12 @@
                 "problemMatcher": []
             },
             {
+                "label": "Pandoc: quick-landscape-pdf",
+                "type": "shell",
+                "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=0.5cm, bottom=0.5cm, left=0.5cm, right=0.5cm,landscape' --strip-comments   && cd ..",
+                "problemMatcher": []
+            },
+            {
                 "label": "Pandoc: bib-pdf",
                 "type": "shell",
                 "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex --citeproc --bibliography assets/publish/bib/bib.bib --metadata csl=assets/publish/bib/nature.csl -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' --strip-comments  && cd ..",

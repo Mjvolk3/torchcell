@@ -285,6 +285,8 @@ class GraphConvRegressionTask(pl.LightningModule):
                 losses[target] = self.loss(y_hat_target, y_target)
                 y_hat_target = 4.20 * y_hat_target
                 y_target = 4.20 * y_target
+            elif target == "fitness":
+                losses[target] = self.loss(y_hat_target, y_target)
             self.log(
                 f"{target}/train_loss",
                 losses[target],
@@ -362,6 +364,8 @@ class GraphConvRegressionTask(pl.LightningModule):
                 losses[target] = self.loss(y_hat_target, y_target)
                 y_hat_target = 4.20 * y_hat_target
                 y_target = 4.20 * y_target
+            elif target == "fitness":
+                losses[target] = self.loss(y_hat_target, y_target)
             self.log(
                 f"{target}/val_loss",
                 losses[target],

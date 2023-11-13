@@ -2,24 +2,109 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1697752109494
+updated: 1699914425220
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.13
+
+- [x] Get [experiments.costanzo_smd_dmf_dcell.dmf_dcell] running.
+- [ ] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta.
+- [ ] Combine `smf` and `dmf` into one dataset.
+
+## 2023.11.04
+
+- [x] Get the [[Cell|dendron://torchcell/src.torchcell.datasets.cell]] working since [[Graph|dendron://torchcell/src.torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
+- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
+
+## 2023.11.03
+
+- [x] Run some example data through [[Dcell|dendron://torchcell/src.torchcell.models.dcell]]. This turned out to be much more involved than I previoulsy thought since we have to do so much data transformation prior to passing the data to the model. [[Model Implementation|dendron://torchcell/src.torchcell.models.dcell#model-implementation]]
+
+- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
+- [ ] Build out [[datamodules.dcell|dendron://torchcell/src.torchcell.datamodules.dcell]] data module. Test loading and a way to vary sampling frequency from different data.
+- [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
+
+## 2023.11.02
+
+- [x] Double check GO annotations with GO file `.gaf` file. → It is terribly annoying to find that they don't overlap and they don't overlap in mysterious ways. Some of the terms from the `gaf` file are not on the GO annotations for the genes.
+- [x] Allow for taking the Union between the two sets, and adding the GO information prior to joining. → In [[Adding GO Union from GAF|dendron://torchcell/src.torchcell.graph.graph#adding-go-union-from-gaf]] I deem this is as currently unnecessary as the contributurion from these terms would be small.
+- [x] Build [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] → prototype
+
+## 2023.11.01
+
+- [x] Since we aren't getting matching graphs using GO annotations processed from the SGD graphs. Double check another source. → GO has a `.gaf` file.
+
+## 2023.10.24
+
+- [x] Double check deletion of `IGI` and forwarding of edges. → [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
+- [x] Plot histogram of GO dates with minimal possible filtering while maintaining DAG and no isolated nodes. → [[Histogram of DCell GO Gene Annotations Binned in Time|dendron://torchcell/src.torchcell.datasets.dcell#histogram-of-dcell-go-gene-annotations-binned-in-time]]
+- [x] Plot of `DCell` DAG without any isolted nodes, and before filtering and with super node → [[DCell DAG No Isolated Nodes No Filtering with Super Node|dendron://torchcell/src.torchcell.datasets.dcell#dcell-dag-no-isolated-nodes-no-filtering-with-super-node]]
+- [x] Allow for gene removal of annotation according to date with a date arg. → [[DCell Dataset GO Gene Annotations Time Cutoff|dendron://torchcell/src.torchcell.datasets.dcell#dcell-dataset-go-gene-annotations-time-cutoff]], added tests [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
+- [x] Check total number of ontology terms with no date args, and with date args. Look for date in `Dcell` paper. → Can only get a rough estimate based on commits and paper submission dates. Even with this we cannot get the number of GO terms to match properly.
+
+- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
+- [ ] Build out [[datamodules.dcell|dendron://torchcell/src.torchcell.datamodules.dcell]] data module. Test loading and a way to vary sampling frequency from different data.
+- [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
+
+- [ ] In any of the graphs Met, GO, Regulatory, Metabolic , PPI, GGI. What is the average degree. For the special graph graphs what is the average number of nodes perturbed. Plot histograms for these.
+
+- [ ] I previously thought that we removed all redundant edges by removing parents with no annotations. If the number of nodes is not the same, check for nodes whose parent node has the exact same gene annotations. I think we consider these nodes redundant. Double check.
+- [ ] Build DCell network takes `nx.DiGraph` as arg. Simulate some data
+
+- [ ] Build out DCell Regression task, experiment script, and configuration.
+- [ ] Run DCell locally
+
+## 2023.10.23
+
+- [x] Explore metabolism → `/Users/michaelvolk/Documents/projects/yeast-GEM/torchcell_test.py`. This was done in another `yeast-GEM`. It shows that we can represent metabolism with a heterogenous graph of both metabolites and reactions. I will wait off on adding metabolism right now. Need to look into hetero graph data more.
+- [x] Graph object, get other relevant networks including GO
+- [x] GO graph add DCell options. → Need to double check `IGI`, and the 6 genes criterion nees to be handled after [[DCell|dendron://torchcell/src.torchcell.datamodules.DCell]]
+
+- [ ] Figure out multigraph with `pyg`. We do not need a custom `Data` object yet for batching data, but we will eventually if we have some heterogenous graph structures. Graph matching case, or bipartite case.
+- [ ] Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
+- [ ] Add in single fitness
+
+- [ ] Change `self.genome.go` to `self.genome.go_set` and make it an ordered set.
+- [ ] Add method for `available_graphs` that tell you which graph constructor classes have been implemented, and which graphs have already been saved.
+- [ ] Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
+
+- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+
+- [ ] Embedding overlay plot for `FungalCIS` and `mean expression`
+- [ ] switch to `torch_geometric.utils.scatter`
+
+## 2023.10.22
+
+- [x] Check if PPIs do overlap with GGI. → They do to some extent.
+- [x] Read on data batching [PyG data batch](https://pytorch-geometric.readthedocs.io/en/latest/advanced/batching.html)
+- [x] Regroup
+- [x] Workout saving graphs objects, this will greatly reduce dev time → Saving as `json` for now because this avoids some serialization issues. `nx` has removed their `gpickle` methods.
+- [x] Graph object add regulatory graph. → `locus1` regulates `locus2` [SGD YER125W](https://www.yeastgenome.org/locus/S000000927/regulation)
+- [x] Add GGI
+- 🔲 Graph object, get other relevant networks including GO, Met.
+- 🔲 Figure out multigraph with `pyg`. We do not need a custom `Data` object yet for batching data, but we will eventually if we have some heterogenous graph structures. Graph matching case, or bipartite case.
+- 🔲 Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
+- 🔲 Add in single fitness
+- 🔲 Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
+- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- 🔲 Embedding overlay plot for `FungalCIS` and `mean expression`
+- 🔲 switch to `torch_geometric.utils.scatter`
+
 ## 2023.10.20
 
-- [ ] Read on data batching [PyG data batch](https://pytorch-geometric.readthedocs.io/en/latest/advanced/batching.html)
-- [ ] Regroup
-- [ ] Graph object, get other relevant networks including PPI, Reg, GGI, GO, Met.
-- [ ] Workout saving graphs objects, this will greatly reduce dev time
-- [ ] Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object. The subset graph procedure that interacts with all data is probably
-- [ ] Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc... This might be an issue with num_workers instead.
+- 🔲 Read on data batching [PyG data batch](https://pytorch-geometric.readthedocs.io/en/latest/advanced/batching.html)
+- 🔲 Regroup
+- 🔲 Graph object, get other relevant networks including PPI, Reg, GGI, GO, Met.
+- 🔲 Workout saving graphs objects, this will greatly reduce dev time
+- 🔲 Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object. The subset graph procedure that interacts with all data is probably
+- 🔲 Implement option to train on fitness and interaction simultaneously. Find more general dataset structures for box plots etc... This might be an issue with num_workers instead.
 
 ## 2023.10.19
 
 - [x] Models didn't work with one hop neighborhood. Try to zero out the embeddings. → `zero_pert` bool, this doesn't seem to work either. I suspect that the issue is that we are using the embedding of 1 hop neighborhood which can be quite large. We could possibly pull out the embedding of the perturbed nodes themselves, but this would require keeping indices in the data object. After now going through 3-4 modelling designs, I think I the subset of data is the key part. It would be nice to specify a very specific transformations like the `pert_graph`, while building out a key to track `edge_index` and ed,
-- [ ] Prepare presentation
+- [x] Prepare presentation
 
 ## 2023.10.18
 
@@ -28,19 +113,17 @@ created: 1690514887023m
 - [x] Something looks strange with the interaction distribution. → 0.04 is about one std away so the genetic interaction score plots show the range of one std.
 - [x] In `nx.compose` the second graph will overwrite data if there are duplicate keys. →
 - [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]
-- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
+- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.graph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
 - [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/src.torchcell.trainers.graph_convolution_regression]]
 - [x] Implement option to train on fitness and interaction simultaneously → set up the beginnings of this, but it is going to be a lot of work.
 - [x] Issue with `genome.gene_set` vs `genome` might instead be an issue with `num_workers`. When I set `num_workers=0` things run. `num_workers=4` things don't run. Gets hung up at `Sanity Checking:` → `num_workers=2` works but it takes a very long time to get going. `num_workers=4` probably also works
-- [ ] Launch on `Delta`.
-
-- [ ] Add in single fitness
-- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]
-- [ ] Plan graph merge
-- [ ] Add single fitness data
-- [ ] Embedding overlay plot for `FungalCis` and `mean expression`
-- [ ] switch to `torch_geometric.utils.scatter`
-- [ ] I think in order to have general graph composition we
+- [x] Launch on `Delta`.
+- 🔲 Add in single fitness
+- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- 🔲 Plan graph merge
+- 🔲 Add single fitness data
+- 🔲 Embedding overlay plot for `FungalCis` and `mean expression`
+- 🔲 switch to `torch_geometric.utils.scatter`
 
 ## 2023.10.17
 
@@ -60,7 +143,7 @@ created: 1690514887023m
 - [x] Test `dmf_costanzo_deepset` with different protein embeddings.
 - [x] Launch `dmf_costanzo_deepset` with `no_dubious` protein embeddings.
 - [x] Check [[dmf Genetic Interaction Score Mean|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmf-genetic-interaction-score-mean]]
-- [x] Check `PyG` → [[Graph|dendron://torchcell/src.torchcell.multidigraph.graph]]
+- [x] Check `PyG` → [[Graph|dendron://torchcell/src.torchcell.graph.graph]]
 - [x] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
 - [x] Launch `prot_T5_no_dubious`, `costanzo_1e6
 

@@ -792,6 +792,7 @@ def main():
     )
 
     print(smf_dataset)
+    gene_set = smf_dataset.gene_set.union(dmf_dataset.gene_set)
     print(smf_dataset[0])
     print(len(smf_dataset.gene_set))
 

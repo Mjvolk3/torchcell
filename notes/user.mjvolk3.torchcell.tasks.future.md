@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1697580479754
+updated: 1698171632897
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Setup `test/data`
 - [ ] Notes that represent a python file should have the path to the python file in the frontmatter.
 - [ ] Convert `gene_set` to `SortedSet`
 - [ ] Workspace utils from note open related python file
@@ -42,6 +43,7 @@ created: 1675887826601
 
 ## Far Future
 
+- [ ] Infer gene ontology from DNA embeddings. First find the portion of the ontology that is occupied by proteins, enzymes, etc.
 - [ ] Download phenotypes from [SGD phenotypes](http://sgd-archive.yeastgenome.org/curation/literature/)
 - [ ] Consider batching i.e. lists of list of sequences. Can be done on GPU. Note that this causes things to crash on local.
 - [ ] Move over analysis of the mutant datasets from `Gene_Graph`

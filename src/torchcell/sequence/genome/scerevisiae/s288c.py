@@ -391,6 +391,10 @@ class SCerevisiaeGenome(Genome):
     _protein_fasta_path: str = field(init=False, default=None, repr=False)
     _cds_fasta_path: str = field(init=False, default=None, repr=False)
     _gff_path: str = field(init=False, default=None, repr=False)
+    _go: SortedSet[str] = field(init=False, default=None, repr=False)
+    _go_genes: SortedDict[str, SortedSet[str]] = field(
+        init=False, default=None, repr=False
+    )
 
     def __attrs_post_init__(self) -> None:
         genome_reference = "S288C_reference_genome"
@@ -549,17 +553,20 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def go(self) -> SortedSet[str]:
-        all_go = SortedSet()
+        if self._go is None:
+            all_go = SortedSet()
 
-        # Iterate through all genes in self.gene_set
-        for gene_id in self.gene_set:
-            gene = self[gene_id]  # Retrieve the gene object
+            # Iterate through all genes in self.gene_set
+            for gene_id in self.gene_set:
+                gene = self[gene_id]  # Retrieve the gene object
 
-            # Use the go attribute of the gene object if it exists and is not None
-            if gene and hasattr(gene, "go") and gene.go is not None:
-                all_go.update(gene.go)
-
-        return all_go
+                # Use the go attribute of the gene object if it exists and is not None
+                if gene and hasattr(gene, "go") and gene.go is not None:
+                    all_go.update(gene.go)
+            self._go = all_go
+            return self._go
+        else:
+            return self._go
 
     def go_subset(self, gene_set: SortedSet[str]) -> SortedSet[str]:
         go_subset = SortedSet()
@@ -576,20 +583,24 @@ class SCerevisiaeGenome(Genome):
 
     @property
     def go_genes(self) -> SortedDict[str, SortedSet[str]]:
-        go_genes_dict = SortedDict()
+        # CHECK could this contain obselete terms? We don't check if the terms are in self.go...
+        if self._go_genes is None:
+            go_genes_dict = SortedDict()
 
-        # Iterate through all genes in self.gene_set
-        for gene_id in self.gene_set:
-            gene = self[gene_id]  # Retrieve the gene object
+            # Iterate through all genes in self.gene_set
+            for gene_id in self.gene_set:
+                gene = self[gene_id]  # Retrieve the gene object
 
-            # Use the go attribute of the gene object if it exists and is not None
-            if gene and hasattr(gene, "go") and gene.go is not None:
-                for go_term in gene.go:
-                    if go_term not in go_genes_dict:
-                        go_genes_dict[go_term] = SortedSet()
-                    go_genes_dict[go_term].add(gene_id)
-
-        return go_genes_dict
+                # Use the go attribute of the gene object if it exists and is not None
+                if gene and hasattr(gene, "go") and gene.go is not None:
+                    for go_term in gene.go:
+                        if go_term not in go_genes_dict:
+                            go_genes_dict[go_term] = SortedSet()
+                        go_genes_dict[go_term].add(gene_id)
+            self._go_genes = go_genes_dict
+            return go_genes_dict
+        else:
+            return self._go_genes
 
     def go_subset_genes(
         self, gene_set: SortedSet[str]

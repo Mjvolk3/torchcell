@@ -2,7 +2,7 @@
 id: euw7ks1ua3afvqcu9bwb7uh
 title: Dcell
 desc: ''
-updated: 1695240251406
+updated: 1699055458091
 created: 1694555579561
 ---
 
@@ -97,3 +97,7 @@ Look into how we can subset GO by date. From the looks of this is not possible w
     },
 ]
 ```
+
+## Model Implementation
+
+The are

@@ -116,6 +116,10 @@ class CellDataset(Dataset):
             graphs.append(G_embedding)
         if self.graph:
             G_physical = self.graph.G_physical
+            # HACK since all the edge data has superfluous data not easily converted to Data
+            for edge in G_physical.edges():
+                # This will remove all edge attributes, effectively dropping edge data
+                G_physical[edge[0]][edge[1]].clear()
             graphs.append(G_physical)
         self.cell_graph = self.to_cell_data(graphs)
         # HACK to try and get ride of no edge index issue.
@@ -520,13 +524,13 @@ def main():
 
     from dotenv import load_dotenv
 
-    from torchcell.multidigraph import SCerevisiaeGraph
+    from torchcell.graph import SCerevisiaeGraph
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    genome.drop_chrmt()
-    genome.drop_empty_go()
+    # genome.drop_chrmt()
+    # genome.drop_empty_go()
 
     # nucleotide transformer
     # nt_dataset = NucleotideTransformerDataset(
@@ -535,21 +539,21 @@ def main():
     #     model_name="nt_window_5979",
     # )
 
-    # fud3_dataset = FungalUpDownTransformerDataset(
-    #     root="data/scerevisiae/fungal_up_down_embed",
-    #     genome=genome,
-    #     model_name="species_downstream",
-    # )
+    fud3_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fungal_up_down_embed",
+        genome=genome,
+        model_name="species_downstream",
+    )
     # fud5_dataset = FungalUpDownTransformerDataset(
     #     root="data/scerevisiae/fungal_up_down_embed",
     #     genome=genome,
     #     model_name="species_upstream",
     # )
-    codon_frequency_dataset = CodonFrequencyDataset(
-        root="data/scerevisiae/codon_frequency", genome=genome
-    )
+    # codon_frequency_dataset = CodonFrequencyDataset(
+    #     root="data/scerevisiae/codon_frequency", genome=genome
+    # )
 
-    embeddings = codon_frequency_dataset
+    embeddings = fud3_dataset
 
     # Experiments
     experiments = DmfCostanzo2016Dataset(
@@ -559,8 +563,10 @@ def main():
     )
     # experiments = experiments[:2]
 
+    # TODO doesn't work right now since we changed graph
+    # BUG These is an issue in getting the
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genes"), gene_set=genome.gene_set
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
 
     cell_dataset = CellDataset(

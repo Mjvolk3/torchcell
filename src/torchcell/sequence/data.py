@@ -104,7 +104,10 @@ class GeneSet(SortedSet):
     def __repr__(self):
         n = len(self)
         limited_items = (self)[:3]
-        return f"GeneSet(size={n}, items={limited_items}...)"
+        if len(self) > 3:
+            return f"GeneSet(size={n}, items={limited_items}...)"
+        elif len(self) < 3:
+            return f"GeneSet(size={n}, items={limited_items})"
 
 
 ###########

@@ -13,6 +13,10 @@
             "path": "../______________"
         },
         {
+            "name": "yeast-GEM",
+            "path": "../yeast-GEM"
+        },
+        {
             "name": "Gene_Graph",
             "path": "../Gene_Graph"
         },
@@ -74,6 +78,11 @@
                 "source.fixAll.markdownlint": true
             }
         },
+        "python.testing.pytestArgs": [
+            "tests"
+        ],
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
         "git.autoRepositoryDetection": false,
         "liveServer.settings.multiRootWorkspaceName": "TorchCell",
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
@@ -370,6 +379,17 @@
                 "subProcess": true,
                 "pythonArgs": ["-Xfrozen_modules=off"],
                 "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"}
+            },
+            {
+                "name": "Python: yeast8",
+                "type": "python",
+                "request": "launch",
+                "program": "${file}",
+                "console": "integratedTerminal",
+                "justMyCode": false,
+                "cwd": "${workspaceFolder:yeast-GEM}",
+                "subProcess": true,
+                "python": "/Users/michaelvolk/opt/miniconda3/envs/yeast8/bin/python"
             },
             {
                 "name": "Python: torchgeo",

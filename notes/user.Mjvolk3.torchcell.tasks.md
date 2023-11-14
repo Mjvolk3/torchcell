@@ -2,16 +2,23 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1699914425220
+updated: 1699998837640
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.14
+
+- [x] Switching plot font to default `DejaVu Sans` since this is platform agnotic.
+- [x] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta. → Training both a fitness model an interaction model.
+- [ ] Combine `smf` and `dmf` into one dataset.
+
 ## 2023.11.13
 
 - [x] Get [experiments.costanzo_smd_dmf_dcell.dmf_dcell] running.
-- [ ] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta.
-- [ ] Combine `smf` and `dmf` into one dataset.
+- [x] Globus transfer of all data → Took 4-5 hours.
+- 🔲 Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta.
+- 🔲 Combine `smf` and `dmf` into one dataset.
 
 ## 2023.11.04
 

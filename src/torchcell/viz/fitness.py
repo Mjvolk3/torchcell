@@ -13,7 +13,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
 
     # font name
-    font_name = "Helvetica"
+    font_name = "DejaVu Sans"
 
     # Bin predictions and collect corresponding true values
     binned_true_values = []

@@ -25,7 +25,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     ]
 
     # font name
-    font_name = "Helvetica"
+    font_name = "DejaVu Sans"
 
     # Bin predictions and collect corresponding true values
     binned_true_values = []

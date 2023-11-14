@@ -108,7 +108,9 @@ def main(cfg: DictConfig) -> None:
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
     # Get reference genome
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
+    )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
@@ -171,7 +173,6 @@ def main(cfg: DictConfig) -> None:
     model = DCellRegressionTask(
         models=models,
         target=wandb.config.regression_task["target"],
-        wt_train_per_epoch=wandb.config.regression_task["wt_train_per_epoch"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],

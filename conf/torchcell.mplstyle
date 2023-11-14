@@ -44,5 +44,5 @@ hist.bins: 20
 text.usetex: False
 
 ## FONT
-font.family: Helvetica
+font.family: DejaVu Sans
 font.size: 16

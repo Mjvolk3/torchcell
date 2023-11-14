@@ -13,7 +13,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
 
     # font name
-    font_name = "Helvetica"
+    font_name = "DejaVu Sans"
 
     # Bin predictions and collect corresponding true values
     binned_true_values = []
@@ -126,3 +126,19 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     plt.tight_layout()
 
     return fig
+
+
+def main():
+    # import matplotlib.font_manager as fm
+
+    # fonts = fm.findSystemFonts()
+    # for font in fonts:
+    #     print(font)
+    predictions = torch.load("predictions.pt")
+    true_values = torch.load("true_values.pt")
+    box_plot(true_values, predictions)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()

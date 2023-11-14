@@ -424,15 +424,13 @@ class SCerevisiaeGenome(Genome):
             "orf_coding_all_" + self.genome_version + ".fasta",
         )
         # Download genome data
-        if not os.path.exists(self._dna_fasta_path) or not os.path.exists(
-            self._gff_path
-        ):
+        if not osp.exists(self._dna_fasta_path) or not osp.exists(self._gff_path):
             self.download_and_extract_genome_files()
 
         db_path = osp.join(self.data_root, "data.db")
 
         # CHECK if this works with ddp
-        if os.path.exists(db_path) and not self.overwrite:
+        if osp.exists(db_path) and not self.overwrite:
             self.db = gffutils.FeatureDB(db_path)
         elif self.overwrite:
             # TODO remove sort_attribute_values since this can be time consuming.
@@ -485,7 +483,7 @@ class SCerevisiaeGenome(Genome):
 
         save_dir = self.data_root
         download_url(url, save_dir)
-        downloaded_file_path = os.path.join(save_dir, url.split("/")[-1])
+        downloaded_file_path = osp.join(save_dir, url.split("/")[-1])
         self.untar_tgz_file(downloaded_file_path, save_dir)
         self.gunzip_all_files_in_dir(save_dir)
 

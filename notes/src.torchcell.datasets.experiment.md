@@ -2,7 +2,7 @@
 id: vgx68e142piq5ecmw0r8r7g
 title: Experiment
 desc: ''
-updated: 1697155716882
+updated: 1699999825365
 created: 1697150864641
 ---
 ## Dunder Adding of Experiments is a Bad Idea
@@ -110,3 +110,4 @@ Some of the unique features of this class include:
 
 - Merge operations - These will need to be further systematized.
 - `experiment_indices` - To track all indices of the different data. In the future we can imagine that if `genotype` and `environment` are compatible based on ontology specification, we could merge phenotype.
+- This is not implemented but we probably also want indices that track if two indices are a match in terms of genotype, environment specification. With this index we could then think about aggregating those data objects into one object, or we can keep them separate.

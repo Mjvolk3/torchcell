@@ -2,16 +2,29 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1699998837640
+updated: 1700261607699
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.11.17
+
+- [x] Correct [[./assets/drawio/Dcell.drawio.png]] → Corrected including subsystem representation.
+- [ ] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly
+- [ ] Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts.
+
+## 2023.11.16
+
+- [x] Review GEARS paper [[./assets/drawio/GEARS.drawio.png]]
 
 ## 2023.11.14
 
 - [x] Switching plot font to default `DejaVu Sans` since this is platform agnotic.
 - [x] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta. → Training both a fitness model an interaction model.
-- [ ] Combine `smf` and `dmf` into one dataset.
+- [x] Recording work with pronto [[src.torchcell.datasets.pronto_ontology]]
+- [ ] Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/src.torchcell.datasets.ontology]].
+
+- [ ] Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/src.torchcell.datasets.experiment]]
 
 ## 2023.11.13
 

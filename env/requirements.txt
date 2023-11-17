@@ -73,6 +73,8 @@ aiohttp==3.8.5
 # ontology stack
 pronto==2.5.4
 nxontology==0.5.0
+owlready2==0.45
+
 
 # Workspace
 python-dotenv==1.0.0

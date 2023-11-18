@@ -39,6 +39,8 @@ class SubsystemModel(nn.Module):
 class DCell(nn.Module):
     def __init__(self, go_graph):
         super().__init__()
+        # HACK probably should reverse the edges in original graph
+        go_graph = nx.reverse(go_graph, copy=True)
         self.go_graph = self.add_boolean_state(go_graph)
         self.subsystems = nn.ModuleDict()
         self.build_subsystems()
@@ -58,63 +60,93 @@ class DCell(nn.Module):
         return go_graph
 
     def build_subsystems(self):
-        # Start with a topological sort to ensure correct processing order
         nodes_sorted = list(nx.topological_sort(self.go_graph))
 
+        current_nodes = []
+        # Initialize subsystems based on descendants
         for node_id in nodes_sorted:
-            # Skip the 'GO:ROOT' node or handle it separately
-            if node_id == "GO:ROOT":
+            descendants = set(nx.descendants(self.go_graph, node_id))
+            # If there are no descendants, this is a true leaf node
+            if not descendants:
+                genes = self.go_graph.nodes[node_id]["gene_set"]
+                self.subsystems[node_id] = SubsystemModel(
+                    input_size=len(genes), output_size=max(20, int(0.3 * len(genes)))
+                )
+                current_nodes.append(node_id)
+
+                # Process non-leaf nodes in reverse topological order
+        # Reverse order to move up from leaf nodes towards root node
+        for node_id in reversed(nodes_sorted):
+            if node_id in self.subsystems:
+                # Skip if subsystem is already initialized (as a leaf)
                 continue
 
-            data = self.go_graph.nodes[node_id]
-            # Use 'gene_set' to set the input size for each SubsystemModel
-            if "gene_set" in data:
-                gene_set = data["gene_set"]
-                input_size = len(gene_set)  # The input size is the number of gene_set
-                output_size = max(
-                    20, int(0.3 * input_size)
-                )  # Apply your original formula
-                self.subsystems[node_id] = SubsystemModel(input_size, output_size)
+            # TODO pick up here with nodes parent to leaf nodes
+            # Calculate the input size as the sum of the output sizes of the child subsystems
+            children_output_sizes = sum(
+                self.subsystems[child].output_size
+                for child in self.go_graph.successors(node_id)
+            )
+            # Add the boolean state vector size for the current node
+            # make empty gene set
+            genes = self.go_graph.nodes[node_id].get("gene_set", [])
+            total_input_size = children_output_sizes + len(genes)
 
-    def calculate_input_size(self, node_id):
-        # Calculate the input size based on the number of gene_set
-        # If the node has children, sum their gene_set; otherwise,
-        # just use this node's gene_set
-        gene_set = self.go_graph.nodes[node_id].get("gene_set", [])
-        return len(gene_set)
+            # Calculate the output size with a minimum of 20
+            output_size = max(20, int(0.3 * len(genes)))
 
-    def forward(self, batch: Batch):
-        # Flatten ids if batch.id is a list of lists; otherwise, use it directly
-        ids = (
-            [id for sublist in batch.id for id in sublist]
-            if isinstance(batch.id[0], list)
-            else batch.id
-        )
-
-        # Initialize a dictionary to store the outputs of each subsystem
-        subsystem_outputs = {}
-
-        # Iterate over the subsystems in the model
-        for subsystem_name, subsystem_model in self.subsystems.items():
-            # Find the indices of all nodes across the batch that correspond to this subsystem
-            subsystem_indices = [
-                (i, node_id)
-                for i, node_id in enumerate(ids)
-                if node_id == subsystem_name
-            ]
-
-            # Stack the mutant states for all nodes corresponding to this subsystem
-            subsystem_states = torch.stack(
-                [batch.x[i][batch.mask[i].bool()].float() for i, _ in subsystem_indices]
+            # Initialize the subsystem for the current node
+            self.subsystems[node_id] = SubsystemModel(
+                input_size=total_input_size, output_size=output_size
             )
 
-            # Pass the stacked mutant states through the subsystem model
-            subsystem_output = subsystem_model(subsystem_states)
+    def calculate_input_size(self, node_id):
+        # Sum output sizes of child subsystems and the boolean state vector
+        input_size_from_children = sum(
+            self.subsystems[child].output_size
+            for child in self.go_graph.successors(node_id)
+        )
+        genes = self.go_graph.nodes[node_id]["gene_set"]
+        return input_size_from_children + len(genes)
 
-            # Store the output in the dictionary using the subsystem name as the key
+    def forward(self, batch: Batch):
+        subsystem_outputs = {}
+        sorted_subsystems = reversed(list(nx.topological_sort(self.go_graph)))
+        go_ids = [i for ids in batch.id for i in ids]
+
+        for subsystem_name in sorted_subsystems:
+            subsystem_model = self.subsystems[subsystem_name]
+
+            # Find indices in the batch that correspond to this subsystem
+            subsystem_indices = [
+                i for i, go in enumerate(go_ids) if go == subsystem_name
+            ]
+
+            # Convert the mask to boolean if it's not already
+            bool_mask = batch.mask.type(torch.bool)
+
+            # Gather the mutant states for the subsystem
+            mutant_states = torch.stack(
+                [batch.x[idx][bool_mask[idx]] for idx in subsystem_indices]
+            ).to(torch.float32)
+
+            # Gather and concatenate outputs of child subsystems
+            child_outputs = torch.tensor([], dtype=torch.float32)
+            for child in self.go_graph.successors(subsystem_name):
+                assert child in subsystem_outputs, "children must be processed first"
+                child_output = subsystem_outputs[child]
+                child_outputs = torch.cat((child_outputs, child_output), dim=1)
+
+            # Concatenate child outputs with mutant states
+            if len(child_outputs) > 0:
+                subsystem_input = torch.cat((mutant_states, child_outputs), dim=1)
+            else:
+                subsystem_input = mutant_states
+
+            # Compute the subsystem output
+            subsystem_output = subsystem_model(subsystem_input.to(torch.float32))
             subsystem_outputs[subsystem_name] = subsystem_output
 
-        # The final output is a dictionary of tensors, where each tensor is the output of a subsystem
         return subsystem_outputs
 
 
@@ -132,23 +164,17 @@ class DCellLinear(nn.Module):
             )
 
     def forward(self, subsystem_outputs: dict):
-        # Initialize an empty tensor to store the concatenated outputs
-        concatenated_outputs = torch.empty(
-            0,
-            self.output_size,
-            device=subsystem_outputs[next(iter(subsystem_outputs))].device,
-        )
+        # Initialize a dictionary to store the outputs for each subsystem
+        linear_outputs = {}
 
-        # Apply the linear transformation to each subsystem output and concatenate them
+        # Apply the linear transformation to each subsystem output
         for subsystem_name, subsystem_output in subsystem_outputs.items():
             transformed_output = self.subsystem_linears[subsystem_name](
                 subsystem_output
             )
-            concatenated_outputs = torch.cat(
-                (concatenated_outputs, transformed_output), dim=0
-            )
+            linear_outputs[subsystem_name] = transformed_output
 
-        return concatenated_outputs
+        return linear_outputs
 
 
 def delete_genes(go_graph: nx.Graph, deletion_gene_set: GeneSet):
@@ -217,6 +243,7 @@ def main():
         DmfCostanzo2016Dataset,
         SmfCostanzo2016Dataset,
     )
+    from torchcell.losses import DCellLoss
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
@@ -254,23 +281,31 @@ def main():
     print(f"After containment filter: {G.number_of_nodes()}")
 
     # Instantiate the model
-    dcell = DCell(go_graph=G)
+    # dcell = DCell(go_graph=G)
 
-    print(dcell)
-    print(dcell)
+    dcell = DCell(G)
+    target = torch.rand(2, 1)
+    # target = target.repeat_interleave(G.number_of_nodes())
+    # Define the loss function
+    criterion = DCellLoss()
 
     G_mutant = delete_genes(
         go_graph=dcell.go_graph, deletion_gene_set=GeneSet(("YDL029W", "YDR150W"))
     )
-    print()
     # forward method
     G_mutant = dcell_from_networkx(G_mutant)
 
     batch = Batch.from_data_list([G_mutant, G_mutant])
     subsystem_outputs = dcell(batch)
-    dcell_linear = DCellLinear(dcell.subsystems, output_size=2)
+    dcell_linear = DCellLinear(dcell.subsystems, output_size=1)
     output = dcell_linear(subsystem_outputs)
-    print(output.size)
+    # Compute the loss
+    loss = criterion(output, target, dcell.parameters())
+
+    # Backward pass
+    loss.backward()
+
+    print(f"Loss: {loss.item()}")
     print()
 
 

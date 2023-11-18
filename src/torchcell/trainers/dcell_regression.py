@@ -17,7 +17,7 @@ from torchmetrics import (
 from tqdm import tqdm
 
 import wandb
-from torchcell.losses import WeightedMSELoss
+from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 # use the specified style
@@ -34,7 +34,6 @@ class DCellRegressionTask(pl.LightningModule):
         boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
-        loss: str = "mse",
         batch_size: int = None,
         train_wt_diff: bool = True,
         **kwargs,
@@ -54,21 +53,7 @@ class DCellRegressionTask(pl.LightningModule):
         self.x_name = "x"
         self.x_batch_name = "batch"
 
-        # loss
-        if loss == "mse":
-            self.loss = nn.MSELoss()
-        elif loss == "weighted_mse":
-            mean_value = kwargs.get("fitness_mean_value")
-            penalty = kwargs.get("penalty", 1.0)
-            self.loss = WeightedMSELoss(mean_value=mean_value, penalty=penalty)
-        elif loss == "mae":
-            self.loss = nn.L1Loss()
-        else:
-            raise ValueError(
-                f"Loss type '{loss}' is not valid."
-                "Currently, supports 'mse' or 'mae' loss."
-            )
-        self.loss_node = nn.MSELoss()
+        self.loss = DCellLoss()
 
         # optimizer
         self.learning_rate = learning_rate

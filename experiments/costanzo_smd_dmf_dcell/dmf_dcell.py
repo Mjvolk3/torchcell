@@ -176,7 +176,6 @@ def main(cfg: DictConfig) -> None:
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
-        loss=wandb.config.regression_task["loss"],
     )
 
     # Checkpoint Callback

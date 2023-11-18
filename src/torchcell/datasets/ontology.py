@@ -1,95 +1,103 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+# src/torchcell/datasets/ontology.py
+# [[src.torchcell.datasets.ontology]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/ontology.py
+# Test file: src/torchcell/datasets/test_ontology.py
+from owlready2 import DataProperty, FunctionalProperty, Thing, get_ontology
 
-from pronto import Ontology
-from nxontology.viz import create_similarity_graphviz
-from nxontology.imports import pronto_to_multidigraph, multidigraph_to_digraph
-from collections import Counter
+# Create a new ontology
+onto = get_ontology("http://example.org/onto.owl")
 
-import networkx as nx
-import matplotlib.pyplot as plt
 
-# # https://obofoundry.org/ontology/mco.html
-# url = "https://raw.githubusercontent.com/microbial-conditions-ontology/microbial-conditions-ontology/master/mco.owl"
-# env_pronto = Ontology(handle=url)
-# print(env_pronto.__dict__)
-# print(50 * "=")
-# print(len(env_pronto.terms()))
-# [print(i) for i in list(env_pronto.terms())]
-# print(50 * "=")
-# [print(i) for i in list(env_pronto.relationships())]
-# print(len(env_pronto.relationships()))
+# Define the top-level Experiment class
+class Experiment(Thing):
+    namespace = onto
 
-# # if __name__ == "__main__":
-# #     Plotting the graph
-# #     env_multidigraph = pronto_to_multidigraph(env_pronto)
-# #     pos = nx.spring_layout(env_multidigraph)
-# #     plt.figure(figsize=(10, 10))
-# #     nx.draw(
-# #         env_multidigraph, pos, with_labels=True, node_size=1000, node_color="skyblue"
-# #     )
-# #     plt.title("env_multidigraph")
-# #     plt.show()
-# #     pass
 
-###############
+# Define Genotype and Phenotype as subclasses of Experiment
+class Genotype(Experiment):
+    namespace = onto
 
-import pronto
 
-# # Create a directed graph
-# G = nx.DiGraph()
+class Phenotype(Experiment):
+    namespace = onto
 
-# # Add nodes for each term in the ontology
-# for term in ontology:
-#     G.add_node(term.id, label=term.name)
 
-# # Add edges for each relationship in the ontology
-# for term in ontology:
-#     for rel, parent in term.relationships.items():
-#         G.add_edge(term.id, parent.id, label=rel.id)
+# Define subclasses of Genotype and Phenotype
+class Allele(Genotype):
+    namespace = onto
 
-# # Draw the graph
-# pos = nx.spring_layout(G)
-# labels = nx.get_node_attributes(G, 'label')
-# nx.draw(G, pos, labels=labels, with_labels=True, node_size=3000, node_color='skyblue', font_size=10, font_weight='bold')
-# plt.show()
-import pronto
-from pronto import Definition
-import networkx as nx
-import matplotlib.pyplot as plt
-from nxontology.imports import pronto_to_multidigraph
+
+class Observation(Phenotype):
+    namespace = onto
+
+
+class Environment(Phenotype):
+    namespace = onto
+
+
+# Define Functional Data Properties for each of the subclasses
+class intervention(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Allele]
+    range = [str]
+
+
+class id_full(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Allele]
+    range = [str]
+
+
+class smf(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Observation]
+    range = [float]
+
+
+class smf_std(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Observation]
+    range = [float]
+
+
+class media(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Environment]
+    range = [str]
+
+
+class temperature(FunctionalProperty, DataProperty):
+    namespace = onto
+    domain = [Environment]
+    range = [int]
+
+
+# Function to create and link instances
+def main():
+    # Create an instance of Experiment
+    experiment1 = Experiment("experiment1")
+
+    # Create instances of Genotype and Phenotype subclasses and assign properties
+    allele1 = Allele("allele1")
+    allele1.intervention = "deletion"
+    allele1.id_full = "YDL171C_dma736"
+
+    observation1 = Observation("observation1")
+    observation1.smf = 0.9777
+    observation1.smf_std = 0.0679
+
+    environment1 = Environment("environment1")
+    environment1.media = "YPD"
+    environment1.temperature = 30
+
+    # Link the Allele, Observation, and Environment instances to the Experiment instance
+    # This assumes that the Experiment class has object properties to reference these instances
+    experiment1.hasGenotype = [allele1]
+    experiment1.hasPhenotype = [observation1, environment1]
+
+    # Save the ontology to a file
+    onto.save(file="my_ontology.owl", format="rdfxml")
+
 
 if __name__ == "__main__":
-    # Create a new ontology
-    ontology = pronto.Ontology()
-
-    # Add terms to the ontology
-    term1 = ontology.create_term("GO:0000001")
-    term1.name = "mitochondrion inheritance"
-    term1.definition = Definition(
-        "The distribution of mitochondria, including the mitochondrial genome, into daughter cells after mitosis or meiosis, mediated by interactions between mitochondria and the cytoskeleton.",
-        [],
-    )
-
-    term2 = ontology.create_term("GO:0000002")
-    term2.name = "mitochondrial genome maintenance"
-    term2.definition = Definition(
-        "The maintenance of the structure and integrity of the mitochondrial genome; includes replication and segregation of the mitochondrial chromosome.",
-        [],
-    )
-
-    # Use the predefined "is_a" relationship
-    relationship = ontology.get_relationship("is_a")
-    term2.relationships[relationship] = {term1}
-
-    print(ontology)
-
-    # Plotting the graph
-    onto_multidigraph = pronto_to_multidigraph(ontology)
-    pos = nx.spring_layout(onto_multidigraph)
-    plt.figure(figsize=(10, 10))
-    nx.draw(
-        onto_multidigraph, pos, with_labels=True, node_size=1000, node_color="skyblue"
-    )
-    plt.title("onto_multidigraph")
-    plt.show()
+    main()

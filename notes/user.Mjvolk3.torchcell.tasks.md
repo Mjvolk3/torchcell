@@ -2,16 +2,22 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700261607699
+updated: 1700331174113
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.18
+
+- [x] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly → I think these are fixed but should go back and annotate and test properly.
+- [ ] Quick run model locally
+- [ ] Launch on `Delta`
+
 ## 2023.11.17
 
 - [x] Correct [[./assets/drawio/Dcell.drawio.png]] → Corrected including subsystem representation.
-- [ ] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly
-- [ ] Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts.
+- [x] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly
+- [ ] Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts. Is this the same thing as `GAF`?
 
 ## 2023.11.16
 

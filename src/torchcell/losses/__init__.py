@@ -1,3 +1,8 @@
+from .dcell import DCellLoss
 from .weighted_mse import WeightedMSELoss
 
-__all__ = ["WeightedMSELoss"]
+standard_losses = {"weighted_mse": WeightedMSELoss}
+
+model_losses = {"dcell": DCellLoss}
+
+__all__ = ["standard_losses", "model_losses"]

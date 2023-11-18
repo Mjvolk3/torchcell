@@ -135,7 +135,7 @@ def main(cfg: DictConfig) -> None:
     G = filter_by_date(G, "2017-07-19")
     G = filter_go_IGI(G)
     G = filter_redundant_terms(G)
-    G = filter_by_contained_genes(G, n=1, gene_set=dcell_gene_set)
+    G = filter_by_contained_genes(G, n=2, gene_set=dcell_gene_set)
 
     # replace graph
     graph.G_go = G

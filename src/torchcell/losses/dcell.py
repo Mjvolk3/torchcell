@@ -7,13 +7,27 @@ import torch
 import torch.nn as nn
 
 
-def dcell_loss(outputs, targets, weights, alpha=0.3, lambda_reg=0.01):
-    criterion = nn.MSELoss()
-    root_loss = criterion(outputs["root"], targets)
+class DCellLoss(nn.Module):
+    def __init__(self, alpha=0.3, lambda_reg=0.01):
+        super().__init__()
+        self.alpha = alpha
+        self.lambda_reg = lambda_reg
+        self.criterion = nn.MSELoss()
 
-    non_root_loss = sum(criterion(outputs[t], targets) for t in outputs if t != "root")
+    def forward(self, outputs, target, weights):
+        # Assuming 'GO:ROOT' is the root subsystem
+        root_output = outputs["GO:ROOT"]
+        root_loss = self.criterion(root_output, target)
 
-    reg_loss = lambda_reg * torch.norm(weights, 2)
+        # Loss for non-root subsystems
+        non_root_loss = sum(
+            self.criterion(outputs[t], target) for t in outputs if t != "GO:ROOT"
+        )
 
-    total_loss = root_loss + alpha * non_root_loss + reg_loss
-    return total_loss / len(targets)
+        # Regularization loss for weights
+        all_weights = torch.cat([w.view(-1) for w in weights])
+        reg_loss = self.lambda_reg * torch.norm(all_weights, 2)
+
+        # Total loss
+        total_loss = root_loss + self.alpha * non_root_loss + reg_loss
+        return total_loss

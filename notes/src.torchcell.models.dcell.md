@@ -2,7 +2,7 @@
 id: euw7ks1ua3afvqcu9bwb7uh
 title: Dcell
 desc: ''
-updated: 1699055458091
+updated: 1700278395667
 created: 1694555579561
 ---
 
@@ -98,6 +98,49 @@ Look into how we can subset GO by date. From the looks of this is not possible w
 ]
 ```
 
-## Model Implementation
+## Model Implementation - Passing Previous Subsystem Outputs
 
-The are
+```mermaid
+graph LR
+    'GO:0000494'-leaf_node --> 'GO:0031126'
+    'GO:0071051'-leaf_node --> 'GO:0031126'
+```
+
+```python
+>>>len(G.nodes['GO:0031126']['gene_set'])
+10
+>>>len(G.nodes['GO:0000494']['gene_set'])
+3
+>>>len(G.nodes['GO:0071051']['gene_set'])
+7
+>>>dcell.subsystems['GO:0031126']
+SubsystemModel(
+  (linear): Linear(in_features=10, out_features=20, bias=True)
+  (tanh): Tanh()
+  (batchnorm): BatchNorm1d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+>>>dcell.subsystems['GO:0000494']
+SubsystemModel(
+  (linear): Linear(in_features=3, out_features=20, bias=True)
+  (tanh): Tanh()
+  (batchnorm): BatchNorm1d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+>>>dcell.subsystems['GO:0071051']
+SubsystemModel(
+  (linear): Linear(in_features=7, out_features=20, bias=True)
+  (tanh): Tanh()
+  (batchnorm): BatchNorm1d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+```
+
+- The features from the two chid nodes `'GO:0000494'-leaf_node`,
+`'GO:0071051'-leaf_node` should be concatenated with the boolean state vector of `'GO:0031126'`. This means that we should instead have size `50` coming in, the out features are still determined by the number of genes that are annotated to that node, so it will get maxed to 20.
+
+```python
+>>>dcell.subsystems['GO:0031126']
+SubsystemModel(
+  (linear): Linear(in_features=50, out_features=20, bias=True)
+  (tanh): Tanh()
+  (batchnorm): BatchNorm1d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+)
+```

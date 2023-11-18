@@ -918,6 +918,96 @@ def go_gaf_investigation():
     compare_go_terms(graph.G_raw, G)
 
 
+import networkx as nx
+import plotly.graph_objects as go
+
+
+def plotly_go_graph(G):
+    # Define color map for namespaces
+    namespace_colors = {
+        "super_root": "#122A4B",
+        "biological_process": "#FF552E",
+        "molecular_function": "#8286C2",
+        "cellular_component": "#D23943",
+        "missing": "#AAAAAA",  # Color for missing namespace
+    }
+
+    # Determine levels and layout
+    max_level = max(data.get("level", 0) for node, data in G.nodes(data=True))
+    min_level = min(data.get("level", 0) for node, data in G.nodes(data=True))
+    level_spacing = 2.0  # Increased spacing for levels
+    horizontal_spacing = 2.0  # Increased spacing horizontally
+
+    new_pos = {}
+    for node, data in G.nodes(data=True):
+        level = data.get("level", 0)
+        nodes_in_level = [n for n, d in G.nodes(data=True) if d.get("level") == level]
+        idx_in_level = nodes_in_level.index(node)
+        total_nodes_in_level = len(nodes_in_level)
+        new_x = (idx_in_level - total_nodes_in_level / 2) * horizontal_spacing
+        new_y = (max_level - level) * level_spacing - min_level * level_spacing
+        new_pos[node] = (new_x, new_y)
+
+    # Creating edge traces
+    edge_x = []
+    edge_y = []
+    for edge in G.edges():
+        x0, y0 = new_pos[edge[0]]
+        x1, y1 = new_pos[edge[1]]
+        edge_x.extend([x0, x1, None])
+        edge_y.extend([y0, y1, None])
+
+    edge_trace = go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        line=dict(width=0.5, color="#888"),
+        hoverinfo="none",
+        mode="lines",
+    )
+
+    # Creating node traces
+    node_x = []
+    node_y = []
+    node_info = []
+    node_color = []
+    for node in G.nodes():
+        x, y = new_pos[node]
+        node_x.append(x)
+        node_y.append(y)
+        node_data = G.nodes[node]
+        name = node_data.get("name", "none")
+        level = node_data.get("level", "none")
+        namespace = node_data.get("namespace", "missing")
+        info_str = f"{node}: name={name}, level={level}"
+        node_info.append(info_str)
+        node_color.append(namespace_colors.get(namespace, "missing"))
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode="markers",
+        hoverinfo="text",
+        text=node_info,
+        marker=dict(showscale=False, size=7, color=node_color, line=None),
+    )
+    # Create the figure
+    fig = go.Figure(
+        data=[edge_trace, node_trace],
+        layout=go.Layout(
+            title="Gene Ontology Graph",
+            titlefont_size=16,
+            showlegend=False,
+            hovermode="closest",
+            margin=dict(b=20, l=5, r=5, t=40),
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            plot_bgcolor="rgba(0,0,0,0)",
+        ),
+    )
+
+    fig.show()
+
+
 def main() -> None:
     import os
     import random
@@ -975,6 +1065,7 @@ def main() -> None:
 
     # plot_annotation_dates_by_month(graph.G_go)
     # plot_go_graph(graph.G_go)
+    plotly_go_graph(G)
 
 
 if __name__ == "__main__":

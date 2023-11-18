@@ -22,7 +22,7 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  target: gitness # fitness, genetic_interaction_score
+  target: fitness # fitness, genetic_interaction_score
   boxplot_every_n_epochs: 1
   learning_rate: 1e-3 #1e-2 #1e-3
   weight_decay: 1e-5

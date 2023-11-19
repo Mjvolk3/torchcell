@@ -110,10 +110,11 @@ class DCell(nn.Module):
         return input_size_from_children + len(genes)
 
     def forward(self, batch: Batch):
+        # HACK should probably move device to a more appropriate location
         subsystem_outputs = {}
         sorted_subsystems = reversed(list(nx.topological_sort(self.go_graph)))
         go_ids = [i for ids in batch.id for i in ids]
-
+        device = batch.x.device
         for subsystem_name in sorted_subsystems:
             subsystem_model = self.subsystems[subsystem_name]
 
@@ -127,14 +128,14 @@ class DCell(nn.Module):
 
             # Gather the mutant states for the subsystem
             mutant_states = torch.stack(
-                [batch.x[idx][bool_mask[idx]] for idx in subsystem_indices]
+                [batch.x[idx][bool_mask[idx]].to(device) for idx in subsystem_indices]
             ).to(torch.float32)
 
             # Gather and concatenate outputs of child subsystems
-            child_outputs = torch.tensor([], dtype=torch.float32)
+            child_outputs = torch.tensor([], dtype=torch.float32).to(device)
             for child in self.go_graph.successors(subsystem_name):
                 assert child in subsystem_outputs, "children must be processed first"
-                child_output = subsystem_outputs[child]
+                child_output = subsystem_outputs[child].to(device)
                 child_outputs = torch.cat((child_outputs, child_output), dim=1)
 
             # Concatenate child outputs with mutant states

@@ -17,11 +17,13 @@ class DCellLoss(nn.Module):
     def forward(self, outputs, target, weights):
         # Assuming 'GO:ROOT' is the root subsystem
         root_output = outputs["GO:ROOT"]
-        root_loss = self.criterion(root_output, target)
+        root_loss = self.criterion(root_output.squeeze(-1), target)
 
         # Loss for non-root subsystems
         non_root_loss = sum(
-            self.criterion(outputs[t], target) for t in outputs if t != "GO:ROOT"
+            self.criterion(outputs[t].squeeze(-1), target)
+            for t in outputs
+            if t != "GO:ROOT"
         )
 
         # Regularization loss for weights

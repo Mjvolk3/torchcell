@@ -107,6 +107,9 @@ def main(cfg: DictConfig) -> None:
     # Initialize the WandbLogger
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    log.info(device)
+
     # Get reference genome
     genome = SCerevisiaeGenome(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
@@ -141,8 +144,8 @@ def main(cfg: DictConfig) -> None:
     graph.G_go = G
 
     # Instantiate Dcell models
-    dcell_model = DCell(go_graph=graph.G_go)
-    dcell_linear = DCellLinear(dcell_model.subsystems, output_size=1)
+    dcell_model = DCell(go_graph=graph.G_go).to(device)
+    dcell_linear = DCellLinear(dcell_model.subsystems, output_size=1).to(device)
     models = {"dcell": dcell_model, "dcell_linear": dcell_linear}
 
     # Embeddings datasets
@@ -186,10 +189,6 @@ def main(cfg: DictConfig) -> None:
         mode="min",
     )
 
-    # Initialize the Trainer with the WandbLogger
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    log.info(device)
-
     num_devices = torch.cuda.device_count()
     if num_devices == 0:  # if there are no GPUs available, use 1 CPU
         devices = 1
@@ -198,6 +197,7 @@ def main(cfg: DictConfig) -> None:
 
     trainer = pl.Trainer(
         strategy=wandb.config.trainer["strategy"],
+        accelerator="auto",
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],

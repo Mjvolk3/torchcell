@@ -93,30 +93,35 @@ class DCellRegressionTask(pl.LightningModule):
         # Implement the forward pass
         dcell_subsystem_output = self.dcell(batch)
         dcell_linear_output = self.dcell_linear(dcell_subsystem_output)
-        if dcell_linear_output.size()[-1] == 1:
-            dcell_linear_output = dcell_linear_output.squeeze(-1)
+        # if dcell_linear_output.size()[-1] == 1:
+        #     dcell_linear_output = dcell_linear_output.squeeze(-1)
         return dcell_linear_output
 
     def on_train_start(self):
         # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
         # Log it using wandb
-        self.log("model/parameters_size", parameter_size)
+        self.log(
+            "model/parameters_size", torch.tensor(parameter_size, dtype=torch.float32)
+        )
 
     def training_step(self, batch, batch_idx):
         y_hat = self(batch)
-        subsystem_batch = batch.batch[: y_hat.size(0)]
-        y = batch.fitness[subsystem_batch]
 
         opt = self.optimizers()
         opt.zero_grad()
-        loss = self.loss(y_hat, y)
+        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
 
         self.manual_backward(loss)  # error on this line
         opt.step()
         opt.zero_grad()
         # logging
         batch_size = batch.batch[-1].item() + 1
+        # Flatten
+        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
+        y_hat = y_hat_stacked.T.reshape(-1)
+        # Log
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients
@@ -141,11 +146,14 @@ class DCellRegressionTask(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
         y_hat = self(batch)
-        subsystem_batch = batch.batch[: y_hat.size(0)]
-        y = batch.fitness[subsystem_batch]
-        loss = self.loss(y_hat, batch.fitness[subsystem_batch])
+        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
         batch_size = batch.batch[-1].item() + 1
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
+        # Flatten
+        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
+        y_hat = y_hat_stacked.T.reshape(-1)
+        # Log
         self.val_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
@@ -207,11 +215,13 @@ class DCellRegressionTask(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         y_hat = self(batch)
-        subsystem_batch = batch.batch[: y_hat.size(0)]
-        y = batch.fitness[subsystem_batch]
-
-        loss = self.loss(y_hat, y)
+        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
         batch_size = batch.batch[-1].item() + 1
+        # Flatten
+        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
+        y_hat = y_hat_stacked.T.reshape(-1)
+        #
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
         self.test_metrics(y_hat, y)
         # Logging the correlation coefficients

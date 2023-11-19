@@ -2,16 +2,22 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700331174113
+updated: 1700429024050
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.19
+
+- [x] Fix device issues with `Dcell`
+- []
+
+
 ## 2023.11.18
 
 - [x] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly → I think these are fixed but should go back and annotate and test properly.
-- [ ] Quick run model locally
-- [ ] Launch on `Delta`
+- [x] Quick run model locally → works on `cpu`
+- 🔲 Launch on `Delta` → device issues
 
 ## 2023.11.17
 

@@ -14,7 +14,7 @@ cell_dataset:
 
 data_module:
   batch_size: 16 #32
-  num_workers: 4
+  num_workers: 6
   pin_memory: true
 
 trainer:
@@ -22,8 +22,8 @@ trainer:
   strategy: auto # ddp, auto
 
 regression_task:
-  target: genetic_interaction_score # fitness, genetic_interaction_score
+  target: fitness # fitness, genetic_interaction_score
   boxplot_every_n_epochs: 1
-  learning_rate: 1e-2 #1e-3
+  learning_rate: 1e-3 #1e-2 #1e-3
   weight_decay: 1e-5
   loss: mse

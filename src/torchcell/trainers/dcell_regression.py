@@ -107,10 +107,10 @@ class DCellRegressionTask(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         y_hat = self(batch)
-
+        y = batch.fitness
         opt = self.optimizers()
         opt.zero_grad()
-        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
+        loss = self.loss(y_hat, y, self.dcell.parameters())
 
         self.manual_backward(loss)  # error on this line
         opt.step()
@@ -118,22 +118,35 @@ class DCellRegressionTask(pl.LightningModule):
         # logging
         batch_size = batch.batch[-1].item() + 1
         # Flatten
-        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_root = y_hat["GO:ROOT"].squeeze(1)
         y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
-        y_hat = y_hat_stacked.T.reshape(-1)
+        y_hat_subsystems = y_hat_stacked.mean(0)
         # Log
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
-        self.train_metrics(y_hat, y)
+        self.train_metrics(y_hat_subsystems, y)
+        self.train_metrics(y_hat_root, y)
         # Logging the correlation coefficients
         self.log(
-            "train_pearson",
-            self.pearson_corr(y_hat, y),
+            "train_pearson_subsystems",
+            self.pearson_corr(y_hat_subsystems, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
-            "train_spearman",
-            self.spearman_corr(y_hat, y),
+            "train_spearman_subsystems",
+            self.spearman_corr(y_hat_subsystems, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "train_pearson_root",
+            self.pearson_corr(y_hat_root, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "train_spearman_root",
+            self.spearman_corr(y_hat_root, y),
             batch_size=batch_size,
             sync_dist=True,
         )
@@ -146,30 +159,44 @@ class DCellRegressionTask(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
         y_hat = self(batch)
-        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
+        y = batch.fitness
+        loss = self.loss(y_hat, y, self.dcell.parameters())
         batch_size = batch.batch[-1].item() + 1
         self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
         # Flatten
-        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_root = y_hat["GO:ROOT"].squeeze(1)
         y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
-        y_hat = y_hat_stacked.T.reshape(-1)
+        y_hat_subsystems = y_hat_stacked.mean(0)
         # Log
-        self.val_metrics(y_hat, y)
+        self.val_metrics(y_hat_subsystems, y)
+        self.val_metrics(y_hat_root, y)
         # Logging the correlation coefficients
         self.log(
+            "val_pearson_subsystems",
+            self.pearson_corr(y_hat_subsystems, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "val_spearman_subsystems",
+            self.spearman_corr(y_hat_subsystems, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
             "val_pearson",
-            self.pearson_corr(y_hat, y),
+            self.pearson_corr(y_hat_root, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
             "val_spearman",
-            self.spearman_corr(y_hat, y),
+            self.spearman_corr(y_hat_root, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.true_values.append(y.detach())
-        self.predictions.append(y_hat.detach())
+        self.predictions.append(y_hat_subsystems.detach())
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -215,25 +242,39 @@ class DCellRegressionTask(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         y_hat = self(batch)
-        loss = self.loss(y_hat, batch.fitness, self.dcell.parameters())
+        y = batch.fitness
+        loss = self.loss(y_hat, y, self.dcell.parameters())
         batch_size = batch.batch[-1].item() + 1
         # Flatten
-        y = batch.fitness.repeat_interleave(len(self.dcell.subsystems))
+        y_hat_root = y_hat["GO:ROOT"].squeeze(1)
         y_hat_stacked = torch.stack([v.squeeze() for v in y_hat.values()])
-        y_hat = y_hat_stacked.T.reshape(-1)
+        y_hat_subsystems = y_hat_stacked.mean(0)
         #
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
-        self.test_metrics(y_hat, y)
+        self.test_metrics(y_hat_subsystems, y)
+        self.test_metrics(y_hat_root, y)
         # Logging the correlation coefficients
         self.log(
-            "test_pearson",
-            self.pearson_corr(y_hat, y),
+            "test_pearson_subsystems",
+            self.pearson_corr(y_hat_subsystems, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
-            "test_spearman",
-            self.spearman_corr(y_hat, y),
+            "test_spearman_subsystems",
+            self.spearman_corr(y_hat_subsystems, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "test_pearson_root",
+            self.pearson_corr(y_hat_root, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "test_spearman_root",
+            self.spearman_corr(y_hat_root, y),
             batch_size=batch_size,
             sync_dist=True,
         )

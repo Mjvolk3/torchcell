@@ -2,16 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700429024050
+updated: 1700503982569
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.20
+
+- [x] Investigate launched models → There are to many workers `pid` fail
+- [x] Model metrics needs to be fixed → logging root predictions and subsystem predictions
+- [ ]
+
 ## 2023.11.19
 
 - [x] Fix device issues with `Dcell`
-- []
-
+- [x] Launch on `DCell`
 
 ## 2023.11.18
 

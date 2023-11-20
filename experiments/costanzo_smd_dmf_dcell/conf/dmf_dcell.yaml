@@ -9,16 +9,16 @@ wandb:
   tags: [dcell]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
+  experiments: costanzo2016_1e4
+  name: cell_1e4
 
 data_module:
   batch_size: 16 #32
-  num_workers: 6
+  num_workers: 4
   pin_memory: true
 
 trainer:
-  max_epochs: 1
+  max_epochs: 1000
   strategy: auto # ddp, auto
 
 regression_task:
@@ -26,4 +26,3 @@ regression_task:
   boxplot_every_n_epochs: 1
   learning_rate: 1e-3 #1e-2 #1e-3
   weight_decay: 1e-5
-  loss: mse

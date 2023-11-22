@@ -83,7 +83,7 @@ from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers import DCellRegressionTask
+from torchcell.trainers import DCellRegressionSlimTask
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -174,7 +174,7 @@ def main(cfg: DictConfig) -> None:
         num_workers=wandb.config.data_module["num_workers"],
     )
 
-    model = DCellRegressionTask(
+    model = DCellRegressionSlimTask(
         models=models,
         target=wandb.config.regression_task["target"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
@@ -196,18 +196,6 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
-    # # Instantiate the profiler
-    # profiler = PyTorchProfiler(
-    #     dir_path="pl_profile",
-    #     filename=f"profiler_results_{slurm_job_id}",
-    #     record_shapes=True,
-    #     profile_memory=True,
-    #     use_cuda=torch.cuda.is_available(),
-    #     export_to_chrome=True,
-    #     row_limit=20,
-    #     sort_by_key="cpu_memory_usage",
-    # )
-
     # Update the Trainer to use the profiler
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
@@ -221,6 +209,8 @@ def main(cfg: DictConfig) -> None:
 
     # Start the training
     trainer.fit(model, data_module)
+
+    wandb.finish()
 
 
 if __name__ == "__main__":

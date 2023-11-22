@@ -4,13 +4,13 @@ defaults:
   - _self_ # append to end for overriding duplicate configs in default
 
 wandb:
-  mode: online # disabled, offline, online
+  mode: offline # disabled, offline, online
   project: torchcell
   tags: [dcell]
 
 cell_dataset:
-  experiments: costanzo2016_1e4
-  name: cell_1e4
+  experiments: costanzo2016_1e3
+  name: cell_1e3
 
 data_module:
   batch_size: 16 #32

@@ -3,12 +3,12 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datamodules/cell.py
 # Test file: src/torchcell/datamodules/test_cell.py
 
-import pytorch_lightning as pl
+import lightning as L
 import torch
 from torch_geometric.loader import DataLoader
 
 
-class CellDataModule(pl.LightningDataModule):
+class CellDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset,

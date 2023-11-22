@@ -7,13 +7,13 @@ import os.path as osp
 import uuid
 
 import hydra
-import pytorch_lightning as pl
+import lightning as L
 import torch
 import torch.distributed as dist
 from dotenv import load_dotenv
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
 
 import wandb
 from torchcell.datamodules import CellDataModule
@@ -214,7 +214,7 @@ def main(cfg: DictConfig) -> None:
         devices = num_devices
 
     # TODO remove num_sanity_val_steps=0
-    trainer = pl.Trainer(
+    trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         devices=devices,
         accelerator=wandb.config.trainer["accelerator"],

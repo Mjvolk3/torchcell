@@ -5,10 +5,10 @@
 
 import math
 
+import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from torch_geometric.data import Batch, Data
@@ -29,7 +29,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 plt.style.use("conf/torchcell.mplstyle")
 
 
-class SimpleLinearRegressionTask(pl.LightningModule):
+class SimpleLinearRegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     def __init__(

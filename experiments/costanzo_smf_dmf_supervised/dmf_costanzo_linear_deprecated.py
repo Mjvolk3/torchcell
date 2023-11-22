@@ -12,14 +12,14 @@ import os.path as osp
 import uuid
 
 import hydra
+import lightning as L
 import numpy as np
-import pytorch_lightning as pl
 import torch
 import torch.distributed as dist
 from dotenv import load_dotenv
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
 from scipy.stats import pearsonr, spearmanr
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error

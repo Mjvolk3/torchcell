@@ -3,8 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression_deep_set_transformer.py
 # Test file: src/torchcell/trainers/test_regression_deep_set_transformer.py
 
+import lightning as L
 import matplotlib.pyplot as plt
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from torch_geometric.data import Batch, Data
@@ -23,7 +23,7 @@ from torchcell.losses import WeightedMSELoss
 plt.style.use("conf/torchcell.mplstyle")
 
 
-class RegressionTaskDeepSetTransformer(pl.LightningModule):
+class RegressionTaskDeepSetTransformer(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     target_key: str = "fitness"

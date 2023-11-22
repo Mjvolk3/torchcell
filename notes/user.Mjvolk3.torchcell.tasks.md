@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700662844170
+updated: 1700665188731
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -583,13 +583,13 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.11
 
-- [x] Investigate why the prefious `dmf` `1e6` failed. → Ran out of gpu memory. Memory increased gpu process memory increased epochs... my suspicion is that tracking model graidents leads to this, but I am unsure. Trying again without gradient tracking. → Now that I think if this it doesn't make much sense since I was able to track weights for large models. Maybe it has something to do with size of data?
-- [x] Review system metrics → Still unsure why some models fail with large gpu memory allocation still availble. We get a gpu shut down message, but I think it has to do with running out of cpu memory on the node. Also it looks like the amount of cpu memory used for `num_workers` is much higher than the amount of allocated memory on gpu. Clearly there are gaps in understanding the allocation. Some anecdotal evidence [[2 gpus A40x4-sbatch - Training Speedup with 1e5 CellDataset cont. 1|dendron://torchcell/experiments.dmf_costanzo_deepset#2-gpus-a40x4-sbatch---training-speedup-with-1e5-celldataset-cont-1]]
+- [x] Investigate why the previous `dmf` `1e6` failed. → Ran out of gpu memory. Memory increased gpu process memory increased epochs... my suspicion is that tracking model gradients leads to this, but I am unsure. Trying again without gradient tracking. → Now that I think this doesn't make much sense since I was able to track weights for large models. Maybe it has something to do with size of data?
+- [x] Review system metrics → Still unsure why some models fail with large gpu memory allocation still available. We get a gpu shut down message, but I think it has to do with running out of cpu memory on the node. Also it looks like the amount of cpu memory used for `num_workers` is much higher than the amount of allocated memory on gpu. Clearly there are gaps in understanding the allocation. Some anecdotal evidence [[2 gpus A40x4-sbatch - Training Speedup with 1e5 CellDataset cont. 1|dendron://torchcell/experiments.dmf_costanzo_deepset#2-gpus-a40x4-sbatch---training-speedup-with-1e5-celldataset-cont-1]]
 - 🔲 git clean up across computers
 - 🔲 wt difference embedding
 - 🔲 optional dimensionality reduction
 - 🔲 Downselect by gene interaction scores or `1e5`...
-- 🔲 Unify `wandb` when training on multiple gpus prvious is slurm job id and date. Don't this will work across sweeps.
+- 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps.
 - 🔲 add period delimited time
 
 ## 2023.09.10

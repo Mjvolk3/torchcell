@@ -9,8 +9,8 @@ wandb:
   tags: [dcell]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
+  experiments: costanzo2016_1e5
+  name: cell_1e5
 
 data_module:
   batch_size: 16 #32 got error with 8
@@ -18,7 +18,7 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 2
+  max_epochs: 1000
   strategy: auto # ddp, auto
 
 regression_task:

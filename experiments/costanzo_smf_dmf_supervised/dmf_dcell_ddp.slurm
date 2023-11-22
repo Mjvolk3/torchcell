@@ -25,4 +25,5 @@ pwd
 conda activate /projects/bbub/miniconda3/envs/torchcell
 #echo "job is starting on `hostname`"
 #wandb artifact cache cleanup 1GB
+HYDRA_FULL_ERROR=1
 srun python experiments/costanzo_smd_dmf_dcell/dmf_dcell.py

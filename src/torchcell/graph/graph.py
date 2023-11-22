@@ -689,7 +689,7 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
 
     # Mark nodes for removal based on containment criteria
     nodes_to_remove = [
-        node for node, genes in containment_dictionary.items() if len(genes) <= n
+        node for node, genes in containment_dictionary.items() if len(genes) < n
     ]
 
     # Forward the connections of nodes marked for removal
@@ -702,7 +702,7 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
                     G.add_edge(in_node, out_node)
 
     # Remove the marked nodes
-    log.info(f"Nodes with <= {n} contained genes removed: {len(nodes_to_remove)}")
+    log.info(f"Nodes with < {n} contained genes removed: {len(nodes_to_remove)}")
     for node in nodes_to_remove:
         G.remove_node(node)
 
@@ -1057,7 +1057,7 @@ def main() -> None:
     G = filter_redundant_terms(G)
     print(f"After redundant filter: {G.number_of_nodes()}")
     # (filter_by_contained_genes(G, 1, gene_set=gene_set)).number_of_nodes()
-    G = filter_by_contained_genes(G, n=1, gene_set=gene_set)
+    G = filter_by_contained_genes(G, n=6, gene_set=gene_set)
     print(f"After containment filter: {G.number_of_nodes()}")
     # print()
     # plot_go_graph(G)

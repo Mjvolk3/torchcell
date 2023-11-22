@@ -23,20 +23,20 @@ from os import environ
 from typing import List, Optional, Tuple, Union
 
 import hydra
+import lightning as L
 import lmdb
 import networkx as nx
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 import torch.distributed as dist
 from attrs import define
 from dotenv import load_dotenv
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.profilers import PyTorchProfiler
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
 from sklearn import experimental
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
@@ -196,26 +196,27 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
-    # Define the output filename for the profiler
-    profile_output_filename = f"profiler_results_{slurm_job_id}.txt"
-
-    # Instantiate the profiler
-    profiler = PyTorchProfiler(
-        output_filename=profile_output_filename,
-        record_shapes=True,
-        profile_memory=True,
-        use_cuda=torch.cuda.is_available(),
-    )
+    # # Instantiate the profiler
+    # profiler = PyTorchProfiler(
+    #     dir_path="pl_profile",
+    #     filename=f"profiler_results_{slurm_job_id}",
+    #     record_shapes=True,
+    #     profile_memory=True,
+    #     use_cuda=torch.cuda.is_available(),
+    #     export_to_chrome=True,
+    #     row_limit=20,
+    #     sort_by_key="cpu_memory_usage",
+    # )
 
     # Update the Trainer to use the profiler
-    trainer = pl.Trainer(
+    trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator="auto",
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        profiler=profiler,  # Add the profiler here
+        # profiler=profiler,  # Add the profiler here
     )
 
     # Start the training

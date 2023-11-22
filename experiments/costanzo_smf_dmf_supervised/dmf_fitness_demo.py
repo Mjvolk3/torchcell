@@ -3,23 +3,26 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/dmf_fitness_demo.py
 # Test file: experiments/test_dmf_fitness_demo.py
 
-# TODO check how front matter changes when outside src.
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
+import os
 import os.path as osp
-from torchcell.datamodules import CellDataModule
-from torchcell.datasets import NucleotideTransformerDataset, FungalUtrTransformerDataset
-from torchcell.datasets.scerevisiae import (
-    DmfCostanzo2016Dataset,
-)
+
+# TODO check how front matter changes when outside src.
+import lightning as L
 import torch
+from dotenv import load_dotenv
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import WandbLogger
+
+from torchcell.datamodules import CellDataModule
+from torchcell.datasets import (
+    CellDataset,
+    FungalUtrTransformerDataset,
+    NucleotideTransformerDataset,
+)
+from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import RegressionTask
-from torchcell.datasets import CellDataset
-from pytorch_lightning.callbacks import ModelCheckpoint
-import os
-from dotenv import load_dotenv
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -69,7 +72,7 @@ model = RegressionTask(
 
 # pytorch_lightning - define trainer
 wandb_logger = WandbLogger(project="torchcell", log_model=True)
-trainer = pl.Trainer(logger=wandb_logger, max_epochs=100)
+trainer = L.Trainer(logger=wandb_logger, max_epochs=100)
 
 # Train
 trainer.fit(model, data_module)

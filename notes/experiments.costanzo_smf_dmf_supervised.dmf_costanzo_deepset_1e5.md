@@ -2,7 +2,7 @@
 id: elr05cfappvsttrp4t5spgn
 title: Dmf_costanzo_deepset_1e5
 desc: ''
-updated: 1696714673673
+updated: 1700668849864
 created: 1695956733137
 ---
 ## Deep Set Model Only Works with DDP Find Unused
@@ -23,7 +23,7 @@ It looks like your LightningModule has parameters that were not used in producin
 
 ```python
 if wandb.config.trainer["strategy"] == "ddp_find_unused":
-    from pytorch_lightning.strategies import DDPStrategy
+    from lightning.strategies import DDPStrategy
     strategy = DDPStrategy(find_unused_parameters=True)
 ```
 

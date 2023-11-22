@@ -1,9 +1,9 @@
 import math
 
+import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 from torch_geometric.data import Batch, Data
@@ -24,7 +24,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 plt.style.use("conf/torchcell.mplstyle")
 
 
-class DCellRegressionTask(pl.LightningModule):
+class DCellRegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     def __init__(
@@ -41,6 +41,7 @@ class DCellRegressionTask(pl.LightningModule):
         super().__init__()
         # models
         self.models = models
+
         for key, value in models.items():
             setattr(self, key, value)
 
@@ -79,8 +80,6 @@ class DCellRegressionTask(pl.LightningModule):
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        self.true_values = []
-        self.predictions = []
 
         # wandb model artifact logging
         self.last_logged_best_step = None
@@ -88,6 +87,8 @@ class DCellRegressionTask(pl.LightningModule):
     def setup(self, stage=None):
         for model in self.models.values():
             model.to(self.device)
+        self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
+        self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
     def forward(self, batch):
         # Implement the forward pass
@@ -195,8 +196,10 @@ class DCellRegressionTask(pl.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
-        self.true_values.append(y.detach())
-        self.predictions.append(y_hat_subsystems.detach())
+        self.true_values = torch.cat([self.true_values, y.detach()], dim=0)
+        self.predictions = torch.cat(
+            [self.predictions, y_hat_subsystems.detach()], dim=0
+        )
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -208,19 +211,15 @@ class DCellRegressionTask(pl.LightningModule):
         ):
             return
 
-        # Convert lists to tensors
-        true_values = torch.cat(self.true_values, dim=0)
-        predictions = torch.cat(self.predictions, dim=0)
-
         if self.target == "fitness":
-            fig = fitness.box_plot(true_values, predictions)
+            fig = fitness.box_plot(self.true_values, self.predictions)
         elif self.target == "genetic_interaction_score":
             fig = genetic_interaction_score.box_plot(true_values, predictions)
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
         # Clear the stored values for the next epoch
-        self.true_values = []
-        self.predictions = []
+        self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
+        self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
         current_global_step = self.global_step
         if (

@@ -1,11 +1,11 @@
-import pytorch_lightning as pl
+import lightning as L
 import torch
 import torch.nn as nn
 
 from torchcell.datamodules import CellDataModule
 
 
-class SimpleModel(pl.LightningModule):
+class SimpleModel(L.LightningModule):
     def __init__(self):
         super().__init__()
         self.linear = nn.Linear(
@@ -37,5 +37,5 @@ if __name__ == "__main__":
     data_module = CellDataModule(batch_size=64)
     model = SimpleModel()
 
-    trainer = pl.Trainer(max_epochs=10, gpus=1 if torch.cuda.is_available() else 0)
+    trainer = L.Trainer(max_epochs=10, gpus=1 if torch.cuda.is_available() else 0)
     trainer.fit(model, datamodule=data_module)

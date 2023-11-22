@@ -13,12 +13,12 @@ cell_dataset:
   name: cell_1e2
 
 data_module:
-  batch_size: 16 #32 got error with 8
+  batch_size: 32 #32 got error with 8
   num_workers: 4 # Got error with 4
   pin_memory: true
 
 trainer:
-  max_epochs: 2
+  max_epochs: 5
   strategy: auto # ddp, auto
 
 regression_task:

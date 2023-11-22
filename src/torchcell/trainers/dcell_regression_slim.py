@@ -1,5 +1,4 @@
 import math
-import tracemalloc
 
 import lightning as L
 import matplotlib.pyplot as plt
@@ -15,6 +14,8 @@ from torchmetrics import (
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
+
+# from torchmetrics.regression import PearsonCorrCoef, SpearmanCorrCoef
 from tqdm import tqdm
 
 import wandb
@@ -25,7 +26,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 plt.style.use("conf/torchcell.mplstyle")
 
 
-class DCellRegressionTask(L.LightningModule):
+class DCellRegressionSlimTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     def __init__(
@@ -69,28 +70,35 @@ class DCellRegressionTask(L.LightningModule):
                 "RMSE": MeanSquaredError(squared=False),
                 "MSE": MeanSquaredError(squared=True),
                 "MAE": MeanAbsoluteError(),
+                "Pearson": PearsonCorrCoef(),
+                "Spearman": SpearmanCorrCoef(),
             },
             prefix="train_",
         )
         self.val_metrics = self.train_metrics.clone(prefix="val_")
         self.test_metrics = self.train_metrics.clone(prefix="test_")
-
-        # Separate attributes for Pearson and Spearman correlation coefficients
-        self.pearson_corr = PearsonCorrCoef()
-        self.spearman_corr = SpearmanCorrCoef()
+        self.train_metrics_root = MetricCollection(
+            {
+                "RMSE": MeanSquaredError(squared=False),
+                "MSE": MeanSquaredError(squared=True),
+                "MAE": MeanAbsoluteError(),
+                "Pearson": PearsonCorrCoef(),
+                "Spearman": SpearmanCorrCoef(),
+            },
+            prefix="train_root_",
+        )
+        self.val_metrics_root = self.train_metrics_root.clone(prefix="val_root_")
+        self.test_metrics_root = self.train_metrics_root.clone(prefix="test_root_")
 
         # Used in end for whisker plot
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
 
         # wandb model artifact logging
         self.last_logged_best_step = None
-        tracemalloc.start()
 
     def setup(self, stage=None):
         for model in self.models.values():
             model.to(self.device)
-        self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
-        self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
 
     def forward(self, batch):
         # Implement the forward pass
@@ -127,37 +135,14 @@ class DCellRegressionTask(L.LightningModule):
         # Log
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat_subsystems, y)
-        self.train_metrics(y_hat_root, y)
-        # Logging the correlation coefficients
-        self.log(
-            "train_pearson_subsystems",
-            self.pearson_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "train_spearman_subsystems",
-            self.spearman_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "train_pearson_root",
-            self.pearson_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "train_spearman_root",
-            self.spearman_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
+        self.train_metrics_root(y_hat_root, y)
         return loss
 
     def on_train_epoch_end(self):
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.train_metrics.reset()
+        self.log_dict(self.train_metrics_root.compute(), sync_dist=True)
+        self.train_metrics_root.reset()
 
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
@@ -172,67 +157,16 @@ class DCellRegressionTask(L.LightningModule):
         y_hat_subsystems = y_hat_stacked.mean(0)
         # Log
         self.val_metrics(y_hat_subsystems, y)
-        self.val_metrics(y_hat_root, y)
-        # Logging the correlation coefficients
-        self.log(
-            "val_pearson_subsystems",
-            self.pearson_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "val_spearman_subsystems",
-            self.spearman_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "val_pearson",
-            self.pearson_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "val_spearman",
-            self.spearman_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.true_values = torch.cat([self.true_values, y.detach()], dim=0)
-        self.predictions = torch.cat(
-            [self.predictions, y_hat_subsystems.detach()], dim=0
-        )
+        self.val_metrics_root(y_hat_root, y)
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
-
-        # Skip plotting during sanity check
-        if self.trainer.sanity_checking or (
-            self.current_epoch % self.boxplot_every_n_epochs != 0
-        ):
-            return
-
-        if self.target == "fitness":
-            fig = fitness.box_plot(self.true_values, self.predictions)
-        elif self.target == "genetic_interaction_score":
-            fig = genetic_interaction_score.box_plot(true_values, predictions)
-        wandb.log({"binned_values_box_plot": wandb.Image(fig)})
-        plt.close(fig)
-        # Clear the stored values for the next epoch
-        self.true_values = torch.tensor([], dtype=torch.float32, device=self.device)
-        self.predictions = torch.tensor([], dtype=torch.float32, device=self.device)
-
-        current_global_step = self.global_step
-        # HACK
-        # Get the current memory usage
-        current, peak = tracemalloc.get_traced_memory()
-        print("======")
-        print(f"Current memory usage is {current / 10**6}MB; Peak was {peak / 10**6}MB")
-        print("======")
+        self.log_dict(self.val_metrics_root.compute(), sync_dist=True)
+        self.val_metrics_root.reset()
 
         # Stop tracing memory allocations
-        tracemalloc.stop()
+        current_global_step = self.global_step
         if (
             self.trainer.checkpoint_callback.best_model_path
             and current_global_step != self.last_logged_best_step
@@ -262,32 +196,7 @@ class DCellRegressionTask(L.LightningModule):
         #
         self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
         self.test_metrics(y_hat_subsystems, y)
-        self.test_metrics(y_hat_root, y)
-        # Logging the correlation coefficients
-        self.log(
-            "test_pearson_subsystems",
-            self.pearson_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "test_spearman_subsystems",
-            self.spearman_corr(y_hat_subsystems, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "test_pearson_root",
-            self.pearson_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "test_spearman_root",
-            self.spearman_corr(y_hat_root, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
+        self.test_metrics_root(y_hat_root, y)
 
     def on_test_epoch_end(self):
         self.log_dict(self.test_metrics.compute(), sync_dist=True)

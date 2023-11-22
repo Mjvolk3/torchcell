@@ -32,6 +32,7 @@ import torch
 import torch.distributed as dist
 from attrs import define
 from dotenv import load_dotenv
+from lightning.pytorch.profilers import PyTorchProfiler
 from omegaconf import DictConfig, OmegaConf
 from pydantic import BaseModel, Extra, Field, ValidationError, validator
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -195,6 +196,18 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    # Define the output filename for the profiler
+    profile_output_filename = f"profiler_results_{slurm_job_id}.txt"
+
+    # Instantiate the profiler
+    profiler = PyTorchProfiler(
+        output_filename=profile_output_filename,
+        record_shapes=True,
+        profile_memory=True,
+        use_cuda=torch.cuda.is_available(),
+    )
+
+    # Update the Trainer to use the profiler
     trainer = pl.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator="auto",
@@ -202,6 +215,7 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
+        profiler=profiler,  # Add the profiler here
     )
 
     # Start the training

@@ -2,16 +2,19 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700503982569
+updated: 1700662844170
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.11.22
+
+- [ ] `Dcell` keeps failing typically after 2 epochs in, makes me think there is some accumulation of data.o
 
 ## 2023.11.20
 
 - [x] Investigate launched models → There are to many workers `pid` fail
 - [x] Model metrics needs to be fixed → logging root predictions and subsystem predictions
-- [ ]
 
 ## 2023.11.19
 

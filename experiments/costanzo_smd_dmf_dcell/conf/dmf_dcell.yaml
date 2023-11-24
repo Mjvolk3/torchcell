@@ -9,16 +9,16 @@ wandb:
   tags: [dcell]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
+  experiments: costanzo2016_1e5
+  name: cell_1e5
 
 data_module:
-  batch_size: 32 #32 got error with 8
-  num_workers: 4 # Got error with 4
+  batch_size: 8 #
+  num_workers: 4 #
   pin_memory: true
 
 trainer:
-  max_epochs: 5
+  max_epochs: 1000
   strategy: auto # ddp, auto
 
 regression_task:

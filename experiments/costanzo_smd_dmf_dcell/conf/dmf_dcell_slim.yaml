@@ -13,8 +13,8 @@ cell_dataset:
   name: cell_1e5
 
 data_module:
-  batch_size: 16 # 32 batch and 4  workers - success
-  num_workers: 5 # 
+  batch_size: 32 # 32 batch and 4  workers - success
+  num_workers: 6 # 
   pin_memory: true
 
 trainer:

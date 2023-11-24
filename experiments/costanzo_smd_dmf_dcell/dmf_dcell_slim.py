@@ -1,7 +1,7 @@
-# experiments/costanzo_smd_dmf_dcell/dmf_dcell.py
-# [[experiments.costanzo_smd_dmf_dcell.dmf_dcell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/costanzo_smd_dmf_dcell/dmf_dcell.py
-# Test file: experiments/costanzo_smd_dmf_dcell/test_dmf_dcell.py
+# experiments/costanzo_smd_dmf_dcell/dmf_dcell_slim.py
+# [[experiments.costanzo_smd_dmf_dcell.dmf_dcell_slim]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/costanzo_smd_dmf_dcell/dmf_dcell_slim.py
+# Test file: experiments/costanzo_smd_dmf_dcell/test_dmf_dcell_slim.py
 
 import copy
 import datetime

@@ -37,7 +37,8 @@ class DCellRegressionSlimTask(L.LightningModule):
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         batch_size: int = None,
-        train_wt_diff: bool = True,
+        alpha: float = 0.3,
+        lambda_reg: float = 0.01,
         **kwargs,
     ):
         super().__init__()
@@ -56,7 +57,7 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.x_name = "x"
         self.x_batch_name = "batch"
 
-        self.loss = DCellLoss()
+        self.loss = DCellLoss(alpha, lambda_reg)
 
         # optimizer
         self.learning_rate = learning_rate

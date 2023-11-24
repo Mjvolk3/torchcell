@@ -9,16 +9,16 @@ wandb:
   tags: [dcell]
 
 cell_dataset:
-  experiments: costanzo2016_1e2
-  name: cell_1e2
+  experiments: costanzo2016_1e5
+  name: cell_1e5
 
 data_module:
-  batch_size: 32 #32 got error with 8
-  num_workers: 4 # Got error with 4
+  batch_size: 16 # 32 batch and 4  workers - success
+  num_workers: 5 # 
   pin_memory: true
 
 trainer:
-  max_epochs: 5
+  max_epochs: 100
   strategy: auto # ddp, auto
 
 regression_task:
@@ -26,5 +26,5 @@ regression_task:
   boxplot_every_n_epochs: 1
   learning_rate: 1e-3 #1e-2 #1e-3
   weight_decay: 1e-5
-  alpha: 0.3
-  lambda_reg: 0.01
+  alpha: 0.3 # (default) - should not change - reported in paper
+  lambda_reg: 1 # 0.01 (default) - not reported

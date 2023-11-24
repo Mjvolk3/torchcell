@@ -90,7 +90,7 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="dmf_dcell")
+@hydra.main(version_base=None, config_path="conf", config_name="dmf_dcell_slim")
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -180,6 +180,8 @@ def main(cfg: DictConfig) -> None:
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
+        alpha=wandb.config.regression_task["alpha"],
+        lambda_reg=wandb.config.regression_task["lambda_reg"],
     )
 
     # Checkpoint Callback

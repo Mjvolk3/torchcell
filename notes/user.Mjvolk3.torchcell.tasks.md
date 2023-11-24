@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700845918381
+updated: 1700850403003
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -10,7 +10,9 @@ created: 1690514887023m
 ## 2023.11.24
 
 - [x] Parameterized `alpha` and `lambda_reg` to increase `lambda_reg` from `0.01` to `1`.
-- [ ] Launch on `delta`
+- [x] Launch on `delta`
+- [x] Read The Definitive Guide to Graph Databases for the RDBMS Developer
+- [ ]
 
 ## 2023.11.22
 

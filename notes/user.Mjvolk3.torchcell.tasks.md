@@ -2,14 +2,19 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700665188731
+updated: 1700845918381
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.11.24
+
+- [x] Parameterized `alpha` and `lambda_reg` to increase `lambda_reg` from `0.01` to `1`.
+- [ ] Launch on `delta`
+
 ## 2023.11.22
 
-- [ ] `Dcell` keeps failing typically after 2 epochs in, makes me think there is some accumulation of data.o
+- [x] `Dcell` keeps failing typically after 2 epochs in, makes me think there is some accumulation of data → [[experiments.costanzo_smd_dmf_dcell.dmf_dcell_slim]] Slimmed to stop recording predictions and true values, this is the solution to keep the prrocess memory constant during training. ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.dcell-constant-process-memory-b32-wrks4.png)
 
 ## 2023.11.20
 

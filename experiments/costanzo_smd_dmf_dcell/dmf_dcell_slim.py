@@ -2,7 +2,7 @@
 # [[experiments.costanzo_smd_dmf_dcell.dmf_dcell_slim]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/costanzo_smd_dmf_dcell/dmf_dcell_slim.py
 # Test file: experiments/costanzo_smd_dmf_dcell/test_dmf_dcell_slim.py
-
+from lightning.pytorch.profilers import AdvancedProfiler, PyTorchProfiler
 import copy
 import datetime
 import hashlib
@@ -198,6 +198,14 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    # profiler
+    profiler = PyTorchProfiler(
+        dirpath="tb_logs/profiler0",
+        filename="profiler_output",
+        on_trace_ready=torch.profiler.tensorboard_trace_handler("tb_logs/profiler0"),
+        schedule=torch.profiler.schedule(skip_first=10, wait=1, warmup=1, active=20),
+    )
+
     # Update the Trainer to use the profiler
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
@@ -206,7 +214,7 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        # profiler=profiler,  # Add the profiler here
+        profiler=profiler,
     )
 
     # Start the training

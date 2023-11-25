@@ -2,17 +2,23 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700850403003
+updated: 1700947352790
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.11.25
+
+- [x] Check on `Dcell` training → Looks like fitting is better, but it would be nice to speed up training by at least 2x.
+- [x] Look at lightning profilers → Using `PytorchProfiler` is the way to go. Found how to schedule its activation so the trace file is not so big.
+- [ ] Try to run a lightning profiler on `Delta`
+
 
 ## 2023.11.24
 
 - [x] Parameterized `alpha` and `lambda_reg` to increase `lambda_reg` from `0.01` to `1`.
 - [x] Launch on `delta`
 - [x] Read The Definitive Guide to Graph Databases for the RDBMS Developer
-- [ ]
 
 ## 2023.11.22
 

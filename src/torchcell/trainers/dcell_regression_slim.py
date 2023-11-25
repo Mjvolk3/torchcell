@@ -142,15 +142,13 @@ class DCellRegressionSlimTask(L.LightningModule):
         self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat_subsystems, y)
         self.train_metrics_root(y_hat_root, y)
+        return loss
+
+    def on_train_epoch_end(self):
         self.log_dict(self.train_metrics.compute(), sync_dist=True)
         self.log_dict(self.train_metrics_root.compute(), sync_dist=True)
         self.train_metrics.reset()
         self.train_metrics_root.reset()
-        return loss
-
-    def on_train_epoch_end(self):
-        # self.train_metrics.reset()
-        # self.train_metrics_root.reset()
         pass
 
     def validation_step(self, batch, batch_idx):
@@ -167,14 +165,12 @@ class DCellRegressionSlimTask(L.LightningModule):
         # Log
         self.val_metrics(y_hat_subsystems, y)
         self.val_metrics_root(y_hat_root, y)
+
+    def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.log_dict(self.val_metrics_root.compute(), sync_dist=True)
         self.val_metrics.reset()
         self.val_metrics_root.reset()
-
-    def on_validation_epoch_end(self):
-        # self.val_metrics.reset()
-        # self.val_metrics_root.reset()
 
         # Stop tracing memory allocations
         current_global_step = self.global_step

@@ -278,7 +278,7 @@ def main():
     print(f"After IGI filter: {G.number_of_nodes()}")
     G = filter_redundant_terms(G)
     print(f"After redundant filter: {G.number_of_nodes()}")
-    G = filter_by_contained_genes(G, n=1, gene_set=gene_set)
+    G = filter_by_contained_genes(G, n=2, gene_set=gene_set)
     print(f"After containment filter: {G.number_of_nodes()}")
 
     # Instantiate the model

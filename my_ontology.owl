@@ -68,12 +68,8 @@
   <rdfs:subClassOf rdf:resource="#Phenotype"/>
 </owl:Class>
 
-<owl:NamedIndividual rdf:about="#genotype1">
-  <rdf:type rdf:resource="#Genotype"/>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#phenotype1">
-  <rdf:type rdf:resource="#Phenotype"/>
+<owl:NamedIndividual rdf:about="#experiment1">
+  <rdf:type rdf:resource="#Experiment"/>
 </owl:NamedIndividual>
 
 <owl:NamedIndividual rdf:about="#allele1">

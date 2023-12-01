@@ -8,27 +8,51 @@
 
 <owl:Ontology rdf:about="http://example.org/onto.owl"/>
 
-<owl:DatatypeProperty rdf:about="#intervention">
+<owl:DatatypeProperty rdf:about="#id">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-  <rdfs:domain rdf:resource="#Allele"/>
+  <rdfs:domain rdf:resource="#Genotype"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
 
-<owl:DatatypeProperty rdf:about="#id_full">
+<owl:DatatypeProperty rdf:about="#intervention">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-  <rdfs:domain rdf:resource="#Allele"/>
+  <rdfs:domain rdf:resource="#Genotype"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#idFull">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+  <rdfs:domain rdf:resource="#Genotype"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
 </owl:DatatypeProperty>
 
 <owl:DatatypeProperty rdf:about="#smf">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-  <rdfs:domain rdf:resource="#Observation"/>
+  <rdfs:domain rdf:resource="#Phenotype"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
 </owl:DatatypeProperty>
 
-<owl:DatatypeProperty rdf:about="#smf_std">
+<owl:DatatypeProperty rdf:about="#dmf">
   <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
-  <rdfs:domain rdf:resource="#Observation"/>
+  <rdfs:domain rdf:resource="#Phenotype"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#dmfStd">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+  <rdfs:domain rdf:resource="#Phenotype"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#geneticInteractionScore">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+  <rdfs:domain rdf:resource="#Phenotype"/>
+  <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
+</owl:DatatypeProperty>
+
+<owl:DatatypeProperty rdf:about="#geneticInteractionPValue">
+  <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+  <rdfs:domain rdf:resource="#Phenotype"/>
   <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#decimal"/>
 </owl:DatatypeProperty>
 
@@ -56,39 +80,9 @@
   <rdfs:subClassOf rdf:resource="#Experiment"/>
 </owl:Class>
 
-<owl:Class rdf:about="#Allele">
-  <rdfs:subClassOf rdf:resource="#Genotype"/>
-</owl:Class>
-
-<owl:Class rdf:about="#Observation">
-  <rdfs:subClassOf rdf:resource="#Phenotype"/>
-</owl:Class>
-
 <owl:Class rdf:about="#Environment">
-  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+  <rdfs:subClassOf rdf:resource="#Experiment"/>
 </owl:Class>
-
-<owl:NamedIndividual rdf:about="#experiment1">
-  <rdf:type rdf:resource="#Experiment"/>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#allele1">
-  <rdf:type rdf:resource="#Allele"/>
-  <intervention rdf:datatype="http://www.w3.org/2001/XMLSchema#string">deletion</intervention>
-  <id_full rdf:datatype="http://www.w3.org/2001/XMLSchema#string">YDL171C_dma736</id_full>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#observation1">
-  <rdf:type rdf:resource="#Observation"/>
-  <smf rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.9777</smf>
-  <smf_std rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0679</smf_std>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#environment1">
-  <rdf:type rdf:resource="#Environment"/>
-  <media rdf:datatype="http://www.w3.org/2001/XMLSchema#string">YPD</media>
-  <temperature rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">30</temperature>
-</owl:NamedIndividual>
 
 
 </rdf:RDF>

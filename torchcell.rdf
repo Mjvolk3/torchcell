@@ -3,10 +3,10 @@
          xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
          xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
          xmlns:owl="http://www.w3.org/2002/07/owl#"
-         xml:base="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.owl"
-         xmlns="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.owl#">
+         xml:base="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.rdf"
+         xmlns="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.rdf#">
 
-<owl:Ontology rdf:about="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.owl"/>
+<owl:Ontology rdf:about="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.rdf"/>
 
 <owl:ObjectProperty rdf:about="#ComposedOf">
   <rdfs:domain rdf:resource="#Media"/>
@@ -29,7 +29,7 @@
   <rdfs:subClassOf rdf:resource="#Experiment"/>
 </owl:Class>
 
-<owl:Class rdf:about="#Reference">
+<owl:Class rdf:about="#ReferenceGenome">
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 
@@ -41,7 +41,7 @@
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 
-<owl:Class rdf:about="#Deletion">
+<owl:Class rdf:about="#GeneDeletion">
   <rdfs:subClassOf rdf:resource="#Intervention"/>
 </owl:Class>
 

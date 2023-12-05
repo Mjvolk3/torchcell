@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xml:base="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/my_ontology.owl"
+         xmlns="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/my_ontology.owl#">
+
+<owl:Ontology rdf:about="https://raw.githubusercontent.com/Mjvolk3/torchcell/main/my_ontology.owl"/>
+
+<owl:ObjectProperty rdf:about="#ComposedOf">
+  <rdfs:domain rdf:resource="#Media"/>
+  <rdfs:range rdf:resource="#Chemical"/>
+</owl:ObjectProperty>
+
+<owl:Class rdf:about="#Experiment">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Genotype">
+  <rdfs:subClassOf rdf:resource="#Experiment"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Phenotype">
+  <rdfs:subClassOf rdf:resource="#Experiment"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Environment">
+  <rdfs:subClassOf rdf:resource="#Experiment"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Reference">
+  <rdfs:subClassOf rdf:resource="#Genotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Id">
+  <rdfs:subClassOf rdf:resource="#Genotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Intervention">
+  <rdfs:subClassOf rdf:resource="#Genotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Deletion">
+  <rdfs:subClassOf rdf:resource="#Genotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#IdFull">
+  <rdfs:subClassOf rdf:resource="#Genotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Smf">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#SmfStd">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Dmf">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#DmfStd">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#GeneticInteractionScore">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#GeneticInteractionPValue">
+  <rdfs:subClassOf rdf:resource="#Phenotype"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Media">
+  <rdfs:subClassOf rdf:resource="#Environment"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Chemical">
+  <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+</owl:Class>
+
+<owl:Class rdf:about="#YeastExtract">
+  <rdfs:subClassOf rdf:resource="#Chemical"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Peptone">
+  <rdfs:subClassOf rdf:resource="#Chemical"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Dextrose">
+  <rdfs:subClassOf rdf:resource="#Chemical"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Ypd">
+  <rdfs:subClassOf rdf:resource="#Media"/>
+</owl:Class>
+
+<owl:Class rdf:about="#Temperature">
+  <rdfs:subClassOf rdf:resource="#Environment"/>
+</owl:Class>
+
+<owl:NamedIndividual rdf:about="#yeastextract1">
+  <rdf:type rdf:resource="#YeastExtract"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#peptone1">
+  <rdf:type rdf:resource="#Peptone"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#dextrose1">
+  <rdf:type rdf:resource="#Dextrose"/>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#ypd1">
+  <rdf:type rdf:resource="#Ypd"/>
+</owl:NamedIndividual>
+
+
+</rdf:RDF>

@@ -1,3 +1,10 @@
-from .pydantic import ModelStrict, ModelStrictArbitrary
+from .pydant import ModelStrict, ModelStrictArbitrary
 
-__all__ = ["ModelStrict", "ModelStrictArbitrary"]
+# from .ontology_pydantic import (
+
+# )
+
+core_models = ["ModelStrict", "ModelStrictArbitrary"]
+# ontology_models = ["BaseEnvironment", "BasePhenotype", "BaseGenotype", "Experiment"]
+
+__all__ = core_models  # + ontology_models

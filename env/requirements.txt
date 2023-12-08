@@ -60,8 +60,7 @@ types-requests== 2.31.0.2
 # data stack
 sortedcontainers==2.4.0
 attrs== 23.1.0
-# pydantic limited by lightning
-pydantic==1.10.5
+pydantic==2.5.2
 h5py== 3.9.0
 
 # database stack

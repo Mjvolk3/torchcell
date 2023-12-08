@@ -8,10 +8,9 @@ import torch.nn as nn
 
 
 class DCellLoss(nn.Module):
-    def __init__(self, alpha=0.3, lambda_reg=0.01):
+    def __init__(self, alpha=0.3):
         super().__init__()
         self.alpha = alpha
-        self.lambda_reg = lambda_reg
         self.criterion = nn.MSELoss()
 
     def forward(self, outputs, target, weights):
@@ -26,10 +25,6 @@ class DCellLoss(nn.Module):
             if t != "GO:ROOT"
         )
 
-        # Regularization loss for weights
-        all_weights = torch.cat([w.view(-1) for w in weights])
-        reg_loss = self.lambda_reg * torch.norm(all_weights, 2)
-
         # Total loss
-        total_loss = root_loss + self.alpha * non_root_loss + reg_loss
+        total_loss = root_loss + self.alpha * non_root_loss
         return total_loss

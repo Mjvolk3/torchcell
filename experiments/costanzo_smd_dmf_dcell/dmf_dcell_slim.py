@@ -2,7 +2,11 @@
 # [[experiments.costanzo_smd_dmf_dcell.dmf_dcell_slim]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/costanzo_smd_dmf_dcell/dmf_dcell_slim.py
 # Test file: experiments/costanzo_smd_dmf_dcell/test_dmf_dcell_slim.py
-from lightning.pytorch.profilers import AdvancedProfiler, PyTorchProfiler
+from lightning.pytorch.profilers import (
+    AdvancedProfiler,
+    PyTorchProfiler,
+    SimpleProfiler,
+)
 import copy
 import datetime
 import hashlib
@@ -105,6 +109,8 @@ def main(cfg: DictConfig) -> None:
         group=group,
     )
 
+    torch.set_float32_matmul_precision("medium")
+
     # Initialize the WandbLogger
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
@@ -187,7 +193,6 @@ def main(cfg: DictConfig) -> None:
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
         alpha=wandb.config.regression_task["alpha"],
-        lambda_reg=wandb.config.regression_task["lambda_reg"],
     )
 
     # Checkpoint Callback
@@ -205,12 +210,14 @@ def main(cfg: DictConfig) -> None:
         devices = num_devices
 
     # profiler
-    profiler = PyTorchProfiler(
-        dirpath="tb_logs/profiler0",
-        filename="profiler_output",
-        on_trace_ready=torch.profiler.tensorboard_trace_handler("tb_logs/profiler0"),
-        schedule=torch.profiler.schedule(skip_first=10, wait=1, warmup=1, active=20),
-    )
+    # profiler = PyTorchProfiler(
+    #     dirpath="tb_logs/profiler0",
+    #     filename="profiler_output",
+    #     on_trace_ready=torch.profiler.tensorboard_trace_handler("tb_logs/profiler0"),
+    #     schedule=torch.profiler.schedule(skip_first=10, wait=1, warmup=1, active=20),
+    # )
+
+    # profiler = SimpleProfiler(dirpath="profiles", filename="dcell_simple_prof")
 
     # Update the Trainer to use the profiler
     trainer = L.Trainer(
@@ -220,7 +227,7 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        profiler=profiler,
+        # profiler=profiler,
     )
 
     # Start the training

@@ -37,10 +37,17 @@ class SubsystemModel(nn.Module):
 
 
 class DCell(nn.Module):
-    def __init__(self, go_graph):
+    def __init__(
+        self,
+        go_graph,
+        subsystem_output_min: int = 20,
+        subsystem_output_max_mult: float = 0.3,
+    ):
         super().__init__()
         # HACK probably should reverse the edges in original graph
         go_graph = nx.reverse(go_graph, copy=True)
+        self.subsystem_output_min = subsystem_output_min
+        self.subsystem_output_max_mult = subsystem_output_max_mult
         self.go_graph = self.add_boolean_state(go_graph)
         self.subsystems = nn.ModuleDict()
         self.build_subsystems()
@@ -70,7 +77,11 @@ class DCell(nn.Module):
             if not descendants:
                 genes = self.go_graph.nodes[node_id]["gene_set"]
                 self.subsystems[node_id] = SubsystemModel(
-                    input_size=len(genes), output_size=max(20, int(0.3 * len(genes)))
+                    input_size=len(genes),
+                    output_size=max(
+                        self.subsystem_output_min,
+                        int(self.subsystem_output_max_mult * len(genes)),
+                    ),
                 )
                 current_nodes.append(node_id)
 
@@ -93,7 +104,10 @@ class DCell(nn.Module):
             total_input_size = children_output_sizes + len(genes)
 
             # Calculate the output size with a minimum of 20
-            output_size = max(20, int(0.3 * len(genes)))
+            output_size = max(
+                self.subsystem_output_min,
+                int(self.subsystem_output_max_mult * len(genes)),
+            )
 
             # Initialize the subsystem for the current node
             self.subsystems[node_id] = SubsystemModel(
@@ -278,7 +292,7 @@ def main():
     print(f"After IGI filter: {G.number_of_nodes()}")
     G = filter_redundant_terms(G)
     print(f"After redundant filter: {G.number_of_nodes()}")
-    G = filter_by_contained_genes(G, n=1, gene_set=gene_set)
+    G = filter_by_contained_genes(G, n=6, gene_set=gene_set)
     print(f"After containment filter: {G.number_of_nodes()}")
 
     # Instantiate the model

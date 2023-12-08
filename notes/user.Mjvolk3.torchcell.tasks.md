@@ -2,17 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1700947352790
+updated: 1701206026258
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2023.11.28
+
+- [x] Study using Neo4j and with ontologies. → Got to [Going Meta - episode 7](https://www.youtube.com/watch?v=Y_IygO4MOqc&list=PL9Hl4pk2FsvX-5QPvwChB-ni_mFF97rCE&index=7)
+- [ ] Study tools for building ontology though OBO training tools → UO, the Units of Measurement Ontology. 
 
 ## 2023.11.25
 
 - [x] Check on `Dcell` training → Looks like fitting is better, but it would be nice to speed up training by at least 2x.
 - [x] Look at lightning profilers → Using `PytorchProfiler` is the way to go. Found how to schedule its activation so the trace file is not so big.
-- [ ] Try to run a lightning profiler on `Delta`
-
+- [x] Try to run a lightning profiler on `Delta` → This works but instead I have just started using the slimmed version.
 
 ## 2023.11.24
 

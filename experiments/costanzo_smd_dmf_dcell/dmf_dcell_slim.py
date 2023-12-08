@@ -139,13 +139,19 @@ def main(cfg: DictConfig) -> None:
     G = filter_by_date(G, "2017-07-19")
     G = filter_go_IGI(G)
     G = filter_redundant_terms(G)
-    G = filter_by_contained_genes(G, n=2, gene_set=dcell_gene_set)
+    G = filter_by_contained_genes(
+        G, n=wandb.config.model["contained_genes"], gene_set=dcell_gene_set
+    )
 
     # replace graph
     graph.G_go = G
 
     # Instantiate Dcell models
-    dcell_model = DCell(go_graph=graph.G_go).to(device)
+    dcell_model = DCell(
+        go_graph=graph.G_go,
+        subsystem_output_min=wandb.config.model["subsystem_output_min"],
+        subsystem_output_max_mult=wandb.config.model["subsystem_output_max_mult"],
+    ).to(device)
     dcell_linear = DCellLinear(dcell_model.subsystems, output_size=1).to(device)
     models = {"dcell": dcell_model, "dcell_linear": dcell_linear}
 

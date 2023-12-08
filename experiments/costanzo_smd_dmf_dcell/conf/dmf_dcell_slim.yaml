@@ -4,7 +4,7 @@ defaults:
   - _self_ # append to end for overriding duplicate configs in default
 
 wandb:
-  mode: online # disabled, offline, online
+  mode: online # disabled, offline, onlineu
   project: torchcell
   tags: [dcell]
 
@@ -20,6 +20,11 @@ data_module:
 trainer:
   max_epochs: 100
   strategy: auto # ddp, auto
+
+model:
+  subsystem_output_min: 10 # 20 is default in original paper
+  subsystem_output_max_mult: 0.01 # 0.3 is default in original paper
+  contained_genes: 6 # have been using  2 this as s
 
 regression_task:
   target: fitness # fitness, genetic_interaction_score

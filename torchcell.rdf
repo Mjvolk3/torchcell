@@ -33,19 +33,19 @@
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 
-<owl:Class rdf:about="#Id">
+<owl:Class rdf:about="#SysGeneName">
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 
-<owl:Class rdf:about="#Intervention">
+<owl:Class rdf:about="#Perturbation">
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 
 <owl:Class rdf:about="#GeneDeletion">
-  <rdfs:subClassOf rdf:resource="#Intervention"/>
+  <rdfs:subClassOf rdf:resource="#Perturbation"/>
 </owl:Class>
 
-<owl:Class rdf:about="#IdFull">
+<owl:Class rdf:about="#SysGeneNameFull">
   <rdfs:subClassOf rdf:resource="#Genotype"/>
 </owl:Class>
 

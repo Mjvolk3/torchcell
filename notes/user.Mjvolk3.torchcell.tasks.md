@@ -2,15 +2,69 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1701206026258
+updated: 1701905961913
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.12.06
+
+
+- [x] Update pydantic for schema viz → Looks like custom functions are needed.
+- [x] Pydantic schemas → ⛔️ [[Strategy For Writing Pydantic Schema|dendron://torchcell/src.torchcell.graph.validation.locus_related.locus#strategy-for-writing-pydantic-schema]]
+- [x] You cannot inherit both from `owlready2` and pydantic models.
+- [x] Investigate serialization and deserialization of data → This works well and give a robust way for reconstructing data in python.
+- [ ] Add media components
+- [ ] Does high level meta data belong to ontology?
+
+- [ ] Add `Costanzo` singles to neo4j
+- [ ] Add `Costanzo` double to neo4j
+- [ ] Add morphology to neo4j
+- [ ] Check ontology vs SGD ontology GAF.
+
+- Make sure on `Delta` that lightly is uninstalled. It had dependencies on an earlier version of pydantic. 
+
+
+## 2023.12.05
+
+- [x] Figure out linking to ontology with toy data → A lot of care will have to go into this. There are a thousand different ways to flay this cat 🐈‍⬛. I think the most important thing is to remember that the fundamental data structure is the data instance, which will be the object of all queries for the foreseeable future. Edges from data instance on to ontology are really to assist in this query.
+- [x] Process `Costanzo` singles with data validation that matches ontology. Then output list of experiments → We should not include DAmP alleles or ts alleles are they are not true deletions. DAmP is a KanMX at the 3' UTR, and the ts alleles have mutations that make their protein product unstable at high temperatures. In both of these cases there is still some functional protein around. Not inclusing them for this.
+
+- [ ] Add `Costanzo` singles to neo4j
+- [ ] Add `Costanzo` double to neo4j
+- [ ] Add morphology to neo4j
+- [ ] Check ontology vs SGD ontology GAF.
+
+-  [The localization and quantitation atlas of the yeast proteome](https://www.weizmann.ac.il/molgen/loqate/)
+
+## 2023.12.04
+
+- [x] Revise ontology into only subclasses. → more works still needed
+- [x] Investigate why property keys don't delete → [Why don't property keys get deleted](https://neo4j.com/developer/kb/why-do-my-deleted-property-keys-appear/) Have to create a new DB for this. This shouldn't be an issue since we will only need to rebuild the DB once locally when things are stable.
+- [ ] Check ontology vs SGD ontology GAF.
+
+## 2023.12.02
+
+- [x] Look into adding json serialized data. → works well
+
+## 2023.11.30
+
+- [x] Make example `my_ontology.rdf` with `OwlReady2` → Cannot save to owl directly
+- [x] Convert `my_ontology.rdf` with `Robot` → Use docker image to run commands, this is easiest to make sure we have all the correct Java versioning. Docker desktop needs to be running for this.
+- [x] Try to get the ontology into `Neo4J` → We can get things via the browser. Also nice to use Bloom to view hierarchical representation of the graph.
+- [x] Delete all nodes and import ontology via python. This will likely take config then upload.
+- [ ] Make the modification to the ontology so environment is on the same level as phenotype and genotype.
+- [ ] Depending on this modification act...
+
+
+## 2023.11.29
+
+- [x] Play with ontology, still unclear to me how I am going to do this.
+
 ## 2023.11.28
 
 - [x] Study using Neo4j and with ontologies. → Got to [Going Meta - episode 7](https://www.youtube.com/watch?v=Y_IygO4MOqc&list=PL9Hl4pk2FsvX-5QPvwChB-ni_mFF97rCE&index=7)
-- [ ] Study tools for building ontology though OBO training tools → UO, the Units of Measurement Ontology. 
+- [x] Study tools for building ontology though OBO training tools → UO, the Units of Measurement Ontology. → I have enough now to write a report for getting help with ontology development.
 
 ## 2023.11.25
 

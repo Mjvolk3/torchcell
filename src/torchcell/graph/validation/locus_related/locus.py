@@ -1,5 +1,8 @@
-# Locus.py
-# Example given with gene "YDR210W"
+# src/torchcell/graph/validation/locus_related/locus.py
+# [[src.torchcell.graph.validation.locus_related.locus]]
+# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/graph/validation/locus_related/locus.py
+# Test file: src/torchcell/graph/validation/locus_related/test_locus.py
+
 from typing import Dict, List, Optional, Union
 
 from pydantic import Field, validator

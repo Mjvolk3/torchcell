@@ -2,13 +2,31 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1701905961913
+updated: 1702484235229
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2023.12.06
 
+## 2023.12.13
+
+-  [ ] Clean up miscellaneous files within the workspace in preparation for adding a database to the root. → Moved [metabolic_graph](./assets/images/metabolic_graph.png) to assets, [smf blox plots gene expression](./assets/images/SMF_gene_expression_box_plot_6170_genes_1143_sm.png) to assets, 
+
+
+## 2023.12.12
+
+- [x] [Biocypher collectri](https://github.com/biocypher/collectri) real world example tutorial → can use ChatGSE for writing cypher queries which is a great benefit for complex queries over a complicated knowledge graph. It would be nice to know if ChatGSE has access to node properties within the graph.
+
+## 2023.12.08
+
+- [x] Run biocypher tutorial
+
+"This allows maintenance of property lists for many classes at once. If the child class has properties already, they will be kept (if they are not present in the parent class) or replaced by the parent class properties (if they are present)."
+  - Confusing, how does inheritance work?
+  https://biocypher.org/tutorial.html#section-3-handling-properties
+
+
+## 2023.12.06
 
 - [x] Update pydantic for schema viz → Looks like custom functions are needed.
 - [x] Pydantic schemas → ⛔️ [[Strategy For Writing Pydantic Schema|dendron://torchcell/src.torchcell.graph.validation.locus_related.locus#strategy-for-writing-pydantic-schema]]

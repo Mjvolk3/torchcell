@@ -2,15 +2,24 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1702484235229
+updated: 1702610627570
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 
+## 2023.12.14
+
+- [ ] Rename `src` to `torchcell`, refactor notes.
+- [ ] Add costanzo single deletions to graph
+
+
+
 ## 2023.12.13
 
--  [ ] Clean up miscellaneous files within the workspace in preparation for adding a database to the root. → Moved [metabolic_graph](./assets/images/metabolic_graph.png) to assets, [smf blox plots gene expression](./assets/images/SMF_gene_expression_box_plot_6170_genes_1143_sm.png) to assets, 
+-  [x] Clean up miscellaneous files within the workspace in preparation for adding a database to the root. → Moved [metabolic_graph](./assets/images/metabolic_graph.png) to assets, [smf blox plots gene expression](./assets/images/SMF_gene_expression_box_plot_6170_genes_1143_sm.png) to assets
+- [x] Test docker build with conda env in [Biocypher collectri](https://github.com/biocypher/collectri) → This works but needed to write a custom `Dockerfile`
+- [x] Move collectri example into `tc`. I think one large repo is better for now because there will be some interaction between the adapter, input data etc. Mostly due to my indecision about the right time to do data cleansing, etc. after or before cypher query. → most difficult part is the need to explicitly copy in the `scripts/build.sh`, the default `cp` seemed to be copying everything.
 
 
 ## 2023.12.12

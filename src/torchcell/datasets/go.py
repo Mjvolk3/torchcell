@@ -13,7 +13,7 @@ from torch_geometric.data import download_url
 
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-plt.style.use("conf/torchcell.mplstyle")
+plt.style.use("config/torchcell.mplstyle")
 
 
 class GoPlot(ABC):

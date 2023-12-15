@@ -11,7 +11,7 @@ from sklearn import base
 from torchcell.sequence import Genome
 from torchcell.sgd.sequence import SCerevisiaeGenome
 
-plt.style.use("conf/torchcell.mplstyle")  # use the specified style
+plt.style.use("config/torchcell.mplstyle")  # use the specified style
 
 
 class GenomePlot(ABC):

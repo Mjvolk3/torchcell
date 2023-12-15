@@ -50,7 +50,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 
-plt.style.use("conf/torchcell.mplstyle")
+plt.style.use("config/torchcell.mplstyle")
 
 
 def main():

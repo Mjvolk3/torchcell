@@ -28,7 +28,7 @@ from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 # use the specified style
-plt.style.use("conf/torchcell.mplstyle")
+plt.style.use("config/torchcell.mplstyle")
 
 
 class DCellRegressionSlimTask(L.LightningModule):

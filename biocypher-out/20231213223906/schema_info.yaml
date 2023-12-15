@@ -1,0 +1,30 @@
+gene:
+  is_relationship: false
+  preferred_id: hgnc.symbol
+  present_in_knowledge_graph: true
+  properties:
+    name: str
+  represented_as: node
+is_schema_info: true
+transcription factor:
+  is_a: gene
+  is_relationship: false
+  preferred_id: hgnc.symbol
+  present_in_knowledge_graph: true
+  properties:
+    category: str
+    name: str
+  represented_as: node
+transcriptional regulation:
+  is_a: pairwise gene to gene interaction
+  is_relationship: true
+  preferred_id: id
+  present_in_knowledge_graph: true
+  properties:
+    activation_or_inhibition: str
+    references: str
+    resources: str
+    sign_decision: str
+  represented_as: edge
+  source: transcription factor
+  target: gene

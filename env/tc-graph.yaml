@@ -1,0 +1,8 @@
+# /Users/michaelvolk/Documents/projects/collectri/env.yaml
+name: tc-graph
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip:
+    - -r requirements.txt

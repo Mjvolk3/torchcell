@@ -20,7 +20,7 @@ import wandb
 from torchcell.losses import WeightedMSELoss
 
 # use the specified style
-plt.style.use("conf/torchcell.mplstyle")
+plt.style.use("config/torchcell.mplstyle")
 
 
 class RegressionTaskDeepSetTransformer(L.LightningModule):

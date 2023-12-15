@@ -1,7 +1,7 @@
-# src/torchcell/sequence/data_scratch.py
-# [[src.torchcell.sequence.data_scratch]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/data_scratch.py
-# Test file: src/torchcell/sequence/test_data_scratch.py
+# torchcell/sequence/data_scratch.py
+# [[torchcell.sequence.data_scratch]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/data_scratch.py
+# Test file: torchcell/sequence/test_data_scratch.py
 
 
 import logging

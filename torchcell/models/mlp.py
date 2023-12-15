@@ -1,7 +1,7 @@
-# src/torchcell/models/mlp.py
-# [[src.torchcell.models.mlp]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/mlp.py
-# Test file: src/torchcell/models/test_mlp.py
+# torchcell/models/mlp.py
+# [[torchcell.models.mlp]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/mlp.py
+# Test file: torchcell/models/test_mlp.py
 from typing import List, Optional
 
 import torch

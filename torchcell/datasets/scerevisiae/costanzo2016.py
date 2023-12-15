@@ -1,7 +1,7 @@
-# src/torchcell/datasets/scerevisiae/costanzo2016.py
-# [[src.torchcell.datasets.scerevisiae.costanzo2016]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/scerevisiae/costanzo2016.py
-# Test file: src/torchcell/datasets/scerevisiae/test_costanzo2016.py
+# torchcell/datasets/scerevisiae/costanzo2016.py
+# [[torchcell.datasets.scerevisiae.costanzo2016]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016.py
+# Test file: torchcell/datasets/scerevisiae/test_costanzo2016.py
 import json
 import logging
 import os

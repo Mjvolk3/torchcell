@@ -1,7 +1,7 @@
-# src/torchcell/viz/genetic_interaction_score.py
-# [[src.torchcell.viz.genetic_interaction_score]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/viz/genetic_interaction_score.py
-# Test file: src/torchcell/viz/test_genetic_interaction_score.py
+# torchcell/viz/genetic_interaction_score.py
+# [[torchcell.viz.genetic_interaction_score]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/genetic_interaction_score.py
+# Test file: torchcell/viz/test_genetic_interaction_score.py
 
 import matplotlib.pyplot as plt
 import numpy as np

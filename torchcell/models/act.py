@@ -1,7 +1,7 @@
-# src/torchcell/models/act.py
-# [[src.torchcell.models.act]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/act.py
-# Test file: src/torchcell/models/test_act.py
+# torchcell/models/act.py
+# [[torchcell.models.act]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/act.py
+# Test file: torchcell/models/test_act.py
 
 from torch import nn
 

@@ -1,7 +1,7 @@
-# src/torchcell/datasets/ontology.py
-# [[src.torchcell.datasets.ontology]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/ontology.py
-# Test file: src/torchcell/datasets/test_ontology.py
+# torchcell/datasets/ontology.py
+# [[torchcell.datasets.ontology]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ontology.py
+# Test file: torchcell/datasets/test_ontology.py
 import json
 
 from owlready2 import (

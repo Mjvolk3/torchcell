@@ -1,7 +1,7 @@
-# src/torchcell/sequence/data.py
-# [[src.torchcell.sequence.data]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/data.py
-# Test file: /src/torchcell/sequence/test_data.py
+# torchcell/sequence/data.py
+# [[torchcell.sequence.data]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/data.py
+# Test file: /torchcell/sequence/test_data.py
 
 import logging
 from abc import ABC, abstractmethod
@@ -150,7 +150,7 @@ class Gene(ABC):
 
 
 class Genome(ABC):
-    # Used elsewhere [[src/torchcell/sgd/validation/valid_models.py]]
+    # Used elsewhere [[torchcell/sgd/validation/valid_models.py]]
     # CHECK IF THIS IS NEEDED.. I think this is a pydantic thing
     # model_config = ConfigDict(frozen=True, extra="forbid")
     # TODO not sure if we need to specify all vars in the __init__

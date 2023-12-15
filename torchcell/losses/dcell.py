@@ -1,7 +1,7 @@
-# src/torchcell/losses/dcell.py
-# [[src.torchcell.losses.dcell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/losses/dcell.py
-# Test file: src/torchcell/losses/test_dcell.py
+# torchcell/losses/dcell.py
+# [[torchcell.losses.dcell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell.py
+# Test file: torchcell/losses/test_dcell.py
 
 import torch
 import torch.nn as nn

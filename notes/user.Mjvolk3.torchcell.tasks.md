@@ -7,14 +7,19 @@ created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2023.12.15
+
+- [ ] Add `costanzo` single deletions to graph
+
 ## 2023.12.14
 
 - [x] Rename `src` to `torchcell`, refactor notes.
 - [x] Test if `Dcell` slim works.
-- [ ] Check python utility functions
+- [x] Check python utility functions → fixed move file, now works well.
 - [x] [[Pyreverse|dendron://torchcell/python.lib.pyreverse]] 
-- [ ] Add costanzo single deletions to graph
+- 🔲 Add costanzo single deletions to graph
 
+- [evotorch](https://evotorch.ai/)
 
 ## 2023.12.13
 

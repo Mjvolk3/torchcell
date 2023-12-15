@@ -1,6 +1,6 @@
-# src/torchcell/datasets/__init__.py
-# [[src.torchcell.datasets.__init__]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/__init__.py
+# torchcell/datasets/__init__.py
+# [[torchcell.datasets.__init__]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/__init__.py
 # Test file: tests/torchcell/datasets/test___init__.py
 from .cell import CellDataset
 from .codon_frequency import CodonFrequencyDataset

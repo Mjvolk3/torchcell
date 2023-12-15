@@ -1,7 +1,7 @@
-# src/torchcell/datamodels/pydantic.py
-# [[src.torchcell.datamodels.pydantic]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datamodels/pydantic.py
-# Test file: src/torchcell/datamodels/test_pydantic.py
+# torchcell/datamodels/pydantic.py
+# [[torchcell.datamodels.pydantic]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/pydantic.py
+# Test file: torchcell/datamodels/test_pydantic.py
 
 import json
 from typing import Any, List, Optional

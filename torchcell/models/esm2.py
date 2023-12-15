@@ -1,7 +1,7 @@
-# src/torchcell/models/esm2.py
-# [[src.torchcell.models.esm2]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/esm2.py
-# Test file: src/torchcell/models/test_esm2.py
+# torchcell/models/esm2.py
+# [[torchcell.models.esm2]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/esm2.py
+# Test file: torchcell/models/test_esm2.py
 
 import os
 import os.path as osp

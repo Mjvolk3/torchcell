@@ -1,7 +1,7 @@
-# src/torchcell/datasets/experiment.py
-# [[src.torchcell.datasets.experiment]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/experiment.py
-# Test file: src/torchcell/datasets/test_experiment.py
+# torchcell/datasets/experiment.py
+# [[torchcell.datasets.experiment]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/experiment.py
+# Test file: torchcell/datasets/test_experiment.py
 
 import json
 import logging

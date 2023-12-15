@@ -1,7 +1,7 @@
-# src/torchcell/datasets/one_hot_gene.py
-# [[src.torchcell.datasets.one_hot_gene]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/one_hot_gene.py
-# Test file: src/torchcell/datasets/test_one_hot_gene.py
+# torchcell/datasets/one_hot_gene.py
+# [[torchcell.datasets.one_hot_gene]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/one_hot_gene.py
+# Test file: torchcell/datasets/test_one_hot_gene.py
 
 from collections.abc import Callable
 import os

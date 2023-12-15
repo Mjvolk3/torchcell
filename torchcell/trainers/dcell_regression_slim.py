@@ -1,7 +1,7 @@
-# src/torchcell/trainers/dcell_regression_slim.py
-# [[src.torchcell.trainers.dcell_regression_slim]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/dcell_regression_slim.py
-# Test file: src/torchcell/trainers/test_dcell_regression_slim.py
+# torchcell/trainers/dcell_regression_slim.py
+# [[torchcell.trainers.dcell_regression_slim]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/dcell_regression_slim.py
+# Test file: torchcell/trainers/test_dcell_regression_slim.py
 
 import math
 

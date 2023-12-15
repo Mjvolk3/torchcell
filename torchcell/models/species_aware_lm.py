@@ -1,7 +1,7 @@
-# src/torchcell/models/species_aware_lm.py
-# [[src.torchcell.models.species_aware_lm]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/species_aware_lm.py
-# Test file: src/torchcell/models/test_species_aware_lm.py
+# torchcell/models/species_aware_lm.py
+# [[torchcell.models.species_aware_lm]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/species_aware_lm.py
+# Test file: torchcell/models/test_species_aware_lm.py
 
 
 import collections

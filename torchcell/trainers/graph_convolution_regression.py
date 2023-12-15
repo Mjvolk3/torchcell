@@ -1,7 +1,7 @@
-# src/torchcell/trainers/graph_convolution_regression.py
-# [[src.torchcell.trainers.graph_convolution_regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/graph_convolution_regression.py
-# Test file: src/torchcell/trainers/test_graph_convolution_regression.py
+# torchcell/trainers/graph_convolution_regression.py
+# [[torchcell.trainers.graph_convolution_regression]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/graph_convolution_regression.py
+# Test file: torchcell/trainers/test_graph_convolution_regression.py
 
 import math
 

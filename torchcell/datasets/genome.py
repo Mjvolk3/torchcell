@@ -1,7 +1,7 @@
-# src/torchcell/datasets/genome.py
-# [[src.torchcell.datasets.genome]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/genome.py
-# Test file: src/torchcell/datasets/test_genome.py
+# torchcell/datasets/genome.py
+# [[torchcell.datasets.genome]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/genome.py
+# Test file: torchcell/datasets/test_genome.py
 
 from abc import ABC, abstractmethod
 

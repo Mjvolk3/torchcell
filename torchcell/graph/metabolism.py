@@ -1,7 +1,7 @@
-# src/torchcell/multidigraph/metabolism.py
-# [[src.torchcell.multidigraph.metabolism]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/multidigraph/metabolism.py
-# Test file: src/torchcell/multidigraph/test_metabolism.py
+# torchcell/multidigraph/metabolism.py
+# [[torchcell.multidigraph.metabolism]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/metabolism.py
+# Test file: torchcell/multidigraph/test_metabolism.py
 
 import networkx as nx
 import pandas as pd

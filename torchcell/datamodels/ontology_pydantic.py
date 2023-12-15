@@ -1,7 +1,7 @@
-# src/torchcell/datamodels/ontology_pydantic.py
-# [[src.torchcell.datamodels.ontology_pydantic]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datamodels/ontology_pydantic.py
-# Test file: src/torchcell/datamodels/test_ontology_pydantic.py
+# torchcell/datamodels/ontology_pydantic.py
+# [[torchcell.datamodels.ontology_pydantic]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/ontology_pydantic.py
+# Test file: torchcell/datamodels/test_ontology_pydantic.py
 
 import json
 from typing import List, Union

@@ -1,7 +1,7 @@
-# src/torchcell/models/fungal_up_down_transformer.py
-# [[src.torchcell.models.fungal_up_down_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/fungal_up_down_transformer.py
-# Test file: src/torchcell/models/test_fungal_up_down_transformer.py
+# torchcell/models/fungal_up_down_transformer.py
+# [[torchcell.models.fungal_up_down_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/fungal_up_down_transformer.py
+# Test file: torchcell/models/test_fungal_up_down_transformer.py
 import os
 import os.path as osp
 

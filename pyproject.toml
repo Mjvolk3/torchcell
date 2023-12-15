@@ -46,7 +46,7 @@ python_version = "3.11"
 ignore_missing_imports = true
 show_error_codes = true
 files = [
-    "src/**/*.py",
+    "torchcell/**/*.py",
     "tests/**/*.py"
 ]
 
@@ -68,6 +68,14 @@ strict_equality = true
 
 [tool.pydocstyle]
 convention = "google"
-match = "src/torchcell/.*\\.py"
+match = "torchcell/.*\\.py"
 
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+[tool.setuptools.dynamic]
+version = {attr = "torchcell.__version__"}
 
+[tool.setuptools.package-data]
+torchcell = ["py.typed"]
+
+[tool.setuptools.packages.find]
+include = ["torchcell*"]

@@ -2,7 +2,7 @@
 id: 2cr5blex47wahra8n5e1zhr
 title: Src
 desc: ''
-updated: 1697130580901
+updated: 1702611998836
 created: 1690915802174
 ---
 ## src Drawio
@@ -85,5 +85,5 @@ This should allow us to group up experiments. SGD already has a phenotpye ontolo
 
 ## Summing vs. Merging Experiment Datasets
 
-- We have been using `__add__` for merging [[Embedding|dendron://torchcell/src.torchcell.datasets.embedding]] type datasets, but this really only makes sense since different embeddings will by definition not overlap. We can apply a similar logic to `Experiment` datasets, if `genotype` and `environment` don't overlap.
+- We have been using `__add__` for merging [[Embedding|dendron://torchcell/torchcell.datasets.embedding]] type datasets, but this really only makes sense since different embeddings will by definition not overlap. We can apply a similar logic to `Experiment` datasets, if `genotype` and `environment` don't overlap.
 - If data does overlap, meaning there are duplicates of `genotype`, `environment`, `phenotype`. Note here than an overlap could be two different types of expression data, collected with different data modalities. This should ultimately be determined by an ontology. We will need to be able to do more complicated operations to standardize datasets in this case. For instance if `dataset_1` and `dataset_2` have gene expression data one measure by microarray, the other by NGS, then these dataset can be merged if they are adjusted. The easiest standardization is to linearly shift the smallest dataset, to the largest dataset. This an only be done if there is some overlap in `genotype`, and `environment`, otherwise the datasets should probably not be joined.

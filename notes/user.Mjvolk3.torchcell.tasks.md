@@ -2,17 +2,18 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1702610627570
+updated: 1702612198712
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-
 ## 2023.12.14
 
-- [ ] Rename `src` to `torchcell`, refactor notes.
+- [x] Rename `src` to `torchcell`, refactor notes.
+- [x] Test if `Dcell` slim works.
+- [ ] Check python utility functions
+- [x] [[Pyreverse|dendron://torchcell/python.lib.pyreverse]] 
 - [ ] Add costanzo single deletions to graph
-
 
 
 ## 2023.12.13
@@ -38,7 +39,7 @@ created: 1690514887023m
 ## 2023.12.06
 
 - [x] Update pydantic for schema viz → Looks like custom functions are needed.
-- [x] Pydantic schemas → ⛔️ [[Strategy For Writing Pydantic Schema|dendron://torchcell/src.torchcell.graph.validation.locus_related.locus#strategy-for-writing-pydantic-schema]]
+- [x] Pydantic schemas → ⛔️ [[Strategy For Writing Pydantic Schema|dendron://torchcell/torchcell.graph.validation.locus_related.locus#strategy-for-writing-pydantic-schema]]
 - [x] You cannot inherit both from `owlready2` and pydantic models.
 - [x] Investigate serialization and deserialization of data → This works well and give a robust way for reconstructing data in python.
 - [ ] Add media components
@@ -121,14 +122,14 @@ created: 1690514887023m
 
 ## 2023.11.18
 
-- [x] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly → I think these are fixed but should go back and annotate and test properly.
+- [x] Fix [[torchcell.models.dcell]] the modules are not being passed correctly → I think these are fixed but should go back and annotate and test properly.
 - [x] Quick run model locally → works on `cpu`
 - 🔲 Launch on `Delta` → device issues
 
 ## 2023.11.17
 
 - [x] Correct [[./assets/drawio/Dcell.drawio.png]] → Corrected including subsystem representation.
-- [x] Fix [[src.torchcell.models.dcell]] the modules are not being passed correctly
+- [x] Fix [[torchcell.models.dcell]] the modules are not being passed correctly
 - [ ] Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts. Is this the same thing as `GAF`?
 
 ## 2023.11.16
@@ -139,10 +140,10 @@ created: 1690514887023m
 
 - [x] Switching plot font to default `DejaVu Sans` since this is platform agnotic.
 - [x] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta. → Training both a fitness model an interaction model.
-- [x] Recording work with pronto [[src.torchcell.datasets.pronto_ontology]]
-- [ ] Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/src.torchcell.datasets.ontology]].
+- [x] Recording work with pronto [[torchcell.datasets.pronto_ontology]]
+- [ ] Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/torchcell.datasets.ontology]].
 
-- [ ] Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/src.torchcell.datasets.experiment]]
+- [ ] Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/torchcell.datasets.experiment]]
 
 ## 2023.11.13
 
@@ -153,22 +154,22 @@ created: 1690514887023m
 
 ## 2023.11.04
 
-- [x] Get the [[Cell|dendron://torchcell/src.torchcell.datasets.cell]] working since [[Graph|dendron://torchcell/src.torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
-- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
+- [x] Get the [[Cell|dendron://torchcell/torchcell.datasets.cell]] working since [[Graph|dendron://torchcell/torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
+- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
 
 ## 2023.11.03
 
-- [x] Run some example data through [[Dcell|dendron://torchcell/src.torchcell.models.dcell]]. This turned out to be much more involved than I previoulsy thought since we have to do so much data transformation prior to passing the data to the model. [[Model Implementation|dendron://torchcell/src.torchcell.models.dcell#model-implementation]]
+- [x] Run some example data through [[Dcell|dendron://torchcell/torchcell.models.dcell]]. This turned out to be much more involved than I previoulsy thought since we have to do so much data transformation prior to passing the data to the model. [[Model Implementation|dendron://torchcell/torchcell.models.dcell#model-implementation]]
 
-- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
-- [ ] Build out [[datamodules.dcell|dendron://torchcell/src.torchcell.datamodules.dcell]] data module. Test loading and a way to vary sampling frequency from different data.
+- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
+- [ ] Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
 - [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
 
 ## 2023.11.02
 
 - [x] Double check GO annotations with GO file `.gaf` file. → It is terribly annoying to find that they don't overlap and they don't overlap in mysterious ways. Some of the terms from the `gaf` file are not on the GO annotations for the genes.
-- [x] Allow for taking the Union between the two sets, and adding the GO information prior to joining. → In [[Adding GO Union from GAF|dendron://torchcell/src.torchcell.graph.graph#adding-go-union-from-gaf]] I deem this is as currently unnecessary as the contributurion from these terms would be small.
-- [x] Build [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] → prototype
+- [x] Allow for taking the Union between the two sets, and adding the GO information prior to joining. → In [[Adding GO Union from GAF|dendron://torchcell/torchcell.graph.graph#adding-go-union-from-gaf]] I deem this is as currently unnecessary as the contributurion from these terms would be small.
+- [x] Build [[Dcell|dendron://torchcell/torchcell.models.dcell]] → prototype
 
 ## 2023.11.01
 
@@ -177,13 +178,13 @@ created: 1690514887023m
 ## 2023.10.24
 
 - [x] Double check deletion of `IGI` and forwarding of edges. → [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
-- [x] Plot histogram of GO dates with minimal possible filtering while maintaining DAG and no isolated nodes. → [[Histogram of DCell GO Gene Annotations Binned in Time|dendron://torchcell/src.torchcell.datasets.dcell#histogram-of-dcell-go-gene-annotations-binned-in-time]]
-- [x] Plot of `DCell` DAG without any isolted nodes, and before filtering and with super node → [[DCell DAG No Isolated Nodes No Filtering with Super Node|dendron://torchcell/src.torchcell.datasets.dcell#dcell-dag-no-isolated-nodes-no-filtering-with-super-node]]
-- [x] Allow for gene removal of annotation according to date with a date arg. → [[DCell Dataset GO Gene Annotations Time Cutoff|dendron://torchcell/src.torchcell.datasets.dcell#dcell-dataset-go-gene-annotations-time-cutoff]], added tests [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
+- [x] Plot histogram of GO dates with minimal possible filtering while maintaining DAG and no isolated nodes. → [[Histogram of DCell GO Gene Annotations Binned in Time|dendron://torchcell/torchcell.datasets.dcell#histogram-of-dcell-go-gene-annotations-binned-in-time]]
+- [x] Plot of `DCell` DAG without any isolted nodes, and before filtering and with super node → [[DCell DAG No Isolated Nodes No Filtering with Super Node|dendron://torchcell/torchcell.datasets.dcell#dcell-dag-no-isolated-nodes-no-filtering-with-super-node]]
+- [x] Allow for gene removal of annotation according to date with a date arg. → [[DCell Dataset GO Gene Annotations Time Cutoff|dendron://torchcell/torchcell.datasets.dcell#dcell-dataset-go-gene-annotations-time-cutoff]], added tests [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
 - [x] Check total number of ontology terms with no date args, and with date args. Look for date in `Dcell` paper. → Can only get a rough estimate based on commits and paper submission dates. Even with this we cannot get the number of GO terms to match properly.
 
-- [ ] Build out [[dataset.dcell|dendron://torchcell/src.torchcell.datasets.dcell]]
-- [ ] Build out [[datamodules.dcell|dendron://torchcell/src.torchcell.datamodules.dcell]] data module. Test loading and a way to vary sampling frequency from different data.
+- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
+- [ ] Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
 - [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
 
 - [ ] In any of the graphs Met, GO, Regulatory, Metabolic , PPI, GGI. What is the average degree. For the special graph graphs what is the average number of nodes perturbed. Plot histograms for these.
@@ -198,7 +199,7 @@ created: 1690514887023m
 
 - [x] Explore metabolism → `/Users/michaelvolk/Documents/projects/yeast-GEM/torchcell_test.py`. This was done in another `yeast-GEM`. It shows that we can represent metabolism with a heterogenous graph of both metabolites and reactions. I will wait off on adding metabolism right now. Need to look into hetero graph data more.
 - [x] Graph object, get other relevant networks including GO
-- [x] GO graph add DCell options. → Need to double check `IGI`, and the 6 genes criterion nees to be handled after [[DCell|dendron://torchcell/src.torchcell.datamodules.DCell]]
+- [x] GO graph add DCell options. → Need to double check `IGI`, and the 6 genes criterion nees to be handled after [[DCell|dendron://torchcell/torchcell.datamodules.DCell]]
 
 - [ ] Figure out multigraph with `pyg`. We do not need a custom `Data` object yet for batching data, but we will eventually if we have some heterogenous graph structures. Graph matching case, or bipartite case.
 - [ ] Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
@@ -208,7 +209,7 @@ created: 1690514887023m
 - [ ] Add method for `available_graphs` that tell you which graph constructor classes have been implemented, and which graphs have already been saved.
 - [ ] Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
 
-- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/torchcell.graph.graph]]
 
 - [ ] Embedding overlay plot for `FungalCIS` and `mean expression`
 - [ ] switch to `torch_geometric.utils.scatter`
@@ -226,7 +227,7 @@ created: 1690514887023m
 - 🔲 Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
 - 🔲 Add in single fitness
 - 🔲 Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
-- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/torchcell.graph.graph]]
 - 🔲 Embedding overlay plot for `FungalCIS` and `mean expression`
 - 🔲 switch to `torch_geometric.utils.scatter`
 
@@ -250,14 +251,14 @@ created: 1690514887023m
 
 - [x] Something looks strange with the interaction distribution. → 0.04 is about one std away so the genetic interaction score plots show the range of one std.
 - [x] In `nx.compose` the second graph will overwrite data if there are duplicate keys. →
-- [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]
-- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/src.torchcell.graph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
-- [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/src.torchcell.trainers.graph_convolution_regression]]
+- [x] Hack to using graphs on perturbation graph → one hop for removed nodes, not yet zeroing out node features. Not sure if it'll be necessary. [[Cell|dendron://torchcell/torchcell.datasets.cell]]
+- [x] Hack for e issue with `genome.gene_set` vs `genome` → using `gene_set` as arg [[Graph|dendron://torchcell/torchcell.graph.graph]], when using `genome` things get hung up on `Sanity Checking:`.
+- [x] Implement a trainer for graph convolution network → [[Graph_convolution_regression|dendron://torchcell/torchcell.trainers.graph_convolution_regression]]
 - [x] Implement option to train on fitness and interaction simultaneously → set up the beginnings of this, but it is going to be a lot of work.
 - [x] Issue with `genome.gene_set` vs `genome` might instead be an issue with `num_workers`. When I set `num_workers=0` things run. `num_workers=4` things don't run. Gets hung up at `Sanity Checking:` → `num_workers=2` works but it takes a very long time to get going. `num_workers=4` probably also works
 - [x] Launch on `Delta`.
 - 🔲 Add in single fitness
-- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/torchcell.graph.graph]]
 - 🔲 Plan graph merge
 - 🔲 Add single fitness data
 - 🔲 Embedding overlay plot for `FungalCis` and `mean expression`
@@ -265,23 +266,23 @@ created: 1690514887023m
 
 ## 2023.10.17
 
-- [x] [[455 Proteins in s288c that are geq 1022 Amino Acids|dendron://torchcell/src.torchcell.models.esm2#455-proteins-in-s288c-that-are-geq-1022-amino-acids]]
+- [x] [[455 Proteins in s288c that are geq 1022 Amino Acids|dendron://torchcell/torchcell.models.esm2#455-proteins-in-s288c-that-are-geq-1022-amino-acids]]
 - [x] See if T5 Model can handle max protein size. "Here, we trained models that were affected by this limitations (ProtBERT, ProtAlbert, ProtElectra) first on proteins of length 512, then on proteins 1024. Only setting the length of the positional encoding to 40k after pre-training allowed the models to process protein sequences up to a length of 40k. ([Elnaggar et al., 2022, p. 7114](zotero://select/library/items/6FEQEKR6)) ([pdf](zotero://open-pdf/library/items/HMD9SDQ2?page=3&annotation=PTEJIYQC))" → We can embed all proteins with this.
-- [x] Figure out how to handle pseudogenes [[6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#6-pseudogenes-from-cmd-f-orf_trans_all_r64-4-1_20230830fasta]]
-- [x] Figure out how to identify noncoding → [[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
-- [x] Compute protT5 embeddings → This had to be done on `Delta` because the model is not working for me on cpu currently. [Github Issue](https://github.com/agemagician/ProtTrans/issues/130). More on embeddings - [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
+- [x] Figure out how to handle pseudogenes [[6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#6-pseudogenes-from-cmd-f-orf_trans_all_r64-4-1_20230830fasta]]
+- [x] Figure out how to identify noncoding → [[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
+- [x] Compute protT5 embeddings → This had to be done on `Delta` because the model is not working for me on cpu currently. [Github Issue](https://github.com/agemagician/ProtTrans/issues/130). More on embeddings - [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
 - [x] Check if we can add in protein embeddings. → We used `protein_data` as an attribute, which prevents us from adding embeddings datasets.
 - [x] Close `genetic_interaction_score`,`dmf_costanzo_linear` [Wandb_Log](https://wandb.ai/zhao-group/torchcell/groups/2514760_3e78b6beb5b847285ef128c72f402d96b88fbb592e9ecb98a745b43db0a857c1/workspace?workspace=user-mjvolk3). You cannot learn the `genetic_interaction_score` by simply `one_hot` encoding the genes.
 - [x] Recompute `ProtT5Dataset` → Had to debug `self.initialize`. There are not some inconsistencies with the embeddings models. I can sort this out later. Added to [[user.mjvolk3.torchcell.tasks.future]]
-- [x] Check we can add the `ProtT5Dataset` to the other datasets. → This is works since we are using the `dna_windows` hack. [[ProtT5 Embedding Input and Output|dendron://torchcell/src.torchcell.models.protT5#prott5-embedding-input-and-output]]
-- [x] Fix indexing [[Embedding|dendron://torchcell/src.torchcell.datasets.embedding]] → now `dataset[0]` and `dataset["Q0010"]` match as they should.
-- [x] Compute `"prot_t5_xl_uniref50_all"` and `"prot_t5_xl_uniref50_no_dubious"` and globus transfer. → Changed my mind on making these separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
-- [x] Add option to combine zero-like out non-expressing proteins denoted as `'dubious'`. → Separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/src.torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
+- [x] Check we can add the `ProtT5Dataset` to the other datasets. → This is works since we are using the `dna_windows` hack. [[ProtT5 Embedding Input and Output|dendron://torchcell/torchcell.models.protT5#prott5-embedding-input-and-output]]
+- [x] Fix indexing [[Embedding|dendron://torchcell/torchcell.datasets.embedding]] → now `dataset[0]` and `dataset["Q0010"]` match as they should.
+- [x] Compute `"prot_t5_xl_uniref50_all"` and `"prot_t5_xl_uniref50_no_dubious"` and globus transfer. → Changed my mind on making these separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
+- [x] Add option to combine zero-like out non-expressing proteins denoted as `'dubious'`. → Separate datasets [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
 - [x] Fix bug "dubious" to "Dubious" and "uncharacterized" to "Uncharacterized" and recompute and transfer embeddings.
 - [x] Test `dmf_costanzo_deepset` with different protein embeddings.
 - [x] Launch `dmf_costanzo_deepset` with `no_dubious` protein embeddings.
-- [x] Check [[dmf Genetic Interaction Score Mean|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmf-genetic-interaction-score-mean]]
-- [x] Check `PyG` → [[Graph|dendron://torchcell/src.torchcell.graph.graph]]
+- [x] Check [[dmf Genetic Interaction Score Mean|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#dmf-genetic-interaction-score-mean]]
+- [x] Check `PyG` → [[Graph|dendron://torchcell/torchcell.graph.graph]]
 - [x] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
 - [x] Launch `prot_T5_no_dubious`, `costanzo_1e6
 
@@ -296,7 +297,7 @@ created: 1690514887023m
 - [x] Make a simple SGD linear model. We use a linear model because the dataset won't fit into memory otherwise.
 - [x] Launch linear `fitness` model on Delta. → Probably could use cpu for this.
 - [x] Launch linear `genetic_interaction_score` model on Delta.
-- [x] Bring in ESM embeddings → Brought in models but not sure if we should bring in embeddings yet since they can't handle 455 protines in that are > 1022 amino acids [[Esm2|dendron://torchcell/src.torchcell.models.esm2]]
+- [x] Bring in ESM embeddings → Brought in models but not sure if we should bring in embeddings yet since they can't handle 455 protines in that are > 1022 amino acids [[Esm2|dendron://torchcell/torchcell.models.esm2]]
 
 ## 2023.10.15
 
@@ -323,12 +324,12 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.10.12
 
-- [x] Rewrite `SmfCostanzoDataset` [[Costanzo2016|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016]] to use `Dataset`instead of in memory dataset. This might be unnecessary overkill, but it should allow for inheritance from a generalized `Dataset` class and will make `+` and merges easier. [[Summing vs. Merging Experiment Datasets|dendron://torchcell/src#summing-vs-merging-experiment-datasets]] → converted over, but haven't done any testing.
+- [x] Rewrite `SmfCostanzoDataset` [[Costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016]] to use `Dataset`instead of in memory dataset. This might be unnecessary overkill, but it should allow for inheritance from a generalized `Dataset` class and will make `+` and merges easier. [[Summing vs. Merging Experiment Datasets|dendron://torchcell/torchcell#summing-vs-merging-experiment-datasets]] → converted over, but haven't done any testing.
 - [x] Check for duplicates in `SmfCostanzoDataset` → Add many duplicate methods. I thing the `both_` methods might abuse the `duplicate` notation.
 - [x] `dmf + smf` dataset. → This creates some issues. I've pursued it some, but the main issue is that another database should be constructed. I think this is the most straightforward way, although it will create duplicate data. This is the easiest solution for now.
-- [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/src.torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/src.torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
+- [x] Implement `MergeExperiments` → We had to move away from Dunder add. [[Dunder Adding of Experiments is a Bad Idea|dendron://torchcell/torchcell.datasets.experiment#dunder-adding-of-experiments-is-a-bad-idea]] I took from the individual experiment design and modified it to do simple merges, where are really concatentations. [[Use Dataset Logic but Use Process for Merger Operations|dendron://torchcell/torchcell.datasets.experiment#use-dataset-logic-but-use-process-for-merger-operations]]
 - [x] Fix dmf data_list iteration.
-- [x] Make box plot for [[Genetic_interaction_score|dendron://torchcell/src.torchcell.viz.genetic_interaction_score]] → If we want a closer match we could make a few more adjustments.
+- [x] Make box plot for [[Genetic_interaction_score|dendron://torchcell/torchcell.viz.genetic_interaction_score]] → If we want a closer match we could make a few more adjustments.
 - [x] Train `1e6` on interaction. → queued priority.
 
 - [ ] Add codon frequency dataset.
@@ -338,9 +339,9 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 
-- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 
-- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 
 - [ ] Plot Umap overlays with new datasets
 - [ ] Optional dimensionality reduction of embeddings
@@ -359,7 +360,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [x] Cancel run on `upstream + downstream` → [wandb upstream and downstream](https://wandb.ai/zhao-group/torchcell/groups/2498195_6e7d3de812c0282976a4afcf00b099283e3b054397d8d3b967a99dc89cba9fea/workspace?workspace=user-mjvolk3)
 - [x] Start run on all `costanzo`
-- [x] Fix plotting of box plots to match `Dcell` → ![](./assets/drawio/dcell-boxplot.drawio.png) used template to adjust figures [[torchcell.viz.fitness|dendron://torchcell/src.torchcell.viz.fitness]] should be publication qualtiy now.
+- [x] Fix plotting of box plots to match `Dcell` → ![](./assets/drawio/dcell-boxplot.drawio.png) used template to adjust figures [[dendron://torchcell/torchcell.viz.fitness]] should be publication qualtiy now.
 - [x] log wandb artifacts in training.
 - [x] Check if 'Arial' is on `Delta`. → `conda install -c conda-forge mscorefonts`
 - [x] Start run on all `costanzo`, with artifact logging and new box plots.
@@ -372,8 +373,8 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - 🔲 Add assertion in the addition to make sure that at least the sizes are the same.
 - 🔲 Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 - 🔲 Add codon frequency dataset.
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Plot Umap overlays with new datasets
 - 🔲 Optional dimensionality reduction of embeddings
@@ -391,15 +392,15 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Write report for @Yunan-Luo → [[results.01.report|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report]]
 - [x] Send report to @Yunan-Luo
 - [x] Rerun embeddings on full `s288c`genome. This allows for the proper collation when combining datasets with add. → This can lead to some pernicious bugs, where you don't recognize that the dataset is smaller and if the designed net always adapts to feature size you never catch this bug. [[Perturbation Nodes Benchmark Model - Adding Bug|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01.report#perturbation-nodes-benchmark-model---adding-bug]]. Might want to consider adding some sort of assertion in the addition to make sure that at least the sizes are the same.
-- [x] Configure type of dataset to train on. → got paritally there but it is difficult to add datasets with `sum` → [[Difficult to Add Datasets with Sum operator|dendron://torchcell/src.torchcell.datasets.embedding#difficult-to-add-datasets-with-sum-operator]]
+- [x] Configure type of dataset to train on. → got paritally there but it is difficult to add datasets with `sum` → [[Difficult to Add Datasets with Sum operator|dendron://torchcell/torchcell.datasets.embedding#difficult-to-add-datasets-with-sum-operator]]
 
 ## 2023.10.08
 
 - [x] On train wt try to overfit the wt before moving to train batch. → Tried this but doesn't seem to work very well. There are a lot of instabilities.
 - 🔲 Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
 - 🔲 Add codon frequency dataset.
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Plot Umap overlays with new datasets
 - 🔲 Optional dimensionality reduction of embeddings
@@ -415,8 +416,8 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [x] Summarize some of the successful run. [[dmf_costanzo_deepset.results.01|dendron://torchcell/experiments.dmf_costanzo_deepset.results.01]]
 - [x] Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA. → paritally finished.
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Plot Umap overlays with new datasets
 - 🔲 Optional dimensionality reduction of embeddings
@@ -437,18 +438,18 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [x] Implement `LayerNorm` normalization and activation parameterization
 - [x] Implement gradient clipping. → No implementation needed. This is easy on pytorch lightning as it can be done by simply passing args to the `Trainer`
-- [x] Add option to include skip connections in instance layers and set layers of [[src.torchcell.models.deep_set]]. Of course skip connections can only be applied to layers of the same dimension so the boolean corresponds to layers with repeat of the same dimension.
-- [x] Automatic clipping only works if we don't use manual backward... [[Manual Backward with Forcing Node Wt to Ones|dendron://torchcell/src.torchcell.trainers.regression#manual-backward-with-forcing-node-wt-to-ones]] → This along with layer norm has appeared to smooth out the loss.
-- [x] Implement set transformer → [[Deep_set_transformer|dendron://torchcell/src.torchcell.models.deep_set_transformer]]
-- [x] Add weighted MSE in case the models don't learn distribution but instead just predict the mean. → [[Weighted_mse|dendron://torchcell/src.torchcell.losses.weighted_mse]]
+- [x] Add option to include skip connections in instance layers and set layers of [[torchcell.models.deep_set]]. Of course skip connections can only be applied to layers of the same dimension so the boolean corresponds to layers with repeat of the same dimension.
+- [x] Automatic clipping only works if we don't use manual backward... [[Manual Backward with Forcing Node Wt to Ones|dendron://torchcell/torchcell.trainers.regression#manual-backward-with-forcing-node-wt-to-ones]] → This along with layer norm has appeared to smooth out the loss.
+- [x] Implement set transformer → [[Deep_set_transformer|dendron://torchcell/torchcell.models.deep_set_transformer]]
+- [x] Add weighted MSE in case the models don't learn distribution but instead just predict the mean. → [[Weighted_mse|dendron://torchcell/torchcell.losses.weighted_mse]]
 - 🔲 Create a sweep locally for `1e4` data.
 
 ## 2023.09.29
 
-- [x] Send query to @Yunan-Luo about [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/src.torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
-- [x] Kill run → [Wandb Run](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3), some sides notes on this run [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/src.torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
-- [x] [[Fixing Padding on Upstream Model to Match GitHub Issue Recommendation|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#fixing-padding-on-upstream-model-to-match-github-issue-recommendation]]
-- [x] Delete old upstream embeddings and rerun [[Fungal_up_down_transformer|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer]]. → Tried running but there is an issue [[Parse Genome and Return None For Dunder Add - Need Genome in Process|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add---need-genome-in-process]]
+- [x] Send query to @Yunan-Luo about [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
+- [x] Kill run → [Wandb Run](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3), some sides notes on this run [[Training Instability with Wildtype Embedding Difference|dendron://torchcell/torchcell.trainers.regression#training-instability-with-wildtype-embedding-difference]]
+- [x] [[Fixing Padding on Upstream Model to Match GitHub Issue Recommendation|dendron://torchcell/torchcell.models.fungal_up_down_transformer#fixing-padding-on-upstream-model-to-match-github-issue-recommendation]]
+- [x] Delete old upstream embeddings and rerun [[Fungal_up_down_transformer|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer]]. → Tried running but there is an issue [[Parse Genome and Return None For Dunder Add - Need Genome in Process|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add---need-genome-in-process]]
 - [x] Try to regularize by forcing `wt` embedding to 1, can also try 0 which should be fine because you can get to 1 with bias from linear.
 
 ## 2023.09.28
@@ -456,16 +457,16 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't think this will work across sweeps. Add agent id. → Agent id is not accessible. Instead I chose to use a hashing of the config. I also got rid of date because if the launch on different gpus happens right around midnight this could create some error. The Hashing method should be unique to the model config.
 - [x] Track value of `WT` embedding.
 - [x] Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
-- [x] `DDP` is with genome `sqlite` → First tracked this error [[2023.09.09|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230909]], made some proper documentation [[DDP sqlite gff error|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#ddp-sqlite-gff-error]] → I still have not confirmed if this is the issue because there was another issue related to combining data
-- [x] Fix issue related to combining data. → There is some dark magic 🪄 that I am unfamiliar with here, but I found a workable solution for now. [[Parse Genome and Return None For Dunder Add|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add]]
+- [x] `DDP` is with genome `sqlite` → First tracked this error [[2023.09.09|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230909]], made some proper documentation [[DDP sqlite gff error|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#ddp-sqlite-gff-error]] → I still have not confirmed if this is the issue because there was another issue related to combining data
+- [x] Fix issue related to combining data. → There is some dark magic 🪄 that I am unfamiliar with here, but I found a workable solution for now. [[Parse Genome and Return None For Dunder Add|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add]]
 - [x] Configure `weight_decay` and `learning_rate`
 - [x] Launch [Wandb - 1e5 Deep Set DDP Find Unused](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3)
 - [x] Try to fix forced ddp find unused by passing two `wt` instances and only computing the loss for one. We lose significant speedups according to [GitHub Issue](https://github.com/Lightning-AI/lightning/issues/17212) [[Deep Set Model Only Works with DDP Find Unused|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused]] → This works, using a batch of `wt` [[Deep Set Model Only Works with DDP Find Unused - Solution|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_deepset_1e5#deep-set-model-only-works-with-ddp-find-unused---solution]]
-- [x] Write set transformer model → Threw something quick together [[Regression_deep_set_transformer|dendron://torchcell/src.torchcell.trainers.regression_deep_set_transformer]]
+- [x] Write set transformer model → Threw something quick together [[Regression_deep_set_transformer|dendron://torchcell/torchcell.trainers.regression_deep_set_transformer]]
 - 🔲 Add codon frequency dataset → This is a bit more difficult than I anticipated since we have codon frequency of gene with intron and codon frequency of mRNA.
 - 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Plot Umap overlays with new datasets
 - 🔲 Optional dimensionality reduction of embeddings
@@ -476,21 +477,21 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.27
 
-- [x] Respose to [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2) → [[How input_ids_len Changes with Different Sequences|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#how-input_ids_len-changes-with-different-sequences]], [[Window Five Prime S288c Genes Less Than 1003 bp|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#window-five-prime-s288c-genes-less-than-1003-bp]], [[Window Three Prime S288c Genes Less Than 300 bp|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#window-three-prime-s288c-genes-less-than-300-bp]]
+- [x] Respose to [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2) → [[How input_ids_len Changes with Different Sequences|dendron://torchcell/torchcell.models.fungal_up_down_transformer#how-input_ids_len-changes-with-different-sequences]], [[Window Five Prime S288c Genes Less Than 1003 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#window-five-prime-s288c-genes-less-than-1003-bp]], [[Window Three Prime S288c Genes Less Than 300 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#window-three-prime-s288c-genes-less-than-300-bp]]
 - [x] [[Test_fungal_up_down_transformer|dendron://torchcell/tests.torchcell.models.test_fungal_up_down_transformer]]
-- [x] Document [[Fungal_up_down_transformer|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer]] → Added some documentation and made docs. Still difficult for me to tell how the raw strings will render using sphinx.
+- [x] Document [[Fungal_up_down_transformer|dendron://torchcell/torchcell.models.fungal_up_down_transformer]] → Added some documentation and made docs. Still difficult for me to tell how the raw strings will render using sphinx.
 - [x] Generate new embeddings using upstream model change.
-- [x] Think more on label adding → [[Adding Fitness Labels|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#adding-fitness-labels]] using a temporary solution for now to handle multiple different cases `dmf`, 'fitness', and mapping them all to `fitness`.
-- [x] Implement wt difference embedding → This has gotten a bit complicated, I am often running into this error `Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed)` when trying to embed the wild type and instances from the batch. I overcame this with explicityly handling the optimization. → [[Explicitly Optimising the training_step and train_wt|dendron://torchcell/src.torchcell.trainers.regression#explicitly-optimising-the-training_step-and-train_wt]]
-- [x] Change [[src.torchcell.models.deep_set]] to have only dropout on last layer - [[Dropout on Last Layer Only|dendron://torchcell/src.torchcell.models.deep_set#dropout-on-last-layer-only]]
+- [x] Think more on label adding → [[Adding Fitness Labels|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#adding-fitness-labels]] using a temporary solution for now to handle multiple different cases `dmf`, 'fitness', and mapping them all to `fitness`.
+- [x] Implement wt difference embedding → This has gotten a bit complicated, I am often running into this error `Trying to backward through the graph a second time (or directly access saved tensors after they have already been freed)` when trying to embed the wild type and instances from the batch. I overcame this with explicityly handling the optimization. → [[Explicitly Optimising the training_step and train_wt|dendron://torchcell/torchcell.trainers.regression#explicitly-optimising-the-training_step-and-train_wt]]
+- [x] Change [[torchcell.models.deep_set]] to have only dropout on last layer - [[Dropout on Last Layer Only|dendron://torchcell/torchcell.models.deep_set#dropout-on-last-layer-only]]
 - [x] Glbous transfer `cell_1e4`, `cell_1e5`, `costanzo2016_1e4`, `costanzo2016_1e5`. →  running `cell` and `costanzo` for later transfer.
 - [x] Review [Github issue](https://github.com/gagneurlab/SpeciesLM/issues/2#issuecomment-1737756856) → It appears there is nothing to do about sequences like this. 🚂 Moving on .
 - [x] Prepare trainer and run models locally for `FungalUpDownTransformer`
 - [x] Run experiments locally
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
 - 🔲 Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Write set transformer model
 - 🔲 Plot Umap overlays with new datasets
@@ -502,19 +503,19 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.26
 
-- [x] Downselect by `costanzo` gene interaction scores or `1e5` → Tabling this for now. This would bias training. Unseen data would then be expected to have interactions, when they were specificially selected to not have an interaction. Also this doesn't make much sense. It would make more sense to takes the `abs` then select upper quantiles of high interaction scores, dropping low interaction. → [[DmfCostanzo2016Dataset Genetic Interaction Score Histogram|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-genetic-interaction-score-histogram]]
-- [x] Check how many genes now are outside of the [[nucleotide_transformer|src.torchcell.datasets.nucleotide_transformer]] window. → [[Genes Larger than Nucleotide Transformer Window|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer#genes-larger-than-nucleotide-transformer-window]]
-- [x] Plot `Dmf` fitness → [[DmfCostanzo2016Dataset Double Mutant Fitness Score Histogram|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-double-mutant-fitness-score-histogram]]
+- [x] Downselect by `costanzo` gene interaction scores or `1e5` → Tabling this for now. This would bias training. Unseen data would then be expected to have interactions, when they were specificially selected to not have an interaction. Also this doesn't make much sense. It would make more sense to takes the `abs` then select upper quantiles of high interaction scores, dropping low interaction. → [[DmfCostanzo2016Dataset Genetic Interaction Score Histogram|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-genetic-interaction-score-histogram]]
+- [x] Check how many genes now are outside of the [[nucleotide_transformer|torchcell.datasets.nucleotide_transformer]] window. → [[Genes Larger than Nucleotide Transformer Window|dendron://torchcell/torchcell.datasets.nucleotide_transformer#genes-larger-than-nucleotide-transformer-window]]
+- [x] Plot `Dmf` fitness → [[DmfCostanzo2016Dataset Double Mutant Fitness Score Histogram|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzo2016dataset-double-mutant-fitness-score-histogram]]
 - [x] Check dna transformers are using `SortedSet`
-- [x] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]` →  This only makes sense for more generic types of datasets like embeddings datasets, [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]. We cannot do this for things like `DmfCostanzo2016Dataset` becuase there are two genes being removed and we cannot index on both.
-- [x] Implement wildtype property → [[Wildtype Property|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#wildtype-property]]
-- [x] Implement wt difference embedding → Got decently far writing a [[src.torchcell.models.mlp]] so this can be used on top of aggegated embeddings from `wt` and instance.
+- [x] Check we can index on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]` →  This only makes sense for more generic types of datasets like embeddings datasets, [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]. We cannot do this for things like `DmfCostanzo2016Dataset` becuase there are two genes being removed and we cannot index on both.
+- [x] Implement wildtype property → [[Wildtype Property|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#wildtype-property]]
+- [x] Implement wt difference embedding → Got decently far writing a [[torchcell.models.mlp]] so this can be used on top of aggegated embeddings from `wt` and instance.
 - 🔲 Prepare trainer and run models locally for `FungalUpDownTransformer`
-- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Change [[Dcell|dendron://torchcell/torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
 - 🔲 Run experiments locally
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
-- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
-- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/src.torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
 - 🔲 Write set transformer model
@@ -535,7 +536,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Downselect by `costanzo` gene interaction scores or `1e5`
 - 🔲 Prepare trainer and run models locally for `FungalUtrTransformer`
-- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Change [[Dcell|dendron://torchcell/torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
 - 🔲 Implement wt difference embedding
 - 🔲 Run experiments locally
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
@@ -550,10 +551,10 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.23
 
-- [x] Test genome [[src.torchcell.sequence.genome.scerevisiae.s288c]] → [[Gene class looks more like ORF|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
-- [x] Write fungal utr model → done but there are still some issues with deciding how to pad the upstream sequence. [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
-- [x] Email `SpeciesLM` Model authors about this [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
-- [x] Write fungal utr dataset → [[Model Variants Support|dendron://torchcell/src.torchcell.datasets.fungal_up_down_transformer#model-variants-support]]
+- [x] Test genome [[torchcell.sequence.genome.scerevisiae.s288c]] → [[Gene class looks more like ORF|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
+- [x] Write fungal utr model → done but there are still some issues with deciding how to pad the upstream sequence. [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
+- [x] Email `SpeciesLM` Model authors about this [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
+- [x] Write fungal utr dataset → [[Model Variants Support|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#model-variants-support]]
 - [x] Recompute `nt dataset` with SortedSet and fixed windows
 - [x] Compute `FungalUtrTransformerDataset`
 - 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
@@ -562,7 +563,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Downselect by `costanzo` gene interaction scores or `1e5`
 - 🔲 Prepare trainer and run models locally for `FungalUtrTransformer`
-- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Change [[Dcell|dendron://torchcell/torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
 - 🔲 Implement wt difference embedding
 - 🔲 Run experiments locally
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
@@ -577,19 +578,19 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [x] Make docs → Changed to `pyg` template as it is simpler
 - [x] Make  `pytest --cov=torchcell --cov-report html tests/` task → have to use full paths to executables.
-- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI s288c we cannot compute UTR lengths|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c_ncbi#using-the-ncbi-s288c-we-cannot-compute-utr-lengths]]
-- 🔲 Test genome [[src.torchcell.sequence.genome.scerevisiae.s288c]]
+- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI s288c we cannot compute UTR lengths|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_ncbi#using-the-ncbi-s288c-we-cannot-compute-utr-lengths]]
+- 🔲 Test genome [[torchcell.sequence.genome.scerevisiae.s288c]]
 
 ## 2023.09.21
 
-- [x] Complete coverage on [[Data|dendron://torchcell/src.torchcell.sequence.data]]
+- [x] Complete coverage on [[Data|dendron://torchcell/torchcell.sequence.data]]
 - 🔲 Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`
 
 ## 2023.09.20
 
 - [x] Email Fungal UTR authors to clarify some of the 5 utr selections
-- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/src.torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
-- [x] Complete coverage on data → [[Data|dendron://torchcell/src.torchcell.sequence.data]] made some progress
+- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
+- [x] Complete coverage on data → [[Data|dendron://torchcell/torchcell.sequence.data]] made some progress
 - [x] Previous task was to organize Umap visualization overlays. Now delete since these are now invalid.
 - 🔲 Make  `pytest --cov=torchcell --cov-report html tests/` task
 - 🔲 Test genome
@@ -608,14 +609,14 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
 - 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
 - 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-- 🔲 Change [[Dcell|dendron://torchcell/src.torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Change [[Dcell|dendron://torchcell/torchcell.models.dcell]] to have only dropout on last layer - `zendron_citation`
 
 ## 2023.09.19
 
-- [x] Clarify notes on [[Selecting Gene Sequence|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
-- [x] Add protein to `Genome` → [[Adding Protein to Genome|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#adding-protein-to-genome]]
-- [x] Resolve start and stop codon issues → [[Selecting Gene Sequence|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
-- [x] There is a very annoying issue where the gff annoation  `self.seq = str(self.fasta_dna[chr].seq[self.start - 1 : self.end])`. The issue is that gff files are genearlly 1-indexed. → I think we are able to mostly bypass having to rewrite the `calculate_window` functions in [[Data|dendron://torchcell/src.torchcell.sequence.data]] since we can just pass in `self.start-1`
+- [x] Clarify notes on [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
+- [x] Add protein to `Genome` → [[Adding Protein to Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#adding-protein-to-genome]]
+- [x] Resolve start and stop codon issues → [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
+- [x] There is a very annoying issue where the gff annoation  `self.seq = str(self.fasta_dna[chr].seq[self.start - 1 : self.end])`. The issue is that gff files are genearlly 1-indexed. → I think we are able to mostly bypass having to rewrite the `calculate_window` functions in [[Data|dendron://torchcell/torchcell.sequence.data]] since we can just pass in `self.start-1`
 
 ## 2023.09.18
 
@@ -629,21 +630,21 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.17
 
-- [x] Download updated fungal UTR transformer. → Got things to work in their jupyter notebooks, but it is not as straight forward as the `nt_transformer`. [[Tokenizing Data Procedure Taken from ModelUsage.py|dendron://torchcell/src.torchcell.models.fungal_up_down_transformer#tokenizing-data-procedure-taken-from-modelusagepy]]
+- [x] Download updated fungal UTR transformer. → Got things to work in their jupyter notebooks, but it is not as straight forward as the `nt_transformer`. [[Tokenizing Data Procedure Taken from ModelUsage.py|dendron://torchcell/torchcell.models.fungal_up_down_transformer#tokenizing-data-procedure-taken-from-modelusagepy]]
 - 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
 - 🔲 Recompute `nt dataset` with SortedSet
 
 ## 2023.09.15
 
 - [x] We have an issue where where if `drop_mt` isn't changing data. fix this. I found that `drop_mt` and `drop_empty_go` aren't reducing `gene_set` size. This might have to do with the reading and writing of the `db`. This is indeed the case. I am not sure if this is the behavior we want. We should try to go back to always writing the `db`, since I think the `sqlite` errors were due to not removing the `db` then double check `ddp`. I think better behavior is to start with the fresh genome each time. → changed back but haven't tested.
-- [x] Make sqlite db removal less hacky and change the `CellDataset` arg to take `genome` again. →  [[Genome Sqlite DB Removal For Dataset Pickling|dendron://torchcell/src.torchcell.datasets.cell#genome-sqlite-db-removal-for-dataset-pickling]]. I've also added a `GeneSet` object to enfoce `SortedSet[str]` for gene sets.
+- [x] Make sqlite db removal less hacky and change the `CellDataset` arg to take `genome` again. →  [[Genome Sqlite DB Removal For Dataset Pickling|dendron://torchcell/torchcell.datasets.cell#genome-sqlite-db-removal-for-dataset-pickling]]. I've also added a `GeneSet` object to enfoce `SortedSet[str]` for gene sets.
 - 🔲 In plotting we have some `dmf` data that has only one perturbation on the gene set. fix.
 - 🔲 Recompute `nt dataset` with SortedSet
 - 🔲 Organize Umap visualization overlays
 - 🔲 Summarize the setting under which models can be successfully trained, or rather where training can at least be started. Create table.
 - 🔲 Make sure dna transformers are using `SortedSet`
-- 🔲 Change [[src/torchcell/models/dcell.py]] to have only dropout on last layer - `zendron_citation`
-- 🔲 Rerun [[src/torchcell/datasets/nucleotide_transformer.py]] to comply with `SortedSet`
+- 🔲 Change [[torchcell/models/dcell.py]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Rerun [[torchcell/datasets/nucleotide_transformer.py]] to comply with `SortedSet`
 - 🔲 wt difference embedding
 - 🔲 optional dimensionality reduction
 - 🔲 Downselect by gene interaction scores or `1e5`...
@@ -654,7 +655,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.09.14
 
-- 🔲 Change [[src/torchcell/models/dcell.py]] to have only dropout on last layer - `zendron_citation`
+- 🔲 Change [[torchcell/models/dcell.py]] to have only dropout on last layer - `zendron_citation`
 - 🔲 Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't this will work across sweeps. Add period delimited time or something else.
 - 🔲 Scale up model training
 - 🔲 Launch job.
@@ -738,10 +739,10 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 - [x] Run test run on `cell.py` on interactive cpu. → `20it/s` very slow, M1 is nearly `2000 it/s`
 - [x] Filter in cell dataset talking a terribly long time. Can Globus transfer for now but should figure out how we can speed up filtering. → Started transfer
-- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/src.torchcell.datasets.cell#merging-dataset-issues]]
+- [x] Write on dataset merge issues → [[Merging Dataset Issues|dendron://torchcell/torchcell.datasets.cell#merging-dataset-issues]]
 - [x] The limitation again looks like IO from reading data from `lmdb`. We should be able to take advantage of multithreading for this. Try multithreading filtering delta interactive cpu. → There does look to be a speed up to `120it/s` on 16 cpu. With this the job with finish in 30 hrs... For now just going to run things locally and tranfer with Globus, since it takes around 2 hours to transfer the data... This isn't a great solution for the library.
 - [x] Try a cpu slurm job with 32 cpu. → This fails due to some `sqlite3` error. To use `num_workers > 0` we need to be to pickle the dataset for multiprocessing, this cannot be done if there is a database open. `self.genome` is using a `sqlite3` database.
-- [x] Fix `dmf` dataset so it can work with `lmdb` and `num_workers > 0`  → [[Using LMDB with Dataloader num_workers ge 0|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#using-lmdb-with-dataloader-num_workers-ge-0]]
+- [x] Fix `dmf` dataset so it can work with `lmdb` and `num_workers > 0`  → [[Using LMDB with Dataloader num_workers ge 0|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#using-lmdb-with-dataloader-num_workers-ge-0]]
 - [x] Fix `cell` dataset so it can work with `lmdb` and `num_workers > 0`, we will also need to handle removing the genome sql db from the init. → This is a bit Hacky for now. Also had to make sure we removed `seq_embedding` datasets. [[Data Loader Speed with Number of Workers for CellDataset|dendron://torchcell/experiments.dmf_costanzo_deepset#data-loader-speed-with-number-of-workers-for-celldataset]]
 - [x] Launch experiment on whole dataset `dmf` → We have speed issues[[Training Speed with Number of Workers for CellDataset|dendron://torchcell/experiments.dmf_costanzo_deepset#training-speed-with-number-of-workers-for-celldataset]]
 - 🔲 WT difference for loss function... thinking dataset should have a reference object at highest level.
@@ -763,16 +764,16 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Try to archive files in `5e5` at a time. → I was able to write the entire `lmdb` before this finished.
 - [x] Follow up on Jira issue → met with @Craig-Steffen → Suggestion was to write files on Delta to `/tmp` which is essentially an `ssd`, tar on node, then copy to parallel file system `/scrath`. First trying to write database on `delta`.
 - [x] Write database on `delta` → This took 24 mins. Very fast!
-- [x] Remove mitochondria genes. → added methods to [[src/torchcell/sequence/genome/scerevisiae/s288c.py]] `drop_chrmt()` and `drop_empty_go`
+- [x] Remove mitochondria genes. → added methods to [[torchcell/sequence/genome/scerevisiae/s288c.py]] `drop_chrmt()` and `drop_empty_go`
 - [x] Move sequence download into scerevisiae genome
-- [x] Correct `go` methods [[src/torchcell/sequence/genome/scerevisiae/s288c.py]]
+- [x] Correct `go` methods [[torchcell/sequence/genome/scerevisiae/s288c.py]]
 - [x] Create cell dataset locally. → Added `lmdb`
 - [x] Review run and launch another exp. → Reviewed but didn't launch
 - 🔲 WT difference for loss function... thinking dataset should have a reference object at highest level.
 - 🔲 Gene ontology for `DCell`
 - 🔲 Add in gene essentiality dataset.
-- 🔲 Add plotting functionality on genomes [[Rough Plots of Gene Ontology Terms per Gene|dendron://torchcell/src.torchcell.datasets.scerevisiae.costanzo2016#rough-plots-of-gene-ontology-terms-per-gene]]
-- 🔲 Filtering cell takes a long time on `Delta` filter is `123.78it/s` on `M1` filter is `2000it/s`. Try to speed up. → [[Cell|dendron://torchcell/src.torchcell.datasets.cell]]
+- 🔲 Add plotting functionality on genomes [[Rough Plots of Gene Ontology Terms per Gene|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#rough-plots-of-gene-ontology-terms-per-gene]]
+- 🔲 Filtering cell takes a long time on `Delta` filter is `123.78it/s` on `M1` filter is `2000it/s`. Try to speed up. → [[Cell|dendron://torchcell/torchcell.datasets.cell]]
 
 ## 2023.09.05
 
@@ -794,7 +795,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.31
 
-- [x] Work on deleting files → [[src/torchcell/delete_subset.py]] tried to see if array and mutlithreading could help. Doesn't seem to help that much.
+- [x] Work on deleting files → [[torchcell/delete_subset.py]] tried to see if array and mutlithreading could help. Doesn't seem to help that much.
 - [x] Submit a Jira Ticket for data transfer issues → [jira-ticket-2023.09.01](https://jira.ncsa.illinois.edu/browse/DELTA-2385)
 - [x] Removing the Costanzo folder with  `~2e6` million files. → Done with Globus. I think this is the most robust method moving forward for deleting large set of files.
 - [x] Try to send files with Globus again. → This is still very slow, and warning give no progress message. ![](./assets/images/user.Mjvolk3.torchcell.tasks.md.Globus-warning-file-transfer.png)
@@ -810,29 +811,29 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Run test run with dmf → [[M1 Test Run Batch 16 Very Slow|experiments.dmf_costanzo_deepset#m1-test-run-batch-16-very-slow]]
 - [x] hydra config experiments → [[experiments/conf/dmf_costanzo_deepset.yaml]]
 - [x] Start transfer data to Delta with Globus → This is a bit slow
-- [x] Install lua. → Not compatible with Delta Redhat [[Lua Not Compatible with Delta Redhat|dendron://torchcell/src.torchcell.models.dcell#lua-not-compatible-with-delta-redhat]]
+- [x] Install lua. → Not compatible with Delta Redhat [[Lua Not Compatible with Delta Redhat|dendron://torchcell/torchcell.models.dcell#lua-not-compatible-with-delta-redhat]]
 - [x] Build ontology... We will build DCell in `torchcell` since DCell requires, both the curation of data and the building of the ontology which couuld be error prone. There model is clear enough to build. → Building ontology requires getting multigraph data.
 - [x] Get all multigraph data from SGD API → Delaying this for `gff`solution
 - [x] Build base multidigraph with no edges and data classes stored in network graph. In future transformations on top of multidigraph, will be used to move node data to edges. Then transformations on edged filled graph are used to get pytorch graphs. All along we only need to be check for not compatibility. → Delaying this for `gff`solution
 - [x] GO and other useful information also exists in the `gff` file annotating the genome. It will be easier for now to GO out of this. This is probably also more extensible to other organisms too since it is more likely they will have a `gff` than some sort of manually constructed multidigraph. Pull out useful db in an aesthetically appleasing way 🦋. → Easier than I thought, all needed info stored in `db.attributes`, added attrs for these.
 - [x] Download GO [GO website](http://geneontology.org/docs/download-ontology/) → We could just download the slim set for yeast, but for now this seems like a more general solution. We can do this this if things are slow.
-- [x] Look into how we can subset GO by date. → From the looks of this is not possible with the `gff`, but this data does exists in SGD. Just showing one term... We would have to cross reference with this data to get the GO subset. → [[Subsetting GO by Date|dendron://torchcell/src.torchcell.models.dcell#subsetting-go-by-date]]
+- [x] Look into how we can subset GO by date. → From the looks of this is not possible with the `gff`, but this data does exists in SGD. Just showing one term... We would have to cross reference with this data to get the GO subset. → [[Subsetting GO by Date|dendron://torchcell/torchcell.models.dcell#subsetting-go-by-date]]
 
 ## 2023.08.29
 
-- [x] Launch experiment on [delta](https://wiki.ncsa.illinois.edu/display/DSC/Delta+User+Guide). → Just to load data takes over 1 hr [[File Existence Check on Dataset|src.torchcell.datasets.scerevisiae.costanzo2016#file-existence-check-on-dataset]]
+- [x] Launch experiment on [delta](https://wiki.ncsa.illinois.edu/display/DSC/Delta+User+Guide). → Just to load data takes over 1 hr [[File Existence Check on Dataset|torchcell.datasets.scerevisiae.costanzo2016#file-existence-check-on-dataset]]
 - [x] Rename [[profiles/DMFCostanzo2016LargeDataset_threads_write_data-2023.08.25-22.29.48.prof]] to write since it looks like we will need to use threads in the file check.
 - [x] Remedy long file checks with multithreading. → Looks like it works well. Now we have diverged from `PyG`... Will need to add our own datasets module
-- [x] AB pointed out some major issues with [[src/torchcell/models/fungal_utr_transformer.py]]. First embeddings need to be generated, double check. → I've confirmed issues and am diving in deeper.
+- [x] AB pointed out some major issues with [[torchcell/models/fungal_utr_transformer.py]]. First embeddings need to be generated, double check. → I've confirmed issues and am diving in deeper.
 - [x] Look into fungal transformer weight initialization → Looks like all [upstream models wights not initialized](https://github.com/DennisGankin/species-aware-DNA-LM/issues/4). We should not be using these models in our current experiments.
 - [x] Try to recreate experiments to determine how `S. cerevisiae` embeddings are created. We need to know which tokens are used for biasing the species aware model. → There are issues with the env, and the code looks like it is out of data. I've submitted an [env issue](https://github.com/DennisGankin/species-aware-DNA-LM/issues/5).
-- [x] Create `dataset.py` for quick reading of data. → [[Skip File Exist Check on Process|src.torchcell.datasets.scerevisiae.costanzo2016#skip-file-exist-check-on-process]]
-- [x] printing an instance is extremely slow. Speed up. → [[Speeding up Data Getting with Len Cache|src.torchcell.datasets.scerevisiae.costanzo2016#speeding-up-data-getting-with-len-cache]]
+- [x] Create `dataset.py` for quick reading of data. → [[Skip File Exist Check on Process|torchcell.datasets.scerevisiae.costanzo2016#skip-file-exist-check-on-process]]
+- [x] printing an instance is extremely slow. Speed up. → [[Speeding up Data Getting with Len Cache|torchcell.datasets.scerevisiae.costanzo2016#speeding-up-data-getting-with-len-cache]]
 - [x] Since moving to `Dataset` `gene_set` is no longer being computed properly. fix. → Fixed by writing to file, during process. Essentially caching the `gene_set`. This saves us from having to compute it many times, and should save us 🛟 on merges.
 - [x] Refactor `CellDataset` so it can handle experiments of type `CellDatset`. → copied over the gene set property. I think writing to file is a decent solution, and will save compute. To do this had to make a small dataset `DMFCostanzo2016SmallDataset`
 - [x] Transfer `DMFCostanzo2016SmallDataset` to `DMFCostanzo2016LargeDataset`
 - [x] Rerun `DMFCostanzo2016LargeDataset` to get with new `gene_set`
-- [x] Rerun [[src/torchcell/datasets/cell.py]] to get a new cell dataset → [[src.torchcell.datasets.cell.md]]
+- [x] Rerun [[torchcell/datasets/cell.py]] to get a new cell dataset → [[torchcell.datasets.cell]]
 
 ## 2023.08.28
 
@@ -857,10 +858,10 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Save `DmfCosanzoDataset` small. → 1000 samples
 - [x] Fix pre-commit [[.pre-commit-config.yaml]] → Needed to add configuration to [[pyproject.toml]] and deleted `mypy.ini`, since the mypy config can be directly recognized from the `toml`. Needed to make sure that `isort` and `black` were compatible. For now ignoring `flake8` and `mypy` settings.
 - [x] Look at `torchgeo` pre-commit → taking a lot of tips from this.o
-- [x] In `cell.py` [[Cell|src.torchcell.datasets.cell]] construct base sequence graph. → It is a set but we add a dummy edge index to make it look more like the standard `pyg` graph. We know there are no edges since it is size `(2,0)`.
-- [x] In `cell.py` [[Cell|src.torchcell.datasets.cell]] allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
-- [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|src.torchcell.datamodules.cell]]
-- [x] Build trainer for fitness prediction. → [[Regression|src.torchcell.trainers.regression]]
+- [x] In `cell.py` [[Cell|torchcell.datasets.cell]] construct base sequence graph. → It is a set but we add a dummy edge index to make it look more like the standard `pyg` graph. We know there are no edges since it is size `(2,0)`.
+- [x] In `cell.py` [[Cell|torchcell.datasets.cell]] allow for getting diff items. → We implement this with a series of methods. We have to overwrite the `get` method of `InMemoryDatset`, then we add a few methods `_subset_graph` and `_add_label` to construct set to be trained on. This is the key part of the library will need careful consideration.
+- [x] Create a lightning data module for `DmfCosanzoDataset`, using small. → [[Cell|torchcell.datamodules.cell]]
+- [x] Build trainer for fitness prediction. → [[Regression|torchcell.trainers.regression]]
 - [x] Add wandb log. → [[Dmf_costanzo_deepset|experiments.dmf_costanzo_deepset]]
 - [x] Add fitness prediction plot to wandb log. Just plot on validation.
 - [x] Setup `.env` for local for data dir
@@ -872,13 +873,13 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 ## 2023.08.16
 
 - [x] Update CI → Separated out formatting, tests, and mypy. Could separate out more.
-- [x] `DmfCostanzoDataset` takes too long to load, consider making it regular dataset, not `InMemory`. → Tried making a [[DmfCostanzoDataset Out Memory Dataset|src.torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzodataset-out-memory-dataset]] and this takes forever to save all files.
+- [x] `DmfCostanzoDataset` takes too long to load, consider making it regular dataset, not `InMemory`. → Tried making a [[DmfCostanzoDataset Out Memory Dataset|torchcell.datasets.scerevisiae.costanzo2016#dmfcostanzodataset-out-memory-dataset]] and this takes forever to save all files.
 - [x] Recover repo after accidentally deleting instead of deleting cache → missed most recent notes.
 
 ## 2023.08.15
 
 - [x] Create an analogous sequence embedding dataset for the nucleotide transformer.
-- [x] Unify the embedding datasets with a nucleotide embedding datasets → [[src.torchcell.datasets.embedding]]
+- [x] Unify the embedding datasets with a nucleotide embedding datasets → [[torchcell.datasets.embedding]]
 - [x] Test goings on the nucleotide transformer and the utr transformer. → not yet tested properly.
 - [x] Run the nucleotide transformer overnight. → Still took half of the next day on local. should consider batching on GPU.
 - 🔲 DMFCostanzo takes too long to load, consider making it regular dataset, not `InMemory`.
@@ -887,12 +888,12 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.14
 
-- [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[src.torchcell.datasets.fungal_up_down_transformer]]
-- [x] Aggregate embedding datasets → `join_datasets`[[src.torchcell.datasets.fungal_up_down_transformer]]
+- [x] Create datasets for embeddings → `GeneEmbeddingDataset` [[torchcell.datasets.fungal_up_down_transformer]]
+- [x] Aggregate embedding datasets → `join_datasets`[[torchcell.datasets.fungal_up_down_transformer]]
 
 ## 2023.08.13
 
-- Might have an issue with pydantic → [[Pytorch Lightning Compatibility with Pydantic|dendron://torchcell/src.torchcell.datamodels.pydantic#pytorch-lightning-compatibility-with-pydantic]]
+- Might have an issue with pydantic → [[Pytorch Lightning Compatibility with Pydantic|dendron://torchcell/torchcell.datamodels.pydantic#pytorch-lightning-compatibility-with-pydantic]]
 
 ## 2023.08.10
 
@@ -907,7 +908,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.08
 
-- [x] Review `TorchGeo` data joins. → Looked over enough to get the gist. Ran debugger on this [[../torchgeo/torchgeo_tutorial.py]]. The thing I am most concerned about is joins. Joins really need to be done based on some hybrid `genotype-phenotype-environment` ontology. → [[Genotype-Phenotype-Environment Ontology For Data Merge|dendron://torchcell/src.torchcell.datasets.cell#genotype-phenotype-environment-ontology-for-data-merge]]
+- [x] Review `TorchGeo` data joins. → Looked over enough to get the gist. Ran debugger on this [[../torchgeo/torchgeo_tutorial.py]]. The thing I am most concerned about is joins. Joins really need to be done based on some hybrid `genotype-phenotype-environment` ontology. → [[Genotype-Phenotype-Environment Ontology For Data Merge|dendron://torchcell/torchcell.datasets.cell#genotype-phenotype-environment-ontology-for-data-merge]]
 - 🔲 Clean up the `pretrain_LLM` interface. We should just be able to import models, not have to run a series of commands on them.
 - 🔲 Do a join between a cell dataset and costanzo dataset.
 - 🔲 I am thinking that `CellDataset` is going to be so complex that we will need some sort of configuration. → moved to [[user.mjvolk3.torchcell.tasks.future]]
@@ -922,7 +923,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.07
 
-- [x] Updated [[src Drawio|src#src-drawio]]. I think this view is simpler in light over the considerations over the library.
+- [x] Updated [[src Drawio|torchcell#src-drawio]]. I think this view is simpler in light over the considerations over the library.
 - [x] `window_5utr` and `window_3utr` selection. → Looks like they work, need to add test functions to these.
 - [x] costanzo2016 data.
 - [x] Yeast LLM
@@ -941,20 +942,20 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.04
 
-- 🔲 Build out a media note. This would really be best if it is linked to the the specific publication notes that contain the necessary information on any given publication. Note that YPD a YEPD are the same. Yeast Extract Peptone Dextrose with their corresponding concentrations. YEPD + G418 for DMA (Deletion Mutant Array) Growth. Need to pay careful attention to this, may not matter if it has already been proven within reason that the addition of G418 creates a small enough deviation. → Moved to [[Tracking Media in the Ontology|dendron://torchcell/src.torchcell.ontology.tc_ontology#tracking-media-in-the-ontology]]
-- 🔲 Does the yeastmined data have the pvalues and the sga interaction scores? Looks like for trigenic they are contained in a "note" field... you've got to be kidding me... populated in a "note" field... and for they don't look populated for digenic.... they are populated for Costanzo 2016 in an "alleles" field, but they are not populated for 2010... This data for networks is probably better pulled from the original data, but then there is potential confliction  `MultiDiGraph` and experiments. → moved note [[Yeastmine Data Comparison to SGD Backend API|dendron://torchcell/src.torchcell.multidigraph.sgd#yeastmine-data-comparison-to-sgd-backend-api]]
+- 🔲 Build out a media note. This would really be best if it is linked to the the specific publication notes that contain the necessary information on any given publication. Note that YPD a YEPD are the same. Yeast Extract Peptone Dextrose with their corresponding concentrations. YEPD + G418 for DMA (Deletion Mutant Array) Growth. Need to pay careful attention to this, may not matter if it has already been proven within reason that the addition of G418 creates a small enough deviation. → Moved to [[Tracking Media in the Ontology|dendron://torchcell/torchcell.ontology.tc_ontology#tracking-media-in-the-ontology]]
+- 🔲 Does the yeastmined data have the pvalues and the sga interaction scores? Looks like for trigenic they are contained in a "note" field... you've got to be kidding me... populated in a "note" field... and for they don't look populated for digenic.... they are populated for Costanzo 2016 in an "alleles" field, but they are not populated for 2010... This data for networks is probably better pulled from the original data, but then there is potential confliction  `MultiDiGraph` and experiments. → moved note [[Yeastmine Data Comparison to SGD Backend API|dendron://torchcell/torchcell.multidigraph.sgd#yeastmine-data-comparison-to-sgd-backend-api]]
 - [x] Look into why `src/package` not typically used. Looks like `.egg` is generally not comitted to project. → it is fine to keep src.
 - 🔲 Make it so genome can call on methods with `__getitem__` like so `genome["YDR210W].seq`, `genome["YDR210W].window(6e4)`, `genome["YDR210W].window(6e4, is_max_size=False)`, `genome["YDR210W].window_5utr(1000)`, `genome["YDR210W].window_3utr(300)`, etc. Think we can do this by having a wrapper object around the db.
 - 🔲 Allow for indexing on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
-- 🔲 Around 32 genes are under 6kb... need to find a way around this. Also made mistake thinking the nucleotide transformer could handle 60kb... whoops. We can still use the Enformer for these large windows. Could also use 3 embeddings to capture the gene with nt transformer. Looks like this is the largest gene in yeast `YKR054C, length: 12278` → [[S288C DNA length for DNA LLMs|dendron://torchcell/src.torchcell.sequence.genome.scerevisiae.s288c#s288c-dna-length-for-dna-llms]]
+- 🔲 Around 32 genes are under 6kb... need to find a way around this. Also made mistake thinking the nucleotide transformer could handle 60kb... whoops. We can still use the Enformer for these large windows. Could also use 3 embeddings to capture the gene with nt transformer. Looks like this is the largest gene in yeast `YKR054C, length: 12278` → [[S288C DNA length for DNA LLMs|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#s288c-dna-length-for-dna-llms]]
 
 ## 2023.08.03
 
-- [x] Test [[src/torchcell/sequence/sequence.py]] window functions → [[tests/torchcell/sequence/test_sequence.py]] #ChatGPT is very useful to get quick tests off the ground that can be tweaked for proper behavior.
+- [x] Test [[torchcell/sequence/sequence.py]] window functions → [[tests/torchcell/sequence/test_sequence.py]] #ChatGPT is very useful to get quick tests off the ground that can be tweaked for proper behavior.
 - [x] Switch to the [Mypy - Matan Grover](https://marketplace.visualstudio.com/items?itemName=matangover.mypy#review-details) since this uses `.ini` has cross file integration. → Switched but I think we are better off using cmd line. I added some bash scripts so I can common `tasks`.
-- 🔲 Implement `cell.py` [[Src|src]]
-- 🔲 Implement `datasets`. → [[Scerevisiae|src.torchcell.datasets.scerevisiae]] Need to split up by organism...
+- 🔲 Implement `cell.py` [[Src|torchcell]]
+- 🔲 Implement `datasets`. → [[Scerevisiae|torchcell.datasets.scerevisiae]] Need to split up by organism...
 - 🔲 Discuss different data
-- 🔲 Implement `datasets.py` [[Src|src]]
+- 🔲 Implement `datasets.py` [[Src|torchcell]]
 - 🔲 Change to something like from tochcell.genome import SCerevisiaeGenome.
 - 🔲 Undo the import magic and drop some of the `if __name__`s

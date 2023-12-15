@@ -1,2 +1,0 @@
-[console_scripts]
-torchcell = torchcell.__main__:main

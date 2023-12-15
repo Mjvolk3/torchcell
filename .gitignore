@@ -11,7 +11,7 @@ datasets.exe
 dataformat.exe
 
 # Pretrained Models
-src/torchcell/models/pretrained_LLM/*
+torchcell/models/pretrained_LLM/*
 
 # Data
 /data/

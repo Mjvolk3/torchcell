@@ -7,7 +7,7 @@ import json
 from typing import List, Union
 
 from pydantic import BaseModel, Field, field_validator, root_validator
-
+from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
 
 
@@ -18,27 +18,7 @@ class ReferenceGenome(ModelStrict):
 
 
 class SysGeneName(ModelStrict):
-    name: str = Field(description="Systematic gene name", min_length=7, max_length=7)
-
-
-# class ExpressionRangeMultiplier(ModelStrict):
-#     min: float
-#     max: float
-
-
-# class DampPerturbation(ModelStrict):
-#     description: str = "4-10 decreased expression via KANmx gene replacement"
-
-#     expression_range: ExpressionRangeMultiplier = Field(
-#         default=ExpressionRangeMultiplier(min=1 / 4.0, max=1 / 10.0),
-#         description="Range of gene expression levels",
-#     )
-
-
-# class TsAllelePerturbation(ModelStrict):
-#     allele_name: str
-#     # Still now sure how to deal with since this is really defined by the sequences of the new allele. You can think if it as gene substitution.
-#     description: str = "Temperature sensitive allele"
+    name: str = Field(description="Systematic gene name", min_length=7, max_length=9)
 
 
 class GenePerturbation(ModelStrict):
@@ -54,6 +34,32 @@ class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
         description="Gene perturbation"
     )
+
+
+class ExpressionRangeMultiplier(ModelStrict):
+    min: float = Field(
+        ..., description="Minimum range multiplier of gene expression levels"
+    )
+    max: float = Field(
+        ..., description="Maximum range multiplier of gene expression levels"
+    )
+
+
+class DampPerturbation(GenePerturbation, ModelStrict):
+    description: str = "4-10 decreased expression via KANmx insertion at the the 3' UTR of the target gene."
+    expression_range: ExpressionRangeMultiplier = Field(
+        default=ExpressionRangeMultiplier(min=1 / 10.0, max=1 / 4.0),
+        description="Gene expression is descreased by 4-10 fold",
+    )
+
+
+class TsAllelePerturbation(GenePerturbation, ModelStrict):
+    description: str = (
+        "Temperature sensitive allele compromised by amino acid substitution."
+    )
+    seq: str = "NOT IMPLEMENTED"
+    # TODO add specifics of allele
+    # [[2023.12.15|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231215]] Many of these are unknown.
 
 
 # Environment
@@ -117,10 +123,19 @@ class DeletionGenotype(BaseGenotype, ModelStrict):
     perturbation: DeletionPerturbation | list[DeletionPerturbation]
 
 
+class InterferenceGenotype(BaseGenotype, ModelStrict):
+    perturbation: DampPerturbation | list[
+        DampPerturbation
+    ] | TsAllelePerturbation | list[TsAllelePerturbation]
+
+
 class FitnessExperiment(BaseExperiment):
     experiment_reference_state: ExperimentReferenceState
-    genotype: DeletionGenotype | list[DeletionGenotype]
+    genotype: DeletionGenotype | list[DeletionGenotype] | InterferenceGenotype | list[
+        InterferenceGenotype
+    ]
     phenotype: FitnessPhenotype
+
 
 
 if __name__ == "__main__":

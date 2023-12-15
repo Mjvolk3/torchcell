@@ -216,7 +216,7 @@
             },
             //python
             {
-                "label": "python: add frontmatter",
+                "label": "tc: add frontmatter (py)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -234,7 +234,7 @@
                 }
             },
             {
-                "label": "python: move file (note & test safe)",
+                "label": "tc: move file [note & test safe] (py)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -248,7 +248,7 @@
                 }
             },
             {
-                "label": "python: create test file",
+                "label": "tc: test file (py)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -267,7 +267,7 @@
                 }
             },
             {
-                "label": "python: delete src (note & test safe)",
+                "label": "tc: delete file [note & test safe] (py)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -286,25 +286,7 @@
                 }
             },
             {
-                "label": "python: src open note and test",
-                "type": "shell",
-                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
-                "args": [
-                  "${workspaceFolder}/notes/assets/scripts/from_src_open_related_note_and_test.py",
-                  "${file}"
-                ],
-                "problemMatcher": [],
-                "group": {
-                    "kind": "build",
-                    "isDefault": true
-                },
-                "presentation": {
-                    "reveal": "always",
-                    "panel": "shared"
-                }
-            },
-            {
-                "label": "python: open related src file",
+                "label": "tc: open related src file (dendron)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -330,7 +312,7 @@
                 "id": "newFilePath",
                 "type": "promptString",
                 "description": "Enter the new file path:",
-                "default": "src/torchcell/"
+                "default": "torchcell/"
             },
             {
                 "id" : "jobName",

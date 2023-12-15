@@ -4,11 +4,14 @@ import subprocess
 import sys
 from dotenv import load_dotenv
 
+# Load environment variables from .env file
 load_dotenv()
 
+# Retrieve environment variables
 WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
 VSCODE_PATH = os.environ.get("VSCODE_PATH")
-
+PYTHON_PKG_TEST_REL_PATH = os.environ.get("PYTHON_PKG_TEST_REL_PATH")
+PYTHON_PKG_REL_PATH = os.getenv("PYTHON_PKG_REL_PATH", "torchcell")
 
 def convert_to_dendron_path(file_path):
     """Convert a file path to Dendron's period-delimited format."""
@@ -16,84 +19,53 @@ def convert_to_dendron_path(file_path):
     dendron_path = relative_path.replace(osp.sep, ".").replace(".py", "")
     return dendron_path
 
-
 def handle_python_file(file_path, new_file_path):
-    base_dir = "notes/"
-    ws_root = WORKSPACE_DIR
-
-    dendron_new_path = convert_to_dendron_path(new_file_path)
-    dendron_old_path = convert_to_dendron_path(file_path)
-
-    dendron_note_exists = osp.exists(
-        osp.join(ws_root, base_dir, f"{dendron_old_path}.md")
-    )
-
+    # Create directories for the new file if they don't exist
     new_dir = osp.dirname(new_file_path)
     os.makedirs(new_dir, exist_ok=True)
 
-    # More dynamic test file path manipulation
-    relative_path = osp.relpath(file_path, WORKSPACE_DIR)
-    test_file_path = osp.join(WORKSPACE_DIR, "tests", relative_path)
-    test_new_file_path = test_file_path.replace(file_path, new_file_path)
+    # Calculate the relative paths for the source and test files within their respective directories
+    source_relative_path = osp.relpath(file_path, osp.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH))
+    new_source_relative_path = osp.relpath(new_file_path, osp.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH))
+    print("======================")
+    print(source_relative_path)
+    print(new_source_relative_path) 
+    # Construct the original and new test file paths
+    test_file_name = "test_" + source_relative_path.split("/")[-1].split(".")[0] + ".py"
+    test_file_path = osp.join(PYTHON_PKG_TEST_REL_PATH, *source_relative_path.split("/")[:-1], test_file_name)
+    print("======================")
+    print(test_file_name)
+    print(test_file_path)
 
-    # Check if destination test or markdown file exists
-    if osp.exists(test_new_file_path):
-        print(
-            f"Destination test file {test_new_file_path} already exists. Opening it in VSCode."
-        )
-        subprocess.run([VSCODE_PATH, test_new_file_path])
-        return
-
-    if osp.exists(
-        osp.join(ws_root, base_dir, dendron_new_path.replace("..", ".") + ".md")
-    ):
-        print(
-            f"Destination markdown file {dendron_new_path.replace('..', '.')} already exists. Opening it in VSCode."
-        )
-        subprocess.run(
-            [
-                VSCODE_PATH,
-                osp.join(
-                    ws_root, base_dir, dendron_new_path.replace("..", ".") + ".md"
-                ),
-            ]
-        )
-        return
-
-    os.rename(file_path, new_file_path)
-    subprocess.run([VSCODE_PATH, new_file_path])
-
-    # If the Dendron note exists, move it
-    if dendron_note_exists:
-        cmd = [
-            "dendron",
-            "note",
-            "move",
-            "--wsRoot",
-            ws_root,
-            "--vault",
-            "torchcell",
-            "--fname",
-            dendron_old_path,
-            "--destFname",
-            dendron_new_path,
-        ]
-        subprocess.run(cmd, check=True)
-        dendron_new_file_path = osp.join(
-            ws_root, base_dir, dendron_new_path.replace("..", ".") + ".md"
-        )
-        subprocess.run([VSCODE_PATH, dendron_new_file_path])
-
+    new_test_file_name = "test_" + new_source_relative_path.split("/")[-1].split(".")[0] + ".py"
+    new_test_file_path = osp.join(PYTHON_PKG_TEST_REL_PATH, *new_source_relative_path.split("/")[:-1], new_test_file_name)
+    print("======================")
+    print(new_test_file_name)
+    print(new_test_file_path)
+    
     if osp.exists(test_file_path):
-        test_new_dir = osp.dirname(test_new_file_path)
-        if not osp.exists(test_new_dir):
-            os.makedirs(test_new_dir)
+        os.makedirs(osp.dirname(new_test_file_path), exist_ok=True)
+        os.rename(test_file_path, new_test_file_path)
 
-        os.rename(test_file_path, test_new_file_path)
-        subprocess.run([VSCODE_PATH, test_new_file_path])
-    else:
-        print(f"Test file {test_file_path} does not exist. Skipping.")
+    # Move the Python file
+    os.rename(file_path, new_file_path)
 
+    # Handle Dendron notes
+    dendron_old_path = convert_to_dendron_path(file_path) + ".md"
+    dendron_new_path = convert_to_dendron_path(new_file_path) + ".md"
+
+    dendron_old_full_path = osp.join(WORKSPACE_DIR, "notes", dendron_old_path)
+    dendron_new_full_path = osp.join(WORKSPACE_DIR, "notes", dendron_new_path)
+
+    if osp.exists(dendron_old_full_path):
+        os.rename(dendron_old_full_path, dendron_new_full_path)
+
+    # Open the new Python file, test file, and Dendron note in VS Code
+    subprocess.run([VSCODE_PATH, new_file_path])
+    if osp.exists(new_test_file_path):
+        subprocess.run([VSCODE_PATH, new_test_file_path])
+    if osp.exists(dendron_new_full_path):
+        subprocess.run([VSCODE_PATH, dendron_new_full_path])
 
 if __name__ == "__main__":
     file_path = sys.argv[1]

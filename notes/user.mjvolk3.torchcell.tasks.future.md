@@ -2,10 +2,14 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1698171632897
+updated: 1702613129238
 created: 1675887826601
 ---
 ## Future
+
+- [ ] Publish package for Junyu and Le to use
+
+## Far Future
 
 - [ ] Setup `test/data`
 - [ ] Notes that represent a python file should have the path to the python file in the frontmatter.
@@ -40,9 +44,6 @@ created: 1675887826601
 - [ ] I am thinking that `CellDataset` is going to be so complex that we will need some sort of configuration
 - [ ] When I do joins of data I want to know what types of data were excluded and which were included. I think that there operations need to be part of something like `Cell.join`
 - [ ] Sort out inconsistencies with embedding datasets. Try to unify with `abc`.
-
-## Far Future
-
 - [ ] Infer gene ontology from DNA embeddings. First find the portion of the ontology that is occupied by proteins, enzymes, etc.
 - [ ] Download phenotypes from [SGD phenotypes](http://sgd-archive.yeastgenome.org/curation/literature/)
 - [ ] Consider batching i.e. lists of list of sequences. Can be done on GPU. Note that this causes things to crash on local.

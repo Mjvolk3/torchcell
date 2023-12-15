@@ -9,6 +9,9 @@ created: 1690514887023m
 
 ## 2023.12.15
 
+- [x] Add `isort` and `black` tasks, since it takes so damn long with the normal vscode extensions.
+- [x] TS alleles inspection. → can find some [nature ts alleles SI Table 1](https://www.nature.com/articles/nbt.1832#MOESM5) around 40 % seem to have enough information to reconstruct the allele sequence. For now will avoid sequence specificaiton.
+
 - [ ] Add `costanzo` single deletions to graph
 
 ## 2023.12.14

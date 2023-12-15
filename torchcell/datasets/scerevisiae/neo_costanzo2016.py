@@ -36,14 +36,21 @@ from torchcell.datamodels import (
     BaseEnvironment,
     BaseGenotype,
     BasePhenotype,
-    Experiment,
-    GeneId,
+    BaseExperiment,
     GenePerturbation,
-    GenePerturbationType,
     Media,
     ModelStrict,
     ReferenceGenome,
     Temperature,
+    DeletionGenotype,
+    DeletionPerturbation,
+    SysGeneName,
+    FitnessPhenotype,
+    ExperimentReferenceState,
+    FitnessExperiment,
+    DampPerturbation,
+    TsAllelePerturbation,
+    InterferenceGenotype
 )
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
@@ -52,36 +59,36 @@ log = logging.getLogger(__name__)
 
 
 # pydantic models
-class SmfCostanzo2016Perturbation(GenePerturbation, ModelStrict):
-    id_full: str
-    allele_name: str
+# class SmfCostanzo2016Perturbation(GenePerturbation, ModelStrict):
+#     id_full: str
+#     allele_name: str
 
 
-class SmfCostanzo2016Genotype(ModelStrict):
-    perturbation: SmfCostanzo2016Perturbation | list[SmfCostanzo2016Perturbation]
+# class SmfCostanzo2016Genotype(ModelStrict):
+#     perturbation: SmfCostanzo2016Perturbation | list[SmfCostanzo2016Perturbation]
 
 
-class SmfCostanzo2016Phenotype(BasePhenotype, ModelStrict):
-    smf: float
-    smf_std: float
+# class SmfCostanzo2016Phenotype(BasePhenotype, ModelStrict):
+#     smf: float
+#     smf_std: float
 
 
-class SmfCostanzo2016Experiment(Experiment):
-    reference_genome: ReferenceGenome
-    reference_environment: BaseEnvironment
-    reference_phenotype: SmfCostanzo2016Phenotype | None
-    genotype: SmfCostanzo2016Genotype
-    environment: BaseEnvironment
-    phenotype: SmfCostanzo2016Phenotype
+# class SmfCostanzo2016Experiment(Experiment):
+#     reference_genome: ReferenceGenome
+#     reference_environment: BaseEnvironment
+#     reference_phenotype: SmfCostanzo2016Phenotype | None
+#     genotype: SmfCostanzo2016Genotype
+#     environment: BaseEnvironment
+#     phenotype: SmfCostanzo2016Phenotype
 
 
-class SmfCostanzo2016Experiment(ModelStrict):
-    reference_genome: ReferenceGenome
-    reference_environment: BaseEnvironment
-    reference_phenotype: SmfCostanzo2016Phenotype | None
-    genotype: SmfCostanzo2016Genotype
-    environment: BaseEnvironment
-    phenotype: SmfCostanzo2016Phenotype
+# class SmfCostanzo2016Experiment(ModelStrict):
+#     reference_genome: ReferenceGenome
+#     reference_environment: BaseEnvironment
+#     reference_phenotype: SmfCostanzo2016Phenotype | None
+#     genotype: SmfCostanzo2016Genotype
+#     environment: BaseEnvironment
+#     phenotype: SmfCostanzo2016Phenotype
 
 
 #
@@ -94,7 +101,7 @@ class NeoSmfCostanzo2016Dataset:
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
     )
     raw: str = field(init=False, repr=False)
-    data: list[SmfCostanzo2016Experiment] = field(init=False, repr=False, default=[])
+    data: list[BaseExperiment] = field(init=False, repr=False, default=[])
     reference_phenotype_std = field(init=False, repr=False)
 
     def __attrs_post_init__(self):
@@ -198,52 +205,70 @@ class NeoSmfCostanzo2016Dataset:
         reference_genome = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
-        gene_id = GeneId(id=row["Systematic gene name"])
-        gene_perturbation_type = GenePerturbationType(perturbation="Deletion")
-        smf_costanzo_perturbation = SmfCostanzo2016Perturbation(
-            id_full=row["Strain ID"],
-            allele_name=row["Allele/Gene name"],
-            gene_id=gene_id,
-            gene_perturbation_type=gene_perturbation_type,
-        )
-        genotype = SmfCostanzo2016Genotype(perturbation=smf_costanzo_perturbation)
-        media = Media(name="YPED", state="solid")
+        
+        # Deal with different types of perturbations
+        if "tsa" or "tsq" in row["Strain ID"]:
+            genotype = InterferenceGenotype(
+                perturbation=DampPerturbation(
+                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
+        elif "damp" in row["Strain ID"]:
+            genotype = InterferenceGenotype(
+                perturbation=DampPerturbation(
+                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
+        else: 
+            genotype = DeletionGenotype(
+                perturbation=DeletionPerturbation(
+                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
         environment = BaseEnvironment(
-            media=media, temperature=Temperature(Celsius=temperature)
+            media=Media(name="YEPD", state="solid"),
+            temperature=Temperature(Celsius=temperature),
         )
-
+        reference_environment = environment.model_copy()
         # Phenotype based on temperature
         smf_key = f"Single mutant fitness ({temperature}°)"
         smf_std_key = f"Single mutant fitness ({temperature}°) stddev"
-        phenotype = SmfCostanzo2016Phenotype(
+        phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
-            smf=row[smf_key],
-            smf_std=row[smf_std_key],
-        )
-        reference_phenotype = SmfCostanzo2016Phenotype(
-            graph_level="global",
-            label="smf",
-            label_error="smf_std",
-            smf=1.0,
-            smf_std=self.reference_phenotype_std,
+            fitness=row[smf_key],
+            fitness_std=row[smf_std_key],
         )
 
-        # Create Experiment instance
-        experiment = SmfCostanzo2016Experiment(
+        reference_phenotype = FitnessPhenotype(
+            graph_level="global",
+            label="smf",
+            label_error="smf_std",
+            fitness=1.0,
+            fitness_std=self.reference_phenotype_std,
+        )
+
+        experiment_reference_state = ExperimentReferenceState(
             reference_genome=reference_genome,
-            reference_environment=environment.copy(),
+            reference_environment=reference_environment,
             reference_phenotype=reference_phenotype,
+        )
+
+        experiment = FitnessExperiment(
+            experiment_reference_state=experiment_reference_state,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
         )
-
         return experiment
 
 
 if __name__ == "__main__":
     dataset = NeoSmfCostanzo2016Dataset()
-    print(dataset.data[0].json(indent=4))
+    # print(dataset.data[0].json(indent=4))
+    print(dataset.data[0].model_dump())
     print()

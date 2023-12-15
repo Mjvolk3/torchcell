@@ -114,6 +114,34 @@
     "tasks": {
         "version": "2.0.0",
         "tasks": [
+            // Black
+            {
+                "label": "black: file",
+                "type": "shell",
+                "command": "black",
+                "args": [
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
+            // isort
+            {
+                "label": "Sort Python Imports",
+                "type": "shell",
+                "command": "isort",
+                "args": [
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
             // Publish
             {
                 "label": "Paper: compile",
@@ -214,7 +242,7 @@
                     "close": true
                 }
             },
-            //python
+            //TC
             {
                 "label": "tc: add frontmatter (py)",
                 "type": "shell",

@@ -52,3 +52,6 @@ outputs/
 
 # docs
 docs/build/
+
+# collectri - temporarily used in dir for biocypher learning.
+collectri/

@@ -1,0 +1,2 @@
+#requirements.txt
+biocypher>=0.5.34 

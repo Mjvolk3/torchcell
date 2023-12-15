@@ -1,0 +1,7 @@
+name: tc-graph
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip:
+    - -r /src/env/requirements-tc-graph.txt

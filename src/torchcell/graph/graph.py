@@ -39,7 +39,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-plt.style.use("conf/torchcell.mplstyle")  # use the specified style
+plt.style.use("config/torchcell.mplstyle")  # use the specified style
 
 
 # BUG switching to genome for GO, this will create training issues with sql,

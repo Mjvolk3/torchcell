@@ -1,0 +1,24 @@
+gene:
+    represented_as: node
+    preferred_id: hgnc.symbol
+    properties:
+        name: str
+
+transcription factor:
+    is_a: gene
+    represented_as: node
+    preferred_id: hgnc.symbol
+    properties:
+        name: str
+        category: str
+
+transcriptional regulation:
+    is_a: pairwise gene to gene interaction
+    represented_as: edge
+    source: transcription factor
+    target: gene
+    properties:
+        activation_or_inhibition: str
+        resources: str
+        references: str
+        sign_decision: str

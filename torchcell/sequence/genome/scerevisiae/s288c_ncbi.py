@@ -1,7 +1,7 @@
-# src/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
-# [[src.torchcell.sequence.genome.scerevisiae.s288c_ncbi]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
-# Test file: src/torchcell/sequence/genome/scerevisiae/test_s288c_ncbi.py
+# torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
+# [[torchcell.sequence.genome.scerevisiae.s288c_ncbi]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
+# Test file: torchcell/sequence/genome/scerevisiae/test_s288c_ncbi.py
 
 import glob
 import gzip

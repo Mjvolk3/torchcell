@@ -1,7 +1,7 @@
-# src/torchcell/multidigraph/sgd.py
-# [[src.torchcell.multidigraph.sgd]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/multidigraph/sgd.py
-# Test file: src/torchcell/multidigraph/test_sgd.py
+# torchcell/multidigraph/sgd.py
+# [[torchcell.multidigraph.sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/sgd.py
+# Test file: torchcell/multidigraph/test_sgd.py
 import asyncio
 import json
 import logging

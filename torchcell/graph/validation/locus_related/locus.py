@@ -1,7 +1,7 @@
-# src/torchcell/graph/validation/locus_related/locus.py
-# [[src.torchcell.graph.validation.locus_related.locus]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/graph/validation/locus_related/locus.py
-# Test file: src/torchcell/graph/validation/locus_related/test_locus.py
+# torchcell/graph/validation/locus_related/locus.py
+# [[torchcell.graph.validation.locus_related.locus]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/validation/locus_related/locus.py
+# Test file: torchcell/graph/validation/locus_related/test_locus.py
 
 from typing import Dict, List, Optional, Union
 

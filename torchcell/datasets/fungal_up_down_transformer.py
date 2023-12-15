@@ -1,7 +1,7 @@
-# src/torchcell/datasets/fungal_up_down_transformer.py
-# [[src.torchcell.datasets.fungal_up_down_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/fungal_up_down_transformer.py
-# Test file: src/torchcell/datasets/test_fungal_up_down_transformer.py
+# torchcell/datasets/fungal_up_down_transformer.py
+# [[torchcell.datasets.fungal_up_down_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
+# Test file: torchcell/datasets/test_fungal_up_down_transformer.py
 
 import os
 from collections.abc import Callable

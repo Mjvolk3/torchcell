@@ -1,7 +1,7 @@
-# src/torchcell/models/deep_set_transformer.py
-# [[src.torchcell.models.deep_set_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/deep_set_transformer.py
-# Test file: src/torchcell/models/test_deep_set_transformer.py
+# torchcell/models/deep_set_transformer.py
+# [[torchcell.models.deep_set_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/deep_set_transformer.py
+# Test file: torchcell/models/test_deep_set_transformer.py
 
 import torch
 import torch.nn as nn

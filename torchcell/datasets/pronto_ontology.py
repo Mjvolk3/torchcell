@@ -1,7 +1,7 @@
-# src/torchcell/datasets/pronto_ontology.py
-# [[src.torchcell.datasets.pronto_ontology]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/pronto_ontology.py
-# Test file: src/torchcell/datasets/test_pronto_ontology.py
+# torchcell/datasets/pronto_ontology.py
+# [[torchcell.datasets.pronto_ontology]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/pronto_ontology.py
+# Test file: torchcell/datasets/test_pronto_ontology.py
 
 from collections import Counter
 

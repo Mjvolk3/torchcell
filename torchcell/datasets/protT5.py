@@ -1,7 +1,7 @@
-# src/torchcell/datasets/protT5.py
-# [[src.torchcell.datasets.protT5]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/protT5.py
-# Test file: src/torchcell/datasets/test_protT5.py
+# torchcell/datasets/protT5.py
+# [[torchcell.datasets.protT5]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/protT5.py
+# Test file: torchcell/datasets/test_protT5.py
 
 import os
 from collections.abc import Callable

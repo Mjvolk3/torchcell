@@ -1,7 +1,7 @@
-# src/torchcell/models/dcell.py
-# [[src.torchcell.models.dcell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/dcell.py
-# Test file: src/torchcell/models/test_dcell.py
+# torchcell/models/dcell.py
+# [[torchcell.models.dcell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell.py
+# Test file: torchcell/models/test_dcell.py
 
 from collections import OrderedDict
 

@@ -1,6 +1,6 @@
-# src/torchcell/datasets/scerevisiae/nucleotide_transformer.py
-# [[src.torchcell.datasets.scerevisiae.nucleotide_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/scerevisiae/nucleotide_transformer.py
+# torchcell/datasets/scerevisiae/nucleotide_transformer.py
+# [[torchcell.datasets.scerevisiae.nucleotide_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/nucleotide_transformer.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_nucleotide_transformer.py
 
 import os

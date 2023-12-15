@@ -1,7 +1,7 @@
-# src/torchcell/trainers/regression.py
-# [[src.torchcell.trainers.regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/trainers/regression.py
-# Test file: src/torchcell/trainers/test_regression.py
+# torchcell/trainers/regression.py
+# [[torchcell.trainers.regression]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression.py
+# Test file: torchcell/trainers/test_regression.py
 
 import math
 

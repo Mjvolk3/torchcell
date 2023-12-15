@@ -1,7 +1,7 @@
-# src/torchcell/models/llm.py
-# [[src.torchcell.models.llm]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/models/llm.py
-# Test file: src/torchcell/models/test_llm.py
+# torchcell/models/llm.py
+# [[torchcell.models.llm]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/llm.py
+# Test file: torchcell/models/test_llm.py
 
 from abc import ABC, abstractmethod
 

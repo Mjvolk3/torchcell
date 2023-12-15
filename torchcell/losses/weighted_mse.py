@@ -1,7 +1,7 @@
-# src/torchcell/losses/weighted_mse.py
-# [[src.torchcell.losses.weighted_mse]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/losses/weighted_mse.py
-# Test file: src/torchcell/losses/test_weighted_mse.py
+# torchcell/losses/weighted_mse.py
+# [[torchcell.losses.weighted_mse]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/weighted_mse.py
+# Test file: torchcell/losses/test_weighted_mse.py
 
 import torch
 import torch.nn as nn

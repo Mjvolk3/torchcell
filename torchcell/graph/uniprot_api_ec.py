@@ -1,7 +1,7 @@
-# src/torchcell/multidigraph/uniprot_api_ec.py
-# [[src.torchcell.multidigraph.uniprot_api_ec]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/multidigraph/uniprot_api_ec.py
-# Test file: src/torchcell/multidigraph/test_uniprot_api_ec.py
+# torchcell/multidigraph/uniprot_api_ec.py
+# [[torchcell.multidigraph.uniprot_api_ec]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/uniprot_api_ec.py
+# Test file: torchcell/multidigraph/test_uniprot_api_ec.py
 
 import json
 import os

@@ -1,7 +1,7 @@
-# src/torchcell/datamodules/cell.py
-# [[src.torchcell.datamodules.cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datamodules/cell.py
-# Test file: src/torchcell/datamodules/test_cell.py
+# torchcell/datamodules/cell.py
+# [[torchcell.datamodules.cell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
+# Test file: torchcell/datamodules/test_cell.py
 
 import lightning as L
 import torch

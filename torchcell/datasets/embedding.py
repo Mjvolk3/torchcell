@@ -1,7 +1,7 @@
-# src/torchcell/datasets/embedding.py
-# [[src.torchcell.datasets.embedding]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/datasets/embedding.py
-# Test file: src/torchcell/datasets/test_embedding.py
+# torchcell/datasets/embedding.py
+# [[torchcell.datasets.embedding]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/embedding.py
+# Test file: torchcell/datasets/test_embedding.py
 
 import os.path as osp
 from abc import ABC, abstractmethod

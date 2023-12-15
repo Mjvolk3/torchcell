@@ -1,7 +1,7 @@
-# src/torchcell/graph/graph.py
-# [[src.torchcell.graph.graph]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/graph/graph.py
-# Test file: src/torchcell/graph/test_graph.py
+# torchcell/graph/graph.py
+# [[torchcell.graph.graph]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/graph.py
+# Test file: torchcell/graph/test_graph.py
 
 import glob
 import gzip

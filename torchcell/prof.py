@@ -1,7 +1,7 @@
-# src/torchcell/prof.py
-# [[src.torchcell.prof]]
-# https://github.com/Mjvolk3/torchcell/tree/main/src/torchcell/prof.py
-# Test file: src/torchcell/test_prof.py
+# torchcell/prof.py
+# [[torchcell.prof]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/prof.py
+# Test file: torchcell/test_prof.py
 
 import os
 import os.path as osp

@@ -14,11 +14,12 @@ from .ontology_pydantic import (
     DeletionPerturbation,
     SysGeneName,
     FitnessPhenotype,
-    ExperimentReferenceState,
     FitnessExperiment,
     DampPerturbation,
     TsAllelePerturbation,
     InterferenceGenotype,
+    FitnessExperimentReference,
+    ExperimentReference,
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
@@ -34,10 +35,11 @@ ontology_models = ["BaseEnvironment",
     "DeletionPerturbation",
     "SysGeneName",
     "FitnessPhenotype",
-    "ExperimentReferenceState",
     "FitnessExperiment",
     "DampPerturbation",
     "TsAllelePerturbation",
-    "InterferenceGenotype"]
+    "InterferenceGenotype",
+    "FitnessExperimentReference",
+    "ExperimentReference"]
 
 __all__ = core_models  + ontology_models

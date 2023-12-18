@@ -1,0 +1,133 @@
+dataset:
+    represented_as: node
+
+experiment:
+    represented_as: node
+    is_a: material sample
+    # preferred_id: 
+    properties:
+        dataset_index: int
+        serialized_data: str
+
+experiment reference: 
+    represented_as: node
+    is_a: material sample
+    # preferred_id: 
+    properties:
+        dataset_index: int
+        serialized_data: str
+
+experiment reference member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment reference
+    target: dataset
+
+experiment member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment
+    target: dataset
+
+experiment reference of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment reference
+    target: experiment
+
+genotype:
+    represented_as: node
+    properties:
+        sys_gene_name: str
+        perturbed_gene_name: list
+        description: str
+        perturbation_type: list
+        serialized_data: str
+
+# CHECK is an environment a physical entity?
+environment: 
+    is_a: environmental exposure 
+    represented_as: node
+    properties: 
+        temperature: str
+        media: str
+        serialized_data: str
+
+media:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        name: str
+        state: str
+        serialized_data: str 
+
+temperature:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        celsius: str
+        serialized_data: str 
+
+phenotype:
+    is_a: phenotypic quality
+    represented_as: node
+    properties:
+        graph_level: str
+        label: str
+        label_error: str
+        fitness: float
+        fitness_std: float 
+
+
+#######################
+
+# genotype:
+#     represented_as: node
+
+# environment:
+#     represented_as: node
+
+# phenotype:
+#     represented_as: node
+
+# experiment_reference_state:
+#     represented_as: node
+
+# reference_genome:
+#     represented_as: node
+
+# reference_environment:
+#     represented_as: node
+
+# reference_phenotype:
+#     represented_as: node
+
+#######################
+
+
+
+#######################
+# gene:
+#     represented_as: node
+#     preferred_id: hgnc.symbol
+#     properties:
+#         name: str
+
+# transcription factor:
+#     is_a: gene
+#     represented_as: node
+#     preferred_id: hgnc.symbol
+#     properties:
+#         name: str
+#         category: str
+
+# transcriptional regulation:
+#     is_a: pairwise gene to gene interaction
+#     represented_as: edge
+#     source: transcription factor
+#     target: gene
+#     properties:
+#         activation_or_inhibition: str
+#         resources: str
+#         references: str
+#         sign_decision: str

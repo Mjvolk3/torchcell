@@ -21,7 +21,7 @@ import polars as pl
 import torch
 from attrs import define, field
 from polars import DataFrame, col
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from torch_geometric.data import (
     Data,
     DataLoader,
@@ -46,11 +46,13 @@ from torchcell.datamodels import (
     DeletionPerturbation,
     SysGeneName,
     FitnessPhenotype,
-    ExperimentReferenceState,
+    FitnessExperimentReference,
+    ExperimentReference,
     FitnessExperiment,
+    ExperimentReference,
     DampPerturbation,
     TsAllelePerturbation,
-    InterferenceGenotype
+    InterferenceGenotype,
 )
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
@@ -58,40 +60,39 @@ from torchcell.sequence import GeneSet
 log = logging.getLogger(__name__)
 
 
-# pydantic models
-# class SmfCostanzo2016Perturbation(GenePerturbation, ModelStrict):
-#     id_full: str
-#     allele_name: str
+class ExperimentReferenceIndex(ModelStrict):
+    reference: ExperimentReference
+    index: List[bool]
+    
+    def __repr__(self):
+        if len(self.index) > 5:
+            return f"ExperimentReferenceIndex(reference={self.reference}, index={self.index[:5]}...)"
+        else:
+            return f"ExperimentReferenceIndex(reference={self.reference}, index={self.index})"
+            
 
 
-# class SmfCostanzo2016Genotype(ModelStrict):
-#     perturbation: SmfCostanzo2016Perturbation | list[SmfCostanzo2016Perturbation]
+class ReferenceIndex(ModelStrict):
+    data: List[ExperimentReferenceIndex]
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
+    
+    def __iter__(self):
+        return iter(self.data)
+    
+    @field_validator("data")
+    def validate_data(cls, v):
+        summed_indices = sum([boolean_value for exp_ref_index in v for boolean_value in exp_ref_index.index])
+
+        if summed_indices != len(v[0].index):
+            raise ValueError("Sum of indices must equal the number of experiments")
+        return v
 
 
-# class SmfCostanzo2016Phenotype(BasePhenotype, ModelStrict):
-#     smf: float
-#     smf_std: float
-
-
-# class SmfCostanzo2016Experiment(Experiment):
-#     reference_genome: ReferenceGenome
-#     reference_environment: BaseEnvironment
-#     reference_phenotype: SmfCostanzo2016Phenotype | None
-#     genotype: SmfCostanzo2016Genotype
-#     environment: BaseEnvironment
-#     phenotype: SmfCostanzo2016Phenotype
-
-
-# class SmfCostanzo2016Experiment(ModelStrict):
-#     reference_genome: ReferenceGenome
-#     reference_environment: BaseEnvironment
-#     reference_phenotype: SmfCostanzo2016Phenotype | None
-#     genotype: SmfCostanzo2016Genotype
-#     environment: BaseEnvironment
-#     phenotype: SmfCostanzo2016Phenotype
-
-
-#
 @define
 class NeoSmfCostanzo2016Dataset:
     root: str = field(default="data/neo4j/smf_costanzo2016")
@@ -101,15 +102,29 @@ class NeoSmfCostanzo2016Dataset:
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
     )
     raw: str = field(init=False, repr=False)
-    data: list[BaseExperiment] = field(init=False, repr=False, default=[])
-    reference_phenotype_std = field(init=False, repr=False)
+    data: list[BaseExperiment] = field(init=False, repr=False, factory=list)
+    reference: list[FitnessExperimentReference] = field(
+        init=False, repr=False, factory=list
+    )
+    reference_index: ReferenceIndex = field(init=False, repr=False)
+    reference_phenotype_std_30 = field(init=False, repr=False)
+    reference_phenotype_std_26 = field(init=False, repr=False)
 
     def __attrs_post_init__(self):
         self.raw = osp.join(self.root, "raw")
         self._download()
         self._extract()
         self._cleanup_after_extract()
-        self.data = self._process_excel()
+        self.data, self.reference = self._process_excel()
+        self.data, self.reference = self._remove_duplicates()
+        self.reference_index = self.get_reference_index()
+
+    # write a get item method to return a single experiment
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)
 
     def _download(self):
         if not osp.exists(self.raw):
@@ -145,20 +160,14 @@ class NeoSmfCostanzo2016Dataset:
         if osp.exists(zip_path):
             os.remove(zip_path)
 
-    def _process_temperature_data(self, df, temperature):
-        """
-        Process DataFrame for a specific temperature and add entries to the dataset.
-        """
-        for _, row in df.iterrows():
-            experiment = self.create_experiment(row, temperature)
-            self.data.append(experiment)
-
     def _process_excel(self):
         """
         Process the Excel file and convert each row to Experiment instances for 26°C and 30°C separately.
         """
         xlsx_path = osp.join(self.raw, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
+        # Process the DataFrame to average rows with 'tsa' or 'tsq'
+        df = self._average_tsa_tsq(df)
         # This is an approximate since I cannot find the exact value in the paper
         df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
@@ -166,11 +175,11 @@ class NeoSmfCostanzo2016Dataset:
         filter_condition = ~df["Strain_ID_suffix"].str.contains("ts|damp", na=False)
         df_filtered = df[filter_condition]
 
-        self.reference_phenotype_std = pd.concat(
-            [
-                df_filtered["Single mutant fitness (26°) stddev"],
-                df_filtered["Single mutant fitness (30°) stddev"],
-            ]
+        self.reference_phenotype_std_26 = (
+            df_filtered["Single mutant fitness (26°) stddev"]
+        ).mean()
+        self.reference_phenotype_std_30 = (
+            df_filtered["Single mutant fitness (30°) stddev"]
         ).mean()
         # Process data for 26°C and 30°C
         df_26 = df_filtered[
@@ -195,7 +204,80 @@ class NeoSmfCostanzo2016Dataset:
         ].dropna()
         self._process_temperature_data(df_30, 30)
 
-        return self.data
+        return self.data, self.reference
+
+    def get_reference_index(self):
+        # Serialize references for comparability using model_dump
+        serialized_references = [
+            json.dumps(ref.model_dump(), sort_keys=True) for ref in self.reference
+        ]
+
+        # Identify unique references and their indices
+        unique_refs = {}
+        for idx, ref_json in enumerate(serialized_references):
+            if ref_json not in unique_refs:
+                unique_refs[ref_json] = {
+                    "indices": [],
+                    "model": self.reference[idx],  # Store the Pydantic model
+                }
+            unique_refs[ref_json]["indices"].append(idx)
+
+        # Create ExperimentReferenceIndex instances
+        reference_indices = []
+        for ref_info in unique_refs.values():
+            bool_array = [i in ref_info["indices"] for i in range(len(self.data))]
+            reference_indices.append(
+                ExperimentReferenceIndex(reference=ref_info["model"], index=bool_array)
+            )
+
+        # Return ReferenceIndex instance
+        return ReferenceIndex(data=reference_indices)
+
+
+    def _average_tsa_tsq(self, df):
+        """
+        Replace 'tsa' and 'tsq' with 'ts' in the Strain ID and average duplicates.
+        """
+        # Replace 'tsa' and 'tsq' with 'ts' in Strain ID
+        df["Strain ID"] = df["Strain ID"].str.replace("_ts[qa]\d*", "_ts", regex=True)
+
+        # Columns to average
+        columns_to_average = [
+            "Single mutant fitness (26°)",
+            "Single mutant fitness (26°) stddev",
+            "Single mutant fitness (30°)",
+            "Single mutant fitness (30°) stddev",
+        ]
+
+        # Averaging duplicates
+        df_avg = (
+            df.groupby(["Strain ID", "Systematic gene name", "Allele/Gene name"])[
+                columns_to_average
+            ]
+            .mean()
+            .reset_index()
+        )
+
+        # Merging averaged values back into the original DataFrame
+        df_non_avg = df.drop(columns_to_average, axis=1).drop_duplicates(
+            ["Strain ID", "Systematic gene name", "Allele/Gene name"]
+        )
+        df = pd.merge(
+            df_non_avg,
+            df_avg,
+            on=["Strain ID", "Systematic gene name", "Allele/Gene name"],
+        )
+
+        return df
+
+    def _process_temperature_data(self, df, temperature):
+        """
+        Process DataFrame for a specific temperature and add entries to the dataset.
+        """
+        for _, row in df.iterrows():
+            experiment, ref = self.create_experiment(row, temperature)
+            self.data.append(experiment)
+            self.reference.append(ref)
 
     def create_experiment(self, row, temperature):
         """
@@ -205,9 +287,9 @@ class NeoSmfCostanzo2016Dataset:
         reference_genome = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
-        
+
         # Deal with different types of perturbations
-        if "tsa" or "tsq" in row["Strain ID"]:
+        if "ts" in row["Strain ID"]:
             genotype = InterferenceGenotype(
                 perturbation=DampPerturbation(
                     sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
@@ -221,7 +303,7 @@ class NeoSmfCostanzo2016Dataset:
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
-        else: 
+        else:
             genotype = DeletionGenotype(
                 perturbation=DeletionPerturbation(
                     sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
@@ -244,31 +326,85 @@ class NeoSmfCostanzo2016Dataset:
             fitness_std=row[smf_std_key],
         )
 
+        if temperature == 26:
+            reference_phenotype_std = self.reference_phenotype_std_26
+        elif temperature == 30:
+            reference_phenotype_std = self.reference_phenotype_std_30
         reference_phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
             fitness=1.0,
-            fitness_std=self.reference_phenotype_std,
+            fitness_std=reference_phenotype_std,
         )
 
-        experiment_reference_state = ExperimentReferenceState(
+        reference = FitnessExperimentReference(
             reference_genome=reference_genome,
             reference_environment=reference_environment,
             reference_phenotype=reference_phenotype,
         )
 
         experiment = FitnessExperiment(
-            experiment_reference_state=experiment_reference_state,
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
-        return experiment
+        return experiment, reference
+
+    def _remove_duplicates(self) -> list[BaseExperiment]:
+        """
+        Remove duplicate BaseExperiment instances from self.data.
+        All fields of the object must match for it to be considered a duplicate.
+        """
+        unique_data = []
+        seen = set()
+
+        for experiment, reference in zip(self.data, self.reference):
+            # Serialize the experiment object to a dictionary
+            experiment_dict = experiment.model_dump()
+            reference_dict = reference.model_dump()
+
+            combined_dict = {**experiment_dict, **reference_dict}
+            # Convert dictionary to a JSON string for comparability
+            combined_json = json.dumps(combined_dict, sort_keys=True)
+
+            if combined_json not in seen:
+                seen.add(combined_json)
+                unique_data.append((experiment, reference))
+
+        self.data = [experiment for experiment, reference in unique_data]
+        self.reference = [reference for experiment, reference in unique_data]
+
+        return self.data, self.reference
+
+    def df(self) -> pd.DataFrame:
+        """
+        Create a DataFrame from the list of BaseExperiment instances.
+        Each instance is a row in the DataFrame.
+        """
+        rows = []
+        for experiment in self.data:
+            # Flatten the structure of each BaseExperiment instance
+            row = {
+                "species": experiment.experiment_reference_state.reference_genome.species,
+                "strain": experiment.experiment_reference_state.reference_genome.strain,
+                "media_name": experiment.environment.media.name,
+                "media_state": experiment.environment.media.state,
+                "temperature": experiment.environment.temperature.Celsius,
+                "genotype": experiment.genotype.perturbation.sys_gene_name.name,
+                "perturbed_gene_name": experiment.genotype.perturbation.perturbed_gene_name,
+                "fitness": experiment.phenotype.fitness,
+                "fitness_std": experiment.phenotype.fitness_std,
+                # Add other fields as needed
+            }
+            rows.append(row)
+
+        return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":
     dataset = NeoSmfCostanzo2016Dataset()
-    # print(dataset.data[0].json(indent=4))
-    print(dataset.data[0].model_dump())
+    print(len(dataset))
+    print(dataset[0])
+    print(dataset.reference_index)
+    print(len(dataset.reference_index))
+    print(dataset.reference_index[0])
     print()

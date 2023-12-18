@@ -1,4 +1,4 @@
-# src/torchcell/sequence/__init__.py
+# torchcell/sequence/__init__.py
 from .data import (
     DnaSelectionResult,
     DnaWindowResult,

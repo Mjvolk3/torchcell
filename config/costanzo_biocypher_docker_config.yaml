@@ -3,11 +3,15 @@
 biocypher:
   offline: true
   debug: false
-  schema_config_path: config/costanzo_schema_config.yaml #config/schema_config.yaml # config/costanzo_schema_config.yaml
-  cache_directory: .cache
+  schema_config_path: config/costanzo_schema_config.yaml
+  output_directory: data/build2neo
 
 neo4j:
+  database_name: neo4j
+  wipe: true
   delimiter: '\t'
   array_delimiter: '|'
   skip_duplicate_nodes: true
   skip_bad_relationships: true
+  import_call_file_prefix: /data/build2neo
+

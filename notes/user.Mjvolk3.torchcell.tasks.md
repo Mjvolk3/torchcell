@@ -2,17 +2,49 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1702612198712
+updated: 1702874981398
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+- Ask about difference between property query v node query. Media v Temperature. 
+- Add all data, or just the data instances? 
+- Suggestions for removing duplicates. 
+- What happens when we create an edge to a duplicated ndoe?
+
+## 2023.12.17
+
+- 
+
+## 2023.12.16
+
+- [x] Write `FitnessExperimentReference` for `FitnessExperiment` to get around the issue of only recovering the base data upon deserialization. This was dropping the `fitness` and `fitness_std`. I think as a rule of thumb we should probably try to limit typing to single types if possible. → I am puzzled in terms of where the reference state should go. I like it with data instances because at the time of modeling, it is available. In general reference states are typically singular with any given experiment, in some cases there could be a few. For memory they can be kept separate and also in the context of graphs it makes more sense if they are kept together. This way we can link to references and use they compatibility to do selection.
+- [x] Separate out the reference from the data itself. → my current solution to this is to have the index as a boolean array, paired with the reference data. I made some pydantic models for this. This will be very useful data for creating nodes within biocypher. The 1st node, publication or study, then 2nd we have reference states (study), and data (study).
+- [x] Add publication, reference states, with boolean indices as data. Add studies. → Create an outline of how we can do this in [[notes/assets/notability/notability.pdf]] → Didn't add the boolean indices as data as these should primarily be used for link creation between reference and data. Waiting on publication, which should be linked to dataset. 
+- [x] Create the necessary relations with biolink predicate, likely in information entity. These include concept links and instance links. → had to change change from the predicates to ther relationship types. These are not capable of being visualized.
+Concept links:
+  - `experiment` - `member_of` -> `dataset`  
+  - `dataset` - `has_member` -> `experiment` 
+  - `experiment reference` - `member_of` -> `dataset` 
+  - `dataset` - `has_member` -> `experiment reference` 
+Instance links:
+  - `experiment` - `associated_with` ->  `experiment reference`
+
+- [ ] Children of study into nodes and information content predicates to link them.
+- [ ] ChatGSE to get query for extracting only nodes that are temperature 30 and gene deletions.
+- [ ] Check that pydantic model names are being propagated as properties so they can be used as selection. Maybe we call this `TcType`.
+
+
+- [ ] Add immediate children of experiment to graph.
+- [ ] Create a ChatGSE demonstration.
+- [ ] Add Costanzo doubles to graph. Start with small subset.
+
 
 ## 2023.12.15
 
 - [x] Add `isort` and `black` tasks, since it takes so damn long with the normal vscode extensions.
 - [x] TS alleles inspection. → can find some [nature ts alleles SI Table 1](https://www.nature.com/articles/nbt.1832#MOESM5) around 40 % seem to have enough information to reconstruct the allele sequence. For now will avoid sequence specificaiton.
-
-- [ ] Add `costanzo` single deletions to graph
+- [x] Add `costanzo` single deletions to graph → Did it! Yay 🎉 but there are some issus, which ontologies to use, data serialization and deserialization 
 
 ## 2023.12.14
 

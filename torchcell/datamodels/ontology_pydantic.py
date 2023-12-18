@@ -28,13 +28,13 @@ class GenePerturbation(ModelStrict):
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
     description: str = "Deletion via KANMX gene replacement"
+    perturbation_type: str = Field(default="deletion", Literal=True)
 
 
 class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
         description="Gene perturbation"
     )
-
 
 class ExpressionRangeMultiplier(ModelStrict):
     min: float = Field(
@@ -51,7 +51,7 @@ class DampPerturbation(GenePerturbation, ModelStrict):
         default=ExpressionRangeMultiplier(min=1 / 10.0, max=1 / 4.0),
         description="Gene expression is descreased by 4-10 fold",
     )
-
+    perturbation_type: str = Field(default="damp", Literal=True)
 
 class TsAllelePerturbation(GenePerturbation, ModelStrict):
     description: str = (
@@ -60,6 +60,7 @@ class TsAllelePerturbation(GenePerturbation, ModelStrict):
     seq: str = "NOT IMPLEMENTED"
     # TODO add specifics of allele
     # [[2023.12.15|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231215]] Many of these are unknown.
+    perturbation_type: str = Field(default="ts_allele", Literal=True)
 
 
 # Environment
@@ -106,8 +107,8 @@ class FitnessPhenotype(BasePhenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
     fitness_std: float = Field(description="fitness standard deviation")
 
-
-class ExperimentReferenceState(ModelStrict):
+# TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype, 
+class ExperimentReference(ModelStrict):
     reference_genome: ReferenceGenome
     reference_environment: BaseEnvironment
     reference_phenotype: BasePhenotype
@@ -129,19 +130,19 @@ class InterferenceGenotype(BaseGenotype, ModelStrict):
     ] | TsAllelePerturbation | list[TsAllelePerturbation]
 
 
+class FitnessExperimentReference(ExperimentReference, ModelStrict):
+    reference_phenotype: FitnessPhenotype
+
+
 class FitnessExperiment(BaseExperiment):
-    experiment_reference_state: ExperimentReferenceState
     genotype: DeletionGenotype | list[DeletionGenotype] | InterferenceGenotype | list[
         InterferenceGenotype
     ]
     phenotype: FitnessPhenotype
-
-
+    
 
 if __name__ == "__main__":
-    reference_genome = ReferenceGenome(
-        species="saccharomyces Cerevisiae", strain="s288c"
-    )
+    # Primary Data
     genotype = DeletionGenotype(
         perturbation=DeletionPerturbation(
             sys_gene_name=SysGeneName(name="YAL001C"),
@@ -151,7 +152,6 @@ if __name__ == "__main__":
     environment = BaseEnvironment(
         media=Media(name="YPD", state="solid"), temperature=Temperature(Celsius=30.0)
     )
-    reference_environment = environment.model_copy()
     phenotype = FitnessPhenotype(
         graph_level="global",
         label="smf",
@@ -160,6 +160,11 @@ if __name__ == "__main__":
         fitness_std=0.10,
     )
 
+    # Reference
+    reference_genome = ReferenceGenome(
+        species="saccharomyces Cerevisiae", strain="s288c"
+    )
+    reference_environment = environment.model_copy()
     reference_phenotype = FitnessPhenotype(
         graph_level="global",
         label="smf",
@@ -167,13 +172,14 @@ if __name__ == "__main__":
         fitness=1.0,
         fitness_std=0.03,
     )
-    experiment_reference_state = ExperimentReferenceState(
+    experiment_reference_state = FitnessExperimentReference(
         reference_genome=reference_genome,
         reference_environment=reference_environment,
         reference_phenotype=reference_phenotype,
     )
+    
+    # Final Experiment
     experiment = FitnessExperiment(
-        experiment_reference_state=experiment_reference_state,
         genotype=genotype,
         environment=environment,
         phenotype=phenotype,

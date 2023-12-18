@@ -42,7 +42,10 @@
         },
         {
             "name": "SpeciesLM",
-            "path": "../SpeciesLM",
+            "path": "../SpeciesLM"
+        },
+        {
+            "path": "../biocypher"
         }
     ],
     "settings": {

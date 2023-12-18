@@ -1,4 +1,4 @@
-# src/torchcell/cell/cell.py
+# torchcell/cell/cell.py
 import os
 import shutil
 import zipfile

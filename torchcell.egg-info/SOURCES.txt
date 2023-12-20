@@ -1,6 +1,9 @@
+MANIFEST.in
 README.md
 pyproject.toml
+env/requirements.txt
 torchcell/__init__.py
+torchcell/__version__.py
 torchcell/cell.py
 torchcell/data_download_yeastmine.py
 torchcell/dataloading_lmdb.py
@@ -17,6 +20,8 @@ torchcell.egg-info/dependency_links.txt
 torchcell.egg-info/entry_points.txt
 torchcell.egg-info/requires.txt
 torchcell.egg-info/top_level.txt
+torchcell/adapters/__init__.py
+torchcell/adapters/neo_costanzo2016_adapter.py
 torchcell/cell/__init__.py
 torchcell/data/__init__.py
 torchcell/data/dataset.py

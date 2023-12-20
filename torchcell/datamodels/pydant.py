@@ -8,17 +8,17 @@ from typing import Any, List, Optional
 
 import matplotlib.pyplot as plt
 import networkx as nx
-from pydantic import BaseModel, ConfigDict, Extra
+from pydantic import BaseModel, ConfigDict
 
 
 class ModelStrict(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
         frozen = True
 
 
 class ModelStrictArbitrary(BaseModel):
     class Config:
-        extra = Extra.forbid
+        extra = "forbid"
         frozen = True
         arbitrary_types_allowed = True

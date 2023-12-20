@@ -292,27 +292,27 @@ class NeoSmfCostanzo2016Dataset:
         if "ts" in row["Strain ID"]:
             genotype = InterferenceGenotype(
                 perturbation=DampPerturbation(
-                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
         elif "damp" in row["Strain ID"]:
             genotype = InterferenceGenotype(
                 perturbation=DampPerturbation(
-                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
         else:
             genotype = DeletionGenotype(
                 perturbation=DeletionPerturbation(
-                    sys_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
         environment = BaseEnvironment(
             media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(Celsius=temperature),
+            temperature=Temperature(scalar=temperature),
         )
         reference_environment = environment.model_copy()
         # Phenotype based on temperature
@@ -388,8 +388,8 @@ class NeoSmfCostanzo2016Dataset:
                 "strain": experiment.experiment_reference_state.reference_genome.strain,
                 "media_name": experiment.environment.media.name,
                 "media_state": experiment.environment.media.state,
-                "temperature": experiment.environment.temperature.Celsius,
-                "genotype": experiment.genotype.perturbation.sys_gene_name.name,
+                "temperature": experiment.environment.temperature.scalar,
+                "genotype": experiment.genotype.perturbation.systematic_gene_name.name,
                 "perturbed_gene_name": experiment.genotype.perturbation.perturbed_gene_name,
                 "fitness": experiment.phenotype.fitness,
                 "fitness_std": experiment.phenotype.fitness_std,
@@ -403,8 +403,8 @@ class NeoSmfCostanzo2016Dataset:
 if __name__ == "__main__":
     dataset = NeoSmfCostanzo2016Dataset()
     print(len(dataset))
-    print(dataset[0])
-    print(dataset.reference_index)
-    print(len(dataset.reference_index))
-    print(dataset.reference_index[0])
-    print()
+    print(json.dumps(dataset[0].model_dump(), indent=4))
+    # print(dataset.reference_index)
+    # print(len(dataset.reference_index))
+    # print(dataset.reference_index[0])
+    # print()

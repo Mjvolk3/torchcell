@@ -28,3 +28,4 @@ bc.write_schema_info(as_node=True)
 
 # Print summary
 bc.summary()
+

@@ -22,7 +22,7 @@ class SysGeneName(ModelStrict):
 
 
 class GenePerturbation(ModelStrict):
-    sys_gene_name: SysGeneName
+    systematic_gene_name: SysGeneName
     perturbed_gene_name: str
 
 
@@ -75,9 +75,15 @@ class Media(ModelStrict):
         return v
 
 
-class Temperature(ModelStrict):
-    # in celsius - not sure how to enforce units
-    Celsius: float
+class Temperature(BaseModel):
+    scalar: float
+    description: str = "Temperature in degrees Celsius."
+    
+    @field_validator('scalar')
+    def check_temperature(cls, v):
+        if v < -273:
+            raise ValueError("Temperature cannot be below -273 degrees Celsius")
+        return v
 
 
 class BaseEnvironment(ModelStrict):
@@ -145,12 +151,12 @@ if __name__ == "__main__":
     # Primary Data
     genotype = DeletionGenotype(
         perturbation=DeletionPerturbation(
-            sys_gene_name=SysGeneName(name="YAL001C"),
+            systematic_gene_name=SysGeneName(name="YAL001C"),
             perturbed_gene_name="YAL001C_damp174",
         )
     )
     environment = BaseEnvironment(
-        media=Media(name="YPD", state="solid"), temperature=Temperature(Celsius=30.0)
+        media=Media(name="YPD", state="solid"), temperature=Temperature(scalar=30.0)
     )
     phenotype = FitnessPhenotype(
         graph_level="global",

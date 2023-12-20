@@ -35,10 +35,17 @@ experiment reference of:
     source: experiment reference
     target: experiment
 
+genome:
+    represented_as: node
+    properties:
+        species: str
+        strain: str
+        serialized_data: str
+
 genotype:
     represented_as: node
     properties:
-        sys_gene_name: str
+        systematic_gene_name: str
         perturbed_gene_name: list
         description: str
         perturbation_type: list
@@ -65,7 +72,8 @@ temperature:
     is_a: environmental exposure
     represented_as: node
     properties:
-        celsius: str
+        scalar: float
+        description: str
         serialized_data: str 
 
 phenotype:
@@ -77,57 +85,44 @@ phenotype:
         label_error: str
         fitness: float
         fitness_std: float 
+        serialized_data: str
 
+# relationships
 
-#######################
+# want to now add this one
+genotype member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: genotype
+    target: experiment
 
-# genotype:
-#     represented_as: node
+environment member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: environment
+    target: [experiment, experiment reference]
 
-# environment:
-#     represented_as: node
+phenotype member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: phenotype
+    target: [experiment, experiment reference]
 
-# phenotype:
-#     represented_as: node
+# Add these last two 
+media member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: media
+    target: environment
 
-# experiment_reference_state:
-#     represented_as: node
+temperature member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: temperature
+    target: environment
 
-# reference_genome:
-#     represented_as: node
-
-# reference_environment:
-#     represented_as: node
-
-# reference_phenotype:
-#     represented_as: node
-
-#######################
-
-
-
-#######################
-# gene:
-#     represented_as: node
-#     preferred_id: hgnc.symbol
-#     properties:
-#         name: str
-
-# transcription factor:
-#     is_a: gene
-#     represented_as: node
-#     preferred_id: hgnc.symbol
-#     properties:
-#         name: str
-#         category: str
-
-# transcriptional regulation:
-#     is_a: pairwise gene to gene interaction
-#     represented_as: edge
-#     source: transcription factor
-#     target: gene
-#     properties:
-#         activation_or_inhibition: str
-#         resources: str
-#         references: str
-#         sign_decision: str
+genome member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: genome
+    target: experiment reference

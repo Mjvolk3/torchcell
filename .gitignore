@@ -62,3 +62,7 @@ biocypher-log/
 
 # cache - biocypher?
 .cache/cache.json
+
+
+# build
+dist/

@@ -9,7 +9,8 @@ cp -r /src/biocypher-log .
 cp -r /src/biocypher-out .
 cp -r /src/collectri .
 cp -r /src/config .
-cp -r /src/create_knowledge_graph.py .
+# cp -r /src/create_knowledge_graph.py .
+cp -r /src/tc_create_knowledge_graph.py .
 cp -r /src/docker .
 cp -r /src/docker-compose-chatgse.yml .
 cp -r /src/docker-compose.yml .
@@ -35,6 +36,6 @@ fi
 conda activate tc-graph
 
 # Run Python script
-python3 create_knowledge_graph.py
+python3 tc_create_knowledge_graph.py
 
 chmod -R 777 biocypher-log

@@ -2,19 +2,27 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1702874981398
+updated: 1703050865221
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-- Ask about difference between property query v node query. Media v Temperature. 
-- Add all data, or just the data instances? 
-- Suggestions for removing duplicates. 
-- What happens when we create an edge to a duplicated ndoe?
+
+## 2023.12.19
+
+- [x] Finish adding data for `Costanzo SMF` → Using sets with MD5 has to avoid forcing Biocypher to take care of deduplication.
+- [x] View data in Bloom. → This works fine, nothing special yet.
+- [x] Make temperature a property of environment. → Not doing this. Mostly for making the modelling process consistent. If everything at bottom in a pydantic class I think it will be easier conceptually.
+- [ ] Publish package to PyPi so we can used docker, and `ChatGSE` 
+
+
+## 2023.12.18
+
+- [x] Discuss Biocypher [[Sebastian-Lobentanzer.2023.12.18|dendron://torchcell/meet.Sebastian-Lobentanzer.2023.12.18]]
 
 ## 2023.12.17
 
-- 
+- [x] Add children as nodes with their data 
 
 ## 2023.12.16
 

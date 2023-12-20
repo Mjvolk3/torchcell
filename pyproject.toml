@@ -17,9 +17,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 keywords = ["An example package", "starving artist"]
-dependencies = [
-]
+# dependencies = []
 requires-python = ">=3.11"
+dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 dev = ["black", "bumpver", "pip-tools", "pytest"]
@@ -37,7 +37,7 @@ skip_gitignore = true
 color_output = true
 
 [tool.black]
-target-version = ["py310", "py311"]
+target-version = ["py311"]
 color = true
 skip_magic_trailing_comma = true # true in torchgeo
 
@@ -72,6 +72,8 @@ match = "torchcell/.*\\.py"
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 [tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+# optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
 version = {attr = "torchcell.__version__"}
 
 [tool.setuptools.package-data]
@@ -79,3 +81,13 @@ torchcell = ["py.typed"]
 
 [tool.setuptools.packages.find]
 include = ["torchcell*"]
+
+[tool.bumpver]
+current_version = "0.0.0"  # Your current version
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Bump version: {old_version} → {new_version}"
+
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
+"torchcell/__version__.py" = ["{version}"]

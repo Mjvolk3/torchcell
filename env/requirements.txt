@@ -80,9 +80,10 @@ owlready2==0.45
 python-dotenv==1.0.0
 
 # dev-tools
-bumpver== 2023.1125
+bumpver== 2023.1129
 pre-commit==  3.3.3
 # ptpython==3.0.23
 pip-tools==7.1.0
 snakeviz== 2.2.0
-
+twine==4.0.2
+# reqs to toml

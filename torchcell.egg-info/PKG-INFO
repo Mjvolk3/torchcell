@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.0.7
+Version: 0.0.9
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -23,6 +23,7 @@ Requires-Dist: torch==2.1.0
 Requires-Dist: torch_geometric==2.4.0
 Requires-Dist: torchmetrics==1.2.1
 Requires-Dist: lightning==2.1.2
+Requires-Dist: torch-scatter==2.1.2
 Requires-Dist: wandb==0.15.8
 Requires-Dist: matplotlib==3.7.2
 Requires-Dist: adjustText==0.8

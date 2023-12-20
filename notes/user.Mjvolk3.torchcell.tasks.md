@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1703050865221
+updated: 1703057544568
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -13,7 +13,8 @@ created: 1690514887023m
 - [x] Finish adding data for `Costanzo SMF` → Using sets with MD5 has to avoid forcing Biocypher to take care of deduplication.
 - [x] View data in Bloom. → This works fine, nothing special yet.
 - [x] Make temperature a property of environment. → Not doing this. Mostly for making the modelling process consistent. If everything at bottom in a pydantic class I think it will be easier conceptually.
-- [ ] Publish package to PyPi so we can used docker, and `ChatGSE` 
+- [x] Publish package to PyPi so we can used docker, and `ChatGSE` → build from src steps
+- [ ] Docker and test `ChatGSE`.
 
 
 ## 2023.12.18

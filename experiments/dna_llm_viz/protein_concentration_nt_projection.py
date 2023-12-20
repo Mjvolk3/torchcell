@@ -49,9 +49,10 @@ from torchcell.sequence import Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
+import torchcell
 
-plt.style.use("config/torchcell.mplstyle")
-
+style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+plt.style.use(style_file_path)
 
 def main():
     # genome

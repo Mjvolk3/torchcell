@@ -10,9 +10,10 @@ from sklearn import base
 
 from torchcell.sequence import Genome
 from torchcell.sgd.sequence import SCerevisiaeGenome
+import torchcell
 
-plt.style.use("config/torchcell.mplstyle")  # use the specified style
-
+style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+plt.style.use(style_file_path)
 
 class GenomePlot(ABC):
     genome: Genome

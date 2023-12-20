@@ -1,1 +1,2 @@
 include env/requirements.txt
+include env/requirements_dependent.txt

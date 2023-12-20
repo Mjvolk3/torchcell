@@ -27,9 +27,10 @@ import wandb
 from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
-# use the specified style
-plt.style.use("config/torchcell.mplstyle")
+import torchcell
 
+style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+plt.style.use(style_file_path)
 
 class DCellRegressionSlimTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""

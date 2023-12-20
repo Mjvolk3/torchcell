@@ -2,6 +2,7 @@ MANIFEST.in
 README.md
 pyproject.toml
 env/requirements.txt
+env/requirements_dependent.txt
 torchcell/__init__.py
 torchcell/__version__.py
 torchcell/cell.py

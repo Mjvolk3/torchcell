@@ -21,7 +21,7 @@ torch==2.1.0
 torch_geometric==2.4.0
 torchmetrics==1.2.1
 lightning==2.1.2
-torch-scatter==2.1.2
+# torch-scatter==2.1.2
 
 # visualization stack and logging
 wandb==0.15.8
@@ -84,4 +84,6 @@ pre-commit==  3.3.3
 pip-tools==7.1.0
 snakeviz== 2.2.0
 twine==4.0.2
-# reqs to toml
+
+# biocypher
+biocypher>=0.5.34 

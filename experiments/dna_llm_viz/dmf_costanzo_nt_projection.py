@@ -50,7 +50,7 @@ import torchcell
 
 log = logging.getLogger(__name__)
 
-style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
 plt.style.use(style_file_path)
 
 def main():

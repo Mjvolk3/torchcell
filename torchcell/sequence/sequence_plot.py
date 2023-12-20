@@ -12,7 +12,7 @@ from torchcell.sequence import Genome
 from torchcell.sgd.sequence import SCerevisiaeGenome
 import torchcell
 
-style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
 plt.style.use(style_file_path)
 
 class GenomePlot(ABC):

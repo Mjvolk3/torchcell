@@ -34,6 +34,7 @@ else
 fi
 
 conda activate tc-graph
+python -m pip install torch-scatter
 
 # Run Python script
 python3 tc_create_knowledge_graph.py

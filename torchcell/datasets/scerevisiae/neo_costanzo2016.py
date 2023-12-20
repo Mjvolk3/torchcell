@@ -17,10 +17,10 @@ import lmdb
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import polars as pl
+# import polars as pl
 import torch
 from attrs import define, field
-from polars import DataFrame, col
+# from polars import DataFrame, col
 from pydantic import Field, field_validator
 from torch_geometric.data import (
     Data,

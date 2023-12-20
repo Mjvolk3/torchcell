@@ -26,7 +26,7 @@ from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 import torchcell
-style_file_path = os.path.join(os.path.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
 plt.style.use(style_file_path)
 
 class GraphConvRegressionTask(L.LightningModule):

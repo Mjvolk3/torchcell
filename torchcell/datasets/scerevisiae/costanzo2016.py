@@ -21,9 +21,9 @@ import lmdb
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import polars as pl
+# import polars as pl
 import torch
-from polars import DataFrame, col
+# from polars import DataFrame, col
 from torch_geometric.data import (
     Data,
     DataLoader,

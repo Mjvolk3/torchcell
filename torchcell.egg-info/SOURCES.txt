@@ -15,6 +15,7 @@ torchcell/neo4j_example.py
 torchcell/prof.py
 torchcell/py.typed
 torchcell/sc_graph.py
+torchcell/torchcell.mplstyle
 torchcell.egg-info/PKG-INFO
 torchcell.egg-info/SOURCES.txt
 torchcell.egg-info/dependency_links.txt

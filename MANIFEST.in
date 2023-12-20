@@ -1,2 +1,3 @@
 include env/requirements.txt
 include env/requirements_dependent.txt
+include torchcell/torchcell.mplstyle

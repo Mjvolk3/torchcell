@@ -123,7 +123,7 @@ class CostanzoSmfAdapter:
 
             if genotype_id not in seen_node_ids:
                 seen_node_ids.add(genotype_id)
-                systematic_gene_name = experiment.genotype.perturbation.systematic_gene_name.name
+                systematic_gene_name = experiment.genotype.perturbation.systematic_gene_name
                 perturbed_gene_name = (
                     experiment.genotype.perturbation.perturbed_gene_name
                 )

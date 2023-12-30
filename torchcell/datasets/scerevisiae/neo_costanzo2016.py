@@ -44,7 +44,6 @@ from torchcell.datamodels import (
     Temperature,
     DeletionGenotype,
     DeletionPerturbation,
-    SysGeneName,
     FitnessPhenotype,
     FitnessExperimentReference,
     ExperimentReference,
@@ -292,21 +291,21 @@ class NeoSmfCostanzo2016Dataset:
         if "ts" in row["Strain ID"]:
             genotype = InterferenceGenotype(
                 perturbation=DampPerturbation(
-                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
         elif "damp" in row["Strain ID"]:
             genotype = InterferenceGenotype(
                 perturbation=DampPerturbation(
-                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
         else:
             genotype = DeletionGenotype(
                 perturbation=DeletionPerturbation(
-                    systematic_gene_name=SysGeneName(name=row["Systematic gene name"]),
+                    systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
@@ -389,7 +388,7 @@ class NeoSmfCostanzo2016Dataset:
                 "media_name": experiment.environment.media.name,
                 "media_state": experiment.environment.media.state,
                 "temperature": experiment.environment.temperature.scalar,
-                "genotype": experiment.genotype.perturbation.systematic_gene_name.name,
+                "genotype": experiment.genotype.perturbation.systematic_gene_name,
                 "perturbed_gene_name": experiment.genotype.perturbation.perturbed_gene_name,
                 "fitness": experiment.phenotype.fitness,
                 "fitness_std": experiment.phenotype.fitness_std,
@@ -408,3 +407,6 @@ if __name__ == "__main__":
     # print(len(dataset.reference_index))
     # print(dataset.reference_index[0])
     # print()
+    for data in dataset:
+        if data.genotype.perturbation.systematic_gene_name == "YIL154C":
+            print()

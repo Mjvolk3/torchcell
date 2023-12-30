@@ -17,13 +17,21 @@ class ReferenceGenome(ModelStrict):
     strain: str
 
 
-class SysGeneName(ModelStrict):
-    name: str = Field(description="Systematic gene name", min_length=7, max_length=9)
-
-
 class GenePerturbation(ModelStrict):
-    systematic_gene_name: SysGeneName
+    systematic_gene_name: str
     perturbed_gene_name: str
+
+    @field_validator("systematic_gene_name")
+    def validate_sys_gene_name(cls, v):
+        if len(v) < 7 or len(v) > 9:
+            raise ValueError("Systematic gene name must be between 7 and 9 characters")
+        return v
+
+    @field_validator("perturbed_gene_name")
+    def validate_pert_gene_name(cls, v):
+        if v.endswith("'"):
+            v = v[:-1] + "_prime"
+        return v
 
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
@@ -35,6 +43,7 @@ class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
         description="Gene perturbation"
     )
+
 
 class ExpressionRangeMultiplier(ModelStrict):
     min: float = Field(
@@ -52,6 +61,7 @@ class DampPerturbation(GenePerturbation, ModelStrict):
         description="Gene expression is descreased by 4-10 fold",
     )
     perturbation_type: str = Field(default="damp", Literal=True)
+
 
 class TsAllelePerturbation(GenePerturbation, ModelStrict):
     description: str = (
@@ -78,8 +88,8 @@ class Media(ModelStrict):
 class Temperature(BaseModel):
     scalar: float
     description: str = "Temperature in degrees Celsius."
-    
-    @field_validator('scalar')
+
+    @field_validator("scalar")
     def check_temperature(cls, v):
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
@@ -113,7 +123,8 @@ class FitnessPhenotype(BasePhenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
     fitness_std: float = Field(description="fitness standard deviation")
 
-# TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype, 
+
+# TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype,
 class ExperimentReference(ModelStrict):
     reference_genome: ReferenceGenome
     reference_environment: BaseEnvironment
@@ -145,14 +156,13 @@ class FitnessExperiment(BaseExperiment):
         InterferenceGenotype
     ]
     phenotype: FitnessPhenotype
-    
+
 
 if __name__ == "__main__":
     # Primary Data
     genotype = DeletionGenotype(
         perturbation=DeletionPerturbation(
-            systematic_gene_name=SysGeneName(name="YAL001C"),
-            perturbed_gene_name="YAL001C_damp174",
+            systematic_gene_name="YAL001C", perturbed_gene_name="YAL001C"
         )
     )
     environment = BaseEnvironment(
@@ -183,12 +193,10 @@ if __name__ == "__main__":
         reference_environment=reference_environment,
         reference_phenotype=reference_phenotype,
     )
-    
+
     # Final Experiment
     experiment = FitnessExperiment(
-        genotype=genotype,
-        environment=environment,
-        phenotype=phenotype,
+        genotype=genotype, environment=environment, phenotype=phenotype
     )
 
     print(experiment.model_dump_json(indent=2))

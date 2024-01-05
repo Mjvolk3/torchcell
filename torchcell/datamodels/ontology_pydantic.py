@@ -152,8 +152,12 @@ class FitnessExperimentReference(ExperimentReference, ModelStrict):
 
 
 class FitnessExperiment(BaseExperiment):
-    genotype: DeletionGenotype | list[DeletionGenotype] | InterferenceGenotype | list[
-        InterferenceGenotype
+    genotype: Union[
+        DeletionGenotype,
+        InterferenceGenotype,
+        List[DeletionGenotype],
+        List[InterferenceGenotype],
+        List[Union[DeletionGenotype, InterferenceGenotype]],
     ]
     phenotype: FitnessPhenotype
 

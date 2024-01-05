@@ -2,11 +2,28 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1703057544568
+updated: 1704476512040
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.05
+
+- [ ] Add `dmf` data, try to keep datasets separate to reduce memory footprint
+
+## 2024.01.04
+
+- [x] Add processed dir of `smf`. → There will definitely be some issues with this process and querying from neo4j since we are using the reference index. I guess we could just pull the index from the previously downloaded data, or we could also add the indices to the neo4j data. This would allow for later just hosting the db remotely.
+- [x] Add loading to dataset. → works for now.
+- 🔲 Add `dmf` data. → We should really only be saving the `reference_index` and not reference since this creates a lot of redundant information. → We don't explicitly add the single mutant fitness to the data because this should naturally appear in the graph structure when the data is added. → Using multiprocessing to speed things up for creating experiments and now looks time is estimated to be around 20 mins, which is more reasonable → Failed at 37% do to a memory error.
+
+## 2023.12.31
+
+- [x] Add `Gif` example of a query → [[SMF Costanzo 2016 Query Example|dendron://torchcell/ChatGSE.smf-costanzo2016-demo#smf-costanzo-2016-query-example]]
+
+## 2023.12.30
+
+- [x] Docker and test `ChatGSE`. → Had to get rid of apostrophe for `perturbed_gene_name` with pydantic data validation.
 
 ## 2023.12.19
 
@@ -14,8 +31,7 @@ created: 1690514887023m
 - [x] View data in Bloom. → This works fine, nothing special yet.
 - [x] Make temperature a property of environment. → Not doing this. Mostly for making the modelling process consistent. If everything at bottom in a pydantic class I think it will be easier conceptually.
 - [x] Publish package to PyPi so we can used docker, and `ChatGSE` → build from src steps
-- [ ] Docker and test `ChatGSE`.
-
+- 🔲 Docker and test `ChatGSE`.
 
 ## 2023.12.18
 

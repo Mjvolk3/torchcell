@@ -2,14 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1704476512040
+updated: 1704580090416
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2024.01.05
+## 2024.01.06
 
-- [ ] Add `dmf` data, try to keep datasets separate to reduce memory footprint
+- [x] Add `dmf` data, try to keep datasets separate to reduce memory footprint → I now have a combination of the new method with pydantic data models and the old method using pytorch geometric `Dataset` with lmdb. This is a good solution and should allow for the usage of individual datasets and their addition to the neo4j database for more complicated multiplex datasets.
+- [ ]
+
 
 ## 2024.01.04
 

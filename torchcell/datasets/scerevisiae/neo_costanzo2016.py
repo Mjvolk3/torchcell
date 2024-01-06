@@ -38,6 +38,43 @@ from torch_geometric.data import (
     extract_zip,
 )
 from tqdm import tqdm
+import json
+import logging
+import os
+import os.path as osp
+import pickle
+import random
+import re
+import shutil
+import zipfile
+from abc import ABC, abstractproperty
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from typing import Literal, Optional
+
+import h5py
+import lmdb
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# import polars as pl
+import torch
+
+# from polars import DataFrame, col
+from torch_geometric.data import (
+    Data,
+    DataLoader,
+    InMemoryDataset,
+    download_url,
+    extract_zip,
+)
+from tqdm import tqdm
+
+from torchcell.data import Dataset
+from torchcell.datamodels import ModelStrict
+from torchcell.prof import prof, prof_input
+from torchcell.sequence import GeneSet
 
 from torchcell.data import Dataset
 from torchcell.datamodels import (
@@ -621,7 +658,9 @@ class NeoDmfCostanzo2016Dataset:
             )
 
             # Using imap_unordered for potentially faster processing and progress monitoring
-            results = list(tqdm(pool.imap_unordered(partial_func, rows), total=len(rows)))
+            results = list(
+                tqdm(pool.imap_unordered(partial_func, rows), total=len(rows))
+            )
 
         # Extend the data and reference lists with the results
         for experiment, ref in results:
@@ -631,12 +670,13 @@ class NeoDmfCostanzo2016Dataset:
         return self.data, self.reference
 
     def _combine_data_tables(self) -> pd.DataFrame:
-        df = pd.DataFrame()
-        log.info("Combining data tables")
-        for file_name in os.listdir(self.raw_dir):
-            df_temp = pd.read_csv(osp.join(self.raw_dir, file_name), sep="\t")
-            df = pd.concat([df, df_temp])
+        # df = pd.DataFrame()
+        # log.info("Combining data tables")
+        # for file_name in os.listdir(self.raw_dir):
+        #     df_temp = pd.read_csv(osp.join(self.raw_dir, file_name), sep="\t")
+        #     df = pd.concat([df, df_temp])
         # return df.head(int(1e7))
+        df = pd.read_csv(osp.join(self.raw_dir, "SGA_NxN.txt"), sep="\t")
         return df
 
     def _process_data_table(self, df) -> pd.DataFrame:
@@ -947,10 +987,401 @@ class NeoDmfCostanzo2016Dataset:
         return self.data, self.reference
 
 
+class DmfCostanzo2016Dataset(Dataset):
+    url = (
+        "https://thecellmap.org/costanzo2016/data_files/"
+        "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
+    )
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/dmf_costanzo2016",
+        subset_n: int = None,
+        preprocess: dict | None = None,
+        skip_process_file_exist: bool = False,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
+    ):
+        self.subset_n = subset_n
+        self._skip_process_file_exist = skip_process_file_exist
+        # TODO consider moving to a well defined Dataset class
+        self.preprocess = preprocess
+        # TODO consider moving to Dataset
+        self.preprocess_dir = osp.join(root, "preprocess")
+        self._length = None
+        self._gene_set = None
+        self._df = None
+        # Check for existing preprocess config
+        existing_config = self.load_preprocess_config()
+        if existing_config is not None:
+            if existing_config != self.preprocess:
+                raise ValueError(
+                    "New preprocess does not match existing config."
+                    "Delete the processed and process dir for a new Dataset."
+                    "Or define a new root."
+                )
+        super().__init__(root, transform, pre_transform)
+        self.env = None
+
+    @property
+    def skip_process_file_exist(self):
+        return self._skip_process_file_exist
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
+
+    @property
+    def processed_file_names(self) -> list[str]:
+        return "data.lmdb"
+
+    def download(self):
+        path = download_url(self.url, self.raw_dir)
+        with zipfile.ZipFile(path, "r") as zip_ref:
+            zip_ref.extractall(self.raw_dir)
+        os.remove(path)
+
+        # Move the contents of the subdirectory to the parent raw directory
+        sub_dir = os.path.join(
+            self.raw_dir,
+            "Data File S1. Raw genetic interaction datasets: Pair-wise interaction format",
+        )
+        for filename in os.listdir(sub_dir):
+            shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
+        os.rmdir(sub_dir)
+
+    def _init_db(self):
+        """Initialize the LMDB environment."""
+        self.env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+        )
+
+    def close_lmdb(self):
+        if self.env is not None:
+            self.env.close()
+            self.env = None
+
+    @property
+    def df(self):
+        if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
+            self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
+        return self._df
+
+    @property
+    def wt(self):
+        wt = {}
+        wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
+        wt["phenotype"] = {
+            "observation": {"fitness": 1.0, "genetic_interaction_score": 0},
+            "environment": {"media": "YPD", "temperature": 30},
+        }
+        data = Data()
+        data.genotype = wt["genotype"]
+        data.phenotype = wt["phenotype"]
+        return data
+
+    def process(self):
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        self._length = None
+        # Initialize an empty DataFrame to hold all raw data
+        all_data_df = pd.DataFrame()
+
+        # Read and concatenate all raw files
+        print("Reading and Concatenating Raw Files...")
+        for file_name in tqdm(self.raw_file_names):
+            file_path = os.path.join(self.raw_dir, file_name)
+
+            # Reading data using Pandas; limit rows for demonstration
+            df = pd.read_csv(file_path, sep="\t")
+
+            # Concatenating data frames
+            all_data_df = pd.concat([all_data_df, df], ignore_index=True)
+        # Functions for data filtering... duplicates selection,
+        all_data_df = self.preprocess_raw(all_data_df, self.preprocess)
+        self.save_preprocess_config(self.preprocess)
+
+        # Subset
+        if self.subset_n is not None:
+            all_data_df = all_data_df.sample(
+                n=self.subset_n, random_state=42
+            ).reset_index(drop=True)
+
+        # Save preprocssed df - mainly for quick stats
+        all_data_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
+
+        print("Processing DMF Files...")
+
+        # Initialize LMDB environment
+        env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            map_size=int(1e12)  # Adjust map_size as needed
+        )
+
+        with env.begin(write=True) as txn:
+            for index, row in tqdm(all_data_df.iterrows(), total=all_data_df.shape[0]):
+                experiment, reference = self.create_experiment(
+                    row, 
+                    reference_phenotype_std_26=0.00123123,
+                    reference_phenotype_std_30=0.00123123
+                )
+
+                # Serialize the Pydantic objects
+                serialized_data = pickle.dumps({"experiment": experiment, "reference": reference})
+                txn.put(f"{index}".encode(), serialized_data)
+
+        env.close()
+       
+        print()
+        # cache gene property
+        # TODO add gene_set
+        # self.gene_set = self.compute_gene_set(data_list)
+
+
+    @staticmethod
+    def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
+        # Common attributes for both temperatures
+        reference_genome = ReferenceGenome(
+            species="saccharomyces Cerevisiae", strain="s288c"
+        )
+
+        # genotype
+        genotype = []
+        # Query
+        if "ts" in row["Query Strain ID"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=DampPerturbation(
+                        systematic_gene_name=row["Query Systematic Name"],
+                        perturbed_gene_name=row["Query allele name"],
+                    )
+                )
+            )
+        elif "damp" in row["Query Strain ID"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=DampPerturbation(
+                        systematic_gene_name=row["Query Systematic Name"],
+                        perturbed_gene_name=row["Query allele name"],
+                    )
+                )
+            )
+        else:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=DeletionPerturbation(
+                        systematic_gene_name=row["Query Systematic Name"],
+                        perturbed_gene_name=row["Query allele name"],
+                    )
+                )
+                # Array
+            )
+        if "ts" in row["Array Strain ID"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=DampPerturbation(
+                        systematic_gene_name=row["Array Systematic Name"],
+                        perturbed_gene_name=row["Array allele name"],
+                    )
+                )
+            )
+        elif "damp" in row["Array Strain ID"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=DampPerturbation(
+                        systematic_gene_name=row["Array Systematic Name"],
+                        perturbed_gene_name=row["Array allele name"],
+                    )
+                )
+            )
+        else:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=DeletionPerturbation(
+                        systematic_gene_name=row["Array Systematic Name"],
+                        perturbed_gene_name=row["Array allele name"],
+                    )
+                )
+            )
+
+        # genotype
+        environment = BaseEnvironment(
+            media=Media(name="YEPD", state="solid"),
+            temperature=Temperature(scalar=row["Temperature"]),
+        )
+        reference_environment = environment.model_copy()
+        # Phenotype based on temperature
+        smf_key = "Double mutant fitness"
+        smf_std_key = "Double mutant fitness standard deviation"
+        phenotype = FitnessPhenotype(
+            graph_level="global",
+            label="smf",
+            label_error="smf_std",
+            fitness=row[smf_key],
+            fitness_std=row[smf_std_key],
+        )
+
+        if row["Temperature"] == 26:
+            reference_phenotype_std = reference_phenotype_std_26
+        elif row["Temperature"] == 30:
+            reference_phenotype_std = reference_phenotype_std_30
+        reference_phenotype = FitnessPhenotype(
+            graph_level="global",
+            label="smf",
+            label_error="smf_std",
+            fitness=1.0,
+            fitness_std=reference_phenotype_std,
+        )
+
+        reference = FitnessExperimentReference(
+            reference_genome=reference_genome,
+            reference_environment=reference_environment,
+            reference_phenotype=reference_phenotype,
+        )
+
+        experiment = FitnessExperiment(
+            genotype=genotype, environment=environment, phenotype=phenotype
+        )
+        return experiment, reference
+
+    def _process_data_table(self, df) -> pd.DataFrame:
+        print("Processing data table")
+        df_processed = df.copy()
+        query_systematic_name = df["Query Strain ID"].str.split("_", expand=True)[0]
+        array_systematic_name = df["Array Strain ID"].str.split("_", expand=True)[0]
+        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        df_processed["Query Systematic Name"] = query_systematic_name
+        df_processed["Array Systematic Name"] = array_systematic_name
+        df_processed["Temperature"] = Temperature
+        df_processed["Query Strain ID"] = df["Query Strain ID"].str.replace(
+            "_ts[qa]\d*", "_ts", regex=True
+        )
+        df_processed["Array Strain ID"] = df["Array Strain ID"].str.replace(
+            "_ts[qa]\d*", "_ts", regex=True
+        )
+        self._compute_phenotype_std(df_processed)
+        return df_processed
+
+    def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
+        log.info("Preprocess on raw data...")
+        # Function to extract gene name
+        def extract_systematic_name(x):
+            return x.apply(lambda y: y.split("_")[0])
+
+        # Extract gene names
+        all_data_df["Query Systematic Name"] = extract_systematic_name(
+            all_data_df["Query Strain ID"]
+        )
+        all_data_df["Array Systematic Name"] = extract_systematic_name(
+            all_data_df["Array Strain ID"]
+        )
+        Temperature = all_data_df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        all_data_df["Temperature"] = Temperature
+        all_data_df["Query Strain ID"] = all_data_df["Query Strain ID"].str.replace(
+            "_ts[qa]\d*", "_ts", regex=True
+        )
+        all_data_df["Array Strain ID"] = all_data_df["Array Strain ID"].str.replace(
+            "_ts[qa]\d*", "_ts", regex=True
+        )
+        return all_data_df
+
+    # New method to save preprocess configuration to a JSON file
+    def save_preprocess_config(self, preprocess):
+        if not osp.exists(self.preprocess_dir):
+            os.makedirs(self.preprocess_dir)
+        with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
+            json.dump(preprocess, f)
+
+    def load_preprocess_config(self):
+        config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
+
+        if osp.exists(config_path):
+            with open(config_path) as f:
+                config = json.load(f)
+            return config
+        else:
+            return None
+
+    def len(self) -> int:
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
+            length = txn.stat()["entries"]
+
+        # Must be closed for dataloader num_workers > 0
+        self.close_lmdb()
+
+        return length
+
+    def get(self, idx):
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
+            serialized_data = txn.get(f"{idx}".encode())
+            if serialized_data is None:
+                return None
+
+            # Deserialize the data
+            deserialized_data = pickle.loads(serialized_data)
+
+            # Create a PyTorch Geometric Data object and assign the deserialized data
+            data = Data()
+            data.serialized_data = deserialized_data
+
+            if self.transform:
+                data = self.transform(data)
+
+            return data
+
+    @staticmethod
+    def compute_gene_set(data_list):
+        computed_gene_set = GeneSet()
+        for data in data_list:
+            for genotype in data.genotype:
+                computed_gene_set.add(genotype["id"])
+        return computed_gene_set
+
+    # Reading from JSON and setting it to self._gene_set
+    @property
+    def gene_set(self):
+        try:
+            if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
+                with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
+                    self._gene_set = GeneSet(json.load(f))
+            elif self._gene_set is None:
+                raise ValueError(
+                    "gene_set not written during process. "
+                    "Please call compute_gene_set in process."
+                )
+            return self._gene_set
+        # CHECK can probably remove this
+        except json.JSONDecodeError:
+            raise ValueError("Invalid or empty JSON file found.")
+
+    @gene_set.setter
+    def gene_set(self, value):
+        if not value:
+            raise ValueError("Cannot set an empty or None value for gene_set")
+        with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
+            json.dump(list(sorted(value)), f, indent=0)
+        self._gene_set = value
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({len(self)})"
+
+
 if __name__ == "__main__":
-    dataset = NeoDmfCostanzo2016Dataset()
-    print(len(dataset))
-    print(json.dumps(dataset[0].model_dump(), indent=4))
+    dataset = DmfCostanzo2016Dataset(
+        subset_n=100, preprocess={"duplicate_resolution": "low_dmf_std"}
+    )
+    dataset[0]
+    # print(len(dataset))
+    # print(json.dumps(dataset[0].model_dump(), indent=4))
     # print(dataset.reference_index)
     # print(len(dataset.reference_index))
     # print(dataset.reference_index[0])

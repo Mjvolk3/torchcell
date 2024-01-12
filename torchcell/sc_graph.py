@@ -94,7 +94,7 @@ def read_raw_data(
     if trigenic:
         df_trigenic = pd.read_csv(
             r"data/Kuzmin2018/aao1729_Data_S1.tsv", sep="\t", encoding="utf-8"
-        )jjj
+        )
         df_names.append("df_trigenic")
         dfs.append(df_trigenic)
 

@@ -2,14 +2,14 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705028978074
+updated: 1705046561644
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.11
 
-- [ ] Add `Strain ID` so we can be sure alignment between `smf` and `dmf` the data.
+- [x] Add `Strain ID` so we can be sure alignment between `smf` and `dmf` the data. → Not doing this. Instead just adding all available data, had to build out more refined pydantic models to do this. [[Costanzo Smf and Dmf Whiteboard Recap|dendron://torchcell/torchcell.datamodels.ontology_pydantic#costanzo-smf-and-dmf-whiteboard-recap]]
 - [ ]
 
 ## 2024.01.09

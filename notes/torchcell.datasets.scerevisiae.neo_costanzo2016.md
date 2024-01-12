@@ -2,7 +2,7 @@
 id: 9p8raxm87m5eoy9c5u2az10
 title: Neo_costanzo2016
 desc: ''
-updated: 1704860977624
+updated: 1705034506195
 created: 1704437089340
 ---
 
@@ -358,4 +358,15 @@ class SmfCostanzo2016Dataset:
             rows.append(row)
 
         return pd.DataFrame(rows)
+```
+
+## Querying Problematic Alleles where Allele Names are Swapped in Query and Array
+
+These alleles have same temperature sensitive alleles but swapped in query and in array. 
+
+```python
+queried_df = df[(df["Query Strain ID"] == 'YGL113W_tsq1382') | (df["Array Strain ID"] == 'YGL113W_tsa1119')]
+duplicates_df = queried_df[queried_df.duplicated('combined_name', keep=False)]
+sorted_duplicates_df = duplicates_df.sort_values('combined_name')
+temperature_sorted_duplicates_df= sorted_duplicates_df[(sorted_duplicates_df['array_perturbation_type'] == "temperature sensitive") & (sorted_duplicates_df['query_perturbation_type'] == "temperature sensitive")]
 ```

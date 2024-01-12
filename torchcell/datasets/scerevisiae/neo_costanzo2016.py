@@ -22,7 +22,6 @@ import multiprocessing as mp
 # import matplotlib.pyplot as plt
 # import numpy as np
 import pandas as pd
-import msgpack
 
 # import polars as pl
 import torch
@@ -58,7 +57,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# import polars as pl
 import torch
 
 # from polars import DataFrame, col
@@ -97,6 +95,15 @@ from torchcell.datamodels import (
     DampPerturbation,
     TsAllelePerturbation,
     InterferenceGenotype,
+    KanMxDeletionPerturbation,
+    NatMxDeletionPerturbation,
+    SgaKanMxDeletionPerturbation,
+    SgaNatMxDeletionPerturbation,
+    SgdTsAllelePerturbation,
+    SgdDampPerturbation,
+    SuppressorAllelePerturbation,
+    SgdSuppressorAllelePerturbation,
+    SuppressorGenotype,
 )
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
@@ -227,9 +234,8 @@ class SmfCostanzo2016Dataset(Dataset):
                     "Or define a new root."
                 )
         # TODO If things run remove this... had to do with compute gene set
-        # self.env = None
-        super().__init__(root, transform, pre_transform)
         self.env = None
+        super().__init__(root, transform, pre_transform)
 
     @property
     def skip_process_file_exist(self):
@@ -287,81 +293,74 @@ class SmfCostanzo2016Dataset(Dataset):
     def process(self):
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
-
         df = self.preprocess_raw(df, self.preprocess)
-        print()
+        (
+            reference_phenotype_std_26,
+            reference_phenotype_std_30,
+        ) = self.compute_reference_phenotype_std(df)
 
-        ##############################3
-        reference_phenotype_std_26 = (
-            df_filtered["Single mutant fitness (26°) stddev"]
-        ).mean()
-        reference_phenotype_std_30 = (
-            df_filtered["Single mutant fitness (30°) stddev"]
-        ).mean()
-        # Process data for 26°C and 30°C
-        df_26 = df_filtered[
-            [
-                "Strain ID",
-                "Systematic gene name",
-                "Allele/Gene name",
-                "Single mutant fitness (26°)",
-                "Single mutant fitness (26°) stddev",
-            ]
-        ].dropna()
+        # Save preprocssed df - mainly for quick stats
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        experiments = []
-        references = []
+        print("Processing SMF Files...")
 
-        for _, row in df_26.iterrows():
-            experiment, reference = self.create_experiment(
-                row, 26, reference_phenotype_std_26, reference_phenotype_std_30
-            )
-            experiments.append(experiment)
-            references.append(reference)
+        # Initialize LMDB environment
+        env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            map_size=int(1e12),  # Adjust map_size as needed
+        )
 
-        df_30 = df_filtered[
-            [
-                "Strain ID",
-                "Systematic gene name",
-                "Allele/Gene name",
-                "Single mutant fitness (30°)",
-                "Single mutant fitness (30°) stddev",
-            ]
-        ].dropna()
+        with env.begin(write=True) as txn:
+            for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+                experiment, reference = self.create_experiment(
+                    row,
+                    reference_phenotype_std_26=reference_phenotype_std_26,
+                    reference_phenotype_std_30=reference_phenotype_std_30,
+                )
 
-        for _, row in df_30.iterrows():
-            experiment, reference = self.create_experiment(
-                row, 30, reference_phenotype_std_26, reference_phenotype_std_30
-            )
-            experiments.append(experiment)
-            references.append(reference)
+                # Serialize the Pydantic objects
+                serialized_data = pickle.dumps(
+                    {"experiment": experiment, "reference": reference}
+                )
+                txn.put(f"{index}".encode(), serialized_data)
 
-        experiments, references = self._remove_duplicates(experiments, references)
+        env.close()
+        self.gene_set = self.compute_gene_set()
 
-    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict | None = None
+    ) -> pd.DataFrame:
         df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
         # Determine perturbation type based on Strain_ID_suffix
         df["perturbation_type"] = df["Strain_ID_suffix"].apply(
             lambda x: "damp"
             if "damp" in x
-            else "temperature sensitive"
+            else "temperature_sensitive"
             if "tsa" in x or "tsq" in x
-            else "deletion"
-            if "dma" in x or "sn" in x or "S" in x or "A_S" in x
+            else "KanMX_deletion"
+            if "dma" in x
+            else "NatMX_deletion"
+            if "sn" in x  # or "S" in x or "A_S" in x
+            else "suppression_allele"
+            if "S" in x
             else "unknown"
         )
 
         # Filter out rows with '-supp' in "Allele/Gene name"
         # These are suppressor mutations and cannot be tracked in strain
-        df = df[~df["Allele/Gene name"].str.contains("-supp")]
+        # CHECK if we need this
+        # df = df[~df["Allele/Gene name"].str.contains("-supp")]
 
         # Filter out problematic temperature-sensitive alleles
-        df = df[~df["Allele/Gene name"].isin(TS_ALLELE_PROBLEMATIC)]
+        # CHECK if we need this
+        # df = df[~df["Allele/Gene name"].isin(TS_ALLELE_PROBLEMATIC)]
 
         # Create separate dataframes for the two temperatures
         df_26 = df[
             [
+                "Strain ID",
                 "Systematic gene name",
                 "Allele/Gene name",
                 "Single mutant fitness (26°)",
@@ -373,6 +372,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
         df_30 = df[
             [
+                "Strain ID",
                 "Systematic gene name",
                 "Allele/Gene name",
                 "Single mutant fitness (30°)",
@@ -408,39 +408,15 @@ class SmfCostanzo2016Dataset(Dataset):
         return combined_df
 
     @staticmethod
-    def _remove_duplicates(experiments, references):
-        unique_data = []
-        seen = set()
-
-        initial_count = len(experiments)
-        print(f"Initial number of experiments: {initial_count}")
-
-        for experiment, reference in zip(experiments, references):
-            # Serialize the experiment object to a dictionary
-            experiment_dict = experiment.model_dump()
-            reference_dict = reference.model_dump()
-
-            combined_dict = {**experiment_dict, **reference_dict}
-            # Convert dictionary to a JSON string for comparability
-            combined_json = json.dumps(combined_dict, sort_keys=True)
-
-            if combined_json not in seen:
-                seen.add(combined_json)
-                unique_data.append((experiment, reference))
-
-        experiments = [experiment for experiment, reference in unique_data]
-        references = [reference for experiment, reference in unique_data]
-
-        final_count = len(experiments)
-        duplicates_count = initial_count - final_count
-        print(f"Number of duplicates removed: {duplicates_count}")
-        print(f"Final number of unique experiments: {final_count}")
-
-        return experiments, references
+    def compute_reference_phenotype_std(df: pd.DataFrame):
+        mean_stds = df.groupby("Temperature")["Single mutant fitness stddev"].mean()
+        reference_phenotype_std_26 = mean_stds[26]
+        reference_phenotype_std_30 = mean_stds[30]
+        return reference_phenotype_std_26, reference_phenotype_std_30
 
     @staticmethod
     def create_experiment(
-        row, temperature, reference_phenotype_std_26, reference_phenotype_std_30
+        row, reference_phenotype_std_26, reference_phenotype_std_30
     ):
         # Common attributes for both temperatures
         reference_genome = ReferenceGenome(
@@ -448,35 +424,56 @@ class SmfCostanzo2016Dataset(Dataset):
         )
 
         # Deal with different types of perturbations
-        if "ts" in row["Strain ID"]:
+        if "temperature_sensitive" in row["perturbation_type"]:
             genotype = InterferenceGenotype(
-                perturbation=DampPerturbation(
+                perturbation=SgdTsAllelePerturbation(
                     systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
+                    strain_id=row["Strain ID"],
                 )
             )
-        elif "damp" in row["Strain ID"]:
+        elif "damp" in row["perturbation_type"]:
             genotype = InterferenceGenotype(
-                perturbation=DampPerturbation(
+                perturbation=SgdDampPerturbation(
                     systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
+                    strain_id=row["Strain ID"],
                 )
             )
-        else:
+        elif "KanMX_deletion" in row["perturbation_type"]:
             genotype = DeletionGenotype(
-                perturbation=DeletionPerturbation(
+                perturbation=SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Systematic gene name"],
                     perturbed_gene_name=row["Allele/Gene name"],
+                    strain_id=row["Strain ID"],
                 )
             )
+        elif "NatMX_deletion" in row["perturbation_type"]:
+            genotype = DeletionGenotype(
+                perturbation=SgaNatMxDeletionPerturbation(
+                    systematic_gene_name=row["Systematic gene name"],
+                    perturbed_gene_name=row["Allele/Gene name"],
+                    strain_id=row["Strain ID"],
+                )
+            )
+        elif "suppression_allele" in row["perturbation_type"]:
+            genotype = SuppressorGenotype(
+                perturbation=SgdSuppressorAllelePerturbation(
+                    systematic_gene_name=row["Systematic gene name"],
+                    perturbed_gene_name=row["Allele/Gene name"],
+                    strain_id=row["Strain ID"],
+                )
+            )
+            print()
+            
         environment = BaseEnvironment(
             media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(value=temperature),
+            temperature=Temperature(value=row["Temperature"]),
         )
         reference_environment = environment.model_copy()
         # Phenotype based on temperature
-        smf_key = f"Single mutant fitness ({temperature}°)"
-        smf_std_key = f"Single mutant fitness ({temperature}°) stddev"
+        smf_key = "Single mutant fitness"
+        smf_std_key = "Single mutant fitness"
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
@@ -485,9 +482,9 @@ class SmfCostanzo2016Dataset(Dataset):
             fitness_std=row[smf_std_key],
         )
 
-        if temperature == 26:
+        if row["Temperature"] == 26:
             reference_phenotype_std = reference_phenotype_std_26
-        elif temperature == 30:
+        elif row["Temperature"] == 30:
             reference_phenotype_std = reference_phenotype_std_30
         reference_phenotype = FitnessPhenotype(
             graph_level="global",
@@ -552,15 +549,9 @@ class SmfCostanzo2016Dataset(Dataset):
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_names(genotypes):
-        gene_names = []
-        for genotype in genotypes:
-            if hasattr(genotype, "perturbation") and hasattr(
-                genotype.perturbation, "systematic_gene_name"
-            ):
-                gene_name = genotype.perturbation.systematic_gene_name
-                gene_names.append(gene_name)
-        return gene_names
+    def extract_systematic_gene_name(genotype):
+        gene_name = genotype.perturbation.systematic_gene_name
+        return gene_name
 
     def compute_gene_set(self):
         gene_set = GeneSet()
@@ -574,11 +565,10 @@ class SmfCostanzo2016Dataset(Dataset):
                 deserialized_data = pickle.loads(value)
                 experiment = deserialized_data["experiment"]
 
-                extracted_gene_names = self.extract_systematic_gene_names(
+                extracted_gene_name = self.extract_systematic_gene_name(
                     experiment.genotype
                 )
-                for gene_name in extracted_gene_names:
-                    gene_set.add(gene_name)
+                gene_set.add(extracted_gene_name)
 
         self.close_lmdb()
         return gene_set
@@ -860,7 +850,7 @@ class DmfCostanzo2016Dataset(Dataset):
         )
         return experiment, reference
 
-    def preprocess_raw(self, all_data_df: pd.DataFrame, preprocess: dict | None = None):
+    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
         print("Preprocess on raw data...")
 
         # Function to extract gene name
@@ -868,21 +858,35 @@ class DmfCostanzo2016Dataset(Dataset):
             return x.apply(lambda y: y.split("_")[0])
 
         # Extract gene names
-        all_data_df["Query Systematic Name"] = extract_systematic_name(
-            all_data_df["Query Strain ID"]
+        df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
+        df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
+        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        df["Temperature"] = Temperature
+        # df["Query Strain ID"] = df["Query Strain ID"].str.replace(
+        #     "_ts[qa]\d*", "_ts", regex=True
+        # )
+        # df["Array Strain ID"] = df["Array Strain ID"].str.replace(
+        #     "_ts[qa]\d*", "_ts", regex=True
+        # )
+        df["query_perturbation_type"] = df["Query Strain ID"].apply(
+            lambda x: "damp"
+            if "damp" in x
+            else "temperature sensitive"
+            if "tsa" in x or "tsq" in x
+            else "deletion"
+            if "dma" in x or "sn" in x or "S" in x or "A_S" in x
+            else "unknown"
         )
-        all_data_df["Array Systematic Name"] = extract_systematic_name(
-            all_data_df["Array Strain ID"]
+        df["array_perturbation_type"] = df["Array Strain ID"].apply(
+            lambda x: "damp"
+            if "damp" in x
+            else "temperature sensitive"
+            if "tsa" in x or "tsq" in x
+            else "deletion"
+            if "dma" in x or "sn" in x or "S" in x or "A_S" in x
+            else "unknown"
         )
-        Temperature = all_data_df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
-        all_data_df["Temperature"] = Temperature
-        all_data_df["Query Strain ID"] = all_data_df["Query Strain ID"].str.replace(
-            "_ts[qa]\d*", "_ts", regex=True
-        )
-        all_data_df["Array Strain ID"] = all_data_df["Array Strain ID"].str.replace(
-            "_ts[qa]\d*", "_ts", regex=True
-        )
-        means = all_data_df.groupby("Temperature")[
+        means = df.groupby("Temperature")[
             "Double mutant fitness standard deviation"
         ].mean()
         # TODO remove TS_ALLELE_PROBLEMATIC
@@ -890,7 +894,23 @@ class DmfCostanzo2016Dataset(Dataset):
         # Extracting means for specific temperatures
         self.reference_phenotype_std_26 = means.get(26, None)
         self.reference_phenotype_std_30 = means.get(30, None)
-        return all_data_df
+
+        # Assuming df is your DataFrame
+        def create_combined_systematic_name(row):
+            names = sorted([row["Query Systematic Name"], row["Array Systematic Name"]])
+            return "_".join(names)
+
+        def create_combined_allele_name(row):
+            names = sorted([row["Query allele name"], row["Array allele name"]])
+            return "_".join(names)
+
+        df["combined_systematic_name"] = df.apply(
+            create_combined_systematic_name, axis=1
+        )
+
+        df["combined_allele_name"] = df.apply(create_combined_allele_name, axis=1)
+
+        return df
 
     # New method to save preprocess configuration to a JSON file
     def save_preprocess_config(self, preprocess):
@@ -997,10 +1017,10 @@ class DmfCostanzo2016Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    # dataset = DmfCostanzo2016Dataset(subset_n=100, preprocess=None)
+    # dataset = DmfCostanzo2016Dataset(subset_n=None, preprocess=None)
     # dataset[0]
     # print(len(dataset))
-    # # print(json.dumps(dataset[0].model_dump(), indent=4))
+    # print(json.dumps(dataset[0].model_dump(), indent=4))
     # # print(dataset.reference_index)
     # # print(len(dataset.reference_index))
     # # print(dataset.reference_index[0])
@@ -1011,4 +1031,7 @@ if __name__ == "__main__":
     # Single mutant fitness
     dataset = SmfCostanzo2016Dataset()
     print(len(dataset))
+    print(dataset[100]['experiment'])
+    serialized_data = dataset[100]['experiment'].model_dump()
+    print(FitnessExperiment.model_validate(serialized_data))
     print("done")

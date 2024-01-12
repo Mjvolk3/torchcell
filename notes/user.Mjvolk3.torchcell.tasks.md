@@ -2,16 +2,33 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1704580090416
+updated: 1705028978074
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.11
+
+- [ ] Add `Strain ID` so we can be sure alignment between `smf` and `dmf` the data.
+- [ ]
+
+## 2024.01.09
+
+- [x] Fix up the `Dmf` class adding `gene_set`, no `Data()`, fixing `preprocess`
+- [x] Compute the means on `Dmf` for different temperatures.
+- [x] Add a clean up dir method after the download happens to remove superfluous files 
+- 🔲 Convert the `Smf` class to look like the `Dmf` class. → `Array allele name` in `Dmf` has a `-supp1` suffix that seems → `-supp1` is for strains that have a suppression mutation. We should drop these because we have no way of tracking them. → I've hit on some troubling issues in harmonizing the data. I had an inkling before, but now it is obvious that sometimes you need the gestalt before you process individual datasets. Now that I see how all of the mutant fitness data must be processed to come together in the db, it is obvious that I wouldn't have been able to arrive at such a solution by atomistically processing each dataset on its own.
+- [ ] Correct the `Smf` adapter
+- [ ] Write `Dmf` adapter
+- [ ] Run query on Yeast9 genes and save json `(list[genes], fitness)` 
+
+## 2024.01.08
+
+- [x] Graphic for comparing key value querying vs graph db querying → ![](./assets/drawio/kv-iteration-vs-graph-db.drawio.png)
+
 ## 2024.01.06
 
 - [x] Add `dmf` data, try to keep datasets separate to reduce memory footprint → I now have a combination of the new method with pydantic data models and the old method using pytorch geometric `Dataset` with lmdb. This is a good solution and should allow for the usage of individual datasets and their addition to the neo4j database for more complicated multiplex datasets.
-- [ ]
-
 
 ## 2024.01.04
 

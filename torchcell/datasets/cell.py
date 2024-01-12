@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 import torch
 from attrs import define
-from pydantic import BaseModel, Extra, Field, ValidationError, validator
+from pydantic import BaseModel, Extra, Field, ValidationError, field_validator
 from sklearn import experimental
 from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
 from torch_geometric.data.separate import separate
@@ -60,11 +60,11 @@ log = logging.getLogger(__name__)
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
-    @validator("gene_set")
-    def validate_gene_set(cls, value):
-        if not isinstance(value, GeneSet):
-            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
-        return value
+    @field_validator("gene_set")
+    def validate_gene_set(cls, v):
+        if not isinstance(v, GeneSet):
+            raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
+        return v
 
 
 class CellDataset(Dataset):

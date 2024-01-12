@@ -35,7 +35,7 @@ class GenePerturbation(ModelStrict):
 
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
-    description: str = "Deletion via KANMX gene replacement"
+    description: str = "Deletion via KanMX or NatMX gene replacement"
     perturbation_type: str = Field(default="deletion", Literal=True)
 
 
@@ -43,6 +43,47 @@ class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
         description="Gene perturbation"
     )
+
+    # Important for disambiguating between single and multiple perturbations
+    # and perturbation types
+    @root_validator(pre=True)
+    def validate_perturbation(cls, values):
+        if "perturbation" in values:
+            perturbation_data = values["perturbation"]
+            validated_perturbations = cls._process_perturbation_data(perturbation_data)
+            values["perturbation"] = validated_perturbations
+        elif isinstance(values, list):
+            # Assuming values is a list of dictionaries, each with a 'perturbation' key
+            validated_perturbations = []
+            for item in values:
+                if "perturbation" in item:
+                    perturbation_data = item["perturbation"]
+                    validated_perturbation = cls._process_perturbation_data(
+                        perturbation_data
+                    )
+                    validated_perturbations.append(validated_perturbation)
+            return validated_perturbations
+        return values
+
+    @classmethod
+    def _process_perturbation_data(cls, perturbation_data):
+        if isinstance(perturbation_data, list):
+            return [cls._create_perturbation_from_dict(p) for p in perturbation_data]
+        elif isinstance(perturbation_data, dict):
+            return cls._create_perturbation_from_dict(perturbation_data)
+        return perturbation_data
+
+    @classmethod
+    def _create_perturbation_from_dict(cls, perturbation_dict):
+        pert_type = perturbation_dict.get("perturbation_type")
+        if pert_type == "deletion":
+            return DeletionPerturbation(**perturbation_dict)
+        elif pert_type == "damp":
+            return DampPerturbation(**perturbation_dict)
+        elif pert_type == "ts_allele":
+            return TsAllelePerturbation(**perturbation_dict)
+        # Handle other perturbation types as needed
+        return None
 
 
 class ExpressionRangeMultiplier(ModelStrict):
@@ -86,10 +127,10 @@ class Media(ModelStrict):
 
 
 class Temperature(BaseModel):
-    scalar: float
-    description: str = "Temperature in degrees Celsius."
+    value: float  # Renamed from scalar to value
+    unit: str = "Celsius"  # Simplified unit string
 
-    @field_validator("scalar")
+    @field_validator("value")  # Updated to reflect the new attribute name
     def check_temperature(cls, v):
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")

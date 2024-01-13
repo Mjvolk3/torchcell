@@ -14,7 +14,11 @@ dataformat.exe
 torchcell/models/pretrained_LLM/*
 
 # Data
-/data/
+/data/go/
+/data/scerevisiae/
+/data/sgd/
+/data/torchcell/
+/data/sgd.gaf
 wandb/
 models/checkpoints/
 

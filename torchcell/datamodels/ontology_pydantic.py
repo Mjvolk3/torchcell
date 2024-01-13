@@ -158,9 +158,16 @@ class TsAllelePerturbation(GenePerturbation, ModelStrict):
         "Temperature sensitive allele compromised by amino acid substitution."
     )
     # seq: str = "NOT IMPLEMENTED"
-    # TODO add specifics of allele
-    # [[2023.12.15|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231215]] Many of these are unknown.
     perturbation_type: str = "temperature_sensitive_allele"
+
+
+class AllelePerturbation(GenePerturbation, ModelStrict):
+    description: str = (
+        "Allele compromised by amino acid substitution without more generic"
+        "phenotypic information specified."
+    )
+    # seq: str = "NOT IMPLEMENTED"
+    perturbation_type: str = "allele"
 
 
 class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
@@ -183,6 +190,12 @@ class SgdTsAllelePerturbation(TsAllelePerturbation, ModelStrict):
     description: str = "Ts Allele Perturbation information specific to SGA experiments."
     strain_id: str = Field(description="'Strain ID' in raw data.")
     temperature_sensitive_allele_perturbation_type: str = "SGA"
+
+
+class SgdAllelePerturbation(GenePerturbation, ModelStrict):
+    description: str = "Ts Allele Perturbation information specific to SGA experiments."
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    allele_perturbation_type: str = "SGA"
 
 
 # Environment
@@ -285,13 +298,19 @@ class FitnessExperimentReference(ExperimentReference, ModelStrict):
 
 class FitnessExperiment(BaseExperiment):
     genotype: Union[
+        BaseGenotype,
         DeletionGenotype,
         InterferenceGenotype,
         SuppressorGenotype,
         List[DeletionGenotype],
         List[InterferenceGenotype],
         List[SuppressorGenotype],
-        List[Union[DeletionGenotype, InterferenceGenotype, SuppressorGenotype]],
+        List[BaseGenotype,],
+        List[
+            Union[
+                BaseGenotype, DeletionGenotype, InterferenceGenotype, SuppressorGenotype
+            ]
+        ],
     ]
     phenotype: FitnessPhenotype
 

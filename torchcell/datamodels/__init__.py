@@ -27,7 +27,9 @@ from .ontology_pydantic import (
     SgdDampPerturbation,
     SuppressorAllelePerturbation,
     SgdSuppressorAllelePerturbation,
-    SuppressorGenotype
+    SuppressorGenotype,
+    AllelePerturbation,
+    SgdAllelePerturbation
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
@@ -58,6 +60,8 @@ ontology_models = [
     "SuppressorAllelePerturbation",
     "SgdSuppressorAllelePerturbation",
     "SuppressorGenotype",
+    "AllelePerturbation",
+    "SgdAllelePerturbation"
 ]
 
 __all__ = core_models + ontology_models

@@ -18,12 +18,12 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Literal, Optional, Union
 import multiprocessing as mp
+import requests
 
 # import lmdb
 # import matplotlib.pyplot as plt
 # import numpy as np
 import pandas as pd
-import msgpack
 
 # import polars as pl
 import torch
@@ -87,6 +87,7 @@ from torchcell.datamodels import (
     Media,
     ModelStrict,
     ReferenceGenome,
+    BaseGenotype,
     Temperature,
     DeletionGenotype,
     DeletionPerturbation,
@@ -98,6 +99,17 @@ from torchcell.datamodels import (
     DampPerturbation,
     TsAllelePerturbation,
     InterferenceGenotype,
+    KanMxDeletionPerturbation,
+    NatMxDeletionPerturbation,
+    SgaKanMxDeletionPerturbation,
+    SgaNatMxDeletionPerturbation,
+    SgdTsAllelePerturbation,
+    SgdDampPerturbation,
+    SuppressorAllelePerturbation,
+    SgdSuppressorAllelePerturbation,
+    SuppressorGenotype,
+    AllelePerturbation,
+    SgdAllelePerturbation,
 )
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
@@ -106,19 +118,12 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-
-
-
-
-class SmfCostanzo2016Dataset(Dataset):
-    url = (
-        "https://www.science.org/doi/suppl/10.1126/"
-        "science.aao1729/suppl_file/aao1729_data_s1.tsv"
-    )
+class DmfKuzmin2018Dataset(Dataset):
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
 
     def __init__(
         self,
-        root: str = "data/torchcell/tmf_kuzmin2018",
+        root: str = "data/torchcell/dmf_kuzmin2018",
         subset_n: int = None,
         preprocess: dict | None = None,
         skip_process_file_exist: bool = False,
@@ -143,10 +148,8 @@ class SmfCostanzo2016Dataset(Dataset):
                     "Delete the processed and process dir for a new Dataset."
                     "Or define a new root."
                 )
-        # TODO If things run remove this... had to do with compute gene set
-        # self.env = None
-        super().__init__(root, transform, pre_transform)
         self.env = None
+        super().__init__(root, transform, pre_transform)
 
     @property
     def skip_process_file_exist(self):
@@ -154,7 +157,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
     @property
     def raw_file_names(self) -> str:
-        return "strain_ids_and_single_mutant_fitness.xlsx"
+        return "aao1729_data_s1.tsv"
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -165,16 +168,6 @@ class SmfCostanzo2016Dataset(Dataset):
         with zipfile.ZipFile(path, "r") as zip_ref:
             zip_ref.extractall(self.raw_dir)
         os.remove(path)
-
-        # Move the contents of the subdirectory to the parent raw directory
-        # sub_dir = os.path.join(
-        #     self.raw_dir,
-        #     "Data File S1. Raw genetic interaction datasets: Pair-wise interaction format",
-        # )
-        # for filename in os.listdir(sub_dir):
-        #     shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
-        # os.rmdir(sub_dir)
-     
 
     def _init_db(self):
         """Initialize the LMDB environment."""
@@ -198,64 +191,152 @@ class SmfCostanzo2016Dataset(Dataset):
         return self._df
 
     def process(self):
-       pass
+        print("Processing...")
+
+        df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
+
+        df = self.preprocess_raw(df, self.preprocess)
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
+
+        print("Processing Dmf Files...")
+
+        # Initialize LMDB environment
+        env = lmdb.open(
+            osp.join(self.processed_dir, "data.lmdb"),
+            map_size=int(1e12),  # Adjust map_size as needed
+        )
+
+        with env.begin(write=True) as txn:
+            for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+                experiment, reference = self.create_experiment(
+                    row, reference_phenotype_std=self.reference_phenotype_std
+                )
+
+                # Serialize the Pydantic objects
+                serialized_data = pickle.dumps(
+                    {"experiment": experiment, "reference": reference}
+                )
+                txn.put(f"{index}".encode(), serialized_data)
+
+        env.close()
+        self.gene_set = self.compute_gene_set()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
     ) -> pd.DataFrame:
-        pass
+        df[["Query strain ID_1", "Query strain ID_2"]] = df[
+            "Query strain ID"
+        ].str.split("+", expand=True)
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+        df["Query systematic name_1"] = df["Query strain ID_1"]
+        df["Query systematic name_2"] = df["Query strain ID_2"].str.split(
+            "_", expand=True
+        )[0]
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+        df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
+            0
+        ]
+        # Select doubles only
+        df = df[df["Combined mutant type"] == "digenic"].copy()
+
+        df["Query allele name no ho"] = (
+            df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
+        )
+        df["Query systematic name"] = df["Query strain ID"].str.split("_", expand=True)[
+            0
+        ]
+        df["Query systematic name no ho"] = (
+            df["Query systematic name"].str.replace("YDL227C", "").str.replace("+", "")
+        )
+
+        df["query_perturbation_type"] = df["Query allele name no ho"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["array_perturbation_type"] = df["Array strain ID"].apply(
+            lambda x: "temperature_sensitive"
+            if "tsa" in x
+            else "KanMX_deletion"
+            if "dma" in x
+            else "unknown"
+        )
+        self.reference_phenotype_std = df[
+            "Combined mutant fitness standard deviation"
+        ].mean()
+        return df
 
     @staticmethod
-    def create_experiment(
-        row, temperature, reference_phenotype_std_26, reference_phenotype_std_30
-    ):
+    def create_experiment(row, reference_phenotype_std):
         # Common attributes for both temperatures
         reference_genome = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
+        # genotype
+        genotype = []
+        # Query...
+        if "KanMX_deletion" in row["query_perturbation_type"]:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
+                    )
+                )
+            )
+        elif "allele" in row["query_perturbation_type"]:
+            genotype.append(
+                BaseGenotype(
+                    perturbation=SgdAllelePerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
+                    )
+                )
+            )
 
-        # Deal with different types of perturbations
-        if "ts" in row["Strain ID"]:
-            genotype = InterferenceGenotype(
-                perturbation=DampPerturbation(
-                    systematic_gene_name=row["Systematic gene name"],
-                    perturbed_gene_name=row["Allele/Gene name"],
+        # Array - only array has ts
+        if "temperature_sensitive" in row["array_perturbation_type"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=SgdTsAllelePerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
+                    )
                 )
             )
-        elif "damp" in row["Strain ID"]:
-            genotype = InterferenceGenotype(
-                perturbation=DampPerturbation(
-                    systematic_gene_name=row["Systematic gene name"],
-                    perturbed_gene_name=row["Allele/Gene name"],
+        elif "KanMX_deletion" in row["array_perturbation_type"]:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
+                    )
                 )
             )
-        else:
-            genotype = DeletionGenotype(
-                perturbation=DeletionPerturbation(
-                    systematic_gene_name=row["Systematic gene name"],
-                    perturbed_gene_name=row["Allele/Gene name"],
-                )
-            )
+
+        # genotype
         environment = BaseEnvironment(
-            media=Media(name="YEPD", state="solid"),
-            temperature=Temperature(value=temperature),
+            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         reference_environment = environment.model_copy()
         # Phenotype based on temperature
-        smf_key = f"Single mutant fitness ({temperature}°)"
-        smf_std_key = f"Single mutant fitness ({temperature}°) stddev"
+        dmf_key = "Combined mutant fitness"
+        dmf_std_key = "Combined mutant fitness standard deviation"
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
-            fitness=row[smf_key],
-            fitness_std=row[smf_std_key],
+            fitness=row[dmf_key],
+            fitness_std=row[dmf_std_key],
         )
 
-        if temperature == 26:
-            reference_phenotype_std = reference_phenotype_std_26
-        elif temperature == 30:
-            reference_phenotype_std = reference_phenotype_std_30
         reference_phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
@@ -353,19 +434,15 @@ class SmfCostanzo2016Dataset(Dataset):
     # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
-        try:
-            if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
-                with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
-                    self._gene_set = GeneSet(json.load(f))
-            elif self._gene_set is None:
-                raise ValueError(
-                    "gene_set not written during process. "
-                    "Please call compute_gene_set in process."
-                )
-            return self._gene_set
-        # CHECK can probably remove this
-        except json.JSONDecodeError:
-            raise ValueError("Invalid or empty JSON file found.")
+        if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
+            with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
+                self._gene_set = GeneSet(json.load(f))
+        elif self._gene_set is None:
+            raise ValueError(
+                "gene_set not written during process. "
+                "Please call compute_gene_set in process."
+            )
+        return self._gene_set
 
     @gene_set.setter
     def gene_set(self, value):
@@ -377,3 +454,10 @@ class SmfCostanzo2016Dataset(Dataset):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
+
+
+if __name__ == "__main__":
+    dataset = DmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    print()

@@ -2,23 +2,26 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705285985830
+updated: 1705359994020
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
-## 2024.01.14
+## 2024.01.15
 
-- [x] Take notes on duplicate array-query alleles → [[We Did Away with the Notion of Duplicate Query-Array Genes|dendron://torchcell/torchcell.datasets.scerevisiae.neo_costanzo2016#we-did-away-with-the-notion-of-duplicate-query-array-genes]]
-- [x] Consider adding `ExperimentReferenceIndex` - might help in Biocypher
-- [x] Add `ExperimentReferenceIndex` property to `SmfCostanzo`, this helps with the uploading data to the knowledge graph
-- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run overnight
+- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run overnight → 
 - [ ] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
 - [ ] Write the `Smf Costanzo` Adapter
 - [ ] Write the `Smf Kuzmin` Adapter
 - [ ] Write the `Dmf Kuzmin` Adapter
 - [ ] Write the `Tmf Kuzmin` Adapter
 - [ ] Write the `Dmf Costanzo` Adapter
+
+## 2024.01.14
+
+- [x] Take notes on duplicate array-query alleles → [[We Did Away with the Notion of Duplicate Query-Array Genes|dendron://torchcell/torchcell.datasets.scerevisiae.neo_costanzo2016#we-did-away-with-the-notion-of-duplicate-query-array-genes]]
+- [x] Consider adding `ExperimentReferenceIndex` - might help in Biocypher
+- [x] Add `ExperimentReferenceIndex` property to `SmfCostanzo`, this helps with the uploading data to the knowledge graph
 
 
 ## 2024.01.13

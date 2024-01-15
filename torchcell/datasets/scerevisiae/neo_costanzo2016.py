@@ -645,6 +645,7 @@ class DmfCostanzo2016Dataset(Dataset):
                     "Or define a new root."
                 )
         self.env = None
+        self._experiment_reference_index = None
         super().__init__(root, transform, pre_transform)
         # This was here before - not sure if it has something to do with gpu
         # self.env = None
@@ -1068,15 +1069,40 @@ class DmfCostanzo2016Dataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
+            with open(index_file_path, "w") as file:
+                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+                json.dump(
+                    [eri.dict() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        return self._experiment_reference_index
+    
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
 
 
 if __name__ == "__main__":
-    # dataset = DmfCostanzo2016Dataset(subset_n=None, preprocess=None)
-    # dataset[0]
-    # # Usage example
-    # print(len(dataset))
+    dataset = DmfCostanzo2016Dataset(preprocess=None)
+    dataset[0]
+    # Usage example
+    print(len(dataset))
     # print(json.dumps(dataset[0].model_dump(), indent=4))
     # print(dataset.reference_index)
     # # print(len(dataset.reference_index))
@@ -1086,9 +1112,9 @@ if __name__ == "__main__":
     # print(FitnessExperiment(**serialized_data))
     ######
     # Single mutant fitness
-    dataset = SmfCostanzo2016Dataset()
-    experiment_indices = compute_experiment_reference_index(dataset)
-    dataset.experiment_reference_index
+    # dataset = SmfCostanzo2016Dataset()
+    # experiment_indices = compute_experiment_reference_index(dataset)
+    # dataset.experiment_reference_index
     print(len(dataset))
     # print(dataset[100]['experiment'])
     # serialized_data = dataset[100]['experiment'].model_dump()

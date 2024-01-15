@@ -2,7 +2,7 @@
 id: 9p8raxm87m5eoy9c5u2az10
 title: Neo_costanzo2016
 desc: ''
-updated: 1705034506195
+updated: 1705284804533
 created: 1704437089340
 ---
 
@@ -369,4 +369,58 @@ queried_df = df[(df["Query Strain ID"] == 'YGL113W_tsq1382') | (df["Array Strain
 duplicates_df = queried_df[queried_df.duplicated('combined_name', keep=False)]
 sorted_duplicates_df = duplicates_df.sort_values('combined_name')
 temperature_sorted_duplicates_df= sorted_duplicates_df[(sorted_duplicates_df['array_perturbation_type'] == "temperature sensitive") & (sorted_duplicates_df['query_perturbation_type'] == "temperature sensitive")]
+```
+
+
+## We Did Away with the Notion of Duplicate Query-Array Genes 
+
+```python
+# These are the alleles that show in both query and array
+# They have very different fitness values depending on query or array
+# Since they cannot be swapped, order matters, and so we remove them
+TS_ALLELE_PROBLEMATIC = {
+    "srv2-ts",
+    "apc2-8",
+    "frq1-1",
+    "act1-3",
+    "sgv1-23",
+    "dam1-9",
+    "dad1-5005",
+    "cdc11-2",
+    "msl5-5001",
+    "sup35-td",
+    "emg1-1",
+    "cdc20-1",
+    "gus1-5001",
+    "nse4-ts2",
+    "rpg1-1",
+    "mvd1-1296",
+    "qri1-5001",
+    "prp18-ts",
+    "tfc8-5001",
+    "taf12-9",
+    "rpt2-rf",
+    "ipl1-1",
+    "duo1-2",
+    "med6-ts",
+    "rna14-5001",
+    "cab5-1",
+    "prp4-1",
+    "nus1-5001",
+    "yju2-5001",
+    "tbf1-5001",
+    "sec12-4",
+    "cet1-15",
+    "cdc47-ts",
+    "ame1-4",
+    "rnt1-ts",
+    "sld3-5001",
+    "lcb2-16",
+    "ret2-1",
+    "phs1-1",
+    "cdc60-ts",
+    "sec39-5001",
+    "emg1-5001",
+    "sec39-1",
+}
 ```

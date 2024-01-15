@@ -74,6 +74,9 @@ from torchcell.datamodels import ModelStrict
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
 
+
+import hashlib
+import json
 from torchcell.data import Dataset
 from torchcell.datamodels import (
     BaseEnvironment,
@@ -150,54 +153,50 @@ class ReferenceIndex(ModelStrict):
         return v
 
 
-# These are the alleles that show in both query and array
-# They have very different fitness values depending on query or array
-# Since they cannot be swapped, order matters, and so we remove them
-TS_ALLELE_PROBLEMATIC = {
-    "srv2-ts",
-    "apc2-8",
-    "frq1-1",
-    "act1-3",
-    "sgv1-23",
-    "dam1-9",
-    "dad1-5005",
-    "cdc11-2",
-    "msl5-5001",
-    "sup35-td",
-    "emg1-1",
-    "cdc20-1",
-    "gus1-5001",
-    "nse4-ts2",
-    "rpg1-1",
-    "mvd1-1296",
-    "qri1-5001",
-    "prp18-ts",
-    "tfc8-5001",
-    "taf12-9",
-    "rpt2-rf",
-    "ipl1-1",
-    "duo1-2",
-    "med6-ts",
-    "rna14-5001",
-    "cab5-1",
-    "prp4-1",
-    "nus1-5001",
-    "yju2-5001",
-    "tbf1-5001",
-    "sec12-4",
-    "cet1-15",
-    "cdc47-ts",
-    "ame1-4",
-    "rnt1-ts",
-    "sld3-5001",
-    "lcb2-16",
-    "ret2-1",
-    "phs1-1",
-    "cdc60-ts",
-    "sec39-5001",
-    "emg1-5001",
-    "sec39-1",
-}
+def serialize_for_hashing(obj) -> str:
+    """
+    Serialize a Pydantic object for hashing.
+    """
+    return json.dumps(obj.dict(), sort_keys=True)
+
+
+def compute_md5_hash(content: str) -> str:
+    """
+    Compute the MD5 hash of a string.
+    """
+    return hashlib.md5(content.encode()).hexdigest()
+
+
+def compute_experiment_reference_index(
+    dataset: Dataset,
+) -> list[ExperimentReferenceIndex]:
+    # Hashes for each reference
+    print("Computing hashes...")
+    reference_hashes = [
+        compute_md5_hash(serialize_for_hashing(data["reference"]))
+        for data in tqdm(dataset)
+    ]
+
+    # Identify unique hashes
+    unique_hashes = set(reference_hashes)
+
+    # Initialize ExperimentReferenceIndex list
+    reference_indices = []
+
+    print("Finding unique references...")
+    for unique_hash in tqdm(unique_hashes):
+        # Create a boolean list where True indicates the presence of the unique reference
+        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
+
+        # Find the corresponding reference object for the unique hash
+        ref_index = reference_hashes.index(unique_hash)
+        unique_ref = dataset[ref_index]["reference"]
+
+        # Create ExperimentReferenceIndex object
+        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
+        reference_indices.append(exp_ref_index)
+
+    return reference_indices
 
 
 class SmfCostanzo2016Dataset(Dataset):
@@ -235,6 +234,7 @@ class SmfCostanzo2016Dataset(Dataset):
                     "Or define a new root."
                 )
         self.env = None
+        self._experiment_reference_index = None
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -581,6 +581,31 @@ class SmfCostanzo2016Dataset(Dataset):
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
+
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
+            with open(index_file_path, "w") as file:
+                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+                json.dump(
+                    [eri.dict() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        return self._experiment_reference_index
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
@@ -1048,9 +1073,10 @@ class DmfCostanzo2016Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = DmfCostanzo2016Dataset(subset_n=None, preprocess=None)
-    dataset[0]
-    print(len(dataset))
+    # dataset = DmfCostanzo2016Dataset(subset_n=None, preprocess=None)
+    # dataset[0]
+    # # Usage example
+    # print(len(dataset))
     # print(json.dumps(dataset[0].model_dump(), indent=4))
     # print(dataset.reference_index)
     # # print(len(dataset.reference_index))
@@ -1060,9 +1086,10 @@ if __name__ == "__main__":
     # print(FitnessExperiment(**serialized_data))
     ######
     # Single mutant fitness
-    # dataset = SmfCostanzo2016Dataset()
-    # print(dataset)
-    # print(len(dataset))
+    dataset = SmfCostanzo2016Dataset()
+    experiment_indices = compute_experiment_reference_index(dataset)
+    dataset.experiment_reference_index
+    print(len(dataset))
     # print(dataset[100]['experiment'])
     # serialized_data = dataset[100]['experiment'].model_dump()
     # print(FitnessExperiment.model_validate(serialized_data))

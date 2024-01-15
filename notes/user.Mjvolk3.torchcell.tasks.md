@@ -2,13 +2,35 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705133811620
+updated: 1705285985830
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.14
+
+- [x] Take notes on duplicate array-query alleles → [[We Did Away with the Notion of Duplicate Query-Array Genes|dendron://torchcell/torchcell.datasets.scerevisiae.neo_costanzo2016#we-did-away-with-the-notion-of-duplicate-query-array-genes]]
+- [x] Consider adding `ExperimentReferenceIndex` - might help in Biocypher
+- [x] Add `ExperimentReferenceIndex` property to `SmfCostanzo`, this helps with the uploading data to the knowledge graph
+- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run overnight
+- [ ] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
+- [ ] Write the `Smf Costanzo` Adapter
+- [ ] Write the `Smf Kuzmin` Adapter
+- [ ] Write the `Dmf Kuzmin` Adapter
+- [ ] Write the `Tmf Kuzmin` Adapter
+- [ ] Write the `Dmf Costanzo` Adapter
+
+
+## 2024.01.13
+
 - [x] `Dmf` Kuzmin
-- [ ] `Tmf` Kuzmin
+- [x] `Smf` Kuzmin → Processing is a bit tricky since the table is a bit wack. We have no standard deviation for measured mutant fitness so I put nan.
+- [x] `Dmf` revise fitness adding double mutant fitness from the `trigenic` rows
+- [x] `Tmf` Kuzmin → `Dmf` not done yet, there are double mutants within the trigenic rows too. This brings up the larger issue of recording the fitness values of lower order combinations. I looked to see if the the single mutant fitness was the same as recorded in Costanzo to see if they just used the same values but it appears they remeasured it... Implementing a `Smf`. 
+- 🔲 `Costanzo ggi` double mutant interaction
+- 🔲 `Kuzmin ggi` double mutant interaction
+- 🔲 `Kuzmin ggi` triple mutant interaction
+- 🔲 Consider adding `ExperimentReferenceIndex` - might help in Biocypher
 
 ## 2024.01.12
 

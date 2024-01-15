@@ -2,12 +2,12 @@
 id: dxhoxruso0jc7offn2jytqh
 title: Kuzmin2018
 desc: ''
-updated: 1705128026103
+updated: 1705136422447
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
 
-- It exists! This dataset is not just trigenic mutants, it has over 400,000 double mutants. But are they really? And that's where the trouble begins.
+- It exists! This dataset is not just trigenic mutants, it has over 400,000 double mutants. But are they really? And that's where the trouble begins. Technically these are triple mutants but since the ho deletion in considered inert... or something like that, the triple mutants with one ho deletion are considered double mutants.
 - One reference temperature as no temperature column data
 
 
@@ -37,7 +37,7 @@ array(['PRE7-ph', 'sec31-1', 'brl1-3231', 'sam35-2', 'cdc23-1',
 
 ## All Double Mutants Contain the ho deletion
 
-This is where we must face the ideal vs reality and choose. In the mood of a German idealist. 
+This is where we must face the ideal vs reality and choose. In the mood of a German idealist. While it betrays reality a bit to represent the triple deletions as double deletions, and the quadruple deletions and triple deletions as they are so labeled, it goes with the understanding and representation presented by the authors. We trust that the authors know the important points to emphasize, basically a deferral to experts justification for our idealism.
 
 ```python
 (df['Query allele name'].str.contains("hoΔ")).sum()
@@ -48,3 +48,4 @@ len(df)
 
 Annoyingly the `hoΔ` can be on the left hand or right hand side of the `+`.
 
+## Single Mutant of Query and arra

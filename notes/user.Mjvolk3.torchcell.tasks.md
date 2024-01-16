@@ -2,15 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705359994020
+updated: 1705363932872
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.15
 
-- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run overnight → 
-- [ ] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
+- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run during book club
+- [x] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
+- [x] Reorganize datasets. → [[Costanzo2016 Notes on Design|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#costanzo2016-notes-on-design]] 
 - [ ] Write the `Smf Costanzo` Adapter
 - [ ] Write the `Smf Kuzmin` Adapter
 - [ ] Write the `Dmf Kuzmin` Adapter

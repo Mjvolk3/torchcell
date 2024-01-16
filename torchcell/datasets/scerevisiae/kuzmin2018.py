@@ -3,110 +3,40 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2018.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2018.py
 
-import functools
 import json
 import logging
 import os
 import os.path as osp
 import pickle
-import random
-import re
-import shutil
 import zipfile
-from abc import ABC, abstractproperty
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Literal, Optional, Union
-import multiprocessing as mp
-import requests
 
-import torch
-import pandas as pd
-import torch
-from attrs import define, field
-
-# from polars import DataFrame, col
-from pydantic import Field, field_validator
-from torch_geometric.data import (
-    Data,
-    DataLoader,
-    InMemoryDataset,
-    download_url,
-    extract_zip,
-)
-from tqdm import tqdm
-import json
-import logging
-import os
-import os.path as osp
-import pickle
-import random
-import re
-import shutil
-import zipfile
-from abc import ABC, abstractproperty
-from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Optional
-
-import h5py
 import lmdb
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import torch
-
-# from polars import DataFrame, col
-from torch_geometric.data import (
-    Data,
-    DataLoader,
-    InMemoryDataset,
-    download_url,
-    extract_zip,
-)
+from torch_geometric.data import download_url
 from tqdm import tqdm
 
-from torchcell.data import Dataset
-from torchcell.datamodels import ModelStrict
-from torchcell.prof import prof, prof_input
-from torchcell.sequence import GeneSet
-
-from torchcell.data import Dataset
+from torchcell.data import (
+    Dataset,
+    ExperimentReferenceIndex,
+    compute_experiment_reference_index,
+)
 from torchcell.datamodels import (
     BaseEnvironment,
     BaseGenotype,
-    BasePhenotype,
-    BaseExperiment,
-    GenePerturbation,
-    Media,
-    ModelStrict,
-    ReferenceGenome,
-    BaseGenotype,
-    Temperature,
     DeletionGenotype,
-    DeletionPerturbation,
-    FitnessPhenotype,
-    FitnessExperimentReference,
-    ExperimentReference,
     FitnessExperiment,
-    ExperimentReference,
-    DampPerturbation,
-    TsAllelePerturbation,
+    FitnessExperimentReference,
+    FitnessPhenotype,
     InterferenceGenotype,
-    KanMxDeletionPerturbation,
-    NatMxDeletionPerturbation,
+    Media,
+    ReferenceGenome,
     SgaKanMxDeletionPerturbation,
-    SgaNatMxDeletionPerturbation,
-    SgdTsAllelePerturbation,
-    SgdDampPerturbation,
-    SuppressorAllelePerturbation,
-    SgdSuppressorAllelePerturbation,
-    SuppressorGenotype,
-    AllelePerturbation,
     SgdAllelePerturbation,
+    SgdTsAllelePerturbation,
+    Temperature,
 )
-from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
@@ -144,6 +74,7 @@ class SmfKuzmin2018Dataset(Dataset):
                     "Or define a new root."
                 )
         self.env = None
+        self._experiment_reference_index = None
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -467,6 +398,31 @@ class SmfKuzmin2018Dataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
+            with open(index_file_path, "w") as file:
+                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+                json.dump(
+                    [eri.dict() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        return self._experiment_reference_index
+
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
 
@@ -502,6 +458,7 @@ class DmfKuzmin2018Dataset(Dataset):
                     "Or define a new root."
                 )
         self.env = None
+        self._experiment_reference_index = None
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -859,6 +816,31 @@ class DmfKuzmin2018Dataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
+            with open(index_file_path, "w") as file:
+                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+                json.dump(
+                    [eri.dict() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        return self._experiment_reference_index
+
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
 
@@ -894,6 +876,7 @@ class TmfKuzmin2018Dataset(Dataset):
                     "Or define a new root."
                 )
         self.env = None
+        self._experiment_reference_index = None
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -1221,6 +1204,31 @@ class TmfKuzmin2018Dataset(Dataset):
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
+
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
+            with open(index_file_path, "w") as file:
+                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+                json.dump(
+                    [eri.dict() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        return self._experiment_reference_index
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"

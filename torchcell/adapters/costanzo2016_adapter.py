@@ -1,3 +1,8 @@
+# torchcell/adapters/neo_costanzo2016_adapter.py
+# [[torchcell.adapters.neo_costanzo2016_adapter]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/neo_costanzo2016_adapter.py
+# Test file: tests/torchcell/adapters/test_neo_costanzo2016_adapter.py
+
 import hashlib
 import random
 import string
@@ -11,17 +16,17 @@ from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import logger
 from typing import Generator, Set
 
-from torchcell.datasets.scerevisiae import NeoSmfCostanzo2016Dataset
+from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
 
 logger.debug(f"Loading module {__name__}.")
 
-dataset = NeoSmfCostanzo2016Dataset()
+dataset = SmfCostanzo2016Dataset()
 
 
 class CostanzoSmfAdapter:
     def __init__(
         self,
-        dataset: NeoSmfCostanzo2016Dataset,
+        dataset: SmfCostanzo2016Dataset,
         node_types: Optional[list] = None,
         node_fields: Optional[list] = None,
         edge_types: Optional[list] = None,
@@ -607,7 +612,7 @@ class CostanzoSmfAdapter:
 
 
 if __name__ == "__main__":
-    dataset = NeoSmfCostanzo2016Dataset()
+    dataset = SmfCostanzo2016Dataset()
     adapter = CostanzoSmfAdapter(dataset=dataset)
     [i for i in adapter.get_nodes()]
     [i for i in adapter.get_edges()]

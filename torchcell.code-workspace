@@ -74,11 +74,11 @@
             "MD026": false,
             "MD033": false,
             "MD045": false,
-            "MD050": false,
+            "MD050": false
         },
         "[markdown]": {
             "editor.codeActionsOnSave": {
-                "source.fixAll.markdownlint": true
+                "source.fixAll.markdownlint": "explicit"
             }
         },
         "python.testing.pytestArgs": [
@@ -117,34 +117,6 @@
     "tasks": {
         "version": "2.0.0",
         "tasks": [
-            // Black
-            {
-                "label": "black: file",
-                "type": "shell",
-                "command": "black",
-                "args": [
-                    "${file}"
-                ],
-                "problemMatcher": [],
-                "group": {
-                    "kind": "build",
-                    "isDefault": true
-                }
-            },
-            // isort
-            {
-                "label": "Sort Python Imports",
-                "type": "shell",
-                "command": "isort",
-                "args": [
-                    "${file}"
-                ],
-                "problemMatcher": [],
-                "group": {
-                    "kind": "build",
-                    "isDefault": true
-                }
-            },
             // Publish
             {
                 "label": "Paper: compile",
@@ -214,6 +186,37 @@
                 "command": "bash notes/assets/scripts/notability_sync.sh",
                 "problemMatcher": []
             },
+            // Black
+            {
+                "label": "black: file",
+                "type": "shell",
+                "command": "black",
+                "args": [
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
+            // autoflake
+            {
+                "label": "autoflake: clean imports",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/autoflake",
+                "args": [
+                    "--remove-all-unused-imports",
+                    "--remove-duplicate-keys",
+                    "--in-place",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
             // mypy
             {
                 "label": "mypy: file",
@@ -240,9 +243,9 @@
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
                 "problemMatcher": [],
                 "presentation": {
-                    "reveal": "never",
+                    "reveal": "always",
                     "panel": "shared",
-                    "close": true
+                    "close": false
                 }
             },
             //TC
@@ -391,7 +394,7 @@
                 "cwd": "${workspaceFolder:torchcell}",
                 "subProcess": true,
                 "pythonArgs": ["-Xfrozen_modules=off"],
-                "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"}
+                "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"},
             },
             {
                 "name": "Python: yeast8",

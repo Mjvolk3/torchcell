@@ -2,16 +2,24 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705363932872
+updated: 1705482675678
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.17
+
+- [x] Write the `Smf Costanzo` Adapter → First pass and it looks good, haven't done thorough check but did a lot of renaming.
+- [x] Look into integrating the `Biocypher` functionality more directly with `TC`. → Set @Sebastian-Lobentanzer ... for now will keep the config in the config dir as I think the software looks for `yaml` files in root and config.
+- [x] Run `DmfCostanzo` to update the dataset
+- [ ] Add perturbations to the knowledge graph.
+- [ ] Build out testing for individual datasets. The tests should not allow graphs with duplicates to pass. Need to intercept the `Biocypher` logging for this. Consider just copying something like `tc_create_knowledge_graph.py` for this.
+ 
 ## 2024.01.15
 
-- [ ] Add `ExperimentReferenceIndex` property to `DmfCostanzo`, run during book club
+- [x] Add `ExperimentReferenceIndex` property to `DmfCostanzo`
 - [x] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
-- [x] Reorganize datasets. → [[Costanzo2016 Notes on Design|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#costanzo2016-notes-on-design]] 
+- [x] Reorganize datasets for preparation of adapters → [[Costanzo2016 Notes on Design|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#costanzo2016-notes-on-design]] 
 - [ ] Write the `Smf Costanzo` Adapter
 - [ ] Write the `Smf Kuzmin` Adapter
 - [ ] Write the `Dmf Kuzmin` Adapter

@@ -10,7 +10,8 @@ import pickle
 import shutil
 import zipfile
 from collections.abc import Callable
-
+import numpy as np
+import torch
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
@@ -367,18 +368,47 @@ class SmfCostanzo2016Dataset(Dataset):
 
         return length
 
+    # def get(self, idx):
+    #     if self.env is None:
+    #         self._init_db()
+
+    #     with self.env.begin() as txn:
+    #         serialized_data = txn.get(f"{idx}".encode())
+    #         if serialized_data is None:
+    #             return None
+
+    #         # Deserialize the data and return it directly
+    #         deserialized_data = pickle.loads(serialized_data)
+
+    #         return deserialized_data
+    
     def get(self, idx):
         if self.env is None:
             self._init_db()
 
+        # Handling boolean index tensors or numpy arrays
+        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+            if isinstance(idx, list):
+                idx = np.array(idx)
+            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+                idx = np.where(idx)[0]
+            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
+                idx = idx.nonzero(as_tuple=False).squeeze(1)
+
+        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
+            # If idx is a list/array/tensor of indices, return a list of data objects
+            return [self.get_single_item(i.item()) for i in idx]
+        else:
+            # Single item retrieval
+            return self.get_single_item(idx)
+
+    def get_single_item(self, idx):
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
-            # Deserialize the data and return it directly
             deserialized_data = pickle.loads(serialized_data)
-
             return deserialized_data
 
     @staticmethod

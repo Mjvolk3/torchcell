@@ -1,3 +1,4 @@
+# Nodes
 dataset:
     represented_as: node
 
@@ -72,8 +73,8 @@ temperature:
     is_a: environmental exposure
     represented_as: node
     properties:
-        scalar: float
-        description: str
+        value: float
+        unit: str
         serialized_data: str 
 
 phenotype:
@@ -87,7 +88,7 @@ phenotype:
         fitness_std: float 
         serialized_data: str
 
-# relationships
+# RELATIONSHIPS
 
 # want to now add this one
 genotype member of:

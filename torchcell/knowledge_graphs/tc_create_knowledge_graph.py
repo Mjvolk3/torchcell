@@ -1,12 +1,12 @@
 from biocypher import BioCypher, Resource
 from torchcell.adapters import CostanzoSmfAdapter
-from torchcell.datasets.scerevisiae import NeoSmfCostanzo2016Dataset
+from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
 
 bc = BioCypher()
 
 RUN_OPTIONAL_STEPS = False
 
-dataset = NeoSmfCostanzo2016Dataset()
+dataset = SmfCostanzo2016Dataset()
 adapter = CostanzoSmfAdapter(dataset=dataset)
 
 if RUN_OPTIONAL_STEPS:

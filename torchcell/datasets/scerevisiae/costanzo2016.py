@@ -381,7 +381,7 @@ class SmfCostanzo2016Dataset(Dataset):
     #         deserialized_data = pickle.loads(serialized_data)
 
     #         return deserialized_data
-    
+
     def get(self, idx):
         if self.env is None:
             self._init_db()
@@ -881,14 +881,29 @@ class DmfCostanzo2016Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
+        # Handling boolean index tensors or numpy arrays
+        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+            if isinstance(idx, list):
+                idx = np.array(idx)
+            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+                idx = np.where(idx)[0]
+            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
+                idx = idx.nonzero(as_tuple=False).squeeze(1)
+
+        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
+            # If idx is a list/array/tensor of indices, return a list of data objects
+            return [self.get_single_item(i.item()) for i in idx]
+        else:
+            # Single item retrieval
+            return self.get_single_item(idx)
+
+    def get_single_item(self, idx):
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
-            # Deserialize the data and return it directly
             deserialized_data = pickle.loads(serialized_data)
-
             return deserialized_data
 
     @staticmethod
@@ -974,10 +989,10 @@ class DmfCostanzo2016Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = DmfCostanzo2016Dataset(preprocess=None)
-    dataset[0]
+    # dataset = DmfCostanzo2016Dataset(preprocess=None)
+    # dataset[0]
     # Usage example
-    print(len(dataset))
+    # print(len(dataset))
     # print(json.dumps(dataset[0].model_dump(), indent=4))
     # print(dataset.reference_index)
     # # print(len(dataset.reference_index))
@@ -987,9 +1002,9 @@ if __name__ == "__main__":
     # print(FitnessExperiment(**serialized_data))
     ######
     # Single mutant fitness
-    # dataset = SmfCostanzo2016Dataset()
-    # experiment_indices = compute_experiment_reference_index(dataset)
-    # dataset.experiment_reference_index
+    dataset = SmfCostanzo2016Dataset()
+    experiment_indices = compute_experiment_reference_index(dataset)
+    dataset.experiment_reference_index
     print(len(dataset))
     # print(dataset[100]['experiment'])
     # serialized_data = dataset[100]['experiment'].model_dump()

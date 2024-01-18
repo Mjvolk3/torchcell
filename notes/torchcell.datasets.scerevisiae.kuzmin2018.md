@@ -2,7 +2,7 @@
 id: dxhoxruso0jc7offn2jytqh
 title: Kuzmin2018
 desc: ''
-updated: 1705136422447
+updated: 1705561526603
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
@@ -48,4 +48,76 @@ len(df)
 
 Annoyingly the `hoΔ` can be on the left hand or right hand side of the `+`.
 
-## Single Mutant of Query and arra
+## Processing Kuzmin Double Mutants in Trigenic Rows
+
+I didn't know if the double mutants reported in the trigenic rows were new mutant data or from the double mutants in the previous rows. I thought that it would be redundant to add the double mutant information form the query so it could be possible that the double mutant data was new. After processing all rows we get a bunch of redundant data. 
+
+I used this to investigate the duplicates. It is not efficient to run this during creation of the dataset, so I just use it to find that the double mutant data is duplicated in the trigenic rows.
+
+```python
+>>> df["md5"] = df.apply(
+       lambda row: hashlib.md5(
+              json.dumps(
+              self.create_experiment(row, self.reference_phenotype_std)[
+                     0
+              ].model_dump()
+              ).encode("utf-8")
+       ).hexdigest(),
+       axis=1,
+)
+>>> print(df['md5'].value_counts()>1).sum()
+>0 # ??? digenic and trigenic 
+0 # digenic only
+
+>>> (df['md5'].value_counts()==1).sum()
+410399 # digenic and trigenic
+410399 # digenic only
+```
+
+We could then get rid of this code block.
+
+```python
+elif row["Combined mutant type"] == "trigenic":
+       # Query 1
+       if "KanMX_deletion" in row["query_perturbation_type_1"]:
+              genotype.append(
+              DeletionGenotype(
+                     perturbation=SgaKanMxDeletionPerturbation(
+                     systematic_gene_name=row["Query systematic name_1"],
+                     perturbed_gene_name=row["Query allele name_1"],
+                     strain_id=row["Query strain ID"],
+                     )
+              )
+              )
+       elif "allele" in row["query_perturbation_type_1"]:
+              genotype.append(
+              BaseGenotype(
+                     perturbation=SgdAllelePerturbation(
+                     systematic_gene_name=row["Query systematic name_1"],
+                     perturbed_gene_name=row["Query allele name_1"],
+                     strain_id=row["Query strain ID"],
+                     )
+              )
+              )
+       # Query 2
+       if "KanMX_deletion" in row["query_perturbation_type_2"]:
+              genotype.append(
+              DeletionGenotype(
+                     perturbation=SgaKanMxDeletionPerturbation(
+                     systematic_gene_name=row["Query systematic name_2"],
+                     perturbed_gene_name=row["Query allele name_2"],
+                     strain_id=row["Query strain ID"],
+                     )
+              )
+              )
+       elif "allele" in row["query_perturbation_type_2"]:
+              genotype.append(
+              BaseGenotype(
+                     perturbation=SgdAllelePerturbation(
+                     systematic_gene_name=row["Query systematic name_2"],
+                     perturbed_gene_name=row["Query allele name_2"],
+                     strain_id=row["Query strain ID"],
+                     )
+              )
+       )
+```

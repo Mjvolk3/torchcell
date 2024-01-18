@@ -236,6 +236,32 @@
                 "command": "bash mypy/dmypy_restart.sh",
                 "problemMatcher": []
             },
+            //pyreverse
+            {
+                "label": "tc: pyreverse UML class diagram",
+                "type": "shell",
+                "command": "${workspaceFolder}/notes/assets/scripts/run_pyreverse.sh",
+                "args": [
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": "build"
+            },
+            {
+                "label": "pyreverse: UML class diagram",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pyreverse",
+                    "-o",
+                    "png",
+                    "-p",
+                    "uml_temp",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "group": "build"
+            },
             // isort
             {
                 "label": "isort: file",

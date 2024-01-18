@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.kuzmin2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2018.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2018.py
-
+import hashlib
 import json
 import logging
 import os
@@ -10,7 +10,7 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
-
+import torch
 import lmdb
 import numpy as np
 import pandas as pd
@@ -120,6 +120,8 @@ class SmfKuzmin2018Dataset(Dataset):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df, self.preprocess)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -207,7 +209,7 @@ class SmfKuzmin2018Dataset(Dataset):
         ].drop_duplicates(subset=["Query allele name"])
         df_query["smf_type"] = "query_smf"
         df = pd.concat([df_array, df_query], axis=0)
-
+        df = df.reset_index(drop=True)
         return df
 
     @staticmethod
@@ -341,14 +343,29 @@ class SmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
+        # Handling boolean index tensors or numpy arrays
+        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+            if isinstance(idx, list):
+                idx = np.array(idx)
+            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+                idx = np.where(idx)[0]
+            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
+                idx = idx.nonzero(as_tuple=False).squeeze(1)
+
+        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
+            # If idx is a list/array/tensor of indices, return a list of data objects
+            return [self.get_single_item(i.item()) for i in idx]
+        else:
+            # Single item retrieval
+            return self.get_single_item(idx)
+
+    def get_single_item(self, idx):
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
-            # Deserialize the data and return it directly
             deserialized_data = pickle.loads(serialized_data)
-
             return deserialized_data
 
     @staticmethod
@@ -504,6 +521,8 @@ class DmfKuzmin2018Dataset(Dataset):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df, self.preprocess)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -550,7 +569,7 @@ class DmfKuzmin2018Dataset(Dataset):
             0
         ]
         # Select doubles only
-        # df = df[df["Combined mutant type"] == "digenic"].copy()
+        df = df[df["Combined mutant type"] == "digenic"].copy()
 
         df["Query allele name no ho"] = (
             df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
@@ -581,6 +600,7 @@ class DmfKuzmin2018Dataset(Dataset):
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
+        df = df.reset_index(drop=True)
         return df
 
     @staticmethod
@@ -591,93 +611,49 @@ class DmfKuzmin2018Dataset(Dataset):
         )
         # genotype
         genotype = []
-        if row["Combined mutant type"] == "digenic":
-            # Query...
-            if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
-                genotype.append(
-                    DeletionGenotype(
-                        perturbation=SgaKanMxDeletionPerturbation(
-                            systematic_gene_name=row["Query systematic name no ho"],
-                            perturbed_gene_name=row["Query allele name no ho"],
-                            strain_id=row["Query strain ID"],
-                        )
+        # Query...
+        if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
                     )
                 )
-            elif "allele" in row["query_perturbation_type_no_ho"]:
-                genotype.append(
-                    BaseGenotype(
-                        perturbation=SgdAllelePerturbation(
-                            systematic_gene_name=row["Query systematic name no ho"],
-                            perturbed_gene_name=row["Query allele name no ho"],
-                            strain_id=row["Query strain ID"],
-                        )
+            )
+        elif "allele" in row["query_perturbation_type_no_ho"]:
+            genotype.append(
+                BaseGenotype(
+                    perturbation=SgdAllelePerturbation(
+                        systematic_gene_name=row["Query systematic name no ho"],
+                        perturbed_gene_name=row["Query allele name no ho"],
+                        strain_id=row["Query strain ID"],
                     )
                 )
+            )
 
-            # Array - only array has ts
-            if "temperature_sensitive" in row["array_perturbation_type"]:
-                genotype.append(
-                    InterferenceGenotype(
-                        perturbation=SgdTsAllelePerturbation(
-                            systematic_gene_name=row["Array systematic name"],
-                            perturbed_gene_name=row["Array allele name"],
-                            strain_id=row["Array strain ID"],
-                        )
+        # Array - only array has ts
+        if "temperature_sensitive" in row["array_perturbation_type"]:
+            genotype.append(
+                InterferenceGenotype(
+                    perturbation=SgdTsAllelePerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
                     )
                 )
-            elif "KanMX_deletion" in row["array_perturbation_type"]:
-                genotype.append(
-                    DeletionGenotype(
-                        perturbation=SgaKanMxDeletionPerturbation(
-                            systematic_gene_name=row["Array systematic name"],
-                            perturbed_gene_name=row["Array allele name"],
-                            strain_id=row["Array strain ID"],
-                        )
+            )
+        elif "KanMX_deletion" in row["array_perturbation_type"]:
+            genotype.append(
+                DeletionGenotype(
+                    perturbation=SgaKanMxDeletionPerturbation(
+                        systematic_gene_name=row["Array systematic name"],
+                        perturbed_gene_name=row["Array allele name"],
+                        strain_id=row["Array strain ID"],
                     )
                 )
-        elif row["Combined mutant type"] == "trigenic":
-            # Query 1
-            if "KanMX_deletion" in row["query_perturbation_type_1"]:
-                genotype.append(
-                    DeletionGenotype(
-                        perturbation=SgaKanMxDeletionPerturbation(
-                            systematic_gene_name=row["Query systematic name_1"],
-                            perturbed_gene_name=row["Query allele name_1"],
-                            strain_id=row["Query strain ID"],
-                        )
-                    )
-                )
-            elif "allele" in row["query_perturbation_type_1"]:
-                genotype.append(
-                    BaseGenotype(
-                        perturbation=SgdAllelePerturbation(
-                            systematic_gene_name=row["Query systematic name_1"],
-                            perturbed_gene_name=row["Query allele name_1"],
-                            strain_id=row["Query strain ID"],
-                        )
-                    )
-                )
-            # Query 2
-            if "KanMX_deletion" in row["query_perturbation_type_2"]:
-                genotype.append(
-                    DeletionGenotype(
-                        perturbation=SgaKanMxDeletionPerturbation(
-                            systematic_gene_name=row["Query systematic name_2"],
-                            perturbed_gene_name=row["Query allele name_2"],
-                            strain_id=row["Query strain ID"],
-                        )
-                    )
-                )
-            elif "allele" in row["query_perturbation_type_2"]:
-                genotype.append(
-                    BaseGenotype(
-                        perturbation=SgdAllelePerturbation(
-                            systematic_gene_name=row["Query systematic name_2"],
-                            perturbed_gene_name=row["Query allele name_2"],
-                            strain_id=row["Query strain ID"],
-                        )
-                    )
-                )
+            )
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
         # genotype
         environment = BaseEnvironment(
@@ -753,14 +729,29 @@ class DmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
+        # Handling boolean index tensors or numpy arrays
+        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+            if isinstance(idx, list):
+                idx = np.array(idx)
+            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+                idx = np.where(idx)[0]
+            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
+                idx = idx.nonzero(as_tuple=False).squeeze(1)
+
+        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
+            # If idx is a list/array/tensor of indices, return a list of data objects
+            return [self.get_single_item(i.item()) for i in idx]
+        else:
+            # Single item retrieval
+            return self.get_single_item(idx)
+
+    def get_single_item(self, idx):
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
-            # Deserialize the data and return it directly
             deserialized_data = pickle.loads(serialized_data)
-
             return deserialized_data
 
     @staticmethod
@@ -922,6 +913,8 @@ class TmfKuzmin2018Dataset(Dataset):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
         df = self.preprocess_raw(df, self.preprocess)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -999,6 +992,7 @@ class TmfKuzmin2018Dataset(Dataset):
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
+        df = df.reset_index(drop=True)
         return df
 
     @staticmethod
@@ -1142,14 +1136,29 @@ class TmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
+        # Handling boolean index tensors or numpy arrays
+        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+            if isinstance(idx, list):
+                idx = np.array(idx)
+            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+                idx = np.where(idx)[0]
+            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
+                idx = idx.nonzero(as_tuple=False).squeeze(1)
+
+        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
+            # If idx is a list/array/tensor of indices, return a list of data objects
+            return [self.get_single_item(i.item()) for i in idx]
+        else:
+            # Single item retrieval
+            return self.get_single_item(idx)
+
+    def get_single_item(self, idx):
         with self.env.begin() as txn:
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
-            # Deserialize the data and return it directly
             deserialized_data = pickle.loads(serialized_data)
-
             return deserialized_data
 
     @staticmethod
@@ -1235,13 +1244,14 @@ class TmfKuzmin2018Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    dataset = SmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    # dataset = SmfKuzmin2018Dataset()
+    # dataset.experiment_reference_index
+    # dataset[0]
+    # print(len(dataset))
     dataset = DmfKuzmin2018Dataset()
     dataset[0]
     print(len(dataset))
-    dataset = TmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    # dataset = TmfKuzmin2018Dataset(subset_n=1000)
+    # dataset[0]
+    # print(len(dataset))
     print()

@@ -64,6 +64,14 @@ class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
     strain_id: str = Field(description="'Strain ID' in raw data.")
     natmx_deletion_type: str = "SGA"
 
+    # @classmethod
+    # def _process_perturbation_data(cls, perturbation_data):
+    #     if isinstance(perturbation_data, list):
+    #         return [cls._create_perturbation_from_dict(p) for p in perturbation_data]
+    #     elif isinstance(perturbation_data, dict):
+    #         return cls._create_perturbation_from_dict(perturbation_data)
+    #     return perturbation_data
+
 
 class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
@@ -91,16 +99,24 @@ class BaseGenotype(ModelStrict):
             return validated_perturbations
         return values
 
-    @classmethod
-    def _process_perturbation_data(cls, perturbation_data):
+    @staticmethod
+    def _process_perturbation_data(perturbation_data):
         if isinstance(perturbation_data, list):
-            return [cls._create_perturbation_from_dict(p) for p in perturbation_data]
+            created_perturbations = [
+                BaseGenotype._create_perturbation_from_dict(p)
+                for p in perturbation_data
+            ]
+            sorted_perturbations = sorted(
+                created_perturbations,
+                key=lambda p: (p.systematic_gene_name, p.perturbed_gene_name),
+            )
+            return sorted_perturbations
         elif isinstance(perturbation_data, dict):
-            return cls._create_perturbation_from_dict(perturbation_data)
+            return BaseGenotype._create_perturbation_from_dict(perturbation_data)
         return perturbation_data
 
-    @classmethod
-    def _create_perturbation_from_dict(cls, perturbation_dict):
+    @staticmethod
+    def _create_perturbation_from_dict(perturbation_dict):
         pert_type = perturbation_dict.get("perturbation_type")
         deletion_type = perturbation_dict.get("deletion_type")
         damp_perturbation_type = perturbation_dict.get("damp_perturbation_type")
@@ -192,7 +208,7 @@ class SgdTsAllelePerturbation(TsAllelePerturbation, ModelStrict):
     temperature_sensitive_allele_perturbation_type: str = "SGA"
 
 
-class SgdAllelePerturbation(GenePerturbation, ModelStrict):
+class SgdAllelePerturbation(AllelePerturbation, ModelStrict):
     description: str = "Ts Allele Perturbation information specific to SGA experiments."
     strain_id: str = Field(description="'Strain ID' in raw data.")
     allele_perturbation_type: str = "SGA"
@@ -276,6 +292,7 @@ class DeletionGenotype(BaseGenotype, ModelStrict):
     ]
 
 
+# Assumes that all TS alleles are dampened - unless specified
 class InterferenceGenotype(BaseGenotype, ModelStrict):
     perturbation: DampPerturbation | list[
         DampPerturbation

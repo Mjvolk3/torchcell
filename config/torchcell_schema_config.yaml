@@ -5,15 +5,15 @@ dataset:
 experiment:
     represented_as: node
     is_a: material sample
-    # preferred_id: 
+    # preferred_id:
     properties:
         dataset_index: int
         serialized_data: str
 
-experiment reference: 
+experiment reference:
     represented_as: node
     is_a: material sample
-    # preferred_id: 
+    # preferred_id:
     properties:
         dataset_index: int
         serialized_data: str
@@ -48,6 +48,8 @@ genotype:
     properties:
         systematic_gene_names: list
         perturbed_gene_names: list
+        is_deletion_genotype: bool
+        is_interference_genotype: bool
         description: str
         perturbation_types: list
         serialized_data: str
@@ -64,10 +66,10 @@ perturbation:
         serialized_data: str
 
 # CHECK is an environment a physical entity?
-environment: 
-    is_a: environmental exposure 
+environment:
+    is_a: environmental exposure
     represented_as: node
-    properties: 
+    properties:
         temperature: str
         media: str
         serialized_data: str
@@ -78,7 +80,7 @@ media:
     properties:
         name: str
         state: str
-        serialized_data: str 
+        serialized_data: str
 
 temperature:
     is_a: environmental exposure
@@ -86,7 +88,7 @@ temperature:
     properties:
         value: float
         unit: str
-        serialized_data: str 
+        serialized_data: str
 
 phenotype:
     is_a: phenotypic quality
@@ -96,7 +98,7 @@ phenotype:
         label: str
         label_error: str
         fitness: float
-        fitness_std: float 
+        fitness_std: float
         serialized_data: str
 
 # RELATIONSHIPS
@@ -126,7 +128,7 @@ phenotype member of:
     source: phenotype
     target: [experiment, experiment reference]
 
-# Add these last two 
+# Add these last two
 media member of:
     is_a: material sample derivation association
     represented_as: edge

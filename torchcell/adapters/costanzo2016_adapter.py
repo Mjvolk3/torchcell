@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/costanzo2016_adapter.py
 # Test file: tests/torchcell/adapters/test_costanzo2016_adapter.py
 
-
 import hashlib
 import random
 import string
@@ -18,7 +17,7 @@ from biocypher._logger import logger
 from typing import Generator, Set
 import torch
 from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
-from torchcell.datamodels import BaseGenotype
+from torchcell.datamodels import BaseGenotype, InterferenceGenotype, DeletionGenotype
 from sortedcontainers import SortedList
 
 logger.debug(f"Loading module {__name__}.")
@@ -26,27 +25,8 @@ logger.debug(f"Loading module {__name__}.")
 dataset = SmfCostanzo2016Dataset()
 
 
-class CostanzoSmfAdapter:
-    def __init__(
-        self,
-        dataset: SmfCostanzo2016Dataset,
-        node_types: Optional[list] = None,
-        node_fields: Optional[list] = None,
-        edge_types: Optional[list] = None,
-        edge_fields: Optional[list] = None,
-    ):
-        self.dataset = dataset
-        # self._set_types_and_fields(
-        #     node_types,
-        #     node_fields,
-        #     edge_types,
-        #     edge_fields,
-        # )
-        self._preprocess_data()
-
-    def _preprocess_data(self) -> None:
-        logger.info("Preprocessing Data")
-
+class SmfCostanzo2016Adapter:
+    def __init__(self, dataset: SmfCostanzo2016Dataset):
         self.dataset = dataset
 
     def get_nodes(self) -> None:
@@ -89,11 +69,9 @@ class CostanzoSmfAdapter:
     def _get_genome_nodes(self) -> None:
         seen_node_ids: Set[str] = set()
 
-        for i, data in enumerate(self.dataset):
+        for i, data in enumerate(self.dataset.experiment_reference_index):
             genome_id = hashlib.md5(
-                json.dumps(data["reference"].reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
@@ -103,10 +81,10 @@ class CostanzoSmfAdapter:
                     preferred_id=f"reference_genome_{i}",
                     node_label="genome",
                     properties={
-                        "species": data["reference"].reference_genome.species,
-                        "strain": data["reference"].reference_genome.strain,
+                        "species": data.reference.reference_genome.species,
+                        "strain": data.reference.reference_genome.strain,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_genome.model_dump()
+                            data.reference.reference_genome.model_dump()
                         ),
                     },
                 )
@@ -156,6 +134,12 @@ class CostanzoSmfAdapter:
                     properties={
                         "systematic_gene_names": [systematic_gene_name],
                         "perturbed_gene_names": [perturbed_gene_name],
+                        "is_deletion_genotype": isinstance(
+                            data["experiment"].genotype, DeletionGenotype
+                        ),
+                        "is_interference_genotype": isinstance(
+                            data["experiment"].genotype, InterferenceGenotype
+                        ),
                         "description": description,
                         "perturbation_types": [perturbation_type],
                         "serialized_data": json.dumps(
@@ -211,7 +195,7 @@ class CostanzoSmfAdapter:
                         "temperature": data["experiment"].environment.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["experiment"].genotype.model_dump()
+                            data["experiment"].environment.model_dump()
                         ),
                     },
                 )
@@ -700,29 +684,27 @@ class CostanzoSmfAdapter:
                     relationship_label="genome member of",
                 )
 
-    def _set_types_and_fields():
-        pass
-
-
 if __name__ == "__main__":
     from biocypher import BioCypher
 
-    # simple testing
+    # # Simple Testing
     # dataset = SmfCostanzo2016Dataset()
-    # adapter = CostanzoSmfAdapter(dataset=dataset)
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset)
     # [i for i in adapter.get_nodes()]
     # [i for i in adapter.get_edges()]
-    # Get dataset, the part I want to test for Warning Duplicates... This shows up in in the biocypher logs.
+
+    ## Advanced Testing
     bc = BioCypher()
     dataset = SmfCostanzo2016Dataset()
-    adapter = CostanzoSmfAdapter(dataset=dataset)
+    adapter = SmfCostanzo2016Adapter(dataset=dataset)
+    print(bc.show_ontology_structure())
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())
 
-    # Write admin import statement and schema information (for biochatter)
+    # # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
 
-    # Print summary
+    # # Print summary
     bc.summary()
     print()

@@ -1,6 +1,15 @@
 from biocypher import BioCypher, Resource
 from torchcell.adapters import CostanzoSmfAdapter
 from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
+import logging
+import warnings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, filename='biocypher_warnings.log')
+logging.captureWarnings(True)
+
+# Example: Generating a warning
+warnings.warn("This is a test warning")
 
 bc = BioCypher()
 

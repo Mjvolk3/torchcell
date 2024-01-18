@@ -1,5 +1,5 @@
 from biocypher import BioCypher, Resource
-from torchcell.adapters import CostanzoSmfAdapter
+from torchcell.adapters import SmfCostanzo2016Adapter
 from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
 import logging
 import warnings
@@ -16,7 +16,7 @@ bc = BioCypher()
 RUN_OPTIONAL_STEPS = False
 
 dataset = SmfCostanzo2016Dataset()
-adapter = CostanzoSmfAdapter(dataset=dataset)
+adapter = SmfCostanzo2016Adapter(dataset=dataset)
 
 if RUN_OPTIONAL_STEPS:
     bc.add(adapter.get_nodes())

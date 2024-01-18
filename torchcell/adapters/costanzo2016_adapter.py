@@ -1,7 +1,8 @@
-# torchcell/adapters/neo_costanzo2016_adapter.py
-# [[torchcell.adapters.neo_costanzo2016_adapter]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/neo_costanzo2016_adapter.py
-# Test file: tests/torchcell/adapters/test_neo_costanzo2016_adapter.py
+# torchcell/adapters/costanzo2016_adapter.py
+# [[torchcell.adapters.costanzo2016_adapter]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/costanzo2016_adapter.py
+# Test file: tests/torchcell/adapters/test_costanzo2016_adapter.py
+
 
 import hashlib
 import random
@@ -17,6 +18,8 @@ from biocypher._logger import logger
 from typing import Generator, Set
 import torch
 from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
+from torchcell.datamodels import BaseGenotype
+from sortedcontainers import SortedList
 
 logger.debug(f"Loading module {__name__}.")
 
@@ -57,6 +60,7 @@ class CostanzoSmfAdapter:
         logger.info("Get dataset nodes.")
         yield from self._get_dataset_nodes()
         logger.info("Get genotype nodes.")
+        logger.info("--- perturbation nodes.")
         yield from self._get_genotype_nodes()
         logger.info("Get environment nodes.")
         yield from self._get_environment_nodes()
@@ -119,9 +123,7 @@ class CostanzoSmfAdapter:
                 node_label="experiment",
                 properties={
                     "dataset_index": i,
-                    "serialized_data": json.dumps(
-                        data["experiment"].model_dump()
-                    ),
+                    "serialized_data": json.dumps(data["experiment"].model_dump()),
                 },
             )
 
@@ -145,22 +147,48 @@ class CostanzoSmfAdapter:
                     "experiment"
                 ].genotype.perturbation.perturbation_type
 
+                self._get_perturbation(data["experiment"].genotype)
+
                 yield BioCypherNode(
                     node_id=genotype_id,
                     preferred_id=f"genotype_{i}",
                     node_label="genotype",
                     properties={
-                        "systematic_gene_name": [
-                            systematic_gene_name
-                        ],  # Casting as list
-                        "perturbed_gene_name": [perturbed_gene_name],  # Casting as list
+                        "systematic_gene_names": [systematic_gene_name],
+                        "perturbed_gene_names": [perturbed_gene_name],
                         "description": description,
-                        "perturbation_type": [perturbation_type],  # Casting as list
+                        "perturbation_types": [perturbation_type],
                         "serialized_data": json.dumps(
                             data["experiment"].genotype.model_dump()
                         ),
                     },
                 )
+
+    @staticmethod
+    def _get_perturbation(
+        genotype: BaseGenotype,
+    ) -> Generator[BioCypherNode, None, None]:
+        if genotype.perturbation:
+            i = 1
+            perturbation_id = hashlib.md5(
+                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            yield BioCypherNode(
+                node_id=perturbation_id,
+                preferred_id=f"perturbation_{i}",
+                node_label="perturbation",
+                properties={
+                    "systematic_gene_name": [
+                        genotype.perturbation.systematic_gene_name
+                    ],
+                    "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
+                    "description": genotype.perturbation.description,
+                    "perturbation_type": genotype.perturbation.perturbation_type,
+                    "strain_id": genotype.perturbation.strain_id,
+                    "serialized_data": json.dumps(genotype.perturbation.model_dump()),
+                },
+            )
 
     def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
         seen_node_ids: Set[str] = set()
@@ -402,6 +430,7 @@ class CostanzoSmfAdapter:
         logger.info("Get experiment reference experiment edges.")
         yield from self._get_experiment_ref_experiment_edges()
         logger.info("Get genotype experiment edges.")
+        logger.info("--- perturbation genotype edges.")
         yield from self._get_genotype_experiment_edges()
         logger.info("Get environment experiment edges.")
         yield from self._get_environment_experiment_edges()
@@ -470,6 +499,10 @@ class CostanzoSmfAdapter:
                 json.dumps(data["experiment"].genotype.model_dump()).encode("utf-8")
             ).hexdigest()
 
+            self._get_perturbation_genotype_edges(
+                genotype=data["experiment"].genotype, genotype_id=genotype_id
+            )
+
             # CHECK if needed - don't think needed since exp ref index
             # genotype_experiment_pair = (genotype_id, experiment_id)
             # if genotype_experiment_pair not in seen_genotype_experiment_pairs:
@@ -479,6 +512,21 @@ class CostanzoSmfAdapter:
                 source_id=genotype_id,
                 target_id=experiment_id,
                 relationship_label="genotype member of",
+            )
+
+    @staticmethod
+    def _get_perturbation_genotype_edges(
+        genotype: BaseGenotype, genotype_id: str
+    ) -> Generator[BioCypherEdge, None, None]:
+        if genotype.perturbation:
+            perturbation_id = hashlib.md5(
+                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            yield BioCypherEdge(
+                source_id=perturbation_id,
+                target_id=genotype_id,
+                relationship_label="perturbation member of",
             )
 
     def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
@@ -657,8 +705,24 @@ class CostanzoSmfAdapter:
 
 
 if __name__ == "__main__":
+    from biocypher import BioCypher
+
+    # simple testing
+    # dataset = SmfCostanzo2016Dataset()
+    # adapter = CostanzoSmfAdapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
+    # Get dataset, the part I want to test for Warning Duplicates... This shows up in in the biocypher logs.
+    bc = BioCypher()
     dataset = SmfCostanzo2016Dataset()
     adapter = CostanzoSmfAdapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
-    # print()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+
+    # Write admin import statement and schema information (for biochatter)
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+
+    # Print summary
+    bc.summary()
+    print()

@@ -46,10 +46,21 @@ genome:
 genotype:
     represented_as: node
     properties:
-        systematic_gene_name: str
-        perturbed_gene_name: list
+        systematic_gene_names: list
+        perturbed_gene_names: list
         description: str
-        perturbation_type: list
+        perturbation_types: list
+        serialized_data: str
+
+perturbation:
+    is_a: genotype
+    represented_as: node
+    properties:
+        systematic_gene_name: str
+        perturbed_gene_name: str
+        description: str
+        perturbation_type: str
+        strain_id: str
         serialized_data: str
 
 # CHECK is an environment a physical entity?
@@ -96,6 +107,12 @@ genotype member of:
     represented_as: edge
     source: genotype
     target: experiment
+
+perturbation member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: perturbation
+    target: genotype
 
 environment member of:
     is_a: material sample derivation association

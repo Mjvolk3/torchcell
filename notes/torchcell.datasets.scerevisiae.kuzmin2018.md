@@ -2,14 +2,13 @@
 id: dxhoxruso0jc7offn2jytqh
 title: Kuzmin2018
 desc: ''
-updated: 1705561526603
+updated: 1705681459925
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
 
 - It exists! This dataset is not just trigenic mutants, it has over 400,000 double mutants. But are they really? And that's where the trouble begins. Technically these are triple mutants but since the ho deletion in considered inert... or something like that, the triple mutants with one ho deletion are considered double mutants.
 - One reference temperature as no temperature column data
-
 
 ## Unsure of Origin of Alleles
 
@@ -50,7 +49,7 @@ Annoyingly the `hoΔ` can be on the left hand or right hand side of the `+`.
 
 ## Processing Kuzmin Double Mutants in Trigenic Rows
 
-I didn't know if the double mutants reported in the trigenic rows were new mutant data or from the double mutants in the previous rows. I thought that it would be redundant to add the double mutant information form the query so it could be possible that the double mutant data was new. After processing all rows we get a bunch of redundant data. 
+I didn't know if the double mutants reported in the trigenic rows were new mutant data or from the double mutants in the previous rows. I thought that it would be redundant to add the double mutant information form the query so it could be possible that the double mutant data was new. After processing all rows we get a bunch of redundant data.
 
 I used this to investigate the duplicates. It is not efficient to run this during creation of the dataset, so I just use it to find that the double mutant data is duplicated in the trigenic rows.
 
@@ -66,7 +65,7 @@ I used this to investigate the duplicates. It is not efficient to run this durin
        axis=1,
 )
 >>> print(df['md5'].value_counts()>1).sum()
->0 # ??? digenic and trigenic 
+0 # ??? digenic and trigenic 
 0 # digenic only
 
 >>> (df['md5'].value_counts()==1).sum()
@@ -121,3 +120,9 @@ elif row["Combined mutant type"] == "trigenic":
               )
        )
 ```
+
+## SmfKuzmin2018 Docker Import Issues with None and Special Characters
+
+`SmfKuzmin2018` has stds don't have values so I was putting `None` which is somewhere converted to nan and the import fails. Another issue I fixed was that the `'` and the `Δ` symbols cannot be imported so I replaced them with `'` with `_prime` and `Δ` with `_delta`.  It is unclear what to do about the missing stds if we cannot import `None.` I thought this should just be mapped to null.
+
+When I replace the `None` with some arbitrary double it works.

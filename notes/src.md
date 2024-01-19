@@ -81,8 +81,6 @@ This should allow us to group up experiments. SGD already has a phenotpye ontolo
 
 ## Gene Probing Hypothesis
 
-
-
 ## Summing vs. Merging Experiment Datasets
 
 - We have been using `__add__` for merging [[Embedding|dendron://torchcell/torchcell.datasets.embedding]] type datasets, but this really only makes sense since different embeddings will by definition not overlap. We can apply a similar logic to `Experiment` datasets, if `genotype` and `environment` don't overlap.

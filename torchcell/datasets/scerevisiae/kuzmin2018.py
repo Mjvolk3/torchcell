@@ -288,7 +288,7 @@ class SmfKuzmin2018Dataset(Dataset):
             label="smf",
             label_error="smf_std",
             fitness=row[smf_key],
-            fitness_std=np.nan,
+            fitness_std=None,
         )
 
         reference_phenotype = FitnessPhenotype(

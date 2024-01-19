@@ -4,7 +4,7 @@
 # Test file: torchcell/datamodels/test_ontology_pydantic.py
 
 import json
-from typing import List, Union
+from typing import List, Union, Optional
 
 from pydantic import BaseModel, Field, field_validator, root_validator
 from enum import Enum, auto
@@ -155,10 +155,11 @@ class ExpressionRangeMultiplier(ModelStrict):
 
 
 class DampPerturbation(GenePerturbation, ModelStrict):
-    description: str = "4-10 decreased expression via KANmx insertion at the the 3' UTR of the target gene."
+    description: str = "4-10 decreased expression via KANmx insertion at the "
+    "the 3' UTR of the target gene."
     expression_range: ExpressionRangeMultiplier = Field(
         default=ExpressionRangeMultiplier(min=1 / 10.0, max=1 / 4.0),
-        description="Gene expression is descreased by 4-10 fold",
+        description="Gene expression is decreased by 4-10 fold",
     )
     perturbation_type: str = "damp"
 
@@ -194,7 +195,7 @@ class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
     perturbation_type: str = "suppressor_allele"
 
 
-class SgdSuppressorAllelePerturbation(GenePerturbation, ModelStrict):
+class SgdSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict):
     description: str = (
         "Suppressor Allele Perturbation information specific to SGA experiments."
     )
@@ -262,7 +263,7 @@ class BasePhenotype(ModelStrict):
 
 class FitnessPhenotype(BasePhenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: float = Field(description="fitness standard deviation")
+    fitness_std: Optional[float] = Field(None, description="fitness standard deviation")
 
 
 # TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype,

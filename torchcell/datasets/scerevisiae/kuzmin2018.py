@@ -210,6 +210,14 @@ class SmfKuzmin2018Dataset(Dataset):
         df_query["smf_type"] = "query_smf"
         df = pd.concat([df_array, df_query], axis=0)
         df = df.reset_index(drop=True)
+        # replace delta symbol for neo4j import
+        df = df.replace("'", "_prime", regex=True)
+        df = df.replace("Δ", "_delta", regex=True)
+        df = (
+            df[~df["Query single/double mutant fitness"].isna()]
+            .copy()
+            .reset_index(drop=True)
+        )
         return df
 
     @staticmethod
@@ -433,7 +441,7 @@ class SmfKuzmin2018Dataset(Dataset):
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.dict() for eri in self._experiment_reference_index],
+                    [eri.model_dump() for eri in self._experiment_reference_index],
                     file,
                     indent=4,
                 )
@@ -1244,13 +1252,13 @@ class TmfKuzmin2018Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    # dataset = SmfKuzmin2018Dataset()
-    # dataset.experiment_reference_index
+    dataset = SmfKuzmin2018Dataset()
+    dataset.experiment_reference_index
+    dataset[0]
+    # print(len(dataset))
+    # dataset = DmfKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
-    dataset = DmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
     # dataset = TmfKuzmin2018Dataset(subset_n=1000)
     # dataset[0]
     # print(len(dataset))

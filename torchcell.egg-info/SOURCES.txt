@@ -38,6 +38,7 @@ torchcell/datamodules/dcell.py
 torchcell/dataset_preprocess/__init__.py
 torchcell/datasets/__init__.py
 torchcell/datasets/add_datasets_check.py
+torchcell/datasets/base_cell.py
 torchcell/datasets/cell.py
 torchcell/datasets/cell_scratch.py
 torchcell/datasets/codon_frequency.py
@@ -57,6 +58,7 @@ torchcell/datasets/scerevisiae/__init__.py
 torchcell/datasets/scerevisiae/baryshnikovna2010.py
 torchcell/datasets/scerevisiae/costanzo2016.py
 torchcell/datasets/scerevisiae/costanzo2016_deprecated.py
+torchcell/datasets/scerevisiae/fitness_yeast9.py
 torchcell/datasets/scerevisiae/kuzmin2018.py
 torchcell/datasets/scerevisiae/tutorial_joining_nucleotide_embeddings.py
 torchcell/go/__init__.py

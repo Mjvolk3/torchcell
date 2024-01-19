@@ -307,7 +307,7 @@ class SmfCostanzo2016Dataset(Dataset):
         reference_environment = environment.model_copy()
         # Phenotype based on temperature
         smf_key = "Single mutant fitness"
-        smf_std_key = "Single mutant fitness"
+        smf_std_key = "Single mutant fitness stddev"
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
@@ -989,7 +989,11 @@ class DmfCostanzo2016Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    # dataset = DmfCostanzo2016Dataset(preprocess=None)
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
+    #     subset_n=100000,
+    #     preprocess=None,
+    # )
     # dataset[0]
     # Usage example
     # print(len(dataset))

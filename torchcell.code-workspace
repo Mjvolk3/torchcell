@@ -44,8 +44,11 @@
             "name": "SpeciesLM",
             "path": "../SpeciesLM"
         },
-        {
+        {   "name": "biocypher",
             "path": "../biocypher"
+        }
+        {   "name": "collectri",
+            "path": "../collectri"
         }
     ],
     "settings": {

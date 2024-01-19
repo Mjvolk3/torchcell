@@ -23,9 +23,11 @@ torchcell.egg-info/entry_points.txt
 torchcell.egg-info/requires.txt
 torchcell.egg-info/top_level.txt
 torchcell/adapters/__init__.py
-torchcell/adapters/neo_costanzo2016_adapter.py
+torchcell/adapters/costanzo2016_adapter.py
+torchcell/adapters/kuzmin2018_adapter.py
 torchcell/cell/__init__.py
 torchcell/data/__init__.py
+torchcell/data/data.py
 torchcell/data/dataset.py
 torchcell/datamodels/__init__.py
 torchcell/datamodels/ontology_pydantic.py
@@ -54,8 +56,8 @@ torchcell/datasets/protT5.py
 torchcell/datasets/scerevisiae/__init__.py
 torchcell/datasets/scerevisiae/baryshnikovna2010.py
 torchcell/datasets/scerevisiae/costanzo2016.py
+torchcell/datasets/scerevisiae/costanzo2016_deprecated.py
 torchcell/datasets/scerevisiae/kuzmin2018.py
-torchcell/datasets/scerevisiae/neo_costanzo2016.py
 torchcell/datasets/scerevisiae/tutorial_joining_nucleotide_embeddings.py
 torchcell/go/__init__.py
 torchcell/go/check_deprecated.py
@@ -68,6 +70,9 @@ torchcell/graph/validation/__init__.py
 torchcell/graph/validation/raw_structure.py
 torchcell/graph/validation/locus_related/__init__.py
 torchcell/graph/validation/locus_related/locus.py
+torchcell/knowledge_graphs/__init__.py
+torchcell/knowledge_graphs/create_scerevisiae_kg.py
+torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
 torchcell/losses/__init__.py
 torchcell/losses/dcell.py
 torchcell/losses/weighted_mse.py

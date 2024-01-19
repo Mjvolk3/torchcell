@@ -2,30 +2,81 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705563168166
+updated: 1705663296556
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2024.01.19
+
+- [x] Markdown all in one issue... → extension still makes things way to slow, only using linter.
+- [ ] Plans for db and class update .... add note
+- [x] Review `neo4j` commands to get db in. → I am making a mistake not using docker. Without docker and cannot do the smart querying.
+- [x] Create scripts for iteratively adding to database. → Cannot doing this, we need to update every time there is a new db. We rely on remove duplicates from multiple datasets.
+- [x] Write src build instructions [[Source Build Instructions|dendron://torchcell/src.build#source-build-instructions]]
+- [x] Rebuild `src` so db has the correct functions.
+- [x] Get ChatGSE working → Trying to build small db again. → [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] created graph. → 
+- [ ] Read [testmon github actions](https://testmon.org/blog/better-github-actions-caching/)
+- [ ] Try [testmon library](https://testmon.org/)
+- [ ] @Sebastian-Lobentanzer informed me that we could set the config in the class instantiation, not the config. Change the location of config and corresponding paths.
+- [ ] Change `reference_genome` to `reference.genome`
+- [ ] Take the
+
+### Features For the User
+
+I want to be able to give @Junyu-Chen the following protocol which should be easy.
+
+1. `python -m pip install torchcell==0.0.?`. I recommend you used a virtual environment for this.
+2. Unzip the data I sent you and put it in any `data/*` folder your have.
+3. Import the dataset
+4. Load dataset
+5. Iterate in dataset, and access data
+
+```python
+from torchcell.dataset import Yeast9FitnessDataset
+yeast9_fitness_dataset = Yeast9FitnessDataset(root:str="data/*")
+for data in yeast9_fitness_dataset:
+  print(data['experiment'].genotype)
+  print(data['experiment'].phenotype)
+  print(data['reference'])
+```
+
+### Features I want
+
+1. `Yeast9FitnessDataset` calls query in the lmdb.
+2. Basic indexing features. For instance it should hold an index for each dataset that a given data point comes from. Pydantic class for index using pydantic to pass standardized data. Do `isinstance` check on on say genotype, environment, or phenotype, then could do another layer of `isinstance.`
+3. `indices` property that returns a list of index objects. These index objects need to be general enough to apply to a lot different types of data. They can be based off the current pydantic data model.
+4. This will be the zipped up process, preprocess, and raw dirs. So it will contain the lmdb. preprocess can capture the index or indices property.
+
+```python
+class BaseCellDataset(Dataset):
+  pass
+
+class Yeast9FitnessDataset(BaseCellDataset):
+  pass
+```
 
 ## 2024.01.18
 
 - [x] Add perturbations to the knowledge graph. → Did this by writing `staticmethod` I think this is more intuitive and will save looping over the dataset multiple times
 - [x] Build out testing for individual datasets. The tests should not allow graphs with duplicates to pass. Need to intercept the `Biocypher` logging for this. Consider just copying something like `tc_create_knowledge_graph.py` for this. → Added test but I think it is unclear if this should be handled upon the writing of the class instead of in tests.
 - [x] Make sure files generated from tests are being properly removed so we aren't generating superfluous data. → Little on the current design choice. [[test_no_duplicate_warnings|dendron://torchcell/tests.torchcell.adapters.test_costanzo2016_adapter#test_no_duplicate_warnings]]
-- [x] Optimize costanzo adapter so we can save on copying. Seems maybe premature but I think it should pay off. First look to `staticmethod` ... → Mocked up a function and realized that the juice 🧃 is not worth the squeeze 🪗.  [[Using Static Methods like in get_perturbation|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#using-static-methods-like-in-get_perturbation]]. 
+- [x] Optimize costanzo adapter so we can save on copying. Seems maybe premature but I think it should pay off. First look to `staticmethod` ... → Mocked up a function and realized that the juice 🧃 is not worth the squeeze 🪗.  [[Using Static Methods like in get_perturbation|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#using-static-methods-like-in-get_perturbation]].
 - [x] Inspect ontology visualization with biocypher. → [[Useful Functions for Debugging Adapter and Printing Ontology|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#useful-functions-for-debugging-adapter-and-printing-ontology]]
-- [x] Sort `list[GenePerturbation]` in `BaseGenotype`, these are now sorted 
+- [x] Sort `list[GenePerturbation]` in `BaseGenotype`, these are now sorted
 - [x] Add `BaseGenotype` as a type of node. → Maybe what we want is whether it is an interference or deletion genotype... → `BaseGenotype` deserialized the children class so this doesn't make much sense. I think it is best to hold off for now, but there is a good idea here which is that data can be easily add to the graph for querying, but this starts to get a bit hacky because you move away from the pydantic models.
-- [x] Read Biocypher docs on set `_set_types_and_fields_` → not in docs just in the collectri example. Don't think this is necessary to use since we have the pydantic models. → Removed the `node_type` and `edge_type` args. 
+- [x] Read Biocypher docs on set `_set_types_and_fields_` → not in docs just in the collectri example. Don't think this is necessary to use since we have the pydantic models. → Removed the `node_type` and `edge_type` args.
 - [x] Write the `Smf Kuzmin` Adapter. Consider optimizations to not loop over the dataset multiple times. → Tests pass for `SmfKuzmin2018Dataset`
 - [x] Write the `Dmf Kuzmin` Adapter → Doing some damage control 🥊 since there is an issue with the `DmfKuzmin2018Dataset` [[Processing Kuzmin Double Mutants in Trigenic Rows|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#processing-kuzmin-double-mutants-in-trigenic-rows]]. This solved the issues with duplicate node and edge types in the adapter → Works well but takes some time to complete.
 - [x] Fix `_get_genome_nodes` to work on reference
 - [x] Try to used pytest cache → We don't want to cache the result as the data is big, we really just want to compare last passing test date with date modified on the `src`.
-- [ ] Write the `Tmf Kuzmin` Adapter
-- [ ] Write the `Dmf Costanzo` Adapter
-- [ ] @Sebastian-Lobentanzer informed me that we could set the config in the class instantiation, not the config. Change the location of config and corresponding paths.
-- [ ] Change `reference_genome` to `reference.genome`
-
+- [x] See if we can modify the tests on the data so they only run when the `src` has been updated or the last test failed, otherwise skip to "success". → This relies on both git history and the pytest history which makes things a bit complicated. I could get the git date but only using full paths and I couldn't get the pytest data. → Seems that [testmon library](https://testmon.org/) can help with this.
+- [x] Write the `Tmf Kuzmin` Adapter
+- [x] Update `DmfKuzmin` and `TmfKuzmin` tests for [[Test_kuzmin2018_adapter|dendron://torchcell/tests.torchcell.adapters.test_kuzmin2018_adapter]]
+- [x] Write the `DmfCostanzo2016Adapter` → This is essentially a copy of the `DmfKuzmin`... also `TmfKuzmin`is a copy of `DmfKuzmin`. These adapters could be united under a common class but I am hesitant to do this yet.
+- [x] Test for `DmfCostanzo2016Adapter` → [[Test_costanzo2016_adapter|dendron://torchcell/tests.torchcell.adapters.test_costanzo2016_adapter]]
+- [x] Start writing [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] with a small example using `SmfCostanzo` and `SmfKuzmin` to see if it works. → Works well.
+- [x] Rerun the `create_kg` with all datasets. Delete current data and run overnight.
 
 ## 2024.01.17
 
@@ -34,12 +85,12 @@ created: 1690514887023m
 - [x] Run `DmfCostanzo` to update the dataset
 - 🔲 Add perturbations to the knowledge graph.
 - 🔲 Build out testing for individual datasets. The tests should not allow graphs with duplicates to pass. Need to intercept the `Biocypher` logging for this. Consider just copying something like `tc_create_knowledge_graph.py` for this.
- 
+
 ## 2024.01.15
 
 - [x] Add `ExperimentReferenceIndex` property to `DmfCostanzo`
 - [x] Add  `ExperimentReferenceIndex` property to all of Kuzmin. I know this shouts of standardization of the Dataclass, but I want to hold out on this until I complete the data upload cycle for multiple datasets. We can try to keep the consistency in mind for later unification.
-- [x] Reorganize datasets for preparation of adapters → [[Costanzo2016 Notes on Design|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#costanzo2016-notes-on-design]] 
+- [x] Reorganize datasets for preparation of adapters → [[Costanzo2016 Notes on Design|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016#costanzo2016-notes-on-design]]
 - 🔲 Write the `Smf Costanzo` Adapter
 - 🔲 Write the `Smf Kuzmin` Adapter
 - 🔲 Write the `Dmf Kuzmin` Adapter
@@ -52,13 +103,12 @@ created: 1690514887023m
 - [x] Consider adding `ExperimentReferenceIndex` - might help in Biocypher
 - [x] Add `ExperimentReferenceIndex` property to `SmfCostanzo`, this helps with the uploading data to the knowledge graph
 
-
 ## 2024.01.13
 
 - [x] `Dmf` Kuzmin
 - [x] `Smf` Kuzmin → Processing is a bit tricky since the table is a bit wack. We have no standard deviation for measured mutant fitness so I put nan.
 - [x] `Dmf` revise fitness adding double mutant fitness from the `trigenic` rows
-- [x] `Tmf` Kuzmin → `Dmf` not done yet, there are double mutants within the trigenic rows too. This brings up the larger issue of recording the fitness values of lower order combinations. I looked to see if the the single mutant fitness was the same as recorded in Costanzo to see if they just used the same values but it appears they remeasured it... Implementing a `Smf`. 
+- [x] `Tmf` Kuzmin → `Dmf` not done yet, there are double mutants within the trigenic rows too. This brings up the larger issue of recording the fitness values of lower order combinations. I looked to see if the the single mutant fitness was the same as recorded in Costanzo to see if they just used the same values but it appears they remeasured it... Implementing a `Smf`.
 - 🔲 `Costanzo ggi` double mutant interaction
 - 🔲 `Kuzmin ggi` double mutant interaction
 - 🔲 `Kuzmin ggi` triple mutant interaction
@@ -68,8 +118,7 @@ created: 1690514887023m
 
 - [x] `tmf` Kuzmin → Data cannot be easily downloaded from science, moving data to zipped hosted version on my github. This works well, there is always the trick of getting the proper path. Got through download, going to split between `smf` and `dmf` as the other datasets have focused on a single phenotype.
 - [x]  Rewrite `TsAllele` to be `Allele` with a `allele_class` attribute. → No this probably a bad idea I think this starts to verge on the idea that everything is an `allele` you just needs its sequence specification. For now we respect the helpful terminology related to different biological classes and types. In this case I am just going to added an additional class. → Added `AllelePerturbation` and `SgdAllelePerturbation`. I think this solves the problem nicely without having to rewrite 📝.
-- [x] `tmf` Kuzmin. → We need to see allele as a more general type of perturbation and temperature sensitive should be a type. This should help some in de cluttering classes. We need the right amount of clutter. → We find there are alternative alleles not well documented... 📝 rewrite time. → It will exist on the same level as a sort of undifferentiated type, and be associated with the `BaseGenotype`. → [[Unsure of Origin of Alleles|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#unsure-of-origin-of-alleles]] → [[All Double Mutants Contain the ho deletion|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#all-double-mutants-contain-the-ho-deletion]] → 
-
+- [x] `tmf` Kuzmin. → We need to see allele as a more general type of perturbation and temperature sensitive should be a type. This should help some in de cluttering classes. We need the right amount of clutter. → We find there are alternative alleles not well documented... 📝 rewrite time. → It will exist on the same level as a sort of undifferentiated type, and be associated with the `BaseGenotype`. → [[Unsure of Origin of Alleles|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#unsure-of-origin-of-alleles]] → [[All Double Mutants Contain the ho deletion|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#all-double-mutants-contain-the-ho-deletion]] →
 
 ## 2024.01.11
 
@@ -80,11 +129,11 @@ created: 1690514887023m
 
 - [x] Fix up the `Dmf` class adding `gene_set`, no `Data()`, fixing `preprocess`
 - [x] Compute the means on `Dmf` for different temperatures.
-- [x] Add a clean up dir method after the download happens to remove superfluous files 
+- [x] Add a clean up dir method after the download happens to remove superfluous files
 - 🔲 Convert the `Smf` class to look like the `Dmf` class. → `Array allele name` in `Dmf` has a `-supp1` suffix that seems → `-supp1` is for strains that have a suppression mutation. We should drop these because we have no way of tracking them. → I've hit on some troubling issues in harmonizing the data. I had an inkling before, but now it is obvious that sometimes you need the gestalt before you process individual datasets. Now that I see how all of the mutant fitness data must be processed to come together in the db, it is obvious that I wouldn't have been able to arrive at such a solution by atomistically processing each dataset on its own.
 - [ ] Correct the `Smf` adapter
 - [ ] Write `Dmf` adapter
-- [ ] Run query on Yeast9 genes and save json `(list[genes], fitness)` 
+- [ ] Run query on Yeast9 genes and save json `(list[genes], fitness)`
 
 ## 2024.01.08
 
@@ -122,19 +171,19 @@ created: 1690514887023m
 
 ## 2023.12.17
 
-- [x] Add children as nodes with their data 
+- [x] Add children as nodes with their data
 
 ## 2023.12.16
 
 - [x] Write `FitnessExperimentReference` for `FitnessExperiment` to get around the issue of only recovering the base data upon deserialization. This was dropping the `fitness` and `fitness_std`. I think as a rule of thumb we should probably try to limit typing to single types if possible. → I am puzzled in terms of where the reference state should go. I like it with data instances because at the time of modeling, it is available. In general reference states are typically singular with any given experiment, in some cases there could be a few. For memory they can be kept separate and also in the context of graphs it makes more sense if they are kept together. This way we can link to references and use they compatibility to do selection.
 - [x] Separate out the reference from the data itself. → my current solution to this is to have the index as a boolean array, paired with the reference data. I made some pydantic models for this. This will be very useful data for creating nodes within biocypher. The 1st node, publication or study, then 2nd we have reference states (study), and data (study).
-- [x] Add publication, reference states, with boolean indices as data. Add studies. → Create an outline of how we can do this in [[notes/assets/notability/notability.pdf]] → Didn't add the boolean indices as data as these should primarily be used for link creation between reference and data. Waiting on publication, which should be linked to dataset. 
+- [x] Add publication, reference states, with boolean indices as data. Add studies. → Create an outline of how we can do this in [[notes/assets/notability/notability.pdf]] → Didn't add the boolean indices as data as these should primarily be used for link creation between reference and data. Waiting on publication, which should be linked to dataset.
 - [x] Create the necessary relations with biolink predicate, likely in information entity. These include concept links and instance links. → had to change change from the predicates to ther relationship types. These are not capable of being visualized.
 Concept links:
   - `experiment` - `member_of` -> `dataset`  
-  - `dataset` - `has_member` -> `experiment` 
-  - `experiment reference` - `member_of` -> `dataset` 
-  - `dataset` - `has_member` -> `experiment reference` 
+  - `dataset` - `has_member` -> `experiment`
+  - `experiment reference` - `member_of` -> `dataset`
+  - `dataset` - `has_member` -> `experiment reference`
 Instance links:
   - `experiment` - `associated_with` ->  `experiment reference`
 
@@ -142,34 +191,31 @@ Instance links:
 - [ ] ChatGSE to get query for extracting only nodes that are temperature 30 and gene deletions.
 - [ ] Check that pydantic model names are being propagated as properties so they can be used as selection. Maybe we call this `TcType`.
 
-
 - [ ] Add immediate children of experiment to graph.
 - [ ] Create a ChatGSE demonstration.
 - [ ] Add Costanzo doubles to graph. Start with small subset.
-
 
 ## 2023.12.15
 
 - [x] Add `isort` and `black` tasks, since it takes so damn long with the normal vscode extensions.
 - [x] TS alleles inspection. → can find some [nature ts alleles SI Table 1](https://www.nature.com/articles/nbt.1832#MOESM5) around 40 % seem to have enough information to reconstruct the allele sequence. For now will avoid sequence specificaiton.
-- [x] Add `costanzo` single deletions to graph → Did it! Yay 🎉 but there are some issus, which ontologies to use, data serialization and deserialization 
+- [x] Add `costanzo` single deletions to graph → Did it! Yay 🎉 but there are some issus, which ontologies to use, data serialization and deserialization
 
 ## 2023.12.14
 
 - [x] Rename `src` to `torchcell`, refactor notes.
 - [x] Test if `Dcell` slim works.
 - [x] Check python utility functions → fixed move file, now works well.
-- [x] [[Pyreverse|dendron://torchcell/python.lib.pyreverse]] 
+- [x] [[Pyreverse|dendron://torchcell/python.lib.pyreverse]]
 - 🔲 Add costanzo single deletions to graph
 
 - [evotorch](https://evotorch.ai/)
 
 ## 2023.12.13
 
--  [x] Clean up miscellaneous files within the workspace in preparation for adding a database to the root. → Moved [metabolic_graph](./assets/images/metabolic_graph.png) to assets, [smf blox plots gene expression](./assets/images/SMF_gene_expression_box_plot_6170_genes_1143_sm.png) to assets
+- [x] Clean up miscellaneous files within the workspace in preparation for adding a database to the root. → Moved [metabolic_graph](./assets/images/metabolic_graph.png) to assets, [smf blox plots gene expression](./assets/images/SMF_gene_expression_box_plot_6170_genes_1143_sm.png) to assets
 - [x] Test docker build with conda env in [Biocypher collectri](https://github.com/biocypher/collectri) → This works but needed to write a custom `Dockerfile`
 - [x] Move collectri example into `tc`. I think one large repo is better for now because there will be some interaction between the adapter, input data etc. Mostly due to my indecision about the right time to do data cleansing, etc. after or before cypher query. → most difficult part is the need to explicitly copy in the `scripts/build.sh`, the default `cp` seemed to be copying everything.
-
 
 ## 2023.12.12
 
@@ -180,9 +226,9 @@ Instance links:
 - [x] Run biocypher tutorial
 
 "This allows maintenance of property lists for many classes at once. If the child class has properties already, they will be kept (if they are not present in the parent class) or replaced by the parent class properties (if they are present)."
-  - Confusing, how does inheritance work?
-  https://biocypher.org/tutorial.html#section-3-handling-properties
 
+- Confusing, how does inheritance work?
+  <https://biocypher.org/tutorial.html#section-3-handling-properties>
 
 ## 2023.12.06
 
@@ -198,8 +244,7 @@ Instance links:
 - [ ] Add morphology to neo4j
 - [ ] Check ontology vs SGD ontology GAF.
 
-- Make sure on `Delta` that lightly is uninstalled. It had dependencies on an earlier version of pydantic. 
-
+- Make sure on `Delta` that lightly is uninstalled. It had dependencies on an earlier version of pydantic.
 
 ## 2023.12.05
 
@@ -211,7 +256,7 @@ Instance links:
 - [ ] Add morphology to neo4j
 - [ ] Check ontology vs SGD ontology GAF.
 
--  [The localization and quantitation atlas of the yeast proteome](https://www.weizmann.ac.il/molgen/loqate/)
+- [The localization and quantitation atlas of the yeast proteome](https://www.weizmann.ac.il/molgen/loqate/)
 
 ## 2023.12.04
 
@@ -231,7 +276,6 @@ Instance links:
 - [x] Delete all nodes and import ontology via python. This will likely take config then upload.
 - [ ] Make the modification to the ontology so environment is on the same level as phenotype and genotype.
 - [ ] Depending on this modification act...
-
 
 ## 2023.11.29
 

@@ -12,8 +12,16 @@ import shutil
 import pytest
 from biocypher import BioCypher
 
-from torchcell.adapters import SmfKuzmin2018Adapter
-from torchcell.datasets.scerevisiae import SmfKuzmin2018Dataset
+from torchcell.adapters import (
+    DmfKuzmin2018Adapter,
+    SmfKuzmin2018Adapter,
+    TmfKuzmin2018Adapter,
+)
+from torchcell.datasets.scerevisiae import (
+    DmfKuzmin2018Dataset,
+    SmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
+)
 
 
 class LogCaptureHandler(logging.Handler):
@@ -40,6 +48,66 @@ def test_no_duplicate_warnings_SmfKuzmin2018Dataset(log_capture):
     bc = BioCypher()
     dataset = SmfKuzmin2018Dataset()
     adapter = SmfKuzmin2018Adapter(dataset=dataset)
+
+    # Run the part of the script to be tested
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+
+    # Check that no log records contain the duplicate warning
+    for record in handler.records:  # Using handler.records
+        assert "Duplicate edge type" not in record.getMessage()
+        assert "Duplicate node type" not in record.getMessage()
+
+    # Deleting the directories and the specific log file
+    try:
+        shutil.rmtree(bc._output_directory)
+        file_handler = next(
+            (h for h in logger.handlers if isinstance(h, logging.FileHandler)), None
+        )
+        if file_handler and hasattr(file_handler, "baseFilename"):
+            log_file_path = file_handler.baseFilename
+            if os.path.exists(log_file_path):
+                os.remove(log_file_path)
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
+
+
+def test_no_duplicate_warnings_DmfKuzmin2018Dataset(log_capture):
+    logger, handler = log_capture
+
+    bc = BioCypher()
+    dataset = DmfKuzmin2018Dataset()
+    adapter = DmfKuzmin2018Adapter(dataset=dataset)
+
+    # Run the part of the script to be tested
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+
+    # Check that no log records contain the duplicate warning
+    for record in handler.records:  # Using handler.records
+        assert "Duplicate edge type" not in record.getMessage()
+        assert "Duplicate node type" not in record.getMessage()
+
+    # Deleting the directories and the specific log file
+    try:
+        shutil.rmtree(bc._output_directory)
+        file_handler = next(
+            (h for h in logger.handlers if isinstance(h, logging.FileHandler)), None
+        )
+        if file_handler and hasattr(file_handler, "baseFilename"):
+            log_file_path = file_handler.baseFilename
+            if os.path.exists(log_file_path):
+                os.remove(log_file_path)
+    except OSError as e:
+        print(f"Error: {e.filename} - {e.strerror}")
+
+
+def test_no_duplicate_warnings_TmfKuzmin2018Dataset(log_capture):
+    logger, handler = log_capture
+
+    bc = BioCypher()
+    dataset = TmfKuzmin2018Dataset()
+    adapter = TmfKuzmin2018Adapter(dataset=dataset)
 
     # Run the part of the script to be tested
     bc.write_nodes(adapter.get_nodes())

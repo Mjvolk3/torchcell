@@ -2,10 +2,15 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705682652487
+updated: 1705805292317
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2024.01.20
+
+- [x] The `db` is taking a long time with the full datasets due to `DmfCostanzo`. Start two runs one small and one normal. Hopefully can trouble shoot with the small
+- [x] Message @Sebastian-Lobentanzer about the slow `db` build.
 
 ## 2024.01.19
 
@@ -15,9 +20,10 @@ created: 1690514887023m
 - [x] Create scripts for iteratively adding to database. → Cannot doing this, we need to update every time there is a new db. We rely on remove duplicates from multiple datasets.
 - [x] Write src build instructions [[Source Build Instructions|dendron://torchcell/src.build#source-build-instructions]]
 - [x] Rebuild `src` so db has the correct functions.
-- [x] Get ChatGSE working → Trying to build small db again. → [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] created graph. → [[SmfKuzmin2018 Docker Import Issues with None and Special Characters|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#smfkuzmin2018-docker-import-issues-with-none-and-special-characters]] → There also seems to be something strange with the order in which I run `docker compose`, I reran once after just resetting everything and got a different error. Have to be careful to check that the proper version of `torchcell` is being used. I also think it helps to `--force-recreate` to recreate containers even if configuration and image haven't changed... maybe it is changing somewhere? I'm not sure. Shouldn't really need this flag. To avoid the versioning issue it is best to just set it in `env/requirements-tc-graph.txt`.
-
+- [ ] Get ChatGSE working → Trying to build small db again. → [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] created graph. → [[SmfKuzmin2018 Docker Import Issues with None and Special Characters|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#smfkuzmin2018-docker-import-issues-with-none-and-special-characters]] → There also seems to be something strange with the order in which I run `docker compose`, I reran once after just resetting everything and got a different error. Have to be careful to check that the proper version of `torchcell` is being used. I also think it helps to `--force-recreate` to recreate containers even if configuration and image haven't changed... maybe it is changing somewhere? I'm not sure. Shouldn't really need this flag. To avoid the versioning issue it is best to just set it in `env/requirements-tc-graph.txt`.
 - [x] torchcell version add to bumpver in toml for `env/requirements-tc-graph.txt`
+- [x] Message @Sebastian-Lobentanzer about `None` getting turned into `nan` when using Docker... For now giving up on Docker.
+- [ ] Try to build db locally.
 
 - [ ] Read [testmon github actions](https://testmon.org/blog/better-github-actions-caching/)
 - [ ] Try [testmon library](https://testmon.org/)

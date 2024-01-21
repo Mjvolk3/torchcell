@@ -12,7 +12,7 @@ from torchcell.adapters import (
     TmfKuzmin2018Adapter,
 )
 from torchcell.datasets.scerevisiae import (
-    SmfCostanzo2016Dataset,o
+    SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
     SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
@@ -32,10 +32,10 @@ bc = BioCypher()
 
 # Ordered adapters from smallest to largest
 adapters = [
-    # SmfCostanzo2016Adapter(dataset=SmfCostanzo2016Dataset()),
-    # SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset()),
-    # TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
-    # DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
+    SmfCostanzo2016Adapter(dataset=SmfCostanzo2016Dataset()),
+    SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset()),
+    TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
+    DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
     DmfCostanzo2016Adapter(dataset=DmfCostanzo2016Dataset()),
 ]
 

@@ -608,6 +608,9 @@ class DmfKuzmin2018Dataset(Dataset):
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
+        # replace delta symbol for neo4j import
+        df = df.replace("'", "_prime", regex=True)
+        df = df.replace("Δ", "_delta", regex=True)
         df = df.reset_index(drop=True)
         return df
 
@@ -1000,6 +1003,9 @@ class TmfKuzmin2018Dataset(Dataset):
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
+        # replace delta symbol for neo4j import
+        df = df.replace("'", "_prime", regex=True)
+        df = df.replace("Δ", "_delta", regex=True)
         df = df.reset_index(drop=True)
         return df
 

@@ -32,17 +32,17 @@ bc = BioCypher()
 
 # Ordered adapters from smallest to largest
 adapters = [
-    # DmfCostanzo2016Adapter(
-    #     dataset=DmfCostanzo2016Dataset(
-    #         root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    #         subset_n=100000,
-    #         preprocess=None,
-    #     )
-    # ),
     SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset()),
-    # TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
-    # DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
-    # DmfCostanzo2016Adapter(dataset=DmfCostanzo2016Dataset()),
+    SmfCostanzo2016Adapter(dataset=SmfCostanzo2016Dataset()),
+    TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
+    DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
+    DmfCostanzo2016Adapter(
+        dataset=DmfCostanzo2016Dataset(
+            root="data/torchcell/dmf_costanzo2016_subset_n_100000",
+            subset_n=100000,
+            preprocess=None,
+        )
+    ),
 ]
 
 for adapter in adapters:

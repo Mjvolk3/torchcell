@@ -8,7 +8,7 @@ Keywords: An example package,starving artist
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
-Requires-Python: >=3.11
+Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 Requires-Dist: numpy==1.26.0
 Requires-Dist: pandas==2.1.1

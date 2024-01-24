@@ -2,15 +2,52 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1705805292317
+updated: 1706126349896
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.24
+
+- [x] Update python envs for use with python → Using a virtual env instead of conda env.
+- [ ] There is no `pypy torch`. This looks like the last necessary lib. Investigate chain of files to make Datasets. → no `torch` in [[torchcell.data.data]], [[torchcell.datamodels.pydantic]], [[Ontology_pydantic|dendron://torchcell/torchcell.datamodels.ontology_pydantic]]
+- [ ] Rebuild `tc` with pypy 3.9. It seems with conda env I can only use 3.9 but mac m1 allows for 3.10 install. I am unsure how to use this pypy3.10 with my conda env libs.
+
+- [ ] Add a version of `DmfCostanzo2016` using Generators
+- [ ] pypy run `DmfCostanzo2016`
+- [ ] fix `SmfCostanzo2016Adapter` Nonetype note iterable error.
+
+## 2024.01.23
+
+- [x] Optimize `DmfCostanzo2016` [[Costanzo2016_adapter|dendron://torchcell/torchcell.adapters.costanzo2016_adapter]] → Changed edge functions that can should rely on reference.
+- [x] Update `_get_phenotype_experiment_ref_edges` in adapters to use reference.
+- [x] Note on classes using Liskov substitution [[Using Static Methods like in get_perturbation|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#using-static-methods-like-in-get_perturbation]]
+- [x] Test `DmfCostanzo2016` [[Costanzo2016_adapter|dendron://torchcell/torchcell.adapters.costanzo2016_adapter]] → Small works
+- [x] Correct dataset names in adapters → Fixed names. Could take class name for this.
+- [x] Test small [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] works.
+- [x] Look into hosting Neo4j → Should be possible. Have slurm script start db, python script to connect to db via local host. Might have to change some of the configs to connect. Run python script to build the db. close db. New slurm script for query and lmdb db construction.
+- [ ] Run db build overnight. I am running with few workers since this could lead to memory overhead.
+- [ ] Look at `_get_perturbation` using some index probably which I don't think is necessary.
+
+## 2024.01.22
+
+- [x] Database Pipeline figure ![](./assets/drawio/torchcell-neo4j-databae-pipeline.drawio.png)
+- [ ] Reduce repetitive code for fitness datasets. After query for @Junyu-Chen, first remove comments from `Kuzmin2018` and copy clipboard compare. Maybe need a experiment type parser. Whether or not to do this needs some careful consideration. It'll be regretted either way.
+
+## 2024.01.21
+
+- [x] Parallelize the other adapters. At least `TmfKuzmin2018` and `DmfKuzmin2018`.
+- [ ] Reorganize [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
+- [ ] Run [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
+- [ ] Remove `preferred_id` in `_get_perturbation`
+
 ## 2024.01.20
 
 - [x] The `db` is taking a long time with the full datasets due to `DmfCostanzo`. Start two runs one small and one normal. Hopefully can trouble shoot with the small
-- [x] Message @Sebastian-Lobentanzer about the slow `db` build.
+- [x] Message @Sebastian-Lobentanzer about the slow `db` build. → Let's hope I'm not bothering him. After finding solution to `concurrent.futures`, I let him know this solves my issue.
+- [x] Investigate parallelism in `get_nodes` → totally possible using `concurrent.futures`.
+- [x] Use `concurrent.futures` to write a second version of `DmfCostanzoAdapter` and run this version in [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
+- [x] Launch [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] → Some of the other adapters should be parallelized.
 
 ## 2024.01.19
 

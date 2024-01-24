@@ -20,32 +20,54 @@ from torchcell.datasets.scerevisiae import (
 )
 import logging
 import warnings
+import multiprocessing as mp
+from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
-# Example: Generating a warning
-warnings.warn("This is a test warning")
+def main():    
+    # logger.info(f"Started at {datetime.now()}") but use logging
+    bc = BioCypher()
 
-bc = BioCypher()
+    # num_workers = mp.cpu_count()
+    num_workers = 6
 
-# Ordered adapters from smallest to largest
-adapters = [
-    SmfCostanzo2016Adapter(dataset=SmfCostanzo2016Dataset()),
-    SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset()),
-    TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
-    DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
-    DmfCostanzo2016Adapter(dataset=DmfCostanzo2016Dataset()),
-]
+    logging.info(f"Using {num_workers} workers")
+    # Ordered adapters from smallest to largest
+    adapters = [
+        DmfCostanzo2016Adapter(
+            dataset=DmfCostanzo2016Dataset(), num_workers=num_workers
+        ),
+        # DmfCostanzo2016Adapter(
+        #     dataset=DmfCostanzo2016Dataset(
+        #         root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
+        #         subset_n=int(1e7),
+        #     ),
+        #     num_workers=num_workers,
+        # ),
+        DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset(), num_workers=num_workers),
+        TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset(), num_workers=num_workers),
+        SmfCostanzo2016Adapter(
+            dataset=SmfCostanzo2016Dataset(), num_workers=num_workers
+        ),
+        SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset(), num_workers=num_workers),
+    ]
 
-for adapter in adapters:
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    for adapter in adapters:
+        bc.write_nodes(adapter.get_nodes())
+        bc.write_edges(adapter.get_edges())
 
-# Write admin import statement and schema information (for biochatter)
-bc.write_import_call()
-bc.write_schema_info(as_node=True)
+    # Write admin import statement and schema information (for biochatter)
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
 
-# Print summary
-bc.summary()
+    # Print summary
+    bc.summary()
+    # log the finish time
+    logging.info(f"Finished at {datetime.now()}")
+
+
+if __name__ == "__main__":
+    main()

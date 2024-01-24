@@ -6,6 +6,7 @@ from biocypher._logger import logger
 from typing import Generator, Set
 from torchcell.datamodels import BaseGenotype, InterferenceGenotype, DeletionGenotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from biocypher import BioCypher
 
 from torchcell.dataset_readers import LmdbDatasetReader
 
@@ -675,18 +676,18 @@ class SmfKuzmin2018Adapter:
 if __name__ == "__main__":
     ## Smf
     # Simple Testing
-    dataset = LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
-    adapter = SmfKuzmin2018Adapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
+    # adapter = SmfKuzmin2018Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
-    # bc = BioCypher()
-    # dataset = SmfKuzmin2018Dataset()
-    # adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # print(bc.show_ontology_structure())
-    # bc.write_nodes(adapter.get_nodes())
-    # # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    bc = BioCypher()
+    dataset = LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
+    adapter = SmfKuzmin2018Adapter(dataset=dataset)
+    print(bc.show_ontology_structure())
+    bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

@@ -16,9 +16,8 @@ import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-
+from torchell.dataset import Dataset
 from torchcell.data import (
-    Dataset,
     ExperimentReferenceIndex,
     compute_experiment_reference_index,
 )

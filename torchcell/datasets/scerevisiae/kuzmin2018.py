@@ -10,19 +10,18 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
-import torch
+# import torch
 import lmdb
 import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-
+from torchcell.dataset import Dataset
 from torchcell.data import (
-    Dataset,
     ExperimentReferenceIndex,
     compute_experiment_reference_index,
 )
-from torchcell.datamodels import (
+from torchcell.datamodels.ontology_pydantic import (
     BaseEnvironment,
     BaseGenotype,
     DeletionGenotype,
@@ -351,18 +350,15 @@ class SmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
-        # Handling boolean index tensors or numpy arrays
-        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+        # Handling boolean index arrays or numpy arrays
+        if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
-            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+            if idx.dtype == np.bool_:
                 idx = np.where(idx)[0]
-            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
-                idx = idx.nonzero(as_tuple=False).squeeze(1)
 
-        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
-            # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            # If idx is a list/array of indices, return a list of data objects
+            return [self.get_single_item(i) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)
@@ -1005,7 +1001,7 @@ class TmfKuzmin2018Dataset(Dataset):
         ].mean()
         # replace delta symbol for neo4j import
         df = df.replace("'", "_prime", regex=True)
-        df = df.replace("Δ", "_delta", regex=True)
+        df = df.replace("Δ", "_delta", regex=True) 
         df = df.reset_index(drop=True)
         return df
 

@@ -1,0 +1,148 @@
+# Nodes
+dataset:
+    represented_as: node
+
+experiment:
+    represented_as: node
+    is_a: material sample
+    # preferred_id:
+    properties:
+        dataset_index: int
+        serialized_data: str
+
+experiment reference:
+    represented_as: node
+    is_a: material sample
+    # preferred_id:
+    properties:
+        dataset_index: int
+        serialized_data: str
+
+experiment reference member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment reference
+    target: dataset
+
+experiment member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment
+    target: dataset
+
+experiment reference of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: experiment reference
+    target: experiment
+
+genome:
+    represented_as: node
+    properties:
+        species: str
+        strain: str
+        serialized_data: str
+
+genotype:
+    represented_as: node
+    properties:
+        systematic_gene_names: list
+        perturbed_gene_names: list
+        is_deletion_genotype: bool
+        is_interference_genotype: bool
+        description: str
+        perturbation_types: list
+        serialized_data: str
+
+perturbation:
+    is_a: genotype
+    represented_as: node
+    properties:
+        systematic_gene_name: str
+        perturbed_gene_name: str
+        description: str
+        perturbation_type: str
+        strain_id: str
+        serialized_data: str
+
+# CHECK is an environment a physical entity?
+environment:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        temperature: str
+        media: str
+        serialized_data: str
+
+media:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        name: str
+        state: str
+        serialized_data: str
+
+temperature:
+    is_a: environmental exposure
+    represented_as: node
+    properties:
+        value: float
+        unit: str
+        serialized_data: str
+
+phenotype:
+    is_a: phenotypic quality
+    represented_as: node
+    properties:
+        graph_level: str
+        label: str
+        label_error: str
+        fitness: float
+        fitness_std: float
+        serialized_data: str
+
+# RELATIONSHIPS
+
+# want to now add this one
+genotype member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: genotype
+    target: experiment
+
+perturbation member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: perturbation
+    target: genotype
+
+environment member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: environment
+    target: [experiment, experiment reference]
+
+phenotype member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: phenotype
+    target: [experiment, experiment reference]
+
+# Add these last two
+media member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: media
+    target: environment
+
+temperature member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: temperature
+    target: environment
+
+genome member of:
+    is_a: material sample derivation association
+    represented_as: edge
+    source: genome
+    target: experiment reference

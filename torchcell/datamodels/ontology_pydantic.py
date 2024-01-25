@@ -1,10 +1,9 @@
 # torchcell/datamodels/ontology_pydantic.py
-# [[torchcell.datamodels.ontology_pydantic]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/ontology_pydantic.py
 # Test file: torchcell/datamodels/test_ontology_pydantic.py
 
 import json
-from typing import List, Union
+from typing import List, Union, Optional
 
 from pydantic import BaseModel, Field, field_validator, root_validator
 from enum import Enum, auto
@@ -35,14 +34,114 @@ class GenePerturbation(ModelStrict):
 
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
-    description: str = "Deletion via KANMX gene replacement"
+    description: str = "Deletion via KanMX or NatMX gene replacement"
     perturbation_type: str = Field(default="deletion", Literal=True)
+
+
+class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    description: str = "Deletion via KanMX gene replacement."
+    deletion_type: str = "KanMX"
+
+
+class NatMxDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    description: str = "Deletion via NatMX gene replacement."
+    deletion_type: str = "NatMX"
+
+
+class SgaKanMxDeletionPerturbation(KanMxDeletionPerturbation, ModelStrict):
+    description: str = (
+        "KanMX Deletion Perturbation information specific to SGA experiments."
+    )
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    kanmx_deletion_type: str = "SGA"
+
+
+class SgaNatMxDeletionPerturbation(NatMxDeletionPerturbation, ModelStrict):
+    description: str = (
+        "NatMX Deletion Perturbation information specific to SGA experiments."
+    )
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    natmx_deletion_type: str = "SGA"
+
+    # @classmethod
+    # def _process_perturbation_data(cls, perturbation_data):
+    #     if isinstance(perturbation_data, list):
+    #         return [cls._create_perturbation_from_dict(p) for p in perturbation_data]
+    #     elif isinstance(perturbation_data, dict):
+    #         return cls._create_perturbation_from_dict(perturbation_data)
+    #     return perturbation_data
 
 
 class BaseGenotype(ModelStrict):
     perturbation: GenePerturbation | list[GenePerturbation] = Field(
         description="Gene perturbation"
     )
+
+    # Important for disambiguating between single and multiple perturbations
+    # and perturbation types
+    @root_validator(pre=True)
+    def validate_perturbation(cls, values):
+        if "perturbation" in values:
+            perturbation_data = values["perturbation"]
+            validated_perturbations = cls._process_perturbation_data(perturbation_data)
+            values["perturbation"] = validated_perturbations
+        elif isinstance(values, list):
+            # Assuming values is a list of dictionaries, each with a 'perturbation' key
+            validated_perturbations = []
+            for item in values:
+                if "perturbation" in item:
+                    perturbation_data = item["perturbation"]
+                    validated_perturbation = cls._process_perturbation_data(
+                        perturbation_data
+                    )
+                    validated_perturbations.append(validated_perturbation)
+            return validated_perturbations
+        return values
+
+    @staticmethod
+    def _process_perturbation_data(perturbation_data):
+        if isinstance(perturbation_data, list):
+            created_perturbations = [
+                BaseGenotype._create_perturbation_from_dict(p)
+                for p in perturbation_data
+            ]
+            sorted_perturbations = sorted(
+                created_perturbations,
+                key=lambda p: (p.systematic_gene_name, p.perturbed_gene_name),
+            )
+            return sorted_perturbations
+        elif isinstance(perturbation_data, dict):
+            return BaseGenotype._create_perturbation_from_dict(perturbation_data)
+        return perturbation_data
+
+    @staticmethod
+    def _create_perturbation_from_dict(perturbation_dict):
+        pert_type = perturbation_dict.get("perturbation_type")
+        deletion_type = perturbation_dict.get("deletion_type")
+        damp_perturbation_type = perturbation_dict.get("damp_perturbation_type")
+        temperature_sensitive_allele_perturbation_type = perturbation_dict.get(
+            "temperature_sensitive_allele_perturbation_type"
+        )
+        suppressor_allele_perturbation_type = perturbation_dict.get(
+            "suppressor_allele_perturbation_type"
+        )
+
+        if pert_type == "deletion":
+            if deletion_type == "NatMX":
+                return SgaNatMxDeletionPerturbation(**perturbation_dict)
+            elif deletion_type == "KanMX":
+                return SgaKanMxDeletionPerturbation(**perturbation_dict)
+            return DeletionPerturbation(**perturbation_dict)
+        elif pert_type == "damp":
+            if damp_perturbation_type == "SGA":
+                return SgdDampPerturbation(**perturbation_dict)
+        elif pert_type == "temperature_sensitive_allele":
+            if temperature_sensitive_allele_perturbation_type == "SGA":
+                return SgdTsAllelePerturbation(**perturbation_dict)
+        elif pert_type == "suppressor_allele":
+            if suppressor_allele_perturbation_type == "SGA":
+                return SgdSuppressorAllelePerturbation(**perturbation_dict)
+        return None
 
 
 class ExpressionRangeMultiplier(ModelStrict):
@@ -55,22 +154,64 @@ class ExpressionRangeMultiplier(ModelStrict):
 
 
 class DampPerturbation(GenePerturbation, ModelStrict):
-    description: str = "4-10 decreased expression via KANmx insertion at the the 3' UTR of the target gene."
+    description: str = "4-10 decreased expression via KANmx insertion at the "
+    "the 3' UTR of the target gene."
     expression_range: ExpressionRangeMultiplier = Field(
         default=ExpressionRangeMultiplier(min=1 / 10.0, max=1 / 4.0),
-        description="Gene expression is descreased by 4-10 fold",
+        description="Gene expression is decreased by 4-10 fold",
     )
-    perturbation_type: str = Field(default="damp", Literal=True)
+    perturbation_type: str = "damp"
+
+
+class SgdDampPerturbation(DampPerturbation, ModelStrict):
+    description: str = "Damp Perturbation information specific to SGA experiments."
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    damp_perturbation_type: str = "SGA"
 
 
 class TsAllelePerturbation(GenePerturbation, ModelStrict):
     description: str = (
         "Temperature sensitive allele compromised by amino acid substitution."
     )
-    seq: str = "NOT IMPLEMENTED"
-    # TODO add specifics of allele
-    # [[2023.12.15|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231215]] Many of these are unknown.
-    perturbation_type: str = Field(default="ts_allele", Literal=True)
+    # seq: str = "NOT IMPLEMENTED"
+    perturbation_type: str = "temperature_sensitive_allele"
+
+
+class AllelePerturbation(GenePerturbation, ModelStrict):
+    description: str = (
+        "Allele compromised by amino acid substitution without more generic"
+        "phenotypic information specified."
+    )
+    # seq: str = "NOT IMPLEMENTED"
+    perturbation_type: str = "allele"
+
+
+class SuppressorAllelePerturbation(GenePerturbation, ModelStrict):
+    description: str = (
+        "suppressor allele that results in higher fitness in the presence"
+        "of a perturbation, compared to the fitness of the perturbation alone."
+    )
+    perturbation_type: str = "suppressor_allele"
+
+
+class SgdSuppressorAllelePerturbation(SuppressorAllelePerturbation, ModelStrict):
+    description: str = (
+        "Suppressor Allele Perturbation information specific to SGA experiments."
+    )
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    suppressor_allele_perturbation_type: str = "SGA"
+
+
+class SgdTsAllelePerturbation(TsAllelePerturbation, ModelStrict):
+    description: str = "Ts Allele Perturbation information specific to SGA experiments."
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    temperature_sensitive_allele_perturbation_type: str = "SGA"
+
+
+class SgdAllelePerturbation(AllelePerturbation, ModelStrict):
+    description: str = "Ts Allele Perturbation information specific to SGA experiments."
+    strain_id: str = Field(description="'Strain ID' in raw data.")
+    allele_perturbation_type: str = "SGA"
 
 
 # Environment
@@ -86,10 +227,10 @@ class Media(ModelStrict):
 
 
 class Temperature(BaseModel):
-    scalar: float
-    description: str = "Temperature in degrees Celsius."
+    value: float  # Renamed from scalar to value
+    unit: str = "Celsius"  # Simplified unit string
 
-    @field_validator("scalar")
+    @field_validator("value")  # Updated to reflect the new attribute name
     def check_temperature(cls, v):
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
@@ -121,7 +262,7 @@ class BasePhenotype(ModelStrict):
 
 class FitnessPhenotype(BasePhenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: float = Field(description="fitness standard deviation")
+    fitness_std: Optional[float] = Field(None, description="fitness standard deviation")
 
 
 # TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype,
@@ -138,13 +279,34 @@ class BaseExperiment(ModelStrict):
 
 
 class DeletionGenotype(BaseGenotype, ModelStrict):
-    perturbation: DeletionPerturbation | list[DeletionPerturbation]
+    perturbation: DeletionPerturbation | list[
+        DeletionPerturbation
+    ] | KanMxDeletionPerturbation | list[
+        KanMxDeletionPerturbation
+    ] | NatMxDeletionPerturbation | list[
+        NatMxDeletionPerturbation
+    ] | SgaKanMxDeletionPerturbation | list[
+        SgaKanMxDeletionPerturbation
+    ] | SgaNatMxDeletionPerturbation | list[
+        SgaNatMxDeletionPerturbation
+    ]
 
 
+# Assumes that all TS alleles are dampened - unless specified
 class InterferenceGenotype(BaseGenotype, ModelStrict):
     perturbation: DampPerturbation | list[
         DampPerturbation
-    ] | TsAllelePerturbation | list[TsAllelePerturbation]
+    ] | TsAllelePerturbation | list[TsAllelePerturbation] | SgdDampPerturbation | list[
+        SgdDampPerturbation
+    ] | SgdTsAllelePerturbation | list[
+        SgdTsAllelePerturbation
+    ]
+
+
+class SuppressorGenotype(BaseGenotype, ModelStrict):
+    perturbation: SuppressorAllelePerturbation | list[
+        SuppressorAllelePerturbation
+    ] | SgdSuppressorAllelePerturbation | list[SgdSuppressorAllelePerturbation]
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
@@ -153,11 +315,19 @@ class FitnessExperimentReference(ExperimentReference, ModelStrict):
 
 class FitnessExperiment(BaseExperiment):
     genotype: Union[
+        BaseGenotype,
         DeletionGenotype,
         InterferenceGenotype,
+        SuppressorGenotype,
         List[DeletionGenotype],
         List[InterferenceGenotype],
-        List[Union[DeletionGenotype, InterferenceGenotype]],
+        List[SuppressorGenotype],
+        List[BaseGenotype,],
+        List[
+            Union[
+                BaseGenotype, DeletionGenotype, InterferenceGenotype, SuppressorGenotype
+            ]
+        ],
     ]
     phenotype: FitnessPhenotype
 

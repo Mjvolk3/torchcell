@@ -19,10 +19,22 @@ from .ontology_pydantic import (
     InterferenceGenotype,
     FitnessExperimentReference,
     ExperimentReference,
+    KanMxDeletionPerturbation,
+    NatMxDeletionPerturbation,
+    SgaKanMxDeletionPerturbation,
+    SgaNatMxDeletionPerturbation,
+    SgdTsAllelePerturbation,
+    SgdDampPerturbation,
+    SuppressorAllelePerturbation,
+    SgdSuppressorAllelePerturbation,
+    SuppressorGenotype,
+    AllelePerturbation,
+    SgdAllelePerturbation
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
-ontology_models = ["BaseEnvironment",
+ontology_models = [
+    "BaseEnvironment",
     "BaseGenotype",
     "BasePhenotype",
     "BaseExperiment",
@@ -38,6 +50,18 @@ ontology_models = ["BaseEnvironment",
     "TsAllelePerturbation",
     "InterferenceGenotype",
     "FitnessExperimentReference",
-    "ExperimentReference"]
+    "ExperimentReference",
+    "KanMxDeletionPerturbation",
+    "NatMxDeletionPerturbation",
+    "SgaKanMxDeletionPerturbation",
+    "SgaNatMxDeletionPerturbation"
+    "SgdTsAllelePerturbation",
+    "SgdDampPerturbation",
+    "SuppressorAllelePerturbation",
+    "SgdSuppressorAllelePerturbation",
+    "SuppressorGenotype",
+    "AllelePerturbation",
+    "SgdAllelePerturbation"
+]
 
-__all__ = core_models  + ontology_models
+__all__ = core_models + ontology_models

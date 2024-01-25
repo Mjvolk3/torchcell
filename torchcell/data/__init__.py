@@ -1,3 +1,16 @@
-from .dataset import Dataset
+from .data import (
+    ExperimentReferenceIndex,
+    ReferenceIndex,
+    serialize_for_hashing,
+    compute_md5_hash,
+)
 
-__all__ = ["Dataset"]
+data = [
+    "ExperimentReferenceIndex",
+    "ReferenceIndex",
+    "serialize_for_hashing",
+    "compute_md5_hash",
+]
+
+
+__all__ = data

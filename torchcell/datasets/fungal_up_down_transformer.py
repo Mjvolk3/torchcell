@@ -37,6 +37,8 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
     ):
         self.genome = genome
         self.model_name = model_name
+        # BUG I just moved this here to recompute the data but we don't want to do this when training models
+        self.transformer = self.initialize_model()
         super().__init__(root, self.model_name, transform, pre_transform)
         # convert genome to parsed genome after process, so have potential issue
         # with sqlite database
@@ -47,7 +49,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
 
         if self.model_name:
             if not os.path.exists(self.processed_paths[0]):
-                self.transformer = self.initialize_transformer()
+                self.transformer = self.initialize_model()
                 self.process()
             self.data, self.slices = torch.load(self.processed_paths[0])
 

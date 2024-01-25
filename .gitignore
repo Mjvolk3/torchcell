@@ -14,7 +14,11 @@ dataformat.exe
 torchcell/models/pretrained_LLM/*
 
 # Data
-/data/
+/data/go/
+/data/scerevisiae/
+/data/sgd/
+/data/torchcell/
+/data/sgd.gaf
 wandb/
 models/checkpoints/
 
@@ -26,7 +30,8 @@ notes/.dendron.cache.json
 # ncbi_cli
 ncbi_cli/*
 
-# env
+# 
+env/pypy/*
 .env
 
 # slurm
@@ -59,6 +64,7 @@ collectri/
 # biocypher 
 biocypher-out/
 biocypher-log/
+biocypher_warnings.log
 
 # cache - biocypher?
 .cache/cache.json

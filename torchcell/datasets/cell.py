@@ -2,55 +2,33 @@
 # [[torchcell.datasets.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/cell.py
 # Test file: torchcell/datasets/test_cell.py
-import copy
 import json
 import logging
 import os
 import os.path as osp
 import pickle
-import re
-import shutil
-import threading
-import zipfile
-from abc import ABC, abstractmethod
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from os import environ
-from typing import List, Optional, Tuple, Union
 
 import lmdb
 import networkx as nx
 import numpy as np
-import pandas as pd
 import torch
-from attrs import define
-from pydantic import BaseModel, Extra, Field, ValidationError, validator
-from sklearn import experimental
-from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
-from torch_geometric.data.separate import separate
-from torch_geometric.loader import DataLoader
+from pydantic import field_validator
+from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.utils import (
     add_self_loops,
-    coalesce,
     from_networkx,
     k_hop_subgraph,
-    subgraph,
 )
 from tqdm import tqdm
 
-from torchcell.data import Dataset
+from torchcell.dataset import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
-    SmfCostanzo2016Dataset,
 )
-from torchcell.models.llm import NucleotideModel
-from torchcell.models.nucleotide_transformer import NucleotideTransformer
-from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -60,11 +38,11 @@ log = logging.getLogger(__name__)
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
-    @validator("gene_set")
-    def validate_gene_set(cls, value):
-        if not isinstance(value, GeneSet):
-            raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")
-        return value
+    @field_validator("gene_set")
+    def validate_gene_set(cls, v):
+        if not isinstance(v, GeneSet):
+            raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
+        return v
 
 
 class CellDataset(Dataset):

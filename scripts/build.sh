@@ -9,8 +9,7 @@ cp -r /src/biocypher-log .
 cp -r /src/biocypher-out .
 cp -r /src/collectri .
 cp -r /src/config .
-# cp -r /src/create_knowledge_graph.py .
-cp -r /src/tc_create_knowledge_graph.py .
+cp -r /src/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py .
 cp -r /src/docker .
 cp -r /src/docker-compose-chatgse.yml .
 cp -r /src/docker-compose.yml .
@@ -37,6 +36,6 @@ conda activate tc-graph
 python -m pip install torch-scatter
 
 # Run Python script
-python3 tc_create_knowledge_graph.py
+python3 create_scerevisiae_kg_small.py
 
 chmod -R 777 biocypher-log

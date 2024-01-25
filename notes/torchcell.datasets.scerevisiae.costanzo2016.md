@@ -1,546 +1,430 @@
 ---
-id: rzwif3bimldfvjdtmx712pp
-title: Costanzo2016
+id: 9p8raxm87m5eoy9c5u2az10
+title: costanzo2016
 desc: ''
-updated: 1697600646551
-created: 1693327811119
+updated: 1705363909750
+created: 1704437089340
 ---
-## DmfCostanzoDataset Out of Memory Dataset
 
-- As an alternative I tried to use the out of memory `Dataset` since the `InMemoryDataset` takes a while to load. Using this method takes a ton of time to write the data but could possible pay off during the training, especially since there will be other large objects in memory.
+## Costanzo2016 Notes on Design
 
+- Much of the design comes from the previous `Datasets` [[Costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016_deprecated]], then we also use the newer notion of capturing all data in a pydantic objects to make the transition to adapters easier.
+
+## Legacy SmfCostanzo2016
 ```python
-from torch_geometric.data import Dataset
-
-class DMFCostanzo2016Dataset(Dataset):
-    url = (
-        "https://thecellmap.org/costanzo2016/data_files/"
-        "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
+@define
+class SmfCostanzo2016Dataset:
+    root: str = field(default="data/torchcell/smf_costanzo2016")
+    url: str = field(
+        repr=False,
+        default="https://thecellmap.org/costanzo2016/data_files/"
+        "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
     )
+    raw_dir: str = field(init=False, repr=False)
+    processed_dir: str = field(init=False, repr=False)
+    data: list[BaseExperiment] = field(init=False, repr=False, factory=list)
+    reference: list[FitnessExperimentReference] = field(
+        init=False, repr=False, factory=list
+    )
+    reference_index: ReferenceIndex = field(init=False, repr=False)
+    reference_phenotype_std_30 = field(init=False, repr=False)
+    reference_phenotype_std_26 = field(init=False, repr=False)
 
-    def __init__(
-        self,
-        root: str = "data/scerevisiae/costanzo2016",
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
-    ):
-        self.root = root
-        self.transform = transform
-        self.pre_transform = pre_transform
-        self.data_list = self.process()
+    def __attrs_post_init__(self):
+        self.raw_dir = osp.join(self.root, "raw")
+        self.processed_dir = osp.join(self.root, "processed")
+        if osp.exists(osp.join(self.processed_dir, "dataset.json")):
+            self.load()
+        else:
+            self._download()
+            self._extract()
+            self._cleanup_after_extract()
+            self.data, self.reference = self._process_excel()
+            self.data, self.reference = self._remove_duplicates()
+            self.reference_index = self.get_reference_index()
+            self.save()
 
-    @property
-    def raw_file_names(self) -> list[str]:
-        return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
+    # write a get item method to return a single experiment
+    def __getitem__(self, index):
+        return self.data[index]
 
-    @property
-    def processed_file_names(self) -> list[str]:
-        return [f"data_dmf_{i}.pt" for i in range(self.len())]
+    def __len__(self):
+        return len(self.data)
 
-    def download(self):
-        path = download_url(self.url, self.raw_dir)
-        with zipfile.ZipFile(path, "r") as zip_ref:
-            zip_ref.extractall(self.raw_dir)
-        os.remove(path)
+    def _download(self):
+        if not osp.exists(self.raw_dir):
+            os.makedirs(self.raw_dir)
+            download_url(self.url, self.raw_dir)
 
-        # Move the contents of the subdirectory to the parent raw directory
-        sub_dir = os.path.join(
+    def save(self):
+        if not osp.exists(self.processed_dir):
+            os.makedirs(self.processed_dir)
+        save_path = osp.join(self.processed_dir, "dataset.json")
+        # Create a dictionary to store the serialized data
+        serialized_data = {
+            "data": [experiment.model_dump() for experiment in self.data],
+            "reference": [ref.model_dump() for ref in self.reference],
+            "reference_index": [
+                ref_idx.model_dump() for ref_idx in self.reference_index.data
+            ],
+        }
+        with open(save_path, "w") as file:
+            json.dump(serialized_data, file, indent=4)
+
+    def load(self):
+        load_path = osp.join(self.processed_dir, "dataset.json")
+        if not osp.exists(load_path):
+            raise FileNotFoundError("Saved dataset not found.")
+
+        with open(load_path, "r") as file:
+            serialized_data = json.load(file)
+
+        # Deserialize the data back into the appropriate classes
+        self.data = [
+            FitnessExperiment.model_validate(exp) for exp in serialized_data["data"]
+        ]
+        self.reference = [
+            FitnessExperimentReference.model_validate(ref)
+            for ref in serialized_data["reference"]
+        ]
+        self.reference_index = ReferenceIndex(
+            data=[
+                ExperimentReferenceIndex.model_validate(ref_idx)
+                for ref_idx in serialized_data["reference_index"]
+            ]
+        )
+
+    def _extract(self):
+        zip_path = osp.join(
+            self.raw_dir,
+            "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
+        )
+        if osp.exists(zip_path):
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(self.raw_dir)
+
+    def _cleanup_after_extract(self):
+        # We are only keeping the smf data for this dataset
+        extracted_folder = osp.join(
             self.raw_dir,
             "Data File S1. Raw genetic interaction datasets: Pair-wise interaction format",
         )
-        for filename in os.listdir(sub_dir):
-            shutil.move(os.path.join(sub_dir, filename), self.raw_dir)
-        os.rmdir(sub_dir)
+        xlsx_file = osp.join(
+            extracted_folder, "strain_ids_and_single_mutant_fitness.xlsx"
+        )
+        if osp.exists(xlsx_file):
+            shutil.move(xlsx_file, self.raw_dir)
+        if osp.exists(extracted_folder):
+            shutil.rmtree(extracted_folder)
+        zip_path = osp.join(
+            self.raw_dir,
+            "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip",
+        )
+        if osp.exists(zip_path):
+            os.remove(zip_path)
 
-    def process(self):
-        data_list = []
+    def _process_excel(self):
+        """
+        Process the Excel file and convert each row to Experiment instances for 26°C and 30°C separately.
+        """
+        xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
+        df = pd.read_excel(xlsx_path)
+        # Process the DataFrame to average rows with 'tsa' or 'tsq'
+        df = self._average_tsa_tsq(df)
+        # This is an approximate since I cannot find the exact value in the paper
+        df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
-        # Process the DMF Files
-        print("Processing DMF Files...")
-        for file_name in tqdm(self.raw_file_names):
-            file_path = os.path.join(self.raw_dir, file_name)
-            df = pd.read_csv(file_path, sep="\t", header=0)
+        # Filter out rows where 'Strain_ID_Part2' contains 'ts' or 'damp'
+        filter_condition = ~df["Strain_ID_suffix"].str.contains("ts|damp", na=False)
+        df_filtered = df[filter_condition]
 
-            # Extract genotype information
-            query_id = df["Query Strain ID"].str.split("_").str[0].tolist()
-            array_id = df["Array Strain ID"].str.split("_").str[0].tolist()
-
-            query_genotype = [
-                {
-                    "id": id_val,
-                    "intervention": "deletion",
-                    "id_full": full_id,
-                }
-                for id_val, full_id in zip(query_id, df["Query Strain ID"])
+        self.reference_phenotype_std_26 = (
+            df_filtered["Single mutant fitness (26°) stddev"]
+        ).mean()
+        self.reference_phenotype_std_30 = (
+            df_filtered["Single mutant fitness (30°) stddev"]
+        ).mean()
+        # Process data for 26°C and 30°C
+        df_26 = df_filtered[
+            [
+                "Strain ID",
+                "Systematic gene name",
+                "Allele/Gene name",
+                "Single mutant fitness (26°)",
+                "Single mutant fitness (26°) stddev",
             ]
-            array_genotype = [
-                {
-                    "id": id_val,
-                    "intervention": "deletion",
-                    "id_full": full_id,
-                }
-                for id_val, full_id in zip(array_id, df["Array Strain ID"])
+        ].dropna()
+        self._process_temperature_data(df_26, 26)
+
+        df_30 = df_filtered[
+            [
+                "Strain ID",
+                "Systematic gene name",
+                "Allele/Gene name",
+                "Single mutant fitness (30°)",
+                "Single mutant fitness (30°) stddev",
             ]
+        ].dropna()
 
-            # Combine the genotypes
-            combined_genotypes = list(zip(query_genotype, array_genotype))
+        # This is modifying self.data, and self.reference
+        self._process_temperature_data(df_30, 30)
 
-            # Extract observation information
-            observations = [
-                {
-                    "smf_fitness": [
-                        row["Query single mutant fitness (SMF)"],
-                        row["Array SMF"],
-                    ],
-                    "dmf_fitness": row["Double mutant fitness"],
-                    "dmf_std": row["Double mutant fitness standard deviation"],
-                    "genetic_interaction_score": row["Genetic interaction score (ε)"],
-                    "genetic_interaction_p-value": row["P-value"],
+        return self.data, self.reference
+
+    def get_reference_index(self):
+        # Serialize references for comparability using model_dump
+        serialized_references = [
+            json.dumps(ref.model_dump(), sort_keys=True) for ref in self.reference
+        ]
+
+        # Identify unique references and their indices
+        unique_refs = {}
+        for idx, ref_json in enumerate(serialized_references):
+            if ref_json not in unique_refs:
+                unique_refs[ref_json] = {
+                    "indices": [],
+                    "model": self.reference[idx],  # Store the Pydantic model
                 }
-                for _, row in df.iterrows()  # This part is still a loop due to the complexity of the data structure
-            ]
+            unique_refs[ref_json]["indices"].append(idx)
 
-            # Create environment dict
-            environment = {"media": "YPD", "temperature": 30}
-
-            # Combine everything
-            combined_data = [
-                {
-                    "genotype": genotype,
-                    "phenotype": {
-                        "observation": observation,
-                        "environment": environment,
-                    },
-                }
-                for genotype, observation in zip(combined_genotypes, observations)
-            ]
-
-            # Convert to Data objects and save each instance to a separate file
-            for idx, item in enumerate(combined_data):
-                data = Data()
-                data.genotype = item["genotype"]
-                data.phenotype = item["phenotype"]
-                data_list.append(data)
-
-                # Save each Data object to its own file
-                file_name = f"data_dmf_{idx}.pt"
-                torch.save(data, os.path.join(self.processed_dir, file_name))
-
-        return data_list
-
-    def len(self):
-        return len(self.data_list)
-
-    def get(self, idx):
-        sample = self.data_list[idx]
-        if self.transform:
-            sample = self.transform(sample)
-        return sample
-
-    @property
-    def gene_set(self):
-        gene_ids = set()
-        for data in self.data_list:
-            for genotype in data.genotype:
-                gene_ids.add(genotype["id"])
-        return gene_ids
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({len(self)})"
-```
-
-## DMFCostanzo2016LargeDataset with Threads
-
-- "If max_workers is None or not given, it will default to the number of processors on the machine." [python concurrent futures](https://docs.python.org/3/library/concurrent.futures.html). On M1 this means 10 workers by default
-- This process takes around 2.5 hours to complete. This is just the data download. The biggest bottleneck seems to be IO in saving the billions of `.pt` tensors.
-
-### DMFCostanzo2016LargeDataset with Threads - M1 Default 10 Threads
-
-```python
-# after combined_data defined
-    with ThreadPoolExecutor() as executor:
-        futures = []
-        for idx, item in tqdm(enumerate(combined_data)):
-            data = Data()
-            data.genotype = item["genotype"]
-            data.phenotype = item["phenotype"]
-            data_list.append(data)  # fill the data_list
-
-            # Submit each save operation to the thread pool
-            future = executor.submit(
-                self.save_data, data, idx, self.processed_dir
+        # Create ExperimentReferenceIndex instances
+        reference_indices = []
+        for ref_info in unique_refs.values():
+            bool_array = [i in ref_info["indices"] for i in range(len(self.data))]
+            reference_indices.append(
+                ExperimentReferenceIndex(reference=ref_info["model"], index=bool_array)
             )
-            futures.append(future)
 
-    # Optionally, wait for all futures to complete
-    for future in futures:
-        future.result()
+        # Return ReferenceIndex instance
+        return ReferenceIndex(data=reference_indices)
 
-self.data_list = data_list  # if you intend to use data_list later
-return data_list  # if you want to return it
+    def _average_tsa_tsq(self, df):
+        """
+        Replace 'tsa' and 'tsq' with 'ts' in the Strain ID and average duplicates.
+        """
+        # Replace 'tsa' and 'tsq' with 'ts' in Strain ID
+        df["Strain ID"] = df["Strain ID"].str.replace("_ts[qa]\d*", "_ts", regex=True)
+
+        # Columns to average
+        columns_to_average = [
+            "Single mutant fitness (26°)",
+            "Single mutant fitness (26°) stddev",
+            "Single mutant fitness (30°)",
+            "Single mutant fitness (30°) stddev",
+        ]
+
+        # Averaging duplicates
+        df_avg = (
+            df.groupby(["Strain ID", "Systematic gene name", "Allele/Gene name"])[
+                columns_to_average
+            ]
+            .mean()
+            .reset_index()
+        )
+
+        # Merging averaged values back into the original DataFrame
+        df_non_avg = df.drop(columns_to_average, axis=1).drop_duplicates(
+            ["Strain ID", "Systematic gene name", "Allele/Gene name"]
+        )
+        df = pd.merge(
+            df_non_avg,
+            df_avg,
+            on=["Strain ID", "Systematic gene name", "Allele/Gene name"],
+        )
+
+        return df
+
+    def _process_temperature_data(self, df, temperature):
+        """
+        Process DataFrame for a specific temperature and add entries to the dataset.
+        """
+        for _, row in df.iterrows():
+            experiment, ref = self.create_experiment(row, temperature)
+            self.data.append(experiment)
+            self.reference.append(ref)
+
+    def create_experiment(self, row, temperature):
+        """
+        Create an Experiment instance from a row of the Excel spreadsheet for a given temperature.
+        """
+        # Common attributes for both temperatures
+        reference_genome = ReferenceGenome(
+            species="saccharomyces Cerevisiae", strain="s288c"
+        )
+
+        # Deal with different types of perturbations
+        if "ts" in row["Strain ID"]:
+            genotype = InterferenceGenotype(
+                perturbation=DampPerturbation(
+                    systematic_gene_name=row["Systematic gene name"],
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
+        elif "damp" in row["Strain ID"]:
+            genotype = InterferenceGenotype(
+                perturbation=DampPerturbation(
+                    systematic_gene_name=row["Systematic gene name"],
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
+        else:
+            genotype = DeletionGenotype(
+                perturbation=DeletionPerturbation(
+                    systematic_gene_name=row["Systematic gene name"],
+                    perturbed_gene_name=row["Allele/Gene name"],
+                )
+            )
+        environment = BaseEnvironment(
+            media=Media(name="YEPD", state="solid"),
+            temperature=Temperature(value=temperature),
+        )
+        reference_environment = environment.model_copy()
+        # Phenotype based on temperature
+        smf_key = f"Single mutant fitness ({temperature}°)"
+        smf_std_key = f"Single mutant fitness ({temperature}°) stddev"
+        phenotype = FitnessPhenotype(
+            graph_level="global",
+            label="smf",
+            label_error="smf_std",
+            fitness=row[smf_key],
+            fitness_std=row[smf_std_key],
+        )
+
+        if temperature == 26:
+            reference_phenotype_std = self.reference_phenotype_std_26
+        elif temperature == 30:
+            reference_phenotype_std = self.reference_phenotype_std_30
+        reference_phenotype = FitnessPhenotype(
+            graph_level="global",
+            label="smf",
+            label_error="smf_std",
+            fitness=1.0,
+            fitness_std=reference_phenotype_std,
+        )
+
+        reference = FitnessExperimentReference(
+            reference_genome=reference_genome,
+            reference_environment=reference_environment,
+            reference_phenotype=reference_phenotype,
+        )
+
+        experiment = FitnessExperiment(
+            genotype=genotype, environment=environment, phenotype=phenotype
+        )
+        return experiment, reference
+
+    def _remove_duplicates(self) -> list[BaseExperiment]:
+        """
+        Remove duplicate BaseExperiment instances from self.data.
+        All fields of the object must match for it to be considered a duplicate.
+        """
+        unique_data = []
+        seen = set()
+
+        for experiment, reference in zip(self.data, self.reference):
+            # Serialize the experiment object to a dictionary
+            experiment_dict = experiment.model_dump()
+            reference_dict = reference.model_dump()
+
+            combined_dict = {**experiment_dict, **reference_dict}
+            # Convert dictionary to a JSON string for comparability
+            combined_json = json.dumps(combined_dict, sort_keys=True)
+
+            if combined_json not in seen:
+                seen.add(combined_json)
+                unique_data.append((experiment, reference))
+
+        self.data = [experiment for experiment, reference in unique_data]
+        self.reference = [reference for experiment, reference in unique_data]
+
+        return self.data, self.reference
+
+    def df(self) -> pd.DataFrame:
+        """
+        Create a DataFrame from the list of BaseExperiment instances.
+        Each instance is a row in the DataFrame.
+        """
+        rows = []
+        for experiment in self.data:
+            # Flatten the structure of each BaseExperiment instance
+            row = {
+                "species": experiment.experiment_reference_state.reference_genome.species,
+                "strain": experiment.experiment_reference_state.reference_genome.strain,
+                "media_name": experiment.environment.media.name,
+                "media_state": experiment.environment.media.state,
+                "temperature": experiment.environment.temperature.value,
+                "genotype": experiment.genotype.perturbation.systematic_gene_name,
+                "perturbed_gene_name": experiment.genotype.perturbation.perturbed_gene_name,
+                "fitness": experiment.phenotype.fitness,
+                "fitness_std": experiment.phenotype.fitness_std,
+                # Add other fields as needed
+            }
+            rows.append(row)
+
+        return pd.DataFrame(rows)
 ```
 
-```bash
-(torchcell) michaelvolk@M1-MV torchcell % python src/torchcell/datasets/scerevisiae/costanzo2016.py                    19:28
-Processing...
-Processing DMF Files...
-1391958it [05:15, 4405.31it/s]                                                                         | 0/4 [00:00<?, ?it/s]
-818570it [03:05, 4420.56it/s]                                                                 | 1/4 [07:01<21:03, 421.09s/it]
-5796145it [37:14, 2593.84it/s]███████████████████▌                                            | 2/4 [11:10<10:40, 320.35s/it]
-12698939it [1:46:04, 1995.24it/s]██████████████████████████████████████                      | 3/4 [56:32<23:36, 1416.78s/it]
-100%|██████████████████████████████████████████████████████████████████████████████████████| 4/4 [3:00:04<00:00, 2701.08s/it]
-Done!
-DMFCostanzo2016LargeDataset(20705612)
-Data(
-  genotype=[2],
-  phenotype={
-    observation={
-      smf_fitness=[2],
-      dmf_fitness=0.8177,
-      dmf_std=0.0286,
-      genetic_interaction_score=0.0358,
-      genetic_interaction_p-value=0.1436
-    },
-    environment={
-      media='YPD',
-      temperature=30
-    }
-  }
-)
-```
+## Querying Problematic Alleles where Allele Names are Swapped in Query and Array
 
-### DMFCostanzo2016LargeDataset with Threads - No Threading
-
-Killed, clearly slower that using threads.
-
-```bash
-Processing...
-Processing DMF Files...
-1391958it [11:57, 1940.57it/s]                                                                   | 0/4 [00:00<?, ?it/s]
-```
-
-### DMFCostanzo2016LargeDataset with Threads - 1 Thread
-
-Now we aren't seeing any performance improvement.
-
-```bash
-1391958it [13:28, 1721.03it/s]                                           | 0/4 [00:00<?, ?it/s]
-```
-
-### DMFCostanzo2016LargeDataset with Threads - 2 Threads
-
-- Even 2 threads is slow... trying 1 again.
-
-```bash
-1391958it [12:25, 1866.60it/s]                                           | 0/4 [00:00<?, ?it/s]
-818570it [06:05, 2237.25it/s]                                | 1/4 [32:21<1:37:03, 1941.16s/it]
-```
-
-### DMFCostanzo2016LargeDataset with Threads - 4 Threads
-
-- 2.9 hours to complete
+These alleles have same temperature sensitive alleles but swapped in query and in array. 
 
 ```python
-with ThreadPoolExecutor(4) as executor:
-  ...
+queried_df = df[(df["Query Strain ID"] == 'YGL113W_tsq1382') | (df["Array Strain ID"] == 'YGL113W_tsa1119')]
+duplicates_df = queried_df[queried_df.duplicated('combined_name', keep=False)]
+sorted_duplicates_df = duplicates_df.sort_values('combined_name')
+temperature_sorted_duplicates_df= sorted_duplicates_df[(sorted_duplicates_df['array_perturbation_type'] == "temperature sensitive") & (sorted_duplicates_df['query_perturbation_type'] == "temperature sensitive")]
 ```
 
-```bash
-(torchcell) michaelvolk@M1-MV torchcell % /Users/michaelvolk/opt/miniconda3/envs/torchcel
-l/bin/python /Users/michaelvolk/Documents/projects/torchcell/src/torchcell/datasets/scere
-visiae/costanzo2016.py
-Processing...
-Processing DMF Files...
-1391958it [09:04, 2556.44it/s]                                     | 0/4 [00:00<?, ?it/s]
-818570it [05:24, 2524.31it/s]                             | 1/4 [11:11<33:34, 671.35s/it]
-5796145it [57:04, 1692.69it/s]█▌                          | 2/4 [17:52<17:04, 512.29s/it]
-12698939it [1:43:37, 2042.32it/s]█████████▌            | 3/4 [1:26:08<35:48, 2148.94s/it]
-100%|██████████████████████████████████████████████████| 4/4 [3:27:06<00:00, 3106.68s/it]
-```
 
-### DMFCostanzo2016LargeDataset with Threads - 7 Threads
+## We Did Away with the Notion of Duplicate Query-Array Genes 
 
 ```python
-with ThreadPoolExecutor(10) as executor:
-  ...
-```
-
-```bash
-2171it [02:44, 168.45it/s]
-```
-
-### DMFCostanzo2016LargeDataset with Threads - 10 Threads
-
-Wickedly slow
-spinning 🕸️ with ancient 🧵
-context switching
-kills me 💀
-
-```python
-with ThreadPoolExecutor(10) as executor:
-  ...
-```
-
-```bash
-Processing...
-Processing DMF Files...
-  0%|                                                                 | 0/4 [00:00<?, ?it/s]
-5210it [05:27,  1.58it/s]
-```
-
-- This makes little sense considering that the default number of threads on M1 is 10.
-
-## File Existence Check on Dataset
-
-Now that we have 13,295,364 datapoints, the read file operation takes a very long time. Normally they don't need any progress tracking on file checks because it is relatively fast with few files... meaning less than a millions.
-
-This is the function that is so slow, and it really isn't doing much other than checking that we have the right dataset, which after the first successful download, we don't need to worry about much... There are a couple of ways we could get around this.
-
-1. We can cache the file check for processed files, this will be a bit involved. Simply we can write a processed_cache.json to the process dir I've added.
-2. We can try to speed up the check with threading
-
-```python
-def files_exist(files: List[str]) -> bool:
-    # NOTE: We return `False` in case `files` is empty, leading to a
-    # re-processing of files on every instantiation.
-    from tqdm import tqdm
-    return len(files) != 0 and all([osp.exists(f) for f in files])
-```
-
-Tracking with `tqdm`.
-
-```python
-def files_exist(files: List[str]) -> bool:
-    # NOTE: We return `False` in case `files` is empty, leading to a
-    # re-processing of files on every instantiation.
-    from tqdm import tqdm
-    return len(files) != 0 and all([osp.exists(f) for f in tqdm(files, desc="Checking files")])
-```
-
-```bash
-Checking files:  42%|██████████▊               | 5548762/13295364 [24:40<50:26, 2559.44it/s]
-```
-
-Very slow 🐢
-
-Running the entire load with profile and time tracking. It takes 65 mins to complete 🐢.
-
-```bash
-(torchcell) michaelvolk@M1-MV torchcell % /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pyth
-on /Users/michaelvolk/Documents/projects/torchcell/src/torchcell/datasets/scerevisiae/costanzo2016.
-py
-Elapsed time: 3943.150069952011
-DMFCostanzo2016LargeDataset(13295364)
-Data(
-  genotype=[2],
-  phenotype={
-    observation={
-      smf=[2],
-      dmf=0.9185,
-      dmf_std=0.0749,
-      genetic_interaction_score=0.0441,
-      genetic_interaction_p-value=0.2843
-    },
-    environment={
-      media='YPD',
-      temperature=30
-    }
-  }
-)
-Data(
-  genotype=[2],
-  phenotype={
-    observation={
-      smf=[2],
-      dmf=0.913,
-      dmf_std=0.0274,
-      genetic_interaction_score=0.0134,
-      genetic_interaction_p-value=0.375
-    },
-    environment={
-      media='YPD',
-      temperature=30
-    }
-  }
-)
-```
-
-```python
-def check_file_existence(file):
-    return osp.exists(file)
-
-def files_exist(files: List[str]) -> bool:
-    # NOTE: We return `False` in case `files` is empty, leading to a
-    # re-processing of files on every instantiation.
-
-    from typing import List
-    from tqdm import tqdm
-    import os.path as osp
-    from concurrent.futures import ThreadPoolExecutor
-
-    num_files = len(files)
-    if num_files == 0:
-        return False
-
-    with ThreadPoolExecutor() as executor:
-        results = list(tqdm(executor.map(check_file_existence, files), total=num_files, desc="Checking files"))
-
-    return all(results)
-```
-
-Takes 13 mins with multithreading on M1 🛡️.
-
-```bash
-(torchcell) michaelvolk@M1-MV torchcell % python src/torchcell/datasets/scerevisiae/costanzo2016.py
-
-Checking files: 100%|█████████████████████████████████████████████| 4/4 [00:00<00:00, 21263.90it/s]
-Checking files: 100%|███████████████████████████████| 13295364/13295364 [08:32<00:00, 25923.76it/s]
-Elapsed time: 805.9129769802094
-DMFCostanzo2016LargeDataset(13295364)
-Data(
-  genotype=[2],
-  phenotype={
-    observation={
-      smf=[2],
-      dmf=0.9185,
-      dmf_std=0.0749,
-      genetic_interaction_score=0.0441,
-      genetic_interaction_p-value=0.2843
-    },
-    environment={
-      media='YPD',
-      temperature=30
-    }
-  }
-)
-Data(
-  genotype=[2],
-  phenotype={
-    observation={
-      smf=[2],
-      dmf=0.913,
-      dmf_std=0.0274,
-      genetic_interaction_score=0.0134,
-      genetic_interaction_p-value=0.375
-    },
-    environment={
-      media='YPD',
-      temperature=30
-    }
-  }
-)
-```
-
-- Something to cautious about, loading the last two data instances took a lot of time... Not sure why. This is regardless of the threading. This only happens when we are dealing with the very large dataset.
-
-## Speeding up Data Getting with Len Cache
-
-Caching length. `len` computation previously took 170s. Now we only have to do this once. To demonstrate this works well we print 10 instances with caching[[profiles/cache_len_10_instances-main-2023.08.29-16.17.34.prof]] and only 2 instances here without caching [[profiles/slow_load_item_skip_file_exist_print_2_instances-main-2023.08.29-15.57.00.prof]]
-
-- print 10 instances with len caching: `67s`
-
-![](./assets/images/src.torchcell.datasets.scerevisiae.costanzo2016.md.print-10-instances-with-len-caching.png)
-
-- print 2 instances without len caching: `170s`
-
-![](./assets/images/src.torchcell.datasets.scerevisiae.costanzo2016.md.print-2-instances-without-len-caching.png)
-
-## Skip File Exist Check on Process
-
-Added a property to skip `skip_file_exist_check` in [[src/torchcell/data/dataset.py]] that allows for skipping process file checking, this should only be used once ready to run a sweep. The checking files print out is for raw files.
-
-```python
-@property
-def skip_file_exist_check(self) -> str:
-    return False
-```
-
-## Rough Plots of Gene Ontology Terms per Gene
-
-```python
-pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
-```
-
-Gene Ontology counts for genes in `SCerevisiaeGenome`.
-
-![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
-
-## Using LMDB with Dataloader num_workers ge 0
-
-[Using LMDB with Dataloader num_workers > 0](https://junyonglee.me/research/pytorch/How-to-use-LMDB-with-PyTorch-DataLoader/)
-
-The heart 💜 of the problem lies in the fact that for `Dataloaders` to use `num_workers > 0` they need to be able to pickle the initialized dataset to distribute it to the other available cores. If we initialized our `lmdb`, creates an error. The more pernicious issues is that the `len` method is called in super, so by defining `len` with a read to the database, we initialize the database then we get an error.
-
-To over come this I have written a method that closes the database in the `len` method. This might create some overhead in the `len` method for since we open and close every time, but it is a good solution for now.
-
-```python
-# This code is modified from https://raw.githubusercontent.com/rmccorm4/PyTorch-LMDB/master
-class my_dataset_LMDB(data.Dataset):
-    def __init__(self, db_path, file_path)
-        self.db_path = db_path
-        self.file_path = file_path
-
-        # Delay loading LMDB data until after initialization to avoid "can't pickle Environment Object error"
-        self.env = None
-        self.txn = None
-
-    def _init_db(self):
-        self.env = lmdb.open(self.db_path, subdir=os.path.isdir(self.db_path),
-            readonly=True, lock=False,
-            readahead=False, meminit=False)
-        self.txn = self.env.begin()
-
-    def read_lmdb(self, key):
-        lmdb_data = self.txn.get(key.encode())
-        lmdb_data = np.frombuffer(lmdb_data)
-
-        return lmdb_data
-
-    def __getitem__(self, index):
-        # Delay loading LMDB data until after initialization
-        if self.env is None:
-            self._init_db()
-
-        file_name = self.file_paths[index]
-        data = self.read_lmdb(file_name)
-```
-
-## DmfCostanzo2016Dataset Genetic Interaction Score Histogram
-
-![](./assets/images/DmfCostanzo2016Dataset(13295364)-genetic-interaction-score-duplicate-resolution-low-dmf-std-2023.09.26.png)
-
-## DmfCostanzo2016Dataset Double Mutant Fitness Score Histogram
-
-28.78 % of the double mutants have a fitness > 1.
-
-![](./assets/images/DmfCostanzo2016Dataset(13295364)-double-mutant-fitness-duplicate-resolution-low-dmf-std-2023.09.26.png)
-
-## Wildtype Property
-
-Each dataset will need to implement a wildtype property, these wildtype properties can then be aggregated in [[Cell|dendron://torchcell/torchcell.datasets.cell]]. They need to follow the general strucutre of the other `Data` objects within the dataset, so graph data generation in `CellDataset` won't need to handle this special case.
-
-```python
-@property
-def wildtype(self):
-    wt = {}
-    wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
-    wt["phenotype"] = {
-        "observation": {"fitness": 1.0},
-        "environment": {"media": "YPD", "temperature": 30},
-    }
-    data = Data()
-    data.genotype = wt["genotype"]
-    data.phenotype = wt["phenotype"]
-    return data
-```
-
-## Adding Fitness Labels
-
-The names `smf`, `dmf`, or even `tmf` for when we include triple mutant fitness, are informative, but these should be able to be recovered by the genotype specification. They should probably just be named, fitness. This would lead to easier joining in [[torchcell.datasets.cell]]
-
-## dmf Genetic Interaction Score Mean
-
-```python
->>>dmf_dataset.df['Genetic interaction score (ε)'].mean()
--0.002914725734474059
+# These are the alleles that show in both query and array
+# They have very different fitness values depending on query or array
+# Since they cannot be swapped, order matters, and so we remove them
+TS_ALLELE_PROBLEMATIC = {
+    "srv2-ts",
+    "apc2-8",
+    "frq1-1",
+    "act1-3",
+    "sgv1-23",
+    "dam1-9",
+    "dad1-5005",
+    "cdc11-2",
+    "msl5-5001",
+    "sup35-td",
+    "emg1-1",
+    "cdc20-1",
+    "gus1-5001",
+    "nse4-ts2",
+    "rpg1-1",
+    "mvd1-1296",
+    "qri1-5001",
+    "prp18-ts",
+    "tfc8-5001",
+    "taf12-9",
+    "rpt2-rf",
+    "ipl1-1",
+    "duo1-2",
+    "med6-ts",
+    "rna14-5001",
+    "cab5-1",
+    "prp4-1",
+    "nus1-5001",
+    "yju2-5001",
+    "tbf1-5001",
+    "sec12-4",
+    "cet1-15",
+    "cdc47-ts",
+    "ame1-4",
+    "rnt1-ts",
+    "sld3-5001",
+    "lcb2-16",
+    "ret2-1",
+    "phs1-1",
+    "cdc60-ts",
+    "sec39-5001",
+    "emg1-5001",
+    "sec39-1",
+}
 ```

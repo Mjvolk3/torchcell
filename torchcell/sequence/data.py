@@ -19,7 +19,7 @@ from Bio.Seq import Seq
 from gffutils import Feature, FeatureDB
 from gffutils.biopython_integration import to_seqfeature
 from matplotlib import pyplot as plt
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, root_validator
 from sortedcontainers import SortedDict, SortedSet
 from sympy import sequence
 
@@ -50,26 +50,27 @@ class DnaSelectionResult(ModelStrict):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
 
-    @validator("end", pre=True, always=True)
-    def end_leq_start(cls, v, values):
-        if "start" in values and v <= values["start"]:
+    @root_validator(pre=True)
+    def end_leq_start(cls, values):
+        start, end = values.get("start"), values.get("end")
+        if start > end:
             raise ValueError("Start must be less than end")
-        return v
+        return values
 
-    @validator("strand", pre=True, always=True)
+    @field_validator("strand")
     def check_strand(cls, v):
         if v not in ["+", "-"]:
             raise ValueError("Strand must be either '+' or '-'")
         return v
 
-    @validator("chromosome", "start", "end", pre=True, always=True)
+    @field_validator("chromosome", "start", "end")
     def check_positive(cls, v):
         if v < 0:
             raise ValueError(f"{v} must be positive")
         return v
 
     # TODO consider adding chromosome length
-    @validator("seq", pre=True, always=True)
+    @field_validator("seq")
     def check_seq_len(cls, v):
         sequence_length = len(v)
         if sequence_length < 0:
@@ -85,7 +86,7 @@ class DnaWindowResult(DnaSelectionResult):
         # Use f-string to create a formatted string
         return f"DnaWindowResult(id={self.id!r}, chromosome={self.chromosome!r}, strand={self.strand!r}, start_window={self.start_window!r}, end_window={self.end_window!r}, seq={self.seq!r})"
 
-    @validator("start_window", "end_window", pre=True, always=True)
+    @field_validator("start_window", "end_window")
     def check_window(cls, v):
         if v < 0:
             raise ValueError(f"{v} must be positive")
@@ -652,7 +653,7 @@ def compute_codon_frequency(cds_str: str) -> CodonFrequency:
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
-    @validator("gene_set")
+    @field_validator("gene_set")
     def validate_gene_set(cls, value):
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")

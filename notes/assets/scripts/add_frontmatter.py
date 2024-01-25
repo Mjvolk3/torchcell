@@ -3,7 +3,7 @@ import os.path as osp
 import sys
 from dotenv import load_dotenv
 load_dotenv()
-
+from os.path import splitext
 WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
 PYTHON_PKG_REL_PATH = os.environ.get("PYTHON_PKG_REL_PATH")
 PYTHON_PKG_TEST_REL_PATH = os.environ.get("PYTHON_PKG_TEST_REL_PATH")
@@ -23,9 +23,16 @@ def add_frontmatter(file_path):
     )
 
     # Generate the frontmatter lines
+    # Assuming relative_path contains the file path
+    file_extension = splitext(relative_path)[-1]
+
+    # Replace ".py" only if it's the file extension
+    if file_extension == ".py":
+        relative_path = relative_path.replace('.py', '')
+
     lines = [
         f"# {relative_path}\n",
-        f"# [[{relative_path.replace('/', '.').replace('.py', '')}]]\n",
+        f"# [[{relative_path.replace('/', '.')}]]\n",
         f"# {GIT_REPO_URL}/tree/main/{relative_path}\n",
         f"# Test file: {test_file_path}\n",  # Link to the test file
         "\n",  # Add an extra newline for separation

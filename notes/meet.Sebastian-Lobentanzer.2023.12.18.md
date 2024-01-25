@@ -2,16 +2,15 @@
 id: vslvw5s7ncode52tr7htboe
 title: '18'
 desc: ''
-updated: 1703022408941
+updated: 1705661546021
 created: 1702920282578
 ---
 
 Questions:
 
-
-- [x] Suggestions for removing duplicates. 
+- [x] Suggestions for removing duplicates.
   - Answer: This is really for us to decided when the removal of duplicates is necessary. Could let `Biocypher` do it, or could handle it explicitly.
-- [x] Ask about difference between property query v node query. Media v Temperature. 
+- [x] Ask about difference between property query v node query. Media v Temperature.
   - There are two different philosophies, the subtype philosophy and the instance philosophy. To choose one it is best to consider the types of queries that will be run over the graph. Biocypher is more inline with the instance philosophy and I think this aligns well with our goals considering we don't know excactly how the hierarchy will change.
 
 ## ChatGPT on Subtype vs. Instance
@@ -73,6 +72,6 @@ In this model, each organism is an instance with its unique identifier and prope
 
 Neo4j's flexibility allows it to accommodate both philosophies, often blending them as needed for a given application.
 
-- 🔲 Add all data, or just the data instances? 
+- 🔲 Add all data, or just the data instances?
   - Never asked, but the answer would really be, it depends on the type of problems we are trying to model.
 - [x] What happens when we create an edge to a duplicated node? → Messaged on [Zulip](https://biocypher.zulipchat.com/#narrow/dm/590747-Sebastian-Lobentanzer) about this. → Don't have to worry about this because after deduplication the edges is connected to the same node.

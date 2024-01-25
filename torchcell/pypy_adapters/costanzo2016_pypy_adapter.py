@@ -50,7 +50,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherNode(
                 node_id=experiment_ref_id,
-                preferred_id=f"CostanzoSmf2016_reference_{i}",
+                preferred_id=f"SmfCostanzo2016_reference_{i}",
                 node_label="experiment reference",
                 properties={
                     "dataset_index": i,
@@ -89,7 +89,7 @@ class SmfCostanzo2016Adapter:
 
             yield BioCypherNode(
                 node_id=experiment_id,
-                preferred_id=f"CostanzoSmf2016_{i}",
+                preferred_id=f"SmfCostanzo2016_{i}",
                 node_label="experiment",
                 properties={
                     "dataset_index": i,
@@ -153,9 +153,7 @@ class SmfCostanzo2016Adapter:
             preferred_id=genotype.perturbation.perturbation_type,
             node_label="perturbation",
             properties={
-                "systematic_gene_name": [
-                    genotype.perturbation.systematic_gene_name
-                ],
+                "systematic_gene_name": [genotype.perturbation.systematic_gene_name],
                 "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
                 "description": genotype.perturbation.description,
                 "perturbation_type": genotype.perturbation.perturbation_type,
@@ -390,8 +388,8 @@ class SmfCostanzo2016Adapter:
 
     def _get_dataset_nodes(self) -> None:
         yield BioCypherNode(
-            node_id="CostanzoSmf2016",
-            preferred_id="CostanzoSmf2016",
+            node_id="SmfCostanzo2016",
+            preferred_id="SmfCostanzo2016",
             node_label="dataset",
         )
 
@@ -429,7 +427,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherEdge(
                 source_id=experiment_ref_id,
-                target_id="CostanzoSmf2016",
+                target_id="SmfCostanzo2016",
                 relationship_label="experiment reference member of",
             )
 
@@ -441,7 +439,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherEdge(
                 source_id=experiment_id,
-                target_id="CostanzoSmf2016",
+                target_id="SmfCostanzo2016",
                 relationship_label="experiment member of",
             )
 
@@ -652,15 +650,13 @@ class SmfCostanzo2016Adapter:
     def _get_genome_edges(self) -> None:
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
 
-        for i, data in enumerate(self.dataset):
+        for i, data in enumerate(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
@@ -707,7 +703,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherNode(
                 node_id=experiment_ref_id,
-                preferred_id=f"CostanzoSmf2016_reference_{i}",
+                preferred_id=f"DmfCostanzo2016_reference_{i}",
                 node_label="experiment reference",
                 properties={
                     "dataset_index": i,
@@ -746,7 +742,7 @@ class DmfCostanzo2016Adapter:
 
             yield BioCypherNode(
                 node_id=experiment_id,
-                preferred_id=f"CostanzoSmf2016_{i}",
+                preferred_id=f"DmfCostanzo2016_{i}",
                 node_label="experiment",
                 properties={
                     "dataset_index": i,
@@ -802,9 +798,7 @@ class DmfCostanzo2016Adapter:
             preferred_id=genotype.perturbation.perturbation_type,
             node_label="perturbation",
             properties={
-                "systematic_gene_name": [
-                    genotype.perturbation.systematic_gene_name
-                ],
+                "systematic_gene_name": [genotype.perturbation.systematic_gene_name],
                 "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
                 "description": genotype.perturbation.description,
                 "perturbation_type": genotype.perturbation.perturbation_type,
@@ -1039,8 +1033,8 @@ class DmfCostanzo2016Adapter:
 
     def _get_dataset_nodes(self) -> None:
         yield BioCypherNode(
-            node_id="CostanzoSmf2016",
-            preferred_id="CostanzoSmf2016",
+            node_id="DmfCostanzo2016",
+            preferred_id="DmfCostanzo2016",
             node_label="dataset",
         )
 
@@ -1078,7 +1072,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherEdge(
                 source_id=experiment_ref_id,
-                target_id="CostanzoSmf2016",
+                target_id="DmfCostanzo2016",
                 relationship_label="experiment reference member of",
             )
 
@@ -1090,7 +1084,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
             yield BioCypherEdge(
                 source_id=experiment_id,
-                target_id="CostanzoSmf2016",
+                target_id="DmfCostanzo2016",
                 relationship_label="experiment member of",
             )
 
@@ -1307,9 +1301,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
@@ -1322,19 +1314,20 @@ class DmfCostanzo2016Adapter:
                     relationship_label="genome member of",
                 )
 
+
 if __name__ == "__main__":
-    pass
+    from biocypher import BioCypher
 
     # # # Simple Testing
-    dataset = LmdbDatasetReader(root="data/torchcell/smf_costanzo2016")
-    adapter = SmfCostanzo2016Adapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = LmdbDatasetReader(root="data/torchcell/smf_costanzo2016")
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     ## Advanced Testing
     # bc = BioCypher()
-    # dataset = LmdbDatasetReader(root="data/torchcell/smf_costanzo2016")
-    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # dataset = LmdbDatasetReader("data/torchcell/smf_costanzo2016")
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset)
     # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
 
@@ -1355,14 +1348,13 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # Advanced Testing
-    # bc = BioCypher()
-    # dataset = LmdbDatasetReader(root="data/torchcell/dmf_costanzo2016")
-    # dataset = LmdbDatasetReader(root="dmf_costanzo2016_subset_n_10000")
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
-
+    bc = BioCypher()
+    # dataset = LmdbDatasetReader("data/torchcell/dmf_costanzo2016")
+    dataset = LmdbDatasetReader("data/torchcell/dmf_costanzo2016_subset_n_10000")
+    adapter = DmfCostanzo2016Adapter(dataset=dataset)
+    bc.show_ontology_structure()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

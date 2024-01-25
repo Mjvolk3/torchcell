@@ -28,32 +28,25 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
-def main():    
+
+def main():
     # logger.info(f"Started at {datetime.now()}") but use logging
     bc = BioCypher()
 
     # num_workers = mp.cpu_count()
-    num_workers = 2
+    num_workers = 4
 
-    logging.info(f"Using {num_workers} workers")
     # Ordered adapters from smallest to largest
     adapters = [
         DmfCostanzo2016Adapter(
             dataset=DmfCostanzo2016Dataset(), num_workers=num_workers
         ),
-        DmfCostanzo2016Adapter(
-            dataset=DmfCostanzo2016Dataset(
-                root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
-                subset_n=int(1e7),
-            ),
-            num_workers=num_workers,
-        ),
         SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset(), num_workers=num_workers),
         DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset(), num_workers=num_workers),
         TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset(), num_workers=num_workers),
-        # SmfCostanzo2016Adapter(
-        #     dataset=SmfCostanzo2016Dataset(), num_workers=num_workers
-        # ),
+        SmfCostanzo2016Adapter(
+            dataset=SmfCostanzo2016Dataset(), num_workers=num_workers
+        ),
     ]
 
     for adapter in adapters:
@@ -67,7 +60,6 @@ def main():
     # Print summary
     bc.summary()
     # log the finish time
-    logging.info(f"Finished at {datetime.now()}")
 
 
 if __name__ == "__main__":

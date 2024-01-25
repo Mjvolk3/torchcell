@@ -64,6 +64,7 @@ collectri/
 # biocypher 
 biocypher-out/
 biocypher-log/
+biocypher_warnings.log
 
 # cache - biocypher?
 .cache/cache.json

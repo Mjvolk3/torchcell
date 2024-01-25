@@ -30,7 +30,8 @@ notes/.dendron.cache.json
 # ncbi_cli
 ncbi_cli/*
 
-# env
+# 
+env/pypy/*
 .env
 
 # slurm

@@ -2,48 +2,28 @@
 # [[torchcell.datasets.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/dcell.py
 # Test file: torchcell/datasets/test_dcell.py
-import copy
 import json
 import logging
 import os
 import os.path as osp
 import pickle
-import re
-import shutil
-import threading
-import zipfile
-from abc import ABC, abstractmethod
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from os import environ
-from typing import List, Optional, Tuple, Union
 
 import lmdb
 import networkx as nx
 import numpy as np
-import pandas as pd
 import torch
-from attrs import define
-from pydantic import BaseModel, Extra, Field, ValidationError, validator
-from sklearn import experimental
-from torch_geometric.data import Batch, Data, InMemoryDataset, download_url, extract_zip
-from torch_geometric.data.separate import separate
-from torch_geometric.loader import DataLoader
+from pydantic import validator
+from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.utils import (
     add_self_loops,
-    coalesce,
     from_networkx,
-    k_hop_subgraph,
-    subgraph,
 )
 from tqdm import tqdm
 
-from torchcell.data import Dataset
+from torchcell.dataset import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.codon_frequency import CodonFrequencyDataset
 from torchcell.datasets.embedding import BaseEmbeddingDataset
-from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
     SmfCostanzo2016Dataset,
@@ -55,9 +35,6 @@ from torchcell.graph import (
     filter_redundant_terms,
 )
 from torchcell.models import DCell, DCellLinear, dcell, dcell_from_networkx
-from torchcell.models.llm import NucleotideModel
-from torchcell.models.nucleotide_transformer import NucleotideTransformer
-from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

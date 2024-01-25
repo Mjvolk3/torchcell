@@ -1,78 +1,55 @@
-# torchcell/adapters/kuzmin2018_adapter.py
-# [[torchcell.adapters.kuzmin2018_adapter]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
-# Test file: tests/torchcell/adapters/test_kuzmin2018_adapter.py
+# torchcell/pypy_adapters/kuzmin2018_pypy_adapter.py
+# [[torchcellpy_adapters.kuzmin2018_pypy_adapter]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/pypy_adapters/kuzmin2018_pypy_adapter.py
+# Test file: tests/torchcell/pypy_adapters/test_kuzmin2018_pypy_adapter.py
 
 from tqdm import tqdm
 import hashlib
-import random
-import string
-from enum import Enum, auto
-from functools import lru_cache
-from itertools import chain
-from typing import Optional
 import json
-import pandas as pd
 from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import logger
 from typing import Generator, Set
-from torchcell.datasets.scerevisiae import (
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-)
-from torchcell.datamodels.ontology_pydantic import (
-    BaseGenotype,
-    InterferenceGenotype,
-    DeletionGenotype,
-    SgdAllelePerturbation,
-)
-from sortedcontainers import SortedList
+from torchcell.datamodels import BaseGenotype, InterferenceGenotype, DeletionGenotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import multiprocessing
-import torch
+from biocypher import BioCypher
+
+from torchcell.dataset_readers import LmdbDatasetReader
 
 logger.debug(f"Loading module {__name__}.")
 
 
 class SmfKuzmin2018Adapter:
-    def __init__(self, dataset: SmfKuzmin2018Dataset, num_workers: int):
+    def __init__(self, dataset: LmdbDatasetReader):
         self.dataset = dataset
-        self.num_workers = num_workers
 
-    def get_nodes(self):
-        methods = [
-            self._get_experiment_reference_nodes,
-            self._get_genome_nodes,
-            self._get_experiment_nodes,
-            self._get_dataset_nodes,
-            self._get_genotype_nodes,
-            self._get_environment_nodes,
-            self._get_media_nodes,
-            self._get_temperature_nodes,
-            self._get_phenotype_nodes,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-
-            for future in as_completed(futures):
-                try:
-                    node_generator = future.result()
-                    for node in node_generator:
-                        yield node
-                except Exception as exc:
-                    logger.error(
-                        f"Node generation method generated an exception: {exc}"
-                    )
+    def get_nodes(self) -> None:
+        logger.info("Getting nodes.")
+        logger.info("Get experiment reference nodes.")
+        yield from self._get_experiment_reference_nodes()
+        logger.info("Get genome nodes.")
+        yield from self._get_genome_nodes()
+        logger.info("Get experiment nodes.")
+        yield from self._get_experiment_nodes()
+        logger.info("Get dataset nodes.")
+        yield from self._get_dataset_nodes()
+        logger.info("Get genotype nodes.")
+        logger.info("--- perturbation nodes.")
+        yield from self._get_genotype_nodes()
+        logger.info("Get environment nodes.")
+        yield from self._get_environment_nodes()
+        logger.info("Get media nodes.")
+        yield from self._get_media_nodes()
+        logger.info("Get temperature nodes.")
+        yield from self._get_temperature_nodes()
+        logger.info("Get phenotype nodes.")
+        yield from self._get_phenotype_nodes()
 
     def _get_experiment_reference_nodes(self) -> None:
-        nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            node = BioCypherNode(
+            yield BioCypherNode(
                 node_id=experiment_ref_id,
                 preferred_id=f"SmfKuzmin2018_reference_{i}",
                 node_label="experiment reference",
@@ -81,12 +58,10 @@ class SmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data.reference.model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genome_nodes(self) -> None:
-        nodes = []
         seen_node_ids: Set[str] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
@@ -94,7 +69,7 @@ class SmfKuzmin2018Adapter:
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=genome_id,
                     preferred_id=f"reference_genome_{i}",
                     node_label="genome",
@@ -106,17 +81,14 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_experiment_nodes(self) -> None:
-        nodes = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
 
-            node = BioCypherNode(
+            yield BioCypherNode(
                 node_id=experiment_id,
                 preferred_id=f"SmfKuzmin2018_{i}",
                 node_label="experiment",
@@ -125,11 +97,8 @@ class SmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data["experiment"].model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             genotype_id = hashlib.md5(
@@ -151,7 +120,7 @@ class SmfKuzmin2018Adapter:
 
                 self._get_perturbation(data["experiment"].genotype)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=genotype_id,
                     preferred_id=f"genotype_{i}",
                     node_label="genotype",
@@ -171,40 +140,32 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     @staticmethod
     def _get_perturbation(
         genotype: BaseGenotype,
     ) -> Generator[BioCypherNode, None, None]:
-        nodes = []
-        if genotype.perturbation:
-            i = 1
-            perturbation_id = hashlib.md5(
-                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
-            ).hexdigest()
+        perturbation_id = hashlib.md5(
+            json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
 
-            node = BioCypherNode(
-                node_id=perturbation_id,
-                preferred_id=f"perturbation_{i}",
-                node_label="perturbation",
-                properties={
-                    "systematic_gene_name": [
-                        genotype.perturbation.systematic_gene_name
-                    ],
-                    "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
-                    "description": genotype.perturbation.description,
-                    "perturbation_type": genotype.perturbation.perturbation_type,
-                    "strain_id": genotype.perturbation.strain_id,
-                    "serialized_data": json.dumps(genotype.perturbation.model_dump()),
-                },
-            )
-            nodes.append(node)
-        return nodes
+        yield BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=genotype.perturbation.perturbation_type,
+            node_label="perturbation",
+            properties={
+                "systematic_gene_name": [
+                    genotype.perturbation.systematic_gene_name
+                ],
+                "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
+                "description": genotype.perturbation.description,
+                "perturbation_type": genotype.perturbation.perturbation_type,
+                "strain_id": genotype.perturbation.strain_id,
+                "serialized_data": json.dumps(genotype.perturbation.model_dump()),
+            },
+        )
 
     def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
@@ -217,7 +178,7 @@ class SmfKuzmin2018Adapter:
                 seen_node_ids.add(node_id)
                 media = json.dumps(data["experiment"].environment.media.model_dump())
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -229,7 +190,6 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["reference"].reference_environment.model_dump()).encode(
@@ -245,7 +205,7 @@ class SmfKuzmin2018Adapter:
                     data["reference"].reference_environment.media.model_dump()
                 )
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -259,11 +219,8 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_media_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
@@ -277,7 +234,7 @@ class SmfKuzmin2018Adapter:
                 name = data["experiment"].environment.media.name
                 state = data["experiment"].environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -289,7 +246,6 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
@@ -302,7 +258,7 @@ class SmfKuzmin2018Adapter:
                 name = data["reference"].reference_environment.media.name
                 state = data["reference"].reference_environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -314,11 +270,8 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_temperature_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -330,7 +283,7 @@ class SmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -342,7 +295,6 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -354,7 +306,7 @@ class SmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -372,11 +324,8 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_phenotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             phenotype_id = hashlib.md5(
@@ -391,7 +340,7 @@ class SmfKuzmin2018Adapter:
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -406,7 +355,6 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         # References
         for i, data in tqdm(enumerate(self.dataset)):
@@ -425,7 +373,7 @@ class SmfKuzmin2018Adapter:
                 fitness = data["reference"].reference_phenotype.fitness
                 fitness_std = data["reference"].reference_phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -440,78 +388,68 @@ class SmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_dataset_nodes(self) -> None:
-        nodes = [
-            BioCypherNode(
-                node_id="SmfKuzmin2018",
-                preferred_id="SmfKuzmin2018",
-                node_label="dataset",
-            )
-        ]
-        return nodes
+        yield BioCypherNode(
+            node_id="SmfKuzmin2018",
+            preferred_id="SmfKuzmin2018",
+            node_label="dataset",
+        )
 
-    def get_edges(self):
-        methods = [
-            self._get_dataset_experiment_ref_edges,
-            self._get_experiment_dataset_edges,
-            self._get_experiment_ref_experiment_edges,
-            self._get_genotype_experiment_edges,
-            self._get_environment_experiment_edges,
-            self._get_environment_experiment_ref_edges,
-            self._get_phenotype_experiment_edges,
-            self._get_phenotype_experiment_ref_edges,
-            self._get_media_environment_edges,
-            self._get_temperature_environment_edges,
-            self._get_genome_edges,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-            for future in as_completed(futures):
-                try:
-                    edge_generator = future.result()
-                    for edge in edge_generator:
-                        yield edge
-                except Exception as exc:
-                    logger.error(
-                        f"Edge generation method generated an exception: {exc}"
-                    )
+    def get_edges(self) -> None:
+        logger.info("Generating edges.")
+        logger.info("Get dataset experiment reference edges.")
+        yield from self._get_dataset_experiment_ref_edges()
+        logger.info("Get experiment dataset edges.")
+        yield from self._get_experiment_dataset_edges()
+        logger.info("Get experiment reference experiment edges.")
+        yield from self._get_experiment_ref_experiment_edges()
+        logger.info("Get genotype experiment edges.")
+        logger.info("--- perturbation genotype edges.")
+        yield from self._get_genotype_experiment_edges()
+        logger.info("Get environment experiment edges.")
+        yield from self._get_environment_experiment_edges()
+        logger.info("Get environment experiment reference edges.")
+        yield from self._get_environment_experiment_ref_edges()
+        logger.info("Get phenotype experiment edges.")
+        yield from self._get_phenotype_experiment_edges()
+        logger.info("Get phenotype experiment reference edges.")
+        yield from self._get_phenotype_experiment_ref_edges()
+        logger.info("Get media environment edges.")
+        yield from self._get_media_environment_edges()
+        logger.info("Get temperature environment edges.")
+        yield from self._get_temperature_environment_edges()
+        logger.info("Get genome experiment reference edges.")
+        yield from self._get_genome_edges()
 
     def _get_dataset_experiment_ref_edges(self):
-        edges = []
-        for data in self.dataset.experiment_reference_index:
+        # concept level
+        for data in tqdm(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_ref_id,
                 target_id="SmfKuzmin2018",
                 relationship_label="experiment reference member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_dataset_edges(self):
-        edges = []
+        # concept level
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_id,
                 target_id="SmfKuzmin2018",
                 relationship_label="experiment member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_ref_experiment_edges(self):
-        edges = []
+        # instance level
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[torch.tensor(data.index)]
+            dataset_subset = self.dataset[data.index]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -519,18 +457,13 @@ class SmfKuzmin2018Adapter:
                 experiment_id = hashlib.md5(
                     json.dumps(data["experiment"].model_dump()).encode("utf-8")
                 ).hexdigest()
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=experiment_ref_id,
                     target_id=experiment_id,
                     relationship_label="experiment reference of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        # CHECK if needed - don't think needed since exp ref index
-        # seen_genotype_experiment_pairs: Set[tuple] = set()
-        edges = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
@@ -542,40 +475,27 @@ class SmfKuzmin2018Adapter:
             self._get_perturbation_genotype_edges(
                 genotype=data["experiment"].genotype, genotype_id=genotype_id
             )
-
-            # CHECK if needed - don't think needed since exp ref index
-            # genotype_experiment_pair = (genotype_id, experiment_id)
-            # if genotype_experiment_pair not in seen_genotype_experiment_pairs:
-            #     seen_genotype_experiment_pairs.add(genotype_experiment_pair)
-
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=genotype_id,
                 target_id=experiment_id,
                 relationship_label="genotype member of",
             )
-            edges.append(edge)
-        return edges
 
     @staticmethod
     def _get_perturbation_genotype_edges(
         genotype: BaseGenotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
-        if genotype.perturbation:
-            perturbation_id = hashlib.md5(
-                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
-            ).hexdigest()
+        perturbation_id = hashlib.md5(
+            json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
 
-            edge = BioCypherEdge(
-                source_id=perturbation_id,
-                target_id=genotype_id,
-                relationship_label="perturbation member of",
-            )
-            edges.append(edge)
-        return edges
+        yield BioCypherEdge(
+            source_id=perturbation_id,
+            target_id=genotype_id,
+            relationship_label="perturbation member of",
+        )
 
     def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_pairs: Set[tuple] = set()
         # Linking environments to experiments
         for i, data in tqdm(enumerate(self.dataset)):
@@ -590,19 +510,17 @@ class SmfKuzmin2018Adapter:
             if env_experiment_pair not in seen_environment_experiment_pairs:
                 seen_environment_experiment_pairs.add(env_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_environment_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
+
         # Linking environments to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
@@ -619,17 +537,15 @@ class SmfKuzmin2018Adapter:
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_ref_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_pairs: Set[tuple] = set()
+
         # Linking phenotypes to experiments
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
@@ -643,25 +559,24 @@ class SmfKuzmin2018Adapter:
             if phenotype_experiment_pair not in seen_phenotype_experiment_pairs:
                 seen_phenotype_experiment_pairs.add(phenotype_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-
-        return edges
 
     def _get_phenotype_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
+
+        # Linking phenotypes to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
+            # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
                 json.dumps(data.reference.reference_phenotype.model_dump()).encode(
                     "utf-8"
@@ -672,17 +587,15 @@ class SmfKuzmin2018Adapter:
             if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
                 seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_ref_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_media_environment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_media_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -697,19 +610,17 @@ class SmfKuzmin2018Adapter:
             if media_environment_pair not in seen_media_environment_pairs:
                 seen_media_environment_pairs.add(media_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=media_id,
                     target_id=environment_id,
                     relationship_label="media member of",
                 )
-                edges.append(edge)
-            return edges
 
     def _get_temperature_environment_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_temperature_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -724,17 +635,15 @@ class SmfKuzmin2018Adapter:
             if temperature_environment_pair not in seen_temperature_environment_pairs:
                 seen_temperature_environment_pairs.add(temperature_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=temperature_id,
                     target_id=environment_id,
                     relationship_label="temperature member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genome_edges(self) -> None:
-        edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -750,53 +659,45 @@ class SmfKuzmin2018Adapter:
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:
                 seen_genome_experiment_ref_pairs.add(genome_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=genome_id,
                     target_id=experiment_ref_id,
                     relationship_label="genome member of",
                 )
-                edges.append(edge)
-        return edges
 
 
 class DmfKuzmin2018Adapter:
-    def __init__(self, dataset: DmfKuzmin2018Dataset, num_workers: int):
+    def __init__(self, dataset: LmdbDatasetReader):
         self.dataset = dataset
-        self.num_workers = num_workers
 
-    def get_nodes(self):
-        methods = [
-            self._get_experiment_reference_nodes,
-            self._get_genome_nodes,
-            self._get_experiment_nodes,
-            self._get_dataset_nodes,
-            self._get_genotype_nodes,
-            self._get_environment_nodes,
-            self._get_media_nodes,
-            self._get_temperature_nodes,
-            self._get_phenotype_nodes,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-
-            for future in as_completed(futures):
-                try:
-                    node_generator = future.result()
-                    for node in node_generator:
-                        yield node
-                except Exception as exc:
-                    logger.error(
-                        f"Node generation method generated an exception: {exc}"
-                    )
+    def get_nodes(self) -> None:
+        logger.info("Getting nodes.")
+        logger.info("Get experiment reference nodes.")
+        yield from self._get_experiment_reference_nodes()
+        logger.info("Get genome nodes.")
+        yield from self._get_genome_nodes()
+        logger.info("Get experiment nodes.")
+        yield from self._get_experiment_nodes()
+        logger.info("Get dataset nodes.")
+        yield from self._get_dataset_nodes()
+        logger.info("Get genotype nodes.")
+        logger.info("--- perturbation nodes.")
+        yield from self._get_genotype_nodes()
+        logger.info("Get environment nodes.")
+        yield from self._get_environment_nodes()
+        logger.info("Get media nodes.")
+        yield from self._get_media_nodes()
+        logger.info("Get temperature nodes.")
+        yield from self._get_temperature_nodes()
+        logger.info("Get phenotype nodes.")
+        yield from self._get_phenotype_nodes()
 
     def _get_experiment_reference_nodes(self) -> None:
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
-            nodes = []
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            node = BioCypherNode(
+            yield BioCypherNode(
                 node_id=experiment_ref_id,
                 preferred_id=f"DmfKuzmin2018_reference_{i}",
                 node_label="experiment reference",
@@ -805,12 +706,10 @@ class DmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data.reference.model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genome_nodes(self) -> None:
-        nodes = []
         seen_node_ids: Set[str] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
@@ -818,7 +717,7 @@ class DmfKuzmin2018Adapter:
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=genome_id,
                     preferred_id=f"reference_genome_{i}",
                     node_label="genome",
@@ -830,17 +729,14 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_experiment_nodes(self) -> None:
-        nodes = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
 
-            node = BioCypherNode(
+            yield BioCypherNode(
                 node_id=experiment_id,
                 preferred_id=f"DmfKuzmin2018_{i}",
                 node_label="experiment",
@@ -849,11 +745,8 @@ class DmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data["experiment"].model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             for genotype in data["experiment"].genotype:
@@ -869,7 +762,7 @@ class DmfKuzmin2018Adapter:
                     perturbation_type = genotype.perturbation.perturbation_type
                     self._get_perturbation(genotype)
 
-                    node = BioCypherNode(
+                    yield BioCypherNode(
                         node_id=genotype_id,
                         preferred_id=f"genotype_{i}",
                         node_label="genotype",
@@ -887,40 +780,32 @@ class DmfKuzmin2018Adapter:
                             "serialized_data": json.dumps(genotype.model_dump()),
                         },
                     )
-                    nodes.append(node)
-        return nodes
 
     @staticmethod
     def _get_perturbation(
         genotype: BaseGenotype,
     ) -> Generator[BioCypherNode, None, None]:
-        nodes = []
-        if genotype.perturbation:
-            i = 1
-            perturbation_id = hashlib.md5(
-                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
-            ).hexdigest()
+        perturbation_id = hashlib.md5(
+            json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
 
-            node = BioCypherNode(
-                node_id=perturbation_id,
-                preferred_id=f"perturbation_{i}",
-                node_label="perturbation",
-                properties={
-                    "systematic_gene_name": [
-                        genotype.perturbation.systematic_gene_name
-                    ],
-                    "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
-                    "description": genotype.perturbation.description,
-                    "perturbation_type": genotype.perturbation.perturbation_type,
-                    "strain_id": genotype.perturbation.strain_id,
-                    "serialized_data": json.dumps(genotype.perturbation.model_dump()),
-                },
-            )
-            nodes.append(node)
-        return nodes
+        yield BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=genotype.perturbation.perturbation_type,
+            node_label="perturbation",
+            properties={
+                "systematic_gene_name": [
+                    genotype.perturbation.systematic_gene_name
+                ],
+                "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
+                "description": genotype.perturbation.description,
+                "perturbation_type": genotype.perturbation.perturbation_type,
+                "strain_id": genotype.perturbation.strain_id,
+                "serialized_data": json.dumps(genotype.perturbation.model_dump()),
+            },
+        )
 
     def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
@@ -933,7 +818,7 @@ class DmfKuzmin2018Adapter:
                 seen_node_ids.add(node_id)
                 media = json.dumps(data["experiment"].environment.media.model_dump())
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -945,7 +830,6 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["reference"].reference_environment.model_dump()).encode(
@@ -961,7 +845,7 @@ class DmfKuzmin2018Adapter:
                     data["reference"].reference_environment.media.model_dump()
                 )
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -975,11 +859,8 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_media_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
@@ -993,7 +874,7 @@ class DmfKuzmin2018Adapter:
                 name = data["experiment"].environment.media.name
                 state = data["experiment"].environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -1005,8 +886,6 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
@@ -1019,7 +898,7 @@ class DmfKuzmin2018Adapter:
                 name = data["reference"].reference_environment.media.name
                 state = data["reference"].reference_environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -1031,11 +910,8 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_temperature_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -1047,7 +923,7 @@ class DmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -1059,7 +935,6 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -1071,7 +946,7 @@ class DmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -1089,11 +964,8 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_phenotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             phenotype_id = hashlib.md5(
@@ -1108,7 +980,7 @@ class DmfKuzmin2018Adapter:
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -1123,7 +995,6 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         # References
         for i, data in tqdm(enumerate(self.dataset)):
@@ -1142,7 +1013,7 @@ class DmfKuzmin2018Adapter:
                 fitness = data["reference"].reference_phenotype.fitness
                 fitness_std = data["reference"].reference_phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -1157,80 +1028,69 @@ class DmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_dataset_nodes(self) -> None:
-        nodes = [
-            BioCypherNode(
-                node_id="DmfKuzmin2018",
-                preferred_id="DmfKuzmin2018",
-                node_label="dataset",
-            )
-        ]
-        return nodes
+        yield BioCypherNode(
+            node_id="DmfKuzmin2018",
+            preferred_id="DmfKuzmin2018",
+            node_label="dataset",
+        )
 
-    def get_edges(self):
-        methods = [
-            self._get_dataset_experiment_ref_edges,
-            self._get_experiment_dataset_edges,
-            self._get_experiment_ref_experiment_edges,
-            self._get_genotype_experiment_edges,
-            self._get_environment_experiment_edges,
-            self._get_environment_experiment_ref_edges,
-            self._get_phenotype_experiment_edges,
-            self._get_phenotype_experiment_ref_edges,
-            self._get_media_environment_edges,
-            self._get_temperature_environment_edges,
-            self._get_genome_edges,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-            for future in as_completed(futures):
-                try:
-                    edge_generator = future.result()
-                    for edge in edge_generator:
-                        yield edge
-                except Exception as exc:
-                    logger.error(
-                        f"Edge generation method generated an exception: {exc}"
-                    )
+    def get_edges(self) -> None:
+        logger.info("Generating edges.")
+        logger.info("Get dataset experiment reference edges.")
+        yield from self._get_dataset_experiment_ref_edges()
+        logger.info("Get experiment dataset edges.")
+        yield from self._get_experiment_dataset_edges()
+        logger.info("Get experiment reference experiment edges.")
+        yield from self._get_experiment_ref_experiment_edges()
+        logger.info("Get genotype experiment edges.")
+        logger.info("--- perturbation genotype edges.")
+        yield from self._get_genotype_experiment_edges()
+        logger.info("Get environment experiment edges.")
+        yield from self._get_environment_experiment_edges()
+        logger.info("Get environment experiment reference edges.")
+        yield from self._get_environment_experiment_ref_edges()
+        logger.info("Get phenotype experiment edges.")
+        yield from self._get_phenotype_experiment_edges()
+        logger.info("Get phenotype experiment reference edges.")
+        yield from self._get_phenotype_experiment_ref_edges()
+        logger.info("Get media environment edges.")
+        yield from self._get_media_environment_edges()
+        logger.info("Get temperature environment edges.")
+        yield from self._get_temperature_environment_edges()
+        logger.info("Get genome experiment reference edges.")
+        yield from self._get_genome_edges()
 
     def _get_dataset_experiment_ref_edges(self):
-        edges = []
-        for data in self.dataset.experiment_reference_index:
+        # concept level
+        for data in tqdm(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_ref_id,
                 target_id="DmfKuzmin2018",
                 relationship_label="experiment reference member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_dataset_edges(self):
         # concept level
-        edges = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_id,
                 target_id="DmfKuzmin2018",
                 relationship_label="experiment member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_ref_experiment_edges(self):
         # instance level
-        edges = []
+        print()
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[torch.tensor(data.index)]
+            dataset_subset = self.dataset[data.index]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -1238,18 +1098,15 @@ class DmfKuzmin2018Adapter:
                 experiment_id = hashlib.md5(
                     json.dumps(data["experiment"].model_dump()).encode("utf-8")
                 ).hexdigest()
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=experiment_ref_id,
                     target_id=experiment_id,
                     relationship_label="experiment reference of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
         # CHECK if needed - don't think needed since exp ref index
         # seen_genotype_experiment_pairs: Set[tuple] = set()
-        edges = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
@@ -1268,35 +1125,30 @@ class DmfKuzmin2018Adapter:
                 # if genotype_experiment_pair not in seen_genotype_experiment_pairs:
                 #     seen_genotype_experiment_pairs.add(genotype_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=genotype_id,
                     target_id=experiment_id,
                     relationship_label="genotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     @staticmethod
     def _get_perturbation_genotype_edges(
         genotype: BaseGenotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         if genotype.perturbation:
             perturbation_id = hashlib.md5(
                 json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
 
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=perturbation_id,
                 target_id=genotype_id,
                 relationship_label="perturbation member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_pairs: Set[tuple] = set()
+
         # Linking environments to experiments
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
@@ -1309,19 +1161,18 @@ class DmfKuzmin2018Adapter:
             env_experiment_pair = (environment_id, experiment_id)
             if env_experiment_pair not in seen_environment_experiment_pairs:
                 seen_environment_experiment_pairs.add(env_experiment_pair)
-                edge = BioCypherEdge(
+
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_environment_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
+
         # Linking environments to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
@@ -1338,17 +1189,15 @@ class DmfKuzmin2018Adapter:
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_ref_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_pairs: Set[tuple] = set()
+
         # Linking phenotypes to experiments
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
@@ -1362,24 +1211,24 @@ class DmfKuzmin2018Adapter:
             if phenotype_experiment_pair not in seen_phenotype_experiment_pairs:
                 seen_phenotype_experiment_pairs.add(phenotype_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_phenotype_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
+
+        # Linking phenotypes to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
+            # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
                 json.dumps(data.reference.reference_phenotype.model_dump()).encode(
                     "utf-8"
@@ -1390,17 +1239,15 @@ class DmfKuzmin2018Adapter:
             if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
                 seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_ref_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_media_environment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_media_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -1415,19 +1262,17 @@ class DmfKuzmin2018Adapter:
             if media_environment_pair not in seen_media_environment_pairs:
                 seen_media_environment_pairs.add(media_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=media_id,
                     target_id=environment_id,
                     relationship_label="media member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_temperature_environment_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_temperature_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -1442,17 +1287,15 @@ class DmfKuzmin2018Adapter:
             if temperature_environment_pair not in seen_temperature_environment_pairs:
                 seen_temperature_environment_pairs.add(temperature_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=temperature_id,
                     target_id=environment_id,
                     relationship_label="temperature member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genome_edges(self) -> None:
-        edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -1468,53 +1311,45 @@ class DmfKuzmin2018Adapter:
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:
                 seen_genome_experiment_ref_pairs.add(genome_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=genome_id,
                     target_id=experiment_ref_id,
                     relationship_label="genome member of",
                 )
-                edges.append(edge)
-        return edges
 
 
 class TmfKuzmin2018Adapter:
-    def __init__(self, dataset: TmfKuzmin2018Dataset, num_workers: int):
+    def __init__(self, dataset: LmdbDatasetReader):
         self.dataset = dataset
-        self.num_workers = num_workers
 
-    def get_nodes(self):
-        methods = [
-            self._get_experiment_reference_nodes,
-            self._get_genome_nodes,
-            self._get_experiment_nodes,
-            self._get_dataset_nodes,
-            self._get_genotype_nodes,
-            self._get_environment_nodes,
-            self._get_media_nodes,
-            self._get_temperature_nodes,
-            self._get_phenotype_nodes,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-
-            for future in as_completed(futures):
-                try:
-                    node_generator = future.result()
-                    for node in node_generator:
-                        yield node
-                except Exception as exc:
-                    logger.error(
-                        f"Node generation method generated an exception: {exc}"
-                    )
+    def get_nodes(self) -> None:
+        logger.info("Getting nodes.")
+        logger.info("Get experiment reference nodes.")
+        yield from self._get_experiment_reference_nodes()
+        logger.info("Get genome nodes.")
+        yield from self._get_genome_nodes()
+        logger.info("Get experiment nodes.")
+        yield from self._get_experiment_nodes()
+        logger.info("Get dataset nodes.")
+        yield from self._get_dataset_nodes()
+        logger.info("Get genotype nodes.")
+        logger.info("--- perturbation nodes.")
+        yield from self._get_genotype_nodes()
+        logger.info("Get environment nodes.")
+        yield from self._get_environment_nodes()
+        logger.info("Get media nodes.")
+        yield from self._get_media_nodes()
+        logger.info("Get temperature nodes.")
+        yield from self._get_temperature_nodes()
+        logger.info("Get phenotype nodes.")
+        yield from self._get_phenotype_nodes()
 
     def _get_experiment_reference_nodes(self) -> None:
-        nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            node = BioCypherNode(
+            yield BioCypherNode(
                 node_id=experiment_ref_id,
                 preferred_id=f"TmfKuzmin2018_reference_{i}",
                 node_label="experiment reference",
@@ -1523,12 +1358,10 @@ class TmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data.reference.model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genome_nodes(self) -> None:
-        nodes = []
         seen_node_ids: Set[str] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
@@ -1536,7 +1369,7 @@ class TmfKuzmin2018Adapter:
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=genome_id,
                     preferred_id=f"reference_genome_{i}",
                     node_label="genome",
@@ -1548,16 +1381,14 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_experiment_nodes(self) -> None:
-        nodes = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-            node = BioCypherNode(
+
+            yield BioCypherNode(
                 node_id=experiment_id,
                 preferred_id=f"TmfKuzmin2018_{i}",
                 node_label="experiment",
@@ -1566,11 +1397,8 @@ class TmfKuzmin2018Adapter:
                     "serialized_data": json.dumps(data["experiment"].model_dump()),
                 },
             )
-            nodes.append(node)
-        return nodes
 
     def _get_genotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             for genotype in data["experiment"].genotype:
@@ -1586,7 +1414,7 @@ class TmfKuzmin2018Adapter:
                     perturbation_type = genotype.perturbation.perturbation_type
                     self._get_perturbation(genotype)
 
-                    node = BioCypherNode(
+                    yield BioCypherNode(
                         node_id=genotype_id,
                         preferred_id=f"genotype_{i}",
                         node_label="genotype",
@@ -1604,40 +1432,32 @@ class TmfKuzmin2018Adapter:
                             "serialized_data": json.dumps(genotype.model_dump()),
                         },
                     )
-                    nodes.append(node)
-        return nodes
 
     @staticmethod
     def _get_perturbation(
         genotype: BaseGenotype,
     ) -> Generator[BioCypherNode, None, None]:
-        nodes = []
-        if genotype.perturbation:
-            i = 1
-            perturbation_id = hashlib.md5(
-                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
-            ).hexdigest()
+        perturbation_id = hashlib.md5(
+            json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
 
-            node = BioCypherNode(
-                node_id=perturbation_id,
-                preferred_id=f"perturbation_{i}",
-                node_label="perturbation",
-                properties={
-                    "systematic_gene_name": [
-                        genotype.perturbation.systematic_gene_name
-                    ],
-                    "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
-                    "description": genotype.perturbation.description,
-                    "perturbation_type": genotype.perturbation.perturbation_type,
-                    "strain_id": genotype.perturbation.strain_id,
-                    "serialized_data": json.dumps(genotype.perturbation.model_dump()),
-                },
-            )
-            nodes.append(node)
-        return nodes
+        yield BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=genotype.perturbation.perturbation_type,
+            node_label="perturbation",
+            properties={
+                "systematic_gene_name": [
+                    genotype.perturbation.systematic_gene_name
+                ],
+                "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
+                "description": genotype.perturbation.description,
+                "perturbation_type": genotype.perturbation.perturbation_type,
+                "strain_id": genotype.perturbation.strain_id,
+                "serialized_data": json.dumps(genotype.perturbation.model_dump()),
+            },
+        )
 
     def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
@@ -1650,7 +1470,7 @@ class TmfKuzmin2018Adapter:
                 seen_node_ids.add(node_id)
                 media = json.dumps(data["experiment"].environment.media.model_dump())
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -1662,7 +1482,6 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["reference"].reference_environment.model_dump()).encode(
@@ -1678,7 +1497,7 @@ class TmfKuzmin2018Adapter:
                     data["reference"].reference_environment.media.model_dump()
                 )
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
                     node_label="environment",
@@ -1692,11 +1511,8 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_media_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
@@ -1710,7 +1526,7 @@ class TmfKuzmin2018Adapter:
                 name = data["experiment"].environment.media.name
                 state = data["experiment"].environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -1722,8 +1538,6 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
@@ -1736,7 +1550,7 @@ class TmfKuzmin2018Adapter:
                 name = data["reference"].reference_environment.media.name
                 state = data["reference"].reference_environment.media.state
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
                     node_label="media",
@@ -1748,11 +1562,8 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_temperature_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -1764,7 +1575,7 @@ class TmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -1776,7 +1587,6 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
@@ -1788,7 +1598,7 @@ class TmfKuzmin2018Adapter:
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
@@ -1806,11 +1616,8 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_phenotype_nodes(self) -> Generator[BioCypherNode, None, None]:
-        nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset)):
             phenotype_id = hashlib.md5(
@@ -1825,7 +1632,7 @@ class TmfKuzmin2018Adapter:
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -1840,7 +1647,6 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
 
         # References
         for i, data in tqdm(enumerate(self.dataset)):
@@ -1859,7 +1665,7 @@ class TmfKuzmin2018Adapter:
                 fitness = data["reference"].reference_phenotype.fitness
                 fitness_std = data["reference"].reference_phenotype.fitness_std
 
-                node = BioCypherNode(
+                yield BioCypherNode(
                     node_id=phenotype_id,
                     preferred_id=f"phenotype_{phenotype_id}",
                     node_label="phenotype",
@@ -1874,78 +1680,69 @@ class TmfKuzmin2018Adapter:
                         ),
                     },
                 )
-                nodes.append(node)
-        return nodes
 
     def _get_dataset_nodes(self) -> None:
-        nodes = [
-            BioCypherNode(
-                node_id="TmfKuzmin2018",
-                preferred_id="TmfKuzmin2018",
-                node_label="dataset",
-            )
-        ]
-        return nodes
+        yield BioCypherNode(
+            node_id="TmfKuzmin2018",
+            preferred_id="TmfKuzmin2018",
+            node_label="dataset",
+        )
 
-    def get_edges(self):
-        methods = [
-            self._get_dataset_experiment_ref_edges,
-            self._get_experiment_dataset_edges,
-            self._get_experiment_ref_experiment_edges,
-            self._get_genotype_experiment_edges,
-            self._get_environment_experiment_edges,
-            self._get_environment_experiment_ref_edges,
-            self._get_phenotype_experiment_edges,
-            self._get_phenotype_experiment_ref_edges,
-            self._get_media_environment_edges,
-            self._get_temperature_environment_edges,
-            self._get_genome_edges,
-        ]
-
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-            for future in as_completed(futures):
-                try:
-                    edge_generator = future.result()
-                    for edge in edge_generator:
-                        yield edge
-                except Exception as exc:
-                    logger.error(
-                        f"Edge generation method generated an exception: {exc}"
-                    )
+    def get_edges(self) -> None:
+        logger.info("Generating edges.")
+        logger.info("Get dataset experiment reference edges.")
+        yield from self._get_dataset_experiment_ref_edges()
+        logger.info("Get experiment dataset edges.")
+        yield from self._get_experiment_dataset_edges()
+        logger.info("Get experiment reference experiment edges.")
+        yield from self._get_experiment_ref_experiment_edges()
+        logger.info("Get genotype experiment edges.")
+        logger.info("--- perturbation genotype edges.")
+        yield from self._get_genotype_experiment_edges()
+        logger.info("Get environment experiment edges.")
+        yield from self._get_environment_experiment_edges()
+        logger.info("Get environment experiment reference edges.")
+        yield from self._get_environment_experiment_ref_edges()
+        logger.info("Get phenotype experiment edges.")
+        yield from self._get_phenotype_experiment_edges()
+        logger.info("Get phenotype experiment reference edges.")
+        yield from self._get_phenotype_experiment_ref_edges()
+        logger.info("Get media environment edges.")
+        yield from self._get_media_environment_edges()
+        logger.info("Get temperature environment edges.")
+        yield from self._get_temperature_environment_edges()
+        logger.info("Get genome experiment reference edges.")
+        yield from self._get_genome_edges()
 
     def _get_dataset_experiment_ref_edges(self):
-        edges = []
-        for data in self.dataset.experiment_reference_index:
+        # concept level
+        for data in tqdm(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_ref_id,
                 target_id="TmfKuzmin2018",
                 relationship_label="experiment reference member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_dataset_edges(self):
-        edges = []
+        # concept level
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=experiment_id,
                 target_id="TmfKuzmin2018",
                 relationship_label="experiment member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_experiment_ref_experiment_edges(self):
-        edges = []
+        # instance level
+        print()
         for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[torch.tensor(data.index)]
+            dataset_subset = self.dataset[data.index]
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -1953,18 +1750,15 @@ class TmfKuzmin2018Adapter:
                 experiment_id = hashlib.md5(
                     json.dumps(data["experiment"].model_dump()).encode("utf-8")
                 ).hexdigest()
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=experiment_ref_id,
                     target_id=experiment_id,
                     relationship_label="experiment reference of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
         # CHECK if needed - don't think needed since exp ref index
         # seen_genotype_experiment_pairs: Set[tuple] = set()
-        edges = []
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
@@ -1983,34 +1777,30 @@ class TmfKuzmin2018Adapter:
                 # if genotype_experiment_pair not in seen_genotype_experiment_pairs:
                 #     seen_genotype_experiment_pairs.add(genotype_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=genotype_id,
                     target_id=experiment_id,
                     relationship_label="genotype member of",
                 )
-                edges.append(edge)
 
     @staticmethod
     def _get_perturbation_genotype_edges(
         genotype: BaseGenotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         if genotype.perturbation:
             perturbation_id = hashlib.md5(
                 json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
 
-            edge = BioCypherEdge(
+            yield BioCypherEdge(
                 source_id=perturbation_id,
                 target_id=genotype_id,
                 relationship_label="perturbation member of",
             )
-            edges.append(edge)
-        return edges
 
     def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_pairs: Set[tuple] = set()
+
         # Linking environments to experiments
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
@@ -2024,19 +1814,17 @@ class TmfKuzmin2018Adapter:
             if env_experiment_pair not in seen_environment_experiment_pairs:
                 seen_environment_experiment_pairs.add(env_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_environment_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
+
         # Linking environments to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
@@ -2053,17 +1841,15 @@ class TmfKuzmin2018Adapter:
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_ref_id,
                     relationship_label="environment member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_pairs: Set[tuple] = set()
+
         # Linking phenotypes to experiments
         for i, data in tqdm(enumerate(self.dataset)):
             experiment_id = hashlib.md5(
@@ -2077,24 +1863,24 @@ class TmfKuzmin2018Adapter:
             if phenotype_experiment_pair not in seen_phenotype_experiment_pairs:
                 seen_phenotype_experiment_pairs.add(phenotype_experiment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_phenotype_experiment_ref_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
+
+        # Linking phenotypes to experiment references
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
+            # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
                 json.dumps(data.reference.reference_phenotype.model_dump()).encode(
                     "utf-8"
@@ -2105,17 +1891,15 @@ class TmfKuzmin2018Adapter:
             if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
                 seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_ref_id,
                     relationship_label="phenotype member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_media_environment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_media_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -2130,19 +1914,17 @@ class TmfKuzmin2018Adapter:
             if media_environment_pair not in seen_media_environment_pairs:
                 seen_media_environment_pairs.add(media_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=media_id,
                     target_id=environment_id,
                     relationship_label="media member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_temperature_environment_edges(
         self,
     ) -> Generator[BioCypherEdge, None, None]:
-        edges = []
         seen_temperature_environment_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
@@ -2157,17 +1939,15 @@ class TmfKuzmin2018Adapter:
             if temperature_environment_pair not in seen_temperature_environment_pairs:
                 seen_temperature_environment_pairs.add(temperature_environment_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=temperature_id,
                     target_id=environment_id,
                     relationship_label="temperature member of",
                 )
-                edges.append(edge)
-        return edges
 
     def _get_genome_edges(self) -> None:
-        edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
+
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.md5(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -2183,48 +1963,42 @@ class TmfKuzmin2018Adapter:
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:
                 seen_genome_experiment_ref_pairs.add(genome_experiment_ref_pair)
 
-                edge = BioCypherEdge(
+                yield BioCypherEdge(
                     source_id=genome_id,
                     target_id=experiment_ref_id,
                     relationship_label="genome member of",
                 )
-                edges.append(edge)
-        return edges
 
 
 if __name__ == "__main__":
-    from biocypher import BioCypher
-
     ## Smf
     # Simple Testing
-    dataset = SmfKuzmin2018Dataset()
-    adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=1)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
+    # adapter = SmfKuzmin2018Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
     # bc = BioCypher()
-    # dataset = SmfKuzmin2018Dataset()
-    # adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # print(bc.show_ontology_structure())
+    # dataset = LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
+    # adapter = SmfKuzmin2018Adapter(dataset=dataset)
     # bc.write_nodes(adapter.get_nodes())
-    # # bc.write_edges(adapter.get_edges())
+    # bc.write_edges(adapter.get_edges())
     # bc.write_import_call()
     # bc.write_schema_info(as_node=True)
     # bc.summary()
 
     ## Dmf
     # Simple Testing
-    dataset = DmfKuzmin2018Dataset()
-    adapter = DmfKuzmin2018Adapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = LmdbDatasetReader("data/torchcell/dmf_kuzmin2018")
+    # adapter = DmfKuzmin2018Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
     # bc = BioCypher()
-    # dataset = DmfKuzmin2018Dataset()
-    # adapter = DmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # print(bc.show_ontology_structure())
+    # dataset = LmdbDatasetReader("data/torchcell/dmf_kuzmin2018")
+    # adapter = DmfKuzmin2018Adapter(dataset=dataset)
     # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     # bc.write_import_call()
@@ -2234,19 +2008,19 @@ if __name__ == "__main__":
 
     ## Tmf
     # Simple Testing
-    dataset = TmfKuzmin2018Dataset()
-    adapter = TmfKuzmin2018Adapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = LmdbDatasetReader("data/torchcell/tmf_kuzmin2018")
+    # adapter = TmfKuzmin2018Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
-    # bc = BioCypher()
-    # dataset = TmfKuzmin2018Dataset()
-    # adapter = TmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    bc = BioCypher()
+    dataset = LmdbDatasetReader("data/torchcell/tmf_kuzmin2018")
+    adapter = TmfKuzmin2018Adapter(dataset=dataset)
+    bc.show_ontology_structure()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()
     # print()

@@ -16,11 +16,8 @@ import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchell.dataset import Dataset
-from torchcell.data import (
-    ExperimentReferenceIndex,
-    compute_experiment_reference_index,
-)
+from torchcell.dataset import Dataset, compute_experiment_reference_index
+from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels import (
     BaseEnvironment,
     DeletionGenotype,
@@ -988,12 +985,12 @@ class DmfCostanzo2016Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    #     subset_n=100000,
-    #     preprocess=None,
-    # )
-    # dataset[0]
+    dataset = DmfCostanzo2016Dataset(
+        root="data/torchcell/dmf_costanzo2016_subset_n_10000",
+        subset_n=10000,
+        preprocess=None,
+    )
+    dataset[0]
     # Usage example
     # print(len(dataset))
     # print(json.dumps(dataset[0].model_dump(), indent=4))
@@ -1005,11 +1002,11 @@ if __name__ == "__main__":
     # print(FitnessExperiment(**serialized_data))
     ######
     # Single mutant fitness
-    dataset = SmfCostanzo2016Dataset()
-    experiment_indices = compute_experiment_reference_index(dataset)
-    dataset.experiment_reference_index
-    print(len(dataset))
+    # dataset = SmfCostanzo2016Dataset()
+    # experiment_indices = compute_experiment_reference_index(dataset)
+    # dataset.experiment_reference_index
+    # print(len(dataset))
     # print(dataset[100]['experiment'])
     # serialized_data = dataset[100]['experiment'].model_dump()
     # print(FitnessExperiment.model_validate(serialized_data))
-    print("done")
+    # print("done")

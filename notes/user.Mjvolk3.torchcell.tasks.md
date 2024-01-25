@@ -2,20 +2,28 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706126349896
+updated: 1706142094401
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.24
 
+- [x] Result of building db with 6 workers. → Ran out of memory and crashed computer when running `DmfCostanzo2016`
 - [x] Update python envs for use with python → Using a virtual env instead of conda env.
-- [ ] There is no `pypy torch`. This looks like the last necessary lib. Investigate chain of files to make Datasets. → no `torch` in [[torchcell.data.data]], [[torchcell.datamodels.pydantic]], [[Ontology_pydantic|dendron://torchcell/torchcell.datamodels.ontology_pydantic]]
-- [ ] Rebuild `tc` with pypy 3.9. It seems with conda env I can only use 3.9 but mac m1 allows for 3.10 install. I am unsure how to use this pypy3.10 with my conda env libs.
+- [x] There is no `pypy torch`. This looks like the last necessary lib. Investigate chain of files to make Datasets. → no `torch` in [[torchcell.data.data]], [[torchcell.datamodels.pydantic]], [[Ontology_pydantic|dendron://torchcell/torchcell.datamodels.ontology_pydantic]] → Separated out all `torch`. Used [[Reader|dendron://torchcell/torchcell.dataset_readers.reader]] to be able to do this. Now we can run the env with pypy.
+- [x] Rebuild `tc` with pypy 3.9. It seems with conda env I can only use 3.9 but mac m1 allows for 3.10 install. I am unsure how to use this pypy3.10 with my conda env libs. → Have a working version that uses local `pypy3.10` since I couldn't get `pypy3.9` to install in a conda env. I use a virtual env with pypy3.10 called `pypy`. This is now stored in the env dir. It can be activated  and used with the pypy_adapter modules.
+- [x] pypy run `Kuzmin2018`
+- [x] Update `add_frontmatter` because it was replacing the `.pypy` with `py`. This is because I previously thought no other `.py` would show. → Now we just replace the file extension. → split out file extension for this.
+- [x] Test speed difference on `Kuzmin2018`, `mp` vs. `pypy` → `pypy` time: 15m 30s , `mp` time 40s → Yikes. We can see why this is a major issue. Lets test regular python with generators → `regular` time 7m... → Pretty awful news considering my last few hours of effort...😡
+- [x] Write `Costanzo2016` `pypy_adapter`
 
-- [ ] Add a version of `DmfCostanzo2016` using Generators
-- [ ] pypy run `DmfCostanzo2016`
-- [ ] fix `SmfCostanzo2016Adapter` Nonetype note iterable error.
+- [ ] Look into alternatives. Chunking the dataset... this will cause issues with the reference index... Would need to consider chunks of 1 million. Then each Chunked dataset would get a new reference index for that chunk.
+- [ ] Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hackiness.
+
+- [ ] pypy run `Costanzo2016`
+- [ ] Run a `create_graph` using pypy
+- [ ] Write a `requirements.txt` to be able to easily recreate the pypy env
 
 ## 2024.01.23
 

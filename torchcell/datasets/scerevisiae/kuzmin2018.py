@@ -10,17 +10,15 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
+
 # import torch
 import lmdb
 import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.dataset import Dataset
-from torchcell.data import (
-    ExperimentReferenceIndex,
-    compute_experiment_reference_index,
-)
+from torchcell.dataset import Dataset, compute_experiment_reference_index
+from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.ontology_pydantic import (
     BaseEnvironment,
     BaseGenotype,
@@ -1001,7 +999,7 @@ class TmfKuzmin2018Dataset(Dataset):
         ].mean()
         # replace delta symbol for neo4j import
         df = df.replace("'", "_prime", regex=True)
-        df = df.replace("Δ", "_delta", regex=True) 
+        df = df.replace("Δ", "_delta", regex=True)
         df = df.reset_index(drop=True)
         return df
 

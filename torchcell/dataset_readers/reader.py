@@ -1,3 +1,8 @@
+# torchcell/dataset_readers/reader.py
+# [[torchcell.dataset_readers.reader]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset_readers/reader.py
+# Test file: tests/torchcell/dataset_readers/test_reader.py
+
 import os.path as osp
 import pickle
 import lmdb

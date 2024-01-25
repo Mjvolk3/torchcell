@@ -2,10 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706142094401
+updated: 1706198268947
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2024.01.25
+
+- [x] Check `torchcell env` run of [[torchcell.knowledge_graphs.create_scerevisiae_kg]]. Did not finish in 10 hrs of running. → Used 4 workers and got through 3 total iterations on the `2e7` data instances. → Killed job since need computer for development around neo4j db on `Delta`.
+- [ ] Look into `ERROR -- Edge generation method generated an exception: 'ExperimentReference' object has no attribute 'environment'`, which appeared when running [[Create_pypy_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_pypy_scerevisiae_kg]]
+- [ ]
 
 ## 2024.01.24
 
@@ -17,7 +23,8 @@ created: 1690514887023m
 - [x] Update `add_frontmatter` because it was replacing the `.pypy` with `py`. This is because I previously thought no other `.py` would show. → Now we just replace the file extension. → split out file extension for this.
 - [x] Test speed difference on `Kuzmin2018`, `mp` vs. `pypy` → `pypy` time: 15m 30s , `mp` time 40s → Yikes. We can see why this is a major issue. Lets test regular python with generators → `regular` time 7m... → Pretty awful news considering my last few hours of effort...😡
 - [x] Write `Costanzo2016` `pypy_adapter`
-
+- [ ]
+- [ ] Property `experiment_reference_index` should be run in `process`
 - [ ] Look into alternatives. Chunking the dataset... this will cause issues with the reference index... Would need to consider chunks of 1 million. Then each Chunked dataset would get a new reference index for that chunk.
 - [ ] Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hackiness.
 

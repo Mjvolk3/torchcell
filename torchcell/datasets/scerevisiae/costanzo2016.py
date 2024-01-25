@@ -990,6 +990,7 @@ if __name__ == "__main__":
         subset_n=10000,
         preprocess=None,
     )
+    dataset.experiment_reference_index
     dataset[0]
     # Usage example
     # print(len(dataset))

@@ -5,7 +5,14 @@
 
 from tqdm import tqdm
 import hashlib
+import random
+import string
+from enum import Enum, auto
+from functools import lru_cache
+from itertools import chain
+from typing import Optional
 import json
+import pandas as pd
 from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import logger
 from typing import Generator, Set
@@ -15,7 +22,9 @@ from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
 )
 from torchcell.datamodels import BaseGenotype, InterferenceGenotype, DeletionGenotype
+from sortedcontainers import SortedList
 from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
 
 logger.debug(f"Loading module {__name__}.")
 
@@ -712,9 +721,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
@@ -1155,7 +1162,17 @@ class DmfCostanzo2016Adapter:
         ]
 
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
+            # Divide methods into smaller chunks
+            method_chunks = [
+                methods[i :: self.num_workers] for i in range(self.num_workers)
+            ]
+
+            futures = []
+            for chunk in method_chunks:
+                for method in chunk:
+                    futures.append(executor.submit(method))
+
+            # Process futures as they complete and yield edges
             for future in as_completed(futures):
                 try:
                     edge_generator = future.result()
@@ -1416,9 +1433,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
@@ -1438,10 +1453,10 @@ if __name__ == "__main__":
     from biocypher import BioCypher
 
     # # # Simple Testing
-    dataset = SmfCostanzo2016Dataset()
-    adapter = SmfCostanzo2016Adapter(dataset=dataset)
-    [i for i in adapter.get_nodes()]
-    [i for i in adapter.get_edges()]
+    # dataset = SmfCostanzo2016Dataset()
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset)
+    # [i for i in adapter.get_nodes()]
+    # [i for i in adapter.get_edges()]
 
     ## Advanced Testing
     # bc = BioCypher()
@@ -1466,18 +1481,18 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # Advanced Testing
-    # bc = BioCypher()
-    # # dataset = DmfCostanzo2016Dataset()
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    # #     subset_n=100000,
-    # #     preprocess=None,
-    # # )
+    bc = BioCypher()
     # dataset = DmfCostanzo2016Dataset()
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
+    #     subset_n=100000,
+    #     preprocess=None,
+    # )
+    dataset = DmfCostanzo2016Dataset()
+    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    bc.show_ontology_structure()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

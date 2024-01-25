@@ -1,12 +1,13 @@
-# torchcell/knowledge_graphs/create_scerevisiae_kg.py
-# [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg.py
-# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
+# torchcell/knowledge_graphs/create_pypy_scerevisiae_kg
+# [[torchcell.knowledge_graphs.create_pypy_scerevisiae_kg]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_pypy_scerevisiae_kg
+# Test file: tests/torchcell/knowledge_graphs/test_create_pypy_scerevisiae_kg.py
+
 
 from biocypher import BioCypher
 from torchcell.pypy_adapters import (
-    # SmfCostanzo2016Adapter,
-    # DmfCostanzo2016Adapter,
+    SmfCostanzo2016Adapter,
+    DmfCostanzo2016Adapter,
     SmfKuzmin2018Adapter,
     DmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
@@ -25,20 +26,22 @@ def main():
     # logger.info(f"Started at {datetime.now()}") but use logging
     bc = BioCypher()
 
-    # num_workers = mp.cpu_count()
-    num_workers = 6
-
-    logging.info(f"Using {num_workers} workers")
     # Ordered adapters from smallest to largest
     adapters = [
+        DmfCostanzo2016Adapter(
+            dataset=LmdbDatasetReader("data/torchcell/dmf_costanzo2016")
+        ),
+        SmfCostanzo2016Adapter(
+            dataset=LmdbDatasetReader("data/torchcell/smf_costanzo2016")
+        ),
         SmfKuzmin2018Adapter(
-            dataset=LmdbDatasetReader("data/torchcell/smf_kuzmin2018"),
+            dataset=LmdbDatasetReader("data/torchcell/smf_kuzmin2018")
         ),
         DmfKuzmin2018Adapter(
-            dataset=LmdbDatasetReader("data/torchcell/dmf_kuzmin2018"),
+            dataset=LmdbDatasetReader("data/torchcell/dmf_kuzmin2018")
         ),
         TmfKuzmin2018Adapter(
-           dataset=LmdbDatasetReader("data/torchcell/tmf_kuzmin2018"),
+            dataset=LmdbDatasetReader("data/torchcell/tmf_kuzmin2018")
         ),
     ]
 
@@ -52,8 +55,6 @@ def main():
 
     # Print summary
     bc.summary()
-    # log the finish time
-    logging.info(f"Finished at {datetime.now()}")
 
 
 if __name__ == "__main__":

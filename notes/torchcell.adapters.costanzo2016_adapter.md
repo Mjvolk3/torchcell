@@ -2,7 +2,7 @@
 id: cg7e5soujlboc77wykbj1n3
 title: Costanzo2016_adapter
 desc: ''
-updated: 1706163377396
+updated: 1706385039927
 created: 1705537951301
 ---
 ## Using Static Methods like in get_perturbation
@@ -1904,7 +1904,17 @@ class DmfCostanzo2016Adapter:
         ]
 
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
+            # Divide methods into smaller chunks
+            method_chunks = [
+                methods[i :: self.num_workers] for i in range(self.num_workers)
+            ]
+
+            futures = []
+            for chunk in method_chunks:
+                for method in chunk:
+                    futures.append(executor.submit(method))
+
+            # Process futures as they complete and yield edges
             for future in as_completed(futures):
                 try:
                     edge_generator = future.result()
@@ -1961,6 +1971,7 @@ class DmfCostanzo2016Adapter:
                 )
                 edges.append(edge)
         return edges
+
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
         edges = []
@@ -2165,9 +2176,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)

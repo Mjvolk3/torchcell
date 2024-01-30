@@ -2,16 +2,52 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706198268947
+updated: 1706584979698
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
+## 2024.01.30
+
+- [ ] Read through the adapter and find where we are making errors with `PhenotypeMemberOf`. Since there are only two the first place to look is probably reference.o
+- [ ] Make a duplicate adapter for `async`
+- [ ] Try bulk import of smf data to Neo4j db on Delta.
+- [ ] Try to query deletion data from Delta Neo4j.
+- [ ] Change `reference_environment` to `environment`
+
+## 2024.01.29
+
+- [x] Send NCSA a message about getting help with port forwarding to be able to interact with the neo4j browser. → Asked about port forwarding for using the Neo4j browser.
+- [x] We are getting low iterations `11838875/20705612 [2:09:53<1:22:32, 1790.52it/s` on looping through the entire dataset. I believe this might be because we have no parallelization directly in the `get_edges` method. → There are some async options to help speed this up. → Finished in about 14 hours. That slow iteration shown was the last one before writing all edge csv. → No duplicates.
+- [x] Check how we can get the dir for bulk import. → `bc_output_directory:
+'/Users/michaelvolk/Documents/projects/torchcell/biocypher-out/20240129211021'` then `"neo4j-admin-import-call.sh"` always sits in this dir. We can just cd to the neo4j terminal and and run this command after returning this information from the writer.
+- [x] Try bulk import of `DmfCostanzo2016` into Neo4j database. → Import took 4m 19s but there are reported bad entries
+- [x] Investigate bad entries. → I think these just need to be corrected after reading though the adapter again.
+
+```bash
+cat import.report
+f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7 (global id space)-[PhenotypeMemberOf]->29d4c34a4008c66eb05e3a34e7366cd05e8fb3ca5b58fd7dae4a215bb201f3ec (global id space) referring to missing node f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7
+f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7 (global id space)-[PhenotypeMemberOf]->73ca7d4694085d74c54e04db8956f128262c0ef4cf2bbe46775b97cb170a7813 (global id space) referring to missing node f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7
+```
+
+- [x] Check number of nodes on `DmfCostanso2016` import and number of edges → `Nodes: 27,507,626, Edges: 124,244,54`0
+
+## 2024.01.28
+
+- [x] Revise `if genotype.perturbation:`, check WT. There is some bug..
+- [x] Chunk what can be chunked in nodes and edges for `DmfCostanzo2016` → Some of these we had to be careful to not chunk so we could remove obvious duplicates. We could revert if this continues to cause memory issues, but it provides more clarity when reviewing the data processing.
+- [x] Do I need a `_get_media_environment_ref_edges`? → For `DmfCostanzo2016` we an just get the media from the ref.
+- [x] Get neo4j docker image working on delta with apptainer. → It seems that there are some java issues still but I have tried both using `jdk-11` and and `jkd-17` and keep getting back the same errors. Google searches in including some stack overflow suggest some issue with permissions. → Got things to work. [[Starting Neo4j Database with Apptainer on Delta Interactive CPU|dendron://torchcell/neo4j.delta#starting-neo4j-database-with-apptainer-on-delta-interactive-cpu]]. It doesn't seem there is anyway to forward ports for access the database on local host. Can send NCSA help a message about this.
+- [x] Run `1e6` and and `1e7` tests
+- 🔲 Change `reference_environment` to `environment`
+
 ## 2024.01.25
 
 - [x] Check `torchcell env` run of [[torchcell.knowledge_graphs.create_scerevisiae_kg]]. Did not finish in 10 hrs of running. → Used 4 workers and got through 3 total iterations on the `2e7` data instances. → Killed job since need computer for development around neo4j db on `Delta`.
-- [ ] Look into `ERROR -- Edge generation method generated an exception: 'ExperimentReference' object has no attribute 'environment'`, which appeared when running [[Create_pypy_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_pypy_scerevisiae_kg]]
-- [ ]
+- [x] Look into `ERROR -- Edge generation method generated an exception: 'ExperimentReference'  object has no attribute 'environment'`, which appeared when running [[Create_pypy_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_pypy_scerevisiae_kg]] → Think this is fixed. Had some typos related to dict key vs attr
+- [x] [Push docker image](https://hub.docker.com/repository/docker/michaelvolk/torchcell_biocypher/general) → Doing this so we can potentilly pursue the singularity option on delta. This way we could avoid the neo4j install directly to `delta`.
+- [x] Transfer `Jdk17` to Delta with Globus `x64 Compressed Archive 174.03 MB
+https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)`
 
 ## 2024.01.24
 
@@ -23,10 +59,9 @@ created: 1690514887023m
 - [x] Update `add_frontmatter` because it was replacing the `.pypy` with `py`. This is because I previously thought no other `.py` would show. → Now we just replace the file extension. → split out file extension for this.
 - [x] Test speed difference on `Kuzmin2018`, `mp` vs. `pypy` → `pypy` time: 15m 30s , `mp` time 40s → Yikes. We can see why this is a major issue. Lets test regular python with generators → `regular` time 7m... → Pretty awful news considering my last few hours of effort...😡
 - [x] Write `Costanzo2016` `pypy_adapter`
-- [ ]
 - [ ] Property `experiment_reference_index` should be run in `process`
 - [ ] Look into alternatives. Chunking the dataset... this will cause issues with the reference index... Would need to consider chunks of 1 million. Then each Chunked dataset would get a new reference index for that chunk.
-- [ ] Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hackiness.
+- [ ] Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hacks.
 
 - [ ] pypy run `Costanzo2016`
 - [ ] Run a `create_graph` using pypy

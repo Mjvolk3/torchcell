@@ -42,7 +42,7 @@
         },
         "[markdown]": {
             "editor.codeActionsOnSave": {
-                "source.fixAll.markdownlint": true
+                "source.fixAll.markdownlint": "explicit"
             }
         },
         "git.autoRepositoryDetection": false,

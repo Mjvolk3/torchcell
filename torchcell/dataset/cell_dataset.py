@@ -2,7 +2,7 @@ from .dataset import Dataset
 from torchcell.data import (
     ExperimentReferenceIndex,
     serialize_for_hashing,
-    compute_md5_hash,
+    compute_sha256_hash,
 )
 from tqdm import tqdm
 
@@ -11,9 +11,9 @@ def compute_experiment_reference_index(
     dataset: Dataset,
 ) -> list[ExperimentReferenceIndex]:
     # Hashes for each reference
-    print("Computing hashes...")
+    print("Computing experiment_reference_index hashes...")
     reference_hashes = [
-        compute_md5_hash(serialize_for_hashing(data["reference"]))
+        compute_sha256_hash(serialize_for_hashing(data["reference"]))
         for data in tqdm(dataset)
     ]
 

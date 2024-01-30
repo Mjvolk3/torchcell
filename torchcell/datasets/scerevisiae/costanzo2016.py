@@ -34,6 +34,7 @@ from torchcell.datamodels import (
     SgdTsAllelePerturbation,
     SuppressorGenotype,
     Temperature,
+    ExperimentReferenceIndex,
 )
 from torchcell.sequence import GeneSet
 
@@ -471,7 +472,7 @@ class SmfCostanzo2016Dataset(Dataset):
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.dict() for eri in self._experiment_reference_index],
+                    [eri.model_dump() for eri in self._experiment_reference_index],
                     file,
                     indent=4,
                 )
@@ -622,6 +623,8 @@ class DmfCostanzo2016Dataset(Dataset):
 
         env.close()
         self.gene_set = self.compute_gene_set()
+        # This will cache the experiment_reference_index
+        self.experiment_reference_index
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -973,7 +976,7 @@ class DmfCostanzo2016Dataset(Dataset):
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.dict() for eri in self._experiment_reference_index],
+                    [eri.model_dump() for eri in self._experiment_reference_index],
                     file,
                     indent=4,
                 )
@@ -986,8 +989,8 @@ class DmfCostanzo2016Dataset(Dataset):
 
 if __name__ == "__main__":
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016_subset_n_10000",
-        subset_n=10000,
+        root="data/torchcell/dmf_costanzo2016_subset_n_1000",
+        subset_n=1000,
         preprocess=None,
     )
     dataset.experiment_reference_index

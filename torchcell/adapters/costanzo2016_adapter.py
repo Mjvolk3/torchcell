@@ -1051,6 +1051,39 @@ class DmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
+        
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)    
 
         return nodes
 
@@ -1465,19 +1498,19 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # Advanced Testing
-    bc = BioCypher()
-    dataset = SmfCostanzo2016Dataset()
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    # bc = BioCypher()
+    # dataset = SmfCostanzo2016Dataset()
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
 
-    # # Write admin import statement and schema information (for biochatter)
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
+    # # # Write admin import statement and schema information (for biochatter)
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
 
-    # # # Print summary
-    bc.summary()
-    print()
+    # # # # Print summary
+    # bc.summary()
+    # print()
 
     ## Dmf
     # Simple Testing
@@ -1487,13 +1520,13 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # Advanced Testing
-    # bc = BioCypher()
+    bc = BioCypher()
     # dataset = DmfCostanzo2016Dataset()
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
-    #     subset_n=1000,
-    #     preprocess=None,
-    # )
+    dataset = DmfCostanzo2016Dataset(
+        root="data/torchcell/dmf_costanzo2016_subset_n_1000",
+        subset_n=1000,
+        preprocess=None,
+    )
     # dataset = DmfCostanzo2016Dataset(
     #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
     #     subset_n=100000,
@@ -1509,10 +1542,10 @@ if __name__ == "__main__":
     #     subset_n=int(1e7),
     #     preprocess=None,
     # )
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    bc.show_ontology_structure()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

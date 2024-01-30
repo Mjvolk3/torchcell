@@ -35,7 +35,7 @@ class GenePerturbation(ModelStrict):
 
 class DeletionPerturbation(GenePerturbation, ModelStrict):
     description: str = "Deletion via KanMX or NatMX gene replacement"
-    perturbation_type: str = Field(default="deletion", Literal=True)
+    perturbation_type: str = "deletion"
 
 
 class KanMxDeletionPerturbation(DeletionPerturbation, ModelStrict):

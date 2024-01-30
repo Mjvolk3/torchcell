@@ -2,18 +2,24 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706584979698
+updated: 1706654430844
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.30
 
-- [ ] Read through the adapter and find where we are making errors with `PhenotypeMemberOf`. Since there are only two the first place to look is probably reference.o
-- [ ] Make a duplicate adapter for `async`
+- [x] Read through the adapter and find where we are making errors with `PhenotypeMemberOf`. Since there are only two the first place to look is probably reference. → This is the case, `f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7` this is the phenotype. → The issue is that the `experiment_reference_index` differs from the indices associate with each experiment. Needs to be fixed within the property. → some dumping issue, likely with serialization. → The issue was that we did not properly type hint the child class `FitnessExperimentReference` and instead were only type hinting `ExperimentReference` in `ExperimentReferenceIndex` [[Data|dendron://torchcell/torchcell.data.data]]. I am a bit worried about this because as the list of supported classes under the `ExperimentReferenceIndex` expand we will have to make sure we maintain the typing it would be better to have and intermediary defined type where we can add a list of these objects. → I have prototyped a `ExperimentReferenceType` and this works well. I think this will be more maintainable in the future making the classes more streamlined centralizing typing to one location.
+- [x] Do a local query test on the `DmfCostanzo2016` to get an idea of speed. → Some of the data does not get validated properly, every genotype looks like a `BaseGenotype`. I think this is ok since the genotype definitions as we have them are more functional when they should be imperative. Perturbations serve as the imperative equivalent of the Genotype types. I think we might want to get rid of these genotype types. We could just ignore them for now, but they aren't totally clear. For example the Suppressor genotype takes a possible list of suppressor alleles when there really only needs to be one suppressor allele. This is confusing and would cause the number of possible genotypes to balloon.
+- [x] Is it possible to start the Neo4j db from the command line? → yes! `cd /Users/michaelvolk/Library/Application Support/Neo4j Desktop/Application/relate-data/dbmss/dbms-010e9a89-2083-4d8f-8f08-4770f372f858`, `./bin/neo4j start`,  `./bin/neo4j stop`
+- [x] Investigate heap error in config → `/Users/michaelvolk/Library/Application Support/Neo4j Desktop/Application/relate-data/dbmss/dbms-010e9a89-2083-4d8f-8f08-4770f372f858/conf/neo4j.conf` dbms.memory.heap.max_size=10G previously 1G
+- [x] We are still only getting around `1e3 it/s` try to optimize. → Maxed out thread workers in config. `dbms.threads.worker_count=10` now achieving > `1e4 it/s` which should be sufficient for now.
+- [ ] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this.
+
 - [ ] Try bulk import of smf data to Neo4j db on Delta.
 - [ ] Try to query deletion data from Delta Neo4j.
 - [ ] Change `reference_environment` to `environment`
+- [ ] Make a duplicate adapter for `async`
 
 ## 2024.01.29
 

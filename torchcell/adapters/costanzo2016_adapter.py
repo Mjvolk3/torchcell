@@ -28,9 +28,6 @@ import multiprocessing
 
 logger.debug(f"Loading module {__name__}.")
 
-dataset = SmfCostanzo2016Dataset()
-
-
 class SmfCostanzo2016Adapter:
     def __init__(self, dataset: SmfCostanzo2016Dataset, num_workers: int = 1):
         self.dataset = dataset
@@ -1406,16 +1403,20 @@ class DmfCostanzo2016Adapter:
 
 if __name__ == "__main__":
     from biocypher import BioCypher
-
+    import os.path as osp
+    from dotenv import load_dotenv
+    load_dotenv()
+    import os
     # # # Simple Testing
     # dataset = SmfCostanzo2016Dataset()
     # adapter = SmfCostanzo2016Adapter(dataset=dataset)
     # [i for i in adapter.get_nodes()]
     # [i for i in adapter.get_edges()]
+    DATA_ROOT = os.getenv("DATA_ROOT")
 
     # Advanced Testing
     bc = BioCypher()
-    dataset = SmfCostanzo2016Dataset()
+    dataset = SmfCostanzo2016Dataset(osp.join("DATA_ROOT", "data/torchcell/smf_costanzo2016"))
     adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())

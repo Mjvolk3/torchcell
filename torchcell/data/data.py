@@ -9,11 +9,20 @@ from typing import List
 
 from pydantic import field_validator
 
-from torchcell.datamodels import ExperimentReference, ModelStrict
+from torchcell.datamodels import (
+    ExperimentReference,
+    FitnessExperimentReference,
+    ModelStrict,
+)
+
+from typing import Union
+
+# List of classes that can be part of ExperimentReference
+ExperimentReferenceType = ExperimentReference | FitnessExperimentReference
 
 
 class ExperimentReferenceIndex(ModelStrict):
-    reference: ExperimentReference
+    reference: ExperimentReferenceType
     index: List[bool]
 
     def __repr__(self):
@@ -57,9 +66,8 @@ def serialize_for_hashing(obj) -> str:
     return json.dumps(obj.dict(), sort_keys=True)
 
 
-def compute_md5_hash(content: str) -> str:
+def compute_sha256_hash(content: str) -> str:
     """
-    Compute the MD5 hash of a string.
+    Compute the sha256 hash of a string.
     """
-    return hashlib.md5(content.encode()).hexdigest()
-
+    return hashlib.sha256(content.encode()).hexdigest()

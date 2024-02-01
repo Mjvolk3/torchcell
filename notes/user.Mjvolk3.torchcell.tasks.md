@@ -2,10 +2,24 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706654430844
+updated: 1706747773037
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+
+## 2024.01.31
+
+- [x] Replace `Sgd` with the correct `Sga` for synthetic genetic array.
+- [x] We can simplify the data model [[Issues with the Current Data Scheme that Uses Different Named Phenotypes|dendron://torchcell/torchcell.datamodels.ontology_pydantic#issues-with-the-current-data-scheme-that-uses-different-named-phenotypes]]. Do this first for `Costanzo`.
+- [ ] Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
+- [ ] Get rid of the `preprocess_config.json
+- [ ] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
+
+
+- [ ] Correct the data schema
+- [ ] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta.
+- [ ] Revert get_edges to old version.
+- [ ] Write Cron Job for Db build
 
 ## 2024.01.30
 
@@ -14,7 +28,10 @@ created: 1690514887023m
 - [x] Is it possible to start the Neo4j db from the command line? → yes! `cd /Users/michaelvolk/Library/Application Support/Neo4j Desktop/Application/relate-data/dbmss/dbms-010e9a89-2083-4d8f-8f08-4770f372f858`, `./bin/neo4j start`,  `./bin/neo4j stop`
 - [x] Investigate heap error in config → `/Users/michaelvolk/Library/Application Support/Neo4j Desktop/Application/relate-data/dbmss/dbms-010e9a89-2083-4d8f-8f08-4770f372f858/conf/neo4j.conf` dbms.memory.heap.max_size=10G previously 1G
 - [x] We are still only getting around `1e3 it/s` try to optimize. → Maxed out thread workers in config. `dbms.threads.worker_count=10` now achieving > `1e4 it/s` which should be sufficient for now.
-- [ ] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this.
+- [x] Summary of neo4j times. → Bulk import is very fast on order of minutes, this means that the db can be easily scrapped and made new. Querying is fast after optimizing the heap and num workers for threading, on order of mins. The slowest portion is adapters which is on order of hours or days in the worst case. I think around 14 hours right now for `DmfCostanzo2016`.
+- [x] Try alternative async parallelization. → After looking into this more it won't provide much benefit unless we use queues for memory management.
+
+- [ ] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this. → Fixed in `DmfCostanzo2016` but the others need modifying
 
 - [ ] Try bulk import of smf data to Neo4j db on Delta.
 - [ ] Try to query deletion data from Delta Neo4j.

@@ -6,52 +6,57 @@
 from biocypher import BioCypher
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
-    DmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
-    DmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
+    # DmfCostanzo2016Adapter,
+    # SmfKuzmin2018Adapter,
+    # DmfKuzmin2018Adapter,
+    # TmfKuzmin2018Adapter,
 )
 from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
-    DmfCostanzo2016Dataset,
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
+    # DmfCostanzo2016Dataset,
+    # SmfKuzmin2018Dataset,
+    # DmfKuzmin2018Dataset,
+    # TmfKuzmin2018Dataset,
 )
 import logging
 import warnings
+from dotenv import load_dotenv
+import os
+import os.path as osp
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
-logging.captureWarnings(True)
 
-# Example: Generating a warning
-warnings.warn("This is a test warning")
+def main():
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
+    logging.captureWarnings(True)
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
 
-bc = BioCypher()
+    # Example: Generating a warning
+    warnings.warn("This is a test warning")
 
-# Ordered adapters from smallest to largest
-adapters = [
-    SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset()),
-    SmfCostanzo2016Adapter(dataset=SmfCostanzo2016Dataset()),
-    TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset()),
-    DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset()),
-    DmfCostanzo2016Adapter(
-        dataset=DmfCostanzo2016Dataset(
-            root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-            subset_n=100000,
-            preprocess=None,
+    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "biocypher-output"))
+    # Ordered adapters from smallest to largest
+    adapters = [
+        SmfCostanzo2016Adapter(
+            dataset=SmfCostanzo2016Dataset(
+                osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+            ),
+            num_workers=10,
         )
-    ),
-]
+    ]
 
-for adapter in adapters:
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    for adapter in adapters:
+        bc.write_nodes(adapter.get_nodes())
+        bc.write_edges(adapter.get_edges())
 
-# Write admin import statement and schema information (for biochatter)
-bc.write_import_call()
-bc.write_schema_info(as_node=True)
+    # Write admin import statement and schema information (for biochatter)
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
 
-# Print summary
-bc.summary()
+    # Print summary
+    bc.summary()
+
+
+if __name__ == "__main__":
+    main()

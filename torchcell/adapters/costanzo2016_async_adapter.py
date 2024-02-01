@@ -21,7 +21,7 @@ from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )
-from torchcell.datamodels import Genotype
+from torchcell.datamodels import BaseGenotype, InterferenceGenotype, DeletionGenotype
 from sortedcontainers import SortedList
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
@@ -129,57 +129,74 @@ class SmfCostanzo2016Adapter:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in enumerate(self.dataset):
-            genotype = data["experiment"].genotype
             genotype_id = hashlib.sha256(
-                json.dumps(genotype.model_dump()).encode("utf-8")
+                json.dumps(data["experiment"].genotype.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genotype_id not in seen_node_ids:
                 seen_node_ids.add(genotype_id)
+                systematic_gene_name = data[
+                    "experiment"
+                ].genotype.perturbation.systematic_gene_name
+                perturbed_gene_name = data[
+                    "experiment"
+                ].genotype.perturbation.perturbed_gene_name
+                description = data["experiment"].genotype.perturbation.description
+                perturbation_type = data[
+                    "experiment"
+                ].genotype.perturbation.perturbation_type
+
+                self._get_perturbation(data["experiment"].genotype)
 
                 node = BioCypherNode(
                     node_id=genotype_id,
                     preferred_id=f"genotype_{i}",
                     node_label="genotype",
                     properties={
-                        "systematic_gene_names": genotype.systematic_gene_names,
-                        "perturbed_gene_names": genotype.perturbed_gene_names,
-                        "perturbation_types": genotype.perturbation_types,
+                        "systematic_gene_names": [systematic_gene_name],
+                        "perturbed_gene_names": [perturbed_gene_name],
+                        "is_deletion_genotype": isinstance(
+                            data["experiment"].genotype, DeletionGenotype
+                        ),
+                        "is_interference_genotype": isinstance(
+                            data["experiment"].genotype, InterferenceGenotype
+                        ),
+                        "description": description,
+                        "perturbation_types": [perturbation_type],
                         "serialized_data": json.dumps(
                             data["experiment"].genotype.model_dump()
                         ),
                     },
                 )
                 nodes.append(node)
-            return nodes
+            return
 
-    def _get_perturbation_nodes(self):
-        nodes = []
-        seen_node_ids = set()
-        for data in tqdm(self.dataset):
-            perturbations = data["experiment"].genotype.perturbations
-            for perturbation in perturbations:
-                perturbation_id = hashlib.sha256(
-                    json.dumps(perturbation.model_dump()).encode("utf-8")
-                ).hexdigest()
+    @staticmethod
+    def _get_perturbation(
+        genotype: BaseGenotype,
+    ) -> Generator[BioCypherNode, None, None]:
+        if genotype.perturbation:
+            i = 1
+            perturbation_id = hashlib.sha256(
+                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+            ).hexdigest()
 
-                if perturbation_id not in seen_node_ids:
-                    seen_node_ids.add(perturbation_id)
-                    node = BioCypherNode(
-                        node_id=perturbation_id,
-                        preferred_id=perturbation.perturbation_type,
-                        node_label="perturbation",
-                        properties={
-                            "systematic_gene_name": perturbation.systematic_gene_name,
-                            "perturbed_gene_name": perturbation.perturbed_gene_name,
-                            "perturbation_type": perturbation.perturbation_type,
-                            "description": perturbation.description,
-                            "strain_id": perturbation.strain_id,
-                            "serialized_data": json.dumps(perturbation.model_dump()),
-                        },
-                    )
-                    nodes.append(node)
-        return nodes
+            node = BioCypherNode(
+                node_id=perturbation_id,
+                preferred_id=f"perturbation_{i}",
+                node_label="perturbation",
+                properties={
+                    "systematic_gene_name": [
+                        genotype.perturbation.systematic_gene_name
+                    ],
+                    "perturbed_gene_name": [genotype.perturbation.perturbed_gene_name],
+                    "description": genotype.perturbation.description,
+                    "perturbation_type": genotype.perturbation.perturbation_type,
+                    "strain_id": genotype.perturbation.strain_id,
+                    "serialized_data": json.dumps(genotype.perturbation.model_dump()),
+                },
+            )
+        return node
 
     def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
         nodes = []
@@ -502,7 +519,6 @@ class SmfCostanzo2016Adapter:
                     relationship_label="experiment reference of",
                 )
                 edges.append(edge)
-        return edges
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
         edges = []
@@ -524,16 +540,15 @@ class SmfCostanzo2016Adapter:
                 relationship_label="genotype member of",
             )
             edges.append(edge)
-        return edges
-    
+
     @staticmethod
     def _get_perturbation_genotype_edges(
-        genotype: Genotype, genotype_id: str
+        genotype: BaseGenotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
         edges = []
-        for perturbation in genotype.perturbations:
+        if genotype.perturbation:
             perturbation_id = hashlib.sha256(
-                json.dumps(perturbation.model_dump()).encode("utf-8")
+                json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
 
             edge = BioCypherEdge(
@@ -728,16 +743,20 @@ class DmfCostanzo2016Adapter:
         self.num_workers = num_workers
 
     def get_nodes(self):
-        for node in self._get_experiment_nodes():
-            yield node
-        for node in self._get_genotype_nodes():
-            yield node
-        for node in self._get_perturbation_nodes():
-            yield node
-        for node in self._get_phenotype_nodes():
-            yield node
+        # for node in self._get_experiment_nodes():
+        #     yield node
+        # for node in self._get_genotype_nodes():
+        #     yield node
+        # for node in self._get_perturbation_nodes():
+        #     yield node
+        # for node in self._get_phenotype_nodes():
+        #     yield node
 
         methods = [
+            self._get_experiment_nodes, # chunked
+            self._get_genotype_nodes, # chunked
+            self._get_perturbation_nodes, # chunked
+            self._get_phenotype_nodes, # chunked
             self._get_experiment_reference_nodes,
             self._get_genome_nodes,
             self._get_dataset_nodes,
@@ -857,19 +876,13 @@ class DmfCostanzo2016Adapter:
 
                     node = BioCypherNode(
                         node_id=genotype_id,
-                        preferred_id=f"genotype_{genotype_id}",
+                        preferred_id=f"genotype_{i}",
                         node_label="genotype",
                         properties={
-                            "systematic_gene_names": [systematic_gene_name],
-                            "perturbed_gene_names": [perturbed_gene_name],
-                            "is_deletion_genotype": isinstance(
-                                genotype, DeletionGenotype
-                            ),
-                            "is_interference_genotype": isinstance(
-                                genotype, InterferenceGenotype
-                            ),
+                            "systematic_gene_name": systematic_gene_name,
+                            "perturbed_gene_name": perturbed_gene_name,
                             "description": description,
-                            "perturbation_types": [perturbation_type],
+                            "perturbation_type": perturbation_type,
                             "serialized_data": json.dumps(genotype.model_dump()),
                         },
                     )
@@ -894,12 +907,8 @@ class DmfCostanzo2016Adapter:
                         preferred_id=genotype.perturbation.perturbation_type,
                         node_label="perturbation",
                         properties={
-                            "systematic_gene_name": [
-                                genotype.perturbation.systematic_gene_name
-                            ],
-                            "perturbed_gene_name": [
-                                genotype.perturbation.perturbed_gene_name
-                            ],
+                            "systematic_gene_name": genotype.perturbation.systematic_gene_name,
+                            "perturbed_gene_name": genotype.perturbation.perturbed_gene_name,
                             "description": genotype.perturbation.description,
                             "perturbation_type": genotype.perturbation.perturbation_type,
                             "strain_id": genotype.perturbation.strain_id,
@@ -1037,6 +1046,41 @@ class DmfCostanzo2016Adapter:
                 )
                 nodes.append(node)
 
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+
+        return nodes
+
     def _get_dataset_nodes(self) -> None:
         nodes = [
             BioCypherNode(
@@ -1047,43 +1091,61 @@ class DmfCostanzo2016Adapter:
         ]
         return nodes
 
+    # def get_edges(self):
+    #     for edge in self._get_experiment_dataset_edges():
+    #         yield edge
+    #     for edge in self._get_dataset_experiment_ref_edges():
+    #         yield edge
+    #     for edge in self._get_experiment_ref_experiment_edges():
+    #         yield edge
+    #     for edge in self._get_genotype_experiment_edges():
+    #         yield edge
+    #     for edge in self._get_environment_experiment_edges():
+    #         yield edge
+    #     for edge in self._get_environment_experiment_ref_edges():
+    #         yield edge
+    #     for edge in self._get_phenotype_experiment_edges():
+    #         yield edge
+    #     for edge in self._get_phenotype_experiment_ref_edges():
+    #         yield edge
+    #     # First, generate all perturbation edges
+    #     for edge in self._get_perturbation_genotype_edges():
+    #         yield edge
+    #     for edge in self._get_media_environment_edges():
+    #         yield edge
+    #     for edge in self._get_temperature_environment_edges():
+    #         yield edge
+    #     for edge in self._get_genome_edges():
+    #         yield edge
+
     def get_edges(self):
-        for edge in self._get_experiment_dataset_edges():
-            yield edge
+        # Create a list of all the generator methods
+        generator_methods = [
+            self._get_experiment_dataset_edges,
+            self._get_dataset_experiment_ref_edges,
+            self._get_experiment_ref_experiment_edges,
+            self._get_genotype_experiment_edges,
+            self._get_environment_experiment_edges,
+            self._get_environment_experiment_ref_edges,
+            self._get_phenotype_experiment_edges,
+            self._get_phenotype_experiment_ref_edges,
+            self._get_perturbation_genotype_edges,
+            self._get_media_environment_edges,
+            self._get_temperature_environment_edges,
+            self._get_genome_edges,
+        ]
 
-        for edge in self._get_dataset_experiment_ref_edges():
-            yield edge
-
-        for edge in self._get_experiment_ref_experiment_edges():
-            yield edge
-
-        for edge in self._get_genotype_experiment_edges():
-            yield edge
-
-        for edge in self._get_environment_experiment_edges():
-            yield edge
-
-        for edge in self._get_environment_experiment_ref_edges():
-            yield edge
-
-        for edge in self._get_phenotype_experiment_edges():
-            yield edge
-
-        for edge in self._get_phenotype_experiment_ref_edges():
-            yield edge
-
-        # First, generate all perturbation edges
-        for edge in self._get_perturbation_genotype_edges():
-            yield edge
-
-        for edge in self._get_media_environment_edges():
-            yield edge
-
-        for edge in self._get_temperature_environment_edges():
-            yield edge
-
-        for edge in self._get_genome_edges():
-            yield edge
+        # Use ProcessPoolExecutor to execute the generators in parallel
+        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+            for method in generator_methods:
+                # Submit the generator method to the executor and get a future
+                future = executor.submit(method)
+                # Yield edges as they are produced by the generator
+                try:
+                    for edge in future.result():
+                        yield edge
+                except Exception as exc:
+                    logger.error(f"Exception occurred: {exc}")
 
     @staticmethod
     def _chunk_experiment_dataset_edges(data_chunk):
@@ -1448,19 +1510,19 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # Advanced Testing
-    bc = BioCypher()
-    dataset = SmfCostanzo2016Dataset()
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    # bc = BioCypher()
+    # dataset = SmfCostanzo2016Dataset()
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
 
-    # # Write admin import statement and schema information (for biochatter)
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
+    # # # Write admin import statement and schema information (for biochatter)
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
 
-    # # # Print summary
-    bc.summary()
-    print()
+    # # # # Print summary
+    # bc.summary()
+    # print()
 
     ## Dmf
     # Simple Testing
@@ -1469,33 +1531,33 @@ if __name__ == "__main__":
     # [i for i in adapter.get_nodes()]
     # [i for i in adapter.get_edges()]
 
-    # # Advanced Testing
-    # bc = BioCypher()
-    # # dataset = DmfCostanzo2016Dataset()
+    # Advanced Testing
+    bc = BioCypher()
+    dataset = DmfCostanzo2016Dataset()
     # dataset = DmfCostanzo2016Dataset(
     #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
     #     subset_n=1000,
     #     preprocess=None,
     # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    # #     subset_n=100000,
-    # #     preprocess=None,
-    # # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_1e6",
-    # #     subset_n=int(1e6),
-    # #     preprocess=None,
-    # # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
-    # #     subset_n=int(1e7),
-    # #     preprocess=None,
-    # # )
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
+    #     subset_n=100000,
+    #     preprocess=None,
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e6",
+    #     subset_n=int(1e6),
+    #     preprocess=None,
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
+    #     subset_n=int(1e7),
+    #     preprocess=None,
+    # )
+    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    bc.show_ontology_structure()
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

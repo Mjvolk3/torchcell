@@ -19,19 +19,17 @@ from torch_geometric.data import download_url
 from tqdm import tqdm
 from torchcell.dataset import Dataset, compute_experiment_reference_index
 from torchcell.data import ExperimentReferenceIndex
-from torchcell.datamodels.ontology_pydantic import (
+from torchcell.datamodels.schema import (
     BaseEnvironment,
-    BaseGenotype,
-    DeletionGenotype,
+    Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
-    InterferenceGenotype,
     Media,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
-    SgdAllelePerturbation,
-    SgdTsAllelePerturbation,
+    SgaAllelePerturbation,
+    SgaTsAllelePerturbation,
     Temperature,
 )
 from torchcell.sequence import GeneSet
@@ -227,7 +225,7 @@ class SmfKuzmin2018Dataset(Dataset):
         if row["smf_type"] == "query_smf":
             # Query
             if "KanMX_deletion" in row["query_perturbation_type"]:
-                genotype = DeletionGenotype(
+                genotype = Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Query systematic name no ho"],
                         perturbed_gene_name=row["Query allele name no ho"],
@@ -236,8 +234,8 @@ class SmfKuzmin2018Dataset(Dataset):
                 )
 
             elif "allele" in row["query_perturbation_type"]:
-                genotype = BaseGenotype(
-                    perturbation=SgdAllelePerturbation(
+                genotype = Genotype(
+                    perturbation=SgaAllelePerturbation(
                         systematic_gene_name=row["Query systematic name no ho"],
                         perturbed_gene_name=row["Query allele name no ho"],
                         strain_id=row["Query strain ID"],
@@ -247,7 +245,7 @@ class SmfKuzmin2018Dataset(Dataset):
         elif row["smf_type"] == "array_smf":
             # Array
             if "KanMX_deletion" in row["array_perturbation_type"]:
-                genotype = DeletionGenotype(
+                genotype = Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
@@ -256,8 +254,8 @@ class SmfKuzmin2018Dataset(Dataset):
                 )
 
             elif "allele" in row["array_perturbation_type"]:
-                genotype = BaseGenotype(
-                    perturbation=SgdAllelePerturbation(
+                genotype = Genotype(
+                    perturbation=SgaAllelePerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
                         strain_id=row["Array strain ID"],
@@ -266,8 +264,8 @@ class SmfKuzmin2018Dataset(Dataset):
 
             # Only array has ts
             elif "temperature_sensitive" in row["array_perturbation_type"]:
-                genotype = InterferenceGenotype(
-                    perturbation=SgdTsAllelePerturbation(
+                genotype = Genotype(
+                    perturbation=SgaTsAllelePerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
                         strain_id=row["Array strain ID"],
@@ -619,7 +617,7 @@ class DmfKuzmin2018Dataset(Dataset):
         # Query...
         if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
             genotype.append(
-                DeletionGenotype(
+                Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Query systematic name no ho"],
                         perturbed_gene_name=row["Query allele name no ho"],
@@ -629,8 +627,8 @@ class DmfKuzmin2018Dataset(Dataset):
             )
         elif "allele" in row["query_perturbation_type_no_ho"]:
             genotype.append(
-                BaseGenotype(
-                    perturbation=SgdAllelePerturbation(
+                Genotype(
+                    perturbation=SgaAllelePerturbation(
                         systematic_gene_name=row["Query systematic name no ho"],
                         perturbed_gene_name=row["Query allele name no ho"],
                         strain_id=row["Query strain ID"],
@@ -641,8 +639,8 @@ class DmfKuzmin2018Dataset(Dataset):
         # Array - only array has ts
         if "temperature_sensitive" in row["array_perturbation_type"]:
             genotype.append(
-                InterferenceGenotype(
-                    perturbation=SgdTsAllelePerturbation(
+                Genotype(
+                    perturbation=SgaTsAllelePerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
                         strain_id=row["Array strain ID"],
@@ -651,7 +649,7 @@ class DmfKuzmin2018Dataset(Dataset):
             )
         elif "KanMX_deletion" in row["array_perturbation_type"]:
             genotype.append(
-                DeletionGenotype(
+                Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
@@ -1015,7 +1013,7 @@ class TmfKuzmin2018Dataset(Dataset):
         # Query 1
         if "KanMX_deletion" in row["query_perturbation_type_1"]:
             genotype.append(
-                DeletionGenotype(
+                Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Query systematic name_1"],
                         perturbed_gene_name=row["Query allele name_1"],
@@ -1025,8 +1023,8 @@ class TmfKuzmin2018Dataset(Dataset):
             )
         elif "allele" in row["query_perturbation_type_1"]:
             genotype.append(
-                BaseGenotype(
-                    perturbation=SgdAllelePerturbation(
+                Genotype(
+                    perturbation=SgaAllelePerturbation(
                         systematic_gene_name=row["Query systematic name_1"],
                         perturbed_gene_name=row["Query allele name_1"],
                         strain_id=row["Query strain ID"],
@@ -1036,7 +1034,7 @@ class TmfKuzmin2018Dataset(Dataset):
         # Query 2
         if "KanMX_deletion" in row["query_perturbation_type_2"]:
             genotype.append(
-                DeletionGenotype(
+                Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Query systematic name_2"],
                         perturbed_gene_name=row["Query allele name_2"],
@@ -1046,8 +1044,8 @@ class TmfKuzmin2018Dataset(Dataset):
             )
         elif "allele" in row["query_perturbation_type_2"]:
             genotype.append(
-                BaseGenotype(
-                    perturbation=SgdAllelePerturbation(
+                Genotype(
+                    perturbation=SgaAllelePerturbation(
                         systematic_gene_name=row["Query systematic name_2"],
                         perturbed_gene_name=row["Query allele name_2"],
                         strain_id=row["Query strain ID"],
@@ -1057,8 +1055,8 @@ class TmfKuzmin2018Dataset(Dataset):
         # Array - only array has ts
         if "temperature_sensitive" in row["array_perturbation_type"]:
             genotype.append(
-                InterferenceGenotype(
-                    perturbation=SgdTsAllelePerturbation(
+                Genotype(
+                    perturbation=SgaTsAllelePerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],
                         strain_id=row["Array strain ID"],
@@ -1067,7 +1065,7 @@ class TmfKuzmin2018Dataset(Dataset):
             )
         elif "KanMX_deletion" in row["array_perturbation_type"]:
             genotype.append(
-                DeletionGenotype(
+                Genotype(
                     perturbation=SgaKanMxDeletionPerturbation(
                         systematic_gene_name=row["Array systematic name"],
                         perturbed_gene_name=row["Array allele name"],

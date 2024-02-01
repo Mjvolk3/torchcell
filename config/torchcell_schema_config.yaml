@@ -12,8 +12,7 @@ experiment:
 
 experiment reference:
     represented_as: node
-    is_a: material sample
-    # preferred_id:
+    is_a: genome
     properties:
         dataset_index: int
         serialized_data: str
@@ -46,9 +45,9 @@ genome:
 genotype:
     represented_as: node
     properties:
-        systematic_gene_names: list[str]
-        perturbed_gene_names: list[str]
-        perturbation_types: list[str]
+        systematic_gene_names: list
+        perturbed_gene_names: list
+        perturbation_types: list
         serialized_data: str
 
 perturbation:
@@ -62,7 +61,6 @@ perturbation:
         strain_id: str
         serialized_data: str
 
-# CHECK is an environment a physical entity?
 environment:
     is_a: environmental exposure
     represented_as: node

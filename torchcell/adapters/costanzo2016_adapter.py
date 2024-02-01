@@ -61,16 +61,16 @@ class SmfCostanzo2016Adapter:
                     logger.error(
                         f"Node generation method generated an exception: {exc}"
                     )
-
+                    
     def _get_experiment_reference_nodes(self) -> None:
+        nodes = []
         for i, data in enumerate(self.dataset.experiment_reference_index):
-            nodes = []
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
             node = BioCypherNode(
                 node_id=experiment_ref_id,
-                preferred_id=f"SmfCostanzo2016_reference_{i}",
+                preferred_id=1,
                 node_label="experiment reference",
                 properties={
                     "dataset_index": i,
@@ -78,7 +78,6 @@ class SmfCostanzo2016Adapter:
                 },
             )
             nodes.append(node)
-
         return nodes
 
     def _get_genome_nodes(self) -> None:
@@ -107,8 +106,8 @@ class SmfCostanzo2016Adapter:
         return nodes
 
     def _get_experiment_nodes(self) -> None:
+        nodes = []
         for i, data in enumerate(self.dataset):
-            nodes = []
             experiment_id = hashlib.sha256(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
@@ -151,7 +150,7 @@ class SmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
-            return nodes
+        return nodes
 
     def _get_perturbation_nodes(self):
         nodes = []
@@ -293,7 +292,7 @@ class SmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
-            return nodes
+        return nodes
 
     def _get_temperature_nodes(self) -> Generator[BioCypherNode, None, None]:
         nodes = []
@@ -351,7 +350,7 @@ class SmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
-            return nodes
+        return nodes
 
     def _get_phenotype_nodes(self) -> Generator[BioCypherNode, None, None]:
         nodes = []
@@ -385,40 +384,7 @@ class SmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
-            return nodes
-
-        for i, data in enumerate(self.dataset):
-            phenotype_id = hashlib.sha256(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
-                    "utf-8"
-                )
-            ).hexdigest()
-
-            if phenotype_id not in seen_node_ids:
-                seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
-
-                node = BioCypherNode(
-                    node_id=phenotype_id,
-                    preferred_id=f"phenotype_{phenotype_id}",
-                    node_label="phenotype",
-                    properties={
-                        "graph_level": graph_level,
-                        "label": label,
-                        "label_error": label_error,
-                        "fitness": fitness,
-                        "fitness_std": fitness_std,
-                        "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
-                        ),
-                    },
-                )
-                nodes.append(node)
-            return nodes
+        return nodes
 
     def _get_dataset_nodes(self) -> None:
         nodes = [
@@ -525,7 +491,7 @@ class SmfCostanzo2016Adapter:
             )
             edges.append(edge)
         return edges
-    
+
     @staticmethod
     def _get_perturbation_genotype_edges(
         genotype: Genotype, genotype_id: str
@@ -592,7 +558,7 @@ class SmfCostanzo2016Adapter:
                     relationship_label="environment member of",
                 )
                 edges.append(edge)
-            return edges
+        return edges
 
     def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
         edges = []
@@ -615,7 +581,7 @@ class SmfCostanzo2016Adapter:
                     relationship_label="phenotype member of",
                 )
                 edges.append(edge)
-            return edges
+        return edges
 
     def _get_phenotype_experiment_ref_edges(
         self,
@@ -668,7 +634,7 @@ class SmfCostanzo2016Adapter:
                     relationship_label="media member of",
                 )
                 edges.append(edge)
-            return edges
+        return edges
 
     def _get_temperature_environment_edges(
         self,
@@ -1459,7 +1425,7 @@ if __name__ == "__main__":
     bc.write_schema_info(as_node=True)
 
     # # # Print summary
-    bc.summary()
+    # bc.summary()
     print()
 
     ## Dmf

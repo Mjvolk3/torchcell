@@ -23,24 +23,22 @@ import warnings
 from dotenv import load_dotenv
 import os
 import os.path as osp
+from datetime import datetime
 
-
-def main():
+def main() -> str:
     # Configure logging
     logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
     logging.captureWarnings(True)
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    # Example: Generating a warning
-    warnings.warn("This is a test warning")
-
-    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "biocypher-output"))
+    time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "biocypher-out", time))
     # Ordered adapters from smallest to largest
     adapters = [
         SmfCostanzo2016Adapter(
             dataset=SmfCostanzo2016Dataset(
-                osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
             ),
             num_workers=10,
         )
@@ -48,14 +46,16 @@ def main():
 
     for adapter in adapters:
         bc.write_nodes(adapter.get_nodes())
-        bc.write_edges(adapter.get_edges())
+        # bc.write_edges(adapter.get_edges())
 
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
 
-    # Print summary
     bc.summary()
+    # Returns bash script path 
+    bash_script_path = osp.join(bc._output_directory, "neo4j-admin-import-call.sh")
+    return bash_script_path
 
 
 if __name__ == "__main__":

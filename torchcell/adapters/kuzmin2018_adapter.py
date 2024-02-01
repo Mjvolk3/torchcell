@@ -21,11 +21,9 @@ from torchcell.datasets.scerevisiae import (
     DmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
 )
-from torchcell.datamodels.ontology_pydantic import (
-    BaseGenotype,
-    InterferenceGenotype,
-    DeletionGenotype,
-    SgdAllelePerturbation,
+from torchcell.datamodels.schema import (
+    Genotype,
+    SgaAllelePerturbation,
 )
 from sortedcontainers import SortedList
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -159,10 +157,10 @@ class SmfKuzmin2018Adapter:
                         "systematic_gene_names": [systematic_gene_name],
                         "perturbed_gene_names": [perturbed_gene_name],
                         "is_deletion_genotype": isinstance(
-                            data["experiment"].genotype, DeletionGenotype
+                            data["experiment"].genotype, Genotype
                         ),
                         "is_interference_genotype": isinstance(
-                            data["experiment"].genotype, InterferenceGenotype
+                            data["experiment"].genotype, Genotype
                         ),
                         "description": description,
                         "perturbation_types": [perturbation_type],
@@ -176,7 +174,7 @@ class SmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation(
-        genotype: BaseGenotype,
+        genotype: Genotype,
     ) -> Generator[BioCypherNode, None, None]:
         nodes = []
         if genotype.perturbation:
@@ -558,7 +556,7 @@ class SmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation_genotype_edges(
-        genotype: BaseGenotype, genotype_id: str
+        genotype: Genotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
         edges = []
         if genotype.perturbation:
@@ -877,10 +875,10 @@ class DmfKuzmin2018Adapter:
                             "systematic_gene_names": [systematic_gene_name],
                             "perturbed_gene_names": [perturbed_gene_name],
                             "is_deletion_genotype": isinstance(
-                                data["experiment"].genotype, DeletionGenotype
+                                data["experiment"].genotype, Genotype
                             ),
                             "is_interference_genotype": isinstance(
-                                data["experiment"].genotype, InterferenceGenotype
+                                data["experiment"].genotype, Genotype
                             ),
                             "description": description,
                             "perturbation_types": [perturbation_type],
@@ -892,7 +890,7 @@ class DmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation(
-        genotype: BaseGenotype,
+        genotype: Genotype,
     ) -> Generator[BioCypherNode, None, None]:
         nodes = []
         if genotype.perturbation:
@@ -1278,7 +1276,7 @@ class DmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation_genotype_edges(
-        genotype: BaseGenotype, genotype_id: str
+        genotype: Genotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
         edges = []
         if genotype.perturbation:
@@ -1594,10 +1592,10 @@ class TmfKuzmin2018Adapter:
                             "systematic_gene_names": [systematic_gene_name],
                             "perturbed_gene_names": [perturbed_gene_name],
                             "is_deletion_genotype": isinstance(
-                                data["experiment"].genotype, DeletionGenotype
+                                data["experiment"].genotype, Genotype
                             ),
                             "is_interference_genotype": isinstance(
-                                data["experiment"].genotype, InterferenceGenotype
+                                data["experiment"].genotype, Genotype
                             ),
                             "description": description,
                             "perturbation_types": [perturbation_type],
@@ -1609,7 +1607,7 @@ class TmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation(
-        genotype: BaseGenotype,
+        genotype: Genotype,
     ) -> Generator[BioCypherNode, None, None]:
         nodes = []
         if genotype.perturbation:
@@ -1992,7 +1990,7 @@ class TmfKuzmin2018Adapter:
 
     @staticmethod
     def _get_perturbation_genotype_edges(
-        genotype: BaseGenotype, genotype_id: str
+        genotype: Genotype, genotype_id: str
     ) -> Generator[BioCypherEdge, None, None]:
         edges = []
         if genotype.perturbation:

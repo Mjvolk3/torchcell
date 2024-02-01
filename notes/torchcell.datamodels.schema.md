@@ -1,8 +1,8 @@
 ---
-id: 720zbt48g03xdhqco1o4rh3
+id: tfshe0ekcxq2pdd695ir5fd
 title: Ontology_pydantic
 desc: ''
-updated: 1706745503294
+updated: 1706740152369
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -17,6 +17,4 @@ created: 1705045346511
 
 ## Issues with the Current Data Scheme that Uses Different Named Phenotypes
 
-If we look at the [pydantic data scheme](./assets/images/pydantic_data_scheme-2024.01.31.png) we it looks like the different genotypes are not playing any role. since they don't carry any additional attributes. I think this layer can likely be removed simplifying our data model. Also should rename this file to something like schema. The simplification should be helpful as the other genotype distinctions are just fallible classifications that breakdown after more than one gene perturbation.
-
-Also we made the set of gene perturbations a list, even if there is only one perturbation. This makes the models simpler. We would use sets, but they cannot be json serialized.
+If we look at the [pydantic data scheme](./assets/images/pydantic_data_scheme-2024.01.31.png) we it looks like the different genotypes are not playing any role. since they don't carry any additional attributes. I think this layer can likely be removed simplifying our data model. Also should rename this file to something like schema.

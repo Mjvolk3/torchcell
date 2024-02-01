@@ -2,7 +2,7 @@ from .data import (
     ExperimentReferenceIndex,
     ReferenceIndex,
     serialize_for_hashing,
-    compute_md5_hash,
+    compute_sha256_hash,
 )
 
 data = [

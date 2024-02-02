@@ -33,7 +33,7 @@ def main() -> str:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time))
+    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time), biocypher_config_path="config/delta_biocypher_config.yaml")
     # Ordered adapters from smallest to largest
     adapters = [
         SmfCostanzo2016Adapter(
@@ -60,4 +60,4 @@ def main() -> str:
 
 
 if __name__ == "__main__":
-    main()
+    print(main())

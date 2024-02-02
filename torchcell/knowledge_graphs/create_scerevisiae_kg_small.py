@@ -19,11 +19,11 @@ from torchcell.datasets.scerevisiae import (
     # TmfKuzmin2018Dataset,
 )
 import logging
-import warnings
 from dotenv import load_dotenv
 import os
 import os.path as osp
 from datetime import datetime
+import multiprocessing as mp
 
 def main() -> str:
     # Configure logging
@@ -33,14 +33,14 @@ def main() -> str:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "biocypher-out", time))
+    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time), biocypher_config_path="config/delta_biocypher_config.yaml")
     # Ordered adapters from smallest to largest
     adapters = [
         SmfCostanzo2016Adapter(
             dataset=SmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
             ),
-            num_workers=10,
+            num_workers=mp.cpu_count(),
         )
     ]
 
@@ -54,9 +54,10 @@ def main() -> str:
 
     bc.summary()
     # Returns bash script path 
-    bash_script_path = osp.join(bc._output_directory, "neo4j-admin-import-call.sh")
-    return bash_script_path
+    
+    relative_bash_script_path = osp.join("biocypher-out", time, "neo4j-admin-import-call.sh")
+    return relative_bash_script_path
 
 
 if __name__ == "__main__":
-    main()
+    print(main())

@@ -16,11 +16,15 @@ def fetch_data_instance(uri, username, password):
     with driver.session() as session:
         result = session.run(
             """
-            MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
-            WITH e, COLLECT(p) AS perturbations
-            WHERE ALL(p in perturbations WHERE p.perturbation_type = 'deletion')
-            RETURN e
+            MATCH (e:Experiment)
+            REUTRN e
             """
+            # """
+            # MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
+            # WITH e, COLLECT(p) AS perturbations
+            # WHERE ALL(p in perturbations WHERE p.perturbation_type = 'deletion')
+            # RETURN e
+            # """
             # """
             # # MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
             # # WITH e, COLLECT(p) AS perturbations

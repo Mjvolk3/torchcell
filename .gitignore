@@ -69,6 +69,8 @@ biocypher_warnings.log
 # cache - biocypher?
 .cache/cache.json
 
-
 # build
 dist/
+
+# database
+database/slurm/*

@@ -2,10 +2,23 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706747773037
+updated: 1706900058346
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
+[[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.02.01
+
+- [x] Paper outline state of things → [[Outline|dendron://torchcell/paper.outline]]
+- [ ] Document the process for downloading a dbms.
+- [ ] Test query script on delta
+
+## 2024.02.01
+
+- [x] Test the dbms on Delta with an interactive terminal.
+- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community`
+- [ ] Document the process for downloading a dbms.
 
 ## 2024.01.31
 
@@ -14,7 +27,6 @@ created: 1690514887023m
 - [ ] Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
-
 
 - [ ] Correct the data schema
 - [ ] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta.

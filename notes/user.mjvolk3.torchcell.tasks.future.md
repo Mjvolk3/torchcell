@@ -8,6 +8,7 @@ created: 1675887826601
 ## Future
 
 - [ ] Publish package for Junyu and Le to use
+- [ ] Change `wandb.tags` to `Tags`
 
 ## Far Future
 

@@ -33,7 +33,7 @@ def main() -> str:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "biocypher-out", time))
+    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time))
     # Ordered adapters from smallest to largest
     adapters = [
         SmfCostanzo2016Adapter(
@@ -54,8 +54,9 @@ def main() -> str:
 
     bc.summary()
     # Returns bash script path 
-    bash_script_path = osp.join(bc._output_directory, "neo4j-admin-import-call.sh")
-    return bash_script_path
+    
+    relative_bash_script_path = osp.join("biocypher-out", time, "neo4j-admin-import-call.sh")
+    return relative_bash_script_path
 
 
 if __name__ == "__main__":

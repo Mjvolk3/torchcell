@@ -38,9 +38,9 @@ def fetch_data_instance(uri, username, password):
 if __name__ == "__main__":
     uri = "neo4j://localhost:7687"
     username = "neo4j"
-    password = "torchcell"
+    password = "neo4j"
 
     for serialized_data in tqdm(fetch_data_instance(uri, username, password)):
         # data = FitnessExperiment.model_validate(json.loads(serialized_data))
         pass
-    # print(data)
+    print("Query successful!")

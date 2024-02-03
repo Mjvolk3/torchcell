@@ -8,7 +8,7 @@ import json
 from neo4j import GraphDatabase
 from torchcell.datamodels import FitnessExperiment
 from tqdm import tqdm
-
+import lmdb
 
 def fetch_data_instance(uri, username, password):
     driver = GraphDatabase.driver(uri, auth=(username, password))

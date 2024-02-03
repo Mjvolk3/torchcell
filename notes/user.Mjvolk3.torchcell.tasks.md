@@ -2,15 +2,20 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706900058346
+updated: 1706948613426
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-## 2024.02.01
+## 2024.02.03
+
+- [ ] Dockerfile python.
+
+## 2024.02.02
 
 - [x] Paper outline state of things → [[Outline|dendron://torchcell/paper.outline]]
+- [ ] Rewrite the adapter for `DmfCostanzo`.
 - [ ] Document the process for downloading a dbms.
 - [ ] Test query script on delta
 

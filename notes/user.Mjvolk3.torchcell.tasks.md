@@ -2,15 +2,26 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706900058346
+updated: 1706958740008
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-## 2024.02.01
+## 2024.02.03
+
+- [x] Dockerfile python.
+- [ ]
+- [ ] Document download steps
+- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
+- [ ] Check that we can still write to the database
+- [ ] Test a query from the database.
+- [ ] Write a query to produce an lmdb in some output dir. `/scratch` on delta.
+
+## 2024.02.02
 
 - [x] Paper outline state of things → [[Outline|dendron://torchcell/paper.outline]]
+- [ ] Rewrite the adapter for `DmfCostanzo`.
 - [ ] Document the process for downloading a dbms.
 - [ ] Test query script on delta
 

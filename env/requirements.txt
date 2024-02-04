@@ -87,3 +87,6 @@ twine==4.0.2
 
 # biocypher
 biocypher>=0.5.34 
+
+# neo4j
+neo4j==4.4.11

@@ -43,6 +43,7 @@ pip-tools==7.1.0
 snakeviz==2.2.0
 twine==4.0.2
 biocypher>=0.5.34
+neo4j==4.4.11
 
 [dev]
 black

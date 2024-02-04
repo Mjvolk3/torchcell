@@ -28,6 +28,7 @@ import multiprocessing
 
 logger.debug(f"Loading module {__name__}.")
 
+
 class SmfCostanzo2016Adapter:
     def __init__(self, dataset: SmfCostanzo2016Dataset, num_workers: int = 1):
         self.dataset = dataset
@@ -58,16 +59,16 @@ class SmfCostanzo2016Adapter:
                     logger.error(
                         f"Node generation method generated an exception: {exc}"
                     )
-                    
+
     def _get_experiment_reference_nodes(self) -> None:
         nodes = []
-        for i, data in enumerate(self.dataset.experiment_reference_index):
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
             node = BioCypherNode(
                 node_id=experiment_ref_id,
-                preferred_id=1,
+                preferred_id=f"SmfCostanzo2016_reference_{i}",
                 node_label="experiment reference",
                 properties={
                     "dataset_index": i,
@@ -80,7 +81,7 @@ class SmfCostanzo2016Adapter:
     def _get_genome_nodes(self) -> None:
         nodes = []
         seen_node_ids: Set[str] = set()
-        for i, data in enumerate(self.dataset.experiment_reference_index):
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
@@ -121,9 +122,9 @@ class SmfCostanzo2016Adapter:
             nodes.append(node)
         return nodes
 
-    def _get_genotype_nodes(self) -> Generator[BioCypherNode, None, None]:
+    def _get_genotype_nodes(self):
         nodes = []
-        seen_node_ids: Set[str] = set()
+        seen_node_ids = set()
         for i, data in enumerate(self.dataset):
             genotype = data["experiment"].genotype
             genotype_id = hashlib.sha256(
@@ -412,7 +413,7 @@ class SmfCostanzo2016Adapter:
             futures = [executor.submit(method) for method in methods]
             for future in as_completed(futures):
                 try:
-                    edge_generator = future.result()
+                    edge_generator = future.        result()
                     for edge in edge_generator:
                         yield edge
                 except Exception as exc:
@@ -801,80 +802,63 @@ class DmfCostanzo2016Adapter:
         return nodes
 
     def _get_genotype_nodes(self):
-        seen_node_ids = set()
         nodes = []
+        seen_node_ids = set()
+        for i, data in enumerate(self.dataset):
+            genotype = data["experiment"].genotype
+            genotype_id = hashlib.sha256(
+                json.dumps(genotype.model_dump()).encode("utf-8")
+            ).hexdigest()
 
-        for i, data in tqdm(enumerate(self.dataset)):
-            for genotype in data["experiment"].genotype:
-                genotype_id = hashlib.sha256(
-                    json.dumps(genotype.model_dump()).encode("utf-8")
-                ).hexdigest()
+            if genotype_id not in seen_node_ids:
+                seen_node_ids.add(genotype_id)
 
-                if genotype_id not in seen_node_ids:
-                    seen_node_ids.add(genotype_id)
-
-                    systematic_gene_name = genotype.perturbation.systematic_gene_name
-                    perturbed_gene_name = genotype.perturbation.perturbed_gene_name
-                    description = genotype.perturbation.description
-                    perturbation_type = genotype.perturbation.perturbation_type
-
-                    node = BioCypherNode(
-                        node_id=genotype_id,
-                        preferred_id=f"genotype_{genotype_id}",
-                        node_label="genotype",
-                        properties={
-                            "systematic_gene_names": [systematic_gene_name],
-                            "perturbed_gene_names": [perturbed_gene_name],
-                            "is_deletion_genotype": isinstance(
-                                genotype, DeletionGenotype
-                            ),
-                            "is_interference_genotype": isinstance(
-                                genotype, InterferenceGenotype
-                            ),
-                            "description": description,
-                            "perturbation_types": [perturbation_type],
-                            "serialized_data": json.dumps(genotype.model_dump()),
-                        },
-                    )
-                    nodes.append(node)
-
+                node = BioCypherNode(
+                    node_id=genotype_id,
+                    preferred_id=f"genotype_{i}",
+                    node_label="genotype",
+                    properties={
+                        "systematic_gene_names": genotype.systematic_gene_names,
+                        "perturbed_gene_names": genotype.perturbed_gene_names,
+                        "perturbation_types": genotype.perturbation_types,
+                        "serialized_data": json.dumps(
+                            data["experiment"].genotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
         return nodes
 
     def _get_perturbation_nodes(self):
         nodes = []
         seen_node_ids = set()
-
         for data in tqdm(self.dataset):
-            for genotype in data["experiment"].genotype:
+            perturbations = data["experiment"].genotype.perturbations
+            for perturbation in perturbations:
                 perturbation_id = hashlib.sha256(
-                    json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
+                    json.dumps(perturbation.model_dump()).encode("utf-8")
                 ).hexdigest()
 
                 if perturbation_id not in seen_node_ids:
                     seen_node_ids.add(perturbation_id)
                     node = BioCypherNode(
                         node_id=perturbation_id,
-                        preferred_id=genotype.perturbation.perturbation_type,
+                        preferred_id=perturbation.perturbation_type,
                         node_label="perturbation",
                         properties={
-                            "systematic_gene_name": [
-                                genotype.perturbation.systematic_gene_name
-                            ],
-                            "perturbed_gene_name": [
-                                genotype.perturbation.perturbed_gene_name
-                            ],
-                            "description": genotype.perturbation.description,
-                            "perturbation_type": genotype.perturbation.perturbation_type,
-                            "strain_id": genotype.perturbation.strain_id,
-                            "serialized_data": json.dumps(
-                                genotype.perturbation.model_dump()
-                            ),
+                            "systematic_gene_name": perturbation.systematic_gene_name,
+                            "perturbed_gene_name": perturbation.perturbed_gene_name,
+                            "perturbation_type": perturbation.perturbation_type,
+                            "description": perturbation.description,
+                            "strain_id": perturbation.strain_id,
+                            "serialized_data": json.dumps(perturbation.model_dump()),
                         },
                     )
                     nodes.append(node)
         return nodes
 
     def _get_environment_nodes(self):
+        # HACK - we know we can loop ref for this node type
         nodes = []
         seen_node_ids = set()
 
@@ -907,6 +891,7 @@ class DmfCostanzo2016Adapter:
         return nodes
 
     def _get_media_nodes(self):
+        # HACK - we know we can loop ref for this node type
         seen_node_ids = set()
         nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
@@ -938,6 +923,7 @@ class DmfCostanzo2016Adapter:
 
     # Function for processing experiment reference temperatures
     def _get_temperature_nodes(self):
+        # HACK - we know we can loop ref for this node type
         seen_node_ids = set()
         nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
@@ -1405,8 +1391,10 @@ if __name__ == "__main__":
     from biocypher import BioCypher
     import os.path as osp
     from dotenv import load_dotenv
+
     load_dotenv()
     import os
+
     # # # Simple Testing
     # dataset = SmfCostanzo2016Dataset()
     # adapter = SmfCostanzo2016Adapter(dataset=dataset)
@@ -1416,7 +1404,9 @@ if __name__ == "__main__":
 
     # Advanced Testing
     bc = BioCypher()
-    dataset = SmfCostanzo2016Dataset(osp.join("DATA_ROOT", "data/torchcell/smf_costanzo2016"))
+    dataset = SmfCostanzo2016Dataset(
+        osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+    )
     adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())

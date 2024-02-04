@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.0.29
+Version: 0.0.30
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -55,6 +55,7 @@ Requires-Dist: pip-tools==7.1.0
 Requires-Dist: snakeviz==2.2.0
 Requires-Dist: twine==4.0.2
 Requires-Dist: biocypher>=0.5.34
+Requires-Dist: neo4j==4.4.11
 Provides-Extra: dev
 Requires-Dist: black; extra == "dev"
 Requires-Dist: bumpver; extra == "dev"

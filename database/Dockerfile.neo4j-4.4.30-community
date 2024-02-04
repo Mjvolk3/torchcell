@@ -1,27 +1,26 @@
 FROM debian:bullseye-slim
 # Install dependencies and Python 3.11
-RUN apt-get update && apt-get install -y \
-    curl \
-    gcc \
-    git \
-    make \
-    procps \
-    wget \
-    python3.11 \
-    python3.11-distutils \
-    python3.11-venv \
-    && rm -rf /var/lib/apt/lists/*
+# Install dependencies required for downloading and installing Miniconda
+RUN apt-get update && apt-get install -y curl wget && \
+    rm -rf /var/lib/apt/lists/*
 
-# Set the Python 3.11 as the default python and pip version
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
+# Install Miniconda
+ENV MINICONDA_VERSION 4.9.2
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py39_${MINICONDA_VERSION}-Linux-x86_64.sh -O /miniconda.sh && \
+    /bin/bash /miniconda.sh -b -p /miniconda && \
+    rm /miniconda.sh
 
-# Install pip for Python 3.11
-RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python
+ENV PATH /miniconda/bin:$PATH
 
-# Your list of packages to install via pip
-RUN pip install \
-    torchcell
+# Create a Python 3.11 environment
+RUN conda create -n myenv python=3.11
+
+# Activate the environment and install your packages
+RUN echo "source activate myenv" > ~/.bashrc
+ENV PATH /miniconda/envs/myenv/bin:$PATH
+
+# Install your required Python packages
+RUN pip install torchcell
 
 ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=eclipse-temurin:11 $JAVA_HOME $JAVA_HOME

@@ -4,6 +4,13 @@ FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y curl wget && \
     rm -rf /var/lib/apt/lists/*
 
+# Install dependencies required for downloading and installing Miniconda and git
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install Miniconda
 ENV MINICONDA_VERSION 4.9.2
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-py39_${MINICONDA_VERSION}-Linux-x86_64.sh -O /miniconda.sh && \
@@ -20,7 +27,8 @@ RUN echo "source activate myenv" > ~/.bashrc
 ENV PATH /miniconda/envs/myenv/bin:$PATH
 
 # Install your required Python packages
-RUN pip install torchcell
+# RUN pip install torchcell
+RUN pip install git+https://github.com/Mjvolk3/torchcell.git
 
 ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=eclipse-temurin:11 $JAVA_HOME $JAVA_HOME

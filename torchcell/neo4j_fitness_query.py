@@ -17,7 +17,7 @@ def fetch_data_instance(uri, username, password):
         result = session.run(
             """
             MATCH (e:Experiment)
-            REUTRN e
+            REUTRN e LIMIT 10
             """
             # """
             # MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
@@ -39,12 +39,19 @@ def fetch_data_instance(uri, username, password):
     driver.close()
 
 
-if __name__ == "__main__":
-    uri = "neo4j://localhost:7687"
+def main():
+    uri = "bolt://localhost:7687"
     username = "neo4j"
     password = "neo4j"
+    print(f"uri: {uri}")
+    print(f"username: {username}")
+    print(f"password: {password}")
+    
 
     for serialized_data in tqdm(fetch_data_instance(uri, username, password)):
         # data = FitnessExperiment.model_validate(json.loads(serialized_data))
         pass
     print("Query successful!")
+
+if __name__ == "__main__":
+    main()

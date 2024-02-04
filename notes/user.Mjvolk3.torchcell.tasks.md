@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706948613426
+updated: 1706958740008
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -10,7 +10,13 @@ created: 1690514887023m
 
 ## 2024.02.03
 
-- [ ] Dockerfile python.
+- [x] Dockerfile python.
+- [ ]
+- [ ] Document download steps
+- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
+- [ ] Check that we can still write to the database
+- [ ] Test a query from the database.
+- [ ] Write a query to produce an lmdb in some output dir. `/scratch` on delta.
 
 ## 2024.02.02
 

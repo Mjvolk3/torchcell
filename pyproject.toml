@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchcell"
-version = "0.0.29"
+version = "0.0.30"
 description = "An example package"
 readme = "README.md"
 authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]
@@ -86,7 +86,7 @@ torchcell = ["py.typed"]
 include = ["torchcell*"]
 
 [tool.bumpver]
-current_version = "0.0.29"  # Your current version
+current_version = "0.0.30"  # Your current version
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Bump version: {old_version} → {new_version}"
 

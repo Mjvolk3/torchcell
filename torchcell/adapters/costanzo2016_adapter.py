@@ -5,14 +5,8 @@
 
 from tqdm import tqdm
 import hashlib
-import random
-import string
-from enum import Enum, auto
-from functools import lru_cache
-from itertools import chain
-from typing import Optional
 import json
-import pandas as pd
+from biocypher import BioCypher
 from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import logger
 from typing import Generator, Set
@@ -22,11 +16,10 @@ from torchcell.datasets.scerevisiae import (
     DmfCostanzo2016Dataset,
 )
 from torchcell.datamodels import Genotype
-from sortedcontainers import SortedList
 from concurrent.futures import ProcessPoolExecutor, as_completed
-import multiprocessing
 
 logger.debug(f"Loading module {__name__}.")
+logger.setLevel("WARN")
 
 
 class SmfCostanzo2016Adapter:
@@ -952,9 +945,8 @@ class DmfCostanzo2016Adapter:
         return nodes
 
     def _get_phenotype_nodes(self):
-        seen_node_ids = set()
         nodes = []
-
+        seen_node_ids = set()
         for i, data in tqdm(enumerate(self.dataset)):
             phenotype_id = hashlib.sha256(
                 json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
@@ -985,6 +977,7 @@ class DmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
+        return nodes
 
     def _get_dataset_nodes(self) -> None:
         nodes = [
@@ -1021,7 +1014,6 @@ class DmfCostanzo2016Adapter:
         for edge in self._get_phenotype_experiment_ref_edges():
             yield edge
 
-        # First, generate all perturbation edges
         for edge in self._get_perturbation_genotype_edges():
             yield edge
 
@@ -1107,17 +1099,17 @@ class DmfCostanzo2016Adapter:
             experiment_id = hashlib.sha256(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-            for genotype in data["experiment"].genotype:
-                genotype_id = hashlib.sha256(
-                    json.dumps(genotype.model_dump()).encode("utf-8")
-                ).hexdigest()
+            genotype = data["experiment"].genotype
+            genotype_id = hashlib.sha256(
+                json.dumps(genotype.model_dump()).encode("utf-8")
+            ).hexdigest()
 
-                edge = BioCypherEdge(
-                    source_id=genotype_id,
-                    target_id=experiment_id,
-                    relationship_label="genotype member of",
-                )
-                edges.append(edge)
+            edge = BioCypherEdge(
+                source_id=genotype_id,
+                target_id=experiment_id,
+                relationship_label="genotype member of",
+            )
+            edges.append(edge)
         return edges
 
     def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
@@ -1137,36 +1129,32 @@ class DmfCostanzo2016Adapter:
                 edges.extend(future.result())
         return edges
 
-    def _get_perturbation_genotype_edges(self) -> Generator[BioCypherEdge, None, None]:
+    def _get_perturbation_genotype_edges(self):
         edges = []
         seen_edges = set()  # Set to track seen edges
 
         for data in tqdm(self.dataset):
-            for genotype in data["experiment"].genotype:
-                if genotype.perturbation:
-                    genotype_id = hashlib.sha256(
-                        json.dumps(genotype.model_dump()).encode("utf-8")
-                    ).hexdigest()
-                    perturbation_id = hashlib.sha256(
-                        json.dumps(genotype.perturbation.model_dump()).encode("utf-8")
-                    ).hexdigest()
+            genotype = data["experiment"].genotype
+            for perturbation in genotype.perturbations:
+                genotype_id = hashlib.sha256(
+                    json.dumps(genotype.model_dump()).encode("utf-8")
+                ).hexdigest()
+                perturbation_id = hashlib.sha256(
+                    json.dumps(perturbation.model_dump()).encode("utf-8")
+                ).hexdigest()
 
-                    # Create a tuple representing the edge
-                    edge_tuple = (
-                        perturbation_id,
-                        genotype_id,
-                        "perturbation member of",
+                # Create a tuple representing the edge
+                edge_tuple = (perturbation_id, genotype_id, "perturbation member of")
+
+                # Check if this edge is a duplicate
+                if edge_tuple not in seen_edges:
+                    seen_edges.add(edge_tuple)
+                    edge = BioCypherEdge(
+                        source_id=perturbation_id,
+                        target_id=genotype_id,
+                        relationship_label="perturbation member of",
                     )
-
-                    # Check if this edge is a duplicate
-                    if edge_tuple not in seen_edges:
-                        seen_edges.add(edge_tuple)
-                        edge = BioCypherEdge(
-                            source_id=perturbation_id,
-                            target_id=genotype_id,
-                            relationship_label="perturbation member of",
-                        )
-                        edges.append(edge)
+                    edges.append(edge)
 
         return edges
 
@@ -1388,7 +1376,6 @@ class DmfCostanzo2016Adapter:
 
 
 if __name__ == "__main__":
-    from biocypher import BioCypher
     import os.path as osp
     from dotenv import load_dotenv
 
@@ -1397,35 +1384,35 @@ if __name__ == "__main__":
 
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
     # # # Simple Testing
     # dataset = SmfCostanzo2016Dataset()
     # adapter = SmfCostanzo2016Adapter(dataset=dataset)
     # [i for i in adapter.get_nodes()]
     # [i for i in adapter.get_edges()]
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    # Advanced Testing
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = SmfCostanzo2016Dataset(
-        osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    )
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=1)
-    bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
+    # # Advanced Testing
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = SmfCostanzo2016Dataset(
+    #     osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+    # )
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # bc.write_nodes(adapter.get_nodes())
+    # # bc.write_edges(adapter.get_edges())
 
-    # # Write admin import statement and schema information (for biochatter)
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
+    # # # Write admin import statement and schema information (for biochatter)
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
 
-    # # # Print summary
-    # bc.summary()
-    print()
+    # # # # Print summary
+    # # bc.summary()
+    # print()
 
     ## Dmf
     # Simple Testing
@@ -1435,37 +1422,39 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
-    # bc = BioCypher(
-    #     output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time),
-    #     biocypher_config_path="config/delta_biocypher_config.yaml",
-    # )
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
     # dataset = DmfCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
     # )
+    dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_subset_n_1000"),
+        subset_n=1000,
+        preprocess=None,
+    )
     # dataset = DmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_subset_n_1000"),
-    #     subset_n=1000,
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
+    #     subset_n=100000,
     #     preprocess=None,
     # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    # #     subset_n=100000,
-    # #     preprocess=None,
-    # # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_1e6",
-    # #     subset_n=int(1e6),
-    # #     preprocess=None,
-    # # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
-    # #     subset_n=int(1e7),
-    # #     preprocess=None,
-    # # )
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.show_ontology_structure()
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e6",
+    #     subset_n=int(1e6),
+    #     preprocess=None,
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
+    #     subset_n=int(1e7),
+    #     preprocess=None,
+    # )
+    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.show_ontology_structure(to_disk=".")
+    print(bc.show_ontology_structure())
+    bc.summary()

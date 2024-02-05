@@ -2,13 +2,15 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1702613129238
+updated: 1707150241069
 created: 1675887826601
 ---
 ## Future
 
 - [ ] Publish package for Junyu and Le to use
 - [ ] Change `wandb.tags` to `Tags`
+- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
+- [ ] Write Cron Job for Db build locally
 
 ## Far Future
 

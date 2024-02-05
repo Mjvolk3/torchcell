@@ -2,47 +2,66 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706958740008
+updated: 1707150383291
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.02.05
+
+- [ ] Rewrite adapter for `DmfCostanzo2016`
+- [ ] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
+- [ ] Rewrite adapter for `SmfKuzmin2018`
+- [ ] Rewrite adapter for `DmfKuzmin2018`
+- [ ] Rewrite adapter for `TmfKuzmin2018`
+- [ ] Look into running apptainer locally so we can have some consistency between `local` and `Delta`.
+- [ ] Setup small build with these 5 datasets on local neo4j-4.4.30. Not sure if there is a distinction between this and community version.
+- [ ] Test query to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
+- [ ] Run query locally and write lmdb.
+- [ ] Write class for getting indices on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
+- [ ] Document download steps for neo4j db.
+- [ ] Get rid of the `preprocess_config.json
+- [ ] Change `reference_environment` to `environment`
+
+## 2024.02.04
+
+- [x] Check that we can still write to the database.
+- [x] Get querying working.
+
 ## 2024.02.03
 
 - [x] Dockerfile python.
-- [ ]
-- [ ] Document download steps
-- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
-- [ ] Check that we can still write to the database
-- [ ] Test a query from the database.
-- [ ] Write a query to produce an lmdb in some output dir. `/scratch` on delta.
+- 🔲 Document download steps
+- 🔲 CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib. → moved [[user.mjvolk3.torchcell.tasks.future#future]]
+- 🔲 Check that we can still write to the database
+- 🔲 Test a query from the database.
+- 🔲 Write a query to produce an lmdb in some output dir. `/scratch` on delta.
 
 ## 2024.02.02
 
 - [x] Paper outline state of things → [[Outline|dendron://torchcell/paper.outline]]
-- [ ] Rewrite the adapter for `DmfCostanzo`.
-- [ ] Document the process for downloading a dbms.
-- [ ] Test query script on delta
+- [x] Correct the data schema → guessed around when this completed.
+- 🔲 Rewrite the adapter for `DmfCostanzo`.
+- 🔲 Document the process for downloading a dbms.
+- 🔲 Test query script on delta
 
 ## 2024.02.01
 
 - [x] Test the dbms on Delta with an interactive terminal.
 - [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community`
-- [ ] Document the process for downloading a dbms.
+- 🔲 Document the process for downloading a dbms.
 
 ## 2024.01.31
 
 - [x] Replace `Sgd` with the correct `Sga` for synthetic genetic array.
 - [x] We can simplify the data model [[Issues with the Current Data Scheme that Uses Different Named Phenotypes|dendron://torchcell/torchcell.datamodels.ontology_pydantic#issues-with-the-current-data-scheme-that-uses-different-named-phenotypes]]. Do this first for `Costanzo`.
-- [ ] Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
-- [ ] Get rid of the `preprocess_config.json
-- [ ] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
-
-- [ ] Correct the data schema
-- [ ] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta.
-- [ ] Revert get_edges to old version.
-- [ ] Write Cron Job for Db build
+- 🔲 Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
+- 🔲 Get rid of the `preprocess_config.json
+- 🔲 Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
+- [x] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta. → Gave up on rebuild locally.
+- 🔲 Revert get_edges to old version.
+- [x] Write Cron Job for Db build → instead moving to delta and a locally. Move to [[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.30
 
@@ -53,13 +72,11 @@ created: 1690514887023m
 - [x] We are still only getting around `1e3 it/s` try to optimize. → Maxed out thread workers in config. `dbms.threads.worker_count=10` now achieving > `1e4 it/s` which should be sufficient for now.
 - [x] Summary of neo4j times. → Bulk import is very fast on order of minutes, this means that the db can be easily scrapped and made new. Querying is fast after optimizing the heap and num workers for threading, on order of mins. The slowest portion is adapters which is on order of hours or days in the worst case. I think around 14 hours right now for `DmfCostanzo2016`.
 - [x] Try alternative async parallelization. → After looking into this more it won't provide much benefit unless we use queues for memory management.
-
-- [ ] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this. → Fixed in `DmfCostanzo2016` but the others need modifying
-
-- [ ] Try bulk import of smf data to Neo4j db on Delta.
-- [ ] Try to query deletion data from Delta Neo4j.
-- [ ] Change `reference_environment` to `environment`
-- [ ] Make a duplicate adapter for `async`
+- [x] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this. → Fixed in `DmfCostanzo2016` but the others need modifying
+- 🔲 Try bulk import of smf data to Neo4j db on Delta.
+- 🔲 Try to query deletion data from Delta Neo4j.
+- 🔲 Change `reference_environment` to `environment`
+- [x] Make a duplicate adapter for `async` → abandoned this idea.
 
 ## 2024.01.29
 

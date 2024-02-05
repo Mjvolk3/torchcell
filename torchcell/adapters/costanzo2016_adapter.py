@@ -27,7 +27,7 @@ class SmfCostanzo2016Adapter:
         self.dataset = dataset
         self.num_workers = num_workers
 
-    def get_nodes(self):
+    def get_nodes(self) -> Generator[BioCypherNode, None, None]:
         methods = [
             self._get_experiment_reference_nodes,
             self._get_genome_nodes,
@@ -42,7 +42,6 @@ class SmfCostanzo2016Adapter:
 
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [executor.submit(method) for method in methods]
-
             for future in as_completed(futures):
                 try:
                     node_generator = future.result()
@@ -53,7 +52,7 @@ class SmfCostanzo2016Adapter:
                         f"Node generation method generated an exception: {exc}"
                     )
 
-    def _get_experiment_reference_nodes(self) -> None:
+    def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
@@ -71,14 +70,13 @@ class SmfCostanzo2016Adapter:
             nodes.append(node)
         return nodes
 
-    def _get_genome_nodes(self) -> None:
+    def _get_genome_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
-
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 node = BioCypherNode(
@@ -96,13 +94,12 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_experiment_nodes(self) -> None:
+    def _get_experiment_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for i, data in enumerate(self.dataset):
             experiment_id = hashlib.sha256(
                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
             ).hexdigest()
-
             node = BioCypherNode(
                 node_id=experiment_id,
                 preferred_id=f"SmfCostanzo2016_{i}",
@@ -115,7 +112,7 @@ class SmfCostanzo2016Adapter:
             nodes.append(node)
         return nodes
 
-    def _get_genotype_nodes(self):
+    def _get_genotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for i, data in enumerate(self.dataset):
@@ -123,10 +120,8 @@ class SmfCostanzo2016Adapter:
             genotype_id = hashlib.sha256(
                 json.dumps(genotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             if genotype_id not in seen_node_ids:
                 seen_node_ids.add(genotype_id)
-
                 node = BioCypherNode(
                     node_id=genotype_id,
                     preferred_id=f"genotype_{i}",
@@ -143,7 +138,7 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_perturbation_nodes(self):
+    def _get_perturbation_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for data in tqdm(self.dataset):
@@ -152,7 +147,6 @@ class SmfCostanzo2016Adapter:
                 perturbation_id = hashlib.sha256(
                     json.dumps(perturbation.model_dump()).encode("utf-8")
                 ).hexdigest()
-
                 if perturbation_id not in seen_node_ids:
                     seen_node_ids.add(perturbation_id)
                     node = BioCypherNode(
@@ -171,16 +165,14 @@ class SmfCostanzo2016Adapter:
                     nodes.append(node)
         return nodes
 
-    def _get_environment_nodes(self) -> Generator[BioCypherNode, None, None]:
+    def _get_environment_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in enumerate(self.dataset):
             environment_id = hashlib.sha256(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
             ).hexdigest()
-
             node_id = environment_id
-
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(data["experiment"].environment.media.model_dump())
@@ -204,15 +196,12 @@ class SmfCostanzo2016Adapter:
                     "utf-8"
                 )
             ).hexdigest()
-
             node_id = environment_id
-
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
                     data["reference"].reference_environment.media.model_dump()
                 )
-
                 node = BioCypherNode(
                     node_id=node_id,
                     preferred_id=f"environment_{i}",
@@ -230,7 +219,7 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_media_nodes(self) -> Generator[BioCypherNode, None, None]:
+    def _get_media_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in enumerate(self.dataset):
@@ -239,12 +228,10 @@ class SmfCostanzo2016Adapter:
                     "utf-8"
                 )
             ).hexdigest()
-
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
                 name = data["experiment"].environment.media.name
                 state = data["experiment"].environment.media.state
-
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
@@ -258,18 +245,17 @@ class SmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
+
         for i, data in enumerate(self.dataset):
             media_id = hashlib.sha256(
                 json.dumps(
                     data["reference"].reference_environment.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
                 name = data["reference"].reference_environment.media.name
                 state = data["reference"].reference_environment.media.state
-
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
@@ -285,7 +271,7 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_temperature_nodes(self) -> Generator[BioCypherNode, None, None]:
+    def _get_temperature_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in enumerate(self.dataset):
@@ -294,10 +280,8 @@ class SmfCostanzo2016Adapter:
                     data["experiment"].environment.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
-
                 node = BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
@@ -318,10 +302,8 @@ class SmfCostanzo2016Adapter:
                     data["reference"].reference_environment.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
-
                 node = BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
@@ -343,7 +325,7 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_phenotype_nodes(self) -> Generator[BioCypherNode, None, None]:
+    def _get_phenotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in enumerate(self.dataset):
@@ -377,7 +359,7 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_dataset_nodes(self) -> None:
+    def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [
             BioCypherNode(
                 node_id="SmfCostanzo2016",
@@ -414,7 +396,7 @@ class SmfCostanzo2016Adapter:
                         f"Edge generation method generated an exception: {exc}"
                     )
 
-    def _get_dataset_experiment_ref_edges(self):
+    def _get_dataset_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in self.dataset.experiment_reference_index:
             experiment_ref_id = hashlib.sha256(
@@ -428,7 +410,7 @@ class SmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_experiment_dataset_edges(self):
+    def _get_experiment_dataset_edges(self) -> list[BioCypherEdge]:
         edges = []
         for i, data in enumerate(self.dataset):
             experiment_id = hashlib.sha256(
@@ -442,7 +424,7 @@ class SmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_experiment_ref_experiment_edges(self):
+    def _get_experiment_ref_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in self.dataset.experiment_reference_index:
             dataset_subset = self.dataset[torch.tensor(data.index)]
@@ -461,7 +443,7 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
+    def _get_genotype_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         for i, data in enumerate(self.dataset):
             experiment_id = hashlib.sha256(
@@ -470,11 +452,9 @@ class SmfCostanzo2016Adapter:
             genotype_id = hashlib.sha256(
                 json.dumps(data["experiment"].genotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             self._get_perturbation_genotype_edges(
                 genotype=data["experiment"].genotype, genotype_id=genotype_id
             )
-
             edge = BioCypherEdge(
                 source_id=genotype_id,
                 target_id=experiment_id,
@@ -486,13 +466,12 @@ class SmfCostanzo2016Adapter:
     @staticmethod
     def _get_perturbation_genotype_edges(
         genotype: Genotype, genotype_id: str
-    ) -> Generator[BioCypherEdge, None, None]:
+    ) -> list[BioCypherEdge]:
         edges = []
         for perturbation in genotype.perturbations:
             perturbation_id = hashlib.sha256(
                 json.dumps(perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
-
             edge = BioCypherEdge(
                 source_id=perturbation_id,
                 target_id=genotype_id,
@@ -501,7 +480,7 @@ class SmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
+    def _get_environment_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_environment_experiment_pairs: Set[tuple] = set()
         for i, data in enumerate(self.dataset):
@@ -511,7 +490,6 @@ class SmfCostanzo2016Adapter:
             environment_id = hashlib.sha256(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
             ).hexdigest()
-
             env_experiment_pair = (environment_id, experiment_id)
             if env_experiment_pair not in seen_environment_experiment_pairs:
                 seen_environment_experiment_pairs.add(env_experiment_pair)
@@ -523,26 +501,21 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_environment_experiment_ref_edges(
-        self,
-    ) -> Generator[BioCypherEdge, None, None]:
+    def _get_environment_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
         for i, data in enumerate(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             environment_id = hashlib.sha256(
                 json.dumps(data.reference.reference_environment.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
-
             env_experiment_ref_pair = (environment_id, experiment_ref_id)
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
-
                 edge = BioCypherEdge(
                     source_id=environment_id,
                     target_id=experiment_ref_id,
@@ -551,7 +524,7 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
+    def _get_phenotype_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_phenotype_experiment_pairs: Set[tuple] = set()
         for i, data in enumerate(self.dataset):
@@ -561,11 +534,9 @@ class SmfCostanzo2016Adapter:
             phenotype_id = hashlib.sha256(
                 json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             phenotype_experiment_pair = (phenotype_id, experiment_id)
             if phenotype_experiment_pair not in seen_phenotype_experiment_pairs:
                 seen_phenotype_experiment_pairs.add(phenotype_experiment_pair)
-
                 edge = BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_id,
@@ -574,16 +545,13 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_phenotype_experiment_ref_edges(
-        self,
-    ) -> Generator[BioCypherEdge, None, None]:
+    def _get_phenotype_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             phenotype_id = hashlib.sha256(
                 json.dumps(data.reference.reference_phenotype.model_dump()).encode(
                     "utf-8"
@@ -593,7 +561,6 @@ class SmfCostanzo2016Adapter:
             phenotype_experiment_ref_pair = (phenotype_id, experiment_ref_id)
             if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
                 seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
-
                 edge = BioCypherEdge(
                     source_id=phenotype_id,
                     target_id=experiment_ref_id,
@@ -602,7 +569,7 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_media_environment_edges(self) -> Generator[BioCypherEdge, None, None]:
+    def _get_media_environment_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_media_environment_pairs: Set[tuple] = set()
         for i, data in enumerate(self.dataset):
@@ -614,11 +581,9 @@ class SmfCostanzo2016Adapter:
                     "utf-8"
                 )
             ).hexdigest()
-
             media_environment_pair = (media_id, environment_id)
             if media_environment_pair not in seen_media_environment_pairs:
                 seen_media_environment_pairs.add(media_environment_pair)
-
                 edge = BioCypherEdge(
                     source_id=media_id,
                     target_id=environment_id,
@@ -627,9 +592,7 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_temperature_environment_edges(
-        self,
-    ) -> Generator[BioCypherEdge, None, None]:
+    def _get_temperature_environment_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_temperature_environment_pairs: Set[tuple] = set()
         for i, data in enumerate(self.dataset):
@@ -641,7 +604,6 @@ class SmfCostanzo2016Adapter:
                     data["experiment"].environment.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             temperature_environment_pair = (temperature_id, environment_id)
             if temperature_environment_pair not in seen_temperature_environment_pairs:
                 seen_temperature_environment_pairs.add(temperature_environment_pair)
@@ -654,22 +616,19 @@ class SmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_genome_edges(self) -> None:
+    def _get_genome_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
-
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:
                 seen_genome_experiment_ref_pairs.add(genome_experiment_ref_pair)
-
                 edge = BioCypherEdge(
                     source_id=genome_id,
                     target_id=experiment_ref_id,
@@ -680,11 +639,17 @@ class SmfCostanzo2016Adapter:
 
 
 class DmfCostanzo2016Adapter:
-    def __init__(self, dataset: DmfCostanzo2016Dataset, num_workers: int = 1):
+    def __init__(
+        self,
+        dataset: DmfCostanzo2016Dataset,
+        num_workers: int = 1,
+        chunk_size: int = 1000,
+    ):
         self.dataset = dataset
         self.num_workers = num_workers
+        self.chunk_size = chunk_size
 
-    def get_nodes(self):
+    def get_nodes(self) -> Generator[BioCypherNode, None, None]:
         for node in self._get_experiment_nodes():
             yield node
         for node in self._get_genotype_nodes():
@@ -715,7 +680,7 @@ class DmfCostanzo2016Adapter:
                         f"Node generation method generated an exception: {exc}"
                     )
 
-    def _get_experiment_reference_nodes(self) -> None:
+    def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
@@ -733,14 +698,13 @@ class DmfCostanzo2016Adapter:
             nodes.append(node)
         return nodes
 
-    def _get_genome_nodes(self) -> None:
+    def _get_genome_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
-
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 node = BioCypherNode(
@@ -759,7 +723,7 @@ class DmfCostanzo2016Adapter:
         return nodes
 
     @staticmethod
-    def _chunk_experiment_nodes(data_chunk):
+    def _chunk_experiment_nodes(data_chunk: dict) -> list[BioCypherNode]:
         nodes = []
         for i, data in enumerate(data_chunk):
             experiment_id = hashlib.sha256(
@@ -777,13 +741,11 @@ class DmfCostanzo2016Adapter:
             nodes.append(node)
         return nodes
 
-    def _get_experiment_nodes(self):
-        chunk_size = 1000  # Adjust as needed
+    def _get_experiment_nodes(self) -> list[BioCypherNode]:
         data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
         ]
-
         nodes = []
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [
@@ -794,7 +756,7 @@ class DmfCostanzo2016Adapter:
                 nodes.extend(future.result())
         return nodes
 
-    def _get_genotype_nodes(self):
+    def _get_genotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for i, data in enumerate(self.dataset):
@@ -802,10 +764,8 @@ class DmfCostanzo2016Adapter:
             genotype_id = hashlib.sha256(
                 json.dumps(genotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             if genotype_id not in seen_node_ids:
                 seen_node_ids.add(genotype_id)
-
                 node = BioCypherNode(
                     node_id=genotype_id,
                     preferred_id=f"genotype_{i}",
@@ -822,7 +782,7 @@ class DmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_perturbation_nodes(self):
+    def _get_perturbation_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for data in tqdm(self.dataset):
@@ -831,7 +791,6 @@ class DmfCostanzo2016Adapter:
                 perturbation_id = hashlib.sha256(
                     json.dumps(perturbation.model_dump()).encode("utf-8")
                 ).hexdigest()
-
                 if perturbation_id not in seen_node_ids:
                     seen_node_ids.add(perturbation_id)
                     node = BioCypherNode(
@@ -850,24 +809,21 @@ class DmfCostanzo2016Adapter:
                     nodes.append(node)
         return nodes
 
-    def _get_environment_nodes(self):
+    def _get_environment_nodes(self) -> list[BioCypherNode]:
         # HACK - we know we can loop ref for this node type
         nodes = []
         seen_node_ids = set()
-
         for data in tqdm(self.dataset.experiment_reference_index):
             environment_id = hashlib.sha256(
                 json.dumps(data.reference.reference_environment.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
-
             if environment_id not in seen_node_ids:
                 seen_node_ids.add(environment_id)
                 media = json.dumps(
                     data.reference.reference_environment.media.model_dump()
                 )
-
                 node = BioCypherNode(
                     node_id=environment_id,
                     preferred_id=f"environment_ref_{environment_id}",
@@ -883,7 +839,7 @@ class DmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_media_nodes(self):
+    def _get_media_nodes(self) -> list[BioCypherNode]:
         # HACK - we know we can loop ref for this node type
         seen_node_ids = set()
         nodes = []
@@ -893,12 +849,10 @@ class DmfCostanzo2016Adapter:
                     data.reference.reference_environment.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
                 name = data.reference.reference_environment.media.name
                 state = data.reference.reference_environment.media.state
-
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
@@ -914,8 +868,7 @@ class DmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    # Function for processing experiment reference temperatures
-    def _get_temperature_nodes(self):
+    def _get_temperature_nodes(self) -> list[BioCypherNode]:
         # HACK - we know we can loop ref for this node type
         seen_node_ids = set()
         nodes = []
@@ -925,10 +878,8 @@ class DmfCostanzo2016Adapter:
                     data.reference.reference_environment.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
-
             if temperature_id not in seen_node_ids:
                 seen_node_ids.add(temperature_id)
-
                 node = BioCypherNode(
                     node_id=temperature_id,
                     preferred_id=f"temperature_{temperature_id}",
@@ -944,17 +895,15 @@ class DmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_phenotype_nodes(self):
+    def _get_phenotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for i, data in tqdm(enumerate(self.dataset)):
             phenotype_id = hashlib.sha256(
                 json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
                 label_error = data["experiment"].phenotype.label_error
@@ -979,7 +928,7 @@ class DmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_dataset_nodes(self) -> None:
+    def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [
             BioCypherNode(
                 node_id="DmfCostanzo2016",
@@ -989,45 +938,34 @@ class DmfCostanzo2016Adapter:
         ]
         return nodes
 
-    def get_edges(self):
+    def get_edges(self) -> Generator[BioCypherEdge, None, None]:
         for edge in self._get_experiment_dataset_edges():
             yield edge
-
         for edge in self._get_dataset_experiment_ref_edges():
             yield edge
-
         for edge in self._get_experiment_ref_experiment_edges():
             yield edge
-
         for edge in self._get_genotype_experiment_edges():
             yield edge
-
         for edge in self._get_environment_experiment_edges():
             yield edge
-
         for edge in self._get_environment_experiment_ref_edges():
             yield edge
-
         for edge in self._get_phenotype_experiment_edges():
             yield edge
-
         for edge in self._get_phenotype_experiment_ref_edges():
             yield edge
-
         for edge in self._get_perturbation_genotype_edges():
             yield edge
-
         for edge in self._get_media_environment_edges():
             yield edge
-
         for edge in self._get_temperature_environment_edges():
             yield edge
-
         for edge in self._get_genome_edges():
             yield edge
 
     @staticmethod
-    def _chunk_experiment_dataset_edges(data_chunk):
+    def _chunk_experiment_dataset_edges(data_chunk) -> list[BioCypherEdge]:
         # Process a chunk of data
         edges = []
         for data in data_chunk:
@@ -1042,13 +980,11 @@ class DmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_experiment_dataset_edges(self):
-        chunk_size = 1000  # Adjust as needed
+    def _get_experiment_dataset_edges(self) -> list[BioCypherEdge]:
         data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
         ]
-
         edges = []
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [
@@ -1059,7 +995,7 @@ class DmfCostanzo2016Adapter:
                 edges.extend(future.result())
         return edges
 
-    def _get_dataset_experiment_ref_edges(self):
+    def _get_dataset_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in tqdm(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.sha256(
@@ -1073,7 +1009,7 @@ class DmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_experiment_ref_experiment_edges(self):
+    def _get_experiment_ref_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in tqdm(self.dataset.experiment_reference_index):
             dataset_subset = self.dataset[torch.tensor(data.index)]
@@ -1093,7 +1029,7 @@ class DmfCostanzo2016Adapter:
         return edges
 
     @staticmethod
-    def _chunk_genotype_experiment_edges(data_chunk):
+    def _chunk_genotype_experiment_edges(data_chunk: dict) -> list[BioCypherEdge]:
         edges = []
         for data in data_chunk:
             experiment_id = hashlib.sha256(
@@ -1103,7 +1039,6 @@ class DmfCostanzo2016Adapter:
             genotype_id = hashlib.sha256(
                 json.dumps(genotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             edge = BioCypherEdge(
                 source_id=genotype_id,
                 target_id=experiment_id,
@@ -1112,13 +1047,11 @@ class DmfCostanzo2016Adapter:
             edges.append(edge)
         return edges
 
-    def _get_genotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        chunk_size = 1000  # Adjust as needed
+    def _get_genotype_experiment_edges(self) -> list[BioCypherEdge]:
         data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
         ]
-
         edges = []
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [
@@ -1129,10 +1062,9 @@ class DmfCostanzo2016Adapter:
                 edges.extend(future.result())
         return edges
 
-    def _get_perturbation_genotype_edges(self):
+    def _get_perturbation_genotype_edges(self) -> list[BioCypherEdge]:
         edges = []
-        seen_edges = set()  # Set to track seen edges
-
+        seen_edges = set()
         for data in tqdm(self.dataset):
             genotype = data["experiment"].genotype
             for perturbation in genotype.perturbations:
@@ -1142,11 +1074,7 @@ class DmfCostanzo2016Adapter:
                 perturbation_id = hashlib.sha256(
                     json.dumps(perturbation.model_dump()).encode("utf-8")
                 ).hexdigest()
-
-                # Create a tuple representing the edge
                 edge_tuple = (perturbation_id, genotype_id, "perturbation member of")
-
-                # Check if this edge is a duplicate
                 if edge_tuple not in seen_edges:
                     seen_edges.add(edge_tuple)
                     edge = BioCypherEdge(
@@ -1159,7 +1087,7 @@ class DmfCostanzo2016Adapter:
         return edges
 
     @staticmethod
-    def _chunk_environment_experiment_edges(data_chunk):
+    def _chunk_environment_experiment_edges(data_chunk) -> list[BioCypherEdge]:
         edges = []
         seen_environment_experiment_pairs = set()
         for data in data_chunk:
@@ -1169,7 +1097,6 @@ class DmfCostanzo2016Adapter:
             environment_id = hashlib.sha256(
                 json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
             ).hexdigest()
-
             env_experiment_pair = (environment_id, experiment_id)
             if env_experiment_pair not in seen_environment_experiment_pairs:
                 seen_environment_experiment_pairs.add(env_experiment_pair)
@@ -1181,13 +1108,11 @@ class DmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_environment_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        chunk_size = 1000  # Adjust as needed
+    def _get_environment_experiment_edges(self) -> list[BioCypherEdge]:
         data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
         ]
-
         edges = []
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [
@@ -1198,22 +1123,18 @@ class DmfCostanzo2016Adapter:
                 edges.extend(future.result())
         return edges
 
-    def _get_environment_experiment_ref_edges(
-        self,
-    ) -> Generator[BioCypherEdge, None, None]:
+    def _get_environment_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             environment_id = hashlib.sha256(
                 json.dumps(data.reference.reference_environment.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
-
             env_experiment_ref_pair = (environment_id, experiment_ref_id)
             if env_experiment_ref_pair not in seen_environment_experiment_ref_pairs:
                 seen_environment_experiment_ref_pairs.add(env_experiment_ref_pair)
@@ -1227,7 +1148,7 @@ class DmfCostanzo2016Adapter:
         return edges
 
     @staticmethod
-    def _chunk_phenotype_experiment_edges(data_chunk):
+    def _chunk_phenotype_experiment_edges(data_chunk) -> list[BioCypherEdge]:
         edges = []
         seen_phenotype_experiment_pairs = set()
         for data in data_chunk:
@@ -1237,7 +1158,6 @@ class DmfCostanzo2016Adapter:
             phenotype_id = hashlib.sha256(
                 json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
-
             phenotype_experiment_pair = (phenotype_id, experiment_id)
             if phenotype_experiment_pair not in seen_phenotype_experiment_pairs:
                 seen_phenotype_experiment_pairs.add(phenotype_experiment_pair)
@@ -1249,13 +1169,11 @@ class DmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_phenotype_experiment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        chunk_size = 1000  # Adjust as needed
+    def _get_phenotype_experiment_edges(self) -> list[BioCypherEdge]:
         data_chunks = [
-            self.dataset[i : i + chunk_size]
-            for i in range(0, len(self.dataset), chunk_size)
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
         ]
-
         edges = []
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [
@@ -1266,22 +1184,18 @@ class DmfCostanzo2016Adapter:
                 edges.extend(future.result())
         return edges
 
-    def _get_phenotype_experiment_ref_edges(
-        self,
-    ) -> Generator[BioCypherEdge, None, None]:
+    def _get_phenotype_experiment_ref_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             phenotype_id = hashlib.sha256(
                 json.dumps(data.reference.reference_phenotype.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
-
             phenotype_experiment_ref_pair = (phenotype_id, experiment_ref_id)
             if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
                 seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
@@ -1294,8 +1208,8 @@ class DmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_media_environment_edges(self) -> Generator[BioCypherEdge, None, None]:
-        # Optimized by using reference
+    def _get_media_environment_edges(self) -> list[BioCypherEdge]:
+        # HACK Optimized by using reference
         # We know reference contains all media and envs
         edges = []
         seen_media_environment_pairs: Set[tuple] = set()
@@ -1321,11 +1235,9 @@ class DmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_temperature_environment_edges(
-        self,
-        # Optimized by using reference
+    def _get_temperature_environment_edges(self) -> list[BioCypherEdge]:
+        # HACK Optimized by using reference
         # We know reference contain all envs and temps
-    ) -> Generator[BioCypherEdge, None, None]:
         edges = []
         seen_temperature_environment_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
@@ -1350,18 +1262,16 @@ class DmfCostanzo2016Adapter:
                 edges.append(edge)
         return edges
 
-    def _get_genome_edges(self) -> None:
+    def _get_genome_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
-
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
             ).hexdigest()
-
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:
                 seen_genome_experiment_ref_pairs.add(genome_experiment_ref_pair)

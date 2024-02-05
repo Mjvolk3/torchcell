@@ -413,7 +413,7 @@ class SmfCostanzo2016Adapter:
             futures = [executor.submit(method) for method in methods]
             for future in as_completed(futures):
                 try:
-                    edge_generator = future.        result()
+                    edge_generator = future.result()
                     for edge in edge_generator:
                         yield edge
                 except Exception as exc:
@@ -1392,8 +1392,11 @@ if __name__ == "__main__":
     import os.path as osp
     from dotenv import load_dotenv
 
-    load_dotenv()
+    from datetime import datetime
     import os
+
+    load_dotenv()
+    time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # # # Simple Testing
     # dataset = SmfCostanzo2016Dataset()
@@ -1401,15 +1404,20 @@ if __name__ == "__main__":
     # [i for i in adapter.get_nodes()]
     # [i for i in adapter.get_edges()]
     DATA_ROOT = os.getenv("DATA_ROOT")
-
+    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     # Advanced Testing
-    bc = BioCypher()
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
     dataset = SmfCostanzo2016Dataset(
         osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=1)
     bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    # bc.write_edges(adapter.get_edges())
 
     # # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
@@ -1427,10 +1435,15 @@ if __name__ == "__main__":
     # [i for i in adapter.get_edges()]
 
     # # Advanced Testing
-    # bc = BioCypher()
-    # # dataset = DmfCostanzo2016Dataset()
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time),
+    #     biocypher_config_path="config/delta_biocypher_config.yaml",
+    # )
     # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_subset_n_1000"),
     #     subset_n=1000,
     #     preprocess=None,
     # )

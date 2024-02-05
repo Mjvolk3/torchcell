@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1707150383291
+updated: 1707150437030
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -20,7 +20,7 @@ created: 1690514887023m
 - [ ] Test query to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
 - [ ] Run query locally and write lmdb.
 - [ ] Write class for getting indices on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
-- [ ] Document download steps for neo4j db.
+- [ ] Document download steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]]
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Change `reference_environment` to `environment`
 

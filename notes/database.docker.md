@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1707803627031
+updated: 1707857874822
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -24,7 +24,7 @@ docker build --no-cache --platform linux/amd64 -t michaelvolk/tc-neo4j:0.0.1 -f 
 
 4. `docker login``
 
-## Troubleshooting Docker Build Local-001
+## 2024.02.08 - Troubleshooting Docker Build Local
 
 Using `database/Dockerfile.tc-neo4j` (name is subject to change). Losing straight forward path to do this... just copying useful commands now and will have to sort things out later.
 
@@ -126,6 +126,8 @@ docker buildx build --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:0
 docker push michaelvolk/tc-neo4j:0.0.3
 docker push michaelvolk/tc-neo4j:latest
 ```
+
+- [[2024.02.13|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20240213]]
 
 ## Docker Image and Container Life Cycle
 
@@ -254,3 +256,5 @@ docker exec -it tc--neo4j python -m pip install torchcell --upgrade
 ```bash
 apptainer exec --writable-tmpfs <container_path> python -m pip install torchcell --upgrade
 ```
+
+## 2024.02.13 - Troubleshooting Docker Build Local

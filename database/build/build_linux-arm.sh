@@ -14,6 +14,7 @@ docker rm -f tc-neo4j
 # Run the container
 echo "Running container..."
 # docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+
 docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
 # Conda activate torchcell here since we are using the local library for the db writing.

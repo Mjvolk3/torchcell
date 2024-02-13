@@ -1,18 +1,14 @@
-
-# database/Dockerfile.tc-neo4j
 FROM debian:bullseye-slim
-# Install Java dependency 11
+
+# @mjvolk3 Install Java dependency 11
 FROM eclipse-temurin:11-jre as base
-# Install dependencies and Python 3.11
-# Install dependencies required for downloading and installing Miniconda
+# @mjvolk3 Install dependencies required for downloading and installing Miniconda
 RUN apt-get update && apt-get install -y curl wget && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda
+# @mjvolk3 Install Miniconda
 ARG TARGETARCH
 ENV MINICONDA_VERSION 4.9.2
-
-# CHECK uncomment after gcc, g++ check
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /miniconda.sh; \
 elif [ "$TARGETARCH" = "arm64" ]; then \
@@ -20,42 +16,37 @@ elif [ "$TARGETARCH" = "arm64" ]; then \
 fi && \
 /bin/bash /miniconda.sh -b -p /miniconda && \
 rm /miniconda.sh
-
 ENV PATH /miniconda/bin:$PATH
 
-# Create a Python 3.11 environment
+# @mjvolk3 Create python 3.11 environment
 RUN conda create -n myenv python=3.11
-
-# Activate the environment and install your packages
+# @mjvolk3 Activate the environment
 RUN echo "source activate myenv" > ~/.bashrc
 ENV PATH /miniconda/envs/myenv/bin:$PATH
-
-### testing 
-# Dependency install for biopython, psutil in torchcell
+# @mjvolk Dependency install for biopython, psutil in torchcell
 RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
     libffi-dev \
     python3-dev
-### testing
-
-# Install your required Python packages
+# @mjvolk3 intall torchell and dependency
 RUN python -m pip install torchcell
 RUN python -m pip install torch-scatter
 
-# ENV JAVA_HOME=/opt/java/openjdk # removing to try and generalize java
+# @mjvolk3 use installed jdk (generalize use). ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=eclipse-temurin:11 $JAVA_HOME $JAVA_HOME
+
+
 ENV PATH="${JAVA_HOME}/bin:${PATH}" \
-    NEO4J_SHA256=601e752be679bb057593794ccdeaf496414d859e19bf0f52ce8c259159e77566 \
-    NEO4J_TARBALL=neo4j-community-4.4.30-unix.tar.gz \
-    NEO4J_EDITION=community \
+    NEO4J_SHA256=9513dddcc0732dc3ad66b7c4c0becde8ce7c6810bf898264f01b2fe634dd4b0e \
+    NEO4J_TARBALL=neo4j-enterprise-4.4.30-unix.tar.gz \
+    NEO4J_EDITION=enterprise \
     NEO4J_HOME="/var/lib/neo4j"
-ARG NEO4J_URI=https://dist.neo4j.org/neo4j-community-4.4.30-unix.tar.gz
+ARG NEO4J_URI=https://dist.neo4j.org/neo4j-enterprise-4.4.30-unix.tar.gz
 
 RUN addgroup --gid 7474 --system neo4j && adduser --uid 7474 --system --no-create-home --home "${NEO4J_HOME}" --ingroup neo4j neo4j
 
 COPY ./local-package/* /startup/
-COPY --chmod=755 ./local-package/* /startup/
 
 RUN apt update \
     && apt-get install -y curl gcc git jq make procps tini wget \

@@ -88,13 +88,17 @@ torchcell = ["py.typed"]
 [tool.setuptools.packages.find]
 include = ["torchcell*"]
 
-[tool.bumpver]
-current_version = "0.0.34"  # Your current version
-version_pattern = "MAJOR.MINOR.PATCH"
-commit_message = "Bump version: {old_version} → {new_version}"
+# [tool.bumpver]
+# current_version = "0.0.34"  # Your current version
+# version_pattern = "MAJOR.MINOR.PATCH"
+# commit_message = "Bump version: {old_version} → {new_version}"
 
+# [tool.bumpver.file_patterns]
+# "pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
+# "torchcell/__version__.py" = ["{version}"]
+# "env/requirements-tc-graph.txt" = ["torchcell>={version}"]
 
-[tool.bumpver.file_patterns]
-"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
-"torchcell/__version__.py" = ["{version}"]
-"env/requirements-tc-graph.txt" = ["torchcell>={version}"]
+[tool.semantic_release]
+version_variable = "pyproject.toml:version, torchcell/__version__.py:__version__"
+branch = "main"
+upload_to_pypi = "true"

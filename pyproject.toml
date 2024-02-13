@@ -102,4 +102,6 @@ include = ["torchcell*"]
 version_variable = "pyproject.toml:version, torchcell/__version__.py:__version__"
 branch = "main"
 upload_to_pypi = "true"
-remote = "torchcell"
+
+[tool.semantic_release.remote]
+name = "torchcell"

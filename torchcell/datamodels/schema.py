@@ -22,13 +22,15 @@ class GenePerturbation(ModelStrict):
     systematic_gene_name: str
     perturbed_gene_name: str
 
-    @field_validator("systematic_gene_name")
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
     def validate_sys_gene_name(cls, v):
         if len(v) < 7 or len(v) > 9:
             raise ValueError("Systematic gene name must be between 7 and 9 characters")
         return v
 
-    @field_validator("perturbed_gene_name")
+    @field_validator("perturbed_gene_name", mode="after")
+    @classmethod
     def validate_pert_gene_name(cls, v):
         if v.endswith("'"):
             v = v[:-1] + "_prime"
@@ -163,6 +165,18 @@ GenePerturbationType = Union[SgaPerturbationType]
 class Genotype(ModelStrict):
     perturbations: list[GenePerturbationType] = Field(description="Gene perturbation")
 
+    @field_validator("perturbations", mode="after")
+    @classmethod
+    def sort_perturbations(cls, perturbations):
+        return sorted(
+            perturbations,
+            key=lambda p: (
+                p.systematic_gene_name,
+                p.perturbation_type,
+                p.perturbed_gene_name,
+            ),
+        )
+
     @property
     def systematic_gene_names(self):
         sorted_perturbations = sorted(
@@ -184,6 +198,9 @@ class Genotype(ModelStrict):
         )
         return [p.perturbation_type for p in sorted_perturbations]
 
+    def __len__(self):
+        return len(self.perturbations)
+
     # we would use set, but need serialization to be a list
     def __eq__(self, other):
         if not isinstance(other, Genotype):
@@ -197,7 +214,8 @@ class Media(ModelStrict):
     name: str
     state: str
 
-    @field_validator("state")
+    @field_validator("state", mode="after")
+    @classmethod
     def validate_state(cls, v):
         if v not in ["solid", "liquid", "gas"]:
             raise ValueError('state must be one of "solid", "liquid", or "gas"')
@@ -208,7 +226,8 @@ class Temperature(BaseModel):
     value: float  # Renamed from scalar to value
     unit: str = "Celsius"  # Simplified unit string
 
-    @field_validator("value")  # Updated to reflect the new attribute name
+    @field_validator("value", mode="after") 
+    @classmethod
     def check_temperature(cls, v):
         if v < -273:
             raise ValueError("Temperature cannot be below -273 degrees Celsius")
@@ -228,7 +247,8 @@ class BasePhenotype(ModelStrict):
     label: str
     label_error: str
 
-    @field_validator("graph_level")
+    @field_validator("graph_level", mode="after")
+    @classmethod
     def validate_level(cls, v):
         levels = {"edge", "node", "subgraph", "global", "metabolism"}
 

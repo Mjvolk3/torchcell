@@ -10,10 +10,15 @@ neo4j:
   skip_duplicate_nodes: true
   skip_bad_relationships: true
 
+  import_call_bin_prefix: /var/lib/neo4j/bin/
+  import_call_file_prefix: "/"
+  
   # Wipe DB before import (offline mode: --force)
   wipe: true
+  # TODO set to false for community version or old neo4j
+  # multi_db: true
 
-  database_name: torchcell
+  database_name: neo4j
   uri: neo4j://localhost:7687
   user: neo4j
   password: torchcell

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchcell"
-version = "0.0.30"
+version = "0.0.34"
 description = "An example package"
 readme = "README.md"
 authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]
@@ -30,6 +30,8 @@ Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 
 [project.scripts]
 torchcell = "torchcell.__main__:main"
+tcdb = "torchcell.database.tcdb:main"
+
 
 [tool.isort]
 profile = "black"
@@ -74,6 +76,7 @@ match = "torchcell/.*\\.py"
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 [tool.setuptools.dynamic]
 dependencies = {file = ["env/requirements.txt"]}
+# Doesn't allow ordering
 # dependencies = {file = ["env/requirements.txt", "env/requirements_dependent.txt"]}
 
 # optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
@@ -86,7 +89,7 @@ torchcell = ["py.typed"]
 include = ["torchcell*"]
 
 [tool.bumpver]
-current_version = "0.0.30"  # Your current version
+current_version = "0.0.34"  # Your current version
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Bump version: {old_version} → {new_version}"
 

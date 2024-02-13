@@ -369,6 +369,41 @@
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pytest --cov=torchcell --cov-report html tests/ ",
                 "problemMatcher": [],
             },
+            // External 
+            {
+                "label": "Open External Terminal",
+                "type": "shell",
+                "command": "./notes/assets/scripts/open-external-terminal.sh",
+                "problemMatcher": []
+            },
+            {
+                "label": "tcdb: build linux-arm",
+                "type": "shell",
+                "command": "osascript",
+                "args": [
+                    "-e",
+                    "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build_linux-arm.sh\""
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
+            {
+                "label": "tcdb: build linux-arm fresh",
+                "type": "shell",
+                "command": "osascript",
+                "args": [
+                    "-e",
+                    "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build_image_fresh_linux-arm.sh\""
+                ],
+                "problemMatcher": [],
+                "group": {
+                    "kind": "build",
+                    "isDefault": true
+                }
+            },
         ],
         "inputs" : [
             {

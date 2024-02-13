@@ -25,15 +25,22 @@ import os.path as osp
 from datetime import datetime
 import multiprocessing as mp
 
+
 def main() -> str:
     # Configure logging
     logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
     logging.captureWarnings(True)
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    bc = BioCypher(output_directory=osp.join(DATA_ROOT, "neo4j/biocypher-out", time), biocypher_config_path="config/delta_biocypher_config.yaml")
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
     # Ordered adapters from smallest to largest
     adapters = [
         SmfCostanzo2016Adapter(
@@ -53,9 +60,11 @@ def main() -> str:
     bc.write_schema_info(as_node=True)
 
     bc.summary()
-    # Returns bash script path 
-    
-    relative_bash_script_path = osp.join("biocypher-out", time, "neo4j-admin-import-call.sh")
+    # Returns bash script path
+
+    relative_bash_script_path = osp.join(
+        "/database/biocypher-out", time, "neo4j-admin-import-call.sh"
+    )
     return relative_bash_script_path
 
 

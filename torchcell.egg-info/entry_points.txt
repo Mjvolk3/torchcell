@@ -1,2 +1,3 @@
 [console_scripts]
+tcdb = torchcell.database.tcdb:main
 torchcell = torchcell.__main__:main

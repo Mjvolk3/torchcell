@@ -80,6 +80,7 @@ python-dotenv>=1.0.0
 
 # dev-tools
 bumpver>= 2023.1129
+python-semantic-release>=9.0.3
 pre-commit>=3.3.3
 # ptpython>=3.0.23
 pip-tools>=7.1.0
@@ -94,3 +95,4 @@ neo4j>=4.4.11
 
 # command line
 cliff>=4.5.0
+

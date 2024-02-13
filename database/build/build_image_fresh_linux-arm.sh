@@ -5,6 +5,9 @@ sleep 10
 
 docker login
 
+docker stop tc-neo4j
+docker rm -f tc-neo4j
+
 echo "Building image..."
 docker buildx build --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
 

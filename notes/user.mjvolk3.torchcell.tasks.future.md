@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1707427413913
+updated: 1707854710152
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Automate the database folder creation given whichever architecture is specified, or detected.
 - [ ] Publish package for Junyu and Le to use
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Change `reference_environment` to `environment`

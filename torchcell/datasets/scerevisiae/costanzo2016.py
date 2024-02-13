@@ -38,7 +38,6 @@ from torchcell.sequence import GeneSet
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-
 class SmfCostanzo2016Dataset(Dataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -134,10 +133,9 @@ class SmfCostanzo2016Dataset(Dataset):
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
         df = self.preprocess_raw(df, self.preprocess)
-        (
-            reference_phenotype_std_26,
-            reference_phenotype_std_30,
-        ) = self.compute_reference_phenotype_std(df)
+        (reference_phenotype_std_26, reference_phenotype_std_30) = (
+            self.compute_reference_phenotype_std(df)
+        )
 
         # Save preprocssed df - mainly for quick stats
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -147,7 +145,7 @@ class SmfCostanzo2016Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -177,17 +175,23 @@ class SmfCostanzo2016Dataset(Dataset):
 
         # Determine perturbation type based on Strain_ID_suffix
         df["perturbation_type"] = df["Strain_ID_suffix"].apply(
-            lambda x: "damp"
-            if "damp" in x
-            else "temperature_sensitive"
-            if "tsa" in x or "tsq" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "NatMX_deletion"
-            if "sn" in x  # or "S" in x or "A_S" in x
-            else "suppression_allele"
-            if "S" in x
-            else "unknown"
+            lambda x: (
+                "damp"
+                if "damp" in x
+                else (
+                    "temperature_sensitive"
+                    if "tsa" in x or "tsq" in x
+                    else (
+                        "KanMX_deletion"
+                        if "dma" in x
+                        else (
+                            "NatMX_deletion"
+                            if "sn" in x  # or "S" in x or "A_S" in x
+                            else "suppression_allele" if "S" in x else "unknown"
+                        )
+                    )
+                )
+            )
         )
 
         # Create separate dataframes for the two temperatures
@@ -374,36 +378,19 @@ class SmfCostanzo2016Dataset(Dataset):
 
         return length
 
-    # def get(self, idx):
-    #     if self.env is None:
-    #         self._init_db()
-
-    #     with self.env.begin() as txn:
-    #         serialized_data = txn.get(f"{idx}".encode())
-    #         if serialized_data is None:
-    #             return None
-
-    #         # Deserialize the data and return it directly
-    #         deserialized_data = pickle.loads(serialized_data)
-
-    #         return deserialized_data
-
     def get(self, idx):
         if self.env is None:
             self._init_db()
 
-        # Handling boolean index tensors or numpy arrays
-        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+        # Handling boolean index arrays or numpy arrays
+        if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
-            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+            if idx.dtype == np.bool_:
                 idx = np.where(idx)[0]
-            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
-                idx = idx.nonzero(as_tuple=False).squeeze(1)
 
-        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
-            # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            # If idx is a list/array of indices, return a list of data objects
+            return [self.get_single_item(i) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)
@@ -788,30 +775,42 @@ class DmfCostanzo2016Dataset(Dataset):
         Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
         df["Temperature"] = Temperature
         df["query_perturbation_type"] = df["Query Strain ID"].apply(
-            lambda x: "damp"
-            if "damp" in x
-            else "temperature_sensitive"
-            if "tsa" in x or "tsq" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "NatMX_deletion"
-            if "sn" in x  # or "S" in x or "A_S" in x
-            else "suppression_allele"
-            if "S" in x
-            else "unknown"
+            lambda x: (
+                "damp"
+                if "damp" in x
+                else (
+                    "temperature_sensitive"
+                    if "tsa" in x or "tsq" in x
+                    else (
+                        "KanMX_deletion"
+                        if "dma" in x
+                        else (
+                            "NatMX_deletion"
+                            if "sn" in x  # or "S" in x or "A_S" in x
+                            else "suppression_allele" if "S" in x else "unknown"
+                        )
+                    )
+                )
+            )
         )
         df["array_perturbation_type"] = df["Array Strain ID"].apply(
-            lambda x: "damp"
-            if "damp" in x
-            else "temperature_sensitive"
-            if "tsa" in x or "tsq" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "NatMX_deletion"
-            if "sn" in x  # or "S" in x or "A_S" in x
-            else "suppression_allele"
-            if "S" in x
-            else "unknown"
+            lambda x: (
+                "damp"
+                if "damp" in x
+                else (
+                    "temperature_sensitive"
+                    if "tsa" in x or "tsq" in x
+                    else (
+                        "KanMX_deletion"
+                        if "dma" in x
+                        else (
+                            "NatMX_deletion"
+                            if "sn" in x  # or "S" in x or "A_S" in x
+                            else "suppression_allele" if "S" in x else "unknown"
+                        )
+                    )
+                )
+            )
         )
         means = df.groupby("Temperature")[
             "Double mutant fitness standard deviation"
@@ -873,18 +872,15 @@ class DmfCostanzo2016Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
-        # Handling boolean index tensors or numpy arrays
-        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+        # Handling boolean index arrays or numpy arrays
+        if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
-            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+            if idx.dtype == np.bool_:
                 idx = np.where(idx)[0]
-            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
-                idx = idx.nonzero(as_tuple=False).squeeze(1)
 
-        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
-            # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            # If idx is a list/array of indices, return a list of data objects
+            return [self.get_single_item(i) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)

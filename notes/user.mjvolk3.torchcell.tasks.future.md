@@ -2,18 +2,25 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1707150241069
+updated: 1707427413913
 created: 1675887826601
 ---
 ## Future
 
 - [ ] Publish package for Junyu and Le to use
-- [ ] Change `wandb.tags` to `Tags`
-- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
-- [ ] Write Cron Job for Db build locally
+- [ ] Get rid of the `preprocess_config.json
+- [ ] Change `reference_environment` to `environment`
+- [ ] #pr.biocypher, path mapping `import_call_file_prefix`
+- [ ] #pr.biocypher, message @Sebastian-Lobentanzer about collectri pr accept on readme
+- [ ] #pr.biocypher minimal example for docker `None` import.
+- [ ] #pr.biocypher update tutorials with Neo4j Bloom images.
+- [ ] Notify @Sebastian-Lobentanzer about #pr.biocypher [Collectri ReadMe Update](https://github.com/biocypher/collectri/pull/1).
 
 ## Far Future
 
+- [ ] Write Cron Job for Db build locally
+- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
+- [ ] Change `wandb.tags` to `Tags`
 - [ ] Setup `test/data`
 - [ ] Notes that represent a python file should have the path to the python file in the frontmatter.
 - [ ] Convert `gene_set` to `SortedSet`

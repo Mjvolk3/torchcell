@@ -30,6 +30,9 @@ torchcell/adapters/kuzmin2018_adapter.py
 torchcell/cell/__init__.py
 torchcell/data/__init__.py
 torchcell/data/data.py
+torchcell/database/__init__.py
+torchcell/database/build_command.py
+torchcell/database/tcdb.py
 torchcell/datamodels/__init__.py
 torchcell/datamodels/pydant.py
 torchcell/datamodels/schema.py

@@ -11,7 +11,7 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/database/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/error/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/eroror/%x_%j.out
 
 # mem 128g
 # cpu 128

@@ -1,57 +1,70 @@
-# torchcell/neo4j_fitness_query
-# [[torchcell.neo4j_fitness_query]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/neo4j_fitness_query
-# Test file: tests/torchcell/test_neo4j_fitness_query.py
-
-
-import json
-from neo4j import GraphDatabase
-from torchcell.datamodels import FitnessExperiment
-from tqdm import tqdm
+import attrs
 import lmdb
-
-def fetch_data_instance(uri, username, password):
-    driver = GraphDatabase.driver(uri, auth=(username, password))
-
-    with driver.session() as session:
-        result = session.run(
-            """
-            MATCH (e:Experiment)
-            REUTRN e LIMIT 10
-            """
-            # """
-            # MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
-            # WITH e, COLLECT(p) AS perturbations
-            # WHERE ALL(p in perturbations WHERE p.perturbation_type = 'deletion')
-            # RETURN e
-            # """
-            # """
-            # # MATCH (e:Experiment)<-[gm:GenotypeMemberOf]-(g:Genotype)<-[pm:PerturbationMemberOf]-(p:Perturbation {perturbation_type: 'deletion'})
-            # # WITH e, COLLECT(p) AS perturbations
-            # # WHERE ANY(p IN perturbations WHERE p.perturbation_type = 'deletion')
-            # # RETURN e
-            # # """
-        )
-
-        for record in result:
-            yield record["e"]["serialized_data"]
-
-    driver.close()
+from neo4j import GraphDatabase
+import os
+from tqdm import tqdm
+from attrs import define, field
+import os.path as osp
 
 
-def main():
-    uri = "bolt://localhost:7687"
-    username = "neo4j"
-    password = "neo4j"
-    print(f"uri: {uri}")
-    print(f"username: {username}")
-    print(f"password: {password}")
-    
+@define
+class Neo4jQueryDatabase:
+    uri: str
+    username: str
+    password: str
+    root_dir: str
+    query: str
+    raw_dir: str = field(init=False, default=None)
+    env: str = field(init=False, default=None)
 
-    for serialized_data in tqdm(fetch_data_instance(uri, username, password)):
-        # data = FitnessExperiment.model_validate(json.loads(serialized_data))
-        pass
-    print("Query successful!")
+    def __attrs_post_init__(self):
+        self.raw_dir = osp.join(self.root_dir, "raw", "data.lmdb")
 
+        if not osp.exists(self.raw_dir):
+            os.makedirs(self.raw_dir)
+        # Ensure the root_dir exists
+        os.makedirs(self.raw_dir, exist_ok=True)
+        # Initialize LMDB environment
+        self.env = lmdb.open(self.raw_dir, map_size=int(1e6))  # Adjust map_size as needed
+
+        # Process the data
+        self.process_data()
+
+    def fetch_data(self):
+        driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
+        with driver.session() as session:
+            result = session.run(self.query)
+            for record in result:
+                print(record)
+                yield record
+
+        driver.close()
+
+    def write_to_lmdb(self, key: bytes, value: bytes):
+        with self.env.begin(write=True) as txn:
+            txn.put(key, value)
+
+    def process_data(self):
+        for i, record in tqdm(enumerate(self.fetch_data())):
+            # Assuming each record can be uniquely identified and serialized
+            # Adjust the key and value encoding as per your data structure
+            key = f"record_{i}".encode()  # Example key
+            value = str(record).encode()  # Example value serialization
+
+            self.write_to_lmdb(key, value)
+        print(f"Finished on {i}")
+        self.env.close()
+
+
+# Example usage
 if __name__ == "__main__":
-    main()
+    neo4j_db = Neo4jQueryDatabase(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="torchcell",  # Replace with your actual password
+        root_dir="/torchcell_data/torchcell/dmf-2022_02_12",
+        query="""
+            MATCH (n)
+            RETURN n LIMIT 10
+        """,
+    )

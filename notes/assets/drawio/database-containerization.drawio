@@ -1,0 +1,36 @@
+<mxfile host="65bd71144e">
+    <diagram id="bIIUmT8sfazxTVj5g0L6" name="Page-1">
+        <mxGraphModel dx="1910" dy="1162" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="10" value="&lt;div style=&quot;color: rgb(31, 36, 40); background-color: rgb(255, 255, 255); font-family: Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; font-weight: normal; font-size: 12px; line-height: 18px;&quot;&gt;&lt;div&gt;&lt;span style=&quot;color: rgb(111, 66, 193);&quot;&gt;docker&lt;/span&gt; &lt;span style=&quot;color: rgb(3, 47, 98);&quot;&gt;login&lt;/span&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: #6f42c1;&quot;&gt;docker&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;buildx&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;build&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #005cc5;&quot;&gt;--platform&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;linux/amd64,linux/arm64&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #005cc5;&quot;&gt;-t&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;michaelvolk/tc-neo4j:0.0.3&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #005cc5;&quot;&gt;-t&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;michaelvolk/tc-neo4j:latest&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #005cc5;&quot;&gt;-f&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;database/Dockerfile.tc-neo4j&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #032f62;&quot;&gt;database&lt;/span&gt;&lt;span style=&quot;color: #1f2428;&quot;&gt; &lt;/span&gt;&lt;span style=&quot;color: #005cc5;&quot;&gt;--push&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" style="text;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="130" y="440" width="450" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="2" target="6">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="140" y="170" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="local" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="370" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="delta" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="680" y="360" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="github" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="680" y="90" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="docker hub" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="110" width="80" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="7" target="2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="Dockerfile.tc-neo4j" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="45" y="525" width="150" height="50" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

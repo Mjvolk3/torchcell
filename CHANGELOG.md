@@ -2,6 +2,13 @@
 
 
 
+## v0.1.14 (2024-02-14)
+
+### Fix
+
+* fix: tc_publish_pypi code action, partial automation ([`097b44f`](https://github.com/Mjvolk3/torchcell/commit/097b44f95f514e4e9a67ca73bd6373e2438ed8fe))
+
+
 ## v0.1.13 (2024-02-14)
 
 ### Fix

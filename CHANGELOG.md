@@ -2,6 +2,13 @@
 
 
 
+## v0.2.1 (2024-02-14)
+
+### Fix
+
+* fix: new semantic release ([`3d0792a`](https://github.com/Mjvolk3/torchcell/commit/3d0792ab6f792a7fc1e5ba29819d8991ac7d8ac0))
+
+
 ## v0.2.0 (2024-02-14)
 
 ### Feature

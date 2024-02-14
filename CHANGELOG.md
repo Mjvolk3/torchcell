@@ -2,6 +2,13 @@
 
 
 
+## v0.1.6 (2024-02-14)
+
+### Fix
+
+* fix: rm bumpver deps ([`a9ebbee`](https://github.com/Mjvolk3/torchcell/commit/a9ebbee1561841a1b74185feb5a6f5f5c04505bc))
+
+
 ## v0.1.5 (2024-02-14)
 
 ### Fix

@@ -2,34 +2,35 @@
 
 
 
-## v0.3.0 (2024-02-14)
+## v0.2.0 (2024-02-14)
+
+### Feature
+
+* feat: try minor ([`2374bf1`](https://github.com/Mjvolk3/torchcell/commit/2374bf1a9caed62d6c90c155a6a2a238a459c9ae))
+
+### Unknown
+
+* try patch wrong... ([`cff0d42`](https://github.com/Mjvolk3/torchcell/commit/cff0d42e7532c35655ca4de8b89e1b1a88d973a1))
+
+
+## v0.1.0 (2024-02-14)
 
 ### Feature
 
 * feat: after v0.1.0 ([`f687905`](https://github.com/Mjvolk3/torchcell/commit/f687905b4cbd12ffde0ece56877eae9034fe7271))
 
-### Unknown
-
-* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1a2a61d`](https://github.com/Mjvolk3/torchcell/commit/1a2a61d44ef587b5146b19d85cdfcb3241ba3004))
-
-
-## v0.2.0 (2024-02-14)
-
-### Feature
-
 * feat: add semantic versioning dev readme ([`cdb2131`](https://github.com/Mjvolk3/torchcell/commit/cdb21313c3510c4111f54d8ef78e012b49fb0a7d))
 
 * feat: add semantic versioning dev ([`8cb3ee2`](https://github.com/Mjvolk3/torchcell/commit/8cb3ee2e7693f09687b389160151a27fdb0d1ef0))
 
-
-## v0.1.0 (2024-02-14)
-
 ### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1a2a61d`](https://github.com/Mjvolk3/torchcell/commit/1a2a61d44ef587b5146b19d85cdfcb3241ba3004))
 
 * BREAKING CHANGE: semantic release ([`4d10292`](https://github.com/Mjvolk3/torchcell/commit/4d10292350041a1007a43bc31157557c46027d89))
 
 
-## v0.0.34 (2024-02-14)
+## v0.0.4 (2024-02-14)
 
 ### Unknown
 

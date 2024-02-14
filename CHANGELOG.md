@@ -2,6 +2,13 @@
 
 
 
+## v0.1.7 (2024-02-14)
+
+### Fix
+
+* fix: patch test, w/ publish ([`c082ea4`](https://github.com/Mjvolk3/torchcell/commit/c082ea4ee6bd37e51891842679915ef28023dd09))
+
+
 ## v0.1.6 (2024-02-14)
 
 ### Fix

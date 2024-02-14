@@ -2,6 +2,17 @@
 
 
 
+## v0.2.2 (2024-02-14)
+
+### Fix
+
+* fix: new semantic checkout ([`d3508f7`](https://github.com/Mjvolk3/torchcell/commit/d3508f79cfbd9f5d0a12a59403f6560af65078b1))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b1a38de`](https://github.com/Mjvolk3/torchcell/commit/b1a38de8de54ab59c0099079cc4d1c265d789839))
+
+
 ## v0.2.1 (2024-02-14)
 
 ### Fix

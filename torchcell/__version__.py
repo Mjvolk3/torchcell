@@ -3,4 +3,4 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/__version__.py
 # Test file: tests/torchcell/test___version__.py
 
-__version__ = "0.1.5"  # Linked to semantic-release in toml
+__version__ = "0.1.6"  # Linked to semantic-release in toml

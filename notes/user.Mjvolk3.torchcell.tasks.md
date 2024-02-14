@@ -2,18 +2,27 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1707883580812
+updated: 1707950356353
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.02.14
+
+- [x] Spin up tc-neo4j container. `chmod +x  database/local-package/docker-entrypoint.sh`. → Forgot this line `COPY --chmod=755 ./local-package/* /startup/` so need to rebuild 😡
+- [ ] Document **python publish** → [[Pypi Publish|dendron://torchcell/pypi-publish]]
+- [ ] Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data. All but `SmfKuzmin2018` should need this.
+- [ ] **small build**
+- [ ] **local lmdb**
+- [ ] **remote build**
 
 ## 2024.02.13
 
 - [x] **Neo4j Enterprise**, switch to enterprise since free for academics according to @Sebastian-Lobentanzer → changed everything over to enterprise. For this you must download `/local-package`, and the `entrypoint.sh`. Can later automate this. → Verified [Neo4j Licensing](https://neo4j.com/open-core-and-neo4j/), "Universities for teaching and learning" then can be transitioned to altruistic projects or something else like it, but we should still be able to use Enterprise. We want to do this for the multiple db problem, start and stop neo4j issues.
 - [x] **Neo4j Enterprise** test image build to see if it works → [[2024.02.13 - Docker image Startup vs Apptainer image startup|dendron://torchcell/database.apptainer#20240213---docker-image-startup-vs-apptainer-image-startup]] → Build was exited due to vscode lag. Restarted. 🐢 This image buid seems even slower than the community one. → pulled image.
 - [x] **semantic versioning** → updates to files locally now work as expected, similar to `bumpver` [python-semantic-release](https://python-semantic-release.readthedocs.io/en/latest/configuration.html#config-build-command). Dropping bumpver from dependencies.
-- [ ] **python publish** add publish github action → `"workflows/python-publish.yaml"` →
+- [x] **python publish** add publish github action → `"workflows/python-publish.yaml"` → Everything works. We are using `semantic-release` for versioning and using a bash script with vscode tasks to push to pypi. This works pretty well.
 
 ## 2024.02.12
 
@@ -51,7 +60,7 @@ breakpoint line 257 right after `self._import_call_file_prefix = import_call_fil
 ## 2024.02.08
 
 - 🔲 **small build** try a standard path without time on `SmfKuzmin2018`
-- [ ] Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data. All but `SmfKuzmin2018` should need this.
+- 🔲 Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data. All but `SmfKuzmin2018` should need this.
 
 ## 2024.02.07
 

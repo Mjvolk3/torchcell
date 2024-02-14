@@ -47,6 +47,8 @@ ARG NEO4J_URI=https://dist.neo4j.org/neo4j-enterprise-4.4.30-unix.tar.gz
 RUN addgroup --gid 7474 --system neo4j && adduser --uid 7474 --system --no-create-home --home "${NEO4J_HOME}" --ingroup neo4j neo4j
 
 COPY ./local-package/* /startup/
+# @mjvolk3 Otherwise the docker-entrypoint.sh is not executable in the container
+COPY --chmod=755 ./local-package/* /startup/
 
 RUN apt update \
     && apt-get install -y curl gcc git jq make procps tini wget \

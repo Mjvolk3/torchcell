@@ -27,6 +27,7 @@ conda env list
 
 bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
 
+docker start tc-neo4j
 docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
 docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
 

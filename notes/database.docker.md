@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1707857874822
+updated: 1707890991384
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -256,5 +256,3 @@ docker exec -it tc--neo4j python -m pip install torchcell --upgrade
 ```bash
 apptainer exec --writable-tmpfs <container_path> python -m pip install torchcell --upgrade
 ```
-
-## 2024.02.13 - Troubleshooting Docker Build Local

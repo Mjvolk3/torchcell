@@ -19,3 +19,5 @@ some more
 and more
 
 more hippidy
+
+rm build

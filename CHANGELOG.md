@@ -2,6 +2,17 @@
 
 
 
+## v0.1.11 (2024-02-14)
+
+### Fix
+
+* fix: tag before or after? ([`2349e7f`](https://github.com/Mjvolk3/torchcell/commit/2349e7fd3a77e03fcac50ea5fe6fc98bb134d363))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7cfa842`](https://github.com/Mjvolk3/torchcell/commit/7cfa842f930e7611b514e8df94cef1a41558b4cb))
+
+
 ## v0.1.10 (2024-02-14)
 
 ### Fix

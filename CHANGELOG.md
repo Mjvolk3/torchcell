@@ -2,6 +2,17 @@
 
 
 
+## v0.1.4 (2024-02-14)
+
+### Fix
+
+* fix: version variables ([`2bbea29`](https://github.com/Mjvolk3/torchcell/commit/2bbea298284a4afb3ac7984409b87101b7bde7a7))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1161a6a`](https://github.com/Mjvolk3/torchcell/commit/1161a6a82e97d2f3fceff082665146e5f5296539))
+
+
 ## v0.1.3 (2024-02-14)
 
 ### Fix

@@ -2,6 +2,17 @@
 
 
 
+## v0.1.12 (2024-02-14)
+
+### Fix
+
+* fix: publish whoas ([`be93561`](https://github.com/Mjvolk3/torchcell/commit/be93561779c91c8431de8a8b2022c9a7171d1091))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`da13bdd`](https://github.com/Mjvolk3/torchcell/commit/da13bdd3af3eb2e7012143209939f0cc8adb392d))
+
+
 ## v0.1.11 (2024-02-14)
 
 ### Fix

@@ -2,6 +2,17 @@
 
 
 
+## v0.3.0 (2024-02-14)
+
+### Feature
+
+* feat: after v0.1.0 ([`f687905`](https://github.com/Mjvolk3/torchcell/commit/f687905b4cbd12ffde0ece56877eae9034fe7271))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1a2a61d`](https://github.com/Mjvolk3/torchcell/commit/1a2a61d44ef587b5146b19d85cdfcb3241ba3004))
+
+
 ## v0.2.0 (2024-02-14)
 
 ### Feature

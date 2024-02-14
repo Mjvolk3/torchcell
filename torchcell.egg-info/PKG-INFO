@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.0.34
+Version: 0.1.12
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -50,7 +50,7 @@ Requires-Dist: pronto>=2.5.4
 Requires-Dist: nxontology>=0.5.0
 Requires-Dist: owlready2>=0.45
 Requires-Dist: python-dotenv>=1.0.0
-Requires-Dist: bumpver>=2023.1129
+Requires-Dist: python-semantic-release>=9.0.3
 Requires-Dist: pre-commit>=3.3.3
 Requires-Dist: pip-tools>=7.1.0
 Requires-Dist: snakeviz>=2.2.0
@@ -60,7 +60,7 @@ Requires-Dist: neo4j>=4.4.11
 Requires-Dist: cliff>=4.5.0
 Provides-Extra: dev
 Requires-Dist: black; extra == "dev"
-Requires-Dist: bumpver; extra == "dev"
+Requires-Dist: semantic-release; extra == "dev"
 Requires-Dist: pip-tools; extra == "dev"
 Requires-Dist: pytest; extra == "dev"
 
@@ -73,3 +73,21 @@ Community: Add slack, add notes url
 Packaging: Add packing <!-- ![Python application](https://github.com/mjvolk3/torchcell/actions/workflows/python_app.yaml/badge.svg) -->
 
 Testing: ![Code Styling](https://github.com/mjvolk3/torchcell/workflows/Code%20Styling/badge.svg) [![codecov](https://codecov.io/gh/mjvolk3/torchcell/branch/main/graph/badge.svg)](https://codecov.io/gh/mjvolk3/torchcell)
+
+semantic versioning. try minor `"major"=="BREAKING CHANGE:"`, `"minor"=="feat:"`, `"major"=="fix:"`
+
+try minor.
+
+anotha one.
+
+some more
+
+and more
+
+more hippidy
+
+rm build
+
+uhhhh plz publish to pypi
+
+again.

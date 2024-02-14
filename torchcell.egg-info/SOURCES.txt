@@ -12,6 +12,7 @@ torchcell/delete_subset.py
 torchcell/mypy_check.py
 torchcell/ncbi.py
 torchcell/neo4j_example.py
+torchcell/neo4j_fitness_lmdb.py
 torchcell/neo4j_fitness_query.py
 torchcell/prof.py
 torchcell/py.typed

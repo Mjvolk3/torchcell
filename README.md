@@ -10,4 +10,4 @@ Testing: ![Code Styling](https://github.com/mjvolk3/torchcell/workflows/Code%20S
 
 semantic versioning. try minor `"major"=="BREAKING CHANGE:"`, `"minor"=="feat:"`, `"major"=="fix:"`
 
-try patch
+try minor.

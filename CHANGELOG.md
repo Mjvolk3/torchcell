@@ -2,6 +2,13 @@
 
 
 
+## v0.1.13 (2024-02-14)
+
+### Fix
+
+* fix: publishing scripts pypi ([`a367116`](https://github.com/Mjvolk3/torchcell/commit/a3671166939e117e3ce353310b29268f89548bb9))
+
+
 ## v0.1.12 (2024-02-14)
 
 ### Fix

@@ -2,6 +2,17 @@
 
 
 
+## v0.1.5 (2024-02-14)
+
+### Fix
+
+* fix: semantic patch test ([`aca0812`](https://github.com/Mjvolk3/torchcell/commit/aca0812bcfca8af57aa119884bd830e6c7770698))
+
+### Unknown
+
+* Create python-publish.yml ([`0d134e3`](https://github.com/Mjvolk3/torchcell/commit/0d134e341e2bb639244d92822560c0a8c82c6269))
+
+
 ## v0.1.4 (2024-02-14)
 
 ### Fix

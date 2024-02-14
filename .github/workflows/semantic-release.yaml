@@ -3,7 +3,7 @@ name: Semantic Release
 on:
   push:
     branches:
-      - main  # Adjust as needed if your main branch has a different name.
+      - main  # Change this to 'master' if your main branch is named 'master'
 
 jobs:
   release:
@@ -14,38 +14,11 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'  # Specify the Python version you need
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install twine setuptools wheel  # Install twine and any other needed packages
-
     - name: Python Semantic Release
-      id: semantic_release
-      uses: python-semantic-release/python-semantic-release@v8.0.0  # Use a specific version instead of 'master'
+      uses: python-semantic-release/python-semantic-release@master
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Build and Publish to PyPI
-      if: steps.semantic_release.outputs.released == 'true'
-      run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/* --skip-existing
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-
-    - name: Upload Release Artifacts to GitHub Releases
-      uses: python-semantic-release/upload-to-gh-release@main
-      if: steps.semantic_release.outputs.released == 'true'
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        files: dist/*  # Specify the path to the artifacts you want to upload

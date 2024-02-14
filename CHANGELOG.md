@@ -2,6 +2,17 @@
 
 
 
+## v0.1.15 (2024-02-14)
+
+### Fix
+
+* fix: bumpversion example, lots of db local-packages ([`ee61890`](https://github.com/Mjvolk3/torchcell/commit/ee61890877828d904ab0871e44c19a5589551de7))
+
+### Unknown
+
+* removed python publish since cannot condition on semantic release ([`78683c8`](https://github.com/Mjvolk3/torchcell/commit/78683c836d892f49c2d223f23922be5f924b7a04))
+
+
 ## v0.1.14 (2024-02-14)
 
 ### Fix

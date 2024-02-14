@@ -2,7 +2,14 @@
 
 
 
-## v0.0.3 (2024-02-13)
+## v0.0.4 (2024-02-13)
+
+### Unknown
+
+* toml update ([`28b1645`](https://github.com/Mjvolk3/torchcell/commit/28b1645dc35614ddf7bb63fd932ca34546a88836))
+
+
+## v0.0.3 (2024-02-14)
 
 
 ## v0.0.2 (2024-02-14)

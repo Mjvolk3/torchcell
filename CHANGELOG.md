@@ -2,7 +2,18 @@
 
 
 
-## v0.1.1 (2024-02-13)
+## v0.1.2 (2024-02-13)
+
+### Fix
+
+* fix: more readme ([`f459b79`](https://github.com/Mjvolk3/torchcell/commit/f459b79e9408e2087af35ba3161a215555d4729c))
+
+### Unknown
+
+* some read me yo ([`e96034f`](https://github.com/Mjvolk3/torchcell/commit/e96034f906d358998c81b8fa3fc248ea9bbc9611))
+
+
+## v0.1.1 (2024-02-14)
 
 ### Feature
 

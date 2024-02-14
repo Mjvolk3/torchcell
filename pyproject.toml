@@ -101,4 +101,4 @@ version_variables = [
 ]
 branch = "main"
 upload_to_pypi = "true"
-build_command = "python -m build"
+# build_command = "python -m build"

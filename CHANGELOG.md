@@ -2,6 +2,17 @@
 
 
 
+## v0.1.8 (2024-02-14)
+
+### Fix
+
+* fix: trying auto pypi with new push recognition ([`f6b23a3`](https://github.com/Mjvolk3/torchcell/commit/f6b23a3b9980d59ae2fb48516ba85d0b1f62e29a))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b2d39a7`](https://github.com/Mjvolk3/torchcell/commit/b2d39a700844fc9f5bc792f79c3bde5c39e80b17))
+
+
 ## v0.1.7 (2024-02-14)
 
 ### Fix

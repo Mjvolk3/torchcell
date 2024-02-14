@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1707883471620
+updated: 1707883580812
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -11,9 +11,9 @@ created: 1690514887023m
 ## 2024.02.13
 
 - [x] **Neo4j Enterprise**, switch to enterprise since free for academics according to @Sebastian-Lobentanzer → changed everything over to enterprise. For this you must download `/local-package`, and the `entrypoint.sh`. Can later automate this. → Verified [Neo4j Licensing](https://neo4j.com/open-core-and-neo4j/), "Universities for teaching and learning" then can be transitioned to altruistic projects or something else like it, but we should still be able to use Enterprise. We want to do this for the multiple db problem, start and stop neo4j issues.
-- [ ] **Neo4j Enterprise** test image build to see if it works → [[2024.02.13 - Docker image Startup vs Apptainer image startup|dendron://torchcell/database.apptainer#20240213---docker-image-startup-vs-apptainer-image-startup]] → Build was exited due to vscode lag. Restarted. 🐢 This image buid seems even slower than the community one.
-- [ ] **semantic versioning** → updates to files locally now work as expected, similar to `bumpver` [python-semantic-release](https://python-semantic-release.readthedocs.io/en/latest/configuration.html#config-build-command). Dropping bumpver from dependencies.
-- []
+- [x] **Neo4j Enterprise** test image build to see if it works → [[2024.02.13 - Docker image Startup vs Apptainer image startup|dendron://torchcell/database.apptainer#20240213---docker-image-startup-vs-apptainer-image-startup]] → Build was exited due to vscode lag. Restarted. 🐢 This image buid seems even slower than the community one. → pulled image.
+- [x] **semantic versioning** → updates to files locally now work as expected, similar to `bumpver` [python-semantic-release](https://python-semantic-release.readthedocs.io/en/latest/configuration.html#config-build-command). Dropping bumpver from dependencies.
+- [ ] **python publish** add publish github action → `"workflows/python-publish.yaml"` →
 
 ## 2024.02.12
 

@@ -1,30 +1,27 @@
 # CHANGELOG
 
-## v0.2.2 (2024-02-13)
 
-### Fix
 
-* fix: new semantic checkout ([`d3508f7`](https://github.com/Mjvolk3/torchcell/commit/d3508f79cfbd9f5d0a12a59403f6560af65078b1))
-
-### Unknown
-
-* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b1a38de`](https://github.com/Mjvolk3/torchcell/commit/b1a38de8de54ab59c0099079cc4d1c265d789839))
-
-## v0.2.1 (2024-02-14)
-
-### Fix
-
-* fix: new semantic release ([`3d0792a`](https://github.com/Mjvolk3/torchcell/commit/3d0792ab6f792a7fc1e5ba29819d8991ac7d8ac0))
-
-## v0.2.0 (2024-02-14)
+## v0.2.0 (2024-02-13)
 
 ### Feature
 
 * feat: try minor ([`2374bf1`](https://github.com/Mjvolk3/torchcell/commit/2374bf1a9caed62d6c90c155a6a2a238a459c9ae))
 
+### Fix
+
+* fix: new semantic checkout ([`d3508f7`](https://github.com/Mjvolk3/torchcell/commit/d3508f79cfbd9f5d0a12a59403f6560af65078b1))
+
+* fix: new semantic release ([`3d0792a`](https://github.com/Mjvolk3/torchcell/commit/3d0792ab6f792a7fc1e5ba29819d8991ac7d8ac0))
+
 ### Unknown
 
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`0bbbdad`](https://github.com/Mjvolk3/torchcell/commit/0bbbdadcef05066c1fa59634951ae517e8594570))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b1a38de`](https://github.com/Mjvolk3/torchcell/commit/b1a38de8de54ab59c0099079cc4d1c265d789839))
+
 * try patch wrong... ([`cff0d42`](https://github.com/Mjvolk3/torchcell/commit/cff0d42e7532c35655ca4de8b89e1b1a88d973a1))
+
 
 ## v0.1.0 (2024-02-14)
 
@@ -42,15 +39,19 @@
 
 * BREAKING CHANGE: semantic release ([`4d10292`](https://github.com/Mjvolk3/torchcell/commit/4d10292350041a1007a43bc31157557c46027d89))
 
+
 ## v0.0.4 (2024-02-14)
 
 ### Unknown
 
 * toml update ([`28b1645`](https://github.com/Mjvolk3/torchcell/commit/28b1645dc35614ddf7bb63fd932ca34546a88836))
 
+
 ## v0.0.3 (2024-02-14)
 
+
 ## v0.0.2 (2024-02-14)
+
 
 ## v0.0.1 (2024-02-14)
 
@@ -386,7 +387,7 @@
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`74a718e`](https://github.com/Mjvolk3/torchcell/commit/74a718edb86e652e80850037e084ca92988ff910))
 
-* exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
+*  exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
 
 * minimal protT5 ([`fda7f19`](https://github.com/Mjvolk3/torchcell/commit/fda7f198ed0c60043bda5f4bc3538e261b9dd78d))
 

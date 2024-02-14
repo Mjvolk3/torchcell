@@ -396,7 +396,7 @@
                 "command": "osascript",
                 "args": [
                     "-e",
-                    "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build_image_fresh_linux-arm.sh\""
+                    "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build-image-fresh_linux-arm.sh\""
                 ],
                 "problemMatcher": [],
                 "group": {

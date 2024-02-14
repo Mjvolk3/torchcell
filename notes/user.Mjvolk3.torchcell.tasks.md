@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1707953509853
+updated: 1707953894269
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -12,11 +12,12 @@ created: 1690514887023m
 
 - [x] Spin up tc-neo4j container. `chmod +x  database/local-package/docker-entrypoint.sh`. → Forgot this line `COPY --chmod=755 ./local-package/* /startup/` so need to rebuild 😡
 - [x] Document **python publish** → [[Pypi Publish|dendron://torchcell/pypi-publish]], [[Versioning|dendron://torchcell/versioning]]
-- [ ] Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data. All but `SmfKuzmin2018` should need this.
+- [ ] Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data.
 
 - [ ] **small build** - currently only the `SmfKuzmin2018` was being used for testing. Check other fitness adapters.
 
 - [ ] **small build** Fix issue with `SmfCostanzo2016`, cannot pickle Environment. → Rewrote `get_nodes` to find error now cannot download file. waiting...
+
 - [ ] **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
 
 - [ ] **small build** try small bulk import.

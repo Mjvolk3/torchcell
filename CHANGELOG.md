@@ -2,6 +2,17 @@
 
 
 
+## v0.1.10 (2024-02-14)
+
+### Fix
+
+* fix: add environment ([`96f7ca0`](https://github.com/Mjvolk3/torchcell/commit/96f7ca091a4e6a4ed400744832e6adfb6d848f67))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`cb4b84c`](https://github.com/Mjvolk3/torchcell/commit/cb4b84c5248eeea10658cb04943720a31400d443))
+
+
 ## v0.1.9 (2024-02-14)
 
 ### Fix

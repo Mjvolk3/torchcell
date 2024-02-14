@@ -1,3 +1,3 @@
 #requirements.txt
 biocypher>=0.5.35 
-torchcell>=0.0.34
+torchcell>=1.0.0

@@ -3,4 +3,4 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/__version__.py
 # Test file: tests/torchcell/test___version__.py
 
-__version__ = "0.0.34"  # Linked to bumpver in toml
+__version__ = "1.0.0"  # Linked to bumpver in toml

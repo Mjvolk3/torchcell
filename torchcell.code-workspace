@@ -407,7 +407,7 @@
             {
                 "label": "tc: publish pypi",
                 "type": "shell",
-                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/Documents/projects/torchcell/notes/assets/scripts/tc_publish_pypi.sh",
+                "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
                 "problemMatcher": [],
             },
         ],

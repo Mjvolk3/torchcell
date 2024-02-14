@@ -1,7 +1,7 @@
 # pyproject.toml
 
 [build-system]
-requires      = ["setuptools>=69.0.2", "wheel"]
+requires = ["setuptools>=69.0.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -48,10 +48,7 @@ skip_magic_trailing_comma = true # true in torchgeo
 python_version = "3.11"
 ignore_missing_imports = true
 show_error_codes = true
-files = [
-    "torchcell/**/*.py",
-    "tests/**/*.py"
-]
+files = ["torchcell/**/*.py", "tests/**/*.py"]
 
 # Strict
 warn_unused_configs = true
@@ -75,12 +72,12 @@ match = "torchcell/.*\\.py"
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 [tool.setuptools.dynamic]
-dependencies = {file = ["env/requirements.txt"]}
+dependencies = { file = ["env/requirements.txt"] }
 # Doesn't allow ordering
 # dependencies = {file = ["env/requirements.txt", "env/requirements_dependent.txt"]}
 
 # optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
-version = {attr = "torchcell.__version__"}
+version = { attr = "torchcell.__version__" }
 
 [tool.setuptools.package-data]
 torchcell = ["py.typed"]
@@ -99,7 +96,9 @@ include = ["torchcell*"]
 # "env/requirements-tc-graph.txt" = ["torchcell>={version}"]
 
 [tool.semantic_release]
-version_variable = "pyproject.toml:version, torchcell/__version__.py:__version__"
+version_variables = [
+    "pyproject.toml:version, torchcell/__version__.py:__version__",
+]
 branch = "main"
 upload_to_pypi = "true"
 build_command = "python -m build"

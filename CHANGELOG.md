@@ -2,6 +2,17 @@
 
 
 
+## v0.1.9 (2024-02-14)
+
+### Fix
+
+* fix: try tag push again ([`d70ad0a`](https://github.com/Mjvolk3/torchcell/commit/d70ad0aa0111d57678d1ac8341c86ebf7952c29e))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`f292e01`](https://github.com/Mjvolk3/torchcell/commit/f292e014812a539d8733ce1a01f566b0e1005449))
+
+
 ## v0.1.8 (2024-02-14)
 
 ### Fix

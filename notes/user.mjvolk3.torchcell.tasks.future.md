@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1707854710152
+updated: 1707952537800
 created: 1675887826601
 ---
 ## Future
@@ -11,7 +11,7 @@ created: 1675887826601
 - [ ] Publish package for Junyu and Le to use
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Change `reference_environment` to `environment`
-- [ ] #pr.biocypher, path mapping `import_call_file_prefix`
+- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix`
 - [ ] #pr.biocypher, message @Sebastian-Lobentanzer about collectri pr accept on readme
 - [ ] #pr.biocypher minimal example for docker `None` import.
 - [ ] #pr.biocypher update tutorials with Neo4j Bloom images.

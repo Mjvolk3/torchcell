@@ -21,3 +21,5 @@ and more
 more hippidy
 
 rm build
+
+uhhhh plz publish to pypi

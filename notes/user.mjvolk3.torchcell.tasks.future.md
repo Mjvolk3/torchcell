@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1708010595342
+updated: 1708040987948
 created: 1675887826601
 ---
 ## Future
@@ -18,6 +18,17 @@ created: 1675887826601
 - [ ] #pr.biocypher minimal example for docker `None` import.
 - [ ] #pr.biocypher update tutorials with Neo4j Bloom images.
 - [ ] Notify @Sebastian-Lobentanzer about #pr.biocypher [Collectri ReadMe Update](https://github.com/biocypher/collectri/pull/1).
+
+- [ ] Front matter fix
+
+`.py` on github not showing up...
+
+```python
+# torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
+```
 
 ## Far Future
 

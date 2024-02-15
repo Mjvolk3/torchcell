@@ -37,7 +37,7 @@ def main() -> str:
 
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        output_directory=osp.join(DATA_ROOT, "biocypher-out", time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )

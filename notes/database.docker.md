@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1707890991384
+updated: 1708012400971
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -177,9 +177,10 @@ docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocy
 ```
 
 - For writing the the lmdb database we need access to the `/data/torchcell` dir. ⛔️ `/data` is already being used by neo4j. It contains the dbms. It should not be overwritten.
+- We also added the `NEO4J_ACCEPT_LICENSE_AGREEMENT` to the env. This could be added to the base image, but it is nice for now to keep it clear that we are using enterprise as academics.
 
 ```bash
-docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/data  -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 ```
 
 ```bash
@@ -255,4 +256,54 @@ docker exec -it tc--neo4j python -m pip install torchcell --upgrade
 
 ```bash
 apptainer exec --writable-tmpfs <container_path> python -m pip install torchcell --upgrade
+```
+
+## Using cypher-shell to Access torchcell Database
+
+Once the docker container is started you can run the cypher-shell interactively.
+
+```bash
+% docker start tc-neo4j
+% docker exec -it tc-neo4j /bin/bash
+% cypher-shell
+# enter username and password
+> SHOW DATABASES;
+# at first only neo4j and system will appear
+> :use system;
+> CREATE DATABASE torchcell;
+> SHOW DATABASES;
+# now torchcell should appear
+> MATCH (n)
+  RETURN (n) LIMIT (10);
+# print out 10 data nodes. 
+> STOP DATABASE torchcell;
+```
+
+### Using cypher-shell to Access torchcell Database - Stop Database to Allow Bulk Import
+
+The `requestedStatus`, shows if the database has been stopped with the `"online"` or `"offline"` distinction. If we do not do this we get an error that the database is open and needs to be closed for bulk import.
+
+```BASH
+neo4j@neo4j> SHOW DATABASES;
++------------------------------------------------------------------------------------------------------------------------------------+
+| name        | aliases | access       | address          | role         | requestedStatus | currentStatus | error | default | home  |
++------------------------------------------------------------------------------------------------------------------------------------+
+| "neo4j"     | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | TRUE    | TRUE  |
+| "system"    | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | FALSE   | FALSE |
+| "torchcell" | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | FALSE   | FALSE |
++------------------------------------------------------------------------------------------------------------------------------------+
+
+3 rows
+ready to start consuming query after 685 ms, results consumed after another 61 ms
+neo4j@neo4j> STOP DATABASE torchcell;
+0 rows
+ready to start consuming query after 496 ms, results consumed after another 0 ms
+neo4j@neo4j> SHOW DATABASES;
++------------------------------------------------------------------------------------------------------------------------------------+
+| name        | aliases | access       | address          | role         | requestedStatus | currentStatus | error | default | home  |
++------------------------------------------------------------------------------------------------------------------------------------+
+| "neo4j"     | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | TRUE    | TRUE  |
+| "system"    | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | FALSE   | FALSE |
+| "torchcell" | []      | "read-write" | "localhost:7687" | "standalone" | "offline"       | "offline"     | ""    | FALSE   | FALSE |
++------------------------------------------------------------------------------------------------------------------------------------+
 ```

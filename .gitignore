@@ -75,4 +75,5 @@ dist/
 # database
 database/slurm/*
 database/biocypher-out/*
-
+## some of this should be kept for database startup.
+database/*

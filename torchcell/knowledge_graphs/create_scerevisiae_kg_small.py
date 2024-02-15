@@ -43,12 +43,12 @@ def main() -> str:
     )
     # Ordered adapters from smallest to largest
     adapters = [
-        SmfCostanzo2016Adapter(
-            dataset=SmfCostanzo2016Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-            ),
-            num_workers=mp.cpu_count(),
-        ),
+        # SmfCostanzo2016Adapter(
+        #     dataset=SmfCostanzo2016Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+        #     ),
+        #     num_workers=mp.cpu_count(),
+        # ),
         # DmfCostanzo2016Adapter(
         #     dataset=DmfCostanzo2016Dataset(
         #         root=osp.join(
@@ -58,12 +58,12 @@ def main() -> str:
         #     ),
         #     num_workers=mp.cpu_count(),
         # ),
-        # SmfKuzmin2018Adapter(
-        #     dataset=SmfKuzmin2018Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-        #     ),
-        #     num_workers=mp.cpu_count(),
-        # ),
+        SmfKuzmin2018Adapter(
+            dataset=SmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
         # DmfKuzmin2018Adapter(
         #     dataset=DmfKuzmin2018Dataset(
         #         root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")

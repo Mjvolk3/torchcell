@@ -24,61 +24,30 @@ class SmfCostanzo2016Adapter:
         self.dataset = dataset
         self.num_workers = num_workers
 
-    # def get_nodes(self) -> Generator[BioCypherNode, None, None]:
-    #     methods = [
-    #         self._get_experiment_reference_nodes,
-    #         self._get_genome_nodes,
-    #         self._get_experiment_nodes,
-    #         self._get_genotype_nodes,
-    #         self._get_dataset_nodes,
-    #         # self._get_environment_nodes,
-    #         # self._get_media_nodes,
-    #         # self._get_temperature_nodes,
-    #         self._get_phenotype_nodes,
-    #     ]
+    def get_nodes(self) -> Generator[BioCypherNode, None, None]:
+        methods = [
+            self._get_experiment_reference_nodes,
+            self._get_genome_nodes,
+            self._get_experiment_nodes,
+            self._get_genotype_nodes,
+            self._get_dataset_nodes,
+            # self._get_environment_nodes,
+            # self._get_media_nodes,
+            # self._get_temperature_nodes,
+            self._get_phenotype_nodes,
+        ]
 
-    #     with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-    #         futures = [executor.submit(method) for method in methods]
-    #         for future in as_completed(futures):
-    #             try:
-    #                 node_generator = future.result()
-    #                 for node in node_generator:
-    #                     yield node
-    #             except Exception as exc:
-    #                 logger.error(
-    #                     f"Node generation method generated an exception: {exc}"
-    #                 )
-
-    def get_nodes(self):
-        for node in self._get_experiment_reference_nodes():
-            yield node
-        for node in self._get_genome_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_experiment_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_genotype_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_perturbation_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_environment_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_media_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_temperature_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_phenotype_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
-        for node in self._get_dataset_nodes():
-            assert isinstance(node, BioCypherNode)
-            yield node
+        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+            futures = [executor.submit(method) for method in methods]
+            for future in as_completed(futures):
+                try:
+                    node_generator = future.result()
+                    for node in node_generator:
+                        yield node
+                except Exception as exc:
+                    logger.error(
+                        f"Node generation method generated an exception: {exc}"
+                    )
 
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -371,6 +340,37 @@ class SmfCostanzo2016Adapter:
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
                             data["experiment"].phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
                         ),
                     },
                 )
@@ -943,6 +943,37 @@ class DmfCostanzo2016Adapter:
                     },
                 )
                 nodes.append(node)
+
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
         return nodes
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
@@ -1316,55 +1347,38 @@ if __name__ == "__main__":
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
     ## SMF
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = SmfCostanzo2016Dataset(
-        osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    )
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
-
-    ## DMF
     # bc = BioCypher(
     #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # # # dataset = DmfCostanzo2016Dataset(
-    # # #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
-    # # # )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_sub_10000"),
-    #     subset_n=1000,
-    #     preprocess=None,
+    # dataset = SmfCostanzo2016Dataset(
+    #     osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     # )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_100000",
-    #     subset_n=100000,
-    #     preprocess=None,
-    # )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e6",
-    #     subset_n=int(1e6),
-    #     preprocess=None,
-    # )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e7",
-    #     subset_n=int(1e7),
-    #     preprocess=None,
-    # )
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
     # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     # bc.write_import_call()
     # bc.write_schema_info(as_node=True)
-    # # bc.show_ontology_structure(to_disk=".")
-    # # print(bc.show_ontology_structure())
     # bc.summary()
+
+    ## DMF
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    )
+    dataset = DmfCostanzo2016Dataset(
+        root="data/torchcell/dmf_costanzo2016_subset_n_1e5",
+        subset_n=int(1e5),
+        preprocess=None,
+    )
+    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()

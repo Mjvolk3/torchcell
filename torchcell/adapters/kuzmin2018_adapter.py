@@ -990,6 +990,37 @@ class DmfKuzmin2018Adapter:
                     },
                 )
                 nodes.append(node)
+
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
         return nodes
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
@@ -1600,6 +1631,37 @@ class TmfKuzmin2018Adapter:
                     },
                 )
                 nodes.append(node)
+
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            if phenotype_id not in seen_node_ids:
+                seen_node_ids.add(phenotype_id)
+                graph_level = data.reference.reference_phenotype.graph_level
+                label = data.reference.reference_phenotype.label
+                label_error = data.reference.reference_phenotype.label_error
+                fitness = data.reference.reference_phenotype.fitness
+                fitness_std = data.reference.reference_phenotype.fitness_std
+
+                node = BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id=f"phenotype_{phenotype_id}",
+                    node_label="phenotype",
+                    properties={
+                        "graph_level": graph_level,
+                        "label": label,
+                        "label_error": label_error,
+                        "fitness": fitness,
+                        "fitness_std": fitness_std,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_phenotype.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
         return nodes
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
@@ -1896,21 +1958,21 @@ if __name__ == "__main__":
     print(BIOCYPHER_CONFIG_PATH)
     print(osp.exists(BIOCYPHER_CONFIG_PATH))
     ## Smf
-    bc = BioCypher(
-        output_directory=osp.join("database/biocypher-out", time),
-        # output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = SmfKuzmin2018Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-    )
-    adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    bc.write_nodes(adapter.get_nodes())
+    # bc = BioCypher(
+    #     output_directory=osp.join("database/biocypher-out", time),
+    #     # output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = SmfKuzmin2018Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+    # )
+    # adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
+    # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
 
     # ## Dmf
     # bc = BioCypher(
@@ -1920,7 +1982,6 @@ if __name__ == "__main__":
     # )
     # dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
     # adapter = DmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # print(bc.show_ontology_structure())
     # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     # bc.write_import_call()

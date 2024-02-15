@@ -6,17 +6,17 @@
 from biocypher import BioCypher
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
-    # DmfCostanzo2016Adapter,
-    # SmfKuzmin2018Adapter,
-    # DmfKuzmin2018Adapter,
-    # TmfKuzmin2018Adapter,
+    DmfCostanzo2016Adapter,
+    SmfKuzmin2018Adapter,
+    DmfKuzmin2018Adapter,
+    TmfKuzmin2018Adapter,
 )
 from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
-    # DmfCostanzo2016Dataset,
-    # SmfKuzmin2018Dataset,
-    # DmfKuzmin2018Dataset,
-    # TmfKuzmin2018Dataset,
+    DmfCostanzo2016Dataset,
+    SmfKuzmin2018Dataset,
+    DmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
 )
 import logging
 from dotenv import load_dotenv
@@ -48,12 +48,36 @@ def main() -> str:
                 root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
             ),
             num_workers=mp.cpu_count(),
-        )
+        ),
+        DmfCostanzo2016Adapter(
+            dataset=DmfCostanzo2016Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_subset_n_1e5")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
+        SmfKuzmin2018Adapter(
+            dataset=SmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
+        DmfKuzmin2018Adapter(
+            dataset=DmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
+        TmfKuzmin2018Adapter(
+            dataset=TmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
     ]
 
     for adapter in adapters:
         bc.write_nodes(adapter.get_nodes())
-        # bc.write_edges(adapter.get_edges())
+        bc.write_edges(adapter.get_edges())
 
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()

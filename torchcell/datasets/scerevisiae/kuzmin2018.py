@@ -82,7 +82,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -93,7 +93,7 @@ class SmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -124,7 +124,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -502,7 +502,7 @@ class DmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -513,7 +513,7 @@ class DmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -544,7 +544,7 @@ class DmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -885,7 +885,7 @@ class TmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -896,7 +896,7 @@ class TmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -927,7 +927,7 @@ class TmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 

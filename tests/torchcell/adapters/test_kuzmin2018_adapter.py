@@ -7,10 +7,13 @@
 import hashlib
 import logging
 import os
+import os.path as osp
 import shutil
+from random import randint
 
 import pytest
 from biocypher import BioCypher
+from dotenv import load_dotenv
 
 from torchcell.adapters import (
     DmfKuzmin2018Adapter,
@@ -22,6 +25,11 @@ from torchcell.datasets.scerevisiae import (
     SmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
 )
+
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
 
 class LogCaptureHandler(logging.Handler):
@@ -45,9 +53,17 @@ def log_capture():
 def test_no_duplicate_warnings_SmfKuzmin2018Dataset(log_capture):
     logger, handler = log_capture
 
-    bc = BioCypher()
-    dataset = SmfKuzmin2018Dataset()
-    adapter = SmfKuzmin2018Adapter(dataset=dataset)
+    rand_int = hashlib.md5(str(randint(0, int(1e10))).encode()).hexdigest()
+    output_directory = osp.join(DATA_ROOT, "database/biocypher-out", rand_int)
+    bc = BioCypher(
+        output_directory=output_directory,
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    dataset = SmfKuzmin2018Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+    )
+    adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
 
     # Run the part of the script to be tested
     bc.write_nodes(adapter.get_nodes())
@@ -66,7 +82,7 @@ def test_no_duplicate_warnings_SmfKuzmin2018Dataset(log_capture):
         )
         if file_handler and hasattr(file_handler, "baseFilename"):
             log_file_path = file_handler.baseFilename
-            if os.path.exists(log_file_path):
+            if osp.exists(log_file_path):
                 os.remove(log_file_path)
     except OSError as e:
         print(f"Error: {e.filename} - {e.strerror}")
@@ -75,9 +91,17 @@ def test_no_duplicate_warnings_SmfKuzmin2018Dataset(log_capture):
 def test_no_duplicate_warnings_DmfKuzmin2018Dataset(log_capture):
     logger, handler = log_capture
 
-    bc = BioCypher()
-    dataset = DmfKuzmin2018Dataset()
-    adapter = DmfKuzmin2018Adapter(dataset=dataset)
+    rand_int = hashlib.md5(str(randint(0, int(1e10))).encode()).hexdigest()
+    output_directory = osp.join(DATA_ROOT, "database/biocypher-out", rand_int)
+    bc = BioCypher(
+        output_directory=output_directory,
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    dataset = DmfKuzmin2018Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
+    )
+    adapter = DmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
 
     # Run the part of the script to be tested
     bc.write_nodes(adapter.get_nodes())
@@ -96,7 +120,7 @@ def test_no_duplicate_warnings_DmfKuzmin2018Dataset(log_capture):
         )
         if file_handler and hasattr(file_handler, "baseFilename"):
             log_file_path = file_handler.baseFilename
-            if os.path.exists(log_file_path):
+            if osp.exists(log_file_path):
                 os.remove(log_file_path)
     except OSError as e:
         print(f"Error: {e.filename} - {e.strerror}")
@@ -105,10 +129,17 @@ def test_no_duplicate_warnings_DmfKuzmin2018Dataset(log_capture):
 def test_no_duplicate_warnings_TmfKuzmin2018Dataset(log_capture):
     logger, handler = log_capture
 
-    bc = BioCypher()
-    dataset = TmfKuzmin2018Dataset()
-    adapter = TmfKuzmin2018Adapter(dataset=dataset)
-
+    rand_int = hashlib.md5(str(randint(0, int(1e10))).encode()).hexdigest()
+    output_directory = osp.join(DATA_ROOT, "database/biocypher-out", rand_int)
+    bc = BioCypher(
+        output_directory=output_directory,
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    dataset = TmfKuzmin2018Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+    )
+    adapter = TmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
     # Run the part of the script to be tested
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())
@@ -126,7 +157,7 @@ def test_no_duplicate_warnings_TmfKuzmin2018Dataset(log_capture):
         )
         if file_handler and hasattr(file_handler, "baseFilename"):
             log_file_path = file_handler.baseFilename
-            if os.path.exists(log_file_path):
+            if osp.exists(log_file_path):
                 os.remove(log_file_path)
     except OSError as e:
         print(f"Error: {e.filename} - {e.strerror}")

@@ -2,11 +2,13 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1707952537800
+updated: 1708010595342
 created: 1675887826601
 ---
 ## Future
 
+- [ ] [[tests.torchcell.adapters.test_costanzo2016_adapter]] and [[tests.torchcell.adapters.test_kuzmin2018_adapter]] create extra longs when using multiprocessing that should be deleted.
+- [ ] Test for datasets that read out the docker neo4j bulk import report.
 - [ ] Automate the database folder creation given whichever architecture is specified, or detected.
 - [ ] Publish package for Junyu and Le to use
 - [ ] Get rid of the `preprocess_config.json

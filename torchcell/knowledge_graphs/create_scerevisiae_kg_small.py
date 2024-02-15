@@ -1,7 +1,8 @@
-# torchcell/knowledge_graphs/create_scerevisiae_kg.py
-# [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg.py
-# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
+# torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
+# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
+
 
 from biocypher import BioCypher
 from torchcell.adapters import (
@@ -34,10 +35,12 @@ def main() -> str:
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-
+    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
+    
+    
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "biocypher-out", time),
+        output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )

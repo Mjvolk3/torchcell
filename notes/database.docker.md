@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1708012400971
+updated: 1708036969754
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -183,6 +183,14 @@ docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocy
 docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 ```
 
+- Trying to map the data in `torchcell` to the data in database with minimal path disturbance.
+
+💥
+
+```bash
+docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/database/data/torchcell:/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+```
+
 ```bash
 docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 ```
@@ -282,6 +290,12 @@ Once the docker container is started you can run the cypher-shell interactively.
 ### Using cypher-shell to Access torchcell Database - Stop Database to Allow Bulk Import
 
 The `requestedStatus`, shows if the database has been stopped with the `"online"` or `"offline"` distinction. If we do not do this we get an error that the database is open and needs to be closed for bulk import.
+
+You can also start the database back up after it has been created, and stopped.
+
+```bash
+START DATABASE torchcell
+```
 
 ```BASH
 neo4j@neo4j> SHOW DATABASES;

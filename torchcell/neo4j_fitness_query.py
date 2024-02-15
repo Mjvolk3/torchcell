@@ -18,7 +18,7 @@ class Neo4jQueryDatabase:
     env: str = field(init=False, default=None)
 
     def __attrs_post_init__(self):
-        self.raw_dir = osp.join(self.root_dir, "raw", "data.lmdb")
+        self.raw_dir = osp.join(self.root_dir, "raw", "lmdb")
 
         if not osp.exists(self.raw_dir):
             os.makedirs(self.raw_dir)
@@ -62,9 +62,16 @@ if __name__ == "__main__":
         uri="bolt://localhost:7687",
         username="neo4j",
         password="torchcell",  # Replace with your actual password
-        root_dir="/torchcell_data/torchcell/dmf-2022_02_12",
+        root_dir="data/torchcell/dmf-2022_02_12",
         query="""
             MATCH (n)
             RETURN n LIMIT 10
         """,
     )
+
+## Get experiments and references
+# MATCH (e:Experiment)-[:GenotypeMemberOf]->(g:Genotype)-[:PerturbationMemberOf]->(p:Perturbation {perturbation_type: 'deletion'})
+# WITH e, COLLECT(p) AS perturbations
+# WHERE ANY(p IN perturbations WHERE p.perturbation_type = 'deletion')
+# MATCH (e)-[:Reference]->(ref:ExperimentReference)
+# RETURN e, ref

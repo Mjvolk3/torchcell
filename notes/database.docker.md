@@ -2,14 +2,14 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1708041138910
+updated: 1708061334420
 created: 1706953111718
 ---
 ## Instructions to Get Image
 
-1. We adapted the [Neo4j-4.4.30-community image](https://github.com/neo4j/docker-neo4j-publish/tree/dae45c73d0c9d68337f01f1711b225a8aef36411/4.4.30/bullseye/community/local-package) by adding python installation where we can install our environment for torchcell.
-2. [DownGit](https://minhaskamal.github.io/DownGit/#/home) used for installed the local-package dir.
-3. Build the Docker image. We put things into `/database`.
+(1) We adapted the [Neo4j-4.4.30-community image](https://github.com/neo4j/docker-neo4j-publish/tree/dae45c73d0c9d68337f01f1711b225a8aef36411/4.4.30/bullseye/community/local-package) by adding python installation where we can install our environment for torchcell.
+(2) [DownGit](https://minhaskamal.github.io/DownGit/#/home) used for installed the local-package dir.
+(3) Build the Docker image. We put things into `/database`.
 
 ```bash
 cd /Users/michaelvolk/Documents/projects/torchcell
@@ -22,7 +22,7 @@ Alternatively, no cache for complete rebuild.
 docker build --no-cache --platform linux/amd64 -t michaelvolk/tc-neo4j:0.0.1 -f database/Dockerfile.tc-neo4j-4.4.30-community database
 ```
 
-4. `docker login``
+(4) `docker login``
 
 ## 2024.02.08 - Troubleshooting Docker Build Local
 
@@ -191,9 +191,8 @@ docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7
 
 - We probably don't want biocypher-out to be in the project dir because it contains the bash script that is specific to the environment.
 
-💥
-
 ```bash
+💥
 docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 ```
 
@@ -326,4 +325,28 @@ neo4j@neo4j> SHOW DATABASES;
 | "system"    | []      | "read-write" | "localhost:7687" | "standalone" | "online"        | "online"      | ""    | FALSE   | FALSE |
 | "torchcell" | []      | "read-write" | "localhost:7687" | "standalone" | "offline"       | "offline"     | ""    | FALSE   | FALSE |
 +------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+## Docker Common Build Error - Invalid value for option '--nodes'
+
+Looks like this when we try to run the bash script. This error is a sign that there is a path error in the `"neo4j-admin-import-call.sh"`.
+
+```bash
+(myenv) root@4c41af09eaab:/var/lib/neo4j# /bin/bash biocypher-out/2024-02-16_01-07-26/neo4j-admin-import-call.sh
+Invalid value for option '--nodes' at index 0 ([<label>[:<label>]...=]<files>): Invalid nodes file: /Temperature-header.csv,/Temperature-part.* (java.lang.IllegalArgumentException: File '/Temperature-header.csv' doesn't exist)
+
+
+USAGE
+
+neo4j-admin import [--expand-commands] [--verbose]
+                   [--auto-skip-subsequent-headers[=<true/false>]]
+                   [--cache-on-heap[=<true/false>]] [--force[=<true/false>]]
+                   [--high-io[=<true/false>]] [--ignore-empty-strings
+                   [=<true/false>]] [--ignore-extra-columns[=<true/false>]]
+                   [--legacy-style-quoting[=<true/false>]] [--multiline-fields
+                   [=<true/false>]] [--normalize-types[=<true/false>]]
+                   [--skip-bad-entries-logging[=<true/false>]]
+                   [--skip-bad-relationships[=<true/false>]]
+                   [--skip-duplicate-nodes[=<true/false>
+...
 ```

@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708041313236
+updated: 1708061362014
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -13,12 +13,18 @@ created: 1690514887023m
 - [x] **small build** - Does the data disappear if the container is removed? → When we map use volumes to bind the `"database/data"` dir, we do not lose the data upon stopping and removing the container, `docker stop tc-neo4j`, `docker rm tc-neo4j.`
 - [x] **small build** - Document using `cypher-shell` from within the tc-neo4j container. → [[Using cypher-shell to Access torchcell Database|dendron://torchcell/database.docker#using-cypher-shell-to-access-torchcell-database]]
 - [x] **small build** try small bulk import. → Did with subset of `DmfCostanzo2016` and this works well. We just have a ton of debug duplicates messages since we are importing multiple datasets. The container only runs with 4 cpus. I believe I set this in docker desktop settings, but a bit unsure.
+- [x] **small build** document bulk import errors. → [[Docker Common Build Error - Invalid value for option '--nodes'|dendron://torchcell/database.docker#docker-common-build-error---invalid-value-for-option---nodes]]
+
 
 - [ ] **docker volumes** - map local `"data/torchcell"` to docker `"data/torchcell"`→ Adding torchcell environment environment variables to clean things up some. → Added `BIOCYPHER_OUT_PATH` since the bash script is specific to the `.env`
 
 ```bash
 pip install git+https://github.com/Mjvolk3/torchcell.git@main
 ```
+
+→ `"docker-entrypoint.sh"` runs every time a docker container spins up, but the docker image needs to rebuild to use this entrypoint... might want to have two separate docker files, one for latest stable that downloads the latest stable build, and the other for latest commit that pip installs from source. This second one will be most useful to me immediately. I will try another build overnight with the pip install. → Added the install to the entrypoint.
+
+- [ ] Path issue in my biocypher overwrite... maybe try to git pull my version to test.
 
 - [ ] **query index** - After building lmdb, also create experiment and graph label indices.
 

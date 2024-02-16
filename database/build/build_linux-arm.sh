@@ -22,16 +22,36 @@ docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7
 # Conda activate torchcell here since we are using the local library for the db writing.
 eval "$(conda shell.bash hook)"
 # conda init
-# source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh  
+# source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 # conda activate /Users/michaelvolk/opt/miniconda3/envs/torchcell
 conda env list
 
-bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
+# bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
 
 docker start tc-neo4j
-docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
-docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
+# TODO ehck if this software update works?
+docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+
+# docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
+# docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
+
+# Execute the Python script inside the Docker container and capture the output
+bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+
+echo "bash_script_path: $bash_script_path"
+# Remove any unwanted characters (e.g., Docker exec command may include newline characters)
+bash_script_path_cleaned=$(echo "${bash_script_path}" | tr -d '\r' | tr -d '\n')
+
+echo "bash_script_path_cleaned: $bash_script_path_cleaned"
+
+# Use the cleaned path in subsequent Docker exec commands
+# For example, setting execute permission on the bash script
+docker exec -it tc-neo4j /bin/bash -c "chmod +x ${bash_script_path_cleaned}"
+
+# Execute the bash script
+docker exec -it tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
 
 echo "Stopping container..."
 docker stop tc-neo4j
@@ -42,4 +62,3 @@ docker stop tc-neo4j
 echo "Build and run process completed."
 
 # database is already started so don't need to work about starting. Apparently this is due to entry point in Dockerfile.tc-neo4j but it doesn't seem to work this way with apptainer. Apptainer might not see entry point?
-

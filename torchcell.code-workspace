@@ -5,10 +5,6 @@
             "path": "."
         },
         {
-            "name": "assets",
-            "path": "notes/assets"
-        },
-        {
             "name": "______________",
             "path": "../______________"
         },
@@ -277,7 +273,7 @@
                     "close": false
                 }
             },
-            //TC
+            //TC - workspace scripts notes/assets/scripts
             {
                 "label": "tc: add frontmatter (py)",
                 "type": "shell",

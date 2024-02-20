@@ -2,11 +2,27 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708061362014
+updated: 1708468786365
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.02.20
+
+- [x] Add new scipy semantic versioning formatting.
+- [ ]
+
+## 2024.02.17
+
+- [x] UIUC containerization workflow → ![](./assets/drawio/database-containerization-uiuc.drawio.png)
+
+## 2024.02.16
+
+- [x] **small build** - fix path matching for neo4j. → Issue was that we need to uninstall biocypher before installing my forked branch.
+- [x] Summarize why we have separated certain files from docker. For instance, I have made the `"biocypher/config"` shared between the docker container and the local project for writing source. Then I have `"biocypher-out"` in both `"/database"` and in the local workspace. → It is easier to keep the config as part of the local workspace and it should possibly be put into the source so we can generate config dirs with the user repo. `"biocypher-out"` maintains database versioning for local, docker local, and apptainer remote. In theory if we use relative paths we could globus transfer `"biocypher-out"` for easy database transfer. Can give @Junyu-Chen credit for this as he asked about database transfer last machine learning subgroup.
+- [x] Ego net drawio ![](./assets/drawio/ego-net-fitness-model.drawio.png)
+- [x] Update containerization drawing drawio ![](./assets/drawio/database-containerization.drawio.png)
 
 ## 2024.02.15
 
@@ -14,7 +30,6 @@ created: 1690514887023m
 - [x] **small build** - Document using `cypher-shell` from within the tc-neo4j container. → [[Using cypher-shell to Access torchcell Database|dendron://torchcell/database.docker#using-cypher-shell-to-access-torchcell-database]]
 - [x] **small build** try small bulk import. → Did with subset of `DmfCostanzo2016` and this works well. We just have a ton of debug duplicates messages since we are importing multiple datasets. The container only runs with 4 cpus. I believe I set this in docker desktop settings, but a bit unsure.
 - [x] **small build** document bulk import errors. → [[Docker Common Build Error - Invalid value for option '--nodes'|dendron://torchcell/database.docker#docker-common-build-error---invalid-value-for-option---nodes]]
-
 
 - [ ] **docker volumes** - map local `"data/torchcell"` to docker `"data/torchcell"`→ Adding torchcell environment environment variables to clean things up some. → Added `BIOCYPHER_OUT_PATH` since the bash script is specific to the `.env`
 

@@ -17,7 +17,7 @@ echo "Running container..."
 
 # docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/database/data:/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
 # Conda activate torchcell here since we are using the local library for the db writing.
 eval "$(conda shell.bash hook)"
@@ -38,13 +38,14 @@ docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/bi
 # docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
 
 # Execute the Python script inside the Docker container and capture the output
-bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+# bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+bash_script_path_cleaned=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 
-echo "bash_script_path: $bash_script_path"
+# echo "bash_script_path: $bash_script_path"
 # Remove any unwanted characters (e.g., Docker exec command may include newline characters)
-bash_script_path_cleaned=$(echo "${bash_script_path}" | tr -d '\r' | tr -d '\n')
+# bash_script_path_cleaned=$(echo "${bash_script_path}" | tr -d '\r' | tr -d '\n')
 
-echo "bash_script_path_cleaned: $bash_script_path_cleaned"
+# echo "bash_script_path_cleaned: $bash_script_path_cleaned"
 
 # Use the cleaned path in subsequent Docker exec commands
 # For example, setting execute permission on the bash script

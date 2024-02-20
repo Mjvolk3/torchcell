@@ -2,131 +2,142 @@
 
 
 
-## v0.1.15 (2024-02-14)
+## v0.1.16 (2024-02-20)
 
 ### Fix
 
-* fix: bumpversion example, lots of db local-packages ([`ee61890`](https://github.com/Mjvolk3/torchcell/commit/ee61890877828d904ab0871e44c19a5589551de7))
+* MAINT: scipy parser ([`5475aa1`](https://github.com/Mjvolk3/torchcell/commit/5475aa138e6626e5eb7cf5991cc8e4663a3daa88))
 
 ### Unknown
+
+* drawings and build ([`0c07330`](https://github.com/Mjvolk3/torchcell/commit/0c0733044eabc1dfc279db2ca71e33ddc4bf5ced))
+
+* update builds ([`333f38c`](https://github.com/Mjvolk3/torchcell/commit/333f38c5c2ea1b622d8b7992f5723e8e5b774859))
+
+* update output dir again according the .env in local v docker, updated .env ([`72ad28c`](https://github.com/Mjvolk3/torchcell/commit/72ad28cfe5b8daad861506d356e45217df3588c9))
+
+* update output dir ([`913cee6`](https://github.com/Mjvolk3/torchcell/commit/913cee6111c5861d6cae45d2ff1eb1eca0192d50))
+
+* update graph to working smf kuzmin ([`0781e27`](https://github.com/Mjvolk3/torchcell/commit/0781e27c3f3e47359e37082a556857927eb03977))
+
+* perfecting the config ([`8b3b0b0`](https://github.com/Mjvolk3/torchcell/commit/8b3b0b0f12480919fcddc0a612caf6a9c30ad302))
+
+* docker local first small build bulk import ([`80ea50d`](https://github.com/Mjvolk3/torchcell/commit/80ea50dd95d3d508c7a1eb186711f92bcdee01ff))
+
+* builds for delta matching local database pattern ([`2dcc4d4`](https://github.com/Mjvolk3/torchcell/commit/2dcc4d49fb10cd6a84ae0c5d0894511ee5a1d248))
+
+* note typos ([`3d30103`](https://github.com/Mjvolk3/torchcell/commit/3d301035d7fe5cba26e9bb679ade187cb63cd52e))
+
+* versioning SOP note ([`a9e741c`](https://github.com/Mjvolk3/torchcell/commit/a9e741c2ada7bbd7ef070bc7418cb72648f8484d))
+
+
+## v0.1.15 (2024-02-14)
+
+### Unknown
+
+* fix: bumpversion example, lots of db local-packages ([`ee61890`](https://github.com/Mjvolk3/torchcell/commit/ee61890877828d904ab0871e44c19a5589551de7))
 
 * removed python publish since cannot condition on semantic release ([`78683c8`](https://github.com/Mjvolk3/torchcell/commit/78683c836d892f49c2d223f23922be5f924b7a04))
 
 
 ## v0.1.14 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: tc_publish_pypi code action, partial automation ([`097b44f`](https://github.com/Mjvolk3/torchcell/commit/097b44f95f514e4e9a67ca73bd6373e2438ed8fe))
 
 
 ## v0.1.13 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: publishing scripts pypi ([`a367116`](https://github.com/Mjvolk3/torchcell/commit/a3671166939e117e3ce353310b29268f89548bb9))
 
 
 ## v0.1.12 (2024-02-14)
 
-### Fix
-
-* fix: publish whoas ([`be93561`](https://github.com/Mjvolk3/torchcell/commit/be93561779c91c8431de8a8b2022c9a7171d1091))
-
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`da13bdd`](https://github.com/Mjvolk3/torchcell/commit/da13bdd3af3eb2e7012143209939f0cc8adb392d))
 
+* fix: publish whoas ([`be93561`](https://github.com/Mjvolk3/torchcell/commit/be93561779c91c8431de8a8b2022c9a7171d1091))
+
 
 ## v0.1.11 (2024-02-14)
-
-### Fix
-
-* fix: tag before or after? ([`2349e7f`](https://github.com/Mjvolk3/torchcell/commit/2349e7fd3a77e03fcac50ea5fe6fc98bb134d363))
 
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7cfa842`](https://github.com/Mjvolk3/torchcell/commit/7cfa842f930e7611b514e8df94cef1a41558b4cb))
 
+* fix: tag before or after? ([`2349e7f`](https://github.com/Mjvolk3/torchcell/commit/2349e7fd3a77e03fcac50ea5fe6fc98bb134d363))
+
 
 ## v0.1.10 (2024-02-14)
-
-### Fix
-
-* fix: add environment ([`96f7ca0`](https://github.com/Mjvolk3/torchcell/commit/96f7ca091a4e6a4ed400744832e6adfb6d848f67))
 
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`cb4b84c`](https://github.com/Mjvolk3/torchcell/commit/cb4b84c5248eeea10658cb04943720a31400d443))
 
+* fix: add environment ([`96f7ca0`](https://github.com/Mjvolk3/torchcell/commit/96f7ca091a4e6a4ed400744832e6adfb6d848f67))
+
 
 ## v0.1.9 (2024-02-14)
-
-### Fix
-
-* fix: try tag push again ([`d70ad0a`](https://github.com/Mjvolk3/torchcell/commit/d70ad0aa0111d57678d1ac8341c86ebf7952c29e))
 
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`f292e01`](https://github.com/Mjvolk3/torchcell/commit/f292e014812a539d8733ce1a01f566b0e1005449))
 
+* fix: try tag push again ([`d70ad0a`](https://github.com/Mjvolk3/torchcell/commit/d70ad0aa0111d57678d1ac8341c86ebf7952c29e))
+
 
 ## v0.1.8 (2024-02-14)
-
-### Fix
-
-* fix: trying auto pypi with new push recognition ([`f6b23a3`](https://github.com/Mjvolk3/torchcell/commit/f6b23a3b9980d59ae2fb48516ba85d0b1f62e29a))
 
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b2d39a7`](https://github.com/Mjvolk3/torchcell/commit/b2d39a700844fc9f5bc792f79c3bde5c39e80b17))
 
+* fix: trying auto pypi with new push recognition ([`f6b23a3`](https://github.com/Mjvolk3/torchcell/commit/f6b23a3b9980d59ae2fb48516ba85d0b1f62e29a))
+
 
 ## v0.1.7 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: patch test, w/ publish ([`c082ea4`](https://github.com/Mjvolk3/torchcell/commit/c082ea4ee6bd37e51891842679915ef28023dd09))
 
 
 ## v0.1.6 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: rm bumpver deps ([`a9ebbee`](https://github.com/Mjvolk3/torchcell/commit/a9ebbee1561841a1b74185feb5a6f5f5c04505bc))
 
 
 ## v0.1.5 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: semantic patch test ([`aca0812`](https://github.com/Mjvolk3/torchcell/commit/aca0812bcfca8af57aa119884bd830e6c7770698))
-
-### Unknown
 
 * Create python-publish.yml ([`0d134e3`](https://github.com/Mjvolk3/torchcell/commit/0d134e341e2bb639244d92822560c0a8c82c6269))
 
 
 ## v0.1.4 (2024-02-14)
 
-### Fix
-
-* fix: version variables ([`2bbea29`](https://github.com/Mjvolk3/torchcell/commit/2bbea298284a4afb3ac7984409b87101b7bde7a7))
-
 ### Unknown
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1161a6a`](https://github.com/Mjvolk3/torchcell/commit/1161a6a82e97d2f3fceff082665146e5f5296539))
 
+* fix: version variables ([`2bbea29`](https://github.com/Mjvolk3/torchcell/commit/2bbea298284a4afb3ac7984409b87101b7bde7a7))
+
 
 ## v0.1.3 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: toml dev deps no build ([`2dbe7af`](https://github.com/Mjvolk3/torchcell/commit/2dbe7aff6188b9577a5072b62e99258a7435206d))
 
 * fix: toml version_variables ([`471442c`](https://github.com/Mjvolk3/torchcell/commit/471442c5dc50913770d4ea04d72e1f058ad5e07c))
-
-### Unknown
 
 * toml dev deps ([`e58b988`](https://github.com/Mjvolk3/torchcell/commit/e58b98860e4570e3b8339b8e834bb08924dd38d0))
 
@@ -137,26 +148,14 @@
 
 ## v0.1.2 (2024-02-14)
 
-### Fix
+### Unknown
 
 * fix: more readme ([`f459b79`](https://github.com/Mjvolk3/torchcell/commit/f459b79e9408e2087af35ba3161a215555d4729c))
-
-### Unknown
 
 * some read me yo ([`e96034f`](https://github.com/Mjvolk3/torchcell/commit/e96034f906d358998c81b8fa3fc248ea9bbc9611))
 
 
 ## v0.1.1 (2024-02-14)
-
-### Feature
-
-* feat: try minor ([`2374bf1`](https://github.com/Mjvolk3/torchcell/commit/2374bf1a9caed62d6c90c155a6a2a238a459c9ae))
-
-### Fix
-
-* fix: new semantic checkout ([`d3508f7`](https://github.com/Mjvolk3/torchcell/commit/d3508f79cfbd9f5d0a12a59403f6560af65078b1))
-
-* fix: new semantic release ([`3d0792a`](https://github.com/Mjvolk3/torchcell/commit/3d0792ab6f792a7fc1e5ba29819d8991ac7d8ac0))
 
 ### Unknown
 
@@ -164,22 +163,26 @@
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b1a38de`](https://github.com/Mjvolk3/torchcell/commit/b1a38de8de54ab59c0099079cc4d1c265d789839))
 
+* fix: new semantic checkout ([`d3508f7`](https://github.com/Mjvolk3/torchcell/commit/d3508f79cfbd9f5d0a12a59403f6560af65078b1))
+
+* fix: new semantic release ([`3d0792a`](https://github.com/Mjvolk3/torchcell/commit/3d0792ab6f792a7fc1e5ba29819d8991ac7d8ac0))
+
+* feat: try minor ([`2374bf1`](https://github.com/Mjvolk3/torchcell/commit/2374bf1a9caed62d6c90c155a6a2a238a459c9ae))
+
 * try patch wrong... ([`cff0d42`](https://github.com/Mjvolk3/torchcell/commit/cff0d42e7532c35655ca4de8b89e1b1a88d973a1))
 
 
 ## v0.1.0 (2024-02-14)
 
-### Feature
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1a2a61d`](https://github.com/Mjvolk3/torchcell/commit/1a2a61d44ef587b5146b19d85cdfcb3241ba3004))
 
 * feat: after v0.1.0 ([`f687905`](https://github.com/Mjvolk3/torchcell/commit/f687905b4cbd12ffde0ece56877eae9034fe7271))
 
 * feat: add semantic versioning dev readme ([`cdb2131`](https://github.com/Mjvolk3/torchcell/commit/cdb21313c3510c4111f54d8ef78e012b49fb0a7d))
 
 * feat: add semantic versioning dev ([`8cb3ee2`](https://github.com/Mjvolk3/torchcell/commit/8cb3ee2e7693f09687b389160151a27fdb0d1ef0))
-
-### Unknown
-
-* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1a2a61d`](https://github.com/Mjvolk3/torchcell/commit/1a2a61d44ef587b5146b19d85cdfcb3241ba3004))
 
 * BREAKING CHANGE: semantic release ([`4d10292`](https://github.com/Mjvolk3/torchcell/commit/4d10292350041a1007a43bc31157557c46027d89))
 
@@ -199,17 +202,21 @@
 
 ## v0.0.1 (2024-02-14)
 
-### Fix
+### None
 
-* fix: comment ([`23f02a9`](https://github.com/Mjvolk3/torchcell/commit/23f02a99315a49c26d369bdd7076f6678bd1e91b))
+*  exclude dubious ([`cdbd9ad`](https://github.com/Mjvolk3/torchcell/commit/cdbd9ade17538720e1bcde0fc74dff9038878f6f))
 
-* fix: added semantic versioning ([`12ad010`](https://github.com/Mjvolk3/torchcell/commit/12ad0104e0150343b2fe0717b6e09cd137cc0335))
+*  exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
 
 ### Unknown
 
 * update toml ([`0f37659`](https://github.com/Mjvolk3/torchcell/commit/0f37659b62df4095afd1bfd179b77fb9e700de80))
 
 * update toml ([`757ddcc`](https://github.com/Mjvolk3/torchcell/commit/757ddccc82fc60429c7e66711216c26c50453f9e))
+
+* fix: comment ([`23f02a9`](https://github.com/Mjvolk3/torchcell/commit/23f02a99315a49c26d369bdd7076f6678bd1e91b))
+
+* fix: added semantic versioning ([`12ad010`](https://github.com/Mjvolk3/torchcell/commit/12ad0104e0150343b2fe0717b6e09cd137cc0335))
 
 * source update - dump to docker community works -&gt; enterprise ([`ca28679`](https://github.com/Mjvolk3/torchcell/commit/ca28679c478aea7e04c1fc27eea9b192ef79ac1d))
 
@@ -686,10 +693,6 @@
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`a07405b`](https://github.com/Mjvolk3/torchcell/commit/a07405b298f6851c5cb55b6d52d4642d2053299a))
 
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`74a718e`](https://github.com/Mjvolk3/torchcell/commit/74a718edb86e652e80850037e084ca92988ff910))
-
-*  exclude dubious ([`cdbd9ad`](https://github.com/Mjvolk3/torchcell/commit/cdbd9ade17538720e1bcde0fc74dff9038878f6f))
-
-*  exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
 
 * minimal protT5 ([`ae556ae`](https://github.com/Mjvolk3/torchcell/commit/ae556ae1a42dac0ddc81f6716f847dcd53e2ff48))
 

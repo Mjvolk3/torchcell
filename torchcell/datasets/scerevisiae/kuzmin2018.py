@@ -120,7 +120,7 @@ class SmfKuzmin2018Dataset(Dataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        print("Processing Dmf Files...")
+        log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
         env = lmdb.open(
@@ -395,7 +395,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            print("Computing gene set...")
+            log.info("Computing gene set...")
             for key, value in tqdm(cursor):
                 deserialized_data = pickle.loads(value)
                 experiment = deserialized_data["experiment"]
@@ -542,7 +542,7 @@ class DmfKuzmin2018Dataset(Dataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        print("Processing Dmf Files...")
+        log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
         env = lmdb.open(
@@ -779,7 +779,7 @@ class DmfKuzmin2018Dataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            print("Computing gene set...")
+            log.info("Computing gene set...")
             for key, value in tqdm(cursor):
                 deserialized_data = pickle.loads(value)
                 experiment = deserialized_data["experiment"]
@@ -926,7 +926,7 @@ class TmfKuzmin2018Dataset(Dataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
-        print("Processing Dmf Files...")
+        log.info("Processing Dmf Files...")
 
         # Initialize LMDB environment
         env = lmdb.open(
@@ -1174,7 +1174,7 @@ class TmfKuzmin2018Dataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            print("Computing gene set...")
+            log.info("Computing gene set...")
             for key, value in tqdm(cursor):
                 deserialized_data = pickle.loads(value)
                 experiment = deserialized_data["experiment"]

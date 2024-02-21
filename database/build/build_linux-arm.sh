@@ -17,7 +17,8 @@ echo "Running container..."
 
 # docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+ 
+docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
 # # Conda activate torchcell here since we are using the local library for the db writing.
 # eval "$(conda shell.bash hook)"

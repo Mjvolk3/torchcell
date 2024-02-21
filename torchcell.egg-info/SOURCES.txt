@@ -12,6 +12,7 @@ torchcell/delete_subset.py
 torchcell/mypy_check.py
 torchcell/ncbi.py
 torchcell/neo4j_example.py
+torchcell/neo4j_fitness_lmdb.py
 torchcell/neo4j_fitness_query.py
 torchcell/prof.py
 torchcell/py.typed
@@ -30,6 +31,9 @@ torchcell/adapters/kuzmin2018_adapter.py
 torchcell/cell/__init__.py
 torchcell/data/__init__.py
 torchcell/data/data.py
+torchcell/database/__init__.py
+torchcell/database/build_command.py
+torchcell/database/tcdb.py
 torchcell/datamodels/__init__.py
 torchcell/datamodels/pydant.py
 torchcell/datamodels/schema.py

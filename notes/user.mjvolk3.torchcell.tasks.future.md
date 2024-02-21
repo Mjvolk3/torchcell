@@ -2,16 +2,40 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1702613129238
+updated: 1708491899441
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Formal docker import test with subprocess docker. Create unique containers for each dataset. Output the and evaluate the report file.
+- [ ] [[tests.torchcell.adapters.test_costanzo2016_adapter]] and [[tests.torchcell.adapters.test_kuzmin2018_adapter]] create extra longs when using multiprocessing that should be deleted.
+- [ ] Test for datasets that read out the docker neo4j bulk import report.
+- [ ] Automate the database folder creation given whichever architecture is specified, or detected.
 - [ ] Publish package for Junyu and Le to use
-- [ ] Change `wandb.tags` to `Tags`
+- [ ] Get rid of the `preprocess_config.json
+- [ ] Change `reference_environment` to `environment`
+- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix`
+- [ ] #pr.biocypher, message @Sebastian-Lobentanzer about collectri pr accept on readme
+- [ ] #pr.biocypher minimal example for docker `None` import.
+- [ ] #pr.biocypher update tutorials with Neo4j Bloom images.
+- [ ] Notify @Sebastian-Lobentanzer about #pr.biocypher [Collectri ReadMe Update](https://github.com/biocypher/collectri/pull/1).
+
+- [ ] Front matter fix
+
+`.py` on github not showing up...
+
+```python
+# torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
+```
 
 ## Far Future
 
+- [ ] Write Cron Job for Db build locally
+- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
+- [ ] Change `wandb.tags` to `Tags`
 - [ ] Setup `test/data`
 - [ ] Notes that represent a python file should have the path to the python file in the frontmatter.
 - [ ] Convert `gene_set` to `SortedSet`

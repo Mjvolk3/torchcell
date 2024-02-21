@@ -11,12 +11,21 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/database/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/error/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/eroror/%x_%j.out
 
 # mem 128g
 # cpu 128
 module reset
 source ~/.bashrc
+
+#################################################
+# Image Fresh - componenet.
+cd /scratch/bbub/mjvolk3/torchcell/database
+rm -rf tc-neo4j.sif
+apptainer build tc-neo4j.sif docker://michaelvolk/tc-neo4j:latest
+#################################################
+
+
 cd /projects/bbub/mjvolk3/torchcell
 conda activate /projects/bbub/miniconda3/envs/torchcell
 
@@ -44,11 +53,11 @@ apptainer exec --writable-tmpfs \
   -B $(pwd)/biocypher-out:/biocypher-out \
   -B $(pwd)/plugins:/plugins \
   -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  $(pwd)/tc-neo4j_0.0.0.sif \
+  $(pwd)/tc-neo4j.sif \
   /var/lib/neo4j/bin/neo4j start
 
 # Wait for Neo4j to fully start
-sleep 30
+sleep 15
 
 # Execute the Neo4j admin import script
 # Ensure you are in the correct directory and have appropriate permissions
@@ -60,7 +69,7 @@ apptainer exec --writable-tmpfs \
   -B $(pwd)/import:/var/lib/neo4j/import \
   -B $(pwd)/plugins:/plugins \
   -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  $(pwd)/neo4j-community_4.4.30.sif \
+  $(pwd)/tc-neo4j.sif \
   /bin/bash "$bash_script_path"
 
 # Stop the Neo4j database before ending the job
@@ -71,14 +80,14 @@ apptainer exec --writable-tmpfs \
   -B $(pwd)/import:/var/lib/neo4j/import \
   -B $(pwd)/plugins:/plugins \
   -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  $(pwd)/neo4j-community_4.4.30.sif \
+  $(pwd)/tc-neo4j.sif \
   /var/lib/neo4j/bin/neo4j stop
 
 echo "Database import complete and Neo4j shutdown."
 
 
 # Binding for writing lmbd data to data dir.
-# apptainer exec --writable-tmpfs -B /home/user/project/data:/data neo4j-community_4.4.30.sif /bin/bash
+# apptainer exec --writable-tmpfs -B /home/user/project/data:/data tc-neo4j.sif /bin/bash
 #apptainer exec --writable-tmpfs \
 #  -B $(pwd)/data:/data \
 #  -B $(pwd)/logs:/logs \
@@ -86,26 +95,5 @@ echo "Database import complete and Neo4j shutdown."
 #  -B $(pwd)/biocypher-out:/biocypher-out \
 #  -B $(pwd)/plugins:/plugins \
 #  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-#  $(pwd)/neo4j-community_4.4.30.sif \
+#  $(pwd)/tc-neo4j.sif \
 #  /bin/bash
-apptainer exec --writable-tmpfs \
-  -B /projects/bbub/mjvolk3/torchcell/torchcell:/torchcell \
-  -B $(pwd)/data:/data \
-  -B $(pwd)/logs:/logs \
-  -B $(pwd)/import:/var/lib/import \
-  -B $(pwd)/biocypher-out:/biocypher-out \
-  -B $(pwd)/plugins:/plugins \
-  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  /scratch/bbub/mjvolk3/torchcell/neo4j/tc-neo4j_0.0.0.sif \
-  /bin/bash
-
-apptainer exec --writable-tmpfs \
-  -B /projects/bbub/mjvolk3/torchcell/torchcell:/torchcell \
-  -B $(pwd)/data:/data \
-  -B $(pwd)/logs:/logs \
-  -B $(pwd)/import:/var/lib/import \
-  -B $(pwd)/biocypher-out:/biocypher-out \
-  -B $(pwd)/plugins:/plugins \
-  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  /scratch/bbub/mjvolk3/torchcell/neo4j/neo4j-community_4.4.30.sif \
-  /bin/bash -c "python /torchcell/printing.py"

@@ -1,5 +1,20 @@
 #!/bin/bash -eu
 
+################# TORCHCELL #################
+source /miniconda/etc/profile.d/conda.sh
+conda activate myenv
+echo "Conda environment activated."
+
+# Display the current Conda environments for debugging
+echo "Current Conda environments:"
+conda env list
+
+# Then run the pip install command
+echo "Installing torchcell package from Git..."
+python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+echo "Continuing with Neo4j database entrypoint"
+################# TORCHCELL #################
+
 cmd="$1"
 
 # load useful utility functions

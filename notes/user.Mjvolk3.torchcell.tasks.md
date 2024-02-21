@@ -2,47 +2,230 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1706958740008
+updated: 1708497505692
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.02.21
+
+## 2024.02.20
+
+- [x] Add new scipy semantic versioning formatting.
+- [x] Find source of the `Environment` cannot pickle error. → Still cannot find the source of this `Error: Cannot pickle 'Environment'` been about an 1.5 hours now.. → adding `self.experiment_reference_index` at the end of `def process(self):` seems to be causing an issue. → Holy.. 3 hours later I found it. → [[Always Close the lmdb before pickling|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#always-close-the-lmdb-before-pickling]]
+- [x] Inspect all `SmfCostanzo2016`, test that it can be put into database with no errors → [[Useful Commands for Checking Source Code Update|dendron://torchcell/database.docker#useful-commands-for-checking-source-code-update]] Appears to work well. → `cat import.report` is empty.
+- [x] Inspect all `DmfCostanzo2016_1e5`, test that it can be put into database with no errors. → `cat import.report` is empty.
+- [x] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors → `cat import.report` is empty → [[Running Docker Interactive Will Merge Stdout and Return Value|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#running-docker-interactive-will-merge-stdout-and-return-value]]
+- [ ] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors
+- [ ] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors
+- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
+
+## 2024.02.17
+
+- [x] UIUC containerization workflow → ![](./assets/drawio/database-containerization-uiuc.drawio.png)
+
+## 2024.02.16
+
+- [x] **small build** - fix path matching for neo4j. → Issue was that we need to uninstall biocypher before installing my forked branch.
+- [x] Summarize why we have separated certain files from docker. For instance, I have made the `"biocypher/config"` shared between the docker container and the local project for writing source. Then I have `"biocypher-out"` in both `"/database"` and in the local workspace. → It is easier to keep the config as part of the local workspace and it should possibly be put into the source so we can generate config dirs with the user repo. `"biocypher-out"` maintains database versioning for local, docker local, and apptainer remote. In theory if we use relative paths we could globus transfer `"biocypher-out"` for easy database transfer. Can give @Junyu-Chen credit for this as he asked about database transfer last machine learning subgroup.
+- [x] Ego net drawio ![](./assets/drawio/ego-net-fitness-model.drawio.png)
+- [x] Update containerization drawing drawio ![](./assets/drawio/database-containerization.drawio.png)
+
+## 2024.02.15
+
+- [x] **small build** - Does the data disappear if the container is removed? → When we map use volumes to bind the `"database/data"` dir, we do not lose the data upon stopping and removing the container, `docker stop tc-neo4j`, `docker rm tc-neo4j.`
+- [x] **small build** - Document using `cypher-shell` from within the tc-neo4j container. → [[Using cypher-shell to Access torchcell Database|dendron://torchcell/database.docker#using-cypher-shell-to-access-torchcell-database]]
+- [x] **small build** try small bulk import. → Did with subset of `DmfCostanzo2016` and this works well. We just have a ton of debug duplicates messages since we are importing multiple datasets. The container only runs with 4 cpus. I believe I set this in docker desktop settings, but a bit unsure.
+- [x] **small build** document bulk import errors. → [[Docker Common Build Error - Invalid value for option '--nodes'|dendron://torchcell/database.docker#docker-common-build-error---invalid-value-for-option---nodes]]
+
+- [ ] **docker volumes** - map local `"data/torchcell"` to docker `"data/torchcell"`→ Adding torchcell environment environment variables to clean things up some. → Added `BIOCYPHER_OUT_PATH` since the bash script is specific to the `.env`
+
+```bash
+pip install git+https://github.com/Mjvolk3/torchcell.git@main
+```
+
+→ `"docker-entrypoint.sh"` runs every time a docker container spins up, but the docker image needs to rebuild to use this entrypoint... might want to have two separate docker files, one for latest stable that downloads the latest stable build, and the other for latest commit that pip installs from source. This second one will be most useful to me immediately. I will try another build overnight with the pip install. → Added the install to the entrypoint.
+
+- [ ] Path issue in my biocypher overwrite... maybe try to git pull my version to test.
+
+- [ ] **query index** - After building lmdb, also create experiment and graph label indices.
+
+- [ ] **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
+
+- [ ] **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
+- [ ] **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentially for now.
+
+- [ ] **small build** - Check other fitness adapters.
+
+- [ ] **remote build** apptainer build image
+- [ ] **remote build** try small db bulk import
+- [ ] **remote build** try db query
+
+- [ ] **small build** - check nan import case.
+
+- [ ] **small build**
+- [ ] **local lmdb**
+- [ ] **remote build**
+
+## 2024.02.14
+
+- [x] Spin up tc-neo4j container. `chmod +x  database/local-package/docker-entrypoint.sh`. → Forgot this line `COPY --chmod=755 ./local-package/* /startup/` so need to rebuild 😡
+- [x] Rebuild tc-neo4j image → started 16:32 and finished 18:17... almost 2 hours for the build! 🐢
+- [x] Pull tc-neo4j image.
+- [x] Document **python publish** → [[Pypi Publish|dendron://torchcell/pypi-publish]], [[Versioning|dendron://torchcell/versioning]]
+- [x] Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data for `get_phenotype_nodes`
+- [x] Run [[Test_kuzmin2018_adapter|dendron://torchcell/tests.torchcell.adapters.test_kuzmin2018_adapter]] with all pass.
+- [x] **small build** Fix issue with `SmfCostanzo2016`, cannot pickle Environment. → Rewrote `get_nodes` to find error now cannot download file. waiting... → Very strange that issue is not showing up anymore. Keep eyes 👀 out .
+- [x] Run [[test_no_duplicate_warnings|dendron://torchcell/tests.torchcell.adapters.test_costanzo2016_adapter#test_no_duplicate_warnings]] with all pass.
+- [x] **small build** try local query → `cypher-shell` works
+
+- [ ] **small build** - currently only the `SmfKuzmin2018` was being used for testing. Check other fitness adapters.
+
+- [ ] **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
+
+- [ ] **small build** try small bulk import.
+- [ ] **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
+- [ ] **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentialy for now.
+
+- [ ] **remote build** apptainer build image
+- [ ] **remote build** try small db bulk import
+- [ ] **remote build** try db query
+
+- [ ] **small build** - check nan import case.
+
+- [ ] **small build**
+- [ ] **local lmdb**
+- [ ] **remote build**
+
+## 2024.02.13
+
+- [x] **Neo4j Enterprise**, switch to enterprise since free for academics according to @Sebastian-Lobentanzer → changed everything over to enterprise. For this you must download `/local-package`, and the `entrypoint.sh`. Can later automate this. → Verified [Neo4j Licensing](https://neo4j.com/open-core-and-neo4j/), "Universities for teaching and learning" then can be transitioned to altruistic projects or something else like it, but we should still be able to use Enterprise. We want to do this for the multiple db problem, start and stop neo4j issues.
+- [x] **Neo4j Enterprise** test image build to see if it works → [[2024.02.13 - Docker image Startup vs Apptainer image startup|dendron://torchcell/database.apptainer#20240213---docker-image-startup-vs-apptainer-image-startup]] → Build was exited due to vscode lag. Restarted. 🐢 This image buid seems even slower than the community one. → pulled image.
+- [x] **semantic versioning** → updates to files locally now work as expected, similar to `bumpver` [python-semantic-release](https://python-semantic-release.readthedocs.io/en/latest/configuration.html#config-build-command). Dropping bumpver from dependencies.
+- [x] **python publish** add publish github action → `"workflows/python-publish.yaml"` → Everything works. We are using `semantic-release` for versioning and using a bash script with vscode tasks to push to pypi. This works pretty well.
+
+## 2024.02.12
+
+- [x] **automate local build**.. Should have called small build, local build, but we will just keep it the same for time tracking.
+- [x] Get **local query** to work with some bash and python scripting. → [[Docker Image and Container Life Cycle - Local Source with Env Source|dendron://torchcell/database.docker#docker-image-and-container-life-cycle---local-source-with-env-source]] → This works but I am thinking I should start building up a command line tool to make things more systematized instead of having a bunch of floating scripts.
+- [x] **cliff cli** for building db. → Wrote some files for this but could not get the outputs to stream properly. Things kept getting stuck. → Alternative solution is to use a vscode task that can spawn an external process.
+- [x] `tcdb: build linux-arm` used to building the local db. → This works well!
+- [x] Find way to get lmdb from database → This is now possible but it is a bit ugly. The crux of the matter is that we can build the db, but we cannot get some of the standard tools to interact with it such as `cypher-shell`. You cannot even add the db with `cypher-shell`. I'm actually not sure if this is a good or bad thing because we need the database to be down for us to bulk import to it.
+
+## 2024.02.10
+
+- 🔲 Properly submit pull request related to `import_call_file_prefix` → moved to [[user.mjvolk3.torchcell.tasks.future]]
+- 🔲 Check nan import case.
+
+## 2024.02.09
+
+- [x] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix` → Found a solution! it works reasonably well and I don't think it will change the src too much. Using locally forked `Biocypher`. → Need to follow pr instructions properly first.
+- [x] **small build** try small bulk import. → Was able to import `SmfKuzmin2018`. 🎉
+- 🔲 **small build** try a standard path without time on `SmfKuzmin2018` → Not necessary with Biocypher overwrite.
+
+## 2024.02.08
+
+- 🔲 **small build** try a standard path without time on `SmfKuzmin2018`
+- 🔲 Add  loop block for `experiment_reference_index` to add data `reference_phenotype` data. All but `SmfKuzmin2018` should need this.
+
+## 2024.02.07
+
+- [x] For managing data will wand use [wandb sync](https://docs.wandb.ai/ref/cli/wandb-sync)
+- [x] **small build**, added `./notes/assets/scripts/open-external-terminal.sh` which opens an external terminal to run commands which will be good for run database builds to prevent risk of crashing vscode.
+- [x] **small build** import `torchcell` in container.
+- [x] **small build** `torch-scatter` install issue. We have two options, break dependency chain with careful importing, fix install image to allow install. Second option is more  general. Investigating. → fixed `gcc` and `g++` availability for `torch-scatter` install by commenting out Dockerfile purge.
+- [x] **small build** verify that the current build method works for quickly updating src. → `rm -rf dist/*`, `bumpver update -p`, `python -m build`, `twine upload dist/*` → This is fast enough.
+- [x] **small build** the issue for docker import is likely related to paths. Inspect paths in config. → The issue lies with config `import_call_file_prefix` which prevents the dynamic versioning of the db. The biocypher source should probably be updated [[user.mjvolk3.torchcell.tasks.future]]
+- 🔲 **small build** Fix issue with `SmfCostanzo2016`, cannot pickle Environment. → Rewrote `get_nodes` to find error now cannot download file. waiting...
+- 🔲 **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data
+- 🔲 **small build** For now separating `biocypher-out` from container. Produce `biocypher-out` via local lib. Need to bind `biocypher-out`
+- 🔲 **small build** try small bulk import.
+- [x] **small build** update query script, `twine`, pip install in container for updating source quickly.build → abandoned this idea, as even it is slower for development than the copying of source method.
+- 🔲 **small build** try local query
+- 🔲 **small build** pip install inside env for quick src update. We should have three workflows... thinking just bash scripts. One is `tcdb_build` always pip installing `torchcell -U` since this should be fast, `tcdb_build_origin` which rebuilds the image, pulls the image then runs build.  
+- 🔲 **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw key value store writing nicely with the `CellDataset`.
+- 🔲 **remote build** apptainer build image
+- 🔲 **remote build** try small db bulk import
+- 🔲 **remote build** try db query
+
+## 2024.02.06
+
+- [x] Setup **small build** with these 5 datasets on local neo4j-4.4.30. Not sure if there is a distinction between this and community version. → Looks like we need to rebuild the image for both `amd` and `arm` [[2024.02.08 - Troubleshooting Docker Build Local|dendron://torchcell/database.docker#20240208---troubleshooting-docker-build-local]]. We are avoiding using docker compose because this prevents us from transferring this workflow easily to Delta slurm cluster. → Considering github actions as a simpler solution [[GitHub Action Docker Build and Push Template|dendron://torchcell/database.docker#github-action-docker-build-and-push-template]] → We need to save time building images... Right now it takes nearly 45 min to both build and push image 🐢 [[Docker Update TorchCell Source Without Image Rebuild|dendron://torchcell/database.docker#docker-update-torchcell-source-without-image-rebuild]] → Nearly the entire time is dominated by the python environment. → 😲😑🫠[[Docker Image and Container Life Cycle|dendron://torchcell/database.docker#docker-image-and-container-life-cycle]] → things working now with checking correct container and updates to allow executable permission. Running container build overnight.
+
+- [ ] Setup **remote build**, try to get to full size datasets to get a time estimate of the entire build.
+- [ ] Test **local query** to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
+- [ ] Run query locally and write **local lmdb**.
+- [ ] Write class for **`get_indices`** on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
+- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]] →
+- [ ] Double **check adapters** for Fitness data.
+- [ ] **remote build**
+
+- [ ] Save list of `sha256` duplicates somewhere. Can query db based on these and construct an lmdb to investigate or do additional checks on query.
+
+- I have a suspicion that the that the docker build importing `None` doesn't work with the biocypher provided docker compose because of the mismatched neo4j version. Unsure..
+
+## 2024.02.05
+
+- [x] Move configs → Used .env for `biocypher_config` and `schema_config` this way we can easily move between local and Delta. → [[TypeError NoneType object is not iterable|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#typeerror-nonetype-object-is-not-iterable]], [[Path Issue Indicated by KeyError 'experiment reference'|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#path-issue-indicated-by-keyerror-experiment-reference]]
+- [x] Rewrite adapter for `DmfCostanzo2016` → Since rewriting we have some double logging. This can be silenced with setting the `biocypher._logger` level at the beginning of the script. We have some error that the ontology has multiple inheritance. → Runs but needs to be double checked.
+- [x] Ontology with multiple inheritance might cause some issues. Investigate. → [[Warning - The Ontology Contains Multiple Inheritance|dendron://torchcell/torchcell.adapters.costanzo2016_adapter#warning---the-ontology-contains-multiple-inheritance]]
+- [x] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
+- [x] Rewrite adapter for `SmfKuzmin2018`
+- [x] Make perturbations list for `DmfKuzmin2018`
+- [x] Make perturbations list for `TmfKuzmin2018`
+- [x] Overwrite get to disallow torch indexing... → Unnecessary and makes get more complicated can add back later if necessary. In [[torchcell.datamodels.schema]] I would like to try to keep python native types for now. We can cast to tensor in `CellDataset`.
+- [x] Rewrite adapter for `DmfKuzmin2018`
+- [x] Look into log to see what "no missing label" means → with multiprocessing the "No duplicate nodes" and "No duplicate edges" don't make it to the log. This will break the previous tests of these adapters. → Not sure what to do about this... → I see now we just need to find the right handler... I already dealt with this 😅 moving on.  → "no missing label" is the label of either `BioCypherNode` or `BioCypherEdge`.
+- [x] Rewrite adapter for `TmfKuzmin2018` → All now work but I fear there are lurking mistakes with all of the copying.
+- [x] Look into running apptainer locally so we can have some consistency between `local` and `Delta`. → This cannot be done because apptainer relies on linux kernel #ChatGPT
+- 🔲 Setup small build with these 5 datasets on local neo4j-4.4.30. Not sure if there is a distinction between this and community version.
+- 🔲 Test query to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
+- 🔲 Run query locally and write lmdb.
+- 🔲 Write class for getting indices on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
+- 🔲 Document download steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]]
+- 🔲 Get rid of the `preprocess_config.json → moved to [[user.mjvolk3.torchcell.tasks.future]]
+- 🔲 Change `reference_environment` to `environment`→ moved to [[user.mjvolk3.torchcell.tasks.future]]
+- 🔲 Double check fitness adapters.
+
+## 2024.02.04
+
+- [x] Check that we can still write to the database.
+- [x] Get querying working.
+
 ## 2024.02.03
 
 - [x] Dockerfile python.
-- [ ]
-- [ ] Document download steps
-- [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
-- [ ] Check that we can still write to the database
-- [ ] Test a query from the database.
-- [ ] Write a query to produce an lmdb in some output dir. `/scratch` on delta.
+- 🔲 Document download steps
+- 🔲 CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib. → moved [[user.mjvolk3.torchcell.tasks.future#future]]
+- 🔲 Check that we can still write to the database
+- 🔲 Test a query from the database.
+- 🔲 Write a query to produce an lmdb in some output dir. `/scratch` on delta.
 
 ## 2024.02.02
 
 - [x] Paper outline state of things → [[Outline|dendron://torchcell/paper.outline]]
-- [ ] Rewrite the adapter for `DmfCostanzo`.
-- [ ] Document the process for downloading a dbms.
-- [ ] Test query script on delta
+- [x] Correct the data schema → guessed around when this completed.
+- 🔲 Rewrite the adapter for `DmfCostanzo`.
+- 🔲 Document the process for downloading a dbms.
+- 🔲 Test query script on delta
 
 ## 2024.02.01
 
 - [x] Test the dbms on Delta with an interactive terminal.
-- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community`
-- [ ] Document the process for downloading a dbms.
+- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community` → [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]]
+- 🔲 Document the process for downloading a dbms.
 
 ## 2024.01.31
 
 - [x] Replace `Sgd` with the correct `Sga` for synthetic genetic array.
 - [x] We can simplify the data model [[Issues with the Current Data Scheme that Uses Different Named Phenotypes|dendron://torchcell/torchcell.datamodels.ontology_pydantic#issues-with-the-current-data-scheme-that-uses-different-named-phenotypes]]. Do this first for `Costanzo`.
-- [ ] Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
-- [ ] Get rid of the `preprocess_config.json
-- [ ] Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
-
-- [ ] Correct the data schema
-- [ ] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta.
-- [ ] Revert get_edges to old version.
-- [ ] Write Cron Job for Db build
+- 🔲 Rewrite the adapter for `SmfCostanzo` and `DmfCostanzo`.
+- 🔲 Get rid of the `preprocess_config.json
+- 🔲 Fix the use of datamodels on `Kuzmin2018` this will involve rewriting the `extract_systematic_gene_names`, just follow example from `Costanzo2016`. Also make all genotype perturbations list.
+- [x] Check the run with modified edges. → Crashed due to memory 60GB tied up in memory and another 40 GB in something called Fig and Media. Not sure what that is. → Going to commit first to see if we can run this db build on Delta. → Gave up on rebuild locally.
+- 🔲 Revert get_edges to old version.
+- [x] Write Cron Job for Db build → instead moving to delta and a locally. Move to [[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.01.30
 
@@ -53,13 +236,11 @@ created: 1690514887023m
 - [x] We are still only getting around `1e3 it/s` try to optimize. → Maxed out thread workers in config. `dbms.threads.worker_count=10` now achieving > `1e4 it/s` which should be sufficient for now.
 - [x] Summary of neo4j times. → Bulk import is very fast on order of minutes, this means that the db can be easily scrapped and made new. Querying is fast after optimizing the heap and num workers for threading, on order of mins. The slowest portion is adapters which is on order of hours or days in the worst case. I think around 14 hours right now for `DmfCostanzo2016`.
 - [x] Try alternative async parallelization. → After looking into this more it won't provide much benefit unless we use queues for memory management.
-
-- [ ] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this. → Fixed in `DmfCostanzo2016` but the others need modifying
-
-- [ ] Try bulk import of smf data to Neo4j db on Delta.
-- [ ] Try to query deletion data from Delta Neo4j.
-- [ ] Change `reference_environment` to `environment`
-- [ ] Make a duplicate adapter for `async`
+- [x] Many of `perturbed_gene_names` and `systematic_gene_names` are `null` in `_get_genotype_nodes`. Correct this. → Fixed in `DmfCostanzo2016` but the others need modifying
+- 🔲 Try bulk import of smf data to Neo4j db on Delta.
+- 🔲 Try to query deletion data from Delta Neo4j.
+- 🔲 Change `reference_environment` to `environment`
+- [x] Make a duplicate adapter for `async` → abandoned this idea.
 
 ## 2024.01.29
 

@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708492120621
+updated: 1708493489407
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -14,7 +14,7 @@ created: 1690514887023m
 
 - [x] Add new scipy semantic versioning formatting.
 - [x] Find source of the `Environment` cannot pickle error. → Still cannot find the source of this `Error: Cannot pickle 'Environment'` been about an 1.5 hours now.. → adding `self.experiment_reference_index` at the end of `def process(self):` seems to be causing an issue. → Holy.. 3 hours later I found it. → [[Always Close the lmdb before pickling|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#always-close-the-lmdb-before-pickling]]
-- [ ] Inspect all `SmfCostanzo2016`, test that it can be put into database with no errors
+- [x] Inspect all `SmfCostanzo2016`, test that it can be put into database with no errors → [[Useful Commands for Checking Source Code Update|dendron://torchcell/database.docker#useful-commands-for-checking-source-code-update]] Appears to work well.
 - [ ] Inspect all `DmfCostanzo2016_1e5`, test that it can be put into database with no errors.
 - [ ] Inspect all `DmfCostanzo2016`, test that it can be put into database with no errors
 - [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.

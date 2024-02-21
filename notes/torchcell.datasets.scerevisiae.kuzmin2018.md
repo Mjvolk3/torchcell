@@ -2,7 +2,7 @@
 id: dxhoxruso0jc7offn2jytqh
 title: Kuzmin2018
 desc: ''
-updated: 1708480139000
+updated: 1708497566861
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
@@ -140,3 +140,38 @@ print(dataset.env)
 ```
 
 First thing while debugging was that we could not pickle due to an object called `Environment`, naturally I assumed this was the `Environment` object related to data that I wrote. Instead it was the `lmdb` `Environment` object. This object cannot be pickled and it is created whenever data from the `lmdb` is accessed. Prior to pickling it must be made None. The `lmdb` can then be initialized after the dataset object is deserialized on whichever process. A sneaky one for sure 😈.
+
+## Running Docker Interactive Will Merge Stdout and Return Value
+
+This first script results in the print statements to be merged with the return value making bash_script_path_cleaned more like a log. And it prevents us from getting the proper string to call the bash script.
+
+```bash
+bash_script_path_cleaned=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+```
+
+The string is wrong Error ⛔️, we can see it is going line by line and trying to run bash on it. The `'INFO'` and `'This'` are output from biocypher.
+
+```bash
+----------------NOW BUILDING GRAPH---------------------
+chmod: cannot access 'INFO': No such file or directory
+chmod: cannot access 'This': No such file or directory
+chmod: cannot access 'is': No such file or directory
+chmod: cannot access 'BioCypher': No such file or directory
+chmod: cannot access 'v0.5.37.'$'\r': No such file or directory
+/bin/bash: line 2: biocypher-log/biocypher-20240221-063654.log: Permission denied
+/bin/bash: line 2: INFO: command not found
+/bin/bash: line 3: frozen: No such file or directory
+/bin/bash: line 3: this: command not found
+/bin/bash: line 4: ?,: No such file or directory
+/bin/bash: line 5: ?,: No such file or directory
+/bin/bash: line 6: INFO: command not found
+/bin/bash: line 7: INFO:biocypher:Loading: command not found
+/bin/bash: line 8: INFO: command not found
+/bin/bash: line 9: INFO:biocypher:Instantiat
+```
+
+This is the **correct** command.
+
+```bash
+bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+```

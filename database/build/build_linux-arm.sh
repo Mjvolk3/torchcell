@@ -19,29 +19,29 @@ echo "Running container..."
 
 docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-# Conda activate torchcell here since we are using the local library for the db writing.
-eval "$(conda shell.bash hook)"
-# conda init
-# source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh
-conda activate torchcell
-# conda activate /Users/michaelvolk/opt/miniconda3/envs/torchcell
-conda env list
+# # Conda activate torchcell here since we are using the local library for the db writing.
+# eval "$(conda shell.bash hook)"
+# # conda init
+# # source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh
+# conda activate torchcell
+# # conda activate /Users/michaelvolk/opt/miniconda3/envs/torchcell
+# conda env list
 
 # bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
 
 docker start tc-neo4j
 # TODO check if this software update works?
-docker exec -it tc-neo4j python -m pip uninstall torchcell
-docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
-docker exec -it tc-neo4j python -m pip uninstall biocypher
-docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@python
+docker exec tc-neo4j python -m pip uninstall torchcell -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip uninstall biocypher -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 
 # docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
 # docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
-
+echo "----------------NOW_BUILDING_GRAPHS---------------------"
 # Execute the Python script inside the Docker container and capture the output
 # bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
-bash_script_path_cleaned=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 
 # echo "bash_script_path: $bash_script_path"
 # Remove any unwanted characters (e.g., Docker exec command may include newline characters)
@@ -51,13 +51,13 @@ bash_script_path_cleaned=$(docker exec -it tc-neo4j python -m torchcell.knowledg
 
 # Use the cleaned path in subsequent Docker exec commands
 # For example, setting execute permission on the bash script
-docker exec -it tc-neo4j /bin/bash -c "chmod +x ${bash_script_path_cleaned}"
+docker exec tc-neo4j /bin/bash -c "chmod +x ${bash_script_path_cleaned}"
 
 # Execute the bash script
-docker exec -it tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
+docker exec tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
 
-echo "Stopping container..."
-docker stop tc-neo4j
+# echo "Stopping container..."
+# docker stop tc-neo4j
 
 # echo "Removing container..."
 # docker rm $container_id

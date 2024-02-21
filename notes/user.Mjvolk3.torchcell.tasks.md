@@ -161,7 +161,7 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [ ] Test **local query** to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
 - [ ] Run query locally and write **local lmdb**.
 - [ ] Write class for **`get_indices`** on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
-- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]] →
+- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]] →
 - [ ] Double **check adapters** for Fitness data.
 - [ ] **remote build**
 
@@ -217,7 +217,7 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 ## 2024.02.01
 
 - [x] Test the dbms on Delta with an interactive terminal.
-- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community` → [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]]
+- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community` → [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]]
 - 🔲 Document the process for downloading a dbms.
 
 ## 2024.01.31

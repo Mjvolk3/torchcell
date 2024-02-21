@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1708040987948
+updated: 1708491899441
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Formal docker import test with subprocess docker. Create unique containers for each dataset. Output the and evaluate the report file.
 - [ ] [[tests.torchcell.adapters.test_costanzo2016_adapter]] and [[tests.torchcell.adapters.test_kuzmin2018_adapter]] create extra longs when using multiprocessing that should be deleted.
 - [ ] Test for datasets that read out the docker neo4j bulk import report.
 - [ ] Automate the database folder creation given whichever architecture is specified, or detected.

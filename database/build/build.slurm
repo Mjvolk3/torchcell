@@ -29,7 +29,7 @@ bash_script_path=$(python /projects/bbub/mjvolk3/torchcell/torchcell/knowledge_g
 
 echo "Bash script path: $bash_script_path"
 
-cd /scratch/bbub/mjvolk3/torchcell/neo4j
+cd /scratch/bbub/mjvolk3/torchcell/database
 
 # Validate the obtained bash script path
 if [ ! -f "$bash_script_path" ]; then
@@ -44,7 +44,7 @@ apptainer exec --writable-tmpfs \
   -B $(pwd)/biocypher-out:/biocypher-out \
   -B $(pwd)/plugins:/plugins \
   -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  $(pwd)/neo4j-community_4.4.30.sif \
+  $(pwd)/tc-neo4j_0.0.0.sif \
   /var/lib/neo4j/bin/neo4j start
 
 # Wait for Neo4j to fully start
@@ -88,3 +88,24 @@ echo "Database import complete and Neo4j shutdown."
 #  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
 #  $(pwd)/neo4j-community_4.4.30.sif \
 #  /bin/bash
+apptainer exec --writable-tmpfs \
+  -B /projects/bbub/mjvolk3/torchcell/torchcell:/torchcell \
+  -B $(pwd)/data:/data \
+  -B $(pwd)/logs:/logs \
+  -B $(pwd)/import:/var/lib/import \
+  -B $(pwd)/biocypher-out:/biocypher-out \
+  -B $(pwd)/plugins:/plugins \
+  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
+  /scratch/bbub/mjvolk3/torchcell/neo4j/tc-neo4j_0.0.0.sif \
+  /bin/bash
+
+apptainer exec --writable-tmpfs \
+  -B /projects/bbub/mjvolk3/torchcell/torchcell:/torchcell \
+  -B $(pwd)/data:/data \
+  -B $(pwd)/logs:/logs \
+  -B $(pwd)/import:/var/lib/import \
+  -B $(pwd)/biocypher-out:/biocypher-out \
+  -B $(pwd)/plugins:/plugins \
+  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
+  /scratch/bbub/mjvolk3/torchcell/neo4j/neo4j-community_4.4.30.sif \
+  /bin/bash -c "python /torchcell/printing.py"

@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1708061334420
+updated: 1708494596425
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -349,4 +349,31 @@ neo4j-admin import [--expand-commands] [--verbose]
                    [--skip-bad-relationships[=<true/false>]]
                    [--skip-duplicate-nodes[=<true/false>
 ...
+```
+
+## Useful Commands for Checking Source Code Update
+
+This tells us if the changes that we have made on github are actually being reflected in latest github pull for the create knowledge graph script. This is incredibly inefficient and needs to be automated away.
+
+```bash
+cd /miniconda/envs/myenv/lib/python3.11/site-packages
+cat torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
+```
+
+- For `torchcell`
+
+```bash
+cat /miniconda/envs/myenv/lib/python3.11/site-packages/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
+```
+
+- For `biocypher`
+
+```bash
+cat /miniconda/envs/myenv/lib/python3.11/site-packages/biocypher/_write.py > data/delete.py
+```
+
+Looks like you have to exit out of the container for the affects to take place, especially if the update is run from another terminal.
+
+```bash
+docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 ```

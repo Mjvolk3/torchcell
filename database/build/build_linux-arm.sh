@@ -31,8 +31,10 @@ conda env list
 
 docker start tc-neo4j
 # TODO check if this software update works?
+docker exec -it tc-neo4j python -m pip uninstall torchcell
 docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
-docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+docker exec -it tc-neo4j python -m pip uninstall biocypher
+docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@python
 
 # docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
 # docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"

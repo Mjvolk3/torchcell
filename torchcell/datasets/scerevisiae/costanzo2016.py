@@ -38,6 +38,7 @@ from torchcell.sequence import GeneSet
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+
 class SmfCostanzo2016Dataset(Dataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -166,6 +167,7 @@ class SmfCostanzo2016Dataset(Dataset):
         env.close()
         self.gene_set = self.compute_gene_set()
         # This will cache the experiment_reference_index
+        # When I comment out this line I don't get 'Error: the cannot pickle 'Environment' object'
         self.experiment_reference_index
 
     def preprocess_raw(
@@ -478,6 +480,7 @@ class SmfCostanzo2016Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -968,6 +971,7 @@ class DmfCostanzo2016Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):

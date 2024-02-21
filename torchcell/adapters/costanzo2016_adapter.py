@@ -20,7 +20,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 
 class SmfCostanzo2016Adapter:
-    def __init__(self, dataset: SmfCostanzo2016Dataset, num_workers: int = 1):
+    def __init__(self, dataset: SmfCostanzo2016Dataset, num_workers: int):
         self.dataset = dataset
         self.num_workers = num_workers
 
@@ -31,9 +31,9 @@ class SmfCostanzo2016Adapter:
             self._get_experiment_nodes,
             self._get_genotype_nodes,
             self._get_dataset_nodes,
-            # self._get_environment_nodes,
-            # self._get_media_nodes,
-            # self._get_temperature_nodes,
+            self._get_environment_nodes,
+            self._get_media_nodes,
+            self._get_temperature_nodes,
             self._get_phenotype_nodes,
         ]
 
@@ -202,7 +202,9 @@ class SmfCostanzo2016Adapter:
                     preferred_id=f"environment_{i}",
                     node_label="environment",
                     properties={
-                        "temperature": data.reference.reference_environment.temperature.value,
+                        "temperature": data[
+                            "reference"
+                        ].reference_environment.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
                             data.reference.reference_environment.model_dump()
@@ -225,6 +227,7 @@ class SmfCostanzo2016Adapter:
                 seen_node_ids.add(media_id)
                 name = data["experiment"].environment.media.name
                 state = data["experiment"].environment.media.state
+
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
@@ -239,16 +242,16 @@ class SmfCostanzo2016Adapter:
                 )
                 nodes.append(node)
 
-        for i, data in enumerate(self.dataset.experiment_reference_index):
+        for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.sha256(
                 json.dumps(
-                    data.reference.reference_environment.media.model_dump()
+                    data["reference"].reference_environment.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data.reference.reference_environment.media.name
-                state = data.reference.reference_environment.media.state
+                name = data["reference"].reference_environment.media.name
+                state = data["reference"].reference_environment.media.state
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id=f"media_{media_id}",
@@ -257,7 +260,7 @@ class SmfCostanzo2016Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data.reference.reference_environment.media.model_dump()
+                            data["reference"].reference_environment.media.model_dump()
                         ),
                     },
                 )
@@ -302,10 +305,10 @@ class SmfCostanzo2016Adapter:
                     preferred_id=f"temperature_{temperature_id}",
                     node_label="temperature",
                     properties={
-                        "value": data.reference.reference_environment.temperature.value,
-                        "unit": data.reference.reference_environment.temperature.unit,
+                        "value": data["experiment"].environment.temperature.value,
+                        "unit": data["experiment"].environment.temperature.unit,
                         "serialized_data": json.dumps(
-                            data.reference.reference_environment.temperature.model_dump()
+                            data["experiment"].environment.temperature.model_dump()
                         ),
                     },
                 )
@@ -387,7 +390,7 @@ class SmfCostanzo2016Adapter:
         ]
         return nodes
 
-    def get_edges(self):
+    def get_edges(self) -> Generator[BioCypherEdge, None, None]:
         methods = [
             self._get_dataset_experiment_ref_edges,
             self._get_experiment_dataset_edges,
@@ -444,7 +447,7 @@ class SmfCostanzo2016Adapter:
 
     def _get_experiment_ref_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
-        for data in self.dataset.experiment_reference_index:
+        for data in tqdm(self.dataset.experiment_reference_index):
             dataset_subset = self.dataset[torch.tensor(data.index)]
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -1347,38 +1350,38 @@ if __name__ == "__main__":
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
     ## SMF
-    # bc = BioCypher(
-    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-    #     schema_config_path=SCHEMA_CONFIG_PATH,
-    # )
-    # dataset = SmfCostanzo2016Dataset(
-    #     osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    # )
-    # adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
-
-    ## DMF
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    dataset = SmfCostanzo2016Dataset(
+        osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
-    dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016_subset_n_1e5",
-        subset_n=int(1e5),
-        preprocess=None,
-    )
-    adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=1)
     bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
+    # bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
     bc.summary()
+
+    ## DMF
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root="data/torchcell/dmf_costanzo2016_subset_n_1e5",
+    #     subset_n=int(1e5),
+    #     preprocess=None,
+    # )
+    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()

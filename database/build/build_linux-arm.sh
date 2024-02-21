@@ -30,7 +30,7 @@ conda env list
 # bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
 
 docker start tc-neo4j
-# TODO ehck if this software update works?
+# TODO check if this software update works?
 docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 

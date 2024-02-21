@@ -24,28 +24,62 @@ import warnings
 import multiprocessing as mp
 from datetime import datetime
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
-logging.captureWarnings(True)
+from biocypher import BioCypher
+from dotenv import load_dotenv
+
+from datetime import datetime
+import os
+import os.path as osp
+
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
 
 def main():
-    # logger.info(f"Started at {datetime.now()}") but use logging
-    bc = BioCypher()
+    time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
 
     # num_workers = mp.cpu_count()
-    num_workers = 4
+    num_workers = 10
 
-    # Ordered adapters from smallest to largest
     adapters = [
         DmfCostanzo2016Adapter(
-            dataset=DmfCostanzo2016Dataset(), num_workers=num_workers
+            dataset=DmfCostanzo2016Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_sub_10000"),
+                subset_n=10000,
+            ),
+            num_workers=num_workers,
         ),
-        SmfKuzmin2018Adapter(dataset=SmfKuzmin2018Dataset(), num_workers=num_workers),
-        DmfKuzmin2018Adapter(dataset=DmfKuzmin2018Dataset(), num_workers=num_workers),
-        TmfKuzmin2018Adapter(dataset=TmfKuzmin2018Dataset(), num_workers=num_workers),
+        SmfKuzmin2018Adapter(
+            dataset=SmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
+        DmfKuzmin2018Adapter(
+            dataset=DmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
+        TmfKuzmin2018Adapter(
+            dataset=TmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
         SmfCostanzo2016Adapter(
-            dataset=SmfCostanzo2016Dataset(), num_workers=num_workers
+            dataset=SmfCostanzo2016Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+            ),
+            num_workers=num_workers,
         ),
     ]
 
@@ -53,13 +87,9 @@ def main():
         bc.write_nodes(adapter.get_nodes())
         bc.write_edges(adapter.get_edges())
 
-    # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
-
-    # Print summary
     bc.summary()
-    # log the finish time
 
 
 if __name__ == "__main__":

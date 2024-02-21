@@ -2,9 +2,67 @@
 id: cg7e5soujlboc77wykbj1n3
 title: Costanzo2016_adapter
 desc: ''
-updated: 1706385039927
+updated: 1707156929027
 created: 1705537951301
 ---
+## Useful Functions for Debugging Adapter and Printing Ontology
+
+`bc.show_ontology_structure` can be used to print the ontology before processing any of the node data.
+
+```python
+if __name__ == "__main__":
+  from biocypher import BioCypher
+
+  #Simple Testing
+  dataset = SmfCostanzo2016Dataset()
+  adapter = SmfCostanzo2016Adapter(dataset=dataset)
+  [i for i in adapter.get_nodes()]
+  [i for i in adapter.get_edges()]
+  
+  ## Advanced Testing
+  bc = BioCypher()
+  dataset = SmfCostanzo2016Dataset()
+  adapter = SmfCostanzo2016Adapter(dataset=dataset)
+  print(bc.show_ontology_structure())
+  bc.write_nodes(adapter.get_nodes())
+  bc.write_edges(adapter.get_edges())
+
+  # # Write admin import statement and schema information (for biochatter)
+  bc.write_import_call()
+  bc.write_schema_info(as_node=True)
+
+  # # Print summary
+  bc.summary()
+  print()
+```
+
+### TypeError NoneType object is not iterable
+
+This error typically indicates that we are not returning the nodes properly. Just check for `return nodes` or `return edges`.
+
+```bash
+File "/Users/michaelvolk/Documents/projects/torchcell/torchcell/adapters/costanzo2016_adapter.py", line 701, in get_nodes
+    for node in self._get_phenotype_nodes():
+TypeError: 'NoneType' object is not iterable
+```
+
+### Path Issue Indicated by KeyError 'experiment reference'
+
+If the `schema_config.yaml` is properly written this error indicates that there was some issue in specifying the correct `schema_config.yaml` path.
+
+```bash
+File "/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/networkx/classes/coreviews.py", line 81, in __getitem__
+return AtlasView(self._atlas[name])
+                    ~~~~~~~~~~~^^^^^^
+KeyError: 'experiment reference'
+```
+
+## Warning - The Ontology Contains Multiple Inheritance
+
+According to @Sebastian-Lobentanzer this shouldn't be an issue for the knowledge graph, but it there to indicate that they cannot display a cycle with the command line output.
+
+![](./assets/images/torchcell.adapters.costanzo2016_adapter.md.warning-the-ontology-contains-multiple-inheritance.png)
+
 ## Using Static Methods like in get_perturbation
 
 This has the luxury of avoiding iterating over the entire dataset, but it doesn't have the ability to check for duplicates. When you iterate over the entire dataset with a regular method it is easier to create a set of data within the scope that that can be used for removing duplicates. It is so cumbersome with a `@staticmethod` pushing the duplicate tracking a function above making things difficult to read.
@@ -41,37 +99,6 @@ def _get_perturbation(
                 "serialized_data": json.dumps(genotype.perturbation.model_dump()),
             },
         )
-```
-
-## Useful Functions for Debugging Adapter and Printing Ontology
-
-`bc.show_ontology_structure` can be used to print the ontology before processing any of the node data.
-
-```python
-if __name__ == "__main__":
-  from biocypher import BioCypher
-
-  #Simple Testing
-  dataset = SmfCostanzo2016Dataset()
-  adapter = SmfCostanzo2016Adapter(dataset=dataset)
-  [i for i in adapter.get_nodes()]
-  [i for i in adapter.get_edges()]
-  
-  ## Advanced Testing
-  bc = BioCypher()
-  dataset = SmfCostanzo2016Dataset()
-  adapter = SmfCostanzo2016Adapter(dataset=dataset)
-  print(bc.show_ontology_structure())
-  bc.write_nodes(adapter.get_nodes())
-  bc.write_edges(adapter.get_edges())
-
-  # # Write admin import statement and schema information (for biochatter)
-  bc.write_import_call()
-  bc.write_schema_info(as_node=True)
-
-  # # Print summary
-  bc.summary()
-  print()
 ```
 
 ## MVP Costanzo2016 Adapter Without Multiprocessing

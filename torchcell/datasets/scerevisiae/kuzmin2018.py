@@ -82,7 +82,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -93,7 +93,7 @@ class SmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -124,7 +124,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -142,6 +142,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
         env.close()
         self.gene_set = self.compute_gene_set()
+        # self.experiment_reference_index
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -176,11 +177,11 @@ class SmfKuzmin2018Dataset(Dataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: "temperature_sensitive"
-            if "tsa" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "unknown"
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
         )
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
@@ -226,50 +227,60 @@ class SmfKuzmin2018Dataset(Dataset):
             # Query
             if "KanMX_deletion" in row["query_perturbation_type"]:
                 genotype = Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Query systematic name no ho"],
-                        perturbed_gene_name=row["Query allele name no ho"],
-                        strain_id=row["Query strain ID"],
-                    )
+                    perturbations=[
+                        SgaKanMxDeletionPerturbation(
+                            systematic_gene_name=row["Query systematic name no ho"],
+                            perturbed_gene_name=row["Query allele name no ho"],
+                            strain_id=row["Query strain ID"],
+                        )
+                    ]
                 )
 
             elif "allele" in row["query_perturbation_type"]:
                 genotype = Genotype(
-                    perturbation=SgaAllelePerturbation(
-                        systematic_gene_name=row["Query systematic name no ho"],
-                        perturbed_gene_name=row["Query allele name no ho"],
-                        strain_id=row["Query strain ID"],
-                    )
+                    perturbations=[
+                        SgaAllelePerturbation(
+                            systematic_gene_name=row["Query systematic name no ho"],
+                            perturbed_gene_name=row["Query allele name no ho"],
+                            strain_id=row["Query strain ID"],
+                        )
+                    ]
                 )
 
         elif row["smf_type"] == "array_smf":
             # Array
             if "KanMX_deletion" in row["array_perturbation_type"]:
                 genotype = Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+                    perturbations=[
+                        SgaKanMxDeletionPerturbation(
+                            systematic_gene_name=row["Array systematic name"],
+                            perturbed_gene_name=row["Array allele name"],
+                            strain_id=row["Array strain ID"],
+                        )
+                    ]
                 )
 
             elif "allele" in row["array_perturbation_type"]:
                 genotype = Genotype(
-                    perturbation=SgaAllelePerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+                    perturbations=[
+                        SgaAllelePerturbation(
+                            systematic_gene_name=row["Array systematic name"],
+                            perturbed_gene_name=row["Array allele name"],
+                            strain_id=row["Array strain ID"],
+                        )
+                    ]
                 )
 
             # Only array has ts
             elif "temperature_sensitive" in row["array_perturbation_type"]:
                 genotype = Genotype(
-                    perturbation=SgaTsAllelePerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+                    perturbations=[
+                        SgaTsAllelePerturbation(
+                            systematic_gene_name=row["Array systematic name"],
+                            perturbed_gene_name=row["Array allele name"],
+                            strain_id=row["Array strain ID"],
+                        )
+                    ]
                 )
 
         # genotype
@@ -369,9 +380,13 @@ class SmfKuzmin2018Dataset(Dataset):
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_name(genotype):
-        gene_name = genotype.perturbation.systematic_gene_name
-        return gene_name
+    def extract_systematic_gene_names(genotype):
+        gene_names = []
+        for perturbation in genotype.perturbations:
+            if hasattr(perturbation, "systematic_gene_name"):
+                gene_name = perturbation.systematic_gene_name
+                gene_names.append(gene_name)
+        return gene_names
 
     def compute_gene_set(self):
         gene_set = GeneSet()
@@ -385,7 +400,7 @@ class SmfKuzmin2018Dataset(Dataset):
                 deserialized_data = pickle.loads(value)
                 experiment = deserialized_data["experiment"]
 
-                extracted_gene_names = self.extract_systematic_gene_name(
+                extracted_gene_names = self.extract_systematic_gene_names(
                     experiment.genotype
                 )
                 for gene_name in extracted_gene_names:
@@ -438,6 +453,7 @@ class SmfKuzmin2018Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -488,7 +504,7 @@ class DmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -499,7 +515,7 @@ class DmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -530,7 +546,7 @@ class DmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -591,11 +607,11 @@ class DmfKuzmin2018Dataset(Dataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: "temperature_sensitive"
-            if "tsa" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "unknown"
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
         )
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
@@ -613,50 +629,43 @@ class DmfKuzmin2018Dataset(Dataset):
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
-        genotype = []
+        perturbations = []
         # Query...
         if "KanMX_deletion" in row["query_perturbation_type_no_ho"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Query systematic name no ho"],
-                        perturbed_gene_name=row["Query allele name no ho"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name no ho"],
+                    perturbed_gene_name=row["Query allele name no ho"],
+                    strain_id=row["Query strain ID"],
                 )
             )
         elif "allele" in row["query_perturbation_type_no_ho"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaAllelePerturbation(
-                        systematic_gene_name=row["Query systematic name no ho"],
-                        perturbed_gene_name=row["Query allele name no ho"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name no ho"],
+                    perturbed_gene_name=row["Query allele name no ho"],
+                    strain_id=row["Query strain ID"],
                 )
             )
 
         # Array - only array has ts
         if "temperature_sensitive" in row["array_perturbation_type"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaTsAllelePerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+            perturbations.append(
+                SgaTsAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"],
+                    strain_id=row["Array strain ID"],
                 )
             )
         elif "KanMX_deletion" in row["array_perturbation_type"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"],
+                    strain_id=row["Array strain ID"],
                 )
             )
+        genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
         # genotype
         environment = BaseEnvironment(
@@ -732,18 +741,15 @@ class DmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
-        # Handling boolean index tensors or numpy arrays
-        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+        # Handling boolean index arrays or numpy arrays
+        if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
-            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+            if idx.dtype == np.bool_:
                 idx = np.where(idx)[0]
-            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
-                idx = idx.nonzero(as_tuple=False).squeeze(1)
 
-        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
-            # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            # If idx is a list/array of indices, return a list of data objects
+            return [self.get_single_item(i) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)
@@ -758,13 +764,11 @@ class DmfKuzmin2018Dataset(Dataset):
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_names(genotypes):
+    def extract_systematic_gene_names(genotype):
         gene_names = []
-        for genotype in genotypes:
-            if hasattr(genotype, "perturbation") and hasattr(
-                genotype.perturbation, "systematic_gene_name"
-            ):
-                gene_name = genotype.perturbation.systematic_gene_name
+        for perturbation in genotype.perturbations:
+            if hasattr(perturbation, "systematic_gene_name"):
+                gene_name = perturbation.systematic_gene_name
                 gene_names.append(gene_name)
         return gene_names
 
@@ -828,11 +832,12 @@ class DmfKuzmin2018Dataset(Dataset):
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.dict() for eri in self._experiment_reference_index],
+                    [eri.model_dump() for eri in self._experiment_reference_index],
                     file,
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -883,7 +888,7 @@ class TmfKuzmin2018Dataset(Dataset):
 
     @property
     def processed_file_names(self) -> list[str]:
-        return "data.lmdb"
+        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -894,7 +899,7 @@ class TmfKuzmin2018Dataset(Dataset):
     def _init_db(self):
         """Initialize the LMDB environment."""
         self.env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             readonly=True,
             lock=False,
             readahead=False,
@@ -925,7 +930,7 @@ class TmfKuzmin2018Dataset(Dataset):
 
         # Initialize LMDB environment
         env = lmdb.open(
-            osp.join(self.processed_dir, "data.lmdb"),
+            osp.join(self.processed_dir, "lmdb"),
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
@@ -986,11 +991,11 @@ class TmfKuzmin2018Dataset(Dataset):
             lambda x: "KanMX_deletion" if "Δ" in x else "allele"
         )
         df["array_perturbation_type"] = df["Array strain ID"].apply(
-            lambda x: "temperature_sensitive"
-            if "tsa" in x
-            else "KanMX_deletion"
-            if "dma" in x
-            else "unknown"
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
         )
         self.reference_phenotype_std = df[
             "Combined mutant fitness standard deviation"
@@ -1008,71 +1013,60 @@ class TmfKuzmin2018Dataset(Dataset):
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
-        genotype = []
+        perturbations = []
         # Query
         # Query 1
         if "KanMX_deletion" in row["query_perturbation_type_1"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Query systematic name_1"],
-                        perturbed_gene_name=row["Query allele name_1"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"],
+                    strain_id=row["Query strain ID"],
                 )
             )
         elif "allele" in row["query_perturbation_type_1"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaAllelePerturbation(
-                        systematic_gene_name=row["Query systematic name_1"],
-                        perturbed_gene_name=row["Query allele name_1"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"],
+                    strain_id=row["Query strain ID"],
                 )
             )
         # Query 2
         if "KanMX_deletion" in row["query_perturbation_type_2"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Query systematic name_2"],
-                        perturbed_gene_name=row["Query allele name_2"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"],
+                    strain_id=row["Query strain ID"],
                 )
             )
         elif "allele" in row["query_perturbation_type_2"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaAllelePerturbation(
-                        systematic_gene_name=row["Query systematic name_2"],
-                        perturbed_gene_name=row["Query allele name_2"],
-                        strain_id=row["Query strain ID"],
-                    )
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"],
+                    strain_id=row["Query strain ID"],
                 )
             )
         # Array - only array has ts
         if "temperature_sensitive" in row["array_perturbation_type"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaTsAllelePerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+            perturbations.append(
+                SgaTsAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"],
+                    strain_id=row["Array strain ID"],
                 )
             )
         elif "KanMX_deletion" in row["array_perturbation_type"]:
-            genotype.append(
-                Genotype(
-                    perturbation=SgaKanMxDeletionPerturbation(
-                        systematic_gene_name=row["Array systematic name"],
-                        perturbed_gene_name=row["Array allele name"],
-                        strain_id=row["Array strain ID"],
-                    )
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"],
+                    strain_id=row["Array strain ID"],
                 )
             )
+        genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
         # genotype
         environment = BaseEnvironment(
@@ -1142,18 +1136,15 @@ class TmfKuzmin2018Dataset(Dataset):
         if self.env is None:
             self._init_db()
 
-        # Handling boolean index tensors or numpy arrays
-        if isinstance(idx, (list, np.ndarray, torch.Tensor)):
+        # Handling boolean index arrays or numpy arrays
+        if isinstance(idx, (list, np.ndarray)):
             if isinstance(idx, list):
                 idx = np.array(idx)
-            if isinstance(idx, np.ndarray) and idx.dtype == np.bool:
+            if idx.dtype == np.bool_:
                 idx = np.where(idx)[0]
-            elif isinstance(idx, torch.Tensor) and idx.dtype == torch.bool:
-                idx = idx.nonzero(as_tuple=False).squeeze(1)
 
-        if isinstance(idx, (np.ndarray, list, torch.Tensor)):
-            # If idx is a list/array/tensor of indices, return a list of data objects
-            return [self.get_single_item(i.item()) for i in idx]
+            # If idx is a list/array of indices, return a list of data objects
+            return [self.get_single_item(i) for i in idx]
         else:
             # Single item retrieval
             return self.get_single_item(idx)
@@ -1168,13 +1159,11 @@ class TmfKuzmin2018Dataset(Dataset):
             return deserialized_data
 
     @staticmethod
-    def extract_systematic_gene_names(genotypes):
+    def extract_systematic_gene_names(genotype):
         gene_names = []
-        for genotype in genotypes:
-            if hasattr(genotype, "perturbation") and hasattr(
-                genotype.perturbation, "systematic_gene_name"
-            ):
-                gene_name = genotype.perturbation.systematic_gene_name
+        for perturbation in genotype.perturbations:
+            if hasattr(perturbation, "systematic_gene_name"):
+                gene_name = perturbation.systematic_gene_name
                 gene_names.append(gene_name)
         return gene_names
 
@@ -1243,6 +1232,7 @@ class TmfKuzmin2018Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -1251,13 +1241,12 @@ class TmfKuzmin2018Dataset(Dataset):
 
 if __name__ == "__main__":
     dataset = SmfKuzmin2018Dataset()
-    dataset.experiment_reference_index
     dataset[0]
-    # print(len(dataset))
-    # dataset = DmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # dataset = TmfKuzmin2018Dataset(subset_n=1000)
-    # dataset[0]
-    # print(len(dataset))
+    print(len(dataset))
+    dataset = DmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    dataset = TmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     print()

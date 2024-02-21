@@ -13,7 +13,7 @@ import lmdb
 import networkx as nx
 import numpy as np
 import torch
-from pydantic import validator
+from pydantic import field_validator
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.utils import (
     add_self_loops,
@@ -44,7 +44,7 @@ log = logging.getLogger(__name__)
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
-    @validator("gene_set")
+    @field_validator("gene_set")
     def validate_gene_set(cls, value):
         if not isinstance(value, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(value).__name__}")

@@ -2,8 +2,6 @@
 # [[torchcell.datamodels.pydantic]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/pydantic.py
 # Test file: torchcell/datamodels/test_pydantic.py
-
-
 from pydantic import BaseModel
 
 

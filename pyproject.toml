@@ -1,12 +1,12 @@
 # pyproject.toml
 
 [build-system]
-requires      = ["setuptools>=69.0.2", "wheel"]
+requires = ["setuptools>=69.0.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "torchcell"
-version = "0.0.30"
+version = "0.1.16"
 description = "An example package"
 readme = "README.md"
 authors = [{ name = "Michael Volk", email = "michaeljvolk7@gmail.com" }]
@@ -23,13 +23,15 @@ requires-python = ">=3.10"
 dynamic = ["dependencies"]
 
 [project.optional-dependencies]
-dev = ["black", "bumpver", "pip-tools", "pytest"]
+dev = ["black", "semantic-release", "pip-tools", "pytest"]
 
 [project.urls]
 Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 
 [project.scripts]
 torchcell = "torchcell.__main__:main"
+tcdb = "torchcell.database.tcdb:main"
+
 
 [tool.isort]
 profile = "black"
@@ -46,10 +48,7 @@ skip_magic_trailing_comma = true # true in torchgeo
 python_version = "3.11"
 ignore_missing_imports = true
 show_error_codes = true
-files = [
-    "torchcell/**/*.py",
-    "tests/**/*.py"
-]
+files = ["torchcell/**/*.py", "tests/**/*.py"]
 
 # Strict
 warn_unused_configs = true
@@ -73,11 +72,12 @@ match = "torchcell/.*\\.py"
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 [tool.setuptools.dynamic]
-dependencies = {file = ["env/requirements.txt"]}
+dependencies = { file = ["env/requirements.txt"] }
+# Doesn't allow ordering
 # dependencies = {file = ["env/requirements.txt", "env/requirements_dependent.txt"]}
 
 # optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
-version = {attr = "torchcell.__version__"}
+version = { attr = "torchcell.__version__" }
 
 [tool.setuptools.package-data]
 torchcell = ["py.typed"]
@@ -85,13 +85,20 @@ torchcell = ["py.typed"]
 [tool.setuptools.packages.find]
 include = ["torchcell*"]
 
-[tool.bumpver]
-current_version = "0.0.30"  # Your current version
-version_pattern = "MAJOR.MINOR.PATCH"
-commit_message = "Bump version: {old_version} → {new_version}"
+[tool.semantic_release]
+version_variables = [
+    "pyproject.toml:version",
+    "torchcell/__version__.py:__version__",
+]
+branch = "main"
+upload_to_pypi = "true"
+commit_parser = "scipy"
 
-
-[tool.bumpver.file_patterns]
-"pyproject.toml" = ['current_version = "{version}"', 'version = "{version}"']
-"torchcell/__version__.py" = ["{version}"]
-"env/requirements-tc-graph.txt" = ["torchcell>={version}"]
+[tool.semantic_release.commit_parser_options]
+allowed_tags = [
+   "API", "DEP", "ENH", "REV", "BUG", "MAINT", "BENCH",
+   "BLD", "DEV", "DOC", "STY", "TST", "REL", "FEAT", "TEST",
+]
+major_tags = ["API"]
+minor_tags = ["DEP", "DEV", "ENH", "REV", "FEAT"]
+patch_tags = ["BLD", "BUG", "MAINT"]

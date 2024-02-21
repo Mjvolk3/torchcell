@@ -1962,8 +1962,6 @@ if __name__ == "__main__":
     dataset = SmfKuzmin2018Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
     )
-    # BUG
-    # dataset.experiment_reference_index # If I don't run this line then it works, I've commented out the dataset.experiment_reference_index in the process. this means that if it has to read from file it breaks with the parallelization.
     adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())

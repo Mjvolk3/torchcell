@@ -39,10 +39,8 @@ class SmfKuzmin2018Adapter:
             self._get_temperature_nodes,
             self._get_phenotype_nodes,
         ]
-
         with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             futures = [executor.submit(method) for method in methods]
-
             for future in as_completed(futures):
                 try:
                     node_generator = future.result()
@@ -1954,25 +1952,24 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    print(os.getcwd())
-    print(BIOCYPHER_CONFIG_PATH)
-    print(osp.exists(BIOCYPHER_CONFIG_PATH))
+    
     ## Smf
-    # bc = BioCypher(
-    #     output_directory=osp.join("database/biocypher-out", time),
-    #     # output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-    #     schema_config_path=SCHEMA_CONFIG_PATH,
-    # )
-    # dataset = SmfKuzmin2018Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-    # )
-    # adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    dataset = SmfKuzmin2018Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+    )
+    # BUG
+    # dataset.experiment_reference_index # If I don't run this line then it works, I've commented out the dataset.experiment_reference_index in the process. this means that if it has to read from file it breaks with the parallelization.
+    adapter = SmfKuzmin2018Adapter(dataset=dataset, num_workers=10)
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()
 
     # ## Dmf
     # bc = BioCypher(

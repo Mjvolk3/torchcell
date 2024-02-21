@@ -2,7 +2,7 @@
 id: dxhoxruso0jc7offn2jytqh
 title: Kuzmin2018
 desc: ''
-updated: 1705681459925
+updated: 1708480139000
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
@@ -126,3 +126,17 @@ elif row["Combined mutant type"] == "trigenic":
 `SmfKuzmin2018` has stds don't have values so I was putting `None` which is somewhere converted to nan and the import fails. Another issue I fixed was that the `'` and the `Δ` symbols cannot be imported so I replaced them with `'` with `_prime` and `Δ` with `_delta`.  It is unclear what to do about the missing stds if we cannot import `None.` I thought this should just be mapped to null.
 
 When I replace the `None` with some arbitrary double it works.
+
+## Always Close the lmdb before pickling
+
+```python
+print(dataset.env)
+> Environment() # some lmdb environment
+# ⛔️ Cannot at this point be pickled
+dataset.close_lmdb
+print(dataset.env)
+> None
+# ✅ Can be pickled
+```
+
+First thing while debugging was that we could not pickle due to an object called `Environment`, naturally I assumed this was the `Environment` object related to data that I wrote. Instead it was the `lmdb` `Environment` object. This object cannot be pickled and it is created whenever data from the `lmdb` is accessed. Prior to pickling it must be made None. The `lmdb` can then be initialized after the dataset object is deserialized on whichever process. A sneaky one for sure 😈.

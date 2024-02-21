@@ -142,6 +142,7 @@ class SmfKuzmin2018Dataset(Dataset):
 
         env.close()
         self.gene_set = self.compute_gene_set()
+        # self.experiment_reference_index
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -452,6 +453,7 @@ class SmfKuzmin2018Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -830,11 +832,12 @@ class DmfKuzmin2018Dataset(Dataset):
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.dict() for eri in self._experiment_reference_index],
+                    [eri.model_dump() for eri in self._experiment_reference_index],
                     file,
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -1229,6 +1232,7 @@ class TmfKuzmin2018Dataset(Dataset):
                     indent=4,
                 )
 
+        self.close_lmdb()
         return self._experiment_reference_index
 
     def __repr__(self):
@@ -1237,7 +1241,6 @@ class TmfKuzmin2018Dataset(Dataset):
 
 if __name__ == "__main__":
     dataset = SmfKuzmin2018Dataset()
-    dataset.experiment_reference_index
     dataset[0]
     print(len(dataset))
     dataset = DmfKuzmin2018Dataset()

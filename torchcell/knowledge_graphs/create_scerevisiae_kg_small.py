@@ -65,18 +65,18 @@ def main() -> str:
         #     ),
         #     num_workers=mp.cpu_count(),
         # ),
-        DmfKuzmin2018Adapter(
-            dataset=DmfKuzmin2018Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
-            ),
-            num_workers=mp.cpu_count(),
-        ),
-        # TmfKuzmin2018Adapter(
-        #     dataset=TmfKuzmin2018Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+        # DmfKuzmin2018Adapter(
+        #     dataset=DmfKuzmin2018Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
         #     ),
         #     num_workers=mp.cpu_count(),
         # ),
+        TmfKuzmin2018Adapter(
+            dataset=TmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+            ),
+            num_workers=mp.cpu_count(),
+        ),
     ]
 
     for adapter in adapters:

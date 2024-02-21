@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708500939580
+updated: 1708506367421
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -23,6 +23,7 @@ created: 1690514887023m
 - [x] Inspect all `DmfKuzmin2018`, test that it can be put into database with no errors → Took an 1 hr 40 min to complete for 400,000 experiments. → `cat import.report` is empty
 - [x] Inspect all `TmfKuzmin2018`, test that it can be put into database with no errors → Took 10 mins for around 90,000 experiments. → `cat import.report` is empty.
 - [x] **small_build** complete.
+- [x] **remote_small_build** getting bash path not consistent in apptainer. → In [[costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016]] and [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]] switched printing to logging so that we can get bash string. This works well.
 - [ ] **remote_small_build**
 
 ## 2024.02.17

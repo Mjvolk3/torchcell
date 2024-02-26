@@ -2,13 +2,13 @@
 id: qi7yo95uaxo0bmrhyb2lhs4
 title: Apptainer
 desc: ''
-updated: 1707857784926
+updated: 1708501078455
 created: 1707239794928
 ---
 
-## Delta Build Database from Origin
+## Delta Build Database from Fresh
 
-Calling this from origin because it is from the beginning of the entire process. This includes recreating apptainer images.
+Calling this from fresh because it is from the beginning of the entire process. This includes recreating apptainer images.
 
 ```bash
 apptainer build tc-neo4j.sif docker://michaelvolk/tc-neo4j:latest

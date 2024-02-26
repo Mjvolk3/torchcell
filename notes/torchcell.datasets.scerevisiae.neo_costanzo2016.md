@@ -7,6 +7,7 @@ created: 1704437089340
 ---
 
 ## Legacy SmfCostanzo2016
+
 ```python
 @define
 class SmfCostanzo2016Dataset:
@@ -362,7 +363,7 @@ class SmfCostanzo2016Dataset:
 
 ## Querying Problematic Alleles where Allele Names are Swapped in Query and Array
 
-These alleles have same temperature sensitive alleles but swapped in query and in array. 
+These alleles have same temperature sensitive alleles but swapped in query and in array.
 
 ```python
 queried_df = df[(df["Query Strain ID"] == 'YGL113W_tsq1382') | (df["Array Strain ID"] == 'YGL113W_tsa1119')]
@@ -371,8 +372,7 @@ sorted_duplicates_df = duplicates_df.sort_values('combined_name')
 temperature_sorted_duplicates_df= sorted_duplicates_df[(sorted_duplicates_df['array_perturbation_type'] == "temperature sensitive") & (sorted_duplicates_df['query_perturbation_type'] == "temperature sensitive")]
 ```
 
-
-## We Did Away with the Notion of Duplicate Query-Array Genes 
+## We Did Away with the Notion of Duplicate Query-Array Genes
 
 ```python
 # These are the alleles that show in both query and array

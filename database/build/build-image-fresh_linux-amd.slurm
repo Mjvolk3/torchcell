@@ -22,7 +22,7 @@ source ~/.bashrc
 # Image Fresh - componenet.
 cd /scratch/bbub/mjvolk3/torchcell/database
 rm -rf tc-neo4j.sif
-apptainer build tc-neo4j.sif docker://michaelvolk/tc-neo4j:latest
+apptainer build tc-neo4j.sif docker://michaelvolk/tc-neo4j:latest ./database
 #################################################
 
 
@@ -97,3 +97,20 @@ echo "Database import complete and Neo4j shutdown."
 #  -B $(pwd)/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
 #  $(pwd)/tc-neo4j.sif \
 #  /bin/bash
+
+
+
+
+
+
+
+
+apptainer exec --writable-tmpfs \
+  -B $(pwd)/database/data:/var/lib/neo4j/data \
+  -B $(pwd)/database/logs:/var/lib/neo4j/logs \
+  -B $(pwd)/database/import:/var/lib/neo4j/import \
+  -B $(pwd)/database/plugins:/var/lib/neo4j/plugins \
+  -B $(pwd)/database/conf:/var/lib/neo4j/conf \
+  -B $(pwd)/jdk-11:/var/lib/neo4j/jdk-11 \
+  $(pwd)/database/tc-neo4j.sif \
+  /bin/bash

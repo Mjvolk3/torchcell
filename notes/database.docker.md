@@ -100,7 +100,7 @@ I am not sure where this comes from since we have `database/local-package/docker
 COPY --chmod=755 ./local-package/* /startup
 ```
 
-Tagging options so we can just use tag `latest` on [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]]
+Tagging options so we can just use tag `latest` on [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]]
 
 - All in one shot. This is the best option ✅.
 

@@ -2,13 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708497505692
+updated: 1708506367421
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
 ## 2024.02.21
+
+- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended.
+- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
 
 ## 2024.02.20
 
@@ -17,9 +20,11 @@ created: 1690514887023m
 - [x] Inspect all `SmfCostanzo2016`, test that it can be put into database with no errors → [[Useful Commands for Checking Source Code Update|dendron://torchcell/database.docker#useful-commands-for-checking-source-code-update]] Appears to work well. → `cat import.report` is empty.
 - [x] Inspect all `DmfCostanzo2016_1e5`, test that it can be put into database with no errors. → `cat import.report` is empty.
 - [x] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors → `cat import.report` is empty → [[Running Docker Interactive Will Merge Stdout and Return Value|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#running-docker-interactive-will-merge-stdout-and-return-value]]
-- [ ] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors
-- [ ] Inspect all `SmfKuzmin2018`, test that it can be put into database with no errors
-- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
+- [x] Inspect all `DmfKuzmin2018`, test that it can be put into database with no errors → Took an 1 hr 40 min to complete for 400,000 experiments. → `cat import.report` is empty
+- [x] Inspect all `TmfKuzmin2018`, test that it can be put into database with no errors → Took 10 mins for around 90,000 experiments. → `cat import.report` is empty.
+- [x] **small_build** complete.
+- [x] **remote_small_build** getting bash path not consistent in apptainer. → In [[costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016]] and [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]] switched printing to logging so that we can get bash string. This works well.
+- [ ] **remote_small_build**
 
 ## 2024.02.17
 
@@ -157,7 +162,7 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [ ] Test **local query** to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
 - [ ] Run query locally and write **local lmdb**.
 - [ ] Write class for **`get_indices`** on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
-- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]] →
+- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]] →
 - [ ] Double **check adapters** for Fitness data.
 - [ ] **remote build**
 
@@ -213,7 +218,7 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 ## 2024.02.01
 
 - [x] Test the dbms on Delta with an interactive terminal.
-- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community` → [[Delta Build Database from Origin|dendron://torchcell/database.apptainer#delta-build-database-from-origin]]
+- [x] Build db with sbatch script. →  `apptainer build neo4j_4.4.30_community.sif docker://neo4j:4.4.30-community` → [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]]
 - 🔲 Document the process for downloading a dbms.
 
 ## 2024.01.31

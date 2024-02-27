@@ -3,17 +3,33 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
 
-
 from biocypher import BioCypher
-from torchcell.adapters import SmfCostanzo2016Adapter
-from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
+from torchcell.adapters import (
+    SmfCostanzo2016Adapter,
+    DmfCostanzo2016Adapter,
+    SmfKuzmin2018Adapter,
+    DmfKuzmin2018Adapter,
+    TmfKuzmin2018Adapter,
+)
+from torchcell.datasets.scerevisiae import (
+    SmfCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
+    SmfKuzmin2018Dataset,
+    DmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
+)
 import logging
 from dotenv import load_dotenv
 import os
 import os.path as osp
 from datetime import datetime
 import multiprocessing as mp
+import sys
 
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+# WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
 
 
 def get_num_workers():
@@ -39,7 +55,7 @@ def main() -> str:
     # Use this function to get the number of workers
     num_workers = get_num_workers()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    print(f"Number of workers: {num_workers}")
+    log.info(f"Number of workers: {num_workers}")
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
@@ -82,8 +98,9 @@ def main() -> str:
     ]
 
     for adapter in adapters:
-        bc.write_nodes(adapter.get_nodes())
-        bc.write_edges(adapter.get_edges())
+        # bc.write_nodes(adapter.get_nodes())
+        adapter.get_nodes()
+        # bc.write_edges(adapter.get_edges())
 
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()

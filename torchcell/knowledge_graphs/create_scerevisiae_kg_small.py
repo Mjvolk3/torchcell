@@ -27,6 +27,20 @@ from datetime import datetime
 import multiprocessing as mp
 
 
+import os
+import multiprocessing as mp
+
+
+def get_num_workers():
+    """Get the number of CPUs allocated by SLURM."""
+    # Try to get number of CPUs allocated by SLURM
+    cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
+    if cpus_per_task is not None:
+        return int(cpus_per_task)
+    # Fallback: Use multiprocessing to get the total number of CPUs
+    return mp.cpu_count()
+
+
 def main() -> str:
     # Configure logging
     logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -37,6 +51,8 @@ def main() -> str:
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
 
+    # Use this function to get the number of workers
+    num_workers = get_num_workers()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time),
@@ -50,32 +66,32 @@ def main() -> str:
             dataset=SmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
             ),
-            num_workers=mp.cpu_count(),
+            num_workers=num_workers,
         ),
         DmfCostanzo2016Adapter(
             dataset=DmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
                 subset_n=int(1e5),
             ),
-            num_workers=mp.cpu_count(),
+            num_workers=num_workers,
         ),
         SmfKuzmin2018Adapter(
             dataset=SmfKuzmin2018Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
             ),
-            num_workers=mp.cpu_count(),
+            num_workers=num_workers,
         ),
         DmfKuzmin2018Adapter(
             dataset=DmfKuzmin2018Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
             ),
-            num_workers=mp.cpu_count(),
+            num_workers=num_workers,
         ),
         TmfKuzmin2018Adapter(
             dataset=TmfKuzmin2018Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
             ),
-            num_workers=mp.cpu_count(),
+            num_workers=num_workers,
         ),
     ]
 

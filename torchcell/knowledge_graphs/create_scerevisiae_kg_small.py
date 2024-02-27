@@ -5,20 +5,8 @@
 
 
 from biocypher import BioCypher
-from torchcell.adapters import (
-    SmfCostanzo2016Adapter,
-    DmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
-    DmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
-)
-from torchcell.datasets.scerevisiae import (
-    SmfCostanzo2016Dataset,
-    DmfCostanzo2016Dataset,
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-)
+from torchcell.adapters import SmfCostanzo2016Adapter
+from torchcell.datasets.scerevisiae import SmfCostanzo2016Dataset
 import logging
 from dotenv import load_dotenv
 import os
@@ -26,9 +14,6 @@ import os.path as osp
 from datetime import datetime
 import multiprocessing as mp
 
-
-import os
-import multiprocessing as mp
 
 
 def get_num_workers():
@@ -54,6 +39,7 @@ def main() -> str:
     # Use this function to get the number of workers
     num_workers = get_num_workers()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    print(f"Number of workers: {num_workers}")
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,

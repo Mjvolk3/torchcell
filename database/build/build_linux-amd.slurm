@@ -17,7 +17,7 @@
 # cpu 128
 module reset
 source ~/.bashrc
-conda activate /projects/bbub/miniconda3/envs/torchcell\
+conda activate /projects/bbub/miniconda3/envs/torchcell
 
 echo "job is starting on `hostname`"
 
@@ -50,18 +50,18 @@ echo "Database bulk import starting."
 
 
 apptainer exec --writable-tmpfs \
-  --env-file $(pwd)/.env \
+  --env-file $(pwd)/database/.env \
   -B /projects/bbub/mjvolk3/torchcell/biocypher:/var/lib/neo4j/biocypher \
   -B /projects/bbub/mjvolk3/torchcell/database/build:/var/lib/neo4j/build \
-  -B $(pwd)/biocypher-out:/var/lib/neo4j/biocypher-out \
-  -B $(pwd)/../data/torchcell:/var/lib/neo4j/data/torchcell \
-  -B $(pwd)/conf/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  -B $(pwd)/data:/data \
-  -B $(pwd)/logs:/logs \
-  -B $(pwd)/import:/var/lib/import \
-  -B $(pwd)/plugins:/plugins \
-  -B $(pwd):/scripts \
-  $(pwd)/tc-neo4j.sif \
+  -B $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
+  -B $(pwd)/database/../data/torchcell:/var/lib/neo4j/data/torchcell \
+  -B $(pwd)/database/conf/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
+  -B $(pwd)/database/data:/data \
+  -B $(pwd)/database/logs:/logs \
+  -B $(pwd)/database/import:/var/lib/import \
+  -B $(pwd)/database/plugins:/plugins \
+  -B $(pwd)/database:/scripts \
+  $(pwd)/database/tc-neo4j.sif \
   /bin/bash /var/lib/neo4j/build/build_linux-amd.sh
 
 #apptainer exec --writable-tmpfs \

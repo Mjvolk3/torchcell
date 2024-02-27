@@ -70,38 +70,40 @@ def main() -> str:
             ),
             num_workers=num_workers,
         ),
-        # DmfCostanzo2016Adapter(
-        #     dataset=DmfCostanzo2016Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
-        #         subset_n=int(1e5),
-        #     ),
-        #     num_workers=num_workers,
-        # ),
-        # SmfKuzmin2018Adapter(
-        #     dataset=SmfKuzmin2018Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-        #     ),
-        #     num_workers=num_workers,
-        # ),
-        # DmfKuzmin2018Adapter(
-        #     dataset=DmfKuzmin2018Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
-        #     ),
-        #     num_workers=num_workers,
-        # ),
-        # TmfKuzmin2018Adapter(
-        #     dataset=TmfKuzmin2018Dataset(
-        #         root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
-        #     ),
-        #     num_workers=num_workers,
-        # ),
+        DmfCostanzo2016Adapter(
+            dataset=DmfCostanzo2016Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
+                subset_n=int(1e5),
+            ),
+            num_workers=num_workers,
+        ),
+        SmfKuzmin2018Adapter(
+            dataset=SmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
+        DmfKuzmin2018Adapter(
+            dataset=DmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
+        TmfKuzmin2018Adapter(
+            dataset=TmfKuzmin2018Dataset(
+                root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+            ),
+            num_workers=num_workers,
+        ),
     ]
 
     for adapter in adapters:
         # bc.write_nodes(adapter.get_nodes())
         adapter.get_nodes()
         # bc.write_edges(adapter.get_edges())
-
+        adapter.get_edges()
+    
+    log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)

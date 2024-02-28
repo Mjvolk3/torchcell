@@ -15,8 +15,11 @@ from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )
+from torchcell.datasets.scerevisiae import CustomDataLoader
 from torchcell.datamodels import Genotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from torch_geometric.loader import DataLoader
+from torchcell.dataset import Dataset
 
 
 class SmfCostanzo2016Adapter:
@@ -24,30 +27,52 @@ class SmfCostanzo2016Adapter:
         self.dataset = dataset
         self.num_workers = num_workers
 
-    def get_nodes(self) -> Generator[BioCypherNode, None, None]:
-        methods = [
-            self._get_experiment_reference_nodes,
-            self._get_genome_nodes,
-            self._get_experiment_nodes,
-            self._get_genotype_nodes,
-            self._get_dataset_nodes,
-            self._get_environment_nodes,
-            self._get_media_nodes,
-            self._get_temperature_nodes,
-            self._get_phenotype_nodes,
-        ]
+    # def get_nodes(self) -> Generator[BioCypherNode, None, None]:
+    #     methods = [
+    #         # self._get_experiment_reference_nodes,
+    #         # self._get_genome_nodes,
+    #         self._get_experiment_nodes,
+    #         # self._get_genotype_nodes,
+    #         # self._get_dataset_nodes,
+    #         # self._get_environment_nodes,
+    #         # self._get_media_nodes,
+    #         # self._get_temperature_nodes,
+    #         # self._get_phenotype_nodes,
+    #     ]
 
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-            for future in as_completed(futures):
-                try:
-                    node_generator = future.result()
-                    for node in node_generator:
-                        yield node
-                except Exception as exc:
-                    logger.error(
-                        f"Node generation method generated an exception: {exc}"
-                    )
+    #     with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+    #         futures = [executor.submit(method) for method in methods]
+    #         for future in as_completed(futures):
+    #             try:
+    #                 node_generator = future.result()
+    #                 for node in node_generator:
+    #                     yield node
+    #             except Exception as exc:
+    #                 logger.error(
+    #                     f"Node generation method generated an exception: {exc}"
+    #                 )
+
+    def get_nodes(self):
+        # for node in self._get_experiment_reference_nodes():
+        #     yield node
+        # for node in self._get_genome_nodes():
+        #     yield node
+        for node in self._get_experiment_nodes():
+            yield node
+        # for node in self._get_genotype_nodes():
+        #     yield node
+        # for node in self._get_perturbation_nodes():
+        #     yield node
+        # for node in self._get_environment_nodes():
+        #     yield node
+        # for node in self._get_media_nodes():
+        #     yield node
+        # for node in self._get_temperature_nodes():
+        #     yield node
+        # for node in self._get_phenotype_nodes():
+        #     yield node
+        # for node in self._get_dataset_nodes():
+        #     yield node
 
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -91,23 +116,48 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_experiment_nodes(self) -> list[BioCypherNode]:
+    def _get_experiment_nodes(self) -> Generator[BioCypherNode, None, None]:
+        data_loader = CustomDataLoader(
+            self.dataset, batch_size=self.num_workers, num_workers=self.num_workers
+        )
+        # Iterate over the DataLoader, which fetches batches of data
         nodes = []
-        for i, data in tqdm(enumerate(self.dataset)):
-            experiment_id = hashlib.sha256(
-                json.dumps(data["experiment"].model_dump()).encode("utf-8")
-            ).hexdigest()
-            node = BioCypherNode(
-                node_id=experiment_id,
-                preferred_id=f"SmfCostanzo2016_{i}",
-                node_label="experiment",
-                properties={
-                    "dataset_index": i,
-                    "serialized_data": json.dumps(data["experiment"].model_dump()),
-                },
-            )
-            nodes.append(node)
+        for batch in tqdm(data_loader):
+            for i, data in enumerate(batch):
+                data = self.dataset.transform_item(data)
+                experiment_id = hashlib.sha256(
+                    json.dumps(data["experiment"].model_dump()).encode("utf-8")
+                ).hexdigest()
+                node = BioCypherNode(
+                    node_id=experiment_id,
+                    preferred_id=f"SmfCostanzo2016_{i}",
+                    node_label="experiment",
+                    properties={
+                        "dataset_index": i,
+                        "serialized_data": json.dumps(data["experiment"].model_dump()),
+                    },
+                )
+                nodes.append(node)
+        data_loader.close()
         return nodes
+
+    # def _get_experiment_nodes(self) -> list[BioCypherNode]:
+    #     nodes = []
+    #     for i, data in tqdm(enumerate(self.dataset)):
+    #         experiment_id = hashlib.sha256(
+    #             json.dumps(data["experiment"].model_dump()).encode("utf-8")
+    #         ).hexdigest()
+    #         node = BioCypherNode(
+    #             node_id=experiment_id,
+    #             preferred_id=f"SmfCostanzo2016_{i}",
+    #             node_label="experiment",
+    #             properties={
+    #                 "dataset_index": i,
+    #                 "serialized_data": json.dumps(data["experiment"].model_dump()),
+    #             },
+    #         )
+    #         nodes.append(node)
+    #     return nodes
 
     def _get_genotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -679,26 +729,26 @@ class DmfCostanzo2016Adapter:
         for node in self._get_phenotype_nodes():
             yield node
 
-        methods = [
-            self._get_experiment_reference_nodes,
-            self._get_genome_nodes,
-            self._get_dataset_nodes,
-            self._get_environment_nodes,
-            self._get_media_nodes,
-            self._get_temperature_nodes,
-        ]
+        # methods = [
+        #     self._get_experiment_reference_nodes,
+        #     self._get_genome_nodes,
+        #     self._get_dataset_nodes,
+        #     self._get_environment_nodes,
+        #     self._get_media_nodes,
+        #     self._get_temperature_nodes,
+        # ]
 
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-            futures = [executor.submit(method) for method in methods]
-            for future in as_completed(futures):
-                try:
-                    node_generator = future.result()
-                    for node in node_generator:
-                        yield node
-                except Exception as exc:
-                    logger.error(
-                        f"Node generation method generated an exception: {exc}"
-                    )
+        # with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        #     futures = [executor.submit(method) for method in methods]
+        #     for future in as_completed(futures):
+        #         try:
+        #             node_generator = future.result()
+        #             for node in node_generator:
+        #                 yield node
+        #         except Exception as exc:
+        #             logger.error(
+        #                 f"Node generation method generated an exception: {exc}"
+        #             )
 
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -990,30 +1040,31 @@ class DmfCostanzo2016Adapter:
         return nodes
 
     def get_edges(self) -> Generator[BioCypherEdge, None, None]:
-        for edge in self._get_experiment_dataset_edges():
-            yield edge
-        for edge in self._get_dataset_experiment_ref_edges():
-            yield edge
-        for edge in self._get_experiment_ref_experiment_edges():
-            yield edge
-        for edge in self._get_genotype_experiment_edges():
-            yield edge
-        for edge in self._get_environment_experiment_edges():
-            yield edge
-        for edge in self._get_environment_experiment_ref_edges():
-            yield edge
-        for edge in self._get_phenotype_experiment_edges():
-            yield edge
-        for edge in self._get_phenotype_experiment_ref_edges():
-            yield edge
-        for edge in self._get_perturbation_genotype_edges():
-            yield edge
-        for edge in self._get_media_environment_edges():
-            yield edge
-        for edge in self._get_temperature_environment_edges():
-            yield edge
-        for edge in self._get_genome_edges():
-            yield edge
+        pass
+        # for edge in self._get_experiment_dataset_edges():
+        #     yield edge
+        # for edge in self._get_dataset_experiment_ref_edges():
+        #     yield edge
+        # for edge in self._get_experiment_ref_experiment_edges():
+        #     yield edge
+        # for edge in self._get_genotype_experiment_edges():
+        #     yield edge
+        # for edge in self._get_environment_experiment_edges():
+        #     yield edge
+        # for edge in self._get_environment_experiment_ref_edges():
+        #     yield edge
+        # for edge in self._get_phenotype_experiment_edges():
+        #     yield edge
+        # for edge in self._get_phenotype_experiment_ref_edges():
+        #     yield edge
+        # for edge in self._get_perturbation_genotype_edges():
+        #     yield edge
+        # for edge in self._get_media_environment_edges():
+        #     yield edge
+        # for edge in self._get_temperature_environment_edges():
+        #     yield edge
+        # for edge in self._get_genome_edges():
+        #     yield edge
 
     @staticmethod
     def _chunk_experiment_dataset_edges(data_chunk) -> list[BioCypherEdge]:
@@ -1358,7 +1409,7 @@ if __name__ == "__main__":
     dataset = SmfCostanzo2016Dataset(
         osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=1)
+    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
     bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     bc.write_import_call()

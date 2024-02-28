@@ -2,15 +2,92 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1708506367421
+updated: 1709154739522
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.02.28
+
+- [x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
+- [x] Remove index from experiment nodes because it will likely get jumbled anyway. → can possibly recover this or find index later through lmdb. sha in key value possibly.
+- [x] Abstract the chunking, and data loading logic for nodes in `SmfCostanzo2016Adapter`. → This is general enough where it should be reusable for other classes. Ideally this will tie directly in with the data models so we can resuse across all datasets.
+
+- [ ] Check node write speed on `delta`.
+
+- [ ] Abstract the chunking, and data loading logic for edges in `SmfCostanzo2016Adapter`.
+
+- [ ] change `data.reference.reference_environment` to `data.reference.environment`
+
+- [ ] Local
+
+- [ ] Rewrite `SmfCostanzo2016Adapter` to use data loader on all `getters`.
+- [ ] Rewrite `DmfCostanzo2016Adapter` to use data loader on all `getters`. This will be the ultimate test to see if the speed is up to snuff.
+
+- [ ] With chunking I forgot that we can no longer deal with deduplication which voids old tests. Not sure If we can somehow rework this in. 🧠 brainstorm a bit.
+
+- [ ] Test `SmfCostanzo2016Adapter` times to write data on `Delta`. Do this from no dataset so we can also squash the confused print statement that gives us the bash path.
+
+- [ ] Yield in `DmfCostanzo2016Adapter` chunking.
+- [ ] Dataset index for lmdb
+
+- [ ] Clean up tasks.
+- [ ] Docker environment variables.
+- [ ] Logging to the slurm out file.
+
+## 2024.02.27
+
+- [x] Check on small **remote_build** → Going shockingly slow. Hasn't finished in 13 hours. On M1 finishes in like 10 min. → on M1 for `SmfCostanzo2016Adapter` we get `20484it [00:01, 12145.92it/s]` and on Delta we are getting `20484it [01:00, 341.24it/s]`
+- [x] Investigate **remote_build** speed issue 🐢 → M1 cpu max clock rate `3.2 GHz`, and Delta AMD EPYC 7763 “Milan” (PCIe Gen4) clock rate `~2.45`. This shouldn't lead to the nearly 2 orders of magnitude difference in speed. This is a bit baffling to me 😧... Maybe there is some networking bottleneck 🍾 although everything should be in memory. → the issue is with slow IO on delta and biocypher writer. → The issue is **NOT** with the Biocypher writer, it is 2 order of magnitude slower just iterating over the `get_` methods, both `get_nodes` and `get_edges`. Must solve this problem before moving on.  → I've at least found the issue, which is IO from the lmdb dataset
+- [x] Use pyg data loaders for loading the `lmdb` → This does not work because the pydantic data models can have different schemes, non standard entries, different keys etc, and so they cannot be collated which is a requirement of the `pyg` data loader. I would at least have to write a custom collate to bypass this issue, which would get a bit hacky, when I could just write a queue to load next data on cpu.
+- [x] Write a custom data loader for speeding up data writing of adapters on `delta` → we have a working class that seems to create the desired speed up. When running on 128 cpu, we see a speedup from a 1m 30s to 3s. But this was only tested on one function.
+
+## 2024.02.26
+
+- [x] With starting database and maybe not stopping it then the database cannot remain open in future sessions. Not sure what causes this... Rebuilding image to fix. → This isn't so bad the rebuild takes around 5 mins. → Still doesn't work, issues is due to `databases/store_lock` created upon interrupted process [store_lock community neo4j](https://community.neo4j.com/t/var-lib-neo4j-data-databases-graph-db-store-lock-please-ensure-no-other-process-is-using-this-database-and-that-the-directory-is-writable/16863/3) → removing doesn't seem to fix things. → After restarting everything it seems to work so my suspicion is that there was some process that needed to be terminated.
+
+- [x] Try using `.env` for docker file configuration, just add
+
+```yaml
+NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+NEO4J_AUTH=neo4j/torchcell
+```
+
+```bash
+docker run --env-file /path/to/your/.env your_image
+```
+
+→ This seems to work ok. I verified that it was copied over to `cypher-shell` for apptainer. still need to check for docker.
+
+- [x] **remote_build** of all fitness data with `1e5` on dmf → After 3 hr run I killed the job. There is insufficient logging. For some reason there is no output from the python script to the slurm out file.
+- [x] **remote_build** database overnight with `1e5` on dmf → Add slurm environment variables getter function for number of workers.
+
+- [ ] Verify that we were able to read data off of the database on `delta`. Reread notes.
+- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
+- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
+
 ## 2024.02.21
 
-- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended.
+- [x] Try to rebuild image with apptainer, then make sure all bind mounts are exact matches and try to start neo4j. If this does not work, build official Neo4j image and make sure we can start this database. → [[2024.02.21 - Building tc-neo4j latest|dendron://torchcell/database.apptainer#20240221---building-tc-neo4j-latest]] → seems just after rebuild it works fine. → [[Fresh Apptainer Build|dendron://torchcell/database.apptainer#fresh-apptainer-build]]
+- [x] Compare tc-neo4j with `neo4j_4.4.30-enterprise` [[2024.02.21 - Comparison between tc-neo4j build and neo4j_4.4.30-enterprise official image|dendron://torchcell/database.apptainer#20240221---comparison-between-tc-neo4j-build-and-neo4j_4430-enterprise-official-image]]
+- [x] Remove external `jdk-11` from `delta`. → Don't need now that inside image.
+
+- [ ] With starting database and maybe not stopping it then the database cannot remain open in future sessions. Not sure what causes this... Rebuilding image to fix. → This isn't so bad the rebuild takes around 5 mins. → Still doesn't work, issues is due to `databases/store_lock` created upon interrupted process [store_lock community neo4j](https://community.neo4j.com/t/var-lib-neo4j-data-databases-graph-db-store-lock-please-ensure-no-other-process-is-using-this-database-and-that-the-directory-is-writable/16863/3) → removing doesn't seem to fix things.
+
+- [ ] Try using `.env` for docker file configuration, just add
+
+```yaml
+NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+NEO4J_AUTH=neo4j/torchcell
+```
+
+```bash
+docker run --env-file /path/to/your/.env your_image
+```
+
+- [ ] Verify that we were able to read data off of the database on `delta`. Reread notes.
+- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
 - [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
 
 ## 2024.02.20
@@ -24,7 +101,7 @@ created: 1690514887023m
 - [x] Inspect all `TmfKuzmin2018`, test that it can be put into database with no errors → Took 10 mins for around 90,000 experiments. → `cat import.report` is empty.
 - [x] **small_build** complete.
 - [x] **remote_small_build** getting bash path not consistent in apptainer. → In [[costanzo2016|dendron://torchcell/torchcell.datasets.scerevisiae.costanzo2016]] and [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]] switched printing to logging so that we can get bash string. This works well.
-- [ ] **remote_small_build**
+- [x] **remote_small_build** try to see if there are the correct number of nodes in the database on delta apptainer. → 😠 No way of knowing.. you cannot use `cypher-shell` in apptainer. [[2024.02.21 - Cannot use cypher-shell in Apptainer|dendron://torchcell/database.apptainer#20240221---cannot-use-cypher-shell-in-apptainer]] → Turns out the database is immediately shutting down so hope remains.
 
 ## 2024.02.17
 

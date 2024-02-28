@@ -98,23 +98,23 @@ def main() -> str:
     ]
 
     for adapter in adapters:
-        # bc.write_nodes(adapter.get_nodes())
-        [i for i in adapter.get_nodes()]
+        bc.write_nodes(adapter.get_nodes())
+        # [i for i in adapter.get_nodes()]
         # bc.write_edges(adapter.get_edges())
-        [i for i in adapter.get_edges()]
+        # [i for i in adapter.get_edges()]
     
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
 
-    # bc.summary()
-    # # Returns bash script path
+    bc.summary()
+    # Returns bash script path
 
-    # relative_bash_script_path = osp.join(
-    #     "biocypher-out", time, "neo4j-admin-import-call.sh"
-    # )
-    # return relative_bash_script_path
+    relative_bash_script_path = osp.join(
+        "biocypher-out", time, "neo4j-admin-import-call.sh"
+    )
+    return relative_bash_script_path
 
 
 if __name__ == "__main__":

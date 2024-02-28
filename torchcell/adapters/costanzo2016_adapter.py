@@ -8,7 +8,8 @@ import hashlib
 import json
 from biocypher import BioCypher
 from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import logger
+from biocypher._logger import get_logger
+import logging
 from typing import Generator, Set
 import torch
 from torchcell.datasets.scerevisiae import (
@@ -20,45 +21,443 @@ from torchcell.datamodels import Genotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from torch_geometric.loader import DataLoader
 from torchcell.dataset import Dataset
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+from typing import Callable
+from functools import wraps
+from abc import abstractmethod
+
+# logging
+# Get the biocypher logger
+logger = get_logger('biocypher')
+logger.setLevel(logging.ERROR)
 
 
-class SmfCostanzo2016Adapter:
-    def __init__(self, dataset: SmfCostanzo2016Dataset, num_workers: int):
+class BaseAdapter:
+    def __init__(
+        self,
+        dataset: Dataset,
+        compute_workers: int,
+        io_workers: int,
+        chunk_size: int = int(1e4),
+        loader_batch_size: int = int(1e3),
+    ):
         self.dataset = dataset
-        self.num_workers = num_workers
+        self.compute_workers = compute_workers
+        self.io_workers = io_workers
+        self.chunk_size = chunk_size
+        self.loader_batch_size = loader_batch_size
 
-    # def get_nodes(self) -> Generator[BioCypherNode, None, None]:
-    #     methods = [
-    #         # self._get_experiment_reference_nodes,
-    #         # self._get_genome_nodes,
-    #         self._get_experiment_nodes,
-    #         # self._get_genotype_nodes,
-    #         # self._get_dataset_nodes,
-    #         # self._get_environment_nodes,
-    #         # self._get_media_nodes,
-    #         # self._get_temperature_nodes,
-    #         # self._get_phenotype_nodes,
-    #     ]
+    @abstractmethod
+    def get_nodes(self):
+        pass
 
-    #     with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
-    #         futures = [executor.submit(method) for method in methods]
-    #         for future in as_completed(futures):
-    #             try:
-    #                 node_generator = future.result()
-    #                 for node in node_generator:
-    #                     yield node
-    #             except Exception as exc:
-    #                 logger.error(
-    #                     f"Node generation method generated an exception: {exc}"
-    #                 )
+    def get_nodes_by_type(self, chunk_processing_func: Callable):
+        data_chunks = [
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
+        ]
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
+            futures = [
+                executor.submit(chunk_processing_func, chunk) for chunk in data_chunks
+            ]
+            for future in futures:
+                for node in future.result():
+                    yield node
+
+    def node_chunker(node_creation_logic):
+        @wraps(node_creation_logic)
+        def decorator(self, data_chunk: dict):
+            data_loader = CustomDataLoader(
+                data_chunk,
+                batch_size=self.loader_batch_size,
+                num_workers=self.io_workers,
+            )
+            nodes = []
+            for batch in tqdm(data_loader):
+                for data in batch:
+                    transformed_data = data_chunk.transform_item(data)
+                    # The unique node creation logic is applied here
+                    node = node_creation_logic(self, transformed_data)
+                    nodes.append(node)
+            return nodes
+
+        return decorator
+
+
+class SmfCostanzo2016Adapter(BaseAdapter):
+    def __init__(
+        self,
+        dataset: SmfCostanzo2016Dataset,
+        compute_workers: int,
+        io_workers: int,
+        chunk_size: int = int(1e4),
+        loader_batch_size: int = int(1e3),
+    ):
+        super().__init__(
+            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+        )
+
+        self.dataset = dataset
+        self.compute_workers = compute_workers
+        self.io_workers = io_workers
+        self.chunk_size = chunk_size
+        self.loader_batch_size = loader_batch_size
+
+    def get_nodes(self):
+        yield from self.get_experiment_reference_nodes()
+        yield from self.get_genome_nodes()
+        yield from self.get_nodes_by_type(self.experiment_node)
+        yield from self.get_nodes_by_type(self.genotype_node)
+        yield from self.get_nodes_by_type(self.perturbation_node)
+        yield from self.get_nodes_by_type(self.environment_node)
+        yield from self.get_reference_environment_nodes()
+        yield from self.get_nodes_by_type(self.media_node)
+        yield from self.get_reference_media_nodes()
+        yield from self.get_nodes_by_type(self.temperature_node)
+        yield from self.get_reference_temperature_nodes()
+        yield from self.get_nodes_by_type(self.phenotype_node)
+        yield from self.get_reference_phenotype_nodes()
+        yield from self.get_dataset_nodes()
+
+    def get_experiment_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
+            experiment_ref_id = hashlib.sha256(
+                json.dumps(data.reference.model_dump()).encode("utf-8")
+            ).hexdigest()
+            node = BioCypherNode(
+                node_id=experiment_ref_id,
+                preferred_id="experiment reference",
+                node_label="experiment reference",
+                properties={"serialized_data": json.dumps(data.reference.model_dump())},
+            )
+            nodes.append(node)
+        return nodes
+
+    def get_genome_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: Set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            genome_id = hashlib.sha256(
+                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if genome_id not in seen_node_ids:
+                seen_node_ids.add(genome_id)
+                node = BioCypherNode(
+                    node_id=genome_id,
+                    preferred_id="genome",
+                    node_label="genome",
+                    properties={
+                        "species": data.reference.reference_genome.species,
+                        "strain": data.reference.reference_genome.strain,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_genome.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+        return nodes
+
+    @BaseAdapter.node_chunker
+    def experiment_node(self, data: dict) -> BioCypherNode:
+        experiment_id = hashlib.sha256(
+            json.dumps(data["experiment"].model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=experiment_id,
+            preferred_id="experiment",
+            node_label="experiment",
+            properties={"serialized_data": json.dumps(data["experiment"].model_dump())},
+        )
+
+    @BaseAdapter.node_chunker
+    def genotype_node(self, data: dict) -> BioCypherNode:
+        genotype = data["experiment"].genotype
+        genotype_id = hashlib.sha256(
+            json.dumps(genotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=genotype_id,
+            preferred_id="genotype",
+            node_label="genotype",
+            properties={
+                "systematic_gene_names": genotype.systematic_gene_names,
+                "perturbed_gene_names": genotype.perturbed_gene_names,
+                "perturbation_types": genotype.perturbation_types,
+                "serialized_data": json.dumps(genotype.model_dump()),
+            },
+        )
+
+    @BaseAdapter.node_chunker
+    def perturbation_node(self, data: dict) -> BioCypherNode:
+        perturbations = data["experiment"].genotype.perturbations
+        for perturbation in perturbations:
+            perturbation_id = hashlib.sha256(
+                json.dumps(perturbation.model_dump()).encode("utf-8")
+            ).hexdigest()
+            return BioCypherNode(
+                node_id=perturbation_id,
+                preferred_id=perturbation.perturbation_type,
+                node_label="perturbation",
+                properties={
+                    "systematic_gene_name": perturbation.systematic_gene_name,
+                    "perturbed_gene_name": perturbation.perturbed_gene_name,
+                    "perturbation_type": perturbation.perturbation_type,
+                    "description": perturbation.description,
+                    "strain_id": perturbation.strain_id,
+                    "serialized_data": json.dumps(perturbation.model_dump()),
+                },
+            )
+
+    @BaseAdapter.node_chunker
+    def environment_node(self, data: dict) -> BioCypherNode:
+        environment_id = hashlib.sha256(
+            json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
+        ).hexdigest()
+        media = json.dumps(data["experiment"].environment.media.model_dump())
+        return BioCypherNode(
+            node_id=environment_id,
+            preferred_id="environment",
+            node_label="environment",
+            properties={
+                "temperature": data["experiment"].environment.temperature.value,
+                "media": media,
+                "serialized_data": json.dumps(
+                    data["experiment"].environment.model_dump()
+                ),
+            },
+        )
+
+    def get_reference_environment_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            environment_id = hashlib.sha256(
+                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            if environment_id not in seen_node_ids:
+                seen_node_ids.add(environment_id)
+                media = json.dumps(
+                    data.reference.reference_environment.media.model_dump()
+                )
+                node = BioCypherNode(
+                    node_id=environment_id,
+                    preferred_id="environment",
+                    node_label="environment",
+                    properties={
+                        "temperature": data.reference.reference_environment.temperature.value,
+                        "media": media,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_environment.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+        return nodes
+
+    @BaseAdapter.node_chunker
+    def media_node(self, data: dict) -> BioCypherNode:
+        media_id = hashlib.sha256(
+            json.dumps(data["experiment"].environment.media.model_dump()).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        name = data["experiment"].environment.media.name
+        state = data["experiment"].environment.media.state
+        return BioCypherNode(
+            node_id=media_id,
+            preferred_id="media",
+            node_label="media",
+            properties={
+                "name": name,
+                "state": state,
+                "serialized_data": json.dumps(
+                    data["experiment"].environment.media.model_dump()
+                ),
+            },
+        )
+
+    def get_reference_media_nodes(self) -> list[BioCypherNode]:
+        seen_node_ids = set()
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            media_id = hashlib.sha256(
+                json.dumps(
+                    data.reference.reference_environment.media.model_dump()
+                ).encode("utf-8")
+            ).hexdigest()
+            if media_id not in seen_node_ids:
+                seen_node_ids.add(media_id)
+                name = data.reference.reference_environment.media.name
+                state = data.reference.reference_environment.media.state
+                node = BioCypherNode(
+                    node_id=media_id,
+                    preferred_id="media",
+                    node_label="media",
+                    properties={
+                        "name": name,
+                        "state": state,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_environment.media.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+        return nodes
+
+    @BaseAdapter.node_chunker
+    def temperature_node(self, data: dict) -> BioCypherNode:
+        temperature_id = hashlib.sha256(
+            json.dumps(data["experiment"].environment.temperature.model_dump()).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=temperature_id,
+            preferred_id="temperature",
+            node_label="temperature",
+            properties={
+                "value": data["experiment"].environment.temperature.value,
+                "unit": data["experiment"].environment.temperature.unit,
+                "serialized_data": json.dumps(
+                    data["experiment"].environment.temperature.model_dump()
+                ),
+            },
+        )
+
+    def get_reference_temperature_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: Set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            temperature_id = hashlib.sha256(
+                json.dumps(
+                    data.reference.reference_environment.temperature.model_dump()
+                ).encode("utf-8")
+            ).hexdigest()
+            if temperature_id not in seen_node_ids:
+                seen_node_ids.add(temperature_id)
+                node = BioCypherNode(
+                    node_id=temperature_id,
+                    preferred_id="temperature",
+                    node_label="temperature",
+                    properties={
+                        "value": data.reference.reference_environment.temperature.value,
+                        "unit": data.reference.reference_environment.temperature.unit,
+                        "serialized_data": json.dumps(
+                            data.reference.reference_environment.temperature.model_dump()
+                        ),
+                    },
+                )
+                nodes.append(node)
+        return nodes
+
+    @BaseAdapter.node_chunker
+    def phenotype_node(self, data: dict) -> BioCypherNode:
+        phenotype_id = hashlib.sha256(
+            json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = data["experiment"].phenotype.graph_level
+        label = data["experiment"].phenotype.label
+        label_error = data["experiment"].phenotype.label_error
+        fitness = data["experiment"].phenotype.fitness
+        fitness_std = data["experiment"].phenotype.fitness_std
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="phenotype",
+            properties={
+                "graph_level": graph_level,
+                "label": label,
+                "label_error": label_error,
+                "fitness": fitness,
+                "fitness_std": fitness_std,
+                "serialized_data": json.dumps(
+                    data["experiment"].phenotype.model_dump()
+                ),
+            },
+        )
+
+    def get_reference_phenotype_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+
+            graph_level = data.reference.reference_phenotype.graph_level
+            label = data.reference.reference_phenotype.label
+            label_error = data.reference.reference_phenotype.label_error
+            fitness = data.reference.reference_phenotype.fitness
+            fitness_std = data.reference.reference_phenotype.fitness_std
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id=f"phenotype",
+                node_label="phenotype",
+                properties={
+                    "graph_level": graph_level,
+                    "label": label,
+                    "label_error": label_error,
+                    "fitness": fitness,
+                    "fitness_std": fitness_std,
+                    "serialized_data": json.dumps(
+                        data.reference.reference_phenotype.model_dump()
+                    ),
+                },
+            )
+            nodes.append(node)
+        return nodes
+
+    def get_dataset_nodes(self) -> list[BioCypherNode]:
+        nodes = [
+            BioCypherNode(
+                node_id=self.dataset.__class__.__name__,
+                preferred_id=self.dataset.__class__.__name__,
+                node_label="dataset",
+            )
+        ]
+        return nodes
+
+    def get_edges(self):
+        pass
+
+
+class SmfCostanzo2016Adapter_OLD:
+    def __init__(
+        self,
+        dataset: SmfCostanzo2016Dataset,
+        compute_workers: int,
+        io_workers: int,
+        chunk_size: int = int(1e4),
+        loader_batch_size: int = int(1e3),
+    ):
+        self.dataset = dataset
+        self.compute_workers = compute_workers
+        self.io_workers = io_workers
+        self.chunk_size = chunk_size
+        self.loader_batch_size = loader_batch_size
 
     def get_nodes(self):
         # for node in self._get_experiment_reference_nodes():
         #     yield node
         # for node in self._get_genome_nodes():
         #     yield node
-        for node in self._get_experiment_nodes():
-            yield node
+        # for node in self._get_experiment_nodes(
+        #     batch_size=self.loader_batch_size, num_workers=self.io_workers
+        # ):
+        #     yield node
+        # yield from self._get_experiment_nodes(
+        #     batch_size=self.loader_batch_size, num_workers=self.io_workers
+        # )
+
+        yield from self.get_nodes_by_type(chunk_processing_func=self.experiment_node)
         # for node in self._get_genotype_nodes():
         #     yield node
         # for node in self._get_perturbation_nodes():
@@ -73,6 +472,103 @@ class SmfCostanzo2016Adapter:
         #     yield node
         # for node in self._get_dataset_nodes():
         #     yield node
+
+    def get_nodes_by_type(self, chunk_processing_func: Callable):
+        data_chunks = [
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
+        ]
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
+            futures = [
+                executor.submit(chunk_processing_func, chunk) for chunk in data_chunks
+            ]
+            for future in futures:
+                for node in future.result():
+                    yield node
+
+    def node_chunker(node_creation_logic):
+        @wraps(node_creation_logic)
+        def decorator(self, data_chunk: dict):
+            data_loader = CustomDataLoader(
+                data_chunk,
+                batch_size=self.loader_batch_size,
+                num_workers=self.io_workers,
+            )
+            nodes = []
+            for batch in tqdm(data_loader):
+                for data in batch:
+                    transformed_data = data_chunk.transform_item(data)
+                    # The unique node creation logic is applied here
+                    node = node_creation_logic(self, transformed_data)
+                    nodes.append(node)
+            return nodes
+
+        return decorator
+
+    @node_chunker
+    def experiment_node(self, data: dict) -> BioCypherNode:
+        experiment_id = hashlib.sha256(
+            json.dumps(data["experiment"].model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=experiment_id,
+            preferred_id="experiment",
+            node_label="experiment",
+            properties={
+                # "dataset_index": index,
+                "serialized_data": json.dumps(data["experiment"].model_dump())
+            },
+        )
+
+    # BOOK this works
+    @staticmethod
+    def _chunk_experiment_nodes(
+        data_chunk: dict, batch_size: int, num_workers: int
+    ) -> list[BioCypherNode]:
+        data_loader = CustomDataLoader(
+            data_chunk, batch_size=batch_size, num_workers=num_workers
+        )
+        nodes = []
+        for batch in tqdm(data_loader):
+            for i, data in enumerate(batch):
+                data = data_chunk.transform_item(data)
+                experiment_id = hashlib.sha256(
+                    json.dumps(data["experiment"].model_dump()).encode("utf-8")
+                ).hexdigest()
+                node = BioCypherNode(
+                    node_id=experiment_id,
+                    preferred_id=f"DmfCostanzo2016_{i}",
+                    node_label="experiment",
+                    properties={
+                        "dataset_index": i,
+                        "serialized_data": json.dumps(data["experiment"].model_dump()),
+                    },
+                )
+                nodes.append(node)
+        return nodes
+
+    def _get_experiment_nodes(
+        self, batch_size: int, num_workers: int
+    ) -> list[BioCypherNode]:
+        data_chunks = [
+            self.dataset[i : i + self.chunk_size]
+            for i in range(0, len(self.dataset), self.chunk_size)
+        ]
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
+            futures = [
+                executor.submit(
+                    partial(
+                        self._chunk_experiment_nodes,
+                        batch_size=batch_size,
+                        num_workers=num_workers,
+                    ),
+                    chunk,
+                )
+                for chunk in data_chunks
+            ]
+            for future in futures:
+                for node in future.result():
+                    yield node
 
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -116,48 +612,36 @@ class SmfCostanzo2016Adapter:
                 nodes.append(node)
         return nodes
 
-    def _get_experiment_nodes(self) -> Generator[BioCypherNode, None, None]:
+    @staticmethod
+    def _chunk_genotype_nodes(
+        data_chunk: dict, batch_size: int, num_workers: int
+    ) -> list[BioCypherNode]:
         data_loader = CustomDataLoader(
-            self.dataset, batch_size=self.num_workers, num_workers=self.num_workers
+            data_chunk, batch_size=batch_size, num_workers=num_workers
         )
-        # Iterate over the DataLoader, which fetches batches of data
         nodes = []
+        seen_node_ids = set()
         for batch in tqdm(data_loader):
             for i, data in enumerate(batch):
-                data = self.dataset.transform_item(data)
-                experiment_id = hashlib.sha256(
-                    json.dumps(data["experiment"].model_dump()).encode("utf-8")
+                genotype = data["experiment"].genotype
+                genotype_id = hashlib.sha256(
+                    json.dumps(genotype.model_dump()).encode("utf-8")
                 ).hexdigest()
-                node = BioCypherNode(
-                    node_id=experiment_id,
-                    preferred_id=f"SmfCostanzo2016_{i}",
-                    node_label="experiment",
-                    properties={
-                        "dataset_index": i,
-                        "serialized_data": json.dumps(data["experiment"].model_dump()),
-                    },
-                )
-                nodes.append(node)
-        data_loader.close()
+                if genotype_id not in seen_node_ids:
+                    seen_node_ids.add(genotype_id)
+                    node = BioCypherNode(
+                        node_id=genotype_id,
+                        preferred_id=f"genotype_{i}",
+                        node_label="genotype",
+                        properties={
+                            "systematic_gene_names": genotype.systematic_gene_names,
+                            "perturbed_gene_names": genotype.perturbed_gene_names,
+                            "perturbation_types": genotype.perturbation_types,
+                            "serialized_data": json.dumps(genotype.model_dump()),
+                        },
+                    )
+                    nodes.append(node)
         return nodes
-
-    # def _get_experiment_nodes(self) -> list[BioCypherNode]:
-    #     nodes = []
-    #     for i, data in tqdm(enumerate(self.dataset)):
-    #         experiment_id = hashlib.sha256(
-    #             json.dumps(data["experiment"].model_dump()).encode("utf-8")
-    #         ).hexdigest()
-    #         node = BioCypherNode(
-    #             node_id=experiment_id,
-    #             preferred_id=f"SmfCostanzo2016_{i}",
-    #             node_label="experiment",
-    #             properties={
-    #                 "dataset_index": i,
-    #                 "serialized_data": json.dumps(data["experiment"].model_dump()),
-    #             },
-    #         )
-    #         nodes.append(node)
-    #     return nodes
 
     def _get_genotype_nodes(self) -> list[BioCypherNode]:
         nodes = []
@@ -455,7 +939,7 @@ class SmfCostanzo2016Adapter:
             self._get_genome_edges,
         ]
 
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [executor.submit(method) for method in methods]
             for future in as_completed(futures):
                 try:
@@ -712,11 +1196,11 @@ class DmfCostanzo2016Adapter:
     def __init__(
         self,
         dataset: DmfCostanzo2016Dataset,
-        num_workers: int = 1,
+        compute_workers: int = 1,
         chunk_size: int = 1000,
     ):
         self.dataset = dataset
-        self.num_workers = num_workers
+        self.compute_workers = compute_workers
         self.chunk_size = chunk_size
 
     def get_nodes(self) -> Generator[BioCypherNode, None, None]:
@@ -738,7 +1222,7 @@ class DmfCostanzo2016Adapter:
         #     self._get_temperature_nodes,
         # ]
 
-        # with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        # with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
         #     futures = [executor.submit(method) for method in methods]
         #     for future in as_completed(futures):
         #         try:
@@ -817,7 +1301,7 @@ class DmfCostanzo2016Adapter:
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
         nodes = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [
                 executor.submit(self._chunk_experiment_nodes, chunk)
                 for chunk in data_chunks
@@ -1088,7 +1572,7 @@ class DmfCostanzo2016Adapter:
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
         edges = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [
                 executor.submit(self._chunk_experiment_dataset_edges, chunk)
                 for chunk in data_chunks
@@ -1155,7 +1639,7 @@ class DmfCostanzo2016Adapter:
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
         edges = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [
                 executor.submit(self._chunk_genotype_experiment_edges, chunk)
                 for chunk in data_chunks
@@ -1216,7 +1700,7 @@ class DmfCostanzo2016Adapter:
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
         edges = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [
                 executor.submit(self._chunk_environment_experiment_edges, chunk)
                 for chunk in data_chunks
@@ -1277,7 +1761,7 @@ class DmfCostanzo2016Adapter:
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
         edges = []
-        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
             futures = [
                 executor.submit(self._chunk_phenotype_experiment_edges, chunk)
                 for chunk in data_chunks
@@ -1394,6 +1878,9 @@ if __name__ == "__main__":
     from datetime import datetime
     import os
 
+    
+
+    ##
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -1409,7 +1896,7 @@ if __name__ == "__main__":
     dataset = SmfCostanzo2016Dataset(
         osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
-    adapter = SmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    adapter = SmfCostanzo2016Adapter(dataset=dataset, compute_workers=8, io_workers=2)
     bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     bc.write_import_call()
@@ -1430,7 +1917,7 @@ if __name__ == "__main__":
     #     subset_n=int(1e5),
     #     preprocess=None,
     # )
-    # adapter = DmfCostanzo2016Adapter(dataset=dataset, num_workers=10)
+    # adapter = DmfCostanzo2016Adapter(dataset=dataset, compute_workers=10)
     # bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())
     # bc.write_import_call()

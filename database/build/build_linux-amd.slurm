@@ -2,7 +2,7 @@
 #SBATCH --mem=64g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=64    # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=128   # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=TC
@@ -11,19 +11,35 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/database/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/eroror/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/error/%x_%j.out
 
 # mem 128g
 # cpu 128
 module reset
-source ~/.bashrc
-conda activate /projects/bbub/miniconda3/envs/torchcell\
+#source ~/.bashrc
+#conda activate /projects/bbub/miniconda3/envs/torchcell
 
 echo "job is starting on `hostname`"
 
-cd /scratch/bbub/mjvolk3/torchcell/database
+cd /scratch/bbub/mjvolk3/torchcell
 
 echo "Database bulk import starting."
+
+apptainer exec --writable-tmpfs \
+  --env-file $(pwd)/database/.env \
+  -B /projects/bbub/mjvolk3/torchcell/biocypher:/var/lib/neo4j/biocypher \
+  -B /projects/bbub/mjvolk3/torchcell/database/build:/var/lib/neo4j/build \
+  -B $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
+  -B $(pwd)/database/../data/torchcell:/var/lib/neo4j/data/torchcell \
+  -B $(pwd)/database/conf/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
+  -B $(pwd)/database/data:/data \
+  -B $(pwd)/database/logs:/logs \
+  -B $(pwd)/database/import:/var/lib/import \
+  -B $(pwd)/database/plugins:/plugins \
+  -B $(pwd)/database:/scripts \
+  $(pwd)/database/tc-neo4j.sif \
+  /bin/bash /var/lib/neo4j/build/build_linux-amd.sh
+
 
 #apptainer exec --writable-tmpfs \
 #  --env-file $(pwd)/database/.env \
@@ -49,20 +65,6 @@ echo "Database bulk import starting."
 #  & /bin/bash -c "${bash_script_path}"
 
 
-apptainer exec --writable-tmpfs \
-  --env-file $(pwd)/.env \
-  -B /projects/bbub/mjvolk3/torchcell/biocypher:/var/lib/neo4j/biocypher \
-  -B /projects/bbub/mjvolk3/torchcell/database/build:/var/lib/neo4j/build \
-  -B $(pwd)/biocypher-out:/var/lib/neo4j/biocypher-out \
-  -B $(pwd)/../data/torchcell:/var/lib/neo4j/data/torchcell \
-  -B $(pwd)/conf/neo4j.conf:/var/lib/neo4j/conf/neo4j.conf \
-  -B $(pwd)/data:/data \
-  -B $(pwd)/logs:/logs \
-  -B $(pwd)/import:/var/lib/import \
-  -B $(pwd)/plugins:/plugins \
-  -B $(pwd):/scripts \
-  $(pwd)/tc-neo4j.sif \
-  /bin/bash /var/lib/neo4j/build/build_linux-amd.sh
 
 #apptainer exec --writable-tmpfs \
 #  --env-file $(pwd)/.env \

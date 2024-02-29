@@ -134,7 +134,7 @@
             {
                 "label": "Delta: Interactive CPU",
                 "type": "shell",
-                "command": "srun --account=bbub-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=16g --pty bash",
+                "command": "srun --account=bbub-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=32g --pty bash",
                 "problemMatcher": []
             },
             {

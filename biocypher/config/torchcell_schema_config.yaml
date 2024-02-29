@@ -7,14 +7,12 @@ experiment:
     is_a: material sample
     # preferred_id:
     properties:
-        dataset_index: int
         serialized_data: str
 
 experiment reference:
     represented_as: node
     is_a: genome
     properties:
-        dataset_index: int
         serialized_data: str
 
 experiment reference member of:

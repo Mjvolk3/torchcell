@@ -2,17 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709154739522
+updated: 1709222015220
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.02.29
+
+- [ ] Check node write speed on `delta`. → Ran into error when trying to update packages to most recent main commit. [[Apptainer|dendron://torchcell/database.apptainer]]
+
 ## 2024.02.28
 
 - [x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
 - [x] Remove index from experiment nodes because it will likely get jumbled anyway. → can possibly recover this or find index later through lmdb. sha in key value possibly.
-- [x] Abstract the chunking, and data loading logic for nodes in `SmfCostanzo2016Adapter`. → This is general enough where it should be reusable for other classes. Ideally this will tie directly in with the data models so we can resuse across all datasets.
+- [x] Abstract the chunking, and data loading logic for nodes in `SmfCostanzo2016Adapter`. → This is general enough where it should be reusable for other classes. Ideally this will tie directly in with the data models so we can reuse across all datasets.
 
 - [ ] Check node write speed on `delta`.
 

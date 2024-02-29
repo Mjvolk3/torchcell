@@ -59,11 +59,19 @@ class ReferenceIndex(ModelStrict):
         return v
 
 
+# def serialize_for_hashing(obj) -> str:
+#     """
+#     Serialize a Pydantic object for hashing.
+#     """
+#     return json.dumps(obj.dict(), sort_keys=True)
+
+
+# HACK temporary not using pydantic return on get item
 def serialize_for_hashing(obj) -> str:
     """
     Serialize a Pydantic object for hashing.
     """
-    return json.dumps(obj.dict(), sort_keys=True)
+    return json.dumps(obj, sort_keys=True)
 
 
 def compute_sha256_hash(content: str) -> str:

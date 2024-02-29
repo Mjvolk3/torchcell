@@ -12,7 +12,6 @@ import shutil
 import zipfile
 from collections.abc import Callable
 import numpy as np
-import torch
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
@@ -35,6 +34,8 @@ from torchcell.datamodels import (
     Temperature,
 )
 from torchcell.sequence import GeneSet
+from multiprocessing import Process, Queue
+from typing import Iterable
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -1001,17 +1002,6 @@ class DmfCostanzo2016Dataset(Dataset):
         return f"{self.__class__.__name__}({len(self)})"
 
 
-import lmdb
-import os.path as osp
-import pickle
-from multiprocessing import Process, Queue
-from torch.utils.data import Dataset
-import time
-from typing import Generator
-import queue  # This is correct
-from typing import Iterable
-
-
 class CustomDataLoader:
     def __init__(self, dataset, batch_size: int, num_workers: int):
         self.dataset = dataset
@@ -1022,6 +1012,10 @@ class CustomDataLoader:
 
         # Calculate how many batches are needed
         self.total_batches = (len(dataset) + batch_size - 1) // batch_size
+
+        # Flag to track if close has been called
+        # make close idempotent
+        self.is_closed = False
 
         for _ in range(num_workers):
             worker = Process(
@@ -1053,6 +1047,7 @@ class CustomDataLoader:
 
     def __next__(self):
         if self.batch_index >= self.total_batches:
+            self.close()  # Ensure cleanup when iteration is complete
             raise StopIteration
 
         batch = self.data_queue.get()
@@ -1065,11 +1060,14 @@ class CustomDataLoader:
         return batch
 
     def close(self):
-        # Send termination signal to each worker
-        for _ in range(len(self.workers)):
-            self.load_queue.put(None)
-        for worker in self.workers:
-            worker.join()  # Wait for all workers to finish
+        if not self.is_closed:
+            # Send termination signal to each worker
+            for _ in self.workers:
+                self.load_queue.put(None)
+            for worker in self.workers:
+                worker.join()  # Wait for all workers to finish
+            self.is_closed = True  # Set the flag to prevent repeated cleanup
+
 
 # Usage example remains the same
 
@@ -1102,7 +1100,6 @@ if __name__ == "__main__":
     # serialized_data = dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == serialized_data)
-    from torch_geometric.loader import DataLoader
 
     data_loader = CustomDataLoader(dataset, batch_size=10, num_workers=2)
 

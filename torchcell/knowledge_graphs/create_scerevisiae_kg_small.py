@@ -25,6 +25,7 @@ import os.path as osp
 from datetime import datetime
 import multiprocessing as mp
 import sys
+import math
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -61,6 +62,10 @@ def main() -> str:
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
+    # Partition workers
+    num_workers = get_num_workers()
+    io_workers = math.ceil(0.2 * num_workers)
+    compute_workers = num_workers - io_workers
 
     # Ordered adapters from smallest to largest
     adapters = [
@@ -68,7 +73,10 @@ def main() -> str:
             dataset=SmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
             ),
-            num_workers=num_workers,
+            compute_workers=compute_workers,
+            io_workers=io_workers,
+            # chunk_size=int(1e6),
+            # loader_batch_size=int(1e6),
         ),
         # DmfCostanzo2016Adapter(
         #     dataset=DmfCostanzo2016Dataset(
@@ -102,13 +110,13 @@ def main() -> str:
         # [i for i in adapter.get_nodes()]
         # bc.write_edges(adapter.get_edges())
         # [i for i in adapter.get_edges()]
-    
+
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
 
-    bc.summary()
+    # bc.summary()
     # Returns bash script path
 
     relative_bash_script_path = osp.join(

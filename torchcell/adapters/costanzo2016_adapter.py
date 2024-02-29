@@ -22,6 +22,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from torch_geometric.loader import DataLoader
 from torchcell.dataset import Dataset
 from concurrent.futures import ProcessPoolExecutor
+import multiprocessing as mp
 from functools import partial
 from typing import Callable
 from functools import wraps
@@ -29,7 +30,7 @@ from abc import abstractmethod
 
 # logging
 # Get the biocypher logger
-logger = get_logger('biocypher')
+logger = get_logger("biocypher")
 logger.setLevel(logging.ERROR)
 
 
@@ -84,6 +85,24 @@ class BaseAdapter:
 
         return decorator
 
+    # TODO This is no different than the node_chunker decorator - can unify later.
+    def edge_chunker(edge_creation_logic):
+        @wraps(edge_creation_logic)
+        def decorator(self, data_chunk: dict):
+            data_loader = CustomDataLoader(
+                data_chunk,
+                batch_size=self.loader_batch_size,
+                num_workers=self.io_workers,
+            )
+            edges = []
+            for batch in tqdm(data_loader):
+                for data in batch:
+                    transformed_data = data_chunk.transform_item(data)
+                    # The unique edge creation logic is applied here
+                    edge = edge_creation_logic(self, transformed_data)
+                    edges.append(edge)
+            return edges
+        return decorator
 
 class SmfCostanzo2016Adapter(BaseAdapter):
     def __init__(
@@ -426,7 +445,58 @@ class SmfCostanzo2016Adapter(BaseAdapter):
         return nodes
 
     def get_edges(self):
-        pass
+        yield from self.get_reference_dataset_edges()
+        yield from self.get_experiment_dataset_edges()
+        yield from self.get_reference_experiment_edges()
+
+    def get_reference_dataset_edges(self) -> list[BioCypherEdge]:
+        edges = []
+        for data in self.dataset.experiment_reference_index:
+            reference_id = hashlib.sha256(
+                json.dumps(data.reference.model_dump()).encode("utf-8")
+            ).hexdigest()
+            edge = BioCypherEdge(
+                source_id=reference_id,
+                target_id=self.dataset.__class__.__name__,
+                relationship_label="experiment reference member of",
+            )
+            edges.append(edge)
+        return edges
+
+    def get_experiment_dataset_edges(self) -> list[BioCypherEdge]:
+        edges = []
+        for i, data in tqdm(enumerate(self.dataset)):
+            experiment_id = hashlib.sha256(
+                json.dumps(data["experiment"].model_dump()).encode("utf-8")
+            ).hexdigest()
+            edge = BioCypherEdge(
+                source_id=experiment_id,
+                target_id=self.dataset.__class__.__name__,
+                relationship_label="experiment member of",
+            )
+            edges.append(edge)
+        return edges
+
+    def get_reference_experiment_edges(self) -> list[BioCypherEdge]:
+        edges = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            dataset_subset = self.dataset[torch.tensor(data.index)]
+            reference_id = hashlib.sha256(
+                json.dumps(data.reference.model_dump()).encode("utf-8")
+            ).hexdigest()
+            for i, data in enumerate(dataset_subset):
+                experiment_id = hashlib.sha256(
+                    json.dumps(data["experiment"].model_dump()).encode("utf-8")
+                ).hexdigest()
+                edge = BioCypherEdge(
+                    source_id=reference_id,
+                    target_id=experiment_id,
+                    relationship_label="experiment reference of",
+                )
+                edges.append(edge)
+        return edges
+    
+    
 
 
 class SmfCostanzo2016Adapter_OLD:
@@ -1874,11 +1944,9 @@ class DmfCostanzo2016Adapter:
 if __name__ == "__main__":
     import os.path as osp
     from dotenv import load_dotenv
-
+    import math
     from datetime import datetime
     import os
-
-    
 
     ##
     load_dotenv()
@@ -1896,6 +1964,9 @@ if __name__ == "__main__":
     dataset = SmfCostanzo2016Dataset(
         osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
+    num_workers = mp.cpu_count()
+    io_workers =  math.ceil(0.2 * num_workers)
+    compute_workers = num_workers - io_workers
     adapter = SmfCostanzo2016Adapter(dataset=dataset, compute_workers=8, io_workers=2)
     bc.write_nodes(adapter.get_nodes())
     # bc.write_edges(adapter.get_edges())

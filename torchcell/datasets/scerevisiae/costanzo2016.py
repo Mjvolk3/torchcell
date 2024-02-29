@@ -1,4 +1,4 @@
-# torchcell/datasets/scerevisiae/costanzo2016
+# torchcell/datasets/scerevisiae_/costanzo2016
 # [[torchcell.datasets.scerevisiae.costanzo2016]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
@@ -12,7 +12,6 @@ import shutil
 import zipfile
 from collections.abc import Callable
 import numpy as np
-import torch
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
@@ -35,6 +34,8 @@ from torchcell.datamodels import (
     Temperature,
 )
 from torchcell.sequence import GeneSet
+from multiprocessing import Process, Queue
+from typing import Iterable
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -161,7 +162,10 @@ class SmfCostanzo2016Dataset(Dataset):
 
                 # Serialize the Pydantic objects
                 serialized_data = pickle.dumps(
-                    {"experiment": experiment, "reference": reference}
+                    {
+                        "experiment": experiment.model_dump(),
+                        "reference": reference.model_dump(),
+                    }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
 
@@ -406,14 +410,18 @@ class SmfCostanzo2016Dataset(Dataset):
 
             deserialized_data = pickle.loads(serialized_data)
             return deserialized_data
+            # CHECK Doesn't work bc cannot pickle in data loader
+            # experiment = self.experiment_class(**(deserialized_data["experiment"]))
+            # reference = self.reference_class(**(deserialized_data["reference"]))
+            # return {"experiment": experiment, "reference": reference}
+            # CHECK
 
     @staticmethod
     def extract_systematic_gene_names(genotype):
         gene_names = []
-        for perturbation in genotype.perturbations:
-            if hasattr(perturbation, "systematic_gene_name"):
-                gene_name = perturbation.systematic_gene_name
-                gene_names.append(gene_name)
+        for perturbation in genotype.get("perturbations"):
+            gene_name = perturbation.get("systematic_gene_name")
+            gene_names.append(gene_name)
         return gene_names
 
     def compute_gene_set(self):
@@ -429,7 +437,7 @@ class SmfCostanzo2016Dataset(Dataset):
                 experiment = deserialized_data["experiment"]
 
                 extracted_gene_names = self.extract_systematic_gene_names(
-                    experiment.genotype
+                    experiment["genotype"]
                 )
                 for gene_name in extracted_gene_names:
                     gene_set.add(gene_name)
@@ -483,6 +491,21 @@ class SmfCostanzo2016Dataset(Dataset):
 
         self.close_lmdb()
         return self._experiment_reference_index
+
+    @property
+    def experiment_class(self):
+        return FitnessExperiment
+
+    @property
+    def reference_class(self):
+        return FitnessExperimentReference
+
+    def transform_item(self, item):
+        experiment_data = item["experiment"]
+        reference_data = item["reference"]
+        experiment = self.experiment_class(**experiment_data)
+        reference = self.reference_class(**reference_data)
+        return {"experiment": experiment, "reference": reference}
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"
@@ -979,6 +1002,76 @@ class DmfCostanzo2016Dataset(Dataset):
         return f"{self.__class__.__name__}({len(self)})"
 
 
+class CustomDataLoader:
+    def __init__(self, dataset, batch_size: int, num_workers: int):
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.load_queue = Queue()
+        self.data_queue = Queue(maxsize=num_workers)
+        self.workers = []
+
+        # Calculate how many batches are needed
+        self.total_batches = (len(dataset) + batch_size - 1) // batch_size
+
+        # Flag to track if close has been called
+        # make close idempotent
+        self.is_closed = False
+
+        for _ in range(num_workers):
+            worker = Process(
+                target=self.worker_function,
+                args=(self.load_queue, self.data_queue, self.dataset, self.batch_size),
+            )
+            worker.start()
+            self.workers.append(worker)
+
+        # Initially, load the first few batches depending on the number of workers
+        for i in range(min(self.total_batches, num_workers)):
+            self.load_queue.put(i)  # Signal with unique batch index
+
+    @staticmethod
+    def worker_function(load_queue: Queue, data_queue: Queue, dataset, batch_size: int):
+        while True:
+            batch_index = load_queue.get()  # Get unique batch index
+            if batch_index is None:  # If None signal received, terminate the worker
+                break
+
+            start_idx = batch_index * batch_size
+            end_idx = min(start_idx + batch_size, len(dataset))
+            batch = [dataset[i] for i in range(start_idx, end_idx)]
+            data_queue.put(batch)
+
+    def __iter__(self) -> Iterable:
+        self.batch_index = 0  # Reset batch index for new iteration
+        return self
+
+    def __next__(self):
+        if self.batch_index >= self.total_batches:
+            self.close()  # Ensure cleanup when iteration is complete
+            raise StopIteration
+
+        batch = self.data_queue.get()
+
+        # Prepare next batch if there are more batches to process
+        if self.batch_index + len(self.workers) < self.total_batches:
+            self.load_queue.put(self.batch_index + len(self.workers))
+
+        self.batch_index += 1
+        return batch
+
+    def close(self):
+        if not self.is_closed:
+            # Send termination signal to each worker
+            for _ in self.workers:
+                self.load_queue.put(None)
+            for worker in self.workers:
+                worker.join()  # Wait for all workers to finish
+            self.is_closed = True  # Set the flag to prevent repeated cleanup
+
+
+# Usage example remains the same
+
+
 if __name__ == "__main__":
     # dataset = DmfCostanzo2016Dataset(
     #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
@@ -1003,8 +1096,20 @@ if __name__ == "__main__":
     # Single mutant fitness
     dataset = SmfCostanzo2016Dataset()
     print(len(dataset))
-    print(dataset[100])
+    # print(dataset[100])
     # serialized_data = dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == serialized_data)
-    print("done")
+
+    data_loader = CustomDataLoader(dataset, batch_size=10, num_workers=2)
+
+    # Fetch and print the first 3 batches
+    for i, batch in enumerate(data_loader):
+        # batch_transformed = list(map(dataset.transform_item, batch))
+        print(batch[0])
+        print("---")
+        if i == 3:
+            break
+    # Clean up worker processes
+    data_loader.close()
+    print("completed")

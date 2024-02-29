@@ -2,7 +2,7 @@
 id: oaa6167tsocb57vzku33s9c
 title: Docker
 desc: ''
-updated: 1708494596425
+updated: 1709223192650
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -191,8 +191,9 @@ docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7
 
 - We probably don't want biocypher-out to be in the project dir because it contains the bash script that is specific to the environment.
 
+BOOK
+
 ```bash
-💥
 docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 ```
 
@@ -376,4 +377,13 @@ Looks like you have to exit out of the container for the affects to take place, 
 
 ```bash
 docker exec -it tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+```
+
+## Useful Commands for Profiling Scripts on Delta Interactive Node
+
+We output the profile into `biocypher-out/` since this is mounted. We just need to make sure that the `.pstats` file is outputted to a mounted directory.
+
+```bash
+python -m cProfile -o biocypher-out/create_scerevisiae_kg_small.pstats /miniconda/
+envs/myenv/lib/python3.11/site-packages/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
 ```

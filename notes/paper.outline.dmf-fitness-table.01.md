@@ -1,31 +1,10 @@
 ---
-id: op1oqh84n1bplxqi2dr7hxh
-title: Outline
+id: jyuzqq2npnj94gqmx1rtbw3
+title: '01'
 desc: ''
-updated: 1708523864018
-created: 1706898364054
+updated: 1708523963718
+created: 1708523953078
 ---
-
-## Sections
-
-Problem and Solutions
-
-1. P: Data problem in systems biology and metabolic engineering S: Torchcell, Neo4j, Biocypher
-2. P: DCell visible neural network (Fitness) S: One Hot set net (Fitness)  
-3. P: DCell (interactions) S:  DiffPool (interactions) - Compare ontology to learned clustering. Interpretability.
-4. P: Multimodal models with expression data and morphology (multimodal learning) S: morphologic state prediction benefit from fitness and expression data?
-5. P: Generative strain design (generative modeling) S: Solve the combinatorics problem when constructing multiplex mutants.
-
-## Models
-
-- Set Net
-- DCell
-- Self-Attention Pool
-- DiffPool
-- cVAE
-
-### Dmf Fitness
-
 | model               | nodes features $(\mathcal{N})$    | edge features $(\mathcal{E})$ | mae | mdae | pearson | spearman | $r^2$ | $\mu$(1.0-1.1) | $\sigma$(1.0-1.1) | $\mu$(1.1-1.2) | $\sigma$(1.1-1.2) |
 |:--------------------|:----------------------------------|:------------------------------|:----|:-----|:--------|:---------|:------|:---------------|:------------------|:---------------|:------------------|
 | DCell               | One Hot Genes                     | -                             |     |      |         |          |       |                |                   |                |                   |
@@ -44,24 +23,3 @@ Problem and Solutions
 | DiffPool            | Fungal-UTR-Transformer Embeddings | PPI                           |     |      |         |          |       |                |                   |                |                   |
 | DiffPool            | Nucleotide-Transformer Embeddings | PPI                           |     |      |         |          |       |                |                   |                |                   |
 | DiffPool            | Prot T5                           | PPI                           |     |      |         |          |       |                |                   |                |                   |
-
-## Features
-
-Types: dna (sequence), interactions (edges)
-
-- Graphs
-  - PPI
-  - GGI
-  - Reg
-- Ontology
-  - GO
-- Node Features
-  - Median protein abundance
-  - Median mRNA
-  - Chromosome position
-- Node Embeddings
-  - Fungal UTR
-  - Nucleotide Transformer
-  - Codon frequency
-  - ProtT5
-  - One hot

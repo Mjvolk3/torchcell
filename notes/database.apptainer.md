@@ -2,7 +2,7 @@
 id: qi7yo95uaxo0bmrhyb2lhs4
 title: Apptainer
 desc: ''
-updated: 1709223024428
+updated: 1709224140184
 created: 1707239794928
 ---
 
@@ -182,4 +182,4 @@ I tried to purge pip cache but this did not work.
 pip cache purge
 ```
 
-The issue was that I only had 16 gb allocated on the `delta` interactive computer node... Also I think that I was trying to install `torchcell` into t.....................................
+The issue was that I only had 16 gb allocated on the `delta` interactive computer node... Also I think that I was trying to install `torchcell` into `(base)` env so essentially installing it twice. I think this is the reason for failure, but regardless I bumped the memory on delta interactive cpu to 32 gb and it now works fine.

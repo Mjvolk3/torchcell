@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1708491899441
+updated: 1709538824365
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Use omega conf to select the functions that get called automatically for `get_nodes` and `get_edges`.
 - [ ] Formal docker import test with subprocess docker. Create unique containers for each dataset. Output the and evaluate the report file.
 - [ ] [[tests.torchcell.adapters.test_costanzo2016_adapter]] and [[tests.torchcell.adapters.test_kuzmin2018_adapter]] create extra longs when using multiprocessing that should be deleted.
 - [ ] Test for datasets that read out the docker neo4j bulk import report.

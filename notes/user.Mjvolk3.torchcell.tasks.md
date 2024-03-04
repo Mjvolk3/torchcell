@@ -2,15 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709530494521
+updated: 1709538945720
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.04
+
+- [ ] Test `SmfCostanzo2016Adapter` on `Delta`
+
 ## 2024.03.03
 
-- [ ]
+- [x] Get things working again. → Had to stash because something is broken.
+- [x] Try threading instead of loading on the Custom Loader. → works but we are keeping the process Custom Loader there for now commented out. We will have to move this to a file where it makes more sense.
+- [x] Finish `SmfCostanzo2016Adapter`
 
 ## 2024.03.01
 

@@ -2,17 +2,33 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709222015220
+updated: 1709530494521
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.03
+
+- [ ]
+
+## 2024.03.01
+
+- [x] Figure on multiprocesssing optimization → ![](./assets/drawio/biocypher-adapter-optimization.drawio.png)
+
 ## 2024.02.29
 
 - [ ] Check node write speed on `delta`. → Ran into error when trying to update packages to most recent main commit. [[Apptainer|dendron://torchcell/database.apptainer]]
+- [ ] We have multiple `.bashrc` that are competing with apptainer and the base env on delta... fix this
 
 ## 2024.02.28
+
+What is going on here ? what could the following text mean?
+
+[x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
+The text is describing a programming task or update involving the modification of a function named `_get_experiment_nodes` in a software component referred to as `SmfCostanzo2016Adapter`.
+
+The purpose of this modification is to enable the function to utilize a data loader that incorporates a chunking technique borrowed from another component named `DmfCostanzo2016Adapter`. This adjustment allows for better management of resources when the function is executed. Specifically, it makes it possible to specify and control the number of worker processes allocated for input/output operations (IO) and the number allocated for multiprocessing tasks separately. Additionally, by using chunking to handle data in smaller, more manageable pieces, the update aims to reduce the memory overhead associated with processing large datasets at once.
 
 - [x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
 - [x] Remove index from experiment nodes because it will likely get jumbled anyway. → can possibly recover this or find index later through lmdb. sha in key value possibly.

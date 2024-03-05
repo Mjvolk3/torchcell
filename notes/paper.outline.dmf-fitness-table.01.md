@@ -2,9 +2,11 @@
 id: jyuzqq2npnj94gqmx1rtbw3
 title: '01'
 desc: ''
-updated: 1708523963718
+updated: 1709585388557
 created: 1708523953078
 ---
+This is wrong, this is for Tmf.
+
 | model               | nodes features $(\mathcal{N})$    | edge features $(\mathcal{E})$ | mae | mdae | pearson | spearman | $r^2$ | $\mu$(1.0-1.1) | $\sigma$(1.0-1.1) | $\mu$(1.1-1.2) | $\sigma$(1.1-1.2) |
 |:--------------------|:----------------------------------|:------------------------------|:----|:-----|:--------|:---------|:------|:---------------|:------------------|:---------------|:------------------|
 | DCell               | One Hot Genes                     | -                             |     |      |         |          |       |                |                   |                |                   |

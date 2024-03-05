@@ -406,8 +406,26 @@
                 "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
                 "problemMatcher": [],
             },
+            // dendron
+            {"label": "dendron: open random notes",
+            "type": "shell",
+            "command": "python notes/assets/scripts/open_random_notes.py -n ${input:openRandomNotes} -d ${workspaceFolder}/notes",
+            "problemMatcher": [],
+            },
         ],
         "inputs" : [
+            {
+                "id" : "openRandomNotes",
+                "description": "number of random notes to open",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "2",
+                    "4",
+                    "8"
+                    "16",
+                ]
+            },
             {
                 "id": "newFilePath",
                 "type": "promptString",

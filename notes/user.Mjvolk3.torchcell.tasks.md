@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709600836723
+updated: 1709610710364
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -12,6 +12,9 @@ created: 1690514887023m
 
 - [x] #ramble → It seems that this part of the process could be almost completely well-defined. There should only be one rule, if you create a dataset that returns the `lmdb` database, made up of data instances defined by the underlying data model, then, your ticket to play 🎫 is making a such a dataset. We should spare the user of having to actually write the adapters. This also would allow me to separate out the `TorchCell` adapter for contribution to biocypher.
 - [x] Work on tables for models → [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
+- [x] Get `DmfCostanzo2016Adapter` working
+
+- [ ] local test on `dmf_costanzo2016_subset_n_1e4`
 - [ ] Test `SmfCostanzo2016Adapter` on `Delta`
 
 - [ ] #ramble I think that bringing the open random note to my workflow will be a very nice way to bring more unity to the workspace. After my first go at opening random notes I recognized that going into this round of experiments I really need to ride the wave 🌊 properly this time. ramping up models for testing, small mostly to make sure things are working and that I can run them all at once. Or right after one another I really want to minimize debugging so I can move onto the next thing which must be adding the gene interaction datasets.

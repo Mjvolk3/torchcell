@@ -90,10 +90,35 @@ class CellAdapter:
     #     pass
 
     # Nodes put here for now since we are trying to generalize as much as possible to reduce code here.
-    
-    
-    
-    
+
+    def get_nodes(self):
+        yield from self._get_experiment_reference_nodes()
+        yield from self._get_genome_nodes()
+        yield from self.get_data_by_type(self._experiment_node)
+        yield from self.get_data_by_type(self._genotype_node)
+        yield from self.get_data_by_type(self._perturbation_node)
+        yield from self.get_data_by_type(self._environment_node)
+        yield from self._get_reference_environment_nodes()
+        yield from self.get_data_by_type(self._media_node)
+        yield from self._get_reference_media_nodes()
+        yield from self.get_data_by_type(self._temperature_node)
+        yield from self._get_reference_temperature_nodes()
+        yield from self.get_data_by_type(self._phenotype_node)
+        yield from self._get_reference_phenotype_nodes()
+        yield from self.get_dataset_nodes()
+
+    def get_edges(self):
+        yield from self.get_reference_dataset_edges()
+        yield from self.get_data_by_type(self._experiment_dataset_edge)
+        yield from self._get_reference_experiment_edges()
+        yield from self.get_data_by_type(self._genotype_experiment_edge)
+        yield from self.get_data_by_type(self._perturbation_genotype_edges)
+        yield from self.get_data_by_type(self._environment_experiment_edges)
+        yield from self._get_environment_experiment_ref_edges()
+        yield from self.get_data_by_type(self._phenotype_experiment_edges)
+        yield from self.get_data_by_type(self._media_environment_edge)
+        yield from self.get_data_by_type(self._temperature_environment_edge)
+        yield from self._get_genome_edges()
 
     # nodes
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:

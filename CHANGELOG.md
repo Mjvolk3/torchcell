@@ -2,6 +2,13 @@
 
 
 
+## v0.2.0 (2024-03-06)
+
+### Feature
+
+* FEAT: bump feat to auto correct pypi ([`db9bd13`](https://github.com/Mjvolk3/torchcell/commit/db9bd1392b197792c61cdd25bffd7bdc41e141a2))
+
+
 ## v0.1.17 (2024-03-06)
 
 ### Fix

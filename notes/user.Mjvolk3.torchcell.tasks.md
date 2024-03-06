@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709756735934
+updated: 1709757605472
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -11,7 +11,8 @@ created: 1690514887023m
 ## 2024.03.06
 
 - [x] Add post_porcess decorator on processed for cached `gene_set` and `experimental_reference_index`
-- [ ] Refactor [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]]
+- [x] #pro-tip Dataset usage [[2024.03.06 Why the Dataset methods Come after Super|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#20240306-why-the-dataset-methods-come-after-super]]
+- [x] Refactor [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]]
 - [ ] Run local test of small build
 - [ ] Run test on `Delta` of small build
 - [ ] Run full database build.

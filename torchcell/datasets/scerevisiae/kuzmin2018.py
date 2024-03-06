@@ -300,6 +300,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.subset_n = subset_n
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -309,7 +310,6 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     @property
     def reference_class(self) -> ExperimentReference:
         return FitnessExperimentReference
-
 
     @property
     def raw_file_names(self) -> str:
@@ -351,9 +351,6 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
-
-        self.gene_set = self.compute_gene_set()
-        self.experiment_reference_index
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -499,7 +496,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         return experiment, reference
 
 
-class TmfKuzmin2018Dataset(Dataset):
+class TmfKuzmin2018Dataset(ExperimentDataset):
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
 
     def __init__(
@@ -509,8 +506,9 @@ class TmfKuzmin2018Dataset(Dataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.subset_n = subset_n
         super().__init__(root, transform, pre_transform)
-
+        
     @property
     def experiment_class(self) -> BaseExperiment:
         return FitnessExperiment
@@ -518,7 +516,6 @@ class TmfKuzmin2018Dataset(Dataset):
     @property
     def reference_class(self) -> ExperimentReference:
         return FitnessExperimentReference
-
 
     @property
     def raw_file_names(self) -> str:
@@ -555,12 +552,14 @@ class TmfKuzmin2018Dataset(Dataset):
 
                 # Serialize the Pydantic objects
                 serialized_data = pickle.dumps(
-                    {"experiment": experiment, "reference": reference}
+                    {
+                        "experiment": experiment.model_dump(),
+                        "reference": reference.model_dump(),
+                    }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
-        self.gene_set = self.compute_gene_set()
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -718,13 +717,13 @@ class TmfKuzmin2018Dataset(Dataset):
 
 
 if __name__ == "__main__":
-    # dataset = SmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    dataset = SmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     dataset = DmfKuzmin2018Dataset()
     dataset[0]
     print(len(dataset))
-    # dataset = TmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # print()
+    dataset = TmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    print()

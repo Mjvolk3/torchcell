@@ -2,24 +2,42 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709610710364
+updated: 1709756735934
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.06
+
+- [x] Add post_porcess decorator on processed for cached `gene_set` and `experimental_reference_index`
+- [ ] Refactor [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]]
+- [ ] Run local test of small build
+- [ ] Run test on `Delta` of small build
+- [ ] Run full database build.
+- [ ] Implement `NeoDataset`, use the datamodel to generate 2-3 common indices.
+- [ ] Create `Dmf` dataset and freeze
+- [ ] Create `Tmf` dataset and freeze
+
+## 2024.03.05
+
+- [x] Methods across all of the datasets is too difficult to maintain. Write a CellDataset Base class that encapsulates the common behavior. → I think the only change to [[torchcell.dataset.dataset]] is the process_files_exists check. We should be able to readily substitute the `pyg` class. → Let's simplify! → We left off with trying to abstract away some of the necessary calls like `gene_set` and `experiment_reference_index`. → Refactored `SmfCostanzo2016` → Refactored `DmfCostanzo2016` and feeling pretty good about everything... for now ⛈️ See [[torchcell.dataset.experiment_dataset]], and [[torchcell.loader.cpu_experiment_loader]]
+- [x] [[2024.03.05 Origin - Skip Process Files Exist Check|dendron://torchcell/torchcell.dataset.dataset#20240305-origin---skip-process-files-exist-check]]
+- [x] [[Cpu_experiment_loader|dendron://torchcell/torchcell.loader.cpu_experiment_loader]]
+- [x] Run with `pyg` `Dataset` class, see if it breaks 💔 → heart is lubadub dub heat is healthy and well. The class works with `pyg` `Dataset`
+- [x] #ramble Check that database exports are key for key the same in `lmdb`. This will make addition of new datasets testable. It is an alternative to trying to reduce duplication. It pushes more work into getting queries correct, or testing queries for certain properties within a class. Theses will be common as they are tied to the data model, and could therefore probably be abstracted, and this is why we love the data model.
+- 🔲 Verify that rewrite works on `Kuzmin2018`
+
 ## 2024.03.04
 
 - [x] #ramble → It seems that this part of the process could be almost completely well-defined. There should only be one rule, if you create a dataset that returns the `lmdb` database, made up of data instances defined by the underlying data model, then, your ticket to play 🎫 is making a such a dataset. We should spare the user of having to actually write the adapters. This also would allow me to separate out the `TorchCell` adapter for contribution to biocypher.
 - [x] Work on tables for models → [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
+- [x] #ramble I think that bringing the open random note to my workflow will be a very nice way to bring more unity to the workspace. After my first go at opening random notes I recognized that going into this round of experiments I really need to ride the wave 🌊 properly this time. ramping up models for testing, small mostly to make sure things are working and that I can run them all at once. Or right after one another I really want to minimize debugging so I can move onto the next thing which must be adding the gene interaction datasets.
 - [x] Get `DmfCostanzo2016Adapter` working
-
-- [ ] local test on `dmf_costanzo2016_subset_n_1e4`
-- [ ] Test `SmfCostanzo2016Adapter` on `Delta`
-
-- [ ] #ramble I think that bringing the open random note to my workflow will be a very nice way to bring more unity to the workspace. After my first go at opening random notes I recognized that going into this round of experiments I really need to ride the wave 🌊 properly this time. ramping up models for testing, small mostly to make sure things are working and that I can run them all at once. Or right after one another I really want to minimize debugging so I can move onto the next thing which must be adding the gene interaction datasets.
-
-- [ ] #ramble
+- [x] local test on `dmf_costanzo2016_subset_n_1e4`
+- [x] Test `SmfCostanzo2016Adapter` on `Delta`
+- [x] Make sure the database is queryable.
+- [x] #ramble The path to now build the database is getting well established. I think the next thing to do is construct a `NeoCellDataset`. This will be possible in two steps first is to build at the query [[torchcell.neo4j_fitness_query]] so we can construct a raw lmdb where instances are not represented by pytorch geometric data. This raw data should be passed through the data model at some point and then used to write `pyg` data. For this we will want to repurpose [[torchcell.datasets.cell]] it should be nice that we can avoid this notion of a combined dataset, and some other older parts.
 
 ## 2024.03.03
 

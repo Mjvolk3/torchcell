@@ -549,4 +549,3 @@ max      1.193100e+00
 ```
 
 ## Instabilities in Overfitting Wildtype Before Training Batch
-

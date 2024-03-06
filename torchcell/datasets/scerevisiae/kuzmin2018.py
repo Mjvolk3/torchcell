@@ -346,7 +346,10 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
                 # Serialize the Pydantic objects
                 serialized_data = pickle.dumps(
-                    {"experiment": experiment, "reference": reference}
+                    {
+                        "experiment": experiment.model_dump(),
+                        "reference": reference.model_dump(),
+                    }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
 
@@ -508,7 +511,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     ):
         self.subset_n = subset_n
         super().__init__(root, transform, pre_transform)
-        
+
     @property
     def experiment_class(self) -> BaseExperiment:
         return FitnessExperiment

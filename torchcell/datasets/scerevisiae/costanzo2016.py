@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
 
-import json
 import logging
 import os
 import os.path as osp
@@ -11,13 +10,10 @@ import pickle
 import shutil
 import zipfile
 from collections.abc import Callable
-import numpy as np
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.dataset import Dataset, compute_experiment_reference_index
-from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels import (
     BaseEnvironment,
     Genotype,
@@ -32,16 +28,17 @@ from torchcell.datamodels import (
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
+    BaseExperiment,
+    ExperimentReference,
 )
-from torchcell.sequence import GeneSet
-from multiprocessing import Process, Queue
-from typing import Iterable
+from torchcell.dataset import ExperimentDataset, post_process
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-class SmfCostanzo2016Dataset(Dataset):
+class SmfCostanzo2016Dataset(ExperimentDataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -50,46 +47,23 @@ class SmfCostanzo2016Dataset(Dataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
-        subset_n: int = None,
-        preprocess: dict | None = None,
-        skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
+        **kwargs,
     ):
-        self.subset_n = subset_n
-        self._skip_process_file_exist = skip_process_file_exist
-        # TODO consider moving to a well defined Dataset class
-        self.preprocess = preprocess
-        # TODO consider moving to Dataset
-        self.preprocess_dir = osp.join(root, "preprocess")
-        self._length = None
-        self._gene_set = None
-        self._df = None
-        # Check for existing preprocess config
-        # TODO remove preprocess config
-        existing_config = self.load_preprocess_config()
-        if existing_config is not None:
-            if existing_config != self.preprocess:
-                raise ValueError(
-                    "New preprocess does not match existing config."
-                    "Delete the processed and process dir for a new Dataset."
-                    "Or define a new root."
-                )
-        self.env = None
-        self._experiment_reference_index = None
-        super().__init__(root, transform, pre_transform)
+        super().__init__(root, transform, pre_transform, **kwargs)
 
     @property
-    def skip_process_file_exist(self):
-        return self._skip_process_file_exist
+    def experiment_class(self) -> BaseExperiment:
+        return FitnessExperiment
+
+    @property
+    def reference_class(self) -> ExperimentReference:
+        return FitnessExperimentReference
 
     @property
     def raw_file_names(self) -> str:
         return "strain_ids_and_single_mutant_fitness.xlsx"
-
-    @property
-    def processed_file_names(self) -> list[str]:
-        return "lmdb"
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -111,31 +85,11 @@ class SmfCostanzo2016Dataset(Dataset):
             if file_name.endswith(".txt"):
                 os.remove(osp.join(self.raw_dir, file_name))
 
-    def _init_db(self):
-        """Initialize the LMDB environment."""
-        self.env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            readonly=True,
-            lock=False,
-            readahead=False,
-            meminit=False,
-        )
-
-    def close_lmdb(self):
-        if self.env is not None:
-            self.env.close()
-            self.env = None
-
-    @property
-    def df(self):
-        if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
-            self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
-        return self._df
-
+    @post_process
     def process(self):
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
-        df = self.preprocess_raw(df, self.preprocess)
+        df = self.preprocess_raw(df)
         (reference_phenotype_std_26, reference_phenotype_std_30) = (
             self.compute_reference_phenotype_std(df)
         )
@@ -170,14 +124,8 @@ class SmfCostanzo2016Dataset(Dataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
-        self.gene_set = self.compute_gene_set()
-        # This will cache the experiment_reference_index
-        # When I comment out this line I don't get 'Error: the cannot pickle 'Environment' object'
-        self.experiment_reference_index
 
-    def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict | None = None
-    ) -> pd.DataFrame:
+    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
         df["Strain_ID_suffix"] = df["Strain ID"].str.split("_", expand=True)[1]
 
         # Determine perturbation type based on Strain_ID_suffix
@@ -356,162 +304,8 @@ class SmfCostanzo2016Dataset(Dataset):
         )
         return experiment, reference
 
-    # New method to save preprocess configuration to a JSON file
-    def save_preprocess_config(self, preprocess):
-        if not osp.exists(self.preprocess_dir):
-            os.makedirs(self.preprocess_dir)
-        with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
-            json.dump(preprocess, f)
 
-    def load_preprocess_config(self):
-        config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
-
-        if osp.exists(config_path):
-            with open(config_path) as f:
-                config = json.load(f)
-            return config
-        else:
-            return None
-
-    def len(self) -> int:
-        if self.env is None:
-            self._init_db()
-
-        with self.env.begin() as txn:
-            length = txn.stat()["entries"]
-
-        # Must be closed for dataloader num_workers > 0
-        self.close_lmdb()
-
-        return length
-
-    def get(self, idx):
-        if self.env is None:
-            self._init_db()
-
-        # Handling boolean index arrays or numpy arrays
-        if isinstance(idx, (list, np.ndarray)):
-            if isinstance(idx, list):
-                idx = np.array(idx)
-            if idx.dtype == np.bool_:
-                idx = np.where(idx)[0]
-
-            # If idx is a list/array of indices, return a list of data objects
-            return [self.get_single_item(i) for i in idx]
-        else:
-            # Single item retrieval
-            return self.get_single_item(idx)
-
-    def get_single_item(self, idx):
-        with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode())
-            if serialized_data is None:
-                return None
-
-            deserialized_data = pickle.loads(serialized_data)
-            return deserialized_data
-            # CHECK Doesn't work bc cannot pickle in data loader
-            # experiment = self.experiment_class(**(deserialized_data["experiment"]))
-            # reference = self.reference_class(**(deserialized_data["reference"]))
-            # return {"experiment": experiment, "reference": reference}
-            # CHECK
-
-    @staticmethod
-    def extract_systematic_gene_names(genotype):
-        gene_names = []
-        for perturbation in genotype.get("perturbations"):
-            gene_name = perturbation.get("systematic_gene_name")
-            gene_names.append(gene_name)
-        return gene_names
-
-    def compute_gene_set(self):
-        gene_set = GeneSet()
-        if self.env is None:
-            self._init_db()
-
-        with self.env.begin() as txn:
-            cursor = txn.cursor()
-            log.info("Computing gene set...")
-            for key, value in tqdm(cursor):
-                deserialized_data = pickle.loads(value)
-                experiment = deserialized_data["experiment"]
-
-                extracted_gene_names = self.extract_systematic_gene_names(
-                    experiment["genotype"]
-                )
-                for gene_name in extracted_gene_names:
-                    gene_set.add(gene_name)
-
-        self.close_lmdb()
-        return gene_set
-
-    # Reading from JSON and setting it to self._gene_set
-    @property
-    def gene_set(self):
-        if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
-            with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
-                self._gene_set = GeneSet(json.load(f))
-        elif self._gene_set is None:
-            raise ValueError(
-                "gene_set not written during process. "
-                "Please call compute_gene_set in process."
-            )
-        return self._gene_set
-
-    @gene_set.setter
-    def gene_set(self, value):
-        if not value:
-            raise ValueError("Cannot set an empty or None value for gene_set")
-        with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
-            json.dump(list(sorted(value)), f, indent=0)
-        self._gene_set = value
-
-    @property
-    def experiment_reference_index(self):
-        index_file_path = osp.join(
-            self.preprocess_dir, "experiment_reference_index.json"
-        )
-
-        if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
-                data = json.load(file)
-                # Assuming ReferenceIndex can be constructed from a list of dictionaries
-                self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in data
-                ]
-        elif self._experiment_reference_index is None:
-            self._experiment_reference_index = compute_experiment_reference_index(self)
-            with open(index_file_path, "w") as file:
-                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
-                json.dump(
-                    [eri.model_dump() for eri in self._experiment_reference_index],
-                    file,
-                    indent=4,
-                )
-
-        self.close_lmdb()
-        return self._experiment_reference_index
-
-    @property
-    def experiment_class(self):
-        return FitnessExperiment
-
-    @property
-    def reference_class(self):
-        return FitnessExperimentReference
-
-    def transform_item(self, item):
-        experiment_data = item["experiment"]
-        reference_data = item["reference"]
-        experiment = self.experiment_class(**experiment_data)
-        reference = self.reference_class(**reference_data)
-        return {"experiment": experiment, "reference": reference}
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}({len(self)})"
-
-
-class DmfCostanzo2016Dataset(Dataset):
+class DmfCostanzo2016Dataset(ExperimentDataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
         "Raw%20genetic%20interaction%20datasets:%20Pair-wise%20interaction%20format.zip"
@@ -519,48 +313,14 @@ class DmfCostanzo2016Dataset(Dataset):
 
     def __init__(
         self,
-        root: str = "data/torchcell/dmf_costanzo2016",
+        root: str = "data/torchcell/smf_costanzo2016",
         subset_n: int = None,
-        preprocess: dict | None = None,
-        skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
+        **kwargs,
     ):
         self.subset_n = subset_n
-        self._skip_process_file_exist = skip_process_file_exist
-        # TODO consider moving to a well defined Dataset class
-        self.preprocess = preprocess
-        # TODO consider moving to Dataset
-        self.preprocess_dir = osp.join(root, "preprocess")
-        self._length = None
-        self._gene_set = None
-        self._df = None
-        # Check for existing preprocess config
-        existing_config = self.load_preprocess_config()
-        if existing_config is not None:
-            if existing_config != self.preprocess:
-                raise ValueError(
-                    "New preprocess does not match existing config."
-                    "Delete the processed and process dir for a new Dataset."
-                    "Or define a new root."
-                )
-        self.env = None
-        self._experiment_reference_index = None
-        super().__init__(root, transform, pre_transform)
-        # This was here before - not sure if it has something to do with gpu
-        # self.env = None
-
-    @property
-    def skip_process_file_exist(self):
-        return self._skip_process_file_exist
-
-    @property
-    def raw_file_names(self) -> list[str]:
-        return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
-
-    @property
-    def processed_file_names(self) -> list[str]:
-        return "lmdb"
+        super().__init__(root, transform, pre_transform, **kwargs)
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -579,26 +339,77 @@ class DmfCostanzo2016Dataset(Dataset):
         # remove any excess files not needed
         os.remove(osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx"))
 
-    def _init_db(self):
-        """Initialize the LMDB environment."""
-        self.env = lmdb.open(
-            osp.join(self.processed_dir, "lmdb"),
-            readonly=True,
-            lock=False,
-            readahead=False,
-            meminit=False,
-        )
-
-    def close_lmdb(self):
-        if self.env is not None:
-            self.env.close()
-            self.env = None
+    @property
+    def experiment_class(self) -> BaseExperiment:
+        return FitnessExperiment
 
     @property
-    def df(self):
-        if osp.exists(osp.join(self.preprocess_dir, "data.csv")):
-            self._df = pd.read_csv(osp.join(self.preprocess_dir, "data.csv"))
-        return self._df
+    def reference_class(self) -> ExperimentReference:
+        return FitnessExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        return ["SGA_DAmP.txt", "SGA_ExE.txt", "SGA_ExN_NxE.txt", "SGA_NxN.txt"]
+
+    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
+        log.info("Preprocess on raw data...")
+
+        # Function to extract gene name
+        def extract_systematic_name(x):
+            return x.apply(lambda y: y.split("_")[0])
+
+        # Extract gene names
+        df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
+        df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
+        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
+        df["Temperature"] = Temperature
+        df["query_perturbation_type"] = df["Query Strain ID"].apply(
+            lambda x: (
+                "damp"
+                if "damp" in x
+                else (
+                    "temperature_sensitive"
+                    if "tsa" in x or "tsq" in x
+                    else (
+                        "KanMX_deletion"
+                        if "dma" in x
+                        else (
+                            "NatMX_deletion"
+                            if "sn" in x  # or "S" in x or "A_S" in x
+                            else "suppression_allele" if "S" in x else "unknown"
+                        )
+                    )
+                )
+            )
+        )
+        df["array_perturbation_type"] = df["Array Strain ID"].apply(
+            lambda x: (
+                "damp"
+                if "damp" in x
+                else (
+                    "temperature_sensitive"
+                    if "tsa" in x or "tsq" in x
+                    else (
+                        "KanMX_deletion"
+                        if "dma" in x
+                        else (
+                            "NatMX_deletion"
+                            if "sn" in x  # or "S" in x or "A_S" in x
+                            else "suppression_allele" if "S" in x else "unknown"
+                        )
+                    )
+                )
+            )
+        )
+        means = df.groupby("Temperature")[
+            "Double mutant fitness standard deviation"
+        ].mean()
+
+        # Extracting means for specific temperatures
+        self.reference_phenotype_std_26 = means.get(26, None)
+        self.reference_phenotype_std_30 = means.get(30, None)
+
+        return df
 
     def process(self):
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -617,8 +428,7 @@ class DmfCostanzo2016Dataset(Dataset):
             # Concatenating data frames
             df = pd.concat([df, df_temp], ignore_index=True)
         # Functions for data filtering... duplicates selection,
-        df = self.preprocess_raw(df, self.preprocess)
-        self.save_preprocess_config(self.preprocess)
+        df = self.preprocess_raw(df)
 
         # Subset
         if self.subset_n is not None:
@@ -653,9 +463,6 @@ class DmfCostanzo2016Dataset(Dataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
-        self.gene_set = self.compute_gene_set()
-        # This will cache the experiment_reference_index
-        self.experiment_reference_index
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -792,393 +599,33 @@ class DmfCostanzo2016Dataset(Dataset):
         )
         return experiment, reference
 
-    def preprocess_raw(self, df: pd.DataFrame, preprocess: dict | None = None):
-        log.info("Preprocess on raw data...")
-
-        # Function to extract gene name
-        def extract_systematic_name(x):
-            return x.apply(lambda y: y.split("_")[0])
-
-        # Extract gene names
-        df["Query Systematic Name"] = extract_systematic_name(df["Query Strain ID"])
-        df["Array Systematic Name"] = extract_systematic_name(df["Array Strain ID"])
-        Temperature = df["Arraytype/Temp"].str.extract("(\d+)").astype(int)
-        df["Temperature"] = Temperature
-        df["query_perturbation_type"] = df["Query Strain ID"].apply(
-            lambda x: (
-                "damp"
-                if "damp" in x
-                else (
-                    "temperature_sensitive"
-                    if "tsa" in x or "tsq" in x
-                    else (
-                        "KanMX_deletion"
-                        if "dma" in x
-                        else (
-                            "NatMX_deletion"
-                            if "sn" in x  # or "S" in x or "A_S" in x
-                            else "suppression_allele" if "S" in x else "unknown"
-                        )
-                    )
-                )
-            )
-        )
-        df["array_perturbation_type"] = df["Array Strain ID"].apply(
-            lambda x: (
-                "damp"
-                if "damp" in x
-                else (
-                    "temperature_sensitive"
-                    if "tsa" in x or "tsq" in x
-                    else (
-                        "KanMX_deletion"
-                        if "dma" in x
-                        else (
-                            "NatMX_deletion"
-                            if "sn" in x  # or "S" in x or "A_S" in x
-                            else "suppression_allele" if "S" in x else "unknown"
-                        )
-                    )
-                )
-            )
-        )
-        means = df.groupby("Temperature")[
-            "Double mutant fitness standard deviation"
-        ].mean()
-        # TODO remove TS_ALLELE_PROBLEMATIC
-
-        # Extracting means for specific temperatures
-        self.reference_phenotype_std_26 = means.get(26, None)
-        self.reference_phenotype_std_30 = means.get(30, None)
-
-        # Assuming df is your DataFrame
-        def create_combined_systematic_name(row):
-            names = sorted([row["Query Systematic Name"], row["Array Systematic Name"]])
-            return "_".join(names)
-
-        def create_combined_allele_name(row):
-            names = sorted([row["Query allele name"], row["Array allele name"]])
-            return "_".join(names)
-
-        # TODO delete if not needed
-        # df["combined_systematic_name"] = df.apply(
-        #     create_combined_systematic_name, axis=1
-        # )
-
-        # df["combined_allele_name"] = df.apply(create_combined_allele_name, axis=1)
-
-        return df
-
-    # New method to save preprocess configuration to a JSON file
-    def save_preprocess_config(self, preprocess):
-        if not osp.exists(self.preprocess_dir):
-            os.makedirs(self.preprocess_dir)
-        with open(osp.join(self.preprocess_dir, "preprocess_config.json"), "w") as f:
-            json.dump(preprocess, f)
-
-    def load_preprocess_config(self):
-        config_path = osp.join(self.preprocess_dir, "preprocess_config.json")
-
-        if osp.exists(config_path):
-            with open(config_path) as f:
-                config = json.load(f)
-            return config
-        else:
-            return None
-
-    def len(self) -> int:
-        if self.env is None:
-            self._init_db()
-
-        with self.env.begin() as txn:
-            length = txn.stat()["entries"]
-
-        # Must be closed for dataloader num_workers > 0
-        self.close_lmdb()
-
-        return length
-
-    def get(self, idx):
-        if self.env is None:
-            self._init_db()
-
-        # Handling boolean index arrays or numpy arrays
-        if isinstance(idx, (list, np.ndarray)):
-            if isinstance(idx, list):
-                idx = np.array(idx)
-            if idx.dtype == np.bool_:
-                idx = np.where(idx)[0]
-
-            # If idx is a list/array of indices, return a list of data objects
-            return [self.get_single_item(i) for i in idx]
-        else:
-            # Single item retrieval
-            return self.get_single_item(idx)
-
-    def get_single_item(self, idx):
-        with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode())
-            if serialized_data is None:
-                return None
-
-            deserialized_data = pickle.loads(serialized_data)
-            return deserialized_data
-
-    @staticmethod
-    def extract_systematic_gene_names(genotype):
-        gene_names = []
-        for perturbation in genotype.get("perturbations"):
-            gene_name = perturbation.get("systematic_gene_name")
-            gene_names.append(gene_name)
-        return gene_names
-
-    def compute_gene_set(self):
-        gene_set = GeneSet()
-        if self.env is None:
-            self._init_db()
-
-        with self.env.begin() as txn:
-            cursor = txn.cursor()
-            log.info("Computing gene set...")
-            for key, value in tqdm(cursor):
-                deserialized_data = pickle.loads(value)
-                experiment = deserialized_data["experiment"]
-
-                extracted_gene_names = self.extract_systematic_gene_names(
-                    experiment["genotype"]
-                )
-                for gene_name in extracted_gene_names:
-                    gene_set.add(gene_name)
-
-        self.close_lmdb()
-        return gene_set
-
-    # Reading from JSON and setting it to self._gene_set
-    @property
-    def gene_set(self):
-        if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
-            with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
-                self._gene_set = GeneSet(json.load(f))
-        elif self._gene_set is None:
-            raise ValueError(
-                "gene_set not written during process. "
-                "Please call compute_gene_set in process."
-            )
-        return self._gene_set
-
-    @gene_set.setter
-    def gene_set(self, value):
-        if not value:
-            raise ValueError("Cannot set an empty or None value for gene_set")
-        with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
-            json.dump(list(sorted(value)), f, indent=0)
-        self._gene_set = value
-
-    @property
-    def experiment_reference_index(self):
-        index_file_path = osp.join(
-            self.preprocess_dir, "experiment_reference_index.json"
-        )
-
-        if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
-                data = json.load(file)
-                # Assuming ReferenceIndex can be constructed from a list of dictionaries
-                self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in data
-                ]
-        elif self._experiment_reference_index is None:
-            self._experiment_reference_index = compute_experiment_reference_index(self)
-            with open(index_file_path, "w") as file:
-                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
-                json.dump(
-                    [eri.model_dump() for eri in self._experiment_reference_index],
-                    file,
-                    indent=4,
-                )
-
-        self.close_lmdb()
-        return self._experiment_reference_index
-
-    @property
-    def experiment_class(self):
-        return FitnessExperiment
-
-    @property
-    def reference_class(self):
-        return FitnessExperimentReference
-
-    def transform_item(self, item):
-        experiment_data = item["experiment"]
-        reference_data = item["reference"]
-        experiment = self.experiment_class(**experiment_data)
-        reference = self.reference_class(**reference_data)
-        return {"experiment": experiment, "reference": reference}
-    
-    def __repr__(self):
-        return f"{self.__class__.__name__}({len(self)})"
-
-
-# class CustomDataLoader:
-#     def __init__(self, dataset, batch_size: int, num_workers: int):
-#         self.dataset = dataset
-#         self.batch_size = batch_size
-#         self.load_queue = Queue()
-#         self.data_queue = Queue(maxsize=num_workers)
-#         self.workers = []
-
-#         # Calculate how many batches are needed
-#         self.total_batches = (len(dataset) + batch_size - 1) // batch_size
-
-#         # Flag to track if close has been called
-#         # make close idempotent
-#         self.is_closed = False
-
-#         for _ in range(num_workers):
-#             worker = Process(
-#                 target=self.worker_function,
-#                 args=(self.load_queue, self.data_queue, self.dataset, self.batch_size),
-#             )
-#             worker.start()
-#             self.workers.append(worker)
-
-#         # Initially, load the first few batches depending on the number of workers
-#         for i in range(min(self.total_batches, num_workers)):
-#             self.load_queue.put(i)  # Signal with unique batch index
-
-#     @staticmethod
-#     def worker_function(load_queue: Queue, data_queue: Queue, dataset, batch_size: int):
-#         while True:
-#             batch_index = load_queue.get()  # Get unique batch index
-#             if batch_index is None:  # If None signal received, terminate the worker
-#                 break
-
-#             start_idx = batch_index * batch_size
-#             end_idx = min(start_idx + batch_size, len(dataset))
-#             batch = [dataset[i] for i in range(start_idx, end_idx)]
-#             data_queue.put(batch)
-
-#     def __iter__(self) -> Iterable:
-#         self.batch_index = 0  # Reset batch index for new iteration
-#         return self
-
-#     def __next__(self):
-#         if self.batch_index >= self.total_batches:
-#             self.close()  # Ensure cleanup when iteration is complete
-#             raise StopIteration
-
-#         batch = self.data_queue.get()
-
-#         # Prepare next batch if there are more batches to process
-#         if self.batch_index + len(self.workers) < self.total_batches:
-#             self.load_queue.put(self.batch_index + len(self.workers))
-
-#         self.batch_index += 1
-#         return batch
-
-#     def close(self):
-#         if not self.is_closed:
-#             # Send termination signal to each worker
-#             for _ in self.workers:
-#                 self.load_queue.put(None)
-#             for worker in self.workers:
-#                 worker.join()  # Wait for all workers to finish
-#             self.is_closed = True  # Set the flag to prevent repeated cleanup
-
-from threading import Thread
-from queue import Queue
-from typing import Iterable
-
-
-class CustomDataLoader:
-    def __init__(self, dataset, batch_size: int, num_workers: int):
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.load_queue = Queue()
-        self.data_queue = Queue(maxsize=num_workers)
-        self.workers = []
-
-        # Calculate how many batches are needed
-        self.total_batches = (len(dataset) + batch_size - 1) // batch_size
-
-        # Flag to track if close has been called
-        # make close idempotent
-        self.is_closed = False
-
-        for _ in range(num_workers):
-            worker = Thread(
-                target=self.worker_function,
-                args=(self.load_queue, self.data_queue, self.dataset, self.batch_size),
-            )
-            worker.start()
-            self.workers.append(worker)
-
-        # Initially, load the first few batches depending on the number of workers
-        for i in range(min(self.total_batches, num_workers)):
-            self.load_queue.put(i)  # Signal with unique batch index
-
-    @staticmethod
-    def worker_function(load_queue: Queue, data_queue: Queue, dataset, batch_size: int):
-        while True:
-            batch_index = load_queue.get()  # Get unique batch index
-            if batch_index is None:  # If None signal received, terminate the worker
-                break
-
-            start_idx = batch_index * batch_size
-            end_idx = min(start_idx + batch_size, len(dataset))
-            batch = [dataset[i] for i in range(start_idx, end_idx)]
-            data_queue.put(batch)
-
-    def __iter__(self) -> Iterable:
-        self.batch_index = 0  # Reset batch index for new iteration
-        return self
-
-    def __next__(self):
-        if self.batch_index >= self.total_batches:
-            self.close()  # Ensure cleanup when iteration is complete
-            raise StopIteration
-
-        batch = self.data_queue.get()
-
-        # Prepare next batch if there are more batches to process
-        if self.batch_index + len(self.workers) < self.total_batches:
-            self.load_queue.put(self.batch_index + len(self.workers))
-
-        self.batch_index += 1
-        return batch
-
-    def close(self):
-        if not self.is_closed:
-            # Send termination signal to each worker
-            for _ in self.workers:
-                self.load_queue.put(None)
-            for worker in self.workers:
-                worker.join()  # Wait for all workers to finish
-            self.is_closed = True  # Set the flag to prevent repeated cleanup
-
-# Usage example remains the same
-
 
 if __name__ == "__main__":
+    from torchcell.loader import CpuExperimentLoader
     # dataset = DmfCostanzo2016Dataset(
     #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
     #     subset_n=1000,
-    #     preprocess=None,
     # )
-    # dataset.experiment_reference_index
-    # dataset[0]
-    # serialized_data = dataset[0]["experiment"].model_dump()
-    # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # print(new_instance == dataset[0]['experiment'])
-    # Usage example
+    # # dataset.experiment_reference_index
+    # # dataset[0]
+    # # serialized_data = dataset[0]["experiment"].model_dump()
+    # # new_instance = FitnessExperiment.model_validate(serialized_data)
+    # # print(new_instance == dataset[0]['experiment'])
+    # # Usage example
     # print(len(dataset))
-    # print(json.dumps(dataset[0].model_dump(), indent=4))
-    # print(dataset.reference_index)
-    # # print(len(dataset.reference_index))
-    # # print(dataset.reference_index[0])
-    # serialized_data = dataset[0]["experiment"].model_dump()
-    # print(dataset[0]["experiment"])
-    # print(FitnessExperiment(**serialized_data))
+    # print(dataset.experiment_reference_index)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # # Fetch and print the first 3 batches
+    # for i, batch in enumerate(data_loader):
+    #     # batch_transformed = list(map(dataset.transform_item, batch))
+    #     print(batch[0])
+    #     print("---")
+    #     if i == 3:
+    #         break
+    # # Clean up worker processes
+    # data_loader.close()
+    # print("completed")
+
     ######
     # Single mutant fitness
     dataset = SmfCostanzo2016Dataset()
@@ -1187,9 +634,7 @@ if __name__ == "__main__":
     # serialized_data = dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == serialized_data)
-
-    data_loader = CustomDataLoader(dataset, batch_size=1, num_workers=1)
-
+    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
     # Fetch and print the first 3 batches
     for i, batch in enumerate(data_loader):
         # batch_transformed = list(map(dataset.transform_item, batch))

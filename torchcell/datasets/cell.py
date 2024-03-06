@@ -496,6 +496,9 @@ class CellDataset(Dataset):
             self.env = None
 
 
+class NeoCellDataset(Dataset):
+    pass
+
 def main():
     # genome
     import os.path as osp

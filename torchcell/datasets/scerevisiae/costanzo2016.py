@@ -602,29 +602,29 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
 if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
-    # dataset = DmfCostanzo2016Dataset(
-    #     root="data/torchcell/dmf_costanzo2016_subset_n_1000",
-    #     subset_n=1000,
-    # )
-    # # dataset.experiment_reference_index
-    # # dataset[0]
-    # # serialized_data = dataset[0]["experiment"].model_dump()
-    # # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # # print(new_instance == dataset[0]['experiment'])
-    # # Usage example
-    # print(len(dataset))
-    # print(dataset.experiment_reference_index)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # # Fetch and print the first 3 batches
-    # for i, batch in enumerate(data_loader):
-    #     # batch_transformed = list(map(dataset.transform_item, batch))
-    #     print(batch[0])
-    #     print("---")
-    #     if i == 3:
-    #         break
-    # # Clean up worker processes
-    # data_loader.close()
-    # print("completed")
+    dataset = DmfCostanzo2016Dataset(
+        root="data/torchcell/dmf_costanzo2016_subset_n_1000",
+        subset_n=1000,
+    )
+    # dataset.experiment_reference_index
+    # dataset[0]
+    # serialized_data = dataset[0]["experiment"].model_dump()
+    # new_instance = FitnessExperiment.model_validate(serialized_data)
+    # print(new_instance == dataset[0]['experiment'])
+    # Usage example
+    print(len(dataset))
+    print(dataset.experiment_reference_index)
+    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # Fetch and print the first 3 batches
+    for i, batch in enumerate(data_loader):
+        # batch_transformed = list(map(dataset.transform_item, batch))
+        print(batch[0])
+        print("---")
+        if i == 3:
+            break
+    # Clean up worker processes
+    data_loader.close()
+    print("completed")
 
     ######
     # Single mutant fitness

@@ -16,7 +16,6 @@ from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )
-from torchcell.datasets.scerevisiae import CustomDataLoader
 from torchcell.datamodels import Genotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from torch_geometric.loader import DataLoader

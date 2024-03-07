@@ -64,22 +64,13 @@ def main() -> str:
     )
     # Partition workers
     num_workers = get_num_workers()
-    io_workers = math.ceil(0.5 * num_workers)
+    io_workers = math.ceil(0.2 * num_workers)
     compute_workers = num_workers - io_workers
-    chunk_size = int(1e5)
+    chunk_size = int(1e4)
     loader_batch_size = int(1e3)
 
     # Ordered adapters from smallest to largest
     adapters = [
-        SmfCostanzo2016Adapter(
-            dataset=SmfCostanzo2016Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-            ),
-            compute_workers=compute_workers,
-            io_workers=io_workers,
-            chunk_size=chunk_size,
-            loader_batch_size=loader_batch_size,
-        ),
         DmfCostanzo2016Adapter(
             dataset=DmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
@@ -89,33 +80,42 @@ def main() -> str:
             chunk_size=chunk_size,
             loader_batch_size=loader_batch_size,
         ),
-        SmfKuzmin2018Adapter(
-            dataset=SmfKuzmin2018Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-            ),
-            compute_workers=compute_workers,
-            io_workers=io_workers,
-            chunk_size=chunk_size,
-            loader_batch_size=loader_batch_size
-        ),
-        DmfKuzmin2018Adapter(
-            dataset=DmfKuzmin2018Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
-            ),
-            compute_workers=compute_workers,
-            io_workers=io_workers,
-            chunk_size=chunk_size,
-            loader_batch_size=loader_batch_size
-        ),
-        TmfKuzmin2018Adapter(
-            dataset=TmfKuzmin2018Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
-            ),
-            compute_workers=compute_workers,
-            io_workers=io_workers,
-            chunk_size=chunk_size,
-            loader_batch_size=loader_batch_size
-        ),
+        # SmfCostanzo2016Adapter(
+        #     dataset=SmfCostanzo2016Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+        #     ),
+        #     compute_workers=compute_workers,
+        #     io_workers=io_workers,
+        #     chunk_size=chunk_size,
+        #     loader_batch_size=loader_batch_size,
+        # ),
+        # SmfKuzmin2018Adapter(
+        #     dataset=SmfKuzmin2018Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+        #     ),
+        #     compute_workers=compute_workers,
+        #     io_workers=io_workers,
+        #     chunk_size=chunk_size,
+        #     loader_batch_size=loader_batch_size
+        # ),
+        # DmfKuzmin2018Adapter(
+        #     dataset=DmfKuzmin2018Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018")
+        #     ),
+        #     compute_workers=compute_workers,
+        #     io_workers=io_workers,
+        #     chunk_size=chunk_size,
+        #     loader_batch_size=loader_batch_size
+        # ),
+        # TmfKuzmin2018Adapter(
+        #     dataset=TmfKuzmin2018Dataset(
+        #         root=osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018")
+        #     ),
+        #     compute_workers=compute_workers,
+        #     io_workers=io_workers,
+        #     chunk_size=chunk_size,
+        #     loader_batch_size=loader_batch_size
+        # ),
     ]
 
     for adapter in adapters:

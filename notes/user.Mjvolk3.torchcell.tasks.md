@@ -16,9 +16,9 @@ created: 1690514887023m
 - [x] Refactor Kuzmin adapters [[Kuzmin2018_adapter|dendron://torchcell/torchcell.adapters.kuzmin2018_adapter]]
 - [x] bump `torchcell` → not recognizing on pypi... bumping `FEAT`
 - [x] Run local test of small build [[2024.03.06 - Start and use Neo4j Torchcell Database|dendron://torchcell/cypher-shell#20240306---start-and-use-neo4j-torchcell-database]]
-- [ ] Run test on `Delta` of small build. → this is going wicked slow... maybe see if there is a difference using processors. Previously this is what I think worked on Delta.
-- [ ] Run full database build.
-- [ ] Implement `NeoDataset`, use the datamodel to generate 2-3 common indices.
+- [x] Run test on `Delta` of small build. → this is going wicked slow... maybe see if there is a difference using processors. Previously this is what I think worked on Delta. → I changed back to `processor` and recovered some speed . Using this for now... I'm not sure of the logic
+- [x] Run full database build. → Launched full build on delta even though still using this file [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
+- [ ] Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
 - [ ] Create `Dmf` dataset and freeze
 - [ ] Create `Tmf` dataset and freeze
 
@@ -27,7 +27,7 @@ created: 1690514887023m
 - [x] Methods across all of the datasets is too difficult to maintain. Write a CellDataset Base class that encapsulates the common behavior. → I think the only change to [[torchcell.dataset.dataset]] is the process_files_exists check. We should be able to readily substitute the `pyg` class. → Let's simplify! → We left off with trying to abstract away some of the necessary calls like `gene_set` and `experiment_reference_index`. → Refactored `SmfCostanzo2016` → Refactored `DmfCostanzo2016` and feeling pretty good about everything... for now ⛈️ See [[torchcell.dataset.experiment_dataset]], and [[torchcell.loader.cpu_experiment_loader]]
 - [x] [[2024.03.05 Origin - Skip Process Files Exist Check|dendron://torchcell/torchcell.dataset.dataset#20240305-origin---skip-process-files-exist-check]]
 - [x] [[Cpu_experiment_loader|dendron://torchcell/torchcell.loader.cpu_experiment_loader]]
-- [x] Run with `pyg` `Dataset` class, see if it breaks 💔 → heart is lubadub dub heat is healthy and well. The class works with `pyg` `Dataset`
+- [x] Run with `pyg` `Dataset` class, see if it breaks 💔 → heart is lubadub dub heat is healthy and well ❤️. The class works with `pyg` `Dataset`
 - [x] #ramble Check that database exports are key for key the same in `lmdb`. This will make addition of new datasets testable. It is an alternative to trying to reduce duplication. It pushes more work into getting queries correct, or testing queries for certain properties within a class. Theses will be common as they are tied to the data model, and could therefore probably be abstracted, and this is why we love the data model.
 - 🔲 Verify that rewrite works on `Kuzmin2018`
 

@@ -64,7 +64,7 @@ def main() -> str:
     )
     # Partition workers
     num_workers = get_num_workers()
-    io_workers = math.ceil(0.8 * num_workers)
+    io_workers = math.ceil(0.5 * num_workers)
     compute_workers = num_workers - io_workers
     chunk_size = int(1e5)
     loader_batch_size = int(1e3)
@@ -82,8 +82,7 @@ def main() -> str:
         ),
         DmfCostanzo2016Adapter(
             dataset=DmfCostanzo2016Dataset(
-                root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
-                subset_n=int(1e5),
+                root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
             ),
             compute_workers=compute_workers,
             io_workers=io_workers,

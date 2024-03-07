@@ -2,7 +2,7 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709760971626
+updated: 1709781206681
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
@@ -15,8 +15,8 @@ created: 1690514887023m
 - [x] Refactor [[Kuzmin2018|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018]]
 - [x] Refactor Kuzmin adapters [[Kuzmin2018_adapter|dendron://torchcell/torchcell.adapters.kuzmin2018_adapter]]
 - [x] bump `torchcell` → not recognizing on pypi... bumping `FEAT`
-- [ ] Run local test of small build
-- [ ] Run test on `Delta` of small build
+- [x] Run local test of small build [[2024.03.06 - Start and use Neo4j Torchcell Database|dendron://torchcell/cypher-shell#20240306---start-and-use-neo4j-torchcell-database]]
+- [ ] Run test on `Delta` of small build. → this is going wicked slow... maybe see if there is a difference using processors. Previously this is what I think worked on Delta.
 - [ ] Run full database build.
 - [ ] Implement `NeoDataset`, use the datamodel to generate 2-3 common indices.
 - [ ] Create `Dmf` dataset and freeze

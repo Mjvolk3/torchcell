@@ -113,36 +113,36 @@ if __name__ == "__main__":
     bc.write_schema_info(as_node=True)
     bc.summary()
 
-    # ## Dmf
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
-    adapter = DmfKuzmin2018Adapter(
-        dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
-    )
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
+    # # ## Dmf
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
+    # adapter = DmfKuzmin2018Adapter(
+    #     dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
+    # )
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
 
-    # ## Tmf
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
-    adapter = TmfKuzmin2018Adapter(
-        dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
-    )
-    bc.show_ontology_structure()
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
-    print()
+    # # ## Tmf
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
+    # adapter = TmfKuzmin2018Adapter(
+    #     dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
+    # )
+    # bc.show_ontology_structure()
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
+    # print()

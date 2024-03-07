@@ -1,5 +1,8 @@
-from .cpu_experiment_loader import CpuExperimentLoader
+from .cpu_experiment_loader import (
+    CpuExperimentLoader,
+    CpuExperimentLoaderMultiprocessing,
+)
 
-loaders = ['CpuExperimentLoader']
+loaders = ["CpuExperimentLoader", "CpuExperimentLoaderMultiprocessing"]
 
-__all__ = ['CpuExperimentLoader']
+__all__ = ["CpuExperimentLoader", "CpuExperimentLoaderMultiprocessing"]

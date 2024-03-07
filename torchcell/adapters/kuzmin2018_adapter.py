@@ -92,8 +92,8 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    compute_workers = 8
-    io_workers = 2
+    compute_workers = 5
+    io_workers = 5
 
     ## Smf
     bc = BioCypher(

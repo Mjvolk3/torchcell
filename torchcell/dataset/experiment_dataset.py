@@ -64,10 +64,12 @@ class ExperimentDataset(Dataset, ABC):
     def __init__(
         self,
         root: str,
+        num_workers: int = None,
         skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
+        self.num_workers = num_workers
         self.preprocess_dir = osp.join(root, "preprocess")
         # TODO This is part of our custom Dataset to speed things up but should be removed when using pure pyg
         self.skip_process_file_exist = skip_process_file_exist

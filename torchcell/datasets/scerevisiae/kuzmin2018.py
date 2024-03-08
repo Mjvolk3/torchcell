@@ -35,7 +35,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
 )
 from torchcell.sequence import GeneSet
-from torchcell.dataset import ExperimentDataset
+from torchcell.dataset import ExperimentDataset, post_process
 
 
 logging.basicConfig(level=logging.INFO)
@@ -75,6 +75,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             zip_ref.extractall(self.raw_dir)
         os.remove(path)
 
+    @post_process
     def process(self):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
@@ -106,8 +107,6 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
-        self.gene_set = self.compute_gene_set()
-        # self.experiment_reference_index
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -321,6 +320,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             zip_ref.extractall(self.raw_dir)
         os.remove(path)
 
+    @post_process
     def process(self):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 
@@ -530,6 +530,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             zip_ref.extractall(self.raw_dir)
         os.remove(path)
 
+    @post_process
     def process(self):
         df = pd.read_csv(osp.join(self.raw_dir, self.raw_file_names), sep="\t")
 

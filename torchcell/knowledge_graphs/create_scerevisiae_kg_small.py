@@ -74,7 +74,7 @@ def main() -> str:
         DmfCostanzo2016Adapter(
             dataset=DmfCostanzo2016Dataset(
                 root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
-                num_workers=io_workers,
+                num_workers=num_workers,
                 batch_size=int(1e4),
             ),
             compute_workers=compute_workers,

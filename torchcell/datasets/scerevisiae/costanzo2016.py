@@ -33,6 +33,8 @@ from torchcell.datamodels import (
 )
 from torchcell.dataset import ExperimentDataset, post_process
 from concurrent.futures import ThreadPoolExecutor
+import multiprocessing
+from functools import partial
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -621,8 +623,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016",
-        # subset_n=int(1e5),
+        root="data/torchcell/dmf_costanzo2016_1e5",
+        subset_n=int(1e5),
         num_workers=8,
         batch_size=int(1e5),
     )

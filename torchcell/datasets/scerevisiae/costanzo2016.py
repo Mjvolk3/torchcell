@@ -49,6 +49,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
+        num_workers: int = 4,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
@@ -86,7 +87,6 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             # if the file name ends in .txt remove it
             if file_name.endswith(".txt"):
                 os.remove(osp.join(self.raw_dir, file_name))
-
     @post_process
     def process(self):
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
@@ -317,14 +317,14 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_costanzo2016",
         subset_n: int = None,
-        num_workers: int = 4,
         batch_size: int = 1000,
+        num_workers: int = 1,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        self.subset_n = subset_n
         self.num_workers = num_workers
+        self.subset_n = subset_n
         self.batch_size = batch_size
         super().__init__(root, transform, pre_transform, **kwargs)
 
@@ -417,6 +417,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         return df
 
+    @post_process
     def process(self):
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
@@ -623,8 +624,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016_1e5",
-        subset_n=int(1e5),
+        root="data/torchcell/dmf_costanzo2016",
+        # subset_n=int(1e5),
         num_workers=8,
         batch_size=int(1e5),
     )
@@ -635,29 +636,29 @@ if __name__ == "__main__":
     # print(new_instance == dataset[0]['experiment'])
     # Usage example
     print(len(dataset))
-    print(dataset.experiment_reference_index)
-    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # Fetch and print the first 3 batches
-    for i, batch in enumerate(data_loader):
-        # batch_transformed = list(map(dataset.transform_item, batch))
-        print(batch[0])
-        print("---")
-        if i == 3:
-            break
-    # Clean up worker processes
-    data_loader.close()
-    print("completed")
+    # print(dataset.experiment_reference_index)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # # Fetch and print the first 3 batches
+    # for i, batch in enumerate(data_loader):
+    #     # batch_transformed = list(map(dataset.transform_item, batch))
+    #     print(batch[0])
+    #     print("---")
+    #     if i == 3:
+    #         break
+    # # Clean up worker processes
+    # data_loader.close()
+    # print("completed")
 
     ######
     # # Single mutant fitness
-    # dataset = SmfCostanzo2016Dataset()
-    # print(len(dataset))
-    # # print(dataset[100])
-    # # serialized_data = dataset[100]["experiment"].model_dump()
-    # # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # # print(new_instance == serialized_data)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # # Fetch and print the first 3 batches
+    dataset = SmfCostanzo2016Dataset()
+    print(len(dataset))
+    # print(dataset[100])
+    # serialized_data = dataset[100]["experiment"].model_dump()
+    # new_instance = FitnessExperiment.model_validate(serialized_data)
+    # print(new_instance == serialized_data)
+    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # Fetch and print the first 3 batches
     # for i, batch in enumerate(data_loader):
     #     # batch_transformed = list(map(dataset.transform_item, batch))
     #     print(batch[0])

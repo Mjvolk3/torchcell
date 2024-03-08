@@ -32,7 +32,7 @@ from torchcell.datamodels import (
     ExperimentReference,
 )
 from torchcell.dataset import ExperimentDataset, post_process
-
+from concurrent.futures import ThreadPoolExecutor
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -315,11 +315,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/smf_costanzo2016",
         subset_n: int = None,
+        num_workers: int = 4,
+        batch_size: int = 1000,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
         self.subset_n = subset_n
+        self.num_workers = num_workers
+        self.batch_size = batch_size
         super().__init__(root, transform, pre_transform, **kwargs)
 
     def download(self):
@@ -413,7 +417,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
     def process(self):
         os.makedirs(self.preprocess_dir, exist_ok=True)
-        self._length = None
+
         # Initialize an empty DataFrame to hold all raw data
         df = pd.DataFrame()
 
@@ -421,12 +425,11 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         log.info("Reading and Concatenating Raw Files...")
         for file_name in tqdm(self.raw_file_names):
             file_path = os.path.join(self.raw_dir, file_name)
-
             # Reading data using Pandas; limit rows for demonstration
             df_temp = pd.read_csv(file_path, sep="\t")
-
             # Concatenating data frames
             df = pd.concat([df, df_temp], ignore_index=True)
+
         # Functions for data filtering... duplicates selection,
         df = self.preprocess_raw(df)
 
@@ -445,8 +448,24 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
+        # Create a ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            futures = []
+            for batch_start in range(0, df.shape[0], self.batch_size):
+                batch_end = min(batch_start + self.batch_size, df.shape[0])
+                batch_df = df.iloc[batch_start:batch_end]
+                future = executor.submit(self._process_batch, batch_df, env)
+                futures.append(future)
+
+            # Wait for all futures to complete
+            for future in tqdm(futures, total=len(futures)):
+                future.result()
+
+        env.close()
+
+    def _process_batch(self, batch_df, env):
         with env.begin(write=True) as txn:
-            for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+            for index, row in batch_df.iterrows():
                 experiment, reference = self.create_experiment(
                     row,
                     reference_phenotype_std_26=self.reference_phenotype_std_26,
@@ -460,9 +479,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                         "reference": reference.model_dump(),
                     }
                 )
-                txn.put(f"{index}".encode(), serialized_data)
 
-        env.close()
+                txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -603,8 +621,10 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016_subset_n_1000",
-        subset_n=1000,
+        root="data/torchcell/dmf_costanzo2016",
+        # subset_n=int(1e5),
+        num_workers=8,
+        batch_size=int(1e5),
     )
     # dataset.experiment_reference_index
     # dataset[0]
@@ -627,21 +647,21 @@ if __name__ == "__main__":
     print("completed")
 
     ######
-    # Single mutant fitness
-    dataset = SmfCostanzo2016Dataset()
-    print(len(dataset))
-    # print(dataset[100])
-    # serialized_data = dataset[100]["experiment"].model_dump()
-    # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # print(new_instance == serialized_data)
-    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # Fetch and print the first 3 batches
-    for i, batch in enumerate(data_loader):
-        # batch_transformed = list(map(dataset.transform_item, batch))
-        print(batch[0])
-        print("---")
-        if i == 3:
-            break
-    # Clean up worker processes
-    data_loader.close()
-    print("completed")
+    # # Single mutant fitness
+    # dataset = SmfCostanzo2016Dataset()
+    # print(len(dataset))
+    # # print(dataset[100])
+    # # serialized_data = dataset[100]["experiment"].model_dump()
+    # # new_instance = FitnessExperiment.model_validate(serialized_data)
+    # # print(new_instance == serialized_data)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # # Fetch and print the first 3 batches
+    # for i, batch in enumerate(data_loader):
+    #     # batch_transformed = list(map(dataset.transform_item, batch))
+    #     print(batch[0])
+    #     print("---")
+    #     if i == 3:
+    #         break
+    # # Clean up worker processes
+    # data_loader.close()
+    # print("completed")

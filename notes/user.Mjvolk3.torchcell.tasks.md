@@ -6,7 +6,12 @@ updated: 1709781206681
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
-[[Outline|dendron://torchcell/paper.outline]]
+[[Outline|dendron://torchcell/paper.ou→line]]
+
+## 2024.03.07
+
+- [x] `TC_3133452` taking way to long. Something like 100 hr projected finish time on `dmf`. `io_workers = math.ceil(0.5 * num_workers)`. → Adjusting parameters using `io_workers = math.ceil(0.2 * num_workers)` → It appears that the errors were occuring just in the writing of the original dataset. Should probably do this locally as the bottleneck is writing IO on `Delta` and this writing is not optimized batched.
+- [ ] Globus transfer of 3133452 output. This file is like 13 MB. We should likely do less logging.
 
 ## 2024.03.06
 

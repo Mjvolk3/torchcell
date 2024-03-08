@@ -42,6 +42,8 @@ from multiprocessing import Process, Queue
 from typing import Iterable
 from abc import ABC, abstractmethod
 from functools import wraps
+import multiprocessing
+from functools import partial
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -220,6 +222,32 @@ class ExperimentDataset(Dataset, ABC):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    # @property
+    # def experiment_reference_index(self):
+    #     index_file_path = osp.join(
+    #         self.preprocess_dir, "experiment_reference_index.json"
+    #     )
+
+    #     if osp.exists(index_file_path):
+    #         with open(index_file_path, "r") as file:
+    #             data = json.load(file)
+    #             # Assuming ReferenceIndex can be constructed from a list of dictionaries
+    #             self._experiment_reference_index = [
+    #                 ExperimentReferenceIndex(**item) for item in data
+    #             ]
+    #     elif self._experiment_reference_index is None:
+    #         self._experiment_reference_index = compute_experiment_reference_index(self)
+    #         with open(index_file_path, "w") as file:
+    #             # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+    #             json.dump(
+    #                 [eri.model_dump() for eri in self._experiment_reference_index],
+    #                 file,
+    #                 indent=4,
+    #             )
+
+    #     self.close_lmdb()
+    #     return self._experiment_reference_index
+
     @property
     def experiment_reference_index(self):
         index_file_path = osp.join(
@@ -229,12 +257,37 @@ class ExperimentDataset(Dataset, ABC):
         if osp.exists(index_file_path):
             with open(index_file_path, "r") as file:
                 data = json.load(file)
-                # Assuming ReferenceIndex can be constructed from a list of dictionaries
-                self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in data
-                ]
+            # Assuming ReferenceIndex can be constructed from a list of dictionaries
+            self._experiment_reference_index = [
+                ExperimentReferenceIndex(**item) for item in data
+            ]
         elif self._experiment_reference_index is None:
-            self._experiment_reference_index = compute_experiment_reference_index(self)
+            if self.num_workers is not None:
+                # Create a pool of worker processes
+                with multiprocessing.Pool(processes=self.num_workers) as pool:
+                    # Split the dataset into chunks for parallel processing
+                    chunk_size = len(self) // self.num_workers
+                    chunks = [
+                        self[i : min(i + chunk_size, len(self))]
+                        for i in range(0, len(self), chunk_size)
+                    ]
+
+                    # Apply the compute_experiment_reference_index function to each chunk in parallel
+                    results = pool.starmap(
+                        compute_experiment_reference_index,
+                        [(chunk,) for chunk in chunks],
+                    )
+
+                # Flatten the results into a single list
+                self._experiment_reference_index = [
+                    item for sublist in results for item in sublist
+                ]
+            else:
+                # Fall back to the original method without parallelization
+                self._experiment_reference_index = compute_experiment_reference_index(
+                    self
+                )
+
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(

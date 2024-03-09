@@ -2,13 +2,21 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709909421141
+updated: 1709947318823
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.ou→line]]
 
 ## 2024.03.08
+
+- [x] Run [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] locally incase of need for globus transfer
+- [x] Run [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] on `delta` now that I think we have solved the issue with the experimental reference index.
+- [x] `Wandb` log database build → created config `torchcell/knowledge_graphs/conf/kg_small.yaml`
+- [x] Run local test → [local wandb test](https://wandb.ai/zhao-group/tcdb/runs/qhfaujdq?nw=nwusermjvolk3). Things work find
+- [ ] Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
+- [ ] Create `Dmf` dataset and freeze
+- [ ] Create `Tmf` dataset and freeze
 
 ## 2024.03.07
 

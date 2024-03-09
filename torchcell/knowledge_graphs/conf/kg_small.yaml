@@ -1,0 +1,17 @@
+# torchcell/knowledge_graphs/conf/kg_small.yaml
+# [[torchcell.knowledge_graphs.conf.kg_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_small.yaml
+ 
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, onlineu
+  project: tcdb
+  tags: [large_kb_test]
+
+adapters:
+  io_process_worker_ratio: 0.2
+  chunk_size: 1e4
+  loader_batch_size: 1e3

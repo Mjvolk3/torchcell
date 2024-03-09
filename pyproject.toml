@@ -80,7 +80,7 @@ dependencies = { file = ["env/requirements.txt"] }
 version = { attr = "torchcell.__version__" }
 
 [tool.setuptools.package-data]
-torchcell = ["py.typed"]
+torchcell = ["py.typed", "knowledge_graphs/conf/*.yaml"]
 
 [tool.setuptools.packages.find]
 include = ["torchcell*"]

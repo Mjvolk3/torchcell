@@ -1,5 +1,3 @@
 include env/requirements.txt
 include env/requirements_dependent.txt
 include torchcell/torchcell.mplstyle
-include torchcell/knowledge_graphs/conf/kg_small.yaml
-include torchcell/knowledge_graphs/conf/default.yaml

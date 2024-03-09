@@ -626,7 +626,7 @@ if __name__ == "__main__":
     dataset = DmfCostanzo2016Dataset(
         root="data/torchcell/dmf_costanzo2016",
         # subset_n=int(1e5),
-        num_workers=8,
+        num_workers=10,
         batch_size=int(1e5),
     )
     # dataset.experiment_reference_index
@@ -651,20 +651,20 @@ if __name__ == "__main__":
 
     ######
     # # Single mutant fitness
-    dataset = SmfCostanzo2016Dataset()
-    print(len(dataset))
-    # print(dataset[100])
-    # serialized_data = dataset[100]["experiment"].model_dump()
-    # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # print(new_instance == serialized_data)
-    data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # Fetch and print the first 3 batches
-    # for i, batch in enumerate(data_loader):
-    #     # batch_transformed = list(map(dataset.transform_item, batch))
-    #     print(batch[0])
-    #     print("---")
-    #     if i == 3:
-    #         break
-    # # Clean up worker processes
-    # data_loader.close()
-    # print("completed")
+    # dataset = SmfCostanzo2016Dataset()
+    # print(len(dataset))
+    # # print(dataset[100])
+    # # serialized_data = dataset[100]["experiment"].model_dump()
+    # # new_instance = FitnessExperiment.model_validate(serialized_data)
+    # # print(new_instance == serialized_data)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # # Fetch and print the first 3 batches
+    # # for i, batch in enumerate(data_loader):
+    # #     # batch_transformed = list(map(dataset.transform_item, batch))
+    # #     print(batch[0])
+    # #     print("---")
+    # #     if i == 3:
+    # #         break
+    # # # Clean up worker processes
+    # # data_loader.close()
+    # # print("completed")

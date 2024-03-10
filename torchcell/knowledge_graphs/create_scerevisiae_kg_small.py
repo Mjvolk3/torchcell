@@ -103,15 +103,6 @@ def main(cfg) -> str:
             "kwargs": {},
         },
         {
-            "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
-            "kwargs": {
-                # "subset_n": int(1e3),
-                "num_workers": num_workers,
-                "batch_size": int(1e4),
-            },
-        },
-        {
             "class": SmfKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
             "kwargs": {},
@@ -125,6 +116,15 @@ def main(cfg) -> str:
             "class": TmfKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
             "kwargs": {},
+        },
+        {
+            "class": DmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo20161"),
+            "kwargs": {
+                # "subset_n": int(1e6),
+                "num_workers": num_workers,
+                "batch_size": int(1e4),
+            },
         },
     ]
 

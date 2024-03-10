@@ -65,9 +65,9 @@ class ExperimentDataset(Dataset, ABC):
         self,
         root: str,
         num_workers: int = None,
-        skip_process_file_exist: bool = False,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
+        skip_process_file_exist: bool = False,
     ):
         self.num_workers = num_workers
         self.preprocess_dir = osp.join(root, "preprocess")

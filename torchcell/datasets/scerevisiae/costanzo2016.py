@@ -419,7 +419,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         return df
 
-    @post_process
+    # @post_process
     def process(self):
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
@@ -453,142 +453,39 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             map_size=int(1e12),  # Adjust map_size as needed
         )
 
-        # Create a partial function with fixed arguments
-        create_experiments_partial = functools.partial(
-            self._process_batch,
-            reference_phenotype_std_26=self.reference_phenotype_std_26,
-            reference_phenotype_std_30=self.reference_phenotype_std_30,
-        )
+        # Create a ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+            futures = []
+            for batch_start in range(0, df.shape[0], self.batch_size):
+                batch_end = min(batch_start + self.batch_size, df.shape[0])
+                batch_df = df.iloc[batch_start:batch_end]
+                future = executor.submit(self._process_batch, batch_df, env)
+                futures.append(future)
 
-        # Process the data in chunks
-        chunk_size = self.batch_size * self.num_workers
-        for chunk_start in tqdm(
-            range(0, len(df), chunk_size), total=len(df) // chunk_size
-        ):
-            chunk_end = min(chunk_start + chunk_size, len(df))
-            chunk_df = df.iloc[chunk_start:chunk_end]
+            # Wait for all futures to complete
+            for future in tqdm(futures, total=len(futures)):
+                future.result()
 
-            # Split the chunk into batches for parallel processing
-            batches = [
-                chunk_df[i : i + self.batch_size]
-                for i in range(0, len(chunk_df), self.batch_size)
-            ]
+        env.close()
 
-            # Process batches in parallel using imap
-            with multiprocessing.Pool(processes=self.num_workers) as pool:
-                batch_results = list(pool.imap(create_experiments_partial, batches))
+    def _process_batch(self, batch_df, env):
+        with env.begin(write=True) as txn:
+            for index, row in batch_df.iterrows():
+                experiment, reference = self.create_experiment(
+                    row,
+                    reference_phenotype_std_26=self.reference_phenotype_std_26,
+                    reference_phenotype_std_30=self.reference_phenotype_std_30,
+                )
 
-            # Flatten the batch results into a single list of experiments
-            experiments = [exp for batch in batch_results for exp in batch]
+                # Serialize the Pydantic objects
+                serialized_data = pickle.dumps(
+                    {
+                        "experiment": experiment.model_dump(),
+                        "reference": reference.model_dump(),
+                    }
+                )
 
-            # Write the experiments to LMDB using multi-threading
-            def write_to_lmdb(index, experiment, reference):
-                with env.begin(write=True) as txn:
-                    serialized_data = pickle.dumps(
-                        {
-                            "experiment": experiment.model_dump(),
-                            "reference": reference.model_dump(),
-                        }
-                    )
-                    txn.put(f"{index}".encode(), serialized_data)
-
-            # TODO threads
-            with ThreadPoolExecutor(
-                max_workers=math.ceil(0.5 * self.num_workers)
-            ) as executor:
-                futures = []
-                for index, (experiment, reference) in enumerate(
-                    experiments, start=chunk_start
-                ):
-                    future = executor.submit(
-                        write_to_lmdb, index, experiment, reference
-                    )
-                    futures.append(future)
-
-                concurrent.futures.wait(futures)
-
-            env.close()
-
-    def _process_batch(
-        self, batch_df, reference_phenotype_std_26, reference_phenotype_std_30
-    ):
-        experiments = []
-        for _, row in batch_df.iterrows():
-            experiment, reference = self.create_experiment(
-                row,
-                reference_phenotype_std_26=reference_phenotype_std_26,
-                reference_phenotype_std_30=reference_phenotype_std_30,
-            )
-            experiments.append((experiment, reference))
-        return experiments
-
-    # @post_process
-    # def process(self):
-    #     os.makedirs(self.preprocess_dir, exist_ok=True)
-
-    #     # Initialize an empty DataFrame to hold all raw data
-    #     df = pd.DataFrame()
-
-    #     # Read and concatenate all raw files
-    #     log.info("Reading and Concatenating Raw Files...")
-    #     for file_name in tqdm(self.raw_file_names):
-    #         file_path = os.path.join(self.raw_dir, file_name)
-    #         # Reading data using Pandas; limit rows for demonstration
-    #         df_temp = pd.read_csv(file_path, sep="\t")
-    #         # Concatenating data frames
-    #         df = pd.concat([df, df_temp], ignore_index=True)
-
-    #     # Functions for data filtering... duplicates selection,
-    #     df = self.preprocess_raw(df)
-
-    #     # Subset
-    #     if self.subset_n is not None:
-    #         df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
-
-    #     # Save preprocssed df - mainly for quick stats
-    #     df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-
-    #     log.info("Processing DMF Files...")
-
-    #     # Initialize LMDB environment
-    #     env = lmdb.open(
-    #         osp.join(self.processed_dir, "lmdb"),
-    #         map_size=int(1e12),  # Adjust map_size as needed
-    #     )
-
-    #     # Create a ThreadPoolExecutor for parallel processing
-    #     with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
-    #         futures = []
-    #         for batch_start in range(0, df.shape[0], self.batch_size):
-    #             batch_end = min(batch_start + self.batch_size, df.shape[0])
-    #             batch_df = df.iloc[batch_start:batch_end]
-    #             future = executor.submit(self._process_batch, batch_df, env)
-    #             futures.append(future)
-
-    #         # Wait for all futures to complete
-    #         for future in tqdm(futures, total=len(futures)):
-    #             future.result()
-
-    #     env.close()
-
-    # def _process_batch(self, batch_df, env):
-    #     with env.begin(write=True) as txn:
-    #         for index, row in batch_df.iterrows():
-    #             experiment, reference = self.create_experiment(
-    #                 row,
-    #                 reference_phenotype_std_26=self.reference_phenotype_std_26,
-    #                 reference_phenotype_std_30=self.reference_phenotype_std_30,
-    #             )
-
-    #             # Serialize the Pydantic objects
-    #             serialized_data = pickle.dumps(
-    #                 {
-    #                     "experiment": experiment.model_dump(),
-    #                     "reference": reference.model_dump(),
-    #                 }
-    #             )
-
-    #             txn.put(f"{index}".encode(), serialized_data)
+                txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -728,9 +625,16 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
 if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
 
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016", num_workers=10, batch_size=int(1e4)
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
+        # subset_n=int(1e6),
+        num_workers=10,
+        batch_size=int(1e4),
     )
     # dataset.experiment_reference_index
     # dataset[0]

@@ -8,10 +8,15 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.10
+
+- [x] Check on delta run. → Some error, it stopped logging, and the [wandb logs](https://wandb.ai/zhao-group/tcdb/runs/hzjaofbq?nw=nwusermjvolk3) indicate that it finished at the point of processing edges. → We are seeing lower cpu utilization than I expect. Extremely low around 10% it seems.
+- [ ] Profile `DmfCostanzo2016` dataset creation
+
 ## 2024.03.09
 
 - [x] Profile `1e6` and the full dataset size. → instead of profiling I just tested out multiprocess and multithreading for a delta launch
-- [ ] Launch delta build.
+- [x] Launch delta build.
 
 ## 2024.03.08
 

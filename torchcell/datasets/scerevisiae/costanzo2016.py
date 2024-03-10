@@ -2,7 +2,7 @@
 # [[torchcell.datasets.scerevisiae.costanzo2016]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
-
+import math
 import logging
 import os
 import os.path as osp
@@ -33,6 +33,7 @@ from torchcell.datamodels import (
 )
 from torchcell.dataset import ExperimentDataset, post_process
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 import multiprocessing
 import functools
 from functools import partial
@@ -55,7 +56,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -328,7 +329,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         self.num_workers = num_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -460,33 +461,54 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             reference_phenotype_std_30=self.reference_phenotype_std_30,
         )
 
-        # Split the DataFrame into batches for parallel processing
-        batch_size = self.batch_size
-        batches = [df[i : i + batch_size] for i in range(0, len(df), batch_size)]
+        # Process the data in chunks
+        chunk_size = self.batch_size * self.num_workers
+        for chunk_start in tqdm(
+            range(0, len(df), chunk_size), total=len(df) // chunk_size
+        ):
+            chunk_end = min(chunk_start + chunk_size, len(df))
+            chunk_df = df.iloc[chunk_start:chunk_end]
 
-        # Process batches in parallel using imap
-        with multiprocessing.Pool(processes=self.num_workers) as pool:
-            batch_results = list(
-                tqdm(pool.imap(create_experiments_partial, batches), total=len(batches))
-            )
+            # Split the chunk into batches for parallel processing
+            batches = [
+                chunk_df[i : i + self.batch_size]
+                for i in range(0, len(chunk_df), self.batch_size)
+            ]
 
-        # Flatten the batch results into a single list of experiments
-        experiments = [exp for batch in batch_results for exp in batch]
+            # Process batches in parallel using imap
+            with multiprocessing.Pool(processes=self.num_workers) as pool:
+                batch_results = list(pool.imap(create_experiments_partial, batches))
 
-        # Save experiments to LMDB
-        with env.begin(write=True) as txn:
-            for index, (experiment, reference) in tqdm(
-                enumerate(experiments), total=len(experiments)
-            ):
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                    }
-                )
-                txn.put(f"{index}".encode(), serialized_data)
+            # Flatten the batch results into a single list of experiments
+            experiments = [exp for batch in batch_results for exp in batch]
 
-        env.close()
+            # Write the experiments to LMDB using multi-threading
+            def write_to_lmdb(index, experiment, reference):
+                with env.begin(write=True) as txn:
+                    serialized_data = pickle.dumps(
+                        {
+                            "experiment": experiment.model_dump(),
+                            "reference": reference.model_dump(),
+                        }
+                    )
+                    txn.put(f"{index}".encode(), serialized_data)
+
+            # TODO threads
+            with ThreadPoolExecutor(
+                max_workers=math.ceil(0.5 * self.num_workers)
+            ) as executor:
+                futures = []
+                for index, (experiment, reference) in enumerate(
+                    experiments, start=chunk_start
+                ):
+                    future = executor.submit(
+                        write_to_lmdb, index, experiment, reference
+                    )
+                    futures.append(future)
+
+                concurrent.futures.wait(futures)
+
+            env.close()
 
     def _process_batch(
         self, batch_df, reference_phenotype_std_26, reference_phenotype_std_30
@@ -709,10 +731,7 @@ if __name__ == "__main__":
     from torchcell.loader import CpuExperimentLoader
 
     dataset = DmfCostanzo2016Dataset(
-        root="data/torchcell/dmf_costanzo2016",
-        # subset_n=int(1e4),
-        num_workers=10,
-        batch_size=int(1e5),
+        root="data/torchcell/dmf_costanzo2016", num_workers=10, batch_size=int(1e4)
     )
     # dataset.experiment_reference_index
     # dataset[0]

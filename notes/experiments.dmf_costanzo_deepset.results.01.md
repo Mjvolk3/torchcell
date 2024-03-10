@@ -1,6 +1,6 @@
 ---
 id: fbh3c3ck36i1hde2wnh35hs
-title: 'dmf_costanzo_deepset.results.01'
+title: dmf_costanzo_deepset.results.01
 desc: ''
 updated: 1696882919877
 created: 1696712795774

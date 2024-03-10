@@ -51,7 +51,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
     ):
-        super().__init__(root, transform, pre_transform)
+        super().__init__(root, num_workers, transform, pre_transform)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -300,7 +300,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
     ):
         self.subset_n = subset_n
-        super().__init__(root, transform, pre_transform)
+        super().__init__(root, num_workers, transform, pre_transform)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -510,7 +510,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         pre_transform: Callable | None = None,
     ):
         self.subset_n = subset_n
-        super().__init__(root, transform, pre_transform)
+        super().__init__(root, num_workers, transform, pre_transform)
 
     @property
     def experiment_class(self) -> BaseExperiment:

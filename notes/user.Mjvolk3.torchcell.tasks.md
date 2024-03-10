@@ -2,11 +2,16 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1709947318823
+updated: 1710065207523
 created: 1690514887023m
 ---
 ![[user.mjvolk3.torchcell.tasks.future#future]]
-[[Outline|dendron://torchcell/paper.ou→line]]
+[[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.03.09
+
+- [x] Profile `1e6` and the full dataset size. → instead of profiling I just tested out multiprocess and multithreading for a delta launch
+- [ ] Launch delta build.
 
 ## 2024.03.08
 

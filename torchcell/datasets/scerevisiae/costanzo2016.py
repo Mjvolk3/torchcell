@@ -51,12 +51,11 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
-        num_workers: int = 4,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
+        super().__init__(root, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:

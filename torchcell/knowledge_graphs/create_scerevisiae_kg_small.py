@@ -45,7 +45,7 @@ file_name_logger = logging.getLogger("file_name_logger")
 file_name_logger.setLevel(logging.INFO)
 
 # Create a file handler for the file name logger
-file_handler = logging.FileHandler("file_name.log")
+file_handler = logging.FileHandler("file_name.log", mode="w")
 file_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the file handler
@@ -231,6 +231,7 @@ def main(cfg) -> str:
     # return relative_bash_script_path
 
 
+
 if __name__ == "__main__":
     main()
     
@@ -239,4 +240,3 @@ if __name__ == "__main__":
         file_name = file.read().strip()
     
     print(file_name)
-    

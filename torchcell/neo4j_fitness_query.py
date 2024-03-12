@@ -1,3 +1,8 @@
+# torchcell/neo4j_fitness_query
+# [[torchcell.neo4j_fitness_query]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/neo4j_fitness_query
+# Test file: tests/torchcell/test_neo4j_fitness_query.py
+
 import attrs
 import lmdb
 from neo4j import GraphDatabase
@@ -14,7 +19,7 @@ class Neo4jQueryDatabase:
     password: str
     root_dir: str
     query: str
-    raw_dir: str = field(init=False, default=None)
+    raw_dir: str = field(ijjjjjnit=False, default=None)
     env: str = field(init=False, default=None)
 
     def __attrs_post_init__(self):

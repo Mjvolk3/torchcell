@@ -2,6 +2,120 @@
 
 
 
+## v0.2.0 (2024-03-06)
+
+### Feature
+
+* FEAT: bump feat to auto correct pypi ([`db9bd13`](https://github.com/Mjvolk3/torchcell/commit/db9bd1392b197792c61cdd25bffd7bdc41e141a2))
+
+
+## v0.1.17 (2024-03-06)
+
+### Fix
+
+* BLD: refactor datasets and adapaters ([`6dad8d8`](https://github.com/Mjvolk3/torchcell/commit/6dad8d8ef692f26bd1fb85c1ec47c089f7820057))
+
+### Unknown
+
+* next bump software version, bump image version ([`902269f`](https://github.com/Mjvolk3/torchcell/commit/902269f32aa85a6b109e254f203ab26df12bc52b))
+
+* kuzmin dataset refactored ([`d1058a0`](https://github.com/Mjvolk3/torchcell/commit/d1058a0c50c1b8cad6cf40957741abda4ef4a35f))
+
+* refactor of dataset ([`71a89c5`](https://github.com/Mjvolk3/torchcell/commit/71a89c5a6f49e1feb590d8a5fd2dafb62e9c84df))
+
+* DmfCostanzoAdapter working. Had to add: transform item function, and make sure that the dataset is model.dumping ([`f6257dd`](https://github.com/Mjvolk3/torchcell/commit/f6257dd7a6883937407c0312c3137734b96290f2))
+
+* deleted scratch note ([`8b895ea`](https://github.com/Mjvolk3/torchcell/commit/8b895ea98a9d450b7a3391408f34bdd867e6cf02))
+
+* costanzo adapter working ([`bcfa141`](https://github.com/Mjvolk3/torchcell/commit/bcfa141dfeec9cf99761a549cc4a8821bea86162))
+
+* workspace open random note script ([`ceeb187`](https://github.com/Mjvolk3/torchcell/commit/ceeb1873f1b70235a9f5b54fbeffa6475bbbd9be))
+
+* workspace update ([`fbf3ac9`](https://github.com/Mjvolk3/torchcell/commit/fbf3ac94a59f8f05bee626aa9e609a381df5297f))
+
+* note update ([`4b25bbd`](https://github.com/Mjvolk3/torchcell/commit/4b25bbd363103f8fda35e4b5b58f02deb07aa5ea))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`4f56d85`](https://github.com/Mjvolk3/torchcell/commit/4f56d85cd69ae7bd3f924a5384a55590de28c063))
+
+* Custom Data Loader threading, working SmfCostanzo2016 ([`ebebede`](https://github.com/Mjvolk3/torchcell/commit/ebebede480982408213af68b5428b581a6f2b8e0))
+
+* notes update ([`c0dbf52`](https://github.com/Mjvolk3/torchcell/commit/c0dbf526d15bfe0dbf4b7abb1b8a52029a340fa1))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`36840fe`](https://github.com/Mjvolk3/torchcell/commit/36840fe5a6d5548445056692df71cdbedf03b415))
+
+* update config for more mem on interactive cpu ([`0fdc64b`](https://github.com/Mjvolk3/torchcell/commit/0fdc64b6011086cfe27e96f69f876076be50ee94))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`9ac3112`](https://github.com/Mjvolk3/torchcell/commit/9ac31121376c4bb545facf7676487781afb3077f))
+
+* notes update ([`1b3a895`](https://github.com/Mjvolk3/torchcell/commit/1b3a895fcc57710dd44572c296cc1a871e19436d))
+
+* update schema config ([`0c0f6d2`](https://github.com/Mjvolk3/torchcell/commit/0c0f6d22ac1af7e8dfc2b8daf6af3f11c9269800))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`9a3d0b4`](https://github.com/Mjvolk3/torchcell/commit/9a3d0b45a78f43b14f91b43a42ef6d5ce33ed82c))
+
+* updated build ([`7ca15ba`](https://github.com/Mjvolk3/torchcell/commit/7ca15ba2ca1423d7c17e0855158410c024d608dd))
+
+* checking node write speed on delta ([`92fa143`](https://github.com/Mjvolk3/torchcell/commit/92fa143dfbe76a995c2b9fdef201e24267135b86))
+
+* tasks update ([`e480079`](https://github.com/Mjvolk3/torchcell/commit/e48007905e6462dc319c55e1e2d796c96ce3df46))
+
+* SmfCostanzo2016 get_nodes refactor with base class. All three optimizations implemented. ([`e1b2baa`](https://github.com/Mjvolk3/torchcell/commit/e1b2baa61be50d8da7861012a7ad6a68e0f5a957))
+
+* custom loader delta test ([`741f862`](https://github.com/Mjvolk3/torchcell/commit/741f862db40f5374653b5dc7ba9dbbdee8353d8f))
+
+* remove error... needs to run delta iter test again ([`e8e33a1`](https://github.com/Mjvolk3/torchcell/commit/e8e33a12340c5a399faa8e96b86900ebbbc4ceaf))
+
+* trying to iterative over, didn&#39;t before, dcell test, no write ([`b257139`](https://github.com/Mjvolk3/torchcell/commit/b25713959f4516b7fbe27c467534b8d22f7490e2))
+
+* iteration of all fitness delta test ([`3b4f266`](https://github.com/Mjvolk3/torchcell/commit/3b4f26632193a37d8000095942c39dc57ffdc8c2))
+
+* no writing of nodes, just iteration for delta test ([`98911ea`](https://github.com/Mjvolk3/torchcell/commit/98911ea81fdb231b5f77916be9755bb9b93b3402))
+
+* print out num workers ([`efe7417`](https://github.com/Mjvolk3/torchcell/commit/efe7417e393792a0a67663d18a55c0a3a85064d3))
+
+* only smf for delta speed test ([`8440797`](https://github.com/Mjvolk3/torchcell/commit/844079710918fe3dff7c116fe961935d6390239c))
+
+* update remote build ([`c0d0724`](https://github.com/Mjvolk3/torchcell/commit/c0d07240d2e95e6018a8a2d70e05aec9afbcfa94))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7cbb6bf`](https://github.com/Mjvolk3/torchcell/commit/7cbb6bf943820dbb861a7fb90a0cef3f86dd0278))
+
+* workers for slurm ([`f6628ab`](https://github.com/Mjvolk3/torchcell/commit/f6628abbace436543b8bf7b64023c307aedf6e10))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`c487a88`](https://github.com/Mjvolk3/torchcell/commit/c487a88d4bb52a331973744212b303616eefb6e4))
+
+* linux amd troubleshooting and simplification via bash script ([`2775c66`](https://github.com/Mjvolk3/torchcell/commit/2775c66f1923cb3991480f8065e12e9e30ff09c7))
+
+* all small delta test ([`5ca61e7`](https://github.com/Mjvolk3/torchcell/commit/5ca61e715f3c96ffedecdac92bdaec61da2ed973))
+
+* task note update and frontmatter ([`dbfd86e`](https://github.com/Mjvolk3/torchcell/commit/dbfd86e1096fd02f8b7e84967dd40496b5aea382))
+
+* switching logging to printing so we can try to suppress the prints in getting bash script in apptainer sif ([`d9fe49c`](https://github.com/Mjvolk3/torchcell/commit/d9fe49c9401d79dd3f2ae5c5b9787cce9d0118b6))
+
+* rever to small with only SmfKuzmin ([`ebc79d8`](https://github.com/Mjvolk3/torchcell/commit/ebc79d8d9aff72d62eea7873c1252ef0ed6d0387))
+
+* local m1 small build complete. ([`9469ff4`](https://github.com/Mjvolk3/torchcell/commit/9469ff4462c4a4dc7b67a2183a8c320a2a7046fb))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`d0e6fc6`](https://github.com/Mjvolk3/torchcell/commit/d0e6fc60fa8bd5847d5b7525e7d29d042699ac79))
+
+* TmfKuzmin2018Adapter test ([`a504d2c`](https://github.com/Mjvolk3/torchcell/commit/a504d2cb173dbc5be9c9456db9516073c88b4578))
+
+* build slurm script update ([`6f9857d`](https://github.com/Mjvolk3/torchcell/commit/6f9857d5c4bedb5bb852be4a9f2c1aa0b29a3c3e))
+
+* fixed interactive mode, DmfKuzmin2018Adapter test ([`e16fe48`](https://github.com/Mjvolk3/torchcell/commit/e16fe48389373f28039050606eba11a678569376))
+
+* comments update ([`d30d335`](https://github.com/Mjvolk3/torchcell/commit/d30d33593e068449baa3a4922ffde48046e5dac4))
+
+* SmfKuzmin2018Adapter test import ([`d22fc50`](https://github.com/Mjvolk3/torchcell/commit/d22fc50077b9706be8794f72aaaea8461aca40a1))
+
+* DmfCostanzo2016Adapter_1e5 test import ([`5f3f59e`](https://github.com/Mjvolk3/torchcell/commit/5f3f59e952a631777d478a777e49b37fea363d05))
+
+* SmfCostanzo2016 test ([`b090706`](https://github.com/Mjvolk3/torchcell/commit/b090706971fbed6a64eec7285205608782e7734a))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`57bb9e3`](https://github.com/Mjvolk3/torchcell/commit/57bb9e30b68f849b3f3b26557efbefeca57d8140))
+
+* close_lmdb before parallelization every time after data is accessed in class methods ([`872daea`](https://github.com/Mjvolk3/torchcell/commit/872daea0d78b950adafac1690b745c5a29048f10))
+
+
 ## v0.1.16 (2024-02-20)
 
 ### Fix

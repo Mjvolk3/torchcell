@@ -42,7 +42,12 @@ docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocyp
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 # Execute the Python script inside the Docker container and capture the output
 # bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
-bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+bash_script_path_cleaned=$(docker exec tc-neo4j cat file_name.log)
+
+# This only works if the stdout is completely clean
+# bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 
 # echo "bash_script_path: $bash_script_path"
 # Remove any unwanted characters (e.g., Docker exec command may include newline characters)

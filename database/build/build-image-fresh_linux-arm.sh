@@ -5,19 +5,18 @@ sleep 10
 
 docker login
 
+cd /Users/michaelvolk/Documents/projects/torchcell
+
 docker stop tc-neo4j
 docker rm -f tc-neo4j
 
 echo "Building image..."
-docker buildx build --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
+docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
 
 echo "Pulling latest image..."
 docker pull michaelvolk/tc-neo4j:latest
 
 ######### 
-
-#!/bin/bash -c
-cd /Users/michaelvolk/Documents/projects/torchcell
 
 echo "Starting build_linux-arm"
 open -a Docker
@@ -29,42 +28,58 @@ docker login
 docker stop tc-neo4j
 docker rm -f tc-neo4j
 
-# Rebuild image
-echo "Building image..."
-docker buildx build --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
-
-echo "Pulling latest image..."
-docker pull michaelvolk/tc-neo4j:latest
-
 # Run the container
 echo "Running container..."
-container_id=$(docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out michaelvolk/tc-neo4j:latest)
+# docker run -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-# Change the Neo4j password to 'torchcell'
-echo "Changing Neo4j password..."
-docker exec -it tc-neo4j cypher-shell -u neo4j -p neo4j "ALTER USER neo4j SET PASSWORD 'torchcell';"
+# docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-# Conda activate torchcell here since we are using the local library for the db writing.
-eval "$(conda shell.bash hook)"
-# conda init
-# source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh  
-conda activate torchcell
-# conda activate /Users/michaelvolk/opt/miniconda3/envs/torchcell
-conda env list
+ 
+docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
-bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
+# # Conda activate torchcell here since we are using the local library for the db writing.
+# eval "$(conda shell.bash hook)"
+# # conda init
+# # source /Users/michaelvolk/miniconda3/etc/profile.d/conda.sh
+# conda activate torchcell
+# # conda activate /Users/michaelvolk/opt/miniconda3/envs/torchcell
+# conda env list
 
-docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
-docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
+# bash_script_path=$(python torchcell/knowledge_graphs/create_scerevisiae_kg_small.py)
 
-echo "Stopping container..."
-docker stop $container_id
+docker start tc-neo4j
+# TODO check if this software update works?
+docker exec tc-neo4j python -m pip uninstall torchcell -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip uninstall biocypher -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 
-echo "Removing container..."
-docker rm $container_id
+# docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
+# docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"
+echo "----------------NOW_BUILDING_GRAPHS---------------------"
+# Execute the Python script inside the Docker container and capture the output
+# bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+
+# echo "bash_script_path: $bash_script_path"
+# Remove any unwanted characters (e.g., Docker exec command may include newline characters)
+# bash_script_path_cleaned=$(echo "${bash_script_path}" | tr -d '\r' | tr -d '\n')
+
+# echo "bash_script_path_cleaned: $bash_script_path_cleaned"
+
+# Use the cleaned path in subsequent Docker exec commands
+# For example, setting execute permission on the bash script
+docker exec tc-neo4j /bin/bash -c "chmod +x ${bash_script_path_cleaned}"
+
+# Execute the bash script
+docker exec tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
+
+# echo "Stopping container..."
+# docker stop tc-neo4j
+
+# echo "Removing container..."
+# docker rm $container_id
 
 echo "Build and run process completed."
 
-
 # database is already started so don't need to work about starting. Apparently this is due to entry point in Dockerfile.tc-neo4j but it doesn't seem to work this way with apptainer. Apptainer might not see entry point?
-

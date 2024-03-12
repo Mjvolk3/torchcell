@@ -30,22 +30,24 @@ import time
 import sys
 from io import StringIO
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
-
-# WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
-
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
+# WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
+
+with open("test_write.log", "w") as test_file:
+    test_file.write("Test write successful\n")
 
 # Logic for capturing the file name
 # Create a separate logger for the file name
 file_name_logger = logging.getLogger("file_name_logger")
 file_name_logger.setLevel(logging.INFO)
 
+# Prevent logger from propagating messages to the root logger
+file_name_logger.propagate = False
+
 # Create a file handler for the file name logger
-file_handler = logging.FileHandler("file_name.log", mode="w")
+file_handler = logging.FileHandler("biocypher_file_name.log", mode="w")
 file_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the file handler
@@ -71,6 +73,7 @@ def capture_output(func):
         return result
 
     return wrapper
+
 
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
@@ -231,12 +234,11 @@ def main(cfg) -> str:
     # return relative_bash_script_path
 
 
-
 if __name__ == "__main__":
     main()
-    
+
     # Read the logged file name from the file
-    with open("file_name.log", "r") as file:
+    with open("logs/biocypher_file_name.log", "r") as file:
         file_name = file.read().strip()
-    
+
     print(file_name)

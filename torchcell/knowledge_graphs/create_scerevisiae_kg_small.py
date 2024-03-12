@@ -58,6 +58,7 @@ def main(cfg) -> str:
         config=wandb_cfg,
         tags=wandb_cfg["wandb"]["tags"],
         group=group,
+        save_code=True,
     )
 
     # Configure logging
@@ -119,11 +120,11 @@ def main(cfg) -> str:
         },
         {
             "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo20161"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
             "kwargs": {
-                # "subset_n": int(1e6),
+                "subset_n": int(1e6),
                 "num_workers": num_workers,
-                "batch_size": int(1e4),
+                "batch_size": int(1e3),
             },
         },
     ]
@@ -141,7 +142,7 @@ def main(cfg) -> str:
         dataset = dataset_class(root=dataset_path, **dataset_kwargs)
         end_time = time.time()
         instantiation_time = end_time - start_time
-        wandb.log({f"{dataset_name}_instantiation_time(s)": instantiation_time})
+        wandb.log({f"{dataset_name}_time(s)": instantiation_time})
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
@@ -180,8 +181,6 @@ def main(cfg) -> str:
         end_time = time.time()
         write_edges_time = end_time - start_time
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
-
-        wandb.log({"adapter_progress": i + 1})
 
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)

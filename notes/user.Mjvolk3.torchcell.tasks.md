@@ -2,21 +2,28 @@
 id: pt6kzbutl4wmnf8xsg4iurb
 title: torchcell.tasks
 desc: ''
-updated: 1710065207523
+updated: 1710223097612
 created: 1690514887023m
 ---
+
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.03.11
+
+- [x] Use previous hacks on the Costanzo Adapter, we've tried without it... Now we need all the help we can get.
+- [ ] Compute time approximation for `DmfCostanzo2016` → Since the node compute time should increase roughly linearly. For `1e6` we have, `1003 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.57 hr`. This on on M1 with 10 cores, so hopefully it should get better with more cores. All 10 cores are maxed out in running the adapters. Edges are`623 s`. Previously I was thinking the edges would scale more quadratically but this shouldn't be the case as we don't double loop over all experiments. Edges are `623s` and plugging this into the equation above we get `1039 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.78 hr` 🛑 I computed for kuzmin need to do for Costanzo..
 
 ## 2024.03.10
 
 - [x] Check on delta run. → Some error, it stopped logging, and the [wandb logs](https://wandb.ai/zhao-group/tcdb/runs/hzjaofbq?nw=nwusermjvolk3) indicate that it finished at the point of processing edges. → We are seeing lower cpu utilization than I expect. Extremely low around 10% it seems.
-- [ ] Profile `DmfCostanzo2016` dataset creation
+- [x] Profile `DmfCostanzo2016` dataset creation... Unclear the issue locking is called a lot during threading. We really need to multiprocess the `create_experiment` since we can do true parallelization over rows.
+- [x] Make sure that rows being multiprocessed. → using `imap` for this then threading. This cuts the time in half on #M1 for processing the data from `20 min` to `8 min` and hopefully it will to greater improvement once we have more resources to
 
 ## 2024.03.09
 
 - [x] Profile `1e6` and the full dataset size. → instead of profiling I just tested out multiprocess and multithreading for a delta launch
-- [x] Launch delta build.
+- [x] Launch delta build.That's the run page huh I want to see that **** What the **** No The core noodles are good, dude. Dude, he's Cosby Blazin Sushi You like
 
 ## 2024.03.08
 

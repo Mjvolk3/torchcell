@@ -52,7 +52,6 @@ class CellAdapter:
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
 
-
     def get_data_by_type(self, chunk_processing_func: Callable):
         data_chunks = [
             self.dataset[i : i + self.chunk_size]
@@ -515,6 +514,7 @@ class CellAdapter:
                 )
             )
             return edges
+        
 
     @data_chunker
     def _environment_experiment_edges(self, data: dict) -> BioCypherEdge:

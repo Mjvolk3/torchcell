@@ -69,7 +69,7 @@ def main(cfg) -> str:
     file_name_logger.propagate = False
 
     # Create a file handler for the file name logger
-    file_handler = logging.FileHandler("biocypher_file_name.log", mode="w")
+    file_handler = logging.FileHandler("logs/biocypher_file_name.log", mode="w")
     file_handler.setLevel(logging.INFO)
 
     # Create a formatter and add it to the file handler

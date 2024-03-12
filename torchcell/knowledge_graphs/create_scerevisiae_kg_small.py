@@ -214,10 +214,6 @@ def main(cfg) -> str:
     relative_bash_script_path = osp.join(
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
-    
-    # sanity check   
-    with open("test_direct_write.log", "w") as f:
-        f.write("Direct write test\n")
 
     try:
         file_name_logger.info(relative_bash_script_path)
@@ -228,7 +224,7 @@ if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("biocypher_file_name.log", "r") as file:
+    with open("logs/biocypher_file_name.log", "r") as file:
         file_name = file.read().strip()
 
     print(file_name)

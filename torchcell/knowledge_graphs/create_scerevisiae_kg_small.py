@@ -33,10 +33,9 @@ log = logging.getLogger(__name__)
 
 # WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
 
-load_dotenv()
+logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
+logging.captureWarnings(True)
 
-WANDB_API_KEY = os.getenv("WANDB_API_KEY")
-print("wandb api key:", WANDB_API_KEY)
 
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
@@ -50,6 +49,14 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
+    load_dotenv()
+    WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+    log.info(f"wandb_api_key:  {WANDB_API_KEY}")
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
+    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
+
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
@@ -63,14 +70,6 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-
-    # Configure logging
-    logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
-    logging.captureWarnings(True)
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
 
     # Use this function to get the number of workers
     num_workers = get_num_workers()

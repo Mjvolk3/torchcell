@@ -37,9 +37,6 @@ logging.captureWarnings(True)
 # WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
 
 
-
-
-
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
     # Try to get number of CPUs allocated by SLURM
@@ -60,24 +57,6 @@ def main(cfg) -> str:
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-    # Logic for capturing the file name
-    # Create a separate logger for the file name
-    file_name_logger = logging.getLogger("file_name_logger")
-    file_name_logger.setLevel(logging.INFO)
-
-    # Prevent logger from propagating messages to the root logger
-    file_name_logger.propagate = False
-
-    # Create a file handler for the file name logger
-    file_handler = logging.FileHandler("logs/biocypher_file_name.log", mode="w")
-    file_handler.setLevel(logging.INFO)
-
-    # Create a formatter and add it to the file handler
-    formatter = logging.Formatter("%(message)s")
-    file_handler.setFormatter(formatter)
-
-    # Add the file handler to the file name logger
-    file_name_logger.addHandler(file_handler)
 
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -215,10 +194,9 @@ def main(cfg) -> str:
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
 
-    try:
-        file_name_logger.info(relative_bash_script_path)
-    except Exception as e:
-        print(f"Error logging file name: {e}")
+    with open("logs/biocypher_file_name.log", "w") as f:
+        f.write(relative_bash_script_path)
+
 
 if __name__ == "__main__":
     main()

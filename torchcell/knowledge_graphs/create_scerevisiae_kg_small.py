@@ -39,6 +39,21 @@ logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
 
+# Logic for capturing the file name
+# Create a separate logger for the file name
+file_name_logger = logging.getLogger("file_name_logger")
+file_name_logger.setLevel(logging.INFO)
+
+# Create a file handler for the file name logger
+file_handler = logging.FileHandler("file_name.log")
+file_handler.setLevel(logging.INFO)
+
+# Create a formatter and add it to the file handler
+formatter = logging.Formatter("%(message)s")
+file_handler.setFormatter(formatter)
+
+# Add the file handler to the file name logger
+file_name_logger.addHandler(file_handler)
 
 
 def capture_output(func):
@@ -67,7 +82,7 @@ def get_num_workers():
     return mp.cpu_count()
 
 
-@capture_output
+# @capture_output
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
     load_dotenv()
@@ -212,9 +227,16 @@ def main(cfg) -> str:
     relative_bash_script_path = osp.join(
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
-    return relative_bash_script_path
+    file_name_logger.info(relative_bash_script_path)
+    # return relative_bash_script_path
 
 
 if __name__ == "__main__":
-    print(main())
+    main()
+    
+    # Read the logged file name from the file
+    with open("file_name.log", "r") as file:
+        file_name = file.read().strip()
+    
+    print(file_name)
     

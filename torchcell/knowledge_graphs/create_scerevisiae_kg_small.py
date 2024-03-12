@@ -27,6 +27,8 @@ import hashlib
 import uuid
 import hydra
 import time
+import sys
+from io import StringIO
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -36,6 +38,24 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
+
+
+
+def capture_output(func):
+    def wrapper(*args, **kwargs):
+        # Redirect stdout to a StringIO object
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+
+        # Call the function
+        result = func(*args, **kwargs)
+
+        # Restore stdout
+        sys.stdout = old_stdout
+
+        return result
+
+    return wrapper
 
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
@@ -47,6 +67,7 @@ def get_num_workers():
     return mp.cpu_count()
 
 
+@capture_output
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
     load_dotenv()
@@ -99,35 +120,35 @@ def main(cfg) -> str:
 
     # Define dataset configurations
     dataset_configs = [
-        {
-            "class": SmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
-            "kwargs": {},
-        },
+        # {
+        #     "class": SmfCostanzo2016Dataset,
+        #     "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
+        #     "kwargs": {},
+        # },
         {
             "class": SmfKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
             "kwargs": {},
         },
-        {
-            "class": DmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-            "kwargs": {},
-        },
-        {
-            "class": TmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
-            "kwargs": {},
-        },
-        {
-            "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
-            "kwargs": {
-                "subset_n": int(1e6),
-                "num_workers": num_workers,
-                "batch_size": int(1e3),
-            },
-        },
+        # {
+        #     "class": DmfKuzmin2018Dataset,
+        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
+        #     "kwargs": {},
+        # },
+        # {
+        #     "class": TmfKuzmin2018Dataset,
+        #     "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
+        #     "kwargs": {},
+        # },
+        # {
+        #     "class": DmfCostanzo2016Dataset,
+        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
+        #     "kwargs": {
+        #         "subset_n": int(1e6),
+        #         "num_workers": num_workers,
+        #         "batch_size": int(1e3),
+        #     },
+        # },
     ]
 
     # Instantiate datasets
@@ -196,3 +217,4 @@ def main(cfg) -> str:
 
 if __name__ == "__main__":
     print(main())
+    

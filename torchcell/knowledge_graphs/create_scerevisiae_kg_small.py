@@ -101,35 +101,34 @@ def main(cfg) -> str:
 
     # Define dataset configurations
     dataset_configs = [
-        # {
-        #     "class": SmfCostanzo2016Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
-        #     "kwargs": {},
-        # },
+        {
+            "class": SmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
+            "kwargs": {},
+        },
         {
             "class": SmfKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
             "kwargs": {},
         },
-        # {
-        #     "class": DmfKuzmin2018Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "class": TmfKuzmin2018Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "class": DmfCostanzo2016Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
-        #     "kwargs": {
-        #         "subset_n": int(1e6),
-        #         "num_workers": num_workers,
-        #         "batch_size": int(1e3),
-        #     },
-        # },
+        {
+            "class": DmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
+            "kwargs": {},
+        },
+        {
+            "class": TmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
+            "kwargs": {},
+        },
+        {
+            "class": DmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
+            "kwargs": {
+                "num_workers": num_workers,
+                "batch_size": int(1e3),
+            },
+        },
     ]
 
     # Instantiate datasets

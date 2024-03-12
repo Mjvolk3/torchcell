@@ -51,8 +51,6 @@ def get_num_workers():
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
     load_dotenv()
-    WANDB_API_KEY = os.getenv("WANDB_API_KEY")
-    log.info(f"wandb_api_key:  {WANDB_API_KEY}")
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
@@ -72,7 +70,7 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-
+    wandb.log({"slurm_job_id": slurm_job_id})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -123,8 +121,9 @@ def main(cfg) -> str:
         },
         {
             "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
             "kwargs": {
+                "subset_n": int(1e6),
                 "num_workers": num_workers,
                 "batch_size": int(1e3),
             },

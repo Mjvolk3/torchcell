@@ -194,7 +194,7 @@ def main(cfg) -> str:
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
 
-    with open("logs/biocypher_file_name.log", "w") as f:
+    with open("biocypher_file_name.txt", "w") as f:
         f.write(relative_bash_script_path)
 
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("logs/biocypher_file_name.log", "r") as file:
+    with open("biocypher_file_name.txt", "r") as file:
         file_name = file.read().strip()
 
     print(file_name)

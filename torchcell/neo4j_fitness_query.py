@@ -19,7 +19,7 @@ class Neo4jQueryDatabase:
     password: str
     root_dir: str
     query: str
-    raw_dir: str = field(init=False, default=None)
+    raw_dir: str = field(ijjjjjnit=False, default=None)
     env: str = field(init=False, default=None)
 
     def __attrs_post_init__(self):

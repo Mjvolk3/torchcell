@@ -5,6 +5,7 @@
 import math
 import logging
 import os
+import multiprocessing as mp
 import os.path as osp
 import pickle
 import shutil
@@ -419,7 +420,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
         return df
 
-    # @post_process
+    @post_process
     def process(self):
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
@@ -486,6 +487,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 )
 
                 txn.put(f"{index}".encode(), serialized_data)
+
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -631,10 +633,10 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
-        # subset_n=int(1e6),
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e3"),
+        subset_n=int(1e3),
         num_workers=10,
-        batch_size=int(1e4),
+        batch_size=int(1e3),
     )
     # dataset.experiment_reference_index
     # dataset[0]

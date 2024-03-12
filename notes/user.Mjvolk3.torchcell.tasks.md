@@ -9,6 +9,14 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.12
+
+- [x] We were able to build the `DmfKuzmin` nodes, but when we try to get the edges the  program fails. There's a spike in the memory, and so it looks like some sort of out of memory error. Check `Delta` logs to confirm. → logs are unclear, we didn't log the job id, we have have some wandb run link. → Not clear why this run failed.
+- [x] Rerun on `Delta` → now times are shockingly low for the datasets → This is likely due to me not restarting with fresh datasets. The extra `preprocess` data is all there for all datasets so I think that everything should be ok.
+- [x] #ramble The design choice arises from trying to apply some general constraints to a more open ended data structure. Each experimental instance is denoted by a perturbation, which could be a scalar, vector, matrix, or some high dimensional tensor object. Importantly, we avoid any overlap between the axis of variation and perturbations, to not capture perturbation information in any data axes. This would violate the data model, which we already use to represent perturbations. In fact, perturbation is the first element of the experimental instance object. This is the most natural choice as we want to learn what happens to the cell under different perturbations.
+- [x] Change dirs for slurm output and error logging on delta. Belongs to `\scratch`
+- [ ] `Lmdb` raw for `dmf` data with docker
+
 ## 2024.03.11
 
 - [x] Use previous hacks on the Costanzo Adapter, we've tried without it... Now we need all the help we can get.
@@ -17,7 +25,7 @@ created: 1690514887023m
 - [x] Run on `Delta` → works very well and is pretty fast. We had an error on bulk import because all of logged output is polluting the final file path.
 - [x] Fix the file path issue. By writing a `txt` file with the path information. Revert `stderr` back to `stdout`. Write text file. → had to move the logging inside of hydra because hydra changes `cwd`. → Reverted to just writing a text file instead log file.
 - [x] Run small test `Delta`
-- [ ] Run whole database build on `Delta`
+- [x] Run whole database build on `Delta`
 - [ ] Run db build on docker try to fix multiprocessing issue.
 
 ## 2024.03.10

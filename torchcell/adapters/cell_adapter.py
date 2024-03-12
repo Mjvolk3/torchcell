@@ -17,7 +17,7 @@ from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )
-from torchcell.datasets.scerevisiae import CustomDataLoader
+from torchcell.loader import CpuExperimentLoader, CpuExperimentLoaderMultiprocessing
 from torchcell.datamodels import Genotype
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from torch_geometric.loader import DataLoader
@@ -41,6 +41,11 @@ class CellAdapter:
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
+        if loader_batch_size > chunk_size:
+            raise ValueError(
+                "chunk_size must be greater than or equal to loader_batch_size."
+                "Our recommendation are chunk_size 2-3 order of magnitude in size."
+            )
         self.dataset = dataset
         self.compute_workers = compute_workers
         self.io_workers = io_workers
@@ -63,7 +68,8 @@ class CellAdapter:
     def data_chunker(data_creation_logic):
         @wraps(data_creation_logic)
         def decorator(self, data_chunk: dict):
-            data_loader = CustomDataLoader(
+            # data_loader = CpuExperimentLoader(
+            data_loader = CpuExperimentLoaderMultiprocessing(
                 data_chunk,
                 batch_size=self.loader_batch_size,
                 num_workers=self.io_workers,
@@ -508,6 +514,7 @@ class CellAdapter:
                 )
             )
             return edges
+        
 
     @data_chunker
     def _environment_experiment_edges(self, data: dict) -> BioCypherEdge:

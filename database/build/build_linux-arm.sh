@@ -44,7 +44,7 @@ echo "----------------NOW_BUILDING_GRAPHS---------------------"
 # bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 
 docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
-bash_script_path_cleaned=$(docker exec tc-neo4j cat file_name.log)
+bash_script_path_cleaned=$(docker exec tc-neo4j cat logs/biocypher_file_name.log)
 
 # This only works if the stdout is completely clean
 # bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)

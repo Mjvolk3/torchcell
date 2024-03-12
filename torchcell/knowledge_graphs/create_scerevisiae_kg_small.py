@@ -48,7 +48,7 @@ file_name_logger.setLevel(logging.INFO)
 file_name_logger.propagate = False
 
 # Create a file handler for the file name logger
-file_handler = logging.FileHandler("logs/biocypher_file_name.log", mode="w")
+file_handler = logging.FileHandler("biocypher_file_name.log", mode="w")
 file_handler.setLevel(logging.INFO)
 
 # Create a formatter and add it to the file handler
@@ -231,15 +231,21 @@ def main(cfg) -> str:
     relative_bash_script_path = osp.join(
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
-    file_name_logger.info(relative_bash_script_path)
-    # return relative_bash_script_path
+    
+    # sanity check   
+    with open("test_direct_write.log", "w") as f:
+        f.write("Direct write test\n")
 
+    try:
+        file_name_logger.info(relative_bash_script_path)
+    except Exception as e:
+        print(f"Error logging file name: {e}")
 
 if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("logs/biocypher_file_name.log", "r") as file:
+    with open("biocypher_file_name.log", "r") as file:
         file_name = file.read().strip()
 
     print(file_name)

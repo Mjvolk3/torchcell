@@ -196,6 +196,7 @@ def main(cfg) -> str:
 
     with open("biocypher_file_name.txt", "w") as f:
         f.write(relative_bash_script_path)
+    wandb.finish()
 
 
 if __name__ == "__main__":

@@ -19,7 +19,6 @@ import os
 import os.path as osp
 from datetime import datetime
 import multiprocessing as mp
-import sys
 import math
 import wandb
 from omegaconf import DictConfig, OmegaConf
@@ -34,6 +33,10 @@ log = logging.getLogger(__name__)
 
 # WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
 
+load_dotenv()
+
+WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+print("wandb api key:", WANDB_API_KEY)
 
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
@@ -64,7 +67,6 @@ def main(cfg) -> str:
     # Configure logging
     logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
     logging.captureWarnings(True)
-    load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")

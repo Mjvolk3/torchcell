@@ -9,6 +9,13 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.13
+
+- [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.
+- [ ] `Lmdb` raw for `dmf` data with docker
+- [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should
+
+
 ## 2024.03.12
 
 - [x] We were able to build the `DmfKuzmin` nodes, but when we try to get the edges the  program fails. There's a spike in the memory, and so it looks like some sort of out of memory error. Check `Delta` logs to confirm. → logs are unclear, we didn't log the job id, we have have some wandb run link. → Not clear why this run failed.
@@ -16,13 +23,12 @@ created: 1690514887023m
 - [x] #ramble The design choice arises from trying to apply some general constraints to a more open ended data structure. Each experimental instance is denoted by a perturbation, which could be a scalar, vector, matrix, or some high dimensional tensor object. Importantly, we avoid any overlap between the axis of variation and perturbations, to not capture perturbation information in any data axes. This would violate the data model, which we already use to represent perturbations. In fact, perturbation is the first element of the experimental instance object. This is the most natural choice as we want to learn what happens to the cell under different perturbations.
 - [x] Change dirs for slurm output and error logging on delta. Belongs to `\scratch`
 - [x] Using [[torchcell.knowledge_graphs.create_scerevisiae_kg]] for large graph now and [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] for docker local builds.
-- [x] Last run failed due to oom. [wandb log](https://wandb.ai/zhao-group/tcdb/runs/fj9ty6cm?nw=nwusermjvolk3) → Restart with 96 cpu instead to reduce memory burden... We could also reduce batch size, this would require another commit. → This seems to have failed although we don't have any error message yet. As soon as the process memory available (non-swap) mb spikes, all cpu usages goes to 0. I think it is safe to assume a OOM. → Killed job `3202829`
-- [ ] Rerun with smaller batch size, and 64 cpu → Started run
-
-- [ ] Run db build on docker try to fix multiprocessing issue. run overnight. → Started run.
-
-- [ ] `Lmdb` raw for `dmf` data with docker
-- [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should
+- [x] Last run failed due to oom. [wandb log](https://wandb.ai/zhao-group/tcdb/runs/fj9ty6cm?nw=nwusermjvolk3) → Restart with 96 cpu instead to reduce memory burden... We could also reduce batch size, this would require another commit. → This seems to have failed although we don't have any error message yet. As soon as the process memory available (non-swap) mb spikes, all cpu usages goes to 0. I think it is safe to assume a #OOM . → Killed job `3202829`
+- [x] Rerun with smaller batch size, and 64 cpu → Started run → messed up and only did 64 cpu
+- [x] Rerun with smaller batch size, and 64 cpu → Started run with smaller `loader_batch_size` and `chunk_size`
+- [x] Run db build on docker try to fix multiprocessing issue. run overnight. → Started run. → cpus still don't look like they are working
+- [x] #ramble if cpus drop to 0 we either have #OOM or switching to different process.
+- 🔲 Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should
 
 ## 2024.03.11
 

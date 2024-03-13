@@ -15,18 +15,20 @@ created: 1690514887023m
 - [x] Rerun on `Delta` → now times are shockingly low for the datasets → This is likely due to me not restarting with fresh datasets. The extra `preprocess` data is all there for all datasets so I think that everything should be ok.
 - [x] #ramble The design choice arises from trying to apply some general constraints to a more open ended data structure. Each experimental instance is denoted by a perturbation, which could be a scalar, vector, matrix, or some high dimensional tensor object. Importantly, we avoid any overlap between the axis of variation and perturbations, to not capture perturbation information in any data axes. This would violate the data model, which we already use to represent perturbations. In fact, perturbation is the first element of the experimental instance object. This is the most natural choice as we want to learn what happens to the cell under different perturbations.
 - [x] Change dirs for slurm output and error logging on delta. Belongs to `\scratch`
+- [x] Using [[torchcell.knowledge_graphs.create_scerevisiae_kg]] for large graph now and [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] for docker local builds.
+- [ ] Run db build on docker try to fix multiprocessing issue... Launch run before gym.
 - [ ] `Lmdb` raw for `dmf` data with docker
 
 ## 2024.03.11
 
 - [x] Use previous hacks on the Costanzo Adapter, we've tried without it... Now we need all the help we can get.
-- [ ] Compute time approximation for `DmfCostanzo2016` → Since the node compute time should increase roughly linearly. For `1e6` we have, `1003 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.57 hr`. This on on M1 with 10 cores, so hopefully it should get better with more cores. All 10 cores are maxed out in running the adapters. Edges are`623 s`. Previously I was thinking the edges would scale more quadratically but this shouldn't be the case as we don't double loop over all experiments. Edges are `623s` and plugging this into the equation above we get `1039 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.78 hr` 🛑 I computed for kuzmin need to do for Costanzo..
+- [x] Compute time approximation for `DmfCostanzo2016` → Since the node compute time should increase roughly linearly. For `1e6` we have, `1003 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.57 hr`. This on on M1 with 10 cores, so hopefully it should get better with more cores. All 10 cores are maxed out in running the adapters. Edges are`623 s`. Previously I was thinking the edges would scale more quadratically but this shouldn't be the case as we don't double loop over all experiments. Edges are `623s` and plugging this into the equation above we get `1039 s * 20 size_increase / 60 (s/min) / 60 (min/hr) = 5.78 hr`
 - [x] Increase cpu cores for Docker to 10
 - [x] Run on `Delta` → works very well and is pretty fast. We had an error on bulk import because all of logged output is polluting the final file path.
 - [x] Fix the file path issue. By writing a `txt` file with the path information. Revert `stderr` back to `stdout`. Write text file. → had to move the logging inside of hydra because hydra changes `cwd`. → Reverted to just writing a text file instead log file.
 - [x] Run small test `Delta`
 - [x] Run whole database build on `Delta`
-- [ ] Run db build on docker try to fix multiprocessing issue.
+- 🔲 Run db build on docker try to fix multiprocessing issue.
 
 ## 2024.03.10
 

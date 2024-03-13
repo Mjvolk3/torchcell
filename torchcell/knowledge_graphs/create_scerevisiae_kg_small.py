@@ -1,3 +1,9 @@
+# torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
+# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
+
+
 from biocypher import BioCypher
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
@@ -37,9 +43,6 @@ logging.captureWarnings(True)
 # WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
 
 
-
-
-
 def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
     # Try to get number of CPUs allocated by SLURM
@@ -54,30 +57,10 @@ def get_num_workers():
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
     load_dotenv()
-    WANDB_API_KEY = os.getenv("WANDB_API_KEY")
-    log.info(f"wandb_api_key:  {WANDB_API_KEY}")
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-    # Logic for capturing the file name
-    # Create a separate logger for the file name
-    file_name_logger = logging.getLogger("file_name_logger")
-    file_name_logger.setLevel(logging.INFO)
-
-    # Prevent logger from propagating messages to the root logger
-    file_name_logger.propagate = False
-
-    # Create a file handler for the file name logger
-    file_handler = logging.FileHandler("logs/biocypher_file_name.log", mode="w")
-    file_handler.setLevel(logging.INFO)
-
-    # Create a formatter and add it to the file handler
-    formatter = logging.Formatter("%(message)s")
-    file_handler.setFormatter(formatter)
-
-    # Add the file handler to the file name logger
-    file_name_logger.addHandler(file_handler)
 
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -93,7 +76,7 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-
+    wandb.log({"slurm_job_id": slurm_job_id})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -122,35 +105,35 @@ def main(cfg) -> str:
 
     # Define dataset configurations
     dataset_configs = [
-        # {
-        #     "class": SmfCostanzo2016Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
-        #     "kwargs": {},
-        # },
+        {
+            "class": SmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
+            "kwargs": {},
+        },
         {
             "class": SmfKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
             "kwargs": {},
         },
-        # {
-        #     "class": DmfKuzmin2018Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "class": TmfKuzmin2018Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
-        #     "kwargs": {},
-        # },
-        # {
-        #     "class": DmfCostanzo2016Dataset,
-        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
-        #     "kwargs": {
-        #         "subset_n": int(1e6),
-        #         "num_workers": num_workers,
-        #         "batch_size": int(1e3),
-        #     },
-        # },
+        {
+            "class": DmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
+            "kwargs": {},
+        },
+        {
+            "class": TmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
+            "kwargs": {},
+        },
+        {
+            "class": DmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
+            "kwargs": {
+                "subset_n": int(1e6),
+                "num_workers": num_workers,
+                "batch_size": int(1e3),
+            },
+        },
     ]
 
     # Instantiate datasets
@@ -215,16 +198,16 @@ def main(cfg) -> str:
         "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
 
-    try:
-        file_name_logger.info(relative_bash_script_path)
-    except Exception as e:
-        print(f"Error logging file name: {e}")
+    with open("biocypher_file_name.txt", "w") as f:
+        f.write(relative_bash_script_path)
+    wandb.finish()
+
 
 if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("logs/biocypher_file_name.log", "r") as file:
+    with open("biocypher_file_name.txt", "r") as file:
         file_name = file.read().strip()
 
     print(file_name)

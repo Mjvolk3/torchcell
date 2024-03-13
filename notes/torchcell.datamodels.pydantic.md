@@ -1,5 +1,5 @@
 ---
-id: zyd8yz3zvglxah90uciet10
+id: 6uktwxu6mxy3nmvx306lmrw
 title: Pydantic
 desc: ''
 updated: 1695169373930

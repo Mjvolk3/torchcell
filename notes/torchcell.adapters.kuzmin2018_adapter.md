@@ -1,5 +1,5 @@
 ---
-id: 4zjdilk1bw8e711mgbm0ana
+id: 2drtmsm76hlxpgly4vrdcu1
 title: Kuzmin2018_adapter
 desc: ''
 updated: 1705879402179

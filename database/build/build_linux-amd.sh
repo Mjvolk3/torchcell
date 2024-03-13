@@ -15,7 +15,7 @@ python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 echo "----------------NOW_BUILDING_GRAPHS----------------"
 
 # Run your Python script and follow-up commands
-python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+python -m torchcell.knowledge_graphs.create_scerevisiae_kg
 bash_script_path=$(cat biocypher_file_name.txt)
 cd /var/lib/neo4j
 chmod +x "${bash_script_path}"

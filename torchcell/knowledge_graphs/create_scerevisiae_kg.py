@@ -77,7 +77,7 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-    wandb.log({"slurm_job_id": slurm_job_id})
+    wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

@@ -1,17 +1,17 @@
 #!/bin/bash
-#SBATCH --mem=16g
+#SBATCH --mem=128g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16   # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=64   # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=TC
-#SBATCH --time=18:00:00
+#SBATCH --time=24:00:00
 #SBATCH --constraint="projects&scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
-#SBATCH --output=/projects/bbub/mjvolk3/torchcell/database/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/database/slurm/error/%x_%j.out
+#SBATCH --output=/scratch/bbub/mjvolk3/torchcell/database/slurm/output/%x_%j.out
+#SBATCH --error=/scratch/bbub/mjvolk3/torchcell/database/slurm/error/%x_%j.out
 
 # mem 128g
 # cpu 128

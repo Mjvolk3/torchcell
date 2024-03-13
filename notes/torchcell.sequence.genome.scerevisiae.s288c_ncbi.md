@@ -1,5 +1,5 @@
 ---
-id: g8uz0m14lrp8e1opzlosylw
+id: 4cqsio17g9ah781p52q8q8g
 title: S288c_ncbi
 desc: ''
 updated: 1695438608971

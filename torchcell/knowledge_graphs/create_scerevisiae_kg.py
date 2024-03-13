@@ -130,7 +130,6 @@ def main(cfg) -> str:
             "class": DmfCostanzo2016Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
             "kwargs": {
-                "subset_n": int(1e6),
                 "num_workers": num_workers,
                 "batch_size": int(1e3),
             },

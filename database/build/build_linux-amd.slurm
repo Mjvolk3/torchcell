@@ -2,7 +2,7 @@
 #SBATCH --mem=240g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=128   # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=96   # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=TC

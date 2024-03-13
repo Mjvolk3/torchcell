@@ -1,5 +1,5 @@
 ---
-id: 3v3poq3u9xpfdub9m973ty2
+id: 6fx2v7fbcx1ga31vp362ai9
 title: Genetic_interaction_score
 desc: ''
 updated: 1697166681544

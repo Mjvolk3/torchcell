@@ -1,5 +1,5 @@
 ---
-id: 75uy2fnxdfrqcv2a8z56fee
+id: 3c589jr80i3t63wtys1plxv
 title: ChatGPT
 desc: ''
 updated: 1690835732507

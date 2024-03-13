@@ -1,5 +1,5 @@
 ---
-id: aog9v2wqkm0ipffu8v2s4n5
+id: dukj36ne67p1lhd2e2igl0q
 title: Uniprot_api_ec
 desc: ''
 updated: 1695246782606

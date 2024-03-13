@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710223097612
+updated: 1710353087886
 created: 1690514887023m
 ---
 
@@ -11,10 +11,23 @@ created: 1690514887023m
 
 ## 2024.03.13
 
+🎉 We have some minor cause for celebration, first full database import 🎉
+
+```bash
+IMPORT DONE in 7m 32s 617ms. 
+Imported:
+  49722079 nodes
+  107306004 relationships
+  249192120 properties
+Peak memory usage: 1.554GiB
+```
+
+- [x] #ramble considering what to do since troubleshooting querying on the local build will be the most time efficient, yet we are struggling on docker to use all cpus. Maybe we should try a simple test to see if we can utilize all cpus.
+- [ ] Fix docker build issue. → ![[2024-03-13 11:35 - Troubleshooting|dendron://torchcell/database.docker.builds.2024.03.13#2024-03-13-1135---troubleshooting]]
+
 - [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.
 - [ ] `Lmdb` raw for `dmf` data with docker
 - [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should
-
 
 ## 2024.03.12
 

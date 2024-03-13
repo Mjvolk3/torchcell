@@ -7,9 +7,9 @@ defaults:
   - _self_ # append to end for overriding duplicate configs in default
 
 wandb:
-  mode: online # disabled, offline, onlineu
+  mode: online # disabled, offline, online
   project: tcdb
-  tags: [large_kb_test]
+  tags:
 
 adapters:
   io_process_worker_ratio: 0.2

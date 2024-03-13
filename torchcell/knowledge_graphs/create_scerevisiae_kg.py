@@ -131,7 +131,7 @@ def main(cfg) -> str:
             "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
             "kwargs": {
                 "num_workers": num_workers,
-                "batch_size": int(1e2),
+                "batch_size": int(1e3),
             },
         },
     ]

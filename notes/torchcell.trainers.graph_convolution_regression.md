@@ -1,5 +1,5 @@
 ---
-id: yx5p859nx8dami4ha7sm7hn
+id: wapmbv8oagfjxx8vpr8ej18
 title: Graph_convolution_regression
 desc: ''
 updated: 1697692668621

@@ -77,6 +77,9 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
+    wandb.run.log_code(
+        "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
+    )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
@@ -87,6 +90,7 @@ def main(cfg) -> str:
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
+    wandb.log({"biocypher-out": bc._output_directory.split("/")[-1]})
     # Partition workers
     num_workers = get_num_workers()
     io_workers = math.ceil(

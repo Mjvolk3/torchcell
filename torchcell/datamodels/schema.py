@@ -275,6 +275,7 @@ class BaseExperiment(ModelStrict):
     environment: BaseEnvironment
     phenotype: BasePhenotype
 
+# TODO, we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
     reference_phenotype: FitnessPhenotype

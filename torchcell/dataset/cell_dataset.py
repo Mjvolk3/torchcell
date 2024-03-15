@@ -1,4 +1,4 @@
-from .dataset import Dataset
+from torch_geometric.data import Dataset
 from torchcell.data import (
     ExperimentReferenceIndex,
     serialize_for_hashing,

@@ -19,6 +19,7 @@ from torch_geometric.data import download_url
 from tqdm import tqdm
 from torch_geometric.data import Dataset
 from torchcell.dataset import compute_experiment_reference_index
+import multiprocessing as mp
 from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels import (
     BaseEnvironment,
@@ -266,7 +267,7 @@ class ExperimentDataset(Dataset, ABC):
         elif self._experiment_reference_index is None:
             if self.num_workers is not None:
                 # Create a pool of worker processes
-                with multiprocessing.Pool(processes=self.num_workers) as pool:
+                with mp.Pool(processes=self.num_workers) as pool:
                     # Split the dataset into chunks for parallel processing
                     chunk_size = len(self) // self.num_workers
                     chunks = [

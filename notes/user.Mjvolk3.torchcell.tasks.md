@@ -2,12 +2,31 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710353087886
+updated: 1710479882624
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.03.14
+
+- [x] simple query note →  [[Simple counting of experiment nodes|dendron://torchcell/torchcell.neo4j_fitness_query#simple-counting-of-experiment-nodes]]
+- [x] smf, dmf query → [[Smf Dmf Benchmark Query Results on Small Knowledge Graph|dendron://torchcell/torchcell.neo4j_fitness_query#smf-dmf-benchmark-query-results-on-small-knowledge-graph]]
+- [x] smf, dmf, tmf query → [[Smf Dmf Tmf Benchmark Query Results on Small Knowledge Graph|dendron://torchcell/torchcell.neo4j_fitness_query#smf-dmf-tmf-benchmark-query-results-on-small-knowledge-graph]]
+- [x] Update `database/build/build-image-fresh_linux-arm.sh`
+- [x] Use `chmod a-w dir` to protect `biocypher-out` bulk import dirs. → added to `amd` and `arm` builds.
+- [x] Add this to [[torchcell.datamodels.schema]] `# we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j`, right now we have to consider experiment type in the query lmdb [[torchcell.neo4j_fitness_query]], which adds annoying complexity. #ramble this will lost the class distinction of which experiment it which but we could always add this back as a `enum` property or something.
+- [x] #ramble From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion. → copying to future.
+- [x] Create query database for raw creating raw data. → Created with the intention of instantiating the database within the raw dir of the `CellDataset`
+- [x] Add query with media and temperature constraints. This could be done via multiple ways by either using the reference or by subsetting each item. [[Neo4j_fitness_query|dendron://torchcell/torchcell.neo4j_fitness_query]] → Did not explicitly use the reference for this.
+
+
+
+- [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should something more like `value` and `value_std`, this will make the downstream querying always consistent. #ramble We will also need a spot for p-values in the data model even though a p-value, is really a comparison metric between the null hypothesis meaning it is a relationship between the wild type or in our case reference. So maybe we also add something like `value_p_value`. These should all be designed with the plan of using them as tensors.
+- [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.
+- [ ] [[torchcell.knowledge_graphs.create_scerevisiae_kg]] and [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] are the same and should be made one file that is configured with hydra.
+- [ ] Experimental reference index in the datsaets is getting split out into a list of indices due to multiprocessing. fix. [[torchcell.datasets.scerevisiae.costanzo2016]]
 
 ## 2024.03.13
 
@@ -23,11 +42,12 @@ Peak memory usage: 1.554GiB
 ```
 
 - [x] #ramble considering what to do since troubleshooting querying on the local build will be the most time efficient, yet we are struggling on docker to use all cpus. Maybe we should try a simple test to see if we can utilize all cpus.
-- [ ] Fix docker build issue. → ![[2024-03-13 11:35 - Troubleshooting|dendron://torchcell/database.docker.builds.2024.03.13#2024-03-13-1135---troubleshooting]]
-
-- [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.
-- [ ] `Lmdb` raw for `dmf` data with docker
-- [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should
+- [x] Fix docker build issue. → ![[2024-03-13 11:35 - Troubleshooting|dendron://torchcell/database.docker.builds.2024.03.13#2024-03-13-1135---troubleshooting]] → we added `docker --cpus 10` but this didn't seem to help. → trying to repull image to avoid any kind of caching. → ⌛️ turns out we just had to wait a bit for the completion of the run, were we end up seeing a lot more cpu usage. It is strange that there is much more usage on local but we can move on for now
+- [x] Log the `biocypher-dir` with the bash script in wandb, this will indicate which dir to find the bash script for rebuilding the db if necessary. → done in both scripts, see tommorow for combining scripst
+- [x] #ramble `wandb` has greatly improved my productivity since using it for the database.
+- 🔲 Now that we switched to using a file output we can and should log completion of different steps in the adapter.
+- 🔲 `Lmdb` raw for `dmf` data with docker
+- 🔲 Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should something more like..
 
 ## 2024.03.12
 

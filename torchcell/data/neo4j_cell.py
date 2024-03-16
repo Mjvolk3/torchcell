@@ -18,6 +18,9 @@ from pydantic import field_validator
 from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.utils import add_self_loops, from_networkx, k_hop_subgraph
 from tqdm import tqdm
+from enum import Enum, auto
+from enum import IntEnum, auto
+from torchcell.datasets.embedding import BaseEmbeddingDataset
 
 from torchcell.dataset import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
@@ -34,6 +37,8 @@ from tqdm import tqdm
 from attrs import define, field
 import os.path as osp
 from torchcell.data import Neo4jQueryRaw
+from torchcell.sequence import GeneSet, Genome
+
 
 log = logging.getLogger(__name__)
 
@@ -48,14 +53,118 @@ class ParsedGenome(ModelStrictArbitrary):
         return v
 
 
+def safe_compose(graphs: nx.Graph) -> nx.Graph:
+    if any(isinstance(G, nx.DiGraph) for G in graphs):
+        # Convert all graphs to DiGraph if at least one is directed
+        graphs = [G if isinstance(G, nx.DiGraph) else G.to_directed() for G in graphs]
+
+    # Start with an empty graph of the appropriate type
+    composed_graph = nx.DiGraph() if isinstance(graphs[0], nx.DiGraph) else nx.Graph()
+
+    for G in graphs:
+        # Check for overlapping node data
+        for node, data in G.nodes(data=True):
+            if node in composed_graph:
+                for key, value in data.items():
+                    if key in composed_graph.nodes[node]:
+                        if isinstance(value, np.ndarray):
+                            if not np.array_equal(
+                                value, composed_graph.nodes[node][key]
+                            ):
+                                raise ValueError(
+                                    f"Overlapping node data found for node {node}: {key}"
+                                )
+                        elif composed_graph.nodes[node][key] != value:
+                            raise ValueError(
+                                f"Overlapping node data found for node {node}: {key}"
+                            )
+
+        # Check for overlapping edge data
+        for node1, node2, data in G.edges(data=True):
+            if composed_graph.has_edge(node1, node2):
+                for key, value in data.items():
+                    if key in composed_graph.edges[node1, node2]:
+                        if isinstance(value, np.ndarray):
+                            if not np.array_equal(
+                                value, composed_graph.edges[node1, node2][key]
+                            ):
+                                raise ValueError(
+                                    f"Overlapping edge data found for edge {(node1, node2)}: {key}"
+                                )
+                        elif composed_graph.edges[node1, node2][key] != value:
+                            raise ValueError(
+                                f"Overlapping edge data found for edge {(node1, node2)}: {key}"
+                            )
+
+        composed_graph = nx.compose(composed_graph, G)
+    # After all graphs are composed unify nodes attrs into x
+    # probably need to unify edge attrs too
+    for node, data in composed_graph.nodes(data=True):
+        attributes_list = []
+        for key, value in data.items():
+            if isinstance(value, np.ndarray):
+                attributes_list.append(value)
+            # You can handle other types as needed
+
+        # For simplicity, assuming all attributes are numpy arrays
+        concatenated_attributes = np.concatenate(attributes_list)
+
+        # Set the concatenated attributes to 'x' and remove other attributes
+        composed_graph.nodes[node]["x"] = concatenated_attributes
+        keys_to_remove = [key for key in data.keys() if key != "x"]
+        for key in keys_to_remove:
+            del composed_graph.nodes[node][key]
+
+    return composed_graph
+
+
+def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
+    """
+    Create a NetworkX graph from embeddings.
+    """
+    # Create an empty NetworkX graph
+    G = nx.Graph()
+
+    # Extract and concatenate embeddings for all items in embeddings
+    for item in embeddings:
+        keys = item["embeddings"].keys()
+        if item.id in genome.gene_set:
+            item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
+            concatenated_embedding = torch.cat(item_embeddings)
+
+            # Add nodes to the graph with embeddings as node attributes
+            G.add_node(item.id, embedding=concatenated_embedding.numpy())
+
+    return G
+
+
+class CellSetPriority(IntEnum):
+    Genome = auto()
+    Networks = auto()
+    Experiments = auto()
+
+
 class Neo4jCellDataset(Dataset):
     def __init__(
         self,
         root: str,
+        experiment_query: str = None,
+        genome: Genome = None,
+        graph: nx.Graph = None,
+        node_embedding: BaseEmbeddingDataset = None,
+        uri: str = "bolt://localhost:7687",
+        username: str = "neo4j",
+        password: str = "torchcell",
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
+        # db start
+        self.uri = uri
+        self.username = username
+        self.password = password
+        self.experiment_query = experiment_query
+
         super().__init__(root, transform, pre_transform, pre_filter)
         self._init_lmdb()  # Initialize the LMDB environment for storing raw data
 
@@ -64,25 +173,13 @@ class Neo4jCellDataset(Dataset):
         return "lmdb"
 
     def download(self):
-        Neo4jQueryRaw(
-            uri="bolt://localhost:7687",
-            username="neo4j",
-            password="torchcell",
+        self.raw_db = Neo4jQueryRaw(
+            uri=self.uri,
+            username=self.username,
+            password=self.password,
             root_dir=self.root,
-            query="""
-            MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
-            WITH e, g, COLLECT(p) AS perturbations
-            WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
-            WITH DISTINCT e
-            MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
-            MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
-            WHERE phen.graph_level = 'global' 
-            AND (phen.label = 'smf' OR phen.label = 'dmf')
-            AND phen.fitness_std < 0.05
-            RETURN e, ref
-            LIMIT 10;
-            """,
-        ).process()
+            query=self.experiment_query,
+        )
 
     def _init_lmdb(self):
         self.env = lmdb.open(
@@ -90,7 +187,7 @@ class Neo4jCellDataset(Dataset):
         )  # Large map_size to accommodate dataset
 
     def to_cell_data(self, graphs: list[nx.Graph]) -> Data:
-        G = self.safe_compose(graphs)
+        G = safe_compose(graphs)
         # drop nodes that don't belong to genome.gene_set
         data = from_networkx(G)
         data.ids = list(G.nodes())
@@ -105,95 +202,6 @@ class Neo4jCellDataset(Dataset):
     @property
     def processed_file_names(self) -> list[str]:
         return "lmdb"
-
-    @staticmethod
-    def safe_compose(graphs):
-        if any(isinstance(G, nx.DiGraph) for G in graphs):
-            # Convert all graphs to DiGraph if at least one is directed
-            graphs = [
-                G if isinstance(G, nx.DiGraph) else G.to_directed() for G in graphs
-            ]
-
-        # Start with an empty graph of the appropriate type
-        composed_graph = (
-            nx.DiGraph() if isinstance(graphs[0], nx.DiGraph) else nx.Graph()
-        )
-
-        for G in graphs:
-            # Check for overlapping node data
-            for node, data in G.nodes(data=True):
-                if node in composed_graph:
-                    for key, value in data.items():
-                        if key in composed_graph.nodes[node]:
-                            if isinstance(value, np.ndarray):
-                                if not np.array_equal(
-                                    value, composed_graph.nodes[node][key]
-                                ):
-                                    raise ValueError(
-                                        f"Overlapping node data found for node {node}: {key}"
-                                    )
-                            elif composed_graph.nodes[node][key] != value:
-                                raise ValueError(
-                                    f"Overlapping node data found for node {node}: {key}"
-                                )
-
-            # Check for overlapping edge data
-            for node1, node2, data in G.edges(data=True):
-                if composed_graph.has_edge(node1, node2):
-                    for key, value in data.items():
-                        if key in composed_graph.edges[node1, node2]:
-                            if isinstance(value, np.ndarray):
-                                if not np.array_equal(
-                                    value, composed_graph.edges[node1, node2][key]
-                                ):
-                                    raise ValueError(
-                                        f"Overlapping edge data found for edge {(node1, node2)}: {key}"
-                                    )
-                            elif composed_graph.edges[node1, node2][key] != value:
-                                raise ValueError(
-                                    f"Overlapping edge data found for edge {(node1, node2)}: {key}"
-                                )
-
-            composed_graph = nx.compose(composed_graph, G)
-        # After all graphs are composed unify nodes attrs into x
-        # probably need to unify edge attrs too
-        for node, data in composed_graph.nodes(data=True):
-            attributes_list = []
-            for key, value in data.items():
-                if isinstance(value, np.ndarray):
-                    attributes_list.append(value)
-                # You can handle other types as needed
-
-            # For simplicity, assuming all attributes are numpy arrays
-            concatenated_attributes = np.concatenate(attributes_list)
-
-            # Set the concatenated attributes to 'x' and remove other attributes
-            composed_graph.nodes[node]["x"] = concatenated_attributes
-            keys_to_remove = [key for key in data.keys() if key != "x"]
-            for key in keys_to_remove:
-                del composed_graph.nodes[node][key]
-
-        return composed_graph
-
-    @staticmethod
-    def create_embedding_graph(genome, embeddings: BaseEmbeddingDataset) -> nx.Graph:
-        """
-        Create a NetworkX graph from embeddings.
-        """
-        # Create an empty NetworkX graph
-        G = nx.Graph()
-
-        # Extract and concatenate embeddings for all items in embeddings
-        for item in embeddings:
-            keys = item["embeddings"].keys()
-            if item.id in genome.gene_set:
-                item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
-                concatenated_embedding = torch.cat(item_embeddings)
-
-                # Add nodes to the graph with embeddings as node attributes
-                G.add_node(item.id, embedding=concatenated_embedding.numpy())
-
-        return G
 
     def read_raw_lmdb(self):
         raw_records = []
@@ -214,45 +222,10 @@ class Neo4jCellDataset(Dataset):
 
     def process(self):
         # Retrieve raw records from the LMDB database
-        raw_records = self.read_raw_lmdb()
-
-        # Example processing loop
-        processed_data = []
-        for record in raw_records:
-            # Here, apply any processing you need on each record
-            # For example, converting raw records to a specific data structure or format
-            processed_record = self.process_single_record(record)
-        processed_data.append(processed_record)
-
-        ####
-        combined_data = []
-        self.gene_set = self.compute_gene_set()
-
-        # Precompute gene_set for faster lookup
-        gene_set = self.gene_set
-
-        # # Use list comprehension and any() for fast filtering
-        combined_data = [
-            item
-            for item in tqdm(self.experiments)
-            if all(i["id"] in gene_set for i in item.genotype)
-        ]
-
-        log.info("creating lmdb database")
-        # Initialize LMDB environment
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
-
-        with env.begin(write=True) as txn:
-            for idx, item in tqdm(enumerate(combined_data)):
-                data = Data()
-                data.genotype = item["genotype"]
-                data.phenotype = item["phenotype"]
-
-                # Serialize the data object using pickle
-                serialized_data = pickle.dumps(data)
-
-                # Save the serialized data in the LMDB environment
-                txn.put(f"{idx}".encode(), serialized_data)
+        self.raw_db
+        print()
+        # TODO compute gene set, maybe others stuff.
+        # self.gene_set = self.compute_gene_set()
 
     @property
     def gene_set(self):
@@ -453,10 +426,30 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    experiment_query = """
+        MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
+        WITH e, g, COLLECT(p) AS perturbations
+        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
+        WITH DISTINCT e
+        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+        MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
+        WHERE phen.graph_level = 'global' 
+        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
+        AND phen.fitness_std < 0.05
+        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
+        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+        RETURN e, ref
+    """
+
+    Neo4jCellDataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/neo4j"),
+        experiment_query=experiment_query,
+    )
+
     # genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     # genome.drop_chrmt()
     # genome.drop_empty_go()
-    Neo4jCellDataset(root=osp.join(DATA_ROOT, "data/torchcell/neo4j"))
 
 
 if __name__ == "__main__":

@@ -2,12 +2,31 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710479882624
+updated: 1710632054606
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.03.16
+
+- [ ] [[torchcell.data.neo4j_cell]] only requires on arg to start → To do this the only thing that makes sense is experiments, so the query. You can take the `gene_set` from the query and automatically one hot the genes. I like this idea as it brings more intuition to the building process. Another option is to require the passing of a `gene_set`, I think it makes more sense to have some resolution for getting the relevant `gene_set` based on `GeneSetPriority` `enum`.
+- [ ] Process method
+- [ ] get method.
+- [ ] One class to implement dataset
+- [ ]
+- [ ]
+
+## 2024.03.15
+
+- [x] Dependency injection into [[torchcell.data.neo4j_cell]] we are building a base class → composition makes more sense here since we can pass fewer variables and make paths same.
+- [x] #ramble the `gene_set` and `experimental_reference_index` should be parallelized because we will compute them for every dataset. The other indices do not need to be parallelized. When we have built up a list of common types of indices taken over [[torchcell.datamodels.schema]] we can add a configuration for which of these to compute and pallelize over each of them.
+- [x] Fix the `experimental_reference_index` in [[torchcell.neo4j_fitness_query]] so it is one index and not a list of indices → This is actually a list of the `ExperimentalReferenceIndex`, maybe we should rename the attr to `ExperimentalReferenceInidces`. → We are not getting the right index yet since aren't capturing the 26 C reference. → Seems to work correctly now.
+- [x] Add `gene_set` to the [[torchcell.neo4j_fitness_query]] → added.
+- 🔲 Add multithreading for local neo4j db config
+- 🔲 In the `init` we should compute the gene set that we can populate a minimum graph.
+- 🔲 Mechanism for constructing `pyg` data objects.
 
 ## 2024.03.14
 
@@ -20,8 +39,6 @@ created: 1690514887023m
 - [x] #ramble From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion. → copying to future.
 - [x] Create query database for raw creating raw data. → Created with the intention of instantiating the database within the raw dir of the `CellDataset`
 - [x] Add query with media and temperature constraints. This could be done via multiple ways by either using the reference or by subsetting each item. [[Neo4j_fitness_query|dendron://torchcell/torchcell.neo4j_fitness_query]] → Did not explicitly use the reference for this.
-
-
 
 - [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should something more like `value` and `value_std`, this will make the downstream querying always consistent. #ramble We will also need a spot for p-values in the data model even though a p-value, is really a comparison metric between the null hypothesis meaning it is a relationship between the wild type or in our case reference. So maybe we also add something like `value_p_value`. These should all be designed with the plan of using them as tensors.
 - [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.

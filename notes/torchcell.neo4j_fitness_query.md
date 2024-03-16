@@ -2,7 +2,7 @@
 id: 8t4hjrl71hnr0iocad2je2j
 title: Neo4j_fitness_query
 desc: ''
-updated: 1710479104980
+updated: 1710538608925
 created: 1706648223300
 ---
 ## Simple counting of experiment nodes
@@ -72,6 +72,8 @@ RETURN COUNT(e) AS TotalExperiments
 Query with added temperature and media constraints.
 
 ```bash
+MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
+WITH e, g, COLLECT(p) AS perturbations
 WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
 WITH DISTINCT e
 MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
@@ -82,6 +84,7 @@ AND phen.fitness_std < 0.05
 MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
 MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
 MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+RETURN e, ref
 RETURN COUNT(e) AS TotalExperiments
 ```
 
@@ -139,6 +142,22 @@ MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
 MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
 WHERE phen.graph_level = 'global' 
 AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
+AND phen.fitness_std < 0.05
+MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
+MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+RETURN COUNT(e) AS TotalExperiments
+```
+
+```bash
+MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
+WITH e, g, COLLECT(p) AS perturbations
+WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
+WITH DISTINCT e
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
+WHERE phen.graph_level = 'global' 
+AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
 AND phen.fitness_std < 0.05
 MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
 MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})

@@ -21,46 +21,105 @@ from torchcell.data import (
     compute_sha256_hash,
 )
 import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor
+from torchcell.sequence import GeneSet
+import pickle
+import logging
+import json
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
-def compute_experiment_reference_index(dataset) -> list[ExperimentReferenceIndex]:
-    # Hashes for each reference
-    print("Computing experiment_reference_index hashes...")
-    # reference_hashes = [
-    #     compute_sha256_hash(serialize_for_hashing(data["reference"]))
-    #     for data in tqdm(dataset)
-    # ]
-    reference_hashes = [
-        compute_sha256_hash(
-            serialize_for_hashing(
-                {"experiment": data[0].model_dump(), "reference": data[1].model_dump()}[
-                    "reference"
-                ]
-            )
+def parallel_hash_computation(data):
+    """
+    Function to compute the hash for a single dataset item.
+    Returns a tuple of the original index in the dataset and the computed hash.
+    """
+    idx, data_item = data
+    return idx, compute_sha256_hash(
+        serialize_for_hashing(data_item["reference"].model_dump())
+    )
+
+
+def compute_experiment_reference_index_parallel(
+    dataset,
+) -> list[ExperimentReferenceIndex]:
+    num_workers = mp.cpu_count()  # Or set manually to a preferred number
+
+    # Use ProcessPoolExecutor to compute hashes in parallel
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        # Prepare dataset with original indices for parallel processing
+        indexed_dataset = list(enumerate(dataset))
+        # Execute parallel computation
+        results = list(executor.map(parallel_hash_computation, indexed_dataset))
+
+    # Sort results by original indices to maintain dataset order
+    sorted_results = sorted(results, key=lambda x: x[0])
+
+    # Extract hashes in their original order
+    reference_hashes = [result[1] for result in sorted_results]
+
+    # Continue with the aggregation logic as before
+    unique_hashes_to_indices = {}
+    for idx, hash_val in enumerate(reference_hashes):
+        if hash_val not in unique_hashes_to_indices:
+            unique_hashes_to_indices[hash_val] = []
+        unique_hashes_to_indices[hash_val].append(idx)
+
+    reference_indices_list = []
+    for hash_val, indices in unique_hashes_to_indices.items():
+        index_list = [False] * len(dataset)
+        for idx in indices:
+            index_list[idx] = True
+        reference_obj = dataset[indices[0]]["reference"].model_dump()
+        exp_ref_index = ExperimentReferenceIndex(
+            reference=reference_obj, index=index_list
         )
-        for data in tqdm(dataset)
-    ]
+        reference_indices_list.append(exp_ref_index)
 
-    # Identify unique hashes
-    unique_hashes = set(reference_hashes)
+    return reference_indices_list
 
-    # Initialize ExperimentReferenceIndex list
-    reference_indices = []
+def compute_experiment_reference_index(
+    dataset, num_workers=None
+) -> list[ExperimentReferenceIndex]:
+    if num_workers is None or num_workers <= 0:
+        # Sequential version
+        reference_hashes = [
+            compute_sha256_hash(serialize_for_hashing(data["reference"].model_dump()))
+            for data in dataset
+        ]
+    else:
+        # Parallel version
+        with ProcessPoolExecutor(max_workers=num_workers) as executor:
+            # Prepare dataset with original indices for parallel processing
+            indexed_dataset = list(enumerate(dataset))
+            # Execute parallel computation
+            results = list(executor.map(parallel_hash_computation, indexed_dataset))
+            # Sort results by original indices to maintain dataset order
+            sorted_results = sorted(results, key=lambda x: x[0])
+            # Extract hashes in their original order
+            reference_hashes = [result[1] for result in sorted_results]
 
-    print("Finding unique references...")
-    for unique_hash in tqdm(unique_hashes):
-        # Create a boolean list where True indicates the presence of the unique reference
-        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
+    # Common aggregation logic for both versions
+    unique_hashes_to_indices = {}
+    for idx, hash_val in enumerate(reference_hashes):
+        if hash_val not in unique_hashes_to_indices:
+            unique_hashes_to_indices[hash_val] = []
+        unique_hashes_to_indices[hash_val].append(idx)
 
-        # Find the corresponding reference object for the unique hash
-        ref_index = reference_hashes.index(unique_hash)
-        unique_ref = dataset[ref_index][1].model_dump()
+    reference_indices_list = []
+    for hash_val, indices in unique_hashes_to_indices.items():
+        index_list = [False] * len(dataset)
+        for idx in indices:
+            index_list[idx] = True
+        reference_obj = dataset[indices[0]]["reference"].model_dump()
+        exp_ref_index = ExperimentReferenceIndex(
+            reference=reference_obj, index=index_list
+        )
+        reference_indices_list.append(exp_ref_index)
 
-        # Create ExperimentReferenceIndex object
-        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
-        reference_indices.append(exp_ref_index)
-
-    return reference_indices
+    return reference_indices_list
 
 
 @define
@@ -79,13 +138,14 @@ class Neo4jQueryRaw:
     lmdb_dir: str = field(init=False, default=None)
     raw_dir: str = field(init=False, default=None)
     env: str = field(init=False, default=None)
+    _gene_set: str = field(init=False, default=None)
 
     def __attrs_post_init__(self):
         self.raw_dir = osp.join(self.root_dir, "raw")
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
         # Initialize LMDB environment
-        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e6))
+        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12))
         if len(self) == 0:
             self.process()
 
@@ -135,19 +195,20 @@ class Neo4jQueryRaw:
             # Create an instance of the FitnessExperimentReference model
             reference = FitnessExperimentReference(**ref_node_data)
 
-            # Serialize the experiment and reference objects to JSON
-            experiment_json = experiment.model_dump_json()
-            reference_json = reference.model_dump_json()
+            # Create a dictionary with experiment and reference objects
+            data_dict = {"experiment": experiment, "reference": reference}
 
-            # Generate keys for the experiment and reference
-            experiment_key = f"experiment_{i}".encode()
-            reference_key = f"reference_{i}".encode()
+            # Serialize the dictionary to JSON
+            data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
 
-            # Write the serialized objects to LMDB
-            self.write_to_lmdb(experiment_key, experiment_json.encode())
-            self.write_to_lmdb(reference_key, reference_json.encode())
+            # Generate a key for the data
+            data_key = f"data_{i}".encode()
+
+            # Write the serialized dictionary to LMDB
+            self.write_to_lmdb(data_key, data_json.encode())
 
         self.experiment_reference_index
+        self.gene_set = self.compute_gene_set()
 
     def __getitem__(self, index: Union[int, slice, list]):
         if isinstance(index, int):
@@ -159,105 +220,75 @@ class Neo4jQueryRaw:
         else:
             raise TypeError(f"Invalid index type: {type(index)}")
 
-    def __len__(self):
-        with self.env.begin() as txn:
-            return txn.stat()["entries"]
-        self.close_lmdb()
-
     def _get_record_by_index(self, index: int):
         self._init_lmdb()
-        experiment_key = f"experiment_{index}".encode()
-        reference_key = f"reference_{index}".encode()
+        data_key = f"data_{index}".encode()
 
         with self.env.begin() as txn:
-            experiment_json = txn.get(experiment_key)
-            reference_json = txn.get(reference_key)
+            data_json = txn.get(data_key)
 
-            if experiment_json is None or reference_json is None:
+            if data_json is None:
                 raise IndexError(f"Record not found at index: {index}")
 
-            experiment = FitnessExperiment(**json.loads(experiment_json.decode()))
-            reference = FitnessExperimentReference(
-                **json.loads(reference_json.decode())
-            )
+            data_dict = json.loads(data_json.decode())
+            experiment = FitnessExperiment(**data_dict["experiment"])
+            reference = FitnessExperimentReference(**data_dict["reference"])
 
-            return experiment, reference
+            return {"experiment": experiment, "reference": reference}
+
+    def _get_record(self, key: bytes):
+        with self.env.begin() as txn:
+            data_json = txn.get(key)
+            if data_json is None:
+                raise IndexError(f"Record not found for key: {key.decode()}")
+            data_dict = json.loads(data_json.decode())
+            experiment = FitnessExperiment(**data_dict["experiment"])
+            reference = FitnessExperimentReference(**data_dict["reference"])
+            return {"experiment": experiment, "reference": reference}
 
     def _get_records_by_slice(self, slice_obj: slice):
         start, stop, step = slice_obj.indices(len(self))
-        experiment_keys = [f"experiment_{i}".encode() for i in range(start, stop, step)]
-        reference_keys = [f"reference_{i}".encode() for i in range(start, stop, step)]
+        data_keys = [f"data_{i}".encode() for i in range(start, stop, step)]
 
         with concurrent.futures.ThreadPoolExecutor(
             max_workers=self.max_workers
         ) as executor:
-            experiments = list(executor.map(self._get_experiment, experiment_keys))
-            references = list(executor.map(self._get_reference, reference_keys))
+            records = list(executor.map(self._get_record, data_keys))
 
-        return list(zip(experiments, references))
+        return records
 
-    def _get_experiment(self, key: bytes):
+    def __len__(self):
         with self.env.begin() as txn:
-            experiment_json = txn.get(key)
-            if experiment_json is None:
-                raise IndexError(f"Experiment not found for key: {key.decode()}")
-            experiment = FitnessExperiment(**json.loads(experiment_json.decode()))
-            return experiment
-
-    def _get_reference(self, key: bytes):
-        with self.env.begin() as txn:
-            reference_json = txn.get(key)
-            if reference_json is None:
-                raise IndexError(f"Reference not found for key: {key.decode()}")
-            reference = FitnessExperimentReference(
-                **json.loads(reference_json.decode())
-            )
-            return reference
+            return txn.stat()["entries"]
+        self.close_lmdb()
+    
+    @staticmethod
+    def extract_systematic_gene_names(genotype):
+        gene_names = []
+        for perturbation in genotype.get("perturbations"):
+            gene_name = perturbation.get("systematic_gene_name")
+            gene_names.append(gene_name)
+        return gene_names
 
     @property
-    def experiment_reference_index(self):
+    def experiment_reference_index(self) -> list[ExperimentReferenceIndex]:
         index_file_path = osp.join(self.raw_dir, "experiment_reference_index.json")
 
         if osp.exists(index_file_path):
             with open(index_file_path, "r") as file:
                 data = json.load(file)
-            # Assuming ReferenceIndex can be constructed from a list of dictionaries
+            # Deserialize each dict in the list to an ExperimentReferenceIndex object
             self._experiment_reference_index = [
                 ExperimentReferenceIndex(**item) for item in data
             ]
         elif self._experiment_reference_index is None:
-            if self.num_workers is not None:
-                # Create a pool of worker processes
-                with mp.Pool(processes=self.num_workers) as pool:
-                    # Split the dataset into chunks for parallel processing
-                    chunk_size = len(self) // self.num_workers
-                    chunks = [
-                        self[i : min(i + chunk_size, len(self))]
-                        for i in range(0, len(self), chunk_size)
-                    ]
-
-                    # Apply the compute_experiment_reference_index function to each chunk in parallel
-                    results = pool.starmap(
-                        compute_experiment_reference_index,
-                        [(chunk,) for chunk in chunks],
-                    )
-
-                # Flatten the results into a single list
-                self._experiment_reference_index = [
-                    item for sublist in results for item in sublist
-                ]
-            else:
-                # Fall back to the original method without parallelization
-                self._experiment_reference_index = compute_experiment_reference_index(
-                    self
-                )
-
+            self._experiment_reference_index = compute_experiment_reference_index(
+                [self[i] for i in range(len(self))]
+            )
+            # Serialize each ExperimentReferenceIndex object to dict and save the list of dicts
             with open(index_file_path, "w") as file:
-                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(
-                    [eri.model_dump() for eri in self._experiment_reference_index],
-                    file,
-                    indent=4,
+                    [eri.model_dump() for eri in self._experiment_reference_index], file
                 )
 
         self.close_lmdb()
@@ -267,7 +298,7 @@ class Neo4jQueryRaw:
         print("Computing phenotype label index...")
         # Fetch all phenotype labels
         phenotype_labels = [
-            (i, record[0].phenotype.label) for i, record in enumerate(self)
+            (i, record["experiment"].phenotype.label) for i, record in enumerate(self)
         ]
 
         # Initialize the phenotype label index dictionary
@@ -293,12 +324,55 @@ class Neo4jQueryRaw:
             with open(
                 osp.join(self.raw_dir, "phenotype_label_index.json"), "w"
             ) as file:
-                json.dump(self._phenotype_label_index, file, indent=4)
+                json.dump(self._phenotype_label_index, file)
         return self._phenotype_label_index
+
+
+    def compute_gene_set(self):
+        gene_set = GeneSet()
+        if self.env is None:
+            self._init_lmdb()
+
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            log.info("Computing gene set...")
+            for key, value in tqdm(cursor):
+                # Corrected line: use json.loads for JSON strings
+                deserialized_data = json.loads(value.decode('utf-8'))  # Assuming value is a bytes object
+                experiment = deserialized_data["experiment"]
+
+                extracted_gene_names = self.extract_systematic_gene_names(
+                    experiment["genotype"]
+                )
+                for gene_name in extracted_gene_names:
+                    gene_set.add(gene_name)
+
+        self.close_lmdb()
+        return gene_set
+
+    # Reading from JSON and setting it to self._gene_set
+    @property
+    def gene_set(self):
+        if osp.exists(osp.join(self.raw_dir, "gene_set.json")):
+            with open(osp.join(self.raw_dir, "gene_set.json")) as f:
+                self._gene_set = GeneSet(json.load(f))
+        else:
+            self._gene_set = self.compute_gene_set()
+        return self._gene_set
+
+    @gene_set.setter
+    def gene_set(self, value):
+        if not value:
+            raise ValueError("Cannot set an empty or None value for gene_set")
+        with open(osp.join(self.raw_dir, "gene_set.json"), "w") as f:
+            json.dump(list(sorted(value)), f, indent=0)
+        self._gene_set = value
 
     def __repr__(self):
         return f"Neo4jQueryRaw(uri={self.uri}, root_dir={self.root_dir}, query={self.query})"
 
+
+##########################33
 
 # Example usage
 if __name__ == "__main__":
@@ -315,13 +389,20 @@ if __name__ == "__main__":
         MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
         MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
         WHERE phen.graph_level = 'global' 
-        AND (phen.label = 'smf' OR phen.label = 'dmf')
-        AND phen.fitness_std < 0.05
+        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
+        AND phen.fitness_std < 0.01
+        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
         RETURN e, ref
-        LIMIT 10;
         """,
         max_workers=4,
+        num_workers=4,
     )
     neo4j_db[0]
     neo4j_db[0:2]
-    neo4j_db.phenotype_label_index
+    neo4j_db.phenotype_label_index.keys()
+    # for i in range(len(neo4j_db)):
+    #     if neo4j_db[i]['experiment'].environment.temperature.value == 26.0:
+    #         print()
+    # MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+    # LIMIT 100

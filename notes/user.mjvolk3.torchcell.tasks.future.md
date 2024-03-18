@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1710475308970
+updated: 1710725501610
 created: 1675887826601
 ---
 ## Future
@@ -32,6 +32,8 @@ created: 1675887826601
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
 ```
+
+- [ ] For simplicity we should get rid of `preprocess_dir` and put everything into `process_dir`
 
 ## Far Future
 

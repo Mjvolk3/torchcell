@@ -148,6 +148,7 @@ class Neo4jQueryRaw:
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12))
         if len(self) == 0:
             self.process()
+        
 
     def close_lmdb(self):
         if self.env is not None:
@@ -258,6 +259,8 @@ class Neo4jQueryRaw:
         return records
 
     def __len__(self):
+        if self.env is None:
+            self._init_lmdb()
         with self.env.begin() as txn:
             return txn.stat()["entries"]
         self.close_lmdb()

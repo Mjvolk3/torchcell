@@ -409,7 +409,7 @@ if __name__ == "__main__":
         """,
         max_workers=4,
         num_workers=4,
-        cypher_kwargs={"gene_set": ["YAL004W", "YAL010C", "YAL011W"]},
+        cypher_kwargs={"gene_set": list(GeneSet(["YAL004W", "YAL010C", "YAL011W"]))},
     )
     neo4j_db[0]
     neo4j_db[0:2]

@@ -80,6 +80,7 @@ def compute_experiment_reference_index_parallel(
 
     return reference_indices_list
 
+
 def compute_experiment_reference_index(
     dataset, num_workers=None
 ) -> list[ExperimentReferenceIndex]:
@@ -139,6 +140,7 @@ class Neo4jQueryRaw:
     raw_dir: str = field(init=False, default=None)
     env: str = field(init=False, default=None)
     _gene_set: str = field(init=False, default=None)
+    cypher_kwargs: dict[str, Union[str, int, float, list]] = field(factory=dict)
 
     def __attrs_post_init__(self):
         self.raw_dir = osp.join(self.root_dir, "raw")
@@ -148,7 +150,6 @@ class Neo4jQueryRaw:
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12))
         if len(self) == 0:
             self.process()
-        
 
     def close_lmdb(self):
         if self.env is not None:
@@ -158,7 +159,7 @@ class Neo4jQueryRaw:
     def fetch_data(self):
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         with driver.session(database="torchcell") as session:
-            result = session.run(self.query)
+            result = session.run(self.query, **self.cypher_kwargs)
             for record in result:
                 yield record
 
@@ -264,7 +265,7 @@ class Neo4jQueryRaw:
         with self.env.begin() as txn:
             return txn.stat()["entries"]
         self.close_lmdb()
-    
+
     @staticmethod
     def extract_systematic_gene_names(genotype):
         gene_names = []
@@ -330,7 +331,6 @@ class Neo4jQueryRaw:
                 json.dump(self._phenotype_label_index, file)
         return self._phenotype_label_index
 
-
     def compute_gene_set(self):
         gene_set = GeneSet()
         if self.env is None:
@@ -341,7 +341,9 @@ class Neo4jQueryRaw:
             log.info("Computing gene set...")
             for key, value in tqdm(cursor):
                 # Corrected line: use json.loads for JSON strings
-                deserialized_data = json.loads(value.decode('utf-8'))  # Assuming value is a bytes object
+                deserialized_data = json.loads(
+                    value.decode("utf-8")
+                )  # Assuming value is a bytes object
                 experiment = deserialized_data["experiment"]
 
                 extracted_gene_names = self.extract_systematic_gene_names(
@@ -379,27 +381,35 @@ class Neo4jQueryRaw:
 
 # Example usage
 if __name__ == "__main__":
+    from torchcell.sequence import GeneSet
+
+    gene_set = GeneSet(["YAL004W", "YAL010C", "YAL011W"])
     neo4j_db = Neo4jQueryRaw(
         uri="bolt://localhost:7687",  # Include the database name here
         username="neo4j",
         password="torchcell",
-        root_dir="data/torchcell/dmf-2024_03_13",
+        root_dir="data/torchcell/neo4j_query_raw",
         query="""
         MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
         WITH e, g, COLLECT(p) AS perturbations
         WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
-        WITH DISTINCT e
+        WITH DISTINCT e, perturbations  // Make sure to carry over perturbations here
         MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
         MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
         WHERE phen.graph_level = 'global' 
         AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
-        AND phen.fitness_std < 0.01
+        AND phen.fitness_std < 0.005
         MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
         MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
+        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+        WITH e, ref, perturbations  // Again, ensure perturbations is carried over
+        , [p IN perturbations WHERE p.systematic_gene_name IN $gene_set | p.systematic_gene_name] AS valid_gene_names
+        WHERE SIZE(valid_gene_names) = SIZE(perturbations)
         RETURN e, ref
         """,
         max_workers=4,
         num_workers=4,
+        cypher_kwargs={"gene_set": ["YAL004W", "YAL010C", "YAL011W"]},
     )
     neo4j_db[0]
     neo4j_db[0:2]

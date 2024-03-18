@@ -1,7 +1,9 @@
-# torchcell/multidigraph/sgd.py
-# [[torchcell.multidigraph.sgd]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/multidigraph/sgd.py
-# Test file: torchcell/multidigraph/test_sgd.py
+# torchcell/graph/sgd
+# [[torchcell.graph.sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/sgd
+# Test file: tests/torchcell/graph/test_sgd.py
+
+
 import asyncio
 import json
 import logging
@@ -18,7 +20,7 @@ from aiohttp import ClientError, ContentTypeError
 from attrs import define, field
 from tqdm import tqdm
 
-from torchcell.multidigraph.validation.locus_related.locus import (
+from torchcell.graph.validation.locus_related.locus import (
     Alias,
     InteractionOverview,
     LocusData,

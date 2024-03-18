@@ -275,7 +275,7 @@ class CellDataset(Dataset):
 
         log.info("creating lmdb database")
         # Initialize LMDB environment
-        env = lmdb.open(osp.join(self.processed_dir, "data.lmdb"), map_size=int(1e12))
+        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
 
         with env.begin(write=True) as txn:
             for idx, item in tqdm(enumerate(combined_data)):

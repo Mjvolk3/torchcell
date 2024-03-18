@@ -2,20 +2,52 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710632054606
+updated: 1710730216196
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.19
+
+- [ ] CaLM model
+
+## 2024.03.18
+
+## 2024.03.17
+
+- [x] #ramble We keep both lmdb [[torchcell.neo4j_fitness_query]] and the lmdb for [[torchcell.data.neo4j_cell]] although they are mostly identical. Within [[torchcell.data.neo4j_cell]] we need to eventually add a `experimental_reference_index` resolver. This should likely be a custom function. For fitness all fields identical but the standard deviation, take the highest standard deviation. Of course more complicated things could be done, but I'd like to put this off long as possible. What if for instance the liquid cultures have a higher mean growth, or they have a larger support? We could compress > 1 to match the support on solid media. This is so custom and too difficult to generalize that I think the CellDataset abstraction is still hard to concretize.
+- [x] `get` method → `len` method wasn't working due my accidental use of two different init methods for `lmdb`. → Works well now with `process_graph`
+- [x] #ramble - Now we fulfill only what is needed to complete the table. We can abstract the graph construction later, I will build it into the classes for now.
+- [x] Need data to be heterogenous at least in edges [[2023.10.22|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231022]]. `pyg` `HeteroData` allows for both nodes types and edge types. Should we use by default? → Yes we should it'll be confusing otherwise. This is a nice generic way of doing things since we intend to model the domain as a `DiMultiGraph`.  → This is taking a bit long as I am trying to flesh out all of the use cases necessary in the table for supporting the multigraph. → Things work pretty well now. Not well tested, and not general but working well enough to move on.
+- [x] #ramble dataset that take some time to compute like the embeddings datasets should be computed over the superset of nodes that has the largest know subset. This starts to make little sense if are basing everything off of differences from genome. For instance we have the issue that if `genome=None`, the `gene_set` is compute based off the `experiments`, then if you wanted sequence embeddings for these you would need their sequence, meaning you need the genome. So there is a loop. But you would still be able to do simple things like `one_hot`.
+- [x] Install CaLM model → Installed with `python -m pip install git+https://github.com/oxpig/CaLM`, ran README example and it works.
+
+- [ ] Maybe consider adding `GeneSet` to datasets.
+- [ ] The easiest model to start with is SAG and `fungal` and `one_hot`
+
+- [ ] Table write based on [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]. → Need systematic way to write data to table. Can move to `TorchCell_Paper` on `wandb`
+
+- [ ] Cover all the data variants for the set of experiments. [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] Calling it dmf right now but the same table can and will be used for `tmf` first.
+- [ ] Checkpoint models and build out separate scripts for model evaluation. Can add unique identifier to [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] and [[02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
+
+- [ ] Check if it works with genome. → works but need to see if the genome size is correct. →
+- [ ] Check if it works with graphs. Will likely need to write some function conversion to torch.
+- [ ] Check if works with embedding datasets. →
+- [ ] Handle multiple experimental references.
+- [x] Move `sgd_delta` into `sgd`... → graphs should work now.
+- [ ] Check if graphs work and evaluate their structure.
+
 ## 2024.03.16
 
-- [ ] [[torchcell.data.neo4j_cell]] only requires on arg to start → To do this the only thing that makes sense is experiments, so the query. You can take the `gene_set` from the query and automatically one hot the genes. I like this idea as it brings more intuition to the building process. Another option is to require the passing of a `gene_set`, I think it makes more sense to have some resolution for getting the relevant `gene_set` based on `GeneSetPriority` `enum`.
-- [ ] Process method
-- [ ] get method.
+- [x] [[torchcell.data.neo4j_cell]] only requires on arg to start → To do this the only thing that makes sense is experiments, so the query. You can take the `gene_set` from the query and automatically one hot the genes. I like this idea as it brings more intuition to the building process. Another option is to require the passing of a `gene_set`, I think it makes more sense to have some resolution for getting the relevant `gene_set` based on `GeneSetPriority` `enum`. → Not using `enum`, just some conditional logic in `get_cell_graph` → `get_cell_graph`, later we might want to make the `cell_graph` it's own object. I think we can use an ABC on `SCerevisiaeGraph` [[torchcell.graph.graph]] 💡
+- [x] Note on Neo4j db schema print out [[Automated Query to get Schema|dendron://torchcell/neo4j.delta#automated-query-to-get-schema]]
+- [x] We need to see the `networkx` graph structure. Globus transfer data for graphs. → Can't login to globus → Rebuild data locally and troubleshoot globus. → Submitted a ticket via email. → transfer with `rsync` [[Rsync Example to Copy Data From Delta To Local|dendron://torchcell/computer.delta.rsync#rsync-example-to-copy-data-from-delta-to-local]] → `rsync` succeeded. → Trying to rebuild the data failed.
+- [ ] `subset_graph` → "experiments are all you need to get started". → The reason we split up the two datasets is that we wanted one to be concerned mainly with just querying the data, and the next to be concerned with transforming the data into usable form using `torch` and `pyg`. This also separates the process from needing the database running vs having the raw data on disk and being able to move on from any potential `neo4j` issue. This will help more readily isolate bugs → We don't have the data downloaded from `sgd`. → changing to `process_graph` since we can include label adding with the new data model. → Left off with trying to get indexing to work in `get` method
+
 - [ ] One class to implement dataset
-- [ ]
+- [ ] There is some good stuff in [[torchcell.datasets.cell]] that we don't want to forget about like `extract_subraph`
 - [ ]
 
 ## 2024.03.15
@@ -1707,7 +1739,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 ## 2023.08.04
 
 - 🔲 Build out a media note. This would really be best if it is linked to the the specific publication notes that contain the necessary information on any given publication. Note that YPD a YEPD are the same. Yeast Extract Peptone Dextrose with their corresponding concentrations. YEPD + G418 for DMA (Deletion Mutant Array) Growth. Need to pay careful attention to this, may not matter if it has already been proven within reason that the addition of G418 creates a small enough deviation. → Moved to [[Tracking Media in the Ontology|dendron://torchcell/torchcell.ontology.tc_ontology#tracking-media-in-the-ontology]]
-- 🔲 Does the yeastmined data have the pvalues and the sga interaction scores? Looks like for trigenic they are contained in a "note" field... you've got to be kidding me... populated in a "note" field... and for they don't look populated for digenic.... they are populated for Costanzo 2016 in an "alleles" field, but they are not populated for 2010... This data for networks is probably better pulled from the original data, but then there is potential confliction  `MultiDiGraph` and experiments. → moved note [[Yeastmine Data Comparison to SGD Backend API|dendron://torchcell/torchcell.multidigraph.sgd#yeastmine-data-comparison-to-sgd-backend-api]]
+- 🔲 Does the yeastmined data have the pvalues and the sga interaction scores? Looks like for trigenic they are contained in a "note" field... you've got to be kidding me... populated in a "note" field... and for they don't look populated for digenic.... they are populated for Costanzo 2016 in an "alleles" field, but they are not populated for 2010... This data for networks is probably better pulled from the original data, but then there is potential confliction  `MultiDiGraph` and experiments. → moved note [[Yeastmine Data Comparison to SGD Backend API|dendron://torchcell/torchcell.graph.sgd#yeastmine-data-comparison-to-sgd-backend-api]]
 - [x] Look into why `src/package` not typically used. Looks like `.egg` is generally not comitted to project. → it is fine to keep src.
 - 🔲 Make it so genome can call on methods with `__getitem__` like so `genome["YDR210W].seq`, `genome["YDR210W].window(6e4)`, `genome["YDR210W].window(6e4, is_max_size=False)`, `genome["YDR210W].window_5utr(1000)`, `genome["YDR210W].window_3utr(300)`, etc. Think we can do this by having a wrapper object around the db.
 - 🔲 Allow for indexing on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`

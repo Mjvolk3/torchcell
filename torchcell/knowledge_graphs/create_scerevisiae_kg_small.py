@@ -5,6 +5,7 @@
 
 
 from biocypher import BioCypher
+import torchcell
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
@@ -35,6 +36,8 @@ import hydra
 import time
 import sys
 from io import StringIO
+
+print("Script file name:", __file__)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -74,7 +77,11 @@ def main(cfg) -> str:
         config=wandb_cfg,
         tags=wandb_cfg["wandb"]["tags"],
         group=group,
-        save_code=True,
+        # save_code=True,
+    )
+    # save_code = True only works for git repositories, so we log the kg dir.
+    wandb.run.log_code(
+        "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
     )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
@@ -86,6 +93,7 @@ def main(cfg) -> str:
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
+    wandb.log({"biocypher-out": bc._output_directory.split("/")[-1]})
     # Partition workers
     num_workers = get_num_workers()
     io_workers = math.ceil(

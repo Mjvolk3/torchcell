@@ -638,6 +638,12 @@ if __name__ == "__main__":
         num_workers=10,
         batch_size=int(1e3),
     )
+    print(dataset[0])
+    print(type(dataset[0]))
+    # print(dataset[0][0])
+    # print(type(dataset[0][0]))
+    # print(type(dataset[0][1]))
+    # print(dataset[0][1])
     # dataset.experiment_reference_index
     # dataset[0]
     # serialized_data = dataset[0]["experiment"].model_dump()

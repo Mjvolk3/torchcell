@@ -77,3 +77,5 @@ database/slurm/*
 database/biocypher-out/*
 ## some of this should be kept for database startup.
 database/data/*
+
+notes/assets/SEED_abstract_2024.docx

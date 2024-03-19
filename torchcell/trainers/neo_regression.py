@@ -26,17 +26,18 @@ from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 import torchcell
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
-class SimpleLinearRegressionTask(L.LightningModule):
+
+class RegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
 
     def __init__(
         self,
         model: nn.Module,
         target: str,
-        boxplot_every_n_epochs: int = 10,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-5,
         loss: str = "mse",
@@ -51,12 +52,10 @@ class SimpleLinearRegressionTask(L.LightningModule):
         # target for training
         self.target = target
 
-        # legacy from dmf_costanzo_deepeset.py
+        # Lightning settings, doing this for WT embedding
         self.automatic_optimization = False
 
         self.model = model
-        self.is_wt_init = False
-        self.wt_nodes_hat, self.wt_set_hat, self.wt_global_hat = None, None, None
 
         # clip grad norm
         self.clip_grad_norm = clip_grad_norm
@@ -65,21 +64,15 @@ class SimpleLinearRegressionTask(L.LightningModule):
         # loss
         if loss == "mse":
             self.loss = nn.MSELoss()
-        elif loss == "weighted_mse":
-            mean_value = kwargs.get("fitness_mean_value")
-            penalty = kwargs.get("penalty", 1.0)
-            self.loss = WeightedMSELoss(mean_value=mean_value, penalty=penalty)
+
         elif loss == "mae":
             self.loss = nn.L1Loss()
         else:
             raise ValueError(
                 f"Loss type '{loss}' is not valid."
-                "Currently, supports 'mse' or 'mae' loss."
+                "Currently, supports 'mse', 'mae' loss."
             )
         self.loss_node = nn.MSELoss()
-
-        # train epoch size for wt frequency
-        self.train_epoch_size = train_epoch_size
 
         # optimizer
         self.learning_rate = learning_rate
@@ -103,8 +96,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.pearson_corr = PearsonCorrCoef()
         self.spearman_corr = SpearmanCorrCoef()
 
-        # Used in end for whisker plot
-        self.boxplot_every_n_epochs = boxplot_every_n_epochs
+        # TODO not sure if these are needed for corr ?
         self.true_values = []
         self.predictions = []
 
@@ -115,7 +107,7 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.model = self.model.to(self.device)
 
     def forward(self, x, batch):
-        y_hat = self.model(x, batch).squeeze()
+        y_hat = self.model(x, batch)
         return y_hat
 
     def on_train_start(self):
@@ -125,13 +117,21 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.log("model/parameters_size", parameter_size)
 
     def training_step(self, batch, batch_idx):
+        # Train on wt reference
+        if self.train_wt_diff:
+            self.train_wt()
         # Extract the batch vector
-        x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch[self.target],
+            batch[self.x_batch_name],
+        )
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
 
         opt = self.optimizers()
         opt.zero_grad()
+
         loss = self.loss(y_hat, y)
 
         self.manual_backward(loss)  # error on this line
@@ -166,7 +166,11 @@ class SimpleLinearRegressionTask(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch[self.target],
+            batch[self.x_batch_name],
+        )
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
@@ -193,25 +197,25 @@ class SimpleLinearRegressionTask(L.LightningModule):
         self.val_metrics.reset()
 
         # Skip plotting during sanity check
-        if self.trainer.sanity_checking or (
-            self.current_epoch % self.boxplot_every_n_epochs != 0
-        ):
-            return
+        #
+        # if self.trainer.sanity_checking or (
+        #     self.current_epoch % self.boxplot_every_n_epochs != 0
+        # ):
+        #     return
 
-        # Convert lists to tensors
-        true_values = torch.cat(self.true_values, dim=0)
-        predictions = torch.cat(self.predictions, dim=0)
+        # # Convert lists to tensors
+        # true_values = torch.cat(self.true_values, dim=0)
+        # predictions = torch.cat(self.predictions, dim=0)
 
-        if self.target == "fitness":
-            fig = fitness.box_plot(true_values, predictions)
-        elif self.target == "genetic_interaction_score":
-            fig = genetic_interaction_score.box_plot(true_values, predictions)
-
-        wandb.log({"binned_values_box_plot": wandb.Image(fig)})
-        plt.close(fig)
-        # Clear the stored values for the next epoch
-        self.true_values = []
-        self.predictions = []
+        # if self.target == "fitness":
+        #     fig = fitness.box_plot(true_values, predictions)
+        # elif self.target == "genetic_interaction_score":
+        #     fig = genetic_interaction_score.box_plot(true_values, predictions)
+        # wandb.log({"binned_values_box_plot": wandb.Image(fig)})
+        # plt.close(fig)
+        # # Clear the stored values for the next epoch
+        # self.true_values = []
+        # self.predictions = []
 
         current_global_step = self.global_step
         if (
@@ -233,7 +237,11 @@ class SimpleLinearRegressionTask(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
-        x, y, batch_vector = (batch.x_pert, batch[self.target], batch.x_pert_batch)
+        x, y, batch_vector = (
+            batch[self.x_name],
+            batch[self.target],
+            batch[self.x_batch_name],
+        )
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1

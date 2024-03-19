@@ -513,7 +513,7 @@ class CellAdapter:
                     relationship_label="perturbation member of",
                 )
             )
-            return edges
+        return edges
         
 
     @data_chunker

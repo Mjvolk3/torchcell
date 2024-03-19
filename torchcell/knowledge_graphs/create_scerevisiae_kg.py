@@ -36,6 +36,7 @@ import hydra
 import time
 import sys
 from io import StringIO
+import torchcell
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")

@@ -6,6 +6,47 @@ updated: 1710710998014
 created: 1709585393267
 ---
 
+```mermaid
+graph LR
+    Set_Net --> Models
+    Set_Transformer-Diffpool --> Models
+    Set_Transformer-SAG --> Models
+    SAG --> Models
+    DiffPool --> Models
+    One_Hot_Genes --> Node_Features
+    Codon_Frequency --> Node_Features
+    CALM --> Node_Features
+    FUDT_Embedding --> Node_Features
+    NT_Embedding --> Node_Features
+    ProtT5_Embedding --> Node_Features
+    Node_Features --> Set_Net
+    Node_Features --> SAG
+    Node_Features --> DiffPool
+    Edge_Features --> SAG
+    Edge_Features --> DiffPool
+    PPI --> Edge_Features 
+    Reg --> Edge_Features 
+    GO --> DCell
+    One_Hot_Genes --> DCell
+    DCell --> Models
+    Models --> Fitness
+    Models --> Interactions
+    Interactions --> metrics
+    Fitness --> metrics 
+    metrics --> mae
+    metrics --> mdae
+    metrics --> pearson
+    metrics --> spearman
+    metrics --> r_squared
+    metrics --> mu_important
+    metrics --> sigma_important
+    SAG --> Interpretable((Interpretable))
+    DiffPool --> Interpretable
+    Set_Transformer-Diffpool --> Interpretable
+    Set_Transformer-SAG --> Interpretable
+```
+
+
   | id                                        | model                      | nodes features $(\mathcal{N})$    | edge features $(\mathcal{E})$ | mae | mdae | pearson | spearman | $r^2$ | $\mu$(1.0-1.1) | $\sigma$(1.0-1.1) | $\mu$(1.1-1.2) | $\sigma$(1.1-1.2) |
   |:------------------------------------------|:---------------------------|:----------------------------------|:------------------------------|:----|:-----|:--------|:---------|:------|:---------------|:------------------|:---------------|:------------------|
   | "DCell.One_Hot_Genes"                     | DCell                      | One Hot Genes                     | -                             |     |      |         |          |       |                |                   |                |                   |
@@ -15,7 +56,7 @@ created: 1709585393267
   | "Set_Net.FUDT_Embedding"                  | Set Net                    | Fungal-UTR-Transformer Embeddings | -                             |     |      |         |          |       |                |                   |                |                   |
   | "Set_Net.NT_Embeddings"                   | Set Net                    | Nucleotide-Transformer Embeddings | -                             |     |      |         |          |       |                |                   |                |                   |
   | "Set_Net.Prot_T5"                         | Set Net                    | Prot T5                           | -                             |     |      |         |          |       |                |                   |                |                   |
-  | "Set_Transformer-SAG.One_Hot_Genes"       | Set Transformer - SAG      | One Hot Genes                     | -                             |     |      |         |          |       |                |                   |                |                   |
+  | "Set_Transformer-SAG.One_Hot_Genes"       | Set Transformer- SAG       | One Hot Genes                     | -                             |     |      |         |          |       |                |                   |                |                   |
   | "Set_Transformer-SAG.Codon_Freq"          | Set Transformer - SAG      | Codon Frequency                   | -                             |     |      |         |          |       |                |                   |                |                   |
   | "Set_Transformer-SAG.CALM"                | Set Transformer - SAG      | CALM                              | -                             |     |      |         |          |       |                |                   |                |                   |
   | "Set_Transformer-SAG.FUDT_Embedding"      | Set Transformer - SAG      | Fungal-UTR-Transformer Embeddings | -                             |     |      |         |          |       |                |                   |                |                   |
@@ -51,43 +92,3 @@ created: 1709585393267
   |                                           | DiffPool                   | Fungal-UTR-Transformer Embeddings | Reg                           |     |      |         |          |       |                |                   |                |                   |
   |                                           | DiffPool                   | Nucleotide-Transformer Embeddings | Reg                           |     |      |         |          |       |                |                   |                |                   |
   |                                           | DiffPool                   | Prot T5                           | Reg                           |     |      |         |          |       |                |                   |                |                   |
-
-```mermaid
-graph LR
-    Set_Net --> Models
-    Set_Transformer-Diffpool --> Models
-    Set_Transformer-SAG --> Models
-    SAG --> Models
-    DiffPool --> Models
-    One_Hot_Genes --> Node_Features
-    Codon_Frequency --> Node_Features
-    CALM --> Node_Features
-    FUPD_Embedding --> Node_Features
-    NT_Embedding --> Node_Features
-    ProtT5_Embedding --> Node_Features
-    Node_Features --> Set_Net
-    Node_Features --> SAG
-    Node_Features --> DiffPool
-    Edge_Features --> SAG
-    Edge_Features --> DiffPool
-    PPI --> Edge_Features 
-    Reg --> Edge_Features 
-    GO --> DCell
-    One_Hot_Genes --> DCell
-    DCell --> Models
-    Models --> Fitness
-    Models --> Interactions
-    Interactions --> metrics
-    Fitness --> metrics 
-    metrics --> mae
-    metrics --> mdae
-    metrics --> pearson
-    metrics --> spearman
-    metrics --> r_squared
-    metrics --> mu_important
-    metrics --> sigma_important
-    SAG --> Interpretable((Interpretable))
-    DiffPool --> Interpretable
-    Set_Transformer-Diffpool --> Interpretable
-    Set_Transformer-SAG --> Interpretable
-```

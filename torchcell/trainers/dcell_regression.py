@@ -16,14 +16,15 @@ from torchmetrics import (
     SpearmanCorrCoef,
 )
 from tqdm import tqdm
-
+import os.path as osp
 import wandb
 from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 import torchcell
 
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class DCellRegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""

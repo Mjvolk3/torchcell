@@ -27,7 +27,7 @@ from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
+
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import attrs
@@ -140,7 +140,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
 
 
 def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
-    processed_graph = HeteroData()
+    processed_graph = HeteroData()  # breakpoint here
 
     # Nodes to remove based on the perturbations
     nodes_to_remove = {
@@ -153,19 +153,30 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     ]
     processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
     # Additional information regarding perturbations
-    processed_graph["gene"].pert_ids = list(nodes_to_remove)
-    processed_graph["gene"].pert_cell_graph_idx = torch.tensor(
+    processed_graph["gene"].ids_pert = list(nodes_to_remove)
+    processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
         [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
         dtype=torch.long,
     )
 
-    # Populate x and pert_x attributes
+    # Populate x and x_pert attributes
     node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
     x = cell_graph["gene"].x
     processed_graph["gene"].x = x[
         torch.tensor([node_mapping[nid] for nid in processed_graph["gene"].node_ids])
     ]
-    processed_graph["gene"].pert_x = x[processed_graph["gene"].pert_cell_graph_idx]
+    processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
+
+    # Add fitness phenotype data
+    phenotype = data["experiment"].phenotype
+    processed_graph["gene"].graph_level = phenotype.graph_level
+    processed_graph["gene"].label = phenotype.label
+    processed_graph["gene"].label_error = phenotype.label_error
+    # TODO we actually want to do this renaming in the datamodel
+    # We do it here to replicate behavior for downstream
+    # Will break with anything other than fitness obviously
+    processed_graph["gene"].label_value = phenotype.fitness
+    processed_graph["gene"].label_value_std = phenotype.fitness_std
 
     # Mapping of node IDs to their new indices after filtering
     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
@@ -222,19 +233,21 @@ class Neo4jCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
-        # TODO check if needed.
-
-        self.raw_db = self.load_raw(uri, username, password, root, query)
+        # Here for straight pass through - Fails without...
+        self.env = None
+        self.root = root
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
 
+        self.raw_db = self.load_raw(uri, username, password, root, query, self.genome)
+        base_graph = self.get_init_graphs(self.raw_db, self.genome)
+        self.gene_set = GeneSet(base_graph.nodes())  # breakpoint here
+
         super().__init__(root, transform, pre_transform, pre_filter)
-        # CHECK if needed
-        self._init_lmdb_read()  # Initialize the LMDB environment for storing raw data
 
         ###
-        base_graph = self.get_init_graphs(self.raw_db, self.genome)
-        self.gene_set = self.compute_gene_set(base_graph)
+        # base_graph = self.get_init_graphs(self.raw_db, self.genome)
+        # self.gene_set = self.compute_gene_set(base_graph)
 
         # graphs
         self.graphs = graphs
@@ -257,6 +270,10 @@ class Neo4jCellDataset(Dataset):
                 # Integrate node embeddings into graphs
         self.cell_graph = to_cell_data(self.graphs)
 
+        # Clean up hanging env, for multiprocessing
+        self.env = None
+        self.raw_db.env = None
+
     def get_init_graphs(self, raw_db, genome):
         # Setting priority
         if genome is None:
@@ -270,7 +287,14 @@ class Neo4jCellDataset(Dataset):
         return "lmdb"
 
     @staticmethod
-    def load_raw(uri, username, password, root_dir, query):
+    def load_raw(uri, username, password, root_dir, query, genome):
+        if genome is not None:
+            gene_set = genome.gene_set
+            cypher_kwargs = {"gene_set": list(gene_set)}
+        else:
+            cypher_kwargs = None
+
+        # cypher_kwargs = {"gene_set": ["YAL004W", "YAL010C", "YAL011W", "YAL017W"]}
         raw_db = Neo4jQueryRaw(
             uri=uri,
             username=username,
@@ -279,8 +303,9 @@ class Neo4jCellDataset(Dataset):
             query=query,
             max_workers=10,  # IDEA simple for new, might need to parameterize
             num_workers=10,
+            cypher_kwargs=cypher_kwargs,
         )
-        return raw_db
+        return raw_db  # break point here
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -326,10 +351,6 @@ class Neo4jCellDataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    def compute_gene_set(self, base_graph: nx.Graph):
-        cell_gene_set = GeneSet(base_graph.nodes())
-        return cell_gene_set
-
     def get(self, idx):
         """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
@@ -356,7 +377,9 @@ class Neo4jCellDataset(Dataset):
         )
 
     def len(self) -> int:
-        self._init_lmdb_read()
+        if self.env is None:
+            self._init_lmdb_read()
+
         with self.env.begin(write=False) as txn:
             length = txn.stat()["entries"]
         self.close_lmdb()
@@ -371,7 +394,7 @@ class Neo4jCellDataset(Dataset):
 def main():
     # genome
     import os.path as osp
-
+    from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
     from dotenv import load_dotenv
 
     from torchcell.graph import SCerevisiaeGraph
@@ -381,16 +404,16 @@ def main():
     query = """
         MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
         WITH e, g, COLLECT(p) AS perturbations
-        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
+        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion' AND p.systematic_gene_name IN $gene_set)
         WITH DISTINCT e
-        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
-        MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
+        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference),
+            (e)<-[:PhenotypeMemberOf]-(phen:Phenotype),
+            (e)<-[:EnvironmentMemberOf]-(env:Environment),
+            (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'}),
+            (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
         WHERE phen.graph_level = 'global' 
-        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
-        AND phen.fitness_std < 0.005
-        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
-        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
-        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+            AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
+            AND phen.fitness_std < 0.001
         RETURN e, ref
     """
 
@@ -433,16 +456,19 @@ def main():
     genome.drop_chrmt()
     genome.drop_empty_go()
 
+    with open("gene_set.json", "w") as f:
+        json.dump(list(genome.gene_set), f)
+
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     fudt_3prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fungal_up_down_embedding",
+        root="data/scerevisiae/fudt_embedding",
         genome=genome,
         model_name="species_downstream",
     )
     fudt_5prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fungal_up_down_embedding",
+        root="data/scerevisiae/fudt_embedding",
         genome=genome,
         model_name="species_downstream",
     )
@@ -456,8 +482,16 @@ def main():
             "fudt_5prime": fudt_5prime_dataset,
         },
     )
-    print(dataset[0])
-    print()
+
+    ## Data module testing
+    from torchcell.datamodules import CellDataModule
+
+    data_module = CellDataModule(dataset=dataset, batch_size=2, num_workers=8)
+    data_module.setup()
+    for i in tqdm(data_module.train_dataloader()):
+        i
+        pass
+    print("finished")
 
 
 if __name__ == "__main__":

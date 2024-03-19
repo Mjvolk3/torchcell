@@ -15,6 +15,21 @@ created: 1690514887023m
 
 ## 2024.03.18
 
+- [x] Changed my mind set net is on one hot is the fastest we can get going.
+- [x] `RuntimeError: "addmm_impl_cpu_" not implemented for 'Half'` some issue with the `ProtT5` model... as much as it pains me... ignore for now.
+- [x] We still want to capture the `wt` or what we are now calling `ref` but this is dependent on `ref` resolution, single `ref`, so I am delaying doing this.
+- [x] Add label to data.
+- [x] Hanging envs to `None` → `self.raw_db.env = None` this was the tricky one.
+- [ ] Add `gene_set` query to `cql` → First I want to print out the schema. → This has been a long journey many hours spent to discover that the neo4j database has an error. We did not properly build out all perturbations, so querying on them doesn't work. 💣 Not what we wanted... 🥺. Big time suck. OMG...  
+
+```python
+for perturbation in genotype.perturbations:
+  ...
+  return edges
+```
+
+- [ ] Get up to in new experiment`CellModule`
+
 ## 2024.03.17
 
 - [x] #ramble We keep both lmdb [[torchcell.neo4j_fitness_query]] and the lmdb for [[torchcell.data.neo4j_cell]] although they are mostly identical. Within [[torchcell.data.neo4j_cell]] we need to eventually add a `experimental_reference_index` resolver. This should likely be a custom function. For fitness all fields identical but the standard deviation, take the highest standard deviation. Of course more complicated things could be done, but I'd like to put this off long as possible. What if for instance the liquid cultures have a higher mean growth, or they have a larger support? We could compress > 1 to match the support on solid media. This is so custom and too difficult to generalize that I think the CellDataset abstraction is still hard to concretize.
@@ -23,12 +38,10 @@ created: 1690514887023m
 - [x] Need data to be heterogenous at least in edges [[2023.10.22|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20231022]]. `pyg` `HeteroData` allows for both nodes types and edge types. Should we use by default? → Yes we should it'll be confusing otherwise. This is a nice generic way of doing things since we intend to model the domain as a `DiMultiGraph`.  → This is taking a bit long as I am trying to flesh out all of the use cases necessary in the table for supporting the multigraph. → Things work pretty well now. Not well tested, and not general but working well enough to move on.
 - [x] #ramble dataset that take some time to compute like the embeddings datasets should be computed over the superset of nodes that has the largest know subset. This starts to make little sense if are basing everything off of differences from genome. For instance we have the issue that if `genome=None`, the `gene_set` is compute based off the `experiments`, then if you wanted sequence embeddings for these you would need their sequence, meaning you need the genome. So there is a loop. But you would still be able to do simple things like `one_hot`.
 - [x] Install CaLM model → Installed with `python -m pip install git+https://github.com/oxpig/CaLM`, ran README example and it works.
-
-- [ ] Maybe consider adding `GeneSet` to datasets.
-- [ ] The easiest model to start with is SAG and `fungal` and `one_hot`
+- [x] Maybe consider adding `GeneSet` to datasets. This would solve some of the joining issues and would be able to remedy index error. #ramble the embeddings in general would be best to be the union of all datasets.
+- [x] The easiest model to start with is SAG and `fungal` and `one_hot` → this is actually a little more difficult in that we need to build out the SAG model still and deal with edge info etc. pause.
 
 - [ ] Table write based on [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]. → Need systematic way to write data to table. Can move to `TorchCell_Paper` on `wandb`
-
 - [ ] Cover all the data variants for the set of experiments. [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] Calling it dmf right now but the same table can and will be used for `tmf` first.
 - [ ] Checkpoint models and build out separate scripts for model evaluation. Can add unique identifier to [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] and [[02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
 

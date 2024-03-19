@@ -34,6 +34,7 @@ created: 1675887826601
 ```
 
 - [ ] For simplicity we should get rid of `preprocess_dir` and put everything into `process_dir`
+- [ ] Embeddings should be union over `gene_sets`
 
 ## Far Future
 

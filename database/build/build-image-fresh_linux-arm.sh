@@ -10,13 +10,9 @@ cd /Users/michaelvolk/Documents/projects/torchcell
 docker stop tc-neo4j
 docker rm -f tc-neo4j
 
-echo "Building image..."
-docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
-
-echo "Pulling latest image..."
-docker pull michaelvolk/tc-neo4j:latest
-
-######### 
+##### Below pasted from database/build/build_linux-arm.sh
+#!/bin/bash -c
+cd /Users/michaelvolk/Documents/projects/torchcell
 
 echo "Starting build_linux-arm"
 open -a Docker
@@ -34,8 +30,7 @@ echo "Running container..."
 
 # docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
- 
-docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
+docker run --cpus=10 --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell -v $(pwd)/database/data:/var/lib/neo4j/data -v $(pwd)/database/.env:/.env -v $(pwd)/biocypher:/var/lib/neo4j/biocypher -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
 # # Conda activate torchcell here since we are using the local library for the db writing.
 # eval "$(conda shell.bash hook)"
@@ -59,7 +54,12 @@ docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocyp
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 # Execute the Python script inside the Docker container and capture the output
 # bash_script_path=$(docker exec -it tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
-bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
+
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)
+
+# This only works if the stdout is completely clean
+# bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 
 # echo "bash_script_path: $bash_script_path"
 # Remove any unwanted characters (e.g., Docker exec command may include newline characters)
@@ -79,6 +79,10 @@ docker exec tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
 
 # echo "Removing container..."
 # docker rm $container_id
+
+# Extract the directory path without the filename, then protect the dir with no write permissions
+dir_path=$(dirname "${bash_script_path_cleaned}")
+docker exec tc-neo4j /bin/bash -c "chmod a-w '${dir_path}'"
 
 echo "Build and run process completed."
 

@@ -4,6 +4,8 @@ from .data import (
     serialize_for_hashing,
     compute_sha256_hash,
 )
+from .neo4j_query_raw import Neo4jQueryRaw
+from .neo4j_cell import Neo4jCellDataset
 
 data = [
     "ExperimentReferenceIndex",
@@ -12,5 +14,6 @@ data = [
     "compute_md5_hash",
 ]
 
+dataset = ["Neo4jQueryRaw", "Neo4jCellDataset"]
 
-__all__ = data
+__all__ = data + dataset

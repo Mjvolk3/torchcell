@@ -20,7 +20,7 @@ from torchmetrics import (
     SpearmanCorrCoef,
 )
 from tqdm import tqdm
-
+imoprt os.path as osp
 import wandb
 from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score

@@ -2,7 +2,7 @@
 id: h3t0pc4jgpinsa2z9d34all
 title: Delta
 desc: ''
-updated: 1706496779795
+updated: 1710644184377
 created: 1706496737248
 ---
 
@@ -57,4 +57,21 @@ To fix the problem, use the -s option or set the environment variable TINI_SUBRE
 2024-01-29 02:51:36.504+0000 INFO  Neo4j Server shutdown initiated by request
 2024-01-29 02:51:36.505+0000 INFO  Stopping...
 2024-01-29 02:51:41.919+0000 INFO  Stopped.
+```
+
+## Automated Query to get Schema
+
+Since we don't have the ability with apptainer to do compose for ChatGSE, we can use this shortcut to get the schema to input into an LLM for easier querying. It would be best to somehow expose this to the user.
+
+```bash
+// Save this content as print_schema.cypher
+CALL db.labels();
+CALL db.relationshipTypes();
+CALL db.propertyKeys();
+CALL db.indexes();
+CALL db.constraints();
+```
+
+```bash
+cypher-shell -u <username> -p <password> -f print_schema.cypher
 ```

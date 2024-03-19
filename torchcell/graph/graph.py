@@ -1008,7 +1008,7 @@ def plotly_go_graph(G):
     fig.show()
 
 
-def main() -> None:
+def old_main() -> None:
     import os
     import random
 
@@ -1066,7 +1066,10 @@ def main() -> None:
     # plot_annotation_dates_by_month(graph.G_go)
     # plot_go_graph(graph.G_go)
     plotly_go_graph(G)
+    print()
 
+def main():
+    pas
 
 if __name__ == "__main__":
     main()

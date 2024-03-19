@@ -69,9 +69,45 @@ class ProtT5Dataset(BaseEmbeddingDataset):
     def initialize_model(self) -> ProtT5:
         return ProtT5("prot_t5_xl_uniref50")
 
+    # def process(self):
+    #     # HACK
+    #     self.transformer = self.initialize_model()
+    #     if not self.model_name:
+    #         return
+
+    #     data_list = []
+
+    #     exclude_classifications = self.MODEL_TO_WINDOW.get(self.model_name, None)
+    #     for gene_id in tqdm(self.genome.gene_set):
+    #         orf_classification = self.genome[gene_id].orf_classification[0]
+
+    #         protein_sequence = str(self.genome[gene_id].protein.seq)
+
+    #         if (
+    #             exclude_classifications
+    #             and orf_classification in exclude_classifications
+    #         ):
+    #             print(f"zeros for {gene_id}")
+    #             embeddings = torch.zeros(1, 1024, dtype=torch.float32).to(self.device)
+    #         else:
+    #             embeddings = self.transformer.embed(
+    #                 [protein_sequence], mean_embedding=True
+    #             ).to(torch.float32)
+
+    #         protein_data_dict = {self.model_name: protein_sequence}
+
+    #         # Using 'dna_windows' for compatibility, but this might need a more general solution in the future
+    #         data = Data(id=gene_id, dna_windows=protein_data_dict)
+    #         data.embeddings = {self.model_name: embeddings}
+    #         data_list.append(data)
+
+    #     if self.pre_transform:
+    #         data_list = [self.pre_transform(data) for data in data_list]
+
+    #     torch.save(self.collate(data_list), self.processed_paths[0])
     def process(self):
         # HACK
-        # self.transformer = self.initialize_model()
+        self.transformer = self.initialize_model()
         if not self.model_name:
             return
 
@@ -92,7 +128,8 @@ class ProtT5Dataset(BaseEmbeddingDataset):
             else:
                 embeddings = self.transformer.embed(
                     [protein_sequence], mean_embedding=True
-                ).to(torch.float32)
+                )
+                embeddings = embeddings.cpu().numpy()  # Convert to numpy array
 
             protein_data_dict = {self.model_name: protein_sequence}
 
@@ -120,13 +157,13 @@ if __name__ == "__main__":
     )
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
         genome=genome,
         model_name="prot_t5_xl_uniref50_all",
     )
 
     dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embed"),
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
         genome=genome,
         model_name="prot_t5_xl_uniref50_no_dubious",
     )

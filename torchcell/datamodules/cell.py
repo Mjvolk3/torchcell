@@ -34,11 +34,9 @@ class CellDataModule(L.LightningDataModule):
         num_val = int(self.val_ratio * len(self.dataset))
         num_test = len(self.dataset) - num_train - num_val
 
-        (
-            self.train_dataset,
-            self.val_dataset,
-            self.test_dataset,
-        ) = torch.utils.data.random_split(self.dataset, [num_train, num_val, num_test])
+        (self.train_dataset, self.val_dataset, self.test_dataset) = (
+            torch.utils.data.random_split(self.dataset, [num_train, num_val, num_test])
+        )
 
     def train_dataloader(self):
         return DataLoader(
@@ -47,7 +45,7 @@ class CellDataModule(L.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            follow_batch=["x"]
+            follow_batch=["x", "x_pert"],
             # follow_batch=["x", "x_pert", "x_one_hop_pert"],
         )
 
@@ -57,7 +55,7 @@ class CellDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            follow_batch=["x"]
+            follow_batch=["x", "x_pert"],
             # follow_batch=["x", "x_pert", "x_one_hop_pert"],
         )
 
@@ -67,7 +65,7 @@ class CellDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
-            follow_batch=["x"]
+            follow_batch=["x", "x_pert"],
             # follow_batch=["x", "x_pert", "x_one_hop_pert"],
         )
 

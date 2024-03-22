@@ -13,11 +13,7 @@ import concurrent.futures
 from typing import Union
 from torchcell.datamodels.schema import FitnessExperiment, FitnessExperimentReference
 import json
-from torchcell.data import (
-    ExperimentReferenceIndex,
-    serialize_for_hashing,
-    compute_sha256_hash,
-)
+from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from torchcell.sequence import GeneSet
@@ -35,7 +31,7 @@ def parallel_hash_computation(data):
     """
     idx, data_item = data
     return idx, compute_sha256_hash(
-        serialize_for_hashing(data_item["reference"].model_dump())
+        json.dumps((data_item["reference"].model_dump()), sort_keys=True)
     )
 
 
@@ -83,11 +79,15 @@ def compute_experiment_reference_index(
 ) -> list[ExperimentReferenceIndex]:
     if num_workers is None or num_workers <= 0:
         # Sequential version
+        log.info("Computing experiment reference index sequentially")
         reference_hashes = [
-            compute_sha256_hash(serialize_for_hashing(data["reference"].model_dump()))
+            compute_sha256_hash(
+                json.dumps(data["reference"].model_dump(), sort_keys=True)
+            )
             for data in dataset
         ]
     else:
+        log.info("Computing experiment reference index in parallel")
         # Parallel version
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
             # Prepare dataset with original indices for parallel processing
@@ -177,7 +177,6 @@ class Neo4jQueryRaw:
     def write_to_lmdb(self, key: bytes, value: bytes):
         with self.env.begin(write=True) as txn:
             txn.put(key, value)
-
 
     def process(self):
         log_batch_size = int(1e10)

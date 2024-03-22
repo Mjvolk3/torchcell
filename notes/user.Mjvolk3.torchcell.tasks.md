@@ -2,12 +2,20 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710985507097
+updated: 1711150520375
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.03.22
+
+- [x] Parallelize `gene_set` and experiment_reference_index → for various reasons this just makes things slower. For `gene_set` we don't set ops and for experimental reference index we have to do serializing and deserializing everytime. There might be a big brained way to do it but for now moving on.
+- [ ]
+- [ ]
+- [ ]
+- [ ]
 
 ## 2024.03.21
 
@@ -16,7 +24,7 @@ created: 1690514887023m
 - [x] #largest-possible-db - See if we can build the largest possible lmdb with a simple `e`, `ref` query [[torchcell.neo4j_fitness_query]] → we could be it is too small... only a million `(e, ref)` → investigate.
 - [x] Querying over all experiments and references does not yield the total number of experiments → This is because we have are missing some `ExperimentReferenceOf` edges in `DmfCostanzo20162016`→ edges are missing due to the parallelization of computing `ExperimentReferenceIndex`. I saw this before and in haste decided we didn't need to worry about it. →  Can run test at completion of dataset creation that the sum over the experiment_reference_index.index is the len of dataset. → Delaying parallelization for now.
 - [x] [[2024.03.21 - scerevisiae_small_kg duplicates by domain overlap|dendron://torchcell/experiments.smf-dmf-tmf-001.node_removal_domain_overlap#20240321---scerevisiae_small_kg-duplicates-by-domain-overlap]]
-- [ ] On local M1 the experiment_reference_index will approximately `1 hr 15 min`.
+- [x] On local M1 the experiment_reference_index will approximately `1 hr 15 min`.
 
 ## 2024.03.20
 

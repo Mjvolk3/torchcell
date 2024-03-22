@@ -19,14 +19,26 @@ from torchcell.sequence import GeneSet
 from abc import ABC, abstractmethod
 from functools import wraps
 import torch
-from torchcell.data import (
-    ExperimentReferenceIndex,
-    serialize_for_hashing,
-    compute_sha256_hash,
-)
+from torchcell.datamodels import FitnessExperimentReference
+from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
+from concurrent.futures import ProcessPoolExecutor
+
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+# return reference_indices
+# TODO FitnessExperimentReference Will need to generalize away from fitness
+def serialize_for_hashing(obj):
+    if isinstance(obj, FitnessExperimentReference):
+        # Convert FitnessExperimentReference to a dictionary
+        obj_dict = obj.model_dump()
+        # Sort the dictionary keys for consistent serialization
+        sorted_dict = dict(sorted(obj_dict.items()))
+        return json.dumps(sorted_dict)
+    else:
+        return json.dumps(obj, sort_keys=True)
 
 
 def compute_experiment_reference_index(
@@ -61,18 +73,6 @@ def compute_experiment_reference_index(
     return reference_indices
 
 
-# def post_process(func):
-#     @wraps(func)
-#     def wrapper(self, *args, **kwargs):
-#         result = func(self, *args, **kwargs)
-#         self.gene_set = self.compute_gene_set()
-#         self.experiment_reference_index
-#         return result
-
-#     return wrapper
-
-
-# CHECK assert guarantees all data related to index, some QA on experimental reference index.
 def post_process(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -102,7 +102,7 @@ class ExperimentDataset(Dataset, ABC):
     def __init__(
         self,
         root: str,
-        num_workers: int = None,
+        num_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         skip_process_file_exist: bool = False,
@@ -239,17 +239,11 @@ class ExperimentDataset(Dataset, ABC):
         self.close_lmdb()
         return gene_set
 
-    # Reading from JSON and setting it to self._gene_set
     @property
     def gene_set(self):
         if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
             with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
                 self._gene_set = GeneSet(json.load(f))
-        # elif self._gene_set is None:
-        #     raise ValueError(
-        #         "gene_set not written during process. "
-        #         "Please call compute_gene_set at the end of process."
-        #     )
         else:
             self._gene_set = self.compute_gene_set()
         return self._gene_set

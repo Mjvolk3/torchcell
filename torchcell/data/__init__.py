@@ -1,7 +1,6 @@
 from .data import (
     ExperimentReferenceIndex,
     ReferenceIndex,
-    serialize_for_hashing,
     compute_sha256_hash,
 )
 from .neo4j_query_raw import Neo4jQueryRaw
@@ -13,7 +12,6 @@ from .experiment_dataset import post_process, compute_experiment_reference_index
 data = [
     "ExperimentReferenceIndex",
     "ReferenceIndex",
-    "serialize_for_hashing",
     "compute_md5_hash",
 ]
 

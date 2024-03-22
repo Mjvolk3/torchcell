@@ -9,6 +9,8 @@ created: 1709585393267
 ```mermaid
 graph LR
     Set_Net --> Models
+    Node_Features --> Set_Transformer-Diffpool
+    Node_Features --> Set_Transformer-SAG
     Set_Transformer-Diffpool --> Models
     Set_Transformer-SAG --> Models
     SAG --> Models
@@ -26,6 +28,8 @@ graph LR
     Edge_Features --> DiffPool
     PPI --> Edge_Features 
     Reg --> Edge_Features 
+    GO --o Node_Features
+    GO --x Edge_Features
     GO --> DCell
     One_Hot_Genes --> DCell
     DCell --> Models
@@ -38,14 +42,14 @@ graph LR
     metrics --> pearson
     metrics --> spearman
     metrics --> r_squared
-    metrics --> mu_important
-    metrics --> sigma_important
-    SAG --> Interpretable((Interpretable))
-    DiffPool --> Interpretable
-    Set_Transformer-Diffpool --> Interpretable
-    Set_Transformer-SAG --> Interpretable
+    metrics --> μ_important
+    metrics --> σ_important
+    DCell -.-> Interpretable((Interpretable))
+    SAG -.-> Interpretable((Interpretable))
+    DiffPool -.-> Interpretable((Interpretable))
+    Set_Transformer-Diffpool -.-> Interpretable((Interpretable))
+    Set_Transformer-SAG -.-> Interpretable((Interpretable))
 ```
-
 
   | id                                        | model                      | nodes features $(\mathcal{N})$    | edge features $(\mathcal{E})$ | mae | mdae | pearson | spearman | $r^2$ | $\mu$(1.0-1.1) | $\sigma$(1.0-1.1) | $\mu$(1.1-1.2) | $\sigma$(1.1-1.2) |
   |:------------------------------------------|:---------------------------|:----------------------------------|:------------------------------|:----|:-----|:--------|:---------|:------|:---------------|:------------------|:---------------|:------------------|

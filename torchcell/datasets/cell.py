@@ -22,7 +22,6 @@ from torch_geometric.utils import (
 )
 from tqdm import tqdm
 
-from torchcell.dataset import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset

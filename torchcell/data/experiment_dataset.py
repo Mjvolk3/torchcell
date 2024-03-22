@@ -6,56 +6,93 @@
 
 import json
 import logging
-import os
 import os.path as osp
 import pickle
-import shutil
-import zipfile
 from collections.abc import Callable
 import numpy as np
 import lmdb
 import pandas as pd
-from torch_geometric.data import download_url
 from tqdm import tqdm
 from torch_geometric.data import Dataset
-from torchcell.dataset import compute_experiment_reference_index
-import multiprocessing as mp
-from torchcell.data import ExperimentReferenceIndex
-from torchcell.datamodels import (
-    BaseEnvironment,
-    Genotype,
-    FitnessExperiment,
-    FitnessExperimentReference,
-    FitnessPhenotype,
-    Media,
-    ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
-    SgaNatMxDeletionPerturbation,
-    SgaDampPerturbation,
-    SgaSuppressorAllelePerturbation,
-    SgaTsAllelePerturbation,
-    Temperature,
-    BaseExperiment,
-    ExperimentReference,
-)
+from torchcell.datamodels import BaseExperiment, ExperimentReference
 from torchcell.sequence import GeneSet
-from multiprocessing import Process, Queue
-from typing import Iterable
 from abc import ABC, abstractmethod
 from functools import wraps
-import multiprocessing
-from functools import partial
+import torch
+from torchcell.data import (
+    ExperimentReferenceIndex,
+    serialize_for_hashing,
+    compute_sha256_hash,
+)
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+def compute_experiment_reference_index(
+    dataset: Dataset,
+) -> list[ExperimentReferenceIndex]:
+    # Hashes for each reference
+    print("Computing experiment_reference_index hashes...")
+    reference_hashes = [
+        compute_sha256_hash(serialize_for_hashing(data["reference"]))
+        for data in tqdm(dataset)
+    ]
+
+    # Identify unique hashes
+    unique_hashes = set(reference_hashes)
+
+    # Initialize ExperimentReferenceIndex list
+    reference_indices = []
+
+    print("Finding unique references...")
+    for unique_hash in tqdm(unique_hashes):
+        # Create a boolean list where True indicates the presence of the unique reference
+        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
+
+        # Find the corresponding reference object for the unique hash
+        ref_index = reference_hashes.index(unique_hash)
+        unique_ref = dataset[ref_index]["reference"]
+
+        # Create ExperimentReferenceIndex object
+        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
+        reference_indices.append(exp_ref_index)
+
+    return reference_indices
+
+
+# def post_process(func):
+#     @wraps(func)
+#     def wrapper(self, *args, **kwargs):
+#         result = func(self, *args, **kwargs)
+#         self.gene_set = self.compute_gene_set()
+#         self.experiment_reference_index
+#         return result
+
+#     return wrapper
+
+
+# CHECK assert guarantees all data related to index, some QA on experimental reference index.
 def post_process(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
+        # Execute the original process method
         result = func(self, *args, **kwargs)
+
+        # Perform the original post-processing tasks
         self.gene_set = self.compute_gene_set()
         self.experiment_reference_index
+
+        # Additional validation step
+        total_index_coverage = torch.zeros(len(self), dtype=torch.bool)
+        for eri in self.experiment_reference_index:
+            index_tensor = torch.tensor(eri.index, dtype=torch.bool)
+            total_index_coverage |= index_tensor
+
+        assert (
+            torch.all(total_index_coverage).item() is True
+        ), "Each item in the dataset must be covered exactly once."
+
         return result
 
     return wrapper
@@ -225,32 +262,6 @@ class ExperimentDataset(Dataset, ABC):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    # @property
-    # def experiment_reference_index(self):
-    #     index_file_path = osp.join(
-    #         self.preprocess_dir, "experiment_reference_index.json"
-    #     )
-
-    #     if osp.exists(index_file_path):
-    #         with open(index_file_path, "r") as file:
-    #             data = json.load(file)
-    #             # Assuming ReferenceIndex can be constructed from a list of dictionaries
-    #             self._experiment_reference_index = [
-    #                 ExperimentReferenceIndex(**item) for item in data
-    #             ]
-    #     elif self._experiment_reference_index is None:
-    #         self._experiment_reference_index = compute_experiment_reference_index(self)
-    #         with open(index_file_path, "w") as file:
-    #             # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
-    #             json.dump(
-    #                 [eri.model_dump() for eri in self._experiment_reference_index],
-    #                 file,
-    #                 indent=4,
-    #             )
-
-    #     self.close_lmdb()
-    #     return self._experiment_reference_index
-
     @property
     def experiment_reference_index(self):
         index_file_path = osp.join(
@@ -260,37 +271,12 @@ class ExperimentDataset(Dataset, ABC):
         if osp.exists(index_file_path):
             with open(index_file_path, "r") as file:
                 data = json.load(file)
-            # Assuming ReferenceIndex can be constructed from a list of dictionaries
-            self._experiment_reference_index = [
-                ExperimentReferenceIndex(**item) for item in data
-            ]
-        elif self._experiment_reference_index is None:
-            if self.num_workers is not None:
-                # Create a pool of worker processes
-                with mp.Pool(processes=self.num_workers) as pool:
-                    # Split the dataset into chunks for parallel processing
-                    chunk_size = len(self) // self.num_workers
-                    chunks = [
-                        self[i : min(i + chunk_size, len(self))]
-                        for i in range(0, len(self), chunk_size)
-                    ]
-
-                    # Apply the compute_experiment_reference_index function to each chunk in parallel
-                    results = pool.starmap(
-                        compute_experiment_reference_index,
-                        [(chunk,) for chunk in chunks],
-                    )
-
-                # Flatten the results into a single list
+                # Assuming ReferenceIndex can be constructed from a list of dictionaries
                 self._experiment_reference_index = [
-                    item for sublist in results for item in sublist
+                    ExperimentReferenceIndex(**item) for item in data
                 ]
-            else:
-                # Fall back to the original method without parallelization
-                self._experiment_reference_index = compute_experiment_reference_index(
-                    self
-                )
-
+        elif self._experiment_reference_index is None:
+            self._experiment_reference_index = compute_experiment_reference_index(self)
             with open(index_file_path, "w") as file:
                 # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
                 json.dump(

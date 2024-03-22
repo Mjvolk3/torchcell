@@ -625,13 +625,13 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_"),
-        # subset_n=int(1e3),
-        num_workers=10,
-        # batch_size=int(1e3),
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
+        subset_n=int(1e5),
+        # num_workers=10,
+        batch_size=int(1e3),
     )
     print(dataset[0])
-    print(type(dataset[0])) 
+    print(type(dataset[0]))
     # print(dataset[0][0])
     # print(type(dataset[0][0]))
     # print(type(dataset[0][1]))
@@ -658,10 +658,10 @@ if __name__ == "__main__":
 
     ######
     # Single mutant fitness
-    smf_dataset = SmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    )
-    print(len(smf_dataset))
+    # smf_dataset = SmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
+    # )
+    # print(len(smf_dataset))
     # print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_data)

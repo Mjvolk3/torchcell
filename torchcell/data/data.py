@@ -25,6 +25,15 @@ class ExperimentReferenceIndex(ModelStrict):
     reference: ExperimentReferenceType
     index: List[bool]
 
+    # Use for parallel computation of a Dataset ExperimentReferenceIndices
+    def combine(self, other: "ExperimentReferenceIndex"):
+        if self.reference != other.reference:
+            raise ValueError(
+                "Cannot combine ExperimentReferenceIndex objects with different references"
+            )
+        combined_index = [a or b for a, b in zip(self.index, other.index)]
+        return ExperimentReferenceIndex(reference=self.reference, index=combined_index)
+
     def __repr__(self):
         if len(self.index) > 5:
             return f"ExperimentReferenceIndex(reference={self.reference}, index={self.index[:5]}...)"
@@ -59,24 +68,8 @@ class ReferenceIndex(ModelStrict):
         return v
 
 
-# def serialize_for_hashing(obj) -> str:
-#     """
-#     Serialize a Pydantic object for hashing.
-#     """
-#     return json.dumps(obj.dict(), sort_keys=True)
-
-
-# HACK temporary not using pydantic return on get item
-def serialize_for_hashing(obj) -> str:
-    """
-    Serialize a Pydantic object for hashing.
-    """
-    return json.dumps(obj, sort_keys=True)
-
-
 def compute_sha256_hash(content: str) -> str:
     """
     Compute the sha256 hash of a string.
     """
     return hashlib.sha256(content.encode()).hexdigest()
-

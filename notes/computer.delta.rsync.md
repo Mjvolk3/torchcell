@@ -20,3 +20,11 @@ rsync -avz -e "ssh -l mjvolk3" mjvolk3@dt-login02.delta.ncsa.illinois.edu:/scrat
 - `-z`- **compress** to reduce amount of data sent over network
 - `l mjvolk3` - optional since username is specified in SSH target (mjvolk3@...)
   - Shows can specify username in the SSH command if needed.
+
+## Transfer Database with rsync
+
+/scratch/bbub/mjvolk3/torchcelldatabase/data/databases/torchcell
+
+```bash
+rsync -avz -e "ssh -l mjvolk3" mjvolk3@dt-login02.delta.ncsa.illinois.edu:/scratch/bbub/mjvolk3/torchcell/database/data/databases/torchcell /Users/michaelvolk/Documents/projects/torchcell/database/data/databases/torchcell_delta
+```

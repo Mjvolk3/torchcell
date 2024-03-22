@@ -15,19 +15,12 @@ import numpy as np
 import torch
 from pydantic import field_validator
 from torch_geometric.data import Data, InMemoryDataset
-from torch_geometric.utils import (
-    add_self_loops,
-    from_networkx,
-)
+from torch_geometric.utils import add_self_loops, from_networkx
 from tqdm import tqdm
 
-from torchcell.dataset import Dataset
+from torch_geometric.data import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.embedding import BaseEmbeddingDataset
-from torchcell.datasets.scerevisiae import (
-    DmfCostanzo2016Dataset,
-    SmfCostanzo2016Dataset,
-)
 from torchcell.graph import (
     filter_by_contained_genes,
     filter_by_date,
@@ -427,7 +420,10 @@ def main():
     import os.path as osp
 
     from dotenv import load_dotenv
-
+    from torchcell.datasets.scerevisiae import (
+        DmfCostanzo2016Dataset,
+        SmfCostanzo2016Dataset,
+    )
     from torchcell.datasets import OneHotGeneDataset
     from torchcell.graph import SCerevisiaeGraph
 

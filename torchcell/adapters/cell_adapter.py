@@ -459,7 +459,7 @@ class CellAdapter:
         )
         return edge
 
-    def _get_reference_experiment_edges(self) -> list[BioCypherEdge]:
+    def  _get_reference_experiment_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in tqdm(self.dataset.experiment_reference_index):
             dataset_subset = self.dataset[torch.tensor(data.index)]

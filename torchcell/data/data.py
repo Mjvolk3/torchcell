@@ -79,3 +79,4 @@ def compute_sha256_hash(content: str) -> str:
     Compute the sha256 hash of a string.
     """
     return hashlib.sha256(content.encode()).hexdigest()
+

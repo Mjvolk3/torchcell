@@ -2,15 +2,62 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1710730216196
+updated: 1710985507097
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.21
+
+- [x] Overnight plot attempt failed because with an #OOM This happened do to specifying the necessary size of the Heap [[2024.03.20 - Trying to Speed up Querying Locally|dendron://torchcell/neo4j.conf#20240320---trying-to-speed-up-querying-locally]], [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]]
+- [ ] We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]]
+- [x] #largest-possible-db - See if we can build the largest possible lmdb with a simple `e`, `ref` query [[torchcell.neo4j_fitness_query]] → we could be it is too small... only a million `(e, ref)` → investigate.
+- [x] Querying over all experiments and references does not yield the total number of experiments → This is because we have are missing some `ExperimentReferenceOf` edges in `DmfCostanzo20162016`→ edges are missing due to the parallelization of computing `ExperimentReferenceIndex`. I saw this before and in haste decided we didn't need to worry about it. →  Can run test at completion of dataset creation that the sum over the experiment_reference_index.index is the len of dataset. → Delaying parallelization for now.
+- [x] [[2024.03.21 - scerevisiae_small_kg duplicates by domain overlap|dendron://torchcell/experiments.smf-dmf-tmf-001.node_removal_domain_overlap#20240321---scerevisiae_small_kg-duplicates-by-domain-overlap]]
+- [ ] On local M1 the experiment_reference_index will approximately `1 hr 15 min`.
+
+## 2024.03.20
+
+- [x] Rookie mistakes... I send Globus request to wrong email... Resend. → Resent. → There seems to be some misunderstanding in why the login is failing → follow up.
+- [x] For now transfer with `rsync` → [[Transfer Database with rsync|dendron://torchcell/computer.delta.rsync#transfer-database-with-rsync]] started run → Globus fixed by signing in incognito mode to go back through authentication. Something likely wrong with caching in chrome browser. Then switched back to normal browser and everything works.
+- [x] Directly transferring folder with `.db` files did not work, going to try and transfer the `biocypher-out` dir then do bulk import again. → Import took 40 mins.
+- [x] `cypher-shell` doesn't open [[2024.03.20 - Cannot start cypher-shell due to Neo4j lock|dendron://torchcell/cypher-shell#20240320---cannot-start-cypher-shell-due-to-neo4j-lock]]
+- [x] Notes on query [[smf-dmf-tmf-001.query|dendron://torchcell/experiments.smf-dmf-tmf-001.query]]
+- [x] Meeting with the Neo4j staff plan. → [[neo4j.meeting.future|dendron://torchcell/neo4j.meeting.future]]
+- [x] Added logs dir in docker run so we can try to diagnoise if there are query issues. → Also keeping a note on ne4j.conf [[Conf|dendron://torchcell/neo4j.conf]]
+
+- [ ] Started query `22:45`
+
+- [ ] We could automate with `rsync` if we wanted since it takes some time for transfer and upload. Likely going to be at least 2 hrs.
+- [ ] Task for `tcdb: docker run`
+- [ ] This will now take forever with large database but we need to get a plot that will help to filter the domain overlap [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]].
+
+- [ ] Plot `std` of `fitness_means` to determine how to handle duplicates.
+
+- [ ] Can take the duplicate   idea and just output the fitness value.
+- [ ] outline
+- [ ] gantt
+- [ ] Figure for comparison of `dmf` and resolution of data
+- [ ] Harmonize
+- [ ] Common cypher queries [[Cypher Queries|dendron://torchcell/cypher-queries]] These ultimately need to be put in their respective `.cql` file or notes, for now a plain text description of the query would help.
+- [ ] Check on Globus help, then transfer DB to local
+
 ## 2024.03.19
 
+- [x] Jobs failed → `torchcell` wasn't imported in [[torchcell.knowledge_graphs.create_scerevisiae_kg]] and the database wasn't closed in docker. `STOP DATABASE torchcell`
+- [x] #expore "Unlike other databases neo4j graph database doesn't need to compute the relationships between the data at query time. The connections are already there. Because of this queries of deeply connected data are orders of magnitude faster." [neo4j youtube](https://www.youtube.com/watch?v=sZDcK910i34) → [Neo4j Langchain Integration](https://neo4j.com/labs/genai-ecosystem/langchain/?utm_source=Google&utm_medium=PaidSearch&utm_campaign=Evergreenutm_content=AMS-Search-SEMCE-DSA-None-SEM-SEM-NonABM&utm_term=&utm_adgroup=DSA-use-cases&gad_source=1&gclid=CjwKCAjw7-SvBhB6EiwAwYdCAbrKlkVLVcFRWuDAi7Lq-KogpO4Hi6lOYQv91NP8az_KpPk-Eo5eVxoCBg4QAvD_BwE)
+- [x] #explore [neo4j youtube - Knolwdge Graph Based Chatbot](https://www.youtube.com/watch?v=XObtoB_g_CA&t=1708s) → neo4j `node properties` and `relationship properties` define schema... I think the biocypher schema might get added... maybe ChatGSE is necessary.
+- [x] #explore [neo4j youtube - Neo4j and LangChain](https://www.youtube.com/watch?v=BmQ8VTM3Izg) → can follow this code for tcdb natural language interaction if we wanted. Could this `pdf` be added to existing data model? How would `pdf` change existing data model? Which files would need to be rewritten (This is probably too deep) ?
+- [x] #explore This could be an alternative to [ChatGSE](https://www.youtube.com/watch?v=OV2ZIWFBe0s) should read up more on ChatGSE before making a decision. I do want to consider some custom control. For instance mapping `pdf` to the [[torchcell.datamodels.schema]]. Could create another DB for representing project itself, or `pdfs` from `zotero`. Create a new DB of proposed dataset, could even just ask for python script output of Dataset give base class and common pattern. Might want to wait on this a bit.
+- [x] Config docker neo4j db → we changed workers to 8. This greatly helps speed up querying.
+- [x] Look into transfer of db on `delta` to local →  Waiting on this... I think I can just use Globus, but I haven't heard back about fixing my Globus activation.
+- [x] Inspect failed `Delta` build → #OOM but no memory spikes [wandb log](https://wandb.ai/zhao-group/tcdb/runs/pm1386pt?nw=nwusermjvolk3)
+- [x] Get up to in new experiment`CellModule` → made it but we can't be sure that we don't have the duplicate with `dmf` fitness over the same phenotype in either `Kuzmin` or `Costanzo`. Might be easier to check the raw data to confirm their different now, but we will need a more robust solution for this.
+- [ ] Deduplication must be done at the proper stage. There is a question of have more and more difficult cypher queries or doing some python filtration after collection all the data. → It makes most sense to do the filtration and check for duplication here [[torchcell.neo4j_fitness_query]]. I did a check that helped me refine the query adding temperature and media specifications for the reference.
+
+- [ ] Check Nones... on db [[94310|dendron://torchcell/scratch.2024.03.19.094310]]
 - [ ] CaLM model
 
 ## 2024.03.18
@@ -20,7 +67,7 @@ created: 1690514887023m
 - [x] We still want to capture the `wt` or what we are now calling `ref` but this is dependent on `ref` resolution, single `ref`, so I am delaying doing this.
 - [x] Add label to data.
 - [x] Hanging envs to `None` → `self.raw_db.env = None` this was the tricky one.
-- [ ] Add `gene_set` query to `cql` → First I want to print out the schema. → This has been a long journey many hours spent to discover that the neo4j database has an error. We did not properly build out all perturbations, so querying on them doesn't work. 💣 Not what we wanted... 🥺. Big time suck. OMG...  
+- [x] Add `gene_set` query to `cql` → First I want to print out the schema. → This has been a long journey many hours spent to discover that the neo4j database has an error. We did not properly build out all perturbations, so querying on them doesn't work. 💣 Not what we wanted... 🥺. Big time suck. OMG...  
 
 ```python
 for perturbation in genotype.perturbations:
@@ -28,7 +75,7 @@ for perturbation in genotype.perturbations:
   return edges
 ```
 
-- [ ] Get up to in new experiment`CellModule`
+- 🔲 Get up to in new experiment`CellModule`
 
 ## 2024.03.17
 

@@ -26,10 +26,11 @@ docker run --cpus=10 \
 -v $(pwd)/database/data:/var/lib/neo4j/data \
 -v $(pwd)/database/.env:/.env \
 -v $(pwd)/biocypher:/var/lib/neo4j/biocypher \
--v $(pwd)/database/conf:/var/lib/neo4j/conf \   
+-v $(pwd)/database/conf:/var/lib/neo4j/conf \
 -v $(pwd)/database/logs:/logs \
 -e NEO4J_AUTH=neo4j/torchcell \
 michaelvolk/tc-neo4j:latest
+
 
 # # Conda activate torchcell here since we are using the local library for the db writing.
 # eval "$(conda shell.bash hook)"

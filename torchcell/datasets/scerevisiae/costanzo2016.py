@@ -46,7 +46,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
-        num_workers: int = 1,
+        num_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,

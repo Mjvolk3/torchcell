@@ -2,43 +2,34 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711150594307
+updated: 1711211157944
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.23
+
+- [x] Review database build. → [[2024.03.23 - Killed do to slow gene_set and experiment_reference_index|dendron://torchcell/database.apptainer.builds.2024.03.22#20240323---killed-do-to-slow-gene_set-and-experiment_reference_index]]
+- [ ] Parallelizing is necessary for `Delta`, we knew this before 😕, but the slowness on M1 made me think it wasn't worth it. Performance will be better with many cpu and can run serially on local.
+- [ ] Outline. Consider training on pert.
+- [ ] Harmonize data.
+- [ ] `One_Hot_Gene -->  Set_Net --> Fitness`
+- [ ] `FUDT --> Set_Net --> Fitness`
+- [ ] `FUDT --> Set_Net --> Fitness`
+- [ ] Add CaLM embedding
+
 ## 2024.03.22
 
-- [x] Parallelize `gene_set` and experiment_reference_index → for various reasons this just makes things slower. For `gene_set` we don't set ops and for experimental reference index we have to do serializing and deserializing everytime. There might be a big brained way to do it but for now moving on.
-- [ ]
-- [ ]
-- [ ]
-- [ ]
-
-```cypher
-neo4j@torchcell> MATCH (d:Dataset)
-                 WHERE d.id IN ["SmfCostanzo2016Dataset","DmfCostanzo2016Dataset", "SmfKuzmin2018Dataset", "DmfKuzmin2018Dataset", "TmfKuzmin2018Dataset"]
-                 OPTIONAL MATCH (d)<-[r1:ExperimentMemberOf]-(e:Experiment)
-                 WITH d, COUNT(r1) AS ExperimentMemberOfCount
-                 OPTIONAL MATCH (d)<-[:ExperimentMemberOf]-(e:Experiment)<-[r2:ExperimentReferenceOf]-(ref:ExperimentReference)
-                 RETURN d.id AS DatasetID, ExperimentMemberOfCount, COUNT(DISTINCT r2) AS ExperimentReferenceOfCount;
-+---------------------------------------------------------------------------------+
-| DatasetID                | ExperimentMemberOfCount | ExperimentReferenceOfCount |
-+---------------------------------------------------------------------------------+
-| "SmfCostanzo2016Dataset" | 20484                   | 20484                      |
-| "SmfKuzmin2018Dataset"   | 1539                    | 1539                       |
-| "DmfKuzmin2018Dataset"   | 410399                  | 410399                     |
-| "TmfKuzmin2018Dataset"   | 91111                   | 91111                      |
-| "DmfCostanzo2016Dataset" | 20705612                | 647050                     |
-+---------------------------------------------------------------------------------+
-```
+- [x] Parallelize `gene_set` and experiment_reference_index → for various reasons this just makes things slower. For `gene_set` we don't set ops and for experimental reference index we have to do serializing and deserializing every time. There might be a big brained way to do it but for now moving on.icO
+- [x] Rebuild `tcdb` I think that this will now → a lot of import errors after refactoring. Need to find a better way to do this. Maybe just with search replace over work space. → I also think that this will slove teh import error.
+- [x] [[2024.03.21 - Query that Identified ExperimentReferenceOfCount Issue in Database|dendron://torchcell/cypher-queries#20240321---query-that-identified-experimentreferenceofcount-issue-in-database]]
 
 ## 2024.03.21
 
 - [x] Overnight plot attempt failed because with an #OOM This happened do to specifying the necessary size of the Heap [[2024.03.20 - Trying to Speed up Querying Locally|dendron://torchcell/neo4j.conf#20240320---trying-to-speed-up-querying-locally]], [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]]
-- [ ] We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]]
+- 🔲 We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]] → Move to [[torchcell.tasks.future|dendron://torchcell/user.mjvolk3.torchcell.tasks.future]]
 - [x] #largest-possible-db - See if we can build the largest possible lmdb with a simple `e`, `ref` query [[torchcell.neo4j_fitness_query]] → we could be it is too small... only a million `(e, ref)` → investigate.
 - [x] Querying over all experiments and references does not yield the total number of experiments → This is because we have are missing some `ExperimentReferenceOf` edges in `DmfCostanzo20162016`→ edges are missing due to the parallelization of computing `ExperimentReferenceIndex`. I saw this before and in haste decided we didn't need to worry about it. →  Can run test at completion of dataset creation that the sum over the experiment_reference_index.index is the len of dataset. → Delaying parallelization for now.
 - [x] [[2024.03.21 - scerevisiae_small_kg duplicates by domain overlap|dendron://torchcell/experiments.smf-dmf-tmf-001.node_removal_domain_overlap#20240321---scerevisiae_small_kg-duplicates-by-domain-overlap]]
@@ -54,21 +45,18 @@ neo4j@torchcell> MATCH (d:Dataset)
 - [x] Meeting with the Neo4j staff plan. → [[neo4j.meeting.future|dendron://torchcell/neo4j.meeting.future]]
 - [x] Added logs dir in docker run so we can try to diagnoise if there are query issues. → Also keeping a note on ne4j.conf [[Conf|dendron://torchcell/neo4j.conf]]
 
-- [ ] Started query `22:45`
-
 - [ ] We could automate with `rsync` if we wanted since it takes some time for transfer and upload. Likely going to be at least 2 hrs.
 - [ ] Task for `tcdb: docker run`
 - [ ] This will now take forever with large database but we need to get a plot that will help to filter the domain overlap [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]].
 
 - [ ] Plot `std` of `fitness_means` to determine how to handle duplicates.
 
-- [ ] Can take the duplicate   idea and just output the fitness value.
+- [ ] Can take the duplicate idea and just output the fitness value.
 - [ ] outline
 - [ ] gantt
 - [ ] Figure for comparison of `dmf` and resolution of data
 - [ ] Harmonize
 - [ ] Common cypher queries [[Cypher Queries|dendron://torchcell/cypher-queries]] These ultimately need to be put in their respective `.cql` file or notes, for now a plain text description of the query would help.
-- [ ] Check on Globus help, then transfer DB to local
 
 ## 2024.03.19
 

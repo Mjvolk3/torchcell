@@ -46,11 +46,12 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
+        num_workers: int = 1,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -625,13 +626,13 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
-        subset_n=int(1e5),
-        # num_workers=10,
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
+        # subset_n=int(1e6),
+        num_workers=10,
         batch_size=int(1e3),
     )
-    print(dataset[0])
-    print(type(dataset[0]))
+    # print(dataset[0])
+    # print(type(dataset[0]))
     # print(dataset[0][0])
     # print(type(dataset[0][0]))
     # print(type(dataset[0][1]))
@@ -642,7 +643,7 @@ if __name__ == "__main__":
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == dataset[0]['experiment'])
     # Usage example
-    print(len(dataset))
+    # print(len(dataset))
     # print(dataset.experiment_reference_index)
     # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
     # # Fetch and print the first 3 batches
@@ -658,11 +659,11 @@ if __name__ == "__main__":
 
     ######
     # Single mutant fitness
-    # smf_dataset = SmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    # )
-    # print(len(smf_dataset))
-    # print(smf_dataset[100])
+    smf_dataset = SmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), num_workers=10
+    )
+    print(len(smf_dataset))
+    print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == serialized_data)

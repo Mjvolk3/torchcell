@@ -22,10 +22,28 @@ import torch
 from torchcell.datamodels import FitnessExperimentReference
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from concurrent.futures import ProcessPoolExecutor
-
+import concurrent.futures
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+def _process_experiment_data_parallel(experiment_data):
+    # Parallel processing function for gene extraction
+    deserialized_data = pickle.loads(experiment_data)
+    experiment = deserialized_data["experiment"]
+    gene_names = []
+    for perturbation in experiment["genotype"].get("perturbations", []):
+        gene_name = perturbation.get("systematic_gene_name")
+        if gene_name:
+            gene_names.append(gene_name)
+    return gene_names
+
+
+def _compute_reference_hash_parallel(data):
+    # Parallel processing function for computing reference hash
+    reference = data["reference"]
+    return compute_sha256_hash(serialize_for_hashing(reference))
 
 
 # return reference_indices
@@ -219,6 +237,14 @@ class ExperimentDataset(Dataset, ABC):
         return gene_names
 
     def compute_gene_set(self):
+        if self.num_workers > 0:
+            log.info("Computing gene set in parallel...")
+            return self.compute_gene_set_parallel()
+        else:
+            log.info("Computing gene set sequentially...")
+            return self.compute_gene_set_sequential()
+
+    def compute_gene_set_sequential(self):
         gene_set = GeneSet()
         if self.env is None:
             self._init_db()
@@ -239,6 +265,126 @@ class ExperimentDataset(Dataset, ABC):
         self.close_lmdb()
         return gene_set
 
+    def compute_gene_set_parallel(self):
+        # Parallel processing for gene set computation
+        gene_set = GeneSet()
+        if self.env is None:
+            self._init_db()
+
+        with self.env.begin() as txn:
+            experiment_data_list = [value for _, value in txn.cursor()]
+
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=self.num_workers
+        ) as executor:
+            log.info("Computing gene set in parallel...")
+            for gene_names in tqdm(
+                executor.map(_process_experiment_data_parallel, experiment_data_list),
+                total=len(experiment_data_list),
+            ):
+                for gene_name in gene_names:
+                    gene_set.add(gene_name)
+
+        self.close_lmdb()
+        return gene_set
+
+    def compute_experiment_reference_index_sequential(self):
+        return compute_experiment_reference_index(self)
+
+    def compute_experiment_reference_index_parallel(self):
+        # Parallel processing for experiment reference index computation
+        reference_hashes = []
+
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=self.num_workers
+        ) as executor:
+            print("Computing experiment_reference_index hashes...")
+            reference_hashes = list(
+                tqdm(
+                    executor.map(_compute_reference_hash_parallel, self),
+                    total=len(self),
+                )
+            )
+
+        unique_hashes = set(reference_hashes)
+        reference_indices = []
+
+        print("Finding unique references...")
+        for unique_hash in tqdm(unique_hashes):
+            index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
+            ref_index = reference_hashes.index(unique_hash)
+            unique_ref = self[ref_index]["reference"]
+            exp_ref_index = ExperimentReferenceIndex(
+                reference=unique_ref, index=index_list
+            )
+            reference_indices.append(exp_ref_index)
+
+        return reference_indices
+
+    @property
+    def experiment_reference_index(self):
+        index_file_path = osp.join(
+            self.preprocess_dir, "experiment_reference_index.json"
+        )
+
+        if osp.exists(index_file_path):
+            with open(index_file_path, "r") as file:
+                data = json.load(file)
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in data
+                ]
+        elif self._experiment_reference_index is None:
+            if self.num_workers > 0:
+                log.info("Computing experiment reference index in parallel...")
+                self._experiment_reference_index = (
+                    self.compute_experiment_reference_index_parallel()
+                )
+            else:
+                log.info("Computing experiment reference index sequentially...")
+                self._experiment_reference_index = (
+                    self.compute_experiment_reference_index_sequential()
+                )
+
+            with open(index_file_path, "w") as file:
+                json.dump(
+                    [eri.model_dump() for eri in self._experiment_reference_index],
+                    file,
+                    indent=4,
+                )
+
+        self.close_lmdb()
+        return self._experiment_reference_index
+
+    # def compute_gene_set(self):
+    #     gene_set = GeneSet()
+    #     if self.env is None:
+    #         self._init_db()
+
+    #     with self.env.begin() as txn:
+    #         cursor = txn.cursor()
+    #         log.info("Computing gene set...")
+    #         for key, value in tqdm(cursor):
+    #             deserialized_data = pickle.loads(value)
+    #             experiment = deserialized_data["experiment"]
+
+    #             extracted_gene_names = self.extract_systematic_gene_names(
+    #                 experiment["genotype"]
+    #             )
+    #             for gene_name in extracted_gene_names:
+    #                 gene_set.add(gene_name)
+
+    #     self.close_lmdb()
+    #     return gene_set
+
+    # @property
+    # def gene_set(self):
+    #     if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
+    #         with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
+    #             self._gene_set = GeneSet(json.load(f))
+    #     else:
+    #         self._gene_set = self.compute_gene_set()
+    #     return self._gene_set
+
     @property
     def gene_set(self):
         if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
@@ -256,31 +402,31 @@ class ExperimentDataset(Dataset, ABC):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    @property
-    def experiment_reference_index(self):
-        index_file_path = osp.join(
-            self.preprocess_dir, "experiment_reference_index.json"
-        )
+    # @property
+    # def experiment_reference_index(self):
+    #     index_file_path = osp.join(
+    #         self.preprocess_dir, "experiment_reference_index.json"
+    #     )
 
-        if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
-                data = json.load(file)
-                # Assuming ReferenceIndex can be constructed from a list of dictionaries
-                self._experiment_reference_index = [
-                    ExperimentReferenceIndex(**item) for item in data
-                ]
-        elif self._experiment_reference_index is None:
-            self._experiment_reference_index = compute_experiment_reference_index(self)
-            with open(index_file_path, "w") as file:
-                # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
-                json.dump(
-                    [eri.model_dump() for eri in self._experiment_reference_index],
-                    file,
-                    indent=4,
-                )
+    #     if osp.exists(index_file_path):
+    #         with open(index_file_path, "r") as file:
+    #             data = json.load(file)
+    #             # Assuming ReferenceIndex can be constructed from a list of dictionaries
+    #             self._experiment_reference_index = [
+    #                 ExperimentReferenceIndex(**item) for item in data
+    #             ]
+    #     elif self._experiment_reference_index is None:
+    #         self._experiment_reference_index = compute_experiment_reference_index(self)
+    #         with open(index_file_path, "w") as file:
+    #             # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
+    #             json.dump(
+    #                 [eri.model_dump() for eri in self._experiment_reference_index],
+    #                 file,
+    #                 indent=4,
+    #             )
 
-        self.close_lmdb()
-        return self._experiment_reference_index
+    #     self.close_lmdb()
+    #     return self._experiment_reference_index
 
     @property
     @abstractmethod

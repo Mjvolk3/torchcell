@@ -12,7 +12,7 @@ from typing import Set
 import torch
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 from concurrent.futures import ProcessPoolExecutor
-from torch_geometric import Dataset
+from torch_geometric.data import Dataset
 from typing import Callable
 from functools import wraps
 

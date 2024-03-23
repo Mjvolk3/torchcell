@@ -10,24 +10,11 @@ from biocypher import BioCypher
 from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import get_logger
 import logging
-from typing import Generator, Set
-import torch
+from typing import Set
 from torchcell.datasets.scerevisiae import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )
-from torchcell.datamodels import Genotype
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from torch_geometric.loader import DataLoader
-from torchcell.dataset import Dataset
-from concurrent.futures import ProcessPoolExecutor
-import multiprocessing as mp
-from functools import partial
-from typing import Callable
-from functools import wraps
-from abc import abstractmethod
-from omegaconf import OmegaConf
-from typing import Any
 from torchcell.adapters.cell_adapter import CellAdapter
 
 # logging
@@ -255,7 +242,6 @@ class DmfCostanzo2016Adapter(CellAdapter):
 if __name__ == "__main__":
     import os.path as osp
     from dotenv import load_dotenv
-    import math
     from datetime import datetime
     import os
 

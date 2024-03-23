@@ -3,20 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
 # Test file: tests/torchcell/adapters/test_kuzmin2018_adapter.py
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import logger
-from typing import Generator, Set
 from torchcell.datasets.scerevisiae import (
     SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
 )
-from torchcell.datamodels.schema import Genotype
-from concurrent.futures import ProcessPoolExecutor, as_completed
-import torch
 from torchcell.adapters.cell_adapter import CellAdapter
 
 # logger.debug(f"Loading module {__name__}.")

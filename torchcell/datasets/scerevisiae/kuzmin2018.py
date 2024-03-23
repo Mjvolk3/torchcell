@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.dataset import Dataset, compute_experiment_reference_index
 from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.schema import (
     BaseEnvironment,
@@ -35,8 +34,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
 )
 from torchcell.sequence import GeneSet
-from torchcell.dataset import ExperimentDataset, post_process
-
+from torchcell.data import ExperimentDataset, post_process 
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1710725501610
+updated: 1711155248795
 created: 1675887826601
 ---
 ## Future
@@ -35,6 +35,7 @@ created: 1675887826601
 
 - [ ] For simplicity we should get rid of `preprocess_dir` and put everything into `process_dir`
 - [ ] Embeddings should be union over `gene_sets`
+- [ ] We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]]
 
 ## Far Future
 

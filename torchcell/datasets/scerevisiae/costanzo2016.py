@@ -46,12 +46,12 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
-        num_workers: int = 0,
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -316,15 +316,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         root: str = "data/torchcell/smf_costanzo2016",
         subset_n: int = None,
         batch_size: int = int(1e4),
-        num_workers: int = 1,
+        io_workers: int = 1,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        self.num_workers = num_workers
+        self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
-        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -450,7 +450,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         )
 
         # Create a ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.io_workers) as executor:
             futures = []
             for batch_start in range(0, df.shape[0], self.batch_size):
                 batch_end = min(batch_start + self.batch_size, df.shape[0])
@@ -628,7 +628,7 @@ if __name__ == "__main__":
     dataset = DmfCostanzo2016Dataset(   
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_alt_1"),
         # subset_n=int(1e6),
-        num_workers=10,
+        io_workers=10,
         batch_size=int(1e4),
     )
     # dataset.gene_set = dataset.compute_gene_set()
@@ -646,7 +646,7 @@ if __name__ == "__main__":
     # Usage example
     # print(len(dataset))
     # print(dataset.experiment_reference_index)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, io_workers=1)
     # # Fetch and print the first 3 batches
     # for i, batch in enumerate(data_loader):
     #     # batch_transformed = list(map(dataset.transform_item, batch))
@@ -661,14 +661,14 @@ if __name__ == "__main__":
     ######
     # Single mutant fitness
     # smf_dataset = SmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), num_workers=10
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
     # )
     # print(len(smf_dataset))
     # print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_   data)
     # print(new_instance == serialized_data)
-    # data_loader = CpuExperimentLoader(smf_dataset, batch_size=1, num_workers=1)
+    # data_loader = CpuExperimentLoader(smf_dataset, batch_size=1, io_workers=1)
     # Fetch and print the first 3 batches
     # for i, batch in enumerate(data_loader):
     #     # batch_transformed = list(map(smf_dataset.transform_item, batch))

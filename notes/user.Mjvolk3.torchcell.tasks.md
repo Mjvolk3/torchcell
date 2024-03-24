@@ -2,17 +2,27 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711211157944
+updated: 1711251245918
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+
+## 2024.03.24
+
+- [x] Compute entire dataset, then run `gene_set`. → [[2024.03.24 - Optional Multiprocessing on Batch|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---optional-multiprocessing-on-batch]]
+- [x] Compute entire dataset, then run `experiment_reference_index` → Did analogous as `gene_set` using `CpuExperimentLoaderMultiprocessing`
+
+
 ## 2024.03.23
 
 - [x] Review database build. → [[2024.03.23 - Killed do to slow gene_set and experiment_reference_index|dendron://torchcell/database.apptainer.builds.2024.03.22#20240323---killed-do-to-slow-gene_set-and-experiment_reference_index]]
 - [ ] Parallelizing is necessary for `Delta`, we knew this before 😕, but the slowness on M1 made me think it wasn't worth it. Performance will be better with many cpu and can run serially on local.
+
+when cpus go down we start computing `gene_set`
+
 - [ ] Outline. Consider training on pert.
 - [ ] Harmonize data.
 - [ ] `One_Hot_Gene -->  Set_Net --> Fitness`

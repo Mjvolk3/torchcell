@@ -3,7 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset
 # Test file: tests/torchcell/dataset/test_experiment_dataset.py
 
-
+import multiprocessing as mp
+from torch_geometric.data import Data, Batch
+from torch_geometric.loader import DataLoader
 import json
 import logging
 import os.path as osp
@@ -23,21 +25,23 @@ from torchcell.datamodels import FitnessExperimentReference
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from concurrent.futures import ProcessPoolExecutor
 import concurrent.futures
+from torchcell.loader import CpuExperimentLoaderMultiprocessing
+import multiprocessing as mp
+import pickle
+from multiprocessing import Pool
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
-def _process_experiment_data_parallel(experiment_data):
-    # Parallel processing function for gene extraction
-    deserialized_data = pickle.loads(experiment_data)
-    experiment = deserialized_data["experiment"]
-    gene_names = []
-    for perturbation in experiment["genotype"].get("perturbations", []):
-        gene_name = perturbation.get("systematic_gene_name")
-        if gene_name:
-            gene_names.append(gene_name)
-    return gene_names
+def process_reference_batch(batch):
+    # This function will process a batch of data to compute reference hashes.
+    # Adjust the implementation based on your data structure.
+    reference_hashes = []
+    for data in batch:
+        reference_hash = compute_sha256_hash(serialize_for_hashing(data["reference"]))
+        reference_hashes.append(reference_hash)
+    return reference_hashes
 
 
 def _compute_reference_hash_parallel(data):
@@ -59,7 +63,7 @@ def serialize_for_hashing(obj):
         return json.dumps(obj, sort_keys=True)
 
 
-def compute_experiment_reference_index(
+def compute_experiment_reference_index_sequential(
     dataset: Dataset,
 ) -> list[ExperimentReferenceIndex]:
     # Hashes for each reference
@@ -68,6 +72,45 @@ def compute_experiment_reference_index(
         compute_sha256_hash(serialize_for_hashing(data["reference"]))
         for data in tqdm(dataset)
     ]
+
+    # Identify unique hashes
+    unique_hashes = set(reference_hashes)
+
+    # Initialize ExperimentReferenceIndex list
+    reference_indices = []
+
+    print("Finding unique references...")
+    for unique_hash in tqdm(unique_hashes):
+        # Create a boolean list where True indicates the presence of the unique reference
+        index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
+
+        # Find the corresponding reference object for the unique hash
+        ref_index = reference_hashes.index(unique_hash)
+        unique_ref = dataset[ref_index]["reference"]
+
+        # Create ExperimentReferenceIndex object
+        exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
+        reference_indices.append(exp_ref_index)
+
+    return reference_indices
+
+
+def compute_experiment_reference_index_parallel(
+    dataset, batch_size=int(1e4), num_workers=1
+) -> list[ExperimentReferenceIndex]:
+    # Hashes for each reference
+    print("Computing experiment_reference_index hashes in parallel...")
+    data_loader = CpuExperimentLoaderMultiprocessing(
+        dataset, batch_size=batch_size, num_workers=num_workers
+    )
+
+    reference_hashes = []
+    for batch in tqdm(data_loader, total=len(data_loader)):
+        for data in batch:
+            reference_hash = compute_sha256_hash(
+                serialize_for_hashing(data["reference"])
+            )
+            reference_hashes.append(reference_hash)
 
     # Identify unique hashes
     unique_hashes = set(reference_hashes)
@@ -239,7 +282,7 @@ class ExperimentDataset(Dataset, ABC):
     def compute_gene_set(self):
         if self.num_workers > 0:
             log.info("Computing gene set in parallel...")
-            return self.compute_gene_set_parallel()
+            return self.compute_gene_set_parallel(num_workers=self.num_workers)
         else:
             log.info("Computing gene set sequentially...")
             return self.compute_gene_set_sequential()
@@ -265,61 +308,25 @@ class ExperimentDataset(Dataset, ABC):
         self.close_lmdb()
         return gene_set
 
-    def compute_gene_set_parallel(self):
-        # Parallel processing for gene set computation
+    def compute_gene_set_parallel(
+        self, batch_size: int = int(1e4), num_workers: int = 1
+    ):
         gene_set = GeneSet()
-        if self.env is None:
-            self._init_db()
 
-        with self.env.begin() as txn:
-            experiment_data_list = [value for _, value in txn.cursor()]
-
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=self.num_workers
-        ) as executor:
-            log.info("Computing gene set in parallel...")
-            for gene_names in tqdm(
-                executor.map(_process_experiment_data_parallel, experiment_data_list),
-                total=len(experiment_data_list),
-            ):
-                for gene_name in gene_names:
-                    gene_set.add(gene_name)
-
-        self.close_lmdb()
-        return gene_set
-
-    def compute_experiment_reference_index_sequential(self):
-        return compute_experiment_reference_index(self)
-
-    def compute_experiment_reference_index_parallel(self):
-        # Parallel processing for experiment reference index computation
-        reference_hashes = []
-
-        with concurrent.futures.ProcessPoolExecutor(
-            max_workers=self.num_workers
-        ) as executor:
-            print("Computing experiment_reference_index hashes...")
-            reference_hashes = list(
-                tqdm(
-                    executor.map(_compute_reference_hash_parallel, self),
-                    total=len(self),
+        log.info("Computing gene set in parallel...")
+        data_loader = CpuExperimentLoaderMultiprocessing(
+            self, batch_size=batch_size, num_workers=num_workers
+        )
+        for batch in tqdm(data_loader, total=len(data_loader)):
+            gene_names_batch = set()
+            for data in batch:
+                gene_names = self.extract_systematic_gene_names(
+                    data["experiment"]["genotype"]
                 )
-            )
+                gene_names_batch.update(gene_names)
+            gene_set.update(gene_names_batch)
 
-        unique_hashes = set(reference_hashes)
-        reference_indices = []
-
-        print("Finding unique references...")
-        for unique_hash in tqdm(unique_hashes):
-            index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
-            ref_index = reference_hashes.index(unique_hash)
-            unique_ref = self[ref_index]["reference"]
-            exp_ref_index = ExperimentReferenceIndex(
-                reference=unique_ref, index=index_list
-            )
-            reference_indices.append(exp_ref_index)
-
-        return reference_indices
+        return gene_set
 
     @property
     def experiment_reference_index(self):
@@ -337,12 +344,14 @@ class ExperimentDataset(Dataset, ABC):
             if self.num_workers > 0:
                 log.info("Computing experiment reference index in parallel...")
                 self._experiment_reference_index = (
-                    self.compute_experiment_reference_index_parallel()
+                    compute_experiment_reference_index_parallel(
+                        dataset=self, num_workers=self.num_workers
+                    )
                 )
             else:
                 log.info("Computing experiment reference index sequentially...")
                 self._experiment_reference_index = (
-                    self.compute_experiment_reference_index_sequential()
+                    compute_experiment_reference_index_sequential(dataset=self)
                 )
 
             with open(index_file_path, "w") as file:
@@ -354,36 +363,6 @@ class ExperimentDataset(Dataset, ABC):
 
         self.close_lmdb()
         return self._experiment_reference_index
-
-    # def compute_gene_set(self):
-    #     gene_set = GeneSet()
-    #     if self.env is None:
-    #         self._init_db()
-
-    #     with self.env.begin() as txn:
-    #         cursor = txn.cursor()
-    #         log.info("Computing gene set...")
-    #         for key, value in tqdm(cursor):
-    #             deserialized_data = pickle.loads(value)
-    #             experiment = deserialized_data["experiment"]
-
-    #             extracted_gene_names = self.extract_systematic_gene_names(
-    #                 experiment["genotype"]
-    #             )
-    #             for gene_name in extracted_gene_names:
-    #                 gene_set.add(gene_name)
-
-    #     self.close_lmdb()
-    #     return gene_set
-
-    # @property
-    # def gene_set(self):
-    #     if osp.exists(osp.join(self.preprocess_dir, "gene_set.json")):
-    #         with open(osp.join(self.preprocess_dir, "gene_set.json")) as f:
-    #             self._gene_set = GeneSet(json.load(f))
-    #     else:
-    #         self._gene_set = self.compute_gene_set()
-    #     return self._gene_set
 
     @property
     def gene_set(self):

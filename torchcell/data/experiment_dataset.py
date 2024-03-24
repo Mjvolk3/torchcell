@@ -96,12 +96,12 @@ def compute_experiment_reference_index_sequential(
 
 
 def compute_experiment_reference_index_parallel(
-    dataset, batch_size=int(1e4), num_workers=1
+    dataset, batch_size=int(1e4), io_workers=1
 ) -> list[ExperimentReferenceIndex]:
     # Hashes for each reference
     print("Computing experiment_reference_index hashes in parallel...")
     data_loader = CpuExperimentLoaderMultiprocessing(
-        dataset, batch_size=batch_size, num_workers=num_workers
+        dataset, batch_size=batch_size, num_workers=io_workers
     )
 
     reference_hashes = []
@@ -163,12 +163,12 @@ class ExperimentDataset(Dataset, ABC):
     def __init__(
         self,
         root: str,
-        num_workers: int = 0,
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         skip_process_file_exist: bool = False,
     ):
-        self.num_workers = num_workers
+        self.io_workers = io_workers
         self.preprocess_dir = osp.join(root, "preprocess")
         # TODO This is part of our custom Dataset to speed things up but should be removed when using pure pyg
         self.skip_process_file_exist = skip_process_file_exist
@@ -240,7 +240,7 @@ class ExperimentDataset(Dataset, ABC):
         with self.env.begin() as txn:
             length = txn.stat()["entries"]
 
-        # Must be closed for dataloader num_workers > 0
+        # Must be closed for dataloader io_workers > 0
         self.close_lmdb()
 
         return length
@@ -280,9 +280,9 @@ class ExperimentDataset(Dataset, ABC):
         return gene_names
 
     def compute_gene_set(self):
-        if self.num_workers > 0:
+        if self.io_workers > 0:
             log.info("Computing gene set in parallel...")
-            return self.compute_gene_set_parallel(num_workers=self.num_workers)
+            return self.compute_gene_set_parallel(io_workers=self.io_workers)
         else:
             log.info("Computing gene set sequentially...")
             return self.compute_gene_set_sequential()
@@ -309,13 +309,13 @@ class ExperimentDataset(Dataset, ABC):
         return gene_set
 
     def compute_gene_set_parallel(
-        self, batch_size: int = int(1e4), num_workers: int = 1
+        self, batch_size: int = int(1e4), io_workers: int = 1
     ):
         gene_set = GeneSet()
 
         log.info("Computing gene set in parallel...")
         data_loader = CpuExperimentLoaderMultiprocessing(
-            self, batch_size=batch_size, num_workers=num_workers
+            self, batch_size=batch_size, num_workers=io_workers
         )
         for batch in tqdm(data_loader, total=len(data_loader)):
             gene_names_batch = set()
@@ -341,11 +341,11 @@ class ExperimentDataset(Dataset, ABC):
                     ExperimentReferenceIndex(**item) for item in data
                 ]
         elif self._experiment_reference_index is None:
-            if self.num_workers > 0:
+            if self.io_workers > 0:
                 log.info("Computing experiment reference index in parallel...")
                 self._experiment_reference_index = (
                     compute_experiment_reference_index_parallel(
-                        dataset=self, num_workers=self.num_workers
+                        dataset=self, io_workers=self.io_workers
                     )
                 )
             else:

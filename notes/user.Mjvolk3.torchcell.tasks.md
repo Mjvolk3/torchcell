@@ -9,12 +9,14 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-
 ## 2024.03.24
 
 - [x] Compute entire dataset, then run `gene_set`. → [[2024.03.24 - Optional Multiprocessing on Batch|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---optional-multiprocessing-on-batch]]
 - [x] Compute entire dataset, then run `experiment_reference_index` → Did analogous as `gene_set` using `CpuExperimentLoaderMultiprocessing`
+- [x] [[2024.03.24 - SSL Apptainer Bug|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240324---ssl-apptainer-bug]]
+- [x] We started on some code to use multiprocessing on batches, but I want to hold off on this. For now I am just putting the progress into the note file. Keeping current since it works and the times for `gene_set` and `experiment_reference_index` aren't as bad as I thought. Less than an hour for each. → [[2024.03.24 - Multiprocessing on gene_set and wip on experiment_reference_index|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---multiprocessing-on-gene_set-and-wip-on-experiment_reference_index]] 
 
+- [ ] We need to be using a different bashrc in the apptainer, this is causing issues with the env.
 
 ## 2024.03.23
 

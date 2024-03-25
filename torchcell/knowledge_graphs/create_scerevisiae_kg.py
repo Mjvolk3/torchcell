@@ -34,12 +34,14 @@ import uuid
 import hydra
 import time
 import torchcell
+import certifi
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
-# WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
+
+os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
 def get_num_workers():

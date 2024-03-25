@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711251245918
+updated: 1711380849327
 created: 1690514887023m
 ---
 
@@ -12,7 +12,8 @@ created: 1690514887023m
 ## 2024.03.25
 
 - [x] Check on database build. → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/558kg0si?nw=nwusermjvolk3) Killed job because we only have one process working. I think this might be due to the memory spike. The expected time is also 11 hrs before seeing processes reengage which is a sign something is wrong. Restarting.
-- [ ] Check `/var/lib/neo4j/import.report` for "bad" entries, consider rerun. → `There were bad entries which were skipped and logged into /var/lib/neo4j/import.report`, this typically indicates some missing links. In our case we have thousands of these.. `77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30 (global id space)-[PerturbationMemberOf]->858133554c1d66a52aca695ec905be65a7e8c6dfc984fb8d2cc5022f6b76a242 (global id space) referring to missing node 77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30`
+- [x] Check `/var/lib/neo4j/import.report` for "bad" entries, consider rerun. → `There were bad entries which were skipped and logged into /var/lib/neo4j/import.report`, this typically indicates some missing links. In our case we have thousands of these.. `77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30 (global id space)-[PerturbationMemberOf]->858133554c1d66a52aca695ec905be65a7e8c6dfc984fb8d2cc5022f6b76a242 (global id space) referring to missing node 77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30` → Found the issue [[torchcell.adapters.cell_adapter]] we weren't returning lists of perturbation nodes.
+- [x] [[2024.03.25 - Some Cpus Not Utilized Because How We Set Workers|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240325---some-cpus-not-utilized-because-how-we-set-workers]]
 - [ ] Run query to check edges
 - [ ] Run query on all data
 - [ ] Run query for fitness data

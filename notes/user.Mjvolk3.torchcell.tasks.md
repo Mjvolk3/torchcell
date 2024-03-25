@@ -11,10 +11,15 @@ created: 1690514887023m
 
 ## 2024.03.25
 
-- [ ] Check on database build.
+- [x] Check on database build. → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/558kg0si?nw=nwusermjvolk3) Killed job because we only have one process working. I think this might be due to the memory spike. The expected time is also 11 hrs before seeing processes reengage which is a sign something is wrong. Restarting.
+- [ ] Check `/var/lib/neo4j/import.report` for "bad" entries, consider rerun. → `There were bad entries which were skipped and logged into /var/lib/neo4j/import.report`, this typically indicates some missing links. In our case we have thousands of these.. `77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30 (global id space)-[PerturbationMemberOf]->858133554c1d66a52aca695ec905be65a7e8c6dfc984fb8d2cc5022f6b76a242 (global id space) referring to missing node 77e955a91470ec68c354e445391d0ea5c96f6fc3059a917a9e72811ae98b4b30`
+- [ ] Run query to check edges
+- [ ] Run query on all data
+- [ ] Run query for fitness data
 - [ ] Outline. Consider training on `pert` added to table
 - [ ] Harmonize data.
 - [ ] `One_Hot_Gene -->  Set_Net --> Fitness`
+- [ ] Start training.
 - [ ] `FUDT --> Set_Net --> Fitness`
 - [ ] `FUDT --> Set_Net --> Fitness`
 - [ ] Add CaLM embedding

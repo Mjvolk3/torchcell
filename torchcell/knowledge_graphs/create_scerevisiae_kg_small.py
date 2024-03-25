@@ -54,7 +54,6 @@ def get_num_workers():
     return mp.cpu_count()
 
 
-# @capture_output
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
     load_dotenv()

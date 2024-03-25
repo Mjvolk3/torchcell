@@ -30,7 +30,7 @@ notes/.dendron.cache.json
 # ncbi_cli
 ncbi_cli/*
 
-# 
+#
 env/pypy/*
 .env
 
@@ -61,7 +61,7 @@ docs/build/
 # collectri - temporarily used in dir for biocypher learning.
 collectri/
 
-# biocypher 
+# biocypher
 biocypher-out/
 biocypher-log/
 biocypher_warnings.log
@@ -77,5 +77,6 @@ database/slurm/*
 database/biocypher-out/*
 ## some of this should be kept for database startup.
 database/data/*
+database/logs
 
 notes/assets/SEED_abstract_2024.docx

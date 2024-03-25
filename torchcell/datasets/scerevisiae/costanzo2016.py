@@ -1,11 +1,9 @@
-# torchcell/datasets/scerevisiae_/costanzo2016
+# torchcell/datasets/scerevisiae/costanzo2016
 # [[torchcell.datasets.scerevisiae.costanzo2016]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
-import math
 import logging
 import os
-import multiprocessing as mp
 import os.path as osp
 import pickle
 import shutil
@@ -32,12 +30,8 @@ from torchcell.datamodels import (
     BaseExperiment,
     ExperimentReference,
 )
-from torchcell.dataset import ExperimentDataset, post_process
+from torchcell.data import ExperimentDataset, post_process  # FLAG
 from concurrent.futures import ThreadPoolExecutor
-import concurrent.futures
-import multiprocessing
-import functools
-from functools import partial
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -52,11 +46,12 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_costanzo2016",
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -321,15 +316,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         root: str = "data/torchcell/smf_costanzo2016",
         subset_n: int = None,
         batch_size: int = int(1e4),
-        num_workers: int = 1,
+        io_workers: int = 1,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        self.num_workers = num_workers
+        self.io_workers = io_workers
         self.subset_n = subset_n
         self.batch_size = batch_size
-        super().__init__(root, num_workers, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     def download(self):
         path = download_url(self.url, self.raw_dir)
@@ -455,7 +450,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         )
 
         # Create a ThreadPoolExecutor for parallel processing
-        with ThreadPoolExecutor(max_workers=self.num_workers) as executor:
+        with ThreadPoolExecutor(max_workers=self.io_workers) as executor:
             futures = []
             for batch_start in range(0, df.shape[0], self.batch_size):
                 batch_end = min(batch_start + self.batch_size, df.shape[0])
@@ -487,7 +482,6 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 )
 
                 txn.put(f"{index}".encode(), serialized_data)
-
 
     @staticmethod
     def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
@@ -626,20 +620,20 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
 
 
 if __name__ == "__main__":
-    from torchcell.loader import CpuExperimentLoader
     from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e3"),
-        subset_n=int(1e3),
-        num_workers=10,
-        batch_size=int(1e3),
+    dataset = DmfCostanzo2016Dataset(   
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_alt_1"),
+        # subset_n=int(1e6),
+        io_workers=10,
+        batch_size=int(1e4),
     )
-    print(dataset[0])
-    print(type(dataset[0]))
+    # dataset.gene_set = dataset.compute_gene_set()
+    dataset.experiment_reference_index
+    # print(type(dataset[0]))
     # print(dataset[0][0])
     # print(type(dataset[0][0]))
     # print(type(dataset[0][1]))
@@ -650,9 +644,9 @@ if __name__ == "__main__":
     # new_instance = FitnessExperiment.model_validate(serialized_data)
     # print(new_instance == dataset[0]['experiment'])
     # Usage example
-    print(len(dataset))
+    # print(len(dataset))
     # print(dataset.experiment_reference_index)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
+    # data_loader = CpuExperimentLoader(dataset, batch_size=1, io_workers=1)
     # # Fetch and print the first 3 batches
     # for i, batch in enumerate(data_loader):
     #     # batch_transformed = list(map(dataset.transform_item, batch))
@@ -665,21 +659,23 @@ if __name__ == "__main__":
     # print("completed")
 
     ######
-    # # Single mutant fitness
-    # dataset = SmfCostanzo2016Dataset()
-    # print(len(dataset))
-    # # print(dataset[100])
-    # # serialized_data = dataset[100]["experiment"].model_dump()
-    # # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # # print(new_instance == serialized_data)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, num_workers=1)
-    # # Fetch and print the first 3 batches
-    # # for i, batch in enumerate(data_loader):
-    # #     # batch_transformed = list(map(dataset.transform_item, batch))
-    # #     print(batch[0])
-    # #     print("---")
-    # #     if i == 3:
-    # #         break
-    # # # Clean up worker processes
-    # # data_loader.close()
-    # # print("completed")
+    # Single mutant fitness
+    # smf_dataset = SmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
+    # )
+    # print(len(smf_dataset))
+    # print(smf_dataset[100])
+    # serialized_data = smf_dataset[100]["experiment"].model_dump()
+    # new_instance = FitnessExperiment.model_validate(serialized_   data)
+    # print(new_instance == serialized_data)
+    # data_loader = CpuExperimentLoader(smf_dataset, batch_size=1, io_workers=1)
+    # Fetch and print the first 3 batches
+    # for i, batch in enumerate(data_loader):
+    #     # batch_transformed = list(map(smf_dataset.transform_item, batch))
+    #     print(batch[0])
+    #     print("---")
+    #     if i == 3:
+    #         break
+    # # Clean up worker processes
+    # data_loader.close()
+    # print("completed")

@@ -164,3 +164,38 @@ MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
 MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
 RETURN COUNT(e) AS TotalExperiments
 ```
+
+## 2024.03.21 - Time with Limit Size on Simple Query
+
+## 2024.03.21 - Time with Limit Size on Simple Query - LIMIT 100,000
+
+```cypher
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+RETURN e, ref LIMIT 100000
+```
+
+```python
+michaelvolk@M1-MV torchcell % /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/Documents/projects/torchcell/torchce
+ll/data/neo4j_query_raw.py
+data/go/go.obo: fmt(1.2) rel(2024-01-17) 45,869 Terms
+0it [00:00, ?it/s]INFO:__main__:Fetching data from Neo4j...
+INFO:__main__:Data fetched successfully.
+100000it [00:23, 4280.74it/s]
+INFO:__main__:Total records processed: 100
+```
+
+## 2024.03.21 - Time with Limit Size on Simple Query - All Data
+
+``` cypher
+MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+RETURN e, ref
+```
+
+```python
+325988it [01:26, 3889.67it/s]
+20,000,000 / 3500
+```
+
+My estimate is somewhere between `20,000,000 / 3500 / 60 / 60 = 1 hr 7 min` - `20,000,000 / 3500 / 60 / 60 = 1 hr 35 min`.
+
+I think it is worth running this experiment to conclusion... it finished early.

@@ -7,29 +7,14 @@
 from tqdm import tqdm
 import hashlib
 import json
-from biocypher import BioCypher
 from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
-import logging
-from typing import Generator, Set
+from typing import Set
 import torch
-from torchcell.datasets.scerevisiae import (
-    SmfCostanzo2016Dataset,
-    DmfCostanzo2016Dataset,
-)
-from torchcell.loader import CpuExperimentLoader, CpuExperimentLoaderMultiprocessing
-from torchcell.datamodels import Genotype
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from torch_geometric.loader import DataLoader
-from torchcell.dataset import Dataset
+from torchcell.loader import CpuExperimentLoaderMultiprocessing
 from concurrent.futures import ProcessPoolExecutor
-import multiprocessing as mp
-from functools import partial
+from torch_geometric.data import Dataset
 from typing import Callable
 from functools import wraps
-from abc import abstractmethod
-from omegaconf import OmegaConf
-from typing import Any
 
 
 class CellAdapter:
@@ -514,7 +499,6 @@ class CellAdapter:
                 )
             )
         return edges
-        
 
     @data_chunker
     def _environment_experiment_edges(self, data: dict) -> BioCypherEdge:

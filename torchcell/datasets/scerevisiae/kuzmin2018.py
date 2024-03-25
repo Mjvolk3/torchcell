@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.dataset import Dataset, compute_experiment_reference_index
 from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.schema import (
     BaseEnvironment,
@@ -35,8 +34,7 @@ from torchcell.datamodels.schema import (
     ExperimentReference,
 )
 from torchcell.sequence import GeneSet
-from torchcell.dataset import ExperimentDataset, post_process
-
+from torchcell.data import ExperimentDataset, post_process
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -48,11 +46,12 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/smf_kuzmin2018",
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -297,12 +296,13 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/dmf_kuzmin2018",
         subset_n: int = None,
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
         self.subset_n = subset_n
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:
@@ -507,13 +507,14 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/tmf_kuzmin2018",
+        subset_n: int = None,
+        io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
-        subset_n: int = None,
         **kwargs,
     ):
         self.subset_n = subset_n
-        super().__init__(root, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
     def experiment_class(self) -> BaseExperiment:

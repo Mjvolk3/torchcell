@@ -15,30 +15,17 @@ import networkx as nx
 import numpy as np
 import torch
 from pydantic import field_validator
-from torch_geometric.data import Data, InMemoryDataset
-from torch_geometric.utils import add_self_loops, from_networkx, k_hop_subgraph
 from tqdm import tqdm
-from enum import Enum, auto
-from enum import IntEnum, auto
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.datasets.embedding import BaseEmbeddingDataset  # FLAG
 from torch_geometric.data import Dataset
-from typing import Union, Any, Dict
+from typing import Any, Dict
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-import attrs
-import lmdb
-from neo4j import GraphDatabase
-import os
-from tqdm import tqdm
-from attrs import define, field
-import os.path as osp
 from torchcell.data import Neo4jQueryRaw
-from torchcell.sequence import GeneSet, Genome
 
 
 log = logging.getLogger(__name__)
@@ -394,9 +381,7 @@ class Neo4jCellDataset(Dataset):
 def main():
     # genome
     import os.path as osp
-    from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
     from dotenv import load_dotenv
-
     from torchcell.graph import SCerevisiaeGraph
 
     load_dotenv()
@@ -404,16 +389,18 @@ def main():
     query = """
         MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
         WITH e, g, COLLECT(p) AS perturbations
-        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion' AND p.systematic_gene_name IN $gene_set)
-        WITH DISTINCT e
-        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference),
-            (e)<-[:PhenotypeMemberOf]-(phen:Phenotype),
-            (e)<-[:EnvironmentMemberOf]-(env:Environment),
-            (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'}),
-            (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
-        WHERE phen.graph_level = 'global' 
-            AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
-            AND phen.fitness_std < 0.001
+        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
+        WITH DISTINCT e, perturbations
+        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+        MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
+        WHERE phen.graph_level = 'global'
+        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
+        AND phen.fitness_std < 0.005
+        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
+        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+        WITH e, ref, perturbations
+        WHERE ALL(p IN perturbations WHERE p.systematic_gene_name IN $gene_set)
         RETURN e, ref
     """
 
@@ -484,14 +471,13 @@ def main():
     )
 
     ## Data module testing
-    from torchcell.datamodules import CellDataModule
 
-    data_module = CellDataModule(dataset=dataset, batch_size=2, num_workers=8)
-    data_module.setup()
-    for i in tqdm(data_module.train_dataloader()):
-        i
-        pass
-    print("finished")
+    # data_module = CellDataModule(dataset=dataset, batch_size=4, num_workers=8)
+    # data_module.setup()
+    # for batch in tqdm(data_module.train_dataloader()):
+    #     batch
+    #     pass
+    # print("finished")
 
 
 if __name__ == "__main__":

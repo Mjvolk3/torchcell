@@ -120,7 +120,7 @@ def main(cfg: DictConfig) -> None:
         genome=genome,
         graphs=graphs,
         node_embeddings=node_embeddings,
-        cypher_kwargs={"gene_set" : list()}
+        cypher_kwargs={"gene_set" : list(genome.gene_set)}
     )
 
     # Instantiate your data module and model

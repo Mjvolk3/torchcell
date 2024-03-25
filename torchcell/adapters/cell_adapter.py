@@ -65,9 +65,11 @@ class CellAdapter:
                     transformed_data = data_chunk.transform_item(data)
                     data = data_creation_logic(self, transformed_data)
                     if isinstance(data, list):
-                        datas.extend(data)  # Extend if 'data' is a list
+                        # list[BiocypherNode] (e.g. perturbations)
+                        datas.extend(data)
                     else:
-                        datas.append(data)  # Append if 'data' is a single item
+                        # BiocypherNode
+                        datas.append(data)
             return datas
 
         return decorator
@@ -182,13 +184,14 @@ class CellAdapter:
         )
 
     @data_chunker
-    def _perturbation_node(self, data: dict) -> BioCypherNode:
+    def _perturbation_node(self, data: dict) -> list[BioCypherNode]:
         perturbations = data["experiment"].genotype.perturbations
+        nodes = []
         for perturbation in perturbations:
             perturbation_id = hashlib.sha256(
                 json.dumps(perturbation.model_dump()).encode("utf-8")
             ).hexdigest()
-            return BioCypherNode(
+            node = BioCypherNode(
                 node_id=perturbation_id,
                 preferred_id=perturbation.perturbation_type,
                 node_label="perturbation",
@@ -201,6 +204,8 @@ class CellAdapter:
                     "serialized_data": json.dumps(perturbation.model_dump()),
                 },
             )
+            nodes.append(node)
+        return nodes
 
     @data_chunker
     def _environment_node(self, data: dict) -> BioCypherNode:

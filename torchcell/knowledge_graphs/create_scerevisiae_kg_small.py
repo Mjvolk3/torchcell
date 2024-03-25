@@ -160,7 +160,7 @@ def main(cfg) -> str:
 
     # Define dataset-adapter mapping
     dataset_adapter_map = {
-        DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
+        # DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
         SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
         SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
         DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,

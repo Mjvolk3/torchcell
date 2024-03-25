@@ -134,6 +134,10 @@ class CpuExperimentLoaderMultiprocessing:
         self.batch_index += 1
         return batch
 
+    def __len__(self):
+        # Calculate how many batches are needed
+        return (len(self.dataset) + self.batch_size - 1) // self.batch_size
+
     def close(self):
         if not self.is_closed:
             # Send termination signal to each worker

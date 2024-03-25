@@ -3,16 +3,12 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/embedding.py
 # Test file: torchcell/datasets/test_embedding.py
 
-import os.path as osp
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Optional
 
 import torch
 from torch_geometric.data import Data, InMemoryDataset
-from tqdm import tqdm
 
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class BaseEmbeddingDataset(InMemoryDataset, ABC):
@@ -178,14 +174,12 @@ class CombinedEmbedding(BaseEmbeddingDataset):
         Implementation of abstract method.
         """
         # Provide a proper implementation if needed or just pass.
-        pass
 
     def process(self):
         """
         Implementation of abstract method.
         """
         # Provide a proper implementation if needed or just pass.
-        pass
 
 
 if __name__ == "__main__":

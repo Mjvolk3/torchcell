@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/neo4j_fitness_query
 # Test file: tests/torchcell/test_neo4j_fitness_query.py
 
-import attrs
 import lmdb
 from neo4j import GraphDatabase
 import os
@@ -14,16 +13,10 @@ import concurrent.futures
 from typing import Union
 from torchcell.datamodels.schema import FitnessExperiment, FitnessExperimentReference
 import json
-from torchcell.data import ExperimentReferenceIndex, ReferenceIndex
-from torchcell.data import (
-    ExperimentReferenceIndex,
-    serialize_for_hashing,
-    compute_sha256_hash,
-)
+from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from torchcell.sequence import GeneSet
-import pickle
 import logging
 import json
 
@@ -38,7 +31,7 @@ def parallel_hash_computation(data):
     """
     idx, data_item = data
     return idx, compute_sha256_hash(
-        serialize_for_hashing(data_item["reference"].model_dump())
+        json.dumps((data_item["reference"].model_dump()), sort_keys=True)
     )
 
 
@@ -86,11 +79,15 @@ def compute_experiment_reference_index(
 ) -> list[ExperimentReferenceIndex]:
     if num_workers is None or num_workers <= 0:
         # Sequential version
+        log.info("Computing experiment reference index sequentially")
         reference_hashes = [
-            compute_sha256_hash(serialize_for_hashing(data["reference"].model_dump()))
+            compute_sha256_hash(
+                json.dumps(data["reference"].model_dump(), sort_keys=True)
+            )
             for data in dataset
         ]
     else:
+        log.info("Computing experiment reference index in parallel")
         # Parallel version
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
             # Prepare dataset with original indices for parallel processing
@@ -159,7 +156,9 @@ class Neo4jQueryRaw:
     def fetch_data(self):
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
         with driver.session(database="torchcell") as session:
+            log.info("Fetching data from Neo4j...")
             result = session.run(self.query, **self.cypher_kwargs)
+            log.info("Data fetched successfully.")
             for record in result:
                 yield record
 
@@ -180,6 +179,8 @@ class Neo4jQueryRaw:
             txn.put(key, value)
 
     def process(self):
+        log_batch_size = int(1e10)
+
         for i, record in tqdm(enumerate(self.fetch_data())):
             # Extract the serialized data from the 'e' node
             e_node_data = json.loads(record["e"]["serialized_data"])
@@ -208,6 +209,12 @@ class Neo4jQueryRaw:
 
             # Write the serialized dictionary to LMDB
             self.write_to_lmdb(data_key, data_json.encode())
+
+            # Log progress every log_batch_size records
+            # if (i + 1) % log_batch_size == 0:
+            #     log.info(f"Processed {i + 1} records")
+
+        log.info(f"Total records processed: {i + 1}")
 
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()
@@ -382,40 +389,48 @@ class Neo4jQueryRaw:
 # Example usage
 if __name__ == "__main__":
     from torchcell.sequence import GeneSet
+    from dotenv import load_dotenv
 
-    gene_set = GeneSet(["YAL004W", "YAL010C", "YAL011W"])
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+    # TODO change to process and io workers
     neo4j_db = Neo4jQueryRaw(
         uri="bolt://localhost:7687",  # Include the database name here
         username="neo4j",
         password="torchcell",
-        root_dir="data/torchcell/neo4j_query_raw",
+        root_dir="data/torchcell/neo4j_query_test",
         query="""
-        MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
-        WITH e, g, COLLECT(p) AS perturbations
-        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
-        WITH DISTINCT e, perturbations  // Make sure to carry over perturbations here
-        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
-        MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
-        WHERE phen.graph_level = 'global' 
-        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = "tmf")
-        AND phen.fitness_std < 0.005
-        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
-        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
-        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
-        WITH e, ref, perturbations  // Again, ensure perturbations is carried over
-        , [p IN perturbations WHERE p.systematic_gene_name IN $gene_set | p.systematic_gene_name] AS valid_gene_names
-        WHERE SIZE(valid_gene_names) = SIZE(perturbations)
-        RETURN e, ref
+            MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+            RETURN e, ref
         """,
-        max_workers=4,
-        num_workers=4,
-        cypher_kwargs={"gene_set": list(GeneSet(["YAL004W", "YAL010C", "YAL011W"]))},
+        max_workers=10,
+        num_workers=10,
+        cypher_kwargs={"gene_set": list(genome.gene_set)},
     )
     neo4j_db[0]
     neo4j_db[0:2]
-    neo4j_db.phenotype_label_index.keys()
+    # neo4j_db.phenotype_label_index.keys()
+
+    # duplicate_check = {}
     # for i in range(len(neo4j_db)):
-    #     if neo4j_db[i]['experiment'].environment.temperature.value == 26.0:
-    #         print()
-    # MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
-    # LIMIT 100
+    #     perturbations = neo4j_db[i]["experiment"].genotype.perturbations
+    #     sorted_gene_names = sorted(
+    #         [pert.systematic_gene_name for pert in perturbations]
+    #     )
+    #     hash_key = sha256(str(sorted_gene_names).encode()).hexdigest()
+
+    #     if hash_key not in duplicate_check:
+    #         duplicate_check[hash_key] = []
+    #     duplicate_check[hash_key].append(i)
+
+    # # Save the duplicate_check dictionary to a file for inspection
+    # with open("duplicate_check.json", "w") as file:
+    #     json.dump(duplicate_check, file, indent=2)
+
+    # print("Duplicate check complete. Results saved to duplicate_check.json.")
+    # print([(k, v) for k,v in duplicate_check.items() if len(v) > 1])

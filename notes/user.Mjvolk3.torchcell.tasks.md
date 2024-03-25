@@ -9,28 +9,34 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-## 2024.03.24
+## 2024.03.25
 
-- [x] Compute entire dataset, then run `gene_set`. → [[2024.03.24 - Optional Multiprocessing on Batch|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---optional-multiprocessing-on-batch]]
-- [x] Compute entire dataset, then run `experiment_reference_index` → Did analogous as `gene_set` using `CpuExperimentLoaderMultiprocessing`
-- [x] [[2024.03.24 - SSL Apptainer Bug|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240324---ssl-apptainer-bug]]
-- [x] We started on some code to use multiprocessing on batches, but I want to hold off on this. For now I am just putting the progress into the note file. Keeping current since it works and the times for `gene_set` and `experiment_reference_index` aren't as bad as I thought. Less than an hour for each. → [[2024.03.24 - Multiprocessing on gene_set and wip on experiment_reference_index|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---multiprocessing-on-gene_set-and-wip-on-experiment_reference_index]] 
-
-- [ ] We need to be using a different bashrc in the apptainer, this is causing issues with the env.
-
-## 2024.03.23
-
-- [x] Review database build. → [[2024.03.23 - Killed do to slow gene_set and experiment_reference_index|dendron://torchcell/database.apptainer.builds.2024.03.22#20240323---killed-do-to-slow-gene_set-and-experiment_reference_index]]
-- [ ] Parallelizing is necessary for `Delta`, we knew this before 😕, but the slowness on M1 made me think it wasn't worth it. Performance will be better with many cpu and can run serially on local.
-
-when cpus go down we start computing `gene_set`
-
-- [ ] Outline. Consider training on pert.
+- [ ] Check on database build.
+- [ ] Outline. Consider training on `pert` added to table
 - [ ] Harmonize data.
 - [ ] `One_Hot_Gene -->  Set_Net --> Fitness`
 - [ ] `FUDT --> Set_Net --> Fitness`
 - [ ] `FUDT --> Set_Net --> Fitness`
 - [ ] Add CaLM embedding
+
+## 2024.03.24
+
+- [x] Compute entire dataset, then run `gene_set`. → [[2024.03.24 - Optional Multiprocessing on Batch|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---optional-multiprocessing-on-batch]]
+- [x] Compute entire dataset, then run `experiment_reference_index` → Did analogous as `gene_set` using `CpuExperimentLoaderMultiprocessing`
+- [x] [[2024.03.24 - SSL Apptainer Bug|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240324---ssl-apptainer-bug]]
+- [x] We started on some code to use multiprocessing on batches, but I want to hold off on this. For now I am just putting the progress into the note file. Keeping current since it works and the times for `gene_set` and `experiment_reference_index` aren't as bad as I thought. Less than an hour for each. → [[2024.03.24 - Multiprocessing on gene_set and wip on experiment_reference_index|dendron://torchcell/torchcell.dataset.experiment_dataset#20240324---multiprocessing-on-gene_set-and-wip-on-experiment_reference_index]]
+- [x] We need to be using a different `bashrc` in the apptainer, this is causing issues with the env. → for now we just run `conda init` then resource. Not perfect but will work consistently. Will cause need for reinit in terminal
+
+## 2024.03.23
+
+- [x] Review database build. → [[2024.03.23 - Killed do to slow gene_set and experiment_reference_index|dendron://torchcell/database.apptainer.builds.2024.03.22#20240323---killed-do-to-slow-gene_set-and-experiment_reference_index]]
+- 🔲 Parallelizing is necessary for `Delta`, we knew this before 😕, but the slowness on M1 made me think it wasn't worth it. Performance will be better with many cpu and can run serially on local.
+- 🔲 Outline. Consider training on pert.
+- 🔲 Harmonize data.
+- 🔲 `One_Hot_Gene -->  Set_Net --> Fitness`
+- 🔲 `FUDT --> Set_Net --> Fitness`
+- 🔲 `FUDT --> Set_Net --> Fitness`
+- 🔲 Add CaLM embedding
 
 ## 2024.03.22
 

@@ -54,8 +54,7 @@ def get_num_workers():
     return mp.cpu_count()
 
 
-# @capture_output
-@hydra.main(version_base=None, config_path="conf", config_name="kg_small")
+@hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

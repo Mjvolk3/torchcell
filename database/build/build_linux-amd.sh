@@ -21,7 +21,4 @@ cd /var/lib/neo4j
 chmod +x "${bash_script_path}"
 /bin/bash -c "${bash_script_path}"
 
-dir_path=$(dirname "${bash_script_path_cleaned}")
-docker exec tc-neo4j /bin/bash -c "chmod a-w '${dir_path}'"
-
 echo "Build and run process completed."

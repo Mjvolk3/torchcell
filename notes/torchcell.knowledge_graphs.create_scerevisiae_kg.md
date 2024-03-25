@@ -2,7 +2,7 @@
 id: cam9jhzi7brp6zk6228dh98
 title: Create_scerevisiae_kg
 desc: ''
-updated: 1711380834476
+updated: 1711380970876
 created: 1705569780034
 ---
 
@@ -118,6 +118,6 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 
 ## 2024.03.25 - Some Cpus Not Utilized Because How We Set Workers
 
-- I think that we just set process workers to max, then threads to some percentage of process workers.
+I think that we just set process workers to max, then threads to some percentage of process workers.
 
 ![](./assets/images/torchcell.knowledge_graphs.create_scerevisiae_kg.md.system-cpu-utilization-some-cpus-not-utilized.png)

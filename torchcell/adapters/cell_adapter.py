@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter
 # Test file: tests/torchcell/adapters/test_cell_adapter.py
 
-
 from tqdm import tqdm
 import hashlib
 import json

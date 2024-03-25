@@ -34,14 +34,14 @@ import hashlib
 import uuid
 import hydra
 import time
+import certifi
 
-print("Script file name:", __file__)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
-# WARNING do not print in this file! This file is used to generate a path to a bash script and printing to stdout will break the bash script path
+os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
 def get_num_workers():
@@ -92,21 +92,13 @@ def main(cfg) -> str:
     )
     wandb.log({"biocypher-out": bc._output_directory.split("/")[-1]})
     # Partition workers
-    num_workers = get_num_workers()
     io_workers = math.ceil(
         wandb.config.adapters["io_process_worker_ratio"] * num_workers
     )
-    compute_workers = num_workers - io_workers
     chunk_size = int(wandb.config.adapters["chunk_size"])
     loader_batch_size = int(wandb.config.adapters["loader_batch_size"])
 
-    wandb.log(
-        {
-            "num_workers": num_workers,
-            "io_workers": io_workers,
-            "compute_workers": compute_workers,
-        }
-    )
+    wandb.log({"num_workers": num_workers, "io_workers": io_workers})
 
     # Define dataset configurations
     dataset_configs = [
@@ -170,7 +162,7 @@ def main(cfg) -> str:
     adapters = [
         dataset_adapter_map[type(dataset)](
             dataset=dataset,
-            compute_workers=compute_workers,
+            compute_workers=num_workers,
             io_workers=io_workers,
             chunk_size=chunk_size,
             loader_batch_size=loader_batch_size,

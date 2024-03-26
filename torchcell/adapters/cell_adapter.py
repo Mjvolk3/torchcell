@@ -14,6 +14,10 @@ from concurrent.futures import ProcessPoolExecutor
 from torch_geometric.data import Dataset
 from typing import Callable
 from functools import wraps
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class CellAdapter:
@@ -84,33 +88,60 @@ class CellAdapter:
     # Nodes put here for now since we are trying to generalize as much as possible to reduce code here.
 
     def get_nodes(self):
+        print("Running: self._get_experiment_reference_nodes()")
         yield from self._get_experiment_reference_nodes()
+        print("Running: self._get_genome_nodes()")
         yield from self._get_genome_nodes()
+        print("Running: self.get_data_by_type(self._experiment_node)")
         yield from self.get_data_by_type(self._experiment_node)
+        print("Running: self.get_data_by_type(self._genotype_node)")
         yield from self.get_data_by_type(self._genotype_node)
+        print("Running: self.get_data_by_type(self._perturbation_node)")
         yield from self.get_data_by_type(self._perturbation_node)
+        print("Running: self.get_data_by_type(self._environment_node)")
         yield from self.get_data_by_type(self._environment_node)
+        print("Running: self._get_reference_environment_nodes()")
         yield from self._get_reference_environment_nodes()
+        print("Running: self.get_data_by_type(self._media_node)")
         yield from self.get_data_by_type(self._media_node)
+        print("Running: self._get_reference_media_nodes()")
         yield from self._get_reference_media_nodes()
+        print("Running: self.get_data_by_type(self._temperature_node)")
         yield from self.get_data_by_type(self._temperature_node)
+        print("Running: self._get_reference_temperature_nodes()")
         yield from self._get_reference_temperature_nodes()
+        print("Running: self.get_data_by_type(self._phenotype_node)")
         yield from self.get_data_by_type(self._phenotype_node)
+        print("Running: self._get_reference_phenotype_nodes()")
         yield from self._get_reference_phenotype_nodes()
+        print("Running: self.get_dataset_nodes()")
         yield from self.get_dataset_nodes()
+        print("Finished: get_nodes")
 
     def get_edges(self):
+        print("Running: self.get_reference_dataset_edges()")
         yield from self.get_reference_dataset_edges()
+        print("Running: self.get_data_by_type(self._experiment_dataset_edge)")
         yield from self.get_data_by_type(self._experiment_dataset_edge)
+        print("Running: self._get_reference_experiment_edges()")
         yield from self._get_reference_experiment_edges()
+        print("Running: self.get_data_by_type(self._genotype_experiment_edge)")
         yield from self.get_data_by_type(self._genotype_experiment_edge)
+        print("Running: self.get_data_by_type(self._perturbation_genotype_edges)")
         yield from self.get_data_by_type(self._perturbation_genotype_edges)
+        print("Running: self.get_data_by_type(self._environment_experiment_edges)")
         yield from self.get_data_by_type(self._environment_experiment_edges)
+        print("Running: self._get_environment_experiment_ref_edges()")
         yield from self._get_environment_experiment_ref_edges()
+        print("Running: self.get_data_by_type(self._phenotype_experiment_edges)")
         yield from self.get_data_by_type(self._phenotype_experiment_edges)
+        print("Running: self.get_data_by_type(self._media_environment_edge)")
         yield from self.get_data_by_type(self._media_environment_edge)
+        print("Running: self.get_data_by_type(self._temperature_environment_edge)")
         yield from self.get_data_by_type(self._temperature_environment_edge)
+        print("Running: self._get_genome_edges()")
         yield from self._get_genome_edges()
+        print("Finished: get_edges")
 
     # nodes
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:

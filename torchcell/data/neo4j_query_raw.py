@@ -127,7 +127,7 @@ class Neo4jQueryRaw:
     password: str
     root_dir: str
     query: str
-    max_workers: int = None
+    io_workers: int = None
     num_workers: int = None
     _experiment_reference_index: ExperimentReferenceIndex = field(
         init=False, default=None, repr=False
@@ -215,6 +215,7 @@ class Neo4jQueryRaw:
             #     log.info(f"Processed {i + 1} records")
 
         log.info(f"Total records processed: {i + 1}")
+        
 
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()
@@ -260,7 +261,7 @@ class Neo4jQueryRaw:
         data_keys = [f"data_{i}".encode() for i in range(start, stop, step)]
 
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.max_workers
+            max_workers=self.io_workers
         ) as executor:
             records = list(executor.map(self._get_record, data_keys))
 
@@ -390,6 +391,7 @@ class Neo4jQueryRaw:
 if __name__ == "__main__":
     from torchcell.sequence import GeneSet
     from dotenv import load_dotenv
+    from hashlib import sha256
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -408,7 +410,7 @@ if __name__ == "__main__":
             MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
             RETURN e, ref
         """,
-        max_workers=10,
+        io_workers=10,
         num_workers=10,
         cypher_kwargs={"gene_set": list(genome.gene_set)},
     )
@@ -416,21 +418,21 @@ if __name__ == "__main__":
     neo4j_db[0:2]
     # neo4j_db.phenotype_label_index.keys()
 
-    # duplicate_check = {}
-    # for i in range(len(neo4j_db)):
-    #     perturbations = neo4j_db[i]["experiment"].genotype.perturbations
-    #     sorted_gene_names = sorted(
-    #         [pert.systematic_gene_name for pert in perturbations]
-    #     )
-    #     hash_key = sha256(str(sorted_gene_names).encode()).hexdigest()
+    duplicate_check = {}
+    for i in tqdm(range(len(neo4j_db))):
+        perturbations = neo4j_db[i]["experiment"].genotype.perturbations
+        sorted_gene_names = sorted(
+            [pert.systematic_gene_name for pert in perturbations]
+        )
+        hash_key = sha256(str(sorted_gene_names).encode()).hexdigest()
 
-    #     if hash_key not in duplicate_check:
-    #         duplicate_check[hash_key] = []
-    #     duplicate_check[hash_key].append(i)
+        if hash_key not in duplicate_check:
+            duplicate_check[hash_key] = []
+        duplicate_check[hash_key].append(i)
 
-    # # Save the duplicate_check dictionary to a file for inspection
-    # with open("duplicate_check.json", "w") as file:
-    #     json.dump(duplicate_check, file, indent=2)
+    # Save the duplicate_check dictionary to a file for inspection
+    with open("duplicate_check.json", "w") as file:
+        json.dump(duplicate_check, file, indent=2)
 
-    # print("Duplicate check complete. Results saved to duplicate_check.json.")
-    # print([(k, v) for k,v in duplicate_check.items() if len(v) > 1])
+    print("Duplicate check complete. Results saved to duplicate_check.json.")
+    print([(k, v) for k, v in duplicate_check.items() if len(v) > 1])

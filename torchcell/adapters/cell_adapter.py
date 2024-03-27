@@ -510,7 +510,7 @@ class CellAdapter:
         ).hexdigest()
         experiment_ref_id = hashlib.sha256(
             json.dumps(data["reference"].model_dump()).encode("utf-8")
-        ).hexdigest
+        ).hexdigest()
         edge = BioCypherEdge(
             source_id=experiment_ref_id,
             target_id=experiment_id,

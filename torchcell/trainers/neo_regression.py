@@ -235,35 +235,37 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
-    def test_step(self, batch, batch_idx):
-        # Extract the batch vector
-        x, y, batch_vector = (
-            batch[self.x_name],
-            batch[self.target],
-            batch[self.x_batch_name],
-        )
-        y_hat = self(x, batch_vector)
-        loss = self.loss(y_hat, y)
-        batch_size = batch_vector[-1].item() + 1
-        self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
-        self.test_metrics(y_hat, y)
-        # Logging the correlation coefficients
-        self.log(
-            "test_pearson",
-            self.pearson_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            "test_spearman",
-            self.spearman_corr(y_hat, y),
-            batch_size=batch_size,
-            sync_dist=True,
-        )
 
-    def on_test_epoch_end(self):
-        self.log_dict(self.test_metrics.compute(), sync_dist=True)
-        self.test_metrics.reset()
+    # TODO we shouldn't need a test loop, since we want to do best model selection
+    # def test_step(self, batch, batch_idx):
+    #     # Extract the batch vector
+    #     x, y, batch_vector = (
+    #         batch[self.x_name],
+    #         batch[self.target],
+    #         batch[self.x_batch_name],
+    #     )
+    #     y_hat = self(x, batch_vector)
+    #     loss = self.loss(y_hat, y)
+    #     batch_size = batch_vector[-1].item() + 1
+    #     self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
+    #     self.test_metrics(y_hat, y)
+    #     # Logging the correlation coefficients
+    #     self.log(
+    #         "test_pearson",
+    #         self.pearson_corr(y_hat, y),
+    #         batch_size=batch_size,
+    #         sync_dist=True,
+    #     )
+    #     self.log(
+    #         "test_spearman",
+    #         self.spearman_corr(y_hat, y),
+    #         batch_size=batch_size,
+    #         sync_dist=True,
+    #     )
+
+    # def on_test_epoch_end(self):
+    #     self.log_dict(self.test_metrics.compute(), sync_dist=True)
+    #     self.test_metrics.reset()
 
     def configure_optimizers(self):
         params = list(self.model.parameters())

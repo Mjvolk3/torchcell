@@ -25,7 +25,6 @@ from torchcell.graph import SCerevisiaeGraph
 import wandb
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import (
-    CellDataset,
     FungalUpDownTransformerDataset,
     NucleotideTransformerDataset,
     OneHotGeneDataset,
@@ -34,7 +33,7 @@ from torchcell.datasets import (
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
+from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.trainers import RegressionTask
 
 # from torchcell.trainers import RegressionTask
@@ -114,20 +113,24 @@ def main(cfg: DictConfig) -> None:
     if not graphs:
         graphs = None
 
+    deduplicator = ExperimentDeduplicator()
     cell_dataset = Neo4jCellDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/neo4j"),
+        root=osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf-001"),
         query=query,
         genome=genome,
-        graphs=graphs,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         node_embeddings=node_embeddings,
-        cypher_kwargs={"gene_set" : list(genome.gene_set)}
+        deduplicator=deduplicator,
     )
 
     # Instantiate your data module and model
     data_module = CellDataModule(
         dataset=cell_dataset,
-        batch_size=wandb.config.data_module["batch_size"],
-        num_workers=wandb.config.data_module["num_workers"],
+        cache_dir="experiments/smf-dmf-tmf-001/data_module_cache",
+        batch_size=8,
+        random_seed=42,
+        num_workers=4,
+        pin_memory=False,
     )
     input_dim = cell_dataset.num_features["gene"]
 

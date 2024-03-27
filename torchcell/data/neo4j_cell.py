@@ -672,8 +672,9 @@ def main():
         model_name="species_downstream",
     )
     deduplicator = ExperimentDeduplicator()
+
     dataset = Neo4jCellDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/neo4j"),
+        root=osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf-001"),
         query=query,
         genome=genome,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
@@ -683,21 +684,21 @@ def main():
         },
         deduplicator=deduplicator,
     )
-
+    print(len(dataset))
     ## Data module testing
 
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir="experiments/smf-dmf-tmf-001/data_module_cache",
-        batch_size=32,
+        batch_size=8,
         random_seed=42,
-        num_workers=10,
+        num_workers=4,
         pin_memory=False,
     )
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
+        # print()
         break
-        pass
     print("finished")
 
 

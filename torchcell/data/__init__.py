@@ -7,9 +7,11 @@ from .experiment_dataset import (
     compute_experiment_reference_index_sequential,
     compute_experiment_reference_index_parallel,
 )
-
+from .neo4j_cell import ExperimentDeduplicator
 
 data = ["ExperimentReferenceIndex", "ReferenceIndex", "compute_md5_hash"]
+
+deduplicators = ["ExperimentDeduplicator"]
 
 dataset = ["ExperimentDataset, " "Neo4jQueryRaw", "Neo4jCellDataset"]
 
@@ -19,4 +21,4 @@ functions = [
     "post_process",
 ]
 
-__all__ = data + dataset
+__all__ = data + deduplicators + dataset

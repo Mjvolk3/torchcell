@@ -80,3 +80,6 @@ database/data/*
 database/logs
 
 notes/assets/SEED_abstract_2024.docx
+
+# files
+gene_set.json

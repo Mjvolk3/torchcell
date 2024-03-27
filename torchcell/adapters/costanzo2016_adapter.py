@@ -334,18 +334,18 @@ if __name__ == "__main__":
     #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
     # )
     dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_subset_n_1e3"),
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e3"),
         subset_n=int(1e3),
     )
     adapter = DmfCostanzo2016Adapter(
         dataset=dataset,
-        compute_workers=1,
-        io_workers=1,
-        chunk_size=int(2 * 1e2),
-        loader_batch_size=int(1e2),
+        compute_workers=10,
+        io_workers=10,
+        chunk_size=100,
+        loader_batch_size=10,
     )
     bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
+    bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
     bc.summary()

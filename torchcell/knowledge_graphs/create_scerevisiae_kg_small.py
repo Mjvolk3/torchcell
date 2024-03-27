@@ -95,7 +95,7 @@ def main(cfg) -> str:
     io_workers = math.ceil(
         wandb.config.adapters["io_to_total_worker_ratio"] * num_workers
     )
-    compute_workers = math.ceil(
+    process_workers = math.ceil(
         wandb.config.adapters["process_to_total_worker_ratio"] * num_workers
     )
     chunk_size = int(wandb.config.adapters["chunk_size"])
@@ -105,7 +105,7 @@ def main(cfg) -> str:
         {
             "num_workers": num_workers,
             "io_workers": io_workers,
-            "compute_workers": compute_workers,
+            "process_workers": process_workers,
             "chunk_size": chunk_size,
             "loader_batch_size": loader_batch_size,
         }
@@ -173,7 +173,7 @@ def main(cfg) -> str:
     adapters = [
         dataset_adapter_map[type(dataset)](
             dataset=dataset,
-            compute_workers=compute_workers,
+            process_workers=process_workers,
             io_workers=io_workers,
             chunk_size=chunk_size,
             loader_batch_size=loader_batch_size,

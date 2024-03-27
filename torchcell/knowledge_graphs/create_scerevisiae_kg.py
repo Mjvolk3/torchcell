@@ -157,7 +157,7 @@ def main(cfg) -> str:
     adapters = [
         dataset_adapter_map[type(dataset)](
             dataset=dataset,
-            compute_workers=num_workers,
+            process_workers=num_workers,
             io_workers=io_workers,
             chunk_size=chunk_size,
             loader_batch_size=loader_batch_size,

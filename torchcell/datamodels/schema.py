@@ -150,6 +150,14 @@ class SgaAllelePerturbation(AllelePerturbation, ModelStrict):
     allele_perturbation_type: str = "SGA"
 
 
+class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
+    description: str = "Mean deletion perturbation representing duplicate experiments"
+    deletion_type: str = "mean"
+    num_duplicates: int = Field(
+        description="Number of duplicate experiments used to compute the mean and std."
+    )
+
+
 SgaPerturbationType = Union[
     SgaKanMxDeletionPerturbation,
     SgaNatMxDeletionPerturbation,
@@ -159,7 +167,7 @@ SgaPerturbationType = Union[
     SgaAllelePerturbation,
 ]
 
-GenePerturbationType = Union[SgaPerturbationType]
+GenePerturbationType = Union[SgaPerturbationType, MeanDeletionPerturbation]
 
 
 class Genotype(ModelStrict):
@@ -226,7 +234,7 @@ class Temperature(BaseModel):
     value: float  # Renamed from scalar to value
     unit: str = "Celsius"  # Simplified unit string
 
-    @field_validator("value", mode="after") 
+    @field_validator("value", mode="after")
     @classmethod
     def check_temperature(cls, v):
         if v < -273:
@@ -275,7 +283,9 @@ class BaseExperiment(ModelStrict):
     environment: BaseEnvironment
     phenotype: BasePhenotype
 
+
 # TODO, we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j
+
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
     reference_phenotype: FitnessPhenotype

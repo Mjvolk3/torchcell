@@ -24,7 +24,7 @@ class CellAdapter:
     def __init__(
         self,
         dataset: Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
@@ -35,7 +35,7 @@ class CellAdapter:
                 "Our recommendation are chunk_size 2-3 order of magnitude in size."
             )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -45,7 +45,7 @@ class CellAdapter:
             self.dataset[i : i + self.chunk_size]
             for i in range(0, len(self.dataset), self.chunk_size)
         ]
-        with ProcessPoolExecutor(max_workers=self.compute_workers) as executor:
+        with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
             futures = [
                 executor.submit(chunk_processing_func, chunk) for chunk in data_chunks
             ]

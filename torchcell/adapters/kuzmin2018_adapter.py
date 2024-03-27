@@ -18,16 +18,16 @@ class SmfKuzmin2018Adapter(CellAdapter):
     def __init__(
         self,
         dataset: SmfKuzmin2018Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         super().__init__(
-            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+            dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -37,16 +37,16 @@ class DmfKuzmin2018Adapter(CellAdapter):
     def __init__(
         self,
         dataset: DmfKuzmin2018Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         super().__init__(
-            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+            dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -56,16 +56,16 @@ class TmfKuzmin2018Adapter(CellAdapter):
     def __init__(
         self,
         dataset: TmfKuzmin2018Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         super().__init__(
-            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+            dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    compute_workers = 5
+    process_workers = 5
     io_workers = 5
 
     ## Smf
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
     )
     adapter = SmfKuzmin2018Adapter(
-        dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
+        dataset=dataset, process_workers=process_workers, io_workers=io_workers
     )
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     )
     dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
     adapter = DmfKuzmin2018Adapter(
-        dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
+        dataset=dataset, process_workers=process_workers, io_workers=io_workers
     )
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     )
     dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
     adapter = TmfKuzmin2018Adapter(
-        dataset=dataset, compute_workers=compute_workers, io_workers=io_workers
+        dataset=dataset, process_workers=process_workers, io_workers=io_workers
     )
     bc.show_ontology_structure()
     bc.write_nodes(adapter.get_nodes())

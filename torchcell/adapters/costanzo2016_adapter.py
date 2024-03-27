@@ -29,16 +29,16 @@ class SmfCostanzo2016Adapter(CellAdapter):
     def __init__(
         self,
         dataset: SmfCostanzo2016Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         super().__init__(
-            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+            dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -48,16 +48,16 @@ class DmfCostanzo2016Adapter(CellAdapter):
     def __init__(
         self,
         dataset: DmfCostanzo2016Dataset,
-        compute_workers: int,
+        process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         super().__init__(
-            dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+            dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         self.dataset = dataset
-        self.compute_workers = compute_workers
+        self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
@@ -67,16 +67,16 @@ class DmfCostanzo2016Adapter(CellAdapter):
 #     def __init__(
 #         self,
 #         dataset: DmfCostanzo2016Dataset,
-#         compute_workers: int,
+#         process_workers: int,
 #         io_workers: int,
 #         chunk_size: int = int(1e4),
 #         loader_batch_size: int = int(1e3),
 #     ):
 #         super().__init__(
-#             dataset, compute_workers, io_workers, chunk_size, loader_batch_size
+#             dataset, process_workers, io_workers, chunk_size, loader_batch_size
 #         )
 #         self.dataset = dataset
-#         self.compute_workers = compute_workers
+#         self.process_workers = process_workers
 #         self.io_workers = io_workers
 #         self.chunk_size = chunk_size
 #         self.loader_batch_size = loader_batch_size
@@ -310,10 +310,10 @@ if __name__ == "__main__":
     # )
     # num_workers = mp.cpu_count()
     # io_workers = math.ceil(0.2 * num_workers)
-    # compute_workers = num_workers - io_workers
+    # process_workers = num_workers - io_workers
     # adapter = SmfCostanzo2016Adapter(
     #     dataset=dataset,
-    #     compute_workers=6,
+    #     process_workers=6,
     #     io_workers=4,
     #     chunk_size=int(1e4),
     #     loader_batch_size=int(1e4),
@@ -339,7 +339,7 @@ if __name__ == "__main__":
     )
     adapter = DmfCostanzo2016Adapter(
         dataset=dataset,
-        compute_workers=10,
+        process_workers=10,
         io_workers=10,
         chunk_size=100,
         loader_batch_size=10,

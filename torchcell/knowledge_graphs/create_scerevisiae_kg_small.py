@@ -124,13 +124,13 @@ def main(cfg) -> str:
         },
         {
             "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_5e5"),
             "kwargs": {
-                "subset_n": int(1e6),
+                "subset_n": int(5e5),
                 "io_workers": num_workers,
                 "batch_size": int(1e3),
             },
-        }
+        },
     ]
 
     # Instantiate datasets

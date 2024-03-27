@@ -59,12 +59,13 @@ def plot_mean_std_with_specified_std(
 
 
 def main():
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell import datamodels
+
     wandb.init(mode="online", project="tcdb-explore")
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()
@@ -79,8 +80,8 @@ def main():
         password="torchcell",
         root_dir="data/torchcell/neo4j_query_raw_full",
         query=query,
-        max_workers=10,
-        num_workers=6,
+        io_workers=10,
+        num_workers=10,
         cypher_kwargs={"gene_set": list(genome.gene_set)},
     )
 
@@ -98,9 +99,13 @@ def main():
 
     # After you've built your duplicate_check dictionary
     duplicate_domain = [(k, v) for k, v in duplicate_check.items() if len(v) > 1]
-    print(len(duplicate_domain))
+    for i, (k, v) in enumerate(duplicate_domain):
+        print()
 
-    save_path = osp.join(ASSET_IMAGES_DIR, "mean_std_with_specified_std_large_db.png")
+    save_path = osp.join(
+        ASSET_IMAGES_DIR,
+        "overlap_domain_scerevisiae_small_kg-mean_std_with_specified_std.png",
+    )
     plot_mean_std_with_specified_std(
         neo4j_db, duplicate_domain, specified_std_value=0.10, save_path=save_path
     )

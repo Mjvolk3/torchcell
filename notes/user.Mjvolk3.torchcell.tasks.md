@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711499130910
+updated: 1711579378344
 created: 1690514887023m
 ---
 
@@ -11,15 +11,22 @@ created: 1690514887023m
 
 ## 2024.03.27
 
-- [ ] Try 20% decrease on `tcdb` chunk size
-- [ ]
+- [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.tcdb.docker_v_m1_study_001
+- [x] Taking long on M1 with small chunk size, but we should likely wait it out. → was not going to finish so killed.
+- [ ] I don't know if we need the phenotype_label_index yet... and it might take too much time to compute with full dataset. For now try to avoid using it.
+- [ ] Test `TmfKuzmin2018` adapter no docker.
+- [ ] If we cannot get docker container to work, manually transfer successful M1 run.
+- [ ] learning rate scheduler.
+- [ ] Hyperband for speeding up neural architecture search.
+- [ ] We wan't to be able to down sample `1e3`, `1e4`, `1e5`, `1e6` then total which is about `2e7`. Last time we learned that evening training on `1e6` can be difficult. To reduce this difficult we hare starting with embeddings of only one type and using smaller datasets. → Instead of changing query, just going to downsample from query.
+- [ ] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible.
 
 ## 2024.03.26
 
 - [x] Rebuild `DmfCostanzo2016` nodes only, on `Delta` to investigate down cpu workers → Uses multiprocessing during duration of run.
 - [x] Rebuild `DmfCostanzo2016` nodes and edges on `Delta` to investigate down cpu workers → Looks like it starts to use multiprocessing during the beginning of the `write_edges`, but the starts using only a single process. → Couldn't easily identify the issue so did some light rewriting of the the adapter for this dataset, commented out, and reverted to using the [[torchcell.adapters.cell_adapter]]. → Started another `Delta` run with this with the belief that the issue is somehow in the modified class.
 - [x] [[2024.03.26 - Uncertain if is is Feasible to Keep a Base Class|dendron://torchcell/torchcell.datamodules.cell#20240326---uncertain-if-is-is-feasible-to-keep-a-base-class]]
-- [ ] `DmfCostanzo2016` adapter with [[torchcell.adapters.cell_adapter]] base class update? → `write_nodes` is looking roughly 3hr instead of 2hr.
+- [ ] `DmfCostanzo2016` adapter with [[torchcell.adapters.cell_adapter]] base class update? → `write_nodes` is looking roughly 3hr instead of 2hr... started with [[torchcell.adapters.kuzmin2018_adapter]] but makes more sense to just run [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] outside of docker container.
 
 - [ ] CellDataModule
 

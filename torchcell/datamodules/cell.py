@@ -9,6 +9,10 @@ import lightning as L
 import torch
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
 
 
 class CellDataModule(L.LightningDataModule):
@@ -45,13 +49,27 @@ class CellDataModule(L.LightningDataModule):
         # Check if cached indices exist
         cached_indices_file = os.path.join(self.cache_dir, "cached_indices.json")
         if os.path.exists(cached_indices_file):
-            # Load cached indices from file
-            with open(cached_indices_file, "r") as f:
-                cached_data = json.load(f)
-                train_indices = cached_data["train_indices"]
-                val_indices = cached_data["val_indices"]
-                test_indices = cached_data["test_indices"]
+            try:
+                # Load cached indices from file
+                with open(cached_indices_file, "r") as f:
+                    log.info(f"Loading cached indices from {cached_indices_file}")
+                    cached_data = json.load(f)
+                    train_indices = cached_data["train_indices"]
+                    val_indices = cached_data["val_indices"]
+                    test_indices = cached_data["test_indices"]
+                    phenotype_label_index = (
+                        self.dataset.phenotype_label_index
+                    )  # Assign the phenotype_label_index
+            except json.decoder.JSONDecodeError:
+                # If JSON decoding fails, regenerate the cached indices
+                print(
+                    "Cached indices JSON is corrupted. Regenerating cached indices..."
+                )
+                os.remove(cached_indices_file)
+                self.setup(stage)
+                return
         else:
+            log.info("Generating indices for train, val, and test sets...")
             # Get the phenotype label index from the dataset
             phenotype_label_index = self.dataset.phenotype_label_index
 

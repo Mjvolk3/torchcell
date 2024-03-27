@@ -123,8 +123,11 @@ class CellAdapter:
         yield from self.get_reference_dataset_edges()
         print("Running: self.get_data_by_type(self._experiment_dataset_edge)")
         yield from self.get_data_by_type(self._experiment_dataset_edge)
-        print("Running: self._get_reference_experiment_edges()")
-        yield from self._get_reference_experiment_edges()
+        # BUG no multiprocessing
+        # print("Running: self._get_reference_experiment_edges()")
+        # yield from self._get_reference_experiment_edges()
+        print("Running: self.get_data_by_type(self._get_reference_experiment_edges)")
+        yield from self.get_data_by_type(self._reference_experiment_edge)
         print("Running: self.get_data_by_type(self._genotype_experiment_edge)")
         yield from self.get_data_by_type(self._genotype_experiment_edge)
         print("Running: self.get_data_by_type(self._perturbation_genotype_edges)")
@@ -479,25 +482,41 @@ class CellAdapter:
         )
         return edge
 
-    def _get_reference_experiment_edges(self) -> list[BioCypherEdge]:
-        edges = []
-        for data in tqdm(self.dataset.experiment_reference_index):
-            dataset_subset = self.dataset[torch.tensor(data.index)]
-            experiment_ref_id = hashlib.sha256(
-                json.dumps(data.reference.model_dump()).encode("utf-8")
-            ).hexdigest()
-            for i, data in enumerate(dataset_subset):
-                data = self.dataset.transform_item(data)
-                experiment_id = hashlib.sha256(
-                    json.dumps(data["experiment"].model_dump()).encode("utf-8")
-                ).hexdigest()
-                edge = BioCypherEdge(
-                    source_id=experiment_ref_id,
-                    target_id=experiment_id,
-                    relationship_label="experiment reference of",
-                )
-                edges.append(edge)
-        return edges
+    # BUG This doesn't use multiprocessing and is therefore extremely slow.
+    # def _get_reference_experiment_edges(self) -> list[BioCypherEdge]:
+    #     edges = []
+    #     for data in tqdm(self.dataset.experiment_reference_index):
+    #         dataset_subset = self.dataset[torch.tensor(data.index)]
+    #         experiment_ref_id = hashlib.sha256(
+    #             json.dumps(data.reference.model_dump()).encode("utf-8")
+    #         ).hexdigest()
+    #         for i, data in enumerate(dataset_subset):
+    #             data = self.dataset.transform_item(data)
+    #             experiment_id = hashlib.sha256(
+    #                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
+    #             ).hexdigest()
+    #             edge = BioCypherEdge(
+    #                 source_id=experiment_ref_id,
+    #                 target_id=experiment_id,
+    #                 relationship_label="experiment reference of",
+    #             )
+    #             edges.append(edge)
+    #     return edges
+
+    @data_chunker
+    def _reference_experiment_edge(self, data: dict) -> BioCypherEdge:
+        experiment_id = hashlib.sha256(
+            json.dumps(data["experiment"].model_dump()).encode("utf-8")
+        ).hexdigest()
+        experiment_ref_id = hashlib.sha256(
+            json.dumps(data["reference"].model_dump()).encode("utf-8")
+        ).hexdigest
+        edge = BioCypherEdge(
+            source_id=experiment_ref_id,
+            target_id=experiment_id,
+            relationship_label="experiment reference of",
+        )
+        return edge
 
     @data_chunker
     def _genotype_experiment_edge(self, data: dict) -> BioCypherEdge:

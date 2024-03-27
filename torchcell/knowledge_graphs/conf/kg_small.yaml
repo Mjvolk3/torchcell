@@ -1,7 +1,7 @@
 # torchcell/knowledge_graphs/conf/kg_small.yaml
 # [[torchcell.knowledge_graphs.conf.kg_small]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg_small.yaml
- 
+
 defaults:
   - default
   - _self_ # append to end for overriding duplicate configs in default

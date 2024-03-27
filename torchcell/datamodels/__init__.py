@@ -27,6 +27,7 @@ from .schema import (
     SgaSuppressorAllelePerturbation,
     AllelePerturbation,
     SgaAllelePerturbation,
+    MeanDeletionPerturbation,
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
@@ -56,8 +57,7 @@ ontology_models = [
     "SgaSuppressorAllelePerturbation",
     "AllelePerturbation",
     "SgaAllelePerturbation",
+    "MeanDeletionPerturbation",
 ]
 
 __all__ = core_models + ontology_models
-
-

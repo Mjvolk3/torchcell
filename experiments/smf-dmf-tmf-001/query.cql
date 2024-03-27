@@ -16,3 +16,4 @@ MATCH (ref_env)<-[:TemperatureMemberOf]-(ref_t:Temperature {value: 30})
 WITH e, ref, perturbations
 WHERE ALL(p IN perturbations WHERE p.systematic_gene_name IN $gene_set)
 RETURN e, ref
+// RETURN e, ref LIMIT 100000

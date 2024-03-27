@@ -9,26 +9,54 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
-
+import hashlib
 import lmdb
 import networkx as nx
 import numpy as np
 import torch
 from pydantic import field_validator
 from tqdm import tqdm
-from torchcell.datasets.embedding import BaseEmbeddingDataset  # FLAG
+from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from typing import Any, Dict
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-
+from torchcell.datamodels import (
+    BaseEnvironment,
+    Genotype,
+    FitnessExperiment,
+    FitnessExperimentReference,
+    FitnessPhenotype,
+    Media,
+    ReferenceGenome,
+    SgaKanMxDeletionPerturbation,
+    SgaNatMxDeletionPerturbation,
+    SgaDampPerturbation,
+    SgaSuppressorAllelePerturbation,
+    SgaTsAllelePerturbation,
+    Temperature,
+    BaseExperiment,
+    ExperimentReference,
+    MeanDeletionPerturbation,
+    ExperimentReference,
+)
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
-
+from abc import ABC, abstractmethod
 
 log = logging.getLogger(__name__)
+
+
+class Deduplicator(ABC):
+    @abstractmethod
+    def duplicate_check(self, data) -> dict[str, list[int]]: ...
+
+    @abstractmethod
+    def create_mean_entry(
+        self, duplicate_experiments
+    ) -> dict[str, BaseExperiment | ExperimentReference]: ...
 
 
 class ParsedGenome(ModelStrictArbitrary):
@@ -213,6 +241,7 @@ class Neo4jCellDataset(Dataset):
         genome: Genome = None,
         graphs: dict[str, nx.Graph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
+        deduplicator: Deduplicator = None,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
         password: str = "torchcell",
@@ -223,6 +252,10 @@ class Neo4jCellDataset(Dataset):
         # Here for straight pass through - Fails without...
         self.env = None
         self.root = root
+
+        self._phenotype_label_index = None
+        # set deduplicator
+        self.deduplicator = deduplicator
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
 
@@ -261,6 +294,9 @@ class Neo4jCellDataset(Dataset):
         self.env = None
         self.raw_db.env = None
 
+        # compute index
+        self.phenotype_label_index
+
     def get_init_graphs(self, raw_db, genome):
         # Setting priority
         if genome is None:
@@ -288,7 +324,7 @@ class Neo4jCellDataset(Dataset):
             password=password,
             root_dir=root_dir,
             query=query,
-            max_workers=10,  # IDEA simple for new, might need to parameterize
+            io_workers=10,  # IDEA simple for new, might need to parameterize
             num_workers=10,
             cypher_kwargs=cypher_kwargs,
         )
@@ -298,19 +334,54 @@ class Neo4jCellDataset(Dataset):
     def processed_file_names(self) -> list[str]:
         return "lmdb"
 
+    # def process(self):
+    #     # strange that we call load_raw might want to change to load.
+    #     if not self.raw_db:
+    #         self.load_raw()
+
+    #     log.info("Processing raw data into LMDB")
+    #     env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+
+    #     with env.begin(write=True) as txn:
+    #         for idx, data in enumerate(tqdm(self.raw_db)):
+    #             txn.put(f"{idx}".encode(), pickle.dumps(data))
+
+    #     # I want to add the deuplication of domain overlap here. This means that we will need to look at the duplicated domains and remove them from the data. and then add back the mean entry
+
+    #     # TODO compute gene set, maybe others stuff.
+    #     # self.gene_set = self.compute_gene_set()
+    #     self.close_lmdb()
     def process(self):
-        # strange that we call load_raw might want to change to load.
         if not self.raw_db:
             self.load_raw()
 
         log.info("Processing raw data into LMDB")
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
 
-        with env.begin(write=True) as txn:
-            for idx, data in enumerate(tqdm(self.raw_db)):
-                txn.put(f"{idx}".encode(), pickle.dumps(data))
-        # TODO compute gene set, maybe others stuff.
-        # self.gene_set = self.compute_gene_set()
+        if self.deduplicator is not None:
+            # Deduplicate domain overlaps and compute mean entries
+            duplicate_check = self.deduplicator.duplicate_check(self.raw_db)
+            deduplicated_data = []
+            for hash_key, indices in duplicate_check.items():
+                if len(indices) > 1:
+                    # Compute mean entry for duplicate experiments
+                    duplicate_experiments = [self.raw_db[i] for i in indices]
+                    mean_entry = self.deduplicator.create_mean_entry(
+                        duplicate_experiments
+                    )
+                    deduplicated_data.append(mean_entry)
+                else:
+                    # Keep non-duplicate experiments as is
+                    deduplicated_data.append(self.raw_db[indices[0]])
+
+            with env.begin(write=True) as txn:
+                for idx, data in enumerate(tqdm(deduplicated_data)):
+                    txn.put(f"{idx}".encode(), pickle.dumps(data))
+        else:
+            with env.begin(write=True) as txn:
+                for idx, data in enumerate(tqdm(self.raw_db)):
+                    txn.put(f"{idx}".encode(), pickle.dumps(data))
+
         self.close_lmdb()
 
     @property
@@ -377,33 +448,174 @@ class Neo4jCellDataset(Dataset):
             self.env.close()
             self.env = None
 
+    def compute_phenotype_label_index(self) -> dict[str, list[int]]:
+        print("Computing phenotype label index...")
+        phenotype_label_index = {}
+
+        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            for idx, (key, value) in enumerate(cursor):
+                data = pickle.loads(value)
+                label = data["experiment"].phenotype.label
+
+                if label not in phenotype_label_index:
+                    phenotype_label_index[label] = []
+                phenotype_label_index[label].append(idx)
+
+        self.close_lmdb()  # Close the LMDB environment
+
+        return phenotype_label_index
+
+    @property
+    def phenotype_label_index(self) -> dict[str, list[bool]]:
+        if osp.exists(osp.join(self.processed_dir, "phenotype_label_index.json")):
+            with open(
+                osp.join(self.processed_dir, "phenotype_label_index.json"), "r"
+            ) as file:
+                self._phenotype_label_index = json.load(file)
+        else:
+            self._phenotype_label_index = self.compute_phenotype_label_index()
+            with open(
+                osp.join(self.processed_dir, "phenotype_label_index.json"), "w"
+            ) as file:
+                json.dump(self._phenotype_label_index, file)
+        return self._phenotype_label_index
+
+
+class ExperimentDeduplicator(Deduplicator):
+    def duplicate_check(self, data) -> dict[str, list[int]]:
+        duplicate_check = {}
+        for idx, item in enumerate(data):
+            perturbations = item["experiment"].genotype.perturbations
+            sorted_gene_names = sorted(
+                [pert.systematic_gene_name for pert in perturbations]
+            )
+            hash_key = hashlib.sha256(str(sorted_gene_names).encode()).hexdigest()
+
+            if hash_key not in duplicate_check:
+                duplicate_check[hash_key] = []
+            duplicate_check[hash_key].append(idx)
+        return duplicate_check
+
+    def create_mean_entry(
+        self, duplicate_experiments
+    ) -> dict[str, BaseExperiment | ExperimentReference]:
+        # Check if all phenotypes have the same graph_level and label
+        graph_levels = set(
+            exp["experiment"].phenotype.graph_level for exp in duplicate_experiments
+        )
+        labels = set(exp["experiment"].phenotype.label for exp in duplicate_experiments)
+
+        if len(graph_levels) > 1 or len(labels) > 1:
+            raise ValueError(
+                "Duplicate experiments have different phenotype graph_level or label values."
+            )
+
+        # Extract fitness values and standard deviations
+        fitness_values = [
+            exp["experiment"].phenotype.fitness for exp in duplicate_experiments
+        ]
+        fitness_stds = [
+            exp["experiment"].phenotype.fitness_std for exp in duplicate_experiments
+        ]
+
+        # Calculate the mean fitness and mean standard deviation
+        mean_fitness = np.mean(fitness_values)
+        mean_fitness_std = np.mean(fitness_stds)
+
+        # Create a new FitnessPhenotype with the mean values
+        mean_phenotype = FitnessPhenotype(
+            graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
+            label=duplicate_experiments[0]["experiment"].phenotype.label,
+            label_error=duplicate_experiments[0]["experiment"].phenotype.label_error,
+            fitness=mean_fitness,
+            fitness_std=mean_fitness_std,
+        )
+
+        mean_perturbations = []
+        for pert in duplicate_experiments[0]["experiment"].genotype.perturbations:
+            mean_pert = MeanDeletionPerturbation(
+                systematic_gene_name=pert.systematic_gene_name,
+                perturbed_gene_name=pert.perturbed_gene_name,
+                num_duplicates=len(duplicate_experiments),
+            )
+            mean_perturbations.append(mean_pert)
+
+        mean_genotype = Genotype(perturbations=mean_perturbations)
+
+        mean_experiment = FitnessExperiment(
+            genotype=mean_genotype,
+            environment=duplicate_experiments[0]["experiment"].environment,
+            phenotype=mean_phenotype,
+        )
+
+        # Create a new FitnessExperimentReference with the mean values
+        fitness_ref_values = [
+            exp["reference"].reference_phenotype.fitness
+            for exp in duplicate_experiments
+        ]
+        fitness_ref_stds = [
+            exp["reference"].reference_phenotype.fitness_std
+            for exp in duplicate_experiments
+        ]
+
+        mean_fitness_ref = np.mean(fitness_ref_values)
+        mean_fitness_ref_std = np.mean(fitness_ref_stds)
+
+        mean_reference_phenotype = FitnessPhenotype(
+            graph_level=duplicate_experiments[0][
+                "reference"
+            ].reference_phenotype.graph_level,
+            label=duplicate_experiments[0]["reference"].reference_phenotype.label,
+            label_error=duplicate_experiments[0][
+                "reference"
+            ].reference_phenotype.label_error,
+            fitness=mean_fitness_ref,
+            fitness_std=mean_fitness_ref_std,
+        )
+
+        # For now we don't deal with reference harmonization - just take first reference
+        mean_reference = FitnessExperimentReference(
+            reference_genome=duplicate_experiments[0]["reference"].reference_genome,
+            reference_environment=duplicate_experiments[0][
+                "reference"
+            ].reference_environment,
+            reference_phenotype=mean_reference_phenotype,
+        )
+
+        return {"experiment": mean_experiment, "reference": mean_reference}
+
 
 def main():
     # genome
     import os.path as osp
     from dotenv import load_dotenv
     from torchcell.graph import SCerevisiaeGraph
+    from torchcell.datamodules import CellDataModule
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    query = """
-        MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
-        WITH e, g, COLLECT(p) AS perturbations
-        WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
-        WITH DISTINCT e, perturbations
-        MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
-        MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
-        WHERE phen.graph_level = 'global'
-        AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
-        AND phen.fitness_std < 0.005
-        MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
-        MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
-        MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
-        WITH e, ref, perturbations
-        WHERE ALL(p IN perturbations WHERE p.systematic_gene_name IN $gene_set)
-        RETURN e, ref
-    """
-
+    # query = """
+    #     MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
+    #     WITH e, g, COLLECT(p) AS perturbations
+    #     WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
+    #     WITH DISTINCT e, perturbations
+    #     MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+    #     MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
+    #     WHERE phen.graph_level = 'global'
+    #     AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
+    #     AND phen.fitness_std < 0.005
+    #     MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
+    #     MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
+    #     MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
+    #     WITH e, ref, perturbations
+    #     WHERE ALL(p IN perturbations WHERE p.systematic_gene_name IN $gene_set)
+    #     RETURN e, ref
+    # """
+    with open("experiments/smf-dmf-tmf-001/query.cql", "r") as f:
+        query = f.read()
     ### Simplest case - works
     # dataset = Neo4jCellDataset(
     #     root=osp.join(DATA_ROOT, "data/torchcell/neo4j"), query=query
@@ -459,6 +671,7 @@ def main():
         genome=genome,
         model_name="species_downstream",
     )
+    deduplicator = ExperimentDeduplicator()
     dataset = Neo4jCellDataset(
         root=osp.join(DATA_ROOT, "data/torchcell/neo4j"),
         query=query,
@@ -468,16 +681,24 @@ def main():
             "fudt_3prime": fudt_3prime_dataset,
             "fudt_5prime": fudt_5prime_dataset,
         },
+        deduplicator=deduplicator,
     )
 
     ## Data module testing
 
-    # data_module = CellDataModule(dataset=dataset, batch_size=4, num_workers=8)
-    # data_module.setup()
-    # for batch in tqdm(data_module.train_dataloader()):
-    #     batch
-    #     pass
-    # print("finished")
+    data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir="experiments/smf-dmf-tmf-001/data_module_cache",
+        batch_size=32,
+        random_seed=42,
+        num_workers=10,
+        pin_memory=False,
+    )
+    data_module.setup()
+    for batch in tqdm(data_module.all_dataloader()):
+        break
+        pass
+    print("finished")
 
 
 if __name__ == "__main__":

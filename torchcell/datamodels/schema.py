@@ -149,6 +149,7 @@ class SgaAllelePerturbation(AllelePerturbation, ModelStrict):
     strain_id: str = Field(description="'Strain ID' in raw data.")
     allele_perturbation_type: str = "SGA"
 
+
 # Change to AggregateDeletionPerturbation, or AggDeletionPerturbation
 class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     description: str = "Mean deletion perturbation representing duplicate experiments"

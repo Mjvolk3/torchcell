@@ -9,6 +9,11 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.27
+
+- [ ] Try 20% decrease on `tcdb` chunk size
+- [ ]
+
 ## 2024.03.26
 
 - [x] Rebuild `DmfCostanzo2016` nodes only, on `Delta` to investigate down cpu workers → Uses multiprocessing during duration of run.

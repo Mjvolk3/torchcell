@@ -92,12 +92,23 @@ def main(cfg) -> str:
     wandb.log({"biocypher-out": bc._output_directory.split("/")[-1]})
     # Partition workers
     io_workers = math.ceil(
-        wandb.config.adapters["io_process_worker_ratio"] * num_workers
+        wandb.config.adapters["io_to_total_worker_ratio"] * num_workers
+    )
+    process_workers = math.ceil(
+        wandb.config.adapters["process_to_total_worker_ratio"] * num_workers
     )
     chunk_size = int(wandb.config.adapters["chunk_size"])
     loader_batch_size = int(wandb.config.adapters["loader_batch_size"])
 
-    wandb.log({"num_workers": num_workers, "io_workers": io_workers})
+    wandb.log(
+        {
+            "num_workers": num_workers,
+            "io_workers": io_workers,
+            "process_workers": process_workers,
+            "chunk_size": chunk_size,
+            "loader_batch_size": loader_batch_size,
+        }
+    )
 
     # Define dataset configurations
     dataset_configs = [

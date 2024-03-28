@@ -180,14 +180,14 @@ def process_batch(batch):
 
 
 def compute_experiment_reference_index_parallel(
-    dataset, batch_size=int(1e4), io_workers=6, compute_workers=10
+    dataset, batch_size=int(1e4), io_workers=6, process_workers=10
 ) -> list[ExperimentReferenceIndex]:
     print("Computing experiment_reference_index hashes in parallel...")
     data_loader = CpuExperimentLoaderMultiprocessing(
         dataset, batch_size=batch_size, num_workers=io_workers
     )
 
-    with mp.Pool(processes=compute_workers) as pool:
+    with mp.Pool(processes=process_workers) as pool:
         reference_hashes = []
         for batch_hashes in tqdm(
             pool.imap(process_batch, data_loader), total=len(data_loader)
@@ -383,7 +383,7 @@ class ExperimentDataset(Dataset, ABC):
         return gene_set
 
     def compute_gene_set_parallel(
-        self, batch_size: int = int(1e4), io_workers: int = 6, compute_workers: int = 10
+        self, batch_size: int = int(1e4), io_workers: int = 6, process_workers: int = 10
     ):
         gene_set = GeneSet()
 
@@ -392,7 +392,7 @@ class ExperimentDataset(Dataset, ABC):
             self, batch_size=batch_size, num_workers=io_workers
         )
 
-        with mp.Pool(processes=compute_workers) as pool:
+        with mp.Pool(processes=process_workers) as pool:
             for batch in tqdm(data_loader, total=len(data_loader)):
                 gene_names_batch = set(
                     gene_name
@@ -422,7 +422,7 @@ class ExperimentDataset(Dataset, ABC):
                 log.info("Computing experiment reference index in parallel...")
                 self._experiment_reference_index = (
                     compute_experiment_reference_index_parallel(
-                        dataset=self, io_workers=self.io_workers, compute_workers=10
+                        dataset=self, io_workers=self.io_workers, process_workers=10
                     )
                 )
             else:

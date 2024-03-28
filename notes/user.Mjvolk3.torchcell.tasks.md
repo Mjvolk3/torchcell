@@ -20,6 +20,7 @@ created: 1690514887023m
 - [ ] Hyperband for speeding up neural architecture search.
 - [ ] We wan't to be able to down sample `1e3`, `1e4`, `1e5`, `1e6` then total which is about `2e7`. Last time we learned that evening training on `1e6` can be difficult. To reduce this difficult we hare starting with embeddings of only one type and using smaller datasets. → Instead of changing query, just going to downsample from query.
 - [ ] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible.
+- [x] `chunk_size: 1e2` is absmially slow 🐢 and barely uses any memory, a kill and use `1e3`. [wandb log](https://wandb.ai/zhao-group/tcdb/runs/q38d00ck?nw=nwusermjvolk3)→ 
 
 ## 2024.03.26
 

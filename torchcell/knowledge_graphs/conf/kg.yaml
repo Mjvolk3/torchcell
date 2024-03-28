@@ -15,5 +15,5 @@ wandb:
 adapters:
   io_to_total_worker_ratio: 0.2
   process_to_total_worker_ratio: 1.0
-  chunk_size: 1e3 # try 1e3
-  loader_batch_size: 1e3 #try 1e2
+  chunk_size: 1e4 # try 1e3
+  loader_batch_size: 1e4 #try 1e2

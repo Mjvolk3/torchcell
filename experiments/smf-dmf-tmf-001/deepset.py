@@ -11,7 +11,7 @@ import logging
 import os
 import os.path as osp
 import uuid
-from torch.nn import ModuleList
+from torch.nn import ModuleDict
 import hydra
 import lightning as L
 import torch
@@ -114,8 +114,9 @@ def main(cfg: DictConfig) -> None:
         graphs = None
 
     deduplicator = ExperimentDeduplicator()
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e4")
     cell_dataset = Neo4jCellDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf-001"),
+        root=dataset_root,
         query=query,
         genome=genome,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
@@ -126,17 +127,20 @@ def main(cfg: DictConfig) -> None:
     # Instantiate your data module and model
     data_module = CellDataModule(
         dataset=cell_dataset,
-        cache_dir="experiments/smf-dmf-tmf-001/data_module_cache",
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
         batch_size=8,
         random_seed=42,
         num_workers=4,
         pin_memory=False,
     )
-    input_dim = cell_dataset.num_features["gene"]
 
-    model = ModuleList(
-        [
-            DeepSet(
+    # Anytime data is accessed lmdb must be closed.
+    input_dim = cell_dataset.num_features["gene"]
+    cell_dataset.close_lmdb()
+
+    model = ModuleDict(
+        {
+            "main": DeepSet(
                 input_dim=input_dim,
                 node_layers=wandb.config.models["graph"]["node_layers"],
                 set_layers=wandb.config.models["graph"]["set_layers"],
@@ -145,11 +149,11 @@ def main(cfg: DictConfig) -> None:
                 skip_node=wandb.config.models["graph"]["skip_node"],
                 skip_set=wandb.config.models["graph"]["skip_set"],
             ),
-            Mlp(
+            "top": Mlp(
                 input_dim=wandb.config.models["graph"]["set_layers"][-1],
                 layer_dims=wandb.config.models["pred_head"]["layer_dims"],
             ),
-        ]
+        }
     )
     task = RegressionTask(
         model=model,

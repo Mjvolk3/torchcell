@@ -107,7 +107,8 @@ class RegressionTask(L.LightningModule):
         self.model = self.model.to(self.device)
 
     def forward(self, x, batch):
-        y_hat = self.model(x, batch)
+        x_nodes, x_set = self.model["main"](x, batch)
+        y_hat = self.model["top"](x_set)
         return y_hat
 
     def on_train_start(self):
@@ -117,14 +118,12 @@ class RegressionTask(L.LightningModule):
         self.log("model/parameters_size", parameter_size)
 
     def training_step(self, batch, batch_idx):
-        # Train on wt reference
-        if self.train_wt_diff:
-            self.train_wt()
         # Extract the batch vector
+        print()
         x, y, batch_vector = (
-            batch[self.x_name],
-            batch[self.target],
-            batch[self.x_batch_name],
+            batch["gene"].x,
+            batch["gene"].label_value,
+            batch["gene"].batch,
         )
         # Pass the batch vector to the forward method
         y_hat = self(x, batch_vector)
@@ -166,10 +165,11 @@ class RegressionTask(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         # Extract the batch vector
+        print()
         x, y, batch_vector = (
-            batch[self.x_name],
-            batch[self.target],
-            batch[self.x_batch_name],
+            batch["gene"].x,
+            batch["gene"].label_value,
+            batch["gene"].batch,
         )
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
@@ -197,26 +197,26 @@ class RegressionTask(L.LightningModule):
         self.val_metrics.reset()
 
         # Skip plotting during sanity check
-        #
-        # if self.trainer.sanity_checking or (
-        #     self.current_epoch % self.boxplot_every_n_epochs != 0
-        # ):
-        #     return
+        if self.trainer.sanity_checking or (
+            self.current_epoch % self.boxplot_every_n_epochs != 0
+        ):
+            return
 
-        # # Convert lists to tensors
-        # true_values = torch.cat(self.true_values, dim=0)
-        # predictions = torch.cat(self.predictions, dim=0)
+        # Convert lists to tensors
+        true_values = torch.cat(self.true_values, dim=0)
+        predictions = torch.cat(self.predictions, dim=0)
 
-        # if self.target == "fitness":
-        #     fig = fitness.box_plot(true_values, predictions)
-        # elif self.target == "genetic_interaction_score":
-        #     fig = genetic_interaction_score.box_plot(true_values, predictions)
-        # wandb.log({"binned_values_box_plot": wandb.Image(fig)})
-        # plt.close(fig)
-        # # Clear the stored values for the next epoch
-        # self.true_values = []
-        # self.predictions = []
+        if self.target == "fitness":
+            fig = fitness.box_plot(true_values, predictions)
+        elif self.target == "genetic_interaction_score":
+            fig = genetic_interaction_score.box_plot(true_values, predictions)
+        wandb.log({"binned_values_box_plot": wandb.Image(fig)})
+        plt.close(fig)
+        # Clear the stored values for the next epoch
+        self.true_values = []
+        self.predictions = []
 
+        # Logging model artifact
         current_global_step = self.global_step
         if (
             self.trainer.checkpoint_callback.best_model_path
@@ -235,37 +235,51 @@ class RegressionTask(L.LightningModule):
                 current_global_step  # update the last logged step
             )
 
+    def test_step(self, batch, batch_idx):
+        # Extract the batch vector
+        x, y, batch_vector = (
+            batch["gene"].x,
+            batch["gene"].label_value,
+            batch["gene"].batch,
+        )
+        y_hat = self(x, batch_vector)
+        loss = self.loss(y_hat, y)
+        batch_size = batch_vector[-1].item() + 1
+        self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
+        self.test_metrics(y_hat, y)
+        # Logging the correlation coefficients
+        self.log(
+            "test_pearson",
+            self.pearson_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "test_spearman",
+            self.spearman_corr(y_hat, y),
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.true_values.append(y.detach())
+        self.predictions.append(y_hat.detach())
 
-    # TODO we shouldn't need a test loop, since we want to do best model selection
-    # def test_step(self, batch, batch_idx):
-    #     # Extract the batch vector
-    #     x, y, batch_vector = (
-    #         batch[self.x_name],
-    #         batch[self.target],
-    #         batch[self.x_batch_name],
-    #     )
-    #     y_hat = self(x, batch_vector)
-    #     loss = self.loss(y_hat, y)
-    #     batch_size = batch_vector[-1].item() + 1
-    #     self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
-    #     self.test_metrics(y_hat, y)
-    #     # Logging the correlation coefficients
-    #     self.log(
-    #         "test_pearson",
-    #         self.pearson_corr(y_hat, y),
-    #         batch_size=batch_size,
-    #         sync_dist=True,
-    #     )
-    #     self.log(
-    #         "test_spearman",
-    #         self.spearman_corr(y_hat, y),
-    #         batch_size=batch_size,
-    #         sync_dist=True,
-    #     )
+    def on_test_epoch_end(self):
+        self.log_dict(self.test_metrics.compute(), sync_dist=True)
+        self.test_metrics.reset()
 
-    # def on_test_epoch_end(self):
-    #     self.log_dict(self.test_metrics.compute(), sync_dist=True)
-    #     self.test_metrics.reset()
+        # Convert lists to tensors
+        true_values = torch.cat(self.true_values, dim=0)
+        predictions = torch.cat(self.predictions, dim=0)
+
+        if self.target == "fitness":
+            fig = fitness.box_plot(true_values, predictions)
+        elif self.target == "genetic_interaction_score":
+            fig = genetic_interaction_score.box_plot(true_values, predictions)
+        wandb.log({"test_binned_values_box_plot": wandb.Image(fig)})
+        plt.close(fig)
+        # Clear the stored values
+        self.true_values = []
+        self.predictions = []
 
     def configure_optimizers(self):
         params = list(self.model.parameters())

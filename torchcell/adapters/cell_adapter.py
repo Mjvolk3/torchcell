@@ -15,6 +15,8 @@ from torch_geometric.data import Dataset
 from typing import Callable
 from functools import wraps
 import logging
+import wandb
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -39,7 +41,8 @@ class CellAdapter:
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
-
+        self.event = 0
+        
     def get_data_by_type(self, chunk_processing_func: Callable):
         data_chunks = [
             self.dataset[i : i + self.chunk_size]

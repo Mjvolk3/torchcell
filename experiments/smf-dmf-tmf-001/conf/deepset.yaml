@@ -22,8 +22,8 @@ trainer:
 
 models:
   graph:
-    node_layers: [512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
-    set_layers: [32, 32, 32, 32] # [256, 128]
+    node_layers: [512, 128] #[512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
+    set_layers: [128, 64, 32] #[32, 32, 32, 32] # [256, 128]
     norm: batch
     activation: gelu
     skip_node: true
@@ -32,16 +32,9 @@ models:
     layer_dims: [1]
 
 regression_task:
-  target: genetic_interaction_score # fitness, genetic_interaction_score
-  wt_train_per_epoch: null # 100
-  boxplot_every_n_epochs: 1
+  target: fitness # fitness
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
   loss: mse
-  weighted_mse_penalty: null # only for weighted mse
-  train_wt_node_loss: false
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10
-  order_penalty: false
-  lambda_order: 1.0
-  train_wt_diff: false

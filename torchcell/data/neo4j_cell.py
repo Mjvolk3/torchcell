@@ -2,7 +2,7 @@
 # [[torchcell.data.neo4j_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_cell
 # Test file: tests/torchcell/data/test_neo4j_cell.py
-
+import torch
 import json
 import logging
 import os
@@ -242,6 +242,7 @@ class Neo4jCellDataset(Dataset):
         graphs: dict[str, nx.Graph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
         deduplicator: Deduplicator = None,
+        max_size: int = None,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
         password: str = "torchcell",
@@ -249,6 +250,7 @@ class Neo4jCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
+        self.max_size = max_size
         # Here for straight pass through - Fails without...
         self.env = None
         self.root = root
@@ -335,21 +337,37 @@ class Neo4jCellDataset(Dataset):
         return "lmdb"
 
     # def process(self):
-    #     # strange that we call load_raw might want to change to load.
     #     if not self.raw_db:
     #         self.load_raw()
 
     #     log.info("Processing raw data into LMDB")
     #     env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
 
-    #     with env.begin(write=True) as txn:
-    #         for idx, data in enumerate(tqdm(self.raw_db)):
-    #             txn.put(f"{idx}".encode(), pickle.dumps(data))
+    #     if self.deduplicator is not None:
+    #         # Deduplicate domain overlaps and compute mean entries
+    #         duplicate_check = self.deduplicator.duplicate_check(self.raw_db)
+    #         deduplicated_data = []
+    #         log.info("Deduplicating domain overlaps...")
+    #         for hash_key, indices in tqdm(duplicate_check.items()):
+    #             if len(indices) > 1:
+    #                 # Compute mean entry for duplicate experiments
+    #                 duplicate_experiments = [self.raw_db[i] for i in indices]
+    #                 mean_entry = self.deduplicator.create_mean_entry(
+    #                     duplicate_experiments
+    #                 )
+    #                 deduplicated_data.append(mean_entry)
+    #             else:
+    #                 # Keep non-duplicate experiments as is
+    #                 deduplicated_data.append(self.raw_db[indices[0]])
 
-    #     # I want to add the deuplication of domain overlap here. This means that we will need to look at the duplicated domains and remove them from the data. and then add back the mean entry
+    #         with env.begin(write=True) as txn:
+    #             for idx, data in enumerate(tqdm(deduplicated_data)):
+    #                 txn.put(f"{idx}".encode(), pickle.dumps(data))
+    #     else:
+    #         with env.begin(write=True) as txn:
+    #             for idx, data in enumerate(tqdm(self.raw_db)):
+    #                 txn.put(f"{idx}".encode(), pickle.dumps(data))
 
-    #     # TODO compute gene set, maybe others stuff.
-    #     # self.gene_set = self.compute_gene_set()
     #     self.close_lmdb()
     def process(self):
         if not self.raw_db:
@@ -362,7 +380,8 @@ class Neo4jCellDataset(Dataset):
             # Deduplicate domain overlaps and compute mean entries
             duplicate_check = self.deduplicator.duplicate_check(self.raw_db)
             deduplicated_data = []
-            for hash_key, indices in duplicate_check.items():
+            log.info("Deduplicating domain overlaps...")
+            for hash_key, indices in tqdm(duplicate_check.items()):
                 if len(indices) > 1:
                     # Compute mean entry for duplicate experiments
                     duplicate_experiments = [self.raw_db[i] for i in indices]
@@ -373,14 +392,20 @@ class Neo4jCellDataset(Dataset):
                 else:
                     # Keep non-duplicate experiments as is
                     deduplicated_data.append(self.raw_db[indices[0]])
-
-            with env.begin(write=True) as txn:
-                for idx, data in enumerate(tqdm(deduplicated_data)):
-                    txn.put(f"{idx}".encode(), pickle.dumps(data))
         else:
-            with env.begin(write=True) as txn:
-                for idx, data in enumerate(tqdm(self.raw_db)):
-                    txn.put(f"{idx}".encode(), pickle.dumps(data))
+            deduplicated_data = list(self.raw_db)  # Convert to list
+
+        # Randomly sample the data if max_size is specified
+        if self.max_size is not None and self.max_size < len(deduplicated_data):
+            log.info(f"Randomly sampling {self.max_size} data points...")
+            indices = torch.randperm(len(deduplicated_data))[: self.max_size].tolist()
+            deduplicated_data = [
+                deduplicated_data[i] for i in indices
+            ]  # Use list comprehension
+
+        with env.begin(write=True) as txn:
+            for idx, data in enumerate(tqdm(deduplicated_data)):
+                txn.put(f"{idx}".encode(), pickle.dumps(data))
 
         self.close_lmdb()
 
@@ -513,17 +538,21 @@ class ExperimentDeduplicator(Deduplicator):
                 "Duplicate experiments have different phenotype graph_level or label values."
             )
 
-        # Extract fitness values and standard deviations
+        # Extract fitness values and standard deviations, excluding None values
         fitness_values = [
-            exp["experiment"].phenotype.fitness for exp in duplicate_experiments
+            exp["experiment"].phenotype.fitness
+            for exp in duplicate_experiments
+            if exp["experiment"].phenotype.fitness is not None
         ]
         fitness_stds = [
-            exp["experiment"].phenotype.fitness_std for exp in duplicate_experiments
+            exp["experiment"].phenotype.fitness_std
+            for exp in duplicate_experiments
+            if exp["experiment"].phenotype.fitness_std is not None
         ]
 
-        # Calculate the mean fitness and mean standard deviation
-        mean_fitness = np.mean(fitness_values)
-        mean_fitness_std = np.mean(fitness_stds)
+        # Calculate the mean fitness and mean standard deviation, handling empty lists
+        mean_fitness = np.mean(fitness_values) if fitness_values else None
+        mean_fitness_std = np.mean(fitness_stds) if fitness_stds else None
 
         # Create a new FitnessPhenotype with the mean values
         mean_phenotype = FitnessPhenotype(
@@ -555,14 +584,17 @@ class ExperimentDeduplicator(Deduplicator):
         fitness_ref_values = [
             exp["reference"].reference_phenotype.fitness
             for exp in duplicate_experiments
+            if exp["reference"].reference_phenotype.fitness is not None
         ]
         fitness_ref_stds = [
             exp["reference"].reference_phenotype.fitness_std
             for exp in duplicate_experiments
+            if exp["reference"].reference_phenotype.fitness_std is not None
         ]
 
-        mean_fitness_ref = np.mean(fitness_ref_values)
-        mean_fitness_ref_std = np.mean(fitness_ref_stds)
+        # Calculate the mean reference fitness and mean reference standard deviation, handling empty lists
+        mean_fitness_ref = np.mean(fitness_ref_values) if fitness_ref_values else None
+        mean_fitness_ref_std = np.mean(fitness_ref_stds) if fitness_ref_stds else None
 
         mean_reference_phenotype = FitnessPhenotype(
             graph_level=duplicate_experiments[0][
@@ -672,9 +704,9 @@ def main():
         model_name="species_downstream",
     )
     deduplicator = ExperimentDeduplicator()
-
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e6")
     dataset = Neo4jCellDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf-001"),
+        root=dataset_root,
         query=query,
         genome=genome,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
@@ -683,13 +715,14 @@ def main():
             "fudt_5prime": fudt_5prime_dataset,
         },
         deduplicator=deduplicator,
+        max_size=int(1e6),
     )
     print(len(dataset))
-    ## Data module testing
+    # Data module testing
 
     data_module = CellDataModule(
         dataset=dataset,
-        cache_dir="experiments/smf-dmf-tmf-001/data_module_cache",
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
         batch_size=8,
         random_seed=42,
         num_workers=4,
@@ -697,8 +730,8 @@ def main():
     )
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
-        # print()
-        break
+        pass
+
     print("finished")
 
 

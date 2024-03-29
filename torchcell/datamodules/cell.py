@@ -32,7 +32,6 @@ class CellDataModule(L.LightningDataModule):
         self.random_seed = random_seed
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self.train_epoch_size = None
         self.train_ratio = 0.8
         self.val_ratio = 0.1
         self.train_epoch_size = int(

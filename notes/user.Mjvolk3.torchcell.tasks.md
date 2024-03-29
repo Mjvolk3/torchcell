@@ -9,18 +9,25 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.28
+
+- [ ] Try to identify reasonable paramters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]]
+
 ## 2024.03.27
 
 - [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.tcdb.docker_v_m1_study_001
 - [x] Taking long on M1 with small chunk size, but we should likely wait it out. → was not going to finish so killed.
-- [ ] I don't know if we need the phenotype_label_index yet... and it might take too much time to compute with full dataset. For now try to avoid using it.
-- [ ] Test `TmfKuzmin2018` adapter no docker.
-- [ ] If we cannot get docker container to work, manually transfer successful M1 run.
-- [ ] learning rate scheduler.
-- [ ] Hyperband for speeding up neural architecture search.
-- [ ] We wan't to be able to down sample `1e3`, `1e4`, `1e5`, `1e6` then total which is about `2e7`. Last time we learned that evening training on `1e6` can be difficult. To reduce this difficult we hare starting with embeddings of only one type and using smaller datasets. → Instead of changing query, just going to downsample from query.
-- [ ] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible.
+- [x] #ramble I don't know if we need the phenotype_label_index yet... and it might take too much time to compute with full dataset. For now try to avoid using it.
+- [x] Test `TmfKuzmin2018` adapter no docker. → works
+- [x] If we cannot get docker container to work, manually transfer successful M1 run. → finally got it to work, reduced process cpus... Not sure why this makes sense.
+- [x] Look into learning rate scheduler. → `lightning` integration
+- [x] Look into hyperband for speeding up neural architecture search. → Offered by wandb
+- [x] #ramble We wan't to be able to down sample `1e3`, `1e4`, `1e5`, `1e6` then total which is about `2e7`. Last time we learned that evening training on `1e6` can be difficult. To reduce this difficult we hare starting with embeddings of only one type and using smaller datasets. → Instead of changing query, just going to down sample from query.
+- [x] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible. → move to ![[user.mjvolk3.torchcell.tasks.future#future]]
 - [x] `chunk_size: 1e2` is abysmally slow 🐢 and barely uses any memory, a kill and use `1e3`. [wandb log](https://wandb.ai/zhao-group/tcdb/runs/q38d00ck?nw=nwusermjvolk3) → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/yj2qkwpd?nw=nwusermjvolk3) of the last run run on delta that is related. This run memory peaks at 90% and has 2x less cpu. Since 120 cpus means more memory for each process I think `5e2` makes the most sense to try, but will try to fail fast with `1e3` first before nights end.
+- [x] Get dataset of about 1,000 samples. → whole datset is 346,321 large.
+- [ ] Subset dataset.
+- [ ] Training loop on local m1 for set net with fungal embeddings.
 
 ## 2024.03.26
 

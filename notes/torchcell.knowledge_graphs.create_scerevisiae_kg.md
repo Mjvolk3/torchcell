@@ -121,3 +121,27 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 I think that we just set process workers to max, then threads to some percentage of process workers.
 
 ![](./assets/images/torchcell.knowledge_graphs.create_scerevisiae_kg.md.system-cpu-utilization-some-cpus-not-utilized.png)
+
+## 2024.03.28 - Assessing TCDB Build Parameters
+
+[[torchcell.knowledge_graphs.conf.kg.yaml]]
+
+- To get the fastest build `--mem=246g` is the maximum amount of memory that can ever be used on a single `Delta` node. We need the memory, it is the biggest bottleneck. Right now it is difficult to max out cpus without getting an #OOM . Part of the problem is that we need cpus working on larger chunks to get better utilization out of them. Longer chunks means more memory. Since we will always max out memory in our runs and the exchange rate of 1 cpu = 2 g memory, then we claim 123 cpu. Then we can set `io_to_total_worker_ratio` and `process_to_total_worker_ratio`. This will making the comparison of system logs on wandb easier.
+- I have neglected the importance of `loader_batch_size` too.
+- ⛔️ I was mistaken in thinking that when we wrote `io_workers` that this was referring to threads but in [[Cpu_experiment_loader|dendron://torchcell/torchcell.loader.cpu_experiment_loader]] the workers `arg` is is a `Process` arg. This means we need to revert back to `process_workers = num_workers - io_workers`
+
+| parameter                | description                                                                               |
+|:-------------------------|:------------------------------------------------------------------------------------------|
+| io_to_total_worker_ratio | Ratio of number of 'process' workers devoted to IO in the loader to total cpu count.      |
+| chunk_size               | Chunks from node and edge generators that will be converted to list and eat 🍽️ memory 💾 |
+| loader_batch_size        | Size of chunks that the loader will operate on. Makes sense to give                       |
+
+- Makes sense to just auto set batch size on number of workers if we want to simplify but I am not sure if there is room here to explore a bit. Regardless of simplifying, we can try to make chunk_size a multiple of batch as a rough rule of thumb.
+- Running 4 hour tests. Should start with parameterization of last successful run.
+
+| experiment | io_to_total_worker_ratio | chunk_size | loader_batch_size | progress | progress ratio |
+|:-----------|:-------------------------|:-----------|:------------------|:---------|:---------------|
+| 1          | 0.2                      | `1e4`      | `1e3`             |          |                |
+| 1          | 0.4                      | `1e4`      | `1e3`             |          |                |
+| 1          | 0.2                      | `1e4`      | `1e2`             |          |                |
+| 1          | 0.4                      | `1e4`      | `1e3`             |          |                |

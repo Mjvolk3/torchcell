@@ -2,11 +2,11 @@
 #SBATCH --mem=246g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=48   # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=123   # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=TC
-#SBATCH --time=4:00:00
+#SBATCH --time=6:00:00
 #SBATCH --constraint="projects&scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"

@@ -137,11 +137,26 @@ I think that we just set process workers to max, then threads to some percentage
 | loader_batch_size        | Size of chunks that the loader will operate on. Makes sense to give                       |
 
 - Makes sense to just auto set batch size on number of workers if we want to simplify but I am not sure if there is room here to explore a bit. Regardless of simplifying, we can try to make chunk_size a multiple of batch as a rough rule of thumb.
-- Running 4 hour tests. Should start with parameterization of last successful run.
+- Running 6 hour tests. Should start with parameterization of last successful run.
 
-| experiment | io_to_total_worker_ratio | chunk_size | loader_batch_size | progress | progress ratio |
-|:-----------|:-------------------------|:-----------|:------------------|:---------|:---------------|
-| 1          | 0.2                      | `1e4`      | `1e3`             |          |                |
-| 1          | 0.4                      | `1e4`      | `1e3`             |          |                |
-| 1          | 0.2                      | `1e4`      | `1e2`             |          |                |
-| 1          | 0.4                      | `1e4`      | `1e3`             |          |                |
+| experiment | io_to_total_worker_ratio | chunk_size | loader_batch_size | crashed bool | furthest event on `DmfCostanzo2016` | progress ratio |
+|:-----------|:-------------------------|:-----------|:------------------|:-------------|:------------------------------------|:---------------|
+| 1          | 0.2                      | `1e4`      | `1e3`             |              |                                     |                |
+| 2          | 0.4                      | `1e4`      | `1e3`             |              |                                     |                |
+| 3          | 0.2                      | `1e4`      | `1e2`             | True         |                                     |                |
+| 4          | 0.4                      | `1e4`      | `1e2`             | True         |                                     |                |
+
+- batch size 1e
+
+| experiment | io_to_total_worker_ratio | chunk_size | loader_batch_size | crashed bool | furthest event on `DmfCostanzo2016` | progress ratio |
+|:-----------|:-------------------------|:-----------|:------------------|:-------------|:------------------------------------|:---------------|
+| 5          | 0.2                      | `1e3`      | `1e2`             |              |                                     |                |
+| 6          | 0.2                      | `1e3`      | `1e1`             |              |                                     |                |
+| 7          | 0.2                      | `1e2`      | `1e1`             |              |                                     |                |
+| 8          | 0.4                      | `1e3`      | `1e2`             |              |                                     |                |
+| 9          | 0.2                      | `5e3`      | `1e2`             |              |                                     |                |
+| 10         | 0.1                      | `2e3`      | `1e2`             |              |                                     |                |
+| 11         | 0.1                      | `8e2`      | `1e2`             |              |                                     |                |
+| 12         | 0.8                      | `1e4`      | `1e3`             |              |                                     |                |
+
+- It is becoming apparent that the most sensitive parameter for controlling memory is `chunk_size`.  

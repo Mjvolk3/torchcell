@@ -34,9 +34,11 @@ from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
-from torchcell.trainers import RegressionTask
 
 # from torchcell.trainers import RegressionTask
+from torchcell.trainers import RegressionTask
+from torchcell.utils import format_scientific_notation
+
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -51,7 +53,7 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        mode=wandb_cfg["wandb"]["mode"],
+        mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -106,22 +108,31 @@ def main(cfg: DictConfig) -> None:
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     graphs = {}
-    if "physical" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"physical": graph.G_physical}
-    if "regulatory" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"regulatory": graph.G_regulatory}
-    if not graphs:
+    if wandb.config.cell_dataset["graphs"] is None:
         graphs = None
+    elif "physical" in wandb.config.cell_dataset["graphs"]:
+        graphs = {"physical": graph.G_physical}
+    elif "regulatory" in wandb.config.cell_dataset["graphs"]:
+        graphs = {"regulatory": graph.G_regulatory}
 
     deduplicator = ExperimentDeduplicator()
-    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e4")
+
+    # Convert max_size to float, then format it in concise scientific notation
+    max_size_str = format_scientific_notation(
+        float(wandb.config.cell_dataset["max_size"])
+    )
+    dataset_root = osp.join(
+        DATA_ROOT, f"data/torchcell/experiments/smf-dmf-tmf_{max_size_str}"
+    )
+
     cell_dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         genome=genome,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=graphs,
         node_embeddings=node_embeddings,
         deduplicator=deduplicator,
+        max_size=int(wandb.config.cell_dataset["max_size"]),
     )
 
     # Instantiate your data module and model
@@ -165,6 +176,7 @@ def main(cfg: DictConfig) -> None:
         train_epoch_size=data_module.train_epoch_size,
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
+        boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         # **kwargs,
     )
 
@@ -172,7 +184,7 @@ def main(cfg: DictConfig) -> None:
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"models/checkpoints/{group}",
         save_top_k=1,
-        monitor="val_loss",
+        monitor="val/loss",
         mode="min",
     )
 

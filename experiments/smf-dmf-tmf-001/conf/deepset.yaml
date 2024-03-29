@@ -8,16 +8,17 @@ wandb:
   project: torchcell_test
 
 cell_dataset:
-  graphs: [physical, regulatory] #[physical], [regulatory], [physical, regulatory], null
+  graphs: null #[physical], [regulatory], [physical, regulatory], []
   node_embeddings: [fudt_upstream] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
+  max_size: 1e2
 
 data_module:
   batch_size: 16 #32
-  num_workers: 0
+  num_workers: 10
   pin_memory: true
 
 trainer:
-  max_epochs: 100
+  max_epochs: 5
   strategy: auto # ddp, auto
 
 models:
@@ -29,10 +30,11 @@ models:
     skip_node: true
     skip_set: true
   pred_head:
-    layer_dims: [1]
+    layer_dims: [1] 
 
 regression_task:
   target: fitness # fitness
+  boxplot_every_n_epochs: 5
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
   loss: mse

@@ -45,10 +45,11 @@ class RegressionTask(L.LightningModule):
         train_epoch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
+        boxplot_every_n_epochs: int = 1,
         **kwargs,
     ):
         super().__init__()
-
+        self.boxplot_every_n_epochs = boxplot_every_n_epochs
         # target for training
         self.target = target
 
@@ -87,10 +88,10 @@ class RegressionTask(L.LightningModule):
                 "MSE": MeanSquaredError(squared=True),
                 "MAE": MeanAbsoluteError(),
             },
-            prefix="train_",
+            prefix="train/",
         )
-        self.val_metrics = self.train_metrics.clone(prefix="val_")
-        self.test_metrics = self.train_metrics.clone(prefix="test_")
+        self.val_metrics = self.train_metrics.clone(prefix="val/")
+        self.test_metrics = self.train_metrics.clone(prefix="test/")
 
         # Separate attributes for Pearson and Spearman correlation coefficients
         self.pearson_corr = PearsonCorrCoef()
@@ -142,7 +143,7 @@ class RegressionTask(L.LightningModule):
         opt.zero_grad()
         # logging
         batch_size = batch_vector[-1].item() + 1
-        self.log("train_loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log("train/loss", loss, batch_size=batch_size, sync_dist=True)
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
@@ -174,7 +175,7 @@ class RegressionTask(L.LightningModule):
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
-        self.log("val_loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log("val/loss", loss, batch_size=batch_size, sync_dist=True)
         self.val_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
@@ -245,7 +246,7 @@ class RegressionTask(L.LightningModule):
         y_hat = self(x, batch_vector)
         loss = self.loss(y_hat, y)
         batch_size = batch_vector[-1].item() + 1
-        self.log("test_loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log("test/loss", loss, batch_size=batch_size, sync_dist=True)
         self.test_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(

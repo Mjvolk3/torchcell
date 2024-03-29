@@ -147,13 +147,13 @@ class RegressionTask(L.LightningModule):
         self.train_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
-            "train_pearson",
+            "train/pearson",
             self.pearson_corr(y_hat, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
-            "train_spearman",
+            "train/spearman",
             self.spearman_corr(y_hat, y),
             batch_size=batch_size,
             sync_dist=True,
@@ -179,13 +179,13 @@ class RegressionTask(L.LightningModule):
         self.val_metrics(y_hat, y)
         # Logging the correlation coefficients
         self.log(
-            "val_pearson",
+            "val/pearson",
             self.pearson_corr(y_hat, y),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
-            "val_spearman",
+            "val/spearman",
             self.spearman_corr(y_hat, y),
             batch_size=batch_size,
             sync_dist=True,

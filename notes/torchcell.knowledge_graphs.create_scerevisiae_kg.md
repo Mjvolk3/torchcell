@@ -158,5 +158,7 @@ I think that we just set process workers to max, then threads to some percentage
 | 10         | 0.1                      | `2e3`      | `1e2`             |              |                                     |                |
 | 11         | 0.1                      | `8e2`      | `1e2`             |              |                                     |                |
 | 12         | 0.8                      | `1e4`      | `1e3`             |              |                                     |                |
+| 13         | 0.05                     | `2e3`      | `1e2`             |              |                                     |                |
+| 14         | 0.05                     | `2e3`      | `5e2`             |              |                                     |                |
 
 - It is becoming apparent that the most sensitive parameter for controlling memory is `chunk_size`.  

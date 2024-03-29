@@ -6,9 +6,11 @@ metric:
   name: val/loss
 early_terminate:
   type: hyperband
-  max_iter: 20 # total iters per each run or what?
-  s: 4 # number of brackets
-  eta: 3 # successive halving
+  min_iter: 10
+  eta: 1.5
+  # max_iter: 10 # total iters per each run or what?
+  # s: 4 # number of brackets
+  # eta: 3 # successive halving
 
 parameters:
   cell_dataset:

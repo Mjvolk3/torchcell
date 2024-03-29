@@ -36,6 +36,7 @@ created: 1675887826601
 - [ ] For simplicity we should get rid of `preprocess_dir` and put everything into `process_dir`
 - [ ] Embeddings should be union over `gene_sets`
 - [ ] We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]]
+- [ ] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible.
 
 ## Far Future
 

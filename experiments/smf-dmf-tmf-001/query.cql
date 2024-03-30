@@ -1,4 +1,4 @@
-MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
+wMATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
 WITH e, g, COLLECT(p) AS perturbations
 WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
 WITH DISTINCT e, perturbations

@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf/deepset
 # Test file: experiments/smf-dmf-tmf/test_deepset.py
 
-
 import datetime
 import hashlib
 import json
@@ -44,6 +43,7 @@ log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+os.environ['WANDB_SERVICE_WAIT'] = 300
 
 @hydra.main(version_base=None, config_path="conf", config_name="deepset")
 def main(cfg: DictConfig) -> None:

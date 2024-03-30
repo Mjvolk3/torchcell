@@ -14,8 +14,8 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 # #SBATCH --output=/dev/null
-# #SBATCH --output=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/output/%x_%j.out
-### #SBATCH --error=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/error/%x_%j.out
+#SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/slurm/error/%x_%j.out
 
 
 module reset # drop modules and explicitly load the ones needed
@@ -25,20 +25,20 @@ source ~/.bashrc
 cd /projects/bbub/mjvolk3/torchcell
 pwd
 lscpu
-nvidia-smi
+nvidia-smi 
 cat /proc/meminfo
 #module load anaconda3_cpu
 module list  # job documentation and metadata
-conda activate torchcell
+conda activate /projects/bbub/miniconda3/envs/torchcell
 
 # CHECK removal not sure if only for Parameter Estimation
-export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+# export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
-SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deepset_sweep_01.yaml
+SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deepset_sweep_02.yaml
 SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
 PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
 

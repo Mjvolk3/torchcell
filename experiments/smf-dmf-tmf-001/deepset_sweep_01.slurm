@@ -31,8 +31,8 @@ cat /proc/meminfo
 module list  # job documentation and metadata
 conda activate /projects/bbub/miniconda3/envs/torchcell
 
-# CHECK removal not sure if only for Parameter Estimation
-# export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
+# TODO Needed for sweep... need to look into this more.
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
@@ -42,13 +42,13 @@ SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deepset_sweep_02.yaml
 SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
 PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
 
-echo $"-----------------"
-echo $SWEEP_ID
-echo $PROJECT_NAME
-echo $"-----------------"
-echo $SLURM_GPUS_ON_NODE
-echo $SLURM_JOB_NUM_NODES
-echo $"-----------------"
+echo "-----------------"
+echo "SWEEP_ID: $SWEEP_ID"
+echo "PROJECT_NAME: $PROJECT_NAME"
+echo "-----------------"
+echo "SLURM_GPUS_ON_NODE: $SLURM_GPUS_ON_NODE"
+echo "SLURM_JOB_NUM_NODES: $SLURM_JOB_NUM_NODES"
+echo "-----------------"
 
 # Use for Agent logging. Only use in testing.
 # Not sure if visivles devices scales with num nodes or resets to 0

@@ -13,6 +13,6 @@ wandb:
   tags:
 
 adapters:
-  io_to_total_worker_ratio: 0.03
+  io_to_total_worker_ratio: 0.05
   chunk_size: 2e3
   loader_batch_size: 5e2

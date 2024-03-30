@@ -1,0 +1,77 @@
+program: experiments/smf-dmf-tmf-001/deepset.py
+project: torchcell_test
+method: grid
+metric:
+  goal: minimize
+  name: val/loss
+# early_terminate:
+#   type: hyperband
+#   min_iter: 10
+#   eta: 1.5
+# max_iter: 10 # total iters per each run or what?
+# s: 4 # number of brackets
+# eta: 3 # successive halving
+
+parameters:
+  cell_dataset:
+    parameters:
+      graphs: #[physical], [regulatory], [physical, regulatory], null
+        values: [null, physical, regulatory, [physical, regulatory]]
+      node_embeddings:
+        values: [fudt_upstream, fudt_downstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
+      max_size:
+        values: [1e4]
+  data_module:
+    parameters:
+      batch_size:
+        values: [16]
+      num_workers:
+        values: [6]
+      pin_memory:
+        values: [false, true]
+  trainer:
+    parameters:
+      max_epochs:
+        values: [2]
+      strategy: # ddp, auto
+        values: [auto]
+  models:
+    parameters:
+      graph:
+        parameters:
+          node_layers:
+            values: [[512, 256]]
+          set_layers:
+            values: [[32, 16]]
+          norm:
+            values: [batch, instance, layer]
+          activation:
+            values: [relu, gelu, sigmoid, leaky_relu, tanh]
+          skip_node:
+            values: [true, false]
+          skip_set:
+            values: [true, false]
+      pred_head:
+        parameters:
+          layer_dims:
+            values: [[1]]
+  regression_task:
+    parameters:
+      target:
+        values: [fitness]
+      boxplot_every_n_epochs:
+        values: [5]
+      learning_rate:
+        values: [1e-3]
+      weight_decay:
+        values: [1e-4]
+      loss:
+        values: [mse]
+      clip_grad_norm:
+        values: [true, false]
+      clip_grad_norm_max_norm:
+        values: [1, 10]
+command:
+  - ${env}
+  - python
+  - ${program}

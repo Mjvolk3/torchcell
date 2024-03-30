@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     genome = SCerevisiaeGenome()
     dataset = OneHotGeneDataset(
-        root="data/scerevisiae/gene_one_hot_encoded", genome=genome
+        root="data/scerevisiae/one_hot_gene_encoding", genome=genome
     )
 
     some_data = dataset[0]  # Should give you the first dataset item

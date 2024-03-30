@@ -10,7 +10,6 @@ defaults:
 wandb:
   mode: online # disabled, offline, online
   project: tcdb
-  tags:
 
 adapters:
   io_to_total_worker_ratio: 0.03

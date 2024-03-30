@@ -42,7 +42,7 @@ class CellAdapter:
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
         self.event = 0
-        
+
     def get_data_by_type(self, chunk_processing_func: Callable):
         data_chunks = [
             self.dataset[i : i + self.chunk_size]
@@ -93,60 +93,107 @@ class CellAdapter:
     def get_nodes(self):
         print("Running: self._get_experiment_reference_nodes()")
         yield from self._get_experiment_reference_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_genome_nodes()")
         yield from self._get_genome_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._experiment_node)")
         yield from self.get_data_by_type(self._experiment_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._genotype_node)")
         yield from self.get_data_by_type(self._genotype_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._perturbation_node)")
         yield from self.get_data_by_type(self._perturbation_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._environment_node)")
         yield from self.get_data_by_type(self._environment_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_reference_environment_nodes()")
         yield from self._get_reference_environment_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._media_node)")
         yield from self.get_data_by_type(self._media_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_reference_media_nodes()")
         yield from self._get_reference_media_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._temperature_node)")
         yield from self.get_data_by_type(self._temperature_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_reference_temperature_nodes()")
         yield from self._get_reference_temperature_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._phenotype_node)")
         yield from self.get_data_by_type(self._phenotype_node)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_reference_phenotype_nodes()")
         yield from self._get_reference_phenotype_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_dataset_nodes()")
         yield from self.get_dataset_nodes()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Finished: get_nodes")
 
     def get_edges(self):
         print("Running: self.get_reference_dataset_edges()")
         yield from self.get_reference_dataset_edges()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._experiment_dataset_edge)")
         yield from self.get_data_by_type(self._experiment_dataset_edge)
-        # BUG no multiprocessing
-        # print("Running: self._get_reference_experiment_edges()")
-        # yield from self._get_reference_experiment_edges()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._get_reference_experiment_edges)")
         yield from self.get_data_by_type(self._reference_experiment_edge)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._genotype_experiment_edge)")
         yield from self.get_data_by_type(self._genotype_experiment_edge)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._perturbation_genotype_edges)")
         yield from self.get_data_by_type(self._perturbation_genotype_edges)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._environment_experiment_edges)")
         yield from self.get_data_by_type(self._environment_experiment_edges)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_environment_experiment_ref_edges()")
         yield from self._get_environment_experiment_ref_edges()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._phenotype_experiment_edges)")
         yield from self.get_data_by_type(self._phenotype_experiment_edges)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._media_environment_edge)")
         yield from self.get_data_by_type(self._media_environment_edge)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self.get_data_by_type(self._temperature_environment_edge)")
         yield from self.get_data_by_type(self._temperature_environment_edge)
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Running: self._get_genome_edges()")
         yield from self._get_genome_edges()
+        self.event += 1
+        wandb.log({"event": self.event})
         print("Finished: get_edges")
 
     # nodes

@@ -30,7 +30,6 @@ from torchcell.datasets import (
     OneHotGeneDataset,
     ProtT5Dataset,
 )
-from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator

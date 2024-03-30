@@ -9,12 +9,17 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.30
+
+- [ ] 
+- [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index.
+
 ## 2024.03.28
 
-- [ ] Try to identify reasonable paramters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]] → Taking longer than expected to get everything going because I forgot that with Apptainer we need to push latest commit to redo `tcdb` build. →  
+- [ ] Try to identify reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]] → Taking longer than expected to get everything going because I forgot that with Apptainer we need to push latest commit to redo `tcdb` build. →  
+- 🔲 We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index.
 
-- [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index.
-- [ ] Create datsaets, then globus transfer them to `delta`, launch delta sweep on `1e4` data.
+- [x] Create datasets, then globus transfer them to `delta`, launch delta sweep on `1e4` data.
 
 ## 2024.03.27
 

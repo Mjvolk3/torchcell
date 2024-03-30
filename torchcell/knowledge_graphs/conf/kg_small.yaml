@@ -9,9 +9,8 @@ defaults:
 wandb:
   mode: online # disabled, offline, online
   project: tcdb
-  tags:
 
 adapters:
-  io_to_total_worker_ratio: 0.2
-  chunk_size: 1e4 # try 1e3
-  loader_batch_size: 1e3 #try 1e2
+  io_to_total_worker_ratio: 0.4
+  chunk_size: 2e3 # try 1e3
+  loader_batch_size: 5e2 #try 1e2

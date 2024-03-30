@@ -81,7 +81,7 @@ class CodonFrequencyDataset(BaseEmbeddingDataset):
 if __name__ == "__main__":
     genome = SCerevisiaeGenome()
     dataset = CodonFrequencyDataset(
-        root="data/scerevisiae/codon_frequency", genome=genome
+        root="data/scerevisiae/codon_frequency_embedding", genome=genome
     )
 
     some_data = dataset[0]  # Should give you the first dataset item

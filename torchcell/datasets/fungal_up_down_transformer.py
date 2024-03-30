@@ -114,7 +114,6 @@ if __name__ == "__main__":
 
     # Adjust the model names accordingly.
     model_names = ["species_downstream", "species_upstream"]
-    # model_names = ["species_upstream"]
 
     datasets = []
     for model_name in model_names:

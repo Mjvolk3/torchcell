@@ -11,8 +11,12 @@ created: 1690514887023m
 
 ## 2024.03.30
 
-- [ ] 
-- [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index.
+- [x] Launch sweep for `DeepSet` on `Delta` → wandb is acting up cannot run loader even test. The sweeps take forever to make in interactive mode. → Launched but waiting...
+- [x] Using tags to track quick investigations just because `wandb` uses tag language and I haven't found a way to save view other than reports which are a bit clunky. → #wandb.docker_v_m1_study_001
+- [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index. → This is a difficult problem to solve since it does not currently exist within the data model but I believe it should. We can just add it as another entry in the reference and the experiment. → I think we add to data model.
+- [ ] Compute all nucleotide transformer embeddings.
+- [ ] Try to do a `1e6` local docker build
+
 
 ## 2024.03.28
 
@@ -23,7 +27,7 @@ created: 1690514887023m
 
 ## 2024.03.27
 
-- [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.tcdb.docker_v_m1_study_001
+- [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.docker_v_m1_study_001
 - [x] Taking long on M1 with small chunk size, but we should likely wait it out. → was not going to finish so killed.
 - [x] #ramble I don't know if we need the phenotype_label_index yet... and it might take too much time to compute with full dataset. For now try to avoid using it.
 - [x] Test `TmfKuzmin2018` adapter no docker. → works

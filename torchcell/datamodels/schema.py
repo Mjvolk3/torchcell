@@ -9,6 +9,8 @@ from typing import List, Union, Optional
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
+from torchcell.datasets import dataset_registry
+
 
 # Genotype
 class ReferenceGenome(ModelStrict):
@@ -277,7 +279,11 @@ class ExperimentReference(ModelStrict):
     reference_phenotype: BasePhenotype
 
 
+#datset type is the union of strings [k for k in dataset_registry.keys()]
+
+
 class BaseExperiment(ModelStrict):
+    dataset: str
     genotype: Genotype
     environment: BaseEnvironment
     phenotype: BasePhenotype

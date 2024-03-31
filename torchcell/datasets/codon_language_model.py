@@ -7,12 +7,10 @@ from calm import CaLM
 import os
 from collections.abc import Callable
 from typing import Optional
-
 import torch
 from pydantic import validator
 from torch_geometric.data import Data
 from tqdm import tqdm
-
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torchcell.sequence import GeneSet, ParsedGenome
@@ -30,10 +28,12 @@ class CalmDataset(BaseEmbeddingDataset):
         model_name: str | None = "calm",
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
+        batch_size: int = 100,
     ):
         self.genome = genome
         self.model_name = model_name
         self.model = self.initialize_model()
+        self.batch_size = batch_size
         super().__init__(root, self.model_name, transform, pre_transform)
         self.genome = self.parse_genome(genome)
         del genome
@@ -60,16 +60,15 @@ class CalmDataset(BaseEmbeddingDataset):
         (window_method, window_size, is_max_size) = self.MODEL_TO_WINDOW[
             self.model_name
         ]
-        for i, gene_id in enumerate(tqdm(self.genome.gene_set)):
-            sequence = self.genome[gene_id]
 
+        for i, gene_id in tqdm(enumerate(self.genome.gene_set)):
+            sequence = self.genome[gene_id]
             if len(sequence) <= window_size:
                 assert len(str(sequence.cds.seq)) % 3 == 0
                 cds_sequence = sequence.cds.seq
                 embeddings = self.model.embed_sequence(str(cds_sequence))
                 dna_selection = getattr(sequence, window_method)(len(cds_sequence))
                 dna_window_dict = {self.model_name: dna_selection}
-
             else:
                 dna_selection = getattr(sequence, window_method)(window_size)
                 assert len(dna_selection.seq) % 3 == 0
@@ -78,17 +77,29 @@ class CalmDataset(BaseEmbeddingDataset):
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)
             data.embeddings = {self.model_name: embeddings}
+            if self.pre_transform is not None:
+                data = self.pre_transform(data)
             data_list.append(data)
 
-        if self.pre_transform:
-            data_list = [self.pre_transform(data) for data in data_list]
+            if (i + 1) % self.batch_size == 0 or (i + 1) == len(self.genome.gene_set):
+                # Load existing data from the file if it exists
+                if os.path.exists(self.processed_paths[0]):
+                    existing_data = torch.load(self.processed_paths[0])
+                    existing_data_list = existing_data.get("data_list", [])
+                    data_list = existing_data_list + data_list
+                if (i + 1) == len(self.genome.gene_set):
+                    torch.save(self.collate(data_list), self.processed_paths[0])
 
-        torch.save(self.collate(data_list), self.processed_paths[0])
-
+                else:
+                    # Save the updated data back to the file
+                    torch.save({"data_list": data_list}, self.processed_paths[0])
+                data_list = []
 
 if __name__ == "__main__":
     genome = SCerevisiaeGenome()
-    dataset = CalmDataset(root="data/scerevisiae/calm_embedding", genome=genome)
+    dataset = CalmDataset(
+        root="data/scerevisiae/calm_embedding", genome=genome, batch_size=100
+    )
     print(f"Calm Dataset: {dataset}")
     some_data = dataset[genome.gene_set[42]]
     print(some_data)

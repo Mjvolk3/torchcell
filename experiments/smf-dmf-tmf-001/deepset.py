@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf/deepset
 # Test file: experiments/smf-dmf-tmf/test_deepset.py
 
-import datetime
 import hashlib
 import json
 import logging
@@ -14,7 +13,6 @@ from torch.nn import ModuleDict
 import hydra
 import lightning as L
 import torch
-import torch.distributed as dist
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -25,7 +23,6 @@ import wandb
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
-    NucleotideTransformerDataset,
     OneHotGeneDataset,
     ProtT5Dataset,
 )

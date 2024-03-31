@@ -3,19 +3,14 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/fungal_up_down_transformer.py
 # Test file: torchcell/datasets/test_fungal_up_down_transformer.py
 
-import os
 from collections.abc import Callable
-from typing import Optional
 
 import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
 
 from torchcell.datasets.embedding import BaseEmbeddingDataset
-from torchcell.models.fungal_up_down_transformer import (  # adjusted import
-    FungalUpDownTransformer,
-)
-from torchcell.sequence import GeneSet, ParsedGenome, compute_codon_frequency
+from torchcell.sequence import ParsedGenome, compute_codon_frequency
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 

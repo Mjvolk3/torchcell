@@ -65,8 +65,10 @@ class CalmDataset(BaseEmbeddingDataset):
 
             if len(sequence) <= window_size:
                 assert len(str(sequence.cds.seq)) % 3 == 0
-                embeddings = self.model.embed_sequence(str(sequence.cds.seq))
-                dna_window_dict = {self.model_name: sequence}
+                cds_sequence = sequence.cds.seq
+                embeddings = self.model.embed_sequence(str(cds_sequence))
+                dna_selection = getattr(sequence, window_method)(len(cds_sequence))
+                dna_window_dict = {self.model_name: dna_selection}
 
             else:
                 dna_selection = getattr(sequence, window_method)(window_size)

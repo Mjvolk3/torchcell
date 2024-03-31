@@ -11,12 +11,13 @@ created: 1690514887023m
 
 ## 2024.03.30
 
-- [x] Launch sweep for `DeepSet` on `Delta` → wandb is acting up cannot run loader even test. The sweeps take forever to make in interactive mode. → Launched but waiting...
+- [x] Launch sweep for `DeepSet` on `Delta` → wandb is acting up cannot run loader even test. The sweeps take forever to make in interactive mode. → Launched but waiting... → Ran for 2 hours and never started... must be because of the `wandb` issue.
 - [x] Using tags to track quick investigations just because `wandb` uses tag language and I haven't found a way to save view other than reports which are a bit clunky. → #wandb.docker_v_m1_study_001
 - [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index. → This is a difficult problem to solve since it does not currently exist within the data model but I believe it should. We can just add it as another entry in the reference and the experiment. → I think we add to data model.
+- [ ] Add prediction stats table. 
+- [ ] Add CaLM embeddings.
 - [ ] Compute all nucleotide transformer embeddings.
-- [ ] Try to do a `1e6` local docker build
-
+- [ ] Try to do a `1e6` local docker build.
 
 ## 2024.03.28
 

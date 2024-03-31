@@ -22,7 +22,7 @@ parameters:
       max_size:
         values: [1e4]
   data_module:
-    parameters:`
+    parameters:
       batch_size:
         values: [8, 16]
       num_workers:

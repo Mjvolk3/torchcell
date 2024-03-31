@@ -12,8 +12,8 @@ created: 1690514887023m
 ## 2024.03.31
 
 - [x] Check CaLM embeddings → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]
-- [ ]
-- [ ] Rerun CaLM embeddings with finisehd script to make they can be reproduced.
+- [ ] Different spiking levels in DmfCostanzo suggest that we should be setting chunksize for differernt functions to squash memory usage when needed.
+- [ ] Rerun CaLM embeddings with finished script to make they can be reproduced.
 - [ ] Compute all nucleotide transformer embeddings.
 - [ ] Try to do a `1e6` local docker build.
 - [ ] Add dataset to the data model
@@ -521,7 +521,6 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [ ] **remote build** try small db bulk import
 - [ ] **remote build** try db query
 - [ ] **small build** - check nan import case.
-
 
 ## 2024.02.13
 

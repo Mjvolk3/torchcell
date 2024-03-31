@@ -18,7 +18,7 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 5
+  max_epochs: 2
   strategy: auto # ddp, auto
 
 models:
@@ -34,7 +34,7 @@ models:
 
 regression_task:
   target: fitness # fitness
-  boxplot_every_n_epochs: 5
+  boxplot_every_n_epochs: 1
   learning_rate: 1e-2 #1e-3
   weight_decay: 1e-5
   loss: mse

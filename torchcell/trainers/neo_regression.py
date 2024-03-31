@@ -113,10 +113,9 @@ class RegressionTask(L.LightningModule):
         return y_hat
 
     def on_train_start(self):
-        # Calculate the model size (number of parameters)
         parameter_size = sum(p.numel() for p in self.parameters())
-        # Log it using wandb
-        self.log("model/parameters_size", parameter_size)
+        parameter_size_float = float(parameter_size)
+        self.log("model/parameters_size", parameter_size_float, on_epoch=True)
 
     def training_step(self, batch, batch_idx):
         # Extract the batch vector
@@ -194,25 +193,31 @@ class RegressionTask(L.LightningModule):
         self.predictions.append(y_hat.detach())
 
     def compute_prediction_stats(self, true_values, predictions, stage="val"):
-        # Define bins for the ranges you're interested in
-        bins = [-float("inf"), 0] + [i * 0.1 for i in range(1, 13)] + [float("inf")]
-        bin_indices = torch.bucketize(predictions, bins=bins)
+        # Define the bin edges
+        bin_edges = torch.tensor(
+            [-float("inf"), 0] + [i * 0.1 for i in range(1, 13)] + [float("inf")]
+        )
 
-        # Prepare a table with columns for the range, mean and standard deviation
-        wandb_table = wandb.Table(columns=["Range", "Mean", "Std"])
+        # Prepare a table with columns for the range, mean, and standard deviation
+        wandb_table = wandb.Table(columns=["Range", "Mean", "StdDev"])
 
         # Calculate mean and std for each bin and add to the table
-        for i in range(len(bins) - 1):
-            bin_mask = bin_indices == i + 1
-            if bin_mask.sum() > 0:
+        for i in range(len(bin_edges) - 1):
+            bin_mask = (predictions >= bin_edges[i]) & (predictions < bin_edges[i + 1])
+            if bin_mask.any():
                 bin_predictions = predictions[bin_mask]
                 mean_val = bin_predictions.mean().item()
                 std_val = bin_predictions.std().item()
-                range_str = f"{bins[i]} - {bins[i+1]}"
+                if i == len(bin_edges) - 2:
+                    range_str = "1.2 - inf"
+                else:
+                    range_str = (
+                        f"{bin_edges[i].item():.1f} - {bin_edges[i+1].item():.1f}"
+                    )
                 wandb_table.add_data(range_str, mean_val, std_val)
 
         # Log the table to wandb
-        wandb.log({f"{stage}/Prediction_Stats": wandb_table})
+        wandb.log({f"{stage}/Prediction_Stats_{self.current_epoch}": wandb_table})
 
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
@@ -294,7 +299,7 @@ class RegressionTask(L.LightningModule):
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
         self.compute_prediction_stats(true_values, predictions, stage="test")
-        
+
         if self.target == "fitness":
             fig = fitness.box_plot(true_values, predictions)
         elif self.target == "genetic_interaction_score":

@@ -12,9 +12,11 @@ from torchcell.adapters import (
     DmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
-from torchcell.datasets.scerevisiae import (
+from torchcell.datasets.scerevisiae.costanzo2016 import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
+)
+from torchcell.datasets.scerevisiae.kuzmin2018 import (
     SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
@@ -72,7 +74,6 @@ def main(cfg) -> str:
         mode=wandb_cfg["wandb"]["mode"],
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
-        tags=wandb_cfg["wandb"]["tags"],
         group=group,
         save_code=True,
     )

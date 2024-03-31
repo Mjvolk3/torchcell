@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
 # Test file: tests/torchcell/adapters/test_kuzmin2018_adapter.py
 
-from torchcell.datasets.scerevisiae import (
+from torchcell.datasets.scerevisiae.kuzmin2018 import (
     SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,

@@ -118,7 +118,7 @@ if __name__ == "__main__":
     datasets = []
     for model_name in model_names:
         dataset = FungalUpDownTransformerDataset(
-            root="data/scerevisiae/fungal_up_down_embedding",
+            root="data/scerevisiae/fungal_up_down_embedding_test",
             genome=genome,
             model_name=model_name,
         )

@@ -31,7 +31,8 @@ from .schema import (
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
-ontology_models = [
+
+schema_classes = [
     "BaseEnvironment",
     "Genotype",
     "BasePhenotype",
@@ -60,4 +61,4 @@ ontology_models = [
     "MeanDeletionPerturbation",
 ]
 
-__all__ = core_models + ontology_models
+__all__ = core_models + schema_classes

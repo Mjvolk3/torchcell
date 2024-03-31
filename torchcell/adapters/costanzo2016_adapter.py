@@ -11,7 +11,7 @@ from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import get_logger
 import logging
 from typing import Set
-from torchcell.datasets.scerevisiae import (
+from torchcell.datasets.scerevisiae.costanzo2016 import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
 )

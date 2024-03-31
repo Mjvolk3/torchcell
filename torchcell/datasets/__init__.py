@@ -10,7 +10,9 @@ from .fungal_up_down_transformer import FungalUpDownTransformerDataset
 from .nucleotide_transformer import NucleotideTransformerDataset
 from .one_hot_gene import OneHotGeneDataset
 from .protT5 import ProtT5Dataset
+from .dataset_registry import dataset_registry
 
+registries = ["dataset_registry"]
 
 core_datasets = ["DCellDataset"]
 
@@ -28,4 +30,4 @@ embedding_datasets = [
 
 # + experiment_datasets
 
-__all__ = core_datasets + embedding_datasets
+__all__ = core_datasets + embedding_datasets + registries

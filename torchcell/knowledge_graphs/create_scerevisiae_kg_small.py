@@ -13,13 +13,15 @@ from torchcell.adapters import (
     DmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
-from torchcell.datasets.scerevisiae import (
+from torchcell.datasets.scerevisiae.costanzo2016 import (
     SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
 )
+# from torchcell.datasets.scerevisiae.kuzmin2018 import (
+#     SmfKuzmin2018Dataset,
+#     DmfKuzmin2018Dataset,
+#     TmfKuzmin2018Dataset,
+# )
 import logging
 from dotenv import load_dotenv
 import os

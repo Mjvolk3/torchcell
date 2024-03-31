@@ -95,3 +95,5 @@ neo4j>=4.4.11
 # command line
 cliff>=4.5.0
 
+# CaLM model
+git+https://github.com/oxpig/CaLM  

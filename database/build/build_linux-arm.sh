@@ -18,19 +18,18 @@ echo "Running container..."
 # docker run --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes -d --name tc-neo4j -p 7474:7474 -p 7687:7687 -v $(pwd)/database/biocypher-out:/database/biocypher-out -v $(pwd)/torchcell:/torchcell -v $(pwd)/data:/torchcell_data -v $(pwd)/database/data:/var/lib/neo4j/data -e NEO4J_AUTH=neo4j/torchcell michaelvolk/tc-neo4j:latest
 
 docker run --cpus=10 \
---env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
--d --name tc-neo4j \
--p 7474:7474 -p 7687:7687 \
--v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
--v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
--v $(pwd)/database/data:/var/lib/neo4j/data \
--v $(pwd)/database/.env:/.env \
--v $(pwd)/biocypher:/var/lib/neo4j/biocypher \
--v $(pwd)/database/conf:/var/lib/neo4j/conf \
--v $(pwd)/database/logs:/logs \
--e NEO4J_AUTH=neo4j/torchcell \
-michaelvolk/tc-neo4j:latest
-
+    --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
+    -d --name tc-neo4j \
+    -p 7474:7474 -p 7687:7687 \
+    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
+    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data:/var/lib/neo4j/data \
+    -v $(pwd)/database/.env:/.env \
+    -v $(pwd)/biocypher:/var/lib/neo4j/biocypher \
+    -v $(pwd)/database/conf:/var/lib/neo4j/conf \
+    -v $(pwd)/database/logs:/logs \
+    -e NEO4J_AUTH=neo4j/torchcell \
+    michaelvolk/tc-neo4j:latest
 
 # # Conda activate torchcell here since we are using the local library for the db writing.
 # eval "$(conda shell.bash hook)"
@@ -48,6 +47,8 @@ docker exec tc-neo4j python -m pip uninstall torchcell -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 docker exec tc-neo4j python -m pip uninstall biocypher -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+# TODO Should be moved into requirements.txt then removed after image build.
+python -m pip install git+https://github.com/oxpig/CaLM@main
 
 # docker exec -it tc-neo4j /bin/bash -c "chmod +x $bash_script_path"
 # docker exec -it tc-neo4j /bin/bash -c "$bash_script_path"

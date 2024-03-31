@@ -113,20 +113,20 @@ if __name__ == "__main__":
     genome = SCerevisiaeGenome()
     model_names = [
         "nt_window_5979",
-        "nt_window_5979_max",
-        "nt_window_3utr_5979",
-        "nt_window_3utr_5979_undersize",
-        "nt_window_5utr_5979",
-        "nt_window_5utr_5979_undersize",
-        "nt_window_3utr_300",
-        "nt_window_3utr_300_undersize",
-        "nt_window_5utr_1000",
-        "nt_window_5utr_1000_undersize"
+        # "nt_window_5979_max",
+        # "nt_window_3utr_5979",
+        # "nt_window_3utr_5979_undersize",
+        # "nt_window_5utr_5979",
+        # "nt_window_5utr_5979_undersize",
+        # "nt_window_3utr_300",
+        # "nt_window_3utr_300_undersize",
+        # "nt_window_5utr_1000",
+        # "nt_window_5utr_1000_undersize"
     ]
     datasets = []
     for model_name in model_names:
         dataset = NucleotideTransformerDataset(
-            root="data/scerevisiae/nucleotide_transformer_embedding",
+            root="data/scerevisiae/nucleotide_transformer_embedding_test",
             genome=genome,
             model_name=model_name,
         )

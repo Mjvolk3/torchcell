@@ -82,13 +82,10 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             return
 
         data_list = []
-        (
-            window_method,
-            window_size,
-            include_cds_codon,
-            allow_undersize,
-        ) = self.MODEL_TO_WINDOW[self.model_name]
-        for gene_id in tqdm(self.genome.gene_set):
+        (window_method, window_size, include_cds_codon, allow_undersize) = (
+            self.MODEL_TO_WINDOW[self.model_name]
+        )
+        for gene_id in tqdm((self.genome.gene_set)):
             sequence = self.genome[gene_id]
             dna_selection = getattr(sequence, window_method)(
                 window_size, include_cds_codon, allow_undersize=allow_undersize
@@ -118,15 +115,13 @@ if __name__ == "__main__":
     datasets = []
     for model_name in model_names:
         dataset = FungalUpDownTransformerDataset(
-            root="data/scerevisiae/fungal_up_down_embedding_test",
-            genome=genome,
-            model_name=model_name,
+            root="data/scerevisiae/fudt_embedding", genome=genome, model_name=model_name
         )
         datasets.append(dataset)
         print(f"Dataset for {model_name}: {dataset}")
     print()
     # seq_embeddings = datasets[0] + datasets[1]
-    # some_data = datasets[0][genome.gene_set[42]]
+    some_data = datasets[0][genome.gene_set[42]]
     # print(some_data)
     # some_data = datasets[1][genome.gene_set[42]]
     # print(some_data)

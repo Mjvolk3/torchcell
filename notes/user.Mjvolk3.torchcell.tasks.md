@@ -2,28 +2,38 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711579378344
+updated: 1711909989551
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.03.31
+
+- [x] Check CaLM embeddings → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]
+- [ ]
+- [ ] Rerun CaLM embeddings with finisehd script to make they can be reproduced.
+- [ ] Compute all nucleotide transformer embeddings.
+- [ ] Try to do a `1e6` local docker build.
+- [ ] Add dataset to the data model
+- [ ] Write brief report with table on reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]]
+
 ## 2024.03.30
 
 - [x] Launch sweep for `DeepSet` on `Delta` → wandb is acting up cannot run loader even test. The sweeps take forever to make in interactive mode. → Launched but waiting... → Ran for 2 hours and never started... must be because of the `wandb` issue.
 - [x] Using tags to track quick investigations just because `wandb` uses tag language and I haven't found a way to save view other than reports which are a bit clunky. → #wandb.docker_v_m1_study_001
-- [ ] We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index. → This is a difficult problem to solve since it does not currently exist within the data model but I believe it should. We can just add it as another entry in the reference and the experiment. → I think we add to data model.
-- [ ] Add prediction stats table. 
-- [ ] Add CaLM embeddings.
-- [ ] Compute all nucleotide transformer embeddings.
-- [ ] Try to do a `1e6` local docker build.
+- [x] #ramble We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index. → This is a difficult problem to solve since it does not currently exist within the data model but I believe it should. We can just add it as another entry in the reference and the experiment. → I think we add to data model... still thinking on it.
+- [x] Add prediction stats table.
+- [x] Add CaLM embeddings. → [[2024.03.30 - CaLM Model Input Description|dendron://torchcell/torchcell.datasets.codon_language_model#20240330---calm-model-input-description]]
+- [x] Dataset registry → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]
+- 🔲 Compute all nucleotide transformer embeddings. → Did CaLM embeddings instead.
+- 🔲 Try to do a `1e6` local docker build. → Did CaLM embeddings instead.
 
 ## 2024.03.28
 
-- [ ] Try to identify reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]] → Taking longer than expected to get everything going because I forgot that with Apptainer we need to push latest commit to redo `tcdb` build. →  
+- 🔲 Try to identify reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]] → Taking longer than expected to get everything going because I forgot that with Apptainer we need to push latest commit to redo `tcdb` build. →  ...
 - 🔲 We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index.
-
 - [x] Create datasets, then globus transfer them to `delta`, launch delta sweep on `1e4` data.
 
 ## 2024.03.27
@@ -38,18 +48,17 @@ created: 1690514887023m
 - [x] #ramble We wan't to be able to down sample `1e3`, `1e4`, `1e5`, `1e6` then total which is about `2e7`. Last time we learned that evening training on `1e6` can be difficult. To reduce this difficult we hare starting with embeddings of only one type and using smaller datasets. → Instead of changing query, just going to down sample from query.
 - [x] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible. → move to ![[user.mjvolk3.torchcell.tasks.future#future]]
 - [x] `chunk_size: 1e2` is abysmally slow 🐢 and barely uses any memory, a kill and use `1e3`. [wandb log](https://wandb.ai/zhao-group/tcdb/runs/q38d00ck?nw=nwusermjvolk3) → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/yj2qkwpd?nw=nwusermjvolk3) of the last run run on delta that is related. This run memory peaks at 90% and has 2x less cpu. Since 120 cpus means more memory for each process I think `5e2` makes the most sense to try, but will try to fail fast with `1e3` first before nights end.
-- [x] Get dataset of about 1,000 samples. → whole datset is 346,321 large.
-- [ ] Subset dataset.
-- [ ] Training loop on local m1 for set net with fungal embeddings.
+- [x] Get dataset of about 1,000 samples. → whole dataset is 346,321 large.
+- [x] Subset dataset.
+- [x] Training loop on local m1 for set net with fungal embeddings.
 
 ## 2024.03.26
 
 - [x] Rebuild `DmfCostanzo2016` nodes only, on `Delta` to investigate down cpu workers → Uses multiprocessing during duration of run.
 - [x] Rebuild `DmfCostanzo2016` nodes and edges on `Delta` to investigate down cpu workers → Looks like it starts to use multiprocessing during the beginning of the `write_edges`, but the starts using only a single process. → Couldn't easily identify the issue so did some light rewriting of the the adapter for this dataset, commented out, and reverted to using the [[torchcell.adapters.cell_adapter]]. → Started another `Delta` run with this with the belief that the issue is somehow in the modified class.
 - [x] [[2024.03.26 - Uncertain if is is Feasible to Keep a Base Class|dendron://torchcell/torchcell.datamodules.cell#20240326---uncertain-if-is-is-feasible-to-keep-a-base-class]]
-- [ ] `DmfCostanzo2016` adapter with [[torchcell.adapters.cell_adapter]] base class update? → `write_nodes` is looking roughly 3hr instead of 2hr... started with [[torchcell.adapters.kuzmin2018_adapter]] but makes more sense to just run [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] outside of docker container.
-
-- [ ] CellDataModule
+- [x] `DmfCostanzo2016` adapter with [[torchcell.adapters.cell_adapter]] base class update? → `write_nodes` is looking roughly 3hr instead of 2hr... started with [[torchcell.adapters.kuzmin2018_adapter]] but makes more sense to just run [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] outside of docker container.
+- 🔲 CellDataModule
 
 ## 2024.03.25
 
@@ -508,16 +517,11 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [ ] **small build** try small bulk import.
 - [ ] **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
 - [ ] **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentialy for now.
-
 - [ ] **remote build** apptainer build image
 - [ ] **remote build** try small db bulk import
 - [ ] **remote build** try db query
-
 - [ ] **small build** - check nan import case.
 
-- [ ] **small build**
-- [ ] **local lmdb**
-- [ ] **remote build**
 
 ## 2024.02.13
 

@@ -193,6 +193,27 @@ class RegressionTask(L.LightningModule):
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 
+    def compute_prediction_stats(self, true_values, predictions, stage="val"):
+        # Define bins for the ranges you're interested in
+        bins = [-float("inf"), 0] + [i * 0.1 for i in range(1, 13)] + [float("inf")]
+        bin_indices = torch.bucketize(predictions, bins=bins)
+
+        # Prepare a table with columns for the range, mean and standard deviation
+        wandb_table = wandb.Table(columns=["Range", "Mean", "Std"])
+
+        # Calculate mean and std for each bin and add to the table
+        for i in range(len(bins) - 1):
+            bin_mask = bin_indices == i + 1
+            if bin_mask.sum() > 0:
+                bin_predictions = predictions[bin_mask]
+                mean_val = bin_predictions.mean().item()
+                std_val = bin_predictions.std().item()
+                range_str = f"{bins[i]} - {bins[i+1]}"
+                wandb_table.add_data(range_str, mean_val, std_val)
+
+        # Log the table to wandb
+        wandb.log({f"{stage}/Prediction_Stats": wandb_table})
+
     def on_validation_epoch_end(self):
         self.log_dict(self.val_metrics.compute(), sync_dist=True)
         self.val_metrics.reset()
@@ -206,6 +227,7 @@ class RegressionTask(L.LightningModule):
         # Convert lists to tensors
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
+        self.compute_prediction_stats(true_values, predictions, stage="val")
 
         if self.target == "fitness":
             fig = fitness.box_plot(true_values, predictions)
@@ -271,7 +293,8 @@ class RegressionTask(L.LightningModule):
         # Convert lists to tensors
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
-
+        self.compute_prediction_stats(true_values, predictions, stage="test")
+        
         if self.target == "fitness":
             fig = fitness.box_plot(true_values, predictions)
         elif self.target == "genetic_interaction_score":

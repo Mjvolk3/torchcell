@@ -4,13 +4,11 @@
 # Test file: tests/torchcell/datamodels/test_schema.py
 
 
-import json
 from typing import List, Union, Optional
 
-from pydantic import BaseModel, Field, field_validator, root_validator
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
-
 
 # Genotype
 class ReferenceGenome(ModelStrict):

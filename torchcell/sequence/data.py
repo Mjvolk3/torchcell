@@ -7,21 +7,11 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from itertools import product
-from turtle import st
-from typing import Set
 
-import gffutils
-import matplotlib.pyplot as plt
 import pandas as pd
-from attrs import define, field
-from Bio import SeqIO
-from Bio.Seq import Seq
-from gffutils import Feature, FeatureDB
-from gffutils.biopython_integration import to_seqfeature
-from matplotlib import pyplot as plt
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, root_validator
+from gffutils import FeatureDB
+from pydantic import field_validator, root_validator
 from sortedcontainers import SortedDict, SortedSet
-from sympy import sequence
 
 from torchcell.datamodels import ModelStrict, ModelStrictArbitrary
 

@@ -32,11 +32,13 @@ from torchcell.datamodels import (
 )
 from torchcell.data import ExperimentDataset, post_process  # FLAG
 from concurrent.futures import ThreadPoolExecutor
+from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+@register_dataset
 class SmfCostanzo2016Dataset(ExperimentDataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -305,6 +307,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         return experiment, reference
 
 
+@register_dataset
 class DmfCostanzo2016Dataset(ExperimentDataset):
     url = (
         "https://thecellmap.org/costanzo2016/data_files/"
@@ -625,7 +628,7 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    dataset = DmfCostanzo2016Dataset(   
+    dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_alt_1"),
         # subset_n=int(1e6),
         io_workers=10,

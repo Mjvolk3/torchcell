@@ -35,11 +35,12 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.sequence import GeneSet
 from torchcell.data import ExperimentDataset, post_process
+from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-
+@register_dataset
 class SmfKuzmin2018Dataset(ExperimentDataset):
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
 
@@ -288,7 +289,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         )
         return experiment, reference
 
-
+@register_dataset
 class DmfKuzmin2018Dataset(ExperimentDataset):
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
 
@@ -500,7 +501,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         )
         return experiment, reference
 
-
+@register_dataset
 class TmfKuzmin2018Dataset(ExperimentDataset):
     url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
 

@@ -10,7 +10,7 @@ wandb:
 cell_dataset:
   graphs: null #[physical], [regulatory], [physical, regulatory], []
   node_embeddings: [one_hot_gene] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
-  max_size: 1e3
+  max_size: 1e4
 
 data_module:
   batch_size: 16 #32

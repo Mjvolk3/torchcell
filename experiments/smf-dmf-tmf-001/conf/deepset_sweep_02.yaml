@@ -1,5 +1,5 @@
 program: experiments/smf-dmf-tmf-001/deepset.py
-project: torchcell_test
+project: torchcell_smf-dmf-tmf-001
 method: grid
 metric:
   goal: minimize
@@ -18,9 +18,9 @@ parameters:
       graphs: #[physical], [regulatory], [physical, regulatory], null
         values: [null]
       node_embeddings:
-        values: [fudt_upstream] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
+        values: [one_hot_gene] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
       max_size:
-        values: [1e4]
+        values: [1e3]
   data_module:
     parameters:
       batch_size:

@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/nucleotide_transformer.py
 # Test file: tests/torchcell/datasets/test_nucleotide_transformer.py
 import os
+import os.path as osp
 from collections.abc import Callable
 from typing import Optional
 
@@ -124,6 +125,11 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
     genome = SCerevisiaeGenome()
     model_names = [
         "nt_window_5979",
@@ -140,7 +146,7 @@ if __name__ == "__main__":
     datasets = []
     for model_name in model_names:
         dataset = NucleotideTransformerDataset(
-            root="data/scerevisiae/nucleotide_transformer_embed",
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
             genome=genome,
             model_name=model_name,
         )

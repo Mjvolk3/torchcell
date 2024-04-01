@@ -704,7 +704,7 @@ def main():
         model_name="species_downstream",
     )
     deduplicator = ExperimentDeduplicator()
-    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e6")
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e04")
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -715,7 +715,7 @@ def main():
             "fudt_5prime": fudt_5prime_dataset,
         },
         deduplicator=deduplicator,
-        max_size=int(1e6),
+        max_size=int(1e4),
     )
     print(len(dataset))
     # Data module testing

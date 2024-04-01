@@ -87,3 +87,5 @@ notes/assets/SEED_abstract_2024.docx
 gene_set.json
 biocypher_file_name.txt
 
+# Agent logs
+experiments/smf-dmf-tmf-001/agent_log

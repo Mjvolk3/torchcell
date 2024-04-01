@@ -53,6 +53,6 @@ echo "-----------------"
 # Use for Agent logging. Only use in testing.
 # Not sure if visivles devices scales with num nodes or resets to 0
 for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
+    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
 done
 wait

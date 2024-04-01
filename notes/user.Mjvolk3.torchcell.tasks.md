@@ -9,6 +9,13 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.04.01
+
+- [x] `1e4` not working for loader test → deleted `1e4` and recompute locally. Launched job for `1e3` can just multiple for order magnitude to get finish estimate.
+- [x] `tcdb` more 6hr job builds #wandb.docker_v_m1_study_003
+- [x] Nucleotide transformer embedding opt → looks to work on local. Added slurm job.
+- [ ] Launch Nucelotide transformer embedding job on `Delta`
+
 ## 2024.03.31
 
 - [x] Check CaLM embeddings → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]

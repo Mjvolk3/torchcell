@@ -2,7 +2,7 @@ import os
 
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
-
+from typing import Union
 from torchcell.models.llm import NucleotideModel
 
 MODEL_NAME = "InstaDeepAI/nucleotide-transformer-2.5b-multi-species"
@@ -12,12 +12,11 @@ class NucleotideTransformer(NucleotideModel):
     def __init__(self):
         self.tokenizer = None
         self.model = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.load_model()
 
     @staticmethod
     def _check_and_download_model():
-        # Define the model name
-
         # Define the directory where you want the model to be saved
         script_dir = os.path.dirname(os.path.realpath(__file__))
         target_directory = os.path.join(
@@ -54,20 +53,26 @@ class NucleotideTransformer(NucleotideModel):
         self.tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
         self.model = AutoModelForMaskedLM.from_pretrained(MODEL_NAME)
 
-    def embed(self, sequences: list[str], mean_embedding: bool = False) -> torch.Tensor:
-        tokens_ids = self.tokenizer.batch_encode_plus(sequences, return_tensors="pt")[
-            "input_ids"
-        ]
-        # TODO check this error handling... looks wrong with 1000
-        for token_id, sequence in zip(tokens_ids, sequences):
-            if len(token_id) > 1000:
-                raise ValueError(
-                    f"Sequence length ({len(sequence)}) is too long for this model. "
-                    f"Max sequence size is {self.max_size}."
-                    f"Token length is {len(token_id)}."
-                    f"Max token length is 1000."
-                )
-        # Compute the embeddings
+        # Move the model to the selected device
+        self.model.to(self.device)
+
+    def embed(
+        self, sequences: Union[str, list[str]], mean_embedding: bool = False
+    ) -> torch.Tensor:
+        if isinstance(sequences, str):
+            sequences = [sequences]  # Convert single string to a list
+
+        tokens_ids = self.tokenizer.batch_encode_plus(
+            sequences,
+            return_tensors="pt",
+            padding="max_length",
+            max_length=self.tokenizer.model_max_length,
+        )["input_ids"]
+
+        # Move the input data to the selected device
+        tokens_ids = tokens_ids.to(self.device)
+
+        # Compute the embeddings on the selected device
         attention_mask = tokens_ids != self.tokenizer.pad_token_id
         torch_outs = self.model(
             tokens_ids,
@@ -79,10 +84,17 @@ class NucleotideTransformer(NucleotideModel):
         embeddings = torch_outs["hidden_states"][-1].detach()
 
         if mean_embedding:
+            # Add embed dimension axis
+            attention_mask = torch.unsqueeze(attention_mask, dim=-1)
             # Compute mean embeddings per sequence
-            embeddings = torch.sum(
-                attention_mask.unsqueeze(-1) * embeddings, axis=-2
-            ) / torch.sum(attention_mask, axis=-1).unsqueeze(-1)
+            embeddings = torch.sum(attention_mask * embeddings, axis=-2) / torch.sum(
+                attention_mask, axis=-2
+            )
+
+        if len(sequences) == 1:
+            embeddings = embeddings.squeeze(
+                0
+            )  # Remove the batch dimension if input was a single string
 
         return embeddings
 

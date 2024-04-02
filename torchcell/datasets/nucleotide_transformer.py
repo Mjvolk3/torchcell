@@ -99,7 +99,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             gene_ids.append(gene_id)
 
         # Compute embeddings in batches
-        batch_size = 2  # Adjust the batch size according to your memory constraints
+        batch_size = 1  # Adjust the batch size according to your memory constraints
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]
@@ -124,9 +124,11 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         torch.save(self.collate(data_list), self.processed_paths[0])
 
 
-if __name__ == "__main__":
+def main():
     from dotenv import load_dotenv
+    import wandb
 
+    wandb = wandb.init(mode="online", project="torchcell_embeddings")
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
@@ -143,13 +145,17 @@ if __name__ == "__main__":
         "nt_window_5utr_1000",
         "nt_window_5utr_1000_undersize",
     ]
-    datasets = []
+    event = 0
     for model_name in model_names:
+        wandb.log({"event": event})
         dataset = NucleotideTransformerDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),
             genome=genome,
             model_name=model_name,
         )
-        datasets.append(dataset)
-        print(f"Dataset for {model_name}: {dataset}")
-    print(dataset)
+        print(f"Completed Dataset for {model_name}: {dataset}")
+        event += 1
+
+
+if __name__ == "__main__":
+    main()

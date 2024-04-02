@@ -125,6 +125,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
 
 def main():
+    print("Starting main...")
     from dotenv import load_dotenv
     import wandb
 

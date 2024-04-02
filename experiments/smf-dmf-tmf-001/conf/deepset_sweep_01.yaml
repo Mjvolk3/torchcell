@@ -24,9 +24,9 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [8, 16]
+        values: [16, 32]
       num_workers:
-        values: [4, 6, 8, 10, 12]
+        values: [10]
       pin_memory:
         values: [true]
   trainer:

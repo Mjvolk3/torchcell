@@ -99,7 +99,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             gene_ids.append(gene_id)
 
         # Compute embeddings in batches
-        batch_size = 4  # Adjust the batch size according to your memory constraints
+        batch_size = 2 # Adjust the batch size according to your memory constraints
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]

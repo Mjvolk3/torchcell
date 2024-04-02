@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
-#SBATCH --partition=gpuA100x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
+#SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
 #SBATCH --job-name=embed
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
@@ -34,4 +34,4 @@ conda activate /projects/bbub/miniconda3/envs/torchcell
 # TODO Needed for sweep... need to look into this more.
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
-python -m torchcell.datasets.nucleotide_transformer
+python torchcell/datasets/nucleotide_transformer.py

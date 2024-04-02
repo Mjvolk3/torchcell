@@ -89,3 +89,7 @@ biocypher_file_name.txt
 
 # Agent logs
 experiments/smf-dmf-tmf-001/agent_log
+
+torchcell/knowledge_graphs/conf/kg.yaml
+experiments/embeddings/slurm/output/
+experiments/embeddings/slurm/error/

@@ -122,7 +122,7 @@
             {
                 "label": "Delta: Interactive gpuA40x",
                 "type": "shell",
-                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=${input:A40x4_mem} --pty bash",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=${input:A40x4_mem} --pty bash",
                 "problemMatcher": []
             },
             {

@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712072997665
+updated: 1712098261856
 created: 1690514887023m
 ---
 
@@ -11,9 +11,10 @@ created: 1690514887023m
 
 - [x] Review worst runs on parallel lines plot. #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
 - [x] Report on loader parameters. Give best parameter and estimate times for runs #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
-- [ ] Wandb Bayesian optimization only takes continuous variables. → [[2024.04.02 - Wandb Bayesian Optimization Only Operates on Continuous Variables|dendron://torchcell/wandb.bayesian-optimization#20240402---wandb-bayesian-optimization-only-operates-on-continuous-variables]] → The source expresses doubt in parallelizing runs with Bayesian optimization. → Need continous model parameterization.
-- [ ] `1e4` dataset.
-- [ ] Change [[Deep_set|dendron://torchcell/torchcell.models.deep_set]] to have continuous parameterization. Thinking `in_channels`, `hidden_channels`, `out_channels`, `num_layers`. 
+- [x] Wandb Bayesian optimization only takes continuous variables. → [[2024.04.02 - Wandb Bayesian Optimization Only Operates on Continuous Variables|dendron://torchcell/wandb.bayesian-optimization#20240402---wandb-bayesian-optimization-only-operates-on-continuous-variables]] → The source expresses doubt in parallelizing runs with Bayesian optimization. → Need continuous model parameterization.
+- [ ] Compute Nucleotide Transformer embeddings on delta. → There have been issues with this. Outputs are not getting logged properly. → Keep getting #OOM, not it is really taking long..
+- [ ] `1e4` dataset. → globus transferred
+- [ ] Change [[Deep_set|dendron://torchcell/torchcell.models.deep_set]] to have continuous parameterization. Thinking `in_channels`, `hidden_channels`, `out_channels`, `num_layers`.
 - [ ] Esm embedding dataset.
 
 - [ ] Add all possible embeddings and test run under optimal loader.

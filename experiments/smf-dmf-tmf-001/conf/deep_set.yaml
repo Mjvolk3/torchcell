@@ -1,4 +1,3 @@
-# experiments/config/dmf_costanzo_deepset.yaml
 defaults:
   - default
   - _self_ # append to end for overriding duplicate configs in default
@@ -23,8 +22,11 @@ trainer:
 
 models:
   graph:
-    node_layers: [512, 128] #[512, 128, 128, 128] #[512, 256, 128, 64] # [1024, 512]
-    set_layers: [128, 64, 32] #[32, 32, 32, 32] # [256, 128]
+    in_channels: null # This will be set based on the input_dim
+    hidden_channels: 128
+    out_channels: 32
+    num_node_layers: 3
+    num_set_layers: 3
     norm: batch
     activation: gelu
     skip_node: true

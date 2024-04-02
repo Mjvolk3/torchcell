@@ -99,7 +99,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             gene_ids.append(gene_id)
 
         # Compute embeddings in batches
-        batch_size = 2 # Adjust the batch size according to your memory constraints
+        batch_size = 2  # Adjust the batch size according to your memory constraints
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome()
+    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
     model_names = [
         "nt_window_5979",
         "nt_window_5979_max",

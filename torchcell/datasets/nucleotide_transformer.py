@@ -16,10 +16,6 @@ from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-os.makedirs("data/scerevisiae/nucleotide_transformer_embed", exist_ok=True)
-
-
-# TODO rename utr to up and down
 class NucleotideTransformerDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
         "nt_window_5979_max": ("window", 5979, True),
@@ -127,7 +123,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 def main():
     from dotenv import load_dotenv
     import wandb
-
+    from time import sleep
+    sleep(20)
+    print("Starting main...")
     wandb = wandb.init(mode="online", project="torchcell_embeddings")
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

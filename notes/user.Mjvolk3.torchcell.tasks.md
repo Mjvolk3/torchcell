@@ -9,17 +9,26 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+- [ ] Review worst runs on parallel lines plot. #wandb.
+- [ ] Report on loader parameters. Give best parameter Desoms for number of possible runs in 48 hr with 3.3 M model.
+- [ ] Add all possible embeddings and test run under optimal loader.
+- [ ] #wandb.tcdb.docker_v_m1_study_002
+- [ ] #wandb.tcdb.docker_v_m1_study_003
+- [ ] #wandb.tcdb.docker_v_m1_study_001
+- [ ] Meet with Neo4j consultant.
+- [ ]
+
 ## 2024.04.01
 
 - [x] `1e4` not working for loader test → deleted `1e4` and recompute locally. Launched job for `1e3` can just multiple for order magnitude to get finish estimate.
-- [x] `tcdb` more 6hr job builds #wandb.docker_v_m1_study_003
+- [x] `tcdb` more 6hr job builds #wandb.tcdb.docker_v_m1_study_003
 - [x] Nucleotide transformer embedding opt → looks to work on local. Added slurm job.
-- [ ] Launch Nucelotide transformer embedding job on `Delta`
+- [x] Launch Nucleotide transformer embedding job on `Delta`
 
 ## 2024.03.31
 
 - [x] Check CaLM embeddings → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]
-- [ ] Different spiking levels in DmfCostanzo suggest that we should be setting chunksize for differernt functions to squash memory usage when needed.
+- [ ] Different spiking levels in DmfCostanzo suggest that we should be setting chunk size for different functions to squash memory usage when needed.
 - [ ] Rerun CaLM embeddings with finished script to make they can be reproduced.
 - [ ] Compute all nucleotide transformer embeddings.
 - [ ] Try to do a `1e6` local docker build.
@@ -29,7 +38,7 @@ created: 1690514887023m
 ## 2024.03.30
 
 - [x] Launch sweep for `DeepSet` on `Delta` → wandb is acting up cannot run loader even test. The sweeps take forever to make in interactive mode. → Launched but waiting... → Ran for 2 hours and never started... must be because of the `wandb` issue.
-- [x] Using tags to track quick investigations just because `wandb` uses tag language and I haven't found a way to save view other than reports which are a bit clunky. → #wandb.docker_v_m1_study_001
+- [x] Using tags to track quick investigations just because `wandb` uses tag language and I haven't found a way to save view other than reports which are a bit clunky. → #wandb.tcdb.docker_v_m1_study_001
 - [x] #ramble We have to know where the data comes from... in terms of which dataset. The dataset property would be very nice for limiting queries to data from different sources. We could also keep the query simple and get the dataset index like we get phenotype label index. → This is a difficult problem to solve since it does not currently exist within the data model but I believe it should. We can just add it as another entry in the reference and the experiment. → I think we add to data model... still thinking on it.
 - [x] Add prediction stats table.
 - [x] Add CaLM embeddings. → [[2024.03.30 - CaLM Model Input Description|dendron://torchcell/torchcell.datasets.codon_language_model#20240330---calm-model-input-description]]
@@ -45,7 +54,7 @@ created: 1690514887023m
 
 ## 2024.03.27
 
-- [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.docker_v_m1_study_001
+- [x] Try 20% decrease on `tcdb` chunk size → [wandb log](https://wandb.ai/zhao-group/tcdb/runs/67iwlmsp?nw=nwusermjvolk3) → looking like it has reduced memory. → #wandb.tcdb.docker_v_m1_study_001
 - [x] Taking long on M1 with small chunk size, but we should likely wait it out. → was not going to finish so killed.
 - [x] #ramble I don't know if we need the phenotype_label_index yet... and it might take too much time to compute with full dataset. For now try to avoid using it.
 - [x] Test `TmfKuzmin2018` adapter no docker. → works

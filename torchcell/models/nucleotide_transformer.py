@@ -90,11 +90,7 @@ class NucleotideTransformer(NucleotideModel):
             embeddings = torch.sum(attention_mask * embeddings, axis=-2) / torch.sum(
                 attention_mask, axis=-2
             )
-
-        if len(sequences) == 1:
-            embeddings = embeddings.squeeze(
-                0
-            )  # Remove the batch dimension if input was a single string
+            embeddings = embeddings.unsqueeze(0)
 
         return embeddings
 

@@ -2,15 +2,20 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1711909989551
+updated: 1712072997665
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-- [ ] Review worst runs on parallel lines plot. #wandb.
-- [ ] Report on loader parameters. Give best parameter Desoms for number of possible runs in 48 hr with 3.3 M model.
+- [x] Review worst runs on parallel lines plot. #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
+- [x] Report on loader parameters. Give best parameter and estimate times for runs #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
+- [ ] Wandb Bayesian optimization only takes continuous variables. → [[2024.04.02 - Wandb Bayesian Optimization Only Operates on Continuous Variables|dendron://torchcell/wandb.bayesian-optimization#20240402---wandb-bayesian-optimization-only-operates-on-continuous-variables]] → The source expresses doubt in parallelizing runs with Bayesian optimization. → Need continous model parameterization.
+- [ ] `1e4` dataset.
+- [ ] Change [[Deep_set|dendron://torchcell/torchcell.models.deep_set]] to have continuous parameterization. Thinking `in_channels`, `hidden_channels`, `out_channels`, `num_layers`. 
+- [ ] Esm embedding dataset.
+
 - [ ] Add all possible embeddings and test run under optimal loader.
 - [ ] #wandb.tcdb.docker_v_m1_study_002
 - [ ] #wandb.tcdb.docker_v_m1_study_003

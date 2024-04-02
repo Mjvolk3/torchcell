@@ -13,9 +13,11 @@ from torchcell.models.act import act_register
 class DeepSet(nn.Module):
     def __init__(
         self,
-        input_dim: int,
-        node_layers: list[int],
-        set_layers: list[int],
+        in_channels: int,
+        hidden_channels: int,
+        out_channels: int,
+        num_node_layers: int,
+        num_set_layers: int,
         dropout_prob: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
@@ -41,18 +43,37 @@ class DeepSet(nn.Module):
             block.append(act_register[activation])
             return nn.Sequential(*block)
 
-        in_dim = input_dim
         node_modules = []
-        for out_dim in node_layers:
-            node_modules.append(create_block(in_dim, out_dim, norm, activation))
-            in_dim = out_dim
+        for i in range(num_node_layers):
+            if i == 0:
+                node_modules.append(
+                    create_block(in_channels, hidden_channels, norm, activation)
+                )
+            elif i == num_node_layers - 1:
+                node_modules.append(
+                    create_block(hidden_channels, out_channels, norm, activation)
+                )
+            else:
+                node_modules.append(
+                    create_block(hidden_channels, hidden_channels, norm, activation)
+                )
         self.node_layers = nn.ModuleList(node_modules)
 
         set_modules = []
-        for out_dim in set_layers:
-            set_modules.append(create_block(in_dim, out_dim, norm, activation))
-            in_dim = out_dim
-        set_modules.append(nn.Dropout(dropout_prob))
+        for i in range(num_set_layers):
+            if i == 0:
+                set_modules.append(
+                    create_block(out_channels, hidden_channels, norm, activation)
+                )
+            elif i == num_set_layers - 1:
+                set_modules.append(
+                    create_block(hidden_channels, out_channels, norm, activation)
+                )
+                set_modules.append(nn.Dropout(dropout_prob))
+            else:
+                set_modules.append(
+                    create_block(hidden_channels, hidden_channels, norm, activation)
+                )
         self.set_layers = nn.ModuleList(set_modules)
 
     def node_layers_forward(self, x):
@@ -70,7 +91,11 @@ class DeepSet(nn.Module):
         x_set = x_summed
         for i, layer in enumerate(self.set_layers):
             out_set = layer(x_set)
-            if self.skip_set and x_set.shape[-1] == out_set.shape[-1]:
+            if (
+                self.skip_set
+                and i < len(self.set_layers) - 1
+                and x_set.shape[-1] == out_set.shape[-1]
+            ):
                 out_set = out_set + x_set  # Skip connection
             x_set = out_set
         return x_set
@@ -86,14 +111,18 @@ def main():
     torch.autograd.set_detect_anomaly(True)
 
     # Model configuration
-    input_dim = 10
-    node_layers = [64, 32, 32, 32]
-    set_layers = [16, 8, 8]
+    in_channels = 10
+    hidden_channels = 32
+    out_channels = 8
+    num_node_layers = 3
+    num_set_layers = 2
 
     model = DeepSet(
-        input_dim,
-        node_layers,
-        set_layers,
+        in_channels,
+        hidden_channels,
+        out_channels,
+        num_node_layers,
+        num_set_layers,
         norm="layer",
         activation="tanh",
         skip_node=True,
@@ -101,17 +130,18 @@ def main():
     )
 
     # Dummy data
-    x = torch.rand(100, input_dim)
+    x = torch.rand(100, in_channels)
+    print("x shape:", x.shape)
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
 
     # Forward pass
     x_nodes, x_set = model(x, batch)
-    print(x_set.shape)
-    print(x_nodes.shape)
+    print("x_set shape:", x_set.shape)
+    print("x_nodes shape:", x_nodes.shape)
 
     # Let's assume you want to predict some values for each set.
     # So, we'll create a dummy target tensor for demonstration purposes.
-    target = torch.rand(5, set_layers[-1])
+    target = torch.rand(5, out_channels)
 
     # Simple mean squared error loss
     criterion = nn.MSELoss()
@@ -122,7 +152,6 @@ def main():
     model.zero_grad()
     loss.backward()
     print("Gradients computed successfully!")
-    print(x_set.size())
 
 
 if __name__ == "__main__":

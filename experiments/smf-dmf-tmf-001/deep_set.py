@@ -39,7 +39,8 @@ log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
-@hydra.main(version_base=None, config_path="conf", config_name="deepset")
+
+@hydra.main(version_base=None, config_path="conf", config_name="deep_set")
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -146,16 +147,18 @@ def main(cfg: DictConfig) -> None:
     model = ModuleDict(
         {
             "main": DeepSet(
-                input_dim=input_dim,
-                node_layers=wandb.config.models["graph"]["node_layers"],
-                set_layers=wandb.config.models["graph"]["set_layers"],
+                in_channels=input_dim,
+                hidden_channels=wandb.config.models["graph"]["hidden_channels"],
+                out_channels=wandb.config.models["graph"]["out_channels"],
+                num_node_layers=wandb.config.models["graph"]["num_node_layers"],
+                num_set_layers=wandb.config.models["graph"]["num_set_layers"],
                 norm=wandb.config.models["graph"]["norm"],
                 activation=wandb.config.models["graph"]["activation"],
                 skip_node=wandb.config.models["graph"]["skip_node"],
                 skip_set=wandb.config.models["graph"]["skip_set"],
             ),
             "top": Mlp(
-                input_dim=wandb.config.models["graph"]["set_layers"][-1],
+                input_dim=wandb.config.models["graph"]["out_channels"],
                 layer_dims=wandb.config.models["pred_head"]["layer_dims"],
             ),
         }

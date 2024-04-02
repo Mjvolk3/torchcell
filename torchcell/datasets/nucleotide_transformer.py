@@ -124,9 +124,8 @@ def main():
     from dotenv import load_dotenv
     import wandb
     from time import sleep
-    sleep(20)
     print("Starting main...")
-    wandb = wandb.init(mode="online", project="torchcell_embeddings")
+    wandb.init(mode="online", project="torchcell_embeddings")
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 

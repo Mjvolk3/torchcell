@@ -147,6 +147,8 @@ def main():
     ]
     event = 0
     for model_name in model_names:
+        print(f"event: {event}")
+        print(f"starting model_name: {model_name}")
         wandb.log({"event": event})
         dataset = NucleotideTransformerDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embed"),

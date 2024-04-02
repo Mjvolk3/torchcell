@@ -7,7 +7,7 @@ from tqdm import tqdm
 import hashlib
 import json
 from biocypher._create import BioCypherEdge, BioCypherNode
-from typing import Set
+from typing import Set, Optional
 import torch
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 from concurrent.futures import ProcessPoolExecutor
@@ -43,10 +43,13 @@ class CellAdapter:
         self.loader_batch_size = loader_batch_size
         self.event = 0
 
-    def get_data_by_type(self, chunk_processing_func: Callable):
+    def get_data_by_type(
+        self, chunk_processing_func: Callable, chunk_size: Optional[int] = None
+    ):
+        chunk_size = chunk_size if chunk_size is not None else self.chunk_size
         data_chunks = [
-            self.dataset[i : i + self.chunk_size]
-            for i in range(0, len(self.dataset), self.chunk_size)
+            self.dataset[i : i + chunk_size]
+            for i in range(0, len(self.dataset), chunk_size)
         ]
         with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
             futures = [

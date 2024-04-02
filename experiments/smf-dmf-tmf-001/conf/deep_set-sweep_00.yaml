@@ -1,4 +1,4 @@
-program: experiments/smf-dmf-tmf-001/deepset.py
+program: experiments/smf-dmf-tmf-001/deep_set.py
 project: torchcell_test
 method: grid
 metric:

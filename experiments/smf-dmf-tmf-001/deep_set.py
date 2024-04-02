@@ -1,7 +1,7 @@
-# experiments/smf-dmf-tmf/deepset
-# [[experiments.smf-dmf-tmf.deepset]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf/deepset
-# Test file: experiments/smf-dmf-tmf/test_deepset.py
+# experiments/smf-dmf-tmf-001/deep_set
+# [[experiments.smf-dmf-tmf-001.deep_set]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/deep_set
+# Test file: experiments/smf-dmf-tmf-001/test_deep_set.py
 
 import hashlib
 import json

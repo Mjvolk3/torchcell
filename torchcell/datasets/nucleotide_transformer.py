@@ -88,7 +88,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         # TODO check that genome gene set is SortedSet
         sequences = []
         gene_ids = []
-        for i, gene_id in tqdm(enumerate(self.genome.gene_set)):
+        for gene_id in tqdm(self.genome.gene_set):
             sequence = self.genome[gene_id]
 
             if "three_prime" in window_method or "five_prime" in window_method:
@@ -102,10 +102,8 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
             sequences.append(dna_selection.seq)
             gene_ids.append(gene_id)
-            if i == 4:
-                break
         # Compute embeddings in batches
-        batch_size = 1  # Adjust the batch size according to your memory constraints
+        batch_size = 4  # Adjust the batch size according to your memory constraints
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]

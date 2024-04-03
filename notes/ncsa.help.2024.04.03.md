@@ -2,7 +2,7 @@
 id: d9b45j7ffn9g89u7f9x03sn
 title: '03'
 desc: ''
-updated: 1712160612210
+updated: 1712162856134
 created: 1712160610661
 ---
 Hi there,
@@ -383,3 +383,102 @@ Ph.D. Candidate
 Zhao Research Group
 Chemical and Biomolecular Engineering
 University of Illinois Urbana-Champaign
+
+## 2024.04.03 - Potential Follow Up - Smaller Loop on Interactive GPU
+
+```bash
+ode=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=62g --pty bash 
+
+srun: job 3351852 queued and waiting for resources
+srun: job 3351852 has been allocated resources
+conda activate /projects/bbub/miniconda3/envs/torchcell
+GpuFreq=control_disabled
+conda activate /projects/bbub/miniconda3/envs/torchcell
+(base) [mjvolk3@gpub002 torchcell]$ conda activate /projects/bbub/miniconda3/envs/torchcell
+(torchcell) [mjvolk3@gpub002 torchcell]$ python experiments/embeddings/compute_nucleotide_transformer_embeddings.py
+Starting main...
+wandb: Currently logged in as: mjvolk3 (zhao-group). Use `wandb login --relogin` to force relogin
+wandb: Tracking run with wandb version 0.16.5
+wandb: Run data is saved locally in /projects/bbub/mjvolk3/torchcell/wandb/run-20240403_112427-nkpx4kx1
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run solar-deluge-18
+wandb: ⭐️ View project at https://wandb.ai/zhao-group/torchcell_embeddings
+wandb: 🚀 View run at https://wandb.ai/zhao-group/torchcell_embeddings/runs/nkpx4kx1/workspace
+Downloading http://current.geneontology.org/ontology/go.obo
+data/go/go.obo: fmt(1.2) rel(2024-01-17) 45,869 Terms
+event: 0
+starting model_name: nt_window_5979
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_5979.pt
+Completed Dataset for nt_window_5979: NucleotideTransformerDataset(11)
+event: 1
+starting model_name: nt_window_5979_max
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_5979_max.pt
+Completed Dataset for nt_window_5979_max: NucleotideTransformerDataset(11)
+event: 2
+starting model_name: nt_window_three_prime_5979
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_three_prime_5979.pt
+Downloading InstaDeepAI/nucleotide-transformer-2.5b-multi-species model to /projects/bbub/mjvolk3/torchcell/torchcell/models/pretrained_LLM/nucleotide_transformer/InstaDeepAI/nucleotide-transformer-2.5b-multi-species...
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [01:00<00:00, 30.32s/it]
+Download finished.
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:11<00:00,  5.72s/it]
+4it [00:00, 53.85it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:21<00:00,  4.28s/it]
+Completed Dataset for nt_window_three_prime_5979: NucleotideTransformerDataset(5)
+event: 3
+starting model_name: nt_window_five_prime_5979
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_five_prime_5979.pt
+Downloading InstaDeepAI/nucleotide-transformer-2.5b-multi-species model to /projects/bbub/mjvolk3/torchcell/torchcell/models/pretrained_LLM/nucleotide_transformer/InstaDeepAI/nucleotide-transformer-2.5b-multi-species...
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.49s/it]
+Download finished.
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.31s/it]
+4it [00:00, 51.98it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:01<00:00,  3.58it/s]
+Completed Dataset for nt_window_five_prime_5979: NucleotideTransformerDataset(5)
+event: 4
+starting model_name: nt_window_three_prime_300
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_three_prime_300.pt
+Downloading InstaDeepAI/nucleotide-transformer-2.5b-multi-species model to /projects/bbub/mjvolk3/torchcell/torchcell/models/pretrained_LLM/nucleotide_transformer/InstaDeepAI/nucleotide-transformer-2.5b-multi-species...
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.32s/it]
+Download finished.
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.12s/it]
+4it [00:00, 56.61it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:01<00:00,  3.72it/s]
+Completed Dataset for nt_window_three_prime_300: NucleotideTransformerDataset(5)
+event: 5
+starting model_name: nt_window_five_prime_1003
+Processing...
+Done!
+/scratch/bbub/mjvolk3/torchcell/data/scerevisiae/nucleotide_transformer_embed/processed/nt_window_five_prime_1003.pt
+Downloading InstaDeepAI/nucleotide-transformer-2.5b-multi-species model to /projects/bbub/mjvolk3/torchcell/torchcell/models/pretrained_LLM/nucleotide_transformer/InstaDeepAI/nucleotide-transformer-2.5b-multi-species...
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.38s/it]
+Download finished.
+Loading checkpoint shards: 100%|███████████████████████████████████████████████████████████████| 2/2 [00:04<00:00,  2.09s/it]
+4it [00:00, 49.65it/s]
+100%|██████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:01<00:00,  3.70it/s]
+Completed Dataset for nt_window_five_prime_1003: NucleotideTransformerDataset(5)
+wandb: / 0.022 MB of 0.022 MB uploaded
+wandb: Run history:
+wandb: event ▁▂▄▅▇█
+wandb: 
+wandb: Run summary:
+wandb: event 5
+wandb: 
+wandb: 🚀 View run solar-deluge-18 at: https://wandb.ai/zhao-group/torchcell_embeddings/runs/nkpx4kx1/workspace
+wandb: Synced 5 W&B file(s), 0 media file(s), 2 artifact file(s) and 0 other file(s)
+wandb: Find logs at: ./wandb/run-20240403_112427-nkpx4kx1/logs
+(torchcell) [mjvolk3@gpub002 torchcell]$ 
+```
+
+## 2024.04.03 - Memory Formatting is MB
+
+Should have review the slurm docs early. I found this by checking the interactive srun that appends `g` to denote GB. This explains the discrepancy.

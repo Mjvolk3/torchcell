@@ -26,4 +26,4 @@ cat /proc/meminfo
 module list  # job documentation and metadata
 conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "Starting Embedding Computation..."
-python torchcell/datasets/nucleotide_transformer.py
+python experiments/embeddings/compute_nucleotide_transformer_embeddings.py

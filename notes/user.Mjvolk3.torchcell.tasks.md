@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712160709995
+updated: 1712163572900
 created: 1690514887023m
 ---
 
@@ -16,9 +16,14 @@ created: 1690514887023m
 - [x] Try to compute Nucleotide Transformer Embeddings with a smaller subset of genes. Works, but the size that don't have `undersize` can fail if they are against the chromosome edge. Leaving these out and only consider allow_undersize.
 - [x] Write #wandb.tcdb.docker_v_m1_study_002
 - [x] Submit help for running scripts on Delta. → [[help.2024.04.03 |dendron://torchcell/ncsa.help.2024.04.03]]
+- [x] Fixed issue with specifying memory [[2024.04.03 - Memory Formatting is MB|dendron://torchcell/ncsa.help.2024.04.03#20240403---memory-formatting-is-mb]]
 
-- [ ] Count parameters script, also plot distributions.
+- [ ] Check no issue with model. [[deep_set-sweep_05|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_05.yaml]]
+- [ ] Check no issue with embeddings. [[Yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
 - [ ] Esm embedding dataset.
+
+- [ ] Check `fudt` works.
+- [ ] Count parameters script, also plot distributions.
 - [ ] Add all possible embeddings and test run under optimal loader.
 - [ ] Write #wandb.tcdb.docker_v_m1_study_003
 - [ ] Add gradient log.

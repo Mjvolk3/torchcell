@@ -1,22 +1,17 @@
 #!/bin/bash
-#SBATCH --mem=253 # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
+#SBATCH --mem=64g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1    # <- match to OMP_NUM_THREADS
-#SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
-#SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=embed
-#SBATCH --time=18:00:00      # hh:mm:ss for the job, 48 hr max.
+#SBATCH --cpus-per-task=32   # <- match to OMP_NUM_THREADS
+#SBATCH --partition=cpu
+#SBATCH --account=bbub-delta-cpu
+#SBATCH --job-name=TC
+#SBATCH --time=6:00:00
 #SBATCH --constraint="projects&scratch"
-### GPU options ###
-#SBATCH --gpus-per-node=4
-#SBATCH --gpu-bind=none     # <- or closest
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
-# #SBATCH --output=/dev/null
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/embeddings/slurm/output/%x_%j.out
 #SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/embeddings/slurm/output/%x_%j.out
-
 
 module reset # drop modules and explicitly load the ones needed
              # (good job metadata and reproducibility)

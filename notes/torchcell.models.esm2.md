@@ -2,7 +2,7 @@
 id: tnrmnt43nsy0vawax1k7pls
 title: Esm2
 desc: ''
-updated: 1697566752879
+updated: 1712164973560
 created: 1697493069967
 ---
 [model names](https://huggingface.co/facebook/esm2_t6_8M_UR50D)
@@ -50,3 +50,7 @@ plt.title(f"{len(lens)} Proteins in Yeast > 1022 Amino Acids")
 pd.Series(lens).hist(bins=20)
 plt.show()
 ```
+
+## 2024.04.03 - Nvidia using 1022 Input
+
+[nvidia esm2](https://docs.nvidia.com/bionemo-framework/latest/models/esm2-nv.html)

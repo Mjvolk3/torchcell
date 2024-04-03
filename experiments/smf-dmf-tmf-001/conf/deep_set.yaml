@@ -8,8 +8,8 @@ wandb:
 
 cell_dataset:
   graphs: null #[physical], [regulatory], [physical, regulatory], []
-  node_embeddings: [one_hot_gene] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious
-  max_size: 1e4
+  node_embeddings: [prot_T5_no_dubious] # fudt_downstream, fudt_upstream, one_hot_gene, prot_T5_all, prot_T5_no_dubious, nt_window_5979, nt_window_5979_max, nt_window_three_prime_5979, nt_window_five_prime_5979, nt_window_three_prime_300, nt_window_five_prime_1003
+  max_size: 1e2
 
 data_module:
   batch_size: 16 #32

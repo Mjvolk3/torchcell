@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1    # <- match to OMP_NUM_THREADS
-#SBATCH --partition=gpuA100x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
+#SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
 #SBATCH --job-name=embed
 #SBATCH --time=18:00:00      # hh:mm:ss for the job, 48 hr max.
@@ -31,4 +31,4 @@ cat /proc/meminfo
 module list  # job documentation and metadata
 conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "Starting Embedding Computation..."
-python -m torchcell.datasets.nucleotide_transformer
+python experiments/embeddings/compute_nucleotide_transformer_embeddings.py

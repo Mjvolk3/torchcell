@@ -2,27 +2,43 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712098261856
+updated: 1712153131633
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-- [x] Review worst runs on parallel lines plot. #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
-- [x] Report on loader parameters. Give best parameter and estimate times for runs #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
-- [x] Wandb Bayesian optimization only takes continuous variables. → [[2024.04.02 - Wandb Bayesian Optimization Only Operates on Continuous Variables|dendron://torchcell/wandb.bayesian-optimization#20240402---wandb-bayesian-optimization-only-operates-on-continuous-variables]] → The source expresses doubt in parallelizing runs with Bayesian optimization. → Need continuous model parameterization.
-- [ ] Compute Nucleotide Transformer embeddings on delta. → There have been issues with this. Outputs are not getting logged properly. → Keep getting #OOM, not it is really taking long..
-- [ ] `1e4` dataset. → globus transferred
-- [ ] Change [[Deep_set|dendron://torchcell/torchcell.models.deep_set]] to have continuous parameterization. Thinking `in_channels`, `hidden_channels`, `out_channels`, `num_layers`.
-- [ ] Esm embedding dataset.
+## 2024.04.03
 
+- [x] Check on `tcdb` run overnight. 
+- [x] Check on Nucelotide Transformer embedding run overnight. → We still get #OOM with max resources on one GPU node, yet this doesn't happen on interactive node.
+- [ ] Try to compute Nucleotide Transformer Embeddings with a smaller subset of genes.
+
+- [ ] Submit help for running scripts on Delta.
+- [ ] Count parameters script, also plot distributions.
+- [ ] Esm embedding dataset.
 - [ ] Add all possible embeddings and test run under optimal loader.
 - [ ] #wandb.tcdb.docker_v_m1_study_002
 - [ ] #wandb.tcdb.docker_v_m1_study_003
 - [ ] #wandb.tcdb.docker_v_m1_study_001
-- [ ] Meet with Neo4j consultant.
-- [ ]
+- [ ] Add gradient log.
+
+## 2024.04.02
+
+- [x] Review worst runs on parallel lines plot. #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
+- [x] Report on loader parameters. Give best parameter and estimate times for runs #wandb.torchcell_smf-dmf-tmf-001.loader_opt_001
+- [x] Wandb Bayesian optimization only takes continuous variables. → [[2024.04.02 - Wandb Bayesian Optimization Only Operates on Continuous Variables|dendron://torchcell/wandb.bayesian-optimization#20240402---wandb-bayesian-optimization-only-operates-on-continuous-variables]] → The source expresses doubt in parallelizing runs with Bayesian optimization. → Need continuous model parameterization.
+- [x] Compute Nucleotide Transformer embeddings on delta. → There have been issues with this. Outputs are not getting logged properly. → Keep getting #OOM, not it is really taking long.. → submit a help request. With exact match interactive srun we cannot run the script [[194056|dendron://torchcell/scratch.2024.04.02.194056]]
+- [x] `1e4` dataset. → globus transferred
+- [x] Change [[Deep_set|dendron://torchcell/torchcell.models.deep_set]] to have continuous parameterization. Thinking `in_channels`, `hidden_channels`, `out_channels`, `num_layers`.
+- [x] Meet with Neo4j consultant. → Made 3 slides. → There some some concern over whether using Enterprise is allowed but I followed up providing the Neo4j documentation. → [[Enterprise|dendron://torchcell/neo4j.enterprise]]
+- [x] Count parameters script → started but didn't make a ton of progress... Not sure if we should just run sweep then make parallel coordinates plot from that... I also want to see distributions of model sizes.
+- 🔲 Esm embedding dataset.
+- 🔲 Add all possible embeddings and test run under optimal loader.
+- 🔲 #wandb.tcdb.docker_v_m1_study_002
+- 🔲 #wandb.tcdb.docker_v_m1_study_003
+- 🔲 #wandb.tcdb.docker_v_m1_study_001
 
 ## 2024.04.01
 

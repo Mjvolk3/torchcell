@@ -16,18 +16,20 @@ from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
+
 class NucleotideTransformerDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
         "nt_window_5979_max": ("window", 5979, True),
         "nt_window_5979": ("window", 5979, False),
-        "nt_window_3utr_5979": ("window_3utr", 5979, False),
-        "nt_window_3utr_5979_undersize": ("window_3utr", 5979, True),
-        "nt_window_5utr_5979": ("window_5utr", 5979, False),
-        "nt_window_5utr_5979_undersize": ("window_5utr", 5979, True),
-        "nt_window_3utr_300": ("window_3utr", 300, False),
-        "nt_window_3utr_300_undersize": ("window_3utr", 300, True),
-        "nt_window_5utr_1000": ("window_5utr", 1000, False),
-        "nt_window_5utr_1000_undersize": ("window_5utr", 1000, True),
+        "nt_window_three_prime_5979": (
+            "window_three_prime",
+            5979,
+            True,
+            True,
+        ),
+        "nt_window_five_prime_5979": ("window_five_prime", 5979, True, True),
+        "nt_window_three_prime_300": ("window_three_prime", 300, True, True),
+        "nt_window_five_prime_1003": ("window_five_prime", 1003, True),
     }
 
     def __init__(
@@ -74,7 +76,14 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             return
 
         data_list = []
-        window_method, window_size, flag = self.MODEL_TO_WINDOW[self.model_name]
+        if "five_prime" in self.model_name or "three_prime" in self.model_name:
+            window_method, window_size, has_special_codon, allow_undersize = (
+                self.MODEL_TO_WINDOW[self.model_name]
+            )
+        else:
+            window_method, window_size, is_max_size = self.MODEL_TO_WINDOW[
+                self.model_name
+            ]
 
         # TODO check that genome gene set is SortedSet
         sequences = []
@@ -82,18 +91,18 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         for i, gene_id in tqdm(enumerate(self.genome.gene_set)):
             sequence = self.genome[gene_id]
 
-            if "utr" in window_method:
+            if "three_prime" in window_method or "five_prime" in window_method:
                 dna_selection = getattr(sequence, window_method)(
-                    window_size, allow_undersize=flag
+                    window_size, allow_undersize=allow_undersize
                 )
             else:
                 dna_selection = getattr(sequence, window_method)(
-                    window_size, is_max_size=flag
+                    window_size, is_max_size=is_max_size
                 )
 
             sequences.append(dna_selection.seq)
             gene_ids.append(gene_id)
-            if i == 10:
+            if i == 4:
                 break
         # Compute embeddings in batches
         batch_size = 1  # Adjust the batch size according to your memory constraints
@@ -125,6 +134,7 @@ def main():
     from dotenv import load_dotenv
     import wandb
     from time import sleep
+
     print("Starting main...")
     wandb.init(mode="online", project="torchcell_embeddings")
     load_dotenv()
@@ -134,14 +144,10 @@ def main():
     model_names = [
         "nt_window_5979",
         "nt_window_5979_max",
-        "nt_window_3utr_5979",
-        "nt_window_3utr_5979_undersize",
-        "nt_window_5utr_5979",
-        "nt_window_5utr_5979_undersize",
-        "nt_window_3utr_300",
-        "nt_window_3utr_300_undersize",
-        "nt_window_5utr_1000",
-        "nt_window_5utr_1000_undersize",
+        "nt_window_three_prime_5979",
+        "nt_window_five_prime_5979",
+        "nt_window_three_prime_300",
+        "nt_window_five_prime_1003",
     ]
     event = 0
     for model_name in model_names:

@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712160023559
+updated: 1712160709995
 created: 1690514887023m
 ---
 
@@ -15,8 +15,8 @@ created: 1690514887023m
 - [x] Check on Nucelotide Transformer embedding run overnight. → We still get #OOM with max resources on one GPU node, yet this doesn't happen on interactive node.
 - [x] Try to compute Nucleotide Transformer Embeddings with a smaller subset of genes. Works, but the size that don't have `undersize` can fail if they are against the chromosome edge. Leaving these out and only consider allow_undersize.
 - [x] Write #wandb.tcdb.docker_v_m1_study_002
+- [x] Submit help for running scripts on Delta. → [[help.2024.04.03 |dendron://torchcell/ncsa.help.2024.04.03]]
 
-- [ ] Submit help for running scripts on Delta.
 - [ ] Count parameters script, also plot distributions.
 - [ ] Esm embedding dataset.
 - [ ] Add all possible embeddings and test run under optimal loader.

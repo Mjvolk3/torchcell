@@ -85,6 +85,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
                 self.model_name
             ]
 
+        # TODO check that genome gene set is SortedSet
         sequences = []
         gene_ids = []
         for gene_id in tqdm(self.genome.gene_set):
@@ -101,10 +102,8 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
             sequences.append(dna_selection.seq)
             gene_ids.append(gene_id)
-
-        
-        # Adjust the batch size according to your memory constraints
-        batch_size = 2 
+        # Compute embeddings in batches
+        batch_size = 1  # Adjust the batch size according to your memory constraints
         embeddings_list = []
         for i in tqdm(range(0, len(sequences), batch_size)):
             batch_sequences = sequences[i : i + batch_size]
@@ -113,12 +112,10 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
             )
             embeddings_list.append(batch_embeddings)
 
-        if len(embeddings_list) > 1:
-            embeddings = torch.cat(embeddings_list, dim=0)
-        else:
-            embeddings = embeddings_list[0]
+        embeddings = torch.cat(embeddings_list, dim=0)
 
         for gene_id, dna_selection, embedding in zip(gene_ids, sequences, embeddings):
+            # Create or update the dna_window dictionary
             dna_window_dict = {self.model_name: dna_selection}
 
             data = Data(id=gene_id, dna_windows=dna_window_dict)

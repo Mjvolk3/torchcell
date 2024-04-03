@@ -2,7 +2,7 @@
 id: cam9jhzi7brp6zk6228dh98
 title: Create_scerevisiae_kg
 desc: ''
-updated: 1711380970876
+updated: 1712157068371
 created: 1705569780034
 ---
 
@@ -160,5 +160,9 @@ I think that we just set process workers to max, then threads to some percentage
 | 12         | 0.8                      | `1e4`      | `1e3`             |              |                                     |                |
 | 13         | 0.05                     | `2e3`      | `1e2`             |              |                                     |                |
 | 14         | 0.05                     | `2e3`      | `5e2`             |              |                                     |                |
+| 15         | 0.05                     | `2e3`      | `1e3`             |              |                                     |                |
+| 16         | 0.03                     | `2e3`      | `5e2`             |              |                                     |                |
+| 17         | 0.05                     | `2e3`      | `5e2`             |              |                                     |                |
 
 - It is becoming apparent that the most sensitive parameter for controlling memory is `chunk_size`.  
+- Moved to #wandb.tcdb.docker_v_m1_study_002

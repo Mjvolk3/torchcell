@@ -274,7 +274,7 @@ class SCerevisiaeGene(Gene):
             elif start_window < 0 and not allow_undersize:
                 outside = abs(start_window)
                 raise ValueError(
-                    f"5utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
+                    f"five prime size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
             seq = str(self.fasta_dna[chr_id].seq[start_window:end_window])
         elif self.strand == "-":
@@ -295,7 +295,7 @@ class SCerevisiaeGene(Gene):
             ):
                 outside = abs(end_window - self.chromosome_lengths[self.chromosome])
                 raise ValueError(
-                    f"5utr size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
+                    f"five prime size ({window_size}) too large ('{self.strand} strand {outside}bp outside.)"
                 )
 
             seq = str(

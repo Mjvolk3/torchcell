@@ -29,7 +29,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
         ),
         "nt_window_five_prime_5979": ("window_five_prime", 5979, True, True),
         "nt_window_three_prime_300": ("window_three_prime", 300, True, True),
-        "nt_window_five_prime_1003": ("window_five_prime", 1003, True),
+        "nt_window_five_prime_1003": ("window_five_prime", 1003, True, True),
     }
 
     def __init__(

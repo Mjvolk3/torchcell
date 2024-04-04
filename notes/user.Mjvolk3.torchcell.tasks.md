@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712255586720
+updated: 1712255651211
 created: 1690514887023m
 ---
 
@@ -14,7 +14,8 @@ created: 1690514887023m
 - [x] Write notes on #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002 → did not complete overnight. Runs crashed for some unknown reason. Logs are sparse. → Kept 4 completed runs and rerunning.
 - [x] Esm embedding status. → Locally we were able to compute all but 3B and 15B. Add Cuda device if available, moved to `Delta` and running 3B and 15B. Drop in performance on Esm2 happens from 150M to 650M, but we still might want to use a smaller model because of reduced dimension. → Trying to run on `Delta` regardless.
 - [x] Nucleotide Transformer Embedding status. → Completed on `Delta`
-- [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect.  
+- [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect. → sort of misappropriating the `BaseEmbeddingDataset` [[torchcell/datasets/sgd_gene_graph.py]] for instance `MODEL_TO_WINDOW` no longer makes any sense.
+- [ ] Need to recompute Esm since we saved as `numpy` `ndarray`.
 - [ ] Try to combine embeddings with node data.
 - [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
 - [ ] Count parameters script, also plot distribution of sizes.

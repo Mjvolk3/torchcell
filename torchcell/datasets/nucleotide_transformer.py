@@ -21,12 +21,7 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
         "nt_window_5979_max": ("window", 5979, True),
         "nt_window_5979": ("window", 5979, False),
-        "nt_window_three_prime_5979": (
-            "window_three_prime",
-            5979,
-            True,
-            True,
-        ),
+        "nt_window_three_prime_5979": ("window_three_prime", 5979, True, True),
         "nt_window_five_prime_5979": ("window_five_prime", 5979, True, True),
         "nt_window_three_prime_300": ("window_three_prime", 300, True, True),
         "nt_window_five_prime_1003": ("window_five_prime", 1003, True, True),
@@ -51,7 +46,13 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
                 # Initialize the language model
                 self.transformer = self.initialize_model()
                 self.process()
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            # TODO me might consider adding this to others
+            # only her bc computed on delta.
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], map_location=torch.device(device)
+            )
+
         self.genome = self.parse_genome(genome)
         del genome
 

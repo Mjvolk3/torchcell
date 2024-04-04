@@ -140,7 +140,7 @@ class Esm2Dataset(BaseEmbeddingDataset):
                     [protein_sequence], mean_embedding=True
                 )
 
-            embeddings = embeddings.cpu().numpy()  # Convert to numpy array
+            embeddings = embeddings.cpu().numpy()
 
             protein_data_dict = {self.model_name: protein_sequence}
 

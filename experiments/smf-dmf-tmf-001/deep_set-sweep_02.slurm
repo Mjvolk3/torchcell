@@ -15,7 +15,7 @@
 #SBATCH --mail-type="END"
 # #SBATCH --output=/dev/null
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
-#SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/slurm/error/%x_%j.out
+#SBATCH --error=/projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
 
 
 module reset # drop modules and explicitly load the ones needed
@@ -38,7 +38,7 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
-SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deepset_sweep_02.yaml
+SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_02.yaml
 SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
 PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
 

@@ -37,10 +37,12 @@ from tqdm import tqdm
 from torchcell.sequence import GeneSet, Genome, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import torchcell
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 # BUG switching to genome for GO, this will create training issues with sql,
 # but need genome for created graphs.
@@ -75,15 +77,23 @@ class SCerevisiaeGraph:
             self.G_go = self.create_G_go()
             # HACK save and unsave
             self.save_graph(self.G_go, "G_go")
-        # # Gene Graph
-        # gene_graph_path = osp.join(graph_dir, "G_gene.pkl")
-        # if osp.exists(gene_graph_path):
-        #     self.G_gene = self.load_graph("G_gene")
-        # else:
-        #     self.G_gene = self.add_gene_protein_overview(
-        #         G_raw=self.G_raw, G_gene=nx.Graph()
-        #     )
-        #     self.save_graph(self.G_gene, "G_gene")
+
+        # Gene Graph
+        gene_graph_path = osp.join(graph_dir, "G_gene.pkl")
+        if osp.exists(gene_graph_path):
+            self.G_gene = self.load_graph("G_gene")
+        else:
+            self.read_raw()
+            self.G_gene = self.add_gene_protein_overview(
+                G_raw=self.G_raw, G_gene=nx.Graph()
+            )
+            self.G_gene = self.add_loci_information(
+                G_raw=self.G_raw, G_gene=self.G_gene
+            )
+            self.G_gene = self.add_pathway_annotation(
+                G_raw=self.G_raw, G_gene=self.G_gene
+            )
+            self.save_graph(self.G_gene, "G_gene")
 
         # Physical Graph
         physical_graph_path = osp.join(graph_dir, "G_physical.pkl")
@@ -424,6 +434,36 @@ class SCerevisiaeGraph:
                 G_gene.add_node(node_name, **protein_overview)
             else:
                 G_gene.add_node(node_name, **protein_overview_template)
+        return G_gene
+
+    @staticmethod
+    def add_loci_information(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
+        loci_information_template = {"start": None, "end": None, "chromosome": None}
+        for node_name, node_data in G_raw.nodes(data=True):
+            loci_information = loci_information_template.copy()
+            for i in node_data["sequence_details"]["genomic_dna"]:
+                if i["strain"]["display_name"] == "S288C":
+                    loci_information["start"] = i.get("start")
+                    loci_information["end"] = i.get("end")
+                    loci_information["chromosome"] = i["contig"]["display_name"]
+                    G_gene.add_node(node_name, **loci_information)
+        return G_gene
+
+    @staticmethod
+    def add_pathway_annotation(G_raw: nx.Graph, G_gene: nx.Graph) -> nx.Graph:
+        pathway_annotation_template = {"pathways": None}
+        for node_name, node_data in G_raw.nodes(data=True):
+            pathway_annotation = pathway_annotation_template.copy()
+            pathways = node_data["locus"].get("pathways")
+            if pathways != []:
+                pathway_annotation["pathways"] = []
+                for pathway in pathways:
+                    pathway_annotation["pathways"].append(
+                        pathway["pathway"]["display_name"]
+                    )
+                G_gene.add_node(node_name, **pathway_annotation)
+            else:
+                G_gene.add_node(node_name, **pathway_annotation)
         return G_gene
 
 
@@ -1068,8 +1108,31 @@ def old_main() -> None:
     plotly_go_graph(G)
     print()
 
+
 def main():
-    pas
+    import os
+    import random
+
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    from dotenv import load_dotenv
+
+    from torchcell.datasets.scerevisiae.costanzo2016 import (
+        DmfCostanzo2016Dataset,
+        SmfCostanzo2016Dataset,
+    )
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+    )
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    print()
+
 
 if __name__ == "__main__":
     main()

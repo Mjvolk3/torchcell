@@ -2,12 +2,29 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712163572900
+updated: 1712168949867
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.04.04
+
+- [ ] Write notes on #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002
+- [ ] Esm embedding status?
+- [ ] Nucleotide Transformer Embedding status?
+- [ ] `SGD` graph node features probably put on Raw.
+- [ ] Try to combine embeddings with node data.
+- [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
+- [ ] Count parameters script, also plot distribution of sizes.
+- [ ] Check no issue with model. [[deep_set-sweep_05|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_05.yaml]]
+- [ ] Check no issue with embeddings. [[Yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
+- [ ] Add all possible embeddings and test run under optimal loader.
+- [ ] Add gradient log.
+- [ ] Run loader overnight?, try sweep on `1e2` over configs 2 epochs.
+- [ ] [[Deep_set_transformer|dendron://torchcell/torchcell.models.deep_set_transformer]] add `scatter_add` and `scatter_mean`
+- [ ]
 
 ## 2024.04.03
 
@@ -17,16 +34,12 @@ created: 1690514887023m
 - [x] Write #wandb.tcdb.docker_v_m1_study_002
 - [x] Submit help for running scripts on Delta. → [[help.2024.04.03 |dendron://torchcell/ncsa.help.2024.04.03]]
 - [x] Fixed issue with specifying memory [[2024.04.03 - Memory Formatting is MB|dendron://torchcell/ncsa.help.2024.04.03#20240403---memory-formatting-is-mb]]
+- [x] Check `fudt` works. → works locally
+- [x] Write #wandb.tcdb.docker_v_m1_study_003
 
-- [ ] Check no issue with model. [[deep_set-sweep_05|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_05.yaml]]
-- [ ] Check no issue with embeddings. [[Yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
-- [ ] Esm embedding dataset.
+- [x] Esm embedding dataset. → Might have enough now, trying to compute all regardless. →
 
-- [ ] Check `fudt` works.
-- [ ] Count parameters script, also plot distributions.
-- [ ] Add all possible embeddings and test run under optimal loader.
-- [ ] Write #wandb.tcdb.docker_v_m1_study_003
-- [ ] Add gradient log.
+- [x] loader with `1e4` #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002 → Running on some narrower parameter ranges on 2 epochs.
 
 ## 2024.04.02
 

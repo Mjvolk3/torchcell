@@ -139,7 +139,8 @@ class Esm2Dataset(BaseEmbeddingDataset):
                 embeddings = self.transformer.embed(
                     [protein_sequence], mean_embedding=True
                 )
-                embeddings = embeddings.cpu().numpy()
+
+            embeddings = embeddings.cpu().numpy()  # Convert to numpy array
 
             protein_data_dict = {self.model_name: protein_sequence}
 
@@ -169,7 +170,7 @@ if __name__ == "__main__":
 
     for model_name in model_names:
         dataset = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
+            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding_test"),
             genome=genome,
             model_name=model_name,
         )

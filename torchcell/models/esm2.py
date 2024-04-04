@@ -31,12 +31,9 @@ class Esm2(PeptideModel):
     def _check_and_download_model(model_name: str):
         script_dir = osp.dirname(osp.realpath(__file__))
         target_directory = osp.join(script_dir, "pretrained_LLM", "Esm2")
-
         if not osp.exists(target_directory):
             os.makedirs(target_directory)
-
         model_directory = osp.join(target_directory, model_name)
-
         if osp.exists(model_directory):
             print(f"{model_name} model already downloaded.")
         else:
@@ -77,7 +74,6 @@ class Esm2(PeptideModel):
         torch_outs = self.model(
             tokens_ids, attention_mask=attention_mask, output_hidden_states=True
         )
-
         embeddings = torch_outs["hidden_states"][-1].detach()
 
         if mean_embedding:

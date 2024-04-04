@@ -24,15 +24,15 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [8, 16, 32, 64]
+        values: [2, 4, 8, 16, 32, 64]
       num_workers:
-        values: [4, 6, 8, 10, 12, 14, 16]
+        values: [8, 10, 12, 14]
       pin_memory:
-        values: [false, true]
+        values: [true]
   trainer:
     parameters:
       max_epochs:
-        values: [3]
+        values: [2]
       strategy: # ddp, auto
         values: [auto]
   models:

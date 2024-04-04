@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712168949867
+updated: 1712255586720
 created: 1690514887023m
 ---
 
@@ -11,10 +11,10 @@ created: 1690514887023m
 
 ## 2024.04.04
 
-- [ ] Write notes on #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002
-- [ ] Esm embedding status?
-- [ ] Nucleotide Transformer Embedding status?
-- [ ] `SGD` graph node features probably put on Raw.
+- [x] Write notes on #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002 → did not complete overnight. Runs crashed for some unknown reason. Logs are sparse. → Kept 4 completed runs and rerunning.
+- [x] Esm embedding status. → Locally we were able to compute all but 3B and 15B. Add Cuda device if available, moved to `Delta` and running 3B and 15B. Drop in performance on Esm2 happens from 150M to 650M, but we still might want to use a smaller model because of reduced dimension. → Trying to run on `Delta` regardless.
+- [x] Nucleotide Transformer Embedding status. → Completed on `Delta`
+- [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect.  
 - [ ] Try to combine embeddings with node data.
 - [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
 - [ ] Count parameters script, also plot distribution of sizes.
@@ -29,7 +29,7 @@ created: 1690514887023m
 ## 2024.04.03
 
 - [x] Check on `tcdb` run overnight. → #wandb.tcdb.docker_v_m1_study_003
-- [x] Check on Nucelotide Transformer embedding run overnight. → We still get #OOM with max resources on one GPU node, yet this doesn't happen on interactive node.
+- [x] Check on Nucleotide Transformer embedding run overnight. → We still get #OOM with max resources on one GPU node, yet this doesn't happen on interactive node.
 - [x] Try to compute Nucleotide Transformer Embeddings with a smaller subset of genes. Works, but the size that don't have `undersize` can fail if they are against the chromosome edge. Leaving these out and only consider allow_undersize.
 - [x] Write #wandb.tcdb.docker_v_m1_study_002
 - [x] Submit help for running scripts on Delta. → [[help.2024.04.03 |dendron://torchcell/ncsa.help.2024.04.03]]

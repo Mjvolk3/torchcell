@@ -25,6 +25,10 @@ from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
     ProtT5Dataset,
+    GraphEmbeddingDataset,
+    Esm2Dataset,
+    NucleotideTransformerDataset,
+    CodonFrequencyDataset,
 )
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -52,6 +56,7 @@ def main(cfg: DictConfig) -> None:
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
+        tags=wandb_cfg["wandb"]["tags"],
     )
 
     # Initialize the WandbLogger
@@ -62,8 +67,33 @@ def main(cfg: DictConfig) -> None:
     genome.drop_chrmt()
     genome.drop_empty_go()
 
+    # Graph data
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    graphs = {}
+    if wandb.config.cell_dataset["graphs"] is None:
+        graphs = None
+    elif "physical" in wandb.config.cell_dataset["graphs"]:
+        graphs = {"physical": graph.G_physical}
+    elif "regulatory" in wandb.config.cell_dataset["graphs"]:
+        graphs = {"regulatory": graph.G_regulatory}
+
     # Node embedding datasets
     node_embeddings = {}
+    # one hot gene - transductive
+    if "one_hot_gene" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["one_hot_gene"] = OneHotGeneDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/one_hot_gene_embedding"),
+            genome=genome,
+        )
+    # codon frequency
+    if "codon_frequency" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["codon_frequency"] = CodonFrequencyDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
+            genome=genome,
+        )
+    # fudt
     if "fudt_downstream" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
@@ -77,11 +107,44 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="species_upstream",
         )
-    if "one_hot_gene" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["one_hot_gene"] = OneHotGeneDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/one_hot_gene_embedding"),
+    # nucleotide transformer
+    if "nt_window_5979" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
             genome=genome,
+            model_name="nt_window_5979",
         )
+    if "nt_window_5979_max" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            genome=genome,
+            model_name="nt_window_5979_max",
+        )
+    if "nt_window_three_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_three_prime_5979"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            genome=genome,
+            model_name="window_three_prime_5979",
+        )
+    if "nt_window_five_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            genome=genome,
+            model_name="nt_window_five_prime_5979",
+        )
+    if "nt_window_three_prime_300" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_three_prime_300"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            genome=genome,
+            model_name="nt_window_three_prime_300",
+        )
+    if "nt_window_five_prime_1003" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["nt_window_five_prime_1003"] = NucleotideTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            genome=genome,
+            model_name="nt_window_five_prime_1003",
+        )
+    # protT5
     if "prot_T5_all" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["prot_T5_all"] = ProtT5Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
@@ -94,21 +157,60 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="prot_t5_xl_uniref50_no_dubious",
         )
+    # esm
+    if "esm2_t33_650M_UR50D_all" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
+            genome=genome,
+            model_name="esm2_t33_650M_UR50D_all",
+        )
+    if "esm2_t33_650M_UR50D_no_dubious" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
+            genome=genome,
+            model_name="esm2_t33_650M_UR50D_no_dubious",
+        )
+    if (
+        "esm2_t33_650M_UR50D_no_dubious_uncharacterized"
+        in wandb.config.cell_dataset["node_embeddings"]
+    ):
+        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
+            genome=genome,
+            model_name="esm2_t33_650M_UR50D_no_dubious_uncharacterized",
+        )
+    if (
+        "esm2_t33_650M_UR50D_no_uncharacterized"
+        in wandb.config.cell_dataset["node_embeddings"]
+    ):
+        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
+            genome=genome,
+            model_name="esm2_t33_650M_UR50D_no_uncharacterized",
+        )
+    # sgd_gene_graph
+    if (
+        "normalized_chr_2_mean_pathways_4"
+        in wandb.config.cell_dataset["node_embeddings"]
+    ):
+        node_embeddings["normalized_chr_2_mean_pathways_4"] = GraphEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
+            graph=graph.G_gene,
+            model_name="normalized_chr_2_mean_pathways_4",
+        )
+    if (
+        "normalized_chr_2_sum_pathways_4"
+        in wandb.config.cell_dataset["node_embeddings"]
+    ):
+        node_embeddings["normalized_chr_2_sum_pathways_4"] = GraphEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
+            graph=graph.G_gene,
+            model_name="normalized_chr_2_sum_pathways_4",
+        )
+
     # Experiments
     with open((osp.join(osp.dirname(__file__), "query.cql")), "r") as f:
         query = f.read()
-
-    # Graph data
-    graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
-    )
-    graphs = {}
-    if wandb.config.cell_dataset["graphs"] is None:
-        graphs = None
-    elif "physical" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"physical": graph.G_physical}
-    elif "regulatory" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"regulatory": graph.G_regulatory}
 
     deduplicator = ExperimentDeduplicator()
 

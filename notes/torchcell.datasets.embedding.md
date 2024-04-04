@@ -2,7 +2,7 @@
 id: ua25z0io2huc7vdos9y2ld8
 title: Embedding
 desc: ''
-updated: 1697218500410
+updated: 1712255705988
 created: 1692275134695
 ---
 
@@ -87,3 +87,7 @@ def __add__(self, other):
 
     return combined_dataset
 ```
+
+## 2024.04.04 - MODEL_TO_WINDOW changed to some configuration
+
+Now that we are using DNA, protein, and other arbitrary node features it will be best to rename this.

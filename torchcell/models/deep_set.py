@@ -71,7 +71,8 @@ class DeepSet(nn.Module):
                 )
                 set_modules.append(nn.Dropout(dropout_prob))
             else:
-                set_modules.append(
+          
+              set_modules.append(
                     create_block(hidden_channels, hidden_channels, norm, activation)
                 )
         self.set_layers = nn.ModuleList(set_modules)

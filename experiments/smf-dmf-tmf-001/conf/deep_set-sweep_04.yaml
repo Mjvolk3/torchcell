@@ -4,27 +4,43 @@ method: grid
 metric:
   goal: minimize
   name: val/loss
+
 parameters:
   cell_dataset:
     parameters:
       graphs:
         values: [null]
       node_embeddings:
-        values: [one_hot_gene]
+        values: [
+            # one_hot_gene, # Y
+            # codon_frequency, # y
+            # fudt_downstream, # y
+            # fudt_upstream, # y
+            # nt_window_5979, y
+            # nt_window_5979_max, y
+            # nt_window_three_prime_300, y
+            # nt_window_five_prime_1003, y
+            # prot_T5_all, # y
+            # prot_T5_no_dubious, # y
+            # esm2_t33_650M_UR50D_all, # recompute
+            # esm2_t33_650M_UR50D_no_dubious, # recompute
+            normalized_chr_2_mean_pathways_4,
+            normalized_chr_2_sum_pathways_4,
+          ]
       max_size:
-        values: [1e4]
+        values: [1e2]
   data_module:
     parameters:
       batch_size:
-        values: [8, 16, 32, 64]
+        values: [8]
       num_workers:
-        values: [4, 6, 8, 10, 12, 14, 16]
+        values: [10]
       pin_memory:
-        values: [false, true]
+        values: [true]
   trainer:
     parameters:
       max_epochs:
-        values: [4]
+        values: [1]
       strategy:
         values: [auto]
   models:
@@ -36,9 +52,9 @@ parameters:
           out_channels:
             values: [32]
           num_node_layers:
-            values: [3]
+            values: [2]
           num_set_layers:
-            values: [3]
+            values: [2]
           norm:
             values: [batch]
           activation:

@@ -12,6 +12,10 @@ import networkx as nx
 
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
+        "normalized_chr_2_mean_pathways_4": (2, 4, True, "mean"),
+        "normalized_chr_2_sum_pathways_4": (2, 4, True, "sum"),
+        "normalized_chr_2_mean_pathways_8": (2, 8, True, "mean"),
+        "normalized_chr_2_sum_pathways_8": (2, 8, True, "sum"),
         "normalized_chr_2_mean_pathways_16": (2, 16, True, "mean"),
         "normalized_chr_2_sum_pathways_16": (2, 16, True, "sum"),
         "normalized_chr_4_mean_pathways_32": (4, 32, True, "mean"),
@@ -153,10 +157,10 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
             # Concatenate node features and embeddings
             node_embedding = torch.cat(
                 [node_features, chromosome_emb.squeeze(), pathways_emb], dim=0
-            )
+            ).unsqueeze(0)
 
             # Create Data object
-            data = Data(id=node_id, embedding=node_embedding)
+            data = Data(id=node_id, embeddings=node_embedding)
             data_list.append(data)
 
         if self.pre_transform is not None:
@@ -194,6 +198,6 @@ def main():
         print(dataset)
         print()
 
+
 if __name__ == "__main__":
     main()
-

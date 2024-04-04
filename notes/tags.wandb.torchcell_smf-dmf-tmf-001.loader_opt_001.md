@@ -56,6 +56,6 @@ This is pretty abysmal without any hyperparameter selection.
 
 Hyperparameter Space
 
-[[experiments/smf-dmf-tmf-001/conf/deepset_sweep_01.yaml]]
+[[experiments/smf-dmf-tmf-001/conf/deep_set-sweep_01.yaml]]
 
 `10 * 2 * 4 * 5 * 3 * 5 * 2 * 2 * 5 * 5 * 2 * 3 = 3,600,000`

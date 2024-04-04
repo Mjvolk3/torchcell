@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712255651211
+updated: 1712273737544
 created: 1690514887023m
 ---
 
@@ -15,7 +15,10 @@ created: 1690514887023m
 - [x] Esm embedding status. → Locally we were able to compute all but 3B and 15B. Add Cuda device if available, moved to `Delta` and running 3B and 15B. Drop in performance on Esm2 happens from 150M to 650M, but we still might want to use a smaller model because of reduced dimension. → Trying to run on `Delta` regardless.
 - [x] Nucleotide Transformer Embedding status. → Completed on `Delta`
 - [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect. → sort of misappropriating the `BaseEmbeddingDataset` [[torchcell/datasets/sgd_gene_graph.py]] for instance `MODEL_TO_WINDOW` no longer makes any sense.
-- [ ] Need to recompute Esm since we saved as `numpy` `ndarray`.
+- [ ] Need to recompute Esm since we saved as `numpy` `ndarray`. → Did on `Delta` → `Delta` login node is acting up. Did from terminal ssh. → globus to local... → Somehow numpy didn't get removed. Unsure what happened. Recommited and relaunched on `Delta`.
+- [ ] Check if Esm embeddings work.
+- [ ] I wanted to used torch.Embedding to encode the categorical variables in [[Sgd_gene_graph|dendron://torchcell/torchcell.datasets.sgd_gene_graph]]... turns out nobody really does this because it creates serialization issues in the data loader when trying to serialized vectors with gradients attached. Guess now we know. The proper thing to do is to pass the data to the model, and to create the embedding within the model.
+- [x] I think it is worth adding categorical variables. If we perturb a gene involved in an important pathway or many important pathway there should be fitness consequences → ![](./assets/images/pathway-annotations-per-gene.png) → This also provides a route directly adding gene ontology to nodes without additional layers of abstraction or graph mapping. This only works for categorical annotaion, and in the case of gene ontology it completely loses structure. But this creates a nice comparison of structure based and structure free.
 - [ ] Try to combine embeddings with node data.
 - [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
 - [ ] Count parameters script, also plot distribution of sizes.

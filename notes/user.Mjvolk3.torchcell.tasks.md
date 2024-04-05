@@ -11,7 +11,9 @@ created: 1690514887023m
 
 ## 2024.04.05
  
-- [ ] Check Esm embeddings local run `Delta`. → `Delta` worked. Commit and globus to local.
+- [x] Check Esm embeddings local run `Delta`. → `Delta` worked. Commit and globus to local.
+- [x] local calse categoricals → [[torchcell.datasets.sgd_gene_graph]]
+- [ ] Test [[torchcell.datasets.sgd_gene_graph]] with `Esm`
 
 
 ## 2024.04.04

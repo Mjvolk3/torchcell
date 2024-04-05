@@ -87,7 +87,7 @@ def create_embedding_graph(
 
             G.add_node(item.id, embedding=concatenated_embedding)
 
-    return G
+    return G # breakpoint here
 
 
 def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:

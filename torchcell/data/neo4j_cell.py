@@ -86,10 +86,63 @@ def create_embedding_graph(
             concatenated_embedding = torch.cat(item_embeddings)
 
             # Add nodes to the graph with embeddings as node attributes
-            G.add_node(item.id, embedding=concatenated_embedding.numpy())
+            # G.add_node(item.id, embedding=concatenated_embedding.numpy())
+            # CHECK sometimes we have grads attached (Embedding), try no numpy
+            G.add_node(item.id, embedding=concatenated_embedding)
 
     return G
 
+    # CHECK delete numpy version
+    # def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
+    #     hetero_data = HeteroData()
+
+    #     # Get the node identifiers from the "base" graph
+    #     base_nodes_list = sorted(list(graphs["base"].nodes()))
+
+    #     # Map each node to a unique index
+    #     node_idx_mapping = {node: idx for idx, node in enumerate(base_nodes_list)}
+
+    #     # Initialize node attributes for 'gene'
+    #     num_nodes = len(base_nodes_list)
+    #     hetero_data["gene"].num_nodes = num_nodes
+    #     hetero_data["gene"].node_ids = base_nodes_list
+
+    #     # Initialize the 'x' attribute for 'gene' node type
+    #     hetero_data["gene"].x = torch.zeros((num_nodes, 0), dtype=torch.float)
+
+    #     # Process each graph and add edges to the HeteroData object
+    #     for graph_type, graph in graphs.items():
+    #         if graph.number_of_edges() > 0:
+    #             # Convert edges to tensor
+    #             edge_index = torch.tensor(
+    #                 [
+    #                     (node_idx_mapping[src], node_idx_mapping[dst])
+    #                     for src, dst in graph.edges()
+    #                     if src in node_idx_mapping and dst in node_idx_mapping
+    #                 ],
+    #                 dtype=torch.long,
+    #             ).t()
+
+    #             # Determine edge type based on graph_type and assign edge indices
+    #             edge_type = ("gene", f"{graph_type}_interaction", "gene")
+    #             hetero_data[edge_type].edge_index = edge_index
+    #             hetero_data[edge_type].num_edges = edge_index.size(1)
+    #         else:
+    #             # Add node embeddings to the 'x' attribute of 'gene' node type
+    #             embeddings = np.zeros((num_nodes, 0))
+    #             for i, node in enumerate(base_nodes_list):
+    #                 if node in graph.nodes and "embedding" in graph.nodes[node]:
+    #                     embedding = graph.nodes[node]["embedding"]
+    #                     if embeddings.shape[1] == 0:
+    #                         embeddings = np.zeros((num_nodes, embedding.shape[0]))
+    #                     embeddings[i] = embedding
+
+    #             embeddings_tensor = torch.tensor(embeddings, dtype=torch.float)
+    #             hetero_data["gene"].x = torch.cat(
+    #                 (hetero_data["gene"].x, embeddings_tensor), dim=1
+    #             )
+
+    #     return hetero_data
 
 def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
     hetero_data = HeteroData()
@@ -127,17 +180,18 @@ def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
             hetero_data[edge_type].num_edges = edge_index.size(1)
         else:
             # Add node embeddings to the 'x' attribute of 'gene' node type
-            embeddings = np.zeros((num_nodes, 0))
+            embeddings = torch.zeros((num_nodes, 0), dtype=torch.float)
             for i, node in enumerate(base_nodes_list):
                 if node in graph.nodes and "embedding" in graph.nodes[node]:
                     embedding = graph.nodes[node]["embedding"]
                     if embeddings.shape[1] == 0:
-                        embeddings = np.zeros((num_nodes, embedding.shape[0]))
+                        embeddings = torch.zeros(
+                            (num_nodes, embedding.shape[0]), dtype=torch.float
+                        )
                     embeddings[i] = embedding
 
-            embeddings_tensor = torch.tensor(embeddings, dtype=torch.float)
             hetero_data["gene"].x = torch.cat(
-                (hetero_data["gene"].x, embeddings_tensor), dim=1
+                (hetero_data["gene"].x, embeddings), dim=1
             )
 
     return hetero_data

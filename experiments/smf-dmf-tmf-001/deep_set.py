@@ -202,22 +202,22 @@ def main(cfg: DictConfig) -> None:
         )
     # sgd_gene_graph
     if (
-        "normalized_chr_2_mean_pathways_4"
+        "normalized_chrom_pathways"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["normalized_chr_2_mean_pathways_4"] = GraphEmbeddingDataset(
+        node_embeddings["normalized_chrom_pathways"] = GraphEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
             graph=graph.G_gene,
-            model_name="normalized_chr_2_mean_pathways_4",
+            model_name="normalized_chrom_pathways",
         )
     if (
-        "normalized_chr_2_sum_pathways_4"
+        "chrom_pathways"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["normalized_chr_2_sum_pathways_4"] = GraphEmbeddingDataset(
+        node_embeddings["chrom_pathways"] = GraphEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
             graph=graph.G_gene,
-            model_name="normalized_chr_2_sum_pathways_4",
+            model_name="chrom_pathways",
         )
 
     # Experiments

@@ -265,6 +265,7 @@ class RegressionTask(L.LightningModule):
 
     def test_step(self, batch, batch_idx):
         # Extract the batch vector
+        print()
         x, y, batch_vector = (
             batch["gene"].x,
             batch["gene"].label_value,

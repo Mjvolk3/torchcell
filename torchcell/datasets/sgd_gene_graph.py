@@ -12,12 +12,7 @@ import os.path as osp
 
 
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
-    MODEL_TO_WINDOW = {
-        "normalized_chr_mean_pathways": (True, "mean"),
-        "normalized_chr_sum_pathways": (True, "sum"),
-        "chr_mean_pathways": (False, "mean"),
-        "chr_sum_pathways": (False, "sum"),
-    }
+    MODEL_TO_WINDOW = {"normalized_chrom_pathways": (True), "chrom_pathways": (False)}
 
     def __init__(
         self,
@@ -50,7 +45,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         unique_chromosomes = set()
         unique_pathways = set()
 
-        normalize_data, pathways_agg_method = self.MODEL_TO_WINDOW[self.model_name]
+        normalize_data = self.MODEL_TO_WINDOW[self.model_name]
 
         # Collect feature values for each node
         feature_values = {
@@ -140,7 +135,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
             # Create Data object
             data = Data(id=node_id)
-            data.embeddings = node_features
+            data.embeddings = {self.model_name: node_features.unsqueeze(0)}
             data.chromosome_index = chromosome_index
             data.pathways_indices = pathways_indices
             data_list.append(data)

@@ -110,37 +110,49 @@ def main(cfg: DictConfig) -> None:
     # nucleotide transformer
     if "nt_window_5979" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="nt_window_5979",
         )
     if "nt_window_5979_max" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="nt_window_5979_max",
         )
     if "nt_window_three_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_three_prime_5979"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="window_three_prime_5979",
         )
     if "nt_window_five_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="nt_window_five_prime_5979",
         )
     if "nt_window_three_prime_300" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_three_prime_300"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="nt_window_three_prime_300",
         )
     if "nt_window_five_prime_1003" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_five_prime_1003"] = NucleotideTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
+            root=osp.join(
+                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
+            ),
             genome=genome,
             model_name="nt_window_five_prime_1003",
         )

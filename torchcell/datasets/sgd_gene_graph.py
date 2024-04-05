@@ -1,29 +1,17 @@
-# torchcell/datasets/sgd_gene_graph
-# [[torchcell.datasets.sgd_gene_graph]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/sgd_gene_graph
-# Test file: tests/torchcell/datasets/test_sgd_gene_graph.py
-
 import torch
 from torch_geometric.data import Data
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from typing import Callable
 import networkx as nx
+import os.path as osp
 
 
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
     MODEL_TO_WINDOW = {
-        "normalized_chr_2_mean_pathways_4": (2, 4, True, "mean"),
-        "normalized_chr_2_sum_pathways_4": (2, 4, True, "sum"),
-        "normalized_chr_2_mean_pathways_8": (2, 8, True, "mean"),
-        "normalized_chr_2_sum_pathways_8": (2, 8, True, "sum"),
-        "normalized_chr_2_mean_pathways_16": (2, 16, True, "mean"),
-        "normalized_chr_2_sum_pathways_16": (2, 16, True, "sum"),
-        "normalized_chr_4_mean_pathways_32": (4, 32, True, "mean"),
-        "normalized_chr_4_sum_pathways_32": (4, 32, True, "sum"),
-        "chr_2_mean_pathways_16": (2, 16, False, "mean"),
-        "chr_2_sum_pathways_16": (2, 16, False, "sum"),
-        "chr_4_mean_pathways_32": (4, 32, False, "mean"),
-        "chr_4_sum_pathways_32": (4, 32, False, "sum"),
+        "normalized_chr_mean_pathways": (True, "mean"),
+        "normalized_chr_sum_pathways": (True, "sum"),
+        "chr_mean_pathways": (False, "mean"),
+        "chr_sum_pathways": (False, "sum"),
     }
 
     def __init__(
@@ -33,24 +21,31 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
         model_name: str | None = None,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
+        categorical_features: dict | None = None,
     ):
         self.graph = graph
+        self.categorical_features = categorical_features or {}
         super().__init__(root, model_name, transform, pre_transform)
+
+        # Load the categorical_features dictionary if it exists
+        if osp.exists(self.processed_paths[1]):
+            self.categorical_features = torch.load(self.processed_paths[1])
+
         self.data, self.slices = torch.load(self.processed_paths[0])
 
     def initialize_model(self):
         pass  # No need to initialize a model for this dataset
 
+    @property
+    def processed_file_names(self) -> list[str]:
+        return [f"{self.model_name}.pt", "categorical_features.pt"]
+
     def process(self):
         data_list = []
         unique_chromosomes = set()
+        unique_pathways = set()
 
-        if self.model_name not in self.MODEL_TO_WINDOW:
-            raise ValueError(f"Invalid model name: {self.model_name}")
-
-        chr_emb_size, pathways_emb_size, normalize_data, pathways_agg_method = (
-            self.MODEL_TO_WINDOW[self.model_name]
-        )
+        normalize_data, pathways_agg_method = self.MODEL_TO_WINDOW[self.model_name]
 
         # Collect feature values for each node
         feature_values = {
@@ -99,9 +94,12 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
             start = node_data["start"] or feature_medians["start"]
             end = node_data["end"] or feature_medians["end"]
             chromosome = node_data["chromosome"]
-            pathways = node_data["pathways"]
+            pathways = (
+                node_data["pathways"] if node_data["pathways"] is not None else []
+            )
 
             unique_chromosomes.add(chromosome)
+            unique_pathways.update(pathways)
 
             # Create node feature vector
             node_features = torch.tensor(
@@ -125,49 +123,40 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
                         feature_max - feature_min
                     )
 
-            # Create learnable embeddings for categorical variables
-            chromosome_embedding = torch.nn.Embedding(
-                len(unique_chromosomes), chr_emb_size
-            )
+            # Get indices for categorical variables
             chromosome_index = torch.tensor(
-                [list(unique_chromosomes).index(chromosome)], dtype=torch.long
+                list(unique_chromosomes).index(chromosome), dtype=torch.long
             )
-            chromosome_emb = chromosome_embedding(chromosome_index)
 
-            if pathways:
-                unique_pathways = list(set(pathways))
-                pathways_embedding = torch.nn.Embedding(
-                    len(unique_pathways), pathways_emb_size
-                )
-                pathways_indices = torch.tensor(
-                    [unique_pathways.index(pathway) for pathway in pathways],
-                    dtype=torch.long,
-                )
-                if pathways_agg_method == "mean":
-                    pathways_emb = pathways_embedding(pathways_indices).mean(dim=0)
-                elif pathways_agg_method == "sum":
-                    pathways_emb = pathways_embedding(pathways_indices).sum(dim=0)
-                else:
-                    raise ValueError(
-                        f"Invalid pathways aggregation method: {pathways_agg_method}"
-                    )
-            else:
-                pathways_emb = torch.zeros(pathways_emb_size)
-
-            # Concatenate node features and embeddings
-            node_embedding = torch.cat(
-                [node_features, chromosome_emb.squeeze(), pathways_emb], dim=0
-            ).unsqueeze(0)
+            pathways_indices = torch.tensor(
+                [list(unique_pathways).index(pathway) for pathway in pathways],
+                dtype=torch.long,
+            )
 
             # Create Data object
-            data = Data(id=node_id, embeddings=node_embedding)
+            data = Data(id=node_id)
+            data.embeddings = node_features
+            data.chromosome_index = chromosome_index
+            data.pathways_indices = pathways_indices
             data_list.append(data)
+
+        # Update the categorical_features dictionary with the number of unique values
+        if "chromosome" not in self.categorical_features:
+            self.categorical_features["chromosome"] = {}
+        self.categorical_features["chromosome"]["num_values"] = len(unique_chromosomes)
+
+        if "pathways" not in self.categorical_features:
+            self.categorical_features["pathways"] = {}
+        self.categorical_features["pathways"]["num_values"] = len(unique_pathways)
 
         if self.pre_transform is not None:
             data_list = [self.pre_transform(data) for data in data_list]
 
         data, slices = self.collate(data_list)
         torch.save((data, slices), self.processed_paths[0])
+
+        # Save the categorical_features dictionary
+        torch.save(self.categorical_features, self.processed_paths[1])
 
 
 def main():
@@ -193,9 +182,19 @@ def main():
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
             graph=graph.G_gene,
             model_name=model_name,
+            categorical_features={"chromosome": {}, "pathways": {}},
         )
         print(f"Completed processing for model: {model_name}")
-        print(dataset)
+        print(
+            "Number of unique chromosomes:",
+            dataset.categorical_features["chromosome"]["num_values"],
+        )
+        print(
+            "Number of unique pathways:",
+            dataset.categorical_features["pathways"]["num_values"],
+        )
+        print("Example data point:")
+        print(dataset[0])
         print()
 
 

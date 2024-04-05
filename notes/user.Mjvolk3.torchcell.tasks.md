@@ -9,14 +9,19 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.04.05
+ 
+- [ ] Check Esm embeddings local run `Delta`. → `Delta` worked. Commit and globus to local.
+
+
 ## 2024.04.04
 
 - [x] Write notes on #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002 → did not complete overnight. Runs crashed for some unknown reason. Logs are sparse. → Kept 4 completed runs and rerunning.
 - [x] Esm embedding status. → Locally we were able to compute all but 3B and 15B. Add Cuda device if available, moved to `Delta` and running 3B and 15B. Drop in performance on Esm2 happens from 150M to 650M, but we still might want to use a smaller model because of reduced dimension. → Trying to run on `Delta` regardless.
 - [x] Nucleotide Transformer Embedding status. → Completed on `Delta`
 - [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect. → sort of misappropriating the `BaseEmbeddingDataset` [[torchcell/datasets/sgd_gene_graph.py]] for instance `MODEL_TO_WINDOW` no longer makes any sense.
-- [ ] Need to recompute Esm since we saved as `numpy` `ndarray`. → Did on `Delta` → `Delta` login node is acting up. Did from terminal ssh. → globus to local... → Somehow numpy didn't get removed. Unsure what happened. Recommited and relaunched on `Delta`.
-- [ ] Check if Esm embeddings work.
+- [x] Need to recompute Esm since we saved as `numpy` `ndarray`. → Did on `Delta` → `Delta` login node is acting up. Did from terminal ssh. → globus to local... → Somehow numpy didn't get removed. Unsure what happened. Commited Again and relaunched on `Delta`.
+- [x] Check if Esm embeddings works. → Worked with most recent update on delta. Shape issue
 - [ ] I wanted to used torch.Embedding to encode the categorical variables in [[Sgd_gene_graph|dendron://torchcell/torchcell.datasets.sgd_gene_graph]]... turns out nobody really does this because it creates serialization issues in the data loader when trying to serialized vectors with gradients attached. Guess now we know. The proper thing to do is to pass the data to the model, and to create the embedding within the model.
 - [x] I think it is worth adding categorical variables. If we perturb a gene involved in an important pathway or many important pathway there should be fitness consequences → ![](./assets/images/pathway-annotations-per-gene.png) → This also provides a route directly adding gene ontology to nodes without additional layers of abstraction or graph mapping. This only works for categorical annotaion, and in the case of gene ontology it completely loses structure. But this creates a nice comparison of structure based and structure free.
 - [ ] Try to combine embeddings with node data.

@@ -1,3 +1,8 @@
+# torchcell/datasets/sgd_gene_graph
+# [[torchcell.datasets.sgd_gene_graph]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/sgd_gene_graph
+# Test file: tests/torchcell/datasets/test_sgd_gene_graph.py
+
 import torch
 from torch_geometric.data import Data
 from torchcell.datasets.embedding import BaseEmbeddingDataset

@@ -10,11 +10,13 @@ created: 1690514887023m
 [[Outline|dendron://torchcell/paper.outline]]
 
 ## 2024.04.05
- 
-- [x] Check Esm embeddings local run `Delta`. → `Delta` worked. Commit and globus to local.
-- [x] local calse categoricals → [[torchcell.datasets.sgd_gene_graph]]
-- [ ] Test [[torchcell.datasets.sgd_gene_graph]] with `Esm`
 
+- [x] Check Esm embeddings local run `Delta`. → `Delta` worked. Commit and globus to local.
+- [x] local test categoricals → [[torchcell.datasets.sgd_gene_graph]]
+- [x] Test `Esm`
+- [x] Adding categoricals is way to involved right now, and we need to launch models. We need to most files to make this happen. Datasets, `HeteroData`, models, etc. Putting on hold for now, although it would be good add.
+- [x] Make chromosome number a numerical feature. → [[Sgd_gene_graph_hot|dendron://torchcell/torchcell.datasets.sgd_gene_graph_hot]] it is working properly
+- [ ] Launch experiments 
 
 ## 2024.04.04
 

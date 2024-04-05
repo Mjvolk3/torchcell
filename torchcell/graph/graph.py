@@ -1048,6 +1048,41 @@ def plotly_go_graph(G):
     fig.show()
 
 
+def plot_pathway_annotations(G_gene: nx.Graph):
+    # Create a list to store the number of pathway annotations for each gene
+    pathway_counts = []
+    for node_name, node_data in G_gene.nodes(data=True):
+        if "pathways" in node_data and node_data["pathways"] is not None:
+            pathway_counts.append(len(node_data["pathways"]))
+        else:
+            pathway_counts.append(0)
+
+    # Calculate the fraction of genes with at least one annotation
+    total_genes = len(pathway_counts)
+    genes_with_annotation = sum(count > 0 for count in pathway_counts)
+    fraction_with_annotation = genes_with_annotation / total_genes
+
+    # Create the histogram
+    plt.figure(figsize=(12, 6))
+    plt.hist(pathway_counts, bins=range(max(pathway_counts) + 2), edgecolor='black', alpha=0.7)
+    plt.xlabel("Number of Pathway Annotations")
+    plt.ylabel("Number of Genes")
+    plt.title("Histogram of Pathway Annotations per Gene")
+    plt.xticks(range(max(pathway_counts) + 1))
+
+    # Add labels for the count of genes in each bin
+    for i in range(max(pathway_counts) + 1):
+        count = sum(count == i for count in pathway_counts)
+        plt.text(i, count + 0.1, str(count), ha='center', va='bottom')
+
+    # Add text displaying the fraction of genes with at least one annotation
+    plt.text(0.95, 0.95, f"Fraction of genes with annotation: {fraction_with_annotation:.2f}",
+             transform=plt.gca().transAxes, ha='right', va='top')
+    plt.savefig("./notes/assets/images/pathway-annotations-per-gene.png", dpi=300)
+    plt.tight_layout()
+    plt.show()
+
+
 def old_main() -> None:
     import os
     import random
@@ -1111,16 +1146,7 @@ def old_main() -> None:
 
 def main():
     import os
-    import random
-
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from dotenv import load_dotenv
-
-    from torchcell.datasets.scerevisiae.costanzo2016 import (
-        DmfCostanzo2016Dataset,
-        SmfCostanzo2016Dataset,
-    )
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -1131,7 +1157,9 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    print()
+
+    # Plot the pathway annotations per gene
+    # plot_pathway_annotations(graph.G_gene)
 
 
 if __name__ == "__main__":

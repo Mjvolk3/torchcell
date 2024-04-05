@@ -14,7 +14,7 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 # #SBATCH --output=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/output/%x_%j.out
-### #SBATCH --error=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/error/%x_%j.out
+### #SBATCH --error=/projects/bbtp/mjvolk3/Parameter_Estimation/slurm/output/%x_%j.out
 # #SBATCH --output=/dev/null
 
 

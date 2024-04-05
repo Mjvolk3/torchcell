@@ -15,14 +15,16 @@ def main():
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
 
     model_names = [
-        "esm2_t36_3B_UR50D_all",
-        "esm2_t36_3B_UR50D_no_dubious_uncharacterized",
-        "esm2_t36_3B_UR50D_no_dubious",
-        "esm2_t36_3B_UR50D_no_uncharacterized",
-        "esm2_t48_15B_UR50D_all",
-        "esm2_t48_15B_UR50D_no_dubious_uncharacterized",
-        "esm2_t48_15B_UR50D_no_dubious",
-        "esm2_t48_15B_UR50D_no_uncharacterized",
+        "esm2_t33_650M_UR50D_all",
+        "esm2_t33_650M_UR50D_no_dubious",
+        # "esm2_t36_3B_UR50D_all",
+        # "esm2_t36_3B_UR50D_no_dubious_uncharacterized",
+        # "esm2_t36_3B_UR50D_no_dubious",
+        # "esm2_t36_3B_UR50D_no_uncharacterized",
+        # "esm2_t48_15B_UR50D_all",
+        # "esm2_t48_15B_UR50D_no_dubious_uncharacterized",
+        # "esm2_t48_15B_UR50D_no_dubious",
+        # "esm2_t48_15B_UR50D_no_uncharacterized",
     ]
 
     event = 0

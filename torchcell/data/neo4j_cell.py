@@ -92,57 +92,6 @@ def create_embedding_graph(
 
     return G
 
-    # CHECK delete numpy version
-    # def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
-    #     hetero_data = HeteroData()
-
-    #     # Get the node identifiers from the "base" graph
-    #     base_nodes_list = sorted(list(graphs["base"].nodes()))
-
-    #     # Map each node to a unique index
-    #     node_idx_mapping = {node: idx for idx, node in enumerate(base_nodes_list)}
-
-    #     # Initialize node attributes for 'gene'
-    #     num_nodes = len(base_nodes_list)
-    #     hetero_data["gene"].num_nodes = num_nodes
-    #     hetero_data["gene"].node_ids = base_nodes_list
-
-    #     # Initialize the 'x' attribute for 'gene' node type
-    #     hetero_data["gene"].x = torch.zeros((num_nodes, 0), dtype=torch.float)
-
-    #     # Process each graph and add edges to the HeteroData object
-    #     for graph_type, graph in graphs.items():
-    #         if graph.number_of_edges() > 0:
-    #             # Convert edges to tensor
-    #             edge_index = torch.tensor(
-    #                 [
-    #                     (node_idx_mapping[src], node_idx_mapping[dst])
-    #                     for src, dst in graph.edges()
-    #                     if src in node_idx_mapping and dst in node_idx_mapping
-    #                 ],
-    #                 dtype=torch.long,
-    #             ).t()
-
-    #             # Determine edge type based on graph_type and assign edge indices
-    #             edge_type = ("gene", f"{graph_type}_interaction", "gene")
-    #             hetero_data[edge_type].edge_index = edge_index
-    #             hetero_data[edge_type].num_edges = edge_index.size(1)
-    #         else:
-    #             # Add node embeddings to the 'x' attribute of 'gene' node type
-    #             embeddings = np.zeros((num_nodes, 0))
-    #             for i, node in enumerate(base_nodes_list):
-    #                 if node in graph.nodes and "embedding" in graph.nodes[node]:
-    #                     embedding = graph.nodes[node]["embedding"]
-    #                     if embeddings.shape[1] == 0:
-    #                         embeddings = np.zeros((num_nodes, embedding.shape[0]))
-    #                     embeddings[i] = embedding
-
-    #             embeddings_tensor = torch.tensor(embeddings, dtype=torch.float)
-    #             hetero_data["gene"].x = torch.cat(
-    #                 (hetero_data["gene"].x, embeddings_tensor), dim=1
-    #             )
-
-    #     return hetero_data
 
 def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
     hetero_data = HeteroData()
@@ -390,39 +339,6 @@ class Neo4jCellDataset(Dataset):
     def processed_file_names(self) -> list[str]:
         return "lmdb"
 
-    # def process(self):
-    #     if not self.raw_db:
-    #         self.load_raw()
-
-    #     log.info("Processing raw data into LMDB")
-    #     env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
-
-    #     if self.deduplicator is not None:
-    #         # Deduplicate domain overlaps and compute mean entries
-    #         duplicate_check = self.deduplicator.duplicate_check(self.raw_db)
-    #         deduplicated_data = []
-    #         log.info("Deduplicating domain overlaps...")
-    #         for hash_key, indices in tqdm(duplicate_check.items()):
-    #             if len(indices) > 1:
-    #                 # Compute mean entry for duplicate experiments
-    #                 duplicate_experiments = [self.raw_db[i] for i in indices]
-    #                 mean_entry = self.deduplicator.create_mean_entry(
-    #                     duplicate_experiments
-    #                 )
-    #                 deduplicated_data.append(mean_entry)
-    #             else:
-    #                 # Keep non-duplicate experiments as is
-    #                 deduplicated_data.append(self.raw_db[indices[0]])
-
-    #         with env.begin(write=True) as txn:
-    #             for idx, data in enumerate(tqdm(deduplicated_data)):
-    #                 txn.put(f"{idx}".encode(), pickle.dumps(data))
-    #     else:
-    #         with env.begin(write=True) as txn:
-    #             for idx, data in enumerate(tqdm(self.raw_db)):
-    #                 txn.put(f"{idx}".encode(), pickle.dumps(data))
-
-    #     self.close_lmdb()
     def process(self):
         if not self.raw_db:
             self.load_raw()

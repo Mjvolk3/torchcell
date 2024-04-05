@@ -85,9 +85,6 @@ def create_embedding_graph(
             item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
             concatenated_embedding = torch.cat(item_embeddings)
 
-            # Add nodes to the graph with embeddings as node attributes
-            # G.add_node(item.id, embedding=concatenated_embedding.numpy())
-            # CHECK sometimes we have grads attached (Embedding), try no numpy
             G.add_node(item.id, embedding=concatenated_embedding)
 
     return G

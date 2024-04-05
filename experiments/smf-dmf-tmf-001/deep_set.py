@@ -206,7 +206,7 @@ def main(cfg: DictConfig) -> None:
         in wandb.config.cell_dataset["node_embeddings"]
     ):
         node_embeddings["normalized_chrom_pathways"] = GraphEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
+            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name="normalized_chrom_pathways",
         )
@@ -215,7 +215,7 @@ def main(cfg: DictConfig) -> None:
         in wandb.config.cell_dataset["node_embeddings"]
     ):
         node_embeddings["chrom_pathways"] = GraphEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph"),
+            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name="chrom_pathways",
         )

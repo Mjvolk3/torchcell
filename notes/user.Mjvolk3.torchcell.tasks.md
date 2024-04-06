@@ -2,12 +2,16 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712273737544
+updated: 1712446869991
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.04.06
+
+- [ ] Run grid to try and isolate batch multi-gpu job issue.
 
 ## 2024.04.05
 
@@ -16,7 +20,7 @@ created: 1690514887023m
 - [x] Test `Esm`
 - [x] Adding categoricals is way to involved right now, and we need to launch models. We need to most files to make this happen. Datasets, `HeteroData`, models, etc. Putting on hold for now, although it would be good add.
 - [x] Make chromosome number a numerical feature. → [[Sgd_gene_graph_hot|dendron://torchcell/torchcell.datasets.sgd_gene_graph_hot]] it is working properly
-- [ ] Launch experiments 
+- [ ] Launch experiments
 
 ## 2024.04.04
 

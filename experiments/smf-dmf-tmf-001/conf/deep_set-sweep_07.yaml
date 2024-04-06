@@ -44,7 +44,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [30]
+        values: [3]
       strategy:
         values: [auto]
   models:

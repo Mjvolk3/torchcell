@@ -32,7 +32,7 @@ parameters:
             normalized_chrom,
           ]
       max_size:
-        values: [1e4]
+        values: [1e2]
   data_module:
     parameters:
       batch_size:

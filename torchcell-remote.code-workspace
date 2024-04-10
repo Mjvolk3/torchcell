@@ -116,7 +116,13 @@
             {
                 "label": "Delta: Interactive gpuA40x",
                 "type": "shell",
-                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=20g --pty bash",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive gpuA100x",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA100x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
                 "problemMatcher": []
             },
             {

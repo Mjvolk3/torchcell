@@ -37,7 +37,6 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
 
-
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")

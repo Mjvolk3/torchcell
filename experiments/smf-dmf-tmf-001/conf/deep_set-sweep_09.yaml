@@ -54,7 +54,7 @@ parameters:
       strategy:
         values: [auto]
       accelerator:
-        values: [cpu]
+        values: [gpu]
   models:
     parameters:
       graph:

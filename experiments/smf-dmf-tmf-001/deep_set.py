@@ -34,7 +34,6 @@ from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 
-# from torchcell.trainers import RegressionTask
 from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
 
@@ -51,8 +50,9 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    
     wandb.init(
-        mode="online",
+        mode=wandb_cfg["wandb"]["mode"],  # Update mode to offline
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -81,137 +81,12 @@ def main(cfg: DictConfig) -> None:
 
     # Node embedding datasets
     node_embeddings = {}
-    # one hot gene - transductive
-    if "one_hot_gene" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["one_hot_gene"] = OneHotGeneDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/one_hot_gene_embedding"),
-            genome=genome,
-        )
-    # codon frequency
-    if "codon_frequency" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["codon_frequency"] = CodonFrequencyDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
-            genome=genome,
-        )
-    # fudt
-    if "fudt_downstream" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_downstream",
-        )
-
-    if "fudt_upstream" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_upstream",
-        )
-    # nucleotide transformer
-    if "nt_window_5979" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="nt_window_5979",
-        )
-    if "nt_window_5979_max" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="nt_window_5979_max",
-        )
-    if "nt_window_three_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_three_prime_5979"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="window_three_prime_5979",
-        )
-    if "nt_window_five_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="nt_window_five_prime_5979",
-        )
-    if "nt_window_three_prime_300" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_three_prime_300"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="nt_window_three_prime_300",
-        )
-    if "nt_window_five_prime_1003" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_five_prime_1003"] = NucleotideTransformerDataset(
-            root=osp.join(
-                DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
-            ),
-            genome=genome,
-            model_name="nt_window_five_prime_1003",
-        )
-    # protT5
-    if "prot_T5_all" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["prot_T5_all"] = ProtT5Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
-            genome=genome,
-            model_name="prot_t5_xl_uniref50_all",
-        )
-    if "prot_T5_no_dubious" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["prot_T5_no_dubious"] = ProtT5Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
-            genome=genome,
-            model_name="prot_t5_xl_uniref50_no_dubious",
-        )
-    # esm
-    if "esm2_t33_650M_UR50D_all" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
-            genome=genome,
-            model_name="esm2_t33_650M_UR50D_all",
-        )
-    if "esm2_t33_650M_UR50D_no_dubious" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
-            genome=genome,
-            model_name="esm2_t33_650M_UR50D_no_dubious",
-        )
-    if (
-        "esm2_t33_650M_UR50D_no_dubious_uncharacterized"
-        in wandb.config.cell_dataset["node_embeddings"]
-    ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
-            genome=genome,
-            model_name="esm2_t33_650M_UR50D_no_dubious_uncharacterized",
-        )
-    if (
-        "esm2_t33_650M_UR50D_no_uncharacterized"
-        in wandb.config.cell_dataset["node_embeddings"]
-    ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
-            genome=genome,
-            model_name="esm2_t33_650M_UR50D_no_uncharacterized",
-        )
-    # sgd_gene_graph
+    # normalized_chrom_pathways
     if "normalized_chrom_pathways" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["normalized_chrom_pathways"] = GraphEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name="normalized_chrom_pathways",
-        )
-    if "chrom_pathways" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["chrom_pathways"] = GraphEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
-            graph=graph.G_gene,
-            model_name="chrom_pathways",
         )
 
     # Experiments
@@ -242,10 +117,10 @@ def main(cfg: DictConfig) -> None:
     data_module = CellDataModule(
         dataset=cell_dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        batch_size=8,
+        batch_size=wandb.config.data_module["batch_size"],  # Update batch_size
         random_seed=42,
-        num_workers=4,
-        pin_memory=False,
+        num_workers=wandb.config.data_module["num_workers"],
+        pin_memory=wandb.config.data_module["pin_memory"],
     )
 
     # Anytime data is accessed lmdb must be closed.
@@ -266,8 +141,14 @@ def main(cfg: DictConfig) -> None:
                 skip_set=wandb.config.models["graph"]["skip_set"],
             ),
             "top": Mlp(
-                input_dim=wandb.config.models["graph"]["out_channels"],
-                layer_dims=wandb.config.models["pred_head"]["layer_dims"],
+                in_channels=wandb.config.models["graph"]["out_channels"],
+                hidden_channels=wandb.config.models["pred_head"]["hidden_channels"],
+                out_channels=wandb.config.models["pred_head"]["out_channels"],
+                num_layers=wandb.config.models["pred_head"]["num_layers"],
+                dropout_prob=wandb.config.models["pred_head"]["dropout_prob"],
+                norm=wandb.config.models["pred_head"]["norm"],
+                activation=wandb.config.models["pred_head"]["activation"],
+                output_activation=wandb.config.models["pred_head"]["output_activation"],
             ),
         }
     )
@@ -282,7 +163,6 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        # **kwargs,
     )
 
     # Checkpoint Callback

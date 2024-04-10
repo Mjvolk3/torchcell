@@ -77,8 +77,20 @@ parameters:
             values: [true, false]
       pred_head:
         parameters:
-          layer_dims:
-            values: [[1]]
+          hidden_channels:
+            values: [0]
+          out_channels:
+            values: [1]
+          num_layers:
+            values: [1]
+          dropout_prob:
+            values: [0.0]
+          norm:
+            values: [null]
+          activation:
+            values: [null]
+          output_activation:
+            values: [null]
   regression_task:
     parameters:
       target:

@@ -38,7 +38,7 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
-SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_07.yaml
+SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_09.yaml
 SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
 PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
 

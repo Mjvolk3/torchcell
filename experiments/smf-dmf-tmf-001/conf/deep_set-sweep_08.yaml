@@ -68,9 +68,9 @@ parameters:
           num_set_layers:
             values: [2, 3, 4]
           norm:
-            values: [batch, instance, layer]
+            values: [batch, layer]
           activation:
-            values: [relu, gelu, sigmoid, tanh]
+            values: [relu, gelu]
           skip_node:
             values: [true, false]
           skip_set:
@@ -102,7 +102,7 @@ parameters:
       weight_decay:
         values: [0, 1e-5, 1e-3]
       loss:
-        values: [mse]
+        values: [mse+list_mle]
       clip_grad_norm:
         values: [true, false]
       clip_grad_norm_max_norm:

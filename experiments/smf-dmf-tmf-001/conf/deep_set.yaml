@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 wandb:
-  mode: offline # disabled, offline, online
+  mode: online # disabled, offline, online
   project: torchcell_test
   tags: []
 
@@ -48,6 +48,6 @@ regression_task:
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2
   weight_decay: 1e-5
-  loss: mse
+  loss: mse+list_mle
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10

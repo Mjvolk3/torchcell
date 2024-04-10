@@ -71,8 +71,8 @@ class DeepSet(nn.Module):
                 )
                 set_modules.append(nn.Dropout(dropout_prob))
             else:
-          
-              set_modules.append(
+
+                set_modules.append(
                     create_block(hidden_channels, hidden_channels, norm, activation)
                 )
         self.set_layers = nn.ModuleList(set_modules)
@@ -146,6 +146,7 @@ def main():
 
     # Simple mean squared error loss
     criterion = nn.MSELoss()
+    print(x_set.shape, target.shape)
     loss = criterion(x_set, target)
     print("Loss:", loss.item())
 

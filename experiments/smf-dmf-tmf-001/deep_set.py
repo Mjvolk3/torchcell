@@ -201,19 +201,13 @@ def main(cfg: DictConfig) -> None:
             model_name="esm2_t33_650M_UR50D_no_uncharacterized",
         )
     # sgd_gene_graph
-    if (
-        "normalized_chrom_pathways"
-        in wandb.config.cell_dataset["node_embeddings"]
-    ):
+    if "normalized_chrom_pathways" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["normalized_chrom_pathways"] = GraphEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name="normalized_chrom_pathways",
         )
-    if (
-        "chrom_pathways"
-        in wandb.config.cell_dataset["node_embeddings"]
-    ):
+    if "chrom_pathways" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["chrom_pathways"] = GraphEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
@@ -299,7 +293,6 @@ def main(cfg: DictConfig) -> None:
         mode="min",
     )
 
-    # Initialize the Trainer with the WandbLogger
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
 
@@ -311,6 +304,7 @@ def main(cfg: DictConfig) -> None:
 
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
+        accelerator=wandb.config.trainer["accelerator"],
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],

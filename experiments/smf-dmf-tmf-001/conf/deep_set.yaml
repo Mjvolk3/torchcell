@@ -9,7 +9,7 @@ wandb:
 
 cell_dataset:
   graphs: null #[physical], [regulatory], [physical, regulatory], []
-  node_embeddings: [normalized_chrom] #one_hot_gene, codon_frequency, fudt_downstream, fudt_upstream, prot_T5_all, prot_T5_no_dubious, nt_window_5979, nt_window_5979_max, nt_window_three_prime_5979, nt_window_five_prime_5979, nt_window_three_prime_300, nt_window_five_prime_1003, esm2_t33_650M_UR50D_all, esm2_t33_650M_UR50D_no_dubious, esm2_t33_650M_UR50D_no_dubious_uncharacterized, esm2_t33_650M_UR50D_no_uncharacterized, normalized_chrom_pathways, normalized_chrom
+  node_embeddings: [normalized_chrom_pathways] #one_hot_gene, codon_frequency, fudt_downstream, fudt_upstream, prot_T5_all, prot_T5_no_dubious, nt_window_5979, nt_window_5979_max, nt_window_three_prime_5979, nt_window_five_prime_5979, nt_window_three_prime_300, nt_window_five_prime_1003, esm2_t33_650M_UR50D_all, esm2_t33_650M_UR50D_no_dubious, esm2_t33_650M_UR50D_no_dubious_uncharacterized, esm2_t33_650M_UR50D_no_uncharacterized, normalized_chrom_pathways, normalized_chrom
 
   max_size: 1e2
 
@@ -21,6 +21,7 @@ data_module:
 trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
+  accelerator: cpu
 
 models:
   graph:

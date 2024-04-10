@@ -2,12 +2,19 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1712446869991
+updated: 1712785836049
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+
+## 2024.04.10
+
+- [ ] setup genome for ddp
+- [ ] `SupConReg` loss
+- [ ] 
 
 ## 2024.04.06
 

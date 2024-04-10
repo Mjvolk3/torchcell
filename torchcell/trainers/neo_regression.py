@@ -24,11 +24,25 @@ from tqdm import tqdm
 import wandb
 from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
-
+from torchcell.losses.list_mle import ListMLELoss
 import torchcell
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
+
+class MSEListMLELoss(nn.Module):
+    def __init__(self, alpha=0.5):
+        super(MSEListMLELoss, self).__init__()
+        self.mse_loss = nn.MSELoss()
+        self.list_mle_loss = ListMLELoss()
+        self.alpha = alpha
+
+    def forward(self, y_pred, y_true):
+        mse = self.mse_loss(y_pred, y_true)
+        list_mle = self.list_mle_loss(y_pred, y_true)
+        combined_loss = self.alpha * mse + (1 - self.alpha) * list_mle
+        return combined_loss
 
 
 class RegressionTask(L.LightningModule):
@@ -65,9 +79,10 @@ class RegressionTask(L.LightningModule):
         # loss
         if loss == "mse":
             self.loss = nn.MSELoss()
-
-        elif loss == "mae":
-            self.loss = nn.L1Loss()
+        elif loss == "list_mle":
+            self.loss = ListMLELoss()
+        elif loss == "mse+list_mle":
+            self.loss = MSEListMLELoss(alpha=0.5)
         else:
             raise ValueError(
                 f"Loss type '{loss}' is not valid."

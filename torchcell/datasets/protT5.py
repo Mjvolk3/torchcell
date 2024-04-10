@@ -126,19 +126,20 @@ if __name__ == "__main__":
     #     model_name="prot_t5_xl_uniref50_all",
     # )
 
+    dataset = ProtT5Dataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
+        genome=genome,
+        model_name="prot_t5_xl_uniref50_no_dubious",
+    )
     # dataset = ProtT5Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
     #     genome=genome,
-    #     model_name="prot_t5_xl_uniref50_no_dubious",
+    #     model_name="prot_t5_xl_uniref50_no_dubious_uncharacterized",
     # )
-    dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
-        genome=genome,
-        model_name="prot_t5_xl_uniref50_no_dubious_uncharacterized",
-    )
 
-    dataset = ProtT5Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
-        genome=genome,
-        model_name="prot_t5_xl_uniref50_no_uncharacterized",
-    )
+    # dataset = ProtT5Dataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/protT5_embedding"),
+    #     genome=genome,
+    #     model_name="prot_t5_xl_uniref50_no_uncharacterized",
+    # )
+    print()

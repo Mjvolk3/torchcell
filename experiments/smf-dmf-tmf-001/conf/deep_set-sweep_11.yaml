@@ -1,5 +1,5 @@
 program: experiments/smf-dmf-tmf-001/deep_set.py
-project: torchcell_smf-dmf-tmf-001-10
+project: torchcell_smf-dmf-tmf-001-11
 method: grid
 metric:
   goal: minimize

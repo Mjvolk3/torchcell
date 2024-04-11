@@ -33,7 +33,8 @@ from torchcell.datasets import (
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
-
+import torch
+import torch.distributed as dist
 from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
 
@@ -61,8 +62,17 @@ def main(cfg: DictConfig) -> None:
     # Initialize the WandbLogger
     wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
 
+    # Handle sql genome access error for ddp
+    if torch.cuda.is_available() and dist.is_initialized():
+        rank = dist.get_rank()
+        genome_data_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
+    else:
+        # Fallback to default DATA_ROOT if not running in distributed mode or no GPU available
+        genome_data_root = osp.join(DATA_ROOT, "data/sgd/genome")
+        rank = 0  #
+
     # Get reference genome
-    genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(data_root=genome_data_root)
     genome.drop_chrmt()
     genome.drop_empty_go()
 
@@ -162,6 +172,7 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
+        kwargs=wandb.config.regression_task,
     )
 
     # Checkpoint Callback

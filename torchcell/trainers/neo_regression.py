@@ -35,17 +35,17 @@ plt.style.use(style_file_path)
 class ListMLEMetric(Metric):
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step)
-        self.list_mle_loss_fn = ListMLELoss()
+        self.list_mle_loss = ListMLELoss()  # Renamed for clarity
         self.add_state("sum_loss", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: torch.Tensor, target: torch.Tensor):
-        loss = self.list_mle_loss_fn(preds, target)
-        self.sum_loss += loss.detach() * target.size(0)  # Update total loss
-        self.total += target.size(0)  # Update total number of examples
+        loss = self.list_mle_loss(preds, target)  # Corrected method call
+        self.sum_loss += loss.detach() * target.size(0)
+        self.total += target.size(0)
 
     def compute(self):
-        return self.sum_loss / self.total  # Return average loss
+        return self.sum_loss / self.total
 
 
 class MSEListMLELoss(nn.Module):
@@ -58,7 +58,7 @@ class MSEListMLELoss(nn.Module):
     def forward(self, y_pred, y_true):
         mse = self.mse_loss(y_pred, y_true)
         list_mle = self.list_mle_loss(y_pred, y_true)
-        combined_loss = self.alpha * mse + (1 - self.alpha) * list_mle
+        combined_loss = (1 - self.alpha) * mse + self.alpha * list_mle
         return combined_loss
 
 
@@ -99,7 +99,7 @@ class RegressionTask(L.LightningModule):
         elif loss == "list_mle":
             self.loss = ListMLELoss()
         elif loss == "mse+list_mle":
-            self.loss = MSEListMLELoss(alpha=0.5)
+            self.loss = MSEListMLELoss(alpha=kwargs.get("alpha", 0.5))
         else:
             raise ValueError(
                 f"Loss type '{loss}' is not valid."

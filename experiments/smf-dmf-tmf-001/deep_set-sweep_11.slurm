@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=253g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
+#SBATCH --mem=243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
@@ -10,7 +10,7 @@
 #SBATCH --constraint="projects&scratch"
 ### GPU options ###
 #SBATCH --gpus-per-node=4
-#SBATCH --gpu-bind=closest     # <- or closest
+#SBATCH --gpu-bind=none     # <- or closest
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 # #SBATCH --output=/dev/null

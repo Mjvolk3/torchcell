@@ -95,6 +95,8 @@ parameters:
       loss:
         values: [mse+list_mle]
       alpha:
+        values: [1e-2]
+      alpha:
         values: [1e-1]
       clip_grad_norm:
         values: [true]

@@ -1,0 +1,104 @@
+program: experiments/smf-dmf-tmf-001/deep_set.py
+project: torchcell_smf-dmf-tmf-001-10
+method: grid
+metric:
+  goal: minimize
+  name: val/loss
+
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [null]
+      node_embeddings:
+        values:
+          [
+            one_hot_gene,
+            codon_frequency,
+            fudt_downstream,
+            fudt_upstream,
+            prot_T5_all,
+            prot_no_dubious,
+            nt_window_5979,
+            nt_window_three_prime_300,
+            nt_window_five_prime_1003,
+            esm2_t33_650M_UR50D_all,
+            esm2_t33_650M_UR50D_no_dubious,
+            normalized_chrom_pathways,
+            normalized_chrom,
+            works,
+          ]
+      max_size:
+        values: [1e3]
+  data_module:
+    parameters:
+      batch_size:
+        values: [32]
+      num_workers:
+        values: [10]
+      pin_memory:
+        values: [true]
+  trainer:
+    parameters:
+      max_epochs:
+        values: [40]
+      strategy:
+        values: [auto]
+      accelerator:
+        values: [cpu]
+  models:
+    parameters:
+      graph:
+        parameters:
+          hidden_channels:
+            values: [256]
+          out_channels:
+            values: [64]
+          num_node_layers:
+            values: [3]
+          num_set_layers:
+            values: [3]
+          norm:
+            values: [batch, layer]
+          activation:
+            values: [gelu]
+          skip_node:
+            values: [true]
+          skip_set:
+            values: [true]
+      pred_head:
+        parameters:
+          hidden_channels:
+            values: [0]
+          out_channels:
+            values: [1]
+          num_layers:
+            values: [1]
+          dropout_prob:
+            values: [0.0]
+          norm:
+            values: [null]
+          activation:
+            values: [null]
+          output_activation:
+            values: [null]
+  regression_task:
+    parameters:
+      target:
+        values: [fitness]
+      boxplot_every_n_epochs:
+        values: [5]
+      learning_rate:
+        values: [1e-4]
+      weight_decay:
+        values: [1e-3]
+      loss:
+        values: [mse+list_mle]
+      clip_grad_norm:
+        values: [true]
+      clip_grad_norm_max_norm:
+        values: [1]
+command:
+  - ${env}
+  - python
+  - ${program}

@@ -26,9 +26,26 @@ from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 from torchcell.losses.list_mle import ListMLELoss
 import torchcell
+from torchmetrics import Metric
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
+
+class ListMLEMetric(Metric):
+    def __init__(self, dist_sync_on_step=False):
+        super().__init__(dist_sync_on_step=dist_sync_on_step)
+        self.list_mle_loss_fn = ListMLELoss()
+        self.add_state("sum_loss", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
+
+    def update(self, preds: torch.Tensor, target: torch.Tensor):
+        loss = self.list_mle_loss_fn(preds, target)
+        self.sum_loss += loss.detach() * target.size(0)  # Update total loss
+        self.total += target.size(0)  # Update total number of examples
+
+    def compute(self):
+        return self.sum_loss / self.total  # Return average loss
 
 
 class MSEListMLELoss(nn.Module):
@@ -102,6 +119,7 @@ class RegressionTask(L.LightningModule):
                 "RMSE": MeanSquaredError(squared=False),
                 "MSE": MeanSquaredError(squared=True),
                 "MAE": MeanAbsoluteError(),
+                "ListMLE": ListMLEMetric(),
             },
             prefix="train/",
         )

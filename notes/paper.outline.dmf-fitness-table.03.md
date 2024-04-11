@@ -2,7 +2,7 @@
 id: rkho6ickchq7mx6fxuwzd0o
 title: '03'
 desc: ''
-updated: 1712171256440
+updated: 1712793805046
 created: 1712171256440
 ---
 ```mermaid
@@ -41,16 +41,18 @@ graph LR
     Interactions --> metrics
     Fitness --> metrics 
     metrics --> mae
-    metrics --> mdae
+    metrics --> list_mle
     metrics --> pearson
     metrics --> spearman
     metrics --> r_squared
     metrics --> μ_important
     metrics --> σ_important
-    DCell -.-> Interpretable((Interpretable))
-    SAG -.-> Interpretable((Interpretable))
-    DiffPool -.-> Interpretable((Interpretable))
-    Self_Attention-DiffPool -.-> Interpretable((Interpretable))
-    Self_Attention-SAG -.-> Interpretable((Interpretable))
-    Self_Attention-Deep_Set -.-> Interpretable((Interpretable))
+    subgraph Interpretable
+        DCell
+        SAG
+        DiffPool
+        Self_Attention-DiffPool
+        Self_Attention-SAG
+        Self_Attention-Deep_Set
+    end
 ```

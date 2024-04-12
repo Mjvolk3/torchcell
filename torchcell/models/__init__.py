@@ -2,7 +2,7 @@ from .act import act_register
 from .constants import DNA_LLM_MAX_TOKEN_SIZE
 from .dcell import DCell, DCellLinear, dcell_from_networkx
 from .deep_set import DeepSet
-from .deep_set_transformer import DeepSetTransformer
+from .self_attention_deep_set import SelfAttentionDeepSet
 from .fungal_up_down_transformer import FungalUpDownTransformer
 from .graph_attention import GraphAttention
 from .graph_convolution import GraphConvolution
@@ -20,7 +20,7 @@ models = [
     "FungalUpDownTransformer",
     "NucleotideTransformer",
     "DeepSet",
-    "DeepSetTransformer",
+    "SelfAttentionDeepSet",
     "SimpleLinearModel",
     "GraphConvolution",
     "GraphAttention",

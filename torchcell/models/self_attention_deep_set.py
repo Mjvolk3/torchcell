@@ -1,16 +1,42 @@
-# torchcell/models/deep_set.py
-# [[torchcell.models.deep_set]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/deep_set.py
-# Test file: torchcell/models/test_deep_set.py
+# torchcell/models/self_attention_deep_set
+# [[torchcell.models.self_attention_deep_set]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/self_attention_deep_set
+# Test file: tests/torchcell/models/test_self_attention_deep_set.py
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch_scatter import scatter_add
 
 from torchcell.models.act import act_register
 
 
-class DeepSet(nn.Module):
+class SelfAttention(nn.Module):
+    def __init__(self, dim_in: int, dim_out: int, num_heads: int = 1):
+        super().__init__()
+        self.query = nn.Linear(dim_in, dim_out * num_heads)
+        self.key = nn.Linear(dim_in, dim_out * num_heads)
+        self.value = nn.Linear(dim_in, dim_out * num_heads)
+        self.dim_out = dim_out
+        self.num_heads = num_heads
+
+    def forward(self, x):
+        Q = self.query(x)
+        K = self.key(x)
+        V = self.value(x)
+
+        Q = Q.view(Q.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
+        K = K.view(K.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
+        V = V.view(V.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
+
+        attn_weights = F.softmax(Q @ K.transpose(-2, -1) / self.dim_out**0.5, dim=-1)
+        out = attn_weights @ V
+        out = out.permute(1, 2, 0, 3).contiguous()
+
+        return out, attn_weights
+
+
+class SelfAttentionDeepSet(nn.Module):
     def __init__(
         self,
         in_channels: int,
@@ -18,11 +44,12 @@ class DeepSet(nn.Module):
         out_channels: int,
         num_node_layers: int,
         num_set_layers: int,
+        num_heads: int = 1,
         dropout_prob: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
-        skip_node: bool = False,  # Parameter to add skip connections in node_layers
-        skip_set: bool = False,  # Parameter to add skip connections in set_layers
+        skip_node: bool = False,
+        skip_set: bool = False,
     ):
         super().__init__()
 
@@ -31,6 +58,7 @@ class DeepSet(nn.Module):
 
         self.skip_node = skip_node
         self.skip_set = skip_set
+        self.num_heads = num_heads
 
         def create_block(in_dim, out_dim, norm, activation):
             block = [nn.Linear(in_dim, out_dim)]
@@ -51,11 +79,11 @@ class DeepSet(nn.Module):
                 )
             elif i == num_node_layers - 1:
                 node_modules.append(
-                    create_block(hidden_channels, out_channels, norm, activation)
+                    create_block(hidden_channels * num_heads, out_channels, norm, activation)
                 )
             else:
                 node_modules.append(
-                    create_block(hidden_channels, hidden_channels, norm, activation)
+                    create_block(hidden_channels * num_heads, hidden_channels, norm, activation)
                 )
         self.node_layers = nn.ModuleList(node_modules)
 
@@ -71,21 +99,29 @@ class DeepSet(nn.Module):
                 )
                 set_modules.append(nn.Dropout(dropout_prob))
             else:
-
                 set_modules.append(
                     create_block(hidden_channels, hidden_channels, norm, activation)
                 )
         self.set_layers = nn.ModuleList(set_modules)
 
+        self.self_attn = SelfAttention(
+            dim_in=hidden_channels, dim_out=hidden_channels, num_heads=num_heads
+        )
+
     def node_layers_forward(self, x):
         """Process node features through node layers."""
         x_node = x
+        attn_weights_list = []  # List to store attention weights from each layer
         for i, layer in enumerate(self.node_layers):
+            if i > 0:
+                x_node, attn_weights = self.self_attn(x_node)
+                attn_weights_list.append(attn_weights)
+                x_node = x_node.view(x_node.size(0), -1)
             out_node = layer(x_node)
             if self.skip_node and x_node.shape[-1] == out_node.shape[-1]:
                 out_node = out_node + x_node  # Skip connection
             x_node = out_node
-        return x_node
+        return x_node, attn_weights_list
 
     def set_layers_forward(self, x_summed):
         """Process aggregated features through set layers."""
@@ -102,10 +138,10 @@ class DeepSet(nn.Module):
         return x_set
 
     def forward(self, x, batch):
-        x_node = self.node_layers_forward(x)
+        x_node, attn_weights_list = self.node_layers_forward(x)
         x_summed = scatter_add(x_node, batch, dim=0)
         x_set = self.set_layers_forward(x_summed)
-        return x_node, x_set
+        return x_node, x_set, attn_weights_list
 
 
 def main():
@@ -117,13 +153,15 @@ def main():
     out_channels = 8
     num_node_layers = 3
     num_set_layers = 2
+    num_heads = 2
 
-    model = DeepSet(
+    model = SelfAttentionDeepSet(
         in_channels,
         hidden_channels,
         out_channels,
         num_node_layers,
         num_set_layers,
+        num_heads,
         norm="layer",
         activation="tanh",
         skip_node=True,
@@ -136,11 +174,12 @@ def main():
     batch = torch.cat([torch.full((20,), i, dtype=torch.long) for i in range(5)])
 
     # Forward pass
-    x_nodes, x_set = model(x, batch)
+    x_nodes, x_set, attn_weights_list = model(x, batch)
     print("x_set shape:", x_set.shape)
-    print("batch shape:", batch.shape)
-    print("batch unique:", torch.unique(batch))
     print("x_nodes shape:", x_nodes.shape)
+    print("Number of attention weights:", len(attn_weights_list))
+    for i, attn_weights in enumerate(attn_weights_list):
+        print(f"Attention weights shape at layer {i+1}:", attn_weights.shape)
 
     # Let's assume you want to predict some values for each set.
     # So, we'll create a dummy target tensor for demonstration purposes.

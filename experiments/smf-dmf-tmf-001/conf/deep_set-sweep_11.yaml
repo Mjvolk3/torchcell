@@ -41,7 +41,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [40]
+        values: [50]
       strategy:
         values: [auto]
       accelerator:
@@ -94,6 +94,10 @@ parameters:
         values: [1e-3]
       loss:
         values: [mse+list_mle]
+      alpha:
+        values: [1e-2]
+      alpha:
+        values: [1e-1]
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:

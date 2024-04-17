@@ -33,7 +33,7 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [32]
+        values: [4]
       num_workers:
         values: [10]
       pin_memory:
@@ -51,13 +51,13 @@ parameters:
       graph:
         parameters:
           hidden_channels:
-            values: [256]
-          out_channels:
             values: [64]
+          out_channels:
+            values: [32]
           num_node_layers:
-            values: [3]
+            values: [2]
           num_set_layers:
-            values: [3]
+            values: [2]
           norm:
             values: [batch, layer]
           activation:

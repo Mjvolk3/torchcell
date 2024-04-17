@@ -58,7 +58,7 @@ class MSEListMLELoss(nn.Module):
     def forward(self, y_pred, y_true):
         mse = self.mse_loss(y_pred, y_true)
         list_mle = self.list_mle_loss(y_pred, y_true)
-        combined_loss = (1 - self.alpha) * mse + self.alpha * list_mle
+        combined_loss = mse + (self.alpha * list_mle)
         return combined_loss
 
 

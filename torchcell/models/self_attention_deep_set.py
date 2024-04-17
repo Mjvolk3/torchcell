@@ -20,20 +20,28 @@ class SelfAttention(nn.Module):
         self.dim_out = dim_out
         self.num_heads = num_heads
 
-    def forward(self, x):
+    def forward(self, x, batch):
         Q = self.query(x)
         K = self.key(x)
         V = self.value(x)
 
-        Q = Q.view(Q.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
-        K = K.view(K.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
-        V = V.view(V.size(0), -1, self.num_heads, self.dim_out).permute(2, 0, 1, 3)
+        Q = Q.view(-1, self.num_heads, self.dim_out).transpose(0, 1)
+        K = K.view(-1, self.num_heads, self.dim_out).transpose(0, 1)
+        V = V.view(-1, self.num_heads, self.dim_out).transpose(0, 1)
 
-        attn_weights = F.softmax(Q @ K.transpose(-2, -1) / self.dim_out**0.5, dim=-1)
-        out = attn_weights @ V
-        out = out.permute(1, 2, 0, 3).contiguous()
+        attn_weights = F.softmax(
+            torch.bmm(Q, K.transpose(1, 2)) / self.dim_out**0.5, dim=-1
+        )
+        out = torch.bmm(attn_weights, V)
+        out = out.transpose(0, 1).contiguous().view(-1, self.num_heads * self.dim_out)
 
-        return out, attn_weights
+        # Retrieve attention weights for a single graph
+        graph_attn_weights = []
+        for i in torch.unique(batch):
+            mask = batch == i
+            graph_attn_weights.append(attn_weights[:, mask][:, :, mask])
+
+        return out, graph_attn_weights
 
 
 class SelfAttentionDeepSet(nn.Module):
@@ -79,11 +87,15 @@ class SelfAttentionDeepSet(nn.Module):
                 )
             elif i == num_node_layers - 1:
                 node_modules.append(
-                    create_block(hidden_channels * num_heads, out_channels, norm, activation)
+                    create_block(
+                        hidden_channels * num_heads, out_channels, norm, activation
+                    )
                 )
             else:
                 node_modules.append(
-                    create_block(hidden_channels * num_heads, hidden_channels, norm, activation)
+                    create_block(
+                        hidden_channels * num_heads, hidden_channels, norm, activation
+                    )
                 )
         self.node_layers = nn.ModuleList(node_modules)
 
@@ -108,15 +120,14 @@ class SelfAttentionDeepSet(nn.Module):
             dim_in=hidden_channels, dim_out=hidden_channels, num_heads=num_heads
         )
 
-    def node_layers_forward(self, x):
+    def node_layers_forward(self, x, batch):
         """Process node features through node layers."""
         x_node = x
         attn_weights_list = []  # List to store attention weights from each layer
         for i, layer in enumerate(self.node_layers):
             if i > 0:
-                x_node, attn_weights = self.self_attn(x_node)
-                attn_weights_list.append(attn_weights)
-                x_node = x_node.view(x_node.size(0), -1)
+                x_node, graph_attn_weights = self.self_attn(x_node, batch)
+                attn_weights_list.append(graph_attn_weights)
             out_node = layer(x_node)
             if self.skip_node and x_node.shape[-1] == out_node.shape[-1]:
                 out_node = out_node + x_node  # Skip connection
@@ -138,7 +149,7 @@ class SelfAttentionDeepSet(nn.Module):
         return x_set
 
     def forward(self, x, batch):
-        x_node, attn_weights_list = self.node_layers_forward(x)
+        x_node, attn_weights_list = self.node_layers_forward(x, batch)
         x_summed = scatter_add(x_node, batch, dim=0)
         x_set = self.set_layers_forward(x_summed)
         return x_node, x_set, attn_weights_list
@@ -168,6 +179,10 @@ def main():
         skip_set=True,
     )
 
+    # Print the number of parameters in the model
+    num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Number of parameters: {num_params}")
+
     # Dummy data
     x = torch.rand(100, in_channels)
     print("x shape:", x.shape)
@@ -178,8 +193,13 @@ def main():
     print("x_set shape:", x_set.shape)
     print("x_nodes shape:", x_nodes.shape)
     print("Number of attention weights:", len(attn_weights_list))
-    for i, attn_weights in enumerate(attn_weights_list):
-        print(f"Attention weights shape at layer {i+1}:", attn_weights.shape)
+    for i, graph_attn_weights in enumerate(attn_weights_list):
+        print(f"Number of graphs at layer {i+1}:", len(graph_attn_weights))
+        for j, attn_weights in enumerate(graph_attn_weights):
+            print(
+                f"Attention weights shape for graph {j+1} at layer {i+1}:",
+                attn_weights.shape,
+            )
 
     # Let's assume you want to predict some values for each set.
     # So, we'll create a dummy target tensor for demonstration purposes.

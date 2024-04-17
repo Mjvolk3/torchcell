@@ -72,7 +72,7 @@ def main(cfg: DictConfig) -> None:
         rank = 0  #
 
     # Get reference genome
-    genome = SCerevisiaeGenome(data_root=genome_data_root)
+    genome = SCerevisiaeGenome(data_root=genome_data_root, overwrite=False)
     genome.drop_chrmt()
     genome.drop_empty_go()
 

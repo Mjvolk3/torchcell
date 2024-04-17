@@ -42,8 +42,10 @@ SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_11.yaml
 SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
 PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
 
+
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"
+echo "SLURM_JOB_ID: $SLURM_JOB_ID"
 echo "PROJECT_NAME: $PROJECT_NAME"
 echo "-----------------"
 echo "SLURM_GPUS_ON_NODE: $SLURM_GPUS_ON_NODE"
@@ -51,11 +53,11 @@ echo "SLURM_JOB_NUM_NODES: $SLURM_JOB_NUM_NODES"
 echo "-----------------"
 
 
-mkdir /projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SWEEP_ID
+mkdir /projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID
 
 # Use for Agent logging. Only use in testing.
 # Not sure if visivles devices scales with num nodes or resets to 0
 for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SWEEP_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
+    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /projects/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
 done
 wait

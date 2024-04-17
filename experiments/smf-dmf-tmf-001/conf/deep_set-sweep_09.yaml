@@ -1,10 +1,10 @@
-# experiments/smf-dmf-tmf-001/conf/deep_set-sweep_08.yaml
-# [[experiments.smf-dmf-tmf-001.conf.deep_set-sweep_08.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/deep_set-sweep_08.yaml
-# Test file: experiments/smf-dmf-tmf-001/conf/test_deep_set-sweep_08.yaml
+# experiments/smf-dmf-tmf-001/conf/deep_set-sweep_09.yaml
+# [[experiments.smf-dmf-tmf-001.conf.deep_set-sweep_09.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/deep_set-sweep_09.yaml
+# Test file: experiments/smf-dmf-tmf-001/conf/test_deep_set-sweep_09.yaml
 
 program: experiments/smf-dmf-tmf-001/deep_set.py
-project: torchcell_smf-dmf-tmf-001-08
+project: torchcell_smf-dmf-tmf-001-09
 method: bayes
 metric:
   goal: minimize

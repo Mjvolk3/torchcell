@@ -1,6 +1,8 @@
-# experiments/smf-dmf-tmf-001/conf/deep_set-sweep_06.yaml
-# [[experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/deep_set-sweep_06.yaml
+# experiments/smf-dmf-tmf-001/conf/deep_set-sweep_07.yaml
+# [[experiments.smf-dmf-tmf-001.conf.deep_set-sweep_07.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/deep_set-sweep_07.yaml
+# Test file: experiments/smf-dmf-tmf-001/conf/test_deep_set-sweep_07.yaml
+
 
 program: experiments/smf-dmf-tmf-001/deep_set.py
 project: torchcell_smf-dmf-tmf-001-07
@@ -29,7 +31,7 @@ parameters:
             esm2_t33_650M_UR50D_all, # works
             esm2_t33_650M_UR50D_no_dubious, # works
             normalized_chrom_pathways, # works 
-            normalized_chrom, works
+            normalized_chrom
           ]
       max_size:
         values: [1e2]

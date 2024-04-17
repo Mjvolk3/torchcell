@@ -698,6 +698,7 @@ def main():
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
         pass
+        print()
 
     print("finished")
 

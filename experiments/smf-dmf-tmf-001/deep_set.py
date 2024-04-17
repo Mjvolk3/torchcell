@@ -298,7 +298,7 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        kwargs=wandb.config.regression_task,
+        alpha=wandb.config.regression_task["alpha"],
     )
 
     # Checkpoint Callback

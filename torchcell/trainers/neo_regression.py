@@ -77,7 +77,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
-        **kwargs,
+        alpha: float = 0.0,
     ):
         super().__init__()
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
@@ -99,7 +99,7 @@ class RegressionTask(L.LightningModule):
         elif loss == "list_mle":
             self.loss = ListMLELoss()
         elif loss == "mse+list_mle":
-            self.loss = MSEListMLELoss(alpha=kwargs.get("alpha", 0.5))
+            self.loss = MSEListMLELoss(alpha=alpha)
         else:
             raise ValueError(
                 f"Loss type '{loss}' is not valid."

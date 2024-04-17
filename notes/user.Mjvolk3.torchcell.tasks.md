@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1713325787847
+updated: 1713329015355
 created: 1690514887023m
 ---
 
@@ -13,7 +13,7 @@ created: 1690514887023m
 
 - [x] Interactive sessions too slow [[delta.issues.2024.04.16|dendron://torchcell/delta.issues.2024.04.16]]
 - [x] Running only deep set and we get broken pipe [[Running Only Deep Set|dendron://torchcell/delta.issues.2024.04.16#running-only-deep-set]]
-- [ ] Create dataframe with 
+- [ ] Create dataframe with for traditional ml techniques. Support sum and mean aggregation. Support `is_pert`.
 
 
 ## 2024.04.10

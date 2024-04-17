@@ -54,9 +54,9 @@ parameters:
           out_channels:
             values: [64]
           num_node_layers:
-            values: [3]
+            values: [2]
           num_set_layers:
-            values: [3]
+            values: [2]
           norm:
             values: [batch, layer]
           activation:

@@ -93,3 +93,7 @@ experiments/smf-dmf-tmf-001/agent_log
 torchcell/knowledge_graphs/conf/kg.yaml
 experiments/embeddings/slurm/output/
 experiments/embeddings/slurm/error/
+
+
+# TEMPORARY
+# notes/assets/images/*

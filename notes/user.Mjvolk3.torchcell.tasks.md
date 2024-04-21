@@ -2,20 +2,33 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1713415677567
+updated: 1713668710004
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.04.20
+
+- [x] Traditional ml `1e3` → Fixed issue with configs that didn't exist, this might be the issue with Deep Set experiments →  Took about 2 hours.
+- [ ] Traditional ml `1e4`
+- [ ] Traditional ml `1e5`
+
+
+## 2024.04.19
+
+- [x] `one_hot_gene`, `batch_size: 16`, `aggregation: sum`
+- [ ] Try to fix failed runs by inspecting logs
+- [ ] If the current plan doesn't work, then [wandb sweep controller script](https://docs.wandb.ai/guides/sweeps/local-controller) 
+- [ ] I think issue in Deep Set could be related to buggy configs.
+
 ## 2024.04.16
 
 - [x] Interactive sessions too slow [[delta.issues.2024.04.16|dendron://torchcell/delta.issues.2024.04.16]]
 - [x] Running only deep set and we get broken pipe [[Running Only Deep Set|dendron://torchcell/delta.issues.2024.04.16#running-only-deep-set]]
 - [x] Create dataframe with for traditional ml techniques. Support sum and mean aggregation. Support `is_pert`.
-- [ ] Log dataframes to `wandb`, set up PCA, TSNE and UMAP. Log table and pngs.
-- [ ] Write 
+- 🔲 Log dataframes to `wandb`, set up PCA, TSNE and UMAP. Log table and pngs.
 
 ## 2024.04.10
 

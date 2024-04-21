@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1712255722240
+updated: 1713568487175
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Compute flops of different networks. There are python libraries to do this for `nn.Module`
 - [ ] From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion.
 - [ ] Use omega conf to select the functions that get called automatically for `get_nodes` and `get_edges`.
 - [ ] Formal docker import test with subprocess docker. Create unique containers for each dataset. Output the and evaluate the report file.

@@ -32,7 +32,7 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [32]
+        values: [16]
       num_workers:
         values: [10]
       pin_memory:
@@ -92,7 +92,7 @@ parameters:
       weight_decay:
         values: [1e-3]
       loss:
-        values: [mse+list_mle]
+        values: [mse]
       alpha:
         values: [1e-2]
       clip_grad_norm:

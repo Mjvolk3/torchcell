@@ -223,6 +223,10 @@ def main(cfg: DictConfig) -> None:
             graph=graph.G_gene,
             model_name="chrom_pathways",
         )
+    print("=============")
+    print("node.embeddings")
+    print(node_embeddings)
+    print("=============")
 
     # Experiments
     with open((osp.join(osp.dirname(__file__), "query.cql")), "r") as f:
@@ -258,7 +262,7 @@ def main(cfg: DictConfig) -> None:
         pin_memory=wandb.config.data_module["pin_memory"],
     )
 
-  # Anytime data is accessed lmdb must be closed.
+    # Anytime data is accessed lmdb must be closed.
     input_dim = cell_dataset.num_features["gene"]
     cell_dataset.close_lmdb()
 

@@ -2,19 +2,23 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1713668710004
+updated: 1713728535168
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.04.21
+
+- [x] Commit traditional ml `1e4` images
+- [x] Launch [[smf-dmf-tmf-001.conf.deep_set-sweep_14|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_14.yaml]]
+- [ ] 
+
 ## 2024.04.20
 
 - [x] Traditional ml `1e3` → Fixed issue with configs that didn't exist, this might be the issue with Deep Set experiments →  Took about 2 hours.
-- [ ] Traditional ml `1e4`
-- [ ] Traditional ml `1e5`
-
+- [x] Traditional ml `1e4`
 
 ## 2024.04.19
 

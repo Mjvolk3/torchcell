@@ -1,3 +1,8 @@
+# experiments/smf-dmf-tmf-001/conf/deep_set-sweep_12.yaml
+# [[experiments.smf-dmf-tmf-001.conf.deep_set-sweep_12.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/deep_set-sweep_12.yaml
+# Test file: experiments/smf-dmf-tmf-001/conf/test_deep_set-sweep_12.yaml
+
 program: experiments/smf-dmf-tmf-001/deep_set.py
 project: torchcell_smf-dmf-tmf-001-12
 method: grid

@@ -103,19 +103,29 @@ def create_embeddings(data, labels, type, method="umap"):
     return embedding
 
 
-def plot_embedding(embedding, labels, title, image_path):
+def plot_embedding(embedding, labels, title, image_path, dataset_size):
     style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
     plt.style.use(style_file_path)
     plt.figure(figsize=(12, 9))  # Increase figure size
+
+    # Calculate the size of the dots based on the number of points
+    max_size = 200  # Maximum size of the dots
+    min_size = 20  # Minimum size of the dots
+    num_points = embedding.shape[0]
+
+    # Calculate the dot size inversely proportional to the number of points
+    dot_size = max_size / (num_points ** 0.5)
+    dot_size = max(min_size, dot_size)  # Ensure the dot size is not smaller than min_size
+
     scatter = plt.scatter(
-        embedding[:, 0], embedding[:, 1], c=labels, cmap="plasma", alpha=0.8
+        embedding[:, 0], embedding[:, 1], c=labels, cmap="plasma", alpha=0.65, s=dot_size
     )
-    
+
     # Increase color bar label font size and tick label font size
     cbar = plt.colorbar(scatter, label="Fitness")
     cbar.ax.tick_params(labelsize=28)
     cbar.set_label(label="Fitness", size=32)
-    
+
     plt.title(title, fontsize=28)  # Increase title font size
     plt.xlabel("Component 1", fontsize=32)  # Increase x-label font size
     plt.ylabel("Component 2", fontsize=32)  # Increase y-label font size
@@ -439,13 +449,16 @@ def main(cfg: DictConfig) -> None:
         # Generate and log embeddings
         for method in ["umap", "tsne"]:
             for embedding_type in ["local", "global", "balanced"]:
+                print("Creating embeddings...")
                 embedding = create_embeddings(
                     np.array(features), np.array(labels), embedding_type, method
                 )
                 title = f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-{method}-{embedding_type}_embedding"
                 image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
 
-                plot_embedding(embedding, labels, title, image_path)
+                print("plotting embedding...")
+                dataset_size = len(dataloader.dataset)  # Get the dataset size
+                plot_embedding(embedding, labels, title, image_path, dataset_size)
                 wandb.log(
                     {f"{split}_{method}_{embedding_type}": wandb.Image(image_path)}
                 )
@@ -458,7 +471,8 @@ def main(cfg: DictConfig) -> None:
             f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-pca_embedding"
         )
         image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
-        plot_embedding(embedding, labels, title, image_path)
+        dataset_size = len(dataloader.dataset)  # Get the dataset size
+        plot_embedding(embedding, labels, title, image_path, dataset_size)
         wandb.log({f"{split}_pca": wandb.Image(image_path)})
 
     wandb.finish()

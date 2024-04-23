@@ -32,7 +32,7 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [16]
+        values: [32]
       num_workers:
         values: [10]
       pin_memory:
@@ -40,7 +40,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [40]
+        values: [50]
       strategy:
         values: [auto]
       accelerator:
@@ -54,9 +54,9 @@ parameters:
           out_channels:
             values: [64]
           num_node_layers:
-            values: [2]
+            values: [3]
           num_set_layers:
-            values: [2]
+            values: [3]
           norm:
             values: [batch, layer]
           activation:
@@ -92,7 +92,7 @@ parameters:
       weight_decay:
         values: [1e-3]
       loss:
-        values: [mse]
+        values: [mse+list_mle]
       alpha:
         values: [1e-2]
       alpha:

@@ -336,7 +336,7 @@ def main(cfg: DictConfig) -> None:
 
     # Start the training
     trainer.fit(task, data_module)
-    wandb.finish()
+
 
 if __name__ == "__main__":
     main()

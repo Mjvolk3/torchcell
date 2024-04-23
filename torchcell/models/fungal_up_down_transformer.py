@@ -262,3 +262,4 @@ class FungalUpDownTransformer(NucleotideModel):
 if __name__ == "__main__":
     model = FungalUpDownTransformer(model_name="upstream_species_lm")
     model.embed(["A" * 500 + "ATG"], mean_embedding=True)
+    # Size is 768

@@ -2,18 +2,28 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1713728535168
+updated: 1713742097338
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.04.22
+
+- [x] Commit `fudt` and `ProtT5` images
+- [x] Outline of Figure 2. → ![](./assets/drawio/Fig2-Traditional-ML-Outline.drawio.png)
+- [x] Check on `Delta` Deep Set sweep. There is better fault tolerance now, I think this is taken care of by `wandb.finish()`, but we still get some broken pipes 💦 .  `nt_window_5979` and `nt_window_five_prime_1003` were configs with broken pipe. Check with offline mode.
+- [x] Run offline `Delta` sweep. → This seemed to work fine, no pipe errors. → Try large experiment.
+- [ ] Traditional machine learning `402` and `404` failed, these are `normalized_chrom_pathways` and `one_hot_gene` → These failed again. → changed to run in offline mode... → Having a lot of issue on `Delta`. Running just one run now.
+- [ ] Launched `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_15.yamll` which is Deep Set sweep.
+- [ ] 
+
 ## 2024.04.21
 
 - [x] Commit traditional ml `1e4` images
-- [x] Launch [[smf-dmf-tmf-001.conf.deep_set-sweep_14|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_14.yaml]]
-- [ ] 
+- [x] Launch [[smf-dmf-tmf-001.conf.deep_set-sweep_14|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_14.yaml]] on `Delta`. → First time failed... Looks like it is related to data and we know there is a current issue with the `/scratch` file system. Trying to rerun. →
+- [x] Commit traditional ml `1e5` images → takes a long time so only processed codon_frequency... probably don't need all this plotting but just exploiting what we have for now.
 
 ## 2024.04.20
 
@@ -24,7 +34,7 @@ created: 1690514887023m
 
 - [x] `one_hot_gene`, `batch_size: 16`, `aggregation: sum`
 - [ ] Try to fix failed runs by inspecting logs
-- [ ] If the current plan doesn't work, then [wandb sweep controller script](https://docs.wandb.ai/guides/sweeps/local-controller) 
+- [ ] If the current plan doesn't work, then [wandb sweep controller script](https://docs.wandb.ai/guides/sweeps/local-controller)
 - [ ] I think issue in Deep Set could be related to buggy configs.
 
 ## 2024.04.16

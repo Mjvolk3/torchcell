@@ -142,4 +142,5 @@ if __name__ == "__main__":
     #     genome=genome,
     #     model_name="prot_t5_xl_uniref50_no_uncharacterized",
     # )
-    print()
+    print(dataset)
+    print(dataset[0])

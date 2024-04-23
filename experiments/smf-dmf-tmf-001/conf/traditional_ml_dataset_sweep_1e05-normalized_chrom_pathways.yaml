@@ -1,0 +1,42 @@
+program: experiments/smf-dmf-tmf-001/traditional_ml_dataset.py
+project: torchcell_smf-dmf-tmf-traditional_ml_dataset
+method: grid
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [null]
+      node_embeddings:
+        values:
+          # - [one_hot_gene]
+          # - [codon_frequency] # completed
+          # - [fudt_downstream]
+          # - [fudt_upstream]
+          # - [prot_T5_all]
+          # - [prot_T5_no_dubious]
+          # - [nt_window_5979]
+          # - [nt_window_three_prime_300]
+          # - [nt_window_five_prime_1003]
+          # - [esm2_t33_650M_UR50D_all]
+          # - [esm2_t33_650M_UR50D_no_dubious]
+          - [normalized_chrom_pathways]
+      max_size:
+        values: [1e5]
+      is_pert:
+        values: [true, false]
+      aggregation:
+        values: [sum, mean]
+  data_module:
+    parameters:
+      batch_size:
+        values: [32]
+      num_workers:
+        values: [4]
+      pin_memory:
+        values: [true]
+  is_plot_embeddings:
+    values: [false]
+command:
+  - ${env}
+  - python
+  - ${program}

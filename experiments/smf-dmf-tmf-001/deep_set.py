@@ -53,7 +53,7 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        mode="online",
+        mode="offline", # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -241,7 +241,10 @@ def main(cfg: DictConfig) -> None:
     dataset_root = osp.join(
         DATA_ROOT, f"data/torchcell/experiments/smf-dmf-tmf_{max_size_str}"
     )
-
+    print("-------------------------")
+    print(f"dataset_root:{dataset_root}")
+    print("-------------------------")
+    
     cell_dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,

@@ -41,7 +41,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [2]
+        values: [50]
       strategy:
         values: [auto]
       accelerator:

@@ -8,7 +8,13 @@ import numpy as np
 import torch
 
 
-def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
+def box_plot(true_values, predictions) -> plt.Figure:
+    # Convert input to numpy arrays
+    if isinstance(true_values, torch.Tensor):
+        true_values = true_values.cpu().numpy()
+    if isinstance(predictions, torch.Tensor):
+        predictions = predictions.cpu().numpy()
+
     # Define bins
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
 
@@ -20,7 +26,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     for i in range(len(bins) - 1):
         mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
-        binned_values = true_values[mask].cpu().numpy()
+        binned_values = true_values[mask]
         binned_true_values.append(binned_values)
 
     # Create a box plot using matplotlib

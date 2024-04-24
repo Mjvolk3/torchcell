@@ -2,12 +2,21 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1713742097338
+updated: 1713928886607
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+# 2024.04.23
+
+- [x] All traditional ml completed except for `traditional_ml_dataset_sweep_1e05-nt_window_5979_3468745.out` unsure why. one_hot_gene finished with #OOM
+- [x] Restart `one_hot_gene` with more memory.
+- [x] Check agent logs → Logs logs look like they are still running. Won't touch for now.
+- [ ] Transfer all data via globus. Verify it all exists.
+- [ ] Test models, and model sweeps locally.
+- [ ] Test model, and model sweeps on `Delta`.
 
 ## 2024.04.22
 
@@ -15,9 +24,8 @@ created: 1690514887023m
 - [x] Outline of Figure 2. → ![](./assets/drawio/Fig2-Traditional-ML-Outline.drawio.png)
 - [x] Check on `Delta` Deep Set sweep. There is better fault tolerance now, I think this is taken care of by `wandb.finish()`, but we still get some broken pipes 💦 .  `nt_window_5979` and `nt_window_five_prime_1003` were configs with broken pipe. Check with offline mode.
 - [x] Run offline `Delta` sweep. → This seemed to work fine, no pipe errors. → Try large experiment.
-- [ ] Traditional machine learning `402` and `404` failed, these are `normalized_chrom_pathways` and `one_hot_gene` → These failed again. → changed to run in offline mode... → Having a lot of issue on `Delta`. Running just one run now.
-- [ ] Launched `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_15.yamll` which is Deep Set sweep.
-- [ ] 
+- [x] Traditional machine learning `402` and `404` failed, these are `normalized_chrom_pathways` and `one_hot_gene` → These failed again. → changed to run in offline mode... → Having a lot of issue on `Delta`. Running just one run now.
+- [x] Launched [[smf-dmf-tmf-001.conf.deep_set-sweep_15.yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_15.yaml]] Deep Set experiment. → Made `max_epoch = 2` mistake and runs seemed to be going well for an hour without any broken pipes. Restarted with 50 epochs.
 
 ## 2024.04.21
 

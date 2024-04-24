@@ -1,0 +1,27 @@
+# experiments/smf-dmf-tmf-001/conf/elastic-net.yaml
+program: experiments/smf-dmf-tmf-001/elastic_net.py
+defaults:
+  - default
+  - _self_
+wandb:
+  mode: online
+  project: torchcell_smf-dmf-tmf-001_trad-ml_elastic-net
+  tags: []
+cell_dataset:
+  graphs: null
+  node_embeddings: [codon_frequency]
+  max_size: 1e3
+  is_pert: true
+  aggregation: sum
+data_module:
+  batch_size: 16
+  num_workers: 6
+  pin_memory: true
+elastic_net:
+  alpha: 0.5
+  l1_ratio: 0.5
+
+command:
+  # - ${env}
+  - python
+  - ${program}

@@ -52,8 +52,9 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    # Might need mode=wandb_cfg["wandb"]["mode"]
     wandb.init(
-        mode="offline", # "online", "offline", "disabled"
+        mode="offline", # "online", "offline", "disabled" 
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,

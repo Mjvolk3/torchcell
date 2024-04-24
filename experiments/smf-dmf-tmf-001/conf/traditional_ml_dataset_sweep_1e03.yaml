@@ -25,7 +25,7 @@ parameters:
             [normalized_chrom_pathways],
           ]
       max_size:
-        values: [1e3]
+        values: [1e3, 1e4, 1e5]
       is_pert:
         values: [true, false]
       aggregation:

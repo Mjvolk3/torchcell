@@ -105,7 +105,6 @@ class RegressionTask(L.LightningModule):
                 f"Loss type '{loss}' is not valid."
                 "Currently, supports 'mse', 'mae' loss."
             )
-        self.loss_node = nn.MSELoss()
 
         # optimizer
         self.learning_rate = learning_rate

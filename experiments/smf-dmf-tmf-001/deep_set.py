@@ -33,7 +33,7 @@ from torchcell.datasets import (
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
-
+from wandb_osh.lightning_hooks import TriggerWandbSyncLightningCallback
 # from torchcell.trainers import RegressionTask
 from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
@@ -49,11 +49,12 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 def main(cfg: DictConfig) -> None:
     print("Starting Deep Set 🌋")
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    print("wandb_cfg", wandb_cfg)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join("wandb-experiments", wandb_cfg["wandb"]["project"])
+    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", slurm_job_id)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline", # "online", "offline", "disabled" 
@@ -335,7 +336,7 @@ def main(cfg: DictConfig) -> None:
         devices=devices,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 
     # Start the training

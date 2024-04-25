@@ -69,9 +69,9 @@ parameters:
           activation:
             values: [gelu]
           skip_node:
-            values: [true, false]
+            values: [true]
           skip_set:
-            values: [true, false]
+            values: [true]
       pred_head:
         parameters:
           hidden_channels:

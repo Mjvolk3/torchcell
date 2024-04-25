@@ -19,7 +19,7 @@ data_module:
   pin_memory: true
 
 trainer:
-  max_epochs: 2
+  max_epochs: 10
   strategy: auto # ddp, auto
   accelerator: gpu
 
@@ -48,7 +48,7 @@ regression_task:
   boxplot_every_n_epochs: 1
   learning_rate: 1e-2
   weight_decay: 1e-5
-  loss: mse+list_mle
+  loss: mse #mse+list_mle
   alpha: 1e-2
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10

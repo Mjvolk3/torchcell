@@ -3,10 +3,6 @@ program: experiments/smf-dmf-tmf-001/random_forest.py
 project: torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e03
 method: grid
 
-wandb:
-  mode: online
-  tags: []
-
 parameters:
   cell_dataset:
     parameters:

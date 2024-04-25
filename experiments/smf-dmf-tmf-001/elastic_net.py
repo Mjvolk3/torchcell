@@ -118,26 +118,6 @@ def main(cfg: DictConfig) -> None:
                             fold, mse, mae, r2, pearson, spearman, data_path
                         )
 
-                        if not np.isnan(pearson):
-                            wandb.log(
-                                {f"{node_embeddings}_cross_validation/pearson": pearson}
-                            )
-                        else:
-                            wandb.log(
-                                {f"{node_embeddings}_cross_validation/pearson": None}
-                            )
-
-                        if not np.isnan(spearman):
-                            wandb.log(
-                                {
-                                    f"{node_embeddings}_cross_validation/spearman": spearman
-                                }
-                            )
-                        else:
-                            wandb.log(
-                                {f"{node_embeddings}_cross_validation/spearman": None}
-                            )
-
                     wandb.log(
                         {
                             f"{node_embeddings}_cross_validation_table": cv_table,
@@ -178,54 +158,40 @@ def main(cfg: DictConfig) -> None:
 
                     wandb.log(
                         {
-                            f"{node_embeddings}_dl_set/val_mse": mse_val,
-                            f"{node_embeddings}_dl_set/val_mae": mae_val,
-                            f"{node_embeddings}_dl_set/val_r2": r2_val,
-                            f"{node_embeddings}_dl_set/test_mse": mse_test,
-                            f"{node_embeddings}_dl_set/test_mae": mae_test,
-                            f"{node_embeddings}_dl_set/test_r2": r2_test,
+                            "val_mse": mse_val,
+                            "val_mae": mae_val,
+                            "val_r2": r2_val,
+                            "test_mse": mse_test,
+                            "test_mae": mae_test,
+                            "test_r2": r2_test,
                             "alpha": alpha,
                             "l1_ratio": l1_ratio,
                         }
                     )
 
                     if not np.isnan(pearson_val):
-                        wandb.log(
-                            {f"{node_embeddings}_dl_set/val_pearson": pearson_val}
-                        )
+                        wandb.log({"val_pearson": pearson_val})
                     else:
-                        wandb.log({f"{node_embeddings}_dl_set/val_pearson": None})
+                        wandb.log({"val_pearson": None})
 
                     if not np.isnan(spearman_val):
-                        wandb.log(
-                            {f"{node_embeddings}_dl_set/val_spearman": spearman_val}
-                        )
+                        wandb.log({"val_spearman": spearman_val})
                     else:
-                        wandb.log({f"{node_embeddings}_dl_set/val_spearman": None})
+                        wandb.log({"val_spearman": None})
 
                     if not np.isnan(pearson_test):
-                        wandb.log(
-                            {f"{node_embeddings}_dl_set/test_pearson": pearson_test}
-                        )
+                        wandb.log({"test_pearson": pearson_test})
                     else:
-                        wandb.log({f"{node_embeddings}_dl_set/test_pearson": None})
+                        wandb.log({"test_pearson": None})
 
                     if not np.isnan(spearman_test):
-                        wandb.log(
-                            {f"{node_embeddings}_dl_set/test_spearman": spearman_test}
-                        )
+                        wandb.log({"test_spearman": spearman_test})
                     else:
-                        wandb.log({f"{node_embeddings}_dl_set/test_spearman": None})
+                        wandb.log({"test_spearman": None})
 
                     # Create fitness boxplot for test predictions
                     fig = fitness.box_plot(y_test, y_pred_test)
-                    wandb.log(
-                        {
-                            f"{node_embeddings}_dl_set/test_predictions_fitness_boxplot": wandb.Image(
-                                fig
-                            )
-                        }
-                    )
+                    wandb.log({"test_predictions_fitness_boxplot": wandb.Image(fig)})
                     plt.close(fig)
 
     wandb.finish()

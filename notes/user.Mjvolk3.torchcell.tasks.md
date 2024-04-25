@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1714037003736
+updated: 1714046512346
 created: 1690514887023m
 ---
 
@@ -11,10 +11,19 @@ created: 1690514887023m
 
 # 2024.04.25
 
-- [ ] Globus transfer from Delta
-- [ ] We will not have plots for `one_hot_gene` `1e5`, as processes seemed to crash for this run but we should have all data. double check.
-- [ ] Glbous transfer from local to Delta.
-- [ ] Run a script with the same agen on `svr` `1e04`
+- [x] Globus transfer from Delta
+- [x] We will not have plots for `one_hot_gene` `1e5`, as processes seemed to crash for this run but we should have all data. double check.
+- [x] Globus transfer from local to Delta. → taking some time →
+- [ ] Run a script with the same agent on `svr` `1e04`
+- [ ] Figure out how to sync runs [wandb offline sync hook](https://github.com/klieret/wandb-offline-sync-hook)
+- [x] This works for iteratively syncing wandb runs of the offline sync hook fails.
+
+```bash
+(torchcell) mjvolk3@dt-login01 wandb % pwd                                                                          6:52
+/scratch/bbub/mjvolk3/torchcell/wandb-experiments/3487237/wandb
+(torchcell) mjvolk3@dt-login01 wandb % for d in $(ls -t -d */); do wandb sync $d; done    
+```
+- [ ] Looks like the 
 
 # 2024.04.24
 
@@ -61,8 +70,6 @@ srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
 srun: error: Timed out waiting for job step to complete
  *  Terminal will be reused by tasks, press any key to close it. 
 ```
-
-
 
 # 2024.04.23
 

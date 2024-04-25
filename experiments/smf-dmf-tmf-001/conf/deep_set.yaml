@@ -1,9 +1,9 @@
-xdefaults:
+defaults:
   - default
   - _self_
 
 wandb:
-  mode: online # disabled, offline, online
+  mode: offline # disabled, offline, online
   project: torchcell_test
   tags: []
 

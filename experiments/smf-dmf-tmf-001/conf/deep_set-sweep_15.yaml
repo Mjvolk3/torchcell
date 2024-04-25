@@ -33,7 +33,7 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [16, 32]
+        values: [8]
       num_workers:
         values: [6]
       pin_memory:

@@ -47,17 +47,21 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 @hydra.main(version_base=None, config_path="conf", config_name="deep_set")
 def main(cfg: DictConfig) -> None:
+    print("Starting Deep Set 🌋")
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join("wandb-experiments", wandb_cfg["wandb"]["project"])
+    os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline", # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
+        dir=experiment_dir
     )
 
     # Initialize the WandbLogger

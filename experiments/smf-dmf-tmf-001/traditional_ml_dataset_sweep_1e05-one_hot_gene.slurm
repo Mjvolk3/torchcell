@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --mem=64g
+#SBATCH --mem=128g
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=32    # <- match to OMP_NUM_THREADS
+#SBATCH --cpus-per-task=64    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH--job-name=traditional_ml_dataset_sweep_1e05-one_hot_gene

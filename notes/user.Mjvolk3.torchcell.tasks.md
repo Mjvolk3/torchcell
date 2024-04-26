@@ -2,20 +2,25 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1714046512346
+updated: 1714099614670
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+# 2024.04.26
+
+- [ ] Add codon language model to sweeps.
+- [ ]
+
 # 2024.04.25
 
 - [x] Globus transfer from Delta
 - [x] We will not have plots for `one_hot_gene` `1e5`, as processes seemed to crash for this run but we should have all data. double check.
 - [x] Globus transfer from local to Delta. → taking some time →
-- [ ] Run a script with the same agent on `svr` `1e04`
-- [ ] Figure out how to sync runs [wandb offline sync hook](https://github.com/klieret/wandb-offline-sync-hook)
+- [x] Run a script with the same agent on `svr` `1e04`
+- [x] Figure out how to sync runs [wandb offline sync hook](https://github.com/klieret/wandb-offline-sync-hook).  → offline synce hook works.
 - [x] This works for iteratively syncing wandb runs of the offline sync hook fails.
 
 ```bash
@@ -23,7 +28,7 @@ created: 1690514887023m
 /scratch/bbub/mjvolk3/torchcell/wandb-experiments/3487237/wandb
 (torchcell) mjvolk3@dt-login01 wandb % for d in $(ls -t -d */); do wandb sync $d; done    
 ```
-- [ ] Looks like the 
+- [ ] Processes are going slow due to cpus not fully utilized → Added n_jobs to random forest. Going to use more tasks on svr.
 
 # 2024.04.24
 

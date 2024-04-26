@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=32  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
-#SBATCH --job-name=SVR_Sweep
+#SBATCH --job-name=SVR_sweep
 #SBATCH --time=48:00:00
 #SBATCH --constraint="projects"
 #SBATCH --mail-user=mjvolk3@illinois.edu

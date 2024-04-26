@@ -27,6 +27,6 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 ####
 
-SWEEP_FILE=rbamwzx4
+SWEEP_FILE=z4uaed5c
 
 wandb agent zhao-group/torchcell_smf-dmf-tmf-traditional_ml_dataset/$SWEEP_FILE

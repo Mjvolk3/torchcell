@@ -1,6 +1,6 @@
-# experiments/smf-dmf-tmf-001/conf/random-forest_1e03.yaml
+# experiments/smf-dmf-tmf-001/conf/random-forest_1e05.yaml
 program: experiments/smf-dmf-tmf-001/random_forest.py
-project: torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e03
+project: torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 method: grid
 
 parameters:
@@ -23,7 +23,7 @@ parameters:
           - [esm2_t33_650M_UR50D_no_dubious]
           - [normalized_chrom_pathways]
       max_size:
-        values: [1e3]
+        values: [1e5]
       is_pert:
         values: [true, false]
       aggregation:

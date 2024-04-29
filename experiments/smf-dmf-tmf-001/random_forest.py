@@ -14,15 +14,11 @@ import hashlib
 import json
 import uuid
 import warnings
-from numba import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 from torchcell.viz import fitness
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
-
-warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
-warnings.filterwarnings("ignore", category=NumbaPendingDeprecationWarning)
-warnings.filterwarnings("ignore", category=ConstantInputWarning)
+from wandb_osh.hooks import TriggerWandbSyncHook
 
 import torchcell
 
@@ -31,7 +27,7 @@ plt.style.use(style_file_path)
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-
+trigger_sync = TriggerWandbSyncHook()
 
 @hydra.main(version_base=None, config_path="conf", config_name="random-forest")
 def main(cfg: DictConfig) -> None:
@@ -188,7 +184,7 @@ def main(cfg: DictConfig) -> None:
             fig = fitness.box_plot(y_test, y_pred_test)
             wandb.log({f"test_predictions_fitness_boxplot": wandb.Image(fig)})
             plt.close(fig)
-
+            trigger_sync() 
     wandb.finish()
 
 

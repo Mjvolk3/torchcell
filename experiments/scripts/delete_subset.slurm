@@ -12,7 +12,7 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 #SBATCH --output=/projects/bbub/mjvolk3/torchcell/slurm/output/%x_%j.out
-##SBATCH --error=/projects/bbub/mjvolk3/torchcell/slurm/error/%x_%j.out
+##SBATCH --error=/projects/bbub/mjvolk3/torchcell/slurm/output/%x_%j.out
 
 module reset # drop modules and explicitly load the ones needed
 source ~/.bashrc

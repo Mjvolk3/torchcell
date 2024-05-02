@@ -2,17 +2,20 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1714099614670
+updated: 1714404573511
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+# 2024.04.27
+
+- [ ] 
+
 # 2024.04.26
 
 - [ ] Add codon language model to sweeps.
-- [ ]
 
 # 2024.04.25
 
@@ -28,6 +31,7 @@ created: 1690514887023m
 /scratch/bbub/mjvolk3/torchcell/wandb-experiments/3487237/wandb
 (torchcell) mjvolk3@dt-login01 wandb % for d in $(ls -t -d */); do wandb sync $d; done    
 ```
+  
 - [ ] Processes are going slow due to cpus not fully utilized → Added n_jobs to random forest. Going to use more tasks on svr.
 
 # 2024.04.24

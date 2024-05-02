@@ -14,16 +14,12 @@ import hashlib
 import json
 import uuid
 import warnings
-from numba import NumbaDeprecationWarning, NumbaPendingDeprecationWarning
 from torchcell.viz import fitness, genetic_interaction_score
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
 
-warnings.filterwarnings("ignore", category=NumbaDeprecationWarning)
-warnings.filterwarnings("ignore", category=NumbaPendingDeprecationWarning)
-warnings.filterwarnings("ignore", category=ConstantInputWarning)
-
+from wandb_osh.hooks import TriggerWandbSyncHook
 import torchcell
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
@@ -31,7 +27,7 @@ plt.style.use(style_file_path)
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-
+trigger_sync = TriggerWandbSyncHook() 
 
 @hydra.main(version_base=None, config_path="conf", config_name="elastic-net")
 def main(cfg: DictConfig) -> None:
@@ -41,11 +37,17 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        mode=wandb_cfg["wandb"]["mode"],
+        # mode=wandb_cfg["wandb"]["mode"],
+        mode="disabled",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
+        settings=wandb.Settings(
+            start_method="fork",
+            init_timeout=600,
+            _service_wait=600,
+        ),
     )
 
     max_size_str = format_scientific_notation(
@@ -193,7 +195,7 @@ def main(cfg: DictConfig) -> None:
                     fig = fitness.box_plot(y_test, y_pred_test)
                     wandb.log({"test_predictions_fitness_boxplot": wandb.Image(fig)})
                     plt.close(fig)
-
+                    trigger_sync()
     wandb.finish()
 
 

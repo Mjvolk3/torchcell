@@ -114,6 +114,12 @@
                 "problemMatcher": []
             },
             {
+                "label": "Delta: sacct",
+                "type": "shell",
+                "command": "sacct --starttime=$(date -d '7 days ago' '+%Y-%m-%d') --format=JobID,JobName:50,State,Elapsed,Start,End",
+                "problemMatcher": []
+            },
+            {
                 "label": "Delta: Interactive gpuA40x",
                 "type": "shell",
                 "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
@@ -283,6 +289,12 @@
                 "id" : "jobName",
                 "description": "name of nano job",
                 "type": "promptString",
+            },
+            {
+                "id" : "days",
+                "description": "number of days",
+                "type": "promptString",
+                "default": "7"
             },
             {
                 "id" : "nanoNode",

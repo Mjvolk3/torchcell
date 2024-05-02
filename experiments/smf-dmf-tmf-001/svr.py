@@ -18,11 +18,9 @@ from torchcell.viz import fitness, genetic_interaction_score
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
-from wandb_osh.hooks import TriggerWandbSyncHook
+# from wandb_osh.hooks import TriggerWandbSyncHook
 
 import torchcell
-os.environ["WANDB__SERVICE_WAIT"]="600"
-os.environ["WANDB_SERVICE_WAIT"]="600"
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -30,12 +28,11 @@ plt.style.use(style_file_path)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
-trigger_sync = TriggerWandbSyncHook()
+# trigger_sync = TriggerWandbSyncHook()
 
 @hydra.main(version_base=None, config_path="conf", config_name="svr")
 def main(cfg: DictConfig) -> None:
-    os.environ["WANDB__SERVICE_WAIT"]="600"
-    os.environ["WANDB_SERVICE_WAIT"]="600"
+    os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
@@ -43,7 +40,7 @@ def main(cfg: DictConfig) -> None:
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
         # mode=wandb_cfg["wandb"].get("mode", "online"),
-        mode="offline",
+        mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -188,7 +185,7 @@ def main(cfg: DictConfig) -> None:
                 }
             )
             plt.close(fig)
-            trigger_sync()
+            # trigger_sync()
     wandb.finish()
 
 

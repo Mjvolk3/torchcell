@@ -79,6 +79,10 @@ class CalmDataset(BaseEmbeddingDataset):
             data.embeddings = {self.model_name: embeddings}
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
+            
+            # Detach the tensors in the data object
+            data = data.detach()
+            
             data_list.append(data)
 
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(self.genome.gene_set):

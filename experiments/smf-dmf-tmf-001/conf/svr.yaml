@@ -9,8 +9,8 @@ wandb:
   tags: []
 cell_dataset:
   graphs: null
-  node_embeddings: [codon_frequency]
-  max_size: 1e3
+  node_embeddings: [one_hot]
+  max_size: 1e5
   is_pert: true
   aggregation: sum
 data_module:

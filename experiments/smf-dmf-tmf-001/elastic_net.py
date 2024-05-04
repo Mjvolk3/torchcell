@@ -99,6 +99,8 @@ def main(cfg: DictConfig) -> None:
                         y_train, y_val = y[train_index], y[val_index]
 
                         model.fit(X_train, y_train)
+                        num_params = X_train.shape[1]
+                        wandb.log({"num_params": num_params})
                         y_pred = model.predict(X_val)
 
                         mse = mean_squared_error(y_val, y_pred)
@@ -142,6 +144,8 @@ def main(cfg: DictConfig) -> None:
                     model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
 
                     model.fit(X_train, y_train)
+                    num_params = X_train.shape[1]
+                    wandb.log({"num_params": num_params})
 
                     y_pred_val = model.predict(X_val)
                     y_pred_test = model.predict(X_test)

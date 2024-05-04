@@ -18,7 +18,6 @@ from torchcell.viz import fitness, genetic_interaction_score
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
-# from wandb_osh.hooks import TriggerWandbSyncHook
 
 import torchcell
 
@@ -28,7 +27,6 @@ plt.style.use(style_file_path)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
-# trigger_sync = TriggerWandbSyncHook()
 
 @hydra.main(version_base=None, config_path="conf", config_name="svr")
 def main(cfg: DictConfig) -> None:
@@ -39,7 +37,6 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        # mode=wandb_cfg["wandb"].get("mode", "online"),
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
@@ -85,6 +82,8 @@ def main(cfg: DictConfig) -> None:
                 y_train, y_val = y[train_index], y[val_index]
 
                 model.fit(X_train, y_train)
+                num_params = model.support_vectors_.shape[0]
+                wandb.log({"num_params": num_params})
                 y_pred = model.predict(X_val)
 
                 mse = mean_squared_error(y_val, y_pred)
@@ -125,7 +124,8 @@ def main(cfg: DictConfig) -> None:
             model = SVR(kernel=kernel, C=c, gamma=gamma)
 
             model.fit(X_train, y_train)
-
+            num_params = model.support_vectors_.shape[0]
+            wandb.log({"num_params": num_params})
             y_pred_val = model.predict(X_val)
             y_pred_test = model.predict(X_test)
 
@@ -185,7 +185,7 @@ def main(cfg: DictConfig) -> None:
                 }
             )
             plt.close(fig)
-            # trigger_sync()
+
     wandb.finish()
 
 

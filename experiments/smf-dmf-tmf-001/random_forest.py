@@ -29,6 +29,14 @@ plt.style.use(style_file_path)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+def get_n_jobs():
+    if "SLURM_JOB_ID" in os.environ:
+        slurm_cpus = os.environ.get("SLURM_CPUS_PER_TASK")
+        return int(slurm_cpus) if slurm_cpus is not None else 1
+    else:
+        return -1
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="random-forest")
 def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "300"
@@ -64,6 +72,8 @@ def main(cfg: DictConfig) -> None:
     max_depth = wandb.config.random_forest["max_depth"]
     min_samples_split = wandb.config.random_forest["min_samples_split"]
 
+    n_jobs = get_n_jobs()
+
     for split in ["all", "train", "val", "test"]:
         X = np.load(osp.join(dataset_path, split, "X.npy"))
         y = np.load(osp.join(dataset_path, split, "y.npy"))
@@ -76,6 +86,7 @@ def main(cfg: DictConfig) -> None:
                 n_estimators=n_estimators,
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
+                n_jobs=n_jobs,
             )
 
             cv_table = wandb.Table(

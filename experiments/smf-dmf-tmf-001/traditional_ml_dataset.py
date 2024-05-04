@@ -30,6 +30,7 @@ from torchcell.datasets import (
     Esm2Dataset,
     NucleotideTransformerDataset,
     CodonFrequencyDataset,
+    CalmDataset
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
@@ -243,6 +244,13 @@ def main(cfg: DictConfig) -> None:
         node_embeddings["codon_frequency"] = CodonFrequencyDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
             genome=genome,
+        )
+    # codon embedding
+    if "calm" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["calm"] = CalmDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/calm_embedding"),
+            genome=genome,
+            model_name="calm",
         )
     # fudt
     if "fudt_downstream" in wandb.config.cell_dataset["node_embeddings"]:

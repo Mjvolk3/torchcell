@@ -98,6 +98,8 @@ def main(cfg: DictConfig) -> None:
                 y_train, y_val = y[train_index], y[val_index]
 
                 model.fit(X_train, y_train)
+                num_params = sum(tree.tree_.node_count for tree in model.estimators_)
+                wandb.log({"num_params": num_params})
                 y_pred = model.predict(X_val)
 
                 mse = mean_squared_error(y_val, y_pred)
@@ -142,6 +144,8 @@ def main(cfg: DictConfig) -> None:
             )
 
             model.fit(X_train, y_train)
+            num_params = sum(tree.tree_.node_count for tree in model.estimators_)
+            wandb.log({"num_params": num_params})
 
             y_pred_val = model.predict(X_val)
             y_pred_test = model.predict(X_test)

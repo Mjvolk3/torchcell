@@ -22,22 +22,23 @@ from wandb_osh.hooks import TriggerWandbSyncHook
 
 import torchcell
 
+# trigger_sync = TriggerWandbSyncHook()
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-trigger_sync = TriggerWandbSyncHook()
 
 @hydra.main(version_base=None, config_path="conf", config_name="random-forest")
 def main(cfg: DictConfig) -> None:
+    os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        mode=wandb_cfg["wandb"].get("mode", "online"),
+        mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -184,7 +185,7 @@ def main(cfg: DictConfig) -> None:
             fig = fitness.box_plot(y_test, y_pred_test)
             wandb.log({f"test_predictions_fitness_boxplot": wandb.Image(fig)})
             plt.close(fig)
-            trigger_sync() 
+            # trigger_sync() 
     wandb.finish()
 
 

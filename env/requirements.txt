@@ -26,6 +26,7 @@ lightning>=2.1.2
 
 # visualization stack and logging
 wandb>=0.16.6
+wandb_osh>=1.2.2
 matplotlib>=3.7.2
 # adjustTest used with with matplotlib
 adjustText>=0.8

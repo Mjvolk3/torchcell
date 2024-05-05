@@ -144,7 +144,7 @@ class Neo4jQueryRaw:
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
         # Initialize LMDB environment
-        self.env = lmdb.open(self.lmdb_dir, map_size=int(10))
+        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12))
         if len(self) == 0:
             self.process()
 

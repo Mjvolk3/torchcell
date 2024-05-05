@@ -26,15 +26,15 @@ conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=xy8qum3f
+SWEEP_ID=zzr26xpn
 PROJECT_NAME=torchcell_smf-dmf-tmf-traditional_ml_dataset
-
+NUM=3
 ####
 
 mkdir /scratch/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID
 
 for ((i=0; i<$SLURM_NTASKS; i++)); do
-    (wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID-$i.log 2>&1) &
+    (wandb agent --count $NUM zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID-$i.log 2>&1) &
 done
 
 wait

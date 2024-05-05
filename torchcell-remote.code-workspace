@@ -116,7 +116,7 @@
             {
                 "label": "Delta: sacct",
                 "type": "shell",
-                "command": "sacct --starttime=$(date -d '7 days ago' '+%Y-%m-%d') --format=JobID,JobName:50,State,Elapsed,Start,End",
+                "command": "sacct --starttime=$(date -d '7 days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End",
                 "problemMatcher": []
             },
             {

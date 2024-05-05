@@ -22,7 +22,7 @@ parameters:
           #  - [esm2_t33_650M_UR50D_no_dubious] # Looks completed - on Delta
           #  - [normalized_chrom_pathways] # Looks completed - on Delta
       max_size:
-        values: [1e3, 1e4, 1e5]
+        values: [1e5]
       is_pert:
         values: [true, false]
       aggregation:

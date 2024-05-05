@@ -23,9 +23,9 @@ parameters:
       max_size:
         values: [1e5]
       is_pert:
-        values: [true, false]
+        values: [false]
       aggregation:
-        values: [sum, mean]
+        values: [mean]
   data_module:
     parameters:
       batch_size:

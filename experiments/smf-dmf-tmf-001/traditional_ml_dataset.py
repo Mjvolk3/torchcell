@@ -456,34 +456,34 @@ def main(cfg: DictConfig) -> None:
 
         # TODO remove ONE_HOT comment
         ############## ONE_HOT
-        # # Generate and log embeddings
-        # for method in ["umap", "tsne"]:
-        #     for embedding_type in ["local", "global", "balanced"]:
-        #         print("Creating embeddings...")
-        #         embedding = create_embeddings(
-        #             np.array(features), np.array(labels), embedding_type, method
-        #         )
-        #         title = f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-{method}-{embedding_type}_embedding"
-        #         image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
+        # Generate and log embeddings
+        for method in ["umap", "tsne"]:
+            for embedding_type in ["local", "global", "balanced"]:
+                print("Creating embeddings...")
+                embedding = create_embeddings(
+                    np.array(features), np.array(labels), embedding_type, method
+                )
+                title = f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-{method}-{embedding_type}_embedding"
+                image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
 
-        #         print("plotting embedding...")
-        #         dataset_size = len(dataloader.dataset)  # Get the dataset size
-        #         plot_embedding(embedding, labels, title, image_path, dataset_size)
-        #         wandb.log(
-        #             {f"{split}_{method}_{embedding_type}": wandb.Image(image_path)}
-        #         )
+                print("plotting embedding...")
+                dataset_size = len(dataloader.dataset)  # Get the dataset size
+                plot_embedding(embedding, labels, title, image_path, dataset_size)
+                wandb.log(
+                    {f"{split}_{method}_{embedding_type}": wandb.Image(image_path)}
+                )
 
-        # # Generate PCA plot for each split
-        # embedding = create_embeddings(
-        #     np.array(features), np.array(labels), type="global", method="pca"
-        # )
-        # title = (
-        #     f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-pca_embedding"
-        # )
-        # image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
-        # dataset_size = len(dataloader.dataset)  # Get the dataset size
-        # plot_embedding(embedding, labels, title, image_path, dataset_size)
-        # wandb.log({f"{split}_pca": wandb.Image(image_path)})
+        # Generate PCA plot for each split
+        embedding = create_embeddings(
+            np.array(features), np.array(labels), type="global", method="pca"
+        )
+        title = (
+            f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-pca_embedding"
+        )
+        image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
+        dataset_size = len(dataloader.dataset)  # Get the dataset size
+        plot_embedding(embedding, labels, title, image_path, dataset_size)
+        wandb.log({f"{split}_pca": wandb.Image(image_path)})
         ############## ONE_HOT
 
     wandb.finish()

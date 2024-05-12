@@ -26,9 +26,9 @@ conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=acfagb2m
+SWEEP_ID=6wqemp1a
 PROJECT_NAME=torchcell_smf-dmf-tmf-traditional_ml_dataset
-NUM=3
+NUM=1
 ####
 
 mkdir /scratch/bbub/mjvolk3/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID

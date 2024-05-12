@@ -2,16 +2,16 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1714404573511
+updated: 1715124822550
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-# 2024.04.27
+## 2024.05.07
 
-- [ ] 
+- [x] [[tcdb-build-optimization.2024.04.02|dendron://torchcell/tcdb-build-optimization.2024.04.02]]
 
 # 2024.04.26
 

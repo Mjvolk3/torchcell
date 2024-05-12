@@ -132,7 +132,7 @@
             {
                 "label": "Pandoc: quick-landscape-pdf",
                 "type": "shell",
-                "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=0.5cm, bottom=0.5cm, left=0.5cm, right=0.5cm,landscape' --strip-comments   && cd ..",
+                "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=0.1cm, bottom=0.1cm, left=0.1cm, right=0.1cm,landscape' --strip-comments   && cd ..",
                 "problemMatcher": []
             },
             {

@@ -9,7 +9,7 @@ wandb:
   tags: []
 cell_dataset:
   graphs: null
-  node_embeddings: [calm]
+  node_embeddings: [fudt_upstream]
   max_size: 1e3
   is_pert: true
   aggregation: sum
@@ -20,7 +20,7 @@ data_module:
 elastic_net:
   alpha: 0.5
   l1_ratio: 0.5
-
+is_cross_validated: false
 command:
   # - ${env}
   - python

@@ -2,20 +2,22 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715124822550
+updated: 1715537108750
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.12
+
+- [ ] No cross validation config for `1e5` on all traditional machine learning scripts
+- [ ] Launch random forest and SVR no cross validation
+
 ## 2024.05.07
 
 - [x] [[tcdb-build-optimization.2024.04.02|dendron://torchcell/tcdb-build-optimization.2024.04.02]]
-
-# 2024.04.26
-
-- [ ] Add codon language model to sweeps.
+- [x] Add codon language model to sweeps.
 
 # 2024.04.25
 
@@ -32,7 +34,7 @@ created: 1690514887023m
 (torchcell) mjvolk3@dt-login01 wandb % for d in $(ls -t -d */); do wandb sync $d; done    
 ```
   
-- [ ] Processes are going slow due to cpus not fully utilized → Added n_jobs to random forest. Going to use more tasks on svr.
+- [x] Processes are going slow due to cpus not fully utilized → Added n_jobs to random forest. Going to use more tasks on svr.
 
 # 2024.04.24
 

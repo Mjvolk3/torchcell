@@ -28,7 +28,8 @@ plt.style.use(style_file_path)
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-# trigger_sync = TriggerWandbSyncHook() 
+# trigger_sync = TriggerWandbSyncHook()
+
 
 @hydra.main(version_base=None, config_path="conf", config_name="elastic-net")
 def main(cfg: DictConfig) -> None:
@@ -68,7 +69,9 @@ def main(cfg: DictConfig) -> None:
         X = np.load(osp.join(dataset_path, split, "X.npy"))
         y = np.load(osp.join(dataset_path, split, "y.npy"))
 
-        if split == "all":
+        if (
+            split == "all" and wandb.config.is_cross_validated
+        ):  # Check if cross-validation is enabled
             # Perform 5-fold cross-validation
             kf = KFold(n_splits=5, shuffle=True, random_state=42)
 

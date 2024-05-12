@@ -29,6 +29,7 @@ plt.style.use(style_file_path)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+
 def get_n_jobs():
     if "SLURM_JOB_ID" in os.environ:
         slurm_cpus = os.environ.get("SLURM_CPUS_PER_TASK")
@@ -78,7 +79,9 @@ def main(cfg: DictConfig) -> None:
         X = np.load(osp.join(dataset_path, split, "X.npy"))
         y = np.load(osp.join(dataset_path, split, "y.npy"))
 
-        if split == "all":
+        if (
+            split == "all" and wandb.config.is_cross_validated
+        ):  # Check if cross-validation is enabled
             # Perform 5-fold cross-validation
             kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -200,7 +203,7 @@ def main(cfg: DictConfig) -> None:
             fig = fitness.box_plot(y_test, y_pred_test)
             wandb.log({f"test_predictions_fitness_boxplot": wandb.Image(fig)})
             plt.close(fig)
-            # trigger_sync() 
+            # trigger_sync()
     wandb.finish()
 
 

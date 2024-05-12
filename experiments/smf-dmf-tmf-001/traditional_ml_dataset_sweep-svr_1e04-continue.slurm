@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=4  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
-#SBATCH --job-name=SVR_continue
+#SBATCH --job-name=SVR_1e04
 #SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -25,7 +25,7 @@ conda activate /scratch/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=53yyvjxn 
+SWEEP_ID=9218ngme
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04
 
 echo "-----------------"

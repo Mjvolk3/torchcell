@@ -320,6 +320,9 @@ class Neo4jCellDataset(Dataset):
             cypher_kwargs = None
 
         # cypher_kwargs = {"gene_set": ["YAL004W", "YAL010C", "YAL011W", "YAL017W"]}
+        print("================")
+        print(f"raw root_dir: {root_dir}")
+        print("================")
         raw_db = Neo4jQueryRaw(
             uri=uri,
             username=username,

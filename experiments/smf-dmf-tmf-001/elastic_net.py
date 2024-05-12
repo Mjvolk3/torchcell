@@ -22,6 +22,7 @@ from scipy.stats import ConstantInputWarning
 # from wandb_osh.hooks import TriggerWandbSyncHook
 import torchcell
 
+os.environ["WANDB__SERVICE_WAIT"] = "300"
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
@@ -31,23 +32,18 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 
 @hydra.main(version_base=None, config_path="conf", config_name="elastic-net")
 def main(cfg: DictConfig) -> None:
+    os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
     wandb.init(
-        # mode=wandb_cfg["wandb"]["mode"],
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
-        settings=wandb.Settings(
-            start_method="fork",
-            init_timeout=600,
-            _service_wait=600,
-        ),
     )
 
     max_size_str = format_scientific_notation(

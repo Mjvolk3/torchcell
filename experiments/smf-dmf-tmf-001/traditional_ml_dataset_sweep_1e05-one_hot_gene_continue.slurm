@@ -18,14 +18,14 @@ source ~/.bashrc
 cd /projects/bbub/mjvolk3/torchcell
 pwd
 lscpu
-cat /proc/meminfo
+cat /proc/meminfos
 module list
 
 conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=bjncrm5x
+SWEEP_ID=zrfs4psh
 PROJECT_NAME=torchcell_smf-dmf-tmf-traditional_ml_dataset
 NUM=3
 ####

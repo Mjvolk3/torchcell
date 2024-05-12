@@ -116,8 +116,16 @@
             {
                 "label": "Delta: sacct",
                 "type": "shell",
-                "command": "sacct --starttime=$(date -d '7 days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End",
-                "problemMatcher": []
+                "command": "sacct --starttime=$(date -d '${input:days} days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End,Nodelist",
+                "problemMatcher": [],
+                "inputs": [
+                    {
+                        "id": "days",
+                        "description": "number of days",
+                        "type": "promptString",
+                        "default": "7"
+                    }
+                ]
             },
             {
                 "label": "Delta: Interactive gpuA40x",

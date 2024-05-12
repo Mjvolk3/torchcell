@@ -12,6 +12,7 @@ parameters:
         values:
           - [one_hot_gene]
           - [codon_frequency]
+          - [calm]
           - [fudt_downstream]
           - [fudt_upstream]
           - [prot_T5_all]

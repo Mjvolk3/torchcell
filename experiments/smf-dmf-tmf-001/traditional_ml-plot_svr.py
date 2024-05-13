@@ -18,6 +18,9 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+RESULTS_DIR = "experiments/smf-dmf-tmf-001/results/svr"
+
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
 def load_dataset(api, project_name):
@@ -71,7 +74,7 @@ def deduplicate_dataframe(df, criterion="mse"):
     return df
 
 
-def create_plots(combined_df, max_size, criterion):
+def create_plots(combined_df, max_size, criterion, is_overwrite=False):
     log = logging.getLogger(__name__)
     style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
     plt.style.use(style_file_path)
@@ -85,7 +88,6 @@ def create_plots(combined_df, max_size, criterion):
 
     # Define a darker pastel color palette
     color_list = [
-        "#746D75",  # Darker purple
         "#D0838E",  # Darker pink
         "#FFA257",  # Darker orange
         "#ECD078",  # Darker yellow
@@ -98,6 +100,7 @@ def create_plots(combined_df, max_size, criterion):
         "#F75C4C",  # Darker blush red
         "#82B3AE",  # Darker sea foam green
         "#FFD3B6",  # Darker peach
+        "#746D75",  # Darker purple
     ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
 
@@ -260,69 +263,104 @@ def create_plots(combined_df, max_size, criterion):
     return None
 
 
-def main():
-    api = wandb.Api()
-
-    # Load datasets for SVR 1e03, 1e04, and 1e05
-    project_names = [
-        "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03",
-        "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04",
-        "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05",
-    ]
-    dataframes = [load_dataset(api, project_name) for project_name in project_names]
-
-    # Combine the dataframes
-    combined_df = pd.concat(dataframes, ignore_index=True)
-
-    # Extract desired columns from 'config'
-    config_columns = [
-        "cell_dataset.is_pert",
-        "cell_dataset.max_size",
-        "cell_dataset.aggregation",
-        "cell_dataset.node_embeddings",
-        "svr.kernel",
-        "svr.C",
-        "svr.gamma",
-    ]
-    config_df = pd.json_normalize(combined_df["config"])[config_columns]
-
-    # Extract desired columns from 'summary'
-    summary_columns = [
-        "num_params",
-        "val_r2",
-        "test_r2",
-        "val_pearson",
-        "test_pearson",
-        "val_spearman",
-        "test_spearman",
-        "val_mae",
-        "test_mae",
-        "val_mse",
-        "test_mse",
-    ]
-    summary_df = pd.json_normalize(combined_df["summary"])[summary_columns]
-
-    # Combine the extracted columns with 'combined_df'
-    combined_df = pd.concat([combined_df, config_df, summary_df], axis=1)
-
-    # Deduplicate the DataFrame based on the lowest "mse" value
+def main(is_overwrite=False):
     criterion_mse = "mse"
-    combined_df_mse = deduplicate_dataframe(combined_df, criterion=criterion_mse)
     criterion_spearman = "spearman"
-    combined_df_spearman = deduplicate_dataframe(
-        combined_df, criterion=criterion_spearman
+
+    combined_df_mse_path = osp.join(RESULTS_DIR, "combined_df_mse.csv")
+    combined_df_spearman_path = osp.join(RESULTS_DIR, "combined_df_spearman.csv")
+
+    if not is_overwrite and not (
+        osp.exists(combined_df_mse_path) and osp.exists(combined_df_spearman_path)
+    ):
+        print("CSV files not found. Fetching data from the API.")
+        is_overwrite = True
+
+    if is_overwrite:
+        api = wandb.Api()
+
+        # Load datasets for SVR 1e03, 1e04, and 1e05
+        project_names = [
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03",
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04",
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05",
+        ]
+        dataframes = [load_dataset(api, project_name) for project_name in project_names]
+
+        # Combine the dataframes
+        combined_df = pd.concat(dataframes, ignore_index=True)
+
+        # Extract desired columns from 'config'
+        config_columns = [
+            "cell_dataset.is_pert",
+            "cell_dataset.max_size",
+            "cell_dataset.aggregation",
+            "cell_dataset.node_embeddings",
+            "svr.kernel",
+            "svr.C",
+            "svr.gamma",
+        ]
+        config_df = pd.json_normalize(combined_df["config"])[config_columns]
+
+        # Extract desired columns from 'summary'
+        summary_columns = [
+            "num_params",
+            "val_r2",
+            "test_r2",
+            "val_pearson",
+            "test_pearson",
+            "val_spearman",
+            "test_spearman",
+            "val_mae",
+            "test_mae",
+            "val_mse",
+            "test_mse",
+        ]
+        summary_df = pd.json_normalize(combined_df["summary"])[summary_columns]
+
+        # Combine the extracted columns with 'combined_df'
+        combined_df = pd.concat([combined_df, config_df, summary_df], axis=1)
+
+        # Deduplicate the DataFrame based on the lowest "mse" value
+        combined_df_mse = deduplicate_dataframe(combined_df, criterion=criterion_mse)
+        combined_df_spearman = deduplicate_dataframe(
+            combined_df, criterion=criterion_spearman
+        )
+
+        # Save the deduplicated dataframes as CSV files
+        combined_df_mse.to_csv(combined_df_mse_path, index=False)
+        combined_df_spearman.to_csv(combined_df_spearman_path, index=False)
+    else:
+        # Load the deduplicated dataframes from CSV files
+        combined_df_mse = pd.read_csv(combined_df_mse_path)
+        combined_df_spearman = pd.read_csv(combined_df_spearman_path)
+
+    create_plots(
+        combined_df_mse,
+        max_size=1000,
+        criterion=criterion_mse,
+        is_overwrite=is_overwrite,
+    )
+    create_plots(
+        combined_df_mse,
+        max_size=10000,
+        criterion=criterion_mse,
+        is_overwrite=is_overwrite,
     )
 
-    print(combined_df)
-    print()
-    # combined_df.to_csv("combined_project_svr.csv")
-
-    create_plots(combined_df_mse, max_size=1000, criterion=criterion_mse)
-    create_plots(combined_df_mse, max_size=10000, criterion=criterion_mse)
-
-    create_plots(combined_df_spearman, max_size=1000, criterion=criterion_spearman)
-    create_plots(combined_df_spearman, max_size=10000, criterion=criterion_spearman)
+    create_plots(
+        combined_df_spearman,
+        max_size=1000,
+        criterion=criterion_spearman,
+        is_overwrite=is_overwrite,
+    )
+    create_plots(
+        combined_df_spearman,
+        max_size=10000,
+        criterion=criterion_spearman,
+        is_overwrite=is_overwrite,
+    )
 
 
 if __name__ == "__main__":
-    main()
+    main(is_overwrite=False)

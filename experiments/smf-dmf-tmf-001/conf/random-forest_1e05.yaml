@@ -46,7 +46,7 @@ parameters:
       min_samples_split:
         values: [2, 5, 10]
   is_cross_validated:
-    values: [true]
+    values: [false]
 command:
   - ${env}
   - python

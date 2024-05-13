@@ -2,17 +2,23 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715537108750
+updated: 1715632560401
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.13
+
+- [x] Save deduplicated dataframe of results.
+- [x] Collect average optimal parameters for elastic-net and random-forest.
+- [x] Select parameters for partial sweep. → 
+
 ## 2024.05.12
 
-- [ ] No cross validation config for `1e5` on all traditional machine learning scripts
-- [ ] Launch random forest and SVR no cross validation
+- [x] No cross validation config for `1e5` on all traditional machine learning scripts
+- [x] Launch random forest and SVR no cross validation
 
 ## 2024.05.07
 

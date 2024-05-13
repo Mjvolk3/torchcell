@@ -81,7 +81,6 @@ def create_plots(combined_df, max_size, criterion):
 
     # Define a darker pastel color palette
     color_list = [
-        "#746D75",  # Darker purple
         "#D0838E",  # Darker pink
         "#FFA257",  # Darker orange
         "#ECD078",  # Darker yellow
@@ -94,6 +93,7 @@ def create_plots(combined_df, max_size, criterion):
         "#F75C4C",  # Darker blush red
         "#82B3AE",  # Darker sea foam green
         "#FFD3B6",  # Darker peach
+        "#746D75",  # Darker purple
     ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
 

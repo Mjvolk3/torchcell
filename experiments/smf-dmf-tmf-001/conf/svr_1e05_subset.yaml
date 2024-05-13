@@ -40,11 +40,11 @@ parameters:
   svr:
     parameters:
       kernel:
-        values: [rbf, poly, linear, sigmoid]
+        values: [rbf]
       C:
-        values: [0.1, 1.0, 10.0]
+        values: [10.0]
       gamma:
-        values: [0.1, 0.01, 0.001]
+        values: [0.1]
   is_cross_validated:
     values: [false]
   

@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715703466862
+updated: 1715703896605
 created: 1690514887023m
 ---
 
@@ -11,7 +11,7 @@ created: 1690514887023m
 
 ## 2024.05.14
 
-- [ ] Fix random forest runs and relaunch
+- [x] Fix random forest runs and relaunch
 - [ ] Clean up tasks
 - [ ] Review workspace
 - [ ] Paper Outline

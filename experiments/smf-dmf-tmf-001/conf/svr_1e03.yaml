@@ -1,4 +1,8 @@
 # experiments/smf-dmf-tmf-001/conf/svr_1e03.yaml
+# [[experiments.smf-dmf-tmf-001.conf.svr_1e03.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/conf/svr_1e03.yaml
+# Test file: experiments/smf-dmf-tmf-001/conf/test_svr_1e03.yaml
+
 program: experiments/smf-dmf-tmf-001/svr.py
 project: torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03
 method: grid

@@ -1,4 +1,4 @@
-# experiments/smf-dmf-tmf-001/conf/svr_1e05.yaml
+
 program: experiments/smf-dmf-tmf-001/svr.py
 project: torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05
 method: grid

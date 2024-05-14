@@ -2,18 +2,27 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715632560401
+updated: 1715703466862
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.14
+
+- [ ] Fix random forest runs and relaunch
+- [ ] Clean up tasks
+- [ ] Review workspace
+- [ ] Paper Outline
+- [ ] Figure 2
+- [ ]  
+
 ## 2024.05.13
 
 - [x] Save deduplicated dataframe of results.
 - [x] Collect average optimal parameters for elastic-net and random-forest.
-- [x] Select parameters for partial sweep. → 
+- [x] Select parameters for partial sweep. → experiments/smf-dmf-tmf-001/conf/svr_1e05_subset.yaml and experiments/smf-dmf-tmf-001/conf/random-forest_1e05_subset.yaml
 
 ## 2024.05.12
 

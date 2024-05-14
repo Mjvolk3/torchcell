@@ -1,367 +1,215 @@
-# experiments/smf-dmf-tmf-001/traditional_ml-plot_random-forest
-# [[experiments.smf-dmf-tmf-001.traditional_ml-plot_random-forest]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/traditional_ml-plot_random-forest
-
+import os
+import os.path as osp
 import numpy as np
 import pandas as pd
-import wandb
 import matplotlib.pyplot as plt
-import os.path as osp
-import logging
-import torchcell
-import os
-from torchcell.utils import format_scientific_notation
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import KFold
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from scipy.stats import pearsonr, spearmanr
+import wandb
+import hydra
+from omegaconf import DictConfig, OmegaConf
+import hashlib
+import json
+import uuid
+import warnings
+from torchcell.viz import fitness
 from dotenv import load_dotenv
+from torchcell.utils import format_scientific_notation
+from scipy.stats import ConstantInputWarning
+from wandb_osh.hooks import TriggerWandbSyncHook
 
-load_dotenv()
+import torchcell
+
+# trigger_sync = TriggerWandbSyncHook()
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
 
-ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-RESULTS_DIR = "experiments/smf-dmf-tmf-001/results/random-forest"
-
-os.makedirs(RESULTS_DIR, exist_ok=True)
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-def load_dataset(api, project_name):
-    runs = api.runs(project_name)
-    summary_list, config_list, name_list = [], [], []
-    for run in runs:
-        summary_list.append(run.summary._json_dict)
-        config_list.append(
-            {k: v for k, v in run.config.items() if not k.startswith("_")}
-        )
-        name_list.append(run.name)
-    return pd.DataFrame(
-        {"summary": summary_list, "config": config_list, "name": name_list}
-    )
-
-
-def deduplicate_dataframe(df, criterion="mse"):
-    # Drop 'summary', 'config', and 'name' columns
-    df = df.drop(columns=["summary", "config", "name"])
-
-    # Take the first element of 'cell_dataset.node_embeddings' column
-    df["cell_dataset.node_embeddings"] = df["cell_dataset.node_embeddings"].apply(
-        lambda x: x[0]
-    )
-
-    # Deduplicate rows based on specified columns
-    dedup_columns = [
-        "cell_dataset.is_pert",
-        "cell_dataset.max_size",
-        "cell_dataset.aggregation",
-        "cell_dataset.node_embeddings",
-        "random_forest.n_estimators",
-        "random_forest.max_depth",
-        "random_forest.min_samples_split",
-        "num_params",
-    ]
-
-    if criterion == "mse":
-        # Select the duplicate with the lowest "mse" value
-        df = df.sort_values("val_mse").drop_duplicates(
-            subset=dedup_columns, keep="first"
-        )
-    elif criterion == "spearman":
-        # Select the duplicate with the highest "spearman" value
-        df = df.sort_values("val_spearman", ascending=False).drop_duplicates(
-            subset=dedup_columns, keep="first"
-        )
+def get_n_jobs():
+    if "SLURM_JOB_ID" in os.environ:
+        slurm_cpus = os.environ.get("SLURM_CPUS_PER_TASK")
+        return int(slurm_cpus) if slurm_cpus is not None else 1
     else:
-        raise ValueError("Invalid criterion. Choose either 'mse' or 'spearman'.")
-
-    return df
+        return -1
 
 
-def create_plots(combined_df, max_size, criterion, is_overwrite=False):
-    log = logging.getLogger(__name__)
-    style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
-    plt.style.use(style_file_path)
+@hydra.main(version_base=None, config_path="conf", config_name="random-forest")
+def main(cfg: DictConfig) -> None:
+    os.environ["WANDB__SERVICE_WAIT"] = "300"
+    wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
+    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+    group = f"{slurm_job_id}_{hashed_cfg}"
+    wandb.init(
+        mode="online",
+        project=wandb_cfg["wandb"]["project"],
+        config=wandb_cfg,
+        group=group,
+        tags=wandb_cfg["wandb"]["tags"],
+    )
 
-    filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size]
-    features = filtered_df["cell_dataset.node_embeddings"].unique()
-    rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
-    metrics = ["r2", "pearson", "spearman", "mse", "mae"]
+    max_size_str = format_scientific_notation(
+        float(wandb.config.cell_dataset["max_size"])
+    )
+    is_pert = wandb.config.cell_dataset["is_pert"]
+    aggregation = wandb.config.cell_dataset["aggregation"]
+    node_embeddings = "_".join(wandb.config.cell_dataset["node_embeddings"])
+    is_pert_str = "_pert" if is_pert else ""
 
-    max_size_str = format_scientific_notation(max_size)
+    dataset_path = osp.join(
+        DATA_ROOT,
+        "data/torchcell/experiments/smf-dmf-tmf-traditional-ml",
+        node_embeddings,
+        f"{aggregation}{is_pert_str}_{max_size_str}",
+    )
 
-    # Define a darker pastel color palette
-    color_list = [
-        "#746D75",  # Darker purple
-        "#D0838E",  # Darker pink
-        "#FFA257",  # Darker orange
-        "#ECD078",  # Darker yellow
-        "#53777A",  # Dark blue-green
-        "#8F918B",  # Darker light purple
-        "#D1A0A2",  # Darker light red
-        "#A8BDB5",  # Darker soft green
-        "#B8AD9E",  # Darker muted brown
-        "#7B9EAE",  # Darker soft blue
-        "#F75C4C",  # Darker blush red
-        "#82B3AE",  # Darker sea foam green
-        "#FFD3B6",  # Darker peach
-    ]
-    color_dict = {feature: color for feature, color in zip(features, color_list)}
+    n_estimators = wandb.config.random_forest["n_estimators"]
+    max_depth = wandb.config.random_forest["max_depth"]
+    min_samples_split = wandb.config.random_forest["min_samples_split"]
 
-    for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        y = 0
-        yticks = []
-        ytick_positions = []
+    n_jobs = get_n_jobs()
 
-        for feature in features:
-            group_start_y = y  # Start of the group for current feature
-            for rep_type in reversed(
-                rep_types
-            ):  # Reverse to start with Intact Mean, ends with Pert Sum
-                val_key = f"val_{metric}"
-                test_key = f"test_{metric}"
-                df = filtered_df[
-                    (filtered_df["cell_dataset.node_embeddings"] == feature)
-                    & (
-                        filtered_df["cell_dataset.is_pert"]
-                        == rep_type.startswith("pert")
-                    )
-                    & (
-                        filtered_df["cell_dataset.aggregation"]
-                        == ("sum" if rep_type.endswith("sum") else "mean")
-                    )
-                ]
+    for split in ["all", "train", "val", "test"]:
+        X = np.load(osp.join(dataset_path, split, "X.npy"))
+        y = np.load(osp.join(dataset_path, split, "y.npy"))
 
-                if df.empty:
-                    continue  # Skip plotting if the DataFrame is empty
+        if (
+            split == "all" and wandb.config.is_cross_validated
+        ):  # Check if cross-validation is enabled
+            # Perform 5-fold cross-validation
+            kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
-                val_value = df[val_key].values[0]
-                test_value = df[test_key].values[0]
+            model = RandomForestRegressor(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+                n_jobs=n_jobs,
+            )
 
-                # Define hatch patterns based on the type
-                hatch = (
-                    "xxx"
-                    if rep_type == "intact_mean"
-                    else (
-                        "+++"
-                        if rep_type == "intact_sum"
-                        else ".." if rep_type == "pert_sum" else "......"
-                    )
+            cv_table = wandb.Table(
+                columns=["Fold", "MSE", "MAE", "R2", "Pearson", "Spearman", "Data Path"]
+            )
+
+            for fold, (train_index, val_index) in enumerate(kf.split(X), start=1):
+                X_train, X_val = X[train_index], X[val_index]
+                y_train, y_val = y[train_index], y[val_index]
+
+                model.fit(X_train, y_train)
+                num_params = sum(tree.tree_.node_count for tree in model.estimators_)
+                wandb.log({"num_params": num_params})
+                y_pred = model.predict(X_val)
+
+                mse = mean_squared_error(y_val, y_pred)
+                mae = mean_absolute_error(y_val, y_pred)
+                r2 = r2_score(y_val, y_pred)
+                pearson, _ = pearsonr(y_val, y_pred)
+                spearman, _ = spearmanr(y_val, y_pred)
+
+                data_path = osp.join(
+                    "torchcell",
+                    *(
+                        dataset_path.split(os.sep)[
+                            dataset_path.split(os.sep).index("torchcell") + 1 :
+                        ]
+                    ),
+                    split,
                 )
-                bar_height = 6.0 * 4  # Increased height
+                cv_table.add_data(fold, mse, mae, r2, pearson, spearman, data_path)
 
-                # Plot Validation first, above Test
-                ax.barh(
-                    y + bar_height,
-                    val_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=1.0,
-                    hatch=hatch,
-                )
-                # Then plot Test below Validation
-                ax.barh(
-                    y,
-                    test_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=0.5,
-                    hatch=hatch,
-                )
-                y += bar_height * 2  # Increase spacing for the next bar group
+            wandb.log(
+                {
+                    f"{node_embeddings}_cross_validation_table": cv_table,
+                    "n_estimators": n_estimators,
+                    "max_depth": max_depth,
+                    "min_samples_split": min_samples_split,
+                }
+            )
 
-            yticks.append(feature)
-            ytick_positions.append(
-                group_start_y + bar_height * 3.5
-            )  # Adjust tick position to middle of the set
-            y += bar_height  # Additional space between different node embeddings
+        else:
+            # Use the train, val, and test splits for final evaluation
+            X_train = np.load(osp.join(dataset_path, "train", "X.npy"))
+            y_train = np.load(osp.join(dataset_path, "train", "y.npy"))
+            X_val = np.load(osp.join(dataset_path, "val", "X.npy"))
+            y_val = np.load(osp.join(dataset_path, "val", "y.npy"))
+            X_test = np.load(osp.join(dataset_path, "test", "X.npy"))
+            y_test = np.load(osp.join(dataset_path, "test", "y.npy"))
 
-        ax.set_yticks(ytick_positions)
-        ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
+            model = RandomForestRegressor(
+                n_estimators=n_estimators,
+                max_depth=max_depth,
+                min_samples_split=min_samples_split,
+            )
 
-        ax.set_xlabel(metric, fontname="Arial", fontsize=20)
-        ax_limit = (
-            1
-            if metric in ["r2", "pearson", "spearman"]
-            else max(val_value, test_value) * 1.5
-        )
-        ax.set_xlim(0, ax_limit)
-        ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
+            model.fit(X_train, y_train)
+            num_params = sum(tree.tree_.node_count for tree in model.estimators_)
+            wandb.log({"num_params": num_params})
 
-        # Set the title as the image save path with the criterion included
-        plot_name = f"Random_Forest_{max_size_str}_{criterion}_{metric}.png"
-        ax.set_title(os.path.splitext(plot_name)[0], fontsize=20)
+            y_pred_val = model.predict(X_val)
+            y_pred_test = model.predict(X_test)
 
-        # Aggregation legend
-        representation_legend = [
-            plt.Rectangle(
-                (0, 0),
-                1,
-                1,
-                facecolor="white",
-                edgecolor="black",
-                hatch="..",
-                label="Pert Sum",
-            ),
-            plt.Rectangle(
-                (0, 0),
-                1,
-                1,
-                facecolor="white",
-                edgecolor="black",
-                hatch="......",
-                label="Pert Mean",
-            ),
-            plt.Rectangle(
-                (0, 0),
-                1,
-                1,
-                facecolor="white",
-                edgecolor="black",
-                hatch="+++",
-                label="Intact Sum",
-            ),
-            plt.Rectangle(
-                (0, 0),
-                1,
-                1,
-                facecolor="white",
-                edgecolor="black",
-                hatch="xxx",
-                label="Intact Mean",
-            ),
-        ]
-        dataset_legend = [
-            plt.Rectangle((0, 0), 1, 1, color="grey", alpha=1.0, label="Validation"),
-            plt.Rectangle((0, 0), 1, 1, color="grey", alpha=0.5, label="Test"),
-        ]
+            mse_val = mean_squared_error(y_val, y_pred_val)
+            mae_val = mean_absolute_error(y_val, y_pred_val)
+            r2_val = r2_score(y_val, y_pred_val)
+            pearson_val, _ = pearsonr(y_val, y_pred_val)
+            spearman_val, _ = spearmanr(y_val, y_pred_val)
 
-        # Create a legend with grouped titles
-        leg1 = ax.legend(
-            handles=representation_legend,
-            title="Representation",
-            loc="upper right",
-            bbox_to_anchor=(1, 1),
-        )
-        ax.add_artist(leg1)
-        ax.legend(
-            handles=dataset_legend,
-            title="Dataset",
-            loc="center right",
-            bbox_to_anchor=(1, 0.5),
-        )
-        plt.tick_params(axis="y", which="major", size=5, width=1)
-        plt.tick_params(axis="x", which="major", size=5, width=1)
-        ax.spines["top"].set_linewidth(1)
-        ax.spines["right"].set_linewidth(1)
-        ax.spines["bottom"].set_linewidth(1)
-        ax.spines["left"].set_linewidth(1)
+            mse_test = mean_squared_error(y_test, y_pred_test)
+            mae_test = mean_absolute_error(y_test, y_pred_test)
+            r2_test = r2_score(y_test, y_pred_test)
+            pearson_test, _ = pearsonr(y_test, y_pred_test)
+            spearman_test, _ = spearmanr(y_test, y_pred_test)
 
-        plt.tight_layout()
-        plt.savefig(osp.join(ASSET_IMAGES_DIR, plot_name), bbox_inches="tight")
-        plt.close(fig)
+            wandb.log(
+                {
+                    "val_mse": mse_val,
+                    "val_mae": mae_val,
+                    "val_r2": r2_val,
+                    "test_mse": mse_test,
+                    "test_mae": mae_test,
+                    "test_r2": r2_test,
+                    "n_estimators": n_estimators,
+                    "max_depth": max_depth,
+                    "min_samples_split": min_samples_split,
+                }
+            )
 
-    return None
+            if not np.isnan(pearson_val):
+                wandb.log({"val_pearson": pearson_val})
+            else:
+                wandb.log({"val_pearson": None})
 
+            if not np.isnan(spearman_val):
+                wandb.log({"val_spearman": spearman_val})
+            else:
+                wandb.log({"val_spearman": None})
 
-def main(is_overwrite=False):
-    criterion_mse = "mse"
-    criterion_spearman = "spearman"
+            if not np.isnan(pearson_test):
+                wandb.log({"test_pearson": pearson_test})
+            else:
+                wandb.log({"test_pearson": None})
 
-    combined_df_mse_path = osp.join(RESULTS_DIR, "combined_df_mse.csv")
-    combined_df_spearman_path = osp.join(RESULTS_DIR, "combined_df_spearman.csv")
+            if not np.isnan(spearman_test):
+                wandb.log({"test_spearman": spearman_test})
+            else:
+                wandb.log({"test_spearman": None})
 
-    if not is_overwrite and not (
-        osp.exists(combined_df_mse_path) and osp.exists(combined_df_spearman_path)
-    ):
-        print("CSV files not found. Fetching data from the API.")
-        is_overwrite = True
-
-    if is_overwrite:
-        api = wandb.Api()
-
-        # Load datasets for Random Forest 1e03, 1e04, and 1e05
-        project_names = [
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e03",
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e04",
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05",
-        ]
-        dataframes = [load_dataset(api, project_name) for project_name in project_names]
-
-        # Combine the dataframes
-        combined_df = pd.concat(dataframes, ignore_index=True)
-
-        # Extract desired columns from 'config'
-        config_columns = [
-            "cell_dataset.is_pert",
-            "cell_dataset.max_size",
-            "cell_dataset.aggregation",
-            "cell_dataset.node_embeddings",
-            "random_forest.n_estimators",
-            "random_forest.max_depth",
-            "random_forest.min_samples_split",
-        ]
-        config_df = pd.json_normalize(combined_df["config"])[config_columns]
-
-        # Extract desired columns from 'summary'
-        summary_columns = [
-            "num_params",
-            "val_r2",
-            "test_r2",
-            "val_pearson",
-            "test_pearson",
-            "val_spearman",
-            "test_spearman",
-            "val_mae",
-            "test_mae",
-            "val_mse",
-            "test_mse",
-        ]
-        summary_df = pd.json_normalize(combined_df["summary"])[summary_columns]
-
-        # Combine the extracted columns with 'combined_df'
-        combined_df = pd.concat([combined_df, config_df, summary_df], axis=1)
-
-        # Deduplicate the DataFrame based on the lowest "mse" value
-        combined_df_mse = deduplicate_dataframe(combined_df, criterion=criterion_mse)
-        combined_df_spearman = deduplicate_dataframe(
-            combined_df, criterion=criterion_spearman
-        )
-
-        # Save the deduplicated dataframes as CSV files
-        combined_df_mse.to_csv(combined_df_mse_path, index=False)
-        combined_df_spearman.to_csv(combined_df_spearman_path, index=False)
-    else:
-        # Load the deduplicated dataframes from CSV files
-        combined_df_mse = pd.read_csv(combined_df_mse_path)
-        combined_df_spearman = pd.read_csv(combined_df_spearman_path)
-
-    create_plots(
-        combined_df_mse,
-        max_size=1000,
-        criterion=criterion_mse,
-        is_overwrite=is_overwrite,
-    )
-    create_plots(
-        combined_df_mse,
-        max_size=10000,
-        criterion=criterion_mse,
-        is_overwrite=is_overwrite,
-    )
-
-    create_plots(
-        combined_df_spearman,
-        max_size=1000,
-        criterion=criterion_spearman,
-        is_overwrite=is_overwrite,
-    )
-    create_plots(
-        combined_df_spearman,
-        max_size=10000,
-        criterion=criterion_spearman,
-        is_overwrite=is_overwrite,
-    )
+            # Create fitness boxplot for test predictions
+            fig = fitness.box_plot(y_test, y_pred_test)
+            wandb.log({f"test_predictions_fitness_boxplot": wandb.Image(fig)})
+            plt.close(fig)
+            # trigger_sync()
+    wandb.finish()
 
 
 if __name__ == "__main__":
-    is_overwrite = False
-    main(is_overwrite)
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Script interrupted by user.")
+        wandb.finish()

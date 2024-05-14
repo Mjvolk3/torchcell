@@ -100,13 +100,21 @@ def main(cfg: DictConfig) -> None:
                         model.fit(X_train, y_train)
                         num_params = X_train.shape[1]
                         wandb.log({"num_params": num_params})
-                        y_pred = model.predict(X_val)
 
-                        mse = mean_squared_error(y_val, y_pred)
-                        mae = mean_absolute_error(y_val, y_pred)
-                        r2 = r2_score(y_val, y_pred)
-                        pearson, _ = pearsonr(y_val, y_pred)
-                        spearman, _ = spearmanr(y_val, y_pred)
+                        y_pred_train = model.predict(X_train)
+                        y_pred_val = model.predict(X_val)
+
+                        mse_train = mean_squared_error(y_train, y_pred_train)
+                        mae_train = mean_absolute_error(y_train, y_pred_train)
+                        r2_train = r2_score(y_train, y_pred_train)
+                        pearson_train, _ = pearsonr(y_train, y_pred_train)
+                        spearman_train, _ = spearmanr(y_train, y_pred_train)
+
+                        mse_val = mean_squared_error(y_val, y_pred_val)
+                        mae_val = mean_absolute_error(y_val, y_pred_val)
+                        r2_val = r2_score(y_val, y_pred_val)
+                        pearson_val, _ = pearsonr(y_val, y_pred_val)
+                        spearman_val, _ = spearmanr(y_val, y_pred_val)
 
                         data_path = osp.join(
                             "torchcell",
@@ -118,7 +126,28 @@ def main(cfg: DictConfig) -> None:
                             split,
                         )
                         cv_table.add_data(
-                            fold, mse, mae, r2, pearson, spearman, data_path
+                            fold,
+                            mse_val,
+                            mae_val,
+                            r2_val,
+                            pearson_val,
+                            spearman_val,
+                            data_path,
+                        )
+
+                        wandb.log(
+                            {
+                                f"fold_{fold}_train_mse": mse_train,
+                                f"fold_{fold}_train_mae": mae_train,
+                                f"fold_{fold}_train_r2": r2_train,
+                                f"fold_{fold}_train_pearson": pearson_train,
+                                f"fold_{fold}_train_spearman": spearman_train,
+                                f"fold_{fold}_val_mse": mse_val,
+                                f"fold_{fold}_val_mae": mae_val,
+                                f"fold_{fold}_val_r2": r2_val,
+                                f"fold_{fold}_val_pearson": pearson_val,
+                                f"fold_{fold}_val_spearman": spearman_val,
+                            }
                         )
 
                     wandb.log(
@@ -146,8 +175,15 @@ def main(cfg: DictConfig) -> None:
                     num_params = X_train.shape[1]
                     wandb.log({"num_params": num_params})
 
+                    y_pred_train = model.predict(X_train)
                     y_pred_val = model.predict(X_val)
                     y_pred_test = model.predict(X_test)
+
+                    mse_train = mean_squared_error(y_train, y_pred_train)
+                    mae_train = mean_absolute_error(y_train, y_pred_train)
+                    r2_train = r2_score(y_train, y_pred_train)
+                    pearson_train, _ = pearsonr(y_train, y_pred_train)
+                    spearman_train, _ = spearmanr(y_train, y_pred_train)
 
                     mse_val = mean_squared_error(y_val, y_pred_val)
                     mae_val = mean_absolute_error(y_val, y_pred_val)
@@ -163,36 +199,25 @@ def main(cfg: DictConfig) -> None:
 
                     wandb.log(
                         {
+                            "train_mse": mse_train,
+                            "train_mae": mae_train,
+                            "train_r2": r2_train,
+                            "train_pearson": pearson_train,
+                            "train_spearman": spearman_train,
                             "val_mse": mse_val,
                             "val_mae": mae_val,
                             "val_r2": r2_val,
+                            "val_pearson": pearson_val,
+                            "val_spearman": spearman_val,
                             "test_mse": mse_test,
                             "test_mae": mae_test,
                             "test_r2": r2_test,
+                            "test_pearson": pearson_test,
+                            "test_spearman": spearman_test,
                             "alpha": alpha,
                             "l1_ratio": l1_ratio,
                         }
                     )
-
-                    if not np.isnan(pearson_val):
-                        wandb.log({"val_pearson": pearson_val})
-                    else:
-                        wandb.log({"val_pearson": None})
-
-                    if not np.isnan(spearman_val):
-                        wandb.log({"val_spearman": spearman_val})
-                    else:
-                        wandb.log({"val_spearman": None})
-
-                    if not np.isnan(pearson_test):
-                        wandb.log({"test_pearson": pearson_test})
-                    else:
-                        wandb.log({"test_pearson": None})
-
-                    if not np.isnan(spearman_test):
-                        wandb.log({"test_spearman": spearman_test})
-                    else:
-                        wandb.log({"test_spearman": None})
 
                     # Create fitness boxplot for test predictions
                     fig = fitness.box_plot(y_test, y_pred_test)

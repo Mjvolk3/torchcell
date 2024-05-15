@@ -2,7 +2,7 @@
 id: aa3jczwffj7pbcvjsvhmfu8
 title: Docker
 desc: ''
-updated: 1709223192650
+updated: 1715731777110
 created: 1706953111718
 ---
 ## Instructions to Get Image
@@ -387,3 +387,16 @@ We output the profile into `biocypher-out/` since this is mounted. We just need 
 python -m cProfile -o biocypher-out/create_scerevisiae_kg_small.pstats /miniconda/
 envs/myenv/lib/python3.11/site-packages/torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
 ```
+
+## Passing Environment Variables
+
+```yaml
+NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
+NEO4J_AUTH=neo4j/torchcell
+```
+
+```bash
+docker run --env-file /path/to/your/.env your_image
+```
+
+This seems to work ok. I verified that it was copied over to `cypher-shell` for apptainer. still need to check for docker.

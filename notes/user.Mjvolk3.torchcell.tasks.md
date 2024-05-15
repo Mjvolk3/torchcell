@@ -2,21 +2,26 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715703896605
+updated: 1715732319071
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.15
+
+- [x] Write 2 page report for more compute on Delta → Needed 3 pages. Did a bit of a word vomit since I wanted to submit asap [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]].
+- [ ] Figure 2 outline update
+- [ ] Paper outline
+- [ ] Gantt
+- [ ] Plan
+
 ## 2024.05.14
 
 - [x] Fix random forest runs and relaunch
-- [ ] Clean up tasks
-- [ ] Review workspace
-- [ ] Paper Outline
-- [ ] Figure 2
-- [ ]  
+- [x] Log train and log folds
+- [x] Clean up tasks
 
 ## 2024.05.13
 
@@ -41,72 +46,17 @@ created: 1690514887023m
 - [x] Globus transfer from local to Delta. → taking some time →
 - [x] Run a script with the same agent on `svr` `1e04`
 - [x] Figure out how to sync runs [wandb offline sync hook](https://github.com/klieret/wandb-offline-sync-hook).  → offline synce hook works.
-- [x] This works for iteratively syncing wandb runs of the offline sync hook fails.
-
-```bash
-(torchcell) mjvolk3@dt-login01 wandb % pwd                                                                          6:52
-/scratch/bbub/mjvolk3/torchcell/wandb-experiments/3487237/wandb
-(torchcell) mjvolk3@dt-login01 wandb % for d in $(ls -t -d */); do wandb sync $d; done    
-```
-  
+- [x] This works for iteratively syncing wandb runs of the offline sync hook fails. → [[Manual Sync|dendron://torchcell/wandb.manual-sync]]
 - [x] Processes are going slow due to cpus not fully utilized → Added n_jobs to random forest. Going to use more tasks on svr.
 
 # 2024.04.24
 
-- [ ]
-
-```bash
- *  Executing task in folder torchcell: srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=62g --pty bash 
-
-srun: job 3479819 queued and waiting for resources
-srun: job 3479819 has been allocated resources
-Wed Apr 24 11:12:19 CDT 2024 - Starting to source .bashrc
-Wed Apr 24 11:12:19 CDT 2024 - Sourcing global definitions...
-Wed Apr 24 11:12:20 CDT 2024 - Global definitions sourced.
-Wed Apr 24 11:12:20 CDT 2024 - Setting up user-specific environment...
-Wed Apr 24 11:12:20 CDT 2024 - User-specific environment set.
-Wed Apr 24 11:12:20 CDT 2024 - Initializing Conda...
-Wed Apr 24 11:14:49 CDT 2024 - Conda initialized.
-Wed Apr 24 11:14:49 CDT 2024 - .bashrc sourced successfully.
-(base) [mjvolk3@gpub001 torchcell]$ conda activate torchcell
-(torchcell) [mjvolk3@gpub001 torchcell]$ cd /scratch/bbub/mjvolk3/torchcell
-(torchcell) [mjvolk3@gpub001 torchcell]$ wandb sweep  experiments/smf-dmf-tmf-001/conf/deep_set-sweep_15.yaml
-
-wandb: Using wandb-core version 0.17.0b10 as the SDK backend. Please refer to https://wandb.me/wandb-core for more information.
-wandb: Creating sweep from: experiments/smf-dmf-tmf-001/conf/deep_set-sweep_15.yaml
-wandb: Creating sweep with ID: k0yw7xgw
-wandb: View sweep at: https://wandb.ai/zhao-group/torchcell_smf-dmf-tmf-001-15/sweeps/k0yw7xgw
-wandb: Run sweep agent with: wandb agent zhao-group/torchcell_smf-dmf-tmf-001-15/k0yw7xgw
-(torchcell) [mjvolk3@gpub001 torchcell]$ 
-(torchcell) [mjvolk3@gpub001 torchcell]$ wandb agent zhao-group/torchcell_smf-dmf-tmf-001-15/k0yw7xgw
-wandb: Using wandb-core version 0.17.0b10 as the SDK backend. Please refer to https://wandb.me/wandb-core for more information.
-wandb: Starting wandb agent 🕵️
-2024-04-24 11:25:37,336 - wandb.wandb_agent - INFO - Running runs: []
-2024-04-24 11:25:37,594 - wandb.wandb_agent - INFO - Agent received command: run
-2024-04-24 11:25:37,594 - wandb.wandb_agent - INFO - Agent starting run with config:
-        cell_dataset: {'graphs': None, 'max_size': 1000, 'node_embeddings': ['nt_window_five_prime_1003']}
-        data_module: {'batch_size': 8, 'num_workers': 6, 'pin_memory': True}
-        models: {'graph': {'activation': 'gelu', 'hidden_channels': 512, 'norm': 'layer', 'num_node_layers': 3, 'num_set_layers': 3, 'out_channels': 32, 'skip_node': True, 'skip_set': True}, 'pred_head': {'activation': None, 'dropout_prob': 0, 'hidden_channels': 0, 'norm': None, 'num_layers': 1, 'out_channels': 1, 'output_activation': None}}
-        regression_task: {'alpha': 0, 'boxplot_every_n_epochs': 5, 'clip_grad_norm': False, 'clip_grad_norm_max_norm': 1, 'learning_rate': 1e-06, 'loss': 'mse', 'target': 'fitness', 'weight_decay': 1e-05}
-        trainer: {'accelerator': 'gpu', 'max_epochs': 50, 'strategy': 'auto'}
-2024-04-24 11:25:37,639 - wandb.wandb_agent - INFO - About to run command: /usr/bin/env python experiments/smf-dmf-tmf-001/deep_set.py
-2024-04-24 11:25:42,648 - wandb.wandb_agent - INFO - Running runs: ['zc80uc9a']
-slurmstepd: error: *** STEP 3479819.0 ON gpub001 CANCELLED AT 2024-04-24T11:42:17 DUE TO TIME LIMIT ***
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-srun: error: Timed out waiting for job step to complete
- *  Terminal will be reused by tasks, press any key to close it. 
-```
-
-# 2024.04.23
-
+- [x] [[delta.issue.2024.04.24|dendron://torchcell/delta.issue.2024.04.24]]
 - [x] All traditional ml completed except for `traditional_ml_dataset_sweep_1e05-nt_window_5979_3468745.out` unsure why. one_hot_gene finished with #OOM
 - [x] Restart `one_hot_gene` with more memory.
 - [x] Check agent logs → Logs logs look like they are still running. Won't touch for now.
-- [ ] Add configs for other dataset sizes. 6 more for `1e4, 1e5` for three different models. → `1e4` added for elastic net. →
+- 🔲 Add configs for other dataset sizes. 6 more for `1e4, 1e5` for three different models. → `1e4` added for elastic net. →
 - [x] `1e3` `elastic-net` completed
-- [ ] Transfer all data via globus. Verify it all exists.
-- [ ] Test models, and model sweeps locally.
-- [ ] Test model, and model sweeps on `Delta`.
 
 ## 2024.04.22
 
@@ -131,9 +81,9 @@ srun: error: Timed out waiting for job step to complete
 ## 2024.04.19
 
 - [x] `one_hot_gene`, `batch_size: 16`, `aggregation: sum`
-- [ ] Try to fix failed runs by inspecting logs
-- [ ] If the current plan doesn't work, then [wandb sweep controller script](https://docs.wandb.ai/guides/sweeps/local-controller)
-- [ ] I think issue in Deep Set could be related to buggy configs.
+- 🔲 Try to fix failed runs by inspecting logs
+- 🔲 If the current plan doesn't work, then [wandb sweep controller script](https://docs.wandb.ai/guides/sweeps/local-controller)
+- 🔲 I think issue in Deep Set could be related to buggy configs.
 
 ## 2024.04.16
 
@@ -167,18 +117,17 @@ srun: error: Timed out waiting for job step to complete
 - [x] `SGD` graph node features probably put on Raw. → already had something going for this. Node features put on `G_gene`. Naming probably isn't perfect. → sort of misappropriating the `BaseEmbeddingDataset` [[torchcell/datasets/sgd_gene_graph.py]] for instance `MODEL_TO_WINDOW` no longer makes any sense.
 - [x] Need to recompute Esm since we saved as `numpy` `ndarray`. → Did on `Delta` → `Delta` login node is acting up. Did from terminal ssh. → globus to local... → Somehow numpy didn't get removed. Unsure what happened. Commited Again and relaunched on `Delta`.
 - [x] Check if Esm embeddings works. → Worked with most recent update on delta. Shape issue
-- [ ] I wanted to used torch.Embedding to encode the categorical variables in [[Sgd_gene_graph|dendron://torchcell/torchcell.datasets.sgd_gene_graph]]... turns out nobody really does this because it creates serialization issues in the data loader when trying to serialized vectors with gradients attached. Guess now we know. The proper thing to do is to pass the data to the model, and to create the embedding within the model.
+- 🔲 I wanted to used torch.Embedding to encode the categorical variables in [[Sgd_gene_graph|dendron://torchcell/torchcell.datasets.sgd_gene_graph]]... turns out nobody really does this because it creates serialization issues in the data loader when trying to serialized vectors with gradients attached. Guess now we know. The proper thing to do is to pass the data to the model, and to create the embedding within the model. → moving to [[user.mjvolk3.torchcell.tasks.future#future]]
 - [x] I think it is worth adding categorical variables. If we perturb a gene involved in an important pathway or many important pathway there should be fitness consequences → ![](./assets/images/pathway-annotations-per-gene.png) → This also provides a route directly adding gene ontology to nodes without additional layers of abstraction or graph mapping. This only works for categorical annotaion, and in the case of gene ontology it completely loses structure. But this creates a nice comparison of structure based and structure free.
-- [ ] Try to combine embeddings with node data.
-- [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
-- [ ] Count parameters script, also plot distribution of sizes.
-- [ ] Check no issue with model. [[deep_set-sweep_05|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_05.yaml]]
-- [ ] Check no issue with embeddings. [[Yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
-- [ ] Add all possible embeddings and test run under optimal loader.
-- [ ] Add gradient log.
-- [ ] Run loader overnight?, try sweep on `1e2` over configs 2 epochs.
-- [ ] [[Deep_set_transformer|dendron://torchcell/torchcell.models.deep_set_transformer]] add `scatter_add` and `scatter_mean`
-- [ ]
+- 🔲 Try to combine embeddings with node data.
+- 🔲 Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean` → Not really sure what this mean, moving to [[user.mjvolk3.torchcell.tasks.future#future]]
+- 🔲 Count parameters script, also plot distribution of sizes.
+- 🔲 Check no issue with model. [[deep_set-sweep_05|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_05.yaml]]
+- 🔲 Check no issue with embeddings. [[Yaml|dendron://torchcell/experiments.smf-dmf-tmf-001.conf.deep_set-sweep_06.yaml]]
+- 🔲 Add all possible embeddings and test run under optimal loader.
+- 🔲 Add gradient log.
+- 🔲 Run loader overnight?, try sweep on `1e2` over configs 2 epochs.
+- 🔲 [[Deep_set_transformer|dendron://torchcell/torchcell.models.deep_set_transformer]] add `scatter_add` and `scatter_mean`
 
 ## 2024.04.03
 
@@ -190,9 +139,7 @@ srun: error: Timed out waiting for job step to complete
 - [x] Fixed issue with specifying memory [[2024.04.03 - Memory Formatting is MB|dendron://torchcell/ncsa.help.2024.04.03#20240403---memory-formatting-is-mb]]
 - [x] Check `fudt` works. → works locally
 - [x] Write #wandb.tcdb.docker_v_m1_study_003
-
 - [x] Esm embedding dataset. → Might have enough now, trying to compute all regardless. →
-
 - [x] loader with `1e4` #wandb.torchcell_smf-dmf-tmf-001.loader_opt_002 → Running on some narrower parameter ranges on 2 epochs.
 
 ## 2024.04.02
@@ -220,12 +167,12 @@ srun: error: Timed out waiting for job step to complete
 ## 2024.03.31
 
 - [x] Check CaLM embeddings → [[2024.03.31 - Overcoming Semaphore Error when Processing CalM Dataset|dendron://torchcell/torchcell.datasets.codon_language_model#20240331---overcoming-semaphore-error-when-processing-calm-dataset]]
-- [ ] Different spiking levels in DmfCostanzo suggest that we should be setting chunk size for different functions to squash memory usage when needed.
-- [ ] Rerun CaLM embeddings with finished script to make they can be reproduced.
-- [ ] Compute all nucleotide transformer embeddings.
-- [ ] Try to do a `1e6` local docker build.
-- [ ] Add dataset to the data model
-- [ ] Write brief report with table on reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]]
+- 🔲 Different spiking levels in DmfCostanzo suggest that we should be setting chunk size for different functions to squash memory usage when needed.
+- 🔲 Rerun CaLM embeddings with finished script to make they can be reproduced.
+- 🔲 Compute all nucleotide transformer embeddings.
+- 🔲 Try to do a `1e6` local docker build.
+- 🔲 Add dataset to the data model
+- 🔲 Write brief report with table on reasonable parameters for `tcdb` build → [[2024.03.28 - Assessing TCDB Build Parameters|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240328---assessing-tcdb-build-parameters]]
 
 ## 2024.03.30
 
@@ -275,14 +222,14 @@ srun: error: Timed out waiting for job step to complete
 - [x] [[2024.03.25 - Some Cpus Not Utilized Because How We Set Workers|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240325---some-cpus-not-utilized-because-how-we-set-workers]]
 - [x] Run query to check edges → [[2024.03.21 - Query that Identified ExperimentReferenceOfCount Issue in Database|dendron://torchcell/cypher-queries#20240321---query-that-identified-experimentreferenceofcount-issue-in-database]]
 - [x] Run query for fitness data [[torchcell.data.neo4j_cell]] → works now we need to handle duplicates
-- [ ] The thought on duplicates is to provide a deduplicator class that handles the duplicates. This depends on the details of how the modeler chooses to model the domain so we should just design an interface for doing so. For now I am hardcoding this in. → Writing a deduplicator class. →
-- [ ] Outline. Consider training on `pert` added to table
-- [ ] Harmonize data.
-- [ ] `One_Hot_Gene -->  Set_Net --> Fitness`
-- [ ] Start training.
-- [ ] `FUDT --> Set_Net --> Fitness`
-- [ ] `FUDT --> Set_Net --> Fitness`
-- [ ] Add CaLM embedding
+- [x] The thought on duplicates is to provide a deduplicator class that handles the duplicates. This depends on the details of how the modeler chooses to model the domain so we should just design an interface for doing so. For now I am hardcoding this in. → Writing a deduplicator class. → [[user.mjvolk3.torchcell.tasks.future#future]]
+- 🔲 Outline. Consider training on `pert` added to table
+- 🔲 Harmonize data.
+- 🔲 `One_Hot_Gene -->  Set_Net --> Fitness`
+- 🔲 Start training.
+- 🔲 `FUDT --> Set_Net --> Fitness`
+- 🔲 `FUDT --> Set_Net --> Fitness`
+- 🔲 Add CaLM embedding
 
 ## 2024.03.24
 
@@ -326,20 +273,17 @@ srun: error: Timed out waiting for job step to complete
 - [x] `cypher-shell` doesn't open [[2024.03.20 - Cannot start cypher-shell due to Neo4j lock|dendron://torchcell/cypher-shell#20240320---cannot-start-cypher-shell-due-to-neo4j-lock]]
 - [x] Notes on query [[smf-dmf-tmf-001.query|dendron://torchcell/experiments.smf-dmf-tmf-001.query]]
 - [x] Meeting with the Neo4j staff plan. → [[neo4j.meeting.future|dendron://torchcell/neo4j.meeting.future]]
-- [x] Added logs dir in docker run so we can try to diagnoise if there are query issues. → Also keeping a note on ne4j.conf [[Conf|dendron://torchcell/neo4j.conf]]
-
-- [ ] We could automate with `rsync` if we wanted since it takes some time for transfer and upload. Likely going to be at least 2 hrs.
-- [ ] Task for `tcdb: docker run`
-- [ ] This will now take forever with large database but we need to get a plot that will help to filter the domain overlap [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]].
-
-- [ ] Plot `std` of `fitness_means` to determine how to handle duplicates.
-
-- [ ] Can take the duplicate idea and just output the fitness value.
-- [ ] outline
-- [ ] gantt
-- [ ] Figure for comparison of `dmf` and resolution of data
-- [ ] Harmonize
-- [ ] Common cypher queries [[Cypher Queries|dendron://torchcell/cypher-queries]] These ultimately need to be put in their respective `.cql` file or notes, for now a plain text description of the query would help.
+- [x] Added logs dir in docker run so we can try to diagnoseif there are query issues. → Also keeping a note on ne4j.conf [[Conf|dendron://torchcell/neo4j.conf]]
+- 🔲 We could automate with `rsync` if we wanted since it takes some time for transfer and upload. Likely going to be at least 2 hrs.
+- 🔲 Task for `tcdb: docker run`
+- 🔲 This will now take forever with large database but we need to get a plot that will help to filter the domain overlap [[experiments.smf-dmf-tmf-001.node_removal_domain_overlap]].
+- 🔲 Plot `std` of `fitness_means` to determine how to handle duplicates.
+- 🔲 Can take the duplicate idea and just output the fitness value.
+- 🔲 outline
+- 🔲 gantt
+- 🔲 Figure for comparison of `dmf` and resolution of data
+- 🔲 Harmonize
+- 🔲 Common cypher queries [[Cypher Queries|dendron://torchcell/cypher-queries]] These ultimately need to be put in their respective `.cql` file or notes, for now a plain text description of the query would help.
 
 ## 2024.03.19
 
@@ -352,10 +296,9 @@ srun: error: Timed out waiting for job step to complete
 - [x] Look into transfer of db on `delta` to local →  Waiting on this... I think I can just use Globus, but I haven't heard back about fixing my Globus activation.
 - [x] Inspect failed `Delta` build → #OOM but no memory spikes [wandb log](https://wandb.ai/zhao-group/tcdb/runs/pm1386pt?nw=nwusermjvolk3)
 - [x] Get up to in new experiment`CellModule` → made it but we can't be sure that we don't have the duplicate with `dmf` fitness over the same phenotype in either `Kuzmin` or `Costanzo`. Might be easier to check the raw data to confirm their different now, but we will need a more robust solution for this.
-- [ ] Deduplication must be done at the proper stage. There is a question of have more and more difficult cypher queries or doing some python filtration after collection all the data. → It makes most sense to do the filtration and check for duplication here [[torchcell.neo4j_fitness_query]]. I did a check that helped me refine the query adding temperature and media specifications for the reference.
-
-- [ ] Check Nones... on db [[94310|dendron://torchcell/scratch.2024.03.19.094310]]
-- [ ] CaLM model
+- 🔲 Deduplication must be done at the proper stage. There is a question of have more and more difficult cypher queries or doing some python filtration after collection all the data. → It makes most sense to do the filtration and check for duplication here [[torchcell.neo4j_fitness_query]]. I did a check that helped me refine the query adding temperature and media specifications for the reference.
+- 🔲 Check Nones... on db [[94310|dendron://torchcell/scratch.2024.03.19.094310]]
+- 🔲 CaLM model
 
 ## 2024.03.18
 
@@ -364,14 +307,7 @@ srun: error: Timed out waiting for job step to complete
 - [x] We still want to capture the `wt` or what we are now calling `ref` but this is dependent on `ref` resolution, single `ref`, so I am delaying doing this.
 - [x] Add label to data.
 - [x] Hanging envs to `None` → `self.raw_db.env = None` this was the tricky one.
-- [x] Add `gene_set` query to `cql` → First I want to print out the schema. → This has been a long journey many hours spent to discover that the neo4j database has an error. We did not properly build out all perturbations, so querying on them doesn't work. 💣 Not what we wanted... 🥺. Big time suck. OMG...  
-
-```python
-for perturbation in genotype.perturbations:
-  ...
-  return edges
-```
-
+- [x] Add `gene_set` query to `cql` → First I want to print out the schema. → This has been a long journey many hours spent to discover that the neo4j database has an error. We did not properly build out all perturbations, so querying on them doesn't work. 💣 Not what we wanted... 🥺. Big time suck. OMG...  → [[2024.03.18 - Proper Indentation|dendron://torchcell/database.common-issues#20240318---proper-indentation]]
 - 🔲 Get up to in new experiment`CellModule`
 
 ## 2024.03.17
@@ -384,28 +320,24 @@ for perturbation in genotype.perturbations:
 - [x] Install CaLM model → Installed with `python -m pip install git+https://github.com/oxpig/CaLM`, ran README example and it works.
 - [x] Maybe consider adding `GeneSet` to datasets. This would solve some of the joining issues and would be able to remedy index error. #ramble the embeddings in general would be best to be the union of all datasets.
 - [x] The easiest model to start with is SAG and `fungal` and `one_hot` → this is actually a little more difficult in that we need to build out the SAG model still and deal with edge info etc. pause.
-
-- [ ] Table write based on [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]. → Need systematic way to write data to table. Can move to `TorchCell_Paper` on `wandb`
-- [ ] Cover all the data variants for the set of experiments. [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] Calling it dmf right now but the same table can and will be used for `tmf` first.
-- [ ] Checkpoint models and build out separate scripts for model evaluation. Can add unique identifier to [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] and [[02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
-
-- [ ] Check if it works with genome. → works but need to see if the genome size is correct. →
-- [ ] Check if it works with graphs. Will likely need to write some function conversion to torch.
-- [ ] Check if works with embedding datasets. →
-- [ ] Handle multiple experimental references.
 - [x] Move `sgd_delta` into `sgd`... → graphs should work now.
-- [ ] Check if graphs work and evaluate their structure.
+- 🔲 Table write based on [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]. → Need systematic way to write data to table. Can move to `TorchCell_Paper` on `wandb`
+- 🔲 Cover all the data variants for the set of experiments. [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] Calling it dmf right now but the same table can and will be used for `tmf` first.
+- 🔲 Checkpoint models and build out separate scripts for model evaluation. Can add unique identifier to [[dmf-fitness-table.02|dendron://torchcell/paper.outline.dmf-fitness-table.02]] and [[02|dendron://torchcell/paper.outline.dmf-fitness-table.02]]
+- 🔲 Check if it works with genome. → works but need to see if the genome size is correct. →
+- 🔲 Check if it works with graphs. Will likely need to write some function conversion to torch.
+- 🔲 Check if works with embedding datasets. →
+- 🔲 Handle multiple experimental references.
+- 🔲 Check if graphs work and evaluate their structure.
 
 ## 2024.03.16
 
 - [x] [[torchcell.data.neo4j_cell]] only requires on arg to start → To do this the only thing that makes sense is experiments, so the query. You can take the `gene_set` from the query and automatically one hot the genes. I like this idea as it brings more intuition to the building process. Another option is to require the passing of a `gene_set`, I think it makes more sense to have some resolution for getting the relevant `gene_set` based on `GeneSetPriority` `enum`. → Not using `enum`, just some conditional logic in `get_cell_graph` → `get_cell_graph`, later we might want to make the `cell_graph` it's own object. I think we can use an ABC on `SCerevisiaeGraph` [[torchcell.graph.graph]] 💡
 - [x] Note on Neo4j db schema print out [[Automated Query to get Schema|dendron://torchcell/neo4j.delta#automated-query-to-get-schema]]
 - [x] We need to see the `networkx` graph structure. Globus transfer data for graphs. → Can't login to globus → Rebuild data locally and troubleshoot globus. → Submitted a ticket via email. → transfer with `rsync` [[Rsync Example to Copy Data From Delta To Local|dendron://torchcell/computer.delta.rsync#rsync-example-to-copy-data-from-delta-to-local]] → `rsync` succeeded. → Trying to rebuild the data failed.
-- [ ] `subset_graph` → "experiments are all you need to get started". → The reason we split up the two datasets is that we wanted one to be concerned mainly with just querying the data, and the next to be concerned with transforming the data into usable form using `torch` and `pyg`. This also separates the process from needing the database running vs having the raw data on disk and being able to move on from any potential `neo4j` issue. This will help more readily isolate bugs → We don't have the data downloaded from `sgd`. → changing to `process_graph` since we can include label adding with the new data model. → Left off with trying to get indexing to work in `get` method
-
-- [ ] One class to implement dataset
-- [ ] There is some good stuff in [[torchcell.datasets.cell]] that we don't want to forget about like `extract_subraph`
-- [ ]
+- [x] `subset_graph` → "experiments are all you need to get started". → The reason we split up the two datasets is that we wanted one to be concerned mainly with just querying the data, and the next to be concerned with transforming the data into usable form using `torch` and `pyg`. This also separates the process from needing the database running vs having the raw data on disk and being able to move on from any potential `neo4j` issue. This will help more readily isolate bugs → We don't have the data downloaded from `sgd`. → changing to `process_graph` since we can include label adding with the new data model. → Left off with trying to get indexing to work in `get` method
+- 🔲 One class to implement dataset
+- 🔲 There is some good stuff in [[torchcell.datasets.cell]] that we don't want to forget about like `extract_subgraph`
 
 ## 2024.03.15
 
@@ -428,25 +360,14 @@ for perturbation in genotype.perturbations:
 - [x] #ramble From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion. → copying to future.
 - [x] Create query database for raw creating raw data. → Created with the intention of instantiating the database within the raw dir of the `CellDataset`
 - [x] Add query with media and temperature constraints. This could be done via multiple ways by either using the reference or by subsetting each item. [[Neo4j_fitness_query|dendron://torchcell/torchcell.neo4j_fitness_query]] → Did not explicitly use the reference for this.
-
-- [ ] Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should something more like `value` and `value_std`, this will make the downstream querying always consistent. #ramble We will also need a spot for p-values in the data model even though a p-value, is really a comparison metric between the null hypothesis meaning it is a relationship between the wild type or in our case reference. So maybe we also add something like `value_p_value`. These should all be designed with the plan of using them as tensors.
-- [ ] Now that we switched to using a file output we can and should log completion of different steps in the adapter.
-- [ ] [[torchcell.knowledge_graphs.create_scerevisiae_kg]] and [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] are the same and should be made one file that is configured with hydra.
-- [ ] Experimental reference index in the datsaets is getting split out into a list of indices due to multiprocessing. fix. [[torchcell.datasets.scerevisiae.costanzo2016]]
+- 🔲 Need to change phenotype in `biocypher/config/torchcell_schema_config.yaml` we currently have `fitness` and `fitness_std`. It should something more like `value` and `value_std`, this will make the downstream querying always consistent. #ramble We will also need a spot for p-values in the data model even though a p-value, is really a comparison metric between the null hypothesis meaning it is a relationship between the wild type or in our case reference. So maybe we also add something like `value_p_value`. These should all be designed with the plan of using them as tensors.
+- 🔲 Now that we switched to using a file output we can and should log completion of different steps in the adapter.
+- 🔲 [[torchcell.knowledge_graphs.create_scerevisiae_kg]] and [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]] are the same and should be made one file that is configured with hydra.
+- 🔲 Experimental reference index in the datasets is getting split out into a list of indices due to multiprocessing. fix. [[torchcell.datasets.scerevisiae.costanzo2016]]
 
 ## 2024.03.13
 
-🎉 We have some minor cause for celebration, first full database import 🎉
-
-```bash
-IMPORT DONE in 7m 32s 617ms. 
-Imported:
-  49722079 nodes
-  107306004 relationships
-  249192120 properties
-Peak memory usage: 1.554GiB
-```
-
+- [x] Database build → 🎉 We have some minor cause for celebration, first full database import 🎉 [[2024.05.14 - Build Summary|dendron://torchcell/database.docker.builds.2024.03.13#20240514---build-summary]]
 - [x] #ramble considering what to do since troubleshooting querying on the local build will be the most time efficient, yet we are struggling on docker to use all cpus. Maybe we should try a simple test to see if we can utilize all cpus.
 - [x] Fix docker build issue. → ![[2024-03-13 11:35 - Troubleshooting|dendron://torchcell/database.docker.builds.2024.03.13#2024-03-13-1135---troubleshooting]] → we added `docker --cpus 10` but this didn't seem to help. → trying to repull image to avoid any kind of caching. → ⌛️ turns out we just had to wait a bit for the completion of the run, were we end up seeing a lot more cpu usage. It is strange that there is much more usage on local but we can move on for now
 - [x] Log the `biocypher-dir` with the bash script in wandb, this will indicate which dir to find the bash script for rebuilding the db if necessary. → done in both scripts, see tommorow for combining scripst
@@ -498,15 +419,15 @@ Peak memory usage: 1.554GiB
 - [x] `Wandb` log database build → created config `torchcell/knowledge_graphs/conf/kg_small.yaml`
 - [x] Run local test → [local wandb test](https://wandb.ai/zhao-group/tcdb/runs/qhfaujdq?nw=nwusermjvolk3). Things work find
 - [x] Build `DmfCostanzo2016` locally
-- [ ] Run large build `delta` → failed, need yamls to be added to package.
-- [ ] Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
-- [ ] Create `Dmf` dataset and freeze
-- [ ] Create `Tmf` dataset and freeze
+- 🔲 Run large build `delta` → failed, need yamls to be added to package.
+- 🔲 Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
+- 🔲 Create `Dmf` dataset and freeze
+- 🔲 Create `Tmf` dataset and freeze
 
 ## 2024.03.07
 
 - [x] `TC_3133452` taking way to long. Something like 100 hr projected finish time on `dmf`. `io_workers = math.ceil(0.5 * num_workers)`. → Adjusting parameters using `io_workers = math.ceil(0.2 * num_workers)` → It appears that the errors were occuring just in the writing of the original dataset. Should probably do this locally as the bottleneck is writing IO on `Delta` and this writing is not optimized batched.
-- [ ] Globus transfer of 3133452 output. This file is like 13 MB. We should likely do less logging.
+- 🔲 Globus transfer of 3133452 output. This file is like 13 MB. We should likely do less logging.
 
 ## 2024.03.06
 
@@ -518,9 +439,9 @@ Peak memory usage: 1.554GiB
 - [x] Run local test of small build [[2024.03.06 - Start and use Neo4j Torchcell Database|dendron://torchcell/cypher-shell#20240306---start-and-use-neo4j-torchcell-database]]
 - [x] Run test on `Delta` of small build. → this is going wicked slow... maybe see if there is a difference using processors. Previously this is what I think worked on Delta. → I changed back to `processor` and recovered some speed . Using this for now... I'm not sure of the logic
 - [x] Run full database build. → Launched full build on delta even though still using this file [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
-- [ ] Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
-- [ ] Create `Dmf` dataset and freeze
-- [ ] Create `Tmf` dataset and freeze
+- 🔲 Implement `NeoDataset`, use the data schema to generate 2-3 common indices.
+- 🔲 Create `Dmf` dataset and freeze
+- 🔲 Create `Tmf` dataset and freeze
 
 ## 2024.03.05
 
@@ -554,43 +475,27 @@ Peak memory usage: 1.554GiB
 
 ## 2024.02.29
 
-- [ ] Check node write speed on `delta`. → Ran into error when trying to update packages to most recent main commit. [[Apptainer|dendron://torchcell/database.apptainer]]
-- [ ] We have multiple `.bashrc` that are competing with apptainer and the base env on delta... fix this
+- 🔲 Check node write speed on `delta`. → Ran into error when trying to update packages to most recent main commit. [[Apptainer|dendron://torchcell/database.apptainer]]
+- 🔲 We have multiple `.bashrc` that are competing with apptainer and the base env on delta... fix this → [[user.mjvolk3.torchcell.tasks.future#future]]
 
 ## 2024.02.28
 
-What is going on here ? what could the following text mean?
-
-[x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
-The text is describing a programming task or update involving the modification of a function named `_get_experiment_nodes` in a software component referred to as `SmfCostanzo2016Adapter`.
-
-The purpose of this modification is to enable the function to utilize a data loader that incorporates a chunking technique borrowed from another component named `DmfCostanzo2016Adapter`. This adjustment allows for better management of resources when the function is executed. Specifically, it makes it possible to specify and control the number of worker processes allocated for input/output operations (IO) and the number allocated for multiprocessing tasks separately. Additionally, by using chunking to handle data in smaller, more manageable pieces, the update aims to reduce the memory overhead associated with processing large datasets at once.
-
+- [x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → [[2024.02.28 - Database Chunking Method|dendron://torchcell/database.chunking#20240228---database-chunking-method]]
 - [x] Rewrite `SmfCostanzo2016Adapter` `_get_experiment_nodes` to use the data loader with chunking from `DmfCostanzo2016Adapter`. → Now we can control the number of workers dedicated to IO and the number dedicated to multiprocessing within the function. This chunking method also reduces memory overhead by controlling chunk size.
 - [x] Remove index from experiment nodes because it will likely get jumbled anyway. → can possibly recover this or find index later through lmdb. sha in key value possibly.
 - [x] Abstract the chunking, and data loading logic for nodes in `SmfCostanzo2016Adapter`. → This is general enough where it should be reusable for other classes. Ideally this will tie directly in with the data models so we can reuse across all datasets.
-
-- [ ] Check node write speed on `delta`.
-
-- [ ] Abstract the chunking, and data loading logic for edges in `SmfCostanzo2016Adapter`.
-
-- [ ] change `data.reference.reference_environment` to `data.reference.environment`
-
-- [ ] Local
-
-- [ ] Rewrite `SmfCostanzo2016Adapter` to use data loader on all `getters`.
-- [ ] Rewrite `DmfCostanzo2016Adapter` to use data loader on all `getters`. This will be the ultimate test to see if the speed is up to snuff.
-
-- [ ] With chunking I forgot that we can no longer deal with deduplication which voids old tests. Not sure If we can somehow rework this in. 🧠 brainstorm a bit.
-
-- [ ] Test `SmfCostanzo2016Adapter` times to write data on `Delta`. Do this from no dataset so we can also squash the confused print statement that gives us the bash path.
-
-- [ ] Yield in `DmfCostanzo2016Adapter` chunking.
-- [ ] Dataset index for lmdb
-
-- [ ] Clean up tasks.
-- [ ] Docker environment variables.
-- [ ] Logging to the slurm out file.
+- 🔲 Check node write speed on `delta`.
+- 🔲 Abstract the chunking, and data loading logic for edges in `SmfCostanzo2016Adapter`.
+- 🔲 change `data.reference.reference_environment` to `data.reference.environment`
+- 🔲 Rewrite `SmfCostanzo2016Adapter` to use data loader on all `getters`.
+- 🔲 Rewrite `DmfCostanzo2016Adapter` to use data loader on all `getters`. This will be the ultimate test to see if the speed is up to snuff.
+- 🔲 With chunking I forgot that we can no longer deal with deduplication which voids old tests. Not sure If we can somehow rework this in. 🧠 brainstorm a bit.
+- 🔲 Test `SmfCostanzo2016Adapter` times to write data on `Delta`. Do this from no dataset so we can also squash the confused print statement that gives us the bash path.
+- 🔲 Yield in `DmfCostanzo2016Adapter` chunking.
+- 🔲 Dataset index for lmdb
+- 🔲 Clean up tasks.
+- 🔲 Docker environment variables.
+- 🔲 Logging to the slurm out file.
 
 ## 2024.02.27
 
@@ -602,49 +507,23 @@ The purpose of this modification is to enable the function to utilize a data loa
 ## 2024.02.26
 
 - [x] With starting database and maybe not stopping it then the database cannot remain open in future sessions. Not sure what causes this... Rebuilding image to fix. → This isn't so bad the rebuild takes around 5 mins. → Still doesn't work, issues is due to `databases/store_lock` created upon interrupted process [store_lock community neo4j](https://community.neo4j.com/t/var-lib-neo4j-data-databases-graph-db-store-lock-please-ensure-no-other-process-is-using-this-database-and-that-the-directory-is-writable/16863/3) → removing doesn't seem to fix things. → After restarting everything it seems to work so my suspicion is that there was some process that needed to be terminated.
-
-- [x] Try using `.env` for docker file configuration, just add
-
-```yaml
-NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-NEO4J_AUTH=neo4j/torchcell
-```
-
-```bash
-docker run --env-file /path/to/your/.env your_image
-```
-
-→ This seems to work ok. I verified that it was copied over to `cypher-shell` for apptainer. still need to check for docker.
-
+- [x] Try using `.env` for docker file configuration → [[Passing Environment Variables|dendron://torchcell/database.docker#passing-environment-variables]]
 - [x] **remote_build** of all fitness data with `1e5` on dmf → After 3 hr run I killed the job. There is insufficient logging. For some reason there is no output from the python script to the slurm out file.
 - [x] **remote_build** database overnight with `1e5` on dmf → Add slurm environment variables getter function for number of workers.
-
-- [ ] Verify that we were able to read data off of the database on `delta`. Reread notes.
-- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
-- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
+- 🔲 Verify that we were able to read data off of the database on `delta`. Reread notes.
+- 🔲 Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
+- 🔲 Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
 
 ## 2024.02.21
 
 - [x] Try to rebuild image with apptainer, then make sure all bind mounts are exact matches and try to start neo4j. If this does not work, build official Neo4j image and make sure we can start this database. → [[2024.02.21 - Building tc-neo4j latest|dendron://torchcell/database.apptainer#20240221---building-tc-neo4j-latest]] → seems just after rebuild it works fine. → [[Fresh Apptainer Build|dendron://torchcell/database.apptainer#fresh-apptainer-build]]
 - [x] Compare tc-neo4j with `neo4j_4.4.30-enterprise` [[2024.02.21 - Comparison between tc-neo4j build and neo4j_4.4.30-enterprise official image|dendron://torchcell/database.apptainer#20240221---comparison-between-tc-neo4j-build-and-neo4j_4430-enterprise-official-image]]
 - [x] Remove external `jdk-11` from `delta`. → Don't need now that inside image.
-
-- [ ] With starting database and maybe not stopping it then the database cannot remain open in future sessions. Not sure what causes this... Rebuilding image to fix. → This isn't so bad the rebuild takes around 5 mins. → Still doesn't work, issues is due to `databases/store_lock` created upon interrupted process [store_lock community neo4j](https://community.neo4j.com/t/var-lib-neo4j-data-databases-graph-db-store-lock-please-ensure-no-other-process-is-using-this-database-and-that-the-directory-is-writable/16863/3) → removing doesn't seem to fix things.
-
-- [ ] Try using `.env` for docker file configuration, just add
-
-```yaml
-NEO4J_ACCEPT_LICENSE_AGREEMENT=yes
-NEO4J_AUTH=neo4j/torchcell
-```
-
-```bash
-docker run --env-file /path/to/your/.env your_image
-```
-
-- [ ] Verify that we were able to read data off of the database on `delta`. Reread notes.
-- [ ] Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
-- [ ] Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
+- 🔲 With starting database and maybe not stopping it then the database cannot remain open in future sessions. Not sure what causes this... Rebuilding image to fix. → This isn't so bad the rebuild takes around 5 mins. → Still doesn't work, issues is due to `databases/store_lock` created upon interrupted process [store_lock community neo4j](https://community.neo4j.com/t/var-lib-neo4j-data-databases-graph-db-store-lock-please-ensure-no-other-process-is-using-this-database-and-that-the-directory-is-writable/16863/3) → removing doesn't seem to fix things.
+- 🔲 Try using `.env` for docker file configuration, just add
+- 🔲 Verify that we were able to read data off of the database on `delta`. Reread notes.
+- 🔲 Need way to dynamically set `dbms.memory.heap.max_size=10G` and `dbms.threads.worker_count`. It seems that the `heap.max_size` is already set automatically which is recommended. → in debug log heap size is actually recommended to be explicitly set.
+- 🔲 Looks like I accidentally deleted the `data/scerevisiae` dir. Should be on delta.
 
 ## 2024.02.20
 
@@ -676,35 +555,17 @@ docker run --env-file /path/to/your/.env your_image
 - [x] **small build** - Document using `cypher-shell` from within the tc-neo4j container. → [[Using cypher-shell to Access torchcell Database|dendron://torchcell/database.docker#using-cypher-shell-to-access-torchcell-database]]
 - [x] **small build** try small bulk import. → Did with subset of `DmfCostanzo2016` and this works well. We just have a ton of debug duplicates messages since we are importing multiple datasets. The container only runs with 4 cpus. I believe I set this in docker desktop settings, but a bit unsure.
 - [x] **small build** document bulk import errors. → [[Docker Common Build Error - Invalid value for option '--nodes'|dendron://torchcell/database.docker#docker-common-build-error---invalid-value-for-option---nodes]]
-
-- [ ] **docker volumes** - map local `"data/torchcell"` to docker `"data/torchcell"`→ Adding torchcell environment environment variables to clean things up some. → Added `BIOCYPHER_OUT_PATH` since the bash script is specific to the `.env`
-
-```bash
-pip install git+https://github.com/Mjvolk3/torchcell.git@main
-```
-
-→ `"docker-entrypoint.sh"` runs every time a docker container spins up, but the docker image needs to rebuild to use this entrypoint... might want to have two separate docker files, one for latest stable that downloads the latest stable build, and the other for latest commit that pip installs from source. This second one will be most useful to me immediately. I will try another build overnight with the pip install. → Added the install to the entrypoint.
-
-- [ ] Path issue in my biocypher overwrite... maybe try to git pull my version to test.
-
-- [ ] **query index** - After building lmdb, also create experiment and graph label indices.
-
-- [ ] **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
-
-- [ ] **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
-- [ ] **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentially for now.
-
-- [ ] **small build** - Check other fitness adapters.
-
-- [ ] **remote build** apptainer build image
-- [ ] **remote build** try small db bulk import
-- [ ] **remote build** try db query
-
-- [ ] **small build** - check nan import case.
-
-- [ ] **small build**
-- [ ] **local lmdb**
-- [ ] **remote build**
+- [x] **docker volumes** - map local `"data/torchcell"` to docker `"data/torchcell"`→ Adding torchcell environment environment variables to clean things up some. → Added `BIOCYPHER_OUT_PATH` since the bash script is specific to the `.env` → `pip install git+https://github.com/Mjvolk3/torchcell.git@main` → `"docker-entrypoint.sh"` runs every time a docker container spins up, but the docker image needs to rebuild to use this entrypoint... might want to have two separate docker files, one for latest stable that downloads the latest stable build, and the other for latest commit that pip installs from source. This second one will be most useful to me immediately. I will try another build overnight with the pip install. → Added the install to the entrypoint.
+- 🔲 Path issue in my biocypher overwrite... maybe try to git pull my version to test.
+- 🔲 **query index** - After building lmdb, also create experiment and graph label indices.
+- 🔲 **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
+- 🔲 **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
+- 🔲 **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentially for now.
+- 🔲 **small build** - Check other fitness adapters.
+- 🔲 **remote build** apptainer build image
+- 🔲 **remote build** try small db bulk import
+- 🔲 **remote build** try db query
+- 🔲 **small build** - check nan import case.
 
 ## 2024.02.14
 
@@ -717,18 +578,15 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [x] **small build** Fix issue with `SmfCostanzo2016`, cannot pickle Environment. → Rewrote `get_nodes` to find error now cannot download file. waiting... → Very strange that issue is not showing up anymore. Keep eyes 👀 out .
 - [x] Run [[test_no_duplicate_warnings|dendron://torchcell/tests.torchcell.adapters.test_costanzo2016_adapter#test_no_duplicate_warnings]] with all pass.
 - [x] **small build** try local query → `cypher-shell` works
-
-- [ ] **small build** - currently only the `SmfKuzmin2018` was being used for testing. Check other fitness adapters.
-
-- [ ] **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
-
-- [ ] **small build** try small bulk import.
-- [ ] **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
-- [ ] **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentialy for now.
-- [ ] **remote build** apptainer build image
-- [ ] **remote build** try small db bulk import
-- [ ] **remote build** try db query
-- [ ] **small build** - check nan import case.
+- 🔲 **small build** - currently only the `SmfKuzmin2018` was being used for testing. Check other fitness adapters.
+- 🔲 **small build** fix issue with neo4j desktop import on `SmfKuzmin2018` issue data.. Forget what the actual error is. Investigated report and found `PhenotypeMemberOf` had couldn't make link due to missing phenotype node. The `reference_phenotype` was missing. Added for loop block for `experiment_reference_index` to add data to other other than `SmfKuzmin2018`.
+- 🔲 **small build** try small bulk import.
+- 🔲 **small build** We should have three workflows... bash script, VsCode tasks. One is `tcdb_build` always copying script from local since this should be fast, `tcdb_build_image_fresh` which rebuilds the image, pulls the image then runs build., and `tcdb_build_stable` which uses the the latest pypi package for building. This give a nice checkpoint for different datasets.
+- 🔲 **local lmdb** query should be used to write an `lmdb` to raw along with some txt description possibly. This separates the query raw `lmdb` key-value store writing nicely with the `CellDataset`. I want to keep index creation on the side of the query. There are some that are dead obvious. Like label in phenotype, and experiment origin. Additional indices can always be created later, but I think these two are essentialy for now.
+- 🔲 **remote build** apptainer build image
+- 🔲 **remote build** try small db bulk import
+- 🔲 **remote build** try db query
+- 🔲 **small build** - check nan import case.
 
 ## 2024.02.13
 
@@ -784,18 +642,13 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 ## 2024.02.06
 
 - [x] Setup **small build** with these 5 datasets on local neo4j-4.4.30. Not sure if there is a distinction between this and community version. → Looks like we need to rebuild the image for both `amd` and `arm` [[2024.02.08 - Troubleshooting Docker Build Local|dendron://torchcell/database.docker#20240208---troubleshooting-docker-build-local]]. We are avoiding using docker compose because this prevents us from transferring this workflow easily to Delta slurm cluster. → Considering github actions as a simpler solution [[GitHub Action Docker Build and Push Template|dendron://torchcell/database.docker#github-action-docker-build-and-push-template]] → We need to save time building images... Right now it takes nearly 45 min to both build and push image 🐢 [[Docker Update TorchCell Source Without Image Rebuild|dendron://torchcell/database.docker#docker-update-torchcell-source-without-image-rebuild]] → Nearly the entire time is dominated by the python environment. → 😲😑🫠[[Docker Image and Container Life Cycle|dendron://torchcell/database.docker#docker-image-and-container-life-cycle]] → things working now with checking correct container and updates to allow executable permission. Running container build overnight.
-
-- [ ] Setup **remote build**, try to get to full size datasets to get a time estimate of the entire build.
-- [ ] Test **local query** to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
-- [ ] Run query locally and write **local lmdb**.
-- [ ] Write class for **`get_indices`** on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
-- [ ] **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]] →
-- [ ] Double **check adapters** for Fitness data.
-- [ ] **remote build**
-
-- [ ] Save list of `sha256` duplicates somewhere. Can query db based on these and construct an lmdb to investigate or do additional checks on query.
-
-- I have a suspicion that the that the docker build importing `None` doesn't work with the biocypher provided docker compose because of the mismatched neo4j version. Unsure..
+- 🔲 Setup **remote build**, try to get to full size datasets to get a time estimate of the entire build.
+- 🔲 Test **local query** to get `Dmf` data for `DCell` benchmark. Take only deletions for benchmark dataset. Verify with `Dcell` publication.
+- 🔲 Run query locally and write **local lmdb**.
+- 🔲 Write class for **`get_indices`** on lmdb and write indices to `processed`. lmdb should be a cell dataset and should be written to `/scratch`. Indices for fitness dataset can include: `deletion_number`, `experiment_name`, `p_value_threshold` (check supplementary for this one.)  
+- 🔲 **Document DB** steps for neo4j db continue on [[Docker|dendron://torchcell/database.docker]] → [[Docker|dendron://torchcell/database.docker]], [[Delta Build Database from Fresh|dendron://torchcell/database.apptainer#delta-build-database-from-fresh]] →
+- 🔲 Double **check adapters** for Fitness data.
+- 🔲 Save list of `sha256` duplicates somewhere. Can query db based on these and construct an lmdb to investigate or do additional checks on query.
 
 ## 2024.02.05
 
@@ -881,15 +734,8 @@ pip install git+https://github.com/Mjvolk3/torchcell.git@main
 - [x] Check how we can get the dir for bulk import. → `bc_output_directory:
 '/Users/michaelvolk/Documents/projects/torchcell/biocypher-out/20240129211021'` then `"neo4j-admin-import-call.sh"` always sits in this dir. We can just cd to the neo4j terminal and and run this command after returning this information from the writer.
 - [x] Try bulk import of `DmfCostanzo2016` into Neo4j database. → Import took 4m 19s but there are reported bad entries
-- [x] Investigate bad entries. → I think these just need to be corrected after reading though the adapter again.
-
-```bash
-cat import.report
-f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7 (global id space)-[PhenotypeMemberOf]->29d4c34a4008c66eb05e3a34e7366cd05e8fb3ca5b58fd7dae4a215bb201f3ec (global id space) referring to missing node f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7
-f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7 (global id space)-[PhenotypeMemberOf]->73ca7d4694085d74c54e04db8956f128262c0ef4cf2bbe46775b97cb170a7813 (global id space) referring to missing node f4a674caf85adc0800397536db8ed9d7a941e70d8ecf86a3843c25f28516b4a7
-```
-
-- [x] Check number of nodes on `DmfCostanso2016` import and number of edges → `Nodes: 27,507,626, Edges: 124,244,54`0
+- [x] Investigate bad entries. → I think these just need to be corrected after reading though the adapter again. → [[2024.03.18 - Proper Indentation|dendron://torchcell/database.common-issues#20240318---proper-indentation]] I think this was the related issue.
+- [x] Check number of nodes on `DmfCostanso2016` import and number of edges → `Nodes: 27,507,626, Edges: 124,244,54`
 
 ## 2024.01.28
 
@@ -918,13 +764,12 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Update `add_frontmatter` because it was replacing the `.pypy` with `py`. This is because I previously thought no other `.py` would show. → Now we just replace the file extension. → split out file extension for this.
 - [x] Test speed difference on `Kuzmin2018`, `mp` vs. `pypy` → `pypy` time: 15m 30s , `mp` time 40s → Yikes. We can see why this is a major issue. Lets test regular python with generators → `regular` time 7m... → Pretty awful news considering my last few hours of effort...😡
 - [x] Write `Costanzo2016` `pypy_adapter`
-- [ ] Property `experiment_reference_index` should be run in `process`
-- [ ] Look into alternatives. Chunking the dataset... this will cause issues with the reference index... Would need to consider chunks of 1 million. Then each Chunked dataset would get a new reference index for that chunk.
-- [ ] Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hacks.
-
-- [ ] pypy run `Costanzo2016`
-- [ ] Run a `create_graph` using pypy
-- [ ] Write a `requirements.txt` to be able to easily recreate the pypy env
+- 🔲 Property `experiment_reference_index` should be run in `process`
+- 🔲 Look into alternatives. Chunking the dataset... this will cause issues with the reference index... Would need to consider chunks of 1 million. Then each Chunked dataset would get a new reference index for that chunk.
+- 🔲 Hybrid `mp` for nodes and with yield for edges for memory purposes... gees 🌊. I hate the hacks.
+- 🔲 pypy run `Costanzo2016`
+- 🔲 Run a `create_graph` using pypy
+- 🔲 Write a `requirements.txt` to be able to easily recreate the pypy env
 
 ## 2024.01.23
 
@@ -935,20 +780,20 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Correct dataset names in adapters → Fixed names. Could take class name for this.
 - [x] Test small [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] works.
 - [x] Look into hosting Neo4j → Should be possible. Have slurm script start db, python script to connect to db via local host. Might have to change some of the configs to connect. Run python script to build the db. close db. New slurm script for query and lmdb db construction.
-- [ ] Run db build overnight. I am running with few workers since this could lead to memory overhead.
-- [ ] Look at `_get_perturbation` using some index probably which I don't think is necessary.
+- 🔲 Run db build overnight. I am running with few workers since this could lead to memory overhead.
+- 🔲 Look at `_get_perturbation` using some index probably which I don't think is necessary.
 
 ## 2024.01.22
 
 - [x] Database Pipeline figure ![](./assets/drawio/torchcell-neo4j-databae-pipeline.drawio.png)
-- [ ] Reduce repetitive code for fitness datasets. After query for @Junyu-Chen, first remove comments from `Kuzmin2018` and copy clipboard compare. Maybe need a experiment type parser. Whether or not to do this needs some careful consideration. It'll be regretted either way.
+- 🔲 Reduce repetitive code for fitness datasets. After query for @Junyu-Chen, first remove comments from `Kuzmin2018` and copy clipboard compare. Maybe need a experiment type parser. Whether or not to do this needs some careful consideration. It'll be regretted either way.
 
 ## 2024.01.21
 
 - [x] Parallelize the other adapters. At least `TmfKuzmin2018` and `DmfKuzmin2018`.
-- [ ] Reorganize [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
-- [ ] Run [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
-- [ ] Remove `preferred_id` in `_get_perturbation`
+- 🔲 Reorganize [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
+- 🔲 Run [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]]
+- 🔲 Remove `preferred_id` in `_get_perturbation`
 
 ## 2024.01.20
 
@@ -961,55 +806,20 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 ## 2024.01.19
 
 - [x] Markdown all in one issue... → extension still makes things way to slow, only using linter.
-- [ ] Plans for db and class update .... add note
+- 🔲 Plans for db and class update .... add note
 - [x] Review `neo4j` commands to get db in. → I am making a mistake not using docker. Without docker and cannot do the smart querying.
 - [x] Create scripts for iteratively adding to database. → Cannot doing this, we need to update every time there is a new db. We rely on remove duplicates from multiple datasets.
 - [x] Write src build instructions [[Source Build Instructions|dendron://torchcell/src.build#source-build-instructions]]
 - [x] Rebuild `src` so db has the correct functions.
-- [ ] Get ChatGSE working → Trying to build small db again. → [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] created graph. → [[SmfKuzmin2018 Docker Import Issues with None and Special Characters|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#smfkuzmin2018-docker-import-issues-with-none-and-special-characters]] → There also seems to be something strange with the order in which I run `docker compose`, I reran once after just resetting everything and got a different error. Have to be careful to check that the proper version of `torchcell` is being used. I also think it helps to `--force-recreate` to recreate containers even if configuration and image haven't changed... maybe it is changing somewhere? I'm not sure. Shouldn't really need this flag. To avoid the versioning issue it is best to just set it in `env/requirements-tc-graph.txt`.
+- 🔲 Get ChatGSE working → Trying to build small db again. → [[Create_scerevisiae_kg|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg]] created graph. → [[SmfKuzmin2018 Docker Import Issues with None and Special Characters|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#smfkuzmin2018-docker-import-issues-with-none-and-special-characters]] → There also seems to be something strange with the order in which I run `docker compose`, I reran once after just resetting everything and got a different error. Have to be careful to check that the proper version of `torchcell` is being used. I also think it helps to `--force-recreate` to recreate containers even if configuration and image haven't changed... maybe it is changing somewhere? I'm not sure. Shouldn't really need this flag. To avoid the versioning issue it is best to just set it in `env/requirements-tc-graph.txt`.
 - [x] torchcell version add to bumpver in toml for `env/requirements-tc-graph.txt`
 - [x] Message @Sebastian-Lobentanzer about `None` getting turned into `nan` when using Docker... For now giving up on Docker.
-- [ ] Try to build db locally.
-
-- [ ] Read [testmon github actions](https://testmon.org/blog/better-github-actions-caching/)
-- [ ] Try [testmon library](https://testmon.org/)
-- [ ] @Sebastian-Lobentanzer informed me that we could set the config in the class instantiation, not the config. Change the location of config and corresponding paths.
-- [ ] Change `reference_genome` to `reference.genome`
-- [ ] Take the
-
-### Features For the User
-
-I want to be able to give @Junyu-Chen the following protocol which should be easy.
-
-1. `python -m pip install torchcell==0.0.?`. I recommend you used a virtual environment for this.
-2. Unzip the data I sent you and put it in any `data/*` folder your have.
-3. Import the dataset
-4. Load dataset
-5. Iterate in dataset, and access data
-
-```python
-from torchcell.dataset import Yeast9FitnessDataset
-yeast9_fitness_dataset = Yeast9FitnessDataset(root:str="data/*")
-for data in yeast9_fitness_dataset:
-  print(data['experiment'].genotype)
-  print(data['experiment'].phenotype)
-  print(data['reference'])
-```
-
-### Features I want
-
-1. `Yeast9FitnessDataset` calls query in the lmdb.
-2. Basic indexing features. For instance it should hold an index for each dataset that a given data point comes from. Pydantic class for index using pydantic to pass standardized data. Do `isinstance` check on on say genotype, environment, or phenotype, then could do another layer of `isinstance.`
-3. `indices` property that returns a list of index objects. These index objects need to be general enough to apply to a lot different types of data. They can be based off the current pydantic data model.
-4. This will be the zipped up process, preprocess, and raw dirs. So it will contain the lmdb. preprocess can capture the index or indices property.
-
-```python
-class BaseCellDataset(Dataset):
-  pass
-
-class Yeast9FitnessDataset(BaseCellDataset):
-  pass
-```
+- 🔲 Try to build db locally.
+- 🔲 Read [testmon github actions](https://testmon.org/blog/better-github-actions-caching/)
+- 🔲 Try [testmon library](https://testmon.org/)
+- 🔲 @Sebastian-Lobentanzer informed me that we could set the config in the class instantiation, not the config. Change the location of config and corresponding paths.
+- 🔲 Change `reference_genome` to `reference.genome`
+- 🔲 Take the
 
 ## 2024.01.18
 
@@ -1086,9 +896,9 @@ class Yeast9FitnessDataset(BaseCellDataset):
 - [x] Compute the means on `Dmf` for different temperatures.
 - [x] Add a clean up dir method after the download happens to remove superfluous files
 - 🔲 Convert the `Smf` class to look like the `Dmf` class. → `Array allele name` in `Dmf` has a `-supp1` suffix that seems → `-supp1` is for strains that have a suppression mutation. We should drop these because we have no way of tracking them. → I've hit on some troubling issues in harmonizing the data. I had an inkling before, but now it is obvious that sometimes you need the gestalt before you process individual datasets. Now that I see how all of the mutant fitness data must be processed to come together in the db, it is obvious that I wouldn't have been able to arrive at such a solution by atomistically processing each dataset on its own.
-- [ ] Correct the `Smf` adapter
-- [ ] Write `Dmf` adapter
-- [ ] Run query on Yeast9 genes and save json `(list[genes], fitness)`
+- 🔲 Correct the `Smf` adapter
+- 🔲 Write `Dmf` adapter
+- 🔲 Run query on Yeast9 genes and save json `(list[genes], fitness)`
 
 ## 2024.01.08
 
@@ -1133,22 +943,13 @@ class Yeast9FitnessDataset(BaseCellDataset):
 - [x] Write `FitnessExperimentReference` for `FitnessExperiment` to get around the issue of only recovering the base data upon deserialization. This was dropping the `fitness` and `fitness_std`. I think as a rule of thumb we should probably try to limit typing to single types if possible. → I am puzzled in terms of where the reference state should go. I like it with data instances because at the time of modeling, it is available. In general reference states are typically singular with any given experiment, in some cases there could be a few. For memory they can be kept separate and also in the context of graphs it makes more sense if they are kept together. This way we can link to references and use they compatibility to do selection.
 - [x] Separate out the reference from the data itself. → my current solution to this is to have the index as a boolean array, paired with the reference data. I made some pydantic models for this. This will be very useful data for creating nodes within biocypher. The 1st node, publication or study, then 2nd we have reference states (study), and data (study).
 - [x] Add publication, reference states, with boolean indices as data. Add studies. → Create an outline of how we can do this in [[notes/assets/notability/notability.pdf]] → Didn't add the boolean indices as data as these should primarily be used for link creation between reference and data. Waiting on publication, which should be linked to dataset.
-- [x] Create the necessary relations with biolink predicate, likely in information entity. These include concept links and instance links. → had to change change from the predicates to ther relationship types. These are not capable of being visualized.
-Concept links:
-  - `experiment` - `member_of` -> `dataset`  
-  - `dataset` - `has_member` -> `experiment`
-  - `experiment reference` - `member_of` -> `dataset`
-  - `dataset` - `has_member` -> `experiment reference`
-Instance links:
-  - `experiment` - `associated_with` ->  `experiment reference`
-
-- [ ] Children of study into nodes and information content predicates to link them.
-- [ ] ChatGSE to get query for extracting only nodes that are temperature 30 and gene deletions.
-- [ ] Check that pydantic model names are being propagated as properties so they can be used as selection. Maybe we call this `TcType`.
-
-- [ ] Add immediate children of experiment to graph.
-- [ ] Create a ChatGSE demonstration.
-- [ ] Add Costanzo doubles to graph. Start with small subset.
+- [x] Create the necessary relations with biolink predicate, likely in information entity. These include concept links and instance links. → had to change change from the predicates to their relationship types. These are not capable of being visualized. → [[2023.12.16 - Concept links|dendron://torchcell/database.biolink#20231216---concept-links]]
+- 🔲 Children of study into nodes and information content predicates to link them.
+- 🔲 ChatGSE to get query for extracting only nodes that are temperature 30 and gene deletions.
+- 🔲 Check that pydantic model names are being propagated as properties so they can be used as selection. Maybe we call this `TcType`.
+- 🔲 Add immediate children of experiment to graph.
+- 🔲 Create a ChatGSE demonstration.
+- 🔲 Add Costanzo doubles to graph. Start with small subset.
 
 ## 2023.12.15
 
@@ -1178,12 +979,7 @@ Instance links:
 
 ## 2023.12.08
 
-- [x] Run biocypher tutorial
-
-"This allows maintenance of property lists for many classes at once. If the child class has properties already, they will be kept (if they are not present in the parent class) or replaced by the parent class properties (if they are present)."
-
-- Confusing, how does inheritance work?
-  <https://biocypher.org/tutorial.html#section-3-handling-properties>
+- [x] Run biocypher tutorial → [[Tutorial Queries|dendron://torchcell/biocypher.tutorial-queries]]
 
 ## 2023.12.06
 
@@ -1191,33 +987,29 @@ Instance links:
 - [x] Pydantic schemas → ⛔️ [[Strategy For Writing Pydantic Schema|dendron://torchcell/torchcell.graph.validation.locus_related.locus#strategy-for-writing-pydantic-schema]]
 - [x] You cannot inherit both from `owlready2` and pydantic models.
 - [x] Investigate serialization and deserialization of data → This works well and give a robust way for reconstructing data in python.
-- [ ] Add media components
-- [ ] Does high level meta data belong to ontology?
-
-- [ ] Add `Costanzo` singles to neo4j
-- [ ] Add `Costanzo` double to neo4j
-- [ ] Add morphology to neo4j
-- [ ] Check ontology vs SGD ontology GAF.
-
-- Make sure on `Delta` that lightly is uninstalled. It had dependencies on an earlier version of pydantic.
+- 🔲 Add media components
+- 🔲 Does high level meta data belong to ontology?
+- 🔲 Add `Costanzo` singles to neo4j
+- 🔲 Add `Costanzo` double to neo4j
+- 🔲 Add morphology to neo4j
+- 🔲 Check ontology vs SGD ontology GAF.
+- 🔲 Make sure on `Delta` that lightning is uninstalled. It had dependencies on an earlier version of pydantic.
 
 ## 2023.12.05
 
 - [x] Figure out linking to ontology with toy data → A lot of care will have to go into this. There are a thousand different ways to flay this cat 🐈‍⬛. I think the most important thing is to remember that the fundamental data structure is the data instance, which will be the object of all queries for the foreseeable future. Edges from data instance on to ontology are really to assist in this query.
-- [x] Process `Costanzo` singles with data validation that matches ontology. Then output list of experiments → We should not include DAmP alleles or ts alleles are they are not true deletions. DAmP is a KanMX at the 3' UTR, and the ts alleles have mutations that make their protein product unstable at high temperatures. In both of these cases there is still some functional protein around. Not inclusing them for this.
-
-- [ ] Add `Costanzo` singles to neo4j
-- [ ] Add `Costanzo` double to neo4j
-- [ ] Add morphology to neo4j
-- [ ] Check ontology vs SGD ontology GAF.
-
-- [The localization and quantitation atlas of the yeast proteome](https://www.weizmann.ac.il/molgen/loqate/)
+- [x] Process `Costanzo` singles with data validation that matches ontology. Then output list of experiments → We should not include DAmP alleles or ts alleles are they are not true deletions. DAmP is a KanMX at the 3' UTR, and the ts alleles have mutations that make their protein product unstable at high temperatures. In both of these cases there is still some functional protein around. Not including them for this.
+- [x] [[Yeast Proteome Localization|dendron://torchcell/torchcell.datasets.yeast-proteome-localization]]
+- 🔲 Add `Costanzo` singles to neo4j
+- 🔲 Add `Costanzo` double to neo4j
+- 🔲 Add morphology to neo4j
+- 🔲 Check ontology vs SGD ontology GAF.
 
 ## 2023.12.04
 
 - [x] Revise ontology into only subclasses. → more works still needed
 - [x] Investigate why property keys don't delete → [Why don't property keys get deleted](https://neo4j.com/developer/kb/why-do-my-deleted-property-keys-appear/) Have to create a new DB for this. This shouldn't be an issue since we will only need to rebuild the DB once locally when things are stable.
-- [ ] Check ontology vs SGD ontology GAF.
+- 🔲 Check ontology vs SGD ontology GAF.
 
 ## 2023.12.02
 
@@ -1229,8 +1021,7 @@ Instance links:
 - [x] Convert `my_ontology.rdf` with `Robot` → Use docker image to run commands, this is easiest to make sure we have all the correct Java versioning. Docker desktop needs to be running for this.
 - [x] Try to get the ontology into `Neo4J` → We can get things via the browser. Also nice to use Bloom to view hierarchical representation of the graph.
 - [x] Delete all nodes and import ontology via python. This will likely take config then upload.
-- [ ] Make the modification to the ontology so environment is on the same level as phenotype and genotype.
-- [ ] Depending on this modification act...
+- 🔲 Make the modification to the ontology so environment is on the same level as phenotype and genotype.
 
 ## 2023.11.29
 
@@ -1275,22 +1066,21 @@ Instance links:
 
 ## 2023.11.17
 
-- [x] Correct [[./assets/drawio/Dcell.drawio.png]] → Corrected including subsystem representation.
+- [x] Correct ![](./assets/drawio/Dcell.drawio.png) → Corrected including subsystem representation.
 - [x] Fix [[torchcell.models.dcell]] the modules are not being passed correctly
-- [ ] Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts. Is this the same thing as `GAF`?
+- 🔲 Check the Yeast OBO for annotations. If it contains annotations check to see if they align with the `DCell` reported annotations counts. Is this the same thing as `GAF`?
 
 ## 2023.11.16
 
-- [x] Review GEARS paper [[./assets/drawio/GEARS.drawio.png]]
+- [x] Review GEARS paper ![](./assets/drawio/GEARS.drawio.png)
 
 ## 2023.11.14
 
 - [x] Switching plot font to default `DejaVu Sans` since this is platform agnotic.
 - [x] Train [experiments.costanzo_smd_dmf_dcell.dmf_dcell] on Delta. → Training both a fitness model an interaction model.
 - [x] Recording work with pronto [[torchcell.datasets.pronto_ontology]]
-- [ ] Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/torchcell.datasets.ontology]].
-
-- [ ] Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/torchcell.datasets.experiment]]
+- 🔲 Build an ontology that can be used from `smf` and `dmf` [[Ontology|dendron://torchcell/torchcell.datasets.ontology]].
+- 🔲 Combine `smf` and `dmf` into one dataset. Some work has already been done on this. [[Experiment|dendron://torchcell/torchcell.datasets.experiment]]
 
 ## 2023.11.13
 
@@ -1302,15 +1092,14 @@ Instance links:
 ## 2023.11.04
 
 - [x] Get the [[Cell|dendron://torchcell/torchcell.datasets.cell]] working since [[Graph|dendron://torchcell/torchcell.graph.graph]] was recently updated. It is now obvious that we need a well defined interface between `Graphs` and `CellDataset` need unit tests for these. I think we should probably use pydantic data validation. For instance I think that we need to ensure that any graphs specify a graph dictionary. I think this is a better option compared to the multigraph, because this allows us to process only individual graphs, and the current functions for conversion.
-- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
+- 🔲 Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
 
 ## 2023.11.03
 
 - [x] Run some example data through [[Dcell|dendron://torchcell/torchcell.models.dcell]]. This turned out to be much more involved than I previoulsy thought since we have to do so much data transformation prior to passing the data to the model. [[Model Implementation|dendron://torchcell/torchcell.models.dcell#model-implementation]]
-
-- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
-- [ ] Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
-- [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
+- 🔲 Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
+- 🔲 Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
+- 🔲 Trial bringing together DCell data for the `<6` gene in dataset criterion
 
 ## 2023.11.02
 
@@ -1329,37 +1118,29 @@ Instance links:
 - [x] Plot of `DCell` DAG without any isolted nodes, and before filtering and with super node → [[DCell DAG No Isolated Nodes No Filtering with Super Node|dendron://torchcell/torchcell.datasets.dcell#dcell-dag-no-isolated-nodes-no-filtering-with-super-node]]
 - [x] Allow for gene removal of annotation according to date with a date arg. → [[DCell Dataset GO Gene Annotations Time Cutoff|dendron://torchcell/torchcell.datasets.dcell#dcell-dataset-go-gene-annotations-time-cutoff]], added tests [[Test_graph|dendron://torchcell/tests.torchcell.graph.test_graph]]
 - [x] Check total number of ontology terms with no date args, and with date args. Look for date in `Dcell` paper. → Can only get a rough estimate based on commits and paper submission dates. Even with this we cannot get the number of GO terms to match properly.
-
-- [ ] Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
-- [ ] Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
-- [ ] Trial bringing together DCell data for the `<6` gene in dataset criterion
-
-- [ ] In any of the graphs Met, GO, Regulatory, Metabolic , PPI, GGI. What is the average degree. For the special graph graphs what is the average number of nodes perturbed. Plot histograms for these.
-
-- [ ] I previously thought that we removed all redundant edges by removing parents with no annotations. If the number of nodes is not the same, check for nodes whose parent node has the exact same gene annotations. I think we consider these nodes redundant. Double check.
-- [ ] Build DCell network takes `nx.DiGraph` as arg. Simulate some data
-
-- [ ] Build out DCell Regression task, experiment script, and configuration.
-- [ ] Run DCell locally
+- 🔲 Build out [[dataset.dcell|dendron://torchcell/torchcell.datasets.dcell]]
+- 🔲 Build out [[datamodules.dcell|dendron://torchcell/torchcell.datamodules.DCell]] data module. Test loading and a way to vary sampling frequency from different data.
+- 🔲 Trial bringing together DCell data for the `<6` gene in dataset criterion
+- 🔲 In any of the graphs Met, GO, Regulatory, Metabolic , PPI, GGI. What is the average degree. For the special graph graphs what is the average number of nodes perturbed. Plot histograms for these.
+- 🔲 I previously thought that we removed all redundant edges by removing parents with no annotations. If the number of nodes is not the same, check for nodes whose parent node has the exact same gene annotations. I think we consider these nodes redundant. Double check.
+- 🔲 Build DCell network takes `nx.DiGraph` as arg. Simulate some data
+- 🔲 Build out DCell Regression task, experiment script, and configuration.
+- 🔲 Run DCell locally
 
 ## 2023.10.23
 
 - [x] Explore metabolism → `/Users/michaelvolk/Documents/projects/yeast-GEM/torchcell_test.py`. This was done in another `yeast-GEM`. It shows that we can represent metabolism with a heterogenous graph of both metabolites and reactions. I will wait off on adding metabolism right now. Need to look into hetero graph data more.
 - [x] Graph object, get other relevant networks including GO
 - [x] GO graph add DCell options. → Need to double check `IGI`, and the 6 genes criterion nees to be handled after [[DCell|dendron://torchcell/torchcell.datamodules.DCell]]
-
-- [ ] Figure out multigraph with `pyg`. We do not need a custom `Data` object yet for batching data, but we will eventually if we have some heterogenous graph structures. Graph matching case, or bipartite case.
-- [ ] Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
-- [ ] Add in single fitness
-
-- [ ] Change `self.genome.go` to `self.genome.go_set` and make it an ordered set.
-- [ ] Add method for `available_graphs` that tell you which graph constructor classes have been implemented, and which graphs have already been saved.
-- [ ] Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
-
-- [ ] Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/torchcell.graph.graph]]
-
-- [ ] Embedding overlay plot for `FungalCIS` and `mean expression`
-- [ ] switch to `torch_geometric.utils.scatter`
+- 🔲 Figure out multigraph with `pyg`. We do not need a custom `Data` object yet for batching data, but we will eventually if we have some heterogenous graph structures. Graph matching case, or bipartite case.
+- 🔲 Verify graph subsetting. I am thinking there has to be a series of objects that can pass around the standard data. Not sure if this would involve writing a new `Data` type object.
+- 🔲 Add in single fitness
+- 🔲 Change `self.genome.go` to `self.genome.go_set` and make it an ordered set.
+- 🔲 Add method for `available_graphs` that tell you which graph constructor classes have been implemented, and which graphs have already been saved.
+- 🔲 Implement option to train on fitness and interaction simultaneously. Both work for now, but individuals need to work.
+- 🔲 Solve issue with `genome.gene_set` vs `genome` had to use `gene_set`. Had to use `gene_set`, but we will likely want to use `genome` for data validation.[[Graph|dendron://torchcell/torchcell.graph.graph]]
+- 🔲 Embedding overlay plot for `FungalCIS` and `mean expression`
+- 🔲 switch to `torch_geometric.utils.scatter`
 
 ## 2023.10.22
 
@@ -1432,12 +1213,10 @@ Instance links:
 - [x] Check `PyG` → [[Graph|dendron://torchcell/torchcell.graph.graph]]
 - [x] Create graph object starting with `PPI` and `mean_expression`. Note that since we aren't using the data validation right now, that the structure of each gene is not consistent. No `None` for empty data. We are doing this for two reasons. One we want it for visualization overlay, and the other is for PPI message passing.
 - [x] Launch `prot_T5_no_dubious`, `costanzo_1e6
-
-- [ ] Add multigraph to prediction
-
-- [ ] Add double prediction of `fitness` and `gene_interaction_score`
-- [ ] Embedding overlay plot for `FungalCis` and `mean expression`
-- [ ] Set default font to `Helvetica`
+- 🔲 Add multigraph to prediction
+- 🔲 Add double prediction of `fitness` and `gene_interaction_score`
+- 🔲 Embedding overlay plot for `FungalCis` and `mean expression`
+- 🔲 Set default font to `Helvetica`
 
 ## 2023.10.16
 
@@ -1453,21 +1232,20 @@ Instance links:
 
 ## 2023.10.14
 
-Big results to report. one hot is best on fitness, can't learn epistatic interactions. Linear  models for fitness on one hot. Add to report
-
 - [x] Set up linear models → [[Dmf_costanzo_linear|dendron://torchcell/experiments.costanzo_smf_dmf_supervised.dmf_costanzo_linear]]
-- [ ] DCell model
-- [ ] Run full linear model.
-- [ ] Add full dataset with `smf` and `dmf`.
-- [ ] Joint prediction of fitness and genetic interaction
+- 🔲 Big results to report. one hot is best on fitness, can't learn epistatic interactions. Linear  models for fitness on one hot. Add to report
+- 🔲 DCell model
+- 🔲 Run full linear model.
+- 🔲 Add full dataset with `smf` and `dmf`.
+- 🔲 Joint prediction of fitness and genetic interaction
 
 ## 2023.10.13
 
 - [x] Add codon frequency dataset.
 - [x] Add one-hot positional encoding dataset, this will make task transductive (check).
-- [ ] Train one hot on `1e6` → wandb log we get much better correlation compared to any of the previous models
-- [ ] Add cell morphology dataset
-- [ ] Add ESM2 dataset
+- 🔲 Train one hot on `1e6` → wandb log we get much better correlation compared to any of the previous models
+- 🔲 Add cell morphology dataset
+- 🔲 Add ESM2 dataset
 
 ## 2023.10.12
 
@@ -1478,30 +1256,20 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 - [x] Fix dmf data_list iteration.
 - [x] Make box plot for [[Genetic_interaction_score|dendron://torchcell/torchcell.viz.genetic_interaction_score]] → If we want a closer match we could make a few more adjustments.
 - [x] Train `1e6` on interaction. → queued priority.
-
-- [ ] Add codon frequency dataset.
-
-- [ ] Add assertion in the addition to make sure that at least the sizes are the same.
-- [ ] Read about `pyg` collate to see if all data objects must be same
-
-- [ ] Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
-
-- [ ] Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
-
-- [ ] Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
-
-- [ ] Plot Umap overlays with new datasets
-- [ ] Optional dimensionality reduction of embeddings
-
-- [ ] Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
-- [ ] Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
-
-- [ ] Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
-
-- [ ] Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
-
-- [ ] Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
-- [ ] Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
+- 🔲 Add codon frequency dataset.
+- 🔲 Add assertion in the addition to make sure that at least the sizes are the same.
+- 🔲 Read about `pyg` collate to see if all data objects must be same
+- 🔲 Create new ModelStrict for CodonSelection Result, or use multiple `DnaSelectionResults`. Try multiple `DnaSelectionResults`first
+- 🔲 Add additional only CDS dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Add additional `five_prime + partial_CDS + three_prime` dataset [[Nucleotide_transformer|dendron://torchcell/torchcell.datasets.nucleotide_transformer]]
+- 🔲 Plot Umap overlays with new datasets
+- 🔲 Optional dimensionality reduction of embeddings
+- 🔲 Bring the the `Culley` data in properly and correct [[experiments/fitness_expr_data_exploration/smf_ge_box_plot.py]]
+- 🔲 Need to bring in `SGD` data in properly and correct [[experiments/protein_concentration_nt_projection.py]]
+- 🔲 Give str `__repr__` to `DnaSelectionResult` like `DnaWindowResult`
+- 🔲 Change the `FungalUpDown` to `FungalCRE` for fungal cis regulatory element
+- 🔲 Try dbfn=`“:memory:"` in genome to solve the sqlite remove deprectaed GO issue.
+- 🔲 Need tex for plotting settings on delta → [conda install texlive-core](https://anaconda.org/conda-forge/texlive-core)
 
 ## 2023.10.11
 
@@ -2040,7 +1808,7 @@ Big results to report. one hot is best on fitness, can't learn epistatic interac
 
 ## 2023.08.13
 
-- Might have an issue with pydantic → [[Pytorch Lightning Compatibility with Pydantic|dendron://torchcell/torchcell.datamodels.pydantic#pytorch-lightning-compatibility-with-pydantic]]
+- [x] Might have an issue with pydantic → [[Pytorch Lightning Compatibility with Pydantic|dendron://torchcell/torchcell.datamodels.pydantic#pytorch-lightning-compatibility-with-pydantic]]
 
 ## 2023.08.10
 

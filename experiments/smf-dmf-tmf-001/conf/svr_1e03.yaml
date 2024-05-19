@@ -49,6 +49,8 @@ parameters:
         values: [0.1, 1.0, 10.0]
       gamma:
         values: [0.1, 0.01, 0.001]
+  is_cross_validated:
+    values: [true]
 command:
   - ${env}
   - python

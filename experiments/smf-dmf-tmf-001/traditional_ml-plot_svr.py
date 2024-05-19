@@ -105,7 +105,7 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
     color_dict = {feature: color for feature, color in zip(features, color_list)}
 
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 12))
         y = 0
         yticks = []
         ytick_positions = []

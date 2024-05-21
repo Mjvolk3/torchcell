@@ -2,20 +2,24 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715732319071
+updated: 1716323004297
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-## 2024.05.15
+## 2024.05.21
 
-- [x] Write 2 page report for more compute on Delta → Needed 3 pages. Did a bit of a word vomit since I wanted to submit asap [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]].
+- [ ] Review `wandb` runs
 - [ ] Figure 2 outline update
 - [ ] Paper outline
 - [ ] Gantt
 - [ ] Plan
+
+## 2024.05.15
+
+- [x] Write 2 page report for more compute on Delta → Needed 3 pages. Did a bit of a word vomit since I wanted to submit asap [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]].
 
 ## 2024.05.14
 

@@ -2,11 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1713568487175
+updated: 1715731989527
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Check ontology vs SGD ontology GAF.
 - [ ] Compute flops of different networks. There are python libraries to do this for `nn.Module`
 - [ ] From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion.
 - [ ] Use omega conf to select the functions that get called automatically for `get_nodes` and `get_edges`.
@@ -17,9 +18,9 @@ created: 1675887826601
 - [ ] Publish package for Junyu and Le to use
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Change `reference_environment` to `environment`
-- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix`
+- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix` 
 - [ ] #pr.biocypher, message @Sebastian-Lobentanzer about collectri pr accept on readme
-- [ ] #pr.biocypher minimal example for docker `None` import.
+- [ ] #pr.biocypher minimal example for docker `None` import. → I have a suspicion that the that the docker build importing `None` doesn't work with the biocypher provided docker compose because of the mismatched neo4j version. Unsure..
 - [ ] #pr.biocypher update tutorials with Neo4j Bloom images.
 - [ ] Notify @Sebastian-Lobentanzer about #pr.biocypher [Collectri ReadMe Update](https://github.com/biocypher/collectri/pull/1).
 
@@ -41,6 +42,10 @@ created: 1675887826601
 
 ## Far Future
 
+- [ ] We have multiple `.bashrc` that are competing with apptainer and the base env on delta... fix this
+- [ ] The thought on duplicates is to provide a deduplicator class that handles the duplicates. This depends on the details of how the modeler chooses to model the domain so we should just design an interface for doing so. For now I am hardcoding this in. → Writing a deduplicator class.
+- [ ] Deep Set models parameterize by add and mean for `scatter_add` and `scatter_mean`
+- [ ] Consider using `nn.Embedding` for categoricals
 - [ ] Write Cron Job for Db build locally
 - [ ] CI/CD for docker image builds queued on changes in Dockerfile or version of `torchcell` lib.
 - [ ] Change `wandb.tags` to `Tags`

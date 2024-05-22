@@ -28,7 +28,7 @@ models:
     in_channels: null # This will be set based on the input_dim
     hidden_channels: 128
     out_channels: 32
-    num_node_layers: 3
+    num_node_layers: 0
     num_set_layers: 3
     norm: batch
     activation: gelu

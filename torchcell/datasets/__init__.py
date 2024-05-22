@@ -14,6 +14,7 @@ from .protT5 import ProtT5Dataset
 from .sgd_gene_graph import GraphEmbeddingDataset
 from .esm2 import Esm2Dataset
 from .codon_language_model import CalmDataset
+from .random_embedding import RandomEmbeddingDataset
 
 core_datasets = ["DCellDataset"]
 
@@ -26,6 +27,7 @@ embedding_datasets = [
     "GraphEmbeddingDataset",
     "Esm2Dataset",
     "CalmDataset",
+    "RandomEmbeddingDataset"
 ]
 
 

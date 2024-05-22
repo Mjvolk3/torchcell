@@ -30,7 +30,8 @@ from torchcell.datasets import (
     Esm2Dataset,
     NucleotideTransformerDataset,
     CodonFrequencyDataset,
-    CalmDataset
+    CalmDataset,
+    RandomEmbeddingDataset
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
@@ -371,6 +372,12 @@ def main(cfg: DictConfig) -> None:
             root=osp.join(DATA_ROOT, "data/scerevisiae/sgd_gene_graph_hot"),
             graph=graph.G_gene,
             model_name="chrom_pathways",
+        )
+    # random
+    if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_1000"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
         )
 
     # Experiments

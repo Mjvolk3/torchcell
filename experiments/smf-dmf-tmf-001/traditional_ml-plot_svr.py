@@ -80,7 +80,7 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
     plt.style.use(style_file_path)
 
     filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size]
-    features = filtered_df["cell_dataset.node_embeddings"].unique()
+    features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
     metrics = ["r2", "pearson", "spearman", "mse", "mae"]
 
@@ -184,7 +184,8 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
             if metric in ["r2", "pearson", "spearman"]
             else max(val_value, test_value) * 1.5
         )
-        ax.set_xlim(0, ax_limit)
+        if not np.isnan(ax_limit) and not np.isinf(ax_limit):
+            ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
 
         # Set the title as the image save path with the criterion included
@@ -347,6 +348,12 @@ def main(is_overwrite=False):
         criterion=criterion_mse,
         is_overwrite=is_overwrite,
     )
+    create_plots(
+        combined_df_mse,
+        max_size=100000,
+        criterion=criterion_mse,
+        is_overwrite=is_overwrite,
+    )
 
     create_plots(
         combined_df_spearman,
@@ -357,6 +364,12 @@ def main(is_overwrite=False):
     create_plots(
         combined_df_spearman,
         max_size=10000,
+        criterion=criterion_spearman,
+        is_overwrite=is_overwrite,
+    )
+    create_plots(
+        combined_df_spearman,
+        max_size=100000,
         criterion=criterion_spearman,
         is_overwrite=is_overwrite,
     )

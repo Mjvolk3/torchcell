@@ -73,7 +73,7 @@ def create_plots(combined_df, max_size, criterion):
     plt.style.use(style_file_path)
 
     filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size]
-    features = filtered_df["cell_dataset.node_embeddings"].unique()
+    features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
     metrics = ["r2", "pearson", "spearman", "mse", "mae"]
 
@@ -98,28 +98,20 @@ def create_plots(combined_df, max_size, criterion):
     color_dict = {feature: color for feature, color in zip(features, color_list)}
 
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 12))
         y = 0
         yticks = []
         ytick_positions = []
 
         for feature in features:
             group_start_y = y  # Start of the group for current feature
-            for rep_type in reversed(
-                rep_types
-            ):  # Reverse to start with Intact Mean, ends with Pert Sum
+            for rep_type in reversed(rep_types):  # Reverse to start with Intact Mean, ends with Pert Sum
                 val_key = f"val_{metric}"
                 test_key = f"test_{metric}"
                 df = filtered_df[
                     (filtered_df["cell_dataset.node_embeddings"] == feature)
-                    & (
-                        filtered_df["cell_dataset.is_pert"]
-                        == rep_type.startswith("pert")
-                    )
-                    & (
-                        filtered_df["cell_dataset.aggregation"]
-                        == ("sum" if rep_type.endswith("sum") else "mean")
-                    )
+                    & (filtered_df["cell_dataset.is_pert"] == rep_type.startswith("pert"))
+                    & (filtered_df["cell_dataset.aggregation"] == ("sum" if rep_type.endswith("sum") else "mean"))
                 ]
 
                 if df.empty:
@@ -132,11 +124,7 @@ def create_plots(combined_df, max_size, criterion):
                 hatch = (
                     "xxx"
                     if rep_type == "intact_mean"
-                    else (
-                        "+++"
-                        if rep_type == "intact_sum"
-                        else ".." if rep_type == "pert_sum" else "......"
-                    )
+                    else ("+++" if rep_type == "intact_sum" else ".." if rep_type == "pert_sum" else "......")
                 )
                 bar_height = 6.0 * 4  # Increased height
 
@@ -163,21 +151,16 @@ def create_plots(combined_df, max_size, criterion):
                 y += bar_height * 2  # Increase spacing for the next bar group
 
             yticks.append(feature)
-            ytick_positions.append(
-                group_start_y + bar_height * 3.5
-            )  # Adjust tick position to middle of the set
+            ytick_positions.append(group_start_y + bar_height * 3.5)  # Adjust tick position to middle of the set
             y += bar_height  # Additional space between different node embeddings
 
         ax.set_yticks(ytick_positions)
         ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
 
         ax.set_xlabel(metric, fontname="Arial", fontsize=20)
-        ax_limit = (
-            1
-            if metric in ["r2", "pearson", "spearman"]
-            else max(val_value, test_value) * 1.5
-        )
-        ax.set_xlim(0, ax_limit)
+        ax_limit = 1 if metric in ["r2", "pearson", "spearman"] else max(val_value, test_value) * 1.5
+        if not np.isnan(ax_limit) and not np.isinf(ax_limit):
+            ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
 
         # Set the title as the image save path with the criterion included
@@ -315,9 +298,11 @@ def main():
 
     create_plots(combined_df_mse, max_size=1000, criterion=criterion_mse)
     create_plots(combined_df_mse, max_size=10000, criterion=criterion_mse)
+    create_plots(combined_df_mse, max_size=100000, criterion=criterion_mse)
 
     create_plots(combined_df_spearman, max_size=1000, criterion=criterion_spearman)
     create_plots(combined_df_spearman, max_size=10000, criterion=criterion_spearman)
+    create_plots(combined_df_spearman, max_size=100000, criterion=criterion_spearman)
 
 
 if __name__ == "__main__":

@@ -62,16 +62,20 @@ class DeepSet(nn.Module):
         set_modules = []
         for i in range(num_set_layers):
             if i == 0:
-                set_modules.append(
-                    create_block(out_channels, hidden_channels, norm, activation)
-                )
+                if num_node_layers > 0:
+                    set_modules.append(
+                        create_block(out_channels, hidden_channels, norm, activation)
+                    )
+                else:
+                    set_modules.append(
+                        create_block(in_channels, hidden_channels, norm, activation)
+                    )
             elif i == num_set_layers - 1:
                 set_modules.append(
                     create_block(hidden_channels, out_channels, norm, activation)
                 )
                 set_modules.append(nn.Dropout(dropout_prob))
             else:
-
                 set_modules.append(
                     create_block(hidden_channels, hidden_channels, norm, activation)
                 )
@@ -102,7 +106,10 @@ class DeepSet(nn.Module):
         return x_set
 
     def forward(self, x, batch):
-        x_node = self.node_layers_forward(x)
+        if len(self.node_layers) > 0:
+            x_node = self.node_layers_forward(x)
+        else:
+            x_node = x
         x_summed = scatter_add(x_node, batch, dim=0)
         x_set = self.set_layers_forward(x_summed)
         return x_node, x_set

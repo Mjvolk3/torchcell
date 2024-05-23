@@ -40,8 +40,8 @@ wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
 SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_16.yaml
-SWEEP_ID=mby6w4e7
-PROJECT_NAME=torchcell_smf-dmf-tmf-001_deep_set_1e03_16
+SWEEP_ID=ibjhxq21
+PROJECT_NAME=torchcell_smf-dmf-tmf-001_deep_set_1e03
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

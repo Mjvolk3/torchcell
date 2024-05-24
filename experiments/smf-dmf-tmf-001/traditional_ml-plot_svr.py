@@ -1,7 +1,3 @@
-# experiments/smf-dmf-tmf-001/traditional_ml-plot_svr
-# [[experiments.smf-dmf-tmf-001.traditional_ml-plot_svr]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/traditional_ml-plot_svr
-
 import numpy as np
 import pandas as pd
 import wandb
@@ -37,72 +33,33 @@ def load_dataset(api, project_name):
     )
 
 
-def deduplicate_dataframe(df, criterion="mse"):
-    # Drop 'summary', 'config', and 'name' columns
-    df = df.drop(columns=["summary", "config", "name"])
-
-    # Take the first element of 'cell_dataset.node_embeddings' column
-    df["cell_dataset.node_embeddings"] = df["cell_dataset.node_embeddings"].apply(
-        lambda x: x[0]
-    )
-
-    # Deduplicate rows based on specified columns
-    dedup_columns = [
-        "cell_dataset.is_pert",
-        "cell_dataset.max_size",
-        "cell_dataset.aggregation",
-        "cell_dataset.node_embeddings",
-        "svr.kernel",
-        "svr.C",
-        "svr.gamma",
-        "num_params",
-    ]
-
-    if criterion == "mse":
-        # Select the duplicate with the lowest "mse" value
-        df = df.sort_values("val_mse").drop_duplicates(
-            subset=dedup_columns, keep="first"
-        )
-    elif criterion == "spearman":
-        # Select the duplicate with the highest "spearman" value
-        df = df.sort_values("val_spearman", ascending=False).drop_duplicates(
-            subset=dedup_columns, keep="first"
-        )
-    else:
-        raise ValueError("Invalid criterion. Choose either 'mse' or 'spearman'.")
-
-    return df
-
-
-def create_plots(combined_df, max_size, criterion, is_overwrite=False):
+def create_plots(
+    combined_df: pd.DataFrame, max_size: int, criterion: str, add_folds: bool = False
+):
     log = logging.getLogger(__name__)
-    style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
-    plt.style.use(style_file_path)
-
-    filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size]
+    filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size].copy()
     features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
-    metrics = ["r2", "pearson", "spearman", "mse", "mae"]
+    metrics = ["r2", "pearson", "spearman", "mse", "mae", "rmse"]
 
     max_size_str = format_scientific_notation(max_size)
-
-    # Define a darker pastel color palette
     color_list = [
-        "#D0838E",  # Darker pink
-        "#FFA257",  # Darker orange
-        "#ECD078",  # Darker yellow
-        "#53777A",  # Dark blue-green
-        "#8F918B",  # Darker light purple
-        "#D1A0A2",  # Darker light red
-        "#A8BDB5",  # Darker soft green
-        "#B8AD9E",  # Darker muted brown
-        "#7B9EAE",  # Darker soft blue
-        "#F75C4C",  # Darker blush red
-        "#82B3AE",  # Darker sea foam green
-        "#FFD3B6",  # Darker peach
-        "#746D75",  # Darker purple
+        "#D0838E",
+        "#FFA257",
+        "#ECD078",
+        "#53777A",
+        "#8F918B",
+        "#D1A0A2",
+        "#A8BDB5",
+        "#B8AD9E",
+        "#7B9EAE",
+        "#F75C4C",
+        "#82B3AE",
+        "#FFD3B6",
+        "#746D75",
     ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
+    default_color = "#808080"
 
     for metric in metrics:
         fig, ax = plt.subplots(figsize=(12, 12))
@@ -111,88 +68,84 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
         ytick_positions = []
 
         for feature in features:
-            group_start_y = y  # Start of the group for current feature
-            for rep_type in reversed(
-                rep_types
-            ):  # Reverse to start with Intact Mean, ends with Pert Sum
+            group_start_y = y
+            for rep_type in reversed(rep_types):
                 val_key = f"val_{metric}"
                 test_key = f"test_{metric}"
                 df = filtered_df[
                     (filtered_df["cell_dataset.node_embeddings"] == feature)
-                    & (
-                        filtered_df["cell_dataset.is_pert"]
-                        == rep_type.startswith("pert")
-                    )
-                    & (
-                        filtered_df["cell_dataset.aggregation"]
-                        == ("sum" if rep_type.endswith("sum") else "mean")
-                    )
+                    & (filtered_df["cell_dataset.is_pert"] == rep_type.startswith("pert"))
+                    & (filtered_df["cell_dataset.aggregation"] == ("sum" if rep_type.endswith("sum") else "mean"))
                 ]
 
                 if df.empty:
-                    continue  # Skip plotting if the DataFrame is empty
+                    val_value = np.nan
+                    test_value = np.nan
+                else:
+                    val_value = df[val_key].values[0]
+                    test_value = df[test_key].values[0]
 
-                val_value = df[val_key].values[0]
-                test_value = df[test_key].values[0]
+                if metric in ["r2", "pearson", "spearman"]:
+                    if pd.isna(val_value):
+                        val_value = 0
+                    if pd.isna(test_value):
+                        test_value = 0
 
-                # Define hatch patterns based on the type
                 hatch = (
                     "xxx"
                     if rep_type == "intact_mean"
-                    else (
-                        "+++"
-                        if rep_type == "intact_sum"
-                        else ".." if rep_type == "pert_sum" else "......"
-                    )
+                    else ("+++" if rep_type == "intact_sum" else ".." if rep_type == "pert_sum" else "......")
                 )
-                bar_height = 6.0 * 4  # Increased height
+                bar_height = 6.0 * 4
+                color = color_dict.get(feature[0] if isinstance(feature, list) else feature, default_color)
 
-                # Plot Validation first, above Test
-                ax.barh(
-                    y + bar_height,
-                    val_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=1.0,
-                    hatch=hatch,
-                )
-                # Then plot Test below Validation
-                ax.barh(
-                    y,
-                    test_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=0.5,
-                    hatch=hatch,
-                )
-                y += bar_height * 2  # Increase spacing for the next bar group
+                if pd.isna(val_value):
+                    ax.scatter(0, y + bar_height, color=color, marker="o", s=100, zorder=3)
+                else:
+                    ax.barh(y + bar_height, val_value, height=bar_height, align="edge", color=color, alpha=1.0, hatch=hatch)
 
-            yticks.append(feature)
-            ytick_positions.append(
-                group_start_y + bar_height * 3.5
-            )  # Adjust tick position to middle of the set
-            y += bar_height  # Additional space between different node embeddings
+                if pd.isna(test_value):
+                    ax.scatter(0, y, color=color, marker="o", s=100, zorder=3)
+                else:
+                    ax.barh(y, test_value, height=bar_height, align="edge", color=color, alpha=0.5, hatch=hatch)
+
+                if add_folds:
+                    fold_mean_col = f"val_{metric}_mean"
+                    fold_std_col = f"val_{metric}_std"
+                    if fold_mean_col in df.columns and fold_std_col in df.columns:
+                        fold_mean = df[fold_mean_col].values[0] if not df.empty else np.nan
+                        fold_std = df[fold_std_col].values[0] if not df.empty else np.nan
+                        if not pd.isna(fold_mean) and not pd.isna(fold_std):
+                            ax.errorbar(
+                                fold_mean,
+                                y + bar_height * 1.5,
+                                xerr=fold_std,
+                                fmt="o",
+                                color="white",
+                                markerfacecolor="white",
+                                markeredgecolor="black",
+                                markersize=10,
+                                alpha=0.8,
+                                ecolor="black",
+                                elinewidth=bar_height * 0.2,
+                                capsize=0,
+                            )
+
+                y += bar_height * 2
+
+            yticks.append(feature[0] if isinstance(feature, list) else feature)
+            ytick_positions.append(group_start_y + bar_height * 3.5)
+            y += bar_height
 
         ax.set_yticks(ytick_positions)
         ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
-
         ax.set_xlabel(metric, fontname="Arial", fontsize=20)
-        ax_limit = (
-            1
-            if metric in ["r2", "pearson", "spearman"]
-            else max(val_value, test_value) * 1.5
-        )
-        if not np.isnan(ax_limit) and not np.isinf(ax_limit):
-            ax.set_xlim(0, ax_limit)
+        ax_limit = 1.05 if metric in ["r2", "pearson", "spearman"] else max(ax.get_xlim()[1], 0.1) * 1.1
+        ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
-
-        # Set the title as the image save path with the criterion included
         plot_name = f"SVR_{max_size_str}_{criterion}_{metric}.png"
         ax.set_title(os.path.splitext(plot_name)[0], fontsize=20)
 
-        # Aggregation legend
         representation_legend = [
             plt.Rectangle(
                 (0, 0),
@@ -236,7 +189,6 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
             plt.Rectangle((0, 0), 1, 1, color="grey", alpha=0.5, label="Test"),
         ]
 
-        # Create a legend with grouped titles
         leg1 = ax.legend(
             handles=representation_legend,
             title="Representation",
@@ -261,37 +213,103 @@ def create_plots(combined_df, max_size, criterion, is_overwrite=False):
         plt.savefig(osp.join(ASSET_IMAGES_DIR, plot_name), bbox_inches="tight")
         plt.close(fig)
 
-    return None
+
+def process_raw_dataframe(
+    df: pd.DataFrame, config_columns: list, summary_columns: list
+) -> pd.DataFrame:
+    config_df = pd.json_normalize(df["config"])[config_columns]
+    summary_df = pd.json_normalize(df["summary"])[summary_columns]
+
+    for metric in ["r2", "pearson", "spearman", "mse", "mae"]:
+        for i in range(1, 6):
+            fold_val_key = f"fold_{i}_val_{metric}"
+            fold_train_key = f"fold_{i}_train_{metric}"
+
+            if fold_val_key in summary_df.columns:
+                summary_df[fold_val_key] = pd.to_numeric(
+                    summary_df[fold_val_key], errors="coerce"
+                )
+            else:
+                summary_df[fold_val_key] = np.nan
+
+            if fold_train_key in summary_df.columns:
+                summary_df[fold_train_key] = pd.to_numeric(
+                    summary_df[fold_train_key], errors="coerce"
+                )
+            else:
+                summary_df[fold_train_key] = np.nan
+
+        fold_mean_col = f"val_{metric}_mean"
+        fold_std_col = f"val_{metric}_std"
+        fold_cols = [f"fold_{i}_val_{metric}" for i in range(1, 6)]
+
+        if set(fold_cols).issubset(summary_df.columns):
+            summary_df[fold_mean_col] = summary_df[fold_cols].mean(axis=1)
+            summary_df[fold_std_col] = summary_df[fold_cols].std(axis=1)
+        else:
+            summary_df[fold_mean_col] = np.nan
+            summary_df[fold_std_col] = np.nan
+
+    # Add RMSE columns
+    mse_columns = [col for col in summary_df.columns if "mse" in col]
+    for mse_col in mse_columns:
+        rmse_col = mse_col.replace("mse", "rmse")
+        summary_df[rmse_col] = np.sqrt(summary_df[mse_col])
+
+    processed_df = pd.concat([config_df, summary_df], axis=1)
+    return processed_df
+
+
+def deduplicate_dataframe(
+    df: pd.DataFrame, criterion: str = "mse", add_folds: bool = False
+) -> pd.DataFrame:
+    dedup_columns = [
+        "cell_dataset.is_pert",
+        "cell_dataset.max_size",
+        "cell_dataset.aggregation",
+        "cell_dataset.node_embeddings",
+        "svr.kernel",
+        "svr.C",
+        "svr.gamma",
+        "num_params",
+    ]
+
+    if criterion == "mse":
+        sort_column = "val_mse"
+    elif criterion == "spearman":
+        sort_column = "val_spearman"
+    else:
+        raise ValueError("Invalid criterion. Choose either 'mse' or 'spearman'.")
+
+    if add_folds:
+        fold_mean_cols = [col for col in df.columns if col.endswith("_mean")]
+        fold_std_cols = [col for col in df.columns if col.endswith("_std")]
+        dedup_columns.extend(fold_mean_cols + fold_std_cols)
+
+    df["cell_dataset.node_embeddings"] = df["cell_dataset.node_embeddings"].apply(
+        lambda x: x[0] if isinstance(x, list) else x
+    )
+
+    df = df.sort_values(sort_column).drop_duplicates(subset=dedup_columns, keep="first")
+
+    return df
 
 
 def main(is_overwrite=False):
     criterion_mse = "mse"
     criterion_spearman = "spearman"
 
-    combined_df_mse_path = osp.join(RESULTS_DIR, "combined_df_mse.csv")
-    combined_df_spearman_path = osp.join(RESULTS_DIR, "combined_df_spearman.csv")
-
-    if not is_overwrite and not (
-        osp.exists(combined_df_mse_path) and osp.exists(combined_df_spearman_path)
-    ):
-        print("CSV files not found. Fetching data from the API.")
-        is_overwrite = True
-
     if is_overwrite:
         api = wandb.Api()
 
-        # Load datasets for SVR 1e03, 1e04, and 1e05
         project_names = [
             "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03",
             "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04",
             "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05",
         ]
+
         dataframes = [load_dataset(api, project_name) for project_name in project_names]
 
-        # Combine the dataframes
-        combined_df = pd.concat(dataframes, ignore_index=True)
-
-        # Extract desired columns from 'config'
         config_columns = [
             "cell_dataset.is_pert",
             "cell_dataset.max_size",
@@ -301,9 +319,6 @@ def main(is_overwrite=False):
             "svr.C",
             "svr.gamma",
         ]
-        config_df = pd.json_normalize(combined_df["config"])[config_columns]
-
-        # Extract desired columns from 'summary'
         summary_columns = [
             "num_params",
             "val_r2",
@@ -317,63 +332,81 @@ def main(is_overwrite=False):
             "val_mse",
             "test_mse",
         ]
-        summary_df = pd.json_normalize(combined_df["summary"])[summary_columns]
 
-        # Combine the extracted columns with 'combined_df'
-        combined_df = pd.concat([combined_df, config_df, summary_df], axis=1)
+        for df, name in zip(dataframes, ["1e3", "1e4", "1e5"]):
+            if not df.empty:
+                processed_df = process_raw_dataframe(
+                    df, config_columns, summary_columns
+                )
+                processed_df.to_csv(
+                    osp.join(RESULTS_DIR, f"combined_df_mse_{name}.csv"), index=False
+                )
+                processed_df.to_csv(
+                    osp.join(RESULTS_DIR, f"combined_df_spearman_{name}.csv"),
+                    index=False,
+                )
 
-        # Deduplicate the DataFrame based on the lowest "mse" value
-        combined_df_mse = deduplicate_dataframe(combined_df, criterion=criterion_mse)
-        combined_df_spearman = deduplicate_dataframe(
-            combined_df, criterion=criterion_spearman
-        )
+    combined_df_1e3_mse = pd.read_csv(osp.join(RESULTS_DIR, "combined_df_mse_1e3.csv"))
+    combined_df_1e4_mse = pd.read_csv(osp.join(RESULTS_DIR, "combined_df_mse_1e4.csv"))
+    combined_df_1e5_mse = pd.read_csv(osp.join(RESULTS_DIR, "combined_df_mse_1e5.csv"))
+    combined_df_1e3_spearman = pd.read_csv(
+        osp.join(RESULTS_DIR, "combined_df_spearman_1e3.csv")
+    )
+    combined_df_1e4_spearman = pd.read_csv(
+        osp.join(RESULTS_DIR, "combined_df_spearman_1e4.csv")
+    )
+    combined_df_1e5_spearman = pd.read_csv(
+        osp.join(RESULTS_DIR, "combined_df_spearman_1e5.csv")
+    )
 
-        # Save the deduplicated dataframes as CSV files
-        combined_df_mse.to_csv(combined_df_mse_path, index=False)
-        combined_df_spearman.to_csv(combined_df_spearman_path, index=False)
-    else:
-        # Load the deduplicated dataframes from CSV files
-        combined_df_mse = pd.read_csv(combined_df_mse_path)
-        combined_df_spearman = pd.read_csv(combined_df_spearman_path)
+    combined_df_1e3_mse = deduplicate_dataframe(
+        combined_df_1e3_mse, criterion=criterion_mse, add_folds=True
+    )
+    combined_df_1e4_mse = deduplicate_dataframe(
+        combined_df_1e4_mse, criterion=criterion_mse, add_folds=True
+    )
+    combined_df_1e5_mse = deduplicate_dataframe(
+        combined_df_1e5_mse, criterion=criterion_mse, add_folds=False
+    )
+    combined_df_1e3_spearman = deduplicate_dataframe(
+        combined_df_1e3_spearman, criterion=criterion_spearman, add_folds=True
+    )
+    combined_df_1e4_spearman = deduplicate_dataframe(
+        combined_df_1e4_spearman, criterion=criterion_spearman, add_folds=True
+    )
+    combined_df_1e5_spearman = deduplicate_dataframe(
+        combined_df_1e5_spearman, criterion=criterion_spearman, add_folds=False
+    )
 
     create_plots(
-        combined_df_mse,
+        combined_df_1e3_mse, max_size=1000, criterion=criterion_mse, add_folds=True
+    )
+    create_plots(
+        combined_df_1e4_mse, max_size=10000, criterion=criterion_mse, add_folds=True
+    )
+    create_plots(
+        combined_df_1e5_mse, max_size=100000, criterion=criterion_mse, add_folds=False
+    )
+
+    create_plots(
+        combined_df_1e3_spearman,
         max_size=1000,
-        criterion=criterion_mse,
-        is_overwrite=is_overwrite,
-    )
-    create_plots(
-        combined_df_mse,
-        max_size=10000,
-        criterion=criterion_mse,
-        is_overwrite=is_overwrite,
-    )
-    create_plots(
-        combined_df_mse,
-        max_size=100000,
-        criterion=criterion_mse,
-        is_overwrite=is_overwrite,
-    )
-
-    create_plots(
-        combined_df_spearman,
-        max_size=1000,
         criterion=criterion_spearman,
-        is_overwrite=is_overwrite,
+        add_folds=True,
     )
     create_plots(
-        combined_df_spearman,
+        combined_df_1e4_spearman,
         max_size=10000,
         criterion=criterion_spearman,
-        is_overwrite=is_overwrite,
+        add_folds=True,
     )
     create_plots(
-        combined_df_spearman,
+        combined_df_1e5_spearman,
         max_size=100000,
         criterion=criterion_spearman,
-        is_overwrite=is_overwrite,
+        add_folds=False,
     )
 
 
 if __name__ == "__main__":
-    main(is_overwrite=False)
+    main(is_overwrite=True)

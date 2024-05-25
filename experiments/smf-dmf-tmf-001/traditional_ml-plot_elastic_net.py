@@ -1,9 +1,3 @@
-# experiments/smf-dmf-tmf-001/traditional_ml-elastic_net
-# [[experiments.smf-dmf-tmf-001.traditional_ml-elastic_net]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/traditional_ml-elastic_net
-# Test file: experiments/smf-dmf-tmf-001/test_traditional_ml-elastic_net.py
-
-
 import numpy as np
 import pandas as pd
 import wandb
@@ -36,16 +30,13 @@ def load_dataset(api, project_name):
     )
 
 
-def deduplicate_dataframe(df, criterion="mse"):
-    # Drop 'summary', 'config', and 'name' columns
+def deduplicate_dataframe(
+    df: pd.DataFrame, criterion: str = "mse", add_folds: bool = False
+) -> pd.DataFrame:
     df = df.drop(columns=["summary", "config", "name"])
-
-    # Take the first element of 'cell_dataset.node_embeddings' column
     df["cell_dataset.node_embeddings"] = df["cell_dataset.node_embeddings"].apply(
         lambda x: x[0]
     )
-
-    # Deduplicate rows based on specified columns
     dedup_columns = [
         "cell_dataset.is_pert",
         "cell_dataset.max_size",
@@ -55,64 +46,71 @@ def deduplicate_dataframe(df, criterion="mse"):
         "elastic_net.l1_ratio",
         "num_params",
     ]
-
     if criterion == "mse":
-        # Select the duplicate with the lowest "mse" value
         df = df.sort_values("val_mse").drop_duplicates(
             subset=dedup_columns, keep="first"
         )
     elif criterion == "spearman":
-        # Select the duplicate with the highest "spearman" value
+        df["val_spearman"] = pd.to_numeric(df["val_spearman"], errors="coerce")
         df = df.sort_values("val_spearman", ascending=False).drop_duplicates(
             subset=dedup_columns, keep="first"
         )
     else:
         raise ValueError("Invalid criterion. Choose either 'mse' or 'spearman'.")
 
+    if add_folds:
+        fold_mean_cols = [col for col in df.columns if col.endswith("_mean")]
+        fold_std_cols = [col for col in df.columns if col.endswith("_std")]
+        df = df.dropna(subset=fold_mean_cols + fold_std_cols, how="all")
+
     return df
 
 
-def create_plots(combined_df, max_size, criterion):
-    log = logging.getLogger(__name__)
-    style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
-    plt.style.use(style_file_path)
+def extract_fold_data(df: pd.DataFrame, metric: str):
+    for i in range(1, 6):
+        fold_val_key = f"fold_{i}_val_{metric}"
+        if fold_val_key not in df.columns:
+            df.loc[:, fold_val_key] = None
+    return df
 
-    filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size]
-    features = filtered_df["cell_dataset.node_embeddings"].unique()
+
+def create_plots(
+    combined_df: pd.DataFrame, max_size: int, criterion: str, add_folds: bool = False
+):
+    log = logging.getLogger(__name__)
+    filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size].copy()
+    features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
     metrics = ["r2", "pearson", "spearman", "mse", "mae"]
 
     max_size_str = format_scientific_notation(max_size)
-
-    # Define a darker pastel color palette
     color_list = [
-        "#D0838E",  # Darker pink
-        "#FFA257",  # Darker orange
-        "#ECD078",  # Darker yellow
-        "#53777A",  # Dark blue-green
-        "#8F918B",  # Darker light purple
-        "#D1A0A2",  # Darker light red
-        "#A8BDB5",  # Darker soft green
-        "#B8AD9E",  # Darker muted brown
-        "#7B9EAE",  # Darker soft blue
-        "#F75C4C",  # Darker blush red
-        "#82B3AE",  # Darker sea foam green
-        "#FFD3B6",  # Darker peach
-        "#746D75",  # Darker purple
+        "#D0838E",
+        "#FFA257",
+        "#ECD078",
+        "#53777A",
+        "#8F918B",
+        "#D1A0A2",
+        "#A8BDB5",
+        "#B8AD9E",
+        "#7B9EAE",
+        "#F75C4C",
+        "#82B3AE",
+        "#FFD3B6",
+        "#746D75",
     ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
+    default_color = "#808080"
 
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 12))
         y = 0
         yticks = []
         ytick_positions = []
 
         for feature in features:
-            group_start_y = y  # Start of the group for current feature
-            for rep_type in reversed(
-                rep_types
-            ):  # Reverse to start with Intact Mean, ends with Pert Sum
+            group_start_y = y
+            for rep_type in reversed(rep_types):
                 val_key = f"val_{metric}"
                 test_key = f"test_{metric}"
                 df = filtered_df[
@@ -128,12 +126,18 @@ def create_plots(combined_df, max_size, criterion):
                 ]
 
                 if df.empty:
-                    continue  # Skip plotting if the DataFrame is empty
+                    val_value = np.nan
+                    test_value = np.nan
+                else:
+                    val_value = df[val_key].values[0]
+                    test_value = df[test_key].values[0]
 
-                val_value = df[val_key].values[0]
-                test_value = df[test_key].values[0]
+                if metric in ["r2", "pearson", "spearman"]:
+                    if pd.isna(val_value):
+                        val_value = 0
+                    if pd.isna(test_value):
+                        test_value = 0
 
-                # Define hatch patterns based on the type
                 hatch = (
                     "xxx"
                     if rep_type == "intact_mean"
@@ -143,53 +147,84 @@ def create_plots(combined_df, max_size, criterion):
                         else ".." if rep_type == "pert_sum" else "......"
                     )
                 )
-                bar_height = 6.0 * 4  # Increased height
+                bar_height = 6.0 * 4
+                color = color_dict.get(feature, default_color)
 
-                # Plot Validation first, above Test
-                ax.barh(
-                    y + bar_height,
-                    val_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=1.0,
-                    hatch=hatch,
-                )
-                # Then plot Test below Validation
-                ax.barh(
-                    y,
-                    test_value,
-                    height=bar_height,
-                    align="edge",
-                    color=color_dict[feature],
-                    alpha=0.5,
-                    hatch=hatch,
-                )
-                y += bar_height * 2  # Increase spacing for the next bar group
+                if pd.isna(val_value):
+                    ax.scatter(
+                        0, y + bar_height, color=color, marker="o", s=100, zorder=3
+                    )
+                else:
+                    ax.barh(
+                        y + bar_height,
+                        val_value,
+                        height=bar_height,
+                        align="edge",
+                        color=color,
+                        alpha=1.0,
+                        hatch=hatch,
+                    )
+
+                if pd.isna(test_value):
+                    ax.scatter(0, y, color=color, marker="o", s=100, zorder=3)
+                else:
+                    ax.barh(
+                        y,
+                        test_value,
+                        height=bar_height,
+                        align="edge",
+                        color=color,
+                        alpha=0.5,
+                        hatch=hatch,
+                    )
+
+                if add_folds:
+                    fold_mean_col = f"val_{metric}_mean"
+                    fold_std_col = f"val_{metric}_std"
+                    if fold_mean_col in df.columns and fold_std_col in df.columns:
+                        fold_mean = (
+                            df[fold_mean_col].values[0] if not df.empty else np.nan
+                        )
+                        fold_std = (
+                            df[fold_std_col].values[0] if not df.empty else np.nan
+                        )
+                        if not pd.isna(fold_mean) and not pd.isna(fold_std):
+                            ax.errorbar(
+                                fold_mean,
+                                y
+                                + bar_height
+                                * 1.56,  # Move the errorbar 
+                                xerr=fold_std,
+                                fmt="o",
+                                color="white",
+                                markerfacecolor="white",
+                                markeredgecolor="black",
+                                markersize=5,
+                                alpha=0.8,
+                                ecolor="black",
+                                elinewidth=bar_height * 0.1,
+                                capsize=0,
+                            )
+
+                y += bar_height * 2
 
             yticks.append(feature)
-            ytick_positions.append(
-                group_start_y + bar_height * 3.5
-            )  # Adjust tick position to middle of the set
-            y += bar_height  # Additional space between different node embeddings
+            ytick_positions.append(group_start_y + bar_height * 3.5)
+            y += bar_height
 
         ax.set_yticks(ytick_positions)
         ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
-
         ax.set_xlabel(metric, fontname="Arial", fontsize=20)
         ax_limit = (
-            1
+            1.05
             if metric in ["r2", "pearson", "spearman"]
-            else max(val_value, test_value) * 1.5
+            else max(ax.get_xlim()[1], 0.1) * 1.1
         )
         ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
-
-        # Set the title as the image save path with the criterion included
         plot_name = f"Elastic-Net_{max_size_str}_{criterion}_{metric}.png"
         ax.set_title(os.path.splitext(plot_name)[0], fontsize=20)
 
-        # Aggregation legend
         representation_legend = [
             plt.Rectangle(
                 (0, 0),
@@ -233,7 +268,6 @@ def create_plots(combined_df, max_size, criterion):
             plt.Rectangle((0, 0), 1, 1, color="grey", alpha=0.5, label="Test"),
         ]
 
-        # Create a legend with grouped titles
         leg1 = ax.legend(
             handles=representation_legend,
             title="Representation",
@@ -258,24 +292,16 @@ def create_plots(combined_df, max_size, criterion):
         plt.savefig(osp.join(ASSET_IMAGES_DIR, plot_name), bbox_inches="tight")
         plt.close(fig)
 
-    return None
-
 
 def main():
     api = wandb.Api()
-
-    # Load datasets for elastic net 1e03, 1e04, and 1e05
     project_names = [
         "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_elastic-net_1e03",
         "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_elastic-net_1e04",
         "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_elastic-net_1e05",
     ]
     dataframes = [load_dataset(api, project_name) for project_name in project_names]
-
-    # Combine the dataframes
     combined_df = pd.concat(dataframes, ignore_index=True)
-
-    # Extract desired columns from 'config'
     config_columns = [
         "cell_dataset.is_pert",
         "cell_dataset.max_size",
@@ -285,8 +311,6 @@ def main():
         "elastic_net.l1_ratio",
     ]
     config_df = pd.json_normalize(combined_df["config"])[config_columns]
-
-    # Extract desired columns from 'summary'
     summary_columns = [
         "num_params",
         "val_r2",
@@ -300,30 +324,62 @@ def main():
         "val_mse",
         "test_mse",
     ]
-    summary_df = pd.json_normalize(combined_df["summary"])[summary_columns]
-
-    # Combine the extracted columns with 'combined_df'
+    summary_df = pd.json_normalize(combined_df["summary"])
     combined_df = pd.concat([combined_df, config_df, summary_df], axis=1)
 
-    # Deduplicate the DataFrame based on the lowest "mse" value
+    for metric in ["r2", "pearson", "spearman", "mse", "mae"]:
+        for i in range(1, 6):
+            fold_val_key = f"fold_{i}_val_{metric}"
+            if fold_val_key in summary_df.columns:
+                combined_df[fold_val_key] = pd.to_numeric(
+                    summary_df[fold_val_key], errors="coerce"
+                )
+
+        fold_mean_col = f"val_{metric}_mean"
+        fold_std_col = f"val_{metric}_std"
+        combined_df[fold_mean_col] = combined_df[
+            [f"fold_{i}_val_{metric}" for i in range(1, 6)]
+        ].mean(axis=1)
+        combined_df[fold_std_col] = combined_df[
+            [f"fold_{i}_val_{metric}" for i in range(1, 6)]
+        ].std(axis=1)
+
     criterion_mse = "mse"
-    combined_df_mse = deduplicate_dataframe(combined_df, criterion=criterion_mse)
+    combined_df_mse = deduplicate_dataframe(
+        combined_df, criterion=criterion_mse, add_folds=True
+    )
     criterion_spearman = "spearman"
     combined_df_spearman = deduplicate_dataframe(
-        combined_df, criterion=criterion_spearman
+        combined_df, criterion=criterion_spearman, add_folds=True
     )
 
-    print(combined_df)
-    print()
-    # combined_df.to_csv("combined_project_elastic_net.csv")
-
-    create_plots(combined_df_mse, max_size=1000, criterion=criterion_mse)
-    create_plots(combined_df_mse, max_size=10000, criterion=criterion_mse)
-    create_plots(combined_df_mse, max_size=100000, criterion=criterion_mse)
-
-    create_plots(combined_df_spearman, max_size=1000, criterion=criterion_spearman)
-    create_plots(combined_df_spearman, max_size=10000, criterion=criterion_spearman)
-    create_plots(combined_df_spearman, max_size=100000, criterion=criterion_spearman)
+    create_plots(
+        combined_df_mse, max_size=1000, criterion=criterion_mse, add_folds=True
+    )
+    create_plots(
+        combined_df_mse, max_size=10000, criterion=criterion_mse, add_folds=True
+    )
+    create_plots(
+        combined_df_mse, max_size=100000, criterion=criterion_mse, add_folds=True
+    )
+    create_plots(
+        combined_df_spearman,
+        max_size=1000,
+        criterion=criterion_spearman,
+        add_folds=True,
+    )
+    create_plots(
+        combined_df_spearman,
+        max_size=10000,
+        criterion=criterion_spearman,
+        add_folds=True,
+    )
+    create_plots(
+        combined_df_spearman,
+        max_size=100000,
+        criterion=criterion_spearman,
+        add_folds=True,
+    )
 
 
 if __name__ == "__main__":

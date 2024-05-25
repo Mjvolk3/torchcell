@@ -1,7 +1,9 @@
-# torchcell/neo4j_fitness_query
-# [[torchcell.neo4j_fitness_query]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/neo4j_fitness_query
-# Test file: tests/torchcell/test_neo4j_fitness_query.py
+# torchcell/data/neo4j_query_raw
+# [[torchcell.data.neo4j_query_raw]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_query_raw
+# Test file: tests/torchcell/data/test_neo4j_query_raw.py
+
+
 
 import lmdb
 from neo4j import GraphDatabase
@@ -144,7 +146,7 @@ class Neo4jQueryRaw:
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
         # Initialize LMDB environment
-        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12))
+        self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
         if len(self) == 0:
             self.process()
 

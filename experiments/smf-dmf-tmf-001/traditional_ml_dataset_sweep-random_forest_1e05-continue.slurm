@@ -6,7 +6,7 @@
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=RF_1e05
-#SBATCH --time=36:00:00
+#SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"

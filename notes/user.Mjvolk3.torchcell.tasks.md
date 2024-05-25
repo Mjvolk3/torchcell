@@ -2,20 +2,35 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1715732319071
+updated: 1716327811941
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
-## 2024.05.15
+## 2024.05.21
 
-- [x] Write 2 page report for more compute on Delta → Needed 3 pages. Did a bit of a word vomit since I wanted to submit asap [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]].
+- [x] Review `wandb` runs → We have some runs `svr` runs failing due to too little memory. We also have runs failing due to what looks like getting timed out. Some `svr` finishes in nearly 2 days indicating that we need longer run times and more memory. A good test job for `gilahyper`.
+- [x] Get globus working on `gilahyper` → Looks like we can only transfer to the root disk then we will have to manually transfer to scratch. Tried to configure `/scratch` but we still cannot connect on the globous website.
+- [x] Manually transfer data files on `gilahyper` to `/scratch` → This works fine and is reasonably fast.
+- [x] Write `.env` on `gilahyper`.
+- [x] Launch svr 1e05 sweep on `gilahyper` → Using all resources currently.
+- [x] Update plots with 1e05. → Since they are incomplete this looks pretty bad.
+- [x] Add a random vector embedding to the list of nodes embeddings
+- [x] Run random datasets `1e03`, `1e04`, `1e05`  → ... 
+- [ ] Globus transfer random datasets to `Delta`
+- [ ] Launch all random experiments except `1e05`
+- [ ] Launch `DeepSet` `1e03` 
+
 - [ ] Figure 2 outline update
 - [ ] Paper outline
 - [ ] Gantt
 - [ ] Plan
+
+## 2024.05.15
+
+- [x] Write 2 page report for more compute on Delta → Needed 3 pages. Did a bit of a word vomit since I wanted to submit asap [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]].
 
 ## 2024.05.14
 

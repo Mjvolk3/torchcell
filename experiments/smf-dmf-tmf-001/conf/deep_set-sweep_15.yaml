@@ -24,6 +24,7 @@ parameters:
         values:
           - [one_hot_gene]
           - [codon_frequency]
+          - [calm]
           - [fudt_downstream]
           - [fudt_upstream]
           - [prot_T5_all]
@@ -61,7 +62,7 @@ parameters:
           out_channels:
             values: [128, 64, 32]
           num_node_layers:
-            values: [2, 3, 4]
+            values: [0, 2, 3, 4]
           num_set_layers:
             values: [2, 3, 4]
           norm:

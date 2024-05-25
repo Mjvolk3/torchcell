@@ -6,7 +6,7 @@
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=RF_1e03
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
@@ -25,7 +25,7 @@ conda activate /scratch/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=ut7mzi91
+SWEEP_ID=xzrv6bjv
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e03
 
 echo "-----------------"

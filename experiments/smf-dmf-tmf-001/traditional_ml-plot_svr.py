@@ -74,8 +74,14 @@ def create_plots(
                 test_key = f"test_{metric}"
                 df = filtered_df[
                     (filtered_df["cell_dataset.node_embeddings"] == feature)
-                    & (filtered_df["cell_dataset.is_pert"] == rep_type.startswith("pert"))
-                    & (filtered_df["cell_dataset.aggregation"] == ("sum" if rep_type.endswith("sum") else "mean"))
+                    & (
+                        filtered_df["cell_dataset.is_pert"]
+                        == rep_type.startswith("pert")
+                    )
+                    & (
+                        filtered_df["cell_dataset.aggregation"]
+                        == ("sum" if rep_type.endswith("sum") else "mean")
+                    )
                 ]
 
                 if df.empty:
@@ -94,27 +100,55 @@ def create_plots(
                 hatch = (
                     "xxx"
                     if rep_type == "intact_mean"
-                    else ("+++" if rep_type == "intact_sum" else ".." if rep_type == "pert_sum" else "......")
+                    else (
+                        "+++"
+                        if rep_type == "intact_sum"
+                        else ".." if rep_type == "pert_sum" else "......"
+                    )
                 )
                 bar_height = 6.0 * 4
-                color = color_dict.get(feature[0] if isinstance(feature, list) else feature, default_color)
+                color = color_dict.get(
+                    feature[0] if isinstance(feature, list) else feature, default_color
+                )
 
                 if pd.isna(val_value):
-                    ax.scatter(0, y + bar_height, color=color, marker="o", s=100, zorder=3)
+                    ax.scatter(
+                        0, y + bar_height, color=color, marker="o", s=100, zorder=3
+                    )
                 else:
-                    ax.barh(y + bar_height, val_value, height=bar_height, align="edge", color=color, alpha=1.0, hatch=hatch)
+                    ax.barh(
+                        y + bar_height,
+                        val_value,
+                        height=bar_height,
+                        align="edge",
+                        color=color,
+                        alpha=1.0,
+                        hatch=hatch,
+                    )
 
                 if pd.isna(test_value):
                     ax.scatter(0, y, color=color, marker="o", s=100, zorder=3)
                 else:
-                    ax.barh(y, test_value, height=bar_height, align="edge", color=color, alpha=0.5, hatch=hatch)
+                    ax.barh(
+                        y,
+                        test_value,
+                        height=bar_height,
+                        align="edge",
+                        color=color,
+                        alpha=0.5,
+                        hatch=hatch,
+                    )
 
                 if add_folds:
-                    fold_mean_col = f"val_{metric}_mean"
-                    fold_std_col = f"val_{metric}_std"
+                    fold_mean_col = f"fold_val_{metric}_mean"
+                    fold_std_col = f"fold_val_{metric}_std"
                     if fold_mean_col in df.columns and fold_std_col in df.columns:
-                        fold_mean = df[fold_mean_col].values[0] if not df.empty else np.nan
-                        fold_std = df[fold_std_col].values[0] if not df.empty else np.nan
+                        fold_mean = (
+                            df[fold_mean_col].values[0] if not df.empty else np.nan
+                        )
+                        fold_std = (
+                            df[fold_std_col].values[0] if not df.empty else np.nan
+                        )
                         if not pd.isna(fold_mean) and not pd.isna(fold_std):
                             ax.errorbar(
                                 fold_mean,
@@ -122,12 +156,12 @@ def create_plots(
                                 xerr=fold_std,
                                 fmt="o",
                                 color="white",
-                                markerfacecolor="white",
+                                markerfacecolor=color,
                                 markeredgecolor="black",
-                                markersize=10,
-                                alpha=0.8,
+                                markersize=8,
+                                alpha=0.5,
                                 ecolor="black",
-                                elinewidth=bar_height * 0.2,
+                                elinewidth=bar_height * 0.15,
                                 capsize=0,
                             )
 
@@ -140,7 +174,11 @@ def create_plots(
         ax.set_yticks(ytick_positions)
         ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
         ax.set_xlabel(metric, fontname="Arial", fontsize=20)
-        ax_limit = 1.05 if metric in ["r2", "pearson", "spearman"] else max(ax.get_xlim()[1], 0.1) * 1.1
+        ax_limit = (
+            1.05
+            if metric in ["r2", "pearson", "spearman"]
+            else max(ax.get_xlim()[1], 0.1) * 1.1
+        )
         ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
         plot_name = f"SVR_{max_size_str}_{criterion}_{metric}.png"
@@ -217,46 +255,82 @@ def create_plots(
 def process_raw_dataframe(
     df: pd.DataFrame, config_columns: list, summary_columns: list
 ) -> pd.DataFrame:
+    # Normalize config columns
     config_df = pd.json_normalize(df["config"])[config_columns]
+
+    # Extract fold data from the summary column
+    fold_metrics = ["r2", "pearson", "spearman", "mse", "mae"]
+    fold_columns = []
+    fold_data = []
+
+    for _, row in df.iterrows():
+        summary = row["summary"]
+        fold_row = {}
+
+        for metric in fold_metrics:
+            for i in range(1, 6):
+                fold_val_key = f"fold_{i}_val_{metric}"
+                fold_train_key = f"fold_{i}_train_{metric}"
+
+                if fold_val_key in summary:
+                    fold_row[fold_val_key] = pd.to_numeric(
+                        summary[fold_val_key], errors="coerce"
+                    )
+                    fold_columns.append(fold_val_key)
+                else:
+                    fold_row[fold_val_key] = np.nan
+
+                if fold_train_key in summary:
+                    fold_row[fold_train_key] = pd.to_numeric(
+                        summary[fold_train_key], errors="coerce"
+                    )
+                    fold_columns.append(fold_train_key)
+                else:
+                    fold_row[fold_train_key] = np.nan
+
+        fold_data.append(fold_row)
+
+    fold_df = pd.DataFrame(fold_data)
+    fold_columns = list(set(fold_columns))
+
+    # Normalize other summary columns
     summary_df = pd.json_normalize(df["summary"])[summary_columns]
 
-    for metric in ["r2", "pearson", "spearman", "mse", "mae"]:
-        for i in range(1, 6):
-            fold_val_key = f"fold_{i}_val_{metric}"
-            fold_train_key = f"fold_{i}_train_{metric}"
+    # Calculate RMSE for each fold
+    for i in range(1, 6):
+        fold_val_mse_key = f"fold_{i}_val_mse"
+        fold_val_rmse_key = f"fold_{i}_val_rmse"
+        if fold_val_mse_key in fold_df.columns:
+            fold_df[fold_val_rmse_key] = np.sqrt(fold_df[fold_val_mse_key])
+            fold_columns.append(fold_val_rmse_key)
 
-            if fold_val_key in summary_df.columns:
-                summary_df[fold_val_key] = pd.to_numeric(
-                    summary_df[fold_val_key], errors="coerce"
-                )
-            else:
-                summary_df[fold_val_key] = np.nan
+        fold_train_mse_key = f"fold_{i}_train_mse"
+        fold_train_rmse_key = f"fold_{i}_train_rmse"
+        if fold_train_mse_key in fold_df.columns:
+            fold_df[fold_train_rmse_key] = np.sqrt(fold_df[fold_train_mse_key])
+            fold_columns.append(fold_train_rmse_key)
 
-            if fold_train_key in summary_df.columns:
-                summary_df[fold_train_key] = pd.to_numeric(
-                    summary_df[fold_train_key], errors="coerce"
-                )
-            else:
-                summary_df[fold_train_key] = np.nan
+    # Calculate means and standard deviations for fold metrics
+    for metric in fold_metrics + ["rmse"]:
+        fold_val_cols = [col for col in fold_columns if f"_val_{metric}" in col]
+        fold_train_cols = [col for col in fold_columns if f"_train_{metric}" in col]
 
-        fold_mean_col = f"val_{metric}_mean"
-        fold_std_col = f"val_{metric}_std"
-        fold_cols = [f"fold_{i}_val_{metric}" for i in range(1, 6)]
+        fold_df[f"fold_val_{metric}_mean"] = fold_df[fold_val_cols].mean(axis=1)
+        fold_df[f"fold_val_{metric}_std"] = fold_df[fold_val_cols].std(axis=1)
+        fold_df[f"fold_train_{metric}_mean"] = fold_df[fold_train_cols].mean(axis=1)
+        fold_df[f"fold_train_{metric}_std"] = fold_df[fold_train_cols].std(axis=1)
 
-        if set(fold_cols).issubset(summary_df.columns):
-            summary_df[fold_mean_col] = summary_df[fold_cols].mean(axis=1)
-            summary_df[fold_std_col] = summary_df[fold_cols].std(axis=1)
-        else:
-            summary_df[fold_mean_col] = np.nan
-            summary_df[fold_std_col] = np.nan
+    # Calculate val_rmse, train_rmse, and test_rmse if the corresponding mse columns exist
+    if "val_mse" in summary_df.columns:
+        summary_df["val_rmse"] = np.sqrt(summary_df["val_mse"])
+    if "train_mse" in summary_df.columns:
+        summary_df["train_rmse"] = np.sqrt(summary_df["train_mse"])
+    if "test_mse" in summary_df.columns:
+        summary_df["test_rmse"] = np.sqrt(summary_df["test_mse"])
 
-    # Add RMSE columns
-    mse_columns = [col for col in summary_df.columns if "mse" in col]
-    for mse_col in mse_columns:
-        rmse_col = mse_col.replace("mse", "rmse")
-        summary_df[rmse_col] = np.sqrt(summary_df[mse_col])
+    # Combine config, summary, and fold DataFrames
+    processed_df = pd.concat([config_df, summary_df, fold_df], axis=1)
 
-    processed_df = pd.concat([config_df, summary_df], axis=1)
     return processed_df
 
 
@@ -284,12 +358,18 @@ def deduplicate_dataframe(
     if add_folds:
         fold_mean_cols = [col for col in df.columns if col.endswith("_mean")]
         fold_std_cols = [col for col in df.columns if col.endswith("_std")]
+
+        # Filter out rows where all the fold mean columns are NaN
+        df = df.dropna(subset=fold_mean_cols, how="all")
+
         dedup_columns.extend(fold_mean_cols + fold_std_cols)
 
-    df["cell_dataset.node_embeddings"] = df["cell_dataset.node_embeddings"].apply(
-        lambda x: x[0] if isinstance(x, list) else x
-    )
+    # Update the 'cell_dataset.node_embeddings' column using .loc
+    df.loc[:, "cell_dataset.node_embeddings"] = df[
+        "cell_dataset.node_embeddings"
+    ].apply(lambda x: x[0] if isinstance(x, list) else x)
 
+    # Perform deduplication based on the defined columns
     df = df.sort_values(sort_column).drop_duplicates(subset=dedup_columns, keep="first")
 
     return df

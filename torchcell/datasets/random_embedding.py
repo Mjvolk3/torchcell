@@ -16,7 +16,12 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):
     # 1000 = random embedding size
-    MODEL_TO_WINDOW = {"random_1000": ("window", 1000, False)}
+    MODEL_TO_WINDOW = {
+        "random_1000": ("window", 1000, False),
+        "random_100": ("window", 100, False),
+        "random_10": ("window", 10, False),
+        "random_1": ("window", 1, False),
+    }
 
     def __init__(
         self,
@@ -98,7 +103,10 @@ class RandomEmbeddingDataset(BaseEmbeddingDataset):
 if __name__ == "__main__":
     genome = SCerevisiaeGenome()
     dataset = RandomEmbeddingDataset(
-        root="data/scerevisiae/random_embedding", genome=genome, batch_size=100
+        root="data/scerevisiae/random_embedding",
+        model_name="random_1",
+        genome=genome,
+        batch_size=100,
     )
     print(f"Random Embedding Dataset: {dataset}")
     some_data = dataset[genome.gene_set[42]]

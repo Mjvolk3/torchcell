@@ -2,12 +2,67 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1716327811941
+updated: 1716780386311
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.05.27
+
+- [ ] Consider breaking out new tasks notes, timestamp
+- [x] Globus transfer of `random_100`, `random_10`, and `random_1` to `delta` and transfer to `gilahyper`
+- [x] Finalize `svr` plot style
+- [x] Launch `random_100`, `random_10`, and `random_1` on `delta` for `elastic-net` → Looks like it finished successfully.
+- [x] After `elastic-net` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `svr` → We only launched for `1e3` and `1e4`. Will need to do `1e5_subset` later
+- [x] `gilahyper` slurm accounting → spent a good deal of time on this setting up `mariadb`.. We still can't get the accounting to work using slurm. We can still run jobs. Stopping to run jobs and we'll worry about accounting later.
+
+- [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
+
+- [ ] Make same plots for `random-forest`
+
+- [ ] Adjust style for `elastic-net` to match
+- [ ] Launch sweeps over new random for `elastic-net`, `svr` and `random-forest`
+
+## 2024.05.26
+
+- [x] Launch `SVR_1e03` on `gilahyper` → we are doing this because CV results don't match no CV results bars.
+- [x] Add Random_100 and Random_10, and Random_1 → running `experiments/smf-dmf-tmf-001/conf/traditional_ml_dataset_sweep_random.yaml`
+- [x] Finalize SVR plotting style. → Close!
+
+## 2024.05.24
+
+- [x] Check runs. → seem fine from agent logs.
+- [ ] Fix plots.
+- [ ] Adjust sweeps so they follow rate limiting and max number of agents.
+
+## 2024.05.23
+
+- [x] Check jobs → Reported `/scratch` issue was some software. Jobs back up. → GPU very busy only running one job, but queued up 4 total. 2 for `1e03` and 2 for `1e04`.
+- [x] Collect lethal and synthetic lethal data into a dataset. For now we don't need adapter. #pivot Retrain and use best model. We don't have a best model trained, so will have to retrain once identified. Won't be able to finish this before 05.24, so we will just focus on other major tasks...
+- [ ] #ramble I suspect that the reason error bars on cross validated cv are typically worse performing is that....
+
+- [x] Finalize adding mean and std to `elastic-net` plots → might need a few more runs.
+- [x] [[2024.05.23 - Issue with Hyperparameter Sweep|dendron://torchcell/torchcell.data.neo4j_query_raw#20240523---issue-with-hyperparameter-sweep]] → adjusted `readonly`.
+
+- [ ] Launch
+
+- [ ] wandb rate limits at 200 requests per minute... For sweeps 20 parallel agents are supported. This will change how we run sweeps some. [wandb docs](https://docs.wandb.ai/guides/track/limits#rate-limits)
+
+- [ ] `svr` plot. → Issue is currently deduplicate data. → The current issue is that after deduplicate dataframe there isn't any data.. Deuplicate data frame should probably be split into two functions. The first is process_raw_dataframe. and the second should be deduplicate... We can just put these both is process_dataframe function. process_raw_dataframe should take the data and do the following
+
+- [ ] Start `Delta` `1e03` and `1e04` for `svr` `random_1000`
+- [ ] Start `Delta` `1e03` and `1e04` for `random-forest` `random_1000`
+- [ ] Add `rmse` so we have plots that are in same units as label.
+
+## 2024.05.22
+
+- [x] Cannot connect to globus `gilahyper` any dir. Fix. → Transfers between two personal devices seem to require some sort of subscription. → In vscode folders can just be copy pasted... proably doing some rsync under the hood. → Was able to get `gilahyper` permissions with `globusconnectpersonal -start -restrict-paths 'rw~,/scratch'`giving it access to `/scratch` → `random_1000` transferred to all machines
+- [x] Launch cpu jobs for `1e03` and `1e04` `random_1000`. Do `1e05` on `elastic-net`. → Just start with `elastic_net`
+- [x] Fix elastic net plotting so we add error bars based on cross validation. mean as dot, std as lines. Bar will still be based on the dataset that is used in deep learning tasks. → made a lot of progress geting mean and std on.
+- [x] All `1e03` `DeepSet` crashed... Investigate. → `offline` → moved to `online` → queue is backed up a bit on `Delta` → Run stopped because exceeded disk quota on user... → Lots of temp files stored in user putting them in `/scratch/bbub/mjvolk3` export env vars in `.bashrc`. → Crashed and suspended again due to `/scratch` being down.
+- [x]#ramble any update to [[torchcell.datamodels.schema]] will change [[torchcell.data.neo4j_cell]] at least in the method of accessing of data. Data itself will be fixed. From brief review it seems that [[torchcell.neo4j_fitness_query]] will be unaffected but that deduplication within [[torchcell.neo4j_fitness_query]] will be affected as it also requires acessing data.
 
 ## 2024.05.21
 
@@ -18,10 +73,10 @@ created: 1690514887023m
 - [x] Launch svr 1e05 sweep on `gilahyper` → Using all resources currently.
 - [x] Update plots with 1e05. → Since they are incomplete this looks pretty bad.
 - [x] Add a random vector embedding to the list of nodes embeddings
-- [x] Run random datasets `1e03`, `1e04`, `1e05`  → ... 
+- [x] Run random datasets `1e03`, `1e04`, `1e05`  → ...
 - [ ] Globus transfer random datasets to `Delta`
 - [ ] Launch all random experiments except `1e05`
-- [ ] Launch `DeepSet` `1e03` 
+- [x] Launch `DeepSet` `1e03`  → ...
 
 - [ ] Figure 2 outline update
 - [ ] Paper outline

@@ -5,47 +5,9 @@
             "path": "."
         },
         {
-            "name": "______________",
-            "path": "../______________"
+            "name": "/scratch/projects/torchcell",
+            "path": "/scratch/projects/torchcell"
         },
-        {
-            "name": "yeast-GEM",
-            "path": "../yeast-GEM"
-        },
-        {
-            "name": "Gene_Graph",
-            "path": "../Gene_Graph"
-        },
-        {
-            "name": "multi_knockout",
-            "path": "../multi_knockout"
-        },
-        {
-            "name": "torchgeo",
-            "path": "../torchgeo"
-        },
-        {
-            "name": "GraphGym",
-            "path": "../GraphGym"
-        },
-        {
-            "name": "pytorch_geometric",
-            "path": "../pytorch_geometric"
-        },
-        {
-            "name": "intermine-ws-python",
-            "path": "../intermine-ws-python"
-        },
-        {
-            "name": "SpeciesLM",
-            "path": "../SpeciesLM"
-        },
-        {   "name": "biocypher",
-            "path": "../biocypher"
-        }
-        {   "name": "collectri",
-            "path": "../collectri"
-        }
     ],
     "settings": {
         "dendron.rootDir": ".",

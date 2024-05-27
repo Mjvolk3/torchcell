@@ -13,11 +13,17 @@ created: 1690514887023m
 
 - [ ] Consider breaking out new tasks notes, timestamp
 - [x] Globus transfer of `random_100`, `random_10`, and `random_1` to `delta` and transfer to `gilahyper`
-- [ ] Finalize `svr` plot style
+- [x] Finalize `svr` plot style
+- [x] Launch `random_100`, `random_10`, and `random_1` on `delta` for `elastic-net` → Looks like it finished successfully.
+- [x] After `elastic-net` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `svr` → We only launched for `1e3` and `1e4`. Will need to do `1e5_subset` later
+- [x] `gilahyper` slurm accounting → spent a good deal of time on this setting up `mariadb`.. We still can't get the accounting to work using slurm. We can still run jobs. Stopping to run jobs and we'll worry about accounting later.
+
+- [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
+
 - [ ] Make same plots for `random-forest`
+
 - [ ] Adjust style for `elastic-net` to match
 - [ ] Launch sweeps over new random for `elastic-net`, `svr` and `random-forest`
-- [ ] `gilahyper` slurm accounting
 
 ## 2024.05.26
 

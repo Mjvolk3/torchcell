@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=sweep
+#SBATCH --job-name=DS_1e03
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
 #SBATCH --constraint="scratch"
 ### GPU options ###
@@ -40,7 +40,7 @@ wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
 SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_16.yaml
-SWEEP_ID=ibjhxq21
+SWEEP_ID=hv21voql
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_deep_set_1e03
 
 echo "-----------------"

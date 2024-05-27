@@ -1,5 +1,5 @@
 program: experiments/smf-dmf-tmf-001/deep_set.py
-project: torchcell_smf-dmf-tmf-001_deep_set_1e03_16
+project: torchcell_smf-dmf-tmf-001_deep_set_1e03
 method: bayes
 metric:
   goal: minimize

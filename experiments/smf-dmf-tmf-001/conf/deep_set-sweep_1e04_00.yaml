@@ -1,5 +1,5 @@
 program: experiments/smf-dmf-tmf-001/deep_set.py
-project: torchcell_smf-dmf-tmf-001_deep_set_1e04_00
+project: torchcell_smf-dmf-tmf-001_deep_set_1e04
 method: bayes
 metric:
   goal: minimize
@@ -30,7 +30,7 @@ parameters:
           - [esm2_t33_650M_UR50D_no_dubious]
           - [normalized_chrom_pathways]
       max_size:
-        values: [1e3]
+        values: [1e4]
   data_module:
     parameters:
       batch_size:

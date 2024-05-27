@@ -19,6 +19,7 @@ created: 1690514887023m
 - [x] `gilahyper` slurm accounting → spent a good deal of time on this setting up `mariadb`.. We still can't get the accounting to work using slurm. We can still run jobs. Stopping to run jobs and we'll worry about accounting later.
 
 - [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
+- [ ] Launch `1e5` for `random-forest` with new `random` on `gilahyper`
 
 - [ ] Make same plots for `random-forest`
 

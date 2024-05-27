@@ -44,20 +44,27 @@ def create_plots(
 
     max_size_str = format_scientific_notation(max_size)
     color_list = [
-        "#D0838E",
-        "#FFA257",
-        "#ECD078",
-        "#53777A",
-        "#8F918B",
-        "#D1A0A2",
-        "#A8BDB5",
-        "#B8AD9E",
-        "#7B9EAE",
-        "#F75C4C",
-        "#82B3AE",
-        "#FFD3B6",
-        "#746D75",
-    ]
+            "#D0838E",
+            "#FFA257",
+            "#ECD078",
+            "#53777A",
+            "#8F918B",
+            "#D1A0A2",
+            "#A8BDB5",
+            "#B8AD9E",
+            "#7B9EAE",
+            "#F75C4C",
+            "#82B3AE",
+            "#FFD3B6",
+            "#746D75",
+            "#FF8C94",
+            "#5E8C61",
+            "#B565A7",
+            "#955251",
+            "#009B77",
+            "#DD4124",
+            "#D65076",
+        ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
     default_color = "#808080"
 

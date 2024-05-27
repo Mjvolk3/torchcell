@@ -379,6 +379,21 @@ def main(cfg: DictConfig) -> None:
             root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
             genome=genome,
         )
+    if "random_100" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_100"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+        )
+    if "random_10" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_10"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+        )
+    if "random_1" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_1"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+        )
 
     # Experiments
     with open((osp.join(osp.dirname(__file__), "query.cql")), "r") as f:

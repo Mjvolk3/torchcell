@@ -1,11 +1,6 @@
-# torchcell/models/deep_set.py
-# [[torchcell.models.deep_set]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/deep_set.py
-# Test file: torchcell/models/test_deep_set.py
-
 import torch
 import torch.nn as nn
-from torch_scatter import scatter_add
+from torch_scatter import scatter_add, scatter_mean
 
 from torchcell.models.act import act_register
 
@@ -23,14 +18,17 @@ class DeepSet(nn.Module):
         activation: str = "relu",
         skip_node: bool = False,  # Parameter to add skip connections in node_layers
         skip_set: bool = False,  # Parameter to add skip connections in set_layers
+        aggregation: str = "sum",  # Aggregation method: "sum" or "mean"
     ):
         super().__init__()
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
+        assert aggregation in ["sum", "mean"], "Invalid aggregation method"
 
         self.skip_node = skip_node
         self.skip_set = skip_set
+        self.aggregation = aggregation
 
         def create_block(in_dim, out_dim, norm, activation):
             block = [nn.Linear(in_dim, out_dim)]
@@ -91,9 +89,9 @@ class DeepSet(nn.Module):
             x_node = out_node
         return x_node
 
-    def set_layers_forward(self, x_summed):
+    def set_layers_forward(self, x_aggregated):
         """Process aggregated features through set layers."""
-        x_set = x_summed
+        x_set = x_aggregated
         for i, layer in enumerate(self.set_layers):
             out_set = layer(x_set)
             if (
@@ -110,8 +108,13 @@ class DeepSet(nn.Module):
             x_node = self.node_layers_forward(x)
         else:
             x_node = x
-        x_summed = scatter_add(x_node, batch, dim=0)
-        x_set = self.set_layers_forward(x_summed)
+
+        if self.aggregation == "sum":
+            x_aggregated = scatter_add(x_node, batch, dim=0)
+        elif self.aggregation == "mean":
+            x_aggregated = scatter_mean(x_node, batch, dim=0)
+
+        x_set = self.set_layers_forward(x_aggregated)
         return x_node, x_set
 
 
@@ -135,6 +138,7 @@ def main():
         activation="tanh",
         skip_node=True,
         skip_set=True,
+        aggregation="mean",  # Use "sum" or "mean" for aggregation
     )
 
     # Dummy data

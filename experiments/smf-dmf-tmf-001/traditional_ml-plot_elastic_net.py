@@ -191,18 +191,16 @@ def create_plots(
                         if not pd.isna(fold_mean) and not pd.isna(fold_std):
                             ax.errorbar(
                                 fold_mean,
-                                y
-                                + bar_height
-                                * 1.56,  # Move the errorbar 
+                                y + bar_height * 1.56,  # Position the errorbar vertically
                                 xerr=fold_std,
-                                fmt="o",
+                                fmt="o",  # Use circle marker
                                 color="white",
                                 markerfacecolor="white",
                                 markeredgecolor="black",
-                                markersize=5,
-                                alpha=0.8,
+                                markersize=8,  # Adjust the size of the circle
+                                alpha=0.5,
                                 ecolor="black",
-                                elinewidth=bar_height * 0.1,
+                                elinewidth=bar_height * 0.1,  # Adjust the thickness of the lines
                                 capsize=0,
                             )
 

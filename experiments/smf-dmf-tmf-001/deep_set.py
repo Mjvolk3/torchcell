@@ -29,10 +29,12 @@ from torchcell.datasets import (
     Esm2Dataset,
     NucleotideTransformerDataset,
     CodonFrequencyDataset,
+    RandomEmbeddingDataset,
 )
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
+
 # from wandb_osh.lightning_hooks import TriggerWandbSyncLightningCallback
 from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
@@ -56,12 +58,12 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(slurm_job_id))
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online", # "online", "offline", "disabled" 
+        mode="online",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
-        dir=experiment_dir
+        dir=experiment_dir,
     )
 
     # Initialize the WandbLogger
@@ -227,6 +229,12 @@ def main(cfg: DictConfig) -> None:
             graph=graph.G_gene,
             model_name="chrom_pathways",
         )
+    # random 1000
+    if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_1000"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+        )
+
     print("=============")
     print("node.embeddings")
     print(node_embeddings)
@@ -248,7 +256,7 @@ def main(cfg: DictConfig) -> None:
     print("-------------------------")
     print(f"dataset_root:{dataset_root}")
     print("-------------------------")
-    
+
     cell_dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -285,6 +293,7 @@ def main(cfg: DictConfig) -> None:
                 activation=wandb.config.models["graph"]["activation"],
                 skip_node=wandb.config.models["graph"]["skip_node"],
                 skip_set=wandb.config.models["graph"]["skip_set"],
+                aggregation=wandb.config.models["graph"]["aggregation"],
             ),
             "top": Mlp(
                 in_channels=wandb.config.models["graph"]["out_channels"],
@@ -329,6 +338,7 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    torch.set_float32_matmul_precision("medium")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],

@@ -27,6 +27,7 @@ parameters:
           - [esm2_t33_650M_UR50D_all]
           - [esm2_t33_650M_UR50D_no_dubious]
           - [normalized_chrom_pathways]
+          - [random_1000]
       max_size:
         values: [1e3]
       is_pert:

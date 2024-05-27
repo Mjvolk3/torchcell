@@ -12,7 +12,7 @@ parameters:
         values:
           [
             # [one_hot_gene],
-            [calm]
+            # [calm]
             # [codon_frequency],
             # [fudt_downstream],
             # [fudt_upstream],

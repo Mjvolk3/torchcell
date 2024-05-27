@@ -34,7 +34,7 @@ def load_dataset(api, project_name):
 
 
 def create_plots(
-    combined_df: pd.DataFrame, max_size: int, criterion: str, add_folds: bool = False
+    combined_df: pd.DataFrame, max_size: int, criterion: str, add_cv: bool = False
 ):
     log = logging.getLogger(__name__)
     filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size].copy()
@@ -61,11 +61,23 @@ def create_plots(
     color_dict = {feature: color for feature, color in zip(features, color_list)}
     default_color = "#808080"
 
+    bar_height = 6.0 * 4
+    x_marker_size = 14
+    x_marker_linewidth = 0.5
+    x_marker_vertical_offset = bar_height * 0.50
+    red_dot_size = 30
+    red_dot_alpha = 0.6
+    red_dot_vertical_offset = 0.08
+    nan_bar_color = "black"
+    nan_marker_color = "red"
+    alpha_light_bar = 0.3
+    alpha_frame = 0.5
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 12))
+        fig, ax = plt.subplots(figsize=(12, 14))
         y = 0
         yticks = []
         ytick_positions = []
+        max_bar_value = 0
 
         for feature in features:
             group_start_y = y
@@ -106,40 +118,30 @@ def create_plots(
                         else ".." if rep_type == "pert_sum" else "......"
                     )
                 )
-                bar_height = 6.0 * 4
-                color = color_dict.get(
-                    feature[0] if isinstance(feature, list) else feature, default_color
+                color = color_dict.get(str(feature), default_color)
+
+                max_bar_value = max(max_bar_value, val_value, test_value)
+
+                ax.barh(
+                    y + bar_height,
+                    val_value,
+                    height=bar_height,
+                    align="edge",
+                    color=color,
+                    alpha=1.0,
+                    hatch=hatch,
+                )
+                ax.barh(
+                    y,
+                    test_value,
+                    height=bar_height,
+                    align="edge",
+                    color=color,
+                    alpha=alpha_light_bar,
+                    hatch=hatch,
                 )
 
-                if pd.isna(val_value):
-                    ax.scatter(
-                        0, y + bar_height, color=color, marker="o", s=100, zorder=3
-                    )
-                else:
-                    ax.barh(
-                        y + bar_height,
-                        val_value,
-                        height=bar_height,
-                        align="edge",
-                        color=color,
-                        alpha=1.0,
-                        hatch=hatch,
-                    )
-
-                if pd.isna(test_value):
-                    ax.scatter(0, y, color=color, marker="o", s=100, zorder=3)
-                else:
-                    ax.barh(
-                        y,
-                        test_value,
-                        height=bar_height,
-                        align="edge",
-                        color=color,
-                        alpha=0.5,
-                        hatch=hatch,
-                    )
-
-                if add_folds:
+                if add_cv:
                     fold_mean_col = f"fold_val_{metric}_mean"
                     fold_std_col = f"fold_val_{metric}_std"
                     if fold_mean_col in df.columns and fold_std_col in df.columns:
@@ -155,34 +157,109 @@ def create_plots(
                                 y + bar_height * 1.5,
                                 xerr=fold_std,
                                 fmt="o",
-                                color="white",
-                                markerfacecolor=color,
+                                color="black",
+                                markerfacecolor="black",
                                 markeredgecolor="black",
-                                markersize=8,
-                                alpha=0.5,
+                                markersize=4,
+                                alpha=1.0,
                                 ecolor="black",
-                                elinewidth=bar_height * 0.15,
+                                elinewidth=bar_height * 0.08,
                                 capsize=0,
                             )
 
                 y += bar_height * 2
 
-            yticks.append(feature[0] if isinstance(feature, list) else feature)
+            yticks.append(str(feature[2:-2]))
             ytick_positions.append(group_start_y + bar_height * 3.5)
             y += bar_height
+
+        ax_limit = (
+            1.05
+            if metric in ["r2", "pearson", "spearman"]
+            else max(max_bar_value, 0.1) * 1.1
+        )
+        marker_offset = ax_limit * 0.01
+
+        for feature in features:
+            group_start_y = ytick_positions[features.index(feature)] - bar_height * 3.5
+            for rep_type in reversed(rep_types):
+                val_key = f"val_{metric}"
+                test_key = f"test_{metric}"
+                df = filtered_df[
+                    (filtered_df["cell_dataset.node_embeddings"] == feature)
+                    & (
+                        filtered_df["cell_dataset.is_pert"]
+                        == rep_type.startswith("pert")
+                    )
+                    & (
+                        filtered_df["cell_dataset.aggregation"]
+                        == ("sum" if rep_type.endswith("sum") else "mean")
+                    )
+                ]
+
+                if df.empty:
+                    val_value = np.nan
+                    test_value = np.nan
+                else:
+                    val_value = df[val_key].values[0]
+                    test_value = df[test_key].values[0]
+
+                if pd.isna(val_value) and add_cv:
+                    ax.scatter(
+                        marker_offset,
+                        group_start_y + bar_height + x_marker_vertical_offset,
+                        color=nan_bar_color,
+                        marker="x",
+                        s=x_marker_size,
+                        linewidths=x_marker_linewidth,
+                        zorder=3,
+                    )
+
+                if pd.isna(test_value) and add_cv:
+                    ax.scatter(
+                        marker_offset,
+                        group_start_y + x_marker_vertical_offset,
+                        color=nan_bar_color,
+                        marker="x",
+                        s=x_marker_size,
+                        linewidths=x_marker_linewidth,
+                        zorder=3,
+                    )
+
+                if add_cv:
+                    fold_mean_col = f"fold_val_{metric}_mean"
+                    fold_std_col = f"fold_val_{metric}_std"
+                    if fold_mean_col in df.columns and fold_std_col in df.columns:
+                        fold_mean = (
+                            df[fold_mean_col].values[0] if not df.empty else np.nan
+                        )
+                        fold_std = (
+                            df[fold_std_col].values[0] if not df.empty else np.nan
+                        )
+                        if pd.isna(fold_mean) or pd.isna(fold_std):
+                            ax.scatter(
+                                marker_offset,
+                                group_start_y
+                                + bar_height * 1.5
+                                + red_dot_vertical_offset,
+                                color=nan_marker_color,
+                                marker="s",
+                                s=red_dot_size,
+                                alpha=red_dot_alpha,
+                                zorder=2,
+                            )
+
+                group_start_y += bar_height * 2
 
         ax.set_yticks(ytick_positions)
         ax.set_yticklabels(yticks, fontname="Arial", fontsize=20)
         ax.set_xlabel(metric, fontname="Arial", fontsize=20)
-        ax_limit = (
-            1.05
-            if metric in ["r2", "pearson", "spearman"]
-            else max(ax.get_xlim()[1], 0.1) * 1.1
-        )
         ax.set_xlim(0, ax_limit)
-        ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.5)
-        plot_name = f"SVR_{max_size_str}_{criterion}_{metric}.png"
-        ax.set_title(os.path.splitext(plot_name)[0], fontsize=20)
+        ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
+
+        plot_name = f"SVR_{max_size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
+        title = f"SVR {max_size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
+        ax.set_title(title, fontsize=20)
 
         representation_legend = [
             plt.Rectangle(
@@ -224,14 +301,39 @@ def create_plots(
         ]
         dataset_legend = [
             plt.Rectangle((0, 0), 1, 1, color="grey", alpha=1.0, label="Validation"),
-            plt.Rectangle((0, 0), 1, 1, color="grey", alpha=0.5, label="Test"),
+            plt.Rectangle((0, 0), 1, 1, color="grey", alpha=alpha_light_bar, label="Test"),
         ]
+
+        if add_cv:
+            dataset_legend.extend(
+                [
+                    plt.scatter(
+                        [],
+                        [],
+                        color=nan_bar_color,
+                        marker="x",
+                        s=x_marker_size,
+                        linewidths=x_marker_linewidth,
+                        label="NaN Bar Value",
+                    ),
+                    plt.scatter(
+                        [],
+                        [],
+                        color=nan_marker_color,
+                        marker="s",
+                        s=red_dot_size,
+                        alpha=red_dot_alpha,
+                        label="NaN CV Mean",
+                    ),
+                ]
+            )
 
         leg1 = ax.legend(
             handles=representation_legend,
             title="Representation",
             loc="upper right",
             bbox_to_anchor=(1, 1),
+            framealpha=alpha_frame,
         )
         ax.add_artist(leg1)
         ax.legend(
@@ -239,7 +341,9 @@ def create_plots(
             title="Dataset",
             loc="center right",
             bbox_to_anchor=(1, 0.5),
+            framealpha=alpha_frame,
         )
+
         plt.tick_params(axis="y", which="major", size=5, width=1)
         plt.tick_params(axis="x", which="major", size=5, width=1)
         ax.spines["top"].set_linewidth(1)
@@ -335,7 +439,7 @@ def process_raw_dataframe(
 
 
 def deduplicate_dataframe(
-    df: pd.DataFrame, criterion: str = "mse", add_folds: bool = False
+    df: pd.DataFrame, criterion: str = "mse", add_cv: bool = False
 ) -> pd.DataFrame:
     dedup_columns = [
         "cell_dataset.is_pert",
@@ -350,14 +454,21 @@ def deduplicate_dataframe(
 
     if criterion == "mse":
         sort_column = "val_mse"
+        ascending = True  # For mse, we want to select the lowest values
     elif criterion == "spearman":
         sort_column = "val_spearman"
+        ascending = False  # For spearman, we want to select the highest values
     else:
         raise ValueError("Invalid criterion. Choose either 'mse' or 'spearman'.")
 
-    if add_folds:
+    if add_cv:
         fold_mean_cols = [col for col in df.columns if col.endswith("_mean")]
         fold_std_cols = [col for col in df.columns if col.endswith("_std")]
+
+        # Filter out rows where all the fold mean columns are missing
+        df = df[
+            df[[col for col in df.columns if col.endswith("_mean")]].notna().any(axis=1)
+        ]
 
         # Filter out rows where all the fold mean columns are NaN
         df = df.dropna(subset=fold_mean_cols, how="all")
@@ -370,7 +481,9 @@ def deduplicate_dataframe(
     ].apply(lambda x: x[0] if isinstance(x, list) else x)
 
     # Perform deduplication based on the defined columns
-    df = df.sort_values(sort_column).drop_duplicates(subset=dedup_columns, keep="first")
+    df = df.sort_values(by=sort_column, ascending=ascending).drop_duplicates(
+        subset=dedup_columns, keep="first"
+    )
 
     return df
 
@@ -439,52 +552,124 @@ def main(is_overwrite=False):
         osp.join(RESULTS_DIR, "combined_df_spearman_1e5.csv")
     )
 
-    combined_df_1e3_mse = deduplicate_dataframe(
-        combined_df_1e3_mse, criterion=criterion_mse, add_folds=True
+    combined_df_1e3_mse_cv = deduplicate_dataframe(
+        combined_df_1e3_mse, criterion=criterion_mse, add_cv=True
     )
-    combined_df_1e4_mse = deduplicate_dataframe(
-        combined_df_1e4_mse, criterion=criterion_mse, add_folds=True
+    combined_df_1e4_mse_cv = deduplicate_dataframe(
+        combined_df_1e4_mse, criterion=criterion_mse, add_cv=True
     )
     combined_df_1e5_mse = deduplicate_dataframe(
-        combined_df_1e5_mse, criterion=criterion_mse, add_folds=False
+        combined_df_1e5_mse, criterion=criterion_mse, add_cv=False
     )
-    combined_df_1e3_spearman = deduplicate_dataframe(
-        combined_df_1e3_spearman, criterion=criterion_spearman, add_folds=True
+    combined_df_1e3_spearman_cv = deduplicate_dataframe(
+        combined_df_1e3_spearman, criterion=criterion_spearman, add_cv=True
     )
-    combined_df_1e4_spearman = deduplicate_dataframe(
-        combined_df_1e4_spearman, criterion=criterion_spearman, add_folds=True
+    combined_df_1e4_spearman_cv = deduplicate_dataframe(
+        combined_df_1e4_spearman, criterion=criterion_spearman, add_cv=True
     )
     combined_df_1e5_spearman = deduplicate_dataframe(
-        combined_df_1e5_spearman, criterion=criterion_spearman, add_folds=False
+        combined_df_1e5_spearman, criterion=criterion_spearman, add_cv=False
+    )
+
+    # Deduplicate DataFrames for 1e03 and 1e04 with add_cv=False
+    combined_df_1e3_mse_no_cv = deduplicate_dataframe(
+        combined_df_1e3_mse, criterion=criterion_mse, add_cv=False
+    )
+    combined_df_1e4_mse_no_cv = deduplicate_dataframe(
+        combined_df_1e4_mse, criterion=criterion_mse, add_cv=False
+    )
+    combined_df_1e3_spearman_no_cv = deduplicate_dataframe(
+        combined_df_1e3_spearman, criterion=criterion_spearman, add_cv=False
+    )
+    combined_df_1e4_spearman_no_cv = deduplicate_dataframe(
+        combined_df_1e4_spearman, criterion=criterion_spearman, add_cv=False
+    )
+
+    # Save the deduplicated DataFrames for manual inspection
+    combined_df_1e3_mse_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_mse_1e3_add_cv.csv"),
+        index=False,
+    )
+    combined_df_1e4_mse_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_mse_1e4_add_cv.csv"),
+        index=False,
+    )
+    combined_df_1e5_mse.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_mse_1e5.csv"), index=False
+    )
+    combined_df_1e3_spearman_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_spearman_1e3_add_cv.csv"),
+        index=False,
+    )
+    combined_df_1e4_spearman_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_spearman_1e4_add_cv.csv"),
+        index=False,
+    )
+    combined_df_1e5_spearman.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_spearman_1e5.csv"), index=False
+    )
+
+    # Save the deduplicated DataFrames for 1e03 and 1e04 with add_cv=False
+    combined_df_1e3_mse_no_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_mse_1e3.csv"), index=False
+    )
+    combined_df_1e4_mse_no_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_mse_1e4.csv"), index=False
+    )
+    combined_df_1e3_spearman_no_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_spearman_1e3.csv"), index=False
+    )
+    combined_df_1e4_spearman_no_cv.to_csv(
+        osp.join(RESULTS_DIR, "deduplicated_combined_df_spearman_1e4.csv"), index=False
     )
 
     create_plots(
-        combined_df_1e3_mse, max_size=1000, criterion=criterion_mse, add_folds=True
+        combined_df_1e3_mse_cv, max_size=1000, criterion=criterion_mse, add_cv=True
     )
     create_plots(
-        combined_df_1e4_mse, max_size=10000, criterion=criterion_mse, add_folds=True
+        combined_df_1e4_mse_cv, max_size=10000, criterion=criterion_mse, add_cv=True
     )
     create_plots(
-        combined_df_1e5_mse, max_size=100000, criterion=criterion_mse, add_folds=False
+        combined_df_1e5_mse, max_size=100000, criterion=criterion_mse, add_cv=False
     )
 
     create_plots(
-        combined_df_1e3_spearman,
+        combined_df_1e3_spearman_cv,
         max_size=1000,
         criterion=criterion_spearman,
-        add_folds=True,
+        add_cv=True,
     )
     create_plots(
-        combined_df_1e4_spearman,
+        combined_df_1e4_spearman_cv,
         max_size=10000,
         criterion=criterion_spearman,
-        add_folds=True,
+        add_cv=True,
     )
     create_plots(
         combined_df_1e5_spearman,
         max_size=100000,
         criterion=criterion_spearman,
-        add_folds=False,
+        add_cv=False,
+    )
+
+    # Create plots for 1e03 and 1e04 with add_cv=False
+    create_plots(
+        combined_df_1e3_mse_no_cv, max_size=1000, criterion=criterion_mse, add_cv=False
+    )
+    create_plots(
+        combined_df_1e4_mse_no_cv, max_size=10000, criterion=criterion_mse, add_cv=False
+    )
+    create_plots(
+        combined_df_1e3_spearman_no_cv,
+        max_size=1000,
+        criterion=criterion_spearman,
+        add_cv=False,
+    )
+    create_plots(
+        combined_df_1e4_spearman_no_cv,
+        max_size=10000,
+        criterion=criterion_spearman,
+        add_cv=False,
     )
 
 

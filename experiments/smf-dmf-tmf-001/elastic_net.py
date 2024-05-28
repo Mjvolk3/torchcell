@@ -18,7 +18,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
-
+import socket
 # from wandb_osh.hooks import TriggerWandbSyncHook
 import torchcell
 
@@ -36,12 +36,15 @@ def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
+    hostname = socket.gethostname()
+    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
-    group = f"{slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(slurm_job_id))
+    group = f"{hostname_slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id))
+    os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online",
+        mode="offline",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,

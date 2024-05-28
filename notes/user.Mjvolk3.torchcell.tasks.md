@@ -9,9 +9,21 @@ created: 1690514887023m
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.28
+
+- [x] Respond to rate limiting query. → They said our limit was bumped to 200 requests per minute but it is unclear when this happend.
+- [x] Had to kill `SVR_1e03` and `RF_1e05` because of what looks like a rate limiting error from `wandb`.
+- [ ] Test syncing of offline runs on `gilahyper`. → This should work. I think that we permanently move all traditional machine learning to offline with cli sync to avoid our rate limiting issues. → If we run `offline` do we have agent limits? → Working well so far will sync as conclusion of run.
+- [x] Check `svr` on `delta` → killed job looks like they are hung up due to rate limit.
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+- [ ]
+
 ## 2024.05.27
 
-- [ ] Consider breaking out new tasks notes, timestamp
+- [x] Consider breaking out new tasks notes, timestamp → not for now things are working good enough.
 - [x] Globus transfer of `random_100`, `random_10`, and `random_1` to `delta` and transfer to `gilahyper`
 - [x] Finalize `svr` plot style
 - [x] Launch `random_100`, `random_10`, and `random_1` on `delta` for `elastic-net` → Looks like it finished successfully.

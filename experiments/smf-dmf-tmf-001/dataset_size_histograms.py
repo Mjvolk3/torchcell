@@ -1,3 +1,7 @@
+# experiments/smf-dmf-tmf-001/dataset_size_histograms
+# [[experiments.smf-dmf-tmf-001.dataset_size_histograms]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/dataset_size_histograms
+
 import os.path as osp
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +18,7 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-def plot_histogram(X, y, dataset_size, split, bins=20):
+def plot_histogram(X, y, dataset_size, split, bins=30):
     X = (X * -1) + 1  # Invert 1s and 0s
     X_gene_count = np.sum(X, axis=1)
     df = pd.DataFrame({"num_genes_deleted": X_gene_count, "fitness": y})

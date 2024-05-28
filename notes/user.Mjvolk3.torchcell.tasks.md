@@ -21,7 +21,10 @@ created: 1690514887023m
 - [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
 - [ ] Launch `1e5` for `random-forest` with new `random` on `gilahyper`
 
-- [ ] Make same plots for `random-forest`
+- [x] Make same plots for `random-forest`
+- [x] Make same plots for `elastic-net`, update
+- [ ] Add run id to results saved for `traditional ml` from 
+
 
 - [ ] Adjust style for `elastic-net` to match
 - [ ] Launch sweeps over new random for `elastic-net`, `svr` and `random-forest`

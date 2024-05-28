@@ -21,17 +21,22 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 
 def load_dataset(api, project_name):
     runs = api.runs(project_name)
-    summary_list, config_list, name_list = [], [], []
+    summary_list, config_list, name_list, run_id_list = [], [], [], []
     for run in runs:
         summary_list.append(run.summary._json_dict)
         config_list.append(
             {k: v for k, v in run.config.items() if not k.startswith("_")}
         )
         name_list.append(run.name)
+        run_id_list.append(run.id)  # Add this line to store the run ID
     return pd.DataFrame(
-        {"summary": summary_list, "config": config_list, "name": name_list}
+        {
+            "summary": summary_list,
+            "config": config_list,
+            "name": name_list,
+            "run_id": run_id_list,  # Add the run ID column
+        }
     )
-
 
 def create_plots(
     combined_df: pd.DataFrame, max_size: int, criterion: str, add_cv: bool = False
@@ -444,6 +449,8 @@ def process_raw_dataframe(
 
     # Combine config, summary, and fold DataFrames
     processed_df = pd.concat([config_df, summary_df, fold_df], axis=1)
+    # Add run id
+    processed_df = pd.concat([df[["run_id"]], config_df, summary_df, fold_df], axis=1)
 
     return processed_df
 

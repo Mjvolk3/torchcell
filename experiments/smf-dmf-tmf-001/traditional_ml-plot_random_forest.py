@@ -21,15 +21,21 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 
 def load_dataset(api, project_name):
     runs = api.runs(project_name)
-    summary_list, config_list, name_list = [], [], []
+    summary_list, config_list, name_list, run_id_list = [], [], [], []
     for run in runs:
         summary_list.append(run.summary._json_dict)
         config_list.append(
             {k: v for k, v in run.config.items() if not k.startswith("_")}
         )
         name_list.append(run.name)
+        run_id_list.append(run.id)  # Add this line to store the run ID
     return pd.DataFrame(
-        {"summary": summary_list, "config": config_list, "name": name_list}
+        {
+            "summary": summary_list,
+            "config": config_list,
+            "name": name_list,
+            "run_id": run_id_list,  # Add the run ID column
+        }
     )
 
 
@@ -57,6 +63,13 @@ def create_plots(
         "#82B3AE",
         "#FFD3B6",
         "#746D75",
+        "#FF8C94",
+        "#5E8C61",
+        "#B565A7",
+        "#955251",
+        "#009B77",
+        "#DD4124",
+        "#D65076",
     ]
     color_dict = {feature: color for feature, color in zip(features, color_list)}
     default_color = "#808080"
@@ -436,7 +449,7 @@ def process_raw_dataframe(
         summary_df["test_rmse"] = np.sqrt(summary_df["test_mse"])
 
     # Combine config, summary, and fold DataFrames
-    processed_df = pd.concat([config_df, summary_df, fold_df], axis=1)
+    processed_df = pd.concat([df[["run_id"]], config_df, summary_df, fold_df], axis=1)
 
     return processed_df
 

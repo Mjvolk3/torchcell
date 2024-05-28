@@ -46,12 +46,14 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(slurm_job_id))
     wandb.init(
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
+        dir=experiment_dir,
     )
 
     max_size_str = format_scientific_notation(

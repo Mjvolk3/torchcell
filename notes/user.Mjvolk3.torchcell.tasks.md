@@ -17,17 +17,13 @@ created: 1690514887023m
 - [x] Launch `random_100`, `random_10`, and `random_1` on `delta` for `elastic-net` → Looks like it finished successfully.
 - [x] After `elastic-net` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `svr` → We only launched for `1e3` and `1e4`. Will need to do `1e5_subset` later
 - [x] `gilahyper` slurm accounting → spent a good deal of time on this setting up `mariadb`.. We still can't get the accounting to work using slurm. We can still run jobs. Stopping to run jobs and we'll worry about accounting later.
+- [x] Submit query about increasing `wandb` rate limit [wandb rate limit increase request](https://weightsandbiases.zendesk.com/hc/en-us/requests/67845)
 
 - [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
 - [ ] Launch `1e5` for `random-forest` with new `random` on `gilahyper`
-
 - [x] Make same plots for `random-forest`
 - [x] Make same plots for `elastic-net`, update
-- [ ] Add run id to results saved for `traditional ml` from 
-
-
-- [ ] Adjust style for `elastic-net` to match
-- [ ] Launch sweeps over new random for `elastic-net`, `svr` and `random-forest`
+- [x] Add run id to results saved for `traditional ml` from
 
 ## 2024.05.26
 

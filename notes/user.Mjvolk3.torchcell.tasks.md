@@ -15,8 +15,8 @@ created: 1690514887023m
 - [x] Had to kill `SVR_1e03` and `RF_1e05` because of what looks like a rate limiting error from `wandb`.
 - [ ] Test syncing of offline runs on `gilahyper`. → This should work. I think that we permanently move all traditional machine learning to offline with cli sync to avoid our rate limiting issues. → If we run `offline` do we have agent limits? → Working well so far will sync as conclusion of run.
 - [x] Check `svr` on `delta` → killed job looks like they are hung up due to rate limit.
-- [ ] Dataset size histograms 
-- [ ]
+- [x] Dataset size histograms → [[Dataset_size_histograms|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_size_histograms]] → I was concerned that these might look irregular but they look as expected.
+- [ ] `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync → 
 - [ ]
 - [ ]
 - [ ]

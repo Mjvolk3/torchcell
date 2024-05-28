@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=RF_1e05
-#SBATCH --ntasks=4
-#SBATCH --cpus-per-task=1            # Half of the total 128 CPUs
-#SBATCH --mem=64G                    # Half of the total 514G memory
-#SBATCH --gres=gpu:0                  # No GPUs
+#SBATCH --ntasks=20                # Set to the desired number of tasks (agents)
+#SBATCH --cpus-per-task=1           # Adjust the number of CPUs per task based on your requirements
+#SBATCH --mem=128G                  # Total memory for the job
+#SBATCH --gres=gpu:0                # No GPUs
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
@@ -38,7 +38,7 @@ cat /proc/meminfo
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=iqe6yqr7
+SWEEP_ID=pt06ht2n
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 
 echo "-----------------"

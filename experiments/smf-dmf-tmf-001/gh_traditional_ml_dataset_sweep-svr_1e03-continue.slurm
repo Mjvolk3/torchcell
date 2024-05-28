@@ -38,7 +38,8 @@ cat /proc/meminfo
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=jecgfoee
+# This one is offline
+SWEEP_ID=w8mvcxug
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03
 
 echo "-----------------"

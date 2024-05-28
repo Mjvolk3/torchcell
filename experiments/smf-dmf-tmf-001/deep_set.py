@@ -40,6 +40,7 @@ from torchcell.trainers import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch
 import torch.distributed as dist
+import socket
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -52,10 +53,14 @@ def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
+    hostname = socket.gethostname()
+    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
-    group = f"{slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(slurm_job_id))
+    group = f"{hostname_slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join(
+        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
+    )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="online",  # "online", "offline", "disabled"

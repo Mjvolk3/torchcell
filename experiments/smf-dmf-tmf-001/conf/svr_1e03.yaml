@@ -6,7 +6,8 @@
 program: experiments/smf-dmf-tmf-001/svr.py
 project: torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03
 method: grid
-
+  randomize_order: true
+  
 parameters:
   cell_dataset:
     parameters:
@@ -54,6 +55,9 @@ parameters:
         values: [0.1, 0.01, 0.001]
   is_cross_validated:
     values: [true]
+
+
+
 command:
   - ${env}
   - python

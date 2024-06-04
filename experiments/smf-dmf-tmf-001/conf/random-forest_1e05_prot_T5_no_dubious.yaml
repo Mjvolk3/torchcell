@@ -1,6 +1,6 @@
-
-program: experiments/smf-dmf-tmf-001/svr.py
-project: torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05
+# experiments/smf-dmf-tmf-001/conf/random-forest_1e05.yaml
+program: experiments/smf-dmf-tmf-001/random_forest.py
+project: torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 method: grid
 
 parameters:
@@ -16,7 +16,7 @@ parameters:
           # - [fudt_downstream]
           # - [fudt_upstream]
           # - [prot_T5_all]
-          # - [prot_T5_no_dubious]
+          - [prot_T5_no_dubious]
           # - [nt_window_5979]
           # - [nt_window_three_prime_300]
           # - [nt_window_five_prime_1003]
@@ -24,15 +24,15 @@ parameters:
           # - [esm2_t33_650M_UR50D_no_dubious]
           # - [normalized_chrom_pathways]
           # - [random_1000]
-          - [random_100]
-          - [random_10]
-          - [random_1]
+          # - [random_100]
+          # - [random_10]
+          # - [random_1]
       max_size:
         values: [1e5]
       is_pert:
-        values: [true] #[true, false]
+        values: [true, false]
       aggregation:
-        values: [mean] #[sum, mean]
+        values: [sum, mean]
   data_module:
     parameters:
       batch_size:
@@ -41,17 +41,16 @@ parameters:
         values: [6]
       pin_memory:
         values: [true]
-  svr:
+  random_forest:
     parameters:
-      kernel:
-        values: [rbf]
-      C:
-        values: [10.0]
-      gamma:
-        values: [0.1]
+      n_estimators:
+        values: [500]
+      max_depth:
+        values: [null]
+      min_samples_split:
+        values: [5]
   is_cross_validated:
     values: [false]
-  
 command:
   - ${env}
   - python

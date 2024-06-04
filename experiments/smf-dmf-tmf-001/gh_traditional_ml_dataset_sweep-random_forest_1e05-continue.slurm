@@ -1,14 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=RF_1e05
-#SBATCH --ntasks=20                # Set to the desired number of tasks (agents)
-#SBATCH --cpus-per-task=1           # Adjust the number of CPUs per task based on your requirements
-#SBATCH --mem=128G                  # Total memory for the job
+#SBATCH --ntasks=4                # Set to the desired number of tasks (agents)
+#SBATCH --cpus-per-task=16           # Adjust the number of CPUs per task based on your requirements
+#SBATCH --mem=753G                  # Total memory for the job
 #SBATCH --gres=gpu:0                # No GPUs
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
 #SBATCH --output=/scratch/projects/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/projects/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
+#SBATCH --no-requeue
+
 
 echo "Running on $(hostname)"
 
@@ -38,7 +40,7 @@ cat /proc/meminfo
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=pt06ht2n
+SWEEP_ID=uq8wvzlr
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 
 echo "-----------------"

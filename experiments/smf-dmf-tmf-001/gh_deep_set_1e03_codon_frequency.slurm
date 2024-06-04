@@ -40,7 +40,7 @@ nvidia-smi # Display GPU information
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=mhbbftax
+SWEEP_ID=2x9rrfxs
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_deep_set_1e03
 
 echo "-----------------"

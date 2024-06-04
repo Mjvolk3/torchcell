@@ -2,23 +2,30 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1716780386311
+updated: 1716997717151
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
 
+## 2024.05.29
+
+- [x] Respond to [Jira Issue](https://jira.ncsa.illinois.edu/browse/DELTA-4317)
+- [x] Check on runs. → Ran syncs even though runs are not done for update individual meeting. will sync again on completion.
+- [ ] Generate plots again
+
 ## 2024.05.28
 
 - [x] Respond to rate limiting query. → They said our limit was bumped to 200 requests per minute but it is unclear when this happend.
 - [x] Had to kill `SVR_1e03` and `RF_1e05` because of what looks like a rate limiting error from `wandb`.
-- [ ] Test syncing of offline runs on `gilahyper`. → This should work. I think that we permanently move all traditional machine learning to offline with cli sync to avoid our rate limiting issues. → If we run `offline` do we have agent limits? → Working well so far will sync as conclusion of run.
+- [x] Test syncing of offline runs on `gilahyper`. → This should work. I think that we permanently move all traditional machine learning to offline with cli sync to avoid our rate limiting issues. → If we run `offline` do we have agent limits? → Working well so far will sync as conclusion of run. → works well.
+- [ ] `gilahyper-57` sync and `57` on `gilahyper` sync... changed the paths during run.
 - [x] Check `svr` on `delta` → killed job looks like they are hung up due to rate limit.
 - [x] Dataset size histograms → [[Dataset_size_histograms|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_size_histograms]] → I was concerned that these might look irregular but they look as expected.
-- [ ] `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync → 
-- [ ]
-- [ ]
+- [ ] `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync →
+- [ ] Launch `delta` jobs `offline` → Going for it all. JOBID: 3753589, 3753588, 3753587, 3753582, 3753580. Each will need to be synced on completion. Leaving open so it is obvious.
+- [x] Launch `gilahyper-59`, `codon_frequency-1e04`  
 - [ ]
 
 ## 2024.05.27

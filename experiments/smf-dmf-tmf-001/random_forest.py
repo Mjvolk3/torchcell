@@ -176,6 +176,7 @@ def main(cfg: DictConfig) -> None:
                 n_estimators=n_estimators,
                 max_depth=max_depth,
                 min_samples_split=min_samples_split,
+                n_jobs=n_jobs,
             )
 
             model.fit(X_train, y_train)

@@ -2,12 +2,21 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1716997717151
+updated: 1717628675276
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.06.05
+
+- [x] Check jobs on `delta` → Not all jobs finished.
+- [x] Request more cpu from `Access`
+- [x] Jobs that need extension? → Looking at `wandb-experiments` and judging completed runs by plot outputs. → [[random-forest-1e05.2024.06.05|dendron://torchcell/experiments.smf-dmf-tmf-001.random-forest-1e05.2024.06.05]]
+- [x] Manually sync runs where they are and plot to see if data matches. → Data doesn't match because many of the runs haven't completed. For runs that have obviously finished the data appears in the wandb GUI. All runs synced say finished although they have not. → The indicator of completion is `wandb-summary.json` e.g. `/scratch/bbub/mjvolk3/torchcell/wandb-experiments/cn035.delta.ncsa.illinois.edu-3792512/wandb/offline-run-20240603_231345-6w915lz4/files/wandb-summary.json`
+- [x] Cancel `3792512` (`ncp_RF_1e05`), and `3792529` (`codon_RF_1e05`)
+- [x] Submit request for run extensions
 
 ## 2024.05.29
 

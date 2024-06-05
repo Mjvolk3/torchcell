@@ -16,11 +16,11 @@ parameters:
         values: [null]
       node_embeddings:
         values:
-          - [one_hot_gene]
+          # - [one_hot_gene]
           # - [codon_frequency]
           # - [calm]
           # - [fudt_downstream]
-          # - [fudt_upstream]
+          - [fudt_upstream]
           # - [prot_T5_all]
           # - [prot_T5_no_dubious]
           # - [nt_window_5979]
@@ -35,9 +35,9 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [32] # FAILED FROM BATCH SIZE TOO LARGE
+        values: [64]
       num_workers:
-        values: [6]
+        values: [8]
       pin_memory:
         values: [true]
   trainer:

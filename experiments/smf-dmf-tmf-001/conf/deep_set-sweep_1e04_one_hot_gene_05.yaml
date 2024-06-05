@@ -3,7 +3,7 @@ project: torchcell_smf-dmf-tmf-001_deep_set_1e04
 method: random
 metric:
   goal: minimize
-  name: val/lossj
+  name: val/loss
 # early_terminate:
 #   type: hyperband
 #   min_iter: 16
@@ -37,7 +37,7 @@ parameters:
       batch_size:
         values: [16]
       num_workers:
-        values: [6]
+        values: [6] # Things are going very slow. Num workers?
       pin_memory:
         values: [true]
   trainer:

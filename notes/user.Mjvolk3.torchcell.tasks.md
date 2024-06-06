@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1717628675276
+updated: 1717643748947
 created: 1690514887023m
 ---
 
@@ -17,6 +17,10 @@ created: 1690514887023m
 - [x] Manually sync runs where they are and plot to see if data matches. → Data doesn't match because many of the runs haven't completed. For runs that have obviously finished the data appears in the wandb GUI. All runs synced say finished although they have not. → The indicator of completion is `wandb-summary.json` e.g. `/scratch/bbub/mjvolk3/torchcell/wandb-experiments/cn035.delta.ncsa.illinois.edu-3792512/wandb/offline-run-20240603_231345-6w915lz4/files/wandb-summary.json`
 - [x] Cancel `3792512` (`ncp_RF_1e05`), and `3792529` (`codon_RF_1e05`)
 - [x] Submit request for run extensions
+- [x] Bar plots for gene count over different scale [[Dataset_genes_bar_plot|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_genes_bar_plot]]
+- [ ] Try gpu accelerated random forest. → install `rapids-ai` for `cuml` [[Install|dendron://torchcell/rapids-ai.install]]
+- [x] Investigate incomplete `wandb-summary.json` and decide if we should keep runs going or cancel → Sometimes they look like they are empty but we have all of the plots. After running `wandb sync` the summary gets populated. This implies that the data is in one of the other files within the dir, but I am not sure which. I think likely in one of the binary `.wandb` files.
+- [ ] Fix slurm config on `gilahyper`
 
 ## 2024.05.29
 

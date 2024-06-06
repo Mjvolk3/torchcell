@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=DS_1e04_one_hot_gene
+#SBATCH --job-name=DS_1e04_fudt-up
 #SBATCH --ntasks-per-node=3 # Set to the desired number of tasks per node
 #SBATCH --cpus-per-task=16 # Adjust the number of CPUs per task based on your requirements
 #SBATCH --mem=192G # Total memory for the job (adjusted based on your available memory) typically use 192...
@@ -42,7 +42,7 @@ nvidia-smi # Display GPU information
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=c4ytoepo
+SWEEP_ID=ipd8qx9x
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_deep_set_1e04
 
 echo "-----------------"

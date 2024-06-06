@@ -35,9 +35,9 @@ parameters:
   data_module:
     parameters:
       batch_size:
-        values: [32] # FAILED FROM BATCH SIZE TOO LARGE
+        values: [8]
       num_workers:
-        values: [6]
+        values: [2] # Things are going very slow. Num workers?
       pin_memory:
         values: [true]
   trainer:

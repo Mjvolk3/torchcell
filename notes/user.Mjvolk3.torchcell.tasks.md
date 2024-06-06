@@ -2,12 +2,23 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1717643748947
+updated: 1717696431331
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.06.06
+
+- [x] Sync previous `gilahyper` runs 57 and 58
+- [x] Sync delta runs
+- [x] Submit for more cpu on `ACCESS`
+- [x] Rerun random forest plots and asses which runs can be cancelled. → kill `fudt_upstream` and `fudt_downstream`
+- [ ] Fix slurm config on `gilahyper` memory bind so RAM is constrained
+- [ ] Test memory constraints on `gilahyper` 243 GB to match `delta`. Job should fail when memory is exceeded.
+- [ ]
+- [ ] `gpu` accelerated random forest
 
 ## 2024.06.05
 
@@ -18,22 +29,22 @@ created: 1690514887023m
 - [x] Cancel `3792512` (`ncp_RF_1e05`), and `3792529` (`codon_RF_1e05`)
 - [x] Submit request for run extensions
 - [x] Bar plots for gene count over different scale [[Dataset_genes_bar_plot|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_genes_bar_plot]]
-- [ ] Try gpu accelerated random forest. → install `rapids-ai` for `cuml` [[Install|dendron://torchcell/rapids-ai.install]]
+- [x] Try gpu accelerated random forest. → install `rapids-ai` for `cuml` [[Install|dendron://torchcell/rapids-ai.install]] → Close but need to figure out how to get parameters from random forest model in `cuml`
 - [x] Investigate incomplete `wandb-summary.json` and decide if we should keep runs going or cancel → Sometimes they look like they are empty but we have all of the plots. After running `wandb sync` the summary gets populated. This implies that the data is in one of the other files within the dir, but I am not sure which. I think likely in one of the binary `.wandb` files.
-- [ ] Fix slurm config on `gilahyper`
+- 🔲 Fix slurm config on `gilahyper`
 
 ## 2024.05.29
 
 - [x] Respond to [Jira Issue](https://jira.ncsa.illinois.edu/browse/DELTA-4317)
 - [x] Check on runs. → Ran syncs even though runs are not done for update individual meeting. will sync again on completion.
-- [ ] Generate plots again
+- [x] Generate plots again
 
 ## 2024.05.28
 
 - [x] Respond to rate limiting query. → They said our limit was bumped to 200 requests per minute but it is unclear when this happend.
 - [x] Had to kill `SVR_1e03` and `RF_1e05` because of what looks like a rate limiting error from `wandb`.
 - [x] Test syncing of offline runs on `gilahyper`. → This should work. I think that we permanently move all traditional machine learning to offline with cli sync to avoid our rate limiting issues. → If we run `offline` do we have agent limits? → Working well so far will sync as conclusion of run. → works well.
-- [ ] `gilahyper-57` sync and `57` on `gilahyper` sync... changed the paths during run.
+- [x] `gilahyper-57` sync and `57` on `gilahyper` sync... changed the paths during run.
 - [x] Check `svr` on `delta` → killed job looks like they are hung up due to rate limit.
 - [x] Dataset size histograms → [[Dataset_size_histograms|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_size_histograms]] → I was concerned that these might look irregular but they look as expected.
 - [ ] `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync →

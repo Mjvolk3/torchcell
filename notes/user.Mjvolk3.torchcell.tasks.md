@@ -2,12 +2,19 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1717696431331
+updated: 1717786183474
 created: 1690514887023m
 ---
 
 ![[user.mjvolk3.torchcell.tasks.future#future]]
 [[Outline|dendron://torchcell/paper.outline]]
+
+## 2024.06.07
+
+- [x] Sync RF runs, run RF plotting, cancel runs that haven't finished. → finished: all `random`, `one_hot_gene`
+- [x] Request extension on jobs.
+- [ ] Per model, per scale, performance v num_params
+- [ ]
 
 ## 2024.06.06
 

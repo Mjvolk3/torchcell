@@ -111,34 +111,18 @@
             },
             // Cluster
             {
-                "label": "nano: Interactive",
+                "label": "gilahyper: sacct",
                 "type": "shell",
-                "command": "qsub -I -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=3600",
-                "problemMatcher": []
-            },
-            {
-                "label": "nano: qsub main",
-                "type": "shell",
-                "command": "qsub main.script -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=96:00:00 -N ${input:jobName}",
-                "problemMatcher": []
-            },
-            {
-                "label": "Delta: Interactive GPU",
-                "type": "shell",
-                "command": "srun --account=bbtp-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=20g --pty bash",
-                "problemMatcher": []
-            },
-            {
-                "label": "Delta: Interactive CPU",
-                "type": "shell",
-                "command": "srun --account=bbtp-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=16g --pty bash",
-                "problemMatcher": []
-            },
-            {
-                "label": "genPE: M1 sweep",
-                "type": "shell",
-                "command": "bash src/genPE/sweep_m1.sh",
-                "problemMatcher": []
+                "command": "sacct --starttime=$(date -d '${input:days} days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End,Nodelist",
+                "problemMatcher": [],
+                "inputs": [
+                    {
+                        "id": "days",
+                        "description": "number of days",
+                        "type": "promptString",
+                        "default": "7"
+                    }
+                ]
             },
             // Notability
             {
@@ -401,6 +385,12 @@
                     "8"
                     "16",
                 ]
+            },
+            {
+                "id" : "days",
+                "description": "number of days",
+                "type": "promptString",
+                "default": "7"
             },
             {
                 "id": "newFilePath",

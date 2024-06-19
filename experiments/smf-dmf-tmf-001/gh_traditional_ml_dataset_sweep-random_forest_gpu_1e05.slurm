@@ -1,16 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=RF_1e05
-#SBATCH --ntasks=4                # Set to the desired number of tasks (agents)
+#SBATCH --ntasks=3                  # Set to the desired number of tasks (agents)
 #SBATCH --cpus-per-task=16           # Adjust the number of CPUs per task based on your requirements
-#SBATCH --mem=753G                  # Total memory for the job
-#SBATCH --gres=gpu:0                # No GPUs
+#SBATCH --mem=256G                   # Total memory for the job
+#SBATCH --gres=gpu:3                 # Request 3 GPUs
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
 #SBATCH --output=/scratch/projects/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/projects/torchcell/experiments/smf-dmf-tmf-001/slurm/output/%x_%j.out
 #SBATCH --no-requeue
-
 
 echo "Running on $(hostname)"
 
@@ -30,7 +29,7 @@ fi
 echo "Allocated CPUs: $SLURM_CPUS_PER_TASK"
 echo "Allocated Memory: $SLURM_MEM_PER_NODE"
 
-# Ch    eck system information
+# Check system information
 nproc
 free -h
 lscpu
@@ -40,7 +39,7 @@ cat /proc/meminfo
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=uq8wvzlr
+SWEEP_ID=7hw5bo7d
 PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 
 echo "-----------------"
@@ -55,6 +54,7 @@ mkdir -p /scratch/projects/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLUR
 
 for ((i=0; i<$SLURM_NTASKS; i++)); do
     echo "Starting wandb agent $i"
+    export CUDA_VISIBLE_DEVICES=$i  # Set the CUDA_VISIBLE_DEVICES environment variable for each agent
     (wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/projects/torchcell/experiments/smf-dmf-tmf-001/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID-$i.log 2>&1) &
     if [ $? -ne 0 ]; then
         echo "Failed to start wandb agent $i"

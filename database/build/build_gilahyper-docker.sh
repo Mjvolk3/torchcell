@@ -36,9 +36,12 @@ docker exec tc-neo4j python -m pip uninstall biocypher -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 # TODO Should be moved into requirements.txt then removed after image build.
 docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
+docker exec tc-neo4j python -m pip install memory-profiler
+
+docker start tc-neo4j
 
 # Add wandb login command
-docker exec tc-neo4j wandb login --key WANDB_API_KEY
+docker exec tc-neo4j wandb login $WANDB_API_KEY
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 

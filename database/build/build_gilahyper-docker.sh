@@ -1,5 +1,5 @@
 #!/bin/bash -c
-cd "$PWD"
+cd /scratch/projects/torchcell
 
 echo "Starting build_gilahyper-docker"
 source .env

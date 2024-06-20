@@ -108,8 +108,12 @@ def main(cfg) -> str:
     # print types
     print(f"time_str type: {type(time_str)}")
     print("=========")
+    output_directory = osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str)
+    print("=========")
+    print(output_directory)
+    print("=========")
     bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str),
+        output_directory=output_directory,
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )

@@ -53,7 +53,8 @@ def get_num_workers():
     if cpus_per_task is not None:
         return int(cpus_per_task)
     # Fallback: Use multiprocessing to get the total number of CPUs
-    return mp.cpu_count()
+    # return mp.cpu_count()
+    return 10
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")

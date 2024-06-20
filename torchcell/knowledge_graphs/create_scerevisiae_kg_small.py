@@ -59,12 +59,22 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
+    print("this is where we are")
+    print(os.getcwd())
+    print("---------")
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-
+    print("---------")
+    print(DATA_ROOT)
+    print(BIOCYPHER_CONFIG_PATH)
+    print(SCHEMA_CONFIG_PATH)
+    print(BIOCYPHER_OUT_PATH)
+    print("---------")
+    
+    
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())

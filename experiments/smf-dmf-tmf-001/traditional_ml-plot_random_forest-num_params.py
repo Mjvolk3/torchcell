@@ -103,24 +103,22 @@ def create_plots(df: pd.DataFrame, max_size: int):
                 curve_y = np.interp(curve_x, [x_val, x_test], [y_val, y_test])
                 curve_y += (curve_x - x_val) * (curve_x - x_test) * 0.1
                 ax.plot(
-                    curve_x,
-                    curve_y,
-                    linestyle="-",
-                    color="gray",
-                    alpha=0.5,
-                    label="_nolegend_",
+                    curve_x, curve_y, linestyle="-", color="gray", alpha=0.5, zorder=-1
                 )
 
         ax.set_xlabel("Number of Parameters", fontsize=14)
-        ax.set_ylabel(metric.upper(), fontsize=14)
+        ax.set_ylabel(metric, fontsize=14)
         ax.set_xscale("log")
         ax.grid(True, which="both", linestyle="--", alpha=0.7)
         ax.legend(fontsize=12)
 
+        if metric == "pearson":
+            ax.set_ylim(0, 1)
+        else:
+            ax.set_ylim(bottom=0)
+
         max_size_str = format_scientific_notation(max_size)
-        title = (
-            f"Random Forest {max_size_str} - {metric.upper()} vs. Number of Parameters"
-        )
+        title = f"Random Forest {max_size_str} - {metric} vs. Number of Parameters"
         ax.set_title(title, fontsize=16)
 
         plot_name = f"Random_Forest_{max_size_str}_{metric}_vs_num_params.png"

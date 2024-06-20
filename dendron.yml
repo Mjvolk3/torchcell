@@ -46,7 +46,7 @@ workspace:
     workspaceVaultSyncMode: noCommit
     enableAutoFoldFrontmatter: false
     maxPreviewsCached: 10
-    maxNoteLength: 204800
+    maxNoteLength: 300000
     task:
         name: ''
         dateFormat: ''

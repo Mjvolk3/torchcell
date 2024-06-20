@@ -45,7 +45,7 @@ from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
 from abc import ABC, abstractmethod
-
+from memory_profiler import profile
 log = logging.getLogger(__name__)
 
 
@@ -68,7 +68,7 @@ class ParsedGenome(ModelStrictArbitrary):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
         return v
 
-
+@profile
 def create_embedding_graph(
     gene_set: GeneSet, embeddings: BaseEmbeddingDataset
 ) -> nx.Graph:
@@ -89,7 +89,7 @@ def create_embedding_graph(
 
     return G # breakpoint here
 
-
+@profile
 def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
     hetero_data = HeteroData()
 
@@ -142,7 +142,7 @@ def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
 
     return hetero_data
 
-
+@profile
 def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     """
     Create a graph where nodes are gene names from the GeneSet.
@@ -153,7 +153,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
         G.add_node(gene_name)  # Nodes are gene names
     return G
 
-
+@profile
 def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     processed_graph = HeteroData()  # breakpoint here
 
@@ -234,6 +234,7 @@ def parse_genome(genome) -> ParsedGenome:
 
 
 class Neo4jCellDataset(Dataset):
+    @profile
     def __init__(
         self,
         root: str,
@@ -299,6 +300,7 @@ class Neo4jCellDataset(Dataset):
         # compute index
         self.phenotype_label_index
 
+    @profile
     def get_init_graphs(self, raw_db, genome):
         # Setting priority
         if genome is None:
@@ -404,6 +406,7 @@ class Neo4jCellDataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
+    @profile
     def get(self, idx):
         """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
@@ -589,7 +592,6 @@ class ExperimentDeduplicator(Deduplicator):
 
         return {"experiment": mean_experiment, "reference": mean_reference}
 
-
 def main():
     # genome
     import os.path as osp
@@ -674,7 +676,7 @@ def main():
         model_name="species_downstream",
     )
     deduplicator = ExperimentDeduplicator()
-    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e04")
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf_1e02")
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -685,7 +687,7 @@ def main():
             "fudt_5prime": fudt_5prime_dataset,
         },
         deduplicator=deduplicator,
-        max_size=int(1e4),
+        max_size=int(1e2),
     )
     print(len(dataset))
     # Data module testing

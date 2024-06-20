@@ -59,7 +59,7 @@ created: 1675887826601
 - [ ] Add args so this goes into data dir `dbfn="data.db",`
 - [ ] `torch_geometric/deprecation.py:22: UserWarning: 'data.DataLoader' is deprecated, use 'loader.DataLoader' instead`
 - [ ] Add tiling window functions for nucleotide transformer
-- [ ] Speed up filtering in `cell.py`, this works well on [[2023.09.07|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230907]] `M1`, but very slow on `Delta`
+- [ ] Speed up filtering in `cell.py`, this works well on @Mjvolk3.torchcell.tasks.deprecated.2024.06.18 `M1`, but very slow on `Delta`
 - [ ] Consider making an `smf` dataset that comes from the `dmf` data.
 - [ ] visualize the dependency of the library (10 min)
 - [ ] We need reason to believe that using llm should work. Collect `1e5` dataset, `add`, `mean`, vectors of missing data, umap visualize, with dmf overlay

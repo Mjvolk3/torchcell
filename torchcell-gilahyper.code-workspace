@@ -124,6 +124,42 @@
                     }
                 ]
             },
+            {
+                "label": "gilahyper: Available memory for active jobs",
+                "type": "shell",
+                "command": "squeue -h -o \"%i %N %C %m\" | while read job node cpus mem; do avail_mem=$(sinfo -n $node -o \"%m %a\" -h | awk '{print $1 - $2}'); echo \"Job $job on $node: Using ${cpus}C / ${mem}M, Available: ${avail_mem}M\"; done",
+                "problemMatcher": []
+            },
+            {
+                "label": "gilahyper: CPU and memory usage per user",
+                "type": "shell",
+                "command": "squeue -o \"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %C %m\" -h | awk '{cpu[$4]+=$8; mem[$4]+=$9} END {for (user in cpu) print user, cpu[user], mem[user]\"M\"}' | sort -k2 -rn",
+                "problemMatcher": []
+            },
+            {
+                "label": "gilahyper: Pending jobs with requested resources",
+                "type": "shell",
+                "command": "squeue -t PD -o \"%.18i %.9P %.8j %.8u %.8T %.10M %.6D %C %m\" -h",
+                "problemMatcher": []
+            },
+            {
+                "label": "gilahyper: Estimated start time for pending jobs",
+                "type": "shell",
+                "command": "squeue -t PD -o \"%.18i %.9P %.8j %.8u %.8T %.10M %.6D %C %m %S\" -h",
+                "problemMatcher": []
+            },
+            {
+                "label": "gilahyper: Jobs close to time limit",
+                "type": "shell",
+                "command": "squeue -o \"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %C %m %L %l\" -h | awk '$11 != \"UNLIMITED\" && $10 != \"UNLIMITED\" && $10 >= 0.9*$11 {print}'",
+                "problemMatcher": []
+            },
+            {
+                "label": "gilahyper: Job resource usage",
+                "type": "shell",
+                "command": "echo 'JobID Node CPUs MemReq AvailMem' && squeue -h -o '%i %N %C %m' | while read job node cpus mem; do avail_mem=$(sinfo -n $node -o '%m %a' -h | awk '{print $1 - $2}'); echo \"$job $node ${cpus}C ${mem} ${avail_mem}M\"; done",
+                "problemMatcher": []
+            },
             // Notability
             {
                 "label": "notability: sync",

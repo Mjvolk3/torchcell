@@ -7,7 +7,7 @@ created: 1707950571933
 ---
 ## Semantic-Release for Versioning
 
-[[2024.02.14|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20240214]]
+@Mjvolk3.torchcell.tasks.deprecated.2024.06.18
 
 ```
 python -m pip install python-semantic-release

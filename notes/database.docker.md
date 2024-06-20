@@ -127,7 +127,7 @@ docker push michaelvolk/tc-neo4j:0.0.3
 docker push michaelvolk/tc-neo4j:latest
 ```
 
-- [[2024.02.13|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20240213]]
+- @Mjvolk3.torchcell.tasks.deprecated.2024.06.18
 
 ## Docker Image and Container Life Cycle
 

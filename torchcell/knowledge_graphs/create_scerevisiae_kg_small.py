@@ -87,6 +87,17 @@ def main(cfg) -> str:
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log.info(f"Number of workers: {num_workers}")
+    print("=========")
+    print(f"DATA_ROOT: {DATA_ROOT}")
+    # print types
+    print(f"DATA_ROOT type: {type(DATA_ROOT)}")
+    print(f"BIOCYPHER_CONFIG_PATH: {BIOCYPHER_CONFIG_PATH}")
+    # print types
+    print(f"BIOCYPHER_CONFIG_PATH type: {type(BIOCYPHER_CONFIG_PATH)}")
+    print(f"time_str: {time_str}")
+    # print types
+    print(f"time_str type: {type(time_str)}")
+    print("=========")
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,

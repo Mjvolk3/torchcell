@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1718917940396
+updated: 1718943536233
 created: 1718737771951
 ---
 
@@ -16,16 +16,18 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.21
 
+- [ ] `sbatch` build
+- [ ] Troubleshoot why docker container is crashing
+- [ ] Verify connection to database from M1
+- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+
 ## 2024.06.20
 
 - [x] Send email accepting 240 V install
 - [x] Send email accepting GPU and 240 V plug
-- [x] Launch random forest models both with cpus and gpus → we are doing over `nt` and codon frequency. This should help us determine which jobs are faster although it seems that we do have a termination issue on some of the jobs giving misleading completion times.
-
-
-
-- [ ] Build small `db` on `gila`. → started build running `database/build/build-image-fresh_linux-arm.sh`. → This needs to be done with srun.
-- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [x] Launch random forest models both with cpus and gpus → we are doing over `nt` and codon frequency. This should help us determine which jobs are faster although it seems that we do have a termination issue on some of the jobs giving misleading completion times.]
+- [x] Build small `db` on `gila`. → started build running `database/build-image-fresh_linux-arm.sh`. → This needs to be done with srun... → using `salloc` jobs fail abruptly maybe some memory issue? Move to `batching`
+- [x] Setup config for port forwarding.
 
 ## 2024.06.19
 

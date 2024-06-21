@@ -62,7 +62,7 @@ def main(cfg) -> str:
     print("this is where we are")
     print(os.getcwd())
     print("---------")
-    load_dotenv("/.env`")
+    load_dotenv("/.env")
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")

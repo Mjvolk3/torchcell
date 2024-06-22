@@ -57,8 +57,8 @@ install_package() {
 docker exec tc-neo4j python -m pip uninstall torchcell -y
 install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
 # docker exec tc-neo4j python -m pip uninstall biocypher -y
-# install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
-# install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
+install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
+install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
 # install_package "memory-profiler" "memory-profiler"
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"

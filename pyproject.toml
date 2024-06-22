@@ -23,7 +23,14 @@ requires-python = ">=3.10"
 dynamic = ["dependencies"]
 
 [project.optional-dependencies]
-dev = ["black", "semantic-release", "pip-tools", "pytest"]
+dev = [
+    "black",
+    "semantic-release",
+    "pip-tools",
+    "pytest",
+    "biocypher @ git+https://github.com/Mjvolk3/biocypher@main",
+    "calm @ git+https://github.com/oxpig/CaLM@main",
+]
 
 [project.urls]
 Homepage = "https://github.com/Mjvolk3/Dendron-Template"
@@ -96,8 +103,21 @@ commit_parser = "scipy"
 
 [tool.semantic_release.commit_parser_options]
 allowed_tags = [
-   "API", "DEP", "ENH", "REV", "BUG", "MAINT", "BENCH",
-   "BLD", "DEV", "DOC", "STY", "TST", "REL", "FEAT", "TEST",
+    "API",
+    "DEP",
+    "ENH",
+    "REV",
+    "BUG",
+    "MAINT",
+    "BENCH",
+    "BLD",
+    "DEV",
+    "DOC",
+    "STY",
+    "TST",
+    "REL",
+    "FEAT",
+    "TEST",
 ]
 major_tags = ["API"]
 minor_tags = ["DEP", "DEV", "ENH", "REV", "FEAT"]

@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1718943536233
+updated: 1719084426297
 created: 1718737771951
 ---
 
@@ -14,9 +14,16 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.22
 
+
+- [ ] Rebuild docker image. Try will all packages but torchcell
+- [ ] `sbatch` build
+- [ ] Troubleshoot why docker container is crashing
+- [ ] Verify connection to database from M1
+- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+
 ## 2024.06.21
 
-- [ ] `sbatch` build
+- [x] `sbatch` build → There are still many problems that are difficult to troubleshoot within the build. It is Difficult to tell The build is failing, I think It still has mostly to do with Package installations. I For this reason, I think we can try to rebuild, push to docker hub, then reinstall.
 - [ ] Troubleshoot why docker container is crashing
 - [ ] Verify connection to database from M1
 - [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.

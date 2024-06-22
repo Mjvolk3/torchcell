@@ -90,7 +90,8 @@ memory-profiler>=0.61.0
 
 # biocypher
 # biocypher>=0.5.35
-git+https://github.com/Mjvolk3/biocypher@main
+# install manually
+biocypher@git+https://github.com/Mjvolk3/biocypher@main
 
 # neo4j
 neo4j>=4.4.11
@@ -98,5 +99,5 @@ neo4j>=4.4.11
 # command line
 cliff>=4.5.0
 
-# CaLM model ... I think the reason we put here was to buildx issue
-git+https://github.com/oxpig/CaLM@main
+# twine cannot handle these
+CaLM@git+https://github.com/oxpig/CaLM@main

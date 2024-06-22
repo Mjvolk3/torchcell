@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.2.5 (2024-06-22)
+
+### Fix
+
+* BLD: rm deps manual git install. ([`ea6a665`](https://github.com/Mjvolk3/torchcell/commit/ea6a665cc3163ac283eb00b0411743fef759b16a))
+
 ## v0.2.4 (2024-06-22)
 
 ### Fix

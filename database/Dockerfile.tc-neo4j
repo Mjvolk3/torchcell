@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     python3-dev
 # @mjvolk3 intall torchell and dependency
+# We install torchcell here and in database builds so we can get latest push.
 RUN python -m pip install torchcell
 RUN python -m pip install torch-scatter
 

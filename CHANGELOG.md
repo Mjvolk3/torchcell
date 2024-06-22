@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v0.2.3 (2024-06-22)
+
+### Fix
+
+* BLD change git format ([`c670db0`](https://github.com/Mjvolk3/torchcell/commit/c670db095b24d7688d2587f93425bd4849ab6a38))
+
+### Unknown
+
+* BLD ([`4716f2c`](https://github.com/Mjvolk3/torchcell/commit/4716f2c1f76419eada31c0312afd0670a8d43a8b))
+
+* rm git from toml deps ([`1ff492b`](https://github.com/Mjvolk3/torchcell/commit/1ff492bb75dc051eee3360c2bcef5df3597a929c))
+
 ## v0.2.2 (2024-06-22)
 
 ### Fix

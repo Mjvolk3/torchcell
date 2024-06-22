@@ -45,13 +45,13 @@ pip-tools>=7.1.0
 snakeviz>=2.2.0
 twine>=4.0.2
 memory-profiler>=0.61.0
-biocypher@ git+https://github.com/Mjvolk3/biocypher@main
 neo4j>=4.4.11
 cliff>=4.5.0
-CaLM@ git+https://github.com/oxpig/CaLM@main
 
 [dev]
 black
 semantic-release
 pip-tools
 pytest
+biocypher@ git+https://github.com/Mjvolk3/biocypher@main
+calm@ git+https://github.com/oxpig/CaLM@main

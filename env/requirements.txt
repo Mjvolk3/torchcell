@@ -102,4 +102,4 @@ cliff>=4.5.0
 
 # twine cannot handle these
 # Not allowed in Pypi
-# CaLM@git+https://github.com/oxpig/CaLM@main
+# I. No. I'm going to blur it. Biceps. That's an excellent idea. **** **** it I Failure is not an option CaLM@git+https://github.com/oxpig/CaLM@main

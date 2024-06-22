@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1719088230564
+updated: 1719089683676
 created: 1718737771951
 ---
 
@@ -14,7 +14,7 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.22
 
-- [ ] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher@` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. →
+- [ ] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher@` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. → won't even work in dependencies. → Reverting.
 - [ ] `sbatch` build
 - [ ] Troubleshoot why docker container is crashing
 - [ ] Verify connection to database from M1

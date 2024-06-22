@@ -1,5 +1,4 @@
-# experiments/smf-dmf-tmf-001/conf/random-forest_1e05.yaml
-program: experiments/smf-dmf-tmf-001/random_forest.py
+program: experiments/smf-dmf-tmf-001/random_forest_gpu.py
 project: torchcell_smf-dmf-tmf-001_trad-ml_random-forest_1e05
 method: grid
 
@@ -11,7 +10,7 @@ parameters:
       node_embeddings:
         values:
           # - [one_hot_gene]
-          # - [codon_frequency]
+          - [codon_frequency]
           # - [calm]
           # - [fudt_downstream]
           # - [fudt_upstream]
@@ -30,9 +29,9 @@ parameters:
       max_size:
         values: [1e5]
       is_pert:
-        values: [true, false]
+        values: [false] #[true, false]
       aggregation:
-        values: [sum, mean]
+        values: [mean] #[sum, mean]
   data_module:
     parameters:
       batch_size:
@@ -46,7 +45,7 @@ parameters:
       n_estimators:
         values: [500]
       max_depth:
-        values: [100] # 100 instead of null to compare to gpu
+        values: [100]
       min_samples_split:
         values: [5]
   is_cross_validated:

@@ -69,6 +69,7 @@ torchcell/datasets/one_hot_gene.py
 torchcell/datasets/ontology.py
 torchcell/datasets/pronto_ontology.py
 torchcell/datasets/protT5.py
+torchcell/datasets/random_embedding.py
 torchcell/datasets/sgd_gene_graph.py
 torchcell/datasets/sgd_gene_graph_hot.py
 torchcell/datasets/scerevisiae/__init__.py

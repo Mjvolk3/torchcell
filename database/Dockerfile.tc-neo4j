@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev
 # @mjvolk3 intall torchell and dependency
 # We install torchcell here and in database builds so we can get latest push.
-RUN python -m pip install torchcell
+RUN python -m pip install torchcell[dev]
 RUN python -m pip install torch-scatter
 
 # @mjvolk3 use installed jdk (generalize use). ENV JAVA_HOME=/opt/java/openjdk

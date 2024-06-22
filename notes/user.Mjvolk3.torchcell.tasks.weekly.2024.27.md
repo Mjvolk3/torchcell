@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1719084426297
+updated: 1719087785189
 created: 1718737771951
 ---
 
@@ -14,8 +14,7 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.22
 
-
-- [ ] Rebuild docker image. Try will all packages but torchcell
+- [ ] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. 
 - [ ] `sbatch` build
 - [ ] Troubleshoot why docker container is crashing
 - [ ] Verify connection to database from M1

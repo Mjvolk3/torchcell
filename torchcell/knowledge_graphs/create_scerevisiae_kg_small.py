@@ -53,17 +53,28 @@ def get_num_workers():
     if cpus_per_task is not None:
         return int(cpus_per_task)
     # Fallback: Use multiprocessing to get the total number of CPUs
-    return mp.cpu_count()
+    # return mp.cpu_count()
+    return 10
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
-    load_dotenv()
+    print("this is where we are")
+    print(os.getcwd())
+    print("---------")
+    load_dotenv("/.env")
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
     BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-
+    print("---------")
+    print(DATA_ROOT)
+    print(BIOCYPHER_CONFIG_PATH)
+    print(SCHEMA_CONFIG_PATH)
+    print(BIOCYPHER_OUT_PATH)
+    print("---------")
+    
+    
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -86,8 +97,23 @@ def main(cfg) -> str:
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log.info(f"Number of workers: {num_workers}")
+    print("=========")
+    print(f"DATA_ROOT: {DATA_ROOT}")
+    # print types
+    print(f"DATA_ROOT type: {type(DATA_ROOT)}")
+    print(f"BIOCYPHER_CONFIG_PATH: {BIOCYPHER_CONFIG_PATH}")
+    # print types
+    print(f"BIOCYPHER_CONFIG_PATH type: {type(BIOCYPHER_CONFIG_PATH)}")
+    print(f"time_str: {time_str}")
+    # print types
+    print(f"time_str type: {type(time_str)}")
+    print("=========")
+    output_directory = osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str)
+    print("=========")
+    print(output_directory)
+    print("=========")
     bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str),
+        output_directory=output_directory,
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )

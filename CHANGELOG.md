@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v0.2.4 (2024-06-22)
+
+### Fix
+
+* BLD: git packages put into dev deps ([`6322a6b`](https://github.com/Mjvolk3/torchcell/commit/6322a6b369315e53fe67ed04b449e26c0309221c))
+
 ## v0.2.3 (2024-06-22)
 
 ### Fix

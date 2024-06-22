@@ -89,9 +89,10 @@ twine>=4.0.2
 memory-profiler>=0.61.0
 
 # biocypher
+# Swith to biocypher after path change is implemented
 # biocypher>=0.5.35
-# install manually
-biocypher@git+https://github.com/Mjvolk3/biocypher@main
+# Not allowed in Pypi
+# biocypher@git+https://github.com/Mjvolk3/biocypher@main
 
 # neo4j
 neo4j>=4.4.11
@@ -100,4 +101,5 @@ neo4j>=4.4.11
 cliff>=4.5.0
 
 # twine cannot handle these
-CaLM@git+https://github.com/oxpig/CaLM@main
+# Not allowed in Pypi
+# CaLM@git+https://github.com/oxpig/CaLM@main

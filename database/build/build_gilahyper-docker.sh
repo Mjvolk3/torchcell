@@ -2,7 +2,8 @@
 cd /scratch/projects/torchcell
 
 echo "Starting build_gilahyper-docker"
-source .env
+# TODO remove if not needed 
+# source .env
 
 sleep 3
 docker login
@@ -29,21 +30,30 @@ docker run --cpus=10 \
     michaelvolk/tc-neo4j:latest
 
 docker start tc-neo4j
+
 # TODO check if this software update works?
+# TODO Should be moved into requirements.txt then removed after image build.
 docker exec tc-neo4j python -m pip uninstall torchcell -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 docker exec tc-neo4j python -m pip uninstall biocypher -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
-# TODO Should be moved into requirements.txt then removed after image build.
 docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
 docker exec tc-neo4j python -m pip install memory-profiler
 
-docker start tc-neo4j
 
 # Add wandb login command
 docker exec tc-neo4j wandb login $WANDB_API_KEY
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
+
+docker start tc-neo4j
+
+# Copy neo4j.conf into the container
+docker cp /scratch/projects/torchcell/database/conf/neo4j.conf tc-neo4j:/var/lib/neo4j/conf/
+
+# Set appropriate ownership and permissions for neo4j.conf
+docker exec tc-neo4j chown neo4j:neo4j /var/lib/neo4j/conf/neo4j.conf
+docker exec tc-neo4j chmod 640 /var/lib/neo4j/conf/neo4j.conf
 
 docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
 # Is this a temp file in docker container? Yes I think so.

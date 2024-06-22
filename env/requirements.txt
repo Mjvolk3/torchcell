@@ -86,9 +86,11 @@ pre-commit>=3.3.3
 pip-tools>=7.1.0
 snakeviz>=2.2.0
 twine>=4.0.2
+memory-profiler>=0.61.0
 
 # biocypher
-biocypher>=0.5.35
+# biocypher>=0.5.35
+git+https://github.com/Mjvolk3/biocypher@main
 
 # neo4j
 neo4j>=4.4.11
@@ -96,5 +98,5 @@ neo4j>=4.4.11
 # command line
 cliff>=4.5.0
 
-# CaLM model
-# git+https://github.com/oxpig/CaLM@main
+# CaLM model ... I think the reason we put here was to buildx issue
+git+https://github.com/oxpig/CaLM@main

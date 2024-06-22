@@ -1224,9 +1224,9 @@
 
 ### None
 
-*  exclude dubious ([`cdbd9ad`](https://github.com/Mjvolk3/torchcell/commit/cdbd9ade17538720e1bcde0fc74dff9038878f6f))
+* exclude dubious ([`cdbd9ad`](https://github.com/Mjvolk3/torchcell/commit/cdbd9ade17538720e1bcde0fc74dff9038878f6f))
 
-*  exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
+* exclude dubious ([`86b07b8`](https://github.com/Mjvolk3/torchcell/commit/86b07b82ad7b0ca83c8c86f465cf244f17da6a16))
 
 ### Unknown
 

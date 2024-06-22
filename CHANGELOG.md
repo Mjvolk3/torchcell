@@ -1,13 +1,940 @@
 # CHANGELOG
 
+## v0.2.1 (2024-06-22)
 
+### Fix
+
+* BLD: docker image buildx ([`d2a630f`](https://github.com/Mjvolk3/torchcell/commit/d2a630fa60694b24744cdcd03fececd3cfceacee))
+
+### Unknown
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`2dea5ce`](https://github.com/Mjvolk3/torchcell/commit/2dea5ce4dbf98d4dace534dd966e362119ab2b19))
+
+* configs ([`9e35f25`](https://github.com/Mjvolk3/torchcell/commit/9e35f2579a26ef2bbe05f8b027aacec1a6eabc89))
+
+* RF updates ([`9fcb728`](https://github.com/Mjvolk3/torchcell/commit/9fcb7288cd1272f31ab0ee4456858b0e7731d55b))
+
+* tasks ([`8150ca3`](https://github.com/Mjvolk3/torchcell/commit/8150ca3dbc96c3d3a1d1e3051cddd4e05f340a7b))
+
+* troubleshoot env ([`95bc8b5`](https://github.com/Mjvolk3/torchcell/commit/95bc8b5a19b4870b26885155f314399f96e12f30))
+
+* .env trbl shoot ([`1ba8319`](https://github.com/Mjvolk3/torchcell/commit/1ba8319b928d5ed14903b75b03a2b609beed42ea))
+
+* tbl output dir ([`797774c`](https://github.com/Mjvolk3/torchcell/commit/797774c3494a5ce8ce6cf09a0a9694f7672284f4))
+
+* troubleshoot no env vars ([`23546c7`](https://github.com/Mjvolk3/torchcell/commit/23546c7999f4bfe50b2f4911f373d285bbadc143))
+
+* gh build ([`55af864`](https://github.com/Mjvolk3/torchcell/commit/55af86482ff469b00bfa268d88658da4f7fcf566))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`34e8ebd`](https://github.com/Mjvolk3/torchcell/commit/34e8ebd0d3a2f43997912a8790bcbd59335d9eaa))
+
+* some permission issue ([`b39c0dd`](https://github.com/Mjvolk3/torchcell/commit/b39c0ddda33091068e0aa8acb81304dbe78de150))
+
+* trbleshoot types ([`826ef13`](https://github.com/Mjvolk3/torchcell/commit/826ef138d66b520b42da4b9f8c1e1479b8fb89fb))
+
+* only 10 cpus for now for resrouce allocation issues ([`a047fd0`](https://github.com/Mjvolk3/torchcell/commit/a047fd057f52742d667a56756064e14904ade77b))
+
+* random forest update and pics ([`170d2e9`](https://github.com/Mjvolk3/torchcell/commit/170d2e9d80d878ef97cc00f951f0d3ad8dca4db9))
+
+* RF updates ([`991e439`](https://github.com/Mjvolk3/torchcell/commit/991e439377e0cd02d0ca59c14b8c93566ee046f3))
+
+* getting rf to work ([`d458b74`](https://github.com/Mjvolk3/torchcell/commit/d458b7454caa58b8186ba435e13bf93d3371fde0))
+
+* tcdb build for gh ([`4961b6c`](https://github.com/Mjvolk3/torchcell/commit/4961b6c3028d57aa23a501568ccfe74393e80d02))
+
+* gh workspace usability. ([`fc41dc0`](https://github.com/Mjvolk3/torchcell/commit/fc41dc023c8ea8936543a0fcf61d7eed0ceb3b5e))
+
+* plot update ([`5595865`](https://github.com/Mjvolk3/torchcell/commit/5595865a25bddda50209055b333585ed559548e0))
+
+* first working rf num_params plot ([`6ff9f4d`](https://github.com/Mjvolk3/torchcell/commit/6ff9f4d3c6b651389b6bad43c0298d8c78214a08))
+
+* RF plot update ([`c35489e`](https://github.com/Mjvolk3/torchcell/commit/c35489e14fbd470fb683af0a50d7f1e3a17f4204))
+
+* rf plot update ([`6aab279`](https://github.com/Mjvolk3/torchcell/commit/6aab27943479b40cd278bdaf0665ce1d5d86f3ed))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`39f8c79`](https://github.com/Mjvolk3/torchcell/commit/39f8c79e5a93953c240965becba6e0c59bb54026))
+
+* update RF ([`322ea4f`](https://github.com/Mjvolk3/torchcell/commit/322ea4f9e57458e9de3adc37870c61a59c5b8f57))
+
+* gene_count bar plot ([`063cb16`](https://github.com/Mjvolk3/torchcell/commit/063cb16993b046516b84173e9cc5d1659822e74d))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`70a54e7`](https://github.com/Mjvolk3/torchcell/commit/70a54e705a8a46ef04abcd98d2cfa13bd50e4b7c))
+
+* configs slurms ([`883e980`](https://github.com/Mjvolk3/torchcell/commit/883e980acdd9bbb53aa4c509c3906f2ad89d4642))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b413ea9`](https://github.com/Mjvolk3/torchcell/commit/b413ea902a9599243a03be9173df7709ea514735))
+
+* codon frequency and chrom pathways rf 1e05 completed ([`cb8d635`](https://github.com/Mjvolk3/torchcell/commit/cb8d635231d7114f8239f8a367ba698729cbe7c3))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1664dce`](https://github.com/Mjvolk3/torchcell/commit/1664dce823b15846ef16018cf484aaaaa148e0eb))
+
+* RF 1e05 indiv embed configs and slurms ([`3dd01a9`](https://github.com/Mjvolk3/torchcell/commit/3dd01a9e17729b8c25c5318df33d4e3d87b63a57))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`6663827`](https://github.com/Mjvolk3/torchcell/commit/666382707af6566e92ce4ede4a72de65770ff0b5))
+
+* RF update ([`0f6a3bc`](https://github.com/Mjvolk3/torchcell/commit/0f6a3bc6a86e4a85ca2e80af42f49bee5587cedd))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`99e13b2`](https://github.com/Mjvolk3/torchcell/commit/99e13b22459a0ed3623b363b86de43469f00ff88))
+
+* individual deep set sweeps and rf 1e05 ([`3b8be47`](https://github.com/Mjvolk3/torchcell/commit/3b8be4751cb97e075e73793fca86eb95a267cbd7))
+
+* trad image update plus histograms ([`2f4500a`](https://github.com/Mjvolk3/torchcell/commit/2f4500a4bb69b144c62a0df94ab90b0d77e9a737))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`ddeb9ec`](https://github.com/Mjvolk3/torchcell/commit/ddeb9ec1368e5506a55740907e5f7fc5a54281d4))
+
+* task note updated ([`0eb3fb1`](https://github.com/Mjvolk3/torchcell/commit/0eb3fb1d7cab469812240f975d2073c173ac6557))
+
+* update data dir logging and made offline ([`fe055a3`](https://github.com/Mjvolk3/torchcell/commit/fe055a3e9ca6ade675a5006be090bc0a60c4007e))
+
+* update bin width ([`55f4be1`](https://github.com/Mjvolk3/torchcell/commit/55f4be13a03a1a7f7f36d2d62fab058efcb89ca0))
+
+* dataset size histograms ([`570a19a`](https://github.com/Mjvolk3/torchcell/commit/570a19a6fdd77e47729e1f746b117f444f3a46aa))
+
+* update sync note ([`8525d43`](https://github.com/Mjvolk3/torchcell/commit/8525d43e0f8e6a9e64de135d9779f13eac9c4686))
+
+* experiment dir ([`6446d4b`](https://github.com/Mjvolk3/torchcell/commit/6446d4b4e008d60579b2f38a3caa7351ef7769a2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`4c5ecf7`](https://github.com/Mjvolk3/torchcell/commit/4c5ecf7375a6075e11fd8481dbe225adff2ca7d2))
+
+* configs slurm ([`1eaa4f7`](https://github.com/Mjvolk3/torchcell/commit/1eaa4f763db9b0f53fe66d7cf08963b4e40871f6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`b1653ee`](https://github.com/Mjvolk3/torchcell/commit/b1653ee96be12b809fe331e8ea131dbc7b94538a))
+
+* slurm update ([`727c8fc`](https://github.com/Mjvolk3/torchcell/commit/727c8fcd648593b3da29dc079d4ddcca5ac3a7a7))
+
+* task notes ([`df2d35e`](https://github.com/Mjvolk3/torchcell/commit/df2d35e421ca033181ce567d09cad5cfb3799056))
+
+* update plots add run_id ([`62f8700`](https://github.com/Mjvolk3/torchcell/commit/62f870088cb3787590f4664bf2e2b6c7efe18c4a))
+
+* /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/Documents/projects/torchcell/experiments/smf-dmf-tmf-001/traditional_ml-plot_elastic_net.py ([`176fdcf`](https://github.com/Mjvolk3/torchcell/commit/176fdcfa6b95fc7bf7b346c02163e69c169ab03c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`ee83018`](https://github.com/Mjvolk3/torchcell/commit/ee8301820d7af742050ceabfacbe3fe6eae1511e))
+
+* configs and slurms ([`39b37a9`](https://github.com/Mjvolk3/torchcell/commit/39b37a973d8315d9577c187e162a7c0cce2b548d))
+
+* configs update ([`e986c31`](https://github.com/Mjvolk3/torchcell/commit/e986c31614a51d12329d154490eff85f165a3a7c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`90b7b59`](https://github.com/Mjvolk3/torchcell/commit/90b7b59fe959f008f0444a8e17d5727b81cd068f))
+
+* rf plots and data ([`19e40a1`](https://github.com/Mjvolk3/torchcell/commit/19e40a1061fd7a71d13ade36e02eeb51183fbbc9))
+
+* update svr plotting ([`d5e5d8e`](https://github.com/Mjvolk3/torchcell/commit/d5e5d8e0219c1a12c31ff623c7303379336abf75))
+
+* renaming ([`439de13`](https://github.com/Mjvolk3/torchcell/commit/439de13f6c82737861f485402011a717c7f3ddda))
+
+* svr plotting looks good but incomplete ([`dc49d8a`](https://github.com/Mjvolk3/torchcell/commit/dc49d8a19aaf126b7286ab7822d1f954cb3ee323))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`8c77f26`](https://github.com/Mjvolk3/torchcell/commit/8c77f261d6273f8a6fbc6f15e6d2a1953b46eeb0))
+
+* first gh scripts ([`98b0232`](https://github.com/Mjvolk3/torchcell/commit/98b02324b8b4330219ce8b371a890c466c42a8c2))
+
+* svr temp plots ([`fa20e57`](https://github.com/Mjvolk3/torchcell/commit/fa20e57293aa9deea4b1a1f2c17f51d6cd95e0d9))
+
+* svr plot temp ([`709cce4`](https://github.com/Mjvolk3/torchcell/commit/709cce4e98a0247b73bf422ab0d0436dfadd94d6))
+
+* configs ([`36e3c29`](https://github.com/Mjvolk3/torchcell/commit/36e3c29bccc00faf0fd5773772ff9de6c45fadb4))
+
+* query raw read only typo ([`606c777`](https://github.com/Mjvolk3/torchcell/commit/606c77707e0ebe3b134eb094307da311b14a9fa5))
+
+* update query to inlude readonly ([`8eae695`](https://github.com/Mjvolk3/torchcell/commit/8eae695ea0a2ebf78084c4428dd525f7ce9f4493))
+
+* read only on post attr init lmdb open ([`4e58155`](https://github.com/Mjvolk3/torchcell/commit/4e58155aea3fc2911ca7982f8f185fd22c4f1ace))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`002308f`](https://github.com/Mjvolk3/torchcell/commit/002308f01a06baaaa1c31994bedf3634f8a9d154))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`6853f4a`](https://github.com/Mjvolk3/torchcell/commit/6853f4a3eab74b8ed1c48de1d8c726229309df55))
+
+* configs ([`4dd7574`](https://github.com/Mjvolk3/torchcell/commit/4dd757407093d8f23bb067e7c38ef06176b22052))
+
+* think we have write access issue for hp sweeping with lmdb, post init confitional for read write. ([`ecffec2`](https://github.com/Mjvolk3/torchcell/commit/ecffec295acd2729221b807db60f1e7d2bc43a8e))
+
+* updated elastic net ([`e09d543`](https://github.com/Mjvolk3/torchcell/commit/e09d5430039f0ab88d60b419e4798c14c2f96b11))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`45ccac8`](https://github.com/Mjvolk3/torchcell/commit/45ccac8994a1cdfdad412720331084074456776a))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`34d66b3`](https://github.com/Mjvolk3/torchcell/commit/34d66b36b477403bd99331fd03902e6d34a120d5))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`78aff2a`](https://github.com/Mjvolk3/torchcell/commit/78aff2a6c35d3a63fbfbb443f4c603c90aaff40d))
+
+* workspace ([`3b9e7b9`](https://github.com/Mjvolk3/torchcell/commit/3b9e7b9a02409c28be51a608edac43a862f865a4))
+
+* some images, random, and deep set ([`2f828a9`](https://github.com/Mjvolk3/torchcell/commit/2f828a9db524717ded59929f3801d822a1cf07e4))
+
+* workspace update ([`236357c`](https://github.com/Mjvolk3/torchcell/commit/236357cf13cd34823a4e22559ef8a62ade58c365))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`a4a238b`](https://github.com/Mjvolk3/torchcell/commit/a4a238b733d6f35059031263a786fa6a2109cda4))
+
+* slurms ([`dc43900`](https://github.com/Mjvolk3/torchcell/commit/dc43900f1a29cee4b4a3dcb000b2e7dd4743d9d0))
+
+* notes update ([`7a64e8b`](https://github.com/Mjvolk3/torchcell/commit/7a64e8b4d4ac529183176b1fd2e729f96d226c5b))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`ccab719`](https://github.com/Mjvolk3/torchcell/commit/ccab719f06b556f51854f743f2d8a3c1ae73cda7))
+
+* figures + workspace update ([`a959d2d`](https://github.com/Mjvolk3/torchcell/commit/a959d2d3616254a1d1eb6ffe10dfbd02729b762b))
+
+* access report and note clean up ([`89fa5b8`](https://github.com/Mjvolk3/torchcell/commit/89fa5b8b6fb95b92fb31339219c9608467778584))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`4d3686a`](https://github.com/Mjvolk3/torchcell/commit/4d3686abb40595946ef8e1506a2a5042d854f005))
+
+* update sweeps ([`5240fd6`](https://github.com/Mjvolk3/torchcell/commit/5240fd642124f8929767338396dc251888d0529b))
+
+* train log, fold log ([`d41c6db`](https://github.com/Mjvolk3/torchcell/commit/d41c6db681a471b548d9624ba98152832b11a8ad))
+
+* slurm update ([`21c78ca`](https://github.com/Mjvolk3/torchcell/commit/21c78cac69ed28e73210469f10cd67c45698529b))
+
+* rf fix ([`4b9c4ea`](https://github.com/Mjvolk3/torchcell/commit/4b9c4ea38b6d694abc79432fb0a817595c8aaf6a))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`fa417e4`](https://github.com/Mjvolk3/torchcell/commit/fa417e411e61a14e8a10c10f8ef585c0e64dff28))
+
+* subset sweeps ([`60694e0`](https://github.com/Mjvolk3/torchcell/commit/60694e013dc74080bfd7496118baed91aa7170c1))
+
+* image dump ([`0b02c93`](https://github.com/Mjvolk3/torchcell/commit/0b02c93b8aa09aab5f305f3db7d0a3cff63fde6f))
+
+* is_cross_validated ([`38c6eae`](https://github.com/Mjvolk3/torchcell/commit/38c6eae837f3c18a8195cd0d582bfc5e6bb5edce))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`acb7f03`](https://github.com/Mjvolk3/torchcell/commit/acb7f0387319636b2297a60130690f87bf963675))
+
+* figures ([`f96c62a`](https://github.com/Mjvolk3/torchcell/commit/f96c62aed699784e4664eec1e91278906300be2f))
+
+* slurm scripts ([`0980196`](https://github.com/Mjvolk3/torchcell/commit/0980196caf588227af64556d3ae7d13d78a86fbe))
+
+* trad ([`314d318`](https://github.com/Mjvolk3/torchcell/commit/314d3182cbdc632fe2c92b8828a9043097a49e93))
+
+* rest of 1e3 1e4 calm embedding images ([`18c046d`](https://github.com/Mjvolk3/torchcell/commit/18c046d61ecb97d2df8ed1077c2906529566eb64))
+
+* partially done calm and one_hot ([`6d45718`](https://github.com/Mjvolk3/torchcell/commit/6d45718dbace5f8936b9348d00d77113cfb285d3))
+
+* calm trad ml ([`a04eaa8`](https://github.com/Mjvolk3/torchcell/commit/a04eaa89e1d9d107485234cfbf88b7c781c0d116))
+
+* calm datasets ([`2e388ad`](https://github.com/Mjvolk3/torchcell/commit/2e388adbe9767f407c81226ccf9b14422476b9ce))
+
+* calm added ([`7ecd177`](https://github.com/Mjvolk3/torchcell/commit/7ecd1773f276de1d364fc6c23b4bc4dc68dd21d3))
+
+* params on rf and elastic ([`cad0cba`](https://github.com/Mjvolk3/torchcell/commit/cad0cba02e29a98c57c353f59714bc152462c8b9))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`07936b0`](https://github.com/Mjvolk3/torchcell/commit/07936b00209c7bf78e1210645d93168a6b8b8f1b))
+
+* random forest online ([`cd266b5`](https://github.com/Mjvolk3/torchcell/commit/cd266b50a78b910b20a295302a13bcd55fc7bf0b))
+
+* add num_params ([`da0a18f`](https://github.com/Mjvolk3/torchcell/commit/da0a18f00866b6a8656f4ebc0f7b5f934a7caf43))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7723250`](https://github.com/Mjvolk3/torchcell/commit/772325014207cf0569ee78725cde913f803660a3))
+
+* figure ideas ([`bc7a67c`](https://github.com/Mjvolk3/torchcell/commit/bc7a67c9ff37c235293163aaa17074669d72e9e1))
+
+* wandb trouble ([`f20a046`](https://github.com/Mjvolk3/torchcell/commit/f20a046a8b4b334bc647ccddb6e544172232f02f))
+
+* error to output in logs ([`536b456`](https://github.com/Mjvolk3/torchcell/commit/536b456073f74a3517c452ed2fa40f740aa8d1a0))
+
+* n jobs ([`5ca5dd4`](https://github.com/Mjvolk3/torchcell/commit/5ca5dd448febc921add857c4283b3f311db78dff))
+
+* trad ml sweeps ([`94819b9`](https://github.com/Mjvolk3/torchcell/commit/94819b9acaaa31840d42e80008177242b186b068))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`75dfd5c`](https://github.com/Mjvolk3/torchcell/commit/75dfd5c6812ec4732e1dc3c17b2e7253b6b975e8))
+
+* notes update ([`cfb18f6`](https://github.com/Mjvolk3/torchcell/commit/cfb18f62b4b2ca79d4ea3a7f6e3404a11037977d))
+
+* wandb osh hooks ([`158e964`](https://github.com/Mjvolk3/torchcell/commit/158e96465c4230a7ec01982477fc2783ea511acd))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`04d307e`](https://github.com/Mjvolk3/torchcell/commit/04d307e16299fbfecc0eae76f69318f37bff1abd))
+
+* trad ml 1e5 imgage dump no one_hot 1e5 bc crash ([`2efb374`](https://github.com/Mjvolk3/torchcell/commit/2efb374d6dde38f5deeee4e11a4df7559c18f2fd))
+
+* trad ml updates ([`348bce3`](https://github.com/Mjvolk3/torchcell/commit/348bce38e545aa46b9b983c0d1e76e8b68f0f417))
+
+* traditional ml ([`d8da958`](https://github.com/Mjvolk3/torchcell/commit/d8da9588f3e06349edcc6e197e8969f45f0711c1))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`562c123`](https://github.com/Mjvolk3/torchcell/commit/562c123223f7e7e60cc216fa0758486d84c33ecd))
+
+* max epochs mistake! fixed. ([`c52cf4f`](https://github.com/Mjvolk3/torchcell/commit/c52cf4f1638f84bfd3d73517fbac511f2d36720e))
+
+* more sweeps to split up work, and deep set 15 for trying sweep fingers crossed. ([`ee675d8`](https://github.com/Mjvolk3/torchcell/commit/ee675d88885b997dd803da38e45cc9d8b66b4210))
+
+* fig 2 trad ml outline ([`c68cbc3`](https://github.com/Mjvolk3/torchcell/commit/c68cbc338e21fb032be11c825d59d46f753a6ac7))
+
+* fudt_downstream, fudt_upstream, prot_T5_all, prot_T5_no_dubious embedding plots and data ([`caa203e`](https://github.com/Mjvolk3/torchcell/commit/caa203e760ae610cd44ba71452114054526f6e5c))
+
+* deep set 14 ([`f1d6336`](https://github.com/Mjvolk3/torchcell/commit/f1d6336f483edfc5fe3c9a3f3fe65c853eef0bd3))
+
+* codon frequency 1e05 complete ([`022fea5`](https://github.com/Mjvolk3/torchcell/commit/022fea5947750f70cdd8f654aa595f0c07bf9779))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`8426443`](https://github.com/Mjvolk3/torchcell/commit/8426443d45a70ecd5515dc7152b0a2d75984ea0f))
+
+* updating batch size ([`db2e6a4`](https://github.com/Mjvolk3/torchcell/commit/db2e6a4dedf3680b7386a77c24e7d3ba096d7672))
+
+* sweep_14 testing on Delta ([`976f567`](https://github.com/Mjvolk3/torchcell/commit/976f56706116c81294fc79491498b51e93b9d598))
+
+* traditional ml 1e4 plots ([`df25050`](https://github.com/Mjvolk3/torchcell/commit/df250507bd644cd962e87d76ba39b707fc147304))
+
+* trad ml ([`c4f676d`](https://github.com/Mjvolk3/torchcell/commit/c4f676dd0f64b9c9874e595ec4f345f687ed3f9d))
+
+* note dump ([`9669079`](https://github.com/Mjvolk3/torchcell/commit/9669079fd9e645e11f4310242e3f51bf9fa46883))
+
+* temp commented ([`325d453`](https://github.com/Mjvolk3/torchcell/commit/325d453ac0f4dd5aa7ff6cc6cbbf10d148975fb4))
+
+* plot adjustment and node_embeddings config fix ([`54c6ac8`](https://github.com/Mjvolk3/torchcell/commit/54c6ac83c105211e913e94a85120df9c8d92cbbf))
+
+* config 1e3 worked so corrected all ([`926f00e`](https://github.com/Mjvolk3/torchcell/commit/926f00e585aa86fc07827e70b2b8dd90d64150ea))
+
+* images from 1e3 ([`23ebaac`](https://github.com/Mjvolk3/torchcell/commit/23ebaac5c397cbc8e99762f6388a1de7d511ca53))
+
+* wandb finish added to trainer. ([`36a1500`](https://github.com/Mjvolk3/torchcell/commit/36a15006acb8a68dc1a982323f756c59276174a1))
+
+* creating traditional ml datasets and embedding projector plots ([`f218942`](https://github.com/Mjvolk3/torchcell/commit/f218942e1e99e57681707eba3f13c7f8cbd8af99))
+
+* simplify network ([`9cb3483`](https://github.com/Mjvolk3/torchcell/commit/9cb3483b3cd6c8a9d55a90a4cdf1893a7c79bac7))
+
+* fixed alpha ([`4370035`](https://github.com/Mjvolk3/torchcell/commit/437003599b1cb5fcbe5125d5ba0478ed62ccab73))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`6bdc319`](https://github.com/Mjvolk3/torchcell/commit/6bdc31977193cc4e8ebe278cc0cacfda00770d5b))
+
+* change alpha on list mle ([`694abf2`](https://github.com/Mjvolk3/torchcell/commit/694abf2226bbbc10329ec071232fb453941487ff))
+
+* smaller network ([`e0316c2`](https://github.com/Mjvolk3/torchcell/commit/e0316c25e87ab1a4b86db132afefac26647881ff))
+
+* some node embeddings were deleted leading to invalid scripts ([`90ee956`](https://github.com/Mjvolk3/torchcell/commit/90ee9569eeb2b37415cd35f3ec0322a49fb3aacc))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`e610365`](https://github.com/Mjvolk3/torchcell/commit/e610365c562f9e5b1df4abda6afa416e193d23ea))
+
+* configs ([`7d4d6b3`](https://github.com/Mjvolk3/torchcell/commit/7d4d6b3739c31b106d4810f784a209a35253b7dd))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`6035831`](https://github.com/Mjvolk3/torchcell/commit/6035831e01f82f8ed02f9132c3e17a492d88fbfa))
+
+* some model trys update, notes, sweeps ([`92a01c2`](https://github.com/Mjvolk3/torchcell/commit/92a01c2cce023d409bee37bd5d271b46c6f00127))
+
+* self attention sag rough draft ([`73604e6`](https://github.com/Mjvolk3/torchcell/commit/73604e652eafb874a7a14b76a3fe104a97d6b834))
+
+* deep_set sweep 12 ([`ea2d91d`](https://github.com/Mjvolk3/torchcell/commit/ea2d91d702ab4881c02e41776612200feb4190de))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7f4dfbd`](https://github.com/Mjvolk3/torchcell/commit/7f4dfbd2e6c35f44c7f721c73394bab7b814399a))
+
+* self attention deep set update, and self attention SAG ([`6930122`](https://github.com/Mjvolk3/torchcell/commit/69301226a16481bcb884e6f1c7ff4c019535a27d))
+
+* alpha to config ([`e9e081a`](https://github.com/Mjvolk3/torchcell/commit/e9e081a498db2195f12688b8bec3b1793b784039))
+
+* trying grid sweep ([`8f943f7`](https://github.com/Mjvolk3/torchcell/commit/8f943f713e2790000b878b3226ccbb2e87dc2ab6))
+
+* grid over 10e4 multi gpu ([`261be19`](https://github.com/Mjvolk3/torchcell/commit/261be19a3798040dc5dfdbf7d90d5a3439e6c2b2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`3ee7317`](https://github.com/Mjvolk3/torchcell/commit/3ee73171e0325541d47e132dfa1268f8a790a8f8))
+
+* 11 adjust ([`dd99877`](https://github.com/Mjvolk3/torchcell/commit/dd9987732406d7285b19724fa9b5ff84a9d62311))
+
+* update sweeps ([`a175fce`](https://github.com/Mjvolk3/torchcell/commit/a175fce3daf58e3dbd5f9dfbabe8eb2a876ed99c))
+
+* genome data root hack ([`98f75bb`](https://github.com/Mjvolk3/torchcell/commit/98f75bbb9786fcbd15d745a25452a27f43d633a5))
+
+* exp 11 deepset ([`f4f5229`](https://github.com/Mjvolk3/torchcell/commit/f4f52290f75083a18763f0ddbb0f2e41b83e2547))
+
+* exp 10 ([`a6b9e53`](https://github.com/Mjvolk3/torchcell/commit/a6b9e53a86946c145cea7e1c1eb5ae62c1984668))
+
+* deepset and list mle ([`9d3f464`](https://github.com/Mjvolk3/torchcell/commit/9d3f4643f10cf353da66e3eda773d0efbe18445c))
+
+* mlp reparameterized. ([`0269bf2`](https://github.com/Mjvolk3/torchcell/commit/0269bf2c8ce7a3b7534a2b480deeba46e43d78e6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`5ef40a2`](https://github.com/Mjvolk3/torchcell/commit/5ef40a272d7af90f6b980385f9e68834b93c129e))
+
+* SupConReg loss ([`4f50e1c`](https://github.com/Mjvolk3/torchcell/commit/4f50e1c0e84573ad2b88da9c1f587fee33495b17))
+
+* deep set ([`7e704aa`](https://github.com/Mjvolk3/torchcell/commit/7e704aaa13520efc8c14696e0c61cf0e93a30b51))
+
+* sweep 09 ([`b035d8e`](https://github.com/Mjvolk3/torchcell/commit/b035d8e6292f1b8bbffc35ad00cf117aab835cc4))
+
+* 09 sweep ([`db63c93`](https://github.com/Mjvolk3/torchcell/commit/db63c93b256ed4c7bcc7dbab05d0f99bef1b0651))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`c0b0162`](https://github.com/Mjvolk3/torchcell/commit/c0b01629c06c61a7d5d960d48cf93167e70a0289))
+
+* A100 interactive and update sweep 7 agent dir and wandb core ([`8d0db90`](https://github.com/Mjvolk3/torchcell/commit/8d0db904af94b5877f11c270ecd89e3975c606c2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1f47d26`](https://github.com/Mjvolk3/torchcell/commit/1f47d26376ff7245c71b8732300029fad635e3bb))
+
+* added gpus to avoid mps error on no_dubious ([`c0b1fc9`](https://github.com/Mjvolk3/torchcell/commit/c0b1fc97637a6c0e78aeb0c22cc4c30db0e598a5))
+
+* single gpu sweep test ([`4dbc243`](https://github.com/Mjvolk3/torchcell/commit/4dbc2432b27a97c64a1496007ba58db7375afdd9))
+
+* update to 3 epochs, slurm script ([`069fe90`](https://github.com/Mjvolk3/torchcell/commit/069fe907cd24f9287a83ffd86d2fc767cc3e2a3c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`17a437d`](https://github.com/Mjvolk3/torchcell/commit/17a437d63bd8b249c0fcccba9e18fb1268be6a2e))
+
+* sweep update ([`0561bc9`](https://github.com/Mjvolk3/torchcell/commit/0561bc9e490fbe88a31c2da877f2735ae1a7618b))
+
+* slurm job ([`95035c2`](https://github.com/Mjvolk3/torchcell/commit/95035c291f41c0837145bb9d06ae53706a37d7cf))
+
+* config sweep 06 ([`0f47826`](https://github.com/Mjvolk3/torchcell/commit/0f4782694bc24549feba5d22bfba8a15834c7278))
+
+* experiment ready, SGD one hot working ([`4561238`](https://github.com/Mjvolk3/torchcell/commit/456123881875c6bd532aff876caa327015fa4469))
+
+* we can now use numerical features of sgd gene graph ([`009a856`](https://github.com/Mjvolk3/torchcell/commit/009a856db3aa3285a9263d30fdbdd3ada5111c1d))
+
+* remove commetts ([`32ce0f1`](https://github.com/Mjvolk3/torchcell/commit/32ce0f16f82725429b0a5898650a8930e2e1564e))
+
+* remove old comments related to numpy ([`c9febb7`](https://github.com/Mjvolk3/torchcell/commit/c9febb7e0d63aa2dae36f5f4aa149bf95890b3bf))
+
+* annotations ([`b0b643b`](https://github.com/Mjvolk3/torchcell/commit/b0b643b7c1acdf6cf8e1a9aea74aadc9ecd327f6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`12748fc`](https://github.com/Mjvolk3/torchcell/commit/12748fcbd26db9e25697a9a64722daf766aad1dc))
+
+* note update ([`5659bcd`](https://github.com/Mjvolk3/torchcell/commit/5659bcd071909d854b0fb60cf56fc8f85680af54))
+
+* trying to be all tensor no numpy ([`262d2bb`](https://github.com/Mjvolk3/torchcell/commit/262d2bb54d4008af77c7636698eca1dc3199faa5))
+
+* handle categorical vars in the specific caset. embedding.pts and categorical_features.pt in processed. ([`bff1cb6`](https://github.com/Mjvolk3/torchcell/commit/bff1cb6251a9ed7324737c1a416cf4fb70d51ffa))
+
+* format deep_set ([`1f997fe`](https://github.com/Mjvolk3/torchcell/commit/1f997fef89715bc55da55b1e58b3c7a9373320d9))
+
+* added pathway histogram for justification of including categoricals ([`652fce8`](https://github.com/Mjvolk3/torchcell/commit/652fce889c01abaa1f379e9375131701bb9b3beb))
+
+* updated esm embedding appears to work fine. ([`3788874`](https://github.com/Mjvolk3/torchcell/commit/3788874f5daae5d0e8dd3684eac1f1d85e1f5dfc))
+
+* notes on annotations ([`6bf7bb9`](https://github.com/Mjvolk3/torchcell/commit/6bf7bb9a472a8924318f48796eb70edddd85ffa6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`3702926`](https://github.com/Mjvolk3/torchcell/commit/3702926a7d13ac80c7ad98c6c79c8ec4c47eb841))
+
+* how was numpy not removed yet.. removed ([`89e12dc`](https://github.com/Mjvolk3/torchcell/commit/89e12dc5108d0f9acc0779dcc47330500d2e7275))
+
+* esm2 embeddings for smf-dmf-tmf-001 ([`42eb4a5`](https://github.com/Mjvolk3/torchcell/commit/42eb4a57b7921aa6ebdfd62debfb8da60b9077d4))
+
+* bringing embeddings into training file... not done fixing them ([`db72aa1`](https://github.com/Mjvolk3/torchcell/commit/db72aa1236137f842e2aefc1f4c273cf95bdd3eb))
+
+* SGD node feature embedding ([`9172aac`](https://github.com/Mjvolk3/torchcell/commit/9172aac4d09be999080818601f0c462a0d26286d))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`e9c7766`](https://github.com/Mjvolk3/torchcell/commit/e9c776687a51a142661f96c59a008df671768935))
+
+* nt esm embeddings to devices for delta 3B and 15B models ([`e296d1f`](https://github.com/Mjvolk3/torchcell/commit/e296d1f5f19a1e00e9bfd0fc1e24cf81db82e264))
+
+* notes ([`4005df2`](https://github.com/Mjvolk3/torchcell/commit/4005df2b879f420b04990f5fa2584d28f30712fb))
+
+* modify sweep 02 ([`17e5f9c`](https://github.com/Mjvolk3/torchcell/commit/17e5f9cec83c02f2c88853049de26976e6e201ba))
+
+* modify opt 02 ([`423e3b5`](https://github.com/Mjvolk3/torchcell/commit/423e3b554fcfd90d8a8a03ddbbbd79293855ee74))
+
+* nt back to batch=1 ([`f624bf5`](https://github.com/Mjvolk3/torchcell/commit/f624bf53d9eaaac99e69ab7c00d4f5cdb22cca86))
+
+* nt dataset ([`4543b14`](https://github.com/Mjvolk3/torchcell/commit/4543b14b643b26585ae882cca0784028ac2555e7))
+
+* esm dataset working ([`9d252ad`](https://github.com/Mjvolk3/torchcell/commit/9d252ad382ad7d4f4de3bace1097251d5c83db37))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`ca968ca`](https://github.com/Mjvolk3/torchcell/commit/ca968ca2fe72cb5ead3a75f195b213314a5b0943))
+
+* batch size 2 after GPU oom ([`c2898f1`](https://github.com/Mjvolk3/torchcell/commit/c2898f123d87c00353433685b28f2415d4d81a2a))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`123bc4d`](https://github.com/Mjvolk3/torchcell/commit/123bc4d3b9c71b954016101a7b57041a023eb3d4))
+
+* notes and sweeps for checking failure modes ([`114e453`](https://github.com/Mjvolk3/torchcell/commit/114e453160df759eced96fdef243e1ecd368547d))
+
+* name fix ([`c7cdbde`](https://github.com/Mjvolk3/torchcell/commit/c7cdbde1c804aaf0e890cd0fa2d291ca53c70dcf))
+
+* adjust time for full ([`52d0afc`](https://github.com/Mjvolk3/torchcell/commit/52d0afcf7050f544c34248db30570a80c5fcb49a))
+
+* pesk g on mem, nt full embeddings ([`4074829`](https://github.com/Mjvolk3/torchcell/commit/4074829be9bf4adf72543b1113d9d2041c8141ae))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`634cff4`](https://github.com/Mjvolk3/torchcell/commit/634cff4ad8703dcc2902097b0fef543fc0e40846))
+
+* nt slurm back to default ([`96c8c0c`](https://github.com/Mjvolk3/torchcell/commit/96c8c0c9b0dad48cfbc4823caffa79cfbbf6accb))
+
+* nt typo ([`e96238e`](https://github.com/Mjvolk3/torchcell/commit/e96238e950d70c10bcb6b0463929bde9e09211f6))
+
+* nt transformer all undersize ([`1861d31`](https://github.com/Mjvolk3/torchcell/commit/1861d311c64a102c53dbb0425c3874736ddbeee8))
+
+* notes on docker_v_m1_study_001 ([`68e9ac6`](https://github.com/Mjvolk3/torchcell/commit/68e9ac6a1ab15e0242a59190094fbdf199810d31))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`539a080`](https://github.com/Mjvolk3/torchcell/commit/539a08079fd96335761dc8167ac675e667333124))
+
+* notes ([`b978aca`](https://github.com/Mjvolk3/torchcell/commit/b978aca138cfd878a27db4e40e210bf9b04e9a49))
+
+* small gene_set nt test ([`3246b97`](https://github.com/Mjvolk3/torchcell/commit/3246b979cd1b487fdcbddfaaeee1c96a5e3bc13b))
+
+* trying to take entire A40 for nt embeddings ([`7c76509`](https://github.com/Mjvolk3/torchcell/commit/7c76509d6fdfb4fe2d208420f21e7ed64cdf056f))
+
+* loader over 1e4 ([`8aa23ea`](https://github.com/Mjvolk3/torchcell/commit/8aa23ea944b9846bbd24ce598a9a08d3258ef2f6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`87a6ea0`](https://github.com/Mjvolk3/torchcell/commit/87a6ea0dc7fcbeaec7790ed7724b9efa8e51482d))
+
+* nt cpu script ([`c6b83cd`](https://github.com/Mjvolk3/torchcell/commit/c6b83cd52e7f6eb8ff1c44d6278e9c2ee8647457))
+
+* nt separate out compute script to avoid sys warning ([`7827138`](https://github.com/Mjvolk3/torchcell/commit/7827138a16d5544cb4ec963d3e3b33476d5e2caf))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`c8fbbd1`](https://github.com/Mjvolk3/torchcell/commit/c8fbbd1fe1ab3c2c7e1f046c2166600c1167d5e9))
+
+* task notes ([`ce7f5bd`](https://github.com/Mjvolk3/torchcell/commit/ce7f5bd1976dbd904bd8b4d1a926656b44fad6f6))
+
+* deep set parameter count for before sweeps wip ([`7eef89a`](https://github.com/Mjvolk3/torchcell/commit/7eef89a82c66ad922ec91192db536418402d6301))
+
+* deep_set reparameterization ([`6d9dfc2`](https://github.com/Mjvolk3/torchcell/commit/6d9dfc2690a762d4446130aadcea55b1a9f3e63c))
+
+* nucleotide_transformer no os make dir ([`f1b8a96`](https://github.com/Mjvolk3/torchcell/commit/f1b8a963bb9b01334596642d823963c1232bafc9))
+
+* print in main ([`624e867`](https://github.com/Mjvolk3/torchcell/commit/624e8679d6471037131a400679bfe90898dfff82))
+
+* 1 task per node ([`6bca118`](https://github.com/Mjvolk3/torchcell/commit/6bca118e9dc96ed148d48800b62c511a6b9dc4dd))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`6296441`](https://github.com/Mjvolk3/torchcell/commit/629644102fdb70df04202ee6cd572fd82bc29b45))
+
+* specifying chunk_size optoin ([`8b5a6d3`](https://github.com/Mjvolk3/torchcell/commit/8b5a6d31a9bfec1814bc678c641fa34ffcd99df2))
+
+* workspace 1 task per node. ([`f52beca`](https://github.com/Mjvolk3/torchcell/commit/f52beca3fb67094b75478cb0e588dcce9678a83b))
+
+* prints on nt for better logging ([`105424b`](https://github.com/Mjvolk3/torchcell/commit/105424be202c97e8e64151dc59d8641f4893b1e6))
+
+* nt failed oom, maxed out mem ([`237952a`](https://github.com/Mjvolk3/torchcell/commit/237952aa7ab24013f843c9f44129266fb619b215))
+
+* reset nt slurm to base ([`0c2e11f`](https://github.com/Mjvolk3/torchcell/commit/0c2e11fcb9e7a7fb74ade9ff02cdadb398b250e7))
+
+* nt transformer update ([`372cbb7`](https://github.com/Mjvolk3/torchcell/commit/372cbb7f7d38f360f49b8c26e4b742bd1b63ee64))
+
+* rename to deep_set ([`9ccff91`](https://github.com/Mjvolk3/torchcell/commit/9ccff919bdc833db4a97251ce4e1f03790714365))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1abd576`](https://github.com/Mjvolk3/torchcell/commit/1abd576a4544c11e9f9d0f3b23bb89b39430fa1e))
+
+* loader_opt notes reflected in deepset_sweep_01.yaml ([`ad1d8ce`](https://github.com/Mjvolk3/torchcell/commit/ad1d8ce1bb75b2459b8d1c7743caddc7aa812713))
+
+* exp 12 ([`a39f38d`](https://github.com/Mjvolk3/torchcell/commit/a39f38da4e8a64df46778b402e17a84757d142a2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`3db9108`](https://github.com/Mjvolk3/torchcell/commit/3db9108cd0958160792a49a5cd011e33a139d4a8))
+
+* slurm nt to A40 ([`a1c40db`](https://github.com/Mjvolk3/torchcell/commit/a1c40dbabb99330094d02d9f0678296c1c9703c1))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`98c4faf`](https://github.com/Mjvolk3/torchcell/commit/98c4faf5895b884db716f8b556ccfd76823c9962))
+
+* data root on nt transformer ([`53c5cd2`](https://github.com/Mjvolk3/torchcell/commit/53c5cd2fe49574ec2301aa6ead4f8d9f9f20f434))
+
+* tag note refactor ([`9572b44`](https://github.com/Mjvolk3/torchcell/commit/9572b44118a84560e1b3a32ed8f2a0e302244fa0))
+
+* exp 11 ([`5583f4e`](https://github.com/Mjvolk3/torchcell/commit/5583f4ee92941f8f3891751899e5a92732cd000f))
+
+* exp 10 ([`0ae280a`](https://github.com/Mjvolk3/torchcell/commit/0ae280a04b6ed7e72a73359d7684a587e5e9fde6))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`2851842`](https://github.com/Mjvolk3/torchcell/commit/285184265def85bd246fa64f635e9cbfed918b21))
+
+* nt update batch dim ([`488f20a`](https://github.com/Mjvolk3/torchcell/commit/488f20aebcfed9e78a6b185cc3fb4cedfee7ab25))
+
+* exp 9 ([`98d32c8`](https://github.com/Mjvolk3/torchcell/commit/98d32c807834697b8ae8ec0e4a42e018d9523533))
+
+* nt update ([`0a28626`](https://github.com/Mjvolk3/torchcell/commit/0a28626e1703e2f59d6f3b544b241e5927b69252))
+
+* exp 8 ([`2cebe55`](https://github.com/Mjvolk3/torchcell/commit/2cebe557f87ae52e7887e96746a2d12739e61dc6))
+
+* agent logs and gpu and job name identification ([`1097fa3`](https://github.com/Mjvolk3/torchcell/commit/1097fa36261f93d8ae399d179fde2a02fb4c1622))
+
+* nt added data root ([`dadac8f`](https://github.com/Mjvolk3/torchcell/commit/dadac8f158a0d5079cd8de6bab903cb33af450bd))
+
+* todays note update ([`a9d39c9`](https://github.com/Mjvolk3/torchcell/commit/a9d39c900cac0f3ea3f7eabc996a2ea10bfd088f))
+
+* nucleotide transformer gpu opt ([`dcf212f`](https://github.com/Mjvolk3/torchcell/commit/dcf212f643e19c688dd6c046ae0708e8b91b29bd))
+
+* small test changes, clearing stage ([`32a2943`](https://github.com/Mjvolk3/torchcell/commit/32a29437c8d6b580fffa144e439f749d5b7080e5))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`bdbeedd`](https://github.com/Mjvolk3/torchcell/commit/bdbeeddf3373798b166874792899746170295098))
+
+* query typo ([`9b25e65`](https://github.com/Mjvolk3/torchcell/commit/9b25e658eab500df187bb3f468418613a68beef2))
+
+* exp 7 ([`c0c5501`](https://github.com/Mjvolk3/torchcell/commit/c0c55011bb9c52c6fc96e226702b73761c9a857c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`4123cb1`](https://github.com/Mjvolk3/torchcell/commit/4123cb1b98633db6206fc79cfb4c9a6b2cd5be1e))
+
+* exp 6 ([`5bc1b17`](https://github.com/Mjvolk3/torchcell/commit/5bc1b17fc29eb1dc8d3668d4ba4c88bea9b2f7b8))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`ff3dbf0`](https://github.com/Mjvolk3/torchcell/commit/ff3dbf000ffe4b8c4b4200273dee98ae6ede2eaf))
+
+* deepset update ([`3591dc8`](https://github.com/Mjvolk3/torchcell/commit/3591dc8f41c0f342c202f4423daffe7eb052b946))
+
+* update sweep 02 for run that works will also be faster. ([`5343d12`](https://github.com/Mjvolk3/torchcell/commit/5343d123f6b09fb8d76f3c06c8ecacc687e755ef))
+
+* exp 5 ([`c98e096`](https://github.com/Mjvolk3/torchcell/commit/c98e0960bb6399b0d6a97f8ae92a9a540c7c48e3))
+
+* exp 4 ([`b0039ad`](https://github.com/Mjvolk3/torchcell/commit/b0039ad20f1bf89a25e9be0c582370e6d0a6e9d2))
+
+* loader opt ([`3494f83`](https://github.com/Mjvolk3/torchcell/commit/3494f83a2f0081c29d519e9d74dadac0d04392a7))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`2a25dfa`](https://github.com/Mjvolk3/torchcell/commit/2a25dfa26a8f875c6ba92d2d515b1fbbef3aa619))
+
+* patched up circular import by not initializing the dataset registry ([`d961893`](https://github.com/Mjvolk3/torchcell/commit/d9618930f5199b648ce00710a8b761fe9097bcca))
+
+* exp3 4e3 ([`c590176`](https://github.com/Mjvolk3/torchcell/commit/c590176817b37e57ef18f524c3c51751de62a273))
+
+* exp 2 6e3 chunk size ([`6d6f247`](https://github.com/Mjvolk3/torchcell/commit/6d6f247d25894ed6e1030ba5a807de073d6669c2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`4cda195`](https://github.com/Mjvolk3/torchcell/commit/4cda195891b2216c92aa1d33e71c2d85982879c3))
+
+* fixed imports of datasets ([`e88b4df`](https://github.com/Mjvolk3/torchcell/commit/e88b4dfeeab7595bce1d5b21f136fe8a603aa8ad))
+
+* remove calm from req txt ([`8398f53`](https://github.com/Mjvolk3/torchcell/commit/8398f5310c7c2a1eaf7b48fb77c1fc7c2bbaa064))
+
+* try test of 64 cpu again ([`8c203a3`](https://github.com/Mjvolk3/torchcell/commit/8c203a3c06e4d786ebfaefb9825984d9e4fb00eb))
+
+* CaLM embeddings ([`5a4b0fe`](https://github.com/Mjvolk3/torchcell/commit/5a4b0feeca854cf735ac34c78dcf1e6ca46c3b37))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`0ffc0ae`](https://github.com/Mjvolk3/torchcell/commit/0ffc0ae9c9950f65f40b8bd0eb4d1693bbefba66))
+
+* calm embedding working, comment out other graphs for 64 cpu test on Delta ([`671bb4b`](https://github.com/Mjvolk3/torchcell/commit/671bb4b4456c3549d3d2c14f178cc3501adea045))
+
+* chaning back to 64 cpu for comparison ([`99c32f0`](https://github.com/Mjvolk3/torchcell/commit/99c32f0c58f8c2b8c17f4ac5c027773f323f5e5f))
+
+* data_list.append(data) creates semaphore error ([`7b8077e`](https://github.com/Mjvolk3/torchcell/commit/7b8077e9dcbf77255dd2cc181a7014bfe71b48ef))
+
+* dataset register and calm embedding with semaphore error ([`84d5eb7`](https://github.com/Mjvolk3/torchcell/commit/84d5eb7daa7192d962c62753f6ed7e9b21fa16f0))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`0fdd0c8`](https://github.com/Mjvolk3/torchcell/commit/0fdd0c8b5021b22d3915f591f2d52015fb73327b))
+
+* update regression ([`4b582a3`](https://github.com/Mjvolk3/torchcell/commit/4b582a37ce822f288e4c81c510c6cb7d4b827d22))
+
+* update conf ([`1f34eb4`](https://github.com/Mjvolk3/torchcell/commit/1f34eb46a57be1e31ae382557eb7ae00b566fdb2))
+
+* update script ([`dbd0e64`](https://github.com/Mjvolk3/torchcell/commit/dbd0e648a1f569020a31e2b985981b12c365549e))
+
+* sMerge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`8da0cf1`](https://github.com/Mjvolk3/torchcell/commit/8da0cf104322012465b593aa42c9caec39d89e82))
+
+* embedding and encoding modes, build yaml adjustments ([`aed6074`](https://github.com/Mjvolk3/torchcell/commit/aed6074afa7d84a4a170ecc6165c1e9dbb7a147d))
+
+* docker v m1 ([`244132d`](https://github.com/Mjvolk3/torchcell/commit/244132db071c158d9efc46fb81a40dc4ad42930d))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`d111e6c`](https://github.com/Mjvolk3/torchcell/commit/d111e6ce44202746cc392cbbe25c5f6e1650d46a))
+
+* update slurm and db build yaml ([`c0d53ea`](https://github.com/Mjvolk3/torchcell/commit/c0d53ead89eb3183e81e2ea19b212d841f50f839))
+
+* changes to sweep ([`a0d90a6`](https://github.com/Mjvolk3/torchcell/commit/a0d90a6629ba85fb421f4f8339bca300c3c04b72))
+
+* clean up + wandb logging in cell adapter ([`4f32fde`](https://github.com/Mjvolk3/torchcell/commit/4f32fde09e1df52f7eccb2e802859e320c6d0f0f))
+
+* full kg rebuild with best found parameters ([`f452d40`](https://github.com/Mjvolk3/torchcell/commit/f452d40aee8b7631fd531b86ee8a855871ba2d69))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`a951614`](https://github.com/Mjvolk3/torchcell/commit/a951614ec5db14202f25748165687c95895d53a1))
+
+* data loading grid ([`33aef18`](https://github.com/Mjvolk3/torchcell/commit/33aef184effd52f20665f6060e4a3f5b0a3d280f))
+
+* update config ([`ece39cd`](https://github.com/Mjvolk3/torchcell/commit/ece39cdbef83937922156369081787017296b31e))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`076a9a3`](https://github.com/Mjvolk3/torchcell/commit/076a9a3cb4785d4f73c5460a08422264fb65d861))
+
+* experiment ready ([`3592e67`](https://github.com/Mjvolk3/torchcell/commit/3592e67eab47b18a3c64b7aef7dfa5ce46b03ef2))
+
+* exp 16 ([`d92f1b6`](https://github.com/Mjvolk3/torchcell/commit/d92f1b6899775e51ba808aefa9c395863493ee0d))
+
+* exp 15 ([`fa29948`](https://github.com/Mjvolk3/torchcell/commit/fa299482ebeed35549ce93b5a83c71055217b30e))
+
+* exp 14 ([`aa86301`](https://github.com/Mjvolk3/torchcell/commit/aa86301e7b215c5b6fad54f3246f2dbdf9f7d224))
+
+* exp 13 ([`7b5e8e7`](https://github.com/Mjvolk3/torchcell/commit/7b5e8e789cb87f010aaf5b82a0c838f03d25daf1))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`2d8f7fc`](https://github.com/Mjvolk3/torchcell/commit/2d8f7fcd499980bedc730bd8bb51b390760f4a9a))
+
+* deepset sweeps working locally ([`5cbd693`](https://github.com/Mjvolk3/torchcell/commit/5cbd693c1dca0a0c5242a0e67ba4e06a4ccb9f19))
+
+* exp 12 ([`e4260cc`](https://github.com/Mjvolk3/torchcell/commit/e4260cc50abd090414af97686d8513caf6ba4ed6))
+
+* exp 11 ([`446d3ce`](https://github.com/Mjvolk3/torchcell/commit/446d3cee095d6647dfd2c9ef7b39132b8ca44a95))
+
+* exp 10 ([`9903743`](https://github.com/Mjvolk3/torchcell/commit/99037431f8a4bc32f28d9540d07f3ce1f672f733))
+
+* exp 9 ([`069107a`](https://github.com/Mjvolk3/torchcell/commit/069107a18757a3e9969a967822089cd31b1dc810))
+
+* exp 8 ([`9d7ba2b`](https://github.com/Mjvolk3/torchcell/commit/9d7ba2b6f875c0e2f5a9dc508f07daa09313ba01))
+
+* exp 7 ([`251c631`](https://github.com/Mjvolk3/torchcell/commit/251c6311c10836178d9241427aba0540cdf9fa89))
+
+* exp 6 ([`d84c1f5`](https://github.com/Mjvolk3/torchcell/commit/d84c1f5ac4edd4a23dd1e32f391e013f9116be62))
+
+* torchcell/knowledge_graphs/conf/kg.yaml ([`b436a0a`](https://github.com/Mjvolk3/torchcell/commit/b436a0a122a77432afc61f8506fd0431d7bd287e))
+
+* exp 1 ([`962a25c`](https://github.com/Mjvolk3/torchcell/commit/962a25c82dc8af236156e53cdb5dd84848c0562d))
+
+* exp 4 ([`ef953e1`](https://github.com/Mjvolk3/torchcell/commit/ef953e1b6b1237717bb315fdf3759d228db5076e))
+
+* exp number 3 ([`1da16ac`](https://github.com/Mjvolk3/torchcell/commit/1da16accc1796b4e85be41dc6238543fdfba4b5f))
+
+* tcdb builds exp 2 ([`4a9b320`](https://github.com/Mjvolk3/torchcell/commit/4a9b32043c5821410df4932c47bcd5fc22f9a40e))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`bb8d95c`](https://github.com/Mjvolk3/torchcell/commit/bb8d95c9b20dab88bf4bfb50f9c0f2e6aea5ee9c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`61eff8d`](https://github.com/Mjvolk3/torchcell/commit/61eff8d41fa6b8042ecb995669bf32c2fe412bdd))
+
+* linux tcdb cpu and mem fixed. ([`27b424b`](https://github.com/Mjvolk3/torchcell/commit/27b424b1cbf22e81d6141df0e585a455e77fd6d9))
+
+* dump... minimal experiment working, tdcb build parameters ([`7d0d08f`](https://github.com/Mjvolk3/torchcell/commit/7d0d08fbf740435d396caa7925d1e3b67b50a511))
+
+* 48 cpu, 1.0 ratios ([`5c910ff`](https://github.com/Mjvolk3/torchcell/commit/5c910ff285877f00b16569db2de8d0bc2f324ee2))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`05588da`](https://github.com/Mjvolk3/torchcell/commit/05588daca58872b4335cb59aee49dd3f7c6862c1))
+
+* reduced processes ([`f2322c6`](https://github.com/Mjvolk3/torchcell/commit/f2322c6be9bf791fcd6bd176613905dd45bca431))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`e09fb0f`](https://github.com/Mjvolk3/torchcell/commit/e09fb0f21f369ff4c6fd258acea8b9f53aadb788))
+
+* process_workers upddated ([`4ad83b1`](https://github.com/Mjvolk3/torchcell/commit/4ad83b1b985afd17f6a2513780718342dd76fb83))
+
+* reduce processor cpus ([`8fcb03a`](https://github.com/Mjvolk3/torchcell/commit/8fcb03a7fe9e0406e1f66a8020cbd46744ddd806))
+
+* 5e3 chunk size ([`8ff3f96`](https://github.com/Mjvolk3/torchcell/commit/8ff3f96818b9a8c9d6e3ec1f901f30c7a87e6469))
+
+* 1e5 exp ([`49167e6`](https://github.com/Mjvolk3/torchcell/commit/49167e6e45c5087beddd605530f829395fa0d0bf))
+
+* 1e4 processors and 0.5 io worker ratio ([`447c995`](https://github.com/Mjvolk3/torchcell/commit/447c995b0d9e27a61b8c2c7d68354f8c1cb7ca7c))
+
+* hadn&#39;t run 1e3 yet ([`fba7b90`](https://github.com/Mjvolk3/torchcell/commit/fba7b90784fd86043ddf98835ce9a53c60bdf7f5))
+
+* up to 1e4 since moving cpus ([`008e54c`](https://github.com/Mjvolk3/torchcell/commit/008e54c15ef375d515b765a360de7fcd8e00594f))
+
+* kg.yaml comments ([`ef1a809`](https://github.com/Mjvolk3/torchcell/commit/ef1a809724dc8f04345f47fd6522a4f3618a0ac8))
+
+* chunk size 1e3 ([`149527e`](https://github.com/Mjvolk3/torchcell/commit/149527e4e40449a00d9ce4ac457f4e3e01a6b14e))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`c4f294a`](https://github.com/Mjvolk3/torchcell/commit/c4f294a45238a781965994fa2f5c3bd37949c9a9))
+
+* forgot new configs in kg ([`f77ef41`](https://github.com/Mjvolk3/torchcell/commit/f77ef4139598cb56131dea32c797f10d842a28e9))
+
+* setting cpus to max according to docs ([`f3ddde6`](https://github.com/Mjvolk3/torchcell/commit/f3ddde6d8943712df6ee281fa0b9f779bdcb4fc6))
+
+* setting cpus to max according to docs ([`89cb7c1`](https://github.com/Mjvolk3/torchcell/commit/89cb7c11edb96b155f6f16f7a4ef6cc8381a6a14))
+
+* kg_small going to 120 cpu ([`51cad57`](https://github.com/Mjvolk3/torchcell/commit/51cad57b53b01990e60815d11f1a012936e56574))
+
+* compute_workers to process_workers ([`5cfec43`](https://github.com/Mjvolk3/torchcell/commit/5cfec43aa4e56af0424f96c3ef54601df6ac01f7))
+
+* in a scramble to get things done and need clean wp ([`961cced`](https://github.com/Mjvolk3/torchcell/commit/961cced03388b90f96c50f22ea8949851ec3719f))
+
+* reconfig not using all workers for compute, reverting a bit but with more config control ([`3f32cc0`](https://github.com/Mjvolk3/torchcell/commit/3f32cc0e5d0656fe5a6905f23eac8763b71d538a))
+
+* reduce chunk_size for docker and reduce subset_n to be more like dmf_kuzmin. ([`ad659a2`](https://github.com/Mjvolk3/torchcell/commit/ad659a28fdf3afef7c5b3ad0a48f839064fa556a))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`f4b209f`](https://github.com/Mjvolk3/torchcell/commit/f4b209fa75d8a4b3929f61866584296af6380f7c))
+
+* kg_small update 40 min on M1 ([`4c78369`](https://github.com/Mjvolk3/torchcell/commit/4c783699b2fc40fa034068293dd22374a29e4600))
+
+* kg_small config update ([`abe28ea`](https://github.com/Mjvolk3/torchcell/commit/abe28ead5a1996b68beb1152c3c489bf428ac68f))
+
+* bumped tcdb slurm time to 2 days ([`b75af08`](https://github.com/Mjvolk3/torchcell/commit/b75af08d8cc4e2fca8d8f4c81960fef74ea66eac))
+
+* 20% decrease on size ([`c22a5cf`](https://github.com/Mjvolk3/torchcell/commit/c22a5cfee89bd08912f3267edf97357e3a1c53ab))
+
+* notes update ([`b08c929`](https://github.com/Mjvolk3/torchcell/commit/b08c929ade05115e9279b7f9a26540b54a074177))
+
+* major changes working out neo4j_cell ([`c70ebba`](https://github.com/Mjvolk3/torchcell/commit/c70ebba64c10e8a1672ebbdcf4ed95e270a1b9aa))
+
+* aggregated deletion ([`a17a4b2`](https://github.com/Mjvolk3/torchcell/commit/a17a4b263e10f1d780e3f5b509e8fcb1266c428a))
+
+* added mean perturbation deleteion... should probably be AggDeletionPerturbation ([`14c0fbf`](https://github.com/Mjvolk3/torchcell/commit/14c0fbfdb002eaa307e722f0110cfc8d0631c53c))
+
+* distinguish between io and compute workers ([`44894bf`](https://github.com/Mjvolk3/torchcell/commit/44894bf4d96b4955f0ef02d45b028e24086798a5))
+
+* note dump ([`1086c7d`](https://github.com/Mjvolk3/torchcell/commit/1086c7d64559a8b1ec84bf44fcaaec32cd88ecda))
+
+* settings on plots ([`9bbf705`](https://github.com/Mjvolk3/torchcell/commit/9bbf70550ff6f85f5976334bee9b43f3ed52bd78))
+
+* precomupting index for later... not sure how useful this is. ([`139164b`](https://github.com/Mjvolk3/torchcell/commit/139164bf64516667c189224e1ee27d69ecd2fb9c))
+
+* oom on both local and delta dropping chunk size ([`f5c0abe`](https://github.com/Mjvolk3/torchcell/commit/f5c0abeac282f9d0ea65f5c9ab3ee60b10c2ce95))
+
+* forgot () on hex ([`dbdf364`](https://github.com/Mjvolk3/torchcell/commit/dbdf364f8a7ccac98ec5c5cb72e5152da1587af9))
+
+* kg_small rebuild ([`0c9d502`](https://github.com/Mjvolk3/torchcell/commit/0c9d502d7b2b6bf7772a5bc39166fe497b438a2b))
+
+* data chunk on ref experiment edge ([`24a9397`](https://github.com/Mjvolk3/torchcell/commit/24a939719108b55ea9732f482cb1cc76797cc881))
+
+* forgot to rename file. ([`871b6b1`](https://github.com/Mjvolk3/torchcell/commit/871b6b1a12015a7d5c491370db014dc7f827886e))
+
+* print instead of log in cell_adapter ([`c701718`](https://github.com/Mjvolk3/torchcell/commit/c701718172d83fb7547642cec77184c1b574ea1e))
+
+* small test on kg_small before delta run. ([`95a2452`](https://github.com/Mjvolk3/torchcell/commit/95a245289914babd72c612ef3c45aae90f9124dc))
+
+* dmf adapter reverted to same as all others test. ([`858fb00`](https://github.com/Mjvolk3/torchcell/commit/858fb00a499d1211bd167cf424930453a6477d9e))
+
+* database wtih write_edges DmfCostanzo2016 dead cpu time test part 2 ([`f66e815`](https://github.com/Mjvolk3/torchcell/commit/f66e8156d864800ec8810f579a1accaece3acc6f))
+
+* nodes only DmfCostanzo2016, investigating dead cpu time ([`b9e7aa8`](https://github.com/Mjvolk3/torchcell/commit/b9e7aa801a01bc5ee2744ee9e1669c52b84a377d))
+
+* [[2024.03.25 - Some Cpus Not Utilized Because How We Set Workers|dendron://torchcell/torchcell.knowledge_graphs.create_scerevisiae_kg#20240325---some-cpus-not-utilized-because-how-we-set-workers]] ([`f145539`](https://github.com/Mjvolk3/torchcell/commit/f1455395fc28d92f79ca361fa8d77f7ae73c42e3))
+
+* not update ([`bddfae9`](https://github.com/Mjvolk3/torchcell/commit/bddfae9646130f900cc7357215072608716f5e6b))
+
+* uncomment DmfCostanzo for full small_kg local ([`35eb31d`](https://github.com/Mjvolk3/torchcell/commit/35eb31ddb7cf10781325344d27a7c3001223c409))
+
+* try larger chunk local ([`f111132`](https://github.com/Mjvolk3/torchcell/commit/f1111322338710d5ba0837d49daf5e6ad31bb08b))
+
+* split out configs for different kg ([`3eb65c0`](https://github.com/Mjvolk3/torchcell/commit/3eb65c0d19d6b8af489969c8e5414e77a49d7a8f))
+
+* fix perturbation nodes ([`d1ddfcf`](https://github.com/Mjvolk3/torchcell/commit/d1ddfcf1fdfb7c937283e1bce96c3909ccab7bf1))
+
+* retry last ([`f8c65e5`](https://github.com/Mjvolk3/torchcell/commit/f8c65e50f418d3a1861dd3183108633e7e8b4683))
+
+* tryin no dmf on small kg for bad entry isolation ([`a5ad632`](https://github.com/Mjvolk3/torchcell/commit/a5ad6322c36678e7ffbccd482cab2e327bbce774))
+
+* note update ([`2c2dea9`](https://github.com/Mjvolk3/torchcell/commit/2c2dea900264ed9010a40f0c0606dd846659a330))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`62edc74`](https://github.com/Mjvolk3/torchcell/commit/62edc742af83ea320b9e9776c1ab8717b0eaeb01))
+
+* notes on mp in gene_set and eri, bash delete file name for clearer fail on bulk import ([`3186232`](https://github.com/Mjvolk3/torchcell/commit/31862320579da81b5683c4f5c5fe84adb3b63cbc))
+
+* trying to add SSL_CERT_FILE for ssl bug on apptainer biocypher ([`1b82315`](https://github.com/Mjvolk3/torchcell/commit/1b82315280838e6fe5a320f558bcc3cf0168f558))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`0d68dc9`](https://github.com/Mjvolk3/torchcell/commit/0d68dc9369999f756a68bed5b5607dee72fb31df))
+
+* build linux update remove docker confusion ([`5831cf5`](https://github.com/Mjvolk3/torchcell/commit/5831cf52937d55b7443231b5ef6490352d4dc171))
+
+* num_workers for io_workers for more threading ([`c53166b`](https://github.com/Mjvolk3/torchcell/commit/c53166ba63e4e63a45e092ac65f27db3d23dc7c4))
+
+* num_workers to io_workers for clear thread vs process distinction ([`6c37a55`](https://github.com/Mjvolk3/torchcell/commit/6c37a553aa729ee9f6999144cbcb46abd70ca8ec))
+
+* using loader for computing gene_set and eri ([`976aaf2`](https://github.com/Mjvolk3/torchcell/commit/976aaf2a08f94d010ed7bfc67aeb9080eb331fe2))
+
+* num_workers super ([`49a90db`](https://github.com/Mjvolk3/torchcell/commit/49a90dbfa26eca6db8fef418fb73533f9fda5720))
+
+* parallel gene_set eri attempt ([`5aae79c`](https://github.com/Mjvolk3/torchcell/commit/5aae79c8a94af025931753ed04ffdf117424460c))
+
+* fixed import ([`94d58a3`](https://github.com/Mjvolk3/torchcell/commit/94d58a391940297262263e27b55802b9f989ce37))
+
+* more cleaning imports ([`6177e98`](https://github.com/Mjvolk3/torchcell/commit/6177e9878ece5c6015f6b46f0f2812165958aed2))
+
+* more import cleaning ([`040c3fc`](https://github.com/Mjvolk3/torchcell/commit/040c3fc07f0e0feeaaa9c3d2dccdef3a666cab85))
+
+* clean adapter imports ([`f17dc46`](https://github.com/Mjvolk3/torchcell/commit/f17dc4691317c3f68e6da2b158f25165c6010464))
+
+* import correct ([`edbd1f7`](https://github.com/Mjvolk3/torchcell/commit/edbd1f7d4e4a58a9d6f3ee9af68e8a3e5caa29f6))
+
+* reverting to sequential processing on experimental_referece_index and gene_set ([`9b92618`](https://github.com/Mjvolk3/torchcell/commit/9b926185ddc960249609b99959de91e33f011eb3))
+
+* dump, neo4j db raw, harmoizing db, neorj cell dataset, tcdb broken, fixed broken experiment reference index by reverting from multiprocessing ([`991c8d1`](https://github.com/Mjvolk3/torchcell/commit/991c8d18f8d10ddf6d49d854a8eaec27abd54246))
+
+* add config to docker neo4j db ([`db03f9b`](https://github.com/Mjvolk3/torchcell/commit/db03f9b4cfba27000cfec54beb6e276c05755a42))
+
+* missing import ([`34f2129`](https://github.com/Mjvolk3/torchcell/commit/34f2129c3e5b66009a656e5f42be14e7551720ba))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`82d9a24`](https://github.com/Mjvolk3/torchcell/commit/82d9a2493d1762efd58e182dd37f0ffec0ee2955))
+
+* need to be more diligent on name refactoring ... ([`5e7d08d`](https://github.com/Mjvolk3/torchcell/commit/5e7d08dc108a464d14073ccb7631b261e4b7972c))
+
+* indent bug on pertubation genotype edges only giving first pertubation. This broke querying based on perturbation types. ([`26170fd`](https://github.com/Mjvolk3/torchcell/commit/26170fda0662757b6729eb6feb9e45e0eb19491f))
+
+* neo4j_qeury_raw works in __name__ ([`81c212d`](https://github.com/Mjvolk3/torchcell/commit/81c212d9a29b1d29c7d0d3c6a88a6f79a2dcd9a7))
+
+* query can now pass params into cql ([`b9a2684`](https://github.com/Mjvolk3/torchcell/commit/b9a2684ca454d7562629cadef97273eb2d758fba))
+
+* neo4j_cell working but rough, good enough to run first experiments and enough ideas to later abstract. We can most likely stick with the basic structure to reduce changes. ([`ce7b1af`](https://github.com/Mjvolk3/torchcell/commit/ce7b1afc0104232cdf9b5d1d904effcb62fd01ff))
+
+* neo4j_query_raw good enough ([`ad505d5`](https://github.com/Mjvolk3/torchcell/commit/ad505d53cf41cf354e74ec25b2b13270a2165b79))
+
+* Neo4j Query Raw added and working ([`fc04137`](https://github.com/Mjvolk3/torchcell/commit/fc0413779f407ee5ec164e563941032b3d0b1183))
+
+* bash scripts update with biocypher-out protected and fresh fixed ([`23886cf`](https://github.com/Mjvolk3/torchcell/commit/23886cf0d6fbee67862a33701817bebc380f3b1c))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`f0171be`](https://github.com/Mjvolk3/torchcell/commit/f0171be7a6f3b4a8cb5f1993be87a82d272de877))
+
+* docker cpu flag ([`477d0f7`](https://github.com/Mjvolk3/torchcell/commit/477d0f75b9139074f4f9df666048d6178e03d3b7))
+
+* run failed but want local diff view to double check working params for successful build. ([`717836c`](https://github.com/Mjvolk3/torchcell/commit/717836c2befc0132926017cb9717265ec5ded41d))
+
+* error with no file found went away local docker ([`e1086f9`](https://github.com/Mjvolk3/torchcell/commit/e1086f970d3ebc453af22293d47e1e228c4cea82))
+
+* troubleshoot docker ([`1c1f0c7`](https://github.com/Mjvolk3/torchcell/commit/1c1f0c7939aaf89c7f77544af435fe5e4ca019e4))
+
+* changed wrong batch size previous, now batch of adapter lowered and chunk size ([`068519f`](https://github.com/Mjvolk3/torchcell/commit/068519f47ba76b82802d1b4095fc888fc51c182c))
+
+* update of slurm job id log to str ([`417006d`](https://github.com/Mjvolk3/torchcell/commit/417006d0c179e48eaefd061c9d06b35d6f61d695))
+
+* smaller batch size for costanzo ([`0de8967`](https://github.com/Mjvolk3/torchcell/commit/0de89672708400acd300b25ef8f3567188bc5b20))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`e9c3ab7`](https://github.com/Mjvolk3/torchcell/commit/e9c3ab738d2aa07590509422f4d0c6c3a98b7975))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`eaf68dc`](https://github.com/Mjvolk3/torchcell/commit/eaf68dce918af591a6f9ad4e710271aa5012b7a8))
+
+* node id fix ([`10b5265`](https://github.com/Mjvolk3/torchcell/commit/10b52656656e52a58cb52f4a1e2c8fd863a47fa9))
+
+* 96 cpu ([`fc33306`](https://github.com/Mjvolk3/torchcell/commit/fc33306820afaf402ebfc816d5fcbd5195ced659))
+
+* mem 240g cpus per task 128 ([`80aa5af`](https://github.com/Mjvolk3/torchcell/commit/80aa5afe60f7b0c0d6260beaa6142d344c57bc6f))
+
+* update kg ([`abe2fb3`](https://github.com/Mjvolk3/torchcell/commit/abe2fb39b36af0cbe00b722c85e0ec08ea447288))
+
+* small and large graph builds ([`efa49bc`](https://github.com/Mjvolk3/torchcell/commit/efa49bc036648b7e25a7c14078fbeaf6488211ff))
+
+* change log path and compute params ([`92e9686`](https://github.com/Mjvolk3/torchcell/commit/92e96860116401ce5c23d6d88315e7b34f0738dd))
+
+* notes and frontmatter update ([`78d9efe`](https://github.com/Mjvolk3/torchcell/commit/78d9efea6735b453a2db4c203297a6d2499e43c4))
+
+* separated out small for large graphs, build large on delta and small locally for query testing ([`3614db5`](https://github.com/Mjvolk3/torchcell/commit/3614db599c099579223bd0aa8510ddd51d72476c))
+
+* entire database build ([`d54b737`](https://github.com/Mjvolk3/torchcell/commit/d54b737380ae0939931bd2687b0dbfe09ea3b4a5))
+
+* wandb finish ([`df6dfb2`](https://github.com/Mjvolk3/torchcell/commit/df6dfb20193602ade387b4c60d6cd784c298a3a7))
+
+* change to txt file because it is clearer that file isn&#39;t log, and rm logs dir prefix ([`495dee5`](https://github.com/Mjvolk3/torchcell/commit/495dee5c38b93d78e65372798ab7682e2c7804ac))
+
+* just using standard io is simpler ([`f2296bc`](https://github.com/Mjvolk3/torchcell/commit/f2296bc0f8fcb08c755b118d3684a6ee21ab106b))
+
+* update git ignore to remove lots of db stuff ([`0ee8701`](https://github.com/Mjvolk3/torchcell/commit/0ee870107c6b5a99386667a22494014737176ace))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`609afaa`](https://github.com/Mjvolk3/torchcell/commit/609afaa9fa625b9608929951c55abb817fd0a500))
+
+* small naming update ([`fb7b92a`](https://github.com/Mjvolk3/torchcell/commit/fb7b92a3d9f99dcc7d38d6f509d81659381ddcff))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`e8eada2`](https://github.com/Mjvolk3/torchcell/commit/e8eada28da278769cc95073d346f97b728f6f891))
+
+* db build scripts ([`f340c1c`](https://github.com/Mjvolk3/torchcell/commit/f340c1c0913868ef216c24b54a0dddb479be12b5))
+
+* path typo ([`d6827b4`](https://github.com/Mjvolk3/torchcell/commit/d6827b404ce5138d65713cecacd584aabc3df3dd))
+
+* working now logging inside hydra, putting into logs and doing full check ([`43beb5f`](https://github.com/Mjvolk3/torchcell/commit/43beb5f30240c597fd97ad650b57a051de956cbc))
+
+* moved logging inside hydra ([`d08b27c`](https://github.com/Mjvolk3/torchcell/commit/d08b27c41372380243cd3a5df35934620eeeb078))
+
+* sanity check log file standard io write ([`0096112`](https://github.com/Mjvolk3/torchcell/commit/00961124f5263e120b2267cb05c146913ad81066))
+
+* fix path typo ([`fac35c7`](https://github.com/Mjvolk3/torchcell/commit/fac35c7883928715bc866fb9eccec221cc2c9529))
+
+* update logging to fix bix, made typo ([`96f8849`](https://github.com/Mjvolk3/torchcell/commit/96f88495d6569696e6902e3e532876cb8cce512e))
+
+* stop log propagation ([`a11ef04`](https://github.com/Mjvolk3/torchcell/commit/a11ef04862b9f9213df9ddee180f118d41b43be2))
+
+* update bash for file_name log ([`5ed1f60`](https://github.com/Mjvolk3/torchcell/commit/5ed1f60c2341a3e0c188432fdc321ec63ddb983e))
+
+* overwriting file_name log ([`6f590dd`](https://github.com/Mjvolk3/torchcell/commit/6f590ddbc4802d2f51c1c73107d2b5d746f23fb9))
+
+* file logger for capturing output ([`92ca460`](https://github.com/Mjvolk3/torchcell/commit/92ca4603986335c99a274019843a608d96aaa6d2))
+
+* graph creation output fix attempt ([`db6efc4`](https://github.com/Mjvolk3/torchcell/commit/db6efc482745123f4f1d1b63acbad8870ea94643))
+
+* loggin wandb api key try again ([`e280bf3`](https://github.com/Mjvolk3/torchcell/commit/e280bf3bef04ea21788319f15828ae22a6c20b71))
+
+* api key needed in docker for wandb logging ([`e379497`](https://github.com/Mjvolk3/torchcell/commit/e379497ef07f67d8735f12d4f2e22c3ca56c5781))
+
+* create kg small profiled on M1, now onto Delta profile. prof with wandb. ([`d746ede`](https://github.com/Mjvolk3/torchcell/commit/d746ede14ed243fddc483efc58b7f32a0f01fcbc))
+
+* delta test whole graph ([`bb84eb9`](https://github.com/Mjvolk3/torchcell/commit/bb84eb90b15773629005ae808f2a409f9f7bed65))
+
+* costanzo 1e6 dataset profile on delta ([`1cc30ea`](https://github.com/Mjvolk3/torchcell/commit/1cc30eab2cfc50f235f378bcd695da6b8b0e5ca7))
+
+* create full graph ([`8525305`](https://github.com/Mjvolk3/torchcell/commit/85253052aa1c74844755545530fdb64b32a65945))
+
+* update workers ([`3730db3`](https://github.com/Mjvolk3/torchcell/commit/3730db3aa664555a4011d28069457930869dfe74))
+
+* experiment multiprocess experiment, thread io lmdb ([`4173f46`](https://github.com/Mjvolk3/torchcell/commit/4173f46118f0d3bd7354a4d9f2e5b2e6621218e3))
+
+* multiprocess on experiment, threads on write ([`7ae1cd6`](https://github.com/Mjvolk3/torchcell/commit/7ae1cd6139a0d6c62ba789636fc4e6e8811384ef))
+
+* add yaml to package data in toml ([`d0fa041`](https://github.com/Mjvolk3/torchcell/commit/d0fa04171e780f18c0814fb893c539e787834746))
+
+* update manifest to include config yaml ([`14ffe82`](https://github.com/Mjvolk3/torchcell/commit/14ffe82c080be612241b7ef68e2c450b5c724de2))
+
+* large kb test ([`a965dde`](https://github.com/Mjvolk3/torchcell/commit/a965dde69dee86df12f1054f1e73e0eeb03ad2d0))
+
+* trying to use all workers for writing lmdb chunks and writing experimental reference index ([`98df92f`](https://github.com/Mjvolk3/torchcell/commit/98df92ff13e52e1038c07094e0e0a89b132ef7b0))
+
+* parallelized experiment_reference_index ([`9a4bc0c`](https://github.com/Mjvolk3/torchcell/commit/9a4bc0c2a4bbd3b598607d842c8ea4ba27372d1e))
+
+* threaded writer ([`c27581a`](https://github.com/Mjvolk3/torchcell/commit/c27581af18bb9ce5581700b8f9d57c645588fb11))
+
+* DmfCostanzo won&#39;t finish, trying new parameters to test ([`e583d6d`](https://github.com/Mjvolk3/torchcell/commit/e583d6d648ac0ba6d2405b8fc9ed6f1a8a66afd7))
+
+* running whole graph delta test ([`9015144`](https://github.com/Mjvolk3/torchcell/commit/901514456bcb424e461532946952b0a65914ab41))
+
+* cell adapter multiprocessing delta test ([`e36dd03`](https://github.com/Mjvolk3/torchcell/commit/e36dd037e57be4f8bf320253539dd40d98bcc46f))
+
+* 0.8x threads delta text ([`2704033`](https://github.com/Mjvolk3/torchcell/commit/27040335d170d53df6df2bc1fbda40318f4f6935))
 
 ## v0.2.0 (2024-03-06)
 
 ### Feature
 
 * FEAT: bump feat to auto correct pypi ([`db9bd13`](https://github.com/Mjvolk3/torchcell/commit/db9bd1392b197792c61cdd25bffd7bdc41e141a2))
-
 
 ## v0.1.17 (2024-03-06)
 
@@ -115,7 +1042,6 @@
 
 * close_lmdb before parallelization every time after data is accessed in class methods ([`872daea`](https://github.com/Mjvolk3/torchcell/commit/872daea0d78b950adafac1690b745c5a29048f10))
 
-
 ## v0.1.16 (2024-02-20)
 
 ### Fix
@@ -144,7 +1070,6 @@
 
 * versioning SOP note ([`a9e741c`](https://github.com/Mjvolk3/torchcell/commit/a9e741c2ada7bbd7ef070bc7418cb72648f8484d))
 
-
 ## v0.1.15 (2024-02-14)
 
 ### Unknown
@@ -153,20 +1078,17 @@
 
 * removed python publish since cannot condition on semantic release ([`78683c8`](https://github.com/Mjvolk3/torchcell/commit/78683c836d892f49c2d223f23922be5f924b7a04))
 
-
 ## v0.1.14 (2024-02-14)
 
 ### Unknown
 
 * fix: tc_publish_pypi code action, partial automation ([`097b44f`](https://github.com/Mjvolk3/torchcell/commit/097b44f95f514e4e9a67ca73bd6373e2438ed8fe))
 
-
 ## v0.1.13 (2024-02-14)
 
 ### Unknown
 
 * fix: publishing scripts pypi ([`a367116`](https://github.com/Mjvolk3/torchcell/commit/a3671166939e117e3ce353310b29268f89548bb9))
-
 
 ## v0.1.12 (2024-02-14)
 
@@ -176,7 +1098,6 @@
 
 * fix: publish whoas ([`be93561`](https://github.com/Mjvolk3/torchcell/commit/be93561779c91c8431de8a8b2022c9a7171d1091))
 
-
 ## v0.1.11 (2024-02-14)
 
 ### Unknown
@@ -184,7 +1105,6 @@
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`7cfa842`](https://github.com/Mjvolk3/torchcell/commit/7cfa842f930e7611b514e8df94cef1a41558b4cb))
 
 * fix: tag before or after? ([`2349e7f`](https://github.com/Mjvolk3/torchcell/commit/2349e7fd3a77e03fcac50ea5fe6fc98bb134d363))
-
 
 ## v0.1.10 (2024-02-14)
 
@@ -194,7 +1114,6 @@
 
 * fix: add environment ([`96f7ca0`](https://github.com/Mjvolk3/torchcell/commit/96f7ca091a4e6a4ed400744832e6adfb6d848f67))
 
-
 ## v0.1.9 (2024-02-14)
 
 ### Unknown
@@ -202,7 +1121,6 @@
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`f292e01`](https://github.com/Mjvolk3/torchcell/commit/f292e014812a539d8733ce1a01f566b0e1005449))
 
 * fix: try tag push again ([`d70ad0a`](https://github.com/Mjvolk3/torchcell/commit/d70ad0aa0111d57678d1ac8341c86ebf7952c29e))
-
 
 ## v0.1.8 (2024-02-14)
 
@@ -212,20 +1130,17 @@
 
 * fix: trying auto pypi with new push recognition ([`f6b23a3`](https://github.com/Mjvolk3/torchcell/commit/f6b23a3b9980d59ae2fb48516ba85d0b1f62e29a))
 
-
 ## v0.1.7 (2024-02-14)
 
 ### Unknown
 
 * fix: patch test, w/ publish ([`c082ea4`](https://github.com/Mjvolk3/torchcell/commit/c082ea4ee6bd37e51891842679915ef28023dd09))
 
-
 ## v0.1.6 (2024-02-14)
 
 ### Unknown
 
 * fix: rm bumpver deps ([`a9ebbee`](https://github.com/Mjvolk3/torchcell/commit/a9ebbee1561841a1b74185feb5a6f5f5c04505bc))
-
 
 ## v0.1.5 (2024-02-14)
 
@@ -235,7 +1150,6 @@
 
 * Create python-publish.yml ([`0d134e3`](https://github.com/Mjvolk3/torchcell/commit/0d134e341e2bb639244d92822560c0a8c82c6269))
 
-
 ## v0.1.4 (2024-02-14)
 
 ### Unknown
@@ -243,7 +1157,6 @@
 * Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`1161a6a`](https://github.com/Mjvolk3/torchcell/commit/1161a6a82e97d2f3fceff082665146e5f5296539))
 
 * fix: version variables ([`2bbea29`](https://github.com/Mjvolk3/torchcell/commit/2bbea298284a4afb3ac7984409b87101b7bde7a7))
-
 
 ## v0.1.3 (2024-02-14)
 
@@ -259,8 +1172,7 @@
 
 * readme more reading me ([`a9e5be3`](https://github.com/Mjvolk3/torchcell/commit/a9e5be360d063e231048c4166a7559d737820f1e))
 
-
-## v0.1.2 (2024-02-14)
+## v0.1.2 (2024-02-13)
 
 ### Unknown
 
@@ -268,8 +1180,7 @@
 
 * some read me yo ([`e96034f`](https://github.com/Mjvolk3/torchcell/commit/e96034f906d358998c81b8fa3fc248ea9bbc9611))
 
-
-## v0.1.1 (2024-02-14)
+## v0.1.1 (2024-02-13)
 
 ### Unknown
 
@@ -285,7 +1196,6 @@
 
 * try patch wrong... ([`cff0d42`](https://github.com/Mjvolk3/torchcell/commit/cff0d42e7532c35655ca4de8b89e1b1a88d973a1))
 
-
 ## v0.1.0 (2024-02-14)
 
 ### Unknown
@@ -300,21 +1210,17 @@
 
 * BREAKING CHANGE: semantic release ([`4d10292`](https://github.com/Mjvolk3/torchcell/commit/4d10292350041a1007a43bc31157557c46027d89))
 
-
-## v0.0.4 (2024-02-14)
+## v0.0.4 (2024-02-13)
 
 ### Unknown
 
 * toml update ([`28b1645`](https://github.com/Mjvolk3/torchcell/commit/28b1645dc35614ddf7bb63fd932ca34546a88836))
 
+## v0.0.3 (2024-02-13)
 
-## v0.0.3 (2024-02-14)
+## v0.0.2 (2024-02-13)
 
-
-## v0.0.2 (2024-02-14)
-
-
-## v0.0.1 (2024-02-14)
+## v0.0.1 (2024-02-13)
 
 ### None
 

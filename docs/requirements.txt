@@ -1,6 +1,6 @@
 # First, install torch_scatter
 git+https://github.com/rusty1s/pytorch_scatter
-
+torchcell
 # Then, install other dependencies
 sphinx
 sphinx_rtd_theme

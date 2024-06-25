@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1719089683676
+updated: 1719334216225
 created: 1718737771951
 ---
 
@@ -12,20 +12,22 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.23
 
+- [x] Rebuild docker image.
+
 ## 2024.06.22
 
-- [ ] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher@` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. → won't even work in dependencies. → Reverting.
-- [ ] `sbatch` build
-- [ ] Troubleshoot why docker container is crashing
-- [ ] Verify connection to database from M1
-- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [x] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. → won't even work in dependencies. → Reverting. → failed due to `torchcell[dev]`
+- 🔲 `sbatch` build
+- 🔲 Troubleshoot why docker container is crashing
+- 🔲 Verify connection to database from M1
+- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
 
 ## 2024.06.21
 
 - [x] `sbatch` build → There are still many problems that are difficult to troubleshoot within the build. It is Difficult to tell The build is failing, I think It still has mostly to do with Package installations. I For this reason, I think we can try to rebuild, push to docker hub, then reinstall.
-- [ ] Troubleshoot why docker container is crashing
-- [ ] Verify connection to database from M1
-- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- 🔲 Troubleshoot why docker container is crashing
+- 🔲 Verify connection to database from M1
+- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
 
 ## 2024.06.20
 

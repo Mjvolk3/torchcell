@@ -2,7 +2,7 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1718917940396
+updated: 1719334216225
 created: 1718737771951
 ---
 
@@ -12,20 +12,30 @@ Since futures is short enough we didn't change it. [[torchcell.tasks.future|dend
 
 ## 2024.06.23
 
+- [x] Rebuild docker image.
+
 ## 2024.06.22
 
+- [x] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. → won't even work in dependencies. → Reverting. → failed due to `torchcell[dev]`
+- 🔲 `sbatch` build
+- 🔲 Troubleshoot why docker container is crashing
+- 🔲 Verify connection to database from M1
+- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+
 ## 2024.06.21
+
+- [x] `sbatch` build → There are still many problems that are difficult to troubleshoot within the build. It is Difficult to tell The build is failing, I think It still has mostly to do with Package installations. I For this reason, I think we can try to rebuild, push to docker hub, then reinstall.
+- 🔲 Troubleshoot why docker container is crashing
+- 🔲 Verify connection to database from M1
+- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
 
 ## 2024.06.20
 
 - [x] Send email accepting 240 V install
 - [x] Send email accepting GPU and 240 V plug
-- [x] Launch random forest models both with cpus and gpus → we are doing over `nt` and codon frequency. This should help us determine which jobs are faster although it seems that we do have a termination issue on some of the jobs giving misleading completion times.
-
-
-
-- [ ] Build small `db` on `gila`. → started build running `database/build/build-image-fresh_linux-arm.sh`. → This needs to be done with srun.
-- [ ] Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [x] Launch random forest models both with cpus and gpus → we are doing over `nt` and codon frequency. This should help us determine which jobs are faster although it seems that we do have a termination issue on some of the jobs giving misleading completion times.]
+- [x] Build small `db` on `gila`. → started build running `database/build-image-fresh_linux-arm.sh`. → This needs to be done with srun... → using `salloc` jobs fail abruptly maybe some memory issue? Move to `batching`
+- [x] Setup config for port forwarding.
 
 ## 2024.06.19
 

@@ -1,3 +1,7 @@
+# Add the PyG Sphinx theme from GitHub
+git+https://github.com/pyg-team/pyg_sphinx_theme
+
+# Other documentation dependencies
 sphinx
 sphinx_rtd_theme
 myst_parser

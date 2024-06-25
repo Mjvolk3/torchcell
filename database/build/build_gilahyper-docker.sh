@@ -38,7 +38,6 @@ docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchc
 docker exec tc-neo4j python -m pip uninstall biocypher -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
-docker exec tc-neo4j python -m pip install memory-profiler
 
 
 # Add wandb login command

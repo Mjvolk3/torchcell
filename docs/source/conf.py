@@ -1,66 +1,74 @@
 import datetime
-import os.path as osp
+import os
 import sys
-
 import pyg_sphinx_theme
 
-import torchcell
+# Correctly adjust the path to the torchcell module
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../torchcell"))
+)
+sys.path.append(os.path.join(os.path.dirname(pyg_sphinx_theme.__file__), "extension"))
 
-author = 'PyG Team'
-project = 'pytorch_geometric'
-version = "0.0.0"
-copyright = f'{datetime.datetime.now().year}, {author}'
+import torchcell  # Import torchcell module here
+from torchcell import __version__
 
-sys.path.insert(0, osp.abspath('../../src'))
-sys.path.append(osp.join(osp.dirname(pyg_sphinx_theme.__file__), 'extension'))
+project = "torchcell"
+author = "Your Name"
+version = __version__
+release = __version__
+copyright = f"{datetime.datetime.now().year}, {author}"
 
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.napoleon',
-    'sphinx.ext.viewcode',
-    'nbsphinx',
-    'pyg',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "nbsphinx",
+    "pyg",
 ]
 
-html_theme = 'pyg_sphinx_theme'
-html_logo = ('https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/'
-             'master/pyg_sphinx_theme/static/img/pyg_logo.png')
-html_favicon = ('https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/'
-                'master/pyg_sphinx_theme/static/img/favicon.png')
-html_static_path = ['_static']
-templates_path = ['_templates']
+templates_path = ["_templates"]
+exclude_patterns = []
+
+html_theme = "pyg_sphinx_theme"
+html_logo = (
+    "https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/"
+    "master/pyg_sphinx_theme/static/img/pyg_logo.png"
+)
+html_favicon = (
+    "https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/"
+    "master/pyg_sphinx_theme/static/img/favicon.png"
+)
+html_static_path = ["_static"]
 
 add_module_names = False
-autodoc_member_order = 'bysource'
-
-suppress_warnings = ['autodoc.import_object']
+autodoc_member_order = "bysource"
+suppress_warnings = ["autodoc.import_object"]
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/', None),
-    'numpy': ('http://docs.scipy.org/doc/numpy', None),
-    'pandas': ('http://pandas.pydata.org/pandas-docs/dev', None),
-    'torch': ('https://pytorch.org/docs/master', None),
+    "python": ("https://docs.python.org/", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "torch": ("https://pytorch.org/docs/master", None),
 }
 
 nbsphinx_thumbnails = {
-    'tutorial/create_gnn': '_static/thumbnails/create_gnn.png',
-    'tutorial/heterogeneous': '_static/thumbnails/heterogeneous.png',
-    'tutorial/create_dataset': '_static/thumbnails/create_dataset.png',
-    'tutorial/load_csv': '_static/thumbnails/load_csv.png',
-    'tutorial/explain': '_static/thumbnails/explain.png',
-    'tutorial/shallow_node_embeddings':
-    '_static/thumbnails/shallow_node_embeddings.png',
-    'tutorial/multi_gpu_vanilla': '_static/thumbnails/multi_gpu_vanilla.png',
+    "tutorial/create_gnn": "_static/thumbnails/create_gnn.png",
+    "tutorial/heterogeneous": "_static/thumbnails/heterogeneous.png",
+    "tutorial/create_dataset": "_static/thumbnails/create_dataset.png",
+    "tutorial/load_csv": "_static/thumbnails/load_csv.png",
+    "tutorial/explain": "_static/thumbnails/explain.png",
+    "tutorial/shallow_node_embeddings": "_static/thumbnails/shallow_node_embeddings.png",
+    "tutorial/multi_gpu_vanilla": "_static/thumbnails/multi_gpu_vanilla.png",
 }
 
 
 def setup(app):
     def rst_jinja_render(app, _, source):
-        rst_context = {'torchcell': torchcell}
+        rst_context = {"torchcell": torchcell}
         source[0] = app.builder.templates.render_string(source[0], rst_context)
 
-    app.connect('source-read', rst_jinja_render)
-    app.add_js_file('js/version_alert.js')
+    app.connect("source-read", rst_jinja_render)
+    app.add_js_file("js/version_alert.js")

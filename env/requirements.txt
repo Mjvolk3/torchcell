@@ -86,9 +86,13 @@ pre-commit>=3.3.3
 pip-tools>=7.1.0
 snakeviz>=2.2.0
 twine>=4.0.2
+memory-profiler>=0.61.0
 
 # biocypher
-biocypher>=0.5.35
+# Swith to biocypher after path change is implemented
+# biocypher>=0.5.35
+# Not allowed in Pypi
+# biocypher@git+https://github.com/Mjvolk3/biocypher@main
 
 # neo4j
 neo4j>=4.4.11
@@ -96,5 +100,6 @@ neo4j>=4.4.11
 # command line
 cliff>=4.5.0
 
-# CaLM model
-# git+https://github.com/oxpig/CaLM@main
+# twine cannot handle these
+# Not allowed in Pypi
+# I. No. I'm going to blur it. Biceps. That's an excellent idea. **** **** it I Failure is not an option CaLM@git+https://github.com/oxpig/CaLM@main

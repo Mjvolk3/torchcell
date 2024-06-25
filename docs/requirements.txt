@@ -1,4 +1,10 @@
-https://download.pytorch.org/whl/cpu/torch-1.13.0%2Bcpu-cp38-cp38-linux_x86_64.whl
-numpy>=1.19.5
+# First, install torch_scatter
+git+https://github.com/rusty1s/pytorch_scatter
+torchcell
+# Then, install other dependencies
+sphinx
+sphinx_rtd_theme
+myst_parser
+pytorch_sphinx_theme
 nbsphinx
-git+https://github.com/pyg-team/pyg_sphinx_theme.git
+git+https://github.com/pyg-team/pyg_sphinx_theme

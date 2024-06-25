@@ -2,9 +2,15 @@
 id: aa3jczwffj7pbcvjsvhmfu8
 title: Docker
 desc: ''
-updated: 1715731777110
+updated: 1719092342963
 created: 1706953111718
 ---
+## 2024.06.22 - Build Command
+
+```bash
+docker buildx build --no-cache --platform linux/amd64,linux/arm64 -t michaelvolk/tc-neo4j:latest -f database/Dockerfile.tc-neo4j database --push
+```
+
 ## Instructions to Get Image
 
 (1) We adapted the [Neo4j-4.4.30-community image](https://github.com/neo4j/docker-neo4j-publish/tree/dae45c73d0c9d68337f01f1711b225a8aef36411/4.4.30/bullseye/community/local-package) by adding python installation where we can install our environment for torchcell.

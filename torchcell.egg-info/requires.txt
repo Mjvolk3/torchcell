@@ -44,7 +44,7 @@ pre-commit>=3.3.3
 pip-tools>=7.1.0
 snakeviz>=2.2.0
 twine>=4.0.2
-biocypher>=0.5.35
+memory-profiler>=0.61.0
 neo4j>=4.4.11
 cliff>=4.5.0
 

@@ -53,5 +53,3 @@ black
 semantic-release
 pip-tools
 pytest
-biocypher@ git+https://github.com/Mjvolk3/biocypher@main
-calm@ git+https://github.com/oxpig/CaLM@main

@@ -1,13 +1,13 @@
 import datetime
 import os
 import sys
-import pyg_sphinx_theme
+import torchcell_sphinx_theme
 
 # Correctly adjust the path to the torchcell module
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../torchcell"))
 )
-sys.path.append(os.path.join(os.path.dirname(pyg_sphinx_theme.__file__), "extension"))
+sys.path.append(os.path.join(os.path.dirname(torchcell_sphinx_theme.__file__), "extension"))
 
 import torchcell  # Import torchcell module here
 from torchcell import __version__
@@ -32,14 +32,14 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = []
 
-html_theme = "pyg_sphinx_theme"
+html_theme = "torchcell_sphinx_theme"
 html_logo = (
-    "https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/"
-    "master/pyg_sphinx_theme/static/img/pyg_logo.png"
+    "https://raw.githubusercontent.com/pyg-team/torchcell_sphinx_theme/"
+    "master/torchcell_sphinx_theme/static/img/pyg_logo.png"
 )
 html_favicon = (
-    "https://raw.githubusercontent.com/pyg-team/pyg_sphinx_theme/"
-    "master/pyg_sphinx_theme/static/img/favicon.png"
+    "https://raw.githubusercontent.com/pyg-team/torchcell_sphinx_theme/"
+    "master/torchcell_sphinx_theme/static/img/favicon.png"
 )
 html_static_path = ["_static"]
 

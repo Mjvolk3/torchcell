@@ -10,3 +10,4 @@ PyG Documentation
 
    modules/sequence
    modules/models
+   modules/datasets

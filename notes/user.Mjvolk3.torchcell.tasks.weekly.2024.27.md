@@ -2,11 +2,11 @@
 id: r62q9b5yqw785xmaesez58p
 title: '27'
 desc: ''
-updated: 1719334216225
+updated: 1719422655773
 created: 1718737771951
 ---
 
-Changed to weekly because notes were getting to long for quick preview rendering. Also this might give a better feel for weekly progress, more frequent check ups etc. Previous task notes: [[user.mjvolk3.torchcell.tasks.deprecated.2024.06.18|dendron://torchcell/user.Mjvolk3.torchcell.tasks.deprecated.2024.06.18]]
+Changed to weekly because notes were getting to long for quick preview rendering. Also this might give a better feel for weekly progress, more frequent check ups etc. Previous task notes: [[user.mjvolk3.torchcell.tasks.deprecated.2024.06.18|dendron://torchcell/juser.Mjvolk3.torchcell.tasks.deprecated.2024.06.18]]
 
 Since futures is short enough we didn't change it. [[torchcell.tasks.future|dendron://torchcell/user.mjvolk3.torchcell.tasks.future]]
 

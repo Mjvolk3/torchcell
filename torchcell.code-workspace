@@ -358,6 +358,12 @@
                     "panel": "shared"
                 }
             },
+            // sphinx sphinx-apidoc -o docs/source/generated torchcell
+            {"label": "sphinx: apidoc",
+            "type": "shell",
+            "command": "sphinx-apidoc -f -o docs/source/generated torchcell",
+            "problemMatcher": []
+            },
             // pytest code coverage
             {
                 "label": "pytest: coverage",

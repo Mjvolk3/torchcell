@@ -1,8 +1,13 @@
 #!/bin/bash -c
+
+cgroup_path="$1"
+cpus="$2"
+memory="$3"
+
 cd /scratch/projects/torchcell
 
 echo "Starting build_gilahyper-docker"
-# TODO remove if not needed
+# TODO remove if not needed 
 # source .env
 
 sleep 3
@@ -12,12 +17,12 @@ docker login
 docker stop tc-neo4j
 docker rm -f tc-neo4j
 
-home_path=/home/michaelvolk/Documents/projects/torchcell
-
 # Run the container
 echo "Running container..."
 
-# docker run --cpus=128 \
+# docker run --cpus="$cpus" \
+#     --memory="$memory" \
+#     --cgroup-parent "$cgroup_path" \
 #     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
 #     -d --name tc-neo4j \
 #     -p 7474:7474 -p 7687:7687 \
@@ -30,9 +35,12 @@ echo "Running container..."
 #     -v $(pwd)/database/logs:/logs \
 #     -e NEO4J_AUTH=neo4j/torchcell \
 #     michaelvolk/tc-neo4j:latest
+
 docker run \
-    --cpus=10 \
-    --memory=256g \
+    --user $(id -u):$(id -g) \
+    --cpus="$SLURM_CPUS_PER_TASK" \
+    --memory="$SLURM_MEM_PER_NODE" \
+    --cgroup-parent "$cgroup_path" \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
     -p 7474:7474 -p 7687:7687 \
@@ -46,6 +54,7 @@ docker run \
     -e NEO4J_AUTH=neo4j/torchcell \
     michaelvolk/tc-neo4j:latest
 
+# Rest of the script remains the same...
 
 docker start tc-neo4j
 

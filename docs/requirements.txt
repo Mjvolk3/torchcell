@@ -7,4 +7,4 @@ sphinx_rtd_theme
 myst_parser
 pytorch_sphinx_theme
 nbsphinx
-git+https://github.com/pyg-team/pyg_sphinx_theme
+git+https://github.com/Mjvolk3/torchcell_sphinx_theme

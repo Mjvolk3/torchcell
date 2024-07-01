@@ -59,9 +59,8 @@ def get_num_workers():
 
 @hydra.main(version_base=None, config_path="conf", config_name="kg_small")
 def main(cfg) -> str:
-    print("this is where we are")
+    print("printing path info")
     print(os.getcwd())
-    print("---------")
     load_dotenv("/.env")
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")

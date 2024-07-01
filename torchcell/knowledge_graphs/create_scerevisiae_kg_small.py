@@ -184,10 +184,10 @@ def main(cfg) -> str:
     # Define dataset-adapter mapping
     dataset_adapter_map = {
         DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
-        SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
-        SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
-        DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
-        TmfKuzmin2018Dataset: TmfKuzmin2018Adapter,
+        # SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
+        # SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
+        # DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
+        # TmfKuzmin2018Dataset: TmfKuzmin2018Adapter,
     }
 
     # Instantiate adapters based on the dataset-adapter mapping
@@ -217,8 +217,6 @@ def main(cfg) -> str:
         end_time = time.time()
         write_edges_time = end_time - start_time
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
-        # TODO remove after works
-        break
 
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)

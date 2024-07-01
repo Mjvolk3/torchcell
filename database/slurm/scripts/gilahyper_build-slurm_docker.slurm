@@ -80,12 +80,12 @@ docker exec tc-neo4j chown -R neo4j:neo4j /var/lib/neo4j/biocypher-out
 docker exec tc-neo4j chmod -R 755 /var/lib/neo4j/biocypher-out
 
 echo "Creating knowledge graph..."
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg
 
-echo "Executing generated bash script..."
-docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then bash_script_path_cleaned=$(cat biocypher_file_name.txt); chmod +x "${bash_script_path_cleaned}"; "${bash_script_path_cleaned}"; else echo "biocypher_file_name.txt not found"; fi'
-
-echo "Protecting directory..."
-docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then dir_path=$(dirname $(cat biocypher_file_name.txt)); chmod a-w "${dir_path}"; else echo "biocypher_file_name.txt not found"; fi'
-
-echo "Build and run process completed."
+## echo "Executing generated bash script..."
+## docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then bash_script_path_cleaned=$(cat biocypher_file_name.txt); chmod +x "${bash_script_path_cleaned}"; "${bash_script_path_cleaned}"; else echo "biocypher_file_name.txt not found"; fi'
+## 
+## echo "Protecting directory..."
+## docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then dir_path=$(dirname $(cat biocypher_file_name.txt)); chmod a-w "${dir_path}"; else echo "biocypher_file_name.txt not found"; fi'
+## 
+## echo "Build and run process completed."

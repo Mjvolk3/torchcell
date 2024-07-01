@@ -6,22 +6,8 @@
 
 from biocypher import BioCypher
 import torchcell
-from torchcell.adapters import (
-    SmfCostanzo2016Adapter,
-    DmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
-    DmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
-)
-from torchcell.datasets.scerevisiae.costanzo2016 import (
-    SmfCostanzo2016Dataset,
-    DmfCostanzo2016Dataset,
-)
-from torchcell.datasets.scerevisiae.kuzmin2018 import (
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-)
+from torchcell.adapters import SmfCostanzo2016Adapter
+from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
 import logging
 from dotenv import load_dotenv
 import os
@@ -72,8 +58,7 @@ def main(cfg) -> str:
     print(SCHEMA_CONFIG_PATH)
     print(BIOCYPHER_OUT_PATH)
     print("---------")
-    
-    
+
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -182,13 +167,7 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {
-        DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
-        SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
-        SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
-        DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
-        TmfKuzmin2018Dataset: TmfKuzmin2018Adapter,
-    }
+    dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

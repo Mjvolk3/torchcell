@@ -8,7 +8,6 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
 
-
 def main() -> None:
     # create database dir in DATA_ROOT and make dir
     database_dir = osp.join(DATA_ROOT, "database")
@@ -16,13 +15,13 @@ def main() -> None:
 
     # make the following directories in database_dir: data, biocypher, conf, logs, and slurm
     data_dir = osp.join(database_dir, "data")
+    biocypher_dir = osp.join(database_dir, "biocypher")
     conf_dir = osp.join(database_dir, "conf")
     logs_dir = osp.join(database_dir, "logs")
     slurm_dir = osp.join(database_dir, "slurm")
-    os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(conf_dir, exist_ok=True)
-    os.makedirs(logs_dir, exist_ok=True)
-    os.makedirs(slurm_dir, exist_ok=True)
+    
+    for dir_path in [data_dir, biocypher_dir, conf_dir, logs_dir, slurm_dir]:
+        os.makedirs(dir_path, exist_ok=True)
 
     # copy osp.join(WORKSPACE_DIR, "database/conf/gh_neo4j.conf") to osp.join(DATA_ROOT, "database/conf") and rename it to "neo4j.conf"
     src_neo4j_conf = osp.join(WORKSPACE_DIR, "database", "conf", "gh_neo4j.conf")
@@ -38,6 +37,26 @@ def main() -> None:
     src_database_env = osp.join(WORKSPACE_DIR, "database", "database.env")
     shutil.copyfile(src_database_env, env_path)
 
+    # copy biocypher directory
+    src_biocypher = osp.join(WORKSPACE_DIR, "biocypher")
+    dst_biocypher = osp.join(DATA_ROOT, "biocypher")
+    if osp.exists(dst_biocypher):
+        shutil.rmtree(dst_biocypher)
+    shutil.copytree(src_biocypher, dst_biocypher)
+
+    # copy biocypher-log directory
+    src_biocypher_log = osp.join(WORKSPACE_DIR, "biocypher-log")
+    dst_biocypher_log = osp.join(DATA_ROOT, "biocypher-log")
+    if osp.exists(dst_biocypher_log):
+        shutil.rmtree(dst_biocypher_log)
+    shutil.copytree(src_biocypher_log, dst_biocypher_log)
+
+    # copy wandb directory
+    src_wandb = osp.join(WORKSPACE_DIR, "wandb")
+    dst_wandb = osp.join(DATA_ROOT, "wandb")
+    if osp.exists(dst_wandb):
+        shutil.rmtree(dst_wandb)
+    shutil.copytree(src_wandb, dst_wandb)
 
 if __name__ == "__main__":
     main()

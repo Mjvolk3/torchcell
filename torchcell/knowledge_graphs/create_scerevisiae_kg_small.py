@@ -108,7 +108,6 @@ def main(cfg) -> str:
     print(f"time_str type: {type(time_str)}")
     print("=========")
     output_directory = osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str)
-    print("=========")
     print(output_directory)
     print("=========")
     bc = BioCypher(
@@ -218,6 +217,8 @@ def main(cfg) -> str:
         end_time = time.time()
         write_edges_time = end_time - start_time
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
+        # TODO remove after works
+        break
 
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)

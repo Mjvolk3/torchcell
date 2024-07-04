@@ -61,9 +61,9 @@ else
 fi
 
 echo "Updating software in the container..."
-docker exec tc-neo4j pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
-docker exec tc-neo4j pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
-docker exec tc-neo4j pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main
+docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
+docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main
 
 echo "Logging in to wandb..."
 docker exec tc-neo4j wandb login $WANDB_API_KEY

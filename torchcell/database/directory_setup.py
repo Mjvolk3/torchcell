@@ -12,6 +12,8 @@ def main() -> None:
     # create database dir in DATA_ROOT and make dir
     database_dir = osp.join(DATA_ROOT, "database")
     os.makedirs(database_dir, exist_ok=True)
+    tc_data_dir = osp.join(DATA_ROOT, "data/torchcell")
+    os.makedirs(tc_data_dir, exist_ok=True)
 
     # make the following directories in database_dir: data, biocypher, conf, logs, and slurm
     data_dir = osp.join(database_dir, "data")
@@ -43,20 +45,6 @@ def main() -> None:
     if osp.exists(dst_biocypher):
         shutil.rmtree(dst_biocypher)
     shutil.copytree(src_biocypher, dst_biocypher)
-
-    # copy biocypher-log directory
-    src_biocypher_log = osp.join(WORKSPACE_DIR, "biocypher-log")
-    dst_biocypher_log = osp.join(DATA_ROOT, "biocypher-log")
-    if osp.exists(dst_biocypher_log):
-        shutil.rmtree(dst_biocypher_log)
-    shutil.copytree(src_biocypher_log, dst_biocypher_log)
-
-    # copy wandb directory
-    src_wandb = osp.join(WORKSPACE_DIR, "wandb")
-    dst_wandb = osp.join(DATA_ROOT, "wandb")
-    if osp.exists(dst_wandb):
-        shutil.rmtree(dst_wandb)
-    shutil.copytree(src_wandb, dst_wandb)
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1715731989527
+updated: 1720114876200
 created: 1675887826601
 ---
 ## Future
@@ -18,7 +18,7 @@ created: 1675887826601
 - [ ] Publish package for Junyu and Le to use
 - [ ] Get rid of the `preprocess_config.json
 - [ ] Change `reference_environment` to `environment`
-- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix` 
+- [ ] #pr.biocypher.import_call_file_prefix, path mapping `import_call_file_prefix`
 - [ ] #pr.biocypher, message @Sebastian-Lobentanzer about collectri pr accept on readme
 - [ ] #pr.biocypher minimal example for docker `None` import. → I have a suspicion that the that the docker build importing `None` doesn't work with the biocypher provided docker compose because of the mismatched neo4j version. Unsure..
 - [ ] #pr.biocypher update tutorials with Neo4j Bloom images.
@@ -92,3 +92,5 @@ created: 1675887826601
 genome["YDR210W"].attributes['display'][0]
 'Predicted tail-anchored plasma membrane protein
 ```
+
+- [ ] First `Ollama` application to write documentation, write tests. Both should come with summaries. Automatically run tests to inspect which tests fail. Test if new dataset code is adherent to schema or can be made adherent to schema. We should also generate schema expansion recommendations. This part is hard, and really needs a vast amount of knowledge over different experimental methods if we want it to scale to 1000s of studies. This will build our understanding of ontologizing in the domain along with predictions over the ontology. This should be evidence enough for funding parallelized pilot scale reactors. 100 L to one 1000 L reactor. Once the we can reliably use the 1000 L reactor to produce a product at profit, we should be able to achieve a second round of funding for replicating the process. So we can penetrate the market.

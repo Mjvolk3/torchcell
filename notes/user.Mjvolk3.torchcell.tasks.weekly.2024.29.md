@@ -2,14 +2,14 @@
 id: goislb7hg0rffoj4hhlzawl
 title: '29'
 desc: ''
-updated: 1720141091363
+updated: 1720141453020
 created: 1719839145091
 ---
 
 ## 2024.07.04
 
 - [x] Get docker going again on `gh` run test sbatch → need to bump version for small.
-- [x] bump version → fix.
+- [x] bump version → fix. colon?
 - [ ] Correct setup script so we can start fresh from `/scratch`. We deleted `wandb-experiments` but they are saved online.
 - [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network.
 - [ ]

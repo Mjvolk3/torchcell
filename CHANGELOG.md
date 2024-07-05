@@ -1,5 +1,69 @@
 # CHANGELOG
 
+## v0.2.6 (2024-07-05)
+
+### Fix
+
+* BLD: we want patch bump to 0.2.6 ([`d3389db`](https://github.com/Mjvolk3/torchcell/commit/d3389db296ea28b8b8cacf5d863ebe9c01bc6ef5))
+
+### Unknown
+
+* BLD ([`a80884f`](https://github.com/Mjvolk3/torchcell/commit/a80884fa45055c043ba8837942e64a1f5305ce4e))
+
+* BLG ([`d650c65`](https://github.com/Mjvolk3/torchcell/commit/d650c653fe523f2a73c34fa16bfa2d9f1b5093ce))
+
+* BLD ([`c0a0ccc`](https://github.com/Mjvolk3/torchcell/commit/c0a0ccc7197bb0804269022f0170da12f284a3fd))
+
+* notes ([`bc6fa57`](https://github.com/Mjvolk3/torchcell/commit/bc6fa575ea1275c6049526ac3ca7c37765f78ad1))
+
+* kg small ([`3e1a272`](https://github.com/Mjvolk3/torchcell/commit/3e1a27283eacf41b777bde1728173010a840c404))
+
+* minimal db dir setup more robust-ongoing ([`1524167`](https://github.com/Mjvolk3/torchcell/commit/1524167282b51e3f12e6e2af61305973558dbfca))
+
+* create scerevisiae ([`71513fa`](https://github.com/Mjvolk3/torchcell/commit/71513faafa0c866b5a730eac3427741d117d45f4))
+
+* smaller ([`a203764`](https://github.com/Mjvolk3/torchcell/commit/a203764e79ba33aeec82a997d4f450e072ba82ba))
+
+* build scripts ([`647889a`](https://github.com/Mjvolk3/torchcell/commit/647889a6d60ee4d8adb8dfe1d5cd9e96e392b2bf))
+
+* print info ([`2d828a4`](https://github.com/Mjvolk3/torchcell/commit/2d828a40180d45a6ecc24629676174081c39df89))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`779a6c1`](https://github.com/Mjvolk3/torchcell/commit/779a6c18b12aeace82bac8eef0b9d3c6b5c55666))
+
+* update - build still broken ([`cb35784`](https://github.com/Mjvolk3/torchcell/commit/cb357849e687c1d47f6116e36b3ff70a8c1e86bf))
+
+* first torchell_sphinx_theme ([`76eac65`](https://github.com/Mjvolk3/torchcell/commit/76eac65fc43ae32dd817912931aff1dacdd68af7))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`98fcd14`](https://github.com/Mjvolk3/torchcell/commit/98fcd14de2109c6f0b75f86fc6c9a991ccc88cd9))
+
+* docs ready for regular builds ([`0dca0a3`](https://github.com/Mjvolk3/torchcell/commit/0dca0a38af427b96d752798d1077104486b3d8da))
+
+* Merge remote-tracking branch &#39;refs/remotes/origin/main&#39; ([`59c0a94`](https://github.com/Mjvolk3/torchcell/commit/59c0a94b92b1fdffd3b6cc525570e73cecb852e8))
+
+* build update ([`833a56e`](https://github.com/Mjvolk3/torchcell/commit/833a56e7dabad80c859c10f526d368243d38527d))
+
+* added docs webhook ([`cd44d35`](https://github.com/Mjvolk3/torchcell/commit/cd44d35e174884b26a6cc7fb0d7a1fe041fa5167))
+
+* try add scatter before add tc ([`efc1b6d`](https://github.com/Mjvolk3/torchcell/commit/efc1b6d2eeb053ca049ae0a42756717538f5dab3))
+
+* try add scatter before ([`b0ec4d4`](https://github.com/Mjvolk3/torchcell/commit/b0ec4d41fc3d29b31aa779e989a8b84310eb53fc))
+
+* try read the docs update eith torchcell ([`d409099`](https://github.com/Mjvolk3/torchcell/commit/d4090994012072d0a99a6fad6bc6fd05b47518dc))
+
+* try read docs again ([`0e89203`](https://github.com/Mjvolk3/torchcell/commit/0e8920373c3ea227fa0fc4540ac82b6805725b1c))
+
+* change docs reqs ([`6a9dd8f`](https://github.com/Mjvolk3/torchcell/commit/6a9dd8fcbff012ccb46292189e021b050b5cee1c))
+
+* new try on docs reqs git ([`44815cf`](https://github.com/Mjvolk3/torchcell/commit/44815cfe27f87a7c4620448fb6cb6de85df1833b))
+
+* trying readthedocs git + ([`89902e5`](https://github.com/Mjvolk3/torchcell/commit/89902e5082512187dd08df4fcccd1e6a256b464f))
+
+* path update ([`d9d3f35`](https://github.com/Mjvolk3/torchcell/commit/d9d3f357e9e70f65c2f7000610ffdc9a7fd6819e))
+
+* read docs yaml ([`831de3d`](https://github.com/Mjvolk3/torchcell/commit/831de3d5733b73c9329276f8bd0c1a62d5219c9d))
+
+* random forest update ([`6d3b3c0`](https://github.com/Mjvolk3/torchcell/commit/6d3b3c035f34718f754527b8e02bf97f13ab86d4))
+
 ## v0.2.5 (2024-06-22)
 
 ### Fix

@@ -38,6 +38,7 @@ torchcell/data/neo4j_cell.py
 torchcell/data/neo4j_query_raw.py
 torchcell/database/__init__.py
 torchcell/database/build_command.py
+torchcell/database/directory_setup.py
 torchcell/database/tcdb.py
 torchcell/datamodels/__init__.py
 torchcell/datamodels/pydant.py
@@ -94,6 +95,7 @@ torchcell/knowledge_graphs/__init__.py
 torchcell/knowledge_graphs/create_pypy_scerevisiae_kg.py
 torchcell/knowledge_graphs/create_scerevisiae_kg.py
 torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
+torchcell/knowledge_graphs/minimal_kg.py
 torchcell/knowledge_graphs/conf/__init__.py
 torchcell/knowledge_graphs/conf/default.yaml
 torchcell/knowledge_graphs/conf/kg.yaml

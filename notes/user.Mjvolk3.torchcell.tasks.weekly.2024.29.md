@@ -2,7 +2,7 @@
 id: goislb7hg0rffoj4hhlzawl
 title: '29'
 desc: ''
-updated: 1720233379356
+updated: 1720242704398
 created: 1719839145091
 ---
 
@@ -13,6 +13,9 @@ created: 1719839145091
 ## 2024.07.05
 
 - [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
+
+- [ ] `ExperimentReferenceOf` looks broken.
+
 - [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
 - [ ] Try to link docker and slurm with `cgroup`
 - [ ] Run build bash script for testing.

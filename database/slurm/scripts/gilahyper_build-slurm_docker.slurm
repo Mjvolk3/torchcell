@@ -8,9 +8,6 @@
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
-# Load necessary environment modules
-module load docker
-
 echo "Running on $(hostname)"
 
 echo "Checking Docker availability..."
@@ -44,7 +41,7 @@ docker run \
     -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell:Z \
     -v $(pwd)/database/data:/var/lib/neo4j/data:Z \
     -v $(pwd)/database/.env:/.env:Z \
-    -v $(pwd)/biocypher:/var/lib/neo4j/biocypher:Z \
+    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher:Z \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf:Z \
     -v $(pwd)/database/logs:/logs:Z \
     -e NEO4J_AUTH=neo4j/torchcell \
@@ -53,7 +50,6 @@ docker run \
 # Check if the container is running
 if [ $(docker ps -q -f name=tc-neo4j) ]; then
     echo "Container is running"
-    docker logs tc-neo4j
 else
     echo "Container failed to start"
     docker logs tc-neo4j
@@ -70,22 +66,47 @@ docker exec tc-neo4j wandb login $WANDB_API_KEY
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
-echo "Setting permissions for neo4j.conf..."
-docker cp /scratch/projects/torchcell/database/conf/neo4j.conf tc-neo4j:/var/lib/neo4j/conf/
-docker exec tc-neo4j chown neo4j:neo4j /var/lib/neo4j/conf/neo4j.conf
-docker exec tc-neo4j chmod 640 /var/lib/neo4j/conf/neo4j.conf
-
-echo "Setting permissions for biocypher-out directory and files..."
-docker exec tc-neo4j chown -R neo4j:neo4j /var/lib/neo4j/biocypher-out
-docker exec tc-neo4j chmod -R 755 /var/lib/neo4j/biocypher-out
-
 echo "Creating knowledge graph..."
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg; then
+    echo "Error: Failed to create knowledge graph"
+    docker logs tc-neo4j
+    exit 1
+fi
 
-## echo "Executing generated bash script..."
-## docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then bash_script_path_cleaned=$(cat biocypher_file_name.txt); chmod +x "${bash_script_path_cleaned}"; "${bash_script_path_cleaned}"; else echo "biocypher_file_name.txt not found"; fi'
-## 
-## echo "Protecting directory..."
-## docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then dir_path=$(dirname $(cat biocypher_file_name.txt)); chmod a-w "${dir_path}"; else echo "biocypher_file_name.txt not found"; fi'
-## 
-## echo "Build and run process completed."
+echo "Knowledge graph creation completed."
+
+echo "Executing generated bash script..."
+docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then 
+    bash_script_path_cleaned=$(cat biocypher_file_name.txt)
+    chmod +x "${bash_script_path_cleaned}"
+    "${bash_script_path_cleaned}"
+else 
+    echo "biocypher_file_name.txt not found"
+fi'
+
+echo "Protecting directory..."
+docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then 
+    dir_path=$(dirname $(cat biocypher_file_name.txt))
+    chmod a-w "${dir_path}"
+else 
+    echo "biocypher_file_name.txt not found"
+fi'
+
+echo "Starting Neo4j service..."
+docker exec tc-neo4j neo4j start
+
+echo "Copying neo4j.conf to host..."
+docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
+
+echo "Copying biocypher config to host..."
+docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
+
+echo "Ensuring files are readable..."
+chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
+chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
+
+echo "File locations:"
+echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
+echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
+
+echo "Build and run process completed."

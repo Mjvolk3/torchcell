@@ -18,7 +18,7 @@ def main() -> None:
         osp.join(DATA_ROOT, "database/conf"),
         osp.join(DATA_ROOT, "database/logs"),
         osp.join(DATA_ROOT, "database/slurm"),
-        osp.join(DATA_ROOT, "database/local-package"), # not sure if necessary
+        # osp.join(DATA_ROOT, "database/local-package"), # Not necessary, only need for image build.
     ]
     
     for dir_path in directories:

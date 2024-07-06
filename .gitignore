@@ -96,3 +96,4 @@ experiments/embeddings/slurm/error/
 
 # TEMPORARY
 # notes/assets/images/*
+*.log

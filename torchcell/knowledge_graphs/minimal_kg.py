@@ -6,8 +6,6 @@
 
 from biocypher import BioCypher
 import torchcell
-from torchcell.adapters import SmfCostanzo2016Adapter
-from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
 import logging
 from dotenv import load_dotenv
 import os
@@ -23,6 +21,9 @@ import uuid
 import hydra
 import time
 import certifi
+from torchcell.adapters import SmfCostanzo2016Adapter, SmfKuzmin2018Adapter
+from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
+from torchcell.datasets.scerevisiae.kuzmin2018 import SmfKuzmin2018Dataset
 
 
 log = logging.getLogger(__name__)
@@ -129,25 +130,6 @@ def main(cfg) -> str:
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
         },
-        {
-            "class": DmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": TmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
-        {
-            "class": DmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_5e5"),
-            "kwargs": {
-                "subset_n": int(5e5),
-                "io_workers": num_workers,
-                "batch_size": int(1e3),
-            },
-        },
     ]
 
     # Instantiate datasets
@@ -166,8 +148,11 @@ def main(cfg) -> str:
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
         datasets.append(dataset)
 
-    # Define dataset-adapter mapping
-    dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
+        # Define dataset-adapter mapping
+        dataset_adapter_map = {
+            SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
+            SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
+        }
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [
@@ -194,7 +179,7 @@ def main(cfg) -> str:
         start_time = time.time()
         bc.write_edges(adapter.get_edges())
         end_time = time.time()
-        write_edges_time = end_time - start_time
+        write_edges_time = end_time - start_time    
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
 
     log.info("Finished iterating nodes and edges")

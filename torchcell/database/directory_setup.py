@@ -18,6 +18,7 @@ def main() -> None:
         osp.join(DATA_ROOT, "database/conf"),
         osp.join(DATA_ROOT, "database/logs"),
         osp.join(DATA_ROOT, "database/slurm"),
+        osp.join(DATA_ROOT, "database/local-package"), # not sure if necessary
     ]
     
     for dir_path in directories:
@@ -39,6 +40,13 @@ def main() -> None:
     if osp.exists(dst_biocypher):
         shutil.rmtree(dst_biocypher)
     shutil.copytree(src_biocypher, dst_biocypher)
+
+    # Copy local-package directory into database
+    src_local_package = osp.join(WORKSPACE_DIR, "database", "local-package")
+    dst_local_package = osp.join(DATA_ROOT, "database/local-package")
+    if osp.exists(dst_local_package):
+        shutil.rmtree(dst_local_package)
+    shutil.copytree(src_local_package, dst_local_package)
 
     print("Setup completed successfully.")
 

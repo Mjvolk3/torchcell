@@ -92,21 +92,18 @@ else
     echo "biocypher_file_name.txt not found"
 fi'
 
-echo "Starting Neo4j service..."
-docker exec tc-neo4j neo4j start
 
-echo "Copying neo4j.conf to host..."
-docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
+#echo "Starting Neo4j service..."
+#docker exec tc-neo4j neo4j start
 
-echo "Copying biocypher config to host..."
-docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
+echo "Copying import.report to logs and changing permissions..."
+docker exec tc-neo4j bash -c 'cp /var/lib/neo4j/import.report /logs/import.report && chmod 755 /logs/import.report'
 
-echo "Ensuring files are readable..."
-chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
-chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
-
-echo "File locations:"
-echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
-echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
-
-echo "Build and run process completed."
+echo "Changing ownership and permissions for neo4j.conf, biocypher config, biocypher-out, and data directory..."
+docker exec tc-neo4j bash -c '
+    chown -R neo4j:neo4j /var/lib/neo4j/conf/neo4j.conf /var/lib/neo4j/biocypher/config /var/lib/neo4j/biocypher-out /var/lib/neo4j/data &&
+    chmod 755 /var/lib/neo4j/conf/neo4j.conf &&
+    chmod -R 755 /var/lib/neo4j/biocypher/config &&
+    chmod -R 755 /var/lib/neo4j/biocypher-out &&
+    chmod -R 755 /var/lib/neo4j/data
+'

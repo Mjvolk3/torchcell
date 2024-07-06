@@ -7,7 +7,7 @@ biocypher:
   output_directory: data/build2neo
 
 neo4j:
-  database_name: neo4j
+  database_name: torchcell
   wipe: true
   delimiter: '\t'
   array_delimiter: '|'

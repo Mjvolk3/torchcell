@@ -36,7 +36,7 @@ docker run \
     --memory=${mem_mb}m \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
-    -p 7474:7474 -p 7687:7687 \
+    -p 7687:7687 -p 7473:7473 -p 7474:7474\
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out:Z \
     -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell:Z \
     -v $(pwd)/database/data:/var/lib/neo4j/data:Z \
@@ -44,6 +44,8 @@ docker run \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher:Z \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf:Z \
     -v $(pwd)/database/logs:/logs:Z \
+    -v $(pwd)/database/certificates/https:/var/lib/neo4j/certificates/https:Z \
+    -v $(pwd)/database/certificates/bolt:/var/lib/neo4j/certificates/bolt:Z \
     -e NEO4J_AUTH=neo4j/torchcell \
     michaelvolk/tc-neo4j:latest
 
@@ -55,6 +57,16 @@ else
     docker logs tc-neo4j
     exit 1
 fi
+
+# Generate SSL certificates
+echo "Generating SSL certificates..."
+docker exec tc-neo4j bash -c '
+    mkdir -p certificates/https certificates/bolt
+    openssl req -newkey rsa:2048 -nodes -keyout certificates/https/private.key -x509 -days 365 -out certificates/https/public.crt -subj "/CN=localhost"
+    openssl req -newkey rsa:2048 -nodes -keyout certificates/bolt/private.key -x509 -days 365 -out certificates/bolt/public.crt -subj "/CN=localhost"
+    chown -R neo4j:neo4j certificates
+    chmod -R 600 certificates
+'
 
 echo "Updating software in the container..."
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
@@ -85,7 +97,7 @@ else
 fi'
 
 echo "Protecting directory..."
-docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt ]; then 
+docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt]; then 
     dir_path=$(dirname $(cat biocypher_file_name.txt))
     chmod a-w "${dir_path}"
 else 

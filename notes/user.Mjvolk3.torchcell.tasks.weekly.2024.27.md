@@ -1,54 +1,79 @@
 ---
-id: r62q9b5yqw785xmaesez58p
+id: goislb7hg0rffoj4hhlzawl
 title: '27'
 desc: ''
-updated: 1719422655773
-created: 1718737771951
+updated: 1720728200298
+created: 1719839145091
 ---
 
-Changed to weekly because notes were getting to long for quick preview rendering. Also this might give a better feel for weekly progress, more frequent check ups etc. Previous task notes: [[user.mjvolk3.torchcell.tasks.deprecated.2024.06.18|dendron://torchcell/juser.Mjvolk3.torchcell.tasks.deprecated.2024.06.18]]
+## 2024.07.07
 
-Since futures is short enough we didn't change it. [[torchcell.tasks.future|dendron://torchcell/user.mjvolk3.torchcell.tasks.future]]
+- [ ] Get https working with certificates setup for public and private keys
+- [ ] Make sure that dirs are visible with `chown` and `chmod`
+- [ ] Biochatter ChatGSE compose?
 
-## 2024.06.23
+## 2024.07.06
 
-- [x] Rebuild docker image.
+- [x] Check in on container that was running over night. → Has been up for 19 hours uninterrupted. → Only issues is I have no idea how and why it is still up.
+- [x] Run basic query and see if it stays up... check at midnight. → still up.
+- [x] #ramble It has become clear that the initialization from scratch is partially manual process. At least the end is so clunky that it it's is unclear if it will be robust enough to automate. I think we should view this script one shot creation + some manual setup. Future should be just about generating `biocypher-out` for new knowledge graph. Unless we can stop database from outside of cypher shell. → build can be separated into two parts. [[2024.07.06 - Building on GilaHyper Workstation|dendron://torchcell/database.docker.build.overview#20240706---building-on-gilahyper-workstation]]
 
-## 2024.06.22
+- [x] Add setup script to slurm script. → had to revert, getting weird error with setup and changing permissions. → Still cannot https working, applying s
 
-- [x] Rebuild docker image. Try will all packages but torchcell → If we add the get packages, the build seems to fail. Trying to add `biocypher` This is recommended format from Claude. If not we can try to put in dev dependencies in `pyproject.toml` → Pypy doesn't allow for the addition of GIT in the source code for security reasons. Going to try to add them to pyproject toml. → won't even work in dependencies. → Reverting. → failed due to `torchcell[dev]`
-- 🔲 `sbatch` build
-- 🔲 Troubleshoot why docker container is crashing
-- 🔲 Verify connection to database from M1
-- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [ ] Get permissions correct so view all necessary dirs in vscode.
+- [ ] See if we can make ports https protocol.
 
-## 2024.06.21
+- [ ] Run a test to see if we can isolate slurm and docker using `cgroup`?
+- [ ] Fix the import issues - `ExperimentReferenceOf` looks broken.
 
-- [x] `sbatch` build → There are still many problems that are difficult to troubleshoot within the build. It is Difficult to tell The build is failing, I think It still has mostly to do with Package installations. I For this reason, I think we can try to rebuild, push to docker hub, then reinstall.
-- 🔲 Troubleshoot why docker container is crashing
-- 🔲 Verify connection to database from M1
-- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [ ] Adjust schema adding in `dataset_name` nodes.
 
-## 2024.06.20
+- [ ] Adjust datasets accounting for `dataset_name` nodes.
 
-- [x] Send email accepting 240 V install
-- [x] Send email accepting GPU and 240 V plug
-- [x] Launch random forest models both with cpus and gpus → we are doing over `nt` and codon frequency. This should help us determine which jobs are faster although it seems that we do have a termination issue on some of the jobs giving misleading completion times.]
-- [x] Build small `db` on `gila`. → started build running `database/build-image-fresh_linux-arm.sh`. → This needs to be done with srun... → using `salloc` jobs fail abruptly maybe some memory issue? Move to `batching`
-- [x] Setup config for port forwarding.
+- [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
+- [ ] Adjust schema for interaction data.
+- [ ] Add interactions to adapter.
+- [ ] Add genes essentiality dataset.
+- [ ] Document about gene essentiality source.
+- [ ] Add gene essentiality to schema and clearly differentiated from current fitness. Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
 
-## 2024.06.19
+- [ ] Add synthetic lethality. Do same as for essentiality.
+- [ ] Add expression dataset for mechanistic aware single fitness
+- [ ] Add expression from double fitness
+- [ ] Add fitness from singles
+- [ ] Add fitness from doubles
+- [ ] Experiment can be linked to a study - We want to query the exact dataset used in this study.
 
-- [x] Solving power issue. → transitioning to 240 V
+- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
 
-## 2024.06.18
+- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
 
-- [x] Refactor task notes to use weekly.
-- [x] Clean harpoon
-- [x] Check `gila` runs and sync, restart if necessary. → rerun `esm_all`. → After sync `find /scratch/projects/torchcell/wandb-experiments/gilahyper-43/wandb -type d | wc -l` returns 1889, which seems huge for 3 gpu. Maybe with hyperparameters models are easier to fit? Or is `cuml` provides that substantive a speed up. 3 gpus, 20 hrs, means around 2 mins per run. `20 hr * 3 gpu /1889 runs * 60 min/hr =1.9057702488 gpu * min / run`. Where cpu runs were sometimes taking 24 hours to complete. `cuml` suggests speed up is only 45x which would mean 30 min per run. The mismatch is likely explained in model configuration.
-- [x] Take note on which bars got gpu enabled `cuml` RF. → [[experiments.smf-dmf-tmf-001.results|dendron://torchcell/experiments.smf-dmf-tmf-001.results]]
-- [x] Plot RF `1e05` → It looks like `intact_mean` mse is worse that for other methods. For a more apples to apples comparison.
-- [x] Launch comparable 100 depth `RF` sweep for `1e05` dataset on `gilahyper` → Check on in morning.
-- [x] Somehow power went down, looked like machine was down hit start but, it came back up, relogin, slurm is still going. → tomorrow try to sync runs and see  what they say `sacct` for job run info and run finish info. Not clear what happened. We are instlling dedicated 240 V circuit to fix these issues.
-- [x] [[paper.recordings.2024.06.18|dendron://torchcell/paper.recordings.2024.06.18]] → summarize with language model. → [[Summary|dendron://torchcell/paper.recordings.2024.06.18.summary]]
-- [x] #ramble We need to work out the case where we have many different genomes. → saving until next project.
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+
+## 2024.07.05
+
+- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
+
+- [x] [[2024.07.06 - Create Database|dendron://torchcell/cypher-shell#20240706---create-database]]
+- [x] [[2024.07.06 - Node Count and Edge Count|dendron://torchcell/cypher-shell#20240706---node-count-and-edge-count]]
+- [x] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... → moved tomorrow
+- [x] Start database. → Can get it to start but stops shortly there after. `databases` and `transactions` must be owned by neo4j. → We have to create the `torchcell` database from the cypher-shell, then restart the container. → The database is available <http://gilahyper.zapto.org:7474/>. We have an issue of docker container randomly closing. I think it might have to do with the neo4j threads not matching cpus given in run.
+- [x] Try rerun with 10 cpus. → `dbms.threads.worker_count=10` → failed
+- [x] Check to make sure the container has permissions over all dirs. This could cause issue. → seems that permissions within database aren't an issue. → Maybe it is a network error that creates disruption. → Database has stayed up 12 minutes, and has been queried from remote. Leaving to see if it stays up overnight. → Overnight things worked... I have to guess it was some networks errors... but this remains a little unsatsifying with no error messaging.
+- [x] While getting coffee make sure that we can connect to the neo4j browser. → it works remotely.
+
+- [ ] `ExperimentReferenceOf` looks broken.
+
+- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
+- [ ] Try to link docker and slurm with `cgroup`
+- [ ] Run build bash script for testing.
+- [ ] `gh` Test build under resource constraints.
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+
+## 2024.07.04
+
+- [x] Get docker going again on `gh` run test sbatch → need to bump version for small.
+- [x] Bump version → fix. colon? → looks like we do need colon.
+- [x] Run small kg → Verify that things update on push to main.
+- [x] Correct setup script so we can start fresh from `/scratch`. We deleted `wandb-experiments` but they are saved online. → I think setting `wandb-experiments` will automatically create them when they are necessary.
+- [x] Make sure that permissions are set such that we can still view all of the files in `/database`

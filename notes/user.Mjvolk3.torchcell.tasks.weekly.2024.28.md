@@ -1,37 +1,49 @@
 ---
-id: 0j3fly72kssdbapr5eqchti
+id: e72hnyx6dkpkdnx09evtjtl
 title: '28'
 desc: ''
-updated: 1720114915301
-created: 1719334149824
+updated: 1720728298998
+created: 1720728215148
 ---
-## 2024.06.27
 
-- [x] Run tests → can get db to build but slurm doesn't talk with docker. → `cgroup`?
-- 🔲 Try to link docker and slurm with `cgroup`
-- 🔲 Run build bash script for testing.
-- 🔲 `gh` Test build under resource constraints.
-- 🔲 Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+## 2024.07.11
 
-## 2024.06.26
+- [ ] Host dataset in read only
 
-- [x] `gh` Test build from bash script → worked first time, text again...
-- [x] `gh` Test build on bash script → works. Now we need to try to rerun under resource limitations
-- [x] Use directory initialization for more reproducibility in setting up builds
-- [x] Troubleshoot builds → ongoing...
-- 🔲 `gh` Test build under resource constraints.
-- 🔲 Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+- [ ] Make sure that dirs are visible with `chown` and `chmod`. Get permissions correct so view all necessary dirs in vscode.
 
-## 2024.06.25
+- [ ] Run a test to see if we can isolate slurm and docker using `cgroup`?
 
-- [x] Sync and stop runs on `gh` → also made new plots
-- [x] Add gpu to gilahyper, now we have 4 gpus.
-- [x] Update cgroup → not cgroup but `gres.conf` and `slurm.conf`
-- [x] Bash build → only works inside docker container `docker exec -it tc-neo4j /bin/bash`.
+- [ ] Fix the import issues - `ExperimentReferenceOf` looks broken.
 
-- [x] Get docs going on readthedocs. should should make the update cycles on docs much faster which might get me to document. Next step would be to `make` documentation with every release. → requirements issues with need to install `torchcell` therefore `pytorch-scatter` which needs to be installed before... trying to do in `requirements.txt`. → works and think that it is pushes to read the docs on push.
-- 🔲 `sbatch` build
-- 🔲 Troubleshoot why docker container is crashing
-- 🔲 Verify connection to database from M1
-- 🔲 Compare GPU accelerated Random Forest v CPU random forest.
-- 🔲 Per model, per scale, performance v num_params for all models. Double check to see if we can get curving lines, look for examples first.
+- [ ] Adjust schema adding in `dataset_name` nodes.
+- [ ] Adjust datasets accounting for `dataset_name` nodes.
+- [ ] Experiment can be linked to a study - We want to query the exact dataset used in this study.
+
+- [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
+- [ ] Adjust schema for interaction data.
+- [ ] Add interactions to adapter.
+- [ ] Add genes essentiality dataset.
+- [ ] Document about gene essentiality source.
+- [ ] Add gene essentiality to schema and clearly differentiated from current fitness. Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
+- [ ] Add synthetic lethality. Do same as for essentiality.
+- [ ] Add expression dataset for mechanistic aware single fitness
+- [ ] Add expression from double fitness
+- [ ] Add fitness from singles
+- [ ] Add fitness from doubles
+- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
+- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+
+- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
+- [ ] `ExperimentReferenceOf` looks broken.
+- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
+- [ ] Try to link docker and slurm with `cgroup`
+- [ ] Run build bash script for testing.
+- [ ] `gh` Test build under resource constraints.
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+
+## 2024.07.10
+
+- [x] Submit `biocypher` PR
+- [x] Rough schematic of database process ![](./assets/database-updataes.drawio.png)

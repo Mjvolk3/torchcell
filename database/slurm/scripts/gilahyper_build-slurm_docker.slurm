@@ -10,6 +10,12 @@
 
 echo "Running on $(hostname)"
 
+# The env in ony need for dir setup, this is link between mounted dir for database and github repo.
+source ~/.zshrc
+conda activate ~/miniconda3/envs/torchcell
+python -m torchcell.database.directory_setup
+
+# Container for database build
 echo "Checking Docker availability..."
 which docker
 docker --version
@@ -92,21 +98,18 @@ else
     echo "biocypher_file_name.txt not found"
 fi'
 
-echo "Starting Neo4j service..."
-docker exec tc-neo4j neo4j start
 
-echo "Copying neo4j.conf to host..."
-docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
 
-echo "Copying biocypher config to host..."
-docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
-
-echo "Ensuring files are readable..."
-chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
-chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
-
-echo "File locations:"
-echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
-echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
-
-echo "Build and run process completed."
+echo "Updating permissions and ownership for Neo4j directories and files..."
+docker exec tc-neo4j bash -c '
+    # Copy import.report to logs
+    cp /var/lib/neo4j/import.report /logs/import.report && 
+    
+    # Set ownership
+    chown -R neo4j:neo4j /var/lib/neo4j/conf /var/lib/neo4j/biocypher /var/lib/neo4j/biocypher-out /var/lib/neo4j/data /logs/import.report &&
+    
+    # Set permissions
+    chmod 755 /var/lib/neo4j/conf /var/lib/neo4j/biocypher /var/lib/neo4j/biocypher-out /logs/import.report &&
+    chmod 755 /var/lib/neo4j/conf/neo4j.conf &&
+    chmod -R 755 /var/lib/neo4j/biocypher/config /var/lib/neo4j/data
+'

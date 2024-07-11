@@ -64,7 +64,9 @@ install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
 # Execute the Python script inside the Docker container and capture the output
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+# docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
+#TODO change back to kg_small.
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

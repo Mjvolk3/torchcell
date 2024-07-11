@@ -10,6 +10,12 @@
 
 echo "Running on $(hostname)"
 
+###
+source ~/.zshrc # Source a minimal environment, adjust to your shell if needed
+conda activate ~/miniconda3/envs/torchcell
+python -m torchcell.database.directory_setup.py
+###
+
 echo "Checking Docker availability..."
 which docker
 docker --version
@@ -36,7 +42,13 @@ docker run \
     --memory=${mem_mb}m \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
-    -p 7687:7687 -p 7473:7473 -p 7474:7474\
+    -p 7687:7687 -p 7473:7473 -p 7474:7474 \
+    --health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
+    --health-interval=30s \
+    --health-timeout=10s \
+    --health-retries=3 \
+    --restart=unless-stopped \
+    --env-file /home/michaelvolk/Documents/projects/torchcell/biochatter.env \
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out:Z \
     -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell:Z \
     -v $(pwd)/database/data:/var/lib/neo4j/data:Z \
@@ -57,16 +69,6 @@ else
     docker logs tc-neo4j
     exit 1
 fi
-
-# Generate SSL certificates
-echo "Generating SSL certificates..."
-docker exec tc-neo4j bash -c '
-    mkdir -p certificates/https certificates/bolt
-    openssl req -newkey rsa:2048 -nodes -keyout certificates/https/private.key -x509 -days 365 -out certificates/https/public.crt -subj "/CN=localhost"
-    openssl req -newkey rsa:2048 -nodes -keyout certificates/bolt/private.key -x509 -days 365 -out certificates/bolt/public.crt -subj "/CN=localhost"
-    chown -R neo4j:neo4j certificates
-    chmod -R 600 certificates
-'
 
 echo "Updating software in the container..."
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
@@ -107,18 +109,21 @@ fi'
 echo "Starting Neo4j service..."
 docker exec tc-neo4j neo4j start
 
-echo "Copying neo4j.conf to host..."
-docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
+cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD "create database torchcell;"
 
-echo "Copying biocypher config to host..."
-docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
-
-echo "Ensuring files are readable..."
-chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
-chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
-
-echo "File locations:"
-echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
-echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
-
-echo "Build and run process completed."
+#
+#echo "Copying neo4j.conf to host..."
+#docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
+#
+#echo "Copying biocypher config to host..."
+#docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
+#
+#echo "Ensuring files are readable..."
+#chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
+#chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
+#
+#echo "File locations:"
+#echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
+#echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
+#
+#echo "Build and run process completed."

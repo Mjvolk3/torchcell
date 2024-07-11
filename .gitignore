@@ -30,9 +30,10 @@ notes/.dendron.cache.json
 # ncbi_cli
 ncbi_cli/*
 
-#
+# envs
 env/pypy/*
 .env
+biochatter.env
 
 # slurm
 slurm/output

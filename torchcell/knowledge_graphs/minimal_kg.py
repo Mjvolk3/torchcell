@@ -1,7 +1,9 @@
-# torchcell/knowledge_graphs/create_scerevisiae_kg_small
-# [[torchcell.knowledge_graphs.create_scerevisiae_kg_small]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg_small
-# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
+# torchcell/knowledge_graphs/minimal_kg
+# [[torchcell.knowledge_graphs.minimal_kg]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/minimal_kg
+# Test file: tests/torchcell/knowledge_graphs/test_minimal_kg.py
+
+
 
 
 from biocypher import BioCypher

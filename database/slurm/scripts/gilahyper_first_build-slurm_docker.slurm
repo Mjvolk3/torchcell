@@ -13,7 +13,7 @@ echo "Running on $(hostname)"
 ###
 source ~/.zshrc # Source a minimal environment, adjust to your shell if needed
 conda activate ~/miniconda3/envs/torchcell
-python -m torchcell.database.directory_setup.py
+python -m torchcell.database.directory_setup
 ###
 
 echo "Checking Docker availability..."
@@ -49,17 +49,21 @@ docker run \
     --health-retries=3 \
     --restart=unless-stopped \
     --env-file /home/michaelvolk/Documents/projects/torchcell/biochatter.env \
-    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out:Z \
-    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell:Z \
-    -v $(pwd)/database/data:/var/lib/neo4j/data:Z \
-    -v $(pwd)/database/.env:/.env:Z \
-    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher:Z \
-    -v $(pwd)/database/conf:/var/lib/neo4j/conf:Z \
-    -v $(pwd)/database/logs:/logs:Z \
-    -v $(pwd)/database/certificates/https:/var/lib/neo4j/certificates/https:Z \
-    -v $(pwd)/database/certificates/bolt:/var/lib/neo4j/certificates/bolt:Z \
+    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
+    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data:/var/lib/neo4j/data \
+    -v $(pwd)/database/.env:/.env \
+    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
+    -v $(pwd)/database/conf:/var/lib/neo4j/conf \
+    -v $(pwd)/database/logs:/logs \
     -e NEO4J_AUTH=neo4j/torchcell \
     michaelvolk/tc-neo4j:latest
+
+
+## TODO adjust permissions for dirs that get changed..
+echo "Adjusting permissions for neo4j.conf..."
+docker exec tc-neo4j bash -c 'chown root:root /var/lib/neo4j/conf/neo4j.conf && chmod 644 /var/lib/neo4j/conf/neo4j.conf'
+##
 
 # Check if the container is running
 if [ $(docker ps -q -f name=tc-neo4j) ]; then
@@ -71,9 +75,14 @@ else
 fi
 
 echo "Updating software in the container..."
-docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
-docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
-docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main
+
+sleep 5
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall git+https://github.com/Mjvolk3/torchcell.git@main
+sleep 5
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall git+https://github.com/Mjvolk3/biocypher@main
+sleep 5
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall git+https://github.com/oxpig/CaLM@main
+
 
 echo "Logging in to wandb..."
 docker exec tc-neo4j wandb login $WANDB_API_KEY
@@ -98,32 +107,15 @@ else
     echo "biocypher_file_name.txt not found"
 fi'
 
-echo "Protecting directory..."
-docker exec tc-neo4j bash -c 'if [ -f biocypher_file_name.txt]; then 
-    dir_path=$(dirname $(cat biocypher_file_name.txt))
-    chmod a-w "${dir_path}"
-else 
-    echo "biocypher_file_name.txt not found"
-fi'
-
 echo "Starting Neo4j service..."
 docker exec tc-neo4j neo4j start
 
-cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD "create database torchcell;"
+docker exec tc-neo4j sleep 300
 
-#
-#echo "Copying neo4j.conf to host..."
-#docker cp tc-neo4j:/var/lib/neo4j/conf/neo4j.conf /scratch/projects/torchcell/database/conf/neo4j.conf
-#
-#echo "Copying biocypher config to host..."
-#docker cp tc-neo4j:/var/lib/neo4j/biocypher/config /scratch/projects/torchcell/database/biocypher/
-#
-#echo "Ensuring files are readable..."
-#chmod 644 /scratch/projects/torchcell/database/conf/neo4j.conf
-#chmod -R 644 /scratch/projects/torchcell/database/biocypher/config
-#
-#echo "File locations:"
-#echo "neo4j.conf: /scratch/projects/torchcell/database/conf/neo4j.conf"
-#echo "biocypher config: /scratch/projects/torchcell/database/biocypher/config/"
-#
-#echo "Build and run process completed."
+docker exec tc-neo4j bash -c 'cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD "CREATE DATABASE torchcell;"'
+
+docker stop tc-neo4j
+docker start tc-neo4j
+
+echo "Database build process completed."
+

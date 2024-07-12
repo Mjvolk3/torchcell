@@ -8,6 +8,7 @@ created: 1720728215148
 
 ## 2024.07.11
 
+- [ ] Roll back `numpy` to `1.26.0`, push version, update pypi, rebuild image.
 - [ ] Host dataset in read only → To adjust permissions we could changed the `chmod` in the entrypoint, but then would have to rebuild the image.
 
 - [ ] Handle database creation in slurm build script.

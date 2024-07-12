@@ -41,3 +41,13 @@ If you like Certbot, please consider supporting our work by:
 2. Set up the necessary directory structure.
 
 3. Run slurm script.
+
+We have abandoned this for the time being since we are going to stick with `http` unless it becomes an issue upon review.
+
+## 2024.07.11 - From Scratch Build Steps (HTTP)
+
+1.
+
+```python
+python -m torchcell.database.directory_setup
+```

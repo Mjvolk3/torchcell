@@ -1,6 +1,7 @@
 # env/requirements.txt
 # scientific computing stack
-numpy>=1.26.0
+# We pin numpy because transformers lib cannot yet use 2.0
+numpy==1.26.0
 pandas>=2.1.1
 pyarrow>=15.0.0
 #polars

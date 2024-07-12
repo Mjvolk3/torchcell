@@ -73,7 +73,8 @@
             "MD026": false,
             "MD033": false,
             "MD045": false,
-            "MD050": false
+            "MD050": false,
+            "MD029": false
         },
         "[markdown]": {
             "editor.codeActionsOnSave": {

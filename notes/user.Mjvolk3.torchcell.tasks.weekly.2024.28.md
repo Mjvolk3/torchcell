@@ -8,7 +8,10 @@ created: 1720728215148
 
 ## 2024.07.11
 
-- [ ] Host dataset in read only
+- [ ] Host dataset in read only → To adjust permissions we could changed the `chmod` in the entrypoint, but then would have to rebuild the image.
+
+- [ ] Handle database creation in slurm build script.
+- [ ] Write notes on current build.
 
 - [ ] Make sure that dirs are visible with `chown` and `chmod`. Get permissions correct so view all necessary dirs in vscode.
 
@@ -42,6 +45,8 @@ created: 1720728215148
 - [ ] Run build bash script for testing.
 - [ ] `gh` Test build under resource constraints.
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+
+- [ ] Remove software update on image entry point
 
 ## 2024.07.10
 

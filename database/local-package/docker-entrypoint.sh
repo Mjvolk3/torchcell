@@ -382,10 +382,10 @@ readonly neo4j_admin_cmd
 if running_as_root; then
     debug_msg "chowning ${NEO4J_HOME} recursively to ${userid}":"${groupid}"
     chown -R "${userid}":"${groupid}" "${NEO4J_HOME}"
-    chmod 770 "${NEO4J_HOME}"
-    find "${NEO4J_HOME}" -mindepth 1 -maxdepth 1 -type d -exec chmod -R 770 {} \;
-    debug_msg "Setting all files in ${NEO4J_HOME}/conf to permissions 660"
-    find "${NEO4J_HOME}"/conf -type f -exec chmod -R 660 {} \;
+    chmod 700 "${NEO4J_HOME}"
+    find "${NEO4J_HOME}" -mindepth 1 -maxdepth 1 -type d -exec chmod -R 700 {} \;
+    debug_msg "Setting all files in ${NEO4J_HOME}/conf to permissions 600"
+    find "${NEO4J_HOME}"/conf -type f -exec chmod -R 600 {} \;
 fi
 
 # ==== CHECK LICENSE AGREEMENT ====

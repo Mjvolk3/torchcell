@@ -6,24 +6,22 @@ updated: 1720728298998
 created: 1720728215148
 ---
 
+## 2024.07.12
+
+- 🔲 Roll back entrypoint permissions as they didn't fix issue of making volumes accessible outside of container.
+
 ## 2024.07.11
 
-- [ ] Roll back `numpy` to `1.26.0`, push version, update pypi, rebuild image.
+- [x] Roll back `numpy` to `1.26.0`, push version, update pypi, rebuild image.
 - [ ] Host dataset in read only → To adjust permissions we could changed the `chmod` in the entrypoint, but then would have to rebuild the image.
-
 - [ ] Handle database creation in slurm build script.
 - [ ] Write notes on current build.
-
 - [ ] Make sure that dirs are visible with `chown` and `chmod`. Get permissions correct so view all necessary dirs in vscode.
-
 - [ ] Run a test to see if we can isolate slurm and docker using `cgroup`?
-
 - [ ] Fix the import issues - `ExperimentReferenceOf` looks broken.
-
 - [ ] Adjust schema adding in `dataset_name` nodes.
 - [ ] Adjust datasets accounting for `dataset_name` nodes.
 - [ ] Experiment can be linked to a study - We want to query the exact dataset used in this study.
-
 - [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
 - [ ] Adjust schema for interaction data.
 - [ ] Add interactions to adapter.
@@ -38,7 +36,6 @@ created: 1720728215148
 - [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
 - [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-
 - [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
 - [ ] `ExperimentReferenceOf` looks broken.
 - [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
@@ -46,7 +43,6 @@ created: 1720728215148
 - [ ] Run build bash script for testing.
 - [ ] `gh` Test build under resource constraints.
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-
 - [ ] Remove software update on image entry point
 
 ## 2024.07.10

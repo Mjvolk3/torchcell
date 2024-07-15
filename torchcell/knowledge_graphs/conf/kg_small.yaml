@@ -6,6 +6,9 @@ defaults:
   - default
   - _self_ # append to end for overriding duplicate configs in default
 
+env_path: ./env # for db builds
+#env_path: .env # for debug
+
 wandb:
   mode: online # disabled, offline, online
   project: tcdb

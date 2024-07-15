@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.2.6
+Version: 0.2.7
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -10,7 +10,7 @@ Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
-Requires-Dist: numpy>=1.26.0
+Requires-Dist: numpy==1.26.0
 Requires-Dist: pandas>=2.1.1
 Requires-Dist: pyarrow>=15.0.0
 Requires-Dist: openpyxl>=3.1.2

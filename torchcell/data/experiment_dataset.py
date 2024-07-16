@@ -216,6 +216,10 @@ class ExperimentDataset(Dataset, ABC):
         self._gene_set = None
         self._df = None
         self._experiment_reference_index = None
+        
+        # Automatically set the name based on the class name
+        self.name = self.__class__.__name__.replace('Dataset', '')
+        
         super().__init__(root, transform, pre_transform)
 
     @property

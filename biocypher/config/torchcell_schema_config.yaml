@@ -1,6 +1,13 @@
 # Nodes
 dataset:
     represented_as: node
+    properties:
+        name: str
+        
+study:
+    represented_as: node
+    properties: 
+        name: str
 
 experiment:
     represented_as: node

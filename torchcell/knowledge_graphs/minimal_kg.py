@@ -66,6 +66,7 @@ def main(cfg) -> str:
     print("printing path info")
     print(os.getcwd())
     load_dotenv(wandb.config.env_path)
+    print(wandb.config.env_path)
     DATA_ROOT = os.getenv("DATA_ROOT")
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")

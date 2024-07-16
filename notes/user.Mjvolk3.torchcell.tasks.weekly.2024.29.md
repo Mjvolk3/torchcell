@@ -8,18 +8,7 @@ created: 1721067657903
 
 ## 2024.07.16
 
-## 2024.07.15
-
-- [ ] Roll back entrypoint permissions as they didn't fix issue of making volumes accessible outside of container.
-
-- [ ] Host dataset in read only → To adjust permissions we could changed the `chmod` in the entrypoint, but then would have to rebuild the image.
-- [ ] Handle database creation in slurm build script.
-- [ ] Write notes on current build.
-- [ ] Make sure that dirs are visible with `chown` and `chmod`. Get permissions correct so view all necessary dirs in vscode.
-- [ ] Run a test to see if we can isolate slurm and docker using `cgroup`?
-- [ ] Fix the import issues - `ExperimentReferenceOf` looks broken.
 - [ ] Adjust schema adding in `dataset_name` nodes.
-- [ ] Adjust datasets accounting for `dataset_name` nodes.
 - [ ] Experiment can be linked to a study - We want to query the exact dataset used in this study.
 - [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
 - [ ] Adjust schema for interaction data.
@@ -43,3 +32,12 @@ created: 1721067657903
 - [ ] `gh` Test build under resource constraints.
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
 - [ ] Remove software update on image entry point
+
+## 2024.07.15
+
+- [x] Roll back `numpy` to `1.26.0`, push version, update pypi, rebuild image.
+- [x] Host dataset in read only → To adjust permissions we could changed the `chown` in the entrypoint, but then would have to rebuild the image.
+- [x] Run a test to see if we can isolate slurm and docker using `cgroup`? → able to solve this with persistent jobs, without directly stress testing docker inherits cgroup and seems to respect resources as long as job persists.
+- [x] Fix the import issues - `ExperimentReferenceOf` looks broken. → Fixed issue with parallel experiment reference index rewrite.
+- [x] Make sure that dirs are visible with `chown` and `chmod`. Get permissions correct so view all necessary dirs in vscode. → We are not going to worry about this unless needed. Some commented commands added to bottom of build scripts.
+- [x] Fix build not recognizing conf → issue was typo in path... we might want different confs for build tests and production builds in `/scratch`

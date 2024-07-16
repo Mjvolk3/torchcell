@@ -46,6 +46,7 @@ docker run \
     --memory=${mem_mb}m \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
+    -p 7687:7687 -p 7474:7474 \
     --health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
     --health-interval=30s \
     --health-timeout=10s \
@@ -59,6 +60,7 @@ docker run \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -e NEO4J_AUTH=neo4j/torchcell \
+    -e NEO4J_dbms_read__only=false \
     michaelvolk/tc-neo4j:latest
 
 # Check if the container is running
@@ -73,7 +75,7 @@ fi
 echo "Updating software in the container..."
 
 sleep 5
-docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall --no-deps git+https://github.com/Mjvolk3/torchcell.git@main
 sleep 5
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
 sleep 5
@@ -81,7 +83,7 @@ docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com
 
 
 echo "Logging in to wandb..."
-docker exec tc-neo4j wandb login $WANDB_API_KEY
+docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 

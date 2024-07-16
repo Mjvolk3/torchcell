@@ -75,7 +75,7 @@ fi
 echo "Updating software in the container..."
 
 sleep 5
-docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall git+https://github.com/Mjvolk3/torchcell.git@main
 sleep 5
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
 sleep 5
@@ -83,7 +83,7 @@ docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com
 
 
 echo "Logging in to wandb..."
-docker exec tc-neo4j wandb login $WANDB_API_KEY
+docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 

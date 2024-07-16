@@ -75,7 +75,7 @@ fi
 echo "Updating software in the container..."
 
 sleep 5
-docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip install --no-cache-dir --force-reinstall --no-deps git+https://github.com/Mjvolk3/torchcell.git@main
 sleep 5
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
 sleep 5

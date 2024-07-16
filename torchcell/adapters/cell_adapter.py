@@ -501,9 +501,12 @@ class CellAdapter:
     def get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [
             BioCypherNode(
-                node_id=self.dataset.__class__.__name__,
-                preferred_id=self.dataset.__class__.__name__,
+                node_id=self.dataset.name,
+                preferred_id=self.dataset.name,
                 node_label="dataset",
+                properties={
+                    "name": self.dataset.name,
+                }
             )
         ]
         return nodes

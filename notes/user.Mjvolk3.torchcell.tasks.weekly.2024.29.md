@@ -6,10 +6,19 @@ updated: 1721067657903
 created: 1721067657903
 ---
 
+## 2024.07.17
+
+- [x] [[torchcell.datamodels.schema]] updated so we can add data more modularly. This comes down to decoding experiment and experiment reference. → [[2024.07.17 - How we Type|dendron://torchcell/torchcell.datamodels.schema#20240717---how-we-type]]
+
 ## 2024.07.16
 
-- [ ] Adjust schema adding in `dataset_name` nodes.
-- [ ] Experiment can be linked to a study - We want to query the exact dataset used in this study.
+- [x] Adjust schema adding in `dataset_name` nodes. → We want to add to experiment data. This is for back tracing.
+- [x] Experiment can be linked to a study - We want to query the exact dataset used in this study. Added to yaml and can worry about later when we handle mechanistic aware case study.
+- [ ] Since we query datasets we want to have `dataset.name` as property of experiment.
+
+- [ ] After rebase clean up commented code in [[torchcell.adapters.cell_adapter]] and [[torchcell.dataset.experiment_dataset]]
+- [ ] Fix dataset registry with imports to init.
+
 - [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
 - [ ] Adjust schema for interaction data.
 - [ ] Add interactions to adapter.

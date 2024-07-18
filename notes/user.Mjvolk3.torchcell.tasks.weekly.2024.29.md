@@ -13,6 +13,7 @@ created: 1721067657903
 - [x] Adjust `biocypher/config/torchcell_schema_config.yaml` for interaction data → no changed needed since everything is contained in experiment.
 - [x] Since we query datasets we want to have `dataset.name` as property of experiment. Added to [[torchcell.dataset.experiment_dataset]] → added `dataset_name` to `torchcell/biocypher/config/torchcell_schema_config.yaml`
 - [x] Check [[torchcell.knowledge_graphs.minimal_kg]] works → had to refactor a bit since not all find replace previously worked... had limited search scope on first refactor.
+- [ ] Check [[torchcell.knowledge_graphs.minimal_kg]] with docker to see if we bad entries on import.
 
 - [ ] After merge clean up commented code in [[torchcell.adapters.cell_adapter]] and [[torchcell.dataset.experiment_dataset]]
 

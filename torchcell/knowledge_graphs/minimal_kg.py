@@ -181,7 +181,7 @@ def main(cfg) -> str:
         start_time = time.time()
         bc.write_edges(adapter.get_edges())
         end_time = time.time()
-        write_edges_time = end_time - start_time    
+        write_edges_time = end_time - start_time
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
 
     log.info("Finished iterating nodes and edges")

@@ -29,6 +29,7 @@ docker run --cpus=10 \
     -e NEO4J_dbms_read__only=false \
     michaelvolk/tc-neo4j:latest
 
+
 # Allow some time for the container to start
 sleep 10
 
@@ -89,6 +90,9 @@ docker exec tc-neo4j /bin/bash -c "${bash_script_path_cleaned}"
 # Extract the directory path without the filename, then protect the dir with no write permissions
 dir_path=$(dirname "${bash_script_path_cleaned}")
 docker exec tc-neo4j /bin/bash -c "chmod a-w '${dir_path}'"
+
+# Not necessary on Mac - fails to create
+#docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" "CREATE DATABASE torchcell;"'
 
 echo "Build and run process completed."
 

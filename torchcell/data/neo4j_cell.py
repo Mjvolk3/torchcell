@@ -23,7 +23,7 @@ from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.datamodels import (
-    BaseEnvironment,
+    Environment,
     Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -36,7 +36,7 @@ from torchcell.datamodels import (
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    BaseExperiment,
+    Experiment,
     ExperimentReference,
     MeanDeletionPerturbation,
     ExperimentReference,
@@ -56,7 +56,7 @@ class Deduplicator(ABC):
     @abstractmethod
     def create_mean_entry(
         self, duplicate_experiments
-    ) -> dict[str, BaseExperiment | ExperimentReference]: ...
+    ) -> dict[str, Experiment | ExperimentReference]: ...
 
 
 class ParsedGenome(ModelStrictArbitrary):
@@ -499,7 +499,7 @@ class ExperimentDeduplicator(Deduplicator):
 
     def create_mean_entry(
         self, duplicate_experiments
-    ) -> dict[str, BaseExperiment | ExperimentReference]:
+    ) -> dict[str, Experiment | ExperimentReference]:
         # Check if all phenotypes have the same graph_level and label
         graph_levels = set(
             exp["experiment"].phenotype.graph_level for exp in duplicate_experiments

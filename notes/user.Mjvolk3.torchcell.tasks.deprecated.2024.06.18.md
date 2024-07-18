@@ -2,7 +2,7 @@
 id: mnpdugjn34bm3mbx2xh1okf
 title: torchcell.tasks
 desc: ''
-updated: 1718738114460
+updated: 1721262350369
 created: 1690514887023m
 ---
 
@@ -68,8 +68,8 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] `gilahyper-57` sync and `57` on `gilahyper` sync... changed the paths during run.
 - [x] Check `svr` on `delta` → killed job looks like they are hung up due to rate limit.
 - [x] Dataset size histograms → [[Dataset_size_histograms|dendron://torchcell/experiments.smf-dmf-tmf-001.dataset_size_histograms]] → I was concerned that these might look irregular but they look as expected.
-- [ ] `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync →
-- [ ] Launch `delta` jobs `offline` → Going for it all. JOBID: 3753589, 3753588, 3753587, 3753582, 3753580. Each will need to be synced on completion. Leaving open so it is obvious.
+- 🔲 `experiments/smf-dmf-tmf-001/conf/deep_set-sweep_1e03_codon_frequency_18.yaml`, `gilahyper` job 58 launched. Will need syncing. Leaving open until sync →
+- 🔲 Launch `delta` jobs `offline` → Going for it all. JOBID: 3753589, 3753588, 3753587, 3753582, 3753580. Each will need to be synced on completion. Leaving open so it is obvious.
 - [x] Launch `gilahyper-59`, `codon_frequency-1e04`  
 - [ ]
 
@@ -83,8 +83,8 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] `gilahyper` slurm accounting → spent a good deal of time on this setting up `mariadb`.. We still can't get the accounting to work using slurm. We can still run jobs. Stopping to run jobs and we'll worry about accounting later.
 - [x] Submit query about increasing `wandb` rate limit [wandb rate limit increase request](https://weightsandbiases.zendesk.com/hc/en-us/requests/67845)
 
-- [ ] After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
-- [ ] Launch `1e5` for `random-forest` with new `random` on `gilahyper`
+- 🔲 After `svr` finishes, launch `random_100`, `random_10`, and `random_1` on `delta` for `random-forest`
+- 🔲 Launch `1e5` for `random-forest` with new `random` on `gilahyper`
 - [x] Make same plots for `random-forest`
 - [x] Make same plots for `elastic-net`, update
 - [x] Add run id to results saved for `traditional ml` from
@@ -98,27 +98,23 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 ## 2024.05.24
 
 - [x] Check runs. → seem fine from agent logs.
-- [ ] Fix plots.
-- [ ] Adjust sweeps so they follow rate limiting and max number of agents.
+- 🔲 Fix plots.
+- 🔲 Adjust sweeps so they follow rate limiting and max number of agents.
 
 ## 2024.05.23
 
 - [x] Check jobs → Reported `/scratch` issue was some software. Jobs back up. → GPU very busy only running one job, but queued up 4 total. 2 for `1e03` and 2 for `1e04`.
 - [x] Collect lethal and synthetic lethal data into a dataset. For now we don't need adapter. #pivot Retrain and use best model. We don't have a best model trained, so will have to retrain once identified. Won't be able to finish this before 05.24, so we will just focus on other major tasks...
-- [ ] #ramble I suspect that the reason error bars on cross validated cv are typically worse performing is that....
+- 🔲 #ramble I suspect that the reason error bars on cross validated cv are typically worse performing is that....
 
 - [x] Finalize adding mean and std to `elastic-net` plots → might need a few more runs.
 - [x] [[2024.05.23 - Issue with Hyperparameter Sweep|dendron://torchcell/torchcell.data.neo4j_query_raw#20240523---issue-with-hyperparameter-sweep]] → adjusted `readonly`.
-
-- [ ] Launch
-
-- [ ] wandb rate limits at 200 requests per minute... For sweeps 20 parallel agents are supported. This will change how we run sweeps some. [wandb docs](https://docs.wandb.ai/guides/track/limits#rate-limits)
-
-- [ ] `svr` plot. → Issue is currently deduplicate data. → The current issue is that after deduplicate dataframe there isn't any data.. Deuplicate data frame should probably be split into two functions. The first is process_raw_dataframe. and the second should be deduplicate... We can just put these both is process_dataframe function. process_raw_dataframe should take the data and do the following
-
-- [ ] Start `Delta` `1e03` and `1e04` for `svr` `random_1000`
-- [ ] Start `Delta` `1e03` and `1e04` for `random-forest` `random_1000`
-- [ ] Add `rmse` so we have plots that are in same units as label.
+- 🔲 Launch
+- 🔲 wandb rate limits at 200 requests per minute... For sweeps 20 parallel agents are supported. This will change how we run sweeps some. [wandb docs](https://docs.wandb.ai/guides/track/limits#rate-limits)
+- 🔲 `svr` plot. → Issue is currently deduplicate data. → The current issue is that after deduplicate dataframe there isn't any data.. Deuplicate data frame should probably be split into two functions. The first is process_raw_dataframe. and the second should be deduplicate... We can just put these both is process_dataframe function. process_raw_dataframe should take the data and do the following
+- 🔲 Start `Delta` `1e03` and `1e04` for `svr` `random_1000`
+- 🔲 Start `Delta` `1e03` and `1e04` for `random-forest` `random_1000`
+- 🔲 Add `rmse` so we have plots that are in same units as label.
 
 ## 2024.05.22
 
@@ -138,14 +134,13 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] Update plots with 1e05. → Since they are incomplete this looks pretty bad.
 - [x] Add a random vector embedding to the list of nodes embeddings
 - [x] Run random datasets `1e03`, `1e04`, `1e05`  → ...
-- [ ] Globus transfer random datasets to `Delta`
-- [ ] Launch all random experiments except `1e05`
+- 🔲 Globus transfer random datasets to `Delta`
+- 🔲 Launch all random experiments except `1e05`
 - [x] Launch `DeepSet` `1e03`  → ...
-
-- [ ] Figure 2 outline update
-- [ ] Paper outline
-- [ ] Gantt
-- [ ] Plan
+- 🔲 Figure 2 outline update
+- 🔲 Paper outline
+- 🔲 Gantt
+- 🔲 Plan
 
 ## 2024.05.15
 
@@ -490,7 +485,7 @@ This note was deprecated and we changed to weekly tasks notes to reduce lag of r
 - [x] smf, dmf, tmf query → [[Smf Dmf Tmf Benchmark Query Results on Small Knowledge Graph|dendron://torchcell/torchcell.neo4j_fitness_query#smf-dmf-tmf-benchmark-query-results-on-small-knowledge-graph]]
 - [x] Update `database/build/build-image-fresh_linux-arm.sh`
 - [x] Use `chmod a-w dir` to protect `biocypher-out` bulk import dirs. → added to `amd` and `arm` builds.
-- [x] Add this to [[torchcell.datamodels.schema]] `# we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j`, right now we have to consider experiment type in the query lmdb [[torchcell.neo4j_fitness_query]], which adds annoying complexity. #ramble this will lost the class distinction of which experiment it which but we could always add this back as a `enum` property or something.
+- [x] Add this to [[torchcell.datamodels.schema]] `# we should get rid of Experiment and just use experiment this way we can always decode the data from neo4j`, right now we have to consider experiment type in the query lmdb [[torchcell.neo4j_fitness_query]], which adds annoying complexity. #ramble this will lost the class distinction of which experiment it which but we could always add this back as a `enum` property or something.
 - [x] #ramble From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion. → copying to future.
 - [x] Create query database for raw creating raw data. → Created with the intention of instantiating the database within the raw dir of the `CellDataset`
 - [x] Add query with media and temperature constraints. This could be done via multiple ways by either using the reference or by subsetting each item. [[Neo4j_fitness_query|dendron://torchcell/torchcell.neo4j_fitness_query]] → Did not explicitly use the reference for this.

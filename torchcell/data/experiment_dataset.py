@@ -16,7 +16,7 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 from torch_geometric.data import Dataset
-from torchcell.datamodels import BaseExperiment, ExperimentReference
+from torchcell.datamodels import Experiment, ExperimentReference
 from torchcell.sequence import GeneSet
 from abc import ABC, abstractmethod
 from functools import wraps
@@ -218,13 +218,13 @@ class ExperimentDataset(Dataset, ABC):
         self._experiment_reference_index = None
         
         # Automatically set the name based on the class name
-        self.name = self.__class__.__name__.replace('Dataset', '')
+        self.name = self.__class__.__name__
         
         super().__init__(root, transform, pre_transform)
 
     @property
     @abstractmethod
-    def experiment_class(self) -> BaseExperiment: ...
+    def experiment_class(self) -> Experiment: ...
 
     @property
     @abstractmethod

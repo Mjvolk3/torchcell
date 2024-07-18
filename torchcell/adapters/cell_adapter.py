@@ -210,7 +210,10 @@ class CellAdapter:
                 node_id=experiment_ref_id,
                 preferred_id="experiment reference",
                 node_label="experiment reference",
-                properties={"serialized_data": json.dumps(data.reference.model_dump())},
+                properties={
+                    "dataset_name": self.dataset.name,
+                    "serialized_data": json.dumps(data.reference.model_dump()),
+                },
             )
             nodes.append(node)
         return nodes
@@ -248,7 +251,10 @@ class CellAdapter:
             node_id=experiment_id,
             preferred_id="experiment",
             node_label="experiment",
-            properties={"serialized_data": json.dumps(data["experiment"].model_dump())},
+            properties={
+                "dataset_name": self.dataset.name,
+                "serialized_data": json.dumps(data["experiment"].model_dump()),
+            },
         )
 
     @data_chunker

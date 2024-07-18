@@ -14,7 +14,7 @@ import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
 from torchcell.datamodels import (
-    BaseEnvironment,
+    Environment,
     Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -27,7 +27,7 @@ from torchcell.datamodels import (
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    BaseExperiment,
+    Experiment,
     ExperimentReference,
 )
 from torchcell.data import ExperimentDataset, post_process  # FLAG
@@ -56,7 +56,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> BaseExperiment:
+    def experiment_class(self) -> Experiment:
         return FitnessExperiment
 
     @property
@@ -267,7 +267,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                 ]
             )
 
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )
@@ -347,7 +347,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         os.remove(osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx"))
 
     @property
-    def experiment_class(self) -> BaseExperiment:
+    def experiment_class(self) -> Experiment:
         return FitnessExperiment
 
     @property
@@ -582,7 +582,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             )
         genotype = Genotype(perturbations=perturbations)
         # genotype
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )

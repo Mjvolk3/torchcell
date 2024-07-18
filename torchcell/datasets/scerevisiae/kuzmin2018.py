@@ -19,7 +19,7 @@ from torch_geometric.data import download_url
 from tqdm import tqdm
 from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.schema import (
-    BaseEnvironment,
+    Environment,
     Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -30,7 +30,7 @@ from torchcell.datamodels.schema import (
     SgaAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    BaseExperiment,
+    Experiment,
     ExperimentReference,
 )
 from torchcell.sequence import GeneSet
@@ -55,7 +55,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> BaseExperiment:
+    def experiment_class(self) -> Experiment:
         return FitnessExperiment
 
     @property
@@ -249,7 +249,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                 )
 
         # genotype
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         reference_environment = environment.model_copy()
@@ -306,7 +306,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> BaseExperiment:
+    def experiment_class(self) -> Experiment:
         return FitnessExperiment
 
     @property
@@ -461,7 +461,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
         # genotype
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         reference_environment = environment.model_copy()
@@ -518,7 +518,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
-    def experiment_class(self) -> BaseExperiment:
+    def experiment_class(self) -> Experiment:
         return FitnessExperiment
 
     @property
@@ -690,7 +690,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 3, "Genotype must have 3 perturbations."
         # genotype
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         reference_environment = environment.model_copy()

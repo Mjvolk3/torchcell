@@ -3,9 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/minimal_kg
 # Test file: tests/torchcell/knowledge_graphs/test_minimal_kg.py
 
-
-
-
 from biocypher import BioCypher
 import torchcell
 import logging

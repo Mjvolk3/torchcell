@@ -254,8 +254,10 @@ class Environment(ModelStrict):
 class Phenotype(ModelStrict):
     graph_level: str
     label: str
-    label_error: str
+    label_error: str | None
 
+    # admittedly, graph_level is subjective
+    # choose most natural level considering whole cell
     @field_validator("graph_level", mode="after")
     @classmethod
     def validate_level(cls, v):
@@ -283,19 +285,21 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
 
 
 class ExperimentReference(ModelStrict):
+    experiment_reference_type: str = "base"
     reference_genome: ReferenceGenome
     reference_environment: Environment
     reference_phenotype: Phenotype
 
 
 class Experiment(ModelStrict):
-    experiment_type: str = "Experiment"
+    experiment_type: str = "base"
     genotype: Genotype
     environment: Environment
     phenotype: Phenotype
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "fitness"
     reference_phenotype: FitnessPhenotype
 
 
@@ -303,6 +307,11 @@ class FitnessExperiment(Experiment):
     experiment_type: str = "fitness"
     genotype: Union[Genotype, List[Genotype,]]
     phenotype: FitnessPhenotype
+
+
+class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
+    reference_phenotype: GeneInteractionPhenotype
+    experiment_reference_type: str = "gene interaction"
 
 
 class GeneInteractionExperiment(Experiment):

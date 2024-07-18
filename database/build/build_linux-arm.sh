@@ -26,6 +26,7 @@ docker run --cpus=10 \
     -v "$(pwd)/database/conf:/var/lib/neo4j/conf" \
     -v "$(pwd)/database/logs:/logs" \
     -e NEO4J_AUTH=neo4j/torchcell \
+    -e NEO4J_dbms_read__only=false \
     michaelvolk/tc-neo4j:latest
 
 # Allow some time for the container to start
@@ -53,15 +54,19 @@ install_package() {
     sleep 5
 }
 
+docker exec tc-neo4j python -m pip install --upgrade pip
 # Install required packages inside the container
 docker exec tc-neo4j python -m pip uninstall torchcell -y
-install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
+install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@dataset-study"
 # docker exec tc-neo4j python -m pip uninstall biocypher -y
 install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
 install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
 # install_package "memory-profiler" "memory-profiler"
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
+
+echo "Logging in to wandb..."
+docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 
 # Execute the Python script inside the Docker container and capture the output
 # docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
@@ -86,3 +91,6 @@ dir_path=$(dirname "${bash_script_path_cleaned}")
 docker exec tc-neo4j /bin/bash -c "chmod a-w '${dir_path}'"
 
 echo "Build and run process completed."
+
+docker stop tc-neo4j 
+docker start tc-neo4j

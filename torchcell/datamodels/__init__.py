@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/__init__.py
 
 
-
 from .pydant import ModelStrict, ModelStrictArbitrary
 
 from .schema import (
@@ -34,6 +33,9 @@ from .schema import (
     AllelePerturbation,
     SgaAllelePerturbation,
     MeanDeletionPerturbation,
+    GeneInteractionPhenotype,
+    GeneInteractionExperimentReference,
+    GeneInteractionExperiment,
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
@@ -65,6 +67,9 @@ schema_classes = [
     "AllelePerturbation",
     "SgaAllelePerturbation",
     "MeanDeletionPerturbation",
+    "GeneInteractionPhenotype",
+    "GeneInteractionExperimentReference",
+    "GeneInteractionExperiment",
 ]
 
 __all__ = core_models + schema_classes

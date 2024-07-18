@@ -4,11 +4,12 @@
 # Test file: tests/torchcell/datamodels/test_schema.py
 
 
-from typing import List, Union, Optional
-
+from typing import List, Union, Dict, Type
+import json
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
+
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -244,15 +245,13 @@ class Temperature(BaseModel):
         return v
 
 
-class BaseEnvironment(ModelStrict):
+class Environment(ModelStrict):
     media: Media
     temperature: Temperature
 
 
 # Phenotype
-
-
-class BasePhenotype(ModelStrict):
+class Phenotype(ModelStrict):
     graph_level: str
     label: str
     label_error: str
@@ -268,38 +267,51 @@ class BasePhenotype(ModelStrict):
         return v
 
 
-class FitnessPhenotype(BasePhenotype, ModelStrict):
+class FitnessPhenotype(Phenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: Optional[float] = Field(None, description="fitness standard deviation")
+    fitness_std: float | None = Field(
+        default=None, description="fitness standard deviation"
+    )
 
 
-# TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype,
+class GeneInteractionPhenotype(Phenotype, ModelStrict):
+    interaction: float = Field(
+        description="""epsilon, tau, or analogous interaction value.
+        Computed from composite fitness phenotypes."""
+    )
+    p_value: float | None = Field(default=None, description="p-value of interaction")
+
+
 class ExperimentReference(ModelStrict):
     reference_genome: ReferenceGenome
-    reference_environment: BaseEnvironment
-    reference_phenotype: BasePhenotype
+    reference_environment: Environment
+    reference_phenotype: Phenotype
 
 
-#datset type is the union of strings [k for k in dataset_registry.keys()]
-#TODO add dataset
-
-class BaseExperiment(ModelStrict):
+class Experiment(ModelStrict):
+    experiment_type: str = "Experiment"
     genotype: Genotype
-    environment: BaseEnvironment
-    phenotype: BasePhenotype
-
-
-# TODO, we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j
+    environment: Environment
+    phenotype: Phenotype
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
     reference_phenotype: FitnessPhenotype
 
 
-class FitnessExperiment(BaseExperiment):
+class FitnessExperiment(Experiment):
+    experiment_type: str = "fitness"
     genotype: Union[Genotype, List[Genotype,]]
     phenotype: FitnessPhenotype
 
+
+class GeneInteractionExperiment(Experiment):
+    experiment_type: str = "gene interaction"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: GeneInteractionPhenotype
+
+
+ExperimentType = Union[FitnessExperiment, GeneInteractionExperiment]
 
 if __name__ == "__main__":
     pass

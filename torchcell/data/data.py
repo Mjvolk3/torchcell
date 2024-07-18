@@ -5,20 +5,24 @@
 
 import hashlib
 import json
-from typing import List
+from typing import List, Union
 
 from pydantic import field_validator
 
 from torchcell.datamodels import (
     ExperimentReference,
     FitnessExperimentReference,
+    GeneInteractionExperimentReference,
     ModelStrict,
 )
 
 from typing import Union
 
+# TODO move this to datamodels
 # List of classes that can be part of ExperimentReference
-ExperimentReferenceType = ExperimentReference | FitnessExperimentReference
+ExperimentReferenceType = Union[
+    ExperimentReference, FitnessExperimentReference, GeneInteractionExperimentReference
+]
 
 
 class ExperimentReferenceIndex(ModelStrict):

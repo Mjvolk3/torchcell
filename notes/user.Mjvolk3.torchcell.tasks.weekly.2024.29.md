@@ -2,7 +2,7 @@
 id: 5jr8kgd7kdw6xthr0epcqy3
 title: '29'
 desc: ''
-updated: 1721263252852
+updated: 1721275605083
 created: 1721067657903
 ---
 
@@ -13,11 +13,15 @@ created: 1721067657903
 - [x] Adjust `biocypher/config/torchcell_schema_config.yaml` for interaction data → no changed needed since everything is contained in experiment.
 - [x] Since we query datasets we want to have `dataset.name` as property of experiment. Added to [[torchcell.dataset.experiment_dataset]] → added `dataset_name` to `torchcell/biocypher/config/torchcell_schema_config.yaml`
 - [x] Check [[torchcell.knowledge_graphs.minimal_kg]] works → had to refactor a bit since not all find replace previously worked... had limited search scope on first refactor.
-- [ ] Check [[torchcell.knowledge_graphs.minimal_kg]] with docker to see if we bad entries on import.
+- [x] Check [[torchcell.knowledge_graphs.minimal_kg]] with docker to see if we bad entries on import. → had to fix `neo4j.conf` read only default setting updated so we can write to db.
+
+- [ ] Add `SmfKuzmin2018` dataset for interactions
+- [ ] Add `DmfKuzmin2018` dataset for interactions
+- [ ] Add `DmfCostanzo2016` dataset for interactions
+
+
 
 - [ ] After merge clean up commented code in [[torchcell.adapters.cell_adapter]] and [[torchcell.dataset.experiment_dataset]]
-
-- [ ] Add `Kuzmin2018` dataset for interactions, it is smaller and covers all interactions.
 
 ## 2024.07.16
 
@@ -43,6 +47,7 @@ created: 1721067657903
 - [ ] `gh` Test build under resource constraints.
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
 - [ ] Remove software update on image entry point
+- [ ] dataset registry not working again because circular import
 
 ## 2024.07.15
 

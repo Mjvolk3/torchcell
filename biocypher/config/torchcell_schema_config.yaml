@@ -90,6 +90,8 @@ temperature:
         unit: str
         serialized_data: str
 
+# TODO expand out to include different phenotypes.
+# TODO change to phenotype feature
 phenotype:
     is_a: phenotypic quality
     represented_as: node

@@ -397,7 +397,7 @@ class SCerevisiaeGenome(Genome):
     )
 
     def __attrs_post_init__(self) -> None:
-        genome_reference = "S288C_reference_genome"
+        genome_reference = "S288C_genome_reference"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
         self.sequence_s288c = "sequence/S288C_reference"
@@ -739,7 +739,7 @@ def main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
     )
     print()
     # orf_classes = []

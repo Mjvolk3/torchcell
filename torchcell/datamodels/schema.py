@@ -286,9 +286,9 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
 
 class ExperimentReference(ModelStrict):
     experiment_reference_type: str = "base"
-    reference_genome: ReferenceGenome
-    reference_environment: Environment
-    reference_phenotype: Phenotype
+    genome_reference: ReferenceGenome
+    environment_reference: Environment
+    phenotype_reference: Phenotype
 
 
 class Experiment(ModelStrict):
@@ -300,7 +300,7 @@ class Experiment(ModelStrict):
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
     experiment_reference_type: str = "fitness"
-    reference_phenotype: FitnessPhenotype
+    phenotype_reference: FitnessPhenotype
 
 
 class FitnessExperiment(Experiment):
@@ -310,7 +310,7 @@ class FitnessExperiment(Experiment):
 
 
 class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
-    reference_phenotype: GeneInteractionPhenotype
+    phenotype_reference: GeneInteractionPhenotype
     experiment_reference_type: str = "gene interaction"
 
 

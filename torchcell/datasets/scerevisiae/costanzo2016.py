@@ -95,8 +95,8 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         xlsx_path = osp.join(self.raw_dir, "strain_ids_and_single_mutant_fitness.xlsx")
         df = pd.read_excel(xlsx_path)
         df = self.preprocess_raw(df)
-        (reference_phenotype_std_26, reference_phenotype_std_30) = (
-            self.compute_reference_phenotype_std(df)
+        (phenotype_reference_std_26, phenotype_reference_std_30) = (
+            self.compute_phenotype_reference_std(df)
         )
 
         # Save preprocssed df - mainly for quick stats
@@ -115,8 +115,8 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference = self.create_experiment(
                     row,
-                    reference_phenotype_std_26=reference_phenotype_std_26,
-                    reference_phenotype_std_30=reference_phenotype_std_30,
+                    phenotype_reference_std_26=phenotype_reference_std_26,
+                    phenotype_reference_std_30=phenotype_reference_std_30,
                 )
 
                 # Serialize the Pydantic objects
@@ -205,16 +205,16 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         return combined_df
 
     @staticmethod
-    def compute_reference_phenotype_std(df: pd.DataFrame):
+    def compute_phenotype_reference_std(df: pd.DataFrame):
         mean_stds = df.groupby("Temperature")["Single mutant fitness stddev"].mean()
-        reference_phenotype_std_26 = mean_stds[26]
-        reference_phenotype_std_30 = mean_stds[30]
-        return reference_phenotype_std_26, reference_phenotype_std_30
+        phenotype_reference_std_26 = mean_stds[26]
+        phenotype_reference_std_30 = mean_stds[30]
+        return phenotype_reference_std_26, phenotype_reference_std_30
 
     @staticmethod
-    def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
+    def create_experiment(row, phenotype_reference_std_26, phenotype_reference_std_30):
         # Common attributes for both temperatures
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
 
@@ -274,7 +274,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         # Phenotype based on temperature
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
@@ -287,21 +287,21 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         )
 
         if row["Temperature"] == 26:
-            reference_phenotype_std = reference_phenotype_std_26
+            phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
-            reference_phenotype_std = reference_phenotype_std_30
-        reference_phenotype = FitnessPhenotype(
+            phenotype_reference_std = phenotype_reference_std_30
+        phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
             fitness=1.0,
-            fitness_std=reference_phenotype_std,
+            fitness_std=phenotype_reference_std,
         )
 
         reference = FitnessExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
@@ -416,8 +416,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         ].mean()
 
         # Extracting means for specific temperatures
-        self.reference_phenotype_std_26 = means.get(26, None)
-        self.reference_phenotype_std_30 = means.get(30, None)
+        self.phenotype_reference_std_26 = means.get(26, None)
+        self.phenotype_reference_std_30 = means.get(30, None)
 
         return df
 
@@ -475,8 +475,8 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             for index, row in batch_df.iterrows():
                 experiment, reference = self.create_experiment(
                     row,
-                    reference_phenotype_std_26=self.reference_phenotype_std_26,
-                    reference_phenotype_std_30=self.reference_phenotype_std_30,
+                    phenotype_reference_std_26=self.phenotype_reference_std_26,
+                    phenotype_reference_std_30=self.phenotype_reference_std_30,
                 )
 
                 # Serialize the Pydantic objects
@@ -490,9 +490,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(row, reference_phenotype_std_26, reference_phenotype_std_30):
+    def create_experiment(row, phenotype_reference_std_26, phenotype_reference_std_30):
         # Common attributes for both temperatures
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
@@ -589,7 +589,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         # Phenotype based on temperature
         dmf_key = "Double mutant fitness"
         dmf_std_key = "Double mutant fitness standard deviation"
@@ -602,21 +602,21 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         )
 
         if row["Temperature"] == 26:
-            reference_phenotype_std = reference_phenotype_std_26
+            phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
-            reference_phenotype_std = reference_phenotype_std_30
-        reference_phenotype = FitnessPhenotype(
+            phenotype_reference_std = phenotype_reference_std_30
+        phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
             fitness=1.0,
-            fitness_std=reference_phenotype_std,
+            fitness_std=phenotype_reference_std,
         )
 
         reference = FitnessExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
@@ -795,7 +795,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(row):
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         
@@ -890,7 +890,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
@@ -901,7 +901,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         )
 
         # By definition, the reference interaction would be 0.
-        reference_phenotype = GeneInteractionPhenotype(
+        phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
             label_error=None,
@@ -910,9 +910,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         )
 
         reference = GeneInteractionExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
             experiment_reference_type="gene interaction"
         )
 

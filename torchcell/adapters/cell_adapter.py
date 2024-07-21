@@ -7,12 +7,12 @@ from tqdm import tqdm
 import hashlib
 import json
 from biocypher._create import BioCypherEdge, BioCypherNode
-from typing import Set, Optional
 import torch
+from omegaconf import OmegaConf, DictConfig
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
 from concurrent.futures import ProcessPoolExecutor
 from torch_geometric.data import Dataset
-from typing import Callable
+from typing import List, Tuple, Callable, Generator, Set, Optional
 from functools import wraps
 import logging
 import wandb
@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 class CellAdapter:
     def __init__(
         self,
+        config: DictConfig,
         dataset: Dataset,
         process_workers: int,
         io_workers: int,
@@ -36,12 +37,65 @@ class CellAdapter:
                 "chunk_size must be greater than or equal to loader_batch_size."
                 "Our recommendation are chunk_size 2-3 order of magnitude in size."
             )
+        self.config = config
         self.dataset = dataset
         self.process_workers = process_workers
         self.io_workers = io_workers
         self.chunk_size = chunk_size
         self.loader_batch_size = loader_batch_size
         self.event = 0
+        wandb.init()
+
+        # Supported methods
+        self.node_methods = [
+            ("experiment_reference", self._get_experiment_reference_nodes),
+            ("genome", self._get_genome_nodes),
+            ("experiment", self._experiment_node),
+            ("genotype", self._genotype_node),
+            ("perturbation", self._perturbation_node),
+            ("environment", self._environment_node),
+            ("environment reference", self._get_environment_reference_nodes),
+            ("media", self._media_node),
+            ("media reference", self._get_media_reference_nodes),
+            ("temperature", self._temperature_node),
+            ("temperature reference", self._get_temperature_reference_nodes),
+            ("fitness phenotype", self._fitness_phenotype_node),
+            ("gene interaction phenotype", self._gene_interaction_phenotype_node),
+            (
+                "fitness phenotype reference",
+                self._get_fitness_phenotype_reference_nodes,
+            ),
+            (
+                "gene interaction phenotype reference",
+                self._get_gene_interaction_phenotype_reference_nodes,
+            ),
+            ("dataset", self._get_dataset_nodes),
+        ]
+        self.edge_methods = [
+            (
+                "experiment reference to dataset",
+                self._get_experiment_reference_to_dataset_edges,
+            ),
+            ("experiment to dataset", self._experiment_to_dataset_edge),
+            (
+                "experiment reference to experiment",
+                self._experiment_reference_to_experiment_edge,
+            ),
+            ("genotype to experiment", self._genotype_to_experiment_edge),
+            ("perturbation to genotype", self._perturbation_to_genotype_edges),
+            ("environment to experiment", self._environment_to_experiment_edge),
+            (
+                "environment to experiment reference",
+                self._get_environment_to_experiment_reference_edges,
+            ),
+            ("phenotype to experiment", self._phenotype_to_experiment_edge),
+            ("media to environment", self._media_to_environment_edge),
+            ("temperature to environment", self._temperature_to_environment_edge),
+            (
+                "genome to experiment reference",
+                self._get_genome_to_experiment_reference_edges,
+            ),
+        ]
 
     def get_data_by_type(
         self, chunk_processing_func: Callable, chunk_size: Optional[int] = None
@@ -83,121 +137,35 @@ class CellAdapter:
 
         return decorator
 
-    # @abstractmethod
-    # def get_nodes(self) -> Generator[BioCypherNode, None, None]:
-    #     pass
+    @property
+    def supported_node_methods(self) -> List[str]:
+        return [method_name for method_name, _ in self.node_methods]
 
-    # @abstractmethod
-    # def get_edges(self) -> Generator[BioCypherEdge, None, None]:
-    #     pass
-
-    # Nodes put here for now since we are trying to generalize as much as possible to reduce code here.
+    @property
+    def supported_edge_methods(self) -> List[str]:
+        return [method_name for method_name, _ in self.edge_methods]
 
     def get_nodes(self):
-        print("Running: self._get_experiment_reference_nodes()")
-        yield from self._get_experiment_reference_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_genome_nodes()")
-        yield from self._get_genome_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._experiment_node)")
-        yield from self.get_data_by_type(self._experiment_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._genotype_node)")
-        yield from self.get_data_by_type(self._genotype_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._perturbation_node)")
-        yield from self.get_data_by_type(self._perturbation_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._environment_node)")
-        yield from self.get_data_by_type(self._environment_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_reference_environment_nodes()")
-        yield from self._get_reference_environment_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._media_node)")
-        yield from self.get_data_by_type(self._media_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_reference_media_nodes()")
-        yield from self._get_reference_media_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._temperature_node)")
-        yield from self.get_data_by_type(self._temperature_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_reference_temperature_nodes()")
-        yield from self._get_reference_temperature_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._phenotype_node)")
-        yield from self.get_data_by_type(self._phenotype_node)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_reference_phenotype_nodes()")
-        yield from self._get_reference_phenotype_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_dataset_nodes()")
-        yield from self.get_dataset_nodes()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Finished: get_nodes")
+        for method_name, method in self.node_methods:
+            if method_name in self.config.cell_adapter.node_methods:
+                log.info(f"Running: {method_name}")
+                if method.__name__.startswith("_get_"):
+                    yield from method()
+                else:
+                    yield from self.get_data_by_type(method)
+                self.event += 1
+                wandb.log({"event": self.event})
 
     def get_edges(self):
-        print("Running: self.get_reference_dataset_edges()")
-        yield from self.get_reference_dataset_edges()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._experiment_dataset_edge)")
-        yield from self.get_data_by_type(self._experiment_dataset_edge)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._get_reference_experiment_edges)")
-        yield from self.get_data_by_type(self._reference_experiment_edge)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._genotype_experiment_edge)")
-        yield from self.get_data_by_type(self._genotype_experiment_edge)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._perturbation_genotype_edges)")
-        yield from self.get_data_by_type(self._perturbation_genotype_edges)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._environment_experiment_edges)")
-        yield from self.get_data_by_type(self._environment_experiment_edges)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_environment_experiment_ref_edges()")
-        yield from self._get_environment_experiment_ref_edges()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._phenotype_experiment_edges)")
-        yield from self.get_data_by_type(self._phenotype_experiment_edges)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._media_environment_edge)")
-        yield from self.get_data_by_type(self._media_environment_edge)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self.get_data_by_type(self._temperature_environment_edge)")
-        yield from self.get_data_by_type(self._temperature_environment_edge)
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Running: self._get_genome_edges()")
-        yield from self._get_genome_edges()
-        self.event += 1
-        wandb.log({"event": self.event})
-        print("Finished: get_edges")
+        for method_name, method in self.edge_methods:
+            if method_name in self.config.cell_adapter.edge_methods:
+                log.info(f"Running: {method_name}")
+                if method.__name__.startswith("_get_"):
+                    yield from method()
+                else:
+                    yield from self.get_data_by_type(method)
+                self.event += 1
+                wandb.log({"event": self.event})
 
     # nodes
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
@@ -223,7 +191,7 @@ class CellAdapter:
         seen_node_ids: Set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             genome_id = hashlib.sha256(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
@@ -232,10 +200,10 @@ class CellAdapter:
                     preferred_id="genome",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -318,29 +286,29 @@ class CellAdapter:
             },
         )
 
-    def _get_reference_environment_nodes(self) -> list[BioCypherNode]:
+    def _get_environment_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             environment_id = hashlib.sha256(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
             if environment_id not in seen_node_ids:
                 seen_node_ids.add(environment_id)
                 media = json.dumps(
-                    data.reference.reference_environment.media.model_dump()
+                    data.reference.environment_reference.media.model_dump()
                 )
                 node = BioCypherNode(
                     node_id=environment_id,
                     preferred_id="environment",
                     node_label="environment",
                     properties={
-                        "temperature": data.reference.reference_environment.temperature.value,
+                        "temperature": data.reference.environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data.reference.reference_environment.model_dump()
+                            data.reference.environment_reference.model_dump()
                         ),
                     },
                 )
@@ -369,19 +337,19 @@ class CellAdapter:
             },
         )
 
-    def _get_reference_media_nodes(self) -> list[BioCypherNode]:
+    def _get_media_reference_nodes(self) -> list[BioCypherNode]:
         seen_node_ids = set()
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
             media_id = hashlib.sha256(
                 json.dumps(
-                    data.reference.reference_environment.media.model_dump()
+                    data.reference.environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data.reference.reference_environment.media.name
-                state = data.reference.reference_environment.media.state
+                name = data.reference.environment_reference.media.name
+                state = data.reference.environment_reference.media.state
                 node = BioCypherNode(
                     node_id=media_id,
                     preferred_id="media",
@@ -390,7 +358,7 @@ class CellAdapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data.reference.reference_environment.media.model_dump()
+                            data.reference.environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -417,13 +385,13 @@ class CellAdapter:
             },
         )
 
-    def _get_reference_temperature_nodes(self) -> list[BioCypherNode]:
+    def _get_temperature_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         seen_node_ids: Set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             temperature_id = hashlib.sha256(
                 json.dumps(
-                    data.reference.reference_environment.temperature.model_dump()
+                    data.reference.environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
             if temperature_id not in seen_node_ids:
@@ -433,10 +401,10 @@ class CellAdapter:
                     preferred_id="temperature",
                     node_label="temperature",
                     properties={
-                        "value": data.reference.reference_environment.temperature.value,
-                        "unit": data.reference.reference_environment.temperature.unit,
+                        "value": data.reference.environment_reference.temperature.value,
+                        "unit": data.reference.environment_reference.temperature.unit,
                         "serialized_data": json.dumps(
-                            data.reference.reference_environment.temperature.model_dump()
+                            data.reference.environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -444,7 +412,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _phenotype_node(self, data: dict) -> BioCypherNode:
+    def _fitness_phenotype_node(self, data: dict) -> BioCypherNode:
         phenotype_id = hashlib.sha256(
             json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -458,7 +426,7 @@ class CellAdapter:
         return BioCypherNode(
             node_id=phenotype_id,
             preferred_id=f"phenotype_{phenotype_id}",
-            node_label="phenotype",
+            node_label="fitness phenotype",
             properties={
                 "graph_level": graph_level,
                 "label": label,
@@ -471,25 +439,54 @@ class CellAdapter:
             },
         )
 
-    def _get_reference_phenotype_nodes(self) -> list[BioCypherNode]:
+    @data_chunker
+    def _gene_interaction_phenotype_node(self, data: dict) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = phenotype.graph_level
+        label = phenotype.label
+        label_error = phenotype.label_error
+        interaction = phenotype.interaction
+        p_value = phenotype.p_value
+
+        properties = {
+            "graph_level": graph_level,
+            "label": label,
+            "label_error": label_error,
+            "interaction": interaction,
+            "p_value": p_value,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="gene interaction phenotype",
+            properties=properties,
+        )
+
+    def _get_fitness_phenotype_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
             phenotype_id = hashlib.sha256(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
-            graph_level = data.reference.reference_phenotype.graph_level
-            label = data.reference.reference_phenotype.label
-            label_error = data.reference.reference_phenotype.label_error
-            fitness = data.reference.reference_phenotype.fitness
-            fitness_std = data.reference.reference_phenotype.fitness_std
+            graph_level = data.reference.phenotype_reference.graph_level
+            label = data.reference.phenotype_reference.label
+            label_error = data.reference.phenotype_reference.label_error
+            fitness = data.reference.phenotype_reference.fitness
+            fitness_std = data.reference.phenotype_reference.fitness_std
 
             node = BioCypherNode(
                 node_id=phenotype_id,
-                preferred_id=f"phenotype",
-                node_label="phenotype",
+                preferred_id="fitness phenotype",
+                node_label="fitness phenotype",
                 properties={
                     "graph_level": graph_level,
                     "label": label,
@@ -497,14 +494,47 @@ class CellAdapter:
                     "fitness": fitness,
                     "fitness_std": fitness_std,
                     "serialized_data": json.dumps(
-                        data.reference.reference_phenotype.model_dump()
+                        data.reference.phenotype_reference.model_dump()
                     ),
                 },
             )
             nodes.append(node)
         return nodes
 
-    def get_dataset_nodes(self) -> list[BioCypherNode]:
+    def _get_gene_interaction_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+
+            graph_level = data.reference.phenotype_reference.graph_level
+            label = data.reference.phenotype_reference.label
+            label_error = data.reference.phenotype_reference.label_error
+            interaction = data.reference.phenotype_reference.interaction
+            p_value = data.reference.phenotype_reference.p_value
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id="gene interaction phenotype",
+                node_label="gene interaction phenotype",
+                properties={
+                    "graph_level": graph_level,
+                    "label": label,
+                    "label_error": label_error,
+                    "interaction": interaction,
+                    "p_value": p_value,
+                    "serialized_data": json.dumps(
+                        data.reference.phenotype_reference.model_dump()
+                    ),
+                },
+            )
+            nodes.append(node)
+        return nodes
+
+    def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [
             BioCypherNode(
                 node_id=self.dataset.__class__.__name__,
@@ -515,7 +545,7 @@ class CellAdapter:
         return nodes
 
     # edges
-    def get_reference_dataset_edges(self) -> list[BioCypherEdge]:
+    def _get_experiment_reference_to_dataset_edges(self) -> list[BioCypherEdge]:
         edges = []
         for data in self.dataset.experiment_reference_index:
             reference_id = hashlib.sha256(
@@ -530,7 +560,7 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _experiment_dataset_edge(self, data: dict) -> list[BioCypherEdge]:
+    def _experiment_to_dataset_edge(self, data: dict) -> list[BioCypherEdge]:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -541,29 +571,8 @@ class CellAdapter:
         )
         return edge
 
-    # BUG This doesn't use multiprocessing and is therefore extremely slow.
-    # def _get_reference_experiment_edges(self) -> list[BioCypherEdge]:
-    #     edges = []
-    #     for data in tqdm(self.dataset.experiment_reference_index):
-    #         dataset_subset = self.dataset[torch.tensor(data.index)]
-    #         experiment_ref_id = hashlib.sha256(
-    #             json.dumps(data.reference.model_dump()).encode("utf-8")
-    #         ).hexdigest()
-    #         for i, data in enumerate(dataset_subset):
-    #             data = self.dataset.transform_item(data)
-    #             experiment_id = hashlib.sha256(
-    #                 json.dumps(data["experiment"].model_dump()).encode("utf-8")
-    #             ).hexdigest()
-    #             edge = BioCypherEdge(
-    #                 source_id=experiment_ref_id,
-    #                 target_id=experiment_id,
-    #                 relationship_label="experiment reference of",
-    #             )
-    #             edges.append(edge)
-    #     return edges
-
     @data_chunker
-    def _reference_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _experiment_reference_to_experiment_edge(self, data: dict) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -578,7 +587,7 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _genotype_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _genotype_to_experiment_edge(self, data: dict) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -594,7 +603,7 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _perturbation_genotype_edges(self, data: dict) -> list[BioCypherEdge]:
+    def _perturbation_to_genotype_edges(self, data: dict) -> list[BioCypherEdge]:
         edges = []
         genotype = data["experiment"].genotype
         for perturbation in genotype.perturbations:
@@ -614,7 +623,7 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _environment_experiment_edges(self, data: dict) -> BioCypherEdge:
+    def _environment_to_experiment_edge(self, data: dict) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -628,7 +637,7 @@ class CellAdapter:
         )
         return edge
 
-    def _get_environment_experiment_ref_edges(self) -> list[BioCypherEdge]:
+    def _get_environment_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_environment_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
@@ -636,7 +645,7 @@ class CellAdapter:
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
             environment_id = hashlib.sha256(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -653,7 +662,7 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _phenotype_experiment_edges(self, data: dict) -> BioCypherEdge:
+    def _phenotype_to_experiment_edge(self, data: dict) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -668,7 +677,7 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _media_environment_edge(self, data: dict) -> BioCypherEdge:
+    def _media_to_environment_edge(self, data: dict) -> BioCypherEdge:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -685,7 +694,7 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _temperature_environment_edge(self, data: dict) -> BioCypherEdge:
+    def _temperature_to_environment_edge(self, data: dict) -> BioCypherEdge:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -701,7 +710,7 @@ class CellAdapter:
         )
         return edge
 
-    def _get_genome_edges(self) -> list[BioCypherEdge]:
+    def _get_genome_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []
         seen_genome_experiment_ref_pairs: Set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
@@ -709,7 +718,7 @@ class CellAdapter:
                 json.dumps(data.reference.model_dump()).encode("utf-8")
             ).hexdigest()
             genome_id = hashlib.sha256(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
             if genome_experiment_ref_pair not in seen_genome_experiment_ref_pairs:

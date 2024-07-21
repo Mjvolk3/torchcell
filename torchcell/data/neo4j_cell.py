@@ -555,39 +555,39 @@ class ExperimentDeduplicator(Deduplicator):
 
         # Create a new FitnessExperimentReference with the mean values
         fitness_ref_values = [
-            exp["reference"].reference_phenotype.fitness
+            exp["reference"].phenotype_reference.fitness
             for exp in duplicate_experiments
-            if exp["reference"].reference_phenotype.fitness is not None
+            if exp["reference"].phenotype_reference.fitness is not None
         ]
         fitness_ref_stds = [
-            exp["reference"].reference_phenotype.fitness_std
+            exp["reference"].phenotype_reference.fitness_std
             for exp in duplicate_experiments
-            if exp["reference"].reference_phenotype.fitness_std is not None
+            if exp["reference"].phenotype_reference.fitness_std is not None
         ]
 
         # Calculate the mean reference fitness and mean reference standard deviation, handling empty lists
         mean_fitness_ref = np.mean(fitness_ref_values) if fitness_ref_values else None
         mean_fitness_ref_std = np.mean(fitness_ref_stds) if fitness_ref_stds else None
 
-        mean_reference_phenotype = FitnessPhenotype(
+        mean_phenotype_reference = FitnessPhenotype(
             graph_level=duplicate_experiments[0][
                 "reference"
-            ].reference_phenotype.graph_level,
-            label=duplicate_experiments[0]["reference"].reference_phenotype.label,
+            ].phenotype_reference.graph_level,
+            label=duplicate_experiments[0]["reference"].phenotype_reference.label,
             label_error=duplicate_experiments[0][
                 "reference"
-            ].reference_phenotype.label_error,
+            ].phenotype_reference.label_error,
             fitness=mean_fitness_ref,
             fitness_std=mean_fitness_ref_std,
         )
 
         # For now we don't deal with reference harmonization - just take first reference
         mean_reference = FitnessExperimentReference(
-            reference_genome=duplicate_experiments[0]["reference"].reference_genome,
-            reference_environment=duplicate_experiments[0][
+            genome_reference=duplicate_experiments[0]["reference"].genome_reference,
+            environment_reference=duplicate_experiments[0][
                 "reference"
-            ].reference_environment,
-            reference_phenotype=mean_reference_phenotype,
+            ].environment_reference,
+            phenotype_reference=mean_phenotype_reference,
         )
 
         return {"experiment": mean_experiment, "reference": mean_reference}

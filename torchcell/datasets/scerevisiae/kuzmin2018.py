@@ -100,7 +100,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference = self.create_experiment(
-                    row, reference_phenotype_std=self.reference_phenotype_std
+                    row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -153,7 +153,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                 else "KanMX_deletion" if "dma" in x else "unknown"
             )
         )
-        self.reference_phenotype_std = df[
+        self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
 
@@ -187,9 +187,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, reference_phenotype_std):
+    def create_experiment(row, phenotype_reference_std):
         # Common attributes for both temperatures
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
@@ -257,7 +257,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         # Phenotype
         if row["smf_type"] == "query_smf":
             smf_key = "Query single/double mutant fitness"
@@ -275,18 +275,18 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             fitness_std=None,
         )
 
-        reference_phenotype = FitnessPhenotype(
+        phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
             label_error="smf_std",
             fitness=1.0,
-            fitness_std=reference_phenotype_std,
+            fitness_std=phenotype_reference_std,
         )
 
         reference = FitnessExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
@@ -350,7 +350,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference = self.create_experiment(
-                    row, reference_phenotype_std=self.reference_phenotype_std
+                    row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -412,7 +412,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
                 else "KanMX_deletion" if "dma" in x else "unknown"
             )
         )
-        self.reference_phenotype_std = df[
+        self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
         # replace delta symbol for neo4j import
@@ -422,9 +422,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, reference_phenotype_std):
+    def create_experiment(row, phenotype_reference_std):
         # Common attributes for both temperatures
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
@@ -470,7 +470,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         # Phenotype
         if row["Combined mutant type"] == "digenic":
             dmf_key = "Combined mutant fitness"
@@ -488,18 +488,18 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             fitness_std=fitness_std,
         )
 
-        reference_phenotype = FitnessPhenotype(
+        phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="dmf",
             label_error="dmf_std",
             fitness=1.0,
-            fitness_std=reference_phenotype_std,
+            fitness_std=phenotype_reference_std,
         )
 
         reference = FitnessExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
@@ -563,7 +563,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference = self.create_experiment(
-                    row, reference_phenotype_std=self.reference_phenotype_std
+                    row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -625,7 +625,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
                 else "KanMX_deletion" if "dma" in x else "unknown"
             )
         )
-        self.reference_phenotype_std = df[
+        self.phenotype_reference_std = df[
             "Combined mutant fitness standard deviation"
         ].mean()
         # replace delta symbol for neo4j import
@@ -635,9 +635,9 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, reference_phenotype_std):
+    def create_experiment(row, phenotype_reference_std):
         # Common attributes for both temperatures
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
         # genotype
@@ -700,7 +700,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
@@ -712,18 +712,18 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             fitness_std=row[tmf_std_key],
         )
 
-        reference_phenotype = FitnessPhenotype(
+        phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="tmf",
             label_error="tmf_std",
             fitness=1.0,
-            fitness_std=reference_phenotype_std,
+            fitness_std=phenotype_reference_std,
         )
 
         reference = FitnessExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
@@ -852,7 +852,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(row):
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
 
@@ -898,7 +898,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
@@ -909,7 +909,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         # By definition in paper interaction would be 0.
-        reference_phenotype = GeneInteractionPhenotype(
+        phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
             label_error=None,
@@ -918,9 +918,9 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         reference = GeneInteractionExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
             experiment_reference_type="gene interaction",
         )
 
@@ -1052,7 +1052,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
     @staticmethod
     def create_experiment(row):
-        reference_genome = ReferenceGenome(
+        genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
 
@@ -1114,7 +1114,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
-        reference_environment = environment.model_copy()
+        environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
@@ -1125,7 +1125,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         # By definition in paper interaction would be 0.
-        reference_phenotype = GeneInteractionPhenotype(
+        phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="tmi",
             label_error=None,
@@ -1134,9 +1134,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         reference = GeneInteractionExperimentReference(
-            reference_genome=reference_genome,
-            reference_environment=reference_environment,
-            reference_phenotype=reference_phenotype,
+            genome_reference=genome_reference,
+            environment_reference=environment_reference,
+            phenotype_reference=phenotype_reference,
             experiment_reference_type="gene interaction",
         )
 

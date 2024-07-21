@@ -352,7 +352,7 @@ class SCerevisiaeGenome(Genome):
     _gff_path: str = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
-        genome_reference = "S288C_reference_genome"
+        genome_reference = "S288C_genome_reference"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
         self.sequence_s288c = "sequence/S288C_reference"

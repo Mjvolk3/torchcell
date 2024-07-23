@@ -33,12 +33,13 @@ from torchcell.datamodels import (
     GeneInteractionExperimentReference,
     GeneInteractionExperiment,
 )
-from torchcell.data import ExperimentDataset, post_process  # FLAG
+from torchcell.data import ExperimentDataset, post_process
 from concurrent.futures import ThreadPoolExecutor
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
 
 # Fitness
 @register_dataset
@@ -302,10 +303,16 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
         return experiment, reference
 
@@ -617,12 +624,19 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
         return experiment, reference
+
 
 # Interactions
 @register_dataset
@@ -798,7 +812,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
-        
+
         perturbations = []
         # Query
         if "temperature_sensitive" in row["query_perturbation_type"]:
@@ -885,13 +899,13 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             )
         genotype = Genotype(perturbations=perturbations)
         assert len(genotype) == 2, "Genotype must have 2 perturbations."
-        
+
         environment = Environment(
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=row["Temperature"]),
         )
         environment_reference = environment.model_copy()
-        
+
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
@@ -913,17 +927,20 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            experiment_reference_type="gene interaction"
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         experiment = GeneInteractionExperiment(
-            experiment_type="gene interaction",
             genotype=genotype,
             environment=environment,
-            phenotype=phenotype
+            phenotype=phenotype,
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
         return experiment, reference
-    
+
+
 if __name__ == "__main__":
     from dotenv import load_dotenv
 
@@ -985,7 +1002,7 @@ if __name__ == "__main__":
     # data_loader.close()
     # print("completed")
 
-    # Interactions 
+    # Interactions
     dataset = DmiCostanzo2016Dataset()
     dataset[0]
     print(len(dataset))

@@ -6,7 +6,7 @@
 
 from typing import List, Union, Dict, Type
 import json
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
 
@@ -276,6 +276,12 @@ class FitnessPhenotype(Phenotype, ModelStrict):
     )
 
 
+class GeneEssentialityPhenotype(Phenotype, ModelStrict):
+    viability: str = Field(
+        description="gene knockout leading cell state as viable or inviable."
+    )
+
+
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
     interaction: float = Field(
         description="""epsilon, tau, or analogous interaction value.
@@ -289,6 +295,18 @@ class ExperimentReference(ModelStrict):
     genome_reference: ReferenceGenome
     environment_reference: Environment
     phenotype_reference: Phenotype
+    pubmed_id: str | None = None
+    pubmed_url: str | None = None
+    doi: str | None = None
+    doi_url: str | None = None
+
+    @model_validator(mode="after")
+    def check_pub_info(self):
+        if self.pubmed_id is None and self.doi is None:
+            raise ValueError("At least one of PubMed ID or DOI must be provided")
+        if self.pubmed_url is None and self.doi_url is None:
+            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
+        return self
 
 
 class Experiment(ModelStrict):
@@ -296,6 +314,18 @@ class Experiment(ModelStrict):
     genotype: Genotype
     environment: Environment
     phenotype: Phenotype
+    pubmed_id: str | None = None
+    pubmed_url: str | None = None
+    doi: str | None = None
+    doi_url: str | None = None
+
+    @model_validator(mode="after")
+    def check_pub_info(self):
+        if self.pubmed_id is None and self.doi is None:
+            raise ValueError("At least one of PubMed ID or DOI must be provided")
+        if self.pubmed_url is None and self.doi_url is None:
+            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
+        return self
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
@@ -303,24 +333,45 @@ class FitnessExperimentReference(ExperimentReference, ModelStrict):
     phenotype_reference: FitnessPhenotype
 
 
-class FitnessExperiment(Experiment):
+class FitnessExperiment(Experiment, ModelStrict):
     experiment_type: str = "fitness"
     genotype: Union[Genotype, List[Genotype,]]
     phenotype: FitnessPhenotype
 
 
 class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
-    phenotype_reference: GeneInteractionPhenotype
     experiment_reference_type: str = "gene interaction"
+    phenotype_reference: GeneInteractionPhenotype
 
 
-class GeneInteractionExperiment(Experiment):
+class GeneInteractionExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene interaction"
     genotype: Union[Genotype, List[Genotype,]]
     phenotype: GeneInteractionPhenotype
 
 
-ExperimentType = Union[FitnessExperiment, GeneInteractionExperiment]
+class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "gene essentiality"
+    phenotype_reference: GeneEssentialityPhenotype
+
+
+class GeneEssentialityExperiment(Experiment, ModelStrict):
+    experiment_type: str = "gene essentiality"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: GeneEssentialityPhenotype
+
+
+ExperimentType = Union[
+    Experiment, FitnessExperiment, GeneInteractionExperiment, GeneEssentialityExperiment
+]
+
+ExperimentReferenceType = Union[
+    ExperimentReference,
+    FitnessExperimentReference,
+    GeneInteractionExperimentReference,
+    GeneEssentialityExperimentReference,
+]
+
 
 if __name__ == "__main__":
     pass

@@ -180,6 +180,10 @@ class CellAdapter:
                 node_label="experiment reference",
                 properties={
                     "dataset_name": self.dataset.name,
+                    "pubmed_id": data.reference.pubmed_id,
+                    "pubmed_url": data.reference.pubmed_url,
+                    "doi": data.reference.doi,
+                    "doi_url": data.reference.doi_url,
                     "serialized_data": json.dumps(data.reference.model_dump()),
                 },
             )
@@ -221,6 +225,10 @@ class CellAdapter:
             node_label="experiment",
             properties={
                 "dataset_name": self.dataset.name,
+                "pubmed_id": data["experiment"].pubmed_id,
+                "pubmed_url": data["experiment"].pubmed_url,
+                "doi": data["experiment"].doi,
+                "doi_url": data["experiment"].doi_url,
                 "serialized_data": json.dumps(data["experiment"].model_dump()),
             },
         )

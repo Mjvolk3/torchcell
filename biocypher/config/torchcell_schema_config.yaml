@@ -13,6 +13,10 @@ experiment:
     # preferred_id:
     properties:
         dataset_name: str
+        pubmed_id: str
+        pubmed_url: str
+        doi: str
+        doi_url: str
         serialized_data: str
 
 reference experiment:
@@ -20,6 +24,10 @@ reference experiment:
     is_a: genome
     properties:
         dataset_name: str
+        pubmed_id: str
+        pubmed_url: str
+        doi: str
+        doi_url: str
         serialized_data: str
 
 reference experiment member of:

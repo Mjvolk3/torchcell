@@ -287,10 +287,16 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
         return experiment, reference
 
@@ -500,10 +506,16 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
         return experiment, reference
 
@@ -724,10 +736,16 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
         return experiment, reference
 
@@ -921,14 +939,16 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            experiment_reference_type="gene interaction",
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = GeneInteractionExperiment(
-            experiment_type="gene interaction",
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
         return experiment, reference
 
@@ -1137,23 +1157,25 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            experiment_reference_type="gene interaction",
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = GeneInteractionExperiment(
-            experiment_type="gene interaction",
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
         return experiment, reference
 
 
 if __name__ == "__main__":
     ## Fitness
-    # dataset = SmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    dataset = SmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     # dataset = DmfKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
@@ -1165,6 +1187,6 @@ if __name__ == "__main__":
     # dataset = DmiKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
-    dataset = TmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    #dataset = TmiKuzmin2018Dataset()
+    #dataset[0]
+    #print(len(dataset))

@@ -21,7 +21,7 @@ from torchcell.sequence import GeneSet
 from abc import ABC, abstractmethod
 from functools import wraps
 import torch
-from torchcell.datamodels import FitnessExperimentReference
+from torchcell.datamodels import ExperimentReferenceType
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from concurrent.futures import ProcessPoolExecutor
 import concurrent.futures
@@ -53,7 +53,7 @@ def _compute_reference_hash_parallel(data):
 # return reference_indices
 # TODO FitnessExperimentReference Will need to generalize away from fitness
 def serialize_for_hashing(obj):
-    if isinstance(obj, FitnessExperimentReference):
+    if isinstance(obj, ExperimentReferenceType):
         # Convert FitnessExperimentReference to a dictionary
         obj_dict = obj.model_dump()
         # Sort the dictionary keys for consistent serialization
@@ -94,44 +94,6 @@ def compute_experiment_reference_index_sequential(
 
     return reference_indices
 
-
-# def compute_experiment_reference_index_parallel(
-#     dataset, batch_size=int(1e4), io_workers=1
-# ) -> list[ExperimentReferenceIndex]:
-#     # Hashes for each reference
-#     print("Computing experiment_reference_index hashes in parallel...")
-#     data_loader = CpuExperimentLoaderMultiprocessing(
-#         dataset, batch_size=batch_size, num_workers=io_workers
-#     )
-
-#     reference_hashes = []
-#     for batch in tqdm(data_loader, total=len(data_loader)):
-#         for data in batch:
-#             reference_hash = compute_sha256_hash(
-#                 serialize_for_hashing(data["reference"])
-#             )
-#             reference_hashes.append(reference_hash)
-
-#     # Identify unique hashes
-#     unique_hashes = set(reference_hashes)
-
-#     # Initialize ExperimentReferenceIndex list
-#     reference_indices = []
-
-#     print("Finding unique references...")
-#     for unique_hash in tqdm(unique_hashes):
-#         # Create a boolean list where True indicates the presence of the unique reference
-#         index_list = [ref_hash == unique_hash for ref_hash in reference_hashes]
-
-#         # Find the corresponding reference object for the unique hash
-#         ref_index = reference_hashes.index(unique_hash)
-#         unique_ref = dataset[ref_index]["reference"]
-
-#         # Create ExperimentReferenceIndex object
-#         exp_ref_index = ExperimentReferenceIndex(reference=unique_ref, index=index_list)
-#         reference_indices.append(exp_ref_index)
-
-#     return reference_indices
 
 def compute_experiment_reference_index_parallel(
     dataset, batch_size=int(1e4), io_workers=1
@@ -216,10 +178,10 @@ class ExperimentDataset(Dataset, ABC):
         self._gene_set = None
         self._df = None
         self._experiment_reference_index = None
-        
+
         # Automatically set the name based on the class name
         self.name = self.__class__.__name__
-        
+
         super().__init__(root, transform, pre_transform)
 
     @property
@@ -423,40 +385,6 @@ class ExperimentDataset(Dataset, ABC):
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
-
-    # @property
-    # def experiment_reference_index(self):
-    #     index_file_path = osp.join(
-    #         self.preprocess_dir, "experiment_reference_index.json"
-    #     )
-
-    #     if osp.exists(index_file_path):
-    #         with open(index_file_path, "r") as file:
-    #             data = json.load(file)
-    #             # Assuming ReferenceIndex can be constructed from a list of dictionaries
-    #             self._experiment_reference_index = [
-    #                 ExperimentReferenceIndex(**item) for item in data
-    #             ]
-    #     elif self._experiment_reference_index is None:
-    #         self._experiment_reference_index = compute_experiment_reference_index(self)
-    #         with open(index_file_path, "w") as file:
-    #             # Convert each ExperimentReferenceIndex object to dict and save the list of dicts
-    #             json.dump(
-    #                 [eri.model_dump() for eri in self._experiment_reference_index],
-    #                 file,
-    #                 indent=4,
-    #             )
-
-    #     self.close_lmdb()
-    #     return self._experiment_reference_index
-
-    @property
-    @abstractmethod
-    def experiment_class(self): ...
-
-    @property
-    @abstractmethod
-    def reference_class(self): ...
 
     def transform_item(self, item):
         experiment_data = item["experiment"]

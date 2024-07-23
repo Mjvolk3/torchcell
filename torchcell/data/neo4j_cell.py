@@ -186,7 +186,7 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     phenotype = data["experiment"].phenotype
     processed_graph["gene"].graph_level = phenotype.graph_level
     processed_graph["gene"].label = phenotype.label
-    processed_graph["gene"].label_error = phenotype.label_error
+    processed_graph["gene"].label_statistic = phenotype.label_statistic
     # TODO we actually want to do this renaming in the datamodel
     # We do it here to replicate behavior for downstream
     # Will break with anything other than fitness obviously
@@ -531,7 +531,7 @@ class ExperimentDeduplicator(Deduplicator):
         mean_phenotype = FitnessPhenotype(
             graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
             label=duplicate_experiments[0]["experiment"].phenotype.label,
-            label_error=duplicate_experiments[0]["experiment"].phenotype.label_error,
+            label_statistic=duplicate_experiments[0]["experiment"].phenotype.label_statistic,
             fitness=mean_fitness,
             fitness_std=mean_fitness_std,
         )
@@ -574,9 +574,9 @@ class ExperimentDeduplicator(Deduplicator):
                 "reference"
             ].phenotype_reference.graph_level,
             label=duplicate_experiments[0]["reference"].phenotype_reference.label,
-            label_error=duplicate_experiments[0][
+            label_statistic=duplicate_experiments[0][
                 "reference"
-            ].phenotype_reference.label_error,
+            ].phenotype_reference.label_statistic,
             fitness=mean_fitness_ref,
             fitness_std=mean_fitness_ref_std,
         )

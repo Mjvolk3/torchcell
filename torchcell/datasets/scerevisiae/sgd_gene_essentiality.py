@@ -173,6 +173,9 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
                     return None
 
     def create_experiment(self, gene, phenotype_data):
+        # HACK for this dataset all meta data is guessed,
+        # since we have no way fo extracting it from the paper yet
+        # It is a reasonable guess
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -193,10 +196,9 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
         )
 
         phenotype = GeneEssentialityPhenotype(
-            graph_level="node",
+            graph_level="global",
             label="gene_essentiality",
-            label_error=None,
-            viability="inviable",
+            label_statistic=None,
         )
 
         pubmed_id = str(phenotype_data["reference"]["pubmed_id"])
@@ -241,15 +243,15 @@ def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
-    )
-    graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
-    )
-    graph.read_raw()
+    # genome = SCerevisiaeGenome(
+    #     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+    # )
+    # graph = SCerevisiaeGraph(
+    #     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    # )
+    # graph.read_raw()
 
-    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=graph)
+    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=None)
     print(dataset)
 
 

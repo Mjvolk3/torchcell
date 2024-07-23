@@ -32,7 +32,7 @@ def fitness_experiment():
     phenotype = FitnessPhenotype(
         graph_level="global",
         label="fitness",
-        label_error="fitness_std",
+        label_statistic="fitness_std",
         fitness=0.85,
         fitness_std=0.05,
     )
@@ -56,7 +56,7 @@ def gene_interaction_experiment():
     phenotype = GeneInteractionPhenotype(
         graph_level="edge",
         label="genetic_interaction",
-        label_error="interaction_std",
+        label_statistic="interaction_std",
         interaction=-0.2,
         p_value=0.01,
     )

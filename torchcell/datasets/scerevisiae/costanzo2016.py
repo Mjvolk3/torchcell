@@ -282,7 +282,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=row[smf_key],
             fitness_std=row[smf_std_key],
         )
@@ -294,7 +294,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=1.0,
             fitness_std=phenotype_reference_std,
         )
@@ -603,7 +603,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=row[dmf_key],
             fitness_std=row[dmf_std_key],
         )
@@ -615,7 +615,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=1.0,
             fitness_std=phenotype_reference_std,
         )
@@ -909,7 +909,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=row["Genetic interaction score (ε)"],
             p_value=row["P-value"],
         )
@@ -918,7 +918,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=0.0,
             p_value=1.0,
         )

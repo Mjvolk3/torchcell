@@ -333,7 +333,7 @@ class SmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -344,7 +344,7 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -366,7 +366,7 @@ class SmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["reference"].phenotype_reference.graph_level
                 label = data["reference"].phenotype_reference.label
-                label_error = data["reference"].phenotype_reference.label_error
+                label_statistic = data["reference"].phenotype_reference.label_statistic
                 fitness = data["reference"].phenotype_reference.fitness
                 fitness_std = data["reference"].phenotype_reference.fitness_std
 
@@ -377,7 +377,7 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -978,7 +978,7 @@ class DmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -989,7 +989,7 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -1011,7 +1011,7 @@ class DmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["reference"].phenotype_reference.graph_level
                 label = data["reference"].phenotype_reference.label
-                label_error = data["reference"].phenotype_reference.label_error
+                label_statistic = data["reference"].phenotype_reference.label_statistic
                 fitness = data["reference"].phenotype_reference.fitness
                 fitness_std = data["reference"].phenotype_reference.fitness_std
 
@@ -1022,7 +1022,7 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(

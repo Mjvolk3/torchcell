@@ -427,7 +427,7 @@ class CellAdapter:
 
         graph_level = data["experiment"].phenotype.graph_level
         label = data["experiment"].phenotype.label
-        label_error = data["experiment"].phenotype.label_error
+        label_statistic = data["experiment"].phenotype.label_statistic
         fitness = data["experiment"].phenotype.fitness
         fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -438,7 +438,7 @@ class CellAdapter:
             properties={
                 "graph_level": graph_level,
                 "label": label,
-                "label_error": label_error,
+                "label_statistic": label_statistic,
                 "fitness": fitness,
                 "fitness_std": fitness_std,
                 "serialized_data": json.dumps(
@@ -456,14 +456,14 @@ class CellAdapter:
 
         graph_level = phenotype.graph_level
         label = phenotype.label
-        label_error = phenotype.label_error
+        label_statistic = phenotype.label_statistic
         interaction = phenotype.interaction
         p_value = phenotype.p_value
 
         properties = {
             "graph_level": graph_level,
             "label": label,
-            "label_error": label_error,
+            "label_statistic": label_statistic,
             "interaction": interaction,
             "p_value": p_value,
             "serialized_data": json.dumps(phenotype.model_dump()),
@@ -487,7 +487,7 @@ class CellAdapter:
 
             graph_level = data.reference.phenotype_reference.graph_level
             label = data.reference.phenotype_reference.label
-            label_error = data.reference.phenotype_reference.label_error
+            label_statistic = data.reference.phenotype_reference.label_statistic
             fitness = data.reference.phenotype_reference.fitness
             fitness_std = data.reference.phenotype_reference.fitness_std
 
@@ -498,7 +498,7 @@ class CellAdapter:
                 properties={
                     "graph_level": graph_level,
                     "label": label,
-                    "label_error": label_error,
+                    "label_statistic": label_statistic,
                     "fitness": fitness,
                     "fitness_std": fitness_std,
                     "serialized_data": json.dumps(
@@ -520,7 +520,7 @@ class CellAdapter:
 
             graph_level = data.reference.phenotype_reference.graph_level
             label = data.reference.phenotype_reference.label
-            label_error = data.reference.phenotype_reference.label_error
+            label_statistic = data.reference.phenotype_reference.label_statistic
             interaction = data.reference.phenotype_reference.interaction
             p_value = data.reference.phenotype_reference.p_value
 
@@ -531,7 +531,7 @@ class CellAdapter:
                 properties={
                     "graph_level": graph_level,
                     "label": label,
-                    "label_error": label_error,
+                    "label_statistic": label_statistic,
                     "interaction": interaction,
                     "p_value": p_value,
                     "serialized_data": json.dumps(

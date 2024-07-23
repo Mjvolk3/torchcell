@@ -270,7 +270,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=row[smf_key],
             fitness_std=None,
         )
@@ -278,7 +278,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="smf",
-            label_error="smf_std",
+            label_statistic="smf_std",
             fitness=1.0,
             fitness_std=phenotype_reference_std,
         )
@@ -489,7 +489,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="dmf",
-            label_error="dmf_std",
+            label_statistic="dmf_std",
             fitness=row[dmf_key],
             fitness_std=fitness_std,
         )
@@ -497,7 +497,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="dmf",
-            label_error="dmf_std",
+            label_statistic="dmf_std",
             fitness=1.0,
             fitness_std=phenotype_reference_std,
         )
@@ -719,7 +719,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         phenotype = FitnessPhenotype(
             graph_level="global",
             label="tmf",
-            label_error="tmf_std",
+            label_statistic="tmf_std",
             fitness=row[tmf_key],
             fitness_std=row[tmf_std_key],
         )
@@ -727,7 +727,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = FitnessPhenotype(
             graph_level="global",
             label="tmf",
-            label_error="tmf_std",
+            label_statistic="tmf_std",
             fitness=1.0,
             fitness_std=phenotype_reference_std,
         )
@@ -921,7 +921,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
@@ -930,7 +930,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="dmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=0.0,
             p_value=1.0,
         )
@@ -1139,7 +1139,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         phenotype = GeneInteractionPhenotype(
             graph_level="edge",
             label="tmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
@@ -1148,7 +1148,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = GeneInteractionPhenotype(
             graph_level="edge",
             label="tmi",
-            label_error=None,
+            label_statistic="p_value",
             interaction=0.0,
             p_value=1.0,
         )

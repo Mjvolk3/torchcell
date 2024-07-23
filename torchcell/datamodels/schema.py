@@ -252,9 +252,13 @@ class Environment(ModelStrict):
 
 # Phenotype
 class Phenotype(ModelStrict):
-    graph_level: str
-    label: str
-    label_error: str | None
+    graph_level: str = Field(
+        description="most natural level of graph at which phenotype is observed"
+    )
+    label: str = Field(description="name of label")
+    label_statistic: str | None = Field(
+        description="name of error or confidence statistic related to label"
+    )
 
     # admittedly, graph_level is subjective
     # choose most natural level considering whole cell
@@ -277,8 +281,34 @@ class FitnessPhenotype(Phenotype, ModelStrict):
 
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
-    viability: str = Field(
-        description="gene knockout leading cell state as viable or inviable."
+    gene_essentiality: bool = Field(
+        default=True, description="gene knockout leading cell death."
+    )
+
+
+class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
+    synthetic_lethality: bool = Field(
+        default=True,
+        description="synthetic lethality occurs when the combination of mutations in"
+        "two or more genes leads to cell death, whereas a mutation in only one of these"
+        "genes does not affect the viability of the cell.",
+    )
+    statistic_score: float | None = Field(
+        default=None,
+        description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
+    )
+
+
+class SyntheticRescuePhenotype(Phenotype, ModelStrict):
+    synthetic_rescue: bool = Field(
+        default=True,
+        description="synthetic rescue occurs when a mutation in one gene compensates"
+        "for the deleterious effects of a mutation in another gene, thereby restoring"
+        "normal function or viability to the cell",
+    )
+    statistic_score: float | None = Field(
+        default=None,
+        description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
 
 
@@ -361,8 +391,35 @@ class GeneEssentialityExperiment(Experiment, ModelStrict):
     phenotype: GeneEssentialityPhenotype
 
 
+class SyntheticLethalityExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "synthetic lethality"
+    phenotype_reference: SyntheticLethalityPhenotype
+
+
+class SyntheticLethalityExperiment(Experiment, ModelStrict):
+    experiment_type: str = "synthetic lethality"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: SyntheticLethalityPhenotype
+
+
+class SyntheticRescueExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "synthetic rescue"
+    phenotype_reference: SyntheticRescuePhenotype
+
+
+class SyntheticRescueExperiment(Experiment, ModelStrict):
+    experiment_type: str = "synthetic rescue"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: SyntheticRescuePhenotype
+
+
 ExperimentType = Union[
-    Experiment, FitnessExperiment, GeneInteractionExperiment, GeneEssentialityExperiment
+    Experiment,
+    FitnessExperiment,
+    GeneInteractionExperiment,
+    GeneEssentialityExperiment,
+    SyntheticLethalityExperiment,
+    SyntheticRescueExperiment,
 ]
 
 ExperimentReferenceType = Union[
@@ -370,6 +427,8 @@ ExperimentReferenceType = Union[
     FitnessExperimentReference,
     GeneInteractionExperimentReference,
     GeneEssentialityExperimentReference,
+    SyntheticLethalityExperimentReference,
+    SyntheticRescueExperimentReference,
 ]
 
 

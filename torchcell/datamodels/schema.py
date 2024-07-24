@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/schema
 # Test file: tests/torchcell/datamodels/test_schema.py
 
-
+import re
 from typing import List, Union, Dict, Type
 import json
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -27,8 +27,8 @@ class GenePerturbation(ModelStrict):
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v):
-        if len(v) < 7 or len(v) > 9:
-            raise ValueError("Systematic gene name must be between 7 and 9 characters")
+        if not re.match(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d+)$", v):
+            raise ValueError("Invalid systematic gene name format")
         return v
 
     @field_validator("perturbed_gene_name", mode="after")

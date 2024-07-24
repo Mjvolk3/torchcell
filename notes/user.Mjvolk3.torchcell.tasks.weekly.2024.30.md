@@ -2,7 +2,7 @@
 id: 2udnurpk5ce6e78o55plv93
 title: '30'
 desc: ''
-updated: 1721770377641
+updated: 1721782841559
 created: 1721590753227
 ---
 
@@ -10,9 +10,8 @@ created: 1721590753227
 
 - [x] Add pubmed id to dataset in schema.
 - [x] After merge clean up commented code in [[torchcell.adapters.cell_adapter]] and [[torchcell.dataset.experiment_dataset]]
-- [ ] Add gene essentiality dataset.
-
-- [ ] Add synthetic lethality. Do same as for essentiality.
+- [x] Add gene essentiality dataset. → [[2024.07.23 - Gene Essentiality Duplicates|dendron://torchcell/torchcell.datasets.scerevisiae.sgd_gene_essentiality#20240723---gene-essentiality-duplicates]]
+- [x] Add synthetic lethality. Do same as for essentiality. → [[2024.07.23 - We Will Not Be Able to Manually Populate Meta Data for all Synthetic Lethality and Synthetic Rescue Experiments|dendron://torchcell/torchcell.datasets.scerevisiae.syn_leth_db_yeast#20240723---we-will-not-be-able-to-manually-populate-meta-data-for-all-synthetic-lethality-and-synthetic-rescue-experiments]]
 
 - [ ] Add gene essentiality to schema and clearly differentiated from current fitness. Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
 

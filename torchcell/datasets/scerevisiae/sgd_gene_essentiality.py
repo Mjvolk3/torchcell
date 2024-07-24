@@ -27,7 +27,6 @@ from torchcell.datamodels.schema import (
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
 )
-
 from torchcell.graph import SCerevisiaeGraph
 
 logging.basicConfig(level=logging.INFO)
@@ -196,9 +195,13 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
         )
 
         phenotype = GeneEssentialityPhenotype(
+            graph_level="global", label="gene_essentiality", label_statistic=None
+        )
+        phenotype_reference = GeneEssentialityPhenotype(
             graph_level="global",
             label="gene_essentiality",
             label_statistic=None,
+            gene_essentiality=False,
         )
 
         pubmed_id = str(phenotype_data["reference"]["pubmed_id"])
@@ -223,7 +226,7 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
         reference = GeneEssentialityExperimentReference(
             experiment_reference_type="gene essentiality",
             genome_reference=genome_reference,
-            environment_reference=environment,
+            environment_reference=phenotype_reference,
             phenotype_reference=phenotype,
             pubmed_id=pub_info["pubmed_id"],
             pubmed_url=pub_info["pubmed_url"],
@@ -243,15 +246,15 @@ def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    # genome = SCerevisiaeGenome(
-    #     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
-    # )
-    # graph = SCerevisiaeGraph(
-    #     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
-    # )
-    # graph.read_raw()
+    genome = SCerevisiaeGenome(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+    )
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    graph.read_raw()
 
-    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=None)
+    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=graph)
     print(dataset)
 
 

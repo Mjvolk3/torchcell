@@ -785,7 +785,7 @@ class CellAdapter:
         return BioCypherEdge(
             source_id=publication_id,
             target_id=experiment_id,
-            relationship_label="mentioning edge",
+            relationship_label="mentions",
         )
 
 

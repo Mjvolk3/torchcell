@@ -167,7 +167,7 @@ class SynthLethalityYeastDataset(ExperimentDataset):
         )
 
         environment = Environment(
-            media=Media(name="YPD", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
 
         phenotype = SyntheticLethalityPhenotype(
@@ -335,7 +335,7 @@ class SynthRescueYeastDataset(ExperimentDataset):
         )
 
         environment = Environment(
-            media=Media(name="YPD", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
 
         phenotype = SyntheticRescuePhenotype(

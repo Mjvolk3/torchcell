@@ -136,7 +136,7 @@ class ComposedOf(ObjectProperty):
     range = [Chemical]
 
 
-class Ypd(Media):
+class YEPD(Media):
     namespace = onto
     composed_of = ComposedOf()
 
@@ -197,9 +197,9 @@ def main():
     peptone = Peptone()
     dextrose = Dextrose()
 
-    # Create an instance of Ypd and link its components
-    ypd = Ypd()
-    ypd.composed_of = [yeast_extract, peptone, dextrose]
+    # Create an instance of YEPD and link its components
+    YEPD = YEPD()
+    YEPD.composed_of = [yeast_extract, peptone, dextrose]
 
     onto.save(file="torchcell.rdf", format="rdfxml")
 

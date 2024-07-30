@@ -320,11 +320,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     p_value: float | None = Field(default=None, description="p-value of interaction")
 
 
-class ExperimentReference(ModelStrict):
-    experiment_reference_type: str = "base"
-    genome_reference: ReferenceGenome
-    environment_reference: Environment
-    phenotype_reference: Phenotype
+class Publication(ModelStrict):
     pubmed_id: str | None = None
     pubmed_url: str | None = None
     doi: str | None = None
@@ -337,6 +333,13 @@ class ExperimentReference(ModelStrict):
         if self.pubmed_url is None and self.doi_url is None:
             raise ValueError("At least one of PubMed URL or DOI URL must be provided")
         return self
+
+
+class ExperimentReference(ModelStrict):
+    experiment_reference_type: str = "base"
+    genome_reference: ReferenceGenome
+    environment_reference: Environment
+    phenotype_reference: Phenotype
 
 
 class Experiment(ModelStrict):
@@ -344,18 +347,6 @@ class Experiment(ModelStrict):
     genotype: Genotype
     environment: Environment
     phenotype: Phenotype
-    pubmed_id: str | None = None
-    pubmed_url: str | None = None
-    doi: str | None = None
-    doi_url: str | None = None
-
-    @model_validator(mode="after")
-    def check_pub_info(self):
-        if self.pubmed_id is None and self.doi is None:
-            raise ValueError("At least one of PubMed ID or DOI must be provided")
-        if self.pubmed_url is None and self.doi_url is None:
-            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
-        return self
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):

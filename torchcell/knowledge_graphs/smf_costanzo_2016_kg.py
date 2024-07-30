@@ -60,7 +60,7 @@ def main(cfg) -> str:
         group=group,
         # save_code=True,
     )
-    
+
     print("printing path info")
     print(os.getcwd())
     load_dotenv(wandb.config.env_path)
@@ -75,7 +75,7 @@ def main(cfg) -> str:
     print(SCHEMA_CONFIG_PATH)
     print(BIOCYPHER_OUT_PATH)
     print("---------")
-    
+
     # save_code = True only works for git repositories, so we log the kg dir.
     wandb.run.log_code(
         "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
@@ -127,14 +127,14 @@ def main(cfg) -> str:
             "class": SmfCostanzo2016Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
             "kwargs": {"io_workers": num_workers},
-        },
+        }
     ]
 
     # Instantiate datasets
     datasets = []
     for config in dataset_configs:
         dataset_class = config["class"]
-        dataset_path = config["path"]
+        dataset_path = config["path"]   
         dataset_kwargs = config["kwargs"]
         dataset_name = dataset_class.__name__
 
@@ -147,9 +147,7 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
         # Define dataset-adapter mapping
-        dataset_adapter_map = {
-            SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
-        }
+        dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [
@@ -176,9 +174,9 @@ def main(cfg) -> str:
         start_time = time.time()
         bc.write_edges(adapter.get_edges())
         end_time = time.time()
-        write_edges_time = end_time - start_time    
+        write_edges_time = end_time - start_time
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
-        
+
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()

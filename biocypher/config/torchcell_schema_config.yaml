@@ -2,10 +2,10 @@
 dataset:
     represented_as: node
 
-study:
-    represented_as: node
-    properties:
-        name: str
+# study:
+#     represented_as: node
+#     properties:
+#         name: str
 
 publication:
     represented_as: node
@@ -16,36 +16,20 @@ publication:
         doi_url: str
         serialized_data: str
 
+# experiment is a process. "ran an experiment", meaning ran the process
+# study used for collection of.
+
 experiment:
     represented_as: node
-    is_a: material sample
-    # preferred_id:
+    is_a: activity
     properties:
         serialized_data: str
 
 experiment reference:
     represented_as: node
-    is_a: genome
+    is_a: activity
     properties:
         serialized_data: str
-
-experiment reference member of:
-    is_a: material sample derivation association
-    represented_as: edge
-    source: experiment reference
-    target: dataset
-
-experiment member of:
-    is_a: material sample derivation association
-    represented_as: edge
-    source: experiment
-    target: dataset
-
-experiment reference of:
-    is_a: material sample derivation association
-    represented_as: edge
-    source: experiment reference
-    target: experiment
 
 genome:
     represented_as: node
@@ -119,63 +103,75 @@ new_phenotype:
         fitness: float
         fitness_std: float
         serialized_data: str
-    
+
 # RELATIONSHIPS
-
-# IDEA to represent inheritance structure we could use "part_of"
-# "material sample derivation association" is more like sample from a whole. which is less correct.
-# IDEA I think "has_participant" is likely most correct if we consider the experiment as 'process' and the children as 'continuants'
-# https://biolink.github.io/biolink-model/has_participant/
-
-
 genotype member of:
-    is_a: material sample derivation association
+    is_a: participates in
     represented_as: edge
     source: genotype
     target: experiment
 
 perturbation member of:
-    is_a: material sample derivation association
+    is_a: genetically associated with
     represented_as: edge
     source: perturbation
     target: genotype
 
 environment member of:
-    is_a: material sample derivation association
+    is_a: participates in
     represented_as: edge
     source: environment
     target: [experiment, experiment reference]
 
-
-# IDEA could use "has_phenotype"
-# Would require reversing direction of edge
 phenotype member of:
-    is_a: material sample derivation association
+    is_a: participates in
     represented_as: edge
     source: fitness phenotype
     target: [experiment, experiment reference]
 
 media member of:
-    is_a: material sample derivation association
+    is_a: part of
     represented_as: edge
     source: media
     target: environment
 
 temperature member of:
-    is_a: material sample derivation association
+    is_a: part of
     represented_as: edge
     source: temperature
     target: environment
 
 genome member of:
-    is_a: material sample derivation association
+    is_a: participates in
     represented_as: edge
     source: genome
     target: experiment reference
 
 # publication mentions experiment:
-    # is_a: mentions
+# is_a: mentions
+# mentions not supported... unsure why. Maybe query on biocypher zulip.
+# information content entity to named thing association:
 mentions:
+    is_a: mentions
     represented_as: edge
     source: publication
+    target: experiment
+
+# Since we treat experiment as process, we need process to continuant relationship... has_output isn't perfect but only one that makes some sense.
+experiment reference member of:
+    is_a: has output
+    represented_as: edge
+    source: experiment reference
+    target: dataset
+
+experiment member of:
+    is_a: has output
+    represented_as: edge
+    source: experiment
+    target: dataset
+
+experiment reference of:
+    is_a: coexists with
+    represented_as: edge
+    source: experiment reference
     target: experiment

@@ -2,21 +2,25 @@
 id: d89wpb229frpmqe25uz142u
 title: '31'
 desc: ''
-updated: 1722372019833
+updated: 1722372760986
 created: 1722369588884
 ---
 ## 2024.07.31
 
-- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]] 
+- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]]
 
 ## 2024.07.30
 
 - [x] Get biochatter working
-- [x] update `gh_neo4j.conf` so `Connect URL` is autofilled.
+- [x] Update `gh_neo4j.conf` so `Connect URL` is autofilled.
+- [x] Respond to biocypher PR review with next steps.
+
+
+
+- [ ] Update edge and node definitions to match biolink more appropriately.
 
 - [ ] Document biochatter startup
 
-- [ ] Update edge definitions to match biolink more appropriately.
 
 - [ ] Update [[torchcell.adapters.cell_adapter]] for new datasets
 - [ ] Update `torchcell/biocypher/config/torchcell_schema_config.yaml` for new datasets

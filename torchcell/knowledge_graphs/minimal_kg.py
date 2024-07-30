@@ -59,7 +59,7 @@ def main(cfg) -> str:
         group=group,
         # save_code=True,
     )
-    
+
     print("printing path info")
     print(os.getcwd())
     load_dotenv(wandb.config.env_path)
@@ -74,7 +74,7 @@ def main(cfg) -> str:
     print(SCHEMA_CONFIG_PATH)
     print(BIOCYPHER_OUT_PATH)
     print("---------")
-    
+
     # save_code = True only works for git repositories, so we log the kg dir.
     wandb.run.log_code(
         "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])

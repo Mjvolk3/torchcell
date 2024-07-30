@@ -2,9 +2,13 @@
 id: d89wpb229frpmqe25uz142u
 title: '31'
 desc: ''
-updated: 1722370030746
+updated: 1722372019833
 created: 1722369588884
 ---
+## 2024.07.31
+
+- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]] 
+
 ## 2024.07.30
 
 - [x] Get biochatter working

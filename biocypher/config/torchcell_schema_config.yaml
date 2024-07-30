@@ -2,23 +2,38 @@
 dataset:
     represented_as: node
 
+study:
+    represented_as: node
+    properties: 
+        name: str
+
 experiment:
     represented_as: node
     is_a: material sample
     # preferred_id:
     properties:
+        dataset_name: str
+        pubmed_id: str
+        pubmed_url: str
+        doi: str
+        doi_url: str
         serialized_data: str
 
-experiment reference:
+reference experiment:
     represented_as: node
     is_a: genome
     properties:
+        dataset_name: str
+        pubmed_id: str
+        pubmed_url: str
+        doi: str
+        doi_url: str
         serialized_data: str
 
-experiment reference member of:
+reference experiment member of:
     is_a: material sample derivation association
     represented_as: edge
-    source: experiment reference
+    source: reference experiment
     target: dataset
 
 experiment member of:
@@ -27,10 +42,10 @@ experiment member of:
     source: experiment
     target: dataset
 
-experiment reference of:
+reference experiment of:
     is_a: material sample derivation association
     represented_as: edge
-    source: experiment reference
+    source: reference experiment
     target: experiment
 
 genome:
@@ -83,8 +98,9 @@ temperature:
         unit: str
         serialized_data: str
 
-phenotype:
-    is_a: phenotypic quality
+# TODO expand out to include different phenotypes.
+fitness phenotype:
+    is_a: phenotypic feature
     represented_as: node
     properties:
         graph_level: str
@@ -113,13 +129,13 @@ environment member of:
     is_a: material sample derivation association
     represented_as: edge
     source: environment
-    target: [experiment, experiment reference]
+    target: [experiment, reference experiment]
 
 phenotype member of:
     is_a: material sample derivation association
     represented_as: edge
-    source: phenotype
-    target: [experiment, experiment reference]
+    source: fitness phenotype
+    target: [experiment, reference experiment]
 
 # Add these last two
 media member of:
@@ -138,4 +154,4 @@ genome member of:
     is_a: material sample derivation association
     represented_as: edge
     source: genome
-    target: experiment reference
+    target: reference experiment

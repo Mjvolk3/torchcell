@@ -3,12 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/schema
 # Test file: tests/torchcell/datamodels/test_schema.py
 
-
-from typing import List, Union, Optional
-
-from pydantic import BaseModel, Field, field_validator
+import re
+from typing import List, Union, Dict, Type
+import json
+from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
+
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -26,8 +27,8 @@ class GenePerturbation(ModelStrict):
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v):
-        if len(v) < 7 or len(v) > 9:
-            raise ValueError("Systematic gene name must be between 7 and 9 characters")
+        if not re.match(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d+)$", v):
+            raise ValueError("Invalid systematic gene name format")
         return v
 
     @field_validator("perturbed_gene_name", mode="after")
@@ -244,19 +245,23 @@ class Temperature(BaseModel):
         return v
 
 
-class BaseEnvironment(ModelStrict):
+class Environment(ModelStrict):
     media: Media
     temperature: Temperature
 
 
 # Phenotype
+class Phenotype(ModelStrict):
+    graph_level: str = Field(
+        description="most natural level of graph at which phenotype is observed"
+    )
+    label: str = Field(description="name of label")
+    label_statistic: str | None = Field(
+        description="name of error or confidence statistic related to label"
+    )
 
-
-class BasePhenotype(ModelStrict):
-    graph_level: str
-    label: str
-    label_error: str
-
+    # admittedly, graph_level is subjective
+    # choose most natural level considering whole cell
     @field_validator("graph_level", mode="after")
     @classmethod
     def validate_level(cls, v):
@@ -268,37 +273,163 @@ class BasePhenotype(ModelStrict):
         return v
 
 
-class FitnessPhenotype(BasePhenotype, ModelStrict):
+class FitnessPhenotype(Phenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: Optional[float] = Field(None, description="fitness standard deviation")
+    fitness_std: float | None = Field(
+        default=None, description="fitness standard deviation"
+    )
 
 
-# TODO when we only do BasePhenotype during serialization, we will lose the other information. It might be good to make refs for each phenotype,
+class GeneEssentialityPhenotype(Phenotype, ModelStrict):
+    gene_essentiality: bool = Field(
+        default=True, description="gene knockout leading cell death."
+    )
+
+
+class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
+    synthetic_lethality: bool = Field(
+        default=True,
+        description="synthetic lethality occurs when the combination of mutations in"
+        "two or more genes leads to cell death, whereas a mutation in only one of these"
+        "genes does not affect the viability of the cell.",
+    )
+    statistic_score: float | None = Field(
+        default=None,
+        description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
+    )
+
+
+class SyntheticRescuePhenotype(Phenotype, ModelStrict):
+    synthetic_rescue: bool = Field(
+        default=True,
+        description="synthetic rescue occurs when a mutation in one gene compensates"
+        "for the deleterious effects of a mutation in another gene, thereby restoring"
+        "normal function or viability to the cell",
+    )
+    statistic_score: float | None = Field(
+        default=None,
+        description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
+    )
+
+
+class GeneInteractionPhenotype(Phenotype, ModelStrict):
+    interaction: float = Field(
+        description="""epsilon, tau, or analogous interaction value.
+        Computed from composite fitness phenotypes."""
+    )
+    p_value: float | None = Field(default=None, description="p-value of interaction")
+
+
 class ExperimentReference(ModelStrict):
-    reference_genome: ReferenceGenome
-    reference_environment: BaseEnvironment
-    reference_phenotype: BasePhenotype
+    experiment_reference_type: str = "base"
+    genome_reference: ReferenceGenome
+    environment_reference: Environment
+    phenotype_reference: Phenotype
+    pubmed_id: str | None = None
+    pubmed_url: str | None = None
+    doi: str | None = None
+    doi_url: str | None = None
+
+    @model_validator(mode="after")
+    def check_pub_info(self):
+        if self.pubmed_id is None and self.doi is None:
+            raise ValueError("At least one of PubMed ID or DOI must be provided")
+        if self.pubmed_url is None and self.doi_url is None:
+            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
+        return self
 
 
-#datset type is the union of strings [k for k in dataset_registry.keys()]
-#TODO add dataset
-
-class BaseExperiment(ModelStrict):
+class Experiment(ModelStrict):
+    experiment_type: str = "base"
     genotype: Genotype
-    environment: BaseEnvironment
-    phenotype: BasePhenotype
+    environment: Environment
+    phenotype: Phenotype
+    pubmed_id: str | None = None
+    pubmed_url: str | None = None
+    doi: str | None = None
+    doi_url: str | None = None
 
-
-# TODO, we should get rid of BaseExperiment and just use experiment this way we can always decode the data from neo4j
+    @model_validator(mode="after")
+    def check_pub_info(self):
+        if self.pubmed_id is None and self.doi is None:
+            raise ValueError("At least one of PubMed ID or DOI must be provided")
+        if self.pubmed_url is None and self.doi_url is None:
+            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
+        return self
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
-    reference_phenotype: FitnessPhenotype
+    experiment_reference_type: str = "fitness"
+    phenotype_reference: FitnessPhenotype
 
 
-class FitnessExperiment(BaseExperiment):
+class FitnessExperiment(Experiment, ModelStrict):
+    experiment_type: str = "fitness"
     genotype: Union[Genotype, List[Genotype,]]
     phenotype: FitnessPhenotype
+
+
+class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "gene interaction"
+    phenotype_reference: GeneInteractionPhenotype
+
+
+class GeneInteractionExperiment(Experiment, ModelStrict):
+    experiment_type: str = "gene interaction"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: GeneInteractionPhenotype
+
+
+class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "gene essentiality"
+    phenotype_reference: GeneEssentialityPhenotype
+
+
+class GeneEssentialityExperiment(Experiment, ModelStrict):
+    experiment_type: str = "gene essentiality"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: GeneEssentialityPhenotype
+
+
+class SyntheticLethalityExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "synthetic lethality"
+    phenotype_reference: SyntheticLethalityPhenotype
+
+
+class SyntheticLethalityExperiment(Experiment, ModelStrict):
+    experiment_type: str = "synthetic lethality"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: SyntheticLethalityPhenotype
+
+
+class SyntheticRescueExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "synthetic rescue"
+    phenotype_reference: SyntheticRescuePhenotype
+
+
+class SyntheticRescueExperiment(Experiment, ModelStrict):
+    experiment_type: str = "synthetic rescue"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: SyntheticRescuePhenotype
+
+
+ExperimentType = Union[
+    Experiment,
+    FitnessExperiment,
+    GeneInteractionExperiment,
+    GeneEssentialityExperiment,
+    SyntheticLethalityExperiment,
+    SyntheticRescueExperiment,
+]
+
+ExperimentReferenceType = Union[
+    ExperimentReference,
+    FitnessExperimentReference,
+    GeneInteractionExperimentReference,
+    GeneEssentialityExperimentReference,
+    SyntheticLethalityExperimentReference,
+    SyntheticRescueExperimentReference,
+]
 
 
 if __name__ == "__main__":

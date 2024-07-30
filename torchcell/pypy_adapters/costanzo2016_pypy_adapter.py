@@ -63,20 +63,20 @@ class SmfCostanzo2016Adapter:
 
         for i, data in enumerate(self.dataset.experiment_reference_index):
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 yield BioCypherNode(
                     node_id=genome_id,
-                    preferred_id=f"reference_genome_{i}",
+                    preferred_id=f"genome_reference_{i}",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -189,7 +189,7 @@ class SmfCostanzo2016Adapter:
                 )
         for i, data in enumerate(self.dataset):
             environment_id = hashlib.md5(
-                json.dumps(data["reference"].reference_environment.model_dump()).encode(
+                json.dumps(data["reference"].environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -199,7 +199,7 @@ class SmfCostanzo2016Adapter:
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 )
 
                 yield BioCypherNode(
@@ -209,10 +209,10 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "temperature": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.model_dump()
+                            data["reference"].environment_reference.model_dump()
                         ),
                     },
                 )
@@ -246,14 +246,14 @@ class SmfCostanzo2016Adapter:
         for i, data in enumerate(self.dataset):
             media_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data["reference"].reference_environment.media.name
-                state = data["reference"].reference_environment.media.state
+                name = data["reference"].environment_reference.media.name
+                state = data["reference"].environment_reference.media.state
 
                 yield BioCypherNode(
                     node_id=media_id,
@@ -263,7 +263,7 @@ class SmfCostanzo2016Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.media.model_dump()
+                            data["reference"].environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -296,7 +296,7 @@ class SmfCostanzo2016Adapter:
         for i, data in enumerate(self.dataset):
             temperature_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.temperature.model_dump()
+                    data["reference"].environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
@@ -310,14 +310,14 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "value": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "description": data[
                             "reference"
-                        ].reference_environment.temperature.description,
+                        ].environment_reference.temperature.description,
                         "serialized_data": json.dumps(
                             data[
                                 "reference"
-                            ].reference_environment.temperature.model_dump()
+                            ].environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -333,7 +333,7 @@ class SmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -344,7 +344,7 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -357,18 +357,18 @@ class SmfCostanzo2016Adapter:
         for i, data in enumerate(self.dataset):
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
+                json.dumps(data["reference"].phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
+                graph_level = data["reference"].phenotype_reference.graph_level
+                label = data["reference"].phenotype_reference.label
+                label_statistic = data["reference"].phenotype_reference.label_statistic
+                fitness = data["reference"].phenotype_reference.fitness
+                fitness_std = data["reference"].phenotype_reference.fitness_std
 
                 yield BioCypherNode(
                     node_id=phenotype_id,
@@ -377,11 +377,11 @@ class SmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
+                            data["reference"].phenotype_reference.model_dump()
                         ),
                     },
                 )
@@ -534,7 +534,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
 
             environment_id = hashlib.md5(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -584,7 +584,7 @@ class SmfCostanzo2016Adapter:
 
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -656,7 +656,7 @@ class SmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)
@@ -716,20 +716,20 @@ class DmfCostanzo2016Adapter:
 
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 yield BioCypherNode(
                     node_id=genome_id,
-                    preferred_id=f"reference_genome_{i}",
+                    preferred_id=f"genome_reference_{i}",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -834,7 +834,7 @@ class DmfCostanzo2016Adapter:
                 )
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
-                json.dumps(data["reference"].reference_environment.model_dump()).encode(
+                json.dumps(data["reference"].environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -844,7 +844,7 @@ class DmfCostanzo2016Adapter:
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 )
 
                 yield BioCypherNode(
@@ -854,10 +854,10 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "temperature": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.model_dump()
+                            data["reference"].environment_reference.model_dump()
                         ),
                     },
                 )
@@ -891,14 +891,14 @@ class DmfCostanzo2016Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data["reference"].reference_environment.media.name
-                state = data["reference"].reference_environment.media.state
+                name = data["reference"].environment_reference.media.name
+                state = data["reference"].environment_reference.media.state
 
                 yield BioCypherNode(
                     node_id=media_id,
@@ -908,7 +908,7 @@ class DmfCostanzo2016Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.media.model_dump()
+                            data["reference"].environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -941,7 +941,7 @@ class DmfCostanzo2016Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.temperature.model_dump()
+                    data["reference"].environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
@@ -955,14 +955,14 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "value": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "description": data[
                             "reference"
-                        ].reference_environment.temperature.description,
+                        ].environment_reference.temperature.description,
                         "serialized_data": json.dumps(
                             data[
                                 "reference"
-                            ].reference_environment.temperature.model_dump()
+                            ].environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -978,7 +978,7 @@ class DmfCostanzo2016Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -989,7 +989,7 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -1002,18 +1002,18 @@ class DmfCostanzo2016Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
+                json.dumps(data["reference"].phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
+                graph_level = data["reference"].phenotype_reference.graph_level
+                label = data["reference"].phenotype_reference.label
+                label_statistic = data["reference"].phenotype_reference.label_statistic
+                fitness = data["reference"].phenotype_reference.fitness
+                fitness_std = data["reference"].phenotype_reference.fitness_std
 
                 yield BioCypherNode(
                     node_id=phenotype_id,
@@ -1022,11 +1022,11 @@ class DmfCostanzo2016Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
+                            data["reference"].phenotype_reference.model_dump()
                         ),
                     },
                 )
@@ -1182,7 +1182,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
 
             environment_id = hashlib.md5(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1232,7 +1232,7 @@ class DmfCostanzo2016Adapter:
 
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1301,7 +1301,7 @@ class DmfCostanzo2016Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             genome_experiment_ref_pair = (genome_id, experiment_ref_id)

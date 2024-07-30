@@ -64,20 +64,20 @@ class SmfKuzmin2018Adapter:
 
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 yield BioCypherNode(
                     node_id=genome_id,
-                    preferred_id=f"reference_genome_{i}",
+                    preferred_id=f"genome_reference_{i}",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -192,7 +192,7 @@ class SmfKuzmin2018Adapter:
                 )
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
-                json.dumps(data["reference"].reference_environment.model_dump()).encode(
+                json.dumps(data["reference"].environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -202,7 +202,7 @@ class SmfKuzmin2018Adapter:
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 )
 
                 yield BioCypherNode(
@@ -212,10 +212,10 @@ class SmfKuzmin2018Adapter:
                     properties={
                         "temperature": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.model_dump()
+                            data["reference"].environment_reference.model_dump()
                         ),
                     },
                 )
@@ -249,14 +249,14 @@ class SmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data["reference"].reference_environment.media.name
-                state = data["reference"].reference_environment.media.state
+                name = data["reference"].environment_reference.media.name
+                state = data["reference"].environment_reference.media.state
 
                 yield BioCypherNode(
                     node_id=media_id,
@@ -266,7 +266,7 @@ class SmfKuzmin2018Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.media.model_dump()
+                            data["reference"].environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -299,7 +299,7 @@ class SmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.temperature.model_dump()
+                    data["reference"].environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
@@ -313,14 +313,14 @@ class SmfKuzmin2018Adapter:
                     properties={
                         "value": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "description": data[
                             "reference"
-                        ].reference_environment.temperature.description,
+                        ].environment_reference.temperature.description,
                         "serialized_data": json.dumps(
                             data[
                                 "reference"
-                            ].reference_environment.temperature.model_dump()
+                            ].environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -336,7 +336,7 @@ class SmfKuzmin2018Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -347,7 +347,7 @@ class SmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -360,18 +360,18 @@ class SmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
+                json.dumps(data["reference"].phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
+                graph_level = data["reference"].phenotype_reference.graph_level
+                label = data["reference"].phenotype_reference.label
+                label_statistic = data["reference"].phenotype_reference.label_statistic
+                fitness = data["reference"].phenotype_reference.fitness
+                fitness_std = data["reference"].phenotype_reference.fitness_std
 
                 yield BioCypherNode(
                     node_id=phenotype_id,
@@ -380,11 +380,11 @@ class SmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
+                            data["reference"].phenotype_reference.model_dump()
                         ),
                     },
                 )
@@ -528,7 +528,7 @@ class SmfKuzmin2018Adapter:
             ).hexdigest()
 
             environment_id = hashlib.md5(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -578,7 +578,7 @@ class SmfKuzmin2018Adapter:
 
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -650,7 +650,7 @@ class SmfKuzmin2018Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
+                json.dumps(data.reference.genome_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -712,20 +712,20 @@ class DmfKuzmin2018Adapter:
 
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 yield BioCypherNode(
                     node_id=genome_id,
-                    preferred_id=f"reference_genome_{i}",
+                    preferred_id=f"genome_reference_{i}",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -832,7 +832,7 @@ class DmfKuzmin2018Adapter:
                 )
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
-                json.dumps(data["reference"].reference_environment.model_dump()).encode(
+                json.dumps(data["reference"].environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -842,7 +842,7 @@ class DmfKuzmin2018Adapter:
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 )
 
                 yield BioCypherNode(
@@ -852,10 +852,10 @@ class DmfKuzmin2018Adapter:
                     properties={
                         "temperature": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.model_dump()
+                            data["reference"].environment_reference.model_dump()
                         ),
                     },
                 )
@@ -889,14 +889,14 @@ class DmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data["reference"].reference_environment.media.name
-                state = data["reference"].reference_environment.media.state
+                name = data["reference"].environment_reference.media.name
+                state = data["reference"].environment_reference.media.state
 
                 yield BioCypherNode(
                     node_id=media_id,
@@ -906,7 +906,7 @@ class DmfKuzmin2018Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.media.model_dump()
+                            data["reference"].environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -939,7 +939,7 @@ class DmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.temperature.model_dump()
+                    data["reference"].environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
@@ -953,14 +953,14 @@ class DmfKuzmin2018Adapter:
                     properties={
                         "value": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "description": data[
                             "reference"
-                        ].reference_environment.temperature.description,
+                        ].environment_reference.temperature.description,
                         "serialized_data": json.dumps(
                             data[
                                 "reference"
-                            ].reference_environment.temperature.model_dump()
+                            ].environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -976,7 +976,7 @@ class DmfKuzmin2018Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -987,7 +987,7 @@ class DmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -1000,18 +1000,18 @@ class DmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
+                json.dumps(data["reference"].phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
+                graph_level = data["reference"].phenotype_reference.graph_level
+                label = data["reference"].phenotype_reference.label
+                label_statistic = data["reference"].phenotype_reference.label_statistic
+                fitness = data["reference"].phenotype_reference.fitness
+                fitness_std = data["reference"].phenotype_reference.fitness_std
 
                 yield BioCypherNode(
                     node_id=phenotype_id,
@@ -1020,11 +1020,11 @@ class DmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
+                            data["reference"].phenotype_reference.model_dump()
                         ),
                     },
                 )
@@ -1180,7 +1180,7 @@ class DmfKuzmin2018Adapter:
             ).hexdigest()
 
             environment_id = hashlib.md5(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1230,7 +1230,7 @@ class DmfKuzmin2018Adapter:
 
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1302,7 +1302,7 @@ class DmfKuzmin2018Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
+                json.dumps(data.reference.genome_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1364,20 +1364,20 @@ class TmfKuzmin2018Adapter:
 
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode("utf-8")
+                json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
             ).hexdigest()
 
             if genome_id not in seen_node_ids:
                 seen_node_ids.add(genome_id)
                 yield BioCypherNode(
                     node_id=genome_id,
-                    preferred_id=f"reference_genome_{i}",
+                    preferred_id=f"genome_reference_{i}",
                     node_label="genome",
                     properties={
-                        "species": data.reference.reference_genome.species,
-                        "strain": data.reference.reference_genome.strain,
+                        "species": data.reference.genome_reference.species,
+                        "strain": data.reference.genome_reference.strain,
                         "serialized_data": json.dumps(
-                            data.reference.reference_genome.model_dump()
+                            data.reference.genome_reference.model_dump()
                         ),
                     },
                 )
@@ -1484,7 +1484,7 @@ class TmfKuzmin2018Adapter:
                 )
         for i, data in tqdm(enumerate(self.dataset)):
             environment_id = hashlib.md5(
-                json.dumps(data["reference"].reference_environment.model_dump()).encode(
+                json.dumps(data["reference"].environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1494,7 +1494,7 @@ class TmfKuzmin2018Adapter:
             if node_id not in seen_node_ids:
                 seen_node_ids.add(node_id)
                 media = json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 )
 
                 yield BioCypherNode(
@@ -1504,10 +1504,10 @@ class TmfKuzmin2018Adapter:
                     properties={
                         "temperature": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "media": media,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.model_dump()
+                            data["reference"].environment_reference.model_dump()
                         ),
                     },
                 )
@@ -1541,14 +1541,14 @@ class TmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             media_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.media.model_dump()
+                    data["reference"].environment_reference.media.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
             if media_id not in seen_node_ids:
                 seen_node_ids.add(media_id)
-                name = data["reference"].reference_environment.media.name
-                state = data["reference"].reference_environment.media.state
+                name = data["reference"].environment_reference.media.name
+                state = data["reference"].environment_reference.media.state
 
                 yield BioCypherNode(
                     node_id=media_id,
@@ -1558,7 +1558,7 @@ class TmfKuzmin2018Adapter:
                         "name": name,
                         "state": state,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_environment.media.model_dump()
+                            data["reference"].environment_reference.media.model_dump()
                         ),
                     },
                 )
@@ -1591,7 +1591,7 @@ class TmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             temperature_id = hashlib.md5(
                 json.dumps(
-                    data["reference"].reference_environment.temperature.model_dump()
+                    data["reference"].environment_reference.temperature.model_dump()
                 ).encode("utf-8")
             ).hexdigest()
 
@@ -1605,14 +1605,14 @@ class TmfKuzmin2018Adapter:
                     properties={
                         "value": data[
                             "reference"
-                        ].reference_environment.temperature.value,
+                        ].environment_reference.temperature.value,
                         "description": data[
                             "reference"
-                        ].reference_environment.temperature.description,
+                        ].environment_reference.temperature.description,
                         "serialized_data": json.dumps(
                             data[
                                 "reference"
-                            ].reference_environment.temperature.model_dump()
+                            ].environment_reference.temperature.model_dump()
                         ),
                     },
                 )
@@ -1628,7 +1628,7 @@ class TmfKuzmin2018Adapter:
                 seen_node_ids.add(phenotype_id)
                 graph_level = data["experiment"].phenotype.graph_level
                 label = data["experiment"].phenotype.label
-                label_error = data["experiment"].phenotype.label_error
+                label_statistic = data["experiment"].phenotype.label_statistic
                 fitness = data["experiment"].phenotype.fitness
                 fitness_std = data["experiment"].phenotype.fitness_std
 
@@ -1639,7 +1639,7 @@ class TmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
@@ -1652,18 +1652,18 @@ class TmfKuzmin2018Adapter:
         for i, data in tqdm(enumerate(self.dataset)):
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data["reference"].reference_phenotype.model_dump()).encode(
+                json.dumps(data["reference"].phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
 
             if phenotype_id not in seen_node_ids:
                 seen_node_ids.add(phenotype_id)
-                graph_level = data["reference"].reference_phenotype.graph_level
-                label = data["reference"].reference_phenotype.label
-                label_error = data["reference"].reference_phenotype.label_error
-                fitness = data["reference"].reference_phenotype.fitness
-                fitness_std = data["reference"].reference_phenotype.fitness_std
+                graph_level = data["reference"].phenotype_reference.graph_level
+                label = data["reference"].phenotype_reference.label
+                label_statistic = data["reference"].phenotype_reference.label_statistic
+                fitness = data["reference"].phenotype_reference.fitness
+                fitness_std = data["reference"].phenotype_reference.fitness_std
 
                 yield BioCypherNode(
                     node_id=phenotype_id,
@@ -1672,11 +1672,11 @@ class TmfKuzmin2018Adapter:
                     properties={
                         "graph_level": graph_level,
                         "label": label,
-                        "label_error": label_error,
+                        "label_statistic": label_statistic,
                         "fitness": fitness,
                         "fitness_std": fitness_std,
                         "serialized_data": json.dumps(
-                            data["reference"].reference_phenotype.model_dump()
+                            data["reference"].phenotype_reference.model_dump()
                         ),
                     },
                 )
@@ -1832,7 +1832,7 @@ class TmfKuzmin2018Adapter:
             ).hexdigest()
 
             environment_id = hashlib.md5(
-                json.dumps(data.reference.reference_environment.model_dump()).encode(
+                json.dumps(data.reference.environment_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1882,7 +1882,7 @@ class TmfKuzmin2018Adapter:
 
             # Get the phenotype ID associated with the experiment reference
             phenotype_id = hashlib.md5(
-                json.dumps(data.reference.reference_phenotype.model_dump()).encode(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()
@@ -1954,7 +1954,7 @@ class TmfKuzmin2018Adapter:
             ).hexdigest()
 
             genome_id = hashlib.md5(
-                json.dumps(data.reference.reference_genome.model_dump()).encode(
+                json.dumps(data.reference.genome_reference.model_dump()).encode(
                     "utf-8"
                 )
             ).hexdigest()

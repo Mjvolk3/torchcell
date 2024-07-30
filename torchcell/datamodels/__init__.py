@@ -1,10 +1,15 @@
+# torchcell/datamodels/__init__
+# [[torchcell.datamodels.__init__]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/__init__.py
+
+
 from .pydant import ModelStrict, ModelStrictArbitrary
 
 from .schema import (
-    BaseEnvironment,
+    Environment,
     Genotype,
-    BasePhenotype,
-    BaseExperiment,
+    Phenotype,
+    Experiment,
     GenePerturbation,
     Media,
     ModelStrict,
@@ -28,15 +33,20 @@ from .schema import (
     AllelePerturbation,
     SgaAllelePerturbation,
     MeanDeletionPerturbation,
+    GeneInteractionPhenotype,
+    GeneInteractionExperimentReference,
+    GeneInteractionExperiment,
+    ExperimentType,
+    ExperimentReferenceType,
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
 
 schema_classes = [
-    "BaseEnvironment",
+    "Environment",
     "Genotype",
-    "BasePhenotype",
-    "BaseExperiment",
+    "Phenotype",
+    "Experiment",
     "GenePerturbation",
     "Media",
     "ReferenceGenome",
@@ -59,6 +69,11 @@ schema_classes = [
     "AllelePerturbation",
     "SgaAllelePerturbation",
     "MeanDeletionPerturbation",
+    "GeneInteractionPhenotype",
+    "GeneInteractionExperimentReference",
+    "GeneInteractionExperiment",
+    "ExperimentType",
+    "ExperimentReferenceType",
 ]
 
 __all__ = core_models + schema_classes

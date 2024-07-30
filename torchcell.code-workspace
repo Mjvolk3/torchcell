@@ -254,7 +254,7 @@
                 "args": [
                     "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pyreverse",
                     "-o",
-                    "png",
+                    "svg",
                     "-p",
                     "uml_temp",
                     "${file}"

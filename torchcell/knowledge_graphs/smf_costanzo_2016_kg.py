@@ -1,7 +1,8 @@
-# torchcell/knowledge_graphs/minimal_kg
-# [[torchcell.knowledge_graphs.minimal_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/minimal_kg
-# Test file: tests/torchcell/knowledge_graphs/test_minimal_kg.py
+# torchcell/knowledge_graphs/smf_costanzo_2016_kg
+# [[torchcell.knowledge_graphs.smf_costanzo_2016_kg]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/smf_costanzo_2016_kg
+# Test file: tests/torchcell/knowledge_graphs/test_smf_costanzo_2016_kg.py
+
 
 from biocypher import BioCypher
 import torchcell
@@ -127,11 +128,6 @@ def main(cfg) -> str:
             "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
             "kwargs": {"io_workers": num_workers},
         },
-        {
-            "class": SmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
-        },
     ]
 
     # Instantiate datasets
@@ -153,7 +149,6 @@ def main(cfg) -> str:
         # Define dataset-adapter mapping
         dataset_adapter_map = {
             SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
-            SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
         }
 
     # Instantiate adapters based on the dataset-adapter mapping
@@ -181,9 +176,9 @@ def main(cfg) -> str:
         start_time = time.time()
         bc.write_edges(adapter.get_edges())
         end_time = time.time()
-        write_edges_time = end_time - start_time
+        write_edges_time = end_time - start_time    
         wandb.log({f"{adapter_name}_write_edges_time": write_edges_time})
-
+        
     log.info("Finished iterating nodes and edges")
     # Write admin import statement and schema information (for biochatter)
     bc.write_import_call()

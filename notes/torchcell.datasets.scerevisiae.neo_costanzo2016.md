@@ -271,7 +271,7 @@ class SmfCostanzo2016Dataset:
                     perturbed_gene_name=row["Allele/Gene name"],
                 )
             )
-        environment = BaseEnvironment(
+        environment = Environment(
             media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=temperature),
         )

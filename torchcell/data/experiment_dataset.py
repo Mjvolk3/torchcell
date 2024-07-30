@@ -21,7 +21,7 @@ from torchcell.sequence import GeneSet
 from abc import ABC, abstractmethod
 from functools import wraps
 import torch
-from torchcell.datamodels import ExperimentReferenceType
+from torchcell.datamodels import ExperimentReferenceType, Publication
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 from concurrent.futures import ProcessPoolExecutor
 import concurrent.futures
@@ -389,9 +389,16 @@ class ExperimentDataset(Dataset, ABC):
     def transform_item(self, item):
         experiment_data = item["experiment"]
         reference_data = item["reference"]
+        publication_data = item["publication"]
         experiment = self.experiment_class(**experiment_data)
         reference = self.reference_class(**reference_data)
-        return {"experiment": experiment, "reference": reference}
+        reference = self.reference_class(**reference_data)
+        publication = Publication(**publication_data)
+        return {
+            "experiment": experiment,
+            "reference": reference,
+            "publication": publication,
+        }
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"

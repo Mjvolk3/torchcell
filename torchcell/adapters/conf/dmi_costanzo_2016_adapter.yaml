@@ -18,6 +18,7 @@ cell_adapter:
     - gene interaction phenotype
     - gene interaction phenotype reference
     - dataset
+    - publication
   edge_methods:
     - experiment reference to dataset
     - experiment to dataset
@@ -28,5 +29,6 @@ cell_adapter:
     - environment to experiment reference
     - phenotype to experiment
     - media to environment
-    - temperature environment
+    - temperature to environment
     - genome to experiment reference
+    - publication to experiment

@@ -130,7 +130,7 @@ class SmfCostanzo2016Dataset(Dataset):
         wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
         wt["phenotype"] = {
             "observation": {"fitness": 1.0},
-            "environment": {"media": "YPD", "temperature": 30},
+            "environment": {"media": "YEPD", "temperature": 30},
         }
         data = Data()
         data.genotype = wt["genotype"]
@@ -178,7 +178,7 @@ class SmfCostanzo2016Dataset(Dataset):
             .to_dict("records")
         )
         environments_26 = [
-            {"media": "YPD", "temperature": 26} for _ in range(len(all_data_df))
+            {"media": "YEPD", "temperature": 26} for _ in range(len(all_data_df))
         ]
 
         # Create 30° observations
@@ -195,7 +195,7 @@ class SmfCostanzo2016Dataset(Dataset):
             .to_dict("records")
         )
         environments_30 = [
-            {"media": "YPD", "temperature": 30} for _ in range(len(all_data_df))
+            {"media": "YEPD", "temperature": 30} for _ in range(len(all_data_df))
         ]
 
         data_list = []
@@ -526,7 +526,7 @@ class DmfCostanzo2016Dataset(Dataset):
         wt["genotype"] = ({"id": None, "intervention": None, "id_full": None},)
         wt["phenotype"] = {
             "observation": {"fitness": 1.0, "genetic_interaction_score": 0},
-            "environment": {"media": "YPD", "temperature": 30},
+            "environment": {"media": "YEPD", "temperature": 30},
         }
         data = Data()
         data.genotype = wt["genotype"]
@@ -595,7 +595,7 @@ class DmfCostanzo2016Dataset(Dataset):
         ]
 
         # Create environment dict
-        environment = {"media": "YPD", "temperature": 30}
+        environment = {"media": "YEPD", "temperature": 30}
 
         # Combine everything
         combined_data = [

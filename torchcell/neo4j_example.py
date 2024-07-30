@@ -17,7 +17,7 @@ def make_fake_data_1():
             "genetic_interaction_p_value": 0.2841,
             "special_fitness": some_serialized_data,  # Serialized data added
         },
-        "environment": {"media": "Ypd", "temperature": 30},
+        "environment": {"media": "YEPD", "temperature": 30},
     }
     return fake_data
 
@@ -36,7 +36,7 @@ def make_fake_data_2():
             "genetic_interaction_p_value": 0.2112,
             "special_fitness": some_serialized_data,  # Serialized data added
         },
-        "environment": {"media": "YPD", "temperature": 30},
+        "environment": {"media": "YEPD", "temperature": 30},
     }
     return fake_data
 

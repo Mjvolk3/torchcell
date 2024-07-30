@@ -23,7 +23,7 @@ from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.datamodels import (
-    BaseEnvironment,
+    Environment,
     Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
@@ -36,7 +36,7 @@ from torchcell.datamodels import (
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    BaseExperiment,
+    Experiment,
     ExperimentReference,
     MeanDeletionPerturbation,
     ExperimentReference,
@@ -56,7 +56,7 @@ class Deduplicator(ABC):
     @abstractmethod
     def create_mean_entry(
         self, duplicate_experiments
-    ) -> dict[str, BaseExperiment | ExperimentReference]: ...
+    ) -> dict[str, Experiment | ExperimentReference]: ...
 
 
 class ParsedGenome(ModelStrictArbitrary):
@@ -186,7 +186,7 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     phenotype = data["experiment"].phenotype
     processed_graph["gene"].graph_level = phenotype.graph_level
     processed_graph["gene"].label = phenotype.label
-    processed_graph["gene"].label_error = phenotype.label_error
+    processed_graph["gene"].label_statistic = phenotype.label_statistic
     # TODO we actually want to do this renaming in the datamodel
     # We do it here to replicate behavior for downstream
     # Will break with anything other than fitness obviously
@@ -499,7 +499,7 @@ class ExperimentDeduplicator(Deduplicator):
 
     def create_mean_entry(
         self, duplicate_experiments
-    ) -> dict[str, BaseExperiment | ExperimentReference]:
+    ) -> dict[str, Experiment | ExperimentReference]:
         # Check if all phenotypes have the same graph_level and label
         graph_levels = set(
             exp["experiment"].phenotype.graph_level for exp in duplicate_experiments
@@ -531,7 +531,7 @@ class ExperimentDeduplicator(Deduplicator):
         mean_phenotype = FitnessPhenotype(
             graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
             label=duplicate_experiments[0]["experiment"].phenotype.label,
-            label_error=duplicate_experiments[0]["experiment"].phenotype.label_error,
+            label_statistic=duplicate_experiments[0]["experiment"].phenotype.label_statistic,
             fitness=mean_fitness,
             fitness_std=mean_fitness_std,
         )
@@ -555,39 +555,39 @@ class ExperimentDeduplicator(Deduplicator):
 
         # Create a new FitnessExperimentReference with the mean values
         fitness_ref_values = [
-            exp["reference"].reference_phenotype.fitness
+            exp["reference"].phenotype_reference.fitness
             for exp in duplicate_experiments
-            if exp["reference"].reference_phenotype.fitness is not None
+            if exp["reference"].phenotype_reference.fitness is not None
         ]
         fitness_ref_stds = [
-            exp["reference"].reference_phenotype.fitness_std
+            exp["reference"].phenotype_reference.fitness_std
             for exp in duplicate_experiments
-            if exp["reference"].reference_phenotype.fitness_std is not None
+            if exp["reference"].phenotype_reference.fitness_std is not None
         ]
 
         # Calculate the mean reference fitness and mean reference standard deviation, handling empty lists
         mean_fitness_ref = np.mean(fitness_ref_values) if fitness_ref_values else None
         mean_fitness_ref_std = np.mean(fitness_ref_stds) if fitness_ref_stds else None
 
-        mean_reference_phenotype = FitnessPhenotype(
+        mean_phenotype_reference = FitnessPhenotype(
             graph_level=duplicate_experiments[0][
                 "reference"
-            ].reference_phenotype.graph_level,
-            label=duplicate_experiments[0]["reference"].reference_phenotype.label,
-            label_error=duplicate_experiments[0][
+            ].phenotype_reference.graph_level,
+            label=duplicate_experiments[0]["reference"].phenotype_reference.label,
+            label_statistic=duplicate_experiments[0][
                 "reference"
-            ].reference_phenotype.label_error,
+            ].phenotype_reference.label_statistic,
             fitness=mean_fitness_ref,
             fitness_std=mean_fitness_ref_std,
         )
 
         # For now we don't deal with reference harmonization - just take first reference
         mean_reference = FitnessExperimentReference(
-            reference_genome=duplicate_experiments[0]["reference"].reference_genome,
-            reference_environment=duplicate_experiments[0][
+            genome_reference=duplicate_experiments[0]["reference"].genome_reference,
+            environment_reference=duplicate_experiments[0][
                 "reference"
-            ].reference_environment,
-            reference_phenotype=mean_reference_phenotype,
+            ].environment_reference,
+            phenotype_reference=mean_phenotype_reference,
         )
 
         return {"experiment": mean_experiment, "reference": mean_reference}

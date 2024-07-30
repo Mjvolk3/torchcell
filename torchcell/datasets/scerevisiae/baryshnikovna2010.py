@@ -55,7 +55,7 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
                 "smf_std": torch.tensor([row["std"]], dtype=torch.float),
             }
             environment = {
-                "media": "YPD",
+                "media": "YEPD",
                 "temperature": "30C",
             }
             phenotype = {"observation": observation, "environment": environment}

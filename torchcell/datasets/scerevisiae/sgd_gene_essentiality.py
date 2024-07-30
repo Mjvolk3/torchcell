@@ -190,7 +190,7 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
         )
 
         environment = Environment(
-            media=Media(name="YPD", state="solid"),
+            media=Media(name="YEPD", state="solid"),
             temperature=Temperature(value=30),  # Assuming standard temperature
         )
 

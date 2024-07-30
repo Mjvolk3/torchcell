@@ -35,6 +35,7 @@ from torchcell.datamodels.schema import (
     GeneInteractionPhenotype,
     GeneInteractionExperimentReference,
     GeneInteractionExperiment,
+    Publication,
 )
 from torchcell.sequence import GeneSet
 from torchcell.data import ExperimentDataset, post_process
@@ -99,7 +100,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(
+                experiment, reference, publication = self.create_experiment(
                     row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
@@ -108,6 +109,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -287,18 +289,19 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+        )
+
+        experiment = FitnessExperiment(
+            genotype=genotype, environment=environment, phenotype=phenotype
+        )
+        publication = Publication(
+            pubmed_id="29674565",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",
             doi="10.1126/science.aao1729",
             doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
-        experiment = FitnessExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
-        )
-        return experiment, reference
+        return experiment, reference, publication
 
 
 @register_dataset
@@ -355,7 +358,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(
+                experiment, reference, publication = self.create_experiment(
                     row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
@@ -364,6 +367,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -517,7 +521,14 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             doi="10.1126/science.aao1729",
             doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
-        return experiment, reference
+        publication = Publication(
+            pubmed_id="29674565",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+        )
+
+        return experiment, reference, publication
 
 
 @register_dataset
@@ -574,7 +585,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(
+                experiment, reference, publication = self.create_experiment(
                     row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
@@ -583,6 +594,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -747,7 +759,14 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             doi="10.1126/science.aao1729",
             doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
-        return experiment, reference
+        publication = Publication(
+            pubmed_id="29674565",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+        )
+
+        return experiment, reference, publication
 
 
 # Interactions
@@ -801,7 +820,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(row)
 
                 serialized_data = pickle.dumps(
                     {
@@ -950,7 +969,14 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             doi="10.1126/science.aao1729",
             doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
-        return experiment, reference
+        publication = Publication(
+            pubmed_id="29674565",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",
+            doi="10.1126/science.aao1729",
+            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+        )
+
+        return experiment, reference, publication
 
 
 @register_dataset
@@ -1003,12 +1029,13 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(row)
 
                 serialized_data = pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -1162,19 +1189,22 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
+            genotype=genotype, environment=environment, phenotype=phenotype
+        )
+        publication = Publication(
+            pubmed_id="29674565",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/29674565/",
             doi="10.1126/science.aao1729",
             doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
-        return experiment, reference
+
+        return experiment, reference, publication
 
 
 if __name__ == "__main__":
     ## Fitness
     dataset = SmfKuzmin2018Dataset()
-    dataset[0]
+    print(dataset[0])
     print(len(dataset))
     # dataset = DmfKuzmin2018Dataset()
     # dataset[0]
@@ -1187,6 +1217,6 @@ if __name__ == "__main__":
     # dataset = DmiKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
-    #dataset = TmiKuzmin2018Dataset()
-    #dataset[0]
-    #print(len(dataset))
+    # dataset = TmiKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))

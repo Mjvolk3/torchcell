@@ -48,7 +48,7 @@ class CellAdapter:
 
         # Supported methods
         self.node_methods = [
-            ("experiment_reference", self._get_experiment_reference_nodes),
+            ("experiment reference", self._get_experiment_reference_nodes),
             ("genome", self._get_genome_nodes),
             ("experiment", self._experiment_node),
             ("genotype", self._genotype_node),
@@ -70,6 +70,7 @@ class CellAdapter:
                 self._get_gene_interaction_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
+            ("publication", self._publication_node),
         ]
         self.edge_methods = [
             (
@@ -95,6 +96,11 @@ class CellAdapter:
                 "genome to experiment reference",
                 self._get_genome_to_experiment_reference_edges,
             ),
+            (
+                "phenotype to experiment reference",
+                self._get_phenotype_to_experiment_reference_edges,
+            ),
+            ("publication to experiment", self._publication_to_experiment_edge),
         ]
 
     def get_data_by_type(
@@ -178,14 +184,7 @@ class CellAdapter:
                 node_id=experiment_ref_id,
                 preferred_id="experiment reference",
                 node_label="experiment reference",
-                properties={
-                    "dataset_name": self.dataset.name,
-                    "pubmed_id": data.reference.pubmed_id,
-                    "pubmed_url": data.reference.pubmed_url,
-                    "doi": data.reference.doi,
-                    "doi_url": data.reference.doi_url,
-                    "serialized_data": json.dumps(data.reference.model_dump()),
-                },
+                properties={"serialized_data": json.dumps(data.reference.model_dump())},
             )
             nodes.append(node)
         return nodes
@@ -223,14 +222,7 @@ class CellAdapter:
             node_id=experiment_id,
             preferred_id="experiment",
             node_label="experiment",
-            properties={
-                "dataset_name": self.dataset.name,
-                "pubmed_id": data["experiment"].pubmed_id,
-                "pubmed_url": data["experiment"].pubmed_url,
-                "doi": data["experiment"].doi,
-                "doi_url": data["experiment"].doi_url,
-                "serialized_data": json.dumps(data["experiment"].model_dump()),
-            },
+            properties={"serialized_data": json.dumps(data["experiment"].model_dump())},
         )
 
     @data_chunker
@@ -552,6 +544,26 @@ class CellAdapter:
         ]
         return nodes
 
+    @data_chunker
+    def _publication_node(self, data: dict) -> BioCypherNode:
+        publication = data["publication"]
+        publication_id = hashlib.sha256(
+            json.dumps(publication.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        return BioCypherNode(
+            node_id=publication_id,
+            preferred_id=f"publication_{publication.pubmed_id}",
+            node_label="publication",
+            properties={
+                "pubmed_id": publication.pubmed_id,
+                "pubmed_url": publication.pubmed_url,
+                "doi": publication.doi,
+                "doi_url": publication.doi_url,
+                "serialized_data": json.dumps(publication.model_dump()),
+            },
+        )
+
     # edges
     def _get_experiment_reference_to_dataset_edges(self) -> list[BioCypherEdge]:
         edges = []
@@ -738,6 +750,43 @@ class CellAdapter:
                 )
                 edges.append(edge)
         return edges
+
+    def _get_phenotype_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
+        edges = []
+        seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            experiment_ref_id = hashlib.sha256(
+                json.dumps(data.reference.model_dump()).encode("utf-8")
+            ).hexdigest()
+            phenotype_id = hashlib.sha256(
+                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
+                    "utf-8"
+                )
+            ).hexdigest()
+            phenotype_experiment_ref_pair = (phenotype_id, experiment_ref_id)
+            if phenotype_experiment_ref_pair not in seen_phenotype_experiment_ref_pairs:
+                seen_phenotype_experiment_ref_pairs.add(phenotype_experiment_ref_pair)
+                edge = BioCypherEdge(
+                    source_id=phenotype_id,
+                    target_id=experiment_ref_id,
+                    relationship_label="phenotype member of",
+                )
+                edges.append(edge)
+        return edges
+
+    @data_chunker
+    def _publication_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+        experiment_id = hashlib.sha256(
+            json.dumps(data["experiment"].model_dump()).encode("utf-8")
+        ).hexdigest()
+        publication_id = hashlib.sha256(
+            json.dumps(data["publication"].model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherEdge(
+            source_id=publication_id,
+            target_id=experiment_id,
+            relationship_label="mentions",
+        )
 
 
 if __name__ == "__main__":

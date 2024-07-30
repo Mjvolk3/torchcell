@@ -2,8 +2,6 @@
 # [[torchcell.adapters.conf.dmf_costanzo_2016_adapter.yaml]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/dmf_costanzo_2016_adapter.yaml
 
-
-
 cell_adapter:
   node_methods:
     - experiment reference
@@ -20,6 +18,7 @@ cell_adapter:
     - fitness phenotype
     - fitness phenotype reference
     - dataset
+    - publication
   edge_methods:
     - experiment reference to dataset
     - experiment to dataset
@@ -30,5 +29,6 @@ cell_adapter:
     - environment to experiment reference
     - phenotype to experiment
     - media to environment
-    - temperature environment
+    - temperature to environment
     - genome to experiment reference
+    - publication to experiment

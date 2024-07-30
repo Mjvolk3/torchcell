@@ -4,36 +4,35 @@ dataset:
 
 study:
     represented_as: node
-    properties: 
+    properties:
         name: str
+
+publication:
+    represented_as: node
+    properties:
+        pubmed_id: str
+        pubmed_url: str
+        doi: str
+        doi_url: str
+        serialized_data: str
 
 experiment:
     represented_as: node
     is_a: material sample
     # preferred_id:
     properties:
-        dataset_name: str
-        pubmed_id: str
-        pubmed_url: str
-        doi: str
-        doi_url: str
         serialized_data: str
 
-reference experiment:
+experiment reference:
     represented_as: node
     is_a: genome
     properties:
-        dataset_name: str
-        pubmed_id: str
-        pubmed_url: str
-        doi: str
-        doi_url: str
         serialized_data: str
 
-reference experiment member of:
+experiment reference member of:
     is_a: material sample derivation association
     represented_as: edge
-    source: reference experiment
+    source: experiment reference
     target: dataset
 
 experiment member of:
@@ -42,10 +41,10 @@ experiment member of:
     source: experiment
     target: dataset
 
-reference experiment of:
+experiment reference of:
     is_a: material sample derivation association
     represented_as: edge
-    source: reference experiment
+    source: experiment reference
     target: experiment
 
 genome:
@@ -105,14 +104,30 @@ fitness phenotype:
     properties:
         graph_level: str
         label: str
-        label_error: str
+        label_statistic: str
         fitness: float
         fitness_std: float
         serialized_data: str
 
+new_phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label: str
+        label_statistic: str
+        fitness: float
+        fitness_std: float
+        serialized_data: str
+    
 # RELATIONSHIPS
 
-# want to now add this one
+# IDEA to represent inheritance structure we could use "part_of"
+# "material sample derivation association" is more like sample from a whole. which is less correct.
+# IDEA I think "has_participant" is likely most correct if we consider the experiment as 'process' and the children as 'continuants'
+# https://biolink.github.io/biolink-model/has_participant/
+
+
 genotype member of:
     is_a: material sample derivation association
     represented_as: edge
@@ -129,15 +144,17 @@ environment member of:
     is_a: material sample derivation association
     represented_as: edge
     source: environment
-    target: [experiment, reference experiment]
+    target: [experiment, experiment reference]
 
+
+# IDEA could use "has_phenotype"
+# Would require reversing direction of edge
 phenotype member of:
     is_a: material sample derivation association
     represented_as: edge
     source: fitness phenotype
-    target: [experiment, reference experiment]
+    target: [experiment, experiment reference]
 
-# Add these last two
 media member of:
     is_a: material sample derivation association
     represented_as: edge
@@ -154,4 +171,11 @@ genome member of:
     is_a: material sample derivation association
     represented_as: edge
     source: genome
-    target: reference experiment
+    target: experiment reference
+
+# publication mentions experiment:
+    # is_a: mentions
+mentions:
+    represented_as: edge
+    source: publication
+    target: experiment

@@ -32,6 +32,7 @@ from torchcell.datamodels import (
     GeneInteractionPhenotype,
     GeneInteractionExperimentReference,
     GeneInteractionExperiment,
+    Publication,
 )
 from torchcell.data import ExperimentDataset, post_process
 from concurrent.futures import ThreadPoolExecutor
@@ -114,7 +115,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference = self.create_experiment(
+                experiment, reference, publication = self.create_experiment(
                     row,
                     phenotype_reference_std_26=phenotype_reference_std_26,
                     phenotype_reference_std_30=phenotype_reference_std_30,
@@ -125,6 +126,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -303,18 +305,20 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
+        )
+
+        experiment = FitnessExperiment(
+            genotype=genotype, environment=environment, phenotype=phenotype
+        )
+        
+        publication = Publication(
+            pubmed_id="27708008",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27708008/",
             doi="10.1126/science.aaf1420",
             doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
-        experiment = FitnessExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-            doi="10.1126/science.aaf1420",
-            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
-        )
-        return experiment, reference
+        return experiment, reference, publication
 
 
 @register_dataset
@@ -480,7 +484,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     def _process_batch(self, batch_df, env):
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
-                experiment, reference = self.create_experiment(
+                experiment, reference, publication = self.create_experiment(
                     row,
                     phenotype_reference_std_26=self.phenotype_reference_std_26,
                     phenotype_reference_std_30=self.phenotype_reference_std_30,
@@ -491,6 +495,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
 
@@ -635,7 +640,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             doi="10.1126/science.aaf1420",
             doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
-        return experiment, reference
+
+        publication = Publication(
+            pubmed_id="27708008",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27708008/",
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
+        )
+
+        return experiment, reference, publication
 
 
 # Interactions
@@ -795,13 +808,14 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     def _process_batch(self, batch_df, env):
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
-                experiment, reference = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(row)
 
                 # Serialize the Pydantic objects
                 serialized_data = pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
 
@@ -938,7 +952,15 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             doi="10.1126/science.aaf1420",
             doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
-        return experiment, reference
+
+        publication = Publication(
+            pubmed_id="27708008",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27708008/",
+            doi="10.1126/science.aaf1420",
+            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
+        )
+
+        return experiment, reference, publication
 
 
 if __name__ == "__main__":
@@ -982,11 +1004,11 @@ if __name__ == "__main__":
 
     ######
     # Single mutant fitness
-    # smf_dataset = SmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
-    # )
-    # print(len(smf_dataset))
-    # print(smf_dataset[100])
+    smf_dataset = SmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
+    )
+    print(len(smf_dataset))
+    print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_   data)
     # print(new_instance == serialized_data)
@@ -1003,6 +1025,6 @@ if __name__ == "__main__":
     # print("completed")
 
     # Interactions
-    dataset = DmiCostanzo2016Dataset()
-    dataset[0]
-    print(len(dataset))
+    # dataset = DmiCostanzo2016Dataset()
+    # dataset[0]
+    # print(len(dataset))

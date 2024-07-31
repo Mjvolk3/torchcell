@@ -629,16 +629,12 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aaf1420",
-            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         experiment = FitnessExperiment(
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            doi="10.1126/science.aaf1420",
-            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         publication = Publication(
@@ -941,16 +937,12 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aaf1420",
-            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         experiment = GeneInteractionExperiment(
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            doi="10.1126/science.aaf1420",
-            doi_url="https://www.science.org/doi/10.1126/science.aaf1420",
         )
 
         publication = Publication(

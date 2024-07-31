@@ -510,16 +510,10 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -748,16 +742,10 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -958,16 +946,10 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -1184,8 +1166,6 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
-            doi="10.1126/science.aao1729",
-            doi_url="https://www.science.org/doi/10.1126/science.aao1729",
         )
 
         experiment = GeneInteractionExperiment(
@@ -1203,9 +1183,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
 if __name__ == "__main__":
     ## Fitness
-    dataset = SmfKuzmin2018Dataset()
-    print(dataset[0])
-    print(len(dataset))
+    # dataset = SmfKuzmin2018Dataset()
+    # print(dataset[0])
+    # print(len(dataset))
     # dataset = DmfKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
@@ -1214,9 +1194,9 @@ if __name__ == "__main__":
     # print(len(dataset))
     # print()
     ## Interactions
-    # dataset = DmiKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    dataset = DmiKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     # dataset = TmiKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))

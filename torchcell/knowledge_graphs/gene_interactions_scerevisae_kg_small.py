@@ -40,13 +40,12 @@ logging.captureWarnings(True)
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
-def get_num_workers():
+def get_num_workers() -> int:
     """Get the number of CPUs allocated by SLURM."""
-    # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
+    print(f"SLURM_CPUS_PER_TASK: {cpus_per_task}")  # Print the value for debugging
     if cpus_per_task is not None:
         return int(cpus_per_task)
-    # Fallback: Use multiprocessing to get the total number of CPUs
     return mp.cpu_count()
 
 
@@ -105,17 +104,17 @@ def main(cfg) -> str:
     dataset_configs = [
         {
             "class": DmiKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
         },
         {
             "class": TmiKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
         },
         {
             "class": DmiCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e6"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
             "kwargs": {
                 "subset_n": int(1e6),
                 "io_workers": num_workers,

@@ -93,15 +93,15 @@ fitness phenotype:
         fitness_std: float
         serialized_data: str
 
-new_phenotype:
+gene interaction phenotype:
     is_a: phenotypic feature
     represented_as: node
     properties:
         graph_level: str
         label: str
         label_statistic: str
-        fitness: float
-        fitness_std: float
+        interaction: float
+        p_value: float
         serialized_data: str
 
 # RELATIONSHIPS

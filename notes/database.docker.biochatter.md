@@ -2,7 +2,7 @@
 id: eeeb5f654m14lhmt0r85njd
 title: Biochatter
 desc: ''
-updated: 1722370295872
+updated: 1722383547019
 created: 1722369733574
 ---
 ## Use Biochatter for Natural Language Query of Database
@@ -51,4 +51,4 @@ docker rm e72b55314032f83be2aba57a363e3231073c7c2f2df8fd51e566f535b542ea36
 
 Then try `docker run` again.
 
-The Streamlit app can be found at `http:/`
+The Streamlit app can be found at `http://localhost:8501`

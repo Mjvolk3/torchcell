@@ -2,27 +2,10 @@
 id: d89wpb229frpmqe25uz142u
 title: '31'
 desc: ''
-updated: 1722383571869
+updated: 1722385860430
 created: 1722369588884
 ---
-## 2024.07.31
-
-- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]]
-
-## 2024.07.30
-
-- [x] Get biochatter working
-- [x] Update `gh_neo4j.conf` so `Connect URL` is autofilled.
-- [x] Respond to biocypher PR review with next steps.
-- [x] Update edge and node definitions to match biolink more appropriately. → `mentions` somehow not recognized but can use `is_a` and this solves it.
-- [x] Document biochatter startup → [[Biochatter|dendron://torchcell/database.docker.biochatter]]
-
-- [ ] Update [[torchcell.adapters.cell_adapter]] for new datasets
-
-- [ ] Update `torchcell/biocypher/config/torchcell_schema_config.yaml` for new datasets
-
-- [ ] Add gene essentiality to schema and clearly differentiated from current fitness. Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
-
+- [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
 - [ ] Add expression dataset for mechanistic aware single fitness
 - [ ] Add expression from double fitness
 - [ ] Add fitness from singles
@@ -39,6 +22,22 @@ created: 1722369588884
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
 - [ ] Remove software update on image entry point
 - [ ] dataset registry not working again because circular import
+
+## 2024.07.31
+
+- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]]
+
+## 2024.07.30
+
+- [x] Get biochatter working
+- [x] Update `gh_neo4j.conf` so `Connect URL` is autofilled.
+- [x] Respond to biocypher PR review with next steps.
+- [x] Update edge and node definitions to match biolink more appropriately. → `mentions` somehow not recognized but can use `is_a` and this solves it.
+- [x] Document biochatter startup → [[Biochatter|dendron://torchcell/database.docker.biochatter]]
+- [x] Update [[torchcell.adapters.cell_adapter]] for new datasets → added interactions.
+- [x] Update `torchcell/biocypher/config/torchcell_schema_config.yaml` for new datasets → added interactions.
+- [x] Add gene essentiality to schema and clearly differentiated from current fitness. → added to datasets last week [[30|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2024.30]] but not documented.
+- [ ] First interaction db build attempt.
 
 ## 2024.07.29
 

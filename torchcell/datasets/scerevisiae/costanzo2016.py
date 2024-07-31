@@ -310,7 +310,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         experiment = FitnessExperiment(
             genotype=genotype, environment=environment, phenotype=phenotype
         )
-        
+
         publication = Publication(
             pubmed_id="27708008",
             pubmed_url="https://pubmed.ncbi.nlm.nih.gov/27708008/",
@@ -632,9 +632,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
 
         publication = Publication(
@@ -940,9 +938,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
+            genotype=genotype, environment=environment, phenotype=phenotype
         )
 
         publication = Publication(
@@ -996,11 +992,12 @@ if __name__ == "__main__":
 
     ######
     # Single mutant fitness
-    smf_dataset = SmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
-    )
-    print(len(smf_dataset))
-    print(smf_dataset[100])
+    # smf_dataset = SmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
+    #     io_workers=10,
+    # )
+    # print(len(smf_dataset))
+    # print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_   data)
     # print(new_instance == serialized_data)
@@ -1017,6 +1014,10 @@ if __name__ == "__main__":
     # print("completed")
 
     # Interactions
-    # dataset = DmiCostanzo2016Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    dataset = DmiCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
+        io_workers=10,
+        subset_n=int(1e6),
+    )
+    dataset[0]
+    print(len(dataset))

@@ -1,12 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=64G
-#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=980G
+#SBATCH --time=48:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
+
+##SBATCH --mem=64G
+##SBATCH --time=12:00:00
 
 echo "Running on $(hostname)"
 
@@ -31,7 +34,7 @@ echo "Memory in MB: $mem_mb"
 # Move to the project directory
 cd /scratch/projects/torchcell
 
-# Remove existing container if it exists
+# Remove existing container if it existso
 docker stop tc-neo4j || true
 docker stop tc-neo4j-readonly || true
 docker rm -f tc-neo4j || true
@@ -43,6 +46,7 @@ echo "Starting Docker container within SLURM cgroup..."
 # We don't forward ports for the writable container, as it will be stopped after the database is created
 docker run \
     --cpus=$SLURM_CPUS_PER_TASK \
+    -e SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK \
     --memory=${mem_mb}m \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
@@ -88,7 +92,11 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg; then
+
+#torchcell.knowledge_graphs.minimal_kg
+#torchcell.knowledge_graphs.create_scerevisiae_kg
+#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

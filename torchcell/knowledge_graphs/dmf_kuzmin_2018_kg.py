@@ -1,7 +1,8 @@
+# torchcell/knowledge_graphs/dmf_kuzmin_2018_kg.py
 
 from biocypher import BioCypher
-from torchcell.adapters import DmiCostanzo2016Adapter
-from torchcell.datasets.scerevisiae.costanzo2016 import DmiCostanzo2016Dataset
+from torchcell.adapters import DmfKuzmin2018Adapter
+from torchcell.datasets.scerevisiae.kuzmin2018 import DmfKuzmin2018Dataset
 import logging
 from dotenv import load_dotenv
 import os
@@ -27,12 +28,13 @@ logging.captureWarnings(True)
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
-def get_num_workers() -> int:
+def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
+    # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
-    print(f"SLURM_CPUS_PER_TASK: {cpus_per_task}")  # Print the value for debugging
     if cpus_per_task is not None:
         return int(cpus_per_task)
+    # Fallback: Use multiprocessing to get the total number of CPUs
     return mp.cpu_count()
 
 
@@ -90,13 +92,9 @@ def main(cfg) -> str:
     # Define dataset configurations
     dataset_configs = [
         {
-            "class": DmiCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
-            "kwargs": {
-                "subset_n": int(1e6),
-                "io_workers": num_workers,
-                "batch_size": int(1e3),
-            },
+            "class": DmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
+            "kwargs": {"io_workers": num_workers},
         }
     ]
 
@@ -118,7 +116,7 @@ def main(cfg) -> str:
 
     # Define dataset-adapter mapping
     dataset_adapter_map = {
-        DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
+        DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
     }
 
     # Instantiate adapters based on the dataset-adapter mapping

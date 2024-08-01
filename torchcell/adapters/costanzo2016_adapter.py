@@ -133,22 +133,21 @@ class DmiCostanzo2016Adapter(CellAdapter):
 
 
 if __name__ == "__main__":
-    pass
-    # import os.path as osp
-    # from dotenv import load_dotenv
-    # from datetime import datetime
-    # import os
-    # import multiprocessing as mp
-    # import math
+    import os.path as osp
+    from dotenv import load_dotenv
+    from datetime import datetime
+    import os
+    import multiprocessing as mp
+    import math
 
-    # ##
-    # load_dotenv()
-    # time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    # DATA_ROOT = os.getenv("DATA_ROOT")
-    # BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    # SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
+    ##
+    load_dotenv()
+    time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
-    ## SMF
+    # # SMF
     # bc = BioCypher(
     #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
@@ -173,20 +172,43 @@ if __name__ == "__main__":
     # bc.write_schema_info(as_node=True)
     # bc.summary()
 
-    ## DMF
+    # # DMF
+    bc = BioCypher(
+        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+        schema_config_path=SCHEMA_CONFIG_PATH,
+    )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    # )
+    dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e4"),
+        subset_n=int(1e4),
+    )
+    adapter = DmfCostanzo2016Adapter(
+        dataset=dataset,
+        process_workers=10,
+        io_workers=10,
+        chunk_size=100,
+        loader_batch_size=10,
+    )
+    bc.write_nodes(adapter.get_nodes())
+    bc.write_edges(adapter.get_edges())
+    bc.write_import_call()
+    bc.write_schema_info(as_node=True)
+    bc.summary()
+    
+    ## Dmi
     # bc = BioCypher(
     #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # # dataset = DmfCostanzo2016Dataset(
-    # #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
-    # # )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e3"),
-    #     subset_n=int(1e3),
+    # dataset = DmiCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
+    #     subset_n=int(1e6),
     # )
-    # adapter = DmfCostanzo2016Adapter(
+    # adapter = DmiCostanzo2016Adapter(
     #     dataset=dataset,
     #     process_workers=10,
     #     io_workers=10,
@@ -198,3 +220,6 @@ if __name__ == "__main__":
     # bc.write_import_call()
     # bc.write_schema_info(as_node=True)
     # bc.summary()
+    
+
+        

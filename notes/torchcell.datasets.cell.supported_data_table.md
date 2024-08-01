@@ -2,13 +2,13 @@
 id: 2n07pysnkm8d4laupomc1l6
 title: Supported_data_table
 desc: ''
-updated: 1697768631789
+updated: 1722464635246
 created: 1697768273584
 ---
 ## Supported Datasets
 
 | $\textbf{Dataset Name}$      | $\textbf{Genotypes}$ | $\textbf{Environment}$ | $\textbf{Phenotype (label)}$    | $\textbf{Label Type}$ | $\textbf{Description}$              | $\textbf{Supported}$ |
-| :--------------------------- | :------------------- | :--------------------- | :------------------------------ | :-------------------- | :---------------------------------- | :------------------: |
+|:-----------------------------|:---------------------|:-----------------------|:--------------------------------|:----------------------|:------------------------------------|:--------------------:|
 | $\text{Baryshnikovna\_2010}$ | $6,022$              | $1$                    | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                |     $\checkmark$     |
 | $\text{Costanzo\_2016\_smf}$ | $21,718$             | $2$                    | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                |     $\checkmark$     |
 | $\text{Costanzo\_2016\_dmf}$ | $20,705,612$         | $1$                    | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                |     $\checkmark$     |
@@ -21,7 +21,7 @@ created: 1697768273584
 | $\text{ODuibhir\_2014}$      | $1,312$              | $1$                    | $\text{smf}$                    | $\text{global, node}$ | $\text{growth rate}$                |     $\checkmark$     |
 | $\text{Kemmeren\_2014}$      | $1,484$              | $1$                    | $\text{expr}$                   | $\text{global, node}$ | $\text{sm microarray expression}$   |     $\checkmark$     |
 | $\text{Sameith\_2015}$       | $72$                 | $1$                    | $\text{expr}$                   | $\text{global, node}$ | $\text{dm microarray expression}$   |     $\checkmark$     |
-| $\text{Zelezniak\_2018}$     | $97$                 | $1$                    | $\text{prot abund., met conc.}$ | $\text{global, node}$ | $\text{sm kinase deletion mutants}$ |     $\checkmark$     |
-| $\text{Wildenhain\_2015}$    | $195$                | $4,915$                | $\text{smf}$                    | $\text{global}$       | $\text{smf drug tolerance}$         |     $\checkmark$     |
-| $\text{Lian\_2017}$          | $18,000$             | $1$                    | $\text{AID}$                    | $\text{global}$       | $\text{AID furfural tolderance}$    |     $\checkmark$     |
+| $\text{Zelezniak\_2018}$     | $97$                 | $1$                    | $\text{prot abund., met conc.}$ | $\text{global, node}$ | $\text{sm kinase deletion mutants}$ |                      |
+| $\text{Wildenhain\_2015}$    | $195$                | $4,915$                | $\text{smf}$                    | $\text{global}$       | $\text{smf drug tolerance}$         |                      |
+| $\text{Lian\_2017}$          | $18,000$             | $1$                    | $\text{AID}$                    | $\text{global}$       | $\text{AID furfural tolderance}$    |                      |
 | $\text{FitDb}$               | $~6,000$             | $1,144$                | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                |                      |

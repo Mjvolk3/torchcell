@@ -212,56 +212,76 @@ if __name__ == "__main__":
     io_workers = math.ceil(0.2 * num_workers)
     process_workers = num_workers - io_workers
 
-    ## Smf
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = SmfKuzmin2018Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
-    )
-    adapter = SmfKuzmin2018Adapter(
-        dataset=dataset,
-        process_workers=process_workers,
-        io_workers=io_workers,
-        chunk_size=int(1e4),
-        loader_batch_size=int(1e4),
-    )
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
+    # ## Smf
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = SmfKuzmin2018Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+    # )
+    # adapter = SmfKuzmin2018Adapter(
+    #     dataset=dataset,
+    #     process_workers=process_workers,
+    #     io_workers=io_workers,
+    #     chunk_size=int(1e4),
+    #     loader_batch_size=int(1e4),
+    # )
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
 
-    ## Dmf
-    bc = BioCypher(
-        output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-        biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-        schema_config_path=SCHEMA_CONFIG_PATH,
-    )
-    dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
-    adapter = DmfKuzmin2018Adapter(
-        dataset=dataset,
-        process_workers=process_workers,
-        io_workers=io_workers,
-        chunk_size=int(1e4),
-        loader_batch_size=int(1e4),
-    )
-    bc.write_nodes(adapter.get_nodes())
-    bc.write_edges(adapter.get_edges())
-    bc.write_import_call()
-    bc.write_schema_info(as_node=True)
-    bc.summary()
+    # ## Dmf
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
+    # adapter = DmfKuzmin2018Adapter(
+    #     dataset=dataset,
+    #     process_workers=process_workers,
+    #     io_workers=io_workers,
+    #     chunk_size=int(1e4),
+    #     loader_batch_size=int(1e4),
+    # )
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
 
-    ## Tmf
+    # ## Tmf
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
+    # adapter = TmfKuzmin2018Adapter(
+    #     dataset=dataset,
+    #     process_workers=process_workers,
+    #     io_workers=io_workers,
+    #     chunk_size=int(1e4),
+    #     loader_batch_size=int(1e4),
+    # )
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
+
+    ## Dmi
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
-    adapter = TmfKuzmin2018Adapter(
+    dataset = DmiKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"))
+    adapter = DmiKuzmin2018Adapter(
         dataset=dataset,
         process_workers=process_workers,
         io_workers=io_workers,
@@ -273,3 +293,25 @@ if __name__ == "__main__":
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
     bc.summary()
+     
+    
+    ## Tmi
+    # bc = BioCypher(
+    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # )
+    # dataset = TmiKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"))
+    # adapter = TmiKuzmin2018Adapter(
+    #     dataset=dataset,
+    #     process_workers=process_workers,
+    #     io_workers=io_workers,
+    #     chunk_size=int(1e4),
+    #     loader_batch_size=int(1e4),
+    # )
+    # bc.write_nodes(adapter.get_nodes())
+    # bc.write_edges(adapter.get_edges())
+    # bc.write_import_call()
+    # bc.write_schema_info(as_node=True)
+    # bc.summary()
+    

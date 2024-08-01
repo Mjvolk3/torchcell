@@ -2,7 +2,7 @@
 id: d89wpb229frpmqe25uz142u
 title: '31'
 desc: ''
-updated: 1722385860430
+updated: 1722503168690
 created: 1722369588884
 ---
 - [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
@@ -25,7 +25,10 @@ created: 1722369588884
 
 ## 2024.07.31
 
-- [ ] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]]
+- [x] Troubleshoot speed issue. → it is beyond speed issues the program freezes for interaction datasets. → Not all data was being serialized `publication`, I think this was messing up data transformation in the `cell_adapter`
+- [x] Check that the yaml configs for fitness have publication.
+- [x] Annual review. Use [[ACCESS Resource Report|dendron://torchcell/access.report.2024.05.15]]
+- [x] Build interaction db
 
 ## 2024.07.30
 

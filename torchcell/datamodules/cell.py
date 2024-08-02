@@ -10,6 +10,7 @@ import torch
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 import logging
+import os.path as osp
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -46,8 +47,8 @@ class CellDataModule(L.LightningDataModule):
         os.makedirs(self.cache_dir, exist_ok=True)
 
         # Check if cached indices exist
-        cached_indices_file = os.path.join(self.cache_dir, "cached_indices.json")
-        if os.path.exists(cached_indices_file):
+        cached_indices_file = osp.join(self.cache_dir, "cached_indices.json")
+        if osp.exists(cached_indices_file):
             try:
                 # Load cached indices from file
                 with open(cached_indices_file, "r") as f:

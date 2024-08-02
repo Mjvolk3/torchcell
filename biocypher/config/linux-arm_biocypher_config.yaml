@@ -11,7 +11,7 @@ neo4j:
   skip_bad_relationships: true
 
   import_call_bin_prefix: /var/lib/neo4j/bin/
-  import_call_file_prefix: "./data/"
+  import_call_file_prefix: "./"
   
   # Wipe DB before import (offline mode: --force)
   wipe: true

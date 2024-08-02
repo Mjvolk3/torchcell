@@ -53,11 +53,11 @@ docker run \
     -d --name tc-neo4j \
     -p 7687:7687 -p 7474:7474 \
     --restart=unless-stopped \
-    -v $(pwd)/database/data/biocypher-out:/var/lib/neo4j/data/biocypher-out \
+    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
     -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
-    -v $(pwd)/database/data/biocypher:/var/lib/neo4j/biocypher \
+    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -e NEO4J_AUTH=neo4j/torchcell \

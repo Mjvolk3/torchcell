@@ -100,7 +100,8 @@ echo "Creating knowledge graph..."
 #torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
 #torchcell.knowledge_graphs.dmi_kuzmin_2018_kg
 #torchcell.knowledge_graphs.dmi_costanzo_2016_kg
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.tmi_kuzmin_2018_kg; then
+#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

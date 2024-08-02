@@ -14,7 +14,7 @@ def main() -> None:
         osp.join(DATA_ROOT, "database"),
         osp.join(DATA_ROOT, "database/data/torchcell"),
         osp.join(DATA_ROOT, "database/data"),
-        osp.join(DATA_ROOT, "database/biocypher"),
+        osp.join(DATA_ROOT, "database/data/biocypher"),
         osp.join(DATA_ROOT, "database/conf"),
         osp.join(DATA_ROOT, "database/logs"),
         osp.join(DATA_ROOT, "database/slurm"),
@@ -35,7 +35,7 @@ def main() -> None:
 
     # Copy biocypher directory into database
     src_biocypher = osp.join(WORKSPACE_DIR, "biocypher")
-    dst_biocypher = osp.join(DATA_ROOT, "database/biocypher")
+    dst_biocypher = osp.join(DATA_ROOT, "database/data/biocypher")
     if osp.exists(dst_biocypher):
         shutil.rmtree(dst_biocypher)
     shutil.copytree(src_biocypher, dst_biocypher)

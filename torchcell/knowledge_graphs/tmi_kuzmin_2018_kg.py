@@ -1,4 +1,3 @@
-
 from biocypher import BioCypher
 from torchcell.adapters import TmiKuzmin2018Adapter
 from torchcell.datasets.scerevisiae.kuzmin2018 import TmiKuzmin2018Dataset
@@ -149,7 +148,7 @@ def main(cfg) -> str:
     bc.write_schema_info(as_node=True)
 
     relative_bash_script_path = osp.join(
-        "data", "biocypher-out", time_str, "neo4j-admin-import-call.sh"
+        "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
 
     with open("biocypher_file_name.txt", "w") as f:

@@ -149,7 +149,7 @@ def main(cfg) -> str:
     bc.write_schema_info(as_node=True)
 
     relative_bash_script_path = osp.join(
-        "biocypher-out", time_str, "neo4j-admin-import-call.sh"
+        "data", "biocypher-out", time_str, "neo4j-admin-import-call.sh"
     )
 
     with open("biocypher_file_name.txt", "w") as f:

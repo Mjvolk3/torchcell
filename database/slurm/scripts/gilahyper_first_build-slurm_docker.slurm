@@ -53,11 +53,11 @@ docker run \
     -d --name tc-neo4j \
     -p 7687:7687 -p 7474:7474 \
     --restart=unless-stopped \
-    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
-    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data/biocypher-out:/var/lib/neo4j/data/biocypher-out \
+    -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
-    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
+    -v $(pwd)/database/data/biocypher:/var/lib/neo4j/data/biocypher \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -e NEO4J_AUTH=neo4j/torchcell \
@@ -100,7 +100,7 @@ echo "Creating knowledge graph..."
 #torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
 #torchcell.knowledge_graphs.dmi_kuzmin_2018_kg
 #torchcell.knowledge_graphs.dmi_costanzo_2016_kg
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.dmi_kuzmin_2018_kg; then
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.tmi_kuzmin_2018_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

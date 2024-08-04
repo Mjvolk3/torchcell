@@ -814,6 +814,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
@@ -1186,9 +1187,9 @@ if __name__ == "__main__":
     # dataset = SmfKuzmin2018Dataset()
     # print(dataset[0])
     # print(len(dataset))
-    # dataset = DmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    dataset = DmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     # dataset = TmfKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))

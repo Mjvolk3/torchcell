@@ -407,7 +407,7 @@ if __name__ == "__main__":
         uri="bolt://localhost:7687",  # Include the database name here
         username="neo4j",
         password="torchcell",
-        root_dir="data/torchcell/neo4j_query_test",
+        root_dir=osp.join(DATA_ROOT ,"data/torchcell/neo4j_query_test"),
         query="""
             MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
             RETURN e, ref

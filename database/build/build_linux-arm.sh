@@ -72,7 +72,8 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 # Execute the Python script inside the Docker container and capture the output
 # docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
 #TODO change back to kg_small.
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg
+# torchcell.knowledge_graphs.tmi_kuzmin_2018_kg
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.tmi_kuzmin_2018_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

@@ -2,7 +2,7 @@
 id: d89wpb229frpmqe25uz142u
 title: '31'
 desc: ''
-updated: 1722503168690
+updated: 1722536467276
 created: 1722369588884
 ---
 - [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
@@ -22,6 +22,11 @@ created: 1722369588884
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
 - [ ] Remove software update on image entry point
 - [ ] dataset registry not working again because circular import
+
+## 2024.08.01
+
+- [ ] We keep having permissions issues with root
+- [ ] Junyu is working on Beta-Carotene.  
 
 ## 2024.07.31
 

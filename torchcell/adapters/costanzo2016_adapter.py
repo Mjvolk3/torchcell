@@ -147,68 +147,45 @@ if __name__ == "__main__":
     BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
     SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
 
-    # # SMF
-    # bc = BioCypher(
-    #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
-    #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
-    #     schema_config_path=SCHEMA_CONFIG_PATH,
-    # )
-    # dataset = SmfCostanzo2016Dataset(
-    #     osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
-    # )
-    # num_workers = mp.cpu_count()
-    # io_workers = math.ceil(0.2 * num_workers)
-    # process_workers = num_workers - io_workers
-    # adapter = SmfCostanzo2016Adapter(
-    #     dataset=dataset,
-    #     process_workers=6,
-    #     io_workers=4,
-    #     chunk_size=int(1e4),
-    #     loader_batch_size=int(1e4),
-    # )
-    # bc.write_nodes(adapter.get_nodes())
-    # bc.write_edges(adapter.get_edges())
-    # bc.write_import_call()
-    # bc.write_schema_info(as_node=True)
-    # bc.summary()
-
-    # # DMF
+    # SMF
     bc = BioCypher(
         output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    # dataset = DmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
-    # )
-    dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e4"),
-        subset_n=int(1e4),
+    dataset = SmfCostanzo2016Dataset(
+        osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016")
     )
-    adapter = DmfCostanzo2016Adapter(
+    num_workers = mp.cpu_count()
+    io_workers = math.ceil(0.2 * num_workers)
+    process_workers = num_workers - io_workers
+    adapter = SmfCostanzo2016Adapter(
         dataset=dataset,
-        process_workers=10,
-        io_workers=10,
-        chunk_size=100,
-        loader_batch_size=10,
+        process_workers=6,
+        io_workers=4,
+        chunk_size=int(1e4),
+        loader_batch_size=int(1e4),
     )
     bc.write_nodes(adapter.get_nodes())
     bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
     bc.summary()
-    
-    ## Dmi
+
+    # # # DMF
     # bc = BioCypher(
     #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = DmiCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
-    #     subset_n=int(1e6),
+    # # dataset = DmfCostanzo2016Dataset(
+    # #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016")
+    # # )
+    # dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e4"),
+    #     subset_n=int(1e4),
     # )
-    # adapter = DmiCostanzo2016Adapter(
+    # adapter = DmfCostanzo2016Adapter(
     #     dataset=dataset,
     #     process_workers=10,
     #     io_workers=10,
@@ -220,6 +197,26 @@ if __name__ == "__main__":
     # bc.write_import_call()
     # bc.write_schema_info(as_node=True)
     # bc.summary()
-    
 
-        
+    # ## Dmi
+    # # bc = BioCypher(
+    # #     output_directory=osp.join(DATA_ROOT, "database/biocypher-out", time),
+    # #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
+    # #     schema_config_path=SCHEMA_CONFIG_PATH,
+    # # )
+    # # dataset = DmiCostanzo2016Dataset(
+    # #     root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
+    # #     subset_n=int(1e6),
+    # # )
+    # # adapter = DmiCostanzo2016Adapter(
+    # #     dataset=dataset,
+    # #     process_workers=10,
+    # #     io_workers=10,
+    # #     chunk_size=100,
+    # #     loader_batch_size=10,
+    # # )
+    # # bc.write_nodes(adapter.get_nodes())
+    # # bc.write_edges(adapter.get_edges())
+    # # bc.write_import_call()
+    # # bc.write_schema_info(as_node=True)
+    # # bc.summary()

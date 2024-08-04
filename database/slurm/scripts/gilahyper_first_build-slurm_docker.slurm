@@ -3,7 +3,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=980G
-#SBATCH --time=48:00:00
+#SBATCH --time=365-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue

@@ -5,31 +5,31 @@
 cell_adapter:
   node_methods:
     - experiment reference
-    # - genome
+    - genome
     - experiment
-    # - genotype
-    # - perturbation
-    # - environment
-    # - environment reference
-    # - media
-    # - media reference
-    # - temperature
-    # - temperature reference
+    - genotype
+    - perturbation
+    - environment
+    - environment reference
+    - media
+    - media reference
+    - temperature
+    - temperature reference
     - fitness phenotype
     - fitness phenotype reference
-    # - dataset
-    # - publication
+    - dataset
+    - publication
   edge_methods:
-    # - experiment reference to dataset
-    # - experiment to dataset
-    # - experiment reference to experiment
-    # - genotype to experiment
-    # - perturbation to genotype
-    # - environment to experiment
-    # - environment to experiment reference
-    # - phenotype to experiment
-    # - media to environment
-    # - temperature to environment
-    # - genome to experiment reference
+    - experiment reference to dataset
+    - experiment to dataset
+    - experiment reference to experiment
+    - genotype to experiment
+    - perturbation to genotype
+    - environment to experiment
+    - environment to experiment reference
+    - phenotype to experiment
+    - media to environment
+    - temperature to environment
+    - genome to experiment reference
     - phenotype to experiment reference
-    # - publication to experiment
+    - publication to experiment

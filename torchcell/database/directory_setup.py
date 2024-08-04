@@ -12,7 +12,7 @@ def main() -> None:
     # Create directories
     directories = [
         osp.join(DATA_ROOT, "database"),
-        osp.join(DATA_ROOT, "data/torchcell"),
+        osp.join(DATA_ROOT, "database/data/torchcell"),
         osp.join(DATA_ROOT, "database/data"),
         osp.join(DATA_ROOT, "database/biocypher"),
         osp.join(DATA_ROOT, "database/conf"),

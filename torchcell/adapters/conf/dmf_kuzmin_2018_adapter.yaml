@@ -19,6 +19,7 @@ cell_adapter:
     - fitness phenotype
     - fitness phenotype reference
     - dataset
+    - publication
   edge_methods:
     - experiment reference to dataset
     - experiment to dataset
@@ -31,3 +32,4 @@ cell_adapter:
     - media to environment
     - temperature environment
     - genome to experiment reference
+    - publication to experiment

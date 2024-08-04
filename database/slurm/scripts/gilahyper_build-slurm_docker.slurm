@@ -60,8 +60,8 @@ docker run \
     --health-timeout=10s \
     --health-retries=3 \
     --restart=unless-stopped \
-    -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
-    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data/biocypher-out:/var/lib/neo4j/biocypher-out \
+    -v $(pwd)database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \

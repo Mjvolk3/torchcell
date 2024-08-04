@@ -114,9 +114,9 @@ def main(cfg) -> str:
         },
         {
             "class": DmiCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_5e6"),
             "kwargs": {
-                "subset_n": int(1e6),
+                "subset_n": int(5e6),
                 "io_workers": num_workers,
                 "batch_size": int(1e3),
             },

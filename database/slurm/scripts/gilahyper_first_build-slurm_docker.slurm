@@ -44,6 +44,7 @@ docker rm -f tc-neo4j-readonly || true
 echo "Starting Docker container within SLURM cgroup..."
 
 # We don't forward ports for the writable container, as it will be stopped after the database is created
+#    -e OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK \
 docker run \
     --cpus=$SLURM_CPUS_PER_TASK \
     -e SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK \
@@ -51,13 +52,9 @@ docker run \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
     -p 7687:7687 -p 7474:7474 \
-    --health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
-    --health-interval=30s \
-    --health-timeout=10s \
-    --health-retries=3 \
     --restart=unless-stopped \
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
-    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
@@ -66,6 +63,11 @@ docker run \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_dbms_read__only=false \
     michaelvolk/tc-neo4j:latest
+
+#--health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
+#--health-interval=30s \
+#--health-timeout=10s \
+#--health-retries=3 \
 
 # Check if the container is running
 if [ $(docker ps -q -f name=tc-neo4j) ]; then
@@ -96,7 +98,10 @@ echo "Creating knowledge graph..."
 #torchcell.knowledge_graphs.minimal_kg
 #torchcell.knowledge_graphs.create_scerevisiae_kg
 #torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg_small; then
+#torchcell.knowledge_graphs.dmi_kuzmin_2018_kg
+#torchcell.knowledge_graphs.dmi_costanzo_2016_kg
+#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

@@ -1,6 +1,14 @@
 from biocypher import BioCypher
-from torchcell.adapters import TmiKuzmin2018Adapter
-from torchcell.datasets.scerevisiae.kuzmin2018 import TmiKuzmin2018Dataset
+from torchcell.adapters import (
+    DmiCostanzo2016Adapter,
+    DmiKuzmin2018Adapter,
+    TmiKuzmin2018Adapter,
+)
+from torchcell.datasets.scerevisiae.costanzo2016 import DmiCostanzo2016Dataset
+from torchcell.datasets.scerevisiae.kuzmin2018 import (
+    DmiKuzmin2018Dataset,
+    TmiKuzmin2018Dataset,
+)
 import logging
 from dotenv import load_dotenv
 import os
@@ -89,10 +97,23 @@ def main(cfg) -> str:
     # Define dataset configurations
     dataset_configs = [
         {
+            "class": DmiKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"),
+            "kwargs": {"io_workers": num_workers},
+        },
+        {
             "class": TmiKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
-        }
+        },
+        {
+            "class": DmiCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
+            "kwargs": {
+                "io_workers": num_workers,
+                "batch_size": int(1e3),
+            },
+        },
     ]
 
     # Instantiate datasets
@@ -112,7 +133,11 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {TmiKuzmin2018Dataset: TmiKuzmin2018Adapter}
+    dataset_adapter_map = {
+        DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
+        DmiKuzmin2018Dataset: DmiKuzmin2018Adapter,
+        TmiKuzmin2018Dataset: TmiKuzmin2018Adapter,
+    }
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

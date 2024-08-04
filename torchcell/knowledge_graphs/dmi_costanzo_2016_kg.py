@@ -1,7 +1,7 @@
+
 from biocypher import BioCypher
 from torchcell.adapters import DmiCostanzo2016Adapter
 from torchcell.datasets.scerevisiae.costanzo2016 import DmiCostanzo2016Dataset
-
 import logging
 from dotenv import load_dotenv
 import os
@@ -63,7 +63,6 @@ def main(cfg) -> str:
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
-    print(f"Number of workers: {num_workers}")
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log.info(f"Number of workers: {num_workers}")
     bc = BioCypher(
@@ -118,7 +117,9 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {DmiCostanzo2016Dataset: DmiCostanzo2016Adapter}
+    dataset_adapter_map = {
+        DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
+    }
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

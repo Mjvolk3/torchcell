@@ -1,25 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
-#SBATCH --mem=64G
-#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=128
+#SBATCH --mem=995G
+#SBATCH --time=365-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
-
-###
-# Allow for working with docker in slurm env
-# Cancel docker with scancel
-cleanup() {
-    echo "Stopping Docker container..."
-    docker stop tc-neo4j
-    docker rm tc-neo4j
-    exit 0
-}
-
-trap cleanup SIGTERM SIGINT
-###
 
 echo "Running on $(hostname)"
 
@@ -55,11 +42,6 @@ docker run \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
     -p 7687:7687 -p 7474:7474 \
-    --health-cmd="curl -f http://gilahyper.zapto.org:7474 || exit 1" \
-    --health-interval=30s \
-    --health-timeout=10s \
-    --health-retries=3 \
-    --restart=unless-stopped \
     -v $(pwd)/database/data/biocypher-out:/var/lib/neo4j/biocypher-out \
     -v $(pwd)database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
@@ -95,7 +77,7 @@ docker exec tc-neo4j wandb login $WANDB_API_KEY
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.minimal_kg; then
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1
@@ -131,13 +113,3 @@ docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NE
 
 docker exec tc-neo4j neo4j stop
 docker exec tc-neo4j neo4j start
-
-echo "All setup completed. Keeping SLURM job alive to maintain resource control..."
-
-while true; do
-    if ! docker ps -q --filter name=tc-neo4j; then
-        echo "Docker container has stopped. Exiting."
-        exit 0
-    fi
-    sleep 10
-done

@@ -45,6 +45,7 @@ class CellAdapter:
         self.loader_batch_size = loader_batch_size
         self.event = 0
         wandb.init()
+        self.log_method_table()
 
         # Supported methods
         self.node_methods = [
@@ -117,6 +118,39 @@ class CellAdapter:
                 self._publication_to_experiment_edge,
             ),
         ]
+
+    def log_method_table(self):
+        methods = []
+        simulated_event_counter = 0
+        for method in (
+            self.config.cell_adapter.node_methods
+            + self.config.cell_adapter.edge_methods
+        ):
+            simulated_event_counter += 1
+            method_name = method["method_name"]
+            data_type = (
+                "node" if method in self.config.cell_adapter.node_methods else "edge"
+            )
+
+            if "(chunked)" in method_name:
+                if "memory_reduction_factor" in method:
+                    memory_reduction_factor = method["memory_reduction_factor"]
+                else:
+                    memory_reduction_factor = 1.0
+            else:
+                memory_reduction_factor = float("nan")
+
+            method_info = [
+                simulated_event_counter,
+                method_name,
+                data_type,
+                memory_reduction_factor,
+            ]
+            methods.append(method_info)
+
+        columns = ["event", "method", "data_type", "memory_reduction_factor"]
+        method_table = wandb.Table(columns=columns, data=methods)
+        wandb.log({f"{self.dataset.name}_method_table": method_table})
 
     def get_data_by_type(
         self, chunk_processing_func: Callable, method_name: str, is_edge: bool = False

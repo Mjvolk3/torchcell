@@ -4,31 +4,34 @@
 
 cell_adapter:
   node_methods:
-    - experiment reference
-    - genome
-    - experiment
-    - genotype
-    - perturbation
-    - environment
-    - environment reference
-    - media
-    - media reference
-    - temperature
-    - temperature reference
-    - fitness phenotype
-    - fitness phenotype reference
-    - dataset
-    - publication
+    - method_name: experiment reference
+    - method_name: genome
+    - method_name: experiment (chunked)
+    - method_name: genotype (chunked)
+    - method_name: perturbation (chunked)
+    - method_name: environment (chunked)
+    - method_name: environment reference
+    - method_name: media (chunked)
+    - method_name: media reference
+    - method_name: temperature (chunked)
+    - method_name: temperature reference
+    - method_name: fitness phenotype (chunked)
+    - method_name: fitness phenotype reference
+    - method_name: dataset
+    - method_name: publication (chunked)
   edge_methods:
-    - experiment reference to dataset
-    - experiment to dataset
-    - experiment reference to experiment
-    - genotype to experiment
-    - perturbation to genotype
-    - environment to experiment
-    - environment to experiment reference
-    - phenotype to experiment
-    - media to environment
-    - temperature to environment
-    - genome to experiment reference
-    - publication to experiment
+    - method_name: experiment reference to dataset
+    - method_name: experiment to dataset (chunked)
+    - method_name: experiment reference to experiment (chunked)
+    - method_name: genotype to experiment (chunked)
+      memory_reduction_error: 0.7
+    - method_name: perturbation to genotype (chunked)
+      memory_reduction_error: 0.7
+    - method_name: environment to experiment (chunked)
+    - method_name: environment to experiment reference
+    - method_name: phenotype to experiment (chunked)
+    - method_name: media to environment (chunked)
+    - method_name: temperature to environment (chunked)
+    - method_name: genome to experiment reference
+    - method_name: phenotype to experiment reference
+    - method_name: publication to experiment (chunked)

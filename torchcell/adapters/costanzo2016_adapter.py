@@ -132,13 +132,14 @@ class DmiCostanzo2016Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-if __name__ == "__main__":
+def main():
     import os.path as osp
     from dotenv import load_dotenv
     from datetime import datetime
     import os
     import multiprocessing as mp
     import math
+    import wandb
 
     ##
     load_dotenv()
@@ -161,8 +162,8 @@ if __name__ == "__main__":
     process_workers = num_workers - io_workers
     adapter = SmfCostanzo2016Adapter(
         dataset=dataset,
-        process_workers=6,
-        io_workers=4,
+        process_workers=process_workers,
+        io_workers=io_workers,
         chunk_size=int(1e4),
         loader_batch_size=int(1e4),
     )
@@ -170,7 +171,9 @@ if __name__ == "__main__":
     bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
-    bc.summary()
+    # BUG printing this gives hangs entire process.
+    # bc.summary()
+    wandb.finish()
 
     # # # DMF
     # bc = BioCypher(
@@ -220,3 +223,7 @@ if __name__ == "__main__":
     # # bc.write_import_call()
     # # bc.write_schema_info(as_node=True)
     # # bc.summary()
+
+
+if __name__ == "__main__":
+    main()

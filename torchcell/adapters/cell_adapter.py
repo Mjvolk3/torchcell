@@ -50,17 +50,20 @@ class CellAdapter:
         self.node_methods = [
             ("experiment reference", self._get_experiment_reference_nodes),
             ("genome", self._get_genome_nodes),
-            ("experiment", self._experiment_node),
-            ("genotype", self._genotype_node),
-            ("perturbation", self._perturbation_node),
-            ("environment", self._environment_node),
+            ("experiment (chunked)", self._experiment_node),
+            ("genotype (chunked)", self._genotype_node),
+            ("perturbation (chunked)", self._perturbation_node),
+            ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
-            ("media", self._media_node),
+            ("media (chunked)", self._media_node),
             ("media reference", self._get_media_reference_nodes),
-            ("temperature", self._temperature_node),
+            ("temperature (chunked)", self._temperature_node),
             ("temperature reference", self._get_temperature_reference_nodes),
-            ("fitness phenotype", self._fitness_phenotype_node),
-            ("gene interaction phenotype", self._gene_interaction_phenotype_node),
+            ("fitness phenotype (chunked)", self._fitness_phenotype_node),
+            (
+                "gene interaction phenotype (chunked)",
+                self._gene_interaction_phenotype_node,
+            ),
             (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
@@ -70,28 +73,37 @@ class CellAdapter:
                 self._get_gene_interaction_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
-            ("publication", self._publication_node),
+            ("publication (chunked)", self._publication_node),
         ]
         self.edge_methods = [
             (
                 "experiment reference to dataset",
                 self._get_experiment_reference_to_dataset_edges,
             ),
-            ("experiment to dataset", self._experiment_to_dataset_edge),
+            ("experiment to dataset (chunked)", self._experiment_to_dataset_edge),
             (
-                "experiment reference to experiment",
+                "experiment reference to experiment (chunked)",
                 self._experiment_reference_to_experiment_edge,
             ),
-            ("genotype to experiment", self._genotype_to_experiment_edge),
-            ("perturbation to genotype", self._perturbation_to_genotype_edges),
-            ("environment to experiment", self._environment_to_experiment_edge),
+            ("genotype to experiment (chunked)", self._genotype_to_experiment_edge),
+            (
+                "perturbation to genotype (chunked)",
+                self._perturbation_to_genotype_edges,
+            ),
+            (
+                "environment to experiment (chunked)",
+                self._environment_to_experiment_edge,
+            ),
             (
                 "environment to experiment reference",
                 self._get_environment_to_experiment_reference_edges,
             ),
-            ("phenotype to experiment", self._phenotype_to_experiment_edge),
-            ("media to environment", self._media_to_environment_edge),
-            ("temperature to environment", self._temperature_to_environment_edge),
+            ("phenotype to experiment (chunked)", self._phenotype_to_experiment_edge),
+            ("media to environment (chunked)", self._media_to_environment_edge),
+            (
+                "temperature to environment (chunked)",
+                self._temperature_to_environment_edge,
+            ),
             (
                 "genome to experiment reference",
                 self._get_genome_to_experiment_reference_edges,
@@ -100,20 +112,25 @@ class CellAdapter:
                 "phenotype to experiment reference",
                 self._get_phenotype_to_experiment_reference_edges,
             ),
-            ("publication to experiment", self._publication_to_experiment_edge),
+            (
+                "publication to experiment (chunked)",
+                self._publication_to_experiment_edge,
+            ),
         ]
 
     def get_data_by_type(
-        self, chunk_processing_func: Callable, chunk_size: Optional[int] = None
+        self, chunk_processing_func: Callable, method_name: str, is_edge: bool = False
     ):
-        chunk_size = chunk_size if chunk_size is not None else self.chunk_size
+        memory_reduction_factor = self.get_memory_reduction_factor(method_name, is_edge)
+        chunk_size = int(self.chunk_size * memory_reduction_factor)
         data_chunks = [
             self.dataset[i : i + chunk_size]
             for i in range(0, len(self.dataset), chunk_size)
         ]
         with ProcessPoolExecutor(max_workers=self.process_workers) as executor:
             futures = [
-                executor.submit(chunk_processing_func, chunk) for chunk in data_chunks
+                executor.submit(chunk_processing_func, chunk, method_name)
+                for chunk in data_chunks
             ]
             for future in futures:
                 for data in future.result():
@@ -121,27 +138,65 @@ class CellAdapter:
 
     def data_chunker(data_creation_logic):
         @wraps(data_creation_logic)
-        def decorator(self, data_chunk: dict):
-            # data_loader = CpuExperimentLoader(
+        def decorator(self, data_chunk: dict, method_name: str):
+            memory_reduction_factor = self.get_memory_reduction_factor(method_name)
+            loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
             data_loader = CpuExperimentLoaderMultiprocessing(
-                data_chunk,
-                batch_size=self.loader_batch_size,
-                num_workers=self.io_workers,
+                data_chunk, batch_size=loader_batch_size, num_workers=self.io_workers
             )
             datas = []
             for batch in tqdm(data_loader):
                 for data in batch:
                     transformed_data = data_chunk.transform_item(data)
-                    data = data_creation_logic(self, transformed_data)
+                    data = data_creation_logic(self, transformed_data, method_name)
                     if isinstance(data, list):
-                        # list[BiocypherNode] (e.g. perturbations)
                         datas.extend(data)
                     else:
-                        # BiocypherNode
                         datas.append(data)
             return datas
 
         return decorator
+
+    def get_memory_reduction_factor(
+        self, method_name: str, is_edge: bool = False
+    ) -> float:
+        method_list = (
+            self.config.cell_adapter.edge_methods
+            if is_edge
+            else self.config.cell_adapter.node_methods
+        )
+        for method in method_list:
+            if method["method_name"] == method_name:
+                return method.get("memory_reduction_factor", 1.0)
+        return 1.0
+
+    def get_nodes(self):
+        for method_name, method in self.node_methods:
+            config_method_names = [
+                i["method_name"] for i in self.config.cell_adapter.node_methods
+            ]
+            if method_name in config_method_names:
+                log.info(f"Running: {method_name}")
+                if method.__name__.startswith("_get_"):
+                    yield from method()
+                else:
+                    yield from self.get_data_by_type(method, method_name)
+                self.event += 1
+                wandb.log({"event": self.event, "method": method_name, "type": "node"})
+
+    def get_edges(self):
+        for method_name, method in self.edge_methods:
+            config_method_names = [
+                i["method_name"] for i in self.config.cell_adapter.edge_methods
+            ]
+            if method_name in config_method_names:
+                log.info(f"Running: {method_name}")
+                if method.__name__.startswith("_get_"):
+                    yield from method()
+                else:
+                    yield from self.get_data_by_type(method, method_name, is_edge=True)
+                self.event += 1
+                wandb.log({"event": self.event, "method": method_name, "type": "edge"})
 
     @property
     def supported_node_methods(self) -> List[str]:
@@ -150,28 +205,6 @@ class CellAdapter:
     @property
     def supported_edge_methods(self) -> List[str]:
         return [method_name for method_name, _ in self.edge_methods]
-
-    def get_nodes(self):
-        for method_name, method in self.node_methods:
-            if method_name in self.config.cell_adapter.node_methods:
-                log.info(f"Running: {method_name}")
-                if method.__name__.startswith("_get_"):
-                    yield from method()
-                else:
-                    yield from self.get_data_by_type(method)
-                self.event += 1
-                wandb.log({"event": self.event})
-
-    def get_edges(self):
-        for method_name, method in self.edge_methods:
-            if method_name in self.config.cell_adapter.edge_methods:
-                log.info(f"Running: {method_name}")
-                if method.__name__.startswith("_get_"):
-                    yield from method()
-                else:
-                    yield from self.get_data_by_type(method)
-                self.event += 1
-                wandb.log({"event": self.event})
 
     # nodes
     def _get_experiment_reference_nodes(self) -> list[BioCypherNode]:
@@ -214,7 +247,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _experiment_node(self, data: dict) -> BioCypherNode:
+    def _experiment_node(self, data: dict, method_name: str) -> BioCypherNode:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -226,7 +259,7 @@ class CellAdapter:
         )
 
     @data_chunker
-    def _genotype_node(self, data: dict) -> BioCypherNode:
+    def _genotype_node(self, data: dict, method_name: str) -> BioCypherNode:
         genotype = data["experiment"].genotype
         genotype_id = hashlib.sha256(
             json.dumps(genotype.model_dump()).encode("utf-8")
@@ -244,7 +277,7 @@ class CellAdapter:
         )
 
     @data_chunker
-    def _perturbation_node(self, data: dict) -> list[BioCypherNode]:
+    def _perturbation_node(self, data: dict, method_name: str) -> list[BioCypherNode]:
         perturbations = data["experiment"].genotype.perturbations
         nodes = []
         for perturbation in perturbations:
@@ -268,7 +301,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _environment_node(self, data: dict) -> BioCypherNode:
+    def _environment_node(self, data: dict, method_name: str) -> BioCypherNode:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -316,7 +349,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _media_node(self, data: dict) -> BioCypherNode:
+    def _media_node(self, data: dict, method_name: str) -> BioCypherNode:
         media_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.media.model_dump()).encode(
                 "utf-8"
@@ -366,7 +399,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _temperature_node(self, data: dict) -> BioCypherNode:
+    def _temperature_node(self, data: dict, method_name: str) -> BioCypherNode:
         temperature_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.temperature.model_dump()).encode(
                 "utf-8"
@@ -412,7 +445,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _fitness_phenotype_node(self, data: dict) -> BioCypherNode:
+    def _fitness_phenotype_node(self, data: dict, method_name: str) -> BioCypherNode:
         phenotype_id = hashlib.sha256(
             json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -440,7 +473,9 @@ class CellAdapter:
         )
 
     @data_chunker
-    def _gene_interaction_phenotype_node(self, data: dict) -> BioCypherNode:
+    def _gene_interaction_phenotype_node(
+        self, data: dict, method_name: str
+    ) -> BioCypherNode:
         phenotype = data["experiment"].phenotype
         phenotype_id = hashlib.sha256(
             json.dumps(phenotype.model_dump()).encode("utf-8")
@@ -545,7 +580,7 @@ class CellAdapter:
         return nodes
 
     @data_chunker
-    def _publication_node(self, data: dict) -> BioCypherNode:
+    def _publication_node(self, data: dict, method_name: str) -> BioCypherNode:
         publication = data["publication"]
         publication_id = hashlib.sha256(
             json.dumps(publication.model_dump()).encode("utf-8")
@@ -580,7 +615,9 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _experiment_to_dataset_edge(self, data: dict) -> list[BioCypherEdge]:
+    def _experiment_to_dataset_edge(
+        self, data: dict, method_name: str
+    ) -> list[BioCypherEdge]:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -592,7 +629,9 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _experiment_reference_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _experiment_reference_to_experiment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -607,7 +646,9 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _genotype_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _genotype_to_experiment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -623,7 +664,9 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _perturbation_to_genotype_edges(self, data: dict) -> list[BioCypherEdge]:
+    def _perturbation_to_genotype_edges(
+        self, data: dict, method_name: str
+    ) -> list[BioCypherEdge]:
         edges = []
         genotype = data["experiment"].genotype
         for perturbation in genotype.perturbations:
@@ -643,7 +686,9 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _environment_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _environment_to_experiment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -682,7 +727,9 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _phenotype_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _phenotype_to_experiment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()
@@ -697,7 +744,7 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _media_to_environment_edge(self, data: dict) -> BioCypherEdge:
+    def _media_to_environment_edge(self, data: dict, method_name: str) -> BioCypherEdge:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -714,7 +761,9 @@ class CellAdapter:
         return edge
 
     @data_chunker
-    def _temperature_to_environment_edge(self, data: dict) -> BioCypherEdge:
+    def _temperature_to_environment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         environment_id = hashlib.sha256(
             json.dumps(data["experiment"].environment.model_dump()).encode("utf-8")
         ).hexdigest()
@@ -775,7 +824,9 @@ class CellAdapter:
         return edges
 
     @data_chunker
-    def _publication_to_experiment_edge(self, data: dict) -> BioCypherEdge:
+    def _publication_to_experiment_edge(
+        self, data: dict, method_name: str
+    ) -> BioCypherEdge:
         experiment_id = hashlib.sha256(
             json.dumps(data["experiment"].model_dump()).encode("utf-8")
         ).hexdigest()

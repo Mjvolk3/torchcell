@@ -1,15 +1,25 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=128
+#SBATCH --cpus-per-task=64
 #SBATCH --mem=995G
 #SBATCH --time=365-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
-# Kill child processes upon cancel
-trap 'kill $(jobs -p)' EXIT
+###
+# Allow for working with docker in slurm env
+# Cancel docker with scancel
+cleanup() {
+    echo "Stopping Docker container..."
+    docker stop tc-neo4j
+    docker rm tc-neo4j
+    exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+###
 
 echo "Running on $(hostname)"
 
@@ -81,8 +91,11 @@ docker exec tc-neo4j wandb login $WANDB_API_KEY
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
+#torchcell.knowledge_graphs.gene_interactions_scerevisae_kg
+#torchcell.torchcell.knowledge_graphs.create_scerevisiae_kg
+
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1
@@ -118,3 +131,14 @@ docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NE
 
 docker exec tc-neo4j neo4j stop
 docker exec tc-neo4j neo4j start
+
+
+### Slurm-Docker interrupt
+while true; do
+    if ! docker ps -q --filter name=tc-neo4j; then
+        echo "Docker container has stopped. Exiting."
+        exit 0
+    fi
+    sleep 10
+done
+###

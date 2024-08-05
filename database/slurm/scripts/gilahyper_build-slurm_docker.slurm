@@ -8,6 +8,9 @@
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
+# Kill child processes upon cancel
+trap 'kill $(jobs -p)' EXIT
+
 echo "Running on $(hostname)"
 
 echo "Checking Docker availability..."

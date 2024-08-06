@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=128
 #SBATCH --mem=995G
 #SBATCH --time=365-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -12,13 +12,11 @@
 # Allow for working with docker in slurm env
 # Cancel docker with scancel
 cleanup() {
-    echo "Stopping Docker container..."
-    docker stop tc-neo4j
-    docker rm tc-neo4j
+    echo "Stopping and removing Docker container..."
+    docker stop tc-neo4j || true
+    docker rm -f tc-neo4j || true
     exit 0
 }
-
-trap cleanup SIGTERM SIGINT
 ###
 
 echo "Running on $(hostname)"
@@ -135,6 +133,7 @@ docker exec tc-neo4j neo4j start
 
 ### Slurm-Docker interrupt
 while true; do
+    trap cleanup SIGTERM SIGINT
     if ! docker ps -q --filter name=tc-neo4j; then
         echo "Docker container has stopped. Exiting."
         exit 0

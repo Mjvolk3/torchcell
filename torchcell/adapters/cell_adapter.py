@@ -173,8 +173,9 @@ class CellAdapter:
     def data_chunker(data_creation_logic):
         @wraps(data_creation_logic)
         def decorator(self, data_chunk: dict, method_name: str):
-            memory_reduction_factor = self.get_memory_reduction_factor(method_name)
-            loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
+            # memory_reduction_factor = self.get_memory_reduction_factor(method_name)
+            # loader_batch_size = int(self.loader_batch_size * memory_reduction_factor)
+            loader_batch_size = self.loader_batch_size
             data_loader = CpuExperimentLoaderMultiprocessing(
                 data_chunk, batch_size=loader_batch_size, num_workers=self.io_workers
             )

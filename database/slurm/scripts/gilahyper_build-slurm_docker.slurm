@@ -12,11 +12,17 @@
 # Allow for working with docker in slurm env
 # Cancel docker with scancel
 cleanup() {
+    echo "Received termination signal. Cleaning up..."
+    
+    # Stop and remove the Docker container
     echo "Stopping and removing Docker container..."
     docker stop tc-neo4j || true
     docker rm -f tc-neo4j || true
+
+    echo "Cleanup completed. Exiting."
     exit 0
 }
+trap cleanup SIGTERM SIGINT SIGHUP EXIT
 ###
 
 echo "Running on $(hostname)"
@@ -133,10 +139,9 @@ docker exec tc-neo4j neo4j start
 
 ### Slurm-Docker interrupt
 while true; do
-    trap cleanup SIGTERM SIGINT
     if ! docker ps -q --filter name=tc-neo4j; then
         echo "Docker container has stopped. Exiting."
-        exit 0
+        cleanup
     fi
     sleep 10
 done

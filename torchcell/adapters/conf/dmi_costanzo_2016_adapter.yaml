@@ -22,16 +22,23 @@ cell_adapter:
   edge_methods:
     - method_name: experiment reference to dataset
     - method_name: experiment to dataset (chunked)
+      memory_reduction_factor: 0.5
     - method_name: experiment reference to experiment (chunked)
+      memory_reduction_factor: 0.5
     - method_name: genotype to experiment (chunked)
       memory_reduction_factor: 0.5
     - method_name: perturbation to genotype (chunked)
       memory_reduction_factor: 0.5
     - method_name: environment to experiment (chunked)
+      memory_reduction_factor: 0.5
     - method_name: environment to experiment reference
     - method_name: phenotype to experiment (chunked)
+      memory_reduction_factor: 0.5
     - method_name: media to environment (chunked)
+      memory_reduction_factor: 0.5
     - method_name: temperature to environment (chunked)
+      memory_reduction_factor: 0.5
     - method_name: genome to experiment reference
     - method_name: phenotype to experiment reference
     - method_name: publication to experiment (chunked)
+      memory_reduction_factor: 0.5

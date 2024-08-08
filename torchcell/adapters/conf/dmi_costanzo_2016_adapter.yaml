@@ -24,9 +24,9 @@ cell_adapter:
     - method_name: experiment to dataset (chunked)
     - method_name: experiment reference to experiment (chunked)
     - method_name: genotype to experiment (chunked)
-      memory_reduction_factor: 0.7
+      memory_reduction_factor: 0.5
     - method_name: perturbation to genotype (chunked)
-      memory_reduction_factor: 0.7
+      memory_reduction_factor: 0.5
     - method_name: environment to experiment (chunked)
     - method_name: environment to experiment reference
     - method_name: phenotype to experiment (chunked)

@@ -12,7 +12,7 @@ wandb:
   project: tcdb
 
 adapters:
-  io_to_total_worker_ratio: 0.2 #0.62
+  io_to_total_worker_ratio: 0.1 #0.62
   chunk_size: 4e5 #4e4 # 2e4 works on delta 256 gb
   loader_batch_size: 1e3 #1e4
 

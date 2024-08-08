@@ -1,4 +1,3 @@
-
 from biocypher import BioCypher
 from torchcell.adapters import DmiCostanzo2016Adapter
 from torchcell.datasets.scerevisiae.costanzo2016 import DmiCostanzo2016Dataset
@@ -91,9 +90,9 @@ def main(cfg) -> str:
     dataset_configs = [
         {
             "class": DmiCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
+            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
             "kwargs": {
-                "subset_n": int(1e6),
+                # "subset_n": int(1e6),
                 "io_workers": num_workers,
                 "batch_size": int(1e3),
             },
@@ -117,9 +116,7 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {
-        DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
-    }
+    dataset_adapter_map = {DmiCostanzo2016Dataset: DmiCostanzo2016Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

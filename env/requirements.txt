@@ -65,7 +65,8 @@ sortedcontainers>=2.4.0
 attrs>=23.1.0
 pydantic>=2.8.2
 h5py>=3.9.0
-rpy2>=3.5.16 # needed for mechanistic aware. can probably get rid of.
+# R is needed for installation. This creates issues.
+#rpy2>=3.5.16 # needed for mechanistic aware. can probably get rid of.
 
 
 # database stack

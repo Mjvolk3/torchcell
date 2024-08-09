@@ -73,7 +73,14 @@ def combine_csv_files(input_dirs, output_dir):
                     file_counters[base_name] = counter + 1
 
 
-def generate_neo4j_import_script(output_dir, neo4j_config):
+def load_schema_info(schema_file):
+    with open(schema_file, "r") as f:
+        schema = yaml.safe_load(f)
+    return schema
+
+
+def generate_neo4j_import_script(output_dir, neo4j_config, schema):
+    output_dir_name = os.path.basename(output_dir)
     script_content = [
         "#!/bin/bash",
         "version=$(bin/neo4j-admin --version | cut -d '.' -f 1)",
@@ -87,26 +94,43 @@ def generate_neo4j_import_script(output_dir, neo4j_config):
         f'    --skip-duplicate-nodes={str(neo4j_config["skip_duplicate_nodes"]).lower()} \\',
     ]
 
-    output_dir_name = os.path.basename(output_dir)
+    # Get actual file names from the directory
+    file_names = os.listdir(output_dir)
+
+    # Separate nodes and relationships based on schema
+    nodes = []
+    relationships = []
+    for entity, info in schema.items():
+        if isinstance(info, dict):
+            file_name = entity.replace(" ", "")
+            if info.get("is_relationship", False):
+                relationships.append(file_name)
+            elif info.get("represented_as") == "node":
+                nodes.append(file_name)
+
+    # Function to find the correct case-sensitive file name
+    def find_file(base_name):
+        return next(
+            (f for f in file_names if f.lower() == f"{base_name.lower()}-header.csv"),
+            None,
+        )
 
     # Add nodes
-    for file in os.listdir(output_dir):
-        if file.endswith("-header.csv") and not file.startswith(
-            ("Schema_info", "Mentions")
-        ):
-            base_name = file.split("-")[0]
+    for base_name in nodes:
+        file_name = find_file(base_name)
+        if file_name:
+            base_name = file_name[:-11]  # Remove "-header.csv"
             script_content.append(
-                f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part*" \\'
+                f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add relationships
-    for file in os.listdir(output_dir):
-        if file.endswith("-header.csv") and (
-            file.startswith(("Mentions", "MemberOf")) or "Of-header" in file
-        ):
-            base_name = file.split("-")[0]
+    for base_name in relationships:
+        file_name = find_file(base_name)
+        if file_name:
+            base_name = file_name[:-11]  # Remove "-header.csv"
             script_content.append(
-                f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part*" \\'
+                f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add database name for Neo4j 5+
@@ -127,23 +151,21 @@ def generate_neo4j_import_script(output_dir, neo4j_config):
     )
 
     # Add nodes for Neo4j 4.x
-    for file in os.listdir(output_dir):
-        if file.endswith("-header.csv") and not file.startswith(
-            ("Schema_info", "Mentions")
-        ):
-            base_name = file.split("-")[0]
+    for base_name in nodes:
+        file_name = find_file(base_name)
+        if file_name:
+            base_name = file_name[:-11]  # Remove "-header.csv"
             script_content.append(
-                f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part*" \\'
+                f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add relationships for Neo4j 4.x
-    for file in os.listdir(output_dir):
-        if file.endswith("-header.csv") and (
-            file.startswith(("Mentions", "MemberOf")) or "Of-header" in file
-        ):
-            base_name = file.split("-")[0]
+    for base_name in relationships:
+        file_name = find_file(base_name)
+        if file_name:
+            base_name = file_name[:-11]  # Remove "-header.csv"
             script_content.append(
-                f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part*" \\'
+                f'    --relationships="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/{base_name}-part.*" \\'
             )
 
     # Add database name for Neo4j 4.x
@@ -172,6 +194,9 @@ def main(input_dirs, output_base_dir, neo4j_yaml):
         print(f"Error: {e}")
         return
 
+    # Remove duplicates from combined YAML
+    combined_yaml = remove_duplicates(combined_yaml)
+
     # Write combined YAML
     with open(os.path.join(output_dir, "schema_info.yaml"), "w") as f:
         yaml.dump(combined_yaml, f)
@@ -184,7 +209,7 @@ def main(input_dirs, output_base_dir, neo4j_yaml):
         neo4j_config = yaml.safe_load(f)["neo4j"]
 
     # Generate Neo4j import script
-    generate_neo4j_import_script(output_dir, neo4j_config)
+    generate_neo4j_import_script(output_dir, neo4j_config, combined_yaml)
 
     print(f"Data combined successfully in {output_dir}")
 

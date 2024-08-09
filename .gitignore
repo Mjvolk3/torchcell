@@ -21,6 +21,8 @@ torchcell/models/pretrained_LLM/*
 /data/sgd.gaf
 wandb/
 models/checkpoints/
+mechanistic_aware.csv
+
 
 # Dendron
 .dendron.port

@@ -1,7 +1,7 @@
-# torchcell/knowledge_graphs/create_scerevisiae_kg
-# [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
-# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
+# torchcell/knowledge_graphs/dmf_tmi_combine_kg
+# [[torchcell.knowledge_graphs.dmf_tmi_combine_kg]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/dmf_tmi_combine_kg
+# Test file: tests/torchcell/knowledge_graphs/test_dmf_tmi_combine_kg.py
 
 
 from biocypher import BioCypher

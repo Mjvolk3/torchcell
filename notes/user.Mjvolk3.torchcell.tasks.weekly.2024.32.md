@@ -2,7 +2,7 @@
 id: epexvgtp427jnjyj40bupb8
 title: '32'
 desc: ''
-updated: 1723149097488
+updated: 1723178560163
 created: 1722806044510
 ---
 
@@ -26,7 +26,8 @@ created: 1722806044510
 
 ## 2024.08.08
 
-- [ ] 
+- [x] biocypher-out combine so we can combine partial knowledge graph builds → [[2024.08.08 - How it works|dendron://torchcell/torchcell.database.biocypher_out_combine#20240808---how-it-works]]
+- [ ] Test that 
 
 ## 2024.08.04
 

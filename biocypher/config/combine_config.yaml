@@ -1,0 +1,9 @@
+neo4j:
+  database_name: torchcell
+  wipe: true
+  delimiter: '\t'
+  array_delimiter: '|'
+  skip_duplicate_nodes: true
+  skip_bad_relationships: true
+  import_call_file_prefix: "./"
+  import_call_bin_prefix: /var/lib/neo4j/bin/

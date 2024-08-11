@@ -18,6 +18,7 @@ def main() -> None:
         osp.join(DATA_ROOT, "database/conf"),
         osp.join(DATA_ROOT, "database/logs"),
         osp.join(DATA_ROOT, "database/slurm"),
+        osp.join(DATA_ROOT, "database/plugins"),
     ]
     
     for dir_path in directories:

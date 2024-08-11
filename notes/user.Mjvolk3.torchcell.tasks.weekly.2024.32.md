@@ -2,7 +2,7 @@
 id: epexvgtp427jnjyj40bupb8
 title: '32'
 desc: ''
-updated: 1723324978814
+updated: 1723344061257
 created: 1722806044510
 ---
 
@@ -20,7 +20,7 @@ Changing as of this week, days are going down chronologically. Before it made se
 
 ## 2024.08.10
 
-- [ ] [[2024.08.10 - Troubleshooting Combine to Match Simultaneous Graph Builds|dendron://torchcell/torchcell.knowledge_graphs.dmf_tmi_combine_kg#20240810---troubleshooting-combine-to-match-simultaneous-graph-builds]]
+- [x] [[2024.08.10 - Troubleshooting Combine to Match Simultaneous Graph Builds|dendron://torchcell/torchcell.knowledge_graphs.dmf_tmi_combine_kg#20240810---troubleshooting-combine-to-match-simultaneous-graph-builds]]
 
 
 

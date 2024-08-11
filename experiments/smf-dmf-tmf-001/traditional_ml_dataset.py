@@ -31,22 +31,18 @@ from torchcell.datasets import (
     NucleotideTransformerDataset,
     CodonFrequencyDataset,
     CalmDataset,
-    RandomEmbeddingDataset
+    RandomEmbeddingDataset,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
-import os.path as osp
 import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 import umap
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
-import wandb
 import torchcell
 
 
@@ -116,11 +112,18 @@ def plot_embedding(embedding, labels, title, image_path, dataset_size):
     num_points = embedding.shape[0]
 
     # Calculate the dot size inversely proportional to the number of points
-    dot_size = max_size / (num_points ** 0.5)
-    dot_size = max(min_size, dot_size)  # Ensure the dot size is not smaller than min_size
+    dot_size = max_size / (num_points**0.5)
+    dot_size = max(
+        min_size, dot_size
+    )  # Ensure the dot size is not smaller than min_size
 
     scatter = plt.scatter(
-        embedding[:, 0], embedding[:, 1], c=labels, cmap="plasma", alpha=0.65, s=dot_size
+        embedding[:, 0],
+        embedding[:, 1],
+        c=labels,
+        cmap="plasma",
+        alpha=0.65,
+        s=dot_size,
     )
 
     # Increase color bar label font size and tick label font size
@@ -376,23 +379,19 @@ def main(cfg: DictConfig) -> None:
     # random
     if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1000"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
-            genome=genome,
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
         )
     if "random_100" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_100"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
-            genome=genome,
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
         )
     if "random_10" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_10"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
-            genome=genome,
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
         )
     if "random_1" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
-            genome=genome,
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
         )
 
     # Experiments
@@ -497,9 +496,7 @@ def main(cfg: DictConfig) -> None:
             embedding = create_embeddings(
                 np.array(features), np.array(labels), type="global", method="pca"
             )
-            title = (
-                f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-pca_embedding"
-            )
+            title = f"{('-').join(node_embeddings_path.split('/')[-2:])}-{split}-pca_embedding"
             image_path = osp.join(ASSET_IMAGES_DIR, title) + ".png"
             dataset_size = len(dataloader.dataset)  # Get the dataset size
             plot_embedding(embedding, labels, title, image_path, dataset_size)

@@ -25,10 +25,14 @@ docker run --cpus=10 \
     -v "$(pwd)/biocypher:/var/lib/neo4j/biocypher" \
     -v "$(pwd)/database/conf:/var/lib/neo4j/conf" \
     -v "$(pwd)/database/logs:/logs" \
+    -v "$(pwd)/database/plugins:/plugins" \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_dbms_read__only=false \
+    -e NEO4J_apoc_export_file_enabled=true \
+    -e NEO4J_apoc_import_file_enabled=true \
+    -e NEO4J_apoc_import_file_use__neo4j__config=true \
+    -e NEO4J_dbms_security_procedures_unrestricted=apoc.\* \
     michaelvolk/tc-neo4j:latest
-
 
 # Allow some time for the container to start
 sleep 10
@@ -75,7 +79,8 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 # torchcell.knowledge_graphs.tmi_kuzmin_2018_kg
 #torchcell.knowledge_graphs.smf_costanzo_2016_kg
 #torchcell.knowledge_graphs.dmf_tmi_combine_kg
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.tmi_kuzmin_2018_kg
+
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_costanzo_2016_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

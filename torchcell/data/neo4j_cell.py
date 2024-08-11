@@ -46,16 +46,17 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
 from abc import ABC, abstractmethod
 from memory_profiler import profile
+
 log = logging.getLogger(__name__)
 
 
 class Deduplicator(ABC):
     @abstractmethod
-    def duplicate_check(self, data) -> dict[str, list[int]]: ...
+    def duplicate_check(self, data: Any) -> dict[str, list[int]]: ...
 
     @abstractmethod
     def create_mean_entry(
-        self, duplicate_experiments
+        self, duplicate_experiments: list[dict[str, Any]]
     ) -> dict[str, Experiment | ExperimentReference]: ...
 
 
@@ -67,6 +68,7 @@ class ParsedGenome(ModelStrictArbitrary):
         if not isinstance(v, GeneSet):
             raise ValueError(f"gene_set must be a GeneSet, got {type(v).__name__}")
         return v
+
 
 @profile
 def create_embedding_graph(
@@ -87,7 +89,8 @@ def create_embedding_graph(
 
             G.add_node(item.id, embedding=concatenated_embedding)
 
-    return G # breakpoint here
+    return G
+
 
 @profile
 def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
@@ -142,6 +145,7 @@ def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
 
     return hetero_data
 
+
 @profile
 def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     """
@@ -152,6 +156,7 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     for gene_name in gene_set:
         G.add_node(gene_name)  # Nodes are gene names
     return G
+
 
 @profile
 def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
@@ -531,7 +536,9 @@ class ExperimentDeduplicator(Deduplicator):
         mean_phenotype = FitnessPhenotype(
             graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
             label=duplicate_experiments[0]["experiment"].phenotype.label,
-            label_statistic=duplicate_experiments[0]["experiment"].phenotype.label_statistic,
+            label_statistic=duplicate_experiments[0][
+                "experiment"
+            ].phenotype.label_statistic,
             fitness=mean_fitness,
             fitness_std=mean_fitness_std,
         )
@@ -591,6 +598,7 @@ class ExperimentDeduplicator(Deduplicator):
         )
 
         return {"experiment": mean_experiment, "reference": mean_reference}
+
 
 def main():
     # genome

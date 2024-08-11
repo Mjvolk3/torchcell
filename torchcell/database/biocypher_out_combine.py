@@ -11,6 +11,8 @@ import argparse
 from deepdiff import DeepDiff
 import glob
 import subprocess
+import json
+import csv
 
 
 def merge_dicts(dict1, dict2):
@@ -53,16 +55,44 @@ def remove_duplicates(data):
         return data
 
 
+def create_schema_info_csv(output_dir, schema_yaml):
+    """Create a new Schema_info CSV file based on the combined schema YAML."""
+    csv_header = ":ID\tschema_info\tid\tpreferred_id\t:LABEL"
+
+    # Ensure is_schema_info: true is within the schema_yaml
+    schema_yaml["is_schema_info"] = True
+
+    # Convert the schema to a JSON string
+    schema_json = json.dumps(schema_yaml, separators=(",", ":"))
+
+    # Create the CSV data row
+    csv_data = f"Schema_info\t'{schema_json}'\tschema_info\tid\tSchema_info"
+
+    # Write the header CSV file
+    with open(os.path.join(output_dir, "Schema_info-header.csv"), "w", newline="") as f:
+        f.write(csv_header + "\n")
+
+    # Write the data CSV file
+    with open(
+        os.path.join(output_dir, "Schema_info-part000.csv"), "w", newline=""
+    ) as f:
+        f.write(csv_data + "\n")
+
+    print(f"Created Schema_info CSV files in {output_dir}")
+
+
 def combine_csv_files(input_dirs, output_dir):
     file_counters = {}
     for input_dir in input_dirs:
         for file in os.listdir(input_dir):
-            if file.endswith(".csv"):
+            if file.endswith(".csv") and not file.startswith("Schema_info"):
                 base_name = file.split("-")[0]
                 if file.endswith("-header.csv"):
-                    shutil.copy(
-                        os.path.join(input_dir, file), os.path.join(output_dir, file)
-                    )
+                    if not os.path.exists(os.path.join(output_dir, file)):
+                        shutil.copy(
+                            os.path.join(input_dir, file),
+                            os.path.join(output_dir, file),
+                        )
                 else:
                     counter = file_counters.get(base_name, 0)
                     new_name = f"{base_name}-part{counter:03d}.csv"
@@ -71,6 +101,34 @@ def combine_csv_files(input_dirs, output_dir):
                         os.path.join(output_dir, new_name),
                     )
                     file_counters[base_name] = counter + 1
+
+
+def load_neo4j_config(config_file):
+    with open(config_file, "r") as f:
+        config = yaml.safe_load(f)
+
+    # Extract Neo4j configuration, preferring the second neo4j block if it exists
+    neo4j_config = config.get("neo4j", {})
+    if "neo4j" in config and isinstance(config["neo4j"], dict):
+        neo4j_config.update(config["neo4j"])
+
+    # Ensure all required keys are present
+    required_keys = [
+        "database_name",
+        "wipe",
+        "delimiter",
+        "array_delimiter",
+        "skip_duplicate_nodes",
+        "skip_bad_relationships",
+        "import_call_file_prefix",
+        "import_call_bin_prefix",
+    ]
+
+    for key in required_keys:
+        if key not in neo4j_config:
+            raise ValueError(f"Missing required Neo4j configuration key: {key}")
+
+    return neo4j_config
 
 
 def load_schema_info(schema_file):
@@ -92,6 +150,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
         f'    --overwrite-destination={str(neo4j_config["wipe"]).lower()} \\',
         f'    --skip-bad-relationships={str(neo4j_config["skip_bad_relationships"]).lower()} \\',
         f'    --skip-duplicate-nodes={str(neo4j_config["skip_duplicate_nodes"]).lower()} \\',
+        f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-part.*" \\',
     ]
 
     # Get actual file names from the directory
@@ -107,6 +166,10 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
                 relationships.append(file_name)
             elif info.get("represented_as") == "node":
                 nodes.append(file_name)
+
+    # Ensure "Mentions" is in the relationships list if it exists in the directory
+    if any(file.startswith("Mentions-") for file in file_names):
+        relationships.append("Mentions")
 
     # Function to find the correct case-sensitive file name
     def find_file(base_name):
@@ -147,6 +210,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
             f'    --force={str(neo4j_config["wipe"]).lower()} \\',
             f'    --skip-bad-relationships={str(neo4j_config["skip_bad_relationships"]).lower()} \\',
             f'    --skip-duplicate-nodes={str(neo4j_config["skip_duplicate_nodes"]).lower()} \\',
+            f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-part.*" \\',
         ]
     )
 
@@ -180,7 +244,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
         f.write("\n".join(script_content))
 
 
-def main(input_dirs, output_base_dir, neo4j_yaml):
+def main(input_dirs, output_base_dir, config_yaml):
     # Create output directory with timestamp
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     output_dir = os.path.join(output_base_dir, f"{timestamp}_combined")
@@ -201,17 +265,42 @@ def main(input_dirs, output_base_dir, neo4j_yaml):
     with open(os.path.join(output_dir, "schema_info.yaml"), "w") as f:
         yaml.dump(combined_yaml, f)
 
-    # Combine CSV files
+    # Create new Schema_info CSV files
+    create_schema_info_csv(output_dir, combined_yaml)
+
+    # Verify Schema_info CSV files
+    schema_header = os.path.join(output_dir, "Schema_info-header.csv")
+    schema_part = os.path.join(output_dir, "Schema_info-part000.csv")
+    if not (os.path.exists(schema_header) and os.path.exists(schema_part)):
+        print("Error: Schema_info CSV files were not created successfully.")
+        return
+
+    # Combine CSV files (excluding Schema_info CSVs)
     combine_csv_files(input_dirs, output_dir)
 
     # Load Neo4j configuration
-    with open(neo4j_yaml, "r") as f:
-        neo4j_config = yaml.safe_load(f)["neo4j"]
+    try:
+        neo4j_config = load_neo4j_config(config_yaml)
+    except ValueError as e:
+        print(f"Error loading Neo4j configuration: {e}")
+        return
 
     # Generate Neo4j import script
     generate_neo4j_import_script(output_dir, neo4j_config, combined_yaml)
 
-    print(f"Data combined successfully in {output_dir}")
+    # Verify the generated import script
+    import_script = os.path.join(output_dir, "neo4j-admin-import-call.sh")
+    if not os.path.exists(import_script):
+        print("Error: Neo4j import script was not generated successfully.")
+        return
+
+    # Check if Schema_info is included in the import script
+    with open(import_script, "r") as f:
+        script_content = f.read()
+        if "Schema_info-header.csv" not in script_content:
+            print(
+                "Warning: Schema_info node might not be included in the import script."
+            )
 
 
 if __name__ == "__main__":
@@ -225,8 +314,8 @@ if __name__ == "__main__":
         help="Base output directory for combined data",
     )
     parser.add_argument(
-        "--neo4j_yaml", required=True, help="Path to the Neo4j configuration YAML file"
+        "--config_yaml", required=True, help="Path to the configuration YAML file"
     )
     args = parser.parse_args()
 
-    main(args.input_dirs, args.output_base_dir, args.neo4j_yaml)
+    main(args.input_dirs, args.output_base_dir, args.config_yaml)

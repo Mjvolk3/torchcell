@@ -67,8 +67,13 @@ docker run \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
+    -v $(pwd)/database/plugins:/plugins \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_dbms_read__only=false \
+    -e NEO4J_apoc_export_file_enabled=true \
+    -e NEO4J_apoc_import_file_enabled=true \
+    -e NEO4J_apoc_import_file_use__neo4j__config=true \
+    -e NEO4J_dbms_security_procedures_unrestricted=apoc.\* \
     michaelvolk/tc-neo4j:latest
 
 # Check if the container is running
@@ -99,7 +104,7 @@ echo "----------------NOW_BUILDING_GRAPHS---------------------"
 #torchcell.torchcell.knowledge_graphs.create_scerevisiae_kg
 #torchcell.knowledge_graphs.dmi_costanzo_2016_kg
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.dmi_costanzo_2016_kg; then
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1
@@ -132,6 +137,10 @@ docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "
 
 echo "Running query to generate index stats..."
 docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD -d torchcell "MATCH (n) RETURN count(n);"'
+
+# Verify APOC installation
+echo "Verifying APOC installation..."
+docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD -d torchcell "RETURN apoc.version() AS apoc_version;"'
 
 docker exec tc-neo4j neo4j stop
 docker exec tc-neo4j neo4j start

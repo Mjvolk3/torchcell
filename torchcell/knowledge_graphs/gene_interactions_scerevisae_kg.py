@@ -96,11 +96,11 @@ def main(cfg) -> str:
 
     # Define dataset configurations
     dataset_configs = [
-        {
-            "class": DmiCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
-            "kwargs": {"io_workers": num_workers, "batch_size": int(1e3)},
-        },
+        # {
+        #     "class": DmiCostanzo2016Dataset,
+        #     "path": osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
+        #     "kwargs": {"io_workers": num_workers, "batch_size": int(1e3)},
+        # },
         {
             "class": DmiKuzmin2018Dataset,
             "path": osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"),

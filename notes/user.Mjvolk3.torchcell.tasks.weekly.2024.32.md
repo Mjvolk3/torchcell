@@ -2,9 +2,29 @@
 id: epexvgtp427jnjyj40bupb8
 title: '32'
 desc: ''
-updated: 1723178560163
+updated: 1723324978814
 created: 1722806044510
 ---
+
+Changing as of this week, days are going down chronologically. Before it made sense with extremely long notes to have them reversed. [[user.Mjvolk3.torchcell.tasks.deprecated]]. We do it this way in all other notes.
+
+## 2024.08.04
+
+- [x] Check on db build. → failed due to time limit... Great...
+- [x] We can optimize this build per edge node type batch sizes. Custom batch sizing in adapters. → we have added some memory reduction mechanisms via yaml
+
+## 2024.08.08
+
+- [x] biocypher-out combine so we can combine partial knowledge graph builds → [[2024.08.08 - How it works|dendron://torchcell/torchcell.database.biocypher_out_combine#20240808---how-it-works]]
+- [x] Test that the combine gives the same as all at once. → [[2024.08.08 - Checking that Combine Produces the Same Import Summary|dendron://torchcell/torchcell.knowledge_graphs.dmf_tmi_combine_kg#20240808---checking-that-combine-produces-the-same-import-summary]] → Not working correctly.
+
+## 2024.08.10
+
+- [ ] [[2024.08.10 - Troubleshooting Combine to Match Simultaneous Graph Builds|dendron://torchcell/torchcell.knowledge_graphs.dmf_tmi_combine_kg#20240810---troubleshooting-combine-to-match-simultaneous-graph-builds]]
+
+
+
+***
 
 - [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
 - [ ] Add expression dataset for mechanistic aware single fitness
@@ -23,13 +43,3 @@ created: 1722806044510
 - [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
 - [ ] Remove software update on image entry point
 - [ ] dataset registry not working again because circular import
-
-## 2024.08.08
-
-- [x] biocypher-out combine so we can combine partial knowledge graph builds → [[2024.08.08 - How it works|dendron://torchcell/torchcell.database.biocypher_out_combine#20240808---how-it-works]]
-- [ ] Test that 
-
-## 2024.08.04
-
-- [x] Check on db build. → failed due to time limit... Great...
-- [x] We can optimize this build per edge node type batch sizes. Custom batch sizing in adapters. → we have added some memory reduction mechanisms via yaml

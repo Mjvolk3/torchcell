@@ -2,7 +2,7 @@
 id: dhxcnez3o7iphm3s8qi4gbn
 title: Neo4j_query_raw
 desc: ''
-updated: 1716490548011
+updated: 1723490056267
 created: 1716490548011
 ---
 ## 2024.05.23 - Issue with Hyperparameter Sweep
@@ -71,4 +71,13 @@ This indicates something wrong with accessing `lmdb`. I believe it to be readonl
 
 ```python
 self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
+```
+
+## 2024.08.12 - Neo4jQueryRaw is Immutable
+
+```python
+neo4j_db[0] = None
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+TypeError: 'Neo4jQueryRaw' object does not support item assignment
 ```

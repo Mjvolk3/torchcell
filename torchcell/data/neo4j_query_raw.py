@@ -4,7 +4,6 @@
 # Test file: tests/torchcell/data/test_neo4j_query_raw.py
 
 
-
 import lmdb
 from neo4j import GraphDatabase
 import os
@@ -13,7 +12,11 @@ from attrs import define, field
 import os.path as osp
 import concurrent.futures
 from typing import Union
-from torchcell.datamodels.schema import FitnessExperiment, FitnessExperimentReference
+from torchcell.datamodels.schema import *
+from torchcell.datamodels.schema import (
+    EXPERIMENT_TYPE_MAP,
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+)
 import json
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
 import multiprocessing as mp
@@ -84,7 +87,7 @@ def compute_experiment_reference_index(
         log.info("Computing experiment reference index sequentially")
         reference_hashes = [
             compute_sha256_hash(
-                json.dumps(data["reference"].model_dump(), sort_keys=True)
+                json.dumps(data["experiment_reference"].model_dump(), sort_keys=True)
             )
             for data in dataset
         ]
@@ -113,7 +116,7 @@ def compute_experiment_reference_index(
         index_list = [False] * len(dataset)
         for idx in indices:
             index_list[idx] = True
-        reference_obj = dataset[indices[0]]["reference"].model_dump()
+        reference_obj = dataset[indices[0]]["experiment_reference"].model_dump()
         exp_ref_index = ExperimentReferenceIndex(
             reference=reference_obj, index=index_list
         )
@@ -145,10 +148,15 @@ class Neo4jQueryRaw:
         self.raw_dir = osp.join(self.root_dir, "raw")
         self.lmdb_dir = osp.join(self.raw_dir, "lmdb")
         os.makedirs(self.raw_dir, exist_ok=True)
+        os.makedirs(self.lmdb_dir, exist_ok=True)
+
+        if not os.path.exists(osp.join(self.lmdb_dir, "data.mdb")):
+            self._init_lmdb(readonly=False)
+            self.process()
+            self.close_lmdb()
+
         # Initialize LMDB environment
         self.env = lmdb.open(self.lmdb_dir, map_size=int(1e12), readonly=True)
-        if len(self) == 0:
-            self.process()
 
     def close_lmdb(self):
         if self.env is not None:
@@ -166,12 +174,15 @@ class Neo4jQueryRaw:
 
         driver.close()
 
-    def _init_lmdb(self):
+    def _init_lmdb(self, readonly=True):
         """Initialize the LMDB environment."""
+        if self.env is not None:
+            self.close_lmdb()
         self.env = lmdb.open(
-            osp.join(self.raw_dir, "lmdb"),
-            readonly=True,
-            lock=False,
+            self.lmdb_dir,
+            map_size=int(1e12),
+            readonly=readonly,
+            lock=not readonly,
             readahead=False,
             meminit=False,
         )
@@ -188,7 +199,8 @@ class Neo4jQueryRaw:
             e_node_data = json.loads(record["e"]["serialized_data"])
 
             # Create an instance of the FitnessExperiment model
-            experiment = FitnessExperiment(
+            experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
+            experiment = experiment_class(
                 genotype=e_node_data["genotype"],
                 environment=e_node_data["environment"],
                 phenotype=e_node_data["phenotype"],
@@ -197,11 +209,17 @@ class Neo4jQueryRaw:
             # Extract the serialized data from the 'ref' node
             ref_node_data = json.loads(record["ref"]["serialized_data"])
 
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                ref_node_data["experiment_reference_type"]
+            ]
             # Create an instance of the FitnessExperimentReference model
-            reference = FitnessExperimentReference(**ref_node_data)
+            experiment_reference = experiment_reference_class(**ref_node_data)
 
             # Create a dictionary with experiment and reference objects
-            data_dict = {"experiment": experiment, "reference": reference}
+            data_dict = {
+                "experiment": experiment,
+                "experiment_reference": experiment_reference,
+            }
 
             # Serialize the dictionary to JSON
             data_json = json.dumps(data_dict, default=lambda o: o.model_dump())
@@ -217,7 +235,6 @@ class Neo4jQueryRaw:
             #     log.info(f"Processed {i + 1} records")
 
         log.info(f"Total records processed: {i + 1}")
-        
 
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()
@@ -243,10 +260,22 @@ class Neo4jQueryRaw:
                 raise IndexError(f"Record not found at index: {index}")
 
             data_dict = json.loads(data_json.decode())
-            experiment = FitnessExperiment(**data_dict["experiment"])
-            reference = FitnessExperimentReference(**data_dict["reference"])
+            experiment_class = EXPERIMENT_TYPE_MAP[
+                data_dict["experiment"]["experiment_type"]
+            ]
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                data_dict["experiment_reference"]["experiment_reference_type"]
+            ]
 
-            return {"experiment": experiment, "reference": reference}
+            experiment = experiment_class(**data_dict["experiment"])
+            experiment_reference = experiment_reference_class(
+                **data_dict["experiment_reference"]
+            )
+
+            return {
+                "experiment": experiment,
+                "experiment_reference": experiment_reference,
+            }
 
     def _get_record(self, key: bytes):
         with self.env.begin() as txn:
@@ -254,9 +283,23 @@ class Neo4jQueryRaw:
             if data_json is None:
                 raise IndexError(f"Record not found for key: {key.decode()}")
             data_dict = json.loads(data_json.decode())
-            experiment = FitnessExperiment(**data_dict["experiment"])
-            reference = FitnessExperimentReference(**data_dict["reference"])
-            return {"experiment": experiment, "reference": reference}
+
+            experiment_class = EXPERIMENT_TYPE_MAP[
+                data_dict["experiment"]["experiment_type"]
+            ]
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                data_dict["experiment_reference"]["experiment_reference_type"]
+            ]
+
+            experiment = experiment_class(**data_dict["experiment"])
+            experiment_reference = experiment_reference_class(
+                **data_dict["experiment_reference"]
+            )
+
+            return {
+                "experiment": experiment,
+                "experiment_reference": experiment_reference,
+            }
 
     def _get_records_by_slice(self, slice_obj: slice):
         start, stop, step = slice_obj.indices(len(self))
@@ -404,13 +447,14 @@ if __name__ == "__main__":
     genome.drop_empty_go()
     # TODO change to process and io workers
     neo4j_db = Neo4jQueryRaw(
-        uri="bolt://localhost:7687",  # Include the database name here
+        uri="bolt://gilahyper.zapto.org:7687",  # Include the database name here
         username="neo4j",
         password="torchcell",
-        root_dir=osp.join(DATA_ROOT ,"data/torchcell/neo4j_query_test"),
+        root_dir=osp.join(DATA_ROOT, "data/torchcell/neo4j_query_test"),
         query="""
             MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
             RETURN e, ref
+            LIMIT 10;
         """,
         io_workers=10,
         num_workers=10,

@@ -36,9 +36,11 @@ from .schema import (
     GeneInteractionPhenotype,
     GeneInteractionExperimentReference,
     GeneInteractionExperiment,
+    Publication,
     ExperimentType,
     ExperimentReferenceType,
-    Publication,
+    EXPERIMENT_TYPE_MAP,
+    EXPERIMENT_REFERENCE_TYPE_MAP,
 )
 
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
@@ -77,5 +79,7 @@ schema_classes = [
     "ExperimentReferenceType",
     "Publication",
 ]
+
+maps = ["EXPERIMENT_TYPE_MAP", "EXPERIMENT_REFERENCE_TYPE_MAP"]
 
 __all__ = core_models + schema_classes

@@ -68,6 +68,7 @@ docker run \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -v $(pwd)/database/plugins:/plugins \
+    -v $(pwd)/database/metrics:/ metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_dbms_read__only=false \
     -e NEO4J_apoc_export_file_enabled=true \

@@ -2,7 +2,7 @@
 id: g7npubvvpk396r8oap7jwey
 title: Biocypher_out_combine
 desc: ''
-updated: 1723177481695
+updated: 1723482299345
 created: 1723177187886
 ---
 
@@ -15,7 +15,7 @@ python -m torchcell.database.biocypher_out_combine \                            
 "/Users/michaelvolk/Documents/projects/torchcell/database/biocypher-out/2024-08-08_20-47-09" \
 "/Users/michaelvolk/Documents/projects/torchcell/database/biocypher-out/2024-08-08_21-24-50" \
 --output_base_dir "/Users/michaelvolk/Documents/projects/torchcell/database/biocypher-out" \
---neo4j_yaml "/Users/michaelvolk/Documents/projects/torchcell/biocypher/config/combine_config.yaml"
+--neo4j_yaml "/Users/michaelvolk/Documents/projects/torchcell/biocypher/config/linux-arm_biocypher_config.yaml"
 ```
 
 Make the script executable.
@@ -49,4 +49,8 @@ Id 'd2a101f9df3ede07ae68eafc260af9130a519c3739bc93c3087c8d17a1d996b7' is defined
 Id 'b2529f271f4993d2e965a9d13dc23642c16774495709f069bad9bc22137fa63b' is defined more than once in group 'global id space'
 Id '243a6a3cbd010322b45021a8a17247cff1807a9e498b7aefcb1af53c01d03494' is defined more than once in group 'global id space'
 ...
+```
+
+```bash
+python -m torchcell.database.biocypher_out_combine "/scratch/projects/torchcell/database/biocypher-out/2024-08-08_18-24-33" "/scratch/projects/torchcell/database/biocypher-out/2024-08-11_04-05-36" --output_base_dir "/scratch/projects/torchcell/database/biocypher-out" --config_yaml "/home/michaelvolk/Documents/projects/torchcell/biocypher/config/linux-arm_biocypher_config.yaml"
 ```

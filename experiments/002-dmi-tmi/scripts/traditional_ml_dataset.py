@@ -88,7 +88,11 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
     return all_features, all_labels
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="traditional_ml_dataset")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="traditional_ml_dataset",
+)
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -283,17 +287,24 @@ def main(cfg: DictConfig) -> None:
         node_embeddings["random_1"] = RandomEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
         )
+    size_str = format_scientific_notation(float(wandb.config.cell_dataset["size"]))
 
-    with open((osp.join(osp.dirname(__file__), "query.cql")), "r") as f:
+    with open(
+        (
+            osp.join(
+                ("/").join(osp.dirname(__file__).split("/")[:-1]),
+                "queries",
+                f"dmi-tmi_{size_str}.cql",
+            )
+        ),
+        "r",
+    ) as f:
         query = f.read()
 
     deduplicator = ExperimentDeduplicator()
 
-    max_size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["max_size"])
-    )
     dataset_root = osp.join(
-        DATA_ROOT, f"data/torchcell/experiments/smf-dmf-tmf_{max_size_str}"
+        DATA_ROOT, f"data/torchcell/experiments/002-dmi-tmi/{size_str}"
     )
 
     cell_dataset = Neo4jCellDataset(
@@ -303,7 +314,6 @@ def main(cfg: DictConfig) -> None:
         graphs=graphs,
         node_embeddings=node_embeddings,
         deduplicator=deduplicator,
-        max_size=int(wandb.config.cell_dataset["max_size"]),
     )
 
     data_module = CellDataModule(
@@ -320,7 +330,7 @@ def main(cfg: DictConfig) -> None:
     data_module.setup()
 
     base_path = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/smf-dmf-tmf-traditional-ml"
+        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/traditional-ml"
     )
     node_embeddings_path = osp.join(
         base_path,
@@ -330,7 +340,7 @@ def main(cfg: DictConfig) -> None:
     if wandb.config.cell_dataset["is_pert"]:
         node_embeddings_path += "_pert"
 
-    node_embeddings_path = node_embeddings_path + "_" + max_size_str
+    node_embeddings_path = node_embeddings_path + "_" + size_str
     os.makedirs(node_embeddings_path, exist_ok=True)
 
     all_data_exists = all(

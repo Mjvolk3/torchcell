@@ -940,7 +940,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             label="dmi",
             label_statistic="p_value",
             interaction=0.0,
-            p_value=1.0,
+            p_value=None,
         )
 
         reference = GeneInteractionExperimentReference(
@@ -1160,7 +1160,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             label="tmi",
             label_statistic="p_value",
             interaction=0.0,
-            p_value=1.0,
+            p_value=None,
         )
 
         reference = GeneInteractionExperimentReference(

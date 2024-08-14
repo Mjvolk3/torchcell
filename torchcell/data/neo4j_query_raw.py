@@ -164,14 +164,16 @@ class Neo4jQueryRaw:
             self.env = None
 
     def fetch_data(self):
+        log.info("Connecting to Neo4j and executing query...")
         driver = GraphDatabase.driver(self.uri, auth=(self.username, self.password))
-        with driver.session(database="torchcell") as session:
-            log.info("Fetching data from Neo4j...")
+        # 1000 is default
+        with driver.session(database="torchcell", fetch_size=1000) as session:
+            log.info("Running query...")
             result = session.run(self.query, **self.cypher_kwargs)
-            log.info("Data fetched successfully.")
+            log.info("Query executed, about to process results...")
             for record in result:
                 yield record
-
+        log.info("All records processed.")
         driver.close()
 
     def _init_lmdb(self, readonly=True):
@@ -194,6 +196,7 @@ class Neo4jQueryRaw:
     def process(self):
         log_batch_size = int(1e10)
 
+        log.info("Processing data...")
         for i, record in tqdm(enumerate(self.fetch_data())):
             # Extract the serialized data from the 'e' node
             e_node_data = json.loads(record["e"]["serialized_data"])
@@ -339,6 +342,7 @@ class Neo4jQueryRaw:
                 ExperimentReferenceIndex(**item) for item in data
             ]
         elif self._experiment_reference_index is None:
+            log.info("Computing experiment reference index...")
             self._experiment_reference_index = compute_experiment_reference_index(
                 [self[i] for i in range(len(self))]
             )
@@ -454,7 +458,7 @@ if __name__ == "__main__":
         query="""
             MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
             RETURN e, ref
-            LIMIT 10;
+            LIMIT 100000;
         """,
         io_workers=10,
         num_workers=10,

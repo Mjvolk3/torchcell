@@ -13,7 +13,7 @@ from tqdm import tqdm
 def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    with open("experiments/002-dmi-tmi/queries/dmi-tmi_1e04.cql", "r") as f:
+    with open("experiments/002-dmi-tmi/queries/dmi-tmi_1e06.cql", "r") as f:
         query = f.read()
 
     ### Add Embeddings
@@ -40,7 +40,7 @@ def main():
 
     deduplicator = ExperimentDeduplicator()
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e04 "
+        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e06"
     )
     dataset = Neo4jCellDataset( 
         root=dataset_root,

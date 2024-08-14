@@ -375,7 +375,7 @@ class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
     experiment_reference_type: str = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
-
+#shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene essentiality"
     genotype: Union[Genotype, List[Genotype,]]

@@ -375,7 +375,7 @@ class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
     experiment_reference_type: str = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
-
+#shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene essentiality"
     genotype: Union[Genotype, List[Genotype,]]
@@ -421,6 +421,23 @@ ExperimentReferenceType = Union[
     SyntheticLethalityExperimentReference,
     SyntheticRescueExperimentReference,
 ]
+
+
+EXPERIMENT_TYPE_MAP = {
+    "fitness": FitnessExperiment,
+    "gene interaction": GeneInteractionExperiment,
+    "gene essentiality": GeneEssentialityExperiment,
+    "synthetic lethality": SyntheticLethalityExperiment,
+    "synthetic rescue": SyntheticRescueExperiment,
+}
+
+EXPERIMENT_REFERENCE_TYPE_MAP = {
+    "fitness": FitnessExperimentReference,
+    "gene interaction": GeneInteractionExperimentReference,
+    "gene essentiality": GeneEssentialityExperimentReference,
+    "synthetic lethality": SyntheticLethalityExperimentReference,
+    "synthetic rescue": SyntheticRescueExperimentReference,
+}
 
 
 if __name__ == "__main__":

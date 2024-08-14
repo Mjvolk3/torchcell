@@ -1,6 +1,6 @@
-#experiments/smf-dmf-tmf-001/conf/traditional_ml_dataset_sweep.yaml
-program: experiments/002-exp-dmi-tmi/scripts/traditional_ml_dataset.py
-project: torchcell_smf-dmf-tmf-traditional_ml_dataset
+#experiments/002-dmi-tmi/conf/traditional_ml_dataset_sweep.yaml
+program: experiments/002-dmi-tmi/scripts/traditional_ml_dataset.py
+project: torchcell_dmi-tmi-traditional_ml_dataset
 method: grid
 
 parameters:
@@ -9,10 +9,9 @@ parameters:
       graphs:
         values: [null]
       node_embeddings:
-        values:
-          [
-            [one_hot_gene],
-            # [calm]
+        values: [
+            # [one_hot_gene],
+            # [calm],
             # [codon_frequency],
             # [fudt_downstream],
             # [fudt_upstream],
@@ -27,14 +26,17 @@ parameters:
             # [random_1000],
             # [random_100],
             # [random_10],
-            # [random_1],
+            [random_1],
           ]
-      max_size:
-        values: [1e3, 1e4, 1e5]
+      size:
+        values: [1e3]
+        # values: [1e3, 1e4, 1e5]
       is_pert:
         values: [true, false]
+        # values: [true, false]
       aggregation:
         values: [sum, mean]
+        # values: [sum, mean]
   data_module:
     parameters:
       batch_size:

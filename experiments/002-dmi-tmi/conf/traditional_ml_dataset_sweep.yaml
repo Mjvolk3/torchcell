@@ -26,7 +26,7 @@ parameters:
             # [random_1000],
             # [random_100],
             # [random_10],
-            [random_1],
+            # [random_1],
           ]
       size:
         values: [1e5]
@@ -43,7 +43,7 @@ parameters:
       batch_size:
         values: [16]
       num_workers:
-        values: [1]
+        values: [8]
       pin_memory:
         values: [true]
 command:

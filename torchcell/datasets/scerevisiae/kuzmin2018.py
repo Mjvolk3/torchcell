@@ -113,7 +113,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
-
+        
         env.close()
 
     def preprocess_raw(
@@ -1187,17 +1187,17 @@ if __name__ == "__main__":
     # dataset = SmfKuzmin2018Dataset()
     # print(dataset[0])
     # print(len(dataset))
-    dataset = DmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    # dataset = DmfKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))
     # dataset = TmfKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
     # print()
     ## Interactions
-    dataset = DmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
-    # dataset = TmiKuzmin2018Dataset()
+    # dataset = DmiKuzmin2018Dataset()
     # dataset[0]
     # print(len(dataset))
+    dataset = TmiKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))

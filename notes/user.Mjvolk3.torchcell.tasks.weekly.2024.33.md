@@ -2,9 +2,10 @@
 id: auzc4lzjlk17i231rflydf9
 title: '33'
 desc: ''
-updated: 1723595591643
+updated: 1724101118621
 created: 1723481104354
 ---
+
 ## 2024.08.12
 
 - [x] Check kgs finished. If not rerun.
@@ -23,15 +24,30 @@ created: 1723481104354
 
 - [x] [[neo4j.apoc.load.json|dendron://torchcell/neo4j.apoc.load.json]]
 - [x] Adjust bolt params for faster query. → Increased max threads. → `server.cypher.parallel.worker_limit` is an option in `Neo4j v5`. This should help with speed up bet we would need to rebuild the `tc-neo4j` docker image.
-- [ ]
 
+## 2024.08.14
 
-- [ ] Get small query working to create a cell dataset. [[torchcell.data.neo4j_cell]]
+- [x] Get small query working to create a cell dataset. [[torchcell.data.neo4j_cell]]
+- [x] Run query. We want all `dmi_kuzmin_2018`, add `tmi_kuzmin_2018`, and then partials of `dmi_costanzo_2016`.
+- [x] Run queries for `1e3`, `1e4`, `1e5`, `1e6`.
+- [x] Build datasets with embeddings without any plotting.
 
-- [ ] Run query. We want all `dmi_kuzmin_2018`, add `tmi_kuzmin_2018`, and then partials of `dmi_costanzo_2016`.
-- [ ] Run queries for `1e3`, `1e4`, `1e5`, `1e6`.
-- [ ] Build datasets with embeddings without any plotting.
+## 2024.08.15
+
+- [x] Troubleshoot database builds → keeps failing due to oom on `gilahyper`...
+- [x] Changed url to [torchcell.web.illinois.edu](https://torchcell.web.illinois.edu/) → Actually just a reroute to [gilahyper.zapto.org:7474](http://gilahyper.zapto.org:7474/browser/)
+
+## 2024.08.16
+
+- [x] Check database build → failed again dropped workers and restarted.
+
+- [ ] Bring in kuzmin2020 dataset
 - [ ] Plots on data distributions.
+
+## 2024.08.17
+
+- [ ] Zendron on `zotero_out`
+
 
 ***
 

@@ -13,6 +13,7 @@ from torchcell.utils import format_scientific_notation
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
+
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
@@ -20,11 +21,7 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 )
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
-    wandb.init(
-        mode="disabled",
-        project=wandb_cfg["wandb"]["project"],
-        config=wandb_cfg,
-    )
+    wandb.init(mode="disabled", project=wandb_cfg["wandb"]["project"], config=wandb_cfg)
 
     genome_data_root = osp.join(DATA_ROOT, "data/sgd/genome")
     genome = SCerevisiaeGenome(data_root=genome_data_root, overwrite=False)
@@ -83,6 +80,7 @@ def main(cfg: DictConfig) -> None:
         print(f"Total batches in {split} split: {total_samples}")
 
     wandb.finish()
+
 
 if __name__ == "__main__":
     main()

@@ -52,29 +52,6 @@ def check_data_exists(node_embeddings_path, split):
     )
 
 
-import multiprocessing as mp
-from functools import partial
-
-
-def process_batch(batch, is_pert, aggregation):
-    x = batch["gene"].x_pert if is_pert else batch["gene"].x
-    batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
-    y = batch["gene"].label_value
-
-    x_unbatched = unbatch(x, batch_index)
-
-    if aggregation == "mean":
-        x_agg = torch.stack([data.mean(0) for data in x_unbatched])
-    elif aggregation == "sum":
-        x_agg = torch.stack([data.sum(0) for data in x_unbatched])
-    else:
-        raise ValueError("Unsupported aggregation method")
-
-    y = y.view(-1) if y.dim() == 2 else y
-
-    return x_agg.numpy(), y.numpy()
-
-
 def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
     os.makedirs(save_path, exist_ok=True)
 
@@ -82,23 +59,37 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
     temp_x_file = osp.join(save_path, f"temp_X_{split}.bin")
     temp_y_file = osp.join(save_path, f"temp_y_{split}.bin")
 
-    process_func = partial(process_batch, is_pert=is_pert, aggregation=aggregation)
+    # Open temporary binary files for writing
+    with open(temp_x_file, "wb") as fx, open(temp_y_file, "wb") as fy:
+        for batch in tqdm(dataloader):
+            x = batch["gene"].x_pert if is_pert else batch["gene"].x
+            batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
+            y = batch["gene"].label_value
 
-    with (
-        mp.Pool(processes=10) as pool,
-        open(temp_x_file, "wb") as fx,
-        open(temp_y_file, "wb") as fy,
-    ):
-        for x_agg_np, y_np in tqdm(
-            pool.imap(process_func, dataloader), total=len(dataloader)
-        ):
+            x_unbatched = unbatch(x, batch_index)
+
+            if aggregation == "mean":
+                x_agg = torch.stack([data.mean(0) for data in x_unbatched])
+            elif aggregation == "sum":
+                x_agg = torch.stack([data.sum(0) for data in x_unbatched])
+            else:
+                raise ValueError("Unsupported aggregation method")
+
+            y = y.view(-1) if y.dim() == 2 else y
+
+            # Convert to numpy and write to temporary files
+            x_agg_np = x_agg.numpy()
+            y_np = y.numpy()
+
             fx.write(x_agg_np.tobytes())
             fy.write(y_np.tobytes())
 
     # Read temporary files and save as .npy
     with open(temp_x_file, "rb") as fx, open(temp_y_file, "rb") as fy:
-        X = np.frombuffer(fx.read(), dtype=np.float32).reshape(-1, x_agg_np.shape[1])
-        y = np.frombuffer(fy.read(), dtype=np.float32)
+        X = np.frombuffer(fx.read(), dtype=x_agg_np.dtype).reshape(
+            -1, x_agg_np.shape[1]
+        )
+        y = np.frombuffer(fy.read(), dtype=y_np.dtype)
 
     np.save(osp.join(save_path, "X.npy"), X)
     np.save(osp.join(save_path, "y.npy"), y)
@@ -337,7 +328,7 @@ def main(cfg: DictConfig) -> None:
         node_embeddings=node_embeddings,
         deduplicator=deduplicator,
     )
-
+    
     data_module = CellDataModule(
         dataset=cell_dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),

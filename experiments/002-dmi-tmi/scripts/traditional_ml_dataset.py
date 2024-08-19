@@ -40,6 +40,7 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
+import socket
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -52,13 +53,16 @@ def check_data_exists(node_embeddings_path, split):
     )
 
 
-def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split, save_interval_batches=10):
+def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
     os.makedirs(save_path, exist_ok=True)
     x_file = osp.join(save_path, "X.npy")
     y_file = osp.join(save_path, "y.npy")
 
     total_samples = 0
-    batch_count = 0
+    x_shape = None
+    y_shape = None
+    x_memmap = None
+    y_memmap = None
 
     for batch in tqdm(dataloader):
         x = batch["gene"].x_pert if is_pert else batch["gene"].x
@@ -76,36 +80,55 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
 
         y = y.view(-1) if y.dim() == 2 else y
 
-        x_agg_np = x_agg.numpy()
-        y_np = y.numpy()
+        x_agg_np = x_agg.detach().cpu().numpy()
+        y_np = y.detach().cpu().numpy()
 
-        if total_samples == 0:
-            np.save(x_file, x_agg_np)
-            np.save(y_file, y_np)
+        if x_shape is None:
+            x_shape = x_agg_np.shape[1:]
+            y_shape = y_np.shape[1:]
+
+        if x_memmap is None:
+            x_memmap = np.memmap(
+                x_file,
+                dtype=x_agg_np.dtype,
+                mode="w+",
+                shape=(x_agg_np.shape[0],) + x_shape,
+            )
+            y_memmap = np.memmap(
+                y_file, dtype=y_np.dtype, mode="w+", shape=(y_np.shape[0],) + y_shape
+            )
         else:
-            with open(x_file, 'ab') as f:
-                np.save(f, x_agg_np)
-            with open(y_file, 'ab') as f:
-                np.save(f, y_np)
+            # Resize memmaps
+            x_memmap.flush()
+            y_memmap.flush()
+            x_memmap = np.memmap(
+                x_file,
+                dtype=x_agg_np.dtype,
+                mode="r+",
+                shape=(total_samples + x_agg_np.shape[0],) + x_shape,
+            )
+            y_memmap = np.memmap(
+                y_file,
+                dtype=y_np.dtype,
+                mode="r+",
+                shape=(total_samples + y_np.shape[0],) + y_shape,
+            )
+
+        # Append new data
+        x_memmap[total_samples:] = x_agg_np
+        y_memmap[total_samples:] = y_np
 
         total_samples += x_agg_np.shape[0]
-        batch_count += 1
+        print(f"Processed {total_samples} samples so far...")
 
-        if batch_count >= save_interval_batches:
-            print(f"Saved {total_samples} samples so far...")
-            batch_count = 0
+    # Ensure all data is written to disk
+    if x_memmap is not None:
+        x_memmap.flush()
+        y_memmap.flush()
+        del x_memmap
+        del y_memmap
 
     print(f"Total samples saved: {total_samples}")
-
-    # Reshape the saved arrays
-    X = np.load(x_file, mmap_mode='r')
-    y = np.load(y_file, mmap_mode='r')
-    
-    X_reshaped = X.reshape((total_samples, -1))
-    y_reshaped = y.reshape((total_samples,))
-
-    np.save(x_file, X_reshaped)
-    np.save(y_file, y_reshaped)
 
     return total_samples
 
@@ -118,15 +141,22 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
+    hostname = socket.gethostname()
+    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join(
+        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
+    )
+    log.info(f"experiment_dir: {experiment_dir}")
     wandb.init(
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
+        dir=experiment_dir,
     )
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -387,7 +417,6 @@ def main(cfg: DictConfig) -> None:
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
             split=split,
-            save_interval_batches=10  # Adjust this value as needed
         )
         print(f"Total samples saved for {split} split: {total_samples}")
 

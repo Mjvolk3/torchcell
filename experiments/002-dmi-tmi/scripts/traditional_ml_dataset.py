@@ -40,7 +40,6 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
-import socket
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -53,62 +52,62 @@ def check_data_exists(node_embeddings_path, split):
     )
 
 
-def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split, save_interval_batches=10):
+import multiprocessing as mp
+from functools import partial
+
+
+def process_batch(batch, is_pert, aggregation):
+    x = batch["gene"].x_pert if is_pert else batch["gene"].x
+    batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
+    y = batch["gene"].label_value
+
+    x_unbatched = unbatch(x, batch_index)
+
+    if aggregation == "mean":
+        x_agg = torch.stack([data.mean(0) for data in x_unbatched])
+    elif aggregation == "sum":
+        x_agg = torch.stack([data.sum(0) for data in x_unbatched])
+    else:
+        raise ValueError("Unsupported aggregation method")
+
+    y = y.view(-1) if y.dim() == 2 else y
+
+    return x_agg.numpy(), y.numpy()
+
+
+def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
     os.makedirs(save_path, exist_ok=True)
-    x_file = osp.join(save_path, "X.npy")
-    y_file = osp.join(save_path, "y.npy")
 
-    total_samples = 0
-    batch_count = 0
+    # Temporary files for X and y
+    temp_x_file = osp.join(save_path, f"temp_X_{split}.bin")
+    temp_y_file = osp.join(save_path, f"temp_y_{split}.bin")
 
-    for batch in tqdm(dataloader):
-        x = batch["gene"].x_pert if is_pert else batch["gene"].x
-        batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
-        y = batch["gene"].label_value
+    process_func = partial(process_batch, is_pert=is_pert, aggregation=aggregation)
 
-        x_unbatched = unbatch(x, batch_index)
+    with (
+        mp.Pool(processes=10) as pool,
+        open(temp_x_file, "wb") as fx,
+        open(temp_y_file, "wb") as fy,
+    ):
+        for x_agg_np, y_np in tqdm(
+            pool.imap(process_func, dataloader), total=len(dataloader)
+        ):
+            fx.write(x_agg_np.tobytes())
+            fy.write(y_np.tobytes())
 
-        if aggregation == "mean":
-            x_agg = torch.stack([data.mean(0) for data in x_unbatched])
-        elif aggregation == "sum":
-            x_agg = torch.stack([data.sum(0) for data in x_unbatched])
-        else:
-            raise ValueError("Unsupported aggregation method")
+    # Read temporary files and save as .npy
+    with open(temp_x_file, "rb") as fx, open(temp_y_file, "rb") as fy:
+        X = np.frombuffer(fx.read(), dtype=np.float32).reshape(-1, x_agg_np.shape[1])
+        y = np.frombuffer(fy.read(), dtype=np.float32)
 
-        y = y.view(-1) if y.dim() == 2 else y
+    np.save(osp.join(save_path, "X.npy"), X)
+    np.save(osp.join(save_path, "y.npy"), y)
 
-        x_agg_np = x_agg.numpy()
-        y_np = y.numpy()
+    # Clean up temporary files
+    os.remove(temp_x_file)
+    os.remove(temp_y_file)
 
-        if total_samples == 0:
-            np.save(x_file, x_agg_np)
-            np.save(y_file, y_np)
-        else:
-            with open(x_file, 'ab') as f:
-                np.save(f, x_agg_np)
-            with open(y_file, 'ab') as f:
-                np.save(f, y_np)
-
-        total_samples += x_agg_np.shape[0]
-        batch_count += 1
-
-        if batch_count >= save_interval_batches:
-            print(f"Saved {total_samples} samples so far...")
-            batch_count = 0
-
-    print(f"Total samples saved: {total_samples}")
-
-    # Reshape the saved arrays
-    X = np.load(x_file, mmap_mode='r')
-    y = np.load(y_file, mmap_mode='r')
-    
-    X_reshaped = X.reshape((total_samples, -1))
-    y_reshaped = y.reshape((total_samples,))
-
-    np.save(x_file, X_reshaped)
-    np.save(y_file, y_reshaped)
-
-    return total_samples
+    return X.shape[0]  # Return the number of samples
 
 
 @hydra.main(
@@ -119,22 +118,15 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
-    hostname = socket.gethostname()
-    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
-    )
-    log.info(f"experiment_dir: {experiment_dir}")
     wandb.init(
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
-        dir=experiment_dir,
     )
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -386,18 +378,17 @@ def main(cfg: DictConfig) -> None:
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
-        ("all", data_module.all_dataloader()),
+        # ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
-        total_samples = save_data_from_dataloader(
+        num_samples = save_data_from_dataloader(
             dataloader,
             save_path,
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
             split=split,
-            save_interval_batches=10  # Adjust this value as needed
         )
-        print(f"Total samples saved for {split} split: {total_samples}")
+        print(f"Saved {num_samples} samples for {split} split")
 
     wandb.finish()
 

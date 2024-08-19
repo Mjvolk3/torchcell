@@ -1,111 +1,112 @@
-# env/requirements.txt
-# scientific computing stack
-# We pin numpy because transformers lib cannot yet use 2.0
-numpy==1.26.0
-pandas>=2.1.1
-pyarrow>=15.0.0
-#polars
-openpyxl>=3.1.2
-# xlrd with pandas
-xlrd>= 2.0.1
-# pyreader use with RDS
-pyreadr>=0.4.9
-scipy>=1.11.4
-networkx>=3.2.1
-#dask
-umap-learn>=0.5.3
+    # env/requirements.txt
+    # scientific computing stack
+    # We pin numpy because transformers lib cannot yet use 2.0
+    numpy==1.26.0
+    pandas>=2.1.1
+    pyarrow>=15.0.0
 
-# configuration
-hydra-core>=1.3.2
-deepdiff>=7.0.1
+    #polars
+    openpyxl>=3.1.2
+    # xlrd with pandas
+    xlrd>= 2.0.1
+    # pyreader use with RDS
+    pyreadr>=0.4.9
+    scipy>=1.11.4
+    networkx>=3.2.1
+    #dask
+    umap-learn>=0.5.3
 
-# torch stack
-torch>=2.1.0
-torch_geometric>=2.4.0
-torchmetrics>=1.2.1
-lightning>=2.1.2
-# torch-scatter>=2.1.2
+    # configuration
+    hydra-core>=1.3.2
+    deepdiff>=7.0.1
 
-# visualization stack and logging
-wandb>=0.17.5
-wandb_osh>=1.2.2
-matplotlib>=3.7.2
-# adjustTest used with with matplotlib
-adjustText>=0.8
-#pydot Don't think I am using this... outdate
-pydot>=1.4.2
-# pygraphviz don't think I am using this
- # graphviz don't think I am using this.
-# graphviz
-plotly>=5.18.0
-seaborn>=0.12.2
+    # torch stack
+    torch>=2.4.0
+    torch_geometric>=2.4.0
+    torchmetrics>=1.2.1
+    lightning>=2.1.2
+    # torch-scatter>=2.1.2
 
-# ML stack
-scikit-learn>=1.2.2
+    # visualization stack and logging
+    wandb>=0.17.5
+    wandb_osh>=1.2.2
+    matplotlib>=3.7.2
+    # adjustTest used with with matplotlib
+    adjustText>=0.8
+    #pydot Don't think I am using this... outdate
+    pydot>=1.4.2
+    # pygraphviz don't think I am using this
+    # graphviz don't think I am using this.
+    # graphviz
+    plotly>=5.18.0
+    seaborn>=0.12.2
 
-# Transformer / Huggingface Stack
-transformers>=4.31.0
-## used with protT5 model
-sentencepiece>=0.1.99
+    # ML stack
+    scikit-learn>=1.2.2
 
-# Bio stack
-biopython>=1.81
-goatools>=1.3.1
-intermine>=1.13.0
-gffutils>=0.12
-GEOparse>=2.0.4
+    # Transformer / Huggingface Stack
+    transformers>=4.31.0
+    ## used with protT5 model
+    sentencepiece>=0.1.99
 
-# stubs and types
-pandas-stubs>=2.0.3.230814
-types-tqdm>=4.65.0.2
-types-requests>= 2.31.0.2
+    # Bio stack
+    biopython>=1.81
+    goatools>=1.3.1
+    intermine>=1.13.0
+    gffutils>=0.12
+    GEOparse>=2.0.4
 
-# data stack
-sortedcontainers>=2.4.0
-attrs>=23.1.0
-pydantic>=2.8.2
-h5py>=3.9.0
-# R is needed for installation. This creates issues.
-#rpy2>=3.5.16 # needed for mechanistic aware. can probably get rid of.
+    # stubs and types
+    pandas-stubs>=2.0.3.230814
+    types-tqdm>=4.65.0.2
+    types-requests>= 2.31.0.2
 
-
-# database stack
-lmdb>=1.4.1
+    # data stack
+    sortedcontainers>=2.4.0
+    attrs>=23.1.0
+    pydantic>=2.8.2
+    h5py>=3.9.0
+    # R is needed for installation. This creates issues.
+    #rpy2>=3.5.16 # needed for mechanistic aware. can probably get rid of.
 
 
-# web stack
-aiohttp>=3.8.5
-
-# ontology stack
-pronto>=2.5.4
-nxontology>=0.5.0
-owlready2>=0.45
+    # database stack
+    lmdb>=1.4.1
 
 
-# Workspace
-python-dotenv>=1.0.0
+    # web stack
+    aiohttp>=3.8.5
 
-# dev-tools
-python-semantic-release>=9.0.3
-pre-commit>=3.3.3
-# ptpython>=3.0.23
-pip-tools>=7.1.0
-snakeviz>=2.2.0
-twine>=4.0.2
-memory-profiler>=0.61.0
+    # ontology stack
+    pronto>=2.5.4
+    nxontology>=0.5.0
+    owlready2>=0.45
 
-# biocypher
-# Swith to biocypher after path change is implemented
-# biocypher>=0.5.35
-# Not allowed in Pypi
-# biocypher@git+https://github.com/Mjvolk3/biocypher@main
 
-# neo4j
-neo4j>=4.4.11
+    # Workspace
+    python-dotenv>=1.0.0
 
-# command line
-cliff>=4.5.0
+    # dev-tools
+    python-semantic-release>=9.0.3
+    pre-commit>=3.3.3
+    # ptpython>=3.0.23
+    pip-tools>=7.1.0
+    snakeviz>=2.2.0
+    twine>=4.0.2
+    memory-profiler>=0.61.0
 
-# twine cannot handle these
-# Not allowed in Pypi
-# CaLM@git+https://github.com/oxpig/CaLM@main
+    # biocypher
+    # Swith to biocypher after path change is implemented
+    # biocypher>=0.5.35
+    # Not allowed in Pypi
+    # biocypher@git+https://github.com/Mjvolk3/biocypher@main
+
+    # neo4j
+    neo4j>=4.4.11,<5.0
+
+    # command line
+    cliff>=4.5.0
+
+    # twine cannot handle these
+    # Not allowed in Pypi
+    # CaLM@git+https://github.com/oxpig/CaLM@main

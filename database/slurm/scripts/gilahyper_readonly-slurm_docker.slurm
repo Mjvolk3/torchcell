@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=neo4j_readonly
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=32
 #SBATCH --mem=64G
 #SBATCH --time=365-0:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -57,7 +57,7 @@ docker run \
     --health-retries=3 \
     --restart=unless-stopped \
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
-    -v $(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \

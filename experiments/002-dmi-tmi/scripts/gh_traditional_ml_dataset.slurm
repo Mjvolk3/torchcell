@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=traditional_ml_dataset
-#SBATCH --ntasks-per-node=4 # Set to the desired number of tasks per node
-#SBATCH --cpus-per-task=64 # Adjust the number of CPUs per task based on your requirements
-#SBATCH --mem=256G # Total memory for the job (adjusted based on your available memory) typically use 192...
-#SBATCH --gres=gpu:4 # Request 3 GPUs for the job
+#SBATCH --ntasks-per-node=16 # Set to the desired number of tasks per node
+#SBATCH --cpus-per-task=1 # Adjust the number of CPUs per task based on your requirements
+#SBATCH --mem=930G # Total memory for the job (adjusted based on your available memory) typically use 192...
+#SBATCH --gres=gpu:0 # Request 3 GPUs for the job
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
@@ -42,7 +42,7 @@ nvidia-smi # Display GPU information
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=
+SWEEP_ID=zt5w8joy
 PROJECT_NAME=torchcell_dmi-tmi-traditional_ml_dataset
 
 echo "-----------------"

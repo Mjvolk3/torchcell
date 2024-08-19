@@ -47,6 +47,7 @@ torchcell/data/experiment_dataset.py
 torchcell/data/neo4j_cell.py
 torchcell/data/neo4j_query_raw.py
 torchcell/database/__init__.py
+torchcell/database/biocypher_out_combine.py
 torchcell/database/build_command.py
 torchcell/database/directory_setup.py
 torchcell/database/tcdb.py
@@ -89,6 +90,8 @@ torchcell/datasets/scerevisiae/costanzo2016.py
 torchcell/datasets/scerevisiae/costanzo2016_deprecated.py
 torchcell/datasets/scerevisiae/fitness_yeast9.py
 torchcell/datasets/scerevisiae/kuzmin2018.py
+torchcell/datasets/scerevisiae/mechanisitc_aware.py
+torchcell/datasets/scerevisiae/oduibhir2014.py
 torchcell/datasets/scerevisiae/sgd_gene_essentiality.py
 torchcell/datasets/scerevisiae/syn_leth_db_yeast.py
 torchcell/datasets/scerevisiae/tutorial_joining_nucleotide_embeddings.py
@@ -107,10 +110,13 @@ torchcell/knowledge_graphs/__init__.py
 torchcell/knowledge_graphs/create_pypy_scerevisiae_kg.py
 torchcell/knowledge_graphs/create_scerevisiae_kg.py
 torchcell/knowledge_graphs/create_scerevisiae_kg_small.py
+torchcell/knowledge_graphs/dmf_kuzmin_2018_kg.py
 torchcell/knowledge_graphs/dmi_costanzo_2016_kg.py
 torchcell/knowledge_graphs/dmi_kuzmin_2018_kg.py
+torchcell/knowledge_graphs/gene_interactions_scerevisae_kg.py
 torchcell/knowledge_graphs/gene_interactions_scerevisae_kg_small.py
 torchcell/knowledge_graphs/smf_costanzo_2016_kg.py
+torchcell/knowledge_graphs/smf_tmi_combine_kg.py
 torchcell/knowledge_graphs/tmi_kuzmin_2018_kg.py
 torchcell/knowledge_graphs/conf/__init__.py
 torchcell/knowledge_graphs/conf/default.yaml

@@ -10,7 +10,7 @@ parameters:
         values: [null]
       node_embeddings:
         values: [
-            # [one_hot_gene],
+            [one_hot_gene],
             # [calm],
             # [codon_frequency],
             # [fudt_downstream],
@@ -26,10 +26,10 @@ parameters:
             # [random_1000],
             # [random_100],
             # [random_10],
-            [random_1],
+            # [random_1],
           ]
       size:
-        values: [1e3]
+        values: [1e5]
         # values: [1e3, 1e4, 1e5]
       is_pert:
         values: [true, false]
@@ -42,7 +42,7 @@ parameters:
       batch_size:
         values: [16]
       num_workers:
-        values: [6]
+        values: [8]
       pin_memory:
         values: [true]
 command:

@@ -163,7 +163,6 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     return G
 
 
-# @profile
 def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     processed_graph = HeteroData()  # breakpoint here
 

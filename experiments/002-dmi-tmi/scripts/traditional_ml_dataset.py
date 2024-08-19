@@ -40,7 +40,6 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
-import socket
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -55,82 +54,51 @@ def check_data_exists(node_embeddings_path, split):
 
 def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
     os.makedirs(save_path, exist_ok=True)
-    x_file = osp.join(save_path, "X.npy")
-    y_file = osp.join(save_path, "y.npy")
 
-    total_samples = 0
-    x_shape = None
-    y_shape = None
-    x_memmap = None
-    y_memmap = None
+    # Temporary files for X and y
+    temp_x_file = osp.join(save_path, f"temp_X_{split}.bin")
+    temp_y_file = osp.join(save_path, f"temp_y_{split}.bin")
 
-    for batch in tqdm(dataloader):
-        x = batch["gene"].x_pert if is_pert else batch["gene"].x
-        batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
-        y = batch["gene"].label_value
+    # Open temporary binary files for writing
+    with open(temp_x_file, "wb") as fx, open(temp_y_file, "wb") as fy:
+        for batch in tqdm(dataloader):
+            x = batch["gene"].x_pert if is_pert else batch["gene"].x
+            batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
+            y = batch["gene"].label_value
 
-        x_unbatched = unbatch(x, batch_index)
+            x_unbatched = unbatch(x, batch_index)
 
-        if aggregation == "mean":
-            x_agg = torch.stack([data.mean(0) for data in x_unbatched])
-        elif aggregation == "sum":
-            x_agg = torch.stack([data.sum(0) for data in x_unbatched])
-        else:
-            raise ValueError("Unsupported aggregation method")
+            if aggregation == "mean":
+                x_agg = torch.stack([data.mean(0) for data in x_unbatched])
+            elif aggregation == "sum":
+                x_agg = torch.stack([data.sum(0) for data in x_unbatched])
+            else:
+                raise ValueError("Unsupported aggregation method")
 
-        y = y.view(-1) if y.dim() == 2 else y
+            y = y.view(-1) if y.dim() == 2 else y
 
-        x_agg_np = x_agg.detach().cpu().numpy()
-        y_np = y.detach().cpu().numpy()
+            # Convert to numpy and write to temporary files
+            x_agg_np = x_agg.numpy()
+            y_np = y.numpy()
 
-        if x_shape is None:
-            x_shape = x_agg_np.shape[1:]
-            y_shape = y_np.shape[1:]
+            fx.write(x_agg_np.tobytes())
+            fy.write(y_np.tobytes())
 
-        if x_memmap is None:
-            x_memmap = np.memmap(
-                x_file,
-                dtype=x_agg_np.dtype,
-                mode="w+",
-                shape=(x_agg_np.shape[0],) + x_shape,
-            )
-            y_memmap = np.memmap(
-                y_file, dtype=y_np.dtype, mode="w+", shape=(y_np.shape[0],) + y_shape
-            )
-        else:
-            # Resize memmaps
-            x_memmap.flush()
-            y_memmap.flush()
-            x_memmap = np.memmap(
-                x_file,
-                dtype=x_agg_np.dtype,
-                mode="r+",
-                shape=(total_samples + x_agg_np.shape[0],) + x_shape,
-            )
-            y_memmap = np.memmap(
-                y_file,
-                dtype=y_np.dtype,
-                mode="r+",
-                shape=(total_samples + y_np.shape[0],) + y_shape,
-            )
+    # Read temporary files and save as .npy
+    with open(temp_x_file, "rb") as fx, open(temp_y_file, "rb") as fy:
+        X = np.frombuffer(fx.read(), dtype=x_agg_np.dtype).reshape(
+            -1, x_agg_np.shape[1]
+        )
+        y = np.frombuffer(fy.read(), dtype=y_np.dtype)
 
-        # Append new data
-        x_memmap[total_samples:] = x_agg_np
-        y_memmap[total_samples:] = y_np
+    np.save(osp.join(save_path, "X.npy"), X)
+    np.save(osp.join(save_path, "y.npy"), y)
 
-        total_samples += x_agg_np.shape[0]
-        print(f"Processed {total_samples} samples so far...")
+    # Clean up temporary files
+    os.remove(temp_x_file)
+    os.remove(temp_y_file)
 
-    # Ensure all data is written to disk
-    if x_memmap is not None:
-        x_memmap.flush()
-        y_memmap.flush()
-        del x_memmap
-        del y_memmap
-
-    print(f"Total samples saved: {total_samples}")
-
-    return total_samples
+    return X.shape[0]  # Return the number of samples
 
 
 @hydra.main(
@@ -141,22 +109,15 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
-    hostname = socket.gethostname()
-    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
-    )
-    log.info(f"experiment_dir: {experiment_dir}")
     wandb.init(
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
-        dir=experiment_dir,
     )
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -367,7 +328,7 @@ def main(cfg: DictConfig) -> None:
         node_embeddings=node_embeddings,
         deduplicator=deduplicator,
     )
-
+    
     data_module = CellDataModule(
         dataset=cell_dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -408,17 +369,17 @@ def main(cfg: DictConfig) -> None:
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
-        ("all", data_module.all_dataloader()),
+        # ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
-        total_samples = save_data_from_dataloader(
+        num_samples = save_data_from_dataloader(
             dataloader,
             save_path,
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
             split=split,
         )
-        print(f"Total samples saved for {split} split: {total_samples}")
+        print(f"Saved {num_samples} samples for {split} split")
 
     wandb.finish()
 

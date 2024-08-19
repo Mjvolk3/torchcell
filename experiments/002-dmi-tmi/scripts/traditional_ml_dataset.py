@@ -40,6 +40,7 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
+import socket
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -96,15 +97,22 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
 def main(cfg: DictConfig) -> None:
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
+    hostname = socket.gethostname()
+    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{slurm_job_id}_{hashed_cfg}"
+    experiment_dir = osp.join(
+        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
+    )
+    log.info(f"experiment_dir: {experiment_dir}")
     wandb.init(
         mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
+        dir=experiment_dir,
     )
 
     if torch.cuda.is_available() and dist.is_initialized():

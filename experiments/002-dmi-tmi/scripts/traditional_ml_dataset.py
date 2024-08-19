@@ -53,9 +53,14 @@ def check_data_exists(node_embeddings_path, split):
     )
 
 
-def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
-    all_features = []
-    all_labels = []
+def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split, save_interval_batches=10):
+    os.makedirs(save_path, exist_ok=True)
+    x_file = osp.join(save_path, "X.npy")
+    y_file = osp.join(save_path, "y.npy")
+
+    total_samples = 0
+    batch_count = 0
+
     for batch in tqdm(dataloader):
         x = batch["gene"].x_pert if is_pert else batch["gene"].x
         batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
@@ -75,18 +80,35 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split
         x_agg_np = x_agg.numpy()
         y_np = y.numpy()
 
-        all_features.append(x_agg_np)
-        all_labels.append(y_np)
+        if total_samples == 0:
+            np.save(x_file, x_agg_np)
+            np.save(y_file, y_np)
+        else:
+            with open(x_file, 'ab') as f:
+                np.save(f, x_agg_np)
+            with open(y_file, 'ab') as f:
+                np.save(f, y_np)
 
-    all_features = np.concatenate(all_features, axis=0)
-    all_labels = np.concatenate(all_labels, axis=0)
+        total_samples += x_agg_np.shape[0]
+        batch_count += 1
 
-    os.makedirs(save_path, exist_ok=True)
+        if batch_count >= save_interval_batches:
+            print(f"Saved {total_samples} samples so far...")
+            batch_count = 0
 
-    np.save(osp.join(save_path, "X.npy"), all_features)
-    np.save(osp.join(save_path, "y.npy"), all_labels)
+    print(f"Total samples saved: {total_samples}")
 
-    return all_features, all_labels
+    # Reshape the saved arrays
+    X = np.load(x_file, mmap_mode='r')
+    y = np.load(y_file, mmap_mode='r')
+    
+    X_reshaped = X.reshape((total_samples, -1))
+    y_reshaped = y.reshape((total_samples,))
+
+    np.save(x_file, X_reshaped)
+    np.save(y_file, y_reshaped)
+
+    return total_samples
 
 
 @hydra.main(
@@ -367,13 +389,15 @@ def main(cfg: DictConfig) -> None:
         ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
-        save_data_from_dataloader(
+        total_samples = save_data_from_dataloader(
             dataloader,
             save_path,
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
             split=split,
+            save_interval_batches=10  # Adjust this value as needed
         )
+        print(f"Total samples saved for {split} split: {total_samples}")
 
     wandb.finish()
 

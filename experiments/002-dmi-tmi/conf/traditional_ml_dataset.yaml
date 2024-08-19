@@ -15,10 +15,6 @@ cell_dataset:
   size: 1e5
   is_pert: false
   aggregation: mean
-  size: 1e5
-  is_pert: false
-  aggregation: mean
-
 data_module:
   batch_size: 16
   num_workers: 4

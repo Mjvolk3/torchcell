@@ -40,7 +40,7 @@ def main():
 
     deduplicator = ExperimentDeduplicator()
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e04 "
+        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e04"
     )
     dataset = Neo4jCellDataset( 
         root=dataset_root,

@@ -1,0 +1,13 @@
+#env/requirements_experiments.txt
+cudf-cu12==24.8.1
+dask-cudf-cu12==24.8.1
+cuml-cu12==24.8.0
+cugraph-cu12==24.8.0
+cuspatial-cu12==24.8.0
+cuproj-cu12==24.8.0
+cuxfilter-cu12==24.8.0
+cucim-cu12==24.8.0
+pylibraft-cu12==24.8.1
+raft-dask-cu12==24.8.1
+cuvs-cu12==24.8.0
+

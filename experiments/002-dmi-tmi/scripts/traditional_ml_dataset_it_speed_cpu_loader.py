@@ -9,6 +9,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 from torchcell.loader import CpuDataModule
+from torchcell.datasets import RandomEmbeddingDataset
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -46,12 +47,19 @@ def main(cfg: DictConfig) -> None:
         DATA_ROOT, f"data/torchcell/experiments/002-dmi-tmi/{size_str}"
     )
 
+    node_embeddings = {}
+    node_embeddings["random_1"] = RandomEmbeddingDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+        model_name="random_1",
+        genome=genome,
+    )
+
     cell_dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         genome=genome,
         graphs=None,
-        node_embeddings={},
+        node_embeddings=node_embeddings,
         deduplicator=deduplicator,
     )
 

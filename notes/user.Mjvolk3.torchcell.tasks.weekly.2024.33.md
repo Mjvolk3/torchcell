@@ -2,7 +2,7 @@
 id: auzc4lzjlk17i231rflydf9
 title: '33'
 desc: ''
-updated: 1724101118621
+updated: 1724147030229
 created: 1723481104354
 ---
 
@@ -48,6 +48,7 @@ created: 1723481104354
 
 - [ ] Zendron on `zotero_out`
 
+- [ ] fix random - specify model name. They all look like they are `random_1000`.
 
 ***
 

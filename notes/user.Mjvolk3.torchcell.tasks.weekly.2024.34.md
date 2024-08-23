@@ -2,7 +2,7 @@
 id: 65w5kdtce7q047b7ollalhq
 title: '34'
 desc: ''
-updated: 1724101257042
+updated: 1724353836135
 created: 1724101120841
 ---
 ## 2024.08.19 
@@ -11,7 +11,10 @@ created: 1724101120841
 - [ ] Bring in kuzmin2020 dataset
 - [ ] Plots on data distributions.
 
+## 2024.08.22
 
+- [ ] Check if `Neo4jCell` can be pickled without deleting vars.
+- [ ]
 
 
 ***

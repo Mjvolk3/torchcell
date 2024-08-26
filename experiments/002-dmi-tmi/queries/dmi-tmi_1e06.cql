@@ -68,7 +68,7 @@ WHERE phen.graph_level = 'edge'
   AND SIZE([(g)<-[:PerturbationMemberOf]-(p) | p]) > 0
 WITH DISTINCT e, ref
 ORDER BY e.id
-LIMIT 509060
+LIMIT 550482
 RETURN e, ref
 
 

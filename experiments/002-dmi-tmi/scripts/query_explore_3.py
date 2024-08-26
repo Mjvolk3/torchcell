@@ -28,21 +28,19 @@ def main():
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     fudt_3prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fudt_embedding",
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
         genome=genome,
         model_name="species_downstream",
     )
     fudt_5prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fudt_embedding",
+        root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
         genome=genome,
         model_name="species_downstream",
     )
 
     deduplicator = ExperimentDeduplicator()
-    dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e06"
-    )
-    dataset = Neo4jCellDataset( 
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/002-dmi-tmi/1e06")
+    dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         genome=genome,
@@ -67,7 +65,7 @@ def main():
     )
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
-        pass
+        break
         print()
 
     print("finished")

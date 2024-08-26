@@ -9,7 +9,7 @@ wandb:
   tags: []
 cell_dataset:
   graphs: null
-  node_embeddings: [codon_frequency]
+  node_embeddings: [random_1]
   max_size: 1e3
   is_pert: true
   aggregation: sum

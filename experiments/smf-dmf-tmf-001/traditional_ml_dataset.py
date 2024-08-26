@@ -272,7 +272,7 @@ def main(cfg: DictConfig) -> None:
         )
     # nucleotide transformer
     if "nt_window_5979" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
+        node_embeddings["nt_window_5979"] = NucleotideTransformerDataset(
             root=osp.join(
                 DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
             ),
@@ -293,7 +293,7 @@ def main(cfg: DictConfig) -> None:
                 DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
             ),
             genome=genome,
-            model_name="window_three_prime_5979",
+            model_name="nt_window_three_prime_5979",
         )
     if "nt_window_five_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
@@ -340,7 +340,7 @@ def main(cfg: DictConfig) -> None:
             model_name="esm2_t33_650M_UR50D_all",
         )
     if "esm2_t33_650M_UR50D_no_dubious" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_dubious"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_dubious",
@@ -349,7 +349,7 @@ def main(cfg: DictConfig) -> None:
         "esm2_t33_650M_UR50D_no_dubious_uncharacterized"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_dubious_uncharacterized"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_dubious_uncharacterized",
@@ -358,7 +358,7 @@ def main(cfg: DictConfig) -> None:
         "esm2_t33_650M_UR50D_no_uncharacterized"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_uncharacterized"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_uncharacterized",
@@ -379,19 +379,27 @@ def main(cfg: DictConfig) -> None:
     # random
     if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1000"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_1000",
         )
     if "random_100" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_100"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_100",
         )
     if "random_10" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_10"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_10",
         )
     if "random_1" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_1",
         )
 
     # Experiments

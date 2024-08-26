@@ -90,4 +90,6 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    import torch.multiprocessing as mp
+    mp.set_start_method('spawn')
     main()

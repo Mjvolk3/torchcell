@@ -40,65 +40,133 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 from torch_geometric.utils import unbatch
+import torch_scatter
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-def check_data_exists(node_embeddings_path, split):
-    return osp.exists(osp.join(node_embeddings_path, split, "X.npy")) and osp.exists(
-        osp.join(node_embeddings_path, split, "y.npy")
+def check_data_exists(save_path):
+    return osp.exists(osp.join(save_path, "X.npy")) and osp.exists(
+        osp.join(save_path, "y.npy")
     )
 
 
-def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, split):
+def cleanup_temp_files(save_path):
+    temp_files = [osp.join(save_path, f) for f in ["temp_X.bin", "temp_y.bin"]]
+    for file in temp_files:
+        if osp.exists(file):
+            os.remove(file)
+            print(f"Deleted temporary file: {file}")
+
+
+# def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation):
+#     os.makedirs(save_path, exist_ok=True)
+
+#     # Clean up any existing temporary files
+#     cleanup_temp_files(save_path)
+
+#     # Temporary files for X and y
+#     temp_x_file = osp.join(save_path, "temp_X.bin")
+#     temp_y_file = osp.join(save_path, "temp_y.bin")
+
+#     total_samples = 0
+#     feature_dim = None
+
+#     # Open temporary binary files for appending
+#     with open(temp_x_file, "ab") as fx, open(temp_y_file, "ab") as fy:
+#         for batch in tqdm(dataloader, desc="Processing batches"):
+#             x = batch["gene"].x_pert if is_pert else batch["gene"].x
+#             batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
+#             y = batch["gene"].label_value
+
+#             x_unbatched = unbatch(x, batch_index)
+
+#             if aggregation == "mean":
+#                 x_agg = torch.stack([data.mean(0) for data in x_unbatched])
+#             elif aggregation == "sum":
+#                 x_agg = torch.stack([data.sum(0) for data in x_unbatched])
+#             else:
+#                 raise ValueError("Unsupported aggregation method")
+
+#             y = y.view(-1) if y.dim() == 2 else y
+
+#             # Convert to numpy and append to temporary files
+#             x_agg_np = x_agg.numpy()
+#             y_np = y.numpy()
+
+#             fx.write(x_agg_np.tobytes())
+#             fy.write(y_np.tobytes())
+
+#             total_samples += x_agg_np.shape[0]
+#             if feature_dim is None:
+#                 feature_dim = x_agg_np.shape[1]
+
+#     # Read temporary files and save as .npy
+#     X = np.fromfile(temp_x_file, dtype=np.float32).reshape(total_samples, feature_dim)
+#     y = np.fromfile(temp_y_file, dtype=np.float32)
+
+#     np.save(osp.join(save_path, "X.npy"), X)
+#     np.save(osp.join(save_path, "y.npy"), y)
+
+#     # Clean up temporary files
+#     cleanup_temp_files(save_path)
+
+#     return total_samples
+
+
+def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation):
     os.makedirs(save_path, exist_ok=True)
 
-    # Temporary files for X and y
-    temp_x_file = osp.join(save_path, f"temp_X_{split}.bin")
-    temp_y_file = osp.join(save_path, f"temp_y_{split}.bin")
+    # Clean up any existing temporary files
+    cleanup_temp_files(save_path)
 
-    # Open temporary binary files for writing
-    with open(temp_x_file, "wb") as fx, open(temp_y_file, "wb") as fy:
-        for batch in tqdm(dataloader):
+    # Temporary files for X and y
+    temp_x_file = osp.join(save_path, "temp_X.bin")
+    temp_y_file = osp.join(save_path, "temp_y.bin")
+
+    total_samples = 0
+    feature_dim = None
+
+    # Open temporary binary files for appending
+    with open(temp_x_file, "ab") as fx, open(temp_y_file, "ab") as fy:
+        for batch in tqdm(dataloader, desc="Processing batches"):
             x = batch["gene"].x_pert if is_pert else batch["gene"].x
             batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
             y = batch["gene"].label_value
 
-            x_unbatched = unbatch(x, batch_index)
-
             if aggregation == "mean":
-                x_agg = torch.stack([data.mean(0) for data in x_unbatched])
+                x_agg = torch_scatter.scatter_mean(x, batch_index, dim=0)
             elif aggregation == "sum":
-                x_agg = torch.stack([data.sum(0) for data in x_unbatched])
+                x_agg = torch_scatter.scatter_add(x, batch_index, dim=0)
             else:
                 raise ValueError("Unsupported aggregation method")
 
             y = y.view(-1) if y.dim() == 2 else y
 
-            # Convert to numpy and write to temporary files
-            x_agg_np = x_agg.numpy()
-            y_np = y.numpy()
+            # Convert to numpy and append to temporary files
+            x_agg_np = x_agg.cpu().numpy()
+            y_np = y.cpu().numpy()
 
             fx.write(x_agg_np.tobytes())
             fy.write(y_np.tobytes())
 
+            total_samples += x_agg_np.shape[0]
+            if feature_dim is None:
+                feature_dim = x_agg_np.shape[1]
+
     # Read temporary files and save as .npy
-    with open(temp_x_file, "rb") as fx, open(temp_y_file, "rb") as fy:
-        X = np.frombuffer(fx.read(), dtype=x_agg_np.dtype).reshape(
-            -1, x_agg_np.shape[1]
-        )
-        y = np.frombuffer(fy.read(), dtype=y_np.dtype)
+    X = np.fromfile(temp_x_file, dtype=np.float32).reshape(total_samples, feature_dim)
+    y = np.fromfile(temp_y_file, dtype=np.float32)
 
     np.save(osp.join(save_path, "X.npy"), X)
     np.save(osp.join(save_path, "y.npy"), y)
 
     # Clean up temporary files
-    os.remove(temp_x_file)
-    os.remove(temp_y_file)
+    cleanup_temp_files(save_path)
 
-    return X.shape[0]  # Return the number of samples
+    return total_samples
 
 
 @hydra.main(
@@ -179,7 +247,7 @@ def main(cfg: DictConfig) -> None:
         )
     # nucleotide transformer
     if "nt_window_5979" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["nt_window_5979_max"] = NucleotideTransformerDataset(
+        node_embeddings["nt_window_5979"] = NucleotideTransformerDataset(
             root=osp.join(
                 DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
             ),
@@ -200,7 +268,7 @@ def main(cfg: DictConfig) -> None:
                 DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"
             ),
             genome=genome,
-            model_name="window_three_prime_5979",
+            model_name="nt_window_three_prime_5979",
         )
     if "nt_window_five_prime_5979" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
@@ -247,7 +315,7 @@ def main(cfg: DictConfig) -> None:
             model_name="esm2_t33_650M_UR50D_all",
         )
     if "esm2_t33_650M_UR50D_no_dubious" in wandb.config.cell_dataset["node_embeddings"]:
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_dubious"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_dubious",
@@ -256,7 +324,7 @@ def main(cfg: DictConfig) -> None:
         "esm2_t33_650M_UR50D_no_dubious_uncharacterized"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_dubious_uncharacterized"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_dubious_uncharacterized",
@@ -265,7 +333,7 @@ def main(cfg: DictConfig) -> None:
         "esm2_t33_650M_UR50D_no_uncharacterized"
         in wandb.config.cell_dataset["node_embeddings"]
     ):
-        node_embeddings["esm2_t33_650M_UR50D_all"] = Esm2Dataset(
+        node_embeddings["esm2_t33_650M_UR50D_no_uncharacterized"] = Esm2Dataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/esm2_embedding"),
             genome=genome,
             model_name="esm2_t33_650M_UR50D_no_uncharacterized",
@@ -286,19 +354,27 @@ def main(cfg: DictConfig) -> None:
     # random
     if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1000"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_1000",
         )
     if "random_100" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_100"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_100",
         )
     if "random_10" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_10"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_10",
         )
     if "random_1" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1"] = RandomEmbeddingDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"), genome=genome
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_1",
         )
     size_str = format_scientific_notation(float(wandb.config.cell_dataset["size"]))
 
@@ -328,7 +404,7 @@ def main(cfg: DictConfig) -> None:
         node_embeddings=node_embeddings,
         deduplicator=deduplicator,
     )
-    
+
     data_module = CellDataModule(
         dataset=cell_dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -356,28 +432,26 @@ def main(cfg: DictConfig) -> None:
     node_embeddings_path = node_embeddings_path + "_" + size_str
     os.makedirs(node_embeddings_path, exist_ok=True)
 
-    all_data_exists = all(
-        check_data_exists(node_embeddings_path, split)
-        for split in ["train", "val", "test", "all"]
-    )
-
-    if all_data_exists:
-        print("All necessary data already exists. Skipping this configuration.")
-        return
-
+    # In the main function, replace the existing loop with this:
     for split, dataloader in [
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
-        # ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
+
+        if check_data_exists(save_path):
+            print(f"Data for {split} split already exists. Skipping.")
+            continue
+
+        # Clean up any existing temporary files before processing
+        cleanup_temp_files(save_path)
+
         num_samples = save_data_from_dataloader(
             dataloader,
             save_path,
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
-            split=split,
         )
         print(f"Saved {num_samples} samples for {split} split")
 

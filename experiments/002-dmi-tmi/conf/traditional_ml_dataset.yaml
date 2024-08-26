@@ -20,4 +20,4 @@ data_module:
   num_workers: 16
   pin_memory: false
   prefetch: true
-device: cuda
+device: cpu

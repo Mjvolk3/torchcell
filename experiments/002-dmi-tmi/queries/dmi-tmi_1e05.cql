@@ -18,7 +18,7 @@ WHERE phen.graph_level = 'edge'
   AND SIZE([(g)<-[:PerturbationMemberOf]-(p) | p]) > 0
 WITH DISTINCT e, ref
 ORDER BY e.id
-LIMIT 50001
+LIMIT 50132
 RETURN e, ref
 
 UNION ALL
@@ -43,5 +43,5 @@ WHERE phen.graph_level = 'edge'
   AND SIZE([(g)<-[:PerturbationMemberOf]-(p) | p]) > 0
 WITH DISTINCT e, ref
 ORDER BY e.id
-LIMIT 50001
+LIMIT 50132
 RETURN e, ref

@@ -31,6 +31,7 @@ parameters:
           ]
       size:
         values: [1e3, 1e4]
+        # values: [1e5]
         # values: [1e3, 1e4, 1e5]
         # values: [1e3]
       is_pert:
@@ -38,7 +39,7 @@ parameters:
         # values: [true, false]
       aggregation:
         values: [sum, mean]
-        # values: [sum, mean]
+        # values: [sum]
   data_module:
     parameters:
       batch_size:

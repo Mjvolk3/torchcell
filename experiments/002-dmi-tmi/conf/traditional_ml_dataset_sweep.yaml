@@ -51,7 +51,8 @@ parameters:
       prefetch:
         values: [true]
   device:
-    values: [cuda]
+    values: [cpu]
+    # values: [cuda]
 
 command:
   - ${env}

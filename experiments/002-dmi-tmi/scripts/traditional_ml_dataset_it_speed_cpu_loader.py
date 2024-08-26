@@ -1,3 +1,5 @@
+# FLAG I've commented out some of the imports since things were not working well fast on GilaHyper.
+
 import os
 import os.path as osp
 import hydra
@@ -10,6 +12,7 @@ from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 from torchcell.loader import CpuDataModule
 from torchcell.datasets import RandomEmbeddingDataset
+import multiprocessing as mp
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -48,9 +51,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     node_embeddings = {}
-    node_embeddings["random_1"] = RandomEmbeddingDataset(
+    rand_embed_str = "random_100"
+    node_embeddings[rand_embed_str] = RandomEmbeddingDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
-        model_name="random_1",
+        model_name=rand_embed_str,
         genome=genome,
     )
 
@@ -68,7 +72,7 @@ def main(cfg: DictConfig) -> None:
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         batch_size=wandb.config.data_module["batch_size"],
         random_seed=42,
-        num_workers=10,  # Using 10 workers as in your original script
+        num_workers=wandb.config.data_module["num_workers"],  # Using 10 workers as in your original script
     )
 
     for split in ["train", "val", "test", "all"]:
@@ -96,4 +100,5 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    mp.set_start_method('spawn')
     main()

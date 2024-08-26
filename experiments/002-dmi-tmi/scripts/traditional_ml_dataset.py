@@ -352,6 +352,12 @@ def main(cfg: DictConfig) -> None:
             model_name="chrom_pathways",
         )
     # random
+    if "random_6579" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_6579"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_6579",
+        )
     if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1000"] = RandomEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
@@ -437,6 +443,7 @@ def main(cfg: DictConfig) -> None:
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
+        ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
 

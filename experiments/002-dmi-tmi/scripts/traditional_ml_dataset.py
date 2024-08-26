@@ -443,7 +443,7 @@ def main(cfg: DictConfig) -> None:
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
-        ("all", data_module.all_dataloader()),
+        # ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
 

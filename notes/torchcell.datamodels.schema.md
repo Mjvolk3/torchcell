@@ -2,7 +2,7 @@
 id: 2qlur6rz1mzpmtltyf7w0j0
 title: Ontology_pydantic
 desc: ''
-updated: 1723496168637
+updated: 1724678319239
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -13,7 +13,7 @@ created: 1705045346511
 - I had some ideas on pulling `strain_id` information via another method, but I avoid this and just added the data to more refined pydantic models.
   - We want these more refined pydantic models because they allow us to take advantage of the authors preprocessing of their own data. Authors like to use some conventions, and this is evident in the follow up `Kuzmin` work. It is best to add these specific details to the data so they can be used for processing, but they need to easily removed so the more general data can be more easily merged.
 
-![](./assets/drawio/ontology_pydantic_hourglass_data_model.png)
+![](./assets/drawio/ontology_pydantic_hourglass_data_model.drawio.png)
 
 ## Issues with the Current Data Scheme that Uses Different Named Phenotypes
 
@@ -170,3 +170,7 @@ HeteroData(
   }
 )
 ```
+
+## 2024.08.26 - Generic Subclasses Need to Consider Phenotype Label Index
+
+We have to be careful about how we do this because we use `self.dataset.phenotype_label_index` for helping create balance spits [[torchcell.datamodules.cell]]. We compute the `phenotype_label_index` here [[torchcell.data.neo4j_cell]]. We can add the source as in the dataset name so we can create another automated way to split data. This is a good idea since datasets are split by unique phenotype to begin with. It is a bit arbitrary still. It is phenotype focused, but it would be better if it was more principled.

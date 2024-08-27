@@ -415,17 +415,28 @@ def process_raw_dataframe(
     # Normalize other summary columns
     summary_df = pd.json_normalize(df["summary"])[summary_columns]
 
+    for col in summary_df.columns:
+        summary_df[col] = pd.to_numeric(summary_df[col], errors="coerce").astype(
+            "float64"
+        )
+
     # Calculate RMSE for each fold
     for i in range(1, 6):
         fold_val_mse_key = f"fold_{i}_val_mse"
         fold_val_rmse_key = f"fold_{i}_val_rmse"
         if fold_val_mse_key in fold_df.columns:
+            fold_df[fold_val_mse_key] = pd.to_numeric(
+                fold_df[fold_val_mse_key], errors="coerce"
+            ).astype("float64")
             fold_df[fold_val_rmse_key] = np.sqrt(fold_df[fold_val_mse_key])
             fold_columns.append(fold_val_rmse_key)
 
         fold_train_mse_key = f"fold_{i}_train_mse"
         fold_train_rmse_key = f"fold_{i}_train_rmse"
         if fold_train_mse_key in fold_df.columns:
+            fold_df[fold_train_mse_key] = pd.to_numeric(
+                fold_df[fold_train_mse_key], errors="coerce"
+            ).astype("float64")
             fold_df[fold_train_rmse_key] = np.sqrt(fold_df[fold_train_mse_key])
             fold_columns.append(fold_train_rmse_key)
 

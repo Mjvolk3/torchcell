@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724792193059
+updated: 1724796843657
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -32,7 +32,7 @@ created: 1724674431881
 ## 2024.08.27
 
 - [x] Try to compute `random_6579` for traditional. → Couldn't complete. `1e5` `no_pert` had some memory issues.
-- [ ]
+- [ ] Traditional ml on interactions.
 
 ***
 

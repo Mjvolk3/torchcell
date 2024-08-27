@@ -38,7 +38,11 @@ def get_n_jobs():
         return -1
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="random-forest")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="random-forest",
+)
 def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -61,9 +65,7 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
     )
 
-    max_size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["max_size"])
-    )
+    size_str = format_scientific_notation(float(wandb.config.cell_dataset["size"]))
     is_pert = wandb.config.cell_dataset["is_pert"]
     aggregation = wandb.config.cell_dataset["aggregation"]
     node_embeddings = "_".join(wandb.config.cell_dataset["node_embeddings"])
@@ -71,9 +73,9 @@ def main(cfg: DictConfig) -> None:
 
     dataset_path = osp.join(
         DATA_ROOT,
-        "data/torchcell/experiments/smf-dmf-tmf-traditional-ml",
+        "data/torchcell/experiments/002-dmi-tmi/traditional-ml",
         node_embeddings,
-        f"{aggregation}{is_pert_str}_{max_size_str}",
+        f"{aggregation}{is_pert_str}_{size_str}",
     )
 
     n_estimators = wandb.config.random_forest["n_estimators"]

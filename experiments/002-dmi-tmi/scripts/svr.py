@@ -1,3 +1,9 @@
+# experiments/smf-dmf-tmf-001/svr
+# [[experiments.smf-dmf-tmf-001.svr]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/svr
+# Test file: experiments/smf-dmf-tmf-001/test_svr.py
+
+
 import os
 import os.path as osp
 import numpy as np
@@ -28,7 +34,11 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="svr")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="svr",
+)
 def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -51,8 +61,8 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
     )
 
-    max_size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["max_size"])
+    size_str = format_scientific_notation(
+        float(wandb.config.cell_dataset["size"])
     )
     is_pert = wandb.config.cell_dataset["is_pert"]
     aggregation = wandb.config.cell_dataset["aggregation"]
@@ -61,9 +71,9 @@ def main(cfg: DictConfig) -> None:
 
     dataset_path = osp.join(
         DATA_ROOT,
-        "data/torchcell/experiments/smf-dmf-tmf-traditional-ml",
+        "data/torchcell/experiments/002-dmi-tmi/traditional-ml",
         node_embeddings,
-        f"{aggregation}{is_pert_str}_{max_size_str}",
+        f"{aggregation}{is_pert_str}_{size_str}",
     )
 
     kernel = wandb.config.svr["kernel"]

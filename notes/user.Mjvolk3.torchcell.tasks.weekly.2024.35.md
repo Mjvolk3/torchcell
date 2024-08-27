@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724693441785
+updated: 1724724604917
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -11,13 +11,14 @@ created: 1724674431881
 - [x] Construct `002-dmi-tmi` `1e06` dataset.
 - [x] Run `all_dataloader` for `002-dmi-tmi` `1e03` and `1e04` on m1.
 - [x] Brainstorming updates to [[torchcell.datamodels.schema]] → [[2024.08.26 - Generic Subclasses Need to Consider Phenotype Label Index|dendron://torchcell/torchcell.datamodels.schema#20240826---generic-subclasses-need-to-consider-phenotype-label-index]]
+- [x] Rerun plotting, trying to fill in all fitness data → almost there.
+- [x] Create random `6579` `random` for `002-dmi-tmi` `1e3`, `1e4`
+- [x] Create random `6579` `random` for `002-dmi-tmi` `1e5` → will finish overnight
+- [x] Fix type case to numeric iss ue is [[Svr|dendron://torchcell/experiments.smf-dmf-tmf-001.svr]]
+- [x] Fix no cross validation in [[Svr|dendron://torchcell/experiments.smf-dmf-tmf-001.svr]]
 
-- [ ] Create scripts for traditional ml `002-dmi-tmi`. Add save models for `1e05` datasets.
+- [ ] Create scripts for traditional ml `002-dmi-tmi`.
 
-- [ ] Rerun plotting, trying to fill in all fitness data
-
-- [ ] Create random `6579` `random` for `002-dmi-tmi` `1e4`
-- [ ] Create random `6579` `random` for `002-dmi-tmi`
 - [ ] Revert to `39f8c79e5a93953c240965becba6e0c59bb54026` to create random `6579` `random`.
 
 - [ ] Bring in kuzmin2020 dataset.

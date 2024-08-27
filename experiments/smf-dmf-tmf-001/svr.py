@@ -1,3 +1,9 @@
+# experiments/smf-dmf-tmf-001/svr
+# [[experiments.smf-dmf-tmf-001.svr]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/smf-dmf-tmf-001/svr
+# Test file: experiments/smf-dmf-tmf-001/test_svr.py
+
+
 import os
 import os.path as osp
 import numpy as np

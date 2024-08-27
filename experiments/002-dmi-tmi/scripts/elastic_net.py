@@ -19,6 +19,7 @@ from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
 import socket
+
 # from wandb_osh.hooks import TriggerWandbSyncHook
 import torchcell
 
@@ -31,7 +32,11 @@ DATA_ROOT = os.getenv("DATA_ROOT")
 # trigger_sync = TriggerWandbSyncHook()
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="elastic-net")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="elastic-net",
+)
 def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "300"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -41,7 +46,9 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id))
+    experiment_dir = osp.join(
+        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
+    )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline",
@@ -52,8 +59,8 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
     )
 
-    max_size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["max_size"])
+    size_str = format_scientific_notation(
+        float(wandb.config.cell_dataset["size"])
     )
     is_pert = wandb.config.cell_dataset["is_pert"]
     aggregation = wandb.config.cell_dataset["aggregation"]
@@ -62,9 +69,9 @@ def main(cfg: DictConfig) -> None:
 
     dataset_path = osp.join(
         DATA_ROOT,
-        "data/torchcell/experiments/smf-dmf-tmf-traditional-ml",
+        "data/torchcell/experiments/002-dmi-tmi/traditional-ml",
         node_embeddings,
-        f"{aggregation}{is_pert_str}_{max_size_str}",
+        f"{aggregation}{is_pert_str}_{size_str}",
     )
 
     alpha_values = [wandb.config.elastic_net["alpha"]]

@@ -1,0 +1,29 @@
+# experiments/smf-dmf-tmf-001/conf/svr.yaml
+program: experiments/002-dmi-tmi/scripts/svr.py
+
+defaults:
+  - default
+  - _self_
+wandb:
+  mode: online
+  project: torchcell_smf-dmf-tmf-001_trad-ml_svr
+  tags: []
+cell_dataset:
+  graphs: null
+  node_embeddings: [codon_frequency]
+  size: 1e3
+  is_pert: true
+  aggregation: sum
+data_module:
+  batch_size: 16
+  num_workers: 6
+  pin_memory: true
+svr:
+  kernel: linear
+  C: 1.0
+  gamma: 0.1
+is_cross_validated: true
+command:
+  # - ${env}
+  - python
+  - ${program}

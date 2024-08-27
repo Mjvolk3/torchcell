@@ -9,6 +9,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.datamodules import CellDataModule
 from torchcell.utils import format_scientific_notation
+from torchcell.datasets import OneHotGeneDataset
+
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -45,13 +47,18 @@ def main(cfg: DictConfig) -> None:
     dataset_root = osp.join(
         DATA_ROOT, f"data/torchcell/experiments/002-dmi-tmi/{size_str}"
     )
+    node_embeddings = {}
+    node_embeddings["one_hot_gene"] = OneHotGeneDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/one_hot_gene_embedding"),
+        genome=genome,
+    )
 
     cell_dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         genome=genome,
         graphs=None,
-        node_embeddings={},
+        node_embeddings=node_embeddings,
         deduplicator=deduplicator,
     )
 
@@ -83,4 +90,6 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    import torch.multiprocessing as mp
+    mp.set_start_method('spawn')
     main()

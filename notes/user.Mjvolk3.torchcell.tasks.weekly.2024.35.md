@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724724627340
+updated: 1724792193059
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -28,6 +28,11 @@ created: 1724674431881
 - [ ] Combined datasets and update readonly db.
 
 - [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
+
+## 2024.08.27
+
+- [x] Try to compute `random_6579` for traditional. → Couldn't complete. `1e5` `no_pert` had some memory issues.
+- [ ]
 
 ***
 

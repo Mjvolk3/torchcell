@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724724604917
+updated: 1724724627340
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -27,7 +27,7 @@ created: 1724674431881
 - [ ] Update combine to add a `README.md` which can serve as a trace to combined data.
 - [ ] Combined datasets and update readonly db.
 
-- [ ] Create `1e03`, `1e04`, and `1e05` datasets. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
+- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
 
 ***
 

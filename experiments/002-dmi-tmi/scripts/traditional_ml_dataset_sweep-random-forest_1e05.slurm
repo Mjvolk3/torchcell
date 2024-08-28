@@ -25,7 +25,7 @@ conda activate /scratch/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=jj5qedte
+SWEEP_ID=tw2eomgp
 PROJECT_NAME=torchcell_002-dmi-tmi_trad-ml_random-forest_1e05
 
 echo "-----------------"
@@ -33,7 +33,7 @@ echo "SWEEP_ID: $SWEEP_ID"
 echo "SLURM_JOB_ID: $SLURM_JOB_ID"
 echo "PROJECT_NAME: $PROJECT_NAME"
 echo "-----------------"
-echo "SLURM_NTASKS: $SLURM_NTASKS"
+echo "SLURM_NTASKS: $SLURM_NTASKS"E
 echo "-----------------"
 
 mkdir /scratch/bbub/mjvolk3/torchcell/experiments/002-dmi-tmi/agent_log/$SLURM_JOB_ID

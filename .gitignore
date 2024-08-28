@@ -41,6 +41,7 @@ biochatter.env
 slurm/output
 slurm/error
 experiments/smf-dmf-tmf-001/slurm/*
+experiments/002-dmi-tmi/slurm/*
 
 
 # docx

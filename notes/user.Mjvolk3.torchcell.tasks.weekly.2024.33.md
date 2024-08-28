@@ -2,7 +2,7 @@
 id: auzc4lzjlk17i231rflydf9
 title: '33'
 desc: ''
-updated: 1724147030229
+updated: 1724678778221
 created: 1723481104354
 ---
 
@@ -20,7 +20,7 @@ created: 1723481104354
 
 ## 2024.08.13
 
-- [ ] We have an issue with slow queries and it looks like the resource usage from `btop` is showing low usage. Explore visualization options. → explored many options... record.
+- 🔲 We have an issue with slow queries and it looks like the resource usage from `btop` is showing low usage. Explore visualization options. → explored many options... record.
 
 - [x] [[neo4j.apoc.load.json|dendron://torchcell/neo4j.apoc.load.json]]
 - [x] Adjust bolt params for faster query. → Increased max threads. → `server.cypher.parallel.worker_limit` is an option in `Neo4j v5`. This should help with speed up bet we would need to rebuild the `tc-neo4j` docker image.
@@ -41,31 +41,31 @@ created: 1723481104354
 
 - [x] Check database build → failed again dropped workers and restarted.
 
-- [ ] Bring in kuzmin2020 dataset
-- [ ] Plots on data distributions.
+- 🔲 Bring in kuzmin2020 dataset
+- 🔲 Plots on data distributions.
 
 ## 2024.08.17
 
-- [ ] Zendron on `zotero_out`
+- 🔲 Zendron on `zotero_out`
 
-- [ ] fix random - specify model name. They all look like they are `random_1000`.
+- 🔲 fix random - specify model name. They all look like they are `random_1000`.
 
 ***
 
-- [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
-- [ ] Add expression dataset for mechanistic aware single fitness
-- [ ] Add expression from double fitness
-- [ ] Add fitness from singles
-- [ ] Add fitness from doubles
-- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
-- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
-- [ ] `ExperimentReferenceOf` looks broken.
-- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
-- [ ] Try to link docker and slurm with `cgroup`
-- [ ] Run build bash script for testing.
-- [ ] `gh` Test build under resource constraints.
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Remove software update on image entry point
-- [ ] dataset registry not working again because circular import
+- 🔲 Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
+- 🔲 Add expression dataset for mechanistic aware single fitness
+- 🔲 Add expression from double fitness
+- 🔲 Add fitness from singles
+- 🔲 Add fitness from doubles
+- 🔲 We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
+- 🔲 Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
+- 🔲 Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+- 🔲 Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
+- 🔲 `ExperimentReferenceOf` looks broken.
+- 🔲 Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
+- 🔲 Try to link docker and slurm with `cgroup`
+- 🔲 Run build bash script for testing.
+- 🔲 `gh` Test build under resource constraints.
+- 🔲 Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+- 🔲 Remove software update on image entry point
+- 🔲 dataset registry not working again because circular import

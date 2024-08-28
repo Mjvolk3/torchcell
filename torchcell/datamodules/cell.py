@@ -11,6 +11,7 @@ from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 import logging
 import os.path as osp
+from torch_geometric.loader import PrefetchLoader
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -25,6 +26,7 @@ class CellDataModule(L.LightningDataModule):
         random_seed: int = 42,
         num_workers: int = 0,
         pin_memory: bool = False,
+        prefetch: bool = False,
     ):
         super().__init__()
         self.dataset = dataset
@@ -33,6 +35,7 @@ class CellDataModule(L.LightningDataModule):
         self.random_seed = random_seed
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.prefetch = prefetch
         self.train_ratio = 0.8
         self.val_ratio = 0.1
         self.train_epoch_size = int(
@@ -140,46 +143,72 @@ class CellDataModule(L.LightningDataModule):
 
         return subset_phenotype_label_index, subset_phenotype_label_index_mapped
 
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_dataset,
+    def _get_dataloader(self, dataset, shuffle=False):
+        loader = DataLoader(
+            dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             follow_batch=["x", "x_pert"],
-            # follow_batch=["x", "x_pert", "x_one_hop_pert"],
         )
+        if self.prefetch:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            return PrefetchLoader(loader, device=device)
+        return loader
+
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            follow_batch=["x", "x_pert"],
-            # follow_batch=["x", "x_pert", "x_one_hop_pert"],
-        )
+        return self._get_dataloader(self.val_dataset)
 
     def test_dataloader(self):
-        return DataLoader(
-            self.test_dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            follow_batch=["x", "x_pert"],
-            # follow_batch=["x", "x_pert", "x_one_hop_pert"],
-        )
+        return self._get_dataloader(self.test_dataset)
 
     def all_dataloader(self):
-        return DataLoader(
-            self.dataset,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            follow_batch=["x", "x_pert"],
-            # follow_batch=["x", "x_pert", "x_one_hop_pert"],
-        )
+        return self._get_dataloader(self.dataset)
+
+    # def train_dataloader(self):
+    #     return DataLoader(
+    #         self.train_dataset,
+    #         batch_size=self.batch_size,
+    #         shuffle=True,
+    #         num_workers=self.num_workers,
+    #         pin_memory=self.pin_memory,
+    #         follow_batch=["x", "x_pert"],
+    #         # follow_batch=["x", "x_pert", "x_one_hop_pert"],
+    #     )
+
+    # def val_dataloader(self):
+    #     return DataLoader(
+    #         self.val_dataset,
+    #         batch_size=self.batch_size,
+    #         num_workers=self.num_workers,
+    #         pin_memory=self.pin_memory,
+    #         follow_batch=["x", "x_pert"],
+    #         # follow_batch=["x", "x_pert", "x_one_hop_pert"],
+    #     )
+
+    # def test_dataloader(self):
+    #     return DataLoader(
+    #         self.test_dataset,
+    #         batch_size=self.batch_size,
+    #         num_workers=self.num_workers,
+    #         pin_memory=self.pin_memory,
+    #         follow_batch=["x", "x_pert"],
+    #         # follow_batch=["x", "x_pert", "x_one_hop_pert"],
+    #     )
+
+    # def all_dataloader(self):
+    #     return DataLoader(
+    #         self.dataset,
+    #         batch_size=self.batch_size,
+    #         num_workers=self.num_workers,
+    #         pin_memory=self.pin_memory,
+    #         follow_batch=["x", "x_pert"],
+    #         # follow_batch=["x", "x_pert", "x_one_hop_pert"],
+    #     )
 
 
 if __name__ == "__main__":

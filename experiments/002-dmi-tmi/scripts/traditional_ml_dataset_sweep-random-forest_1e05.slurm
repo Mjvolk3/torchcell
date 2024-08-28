@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mem=240g
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=10  # Increase the number of tasks per node to the desired number of agents
-#SBATCH --cpus-per-task=20  # Adjust the number of CPUs per task based on your requirements
+#SBATCH --ntasks-per-node=16  # Increase the number of tasks per node to the desired number of agents
+#SBATCH --cpus-per-task=8  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=RF_1e05
@@ -25,7 +25,7 @@ conda activate /scratch/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=et58l3tz
+SWEEP_ID=jj5qedte
 PROJECT_NAME=torchcell_002-dmi-tmi_trad-ml_random-forest_1e05
 
 echo "-----------------"

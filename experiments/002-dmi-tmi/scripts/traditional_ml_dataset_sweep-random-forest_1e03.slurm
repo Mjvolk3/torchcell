@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mem=240g
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=20  # Increase the number of tasks per node to the desired number of agents
-#SBATCH --cpus-per-task=10  # Adjust the number of CPUs per task based on your requirements
+#SBATCH --ntasks-per-node=16  # Increase the number of tasks per node to the desired number of agents
+#SBATCH --cpus-per-task=8  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=RF_1e03

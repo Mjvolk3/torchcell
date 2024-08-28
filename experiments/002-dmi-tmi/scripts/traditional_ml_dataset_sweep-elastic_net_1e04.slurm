@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --mem=160g
+#SBATCH --mem=240g
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=20  # Increase the number of tasks per node to the desired number of agents
+#SBATCH --ntasks-per-node=32  # Increase the number of tasks per node to the desired number of agents
 #SBATCH --cpus-per-task=4  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu

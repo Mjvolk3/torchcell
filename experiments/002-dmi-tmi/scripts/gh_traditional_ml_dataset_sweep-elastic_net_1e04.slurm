@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=EN_1e04
-#SBATCH --ntasks=32               # Set to the desired number of tasks (agents)
+#SBATCH --ntasks=32 #24           # Set to the desired number of tasks (agents)
 #SBATCH --cpus-per-task=4           # Adjust the number of CPUs per task based on your requirements
 #SBATCH --mem=930G                  # Total memory for the job
 #SBATCH --gres=gpu:0                # No GPUs
@@ -39,7 +39,7 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
 # This one is offline
-SWEEP_ID=w8mvcxug
+SWEEP_ID=uuqkb5eh
 PROJECT_NAME=torchcell_002-dmi-tmi_trad-ml_elastic-net_1e04
 
 echo "-----------------"

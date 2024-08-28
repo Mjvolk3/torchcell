@@ -236,6 +236,7 @@ def main(cfg: DictConfig) -> None:
             )
             plt.close(fig)
             # trigger_sync()
+    print(wandb.run.summary._as_dict())
     wandb.finish()
 
 

@@ -47,7 +47,8 @@ parameters:
       n_estimators:
         values: [100, 200, 500]
       max_depth:
-        values: [null, 5, 10]
+        values: [5, 10, 500]
+        # values: [null, 5, 10]
       min_samples_split:
         values: [2, 5, 10]
   is_cross_validated:

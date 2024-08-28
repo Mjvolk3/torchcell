@@ -51,7 +51,7 @@ def main(cfg: DictConfig) -> None:
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",
+        mode="online",
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,

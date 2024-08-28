@@ -14,7 +14,7 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-RESULTS_DIR = "experiments/002-dmi-tmi/results/elastic_net"
+RESULTS_DIR = "experiments/002-dmi-tmi/results/svr"
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
@@ -86,8 +86,7 @@ def create_plots(
     alpha_light_bar = 0.3
     alpha_frame = 0.5
     for metric in metrics:
-        fig, ax = plt.subplots(figsize=(12, 14))  # Increase figure size
-
+        fig, ax = plt.subplots(figsize=(12, 14))
         y = 0
         yticks = []
         ytick_positions = []
@@ -271,8 +270,8 @@ def create_plots(
         ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
 
-        plot_name = f"002-dmi-tmi_Elastic_Net_{size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
-        title = f"002-dmi-tmi Elastic Net {size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
+        plot_name = f"002-dmi-tmi_SVR_{size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
+        title = f"002-dmi-tmi SVR {size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
         ax.set_title(title, fontsize=20)
 
         representation_legend = [
@@ -416,17 +415,28 @@ def process_raw_dataframe(
     # Normalize other summary columns
     summary_df = pd.json_normalize(df["summary"])[summary_columns]
 
+    for col in summary_df.columns:
+        summary_df[col] = pd.to_numeric(summary_df[col], errors="coerce").astype(
+            "float64"
+        )
+
     # Calculate RMSE for each fold
     for i in range(1, 6):
         fold_val_mse_key = f"fold_{i}_val_mse"
         fold_val_rmse_key = f"fold_{i}_val_rmse"
         if fold_val_mse_key in fold_df.columns:
+            fold_df[fold_val_mse_key] = pd.to_numeric(
+                fold_df[fold_val_mse_key], errors="coerce"
+            ).astype("float64")
             fold_df[fold_val_rmse_key] = np.sqrt(fold_df[fold_val_mse_key])
             fold_columns.append(fold_val_rmse_key)
 
         fold_train_mse_key = f"fold_{i}_train_mse"
         fold_train_rmse_key = f"fold_{i}_train_rmse"
         if fold_train_mse_key in fold_df.columns:
+            fold_df[fold_train_mse_key] = pd.to_numeric(
+                fold_df[fold_train_mse_key], errors="coerce"
+            ).astype("float64")
             fold_df[fold_train_rmse_key] = np.sqrt(fold_df[fold_train_mse_key])
             fold_columns.append(fold_train_rmse_key)
 
@@ -450,6 +460,7 @@ def process_raw_dataframe(
 
     # Combine config, summary, and fold DataFrames
     processed_df = pd.concat([config_df, summary_df, fold_df], axis=1)
+
     # Add run id
     processed_df = pd.concat([df[["run_id"]], config_df, summary_df, fold_df], axis=1)
 
@@ -464,8 +475,9 @@ def deduplicate_dataframe(
         "cell_dataset.size",
         "cell_dataset.aggregation",
         "cell_dataset.node_embeddings",
-        "elastic_net.alpha",
-        "elastic_net.l1_ratio",
+        "svr.kernel",
+        "svr.C",
+        "svr.gamma",
         "num_params",
     ]
 
@@ -513,9 +525,9 @@ def main(is_overwrite=False):
         api = wandb.Api()
 
         project_names = [
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e03",
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e04",
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e05",
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03",
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04",
+            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05",
         ]
 
         dataframes = [load_dataset(api, project_name) for project_name in project_names]
@@ -525,8 +537,9 @@ def main(is_overwrite=False):
             "cell_dataset.size",
             "cell_dataset.aggregation",
             "cell_dataset.node_embeddings",
-            "elastic_net.alpha",
-            "elastic_net.l1_ratio",
+            "svr.kernel",
+            "svr.C",
+            "svr.gamma",
         ]
         summary_columns = [
             "num_params",

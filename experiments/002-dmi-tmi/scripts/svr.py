@@ -61,9 +61,7 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
     )
 
-    size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["size"])
-    )
+    size_str = format_scientific_notation(float(wandb.config.cell_dataset["size"]))
     is_pert = wandb.config.cell_dataset["is_pert"]
     aggregation = wandb.config.cell_dataset["aggregation"]
     node_embeddings = "_".join(wandb.config.cell_dataset["node_embeddings"])
@@ -217,11 +215,7 @@ def main(cfg: DictConfig) -> None:
             # Create genetic_interaction_score boxplot for test predictions
             fig = genetic_interaction_score.box_plot(y_test, y_pred_test)
             wandb.log(
-                {
-                    f"{node_embeddings}_dl_set/test_predictions_genetic_interaction_score_boxplot": wandb.Image(
-                        fig
-                    )
-                }
+                {"test_predictions_genetic_interaction_score_boxplot": wandb.Image(fig)}
             )
             plt.close(fig)
 

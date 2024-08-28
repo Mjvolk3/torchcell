@@ -81,10 +81,10 @@ def main(cfg: DictConfig) -> None:
     gamma = wandb.config.svr["gamma"]
 
     for split in ["all", "train", "val", "test"]:
-        X = np.load(osp.join(dataset_path, split, "X.npy"))
-        y = np.load(osp.join(dataset_path, split, "y.npy"))
 
         if split == "all":
+            X = np.load(osp.join(dataset_path, split, "X.npy"))
+            y = np.load(osp.join(dataset_path, split, "y.npy"))
             # Perform 5-fold cross-validation
             kf = KFold(n_splits=5, shuffle=True, random_state=42)
 

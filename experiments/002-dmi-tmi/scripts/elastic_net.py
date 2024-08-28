@@ -59,9 +59,7 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
     )
 
-    size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["size"])
-    )
+    size_str = format_scientific_notation(float(wandb.config.cell_dataset["size"]))
     is_pert = wandb.config.cell_dataset["is_pert"]
     aggregation = wandb.config.cell_dataset["aggregation"]
     node_embeddings = "_".join(wandb.config.cell_dataset["node_embeddings"])
@@ -78,12 +76,12 @@ def main(cfg: DictConfig) -> None:
     l1_ratio_values = [wandb.config.elastic_net["l1_ratio"]]
 
     for split in ["all", "train", "val", "test"]:
-        X = np.load(osp.join(dataset_path, split, "X.npy"))
-        y = np.load(osp.join(dataset_path, split, "y.npy"))
 
         if (
             split == "all" and wandb.config.is_cross_validated
         ):  # Check if cross-validation is enabled
+            X = np.load(osp.join(dataset_path, split, "X.npy"))
+            y = np.load(osp.join(dataset_path, split, "y.npy"))
             # Perform 5-fold cross-validation
             kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -231,9 +229,15 @@ def main(cfg: DictConfig) -> None:
                         }
                     )
 
-                    # Create fitness boxplot for test predictions
-                    fig = fitness.box_plot(y_test, y_pred_test)
-                    wandb.log({"test_predictions_fitness_boxplot": wandb.Image(fig)})
+                    # Create genetic_interaction_score boxplot for test predictions
+                    fig = genetic_interaction_score.box_plot(y_test, y_pred_test)
+                    wandb.log(
+                        {
+                            "test_predictions_genetic_interaction_score_boxplot": wandb.Image(
+                                fig
+                            )
+                        }
+                    )
                     plt.close(fig)
                     # trigger_sync()
     wandb.finish()

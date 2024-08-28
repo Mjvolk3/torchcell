@@ -298,13 +298,18 @@ class Neo4jCellDataset(Dataset):
             self.graphs = {"base": base_graph}
 
         # embeddings
-        self.node_embeddings = node_embeddings
-        if self.node_embeddings is not None:
-            for name, embedding in self.node_embeddings.items():
+        # TODO remove
+        # node_embeddings = {}
+        if node_embeddings is not None:
+            for name, embedding in node_embeddings.items():
                 self.graphs[name] = create_embedding_graph(self.gene_set, embedding)
                 # Integrate node embeddings into graphs
         self.cell_graph = to_cell_data(self.graphs)
 
+        # HACK removing state for mp
+        del self.graphs
+        del node_embeddings
+        
         # Clean up hanging env, for multiprocessing
         self.env = None
         self.raw_db.env = None
@@ -433,6 +438,8 @@ class Neo4jCellDataset(Dataset):
             subsetted_graph = process_graph(self.cell_graph, data)
             # if self.transform:
             #     subsetted_graph = self.transform(subsetted_graph)
+            # TODO consider clearing env on every get so we can pickle
+            # self.env = None
             return subsetted_graph
 
     def _init_lmdb_read(self):

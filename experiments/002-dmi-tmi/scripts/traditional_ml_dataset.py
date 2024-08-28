@@ -116,25 +116,26 @@ def cleanup_temp_files(save_path):
 #     return total_samples
 
 
-def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation):
+def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation, device):
     os.makedirs(save_path, exist_ok=True)
-
-    # Clean up any existing temporary files
     cleanup_temp_files(save_path)
 
-    # Temporary files for X and y
     temp_x_file = osp.join(save_path, "temp_X.bin")
     temp_y_file = osp.join(save_path, "temp_y.bin")
 
     total_samples = 0
     feature_dim = None
 
-    # Open temporary binary files for appending
     with open(temp_x_file, "ab") as fx, open(temp_y_file, "ab") as fy:
         for batch in tqdm(dataloader, desc="Processing batches"):
             x = batch["gene"].x_pert if is_pert else batch["gene"].x
             batch_index = batch["gene"].x_pert_batch if is_pert else batch["gene"].batch
             y = batch["gene"].label_value
+
+            # Move data to specified device
+            x = x.to(device)
+            batch_index = batch_index.to(device)
+            y = y.to(device)
 
             if aggregation == "mean":
                 x_agg = torch_scatter.scatter_mean(x, batch_index, dim=0)
@@ -145,7 +146,7 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation):
 
             y = y.view(-1) if y.dim() == 2 else y
 
-            # Convert to numpy and append to temporary files
+            # Move data back to CPU for numpy conversion
             x_agg_np = x_agg.cpu().numpy()
             y_np = y.cpu().numpy()
 
@@ -156,14 +157,12 @@ def save_data_from_dataloader(dataloader, save_path, is_pert, aggregation):
             if feature_dim is None:
                 feature_dim = x_agg_np.shape[1]
 
-    # Read temporary files and save as .npy
     X = np.fromfile(temp_x_file, dtype=np.float32).reshape(total_samples, feature_dim)
     y = np.fromfile(temp_y_file, dtype=np.float32)
 
     np.save(osp.join(save_path, "X.npy"), X)
     np.save(osp.join(save_path, "y.npy"), y)
 
-    # Clean up temporary files
     cleanup_temp_files(save_path)
 
     return total_samples
@@ -187,6 +186,18 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
     )
+
+    print(f"CUDA available: {torch.cuda.is_available()}")
+    print(f"Number of CUDA devices: {torch.cuda.device_count()}")
+
+    device = torch.device(wandb.config.device if torch.cuda.is_available() else "cpu")
+    # HACK gpu troubleshoot logging for wandb sweep
+    print(f"Using device: {device}")
+    print(f"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}")
+    if torch.cuda.is_available():
+        print(f"Current CUDA device: {torch.cuda.current_device()}")
+        print(f"GPU Memory usage: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+    # HACK gpu troubleshoot logging for wandb sweep
 
     if torch.cuda.is_available() and dist.is_initialized():
         rank = dist.get_rank()
@@ -352,6 +363,12 @@ def main(cfg: DictConfig) -> None:
             model_name="chrom_pathways",
         )
     # random
+    if "random_6579" in wandb.config.cell_dataset["node_embeddings"]:
+        node_embeddings["random_6579"] = RandomEmbeddingDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
+            genome=genome,
+            model_name="random_6579",
+        )
     if "random_1000" in wandb.config.cell_dataset["node_embeddings"]:
         node_embeddings["random_1000"] = RandomEmbeddingDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/random_embedding"),
@@ -412,6 +429,7 @@ def main(cfg: DictConfig) -> None:
         random_seed=42,
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
+        prefetch=wandb.config.data_module["prefetch"],
     )
 
     cell_dataset.close_lmdb()
@@ -437,6 +455,7 @@ def main(cfg: DictConfig) -> None:
         ("train", data_module.train_dataloader()),
         ("val", data_module.val_dataloader()),
         ("test", data_module.test_dataloader()),
+        # ("all", data_module.all_dataloader()),
     ]:
         save_path = osp.join(node_embeddings_path, split)
 
@@ -444,7 +463,6 @@ def main(cfg: DictConfig) -> None:
             print(f"Data for {split} split already exists. Skipping.")
             continue
 
-        # Clean up any existing temporary files before processing
         cleanup_temp_files(save_path)
 
         num_samples = save_data_from_dataloader(
@@ -452,6 +470,7 @@ def main(cfg: DictConfig) -> None:
             save_path,
             is_pert=wandb.config.cell_dataset["is_pert"],
             aggregation=wandb.config.cell_dataset["aggregation"],
+            device=device,  # Pass the device to the function
         )
         print(f"Saved {num_samples} samples for {split} split")
 

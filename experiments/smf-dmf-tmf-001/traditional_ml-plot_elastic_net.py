@@ -38,6 +38,7 @@ def load_dataset(api, project_name):
         }
     )
 
+
 def create_plots(
     combined_df: pd.DataFrame, max_size: int, criterion: str, add_cv: bool = False
 ):

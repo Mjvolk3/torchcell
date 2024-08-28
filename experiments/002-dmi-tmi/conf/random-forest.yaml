@@ -1,0 +1,29 @@
+# experiments/smf-dmf-tmf-001/conf/random-forest.yaml
+program: experiments/002-dmi-tmi/scripts/random_forest.py
+
+defaults:
+  - default
+  - _self_
+wandb:
+  mode: online
+  project: torchcell_002-dmi-tmi_trad-ml_random-forest
+  tags: []
+cell_dataset:
+  graphs: null
+  node_embeddings: [random_1]
+  size: 1e3
+  is_pert: true
+  aggregation: sum
+data_module:
+  batch_size: 16
+  num_workers: 6
+  pin_memory: true
+random_forest:
+  n_estimators: 100
+  max_depth: 5
+  min_samples_split: 2
+is_cross_validated: true
+command:
+  # - ${env}
+  - python
+  - ${program}

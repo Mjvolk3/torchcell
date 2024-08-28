@@ -16,7 +16,9 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):
     # 1000 = random embedding size
+    # We should remove this to make it more general
     MODEL_TO_WINDOW = {
+        "random_6579": ("window", 6579, False),
         "random_1000": ("window", 1000, False),
         "random_100": ("window", 100, False),
         "random_10": ("window", 10, False),

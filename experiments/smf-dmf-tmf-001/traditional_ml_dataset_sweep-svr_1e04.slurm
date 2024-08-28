@@ -25,9 +25,8 @@ conda activate /projects/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_FILE=experiments/smf-dmf-tmf-001/conf/svr_1e04.yaml
-SWEEP_ID=$(wandb sweep $SWEEP_FILE 2>&1 | grep "Creating sweep with ID:" | awk -F': ' '{print $3}')
-PROJECT_NAME=$(python torchcell/config.py $SWEEP_FILE)
+SWEEP_ID=
+PROJECT_NAME=torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

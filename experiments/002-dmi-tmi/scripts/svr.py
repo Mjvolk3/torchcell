@@ -214,11 +214,11 @@ def main(cfg: DictConfig) -> None:
                 }
             )
 
-            # Create fitness boxplot for test predictions
-            fig = fitness.box_plot(y_test, y_pred_test)
+            # Create genetic_interaction_score boxplot for test predictions
+            fig = genetic_interaction_score.box_plot(y_test, y_pred_test)
             wandb.log(
                 {
-                    f"{node_embeddings}_dl_set/test_predictions_fitness_boxplot": wandb.Image(
+                    f"{node_embeddings}_dl_set/test_predictions_genetic_interaction_score_boxplot": wandb.Image(
                         fig
                     )
                 }

@@ -14,7 +14,7 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-RESULTS_DIR = "experiments/smf-dmf-tmf-001/results/elastic_net"
+RESULTS_DIR = "experiments/002-dmi-tmi/results/elastic_net"
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 

@@ -9,6 +9,10 @@ import torch
 
 
 def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
+    if isinstance(true_values, torch.Tensor):
+        true_values = true_values.cpu().numpy()
+    if isinstance(predictions, torch.Tensor):
+        predictions = predictions.cpu().numpy()
     # Define bins for the second image
     bins = [
         -float("inf"),
@@ -32,7 +36,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     for i in range(len(bins) - 1):
         mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
-        binned_values = true_values[mask].cpu().numpy()
+        binned_values = true_values[mask]
         binned_true_values.append(binned_values)
 
     # Create a box plot using matplotlib

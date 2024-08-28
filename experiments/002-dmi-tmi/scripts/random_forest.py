@@ -14,7 +14,7 @@ import hashlib
 import json
 import uuid
 import warnings
-from torchcell.viz import fitness
+from torchcell.viz import fitness, genetic_interaction_score
 from dotenv import load_dotenv
 from torchcell.utils import format_scientific_notation
 from scipy.stats import ConstantInputWarning
@@ -231,7 +231,13 @@ def main(cfg: DictConfig) -> None:
 
             # Create genetic_interaction_score boxplot for test predictions
             fig = genetic_interaction_score.box_plot(y_test, y_pred_test)
-            wandb.log({f"test_predictions_genetic_interaction_score_boxplot": wandb.Image(fig)})
+            wandb.log(
+                    f"test_predictions_genetic_interaction_score_boxplot": wandb.Image(
+                {
+                        fig
+                    )
+                }
+            )
             plt.close(fig)
             # trigger_sync()
     wandb.finish()

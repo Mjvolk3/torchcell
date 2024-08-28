@@ -26,7 +26,7 @@ parameters:
           # - [random_1000]
           - [random_100]
           - [random_10]
-          - [random_1]
+          # - [random_1]
       max_size:
         values: [1e4]
       is_pert:

@@ -17,19 +17,24 @@ parameters:
           # - [fudt_upstream]
           # - [prot_T5_all]
           # - [prot_T5_no_dubious]
-          # - [nt_window_5979]
+          - [nt_window_5979]
           # - [nt_window_three_prime_300]
           # - [nt_window_five_prime_1003]
           # - [esm2_t33_650M_UR50D_all]
           # - [esm2_t33_650M_UR50D_no_dubious]
           # - [normalized_chrom_pathways]
           # - [random_1000]
+          # - [random_100]
+          # - [random_10]
+          # - [random_1]
       max_size:
         values: [1e5]
       is_pert:
-        values: [true, false]
+        values: [true]
+        # values: [true, false]
       aggregation:
-        values: [sum, mean]
+        values: [sum]
+        # values: [sum, mean]
   data_module:
     parameters:
       batch_size:
@@ -41,11 +46,14 @@ parameters:
   svr:
     parameters:
       kernel:
-        values: [rbf, poly, linear, sigmoid]
+        values: [poly]
+        # values: [rbf, poly, linear, sigmoid]
       C:
-        values: [0.1, 1.0, 10.0]
+        values: [0.1, 1.0]
+        # values: [0.1, 1.0, 10.0]
       gamma:
-        values: [0.1, 0.01, 0.001]
+        values: [0.1, 0.01]
+        # values: [0.1, 0.01, 0.001]
   is_cross_validated:
     values: [false]
   

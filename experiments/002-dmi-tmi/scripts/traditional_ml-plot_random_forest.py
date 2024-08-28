@@ -14,7 +14,7 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-RESULTS_DIR = "experiments/002-dmi-tmi/results/elastic_net"
+RESULTS_DIR = "experiments/002-dmi-tmi/results/random_forest"
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
@@ -271,8 +271,8 @@ def create_plots(
         ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
 
-        plot_name = f"002-dmi-tmi_Elastic_Net_{size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
-        title = f"002-dmi-tmi Elastic Net {size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
+        plot_name = f"002-dmi-tmi_Random_Forest_{size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
+        title = f"002-dmi-tmi Random Forest {size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
         ax.set_title(title, fontsize=20)
 
         representation_legend = [
@@ -449,8 +449,6 @@ def process_raw_dataframe(
         summary_df["test_rmse"] = np.sqrt(summary_df["test_mse"])
 
     # Combine config, summary, and fold DataFrames
-    processed_df = pd.concat([config_df, summary_df, fold_df], axis=1)
-    # Add run id
     processed_df = pd.concat([df[["run_id"]], config_df, summary_df, fold_df], axis=1)
 
     return processed_df
@@ -464,8 +462,9 @@ def deduplicate_dataframe(
         "cell_dataset.size",
         "cell_dataset.aggregation",
         "cell_dataset.node_embeddings",
-        "elastic_net.alpha",
-        "elastic_net.l1_ratio",
+        "random_forest.max_depth",
+        "random_forest.n_estimators",
+        "random_forest.min_samples_split",
         "num_params",
     ]
 
@@ -513,9 +512,9 @@ def main(is_overwrite=False):
         api = wandb.Api()
 
         project_names = [
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e03",
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e04",
-            "zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e05",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e03",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e04",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e05",
         ]
 
         dataframes = [load_dataset(api, project_name) for project_name in project_names]
@@ -525,8 +524,9 @@ def main(is_overwrite=False):
             "cell_dataset.size",
             "cell_dataset.aggregation",
             "cell_dataset.node_embeddings",
-            "elastic_net.alpha",
-            "elastic_net.l1_ratio",
+            "random_forest.max_depth",
+            "random_forest.n_estimators",
+            "random_forest.min_samples_split",
         ]
         summary_columns = [
             "num_params",

@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=RF_1e05
-#SBATCH --ntasks=32               # Set to the desired number of tasks (agents)
-#SBATCH --cpus-per-task=4           # Adjust the number of CPUs per task based on your requirements
-#SBATCH --mem=930G                  # Total memory for the job
+#SBATCH --ntasks=16               # Set to the desired number of tasks (agents)
+#SBATCH --cpus-per-task=8           # Adjust the number of CPUs per task based on your requirements
+#SBATCH --mem=995G                  # Total memory for the job
 #SBATCH --gres=gpu:0                # No GPUs
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -39,7 +39,7 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
 # This one is offline
-SWEEP_ID=2zxncm23
+SWEEP_ID=q5xmym2q
 PROJECT_NAME=torchcell_002-dmi-tmi_trad-ml_random-forest_1e05
 
 echo "-----------------"

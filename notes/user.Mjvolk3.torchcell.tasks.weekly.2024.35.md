@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724884153770
+updated: 1724907619652
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -38,7 +38,14 @@ created: 1724674431881
 
 - [x] Write plotting scripts for `svr` and `rf` interactions → [[Traditional_ml Plot_svr|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_svr]], [[Traditional_ml Plot_random_forest|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_random_forest]], [[Traditional_ml Plot_elastic_net|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_elastic_net]]
 - [x] sync `EN_1e03` → summaries have not been saving. → investigated and submitted issue to wandb. [wandb github issue](https://github.com/wandb/wandb/issues/7227)
-- [ ] Running `RF_1e03`, and `RF_1e04` on m1
+- [x] Ran and completed `EN_1e04`
+- [ ] Running `RF_1e03`, and `RF_1e04` on m1.... → cancelled so we can work on plotting. sweeps to continue. `zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e03/sweeps/olyxjcv6`, `zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e04/sweeps/1tus1dbh`
+
+- [ ] Continue `RF_1e03` and `RF_1e04`
+
+## 2024.08.29
+
+- [ ] Check on db url update.
 
 ***
 

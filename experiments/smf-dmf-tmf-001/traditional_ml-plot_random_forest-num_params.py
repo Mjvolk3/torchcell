@@ -66,8 +66,8 @@ def process_raw_dataframe(
 
 def create_plots(df: pd.DataFrame, max_size: int):
     metrics = ["r2", "pearson", "spearman", "mse", "mae", "rmse"]
-    colors = plt.rcParams["axes.prop_cycle"].by_key()["color"][:2]
-    val_color, test_color = colors
+    # colors = plt.rcParams["axes.prop_cycle"].by_key()["color"][:2]
+    val_color, test_color = "#FF552E", "#122A4B"
 
     for metric in metrics:
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -76,19 +76,22 @@ def create_plots(df: pd.DataFrame, max_size: int):
             val_mask = group_df[f"val_{metric}"].notna()
             test_mask = group_df[f"test_{metric}"].notna()
             if val_mask.any() and test_mask.any():
+                dot_size = 16
                 ax.scatter(
                     group_df.loc[val_mask, "num_params"],
                     group_df.loc[val_mask, f"val_{metric}"],
                     color=val_color,
-                    alpha=0.7,
+                    alpha=0.5,
                     label="Validation" if i == 0 else None,
+                    s=dot_size,
                 )
                 ax.scatter(
                     group_df.loc[test_mask, "num_params"],
                     group_df.loc[test_mask, f"test_{metric}"],
                     color=test_color,
-                    alpha=0.7,
+                    alpha=0.5,
                     label="Test" if i == 0 else None,
+                    s=dot_size,
                 )
 
                 x_val, y_val = (

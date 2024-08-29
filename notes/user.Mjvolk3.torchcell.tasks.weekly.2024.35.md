@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724871286675
+updated: 1724884153770
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -36,13 +36,9 @@ created: 1724674431881
 
 ## 2024.08.28
 
-- [ ] sync `EN_1e03`
-- [ ] sync `EN_1e04` `wandb agent zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e04/asa0q6r0`
-
-- [ ] sync `EN_1e05` `wandb agent zhao-group/torchcell_002-dmi-tmi_trad-ml_elastic-net_1e05/izabflkh`
-
-- [ ] sync `RF_1e03` `wandb agent zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e03/vhs2p1n9`
-- [ ] sync `RF_1e04` `wandb agent zhao-group/torchcell_002-dmi-tmi_trad-ml_random-forest_1e04/sez2oogq`
+- [x] Write plotting scripts for `svr` and `rf` interactions → [[Traditional_ml Plot_svr|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_svr]], [[Traditional_ml Plot_random_forest|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_random_forest]], [[Traditional_ml Plot_elastic_net|dendron://torchcell/experiments.002-dmi-tmi.scripts.traditional_ml-plot_elastic_net]]
+- [x] sync `EN_1e03` → summaries have not been saving. → investigated and submitted issue to wandb. [wandb github issue](https://github.com/wandb/wandb/issues/7227)
+- [ ] Running `RF_1e03`, and `RF_1e04` on m1
 
 ***
 

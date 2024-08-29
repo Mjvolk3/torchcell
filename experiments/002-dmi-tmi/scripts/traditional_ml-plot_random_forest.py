@@ -1,3 +1,7 @@
+# experiments/002-dmi-tmi/scripts/traditional_ml-plot_random_forestexperiments.002-dmi-tmi.scripts.traditional_ml-plot_random_forest]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/002-dmi-tmi/scripts/traditional_ml-plot_random_forest
+# Test file: experiments/002-dmi-tmi/scripts/test_traditional_ml-plot_random_forest.py
+
 import numpy as np
 import pandas as pd
 import wandb

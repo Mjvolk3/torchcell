@@ -1,3 +1,8 @@
+# experiments/002-dmi-tmi/scripts/traditional_ml-plot_svr
+# [[experiments.002-dmi-tmi.scripts.traditional_ml-plot_svr]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/002-dmi-tmi/scripts/traditional_ml-plot_svr
+# Test file: experiments/002-dmi-tmi/scripts/test_traditional_ml-plot_svr.py
+
 import numpy as np
 import pandas as pd
 import wandb

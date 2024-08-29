@@ -32,25 +32,26 @@ color_list = [
     "#D65076",
 ]
 
+
 # Define the desired order of node embeddings
 node_embedding_order = [
-    "one_hot_gene",
+    "random_1",
+    "random_10",
     "codon_frequency",
+    "random_100",
+    "normalized_chrom_pathways",
+    "calm",
+    "fudt_upstream",
+    "fudt_downstream",
+    "random_1000",
     "prot_T5_all",
     "prot_T5_no_dubious",
     "esm2_t33_650M_UR50D_all",
     "esm2_t33_650M_UR50D_no_dubious",
-    "nt_window_5979",
     "nt_window_three_prime_300",
     "nt_window_five_prime_1003",
-    "fudt_downstream",
-    "fudt_upstream",
-    "calm",
-    "normalized_chrom_pathways",
-    "random_1000",
-    "random_100",
-    "random_10",
-    "random_1",
+    "nt_window_5979",
+    "one_hot_gene",
 ]
 
 

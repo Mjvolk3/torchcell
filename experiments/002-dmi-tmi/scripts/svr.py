@@ -80,7 +80,9 @@ def main(cfg: DictConfig) -> None:
 
     for split in ["all", "train", "val", "test"]:
 
-        if split == "all":
+        if (
+            split == "all" and wandb.config.is_cross_validated
+        ):  # Check if cross-validation is enabled
             X = np.load(osp.join(dataset_path, split, "X.npy"))
             y = np.load(osp.join(dataset_path, split, "y.npy"))
             # Perform 5-fold cross-validation

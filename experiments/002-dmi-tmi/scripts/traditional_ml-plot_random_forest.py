@@ -48,7 +48,9 @@ def create_plots(
 ):
     log = logging.getLogger(__name__)
     filtered_df = combined_df[combined_df["cell_dataset.size"] == size].copy()
+
     features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
+
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
     metrics = ["r2", "pearson", "spearman", "mse", "mae", "rmse"]
 
@@ -75,7 +77,41 @@ def create_plots(
         "#DD4124",
         "#D65076",
     ]
-    color_dict = {feature: color for feature, color in zip(features, color_list)}
+
+    FEATURE_ORDER = [
+        "['random_1']",
+        "['random_10']",
+        "['codon_frequency']",
+        "['random_100']",
+        "['normalized_chrom_pathways']",
+        "['calm']",
+        "['fudt_upstream']",
+        "['fudt_downstream']",
+        "['random_1000']",
+        "['prot_T5_all']",
+        "['prot_T5_no_dubious']",
+        "['esm2_t33_650M_UR50D_all']",
+        "['esm2_t33_650M_UR50D_no_dubious']",
+        "['nt_window_5979']",
+        "['nt_window_three_prime_300']",
+        "['nt_window_five_prime_1003']",
+        "['one_hot_gene']",
+    ]
+
+    all_features = filtered_df["cell_dataset.node_embeddings"].unique()
+    features = [f for f in FEATURE_ORDER if f in all_features]
+    # Add any features not in FEATURE_ORDER at the end
+    features += [f for f in all_features if f not in FEATURE_ORDER]
+
+    # Create color dictionary with original order
+    color_dict = {
+        feature: color
+        for feature, color in zip(FEATURE_ORDER, color_list[: len(FEATURE_ORDER)])
+    }
+
+    # Reverse the features list for plotting
+    features = features[::-1]
+
     default_color = "#808080"
 
     bar_height = 6.0 * 4

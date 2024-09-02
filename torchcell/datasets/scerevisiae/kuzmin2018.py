@@ -1183,21 +1183,23 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
 
 if __name__ == "__main__":
-    ## Fitness
-    # dataset = SmfKuzmin2018Dataset()
-    # print(dataset[0])
-    # print(len(dataset))
-    # dataset = DmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # dataset = TmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # print()
-    ## Interactions
-    # dataset = DmiKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    # Fitness
+    print("Fitness")
+    dataset = SmfKuzmin2018Dataset()
+    print(dataset[0])
+    print(len(dataset))
+    dataset = DmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    dataset = TmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    print()
+    print("Interactions")
+    # Interactions
+    dataset = DmiKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
     dataset = TmiKuzmin2018Dataset()
     dataset[0]
     print(len(dataset))

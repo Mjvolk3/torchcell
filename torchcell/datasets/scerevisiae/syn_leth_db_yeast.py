@@ -191,8 +191,8 @@ class SynthLethalityYeastDataset(ExperimentDataset):
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            pubmed_id=str(row["r.pubmed_id"]),
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            # pubmed_id=str(row["r.pubmed_id"]),
+            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         reference = SyntheticLethalityExperimentReference(
@@ -200,8 +200,8 @@ class SynthLethalityYeastDataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment,
             phenotype_reference=phenotype_reference,
-            pubmed_id=str(row["r.pubmed_id"]),
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            # pubmed_id=str(row["r.pubmed_id"]),
+            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         return experiment, reference
@@ -363,8 +363,8 @@ class SynthRescueYeastDataset(ExperimentDataset):
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            pubmed_id=str(row["r.pubmed_id"]),
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            # pubmed_id=str(row["r.pubmed_id"]),
+            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         reference = SyntheticRescueExperimentReference(
@@ -372,8 +372,8 @@ class SynthRescueYeastDataset(ExperimentDataset):
             genome_reference=genome_reference,
             environment_reference=environment,
             phenotype_reference=phenotype_reference,
-            pubmed_id=str(row["r.pubmed_id"]),
-            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            # pubmed_id=str(row["r.pubmed_id"]),
+            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         return experiment, reference

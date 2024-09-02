@@ -97,7 +97,7 @@ def create_plots(
         ytick_positions = []
         max_bar_value = 0
 
-        for feature in features:
+        for feature in features:o
             group_start_y = y
             for rep_type in reversed(rep_types):
                 val_key = f"val_{metric}"

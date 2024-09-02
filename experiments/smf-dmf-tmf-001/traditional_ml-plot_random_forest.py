@@ -44,7 +44,9 @@ def create_plots(
 ):
     log = logging.getLogger(__name__)
     filtered_df = combined_df[combined_df["cell_dataset.max_size"] == max_size].copy()
-    features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
+
+    # features = sorted(filtered_df["cell_dataset.node_embeddings"].unique())
+
     rep_types = ["pert_sum", "pert_mean", "intact_sum", "intact_mean"]
     metrics = ["r2", "pearson", "spearman", "mse", "mae", "rmse"]
 
@@ -71,7 +73,38 @@ def create_plots(
         "#DD4124",
         "#D65076",
     ]
-    color_dict = {feature: color for feature, color in zip(features, color_list)}
+
+    FEATURE_ORDER = [
+        "['random_1']",
+        "['random_10']",
+        "['codon_frequency']",
+        "['random_100']",
+        "['normalized_chrom_pathways']",
+        "['calm']",
+        "['fudt_upstream']",
+        "['fudt_downstream']",
+        "['random_1000']",
+        "['prot_T5_all']",
+        "['prot_T5_no_dubious']",
+        "['esm2_t33_650M_UR50D_all']",
+        "['esm2_t33_650M_UR50D_no_dubious']",
+        "['nt_window_5979']",
+        "['nt_window_three_prime_300']",
+        "['nt_window_five_prime_1003']",
+        "['one_hot_gene']",
+    ]
+
+    all_features = filtered_df["cell_dataset.node_embeddings"].unique()
+    features = [f for f in FEATURE_ORDER if f in all_features]
+    # Add any features not in FEATURE_ORDER at the end
+    features += [f for f in all_features if f not in FEATURE_ORDER]
+    
+    # Create color dictionary with original order
+    color_dict = {feature: color for feature, color in zip(FEATURE_ORDER, color_list[:len(FEATURE_ORDER)])}
+
+    # Reverse the features list for plotting
+    features = features[::-1]
+
     default_color = "#808080"
 
     bar_height = 6.0 * 4
@@ -271,8 +304,8 @@ def create_plots(
         ax.set_xlim(0, ax_limit)
         ax.grid(color="#838383", linestyle="-", linewidth=0.8, alpha=0.2)
 
-        plot_name = f"Random_Forest_{max_size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
-        title = f"Random Forest {max_size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
+        plot_name = f"smf-dmf-tmf-001_Random_Forest_{max_size_str}_{criterion}_{metric}_{'add_cv' if add_cv else 'no_cv'}.png"
+        title = f"smf-dmf-tmf-001 Random Forest {max_size_str} {criterion} {metric} {'with CV' if add_cv else 'without CV'}"
         ax.set_title(title, fontsize=20)
 
         representation_legend = [

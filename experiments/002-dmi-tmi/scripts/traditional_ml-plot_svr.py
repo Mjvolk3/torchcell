@@ -97,7 +97,7 @@ def create_plots(
         ytick_positions = []
         max_bar_value = 0
 
-        for feature in features:o
+        for feature in features:
             group_start_y = y
             for rep_type in reversed(rep_types):
                 val_key = f"val_{metric}"
@@ -530,9 +530,9 @@ def main(is_overwrite=False):
         api = wandb.Api()
 
         project_names = [
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e03",
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e04",
-            "zhao-group/torchcell_smf-dmf-tmf-001_trad-ml_svr_1e05",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_svr_1e03",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_svr_1e04",
+            "zhao-group/torchcell_002-dmi-tmi_trad-ml_svr_1e05",
         ]
 
         dataframes = [load_dataset(api, project_name) for project_name in project_names]

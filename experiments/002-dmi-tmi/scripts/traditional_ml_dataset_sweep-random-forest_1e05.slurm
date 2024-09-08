@@ -25,7 +25,7 @@ conda activate /scratch/bbub/miniconda3/envs/torchcell
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=tw2eomgp
+SWEEP_ID=q5xmym2q
 PROJECT_NAME=torchcell_002-dmi-tmi_trad-ml_random-forest_1e05
 
 echo "-----------------"

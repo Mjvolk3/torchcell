@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/datamodels/test_schema.py
 
 import re
-from typing import List, Union, Dict, Type
+from typing import List, Union, Dict, Type, Optional, Any
 import json
 from pydantic import BaseModel, Field, field_validator, model_validator
 from enum import Enum, auto
@@ -255,29 +255,51 @@ class Phenotype(ModelStrict):
     graph_level: str = Field(
         description="most natural level of graph at which phenotype is observed"
     )
-    label: str = Field(description="name of label")
-    label_statistic: str | None = Field(
-        description="name of error or confidence statistic related to label"
+    label_name: str = Field(description="name of label")
+    label_statistic_name: Optional[str] = Field(
+        default=None,
+        description="name of error or confidence statistic related to label",
+    )
+    label: Any = Field(description="value of the label")
+    label_statistic: Optional[Any] = Field(
+        default=None,
+        description="value of the error or confidence statistic related to label",
     )
 
-    # admittedly, graph_level is subjective
-    # choose most natural level considering whole cell
-    @field_validator("graph_level", mode="after")
-    @classmethod
-    def validate_level(cls, v):
-        levels = {"edge", "node", "subgraph", "global", "metabolism"}
+    @model_validator(mode="after")
+    def validate_fields(self):
+        valid_graph_levels = {
+            "edge",
+            "node",
+            "subgraph",
+            "global",
+            "metabolism",
+            "gene ontology",
+        }
+        if self.graph_level not in valid_graph_levels:
+            raise ValueError(
+                f"graph_level must be one of: {', '.join(valid_graph_levels)}"
+            )
+        return self
 
-        if v not in levels:
-            raise ValueError("level must be one of: edge, node, global, metabolism")
-
-        return v
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
 class FitnessPhenotype(Phenotype, ModelStrict):
-    fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: float | None = Field(
-        default=None, description="fitness standard deviation"
+    graph_level: str = "global"
+    label_name: str = Field(
+        default="fitness", description="wt_growth_rate/ko_growth_rate"
     )
+    label_statistic_name: str | None = Field(
+        default="std", description="fitness standard deviation"
+    )
+
+    @field_validator("label")
+    def validate_fitness(cls, v):
+        if v <= 0:
+            raise ValueError("Fitness must be greater than 0")
+        return v
 
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
@@ -337,6 +359,7 @@ class Publication(ModelStrict):
 
 class ExperimentReference(ModelStrict):
     experiment_reference_type: str = "base"
+    dataset_name: str
     genome_reference: ReferenceGenome
     environment_reference: Environment
     phenotype_reference: Phenotype
@@ -344,6 +367,7 @@ class ExperimentReference(ModelStrict):
 
 class Experiment(ModelStrict):
     experiment_type: str = "base"
+    dataset_name: str
     genotype: Genotype
     environment: Environment
     phenotype: Phenotype
@@ -375,7 +399,8 @@ class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
     experiment_reference_type: str = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
-#shouldn't it jut be one gene for genotype?
+
+# shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene essentiality"
     genotype: Union[Genotype, List[Genotype,]]

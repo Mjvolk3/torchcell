@@ -304,6 +304,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         query_genes = row["Query allele name"].split("+")
         array_gene = row["Array allele name"]
 
+
+        # TODO none of these are systematic gene names.
         for gene in query_genes + [array_gene]:
             if "delta" in gene:
                 perturbation = SgaKanMxDeletionPerturbation(
@@ -818,7 +820,7 @@ if __name__ == "__main__":
     # Test the datasets
     datasets = [
         # SmfKuzmin2020Dataset(),
-        DmfKuzmin2020Dataset(),
+        # DmfKuzmin2020Dataset(),
         # TmfKuzmin2020Dataset(),
         # DmiKuzmin2020Dataset(),
         # TmiKuzmin2020Dataset(),

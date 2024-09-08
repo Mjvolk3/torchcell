@@ -101,7 +101,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
-                    row, phenotype_reference_std=self.phenotype_reference_std
+                    self.name,
+                    row,
+                    phenotype_reference_std=self.phenotype_reference_std,
                 )
 
                 # Serialize the Pydantic objects
@@ -113,7 +115,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
-        
+
         env.close()
 
     def preprocess_raw(
@@ -189,7 +191,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, phenotype_reference_std):
+    def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
@@ -269,30 +271,24 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         # We have no reported std for single mutants
         # Could use mean of all stds, would be a conservative estimate
         # Using nan for now
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="smf_std",
-            fitness=row[smf_key],
-            fitness_std=None,
-        )
+        phenotype = FitnessPhenotype(label=row[smf_key], label_statistic=None)
 
         phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="smf_std",
-            fitness=1.0,
-            fitness_std=phenotype_reference_std,
+            label=1.0, label_statistic=phenotype_reference_std
         )
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -1187,19 +1183,19 @@ if __name__ == "__main__":
     print("Fitness")
     dataset = SmfKuzmin2018Dataset()
     print(dataset[0])
-    print(len(dataset))
-    dataset = DmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
-    dataset = TmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
-    print()
-    print("Interactions")
-    # Interactions
-    dataset = DmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
-    dataset = TmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    # print(len(dataset))
+    # dataset = DmfKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))
+    # dataset = TmfKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))
+    # print()
+    # print("Interactions")
+    # # Interactions
+    # dataset = DmiKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))
+    # dataset = TmiKuzmin2018Dataset()
+    # dataset[0]
+    # print(len(dataset))

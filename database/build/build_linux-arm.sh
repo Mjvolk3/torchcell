@@ -80,7 +80,7 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 #torchcell.knowledge_graphs.smf_costanzo_2016_kg
 #torchcell.knowledge_graphs.dmf_tmi_combine_kg
 
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_costanzo_2016_kg
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

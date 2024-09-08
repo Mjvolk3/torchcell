@@ -486,10 +486,10 @@ class CellAdapter:
         ).hexdigest()
 
         graph_level = data["experiment"].phenotype.graph_level
+        label_name = data["experiment"].phenotype.label_name
+        label_statistic_name = data["experiment"].phenotype.label_statistic_name
         label = data["experiment"].phenotype.label
         label_statistic = data["experiment"].phenotype.label_statistic
-        fitness = data["experiment"].phenotype.fitness
-        fitness_std = data["experiment"].phenotype.fitness_std
 
         return BioCypherNode(
             node_id=phenotype_id,
@@ -497,10 +497,10 @@ class CellAdapter:
             node_label="fitness phenotype",
             properties={
                 "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
                 "label": label,
                 "label_statistic": label_statistic,
-                "fitness": fitness,
-                "fitness_std": fitness_std,
                 "serialized_data": json.dumps(
                     data["experiment"].phenotype.model_dump()
                 ),
@@ -548,10 +548,12 @@ class CellAdapter:
             ).hexdigest()
 
             graph_level = data.reference.phenotype_reference.graph_level
+            label_name = data.reference.phenotype_reference.label_name
+            label_statistic_name = (
+                data.reference.phenotype_reference.label_statistic_name
+            )
             label = data.reference.phenotype_reference.label
             label_statistic = data.reference.phenotype_reference.label_statistic
-            fitness = data.reference.phenotype_reference.fitness
-            fitness_std = data.reference.phenotype_reference.fitness_std
 
             node = BioCypherNode(
                 node_id=phenotype_id,
@@ -559,10 +561,10 @@ class CellAdapter:
                 node_label="fitness phenotype",
                 properties={
                     "graph_level": graph_level,
+                    "label_name": label_name,
+                    "label_statistic_name": label_statistic_name,
                     "label": label,
                     "label_statistic": label_statistic,
-                    "fitness": fitness,
-                    "fitness_std": fitness_std,
                     "serialized_data": json.dumps(
                         data.reference.phenotype_reference.model_dump()
                     ),
@@ -607,8 +609,8 @@ class CellAdapter:
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [
             BioCypherNode(
-                node_id=self.dataset.__class__.__name__,
-                preferred_id=self.dataset.__class__.__name__,
+                node_id=self.dataset.name,
+                preferred_id=self.dataset.name,
                 node_label="dataset",
             )
         ]
@@ -643,7 +645,7 @@ class CellAdapter:
             ).hexdigest()
             edge = BioCypherEdge(
                 source_id=reference_id,
-                target_id=self.dataset.__class__.__name__,
+                target_id=self.dataset.name,
                 relationship_label="experiment reference member of",
             )
             edges.append(edge)
@@ -658,7 +660,7 @@ class CellAdapter:
         ).hexdigest()
         edge = BioCypherEdge(
             source_id=experiment_id,
-            target_id=self.dataset.__class__.__name__,
+            target_id=self.dataset.name,
             relationship_label="experiment member of",
         )
         return edge

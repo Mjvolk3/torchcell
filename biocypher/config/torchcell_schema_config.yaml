@@ -89,8 +89,8 @@ fitness phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        label: float
-        label_statistic: float
+        fitness: float
+        std: float
         serialized_data: str
 
 gene interaction phenotype:

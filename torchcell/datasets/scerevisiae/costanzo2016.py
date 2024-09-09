@@ -285,7 +285,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
         phenotype = FitnessPhenotype(
-            label=row[smf_key], label_statistic=row[smf_std_key]
+            fitness=row[smf_key], std=row[smf_std_key]
         )
 
         if row["Temperature"] == 26:
@@ -293,7 +293,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
         phenotype_reference = FitnessPhenotype(
-            label=1.0, label_statistic=phenotype_reference_std
+            fitness=1.0, std=phenotype_reference_std
         )
 
         reference = FitnessExperimentReference(

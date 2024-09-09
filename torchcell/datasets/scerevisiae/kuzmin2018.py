@@ -101,9 +101,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
-                    self.name,
-                    row,
-                    phenotype_reference_std=self.phenotype_reference_std,
+                    self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -271,11 +269,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         # We have no reported std for single mutants
         # Could use mean of all stds, would be a conservative estimate
         # Using nan for now
-        phenotype = FitnessPhenotype(label=row[smf_key], label_statistic=None)
+        phenotype = FitnessPhenotype(fitness=row[smf_key], std=None)
 
-        phenotype_reference = FitnessPhenotype(
-            label=1.0, label_statistic=phenotype_reference_std
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,

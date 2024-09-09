@@ -260,11 +260,6 @@ class Phenotype(ModelStrict):
         default=None,
         description="name of error or confidence statistic related to label",
     )
-    label: Any = Field(description="value of the label")
-    label_statistic: Optional[Any] = Field(
-        default=None,
-        description="value of the error or confidence statistic related to label",
-    )
 
     @model_validator(mode="after")
     def validate_fields(self):
@@ -288,18 +283,38 @@ class Phenotype(ModelStrict):
 
 class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
-    label_name: str = Field(
-        default="fitness", description="wt_growth_rate/ko_growth_rate"
-    )
-    label_statistic_name: str | None = Field(
-        default="std", description="fitness standard deviation"
-    )
+    label_name: str = "fitness"
+    label_statistic_name: str = "std"
+    fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
+    std: float | None = Field(description="fitness standard deviation")
 
-    @field_validator("label")
+    @field_validator("fitness")
     def validate_fitness(cls, v):
         if v <= 0:
             raise ValueError("Fitness must be greater than 0")
         return v
+
+    # IDEA
+    # This is going to be standard for all child classes of Phenotype
+    # This could alternatively be moved to testing 
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        # Check if label_name is a class attribute
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        # Check if label_statistic_name is a class attribute (if it's not None)
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"label_statistic_name '{values.label_statistic_name}' must be a class attribute"
+            )
+
+        return values
 
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):

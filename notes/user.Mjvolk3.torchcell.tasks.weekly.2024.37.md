@@ -2,7 +2,7 @@
 id: z824gvi4f507r9ky9poh0zj
 title: '37'
 desc: ''
-updated: 1725833042261
+updated: 1725920780785
 created: 1725815628586
 ---
 
@@ -11,8 +11,67 @@ created: 1725815628586
 
 - [x] Either add dataset to experiment and reference or to lmdb structure. lmdb probably makes most sense. Check that splitting from this would work. It should since we iterate over data like this. `label = data["experiment"]`... Check that this aligns with adapters. → we added dataset to experiment and reference as I think this will be more useful when inspecting data in `repl`.
 - [x] Change Schema to generic structure as described here [[torchcell.datamodels.schema]]. → [[2024.08.12 - Making Sublcasses More Generic For Downstream Querying|dendron://torchcell/torchcell.datamodels.schema#20240812---making-sublcasses-more-generic-for-downstream-querying]] and [[2024.08.26 - Generic Subclasses Need to Consider Phenotype Label Index|dendron://torchcell/torchcell.datamodels.schema#20240826---generic-subclasses-need-to-consider-phenotype-label-index]]
+- [x] `torch_scatter` directly from `https://data.pyg.org/whl/torch-2.4.0+cpu.html` fixed issue with `database/build/build_linux-arm.sh`. Not sure how to fix this in general for installation.
 
-- [ ]
+## 2024.09.09
+
+## First Experiment
+
+```python
+repeats = 5
+matrix_size = 1000
+```
+
+GilaHyper no Slurm
+
+```bash
+(torchcell) michaelvolk@gilahyper torchcell % /home/michaelvolk/miniconda3/envs/torchcell/bin/python /home/michaelvolk/Documents/projects/torchcell/torc
+hcell/scratch/cpu_performance_benchmark.py
+Raw Data: [20.143832683563232, 19.094918727874756, 20.667733669281006, 19.605305671691895, 19.61408519744873]
+Mean Time: 19.83 seconds
+Standard Deviation: 0.54 seconds
+```
+
+GilaHyper Slurm. There is a slight overhead.
+
+```bash
+Raw Data: [20.507216453552246, 20.640620231628418, 20.882274389266968, 21.411606311798096, 20.875935316085815]
+Mean Time: 20.86 seconds
+Standard Deviation: 0.31 seconds
+```
+
+Delta Slurm
+
+```bash
+Raw Data: [1.1937663555145264, 1.5070643424987793, 1.3696041107177734, 1.2952206134796143, 1.2181971073150635]
+Mean Time: 1.32 seconds
+Standard Deviation: 0.11 seconds
+```
+
+## Second Experiment
+
+```python
+repeats = 5
+matrix_size = 4000
+```
+
+GilaHyper Slurm.
+
+```bash
+
+```
+
+Delta Slurm
+
+```bash
+Raw Data: [15.837791681289673, 9.31566071510315, 12.116915702819824, 9.68659520149231, 9.873022317886353]
+Mean Time: 11.37 seconds
+Standard Deviation: 2.44 seconds
+```
+
+- [x] Planning [[2024.09.09 - Thinking About Pooling GNNs|dendron://torchcell/experiments.003-fit-int-leth#20240909---thinking-about-pooling-gnns]]
+
+- [ ] GO graph looks like the levels don't necessarily feed into levels directly above... We might be able to git fewer levels by looking at direct connections to levels above which could give a smart number pooling layers for the model.
 
 - [ ] Bring in kuzmin2020 dataset.
 - [ ] Run KG build for kuzmin2020 interactions

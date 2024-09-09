@@ -62,7 +62,9 @@ install_package() {
 docker exec tc-neo4j python -m pip install --upgrade pip
 # Install required packages inside the container
 docker exec tc-neo4j python -m pip uninstall torchcell -y
+
 install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
+docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 # docker exec tc-neo4j python -m pip uninstall biocypher -y
 install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
 install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"

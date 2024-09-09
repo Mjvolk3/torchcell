@@ -2,7 +2,7 @@
 id: 2qlur6rz1mzpmtltyf7w0j0
 title: Ontology_pydantic
 desc: ''
-updated: 1724678319239
+updated: 1725849448274
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -174,3 +174,64 @@ HeteroData(
 ## 2024.08.26 - Generic Subclasses Need to Consider Phenotype Label Index
 
 We have to be careful about how we do this because we use `self.dataset.phenotype_label_index` for helping create balance spits [[torchcell.datamodules.cell]]. We compute the `phenotype_label_index` here [[torchcell.data.neo4j_cell]]. We can add the source as in the dataset name so we can create another automated way to split data. This is a good idea since datasets are split by unique phenotype to begin with. It is a bit arbitrary still. It is phenotype focused, but it would be better if it was more principled.
+
+## 2024.09.08 - Why we Need Label_Name and Label
+
+This is what thought we should change too and I did change `SmfKuzmin2018` and `SmfCostanzo2016` but there is an issue in that all phenotypes will start to look the same. They will have the same named attributes and could easily transformed into one another... If this was the case we should just move all data back one abstraction to phenotype. This isn't really what we want. This might also mess with decoding since the different phenotypes cannot be distinguished by named attribute. This easily happens if named attributes are the same and must be avoided.
+
+```python
+# Phenotype
+class Phenotype(ModelStrict):
+    graph_level: str = Field(
+        description="most natural level of graph at which phenotype is observed"
+    )
+    label_name: str = Field(description="name of label")
+    label_statistic_name: Optional[str] = Field(
+        default=None,
+        description="name of error or confidence statistic related to label",
+    )
+    label: Any = Field(description="value of the label")
+    label_statistic: Optional[Any] = Field(
+        default=None,
+        description="value of the error or confidence statistic related to label",
+    )
+
+    @model_validator(mode="after")
+    def validate_fields(self):
+        valid_graph_levels = {
+            "edge",
+            "node",
+            "subgraph",
+            "global",
+            "metabolism",
+            "gene ontology",
+        }
+        if self.graph_level not in valid_graph_levels:
+            raise ValueError(
+                f"graph_level must be one of: {', '.join(valid_graph_levels)}"
+            )
+        return self
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+
+class FitnessPhenotype(Phenotype, ModelStrict):
+    graph_level: str = "global"
+    label_name: str = Field(
+        default="fitness", description="wt_growth_rate/ko_growth_rate"
+    )
+    label_statistic_name: str | None = Field(
+        default="std", description="fitness standard deviation"
+    )
+
+    @field_validator("label")
+    def validate_fitness(cls, v):
+        if v <= 0:
+            raise ValueError("Fitness must be greater than 0")
+        return v
+```
+
+I thought about just having `label_name:str` and then having the corresponding str as a key in the pydantic model. I previously thought that the issue with this was that we wouldn't be able to access the data, and we won't with dot notation but we can with dict notation. 
+
+I think instead what we do is have some named vocab that matches `label_name` to the key of the child class.

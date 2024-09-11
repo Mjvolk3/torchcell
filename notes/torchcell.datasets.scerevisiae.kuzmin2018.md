@@ -2,7 +2,7 @@
 id: xfl1rdpnyjsb8ahz6g1kxxm
 title: Kuzmin2018
 desc: ''
-updated: 1709757418439
+updated: 1725988042050
 created: 1705123822425
 ---
 ## Things We Know About Dmf Kuzmin
@@ -176,6 +176,10 @@ This is the **correct** command.
 bash_script_path_cleaned=$(docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small)
 ```
 
-## 2024.03.06 Why the Dataset methods Come after Super
+## 2024.03.06 - Why the Dataset methods Come after Super
 
 Not sure where to put this note but I noticed that child classes of `ExperimentDataset` must always put their attributes and methods before `super()` because this is what runs process. If there are any attributes defined in the dataset that are needed in process they won't be in the scope of process.
+
+## 2024.09.10 - Kuzmin2018 Alternative Download Source
+
+Can download dataset from here too. [kuzmin2018 dataset](https://boonelab.ccbr.utoronto.ca/supplement/kuzmin2018/supplement.html). Might be more stable than science source.

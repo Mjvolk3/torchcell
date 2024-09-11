@@ -2,7 +2,7 @@
 id: z824gvi4f507r9ky9poh0zj
 title: '37'
 desc: ''
-updated: 1725920780785
+updated: 1725990688338
 created: 1725815628586
 ---
 
@@ -58,7 +58,9 @@ matrix_size = 4000
 GilaHyper Slurm.
 
 ```bash
-
+Raw Data: [2717.3176045417786, 2077.3530197143555, 2640.1949455738068, 2294.7787528038025, 2614.683986902237]
+Mean Time: 2468.87 seconds
+Standard Deviation: 243.28 seconds
 ```
 
 Delta Slurm
@@ -70,10 +72,19 @@ Standard Deviation: 2.44 seconds
 ```
 
 - [x] Planning [[2024.09.09 - Thinking About Pooling GNNs|dendron://torchcell/experiments.003-fit-int-leth#20240909---thinking-about-pooling-gnns]]
+- [x] #ramble GO graph looks like the levels don't necessarily feed into levels directly above... We might be able to git fewer levels by looking at direct connections to levels above which could give a smart number pooling layers for the model.
 
-- [ ] GO graph looks like the levels don't necessarily feed into levels directly above... We might be able to git fewer levels by looking at direct connections to levels above which could give a smart number pooling layers for the model.
+- [x] Fix all of [[torchcell.datasets.scerevisiae.costanzo2016]]
+- [x] Fix all of [[torchcell.datasets.scerevisiae.kuzmin2018]]
+- [x] Fix [[torchcell.datasets.scerevisiae.sgd_gene_essentiality]]
 
-- [ ] Bring in kuzmin2020 dataset.
+## 2024.09.10
+
+- [x] `kuzmin2018` alternate data source. [[2024.09.10 - Kuzmin2018 Alternative Download Source|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#20240910---kuzmin2018-alternative-download-source]]
+- [x] [SGA automated image analysis](http://sgatools.ccbr.utoronto.ca/) called SGATools.
+- [x] [[2024.09.10 - There are Negative Fitness Values|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2020#20240910---there-are-negative-fitness-values]] validate negative fitness to `0.0`.
+
+- [ ] Write `DmfKuzmin2020Dataset`.
 - [ ] Run KG build for kuzmin2020 interactions
 
 - [ ] Update combine to add a `README.md` which can serve as a trace to combined data.

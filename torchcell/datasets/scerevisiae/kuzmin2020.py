@@ -3,23 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2020
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2020.py
 
-import hashlib
-import json
 import logging
 import os
 import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
-import urllib.request
-import requests
-import ssl
 import lmdb
-import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -29,10 +22,8 @@ from torchcell.datamodels.schema import (
     Media,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
-    SgaNatMxDeletionPerturbation,
     SgaAllelePerturbation,
     SgaTsAllelePerturbation,
-    SgaDampPerturbation,
     Temperature,
     Experiment,
     ExperimentReference,
@@ -41,10 +32,8 @@ from torchcell.datamodels.schema import (
     GeneInteractionExperiment,
     Publication,
 )
-from torchcell.sequence import GeneSet
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
-from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -101,7 +90,9 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -121,7 +112,7 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="s288c"
         )
@@ -140,36 +131,29 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
             )
 
         genotype = Genotype(perturbations=[perturbation])
+        assert len(genotype) == 1, "Genotype must have 1 perturbation."
 
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="std",
-            fitness=row["Fitness"],
-            fitness_std=row["St.dev."],
-        )
+        phenotype = FitnessPhenotype(fitness=row["Fitness"], std=row["St.dev."])
 
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="std",
-            fitness=1.0,
-            fitness_std=None,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -244,7 +228,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -277,7 +263,6 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         )
 
         # Verify fitness values match
-        # TODO make assertion. 
         mask = (df["Double/triple mutant fitness"] - df["Fitness"]).abs() > 1e-6
         if mask.any():
             log.warning(f"Fitness mismatch found for {mask.sum()} rows")
@@ -288,70 +273,140 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             df["Double/triple mutant fitness standard deviation"]
         )
 
-        # Clean up gene names
+        # Split Query strain ID and Query allele name
+        df[["Query strain ID_1", "Query strain ID_2"]] = df[
+            "Query strain ID"
+        ].str.split("+", expand=True)
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+
+        # Extract systematic names
+        df["Query systematic name_1"] = df["Query strain ID_1"].str.split(
+            "_", expand=True
+        )[0]
+        df["Query systematic name_2"] = df["Query strain ID_2"].str.split(
+            "_", expand=True
+        )[0]
+        df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
+            0
+        ]
+
+        # Create 'no ho' versions
+        df["Query allele name no ho"] = (
+            df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
+        )
+        df["Query systematic name"] = df["Query strain ID"].str.split("_", expand=True)[
+            0
+        ]
+        df["Query systematic name no ho"] = (
+            df["Query systematic name"].str.replace("YDL227C", "").str.replace("+", "")
+        )
+
+        # Determine perturbation types (using Δ before replacement)
+        df["query_perturbation_type_no_ho"] = df["Query allele name no ho"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["query_perturbation_type_1"] = df["Query allele name_1"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["query_perturbation_type_2"] = df["Query allele name_2"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["array_perturbation_type"] = df["Array strain ID"].apply(
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
+        )
+
+        # Calculate phenotype reference std
+        self.phenotype_reference_std = df["fitness_std"].mean()
+
+        # Clean up gene names (after determining perturbation types)
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
 
+        df = df.reset_index(drop=True)
         return df
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="s288c"
         )
 
         perturbations = []
-        query_genes = row["Query allele name"].split("+")
-        array_gene = row["Array allele name"]
 
+        # Process query perturbation (excluding ho)
+        query_systematic_name = row["Query systematic name no ho"]
+        query_allele_name = row["Query allele name no ho"]
+        query_perturbation_type = row["query_perturbation_type_no_ho"]
 
-        # TODO none of these are systematic gene names.
-        for gene in query_genes + [array_gene]:
-            if "delta" in gene:
-                perturbation = SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=gene.split("_")[0],
-                    perturbed_gene_name=gene.split("_")[0],
-                    strain_id=row["Query strain ID"],
-                )
-            else:
-                perturbation = SgaAllelePerturbation(
-                    systematic_gene_name=gene.split("-")[0],
-                    perturbed_gene_name=gene.split("-")[0],
-                    strain_id=row["Query strain ID"],
-                )
-            perturbations.append(perturbation)
+        if query_perturbation_type == "KanMX_deletion":
+            perturbation = SgaKanMxDeletionPerturbation(
+                systematic_gene_name=query_systematic_name,
+                perturbed_gene_name=query_allele_name.split("_")[0],
+                strain_id=row["Query strain ID"],
+            )
+        else:  # allele
+            perturbation = SgaAllelePerturbation(
+                systematic_gene_name=query_systematic_name,
+                perturbed_gene_name=query_allele_name.split("_")[0],
+                strain_id=row["Query strain ID"],
+            )
+        perturbations.append(perturbation)
+
+        # Process array perturbation
+        array_systematic_name = row["Array systematic name"]
+        array_allele_name = row["Array allele name"]
+        array_perturbation_type = row["array_perturbation_type"]
+
+        if array_perturbation_type == "KanMX_deletion":
+            perturbation = SgaKanMxDeletionPerturbation(
+                systematic_gene_name=array_systematic_name,
+                perturbed_gene_name=array_allele_name.split("_")[0],
+                strain_id=row["Array strain ID"],
+            )
+        elif array_perturbation_type == "temperature_sensitive":
+            perturbation = SgaTsAllelePerturbation(
+                systematic_gene_name=array_systematic_name,
+                perturbed_gene_name=array_allele_name.split("_")[0],
+                strain_id=row["Array strain ID"],
+            )
+        else:  # unknown or other types
+            perturbation = SgaAllelePerturbation(
+                systematic_gene_name=array_systematic_name,
+                perturbed_gene_name=array_allele_name.split("_")[0],
+                strain_id=row["Array strain ID"],
+            )
+        perturbations.append(perturbation)
 
         genotype = Genotype(perturbations=perturbations)
+        assert len(genotype) == 2, "Genotype must have 2 perturbations."
 
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="dmf",
-            label_statistic="std",
-            fitness=row["fitness"],
-            fitness_std=row["fitness_std"],
-        )
+        phenotype = FitnessPhenotype(fitness=row["fitness"], std=row["fitness_std"])
 
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="dmf",
-            label_statistic="std",
-            fitness=1.0,
-            fitness_std=None,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -366,18 +421,18 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class TmfKuzmin2020Dataset(ExperimentDataset):
-    # original that doesn't work. Think Science blocks.
-    # url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
         self,
         root: str = "data/torchcell/tmf_kuzmin2020",
+        subset_n: int = None,
         io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -389,8 +444,8 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         return FitnessExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
-        return "aaz5667-Table-S1.xlsx"
+    def raw_file_names(self) -> list[str]:
+        return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -404,8 +459,16 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
-        df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names))
-        df = self.preprocess_raw(df)
+        df_s1 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
+        )
+        df_s3 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[1]), skiprows=1
+        )
+
+        df = self.preprocess_raw(df_s1, df_s3)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -415,7 +478,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row, phenotype_reference_std=self.phenotype_reference_std
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -428,82 +493,151 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Implement preprocessing specific to TmfKuzmin2020Dataset
-        df = df[df["Combined mutant type"] == "trigenic"]
+    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        # Combine S1 and S3, filtering for trigenic interactions
+        df = pd.concat([df_s1, df_s3])
+        df = df[df["Combined mutant type"] == "trigenic"].copy()
+
+        # Use the provided fitness and standard deviation
+        df["fitness"] = df["Double/triple mutant fitness"]
+        df["fitness_std"] = df["Double/triple mutant fitness standard deviation"]
+
+        # Split Query strain ID and Query allele name
+        df[["Query strain ID_1", "Query strain ID_2"]] = df[
+            "Query strain ID"
+        ].str.split("+", expand=True)
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+
+        # Extract systematic names
+        df["Query systematic name_1"] = df["Query strain ID_1"].str.split(
+            "_", expand=True
+        )[0]
+        df["Query systematic name_2"] = df["Query strain ID_2"].str.split(
+            "_", expand=True
+        )[0]
+        df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
+            0
+        ]
+
+        # Determine perturbation types
+        df["query_perturbation_type_1"] = df["Query allele name_1"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["query_perturbation_type_2"] = df["Query allele name_2"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["array_perturbation_type"] = df["Array strain ID"].apply(
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
+        )
+
+        # Calculate phenotype reference std
+        self.phenotype_reference_std = df["fitness_std"].mean()
+
+        # Clean up gene names
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        return df
+
+        return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row, phenotype_reference_std):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="s288c"
         )
 
         perturbations = []
-        for i in range(1, 4):  # For trigenic mutants
-            gene_name = (
-                row[f"Query allele name_{i}"] if i < 3 else row["Array allele name"]
+        # Query 1
+        if row["query_perturbation_type_1"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    strain_id=row["Query strain ID_1"],
+                )
             )
-            systematic_name = (
-                row[f"Query systematic name_{i}"]
-                if i < 3
-                else row["Array systematic name"]
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    strain_id=row["Query strain ID_1"],
+                )
             )
-            strain_id = row["Query strain ID"] if i < 3 else row["Array strain ID"]
 
-            if "delta" in gene_name:
-                perturbation = SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+        # Query 2
+        if row["query_perturbation_type_2"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    strain_id=row["Query strain ID_2"],
                 )
-            elif "ts" in gene_name:
-                perturbation = SgaTsAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    strain_id=row["Query strain ID_2"],
                 )
-            else:
-                perturbation = SgaAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+
+        # Array
+        if row["array_perturbation_type"] == "temperature_sensitive":
+            perturbations.append(
+                SgaTsAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
                 )
-            perturbations.append(perturbation)
+            )
+        elif row["array_perturbation_type"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
+                )
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
+                )
+            )
 
         genotype = Genotype(perturbations=perturbations)
+        assert len(genotype) == 3, "Genotype must have 3 perturbations."
 
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="tmf",
-            label_statistic="tmf_std",
-            fitness=row["Double/triple mutant fitness"],
-            fitness_std=row["Double/triple mutant fitness standard deviation"],
-        )
+        phenotype = FitnessPhenotype(fitness=row["fitness"], std=row["fitness_std"])
 
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="tmf",
-            label_statistic="tmf_std",
-            fitness=1.0,
-            fitness_std=None,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -518,18 +652,18 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class DmiKuzmin2020Dataset(ExperimentDataset):
-    # original that doesn't work. Think Science blocks.
-    # url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
         self,
         root: str = "data/torchcell/dmi_kuzmin2020",
+        subset_n: int = None,
         io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -541,8 +675,8 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
-        return "aaz5667-Table-S1.xlsx"
+    def raw_file_names(self) -> list[str]:
+        return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -556,8 +690,16 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
-        df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names))
-        df = self.preprocess_raw(df)
+        df_s1 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
+        )
+        df_s3 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[1]), skiprows=1
+        )
+
+        df = self.preprocess_raw(df_s1, df_s3)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -567,7 +709,9 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -580,48 +724,104 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Implement preprocessing specific to DmiKuzmin2020Dataset
-        df = df[df["Combined mutant type"] == "digenic"]
+    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        df = pd.concat([df_s1, df_s3])
+        df = df[df["Combined mutant type"] == "digenic"].copy()
+
+        df[["Query strain ID_1", "Query strain ID_2"]] = df[
+            "Query strain ID"
+        ].str.split("+", expand=True)
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+        df["Query systematic name_1"] = df["Query strain ID_1"].str.split(
+            "_", expand=True
+        )[0]
+        df["Query systematic name_2"] = df["Query strain ID_2"].str.split(
+            "_", expand=True
+        )[0]
+        df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
+            0
+        ]
+
+        df["Query allele name no ho"] = (
+            df["Query allele name"].str.replace("hoΔ", "").str.replace("+", "")
+        )
+        df["Query systematic name"] = df["Query strain ID"].str.split("_", expand=True)[
+            0
+        ]
+        df["Query systematic name no ho"] = (
+            df["Query systematic name"].str.replace("YDL227C", "").str.replace("+", "")
+        )
+
+        df["query_perturbation_type_no_ho"] = df["Query allele name no ho"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["array_perturbation_type"] = df["Array strain ID"].apply(
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
+        )
+
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        return df
+        return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="s288c"
         )
 
         perturbations = []
-        for i in range(1, 3):  # For digenic mutants
-            gene_name = row["Query allele name"] if i == 1 else row["Array allele name"]
-            systematic_name = (
-                row["Query systematic name"] if i == 1 else row["Array systematic name"]
+        # Query
+        if row["query_perturbation_type_no_ho"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name no ho"],
+                    perturbed_gene_name=row["Query allele name no ho"].split("_")[0],
+                    strain_id=row["Query strain ID"],
+                )
             )
-            strain_id = row["Query strain ID"] if i == 1 else row["Array strain ID"]
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name no ho"],
+                    perturbed_gene_name=row["Query allele name no ho"].split("_")[0],
+                    strain_id=row["Query strain ID"],
+                )
+            )
 
-            if "delta" in gene_name:
-                perturbation = SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+        # Array
+        if row["array_perturbation_type"] == "temperature_sensitive":
+            perturbations.append(
+                SgaTsAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
                 )
-            elif "ts" in gene_name:
-                perturbation = SgaTsAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+        elif row["array_perturbation_type"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
                 )
-            else:
-                perturbation = SgaAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
                 )
-            perturbations.append(perturbation)
+            )
 
         genotype = Genotype(perturbations=perturbations)
+        assert len(genotype) == 2, "Genotype must have 2 perturbations."
 
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
@@ -629,29 +829,24 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
-        phenotype_reference = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
-            interaction=0.0,
-            p_value=None,
-        )
+        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -666,18 +861,18 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
 @register_dataset
 class TmiKuzmin2020Dataset(ExperimentDataset):
-    # original that doesn't work. Think Science blocks.
-    # url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip
     url = "https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"
 
     def __init__(
         self,
         root: str = "data/torchcell/tmi_kuzmin2020",
+        subset_n: int = None,
         io_workers: int = 0,
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
     ):
+        self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -689,8 +884,8 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return GeneInteractionExperimentReference
 
     @property
-    def raw_file_names(self) -> str:
-        return "aaz5667-Table-S1.xlsx"
+    def raw_file_names(self) -> list[str]:
+        return ["aaz5667-Table-S1.xlsx", "aaz5667-Table-S3.xlsx"]
 
     @property
     def processed_file_names(self) -> list[str]:
@@ -704,8 +899,16 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
     @post_process
     def process(self):
-        df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names))
-        df = self.preprocess_raw(df)
+        df_s1 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[0]), skiprows=1
+        )
+        df_s3 = pd.read_excel(
+            osp.join(self.raw_dir, self.raw_file_names[1]), skiprows=1
+        )
+
+        df = self.preprocess_raw(df_s1, df_s3)
+        if self.subset_n is not None:
+            df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
@@ -715,7 +918,9 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -728,52 +933,115 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         env.close()
 
-    def preprocess_raw(self, df: pd.DataFrame) -> pd.DataFrame:
-        # Implement preprocessing specific to TmiKuzmin2020Dataset
-        df = df[df["Combined mutant type"] == "trigenic"]
+    def preprocess_raw(self, df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
+        df = pd.concat([df_s1, df_s3])
+        df = df[df["Combined mutant type"] == "trigenic"].copy()
+
+        df[["Query strain ID_1", "Query strain ID_2"]] = df[
+            "Query strain ID"
+        ].str.split("+", expand=True)
+        df[["Query allele name_1", "Query allele name_2"]] = df[
+            "Query allele name"
+        ].str.split("+", expand=True)
+        df["Query systematic name_1"] = df["Query strain ID_1"].str.split(
+            "_", expand=True
+        )[0]
+        df["Query systematic name_2"] = df["Query strain ID_2"].str.split(
+            "_", expand=True
+        )[0]
+        df["Array systematic name"] = df["Array strain ID"].str.split("_", expand=True)[
+            0
+        ]
+
+        df["query_perturbation_type_1"] = df["Query allele name_1"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["query_perturbation_type_2"] = df["Query allele name_2"].apply(
+            lambda x: "KanMX_deletion" if "Δ" in x else "allele"
+        )
+        df["array_perturbation_type"] = df["Array strain ID"].apply(
+            lambda x: (
+                "temperature_sensitive"
+                if "tsa" in x
+                else "KanMX_deletion" if "dma" in x else "unknown"
+            )
+        )
+
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        return df
+        return df.reset_index(drop=True)
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="s288c"
         )
 
         perturbations = []
-        for i in range(1, 4):  # For trigenic mutants
-            gene_name = (
-                row[f"Query allele name_{i}"] if i < 3 else row["Array allele name"]
+        # Query 1
+        if row["query_perturbation_type_1"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    strain_id=row["Query strain ID_1"],
+                )
             )
-            systematic_name = (
-                row[f"Query systematic name_{i}"]
-                if i < 3
-                else row["Array systematic name"]
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_1"],
+                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    strain_id=row["Query strain ID_1"],
+                )
             )
-            strain_id = row["Query strain ID"] if i < 3 else row["Array strain ID"]
 
-            if "delta" in gene_name:
-                perturbation = SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+        # Query 2
+        if row["query_perturbation_type_2"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    strain_id=row["Query strain ID_2"],
                 )
-            elif "ts" in gene_name:
-                perturbation = SgaTsAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Query systematic name_2"],
+                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    strain_id=row["Query strain ID_2"],
                 )
-            else:
-                perturbation = SgaAllelePerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=gene_name,
-                    strain_id=strain_id,
+            )
+
+        # Array
+        if row["array_perturbation_type"] == "temperature_sensitive":
+            perturbations.append(
+                SgaTsAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
                 )
-            perturbations.append(perturbation)
+            )
+        elif row["array_perturbation_type"] == "KanMX_deletion":
+            perturbations.append(
+                SgaKanMxDeletionPerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
+                )
+            )
+        else:
+            perturbations.append(
+                SgaAllelePerturbation(
+                    systematic_gene_name=row["Array systematic name"],
+                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    strain_id=row["Array strain ID"],
+                )
+            )
 
         genotype = Genotype(perturbations=perturbations)
+        assert len(genotype) == 3, "Genotype must have 3 perturbations."
 
         environment = Environment(
             media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
@@ -781,29 +1049,24 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="tmi",
-            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
-        phenotype_reference = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="tmi",
-            label_statistic="p_value",
-            interaction=0.0,
-            p_value=None,
-        )
+        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -819,11 +1082,11 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 if __name__ == "__main__":
     # Test the datasets
     datasets = [
-        # SmfKuzmin2020Dataset(),
-        # DmfKuzmin2020Dataset(),
-        # TmfKuzmin2020Dataset(),
-        # DmiKuzmin2020Dataset(),
-        # TmiKuzmin2020Dataset(),
+        SmfKuzmin2020Dataset(),
+        DmfKuzmin2020Dataset(),
+        TmfKuzmin2020Dataset(),
+        DmiKuzmin2020Dataset(),
+        TmiKuzmin2020Dataset(),
     ]
 
     for dataset in datasets:

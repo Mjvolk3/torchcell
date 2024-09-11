@@ -2,7 +2,6 @@
 # [[torchcell.models.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell.py
 # Test file: torchcell/models/test_dcell.py
-
 from collections import OrderedDict
 
 import networkx as nx

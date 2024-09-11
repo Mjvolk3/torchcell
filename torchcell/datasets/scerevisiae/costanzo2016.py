@@ -284,17 +284,13 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         # Phenotype based on temperature
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
-        phenotype = FitnessPhenotype(
-            fitness=row[smf_key], std=row[smf_std_key]
-        )
+        phenotype = FitnessPhenotype(fitness=row[smf_key], std=row[smf_std_key])
 
         if row["Temperature"] == 26:
             phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
-        phenotype_reference = FitnessPhenotype(
-            fitness=1.0, std=phenotype_reference_std
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -484,6 +480,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
                 experiment, reference, publication = self.create_experiment(
+                    self.name,
                     row,
                     phenotype_reference_std_26=self.phenotype_reference_std_26,
                     phenotype_reference_std_30=self.phenotype_reference_std_30,
@@ -501,7 +498,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(row, phenotype_reference_std_26, phenotype_reference_std_30):
+    def create_experiment(
+        dataset_name, row, phenotype_reference_std_26, phenotype_reference_std_30
+    ):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
@@ -604,34 +603,26 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         # Phenotype based on temperature
         dmf_key = "Double mutant fitness"
         dmf_std_key = "Double mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="smf_std",
-            fitness=row[dmf_key],
-            fitness_std=row[dmf_std_key],
-        )
+        phenotype = FitnessPhenotype(fitness=row[dmf_key], std=row[dmf_std_key])
 
         if row["Temperature"] == 26:
             phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="smf",
-            label_statistic="smf_std",
-            fitness=1.0,
-            fitness_std=phenotype_reference_std,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -801,7 +792,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     def _process_batch(self, batch_df, env):
         with env.begin(write=True) as txn:
             for index, row in batch_df.iterrows():
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 # Serialize the Pydantic objects
                 serialized_data = pickle.dumps(
@@ -815,7 +808,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                 txn.put(f"{index}".encode(), serialized_data)
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
@@ -914,30 +907,24 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
-            interaction=row["Genetic interaction score (ε)"],
-            p_value=row["P-value"],
+            interaction=row["Genetic interaction score (ε)"], p_value=row["P-value"]
         )
 
         # By definition, the reference interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
-            interaction=0.0,
-            p_value=None,
-        )
+        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
 
         publication = Publication(
@@ -956,12 +943,19 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
+    dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
+        io_workers=10,
+        batch_size=int(1e4),
+    )
+
     # dataset = DmfCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_delete"),
-    #     # subset_n=int(1e6),
+    #     subset_n=int(1e4),
     #     io_workers=10,
-    #     batch_size=int(1e4),
+    #     batch_size=int(1e3),
     # )
+
     # dataset.gene_set = dataset.compute_gene_set()
     # dataset.experiment_reference_index
     # print(type(dataset[0]))
@@ -994,8 +988,8 @@ if __name__ == "__main__":
     smf_dataset = SmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
     )
-    print(len(smf_dataset))
-    print(smf_dataset[100])
+    # print(len(smf_dataset))
+    # print(smf_dataset[100])
     # serialized_data = smf_dataset[100]["experiment"].model_dump()
     # new_instance = FitnessExperiment.model_validate(serialized_   data)
     # print(new_instance == serialized_data)
@@ -1012,10 +1006,10 @@ if __name__ == "__main__":
     # print("completed")
 
     # Interactions
-    # dataset = DmiCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e6"),
-    #     io_workers=10,
-    #     subset_n=int(1e6),
-    # )
+    dataset = DmiCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"),
+        io_workers=10,
+        # subset_n=int(1e6),
+    )
     # dataset[0]
     # print(len(dataset))

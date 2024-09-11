@@ -9,7 +9,7 @@ from .codon_frequency import CodonFrequencyDataset
 # from .dcell import DCellDataset
 
 # scerevisiae datasets
-# from .scerevisiae.costanzo2016 import SmfCostanzo2016Dataset, DmfCostanzo2016Dataset
+from .scerevisiae.costanzo2016 import SmfCostanzo2016Dataset, DmfCostanzo2016Dataset
 # from .scerevisiae.kuzmin2018 import (
 #     SmfKuzmin2018Dataset,
 #     DmfKuzmin2018Dataset,
@@ -30,7 +30,6 @@ from .dataset_registry import dataset_registry
 
 core_datasets = ["DCellDataset"]
 
-# scerevisiae_datasets = ["DmfCostanzo2016Dataset", "SmfCostanzo2016Dataset"]
 
 embedding_datasets = [
     "NucleotideTransformerDataset",
@@ -45,7 +44,7 @@ embedding_datasets = [
 ]
 
 
-# experiment_datasets = ["SmfCostanzo2016Dataset", "DmfCostanzo2016Dataset"]
+experiment_datasets = ["SmfCostanzo2016Dataset", "DmfCostanzo2016Dataset"]
 
 
 # + experiment_datasets

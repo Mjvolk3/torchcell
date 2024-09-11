@@ -10,14 +10,11 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
-
-# import torch
 import lmdb
 import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
-from torchcell.data import ExperimentReferenceIndex
 from torchcell.datamodels.schema import (
     Environment,
     Genotype,
@@ -37,7 +34,6 @@ from torchcell.datamodels.schema import (
     GeneInteractionExperiment,
     Publication,
 )
-from torchcell.sequence import GeneSet
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 
@@ -351,7 +347,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
-                    row, phenotype_reference_std=self.phenotype_reference_std
+                    self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -424,7 +420,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, phenotype_reference_std):
+    def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
@@ -482,30 +478,22 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             dmf_key = "Query single/double mutant fitness"
             # std of these fitnesses not reported
             fitness_std = np.nan
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="dmf",
-            label_statistic="dmf_std",
-            fitness=row[dmf_key],
-            fitness_std=fitness_std,
-        )
+        phenotype = FitnessPhenotype(fitness=row[dmf_key], std=fitness_std)
 
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="dmf",
-            label_statistic="dmf_std",
-            fitness=1.0,
-            fitness_std=phenotype_reference_std,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -572,7 +560,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
                 experiment, reference, publication = self.create_experiment(
-                    row, phenotype_reference_std=self.phenotype_reference_std
+                    self.name, row, phenotype_reference_std=self.phenotype_reference_std
                 )
 
                 # Serialize the Pydantic objects
@@ -645,7 +633,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row, phenotype_reference_std):
+    def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
@@ -714,30 +702,22 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(
-            graph_level="global",
-            label="tmf",
-            label_statistic="tmf_std",
-            fitness=row[tmf_key],
-            fitness_std=row[tmf_std_key],
-        )
+        phenotype = FitnessPhenotype(fitness=row[tmf_key], std=row[tmf_std_key])
 
-        phenotype_reference = FitnessPhenotype(
-            graph_level="global",
-            label="tmf",
-            label_statistic="tmf_std",
-            fitness=1.0,
-            fitness_std=phenotype_reference_std,
-        )
+        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = FitnessExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -800,7 +780,9 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -869,7 +851,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
@@ -919,30 +901,25 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="dmi",
-            label_statistic="p_value",
-            interaction=0.0,
-            p_value=None,
-        )
+        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
+            datset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -1004,7 +981,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=df.shape[0]):
-                experiment, reference, publication = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
@@ -1073,7 +1052,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         return df
 
     @staticmethod
-    def create_experiment(row):
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="saccharomyces Cerevisiae", strain="s288c"
         )
@@ -1139,30 +1118,25 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="tmi",
-            label_statistic="p_value",
             interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(
-            graph_level="edge",
-            label="tmi",
-            label_statistic="p_value",
-            interaction=0.0,
-            p_value=None,
-        )
+        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,
         )
 
         experiment = GeneInteractionExperiment(
-            genotype=genotype, environment=environment, phenotype=phenotype
+            dataset_name=dataset_name,
+            genotype=genotype,
+            environment=environment,
+            phenotype=phenotype,
         )
         publication = Publication(
             pubmed_id="29674565",
@@ -1179,19 +1153,19 @@ if __name__ == "__main__":
     print("Fitness")
     dataset = SmfKuzmin2018Dataset()
     print(dataset[0])
-    # print(len(dataset))
-    # dataset = DmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # dataset = TmfKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # print()
-    # print("Interactions")
-    # # Interactions
-    # dataset = DmiKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
-    # dataset = TmiKuzmin2018Dataset()
-    # dataset[0]
-    # print(len(dataset))
+    print(len(dataset))
+    dataset = DmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    dataset = TmfKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    print()
+    print("Interactions")
+    # Interactions
+    dataset = DmiKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))
+    dataset = TmiKuzmin2018Dataset()
+    dataset[0]
+    print(len(dataset))

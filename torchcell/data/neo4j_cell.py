@@ -13,17 +13,14 @@ import hashlib
 import lmdb
 import networkx as nx
 import numpy as np
-import torch
 from pydantic import field_validator
 from tqdm import tqdm
 from torchcell.datasets.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from typing import Any, Dict
 from torch_geometric.data import HeteroData
-import numpy as np
-from scipy.stats import chi2, norm, t
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+
 from torchcell.datamodels import (
     Environment,
     Genotype,
@@ -50,7 +47,6 @@ from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
 from abc import ABC, abstractmethod
-from memory_profiler import profile
 
 log = logging.getLogger(__name__)
 
@@ -309,7 +305,7 @@ class Neo4jCellDataset(Dataset):
         # HACK removing state for mp
         del self.graphs
         del node_embeddings
-        
+
         # Clean up hanging env, for multiprocessing
         self.env = None
         self.raw_db.env = None
@@ -764,6 +760,9 @@ def main():
     from dotenv import load_dotenv
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.datamodules import CellDataModule
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

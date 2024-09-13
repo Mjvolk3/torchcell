@@ -10,6 +10,13 @@ from .kuzmin2018_adapter import (
     DmiKuzmin2018Adapter,
     TmiKuzmin2018Adapter,
 )
+from .kuzmin2020_adapter import (
+    SmfKuzmin2020Adapter,
+    DmfKuzmin2020Adapter,
+    TmfKuzmin2020Adapter,
+    DmiKuzmin2020Adapter,
+    TmiKuzmin2020Adapter,
+)
 from .cell_adapter import CellAdapter
 
 cell_adapters = ["CellAdapter"]
@@ -28,4 +35,14 @@ kuzmin2018_adapters = [
     "TmiKuzmin2018Adapter",
 ]
 
-__all__ = cell_adapters + costanzo2016_adapters + kuzmin2018_adapters
+kuzmin2020_adapters = [
+    "SmfKuzmin2020Adapter",
+    "DmfKuzmin2020Adapter",
+    "TmfKuzmin2020Adapter",
+    "DmiKuzmin2020Adapter",
+    "TmiKuzmin2020Adapter",
+]
+
+__all__ = (
+    cell_adapters + costanzo2016_adapters + kuzmin2018_adapters + kuzmin2020_adapters
+)

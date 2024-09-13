@@ -767,6 +767,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
+        
         return df.reset_index(drop=True)
 
     @staticmethod
@@ -969,6 +970,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
+        
         return df.reset_index(drop=True)
 
     @staticmethod
@@ -1083,10 +1085,10 @@ if __name__ == "__main__":
     # Test the datasets
     datasets = [
         SmfKuzmin2020Dataset(),
-        DmfKuzmin2020Dataset(),
-        TmfKuzmin2020Dataset(),
-        DmiKuzmin2020Dataset(),
-        TmiKuzmin2020Dataset(),
+        # DmfKuzmin2020Dataset(),
+        # TmfKuzmin2020Dataset(),
+        # DmiKuzmin2020Dataset(),
+        # TmiKuzmin2020Dataset(),
     ]
 
     for dataset in datasets:

@@ -41,7 +41,7 @@ class SmfCostanzo2016Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "smf_costanzo_2016_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "smf_costanzo2016_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -75,7 +75,7 @@ class DmfCostanzo2016Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "dmf_costanzo_2016_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "dmf_costanzo2016_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -109,7 +109,7 @@ class DmiCostanzo2016Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "dmi_costanzo_2016_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "dmi_costanzo2016_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")

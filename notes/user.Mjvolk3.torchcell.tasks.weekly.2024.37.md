@@ -2,7 +2,7 @@
 id: z824gvi4f507r9ky9poh0zj
 title: '37'
 desc: ''
-updated: 1725990688338
+updated: 1726245631590
 created: 1725815628586
 ---
 
@@ -83,8 +83,30 @@ Standard Deviation: 2.44 seconds
 - [x] `kuzmin2018` alternate data source. [[2024.09.10 - Kuzmin2018 Alternative Download Source|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2018#20240910---kuzmin2018-alternative-download-source]]
 - [x] [SGA automated image analysis](http://sgatools.ccbr.utoronto.ca/) called SGATools.
 - [x] [[2024.09.10 - There are Negative Fitness Values|dendron://torchcell/torchcell.datasets.scerevisiae.kuzmin2020#20240910---there-are-negative-fitness-values]] validate negative fitness to `0.0`.
+- [x] Write `DmfKuzmin2020Dataset`.
+- [x] Build all datasets
 
-- [ ] Write `DmfKuzmin2020Dataset`.
+## 2024.09.11
+
+- [x] Fix adapters for new data → did partially
+
+## 2024.09.12
+
+- [x] Meet with Cheng and Ge to discuss project
+- [x] `GH` security research → lots of work to do here.
+
+## 2024.09.13
+
+- [x] Fix adapter yaml names to match
+- [ ] Add multiple edge for phenotypes
+- [ ] Update edge creation in [[torchcell.adapters.cell_adapter]]
+- [ ] Write adapters for remaining datasets
+- [ ] Add a kg for each dataset class
+
+- [ ] `GH` ssh security
+
+- [ ] Build kgs
+
 - [ ] Run KG build for kuzmin2020 interactions
 
 - [ ] Update combine to add a `README.md` which can serve as a trace to combined data.

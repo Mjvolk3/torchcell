@@ -1,11 +1,6 @@
-# torchcell/knowledge_graphs/smf_costanzo_2016_kg
-# [[torchcell.knowledge_graphs.smf_costanzo_2016_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/smf_costanzo_2016_kg
-# Test file: tests/torchcell/knowledge_graphs/test_smf_costanzo_2016_kg.py
-
-
 from biocypher import BioCypher
-import torchcell
+from torchcell.adapters import TmiKuzmin2018Adapter
+from torchcell.datasets.scerevisiae.kuzmin2018 import TmiKuzmin2018Dataset
 import logging
 from dotenv import load_dotenv
 import os
@@ -20,10 +15,8 @@ import hashlib
 import uuid
 import hydra
 import time
+import torchcell
 import certifi
-from torchcell.adapters import SmfCostanzo2016Adapter, SmfKuzmin2018Adapter
-from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
-from torchcell.datasets.scerevisiae.kuzmin2018 import SmfKuzmin2018Dataset
 
 
 log = logging.getLogger(__name__)
@@ -32,19 +25,22 @@ logging.captureWarnings(True)
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
+BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
 
-def get_num_workers():
+
+def get_num_workers() -> int:
     """Get the number of CPUs allocated by SLURM."""
-    # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
     if cpus_per_task is not None:
         return int(cpus_per_task)
-    # Fallback: Use multiprocessing to get the total number of CPUs
-    # return mp.cpu_count()
-    return 10
+    return mp.cpu_count()
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="kg_small")
+@hydra.main(version_base=None, config_path="conf", config_name="kg")
 def main(cfg) -> str:
 
     # wandb configuration
@@ -58,25 +54,8 @@ def main(cfg) -> str:
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
-        # save_code=True,
+        save_code=True,
     )
-
-    print("printing path info")
-    print(os.getcwd())
-    load_dotenv(wandb.config.env_path)
-    print(wandb.config.env_path)
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-    print("---------")
-    print(DATA_ROOT)
-    print(BIOCYPHER_CONFIG_PATH)
-    print(SCHEMA_CONFIG_PATH)
-    print(BIOCYPHER_OUT_PATH)
-    print("---------")
-
-    # save_code = True only works for git repositories, so we log the kg dir.
     wandb.run.log_code(
         "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
     )
@@ -85,22 +64,8 @@ def main(cfg) -> str:
     num_workers = get_num_workers()
     time_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     log.info(f"Number of workers: {num_workers}")
-    print("=========")
-    print(f"DATA_ROOT: {DATA_ROOT}")
-    # print types
-    print(f"DATA_ROOT type: {type(DATA_ROOT)}")
-    print(f"BIOCYPHER_CONFIG_PATH: {BIOCYPHER_CONFIG_PATH}")
-    # print types
-    print(f"BIOCYPHER_CONFIG_PATH type: {type(BIOCYPHER_CONFIG_PATH)}")
-    print(f"time_str: {time_str}")
-    # print types
-    print(f"time_str type: {type(time_str)}")
-    print("=========")
-    output_directory = osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str)
-    print(output_directory)
-    print("=========")
     bc = BioCypher(
-        output_directory=output_directory,
+        output_directory=osp.join(DATA_ROOT, BIOCYPHER_OUT_PATH, time_str),
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
@@ -124,8 +89,8 @@ def main(cfg) -> str:
     # Define dataset configurations
     dataset_configs = [
         {
-            "class": SmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
+            "class": TmiKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
         }
     ]
@@ -134,7 +99,7 @@ def main(cfg) -> str:
     datasets = []
     for config in dataset_configs:
         dataset_class = config["class"]
-        dataset_path = config["path"]   
+        dataset_path = config["path"]
         dataset_kwargs = config["kwargs"]
         dataset_name = dataset_class.__name__
 
@@ -146,8 +111,8 @@ def main(cfg) -> str:
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
         datasets.append(dataset)
 
-        # Define dataset-adapter mapping
-        dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
+    # Define dataset-adapter mapping
+    dataset_adapter_map = {TmiKuzmin2018Dataset: TmiKuzmin2018Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

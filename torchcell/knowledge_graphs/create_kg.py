@@ -1,18 +1,11 @@
-# torchcell/knowledge_graphs/create_scerevisiae_kg
-# [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
-# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
-
-
 from biocypher import BioCypher
-from torchcell.adapters import DmiKuzmin2018Adapter
-from torchcell.datasets.scerevisiae.kuzmin2018 import DmiKuzmin2018Dataset
+import torchcell
 import logging
 from dotenv import load_dotenv
 import os
 import os.path as osp
-from datetime import datetime
 import multiprocessing as mp
+from datetime import datetime
 import math
 import wandb
 from omegaconf import OmegaConf
@@ -21,8 +14,9 @@ import hashlib
 import uuid
 import hydra
 import time
-import torchcell
 import certifi
+from torchcell.adapters import SmfCostanzo2016Adapter
+from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
 
 
 log = logging.getLogger(__name__)
@@ -31,24 +25,28 @@ logging.captureWarnings(True)
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
+BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
+
 
 def get_num_workers() -> int:
     """Get the number of CPUs allocated by SLURM."""
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
-    print(f"SLURM_CPUS_PER_TASK: {cpus_per_task}")  # Print the value for debugging
     if cpus_per_task is not None:
         return int(cpus_per_task)
     return mp.cpu_count()
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="kg")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="smf_costanzo2016_kg",
+    # config_name=None,
+)
 def main(cfg) -> str:
-    load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -62,9 +60,9 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-    wandb.run.log_code(
-        "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
-    )
+    # wandb.run.log_code(
+    #     "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
+    # )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
@@ -95,8 +93,8 @@ def main(cfg) -> str:
     # Define dataset configurations
     dataset_configs = [
         {
-            "class": DmiKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"),
+            "class": SmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
             "kwargs": {"io_workers": num_workers},
         }
     ]
@@ -118,7 +116,7 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {DmiKuzmin2018Dataset: DmiKuzmin2018Adapter}
+    dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

@@ -909,7 +909,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
-            datset_name=dataset_name,
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment_reference,
             phenotype_reference=phenotype_reference,

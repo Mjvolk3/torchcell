@@ -1,7 +1,7 @@
-# torchcell/adapters/kuzmin2018_adapter.py
-# [[torchcell.adapters.kuzmin2018_adapter]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
-# Test file: tests/torchcell/adapters/test_kuzmin2018_adapter.py
+# torchcell/adapters/kuzmin2020_adapter
+# [[torchcell.adapters.kuzmin2020_adapter]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2020_adapter
+
 
 from tqdm import tqdm
 import hashlib
@@ -11,12 +11,12 @@ from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import get_logger
 import logging
 from typing import Set
-from torchcell.datasets.scerevisiae.kuzmin2018 import (
-    SmfKuzmin2018Dataset,
-    DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-    DmiKuzmin2018Dataset,
-    TmiKuzmin2018Dataset,
+from torchcell.datasets.scerevisiae.kuzmin2020 import (
+    SmfKuzmin2020Dataset,
+    DmfKuzmin2020Dataset,
+    TmfKuzmin2020Dataset,
+    DmiKuzmin2020Dataset,
+    TmiKuzmin2020Dataset,
 )
 from torchcell.adapters.cell_adapter import CellAdapter
 import yaml
@@ -31,10 +31,10 @@ logger = get_logger("biocypher")
 logger.setLevel(logging.ERROR)
 
 
-class SmfKuzmin2018Adapter(CellAdapter):
+class SmfKuzmin2020Adapter(CellAdapter):
     def __init__(
         self,
-        dataset: SmfKuzmin2018Dataset,
+        dataset: SmfKuzmin2020Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
@@ -42,7 +42,7 @@ class SmfKuzmin2018Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "smf_kuzmin2018_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "smf_kuzmin2020_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -56,7 +56,7 @@ class SmfKuzmin2018Adapter(CellAdapter):
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         print(
-            f"SmfKuzmin2018Adapter initialized with config: {self.config}"
+            f"SmfKuzmin2020Adapter initialized with config: {self.config}"
         )  # Debug print
         self.dataset = dataset
         self.process_workers = process_workers
@@ -65,10 +65,10 @@ class SmfKuzmin2018Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-class DmfKuzmin2018Adapter(CellAdapter):
+class DmfKuzmin2020Adapter(CellAdapter):
     def __init__(
         self,
-        dataset: DmfKuzmin2018Dataset,
+        dataset: DmfKuzmin2020Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
@@ -76,7 +76,7 @@ class DmfKuzmin2018Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "dmf_kuzmin2018_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "dmf_kuzmin2020_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -90,7 +90,7 @@ class DmfKuzmin2018Adapter(CellAdapter):
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         print(
-            f"DmfKuzmin2018Adapter initialized with config: {self.config}"
+            f"DmfKuzmin2020Adapter initialized with config: {self.config}"
         )  # Debug print
         self.dataset = dataset
         self.process_workers = process_workers
@@ -99,10 +99,10 @@ class DmfKuzmin2018Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-class TmfKuzmin2018Adapter(CellAdapter):
+class TmfKuzmin2020Adapter(CellAdapter):
     def __init__(
         self,
-        dataset: TmfKuzmin2018Dataset,
+        dataset: TmfKuzmin2020Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
@@ -110,7 +110,7 @@ class TmfKuzmin2018Adapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "tmf_kuzmin2018_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "tmf_kuzmin2020_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -124,7 +124,7 @@ class TmfKuzmin2018Adapter(CellAdapter):
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
         print(
-            f"TmfKuzmin2018Adapter initialized with config: {self.config}"
+            f"TmfKuzmin2020Adapter initialized with config: {self.config}"
         )  # Debug print
         self.dataset = dataset
         self.process_workers = process_workers
@@ -133,17 +133,17 @@ class TmfKuzmin2018Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-class DmiKuzmin2018Adapter(CellAdapter):
+class DmiKuzmin2020Adapter(CellAdapter):
     def __init__(
         self,
-        dataset: DmiKuzmin2018Dataset,
+        dataset: DmiKuzmin2020Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
-        config_path = osp.join(current_dir, "conf", "dmi_kuzmin2018_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "dmi_kuzmin2020_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -156,7 +156,7 @@ class DmiKuzmin2018Adapter(CellAdapter):
         super().__init__(
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
-        print(f"DmiKuzmin2018Adapter initialized with config: {self.config}")
+        print(f"DmiKuzmin2020Adapter initialized with config: {self.config}")
         self.dataset = dataset
         self.process_workers = process_workers
         self.io_workers = io_workers
@@ -164,17 +164,17 @@ class DmiKuzmin2018Adapter(CellAdapter):
         self.loader_batch_size = loader_batch_size
 
 
-class TmiKuzmin2018Adapter(CellAdapter):
+class TmiKuzmin2020Adapter(CellAdapter):
     def __init__(
         self,
-        dataset: TmiKuzmin2018Dataset,
+        dataset: TmiKuzmin2020Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
         loader_batch_size: int = int(1e3),
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
-        config_path = osp.join(current_dir, "conf", "tmi_kuzmin2018_adapter.yaml")
+        config_path = osp.join(current_dir, "conf", "tmi_kuzmin2020_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
@@ -187,7 +187,7 @@ class TmiKuzmin2018Adapter(CellAdapter):
         super().__init__(
             config, dataset, process_workers, io_workers, chunk_size, loader_batch_size
         )
-        print(f"TmiKuzmin2018Adapter initialized with config: {self.config}")
+        print(f"TmiKuzmin2020Adapter initialized with config: {self.config}")
         self.dataset = dataset
         self.process_workers = process_workers
         self.io_workers = io_workers
@@ -218,10 +218,10 @@ if __name__ == "__main__":
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    dataset = SmfKuzmin2018Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018")
+    dataset = SmfKuzmin2020Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2020")
     )
-    adapter = SmfKuzmin2018Adapter(
+    adapter = SmfKuzmin2020Adapter(
         dataset=dataset,
         process_workers=process_workers,
         io_workers=io_workers,
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
-    bc.summary()
+    # bc.summary()
 
     # ## Dmf
     # bc = BioCypher(
@@ -240,8 +240,8 @@ if __name__ == "__main__":
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
-    # adapter = DmfKuzmin2018Adapter(
+    # dataset = DmfKuzmin2020Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2020"))
+    # adapter = DmfKuzmin2020Adapter(
     #     dataset=dataset,
     #     process_workers=process_workers,
     #     io_workers=io_workers,
@@ -260,8 +260,8 @@ if __name__ == "__main__":
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
-    # adapter = TmfKuzmin2018Adapter(
+    # dataset = TmfKuzmin2020Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2020"))
+    # adapter = TmfKuzmin2020Adapter(
     #     dataset=dataset,
     #     process_workers=process_workers,
     #     io_workers=io_workers,
@@ -280,8 +280,8 @@ if __name__ == "__main__":
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = DmiKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2018"))
-    # adapter = DmiKuzmin2018Adapter(
+    # dataset = DmiKuzmin2020Dataset(osp.join(DATA_ROOT, "data/torchcell/dmi_kuzmin2020"))
+    # adapter = DmiKuzmin2020Adapter(
     #     dataset=dataset,
     #     process_workers=process_workers,
     #     io_workers=io_workers,
@@ -300,8 +300,8 @@ if __name__ == "__main__":
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = DmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"))
-    # adapter = DmfKuzmin2018Adapter(
+    # dataset = DmfKuzmin2020Dataset(osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2020"))
+    # adapter = DmfKuzmin2020Adapter(
     #     dataset=dataset,
     #     process_workers=process_workers,
     #     io_workers=io_workers,
@@ -320,8 +320,8 @@ if __name__ == "__main__":
     #     biocypher_config_path=BIOCYPHER_CONFIG_PATH,
     #     schema_config_path=SCHEMA_CONFIG_PATH,
     # )
-    # dataset = TmfKuzmin2018Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2018"))
-    # adapter = TmfKuzmin2018Adapter(
+    # dataset = TmfKuzmin2020Dataset(osp.join(DATA_ROOT, "data/torchcell/tmf_kuzmin2020"))
+    # adapter = TmfKuzmin2020Adapter(
     #     dataset=dataset,
     #     process_workers=process_workers,
     #     io_workers=io_workers,

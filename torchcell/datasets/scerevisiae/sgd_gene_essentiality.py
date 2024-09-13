@@ -175,49 +175,60 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
 
         env.close()
 
-    def create_experiment(self, row):
-        # HACK for this dataset all meta data is guessed,
-        # since we have no way fo extracting it from the paper yet
-        # It is a reasonable guess
+    # HACK for this dataset all meta data is guessed,
+    # since we have no way fo extracting it from the paper yet
+    # It is a reasonable guess
+    @staticmethod
+    def create_experiment(dataset_name, gene, phenotype_data):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         genotype = Genotype(
             perturbations=[
                 SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=row["systematic_name"],
-                    perturbed_gene_name=row["gene_name"],
-                    strain_id="NOT APPLICABLE",
+                    systematic_gene_name=gene,
+                    perturbed_gene_name=phenotype_data["locus"]["display_name"],
+                    strain_id="S288C",
                 )
             ]
         )
 
         environment = Environment(
-            media=Media(name="YEPD", state="solid"), temperature=Temperature(value=30)
+            media=Media(name="YEPD", state="solid"),
+            temperature=Temperature(value=30),  # Assuming standard temperature
         )
 
-        phenotype = GeneEssentialityPhenotype(is_essential=row["is_essential"])
+        phenotype = GeneEssentialityPhenotype(is_essential=True)
+        phenotype_reference = GeneEssentialityPhenotype(is_essential=False)
 
-        reference = GeneEssentialityExperimentReference(
-            dataset_name=self.name,
-            genome_reference=genome_reference,
-            environment_reference=environment,
-            phenotype_reference=phenotype,
-        )
+        pubmed_id = str(phenotype_data["reference"]["pubmed_id"])
+        pub_info = get_publication_info(pubmed_id)
+
+        if pub_info is None:
+            raise ValueError(
+                f"Unable to retrieve publication information for PubMed ID: {pubmed_id}"
+            )
 
         experiment = GeneEssentialityExperiment(
-            dataset_name=self.name,
+            dataset_name=dataset_name,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
         )
 
+        reference = GeneEssentialityExperimentReference(
+            dataset_name=dataset_name,
+            genome_reference=genome_reference,
+            environment_reference=environment,
+            phenotype_reference=phenotype_reference,
+        )
+
         publication = Publication(
-            pubmed_id="31845147",
-            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/31845147/",
-            doi="10.1093/database/baz110",
-            doi_url="https://doi.org/10.1093/database/baz110",
+            pubmed_id=pub_info["pubmed_id"],
+            pubmed_url=pub_info["pubmed_url"],
+            doi=pub_info["doi"],
+            doi_url=pub_info["doi_url"],
         )
 
         return experiment, reference, publication

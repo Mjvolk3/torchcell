@@ -66,12 +66,36 @@ class CellAdapter:
                 self._gene_interaction_phenotype_node,
             ),
             (
+                "gene essentiality phenotype (chunked)",
+                self._gene_essentiality_phenotype_node,
+            ),
+            (
+                "synthetic lethality phenotype (chunked)",
+                self._synthetic_lethality_phenotype_node,
+            ),
+            (
+                "synthetic rescue phenotype (chunked)",
+                self._synthetic_rescue_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
             (
                 "gene interaction phenotype reference",
                 self._get_gene_interaction_phenotype_reference_nodes,
+            ),
+            (
+                "gene essentiality phenotype reference",
+                self._get_gene_essentiality_phenotype_reference_nodes,
+            ),
+            (
+                "synthetic lethality phenotype reference",
+                self._get_synthetic_lethality_phenotype_reference_nodes,
+            ),
+            (
+                "synthetic rescue phenotype reference",
+                self._get_synthetic_rescue_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -481,30 +505,31 @@ class CellAdapter:
 
     @data_chunker
     def _fitness_phenotype_node(self, data: dict, method_name: str) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
         phenotype_id = hashlib.sha256(
             json.dumps(data["experiment"].phenotype.model_dump()).encode("utf-8")
         ).hexdigest()
 
-        graph_level = data["experiment"].phenotype.graph_level
-        label_name = data["experiment"].phenotype.label_name
-        label_statistic_name = data["experiment"].phenotype.label_statistic_name
-        label = data["experiment"].phenotype.label
-        label_statistic = data["experiment"].phenotype.label_statistic
+        graph_level = phenotype.graph_level
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
+        fitness = phenotype.fitness
+        std = phenotype.std
+
+        properties = {
+            "graph_level": graph_level,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
+            "fitness": fitness,
+            "std": std,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
 
         return BioCypherNode(
             node_id=phenotype_id,
             preferred_id=f"phenotype_{phenotype_id}",
             node_label="fitness phenotype",
-            properties={
-                "graph_level": graph_level,
-                "label_name": label_name,
-                "label_statistic_name": label_statistic_name,
-                "label": label,
-                "label_statistic": label_statistic,
-                "serialized_data": json.dumps(
-                    data["experiment"].phenotype.model_dump()
-                ),
-            },
+            properties=properties,
         )
 
     @data_chunker
@@ -517,15 +542,15 @@ class CellAdapter:
         ).hexdigest()
 
         graph_level = phenotype.graph_level
-        label = phenotype.label
-        label_statistic = phenotype.label_statistic
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
         interaction = phenotype.interaction
         p_value = phenotype.p_value
 
         properties = {
             "graph_level": graph_level,
-            "label": label,
-            "label_statistic": label_statistic,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
             "interaction": interaction,
             "p_value": p_value,
             "serialized_data": json.dumps(phenotype.model_dump()),
@@ -538,37 +563,125 @@ class CellAdapter:
             properties=properties,
         )
 
+    @data_chunker
+    def _gene_essentiality_phenotype_node(
+        self, data: dict, method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = phenotype.graph_level
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
+        is_essential = phenotype.is_essential
+
+        properties = {
+            "graph_level": graph_level,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
+            "is_essential": is_essential,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="gene essentiality phenotype",
+            properties=properties,
+        )
+
+    @data_chunker
+    def _synthetic_lethality_phenotype_node(
+        self, data: dict, method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = phenotype.graph_level
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
+        is_synthetic_lethal = phenotype.is_synthetic_lethal
+        statistic_score = phenotype.statistic_score
+
+        properties = {
+            "graph_level": graph_level,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
+            "is_synthetic_lethal": is_synthetic_lethal,
+            "statistic_score": statistic_score,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="synthetic lethality phenotype",
+            properties=properties,
+        )
+
+    @data_chunker
+    def _synthetic_rescue_phenotype_node(
+        self, data: dict, method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = phenotype.graph_level
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
+        is_synthetic_rescue = phenotype.is_synthetic_rescue
+        statistic_score = phenotype.statistic_score
+
+        properties = {
+            "graph_level": graph_level,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
+            "is_synthetic_rescue": is_synthetic_rescue,
+            "statistic_score": statistic_score,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="synthetic rescue phenotype",
+            properties=properties,
+        )
+
     def _get_fitness_phenotype_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
             phenotype_id = hashlib.sha256(
-                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
 
-            graph_level = data.reference.phenotype_reference.graph_level
-            label_name = data.reference.phenotype_reference.label_name
-            label_statistic_name = (
-                data.reference.phenotype_reference.label_statistic_name
-            )
-            label = data.reference.phenotype_reference.label
-            label_statistic = data.reference.phenotype_reference.label_statistic
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            fitness = phenotype.fitness
+            std = phenotype.std
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "fitness": fitness,
+                "std": std,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
 
             node = BioCypherNode(
                 node_id=phenotype_id,
                 preferred_id="fitness phenotype",
                 node_label="fitness phenotype",
-                properties={
-                    "graph_level": graph_level,
-                    "label_name": label_name,
-                    "label_statistic_name": label_statistic_name,
-                    "label": label,
-                    "label_statistic": label_statistic,
-                    "serialized_data": json.dumps(
-                        data.reference.phenotype_reference.model_dump()
-                    ),
-                },
+                properties=properties,
             )
             nodes.append(node)
         return nodes
@@ -576,32 +689,129 @@ class CellAdapter:
     def _get_gene_interaction_phenotype_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+
             phenotype_id = hashlib.sha256(
-                json.dumps(data.reference.phenotype_reference.model_dump()).encode(
-                    "utf-8"
-                )
+                json.dumps(phenotype.model_dump()).encode("utf-8")
             ).hexdigest()
 
-            graph_level = data.reference.phenotype_reference.graph_level
-            label = data.reference.phenotype_reference.label
-            label_statistic = data.reference.phenotype_reference.label_statistic
-            interaction = data.reference.phenotype_reference.interaction
-            p_value = data.reference.phenotype_reference.p_value
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            interaction = phenotype.interaction
+            p_value = phenotype.p_value
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "interaction": interaction,
+                "p_value": p_value,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
 
             node = BioCypherNode(
                 node_id=phenotype_id,
                 preferred_id="gene interaction phenotype",
                 node_label="gene interaction phenotype",
-                properties={
-                    "graph_level": graph_level,
-                    "label": label,
-                    "label_statistic": label_statistic,
-                    "interaction": interaction,
-                    "p_value": p_value,
-                    "serialized_data": json.dumps(
-                        data.reference.phenotype_reference.model_dump()
-                    ),
-                },
+                properties=properties,
+            )
+            nodes.append(node)
+        return nodes
+
+    def _get_gene_essentiality_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            is_essential = phenotype.is_essential
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "is_essential": is_essential,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id="gene essentiality phenotype",
+                node_label="gene essentiality phenotype",
+                properties=properties,
+            )
+            nodes.append(node)
+        return nodes
+
+    def _get_synthetic_lethality_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            is_synthetic_lethal = phenotype.is_synthetic_lethal
+            statistic_score = phenotype.statistic_score
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "is_synthetic_lethal": is_synthetic_lethal,
+                "statistic_score": statistic_score,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id="synthetic lethality phenotype",
+                node_label="synthetic lethality phenotype",
+                properties=properties,
+            )
+            nodes.append(node)
+        return nodes
+
+    def _get_synthetic_rescue_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            is_synthetic_rescue = phenotype.is_synthetic_rescue
+            statistic_score = phenotype.statistic_score
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "is_synthetic_rescue": is_synthetic_rescue,
+                "statistic_score": statistic_score,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id="synthetic rescue phenotype",
+                node_label="synthetic rescue phenotype",
+                properties=properties,
             )
             nodes.append(node)
         return nodes

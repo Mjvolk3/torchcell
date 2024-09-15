@@ -1,14 +1,10 @@
-# torchcell/knowledge_graphs/dmf_kuzmin_2018_kg.py
-
 from biocypher import BioCypher
-from torchcell.adapters import DmfKuzmin2018Adapter
-from torchcell.datasets.scerevisiae.kuzmin2018 import DmfKuzmin2018Dataset
 import logging
 from dotenv import load_dotenv
 import os
 import os.path as osp
-from datetime import datetime
 import multiprocessing as mp
+from datetime import datetime
 import math
 import wandb
 from omegaconf import OmegaConf
@@ -17,9 +13,13 @@ import hashlib
 import uuid
 import hydra
 import time
-import torchcell
 import certifi
+from torchcell.datasets import dataset_registry
+from torchcell.knowledge_graphs import dataset_adapter_map
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.graph import SCerevisiaeGraph
 
+import inspect
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -27,25 +27,23 @@ logging.captureWarnings(True)
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
+SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
+BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
 
-def get_num_workers():
+
+def get_num_workers() -> int:
     """Get the number of CPUs allocated by SLURM."""
-    # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
     if cpus_per_task is not None:
         return int(cpus_per_task)
-    # Fallback: Use multiprocessing to get the total number of CPUs
     return mp.cpu_count()
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="kg")
+@hydra.main(version_base=None, config_path="conf", config_name="gene_essentiality_sgd")
 def main(cfg) -> str:
-    load_dotenv()
-    DATA_ROOT = os.getenv("DATA_ROOT")
-    BIOCYPHER_CONFIG_PATH = os.getenv("BIOCYPHER_CONFIG_PATH")
-    SCHEMA_CONFIG_PATH = os.getenv("SCHEMA_CONFIG_PATH")
-    BIOCYPHER_OUT_PATH = os.getenv("BIOCYPHER_OUT_PATH")
-
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -58,9 +56,6 @@ def main(cfg) -> str:
         config=wandb_cfg,
         group=group,
         save_code=True,
-    )
-    wandb.run.log_code(
-        "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
     )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
@@ -90,13 +85,43 @@ def main(cfg) -> str:
     )
 
     # Define dataset configurations
-    dataset_configs = [
-        {
-            "class": DmfKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/dmf_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
+    dataset_configs = []
+    for dataset in wandb.config.datasets:
+        # We need workers according to system but other kwargs
+        # come from yaml, like subsetting, etc.
+        if wandb.config.datasets[dataset]["kwargs"] is not None:
+            kwargs = {
+                **wandb.config.datasets[dataset]["kwargs"],
+                **{"io_workers": num_workers},
+            }
+        else:
+            kwargs = {"io_workers": num_workers}
+
+        dataset_class = dataset_registry[dataset]
+
+        # Start special cases
+        # Handle special cases...
+        # Concerned about this as it makes things much less general.
+        if "scerevisiae_graph" in inspect.signature(dataset_class.__init__).parameters:
+            genome = SCerevisiaeGenome(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+            )
+            graph = SCerevisiaeGraph(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+            )
+            kwargs["scerevisiae_graph"] = graph
+        if "genome" in inspect.signature(dataset_class.__init__).parameters:
+            genome = SCerevisiaeGenome(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+            )
+            kwargs["genome"] = genome
+
+        dataset_config = {
+            "class": dataset_registry[dataset],
+            "path": osp.join(DATA_ROOT, wandb.config.datasets[dataset]["path"]),
+            "kwargs": kwargs,
         }
-    ]
+        dataset_configs.append(dataset_config)  
 
     # Instantiate datasets
     datasets = []
@@ -113,11 +138,6 @@ def main(cfg) -> str:
         instantiation_time = end_time - start_time
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
         datasets.append(dataset)
-
-    # Define dataset-adapter mapping
-    dataset_adapter_map = {
-        DmfKuzmin2018Dataset: DmfKuzmin2018Adapter,
-    }
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

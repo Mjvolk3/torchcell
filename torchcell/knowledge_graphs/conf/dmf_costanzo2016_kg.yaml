@@ -1,0 +1,24 @@
+# torchcell/knowledge_graphs/conf/dmf_costanzo2016_kg.yaml
+# [[torchcell.knowledge_graphs.conf.dmf_costanzo2016_kg.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/dmf_costanzo2016_kg.yaml
+
+defaults:
+  - default
+  - _self_ # append to end for overriding duplicate configs in default
+
+wandb:
+  mode: online # disabled, offline, online
+  project: tcdb
+
+adapters:
+  io_to_total_worker_ratio: 0.1
+  chunk_size: 4e5
+  loader_batch_size: 1e3
+
+datasets:
+  DmfCostanzo2016Dataset:
+    path: data/torchcell/dmf_costanzo2016
+    kwargs: null
+      # batch_size: 1000 # 1e3
+      # subset_n: 10000 # 1e4
+

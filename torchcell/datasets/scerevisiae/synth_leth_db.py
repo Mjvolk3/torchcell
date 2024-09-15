@@ -25,6 +25,7 @@ from torchcell.datamodels.schema import (
     SyntheticRescuePhenotype,
     SyntheticRescueExperiment,
     SyntheticRescueExperimentReference,
+    Publication,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -37,7 +38,7 @@ log = logging.getLogger(__name__)
 
 
 @register_dataset
-class SynthLethalityYeastDataset(ExperimentDataset):
+class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
@@ -49,6 +50,9 @@ class SynthLethalityYeastDataset(ExperimentDataset):
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
+        # delete to remove: cannot pickle 'sqlite3.Connection' object
+        del genome
+        del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
@@ -134,19 +138,23 @@ class SynthLethalityYeastDataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=len(df)):
-                experiment, reference = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
 
-    def create_experiment(self, row):
+    @staticmethod
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -171,44 +179,38 @@ class SynthLethalityYeastDataset(ExperimentDataset):
         )
 
         phenotype = SyntheticLethalityPhenotype(
-            graph_level="node",
-            label="synthetic_lethality",
-            label_statistic="statistic_score",
-            synthetic_lethality=True,
-            statistic_score=float(row["r.statistic_score"]),
+            is_synthetic_lethal=True, statistic_score=float(row["r.statistic_score"])
         )
 
         phenotype_reference = SyntheticLethalityPhenotype(
-            graph_level="node",
-            label="synthetic_lethality",
-            label_statistic="statistic_score",
-            synthetic_lethality=False,
-            statistic_score=None,
+            is_synthetic_lethal=False, statistic_score=None
         )
 
         experiment = SyntheticLethalityExperiment(
-            experiment_type="synthetic lethality",
+            dataset_name=dataset_name,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            # pubmed_id=str(row["r.pubmed_id"]),
-            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         reference = SyntheticLethalityExperimentReference(
-            experiment_reference_type="synthetic lethality",
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment,
             phenotype_reference=phenotype_reference,
-            # pubmed_id=str(row["r.pubmed_id"]),
-            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
-        return experiment, reference
+        publication = Publication(
+            pubmed_id=str(row["r.pubmed_id"]),
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            doi=None,
+            doi_url=None,
+        )
+        return experiment, reference, publication
 
 
 @register_dataset
-class SynthRescueYeastDataset(ExperimentDataset):
+class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_rescue_db_yeast",
@@ -220,6 +222,9 @@ class SynthRescueYeastDataset(ExperimentDataset):
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
+        # delete to remove: cannot pickle 'sqlite3.Connection' object
+        del genome
+        del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
@@ -302,19 +307,23 @@ class SynthRescueYeastDataset(ExperimentDataset):
 
         with env.begin(write=True) as txn:
             for index, row in tqdm(df.iterrows(), total=len(df)):
-                experiment, reference = self.create_experiment(row)
+                experiment, reference, publication = self.create_experiment(
+                    self.name, row
+                )
 
                 serialized_data = pickle.dumps(
                     {
                         "experiment": experiment.model_dump(),
                         "reference": reference.model_dump(),
+                        "publication": publication.model_dump(),
                     }
                 )
                 txn.put(f"{index}".encode(), serialized_data)
 
         env.close()
 
-    def create_experiment(self, row):
+    @staticmethod
+    def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -339,10 +348,7 @@ class SynthRescueYeastDataset(ExperimentDataset):
         )
 
         phenotype = SyntheticRescuePhenotype(
-            graph_level="node",
-            label="synthetic_rescue",
-            label_statistic="statistic_score",
-            synthetic_rescue=True,
+            is_synthetic_rescue=True,
             statistic_score=(
                 float(row["r.statistic_score"])
                 if pd.notna(row["r.statistic_score"])
@@ -351,32 +357,30 @@ class SynthRescueYeastDataset(ExperimentDataset):
         )
 
         phenotype_reference = SyntheticRescuePhenotype(
-            graph_level="node",
-            label="synthetic_rescue",
-            label_statistic="statistic_score",
-            synthetic_rescue=False,
-            statistic_score=None,
+            is_synthetic_rescue=False, statistic_score=None
         )
 
         experiment = SyntheticRescueExperiment(
-            experiment_type="synthetic rescue",
+            dataset_name=dataset_name,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            # pubmed_id=str(row["r.pubmed_id"]),
-            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
         reference = SyntheticRescueExperimentReference(
-            experiment_reference_type="synthetic rescue",
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
             environment_reference=environment,
             phenotype_reference=phenotype_reference,
-            # pubmed_id=str(row["r.pubmed_id"]),
-            # pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
         )
 
-        return experiment, reference
+        publication = Publication(
+            pubmed_id=str(row["r.pubmed_id"]),
+            pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{row['r.pubmed_id']}/",
+            doi=None,
+            doi_url=None,
+        )
+        return experiment, reference, publication
 
 
 def main():
@@ -390,10 +394,10 @@ def main():
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
 
-    lethality_dataset = SynthLethalityYeastDataset(genome=genome)
+    lethality_dataset = SynthLethalityYeastSynthLethDbDataset(genome=genome)
     print(lethality_dataset)
 
-    rescue_dataset = SynthRescueYeastDataset(genome=genome)
+    rescue_dataset = SynthRescueYeastSynthLethDbDataset(genome=genome)
     print(rescue_dataset)
 
 

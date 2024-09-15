@@ -1,6 +1,8 @@
-# torchcell/datasets/scerevisiae/sgd_gene_essentiality
-# [[torchcell.datasets.scerevisiae.sgd_gene_essentiality]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd_gene_essentiality
+# torchcell/datasets/scerevisiae/gene_essentiality_sgd
+# [[torchcell.datasets.scerevisiae.gene_essentiality_sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/gene_essentiality_sgd
+# Test file: tests/torchcell/datasets/scerevisiae/test_gene_essentiality_sgd.py
+
 import logging
 import re
 from urllib.parse import urlparse
@@ -26,6 +28,7 @@ from torchcell.datamodels.schema import (
     GeneEssentialityPhenotype,
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
+    Publication,
 )
 from torchcell.graph import SCerevisiaeGraph
 
@@ -33,11 +36,76 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+def get_publication_info(pubmed_id):
+    Entrez.email = "mvjolk3@illinois.edu"
+    max_retries = 5
+    base_delay = 1  # seconds
+
+    for attempt in range(max_retries):
+        try:
+            handle = Entrez.efetch(
+                db="pubmed", id=pubmed_id, rettype="xml", retmode="text"
+            )
+            records = Entrez.read(handle)
+            handle.close()
+
+            article = records["PubmedArticle"][0]["MedlineCitation"]["Article"]
+
+            info = {
+                "pubmed_id": pubmed_id,
+                "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}/",
+                "doi": None,
+                "doi_url": None,
+            }
+
+            # Try to get DOI from ELocationID
+            doi = next(
+                (
+                    eid
+                    for eid in article.get("ELocationID", [])
+                    if eid.attributes["EIdType"] == "doi"
+                ),
+                None,
+            )
+
+            # If DOI not found in ELocationID, try ArticleId
+            if not doi:
+                article_id_list = records["PubmedArticle"][0]["PubmedData"][
+                    "ArticleIdList"
+                ]
+                doi = next(
+                    (
+                        article_id
+                        for article_id in article_id_list
+                        if article_id.attributes["IdType"] == "doi"
+                    ),
+                    None,
+                )
+
+            if doi:
+                info["doi"] = str(doi)
+                info["doi_url"] = f"https://doi.org/{info['doi']}"
+
+            return info
+
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = base_delay * (2**attempt) + random.uniform(0, 1)
+                print(
+                    f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds..."
+                )
+                time.sleep(delay)
+                continue
+            else:
+                print(f"Error fetching info for PubMed ID {pubmed_id}: {str(e)}")
+                return None
+
+
 @register_dataset
-class SgdGeneEssentialityDataset(ExperimentDataset):
+class GeneEssentialitySgdDataset(ExperimentDataset):
     def __init__(
         self,
-        root: str = "data/torchcell/sgd_gene_essentiality",
+        root: str = "data/torchcell/gene_essentiality_sgd",
         scerevisiae_graph: SCerevisiaeGraph = None,
         io_workers: int = 0,
         transform: Callable | None = None,
@@ -71,6 +139,7 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        self.scerevisiae_graph.read_raw()
         log.info("Processing SGD Gene Essentiality Data...")
 
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -93,12 +162,15 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
                 ]
 
                 for phenotype in inviable_phenotypes:
-                    experiment, reference = self.create_experiment(gene, phenotype)
+                    experiment, reference, publication = self.create_experiment(
+                        self.name, gene, phenotype
+                    )
 
                     serialized_data = pickle.dumps(
                         {
                             "experiment": experiment.model_dump(),
                             "reference": reference.model_dump(),
+                            "publication": publication.model_dump(),
                         }
                     )
                     txn.put(f"{index}".encode(), serialized_data)
@@ -106,75 +178,11 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
 
         env.close()
 
+    # HACK for this dataset all meta data is guessed,
+    # since we have no way fo extracting it from the paper yet
+    # It is a reasonable guess
     @staticmethod
-    def get_publication_info(pubmed_id):
-        Entrez.email = "mvjolk3@illinois.edu"
-        max_retries = 5
-        base_delay = 1  # seconds
-
-        for attempt in range(max_retries):
-            try:
-                handle = Entrez.efetch(
-                    db="pubmed", id=pubmed_id, rettype="xml", retmode="text"
-                )
-                records = Entrez.read(handle)
-                handle.close()
-
-                article = records["PubmedArticle"][0]["MedlineCitation"]["Article"]
-
-                info = {
-                    "pubmed_id": pubmed_id,
-                    "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}/",
-                    "doi": None,
-                    "doi_url": None,
-                }
-
-                # Try to get DOI from ELocationID
-                doi = next(
-                    (
-                        eid
-                        for eid in article.get("ELocationID", [])
-                        if eid.attributes["EIdType"] == "doi"
-                    ),
-                    None,
-                )
-
-                # If DOI not found in ELocationID, try ArticleId
-                if not doi:
-                    article_id_list = records["PubmedArticle"][0]["PubmedData"][
-                        "ArticleIdList"
-                    ]
-                    doi = next(
-                        (
-                            article_id
-                            for article_id in article_id_list
-                            if article_id.attributes["IdType"] == "doi"
-                        ),
-                        None,
-                    )
-
-                if doi:
-                    info["doi"] = str(doi)
-                    info["doi_url"] = f"https://doi.org/{info['doi']}"
-
-                return info
-
-            except Exception as e:
-                if attempt < max_retries - 1:
-                    delay = base_delay * (2**attempt) + random.uniform(0, 1)
-                    print(
-                        f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds..."
-                    )
-                    time.sleep(delay)
-                    continue
-                else:
-                    print(f"Error fetching info for PubMed ID {pubmed_id}: {str(e)}")
-                    return None
-
-    def create_experiment(self, gene, phenotype_data):
-        # HACK for this dataset all meta data is guessed,
-        # since we have no way fo extracting it from the paper yet
-        # It is a reasonable guess
+    def create_experiment(dataset_name, gene, phenotype_data):
         genome_reference = ReferenceGenome(
             species="Saccharomyces cerevisiae", strain="S288C"
         )
@@ -194,18 +202,11 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
             temperature=Temperature(value=30),  # Assuming standard temperature
         )
 
-        phenotype = GeneEssentialityPhenotype(
-            graph_level="global", label="gene_essentiality", label_statistic=None
-        )
-        phenotype_reference = GeneEssentialityPhenotype(
-            graph_level="global",
-            label="gene_essentiality",
-            label_statistic=None,
-            gene_essentiality=False,
-        )
+        phenotype = GeneEssentialityPhenotype(is_essential=True)
+        phenotype_reference = GeneEssentialityPhenotype(is_essential=False)
 
         pubmed_id = str(phenotype_data["reference"]["pubmed_id"])
-        pub_info = self.get_publication_info(pubmed_id)
+        pub_info = get_publication_info(pubmed_id)
 
         if pub_info is None:
             raise ValueError(
@@ -213,28 +214,27 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
             )
 
         experiment = GeneEssentialityExperiment(
-            experiment_type="gene essentiality",
+            dataset_name=dataset_name,
             genotype=genotype,
             environment=environment,
             phenotype=phenotype,
-            pubmed_id=pub_info["pubmed_id"],
-            pubmed_url=pub_info["pubmed_url"],
-            doi=pub_info["doi"],
-            doi_url=pub_info["doi_url"],
         )
 
         reference = GeneEssentialityExperimentReference(
-            experiment_reference_type="gene essentiality",
+            dataset_name=dataset_name,
             genome_reference=genome_reference,
-            environment_reference=phenotype_reference,
-            phenotype_reference=phenotype,
+            environment_reference=environment,
+            phenotype_reference=phenotype_reference,
+        )
+
+        publication = Publication(
             pubmed_id=pub_info["pubmed_id"],
             pubmed_url=pub_info["pubmed_url"],
             doi=pub_info["doi"],
             doi_url=pub_info["doi_url"],
         )
 
-        return experiment, reference
+        return experiment, reference, publication
 
 
 def main():
@@ -252,9 +252,8 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    graph.read_raw()
 
-    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=graph)
+    dataset = GeneEssentialitySgdDataset(scerevisiae_graph=graph)
     print(dataset)
 
 

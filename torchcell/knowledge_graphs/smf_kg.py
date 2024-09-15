@@ -1,6 +1,26 @@
+# torchcell/knowledge_graphs/create_scerevisiae_kg
+# [[torchcell.knowledge_graphs.create_scerevisiae_kg]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
+# Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
+
+
 from biocypher import BioCypher
-from torchcell.adapters import TmiKuzmin2018Adapter
-from torchcell.datasets.scerevisiae.kuzmin2018 import TmiKuzmin2018Dataset
+from torchcell.adapters import (
+    SmfCostanzo2016Adapter,
+    DmfCostanzo2016Adapter,
+    SmfKuzmin2018Adapter,
+    DmfKuzmin2018Adapter,
+    TmfKuzmin2018Adapter,
+)
+from torchcell.datasets.scerevisiae.costanzo2016 import (
+    SmfCostanzo2016Dataset,
+    DmfCostanzo2016Dataset,
+)
+from torchcell.datasets.scerevisiae.kuzmin2018 import (
+    SmfKuzmin2018Dataset,
+    DmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
+)
 import logging
 from dotenv import load_dotenv
 import os
@@ -26,12 +46,13 @@ logging.captureWarnings(True)
 os.environ["SSL_CERT_FILE"] = certifi.where()
 
 
-def get_num_workers() -> int:
+def get_num_workers():
     """Get the number of CPUs allocated by SLURM."""
+    # Try to get number of CPUs allocated by SLURM
     cpus_per_task = os.getenv("SLURM_CPUS_PER_TASK")
-    print(f"SLURM_CPUS_PER_TASK: {cpus_per_task}")  # Print the value for debugging
     if cpus_per_task is not None:
         return int(cpus_per_task)
+    # Fallback: Use multiprocessing to get the total number of CPUs
     return mp.cpu_count()
 
 
@@ -89,10 +110,15 @@ def main(cfg) -> str:
     # Define dataset configurations
     dataset_configs = [
         {
-            "class": TmiKuzmin2018Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
+            "class": SmfCostanzo2016Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"),
             "kwargs": {"io_workers": num_workers},
-        }
+        },
+        {
+            "class": SmfKuzmin2018Dataset,
+            "path": osp.join(DATA_ROOT, "data/torchcell/smf_kuzmin2018"),
+            "kwargs": {"io_workers": num_workers},
+        },
     ]
 
     # Instantiate datasets
@@ -112,7 +138,10 @@ def main(cfg) -> str:
         datasets.append(dataset)
 
     # Define dataset-adapter mapping
-    dataset_adapter_map = {TmiKuzmin2018Dataset: TmiKuzmin2018Adapter}
+    dataset_adapter_map = {
+        SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
+        SmfKuzmin2018Dataset: SmfKuzmin2018Adapter,
+    }
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

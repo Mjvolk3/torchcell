@@ -2,7 +2,7 @@
 id: rdi64el69j2nxjlvtrcftqu
 title: Kuzmin2020
 desc: ''
-updated: 1723837844781
+updated: 1725990105586
 created: 1723828982525
 ---
 
@@ -84,4 +84,36 @@ To summarize the files that will be necessary for each dataset. These should als
 
 To implement this make sure we follow the patterns laid out by `kuzmin2018` datasets, and adhere to the schema.py.
 
-This is the DOI: 10.1126/science.aaz5667, and pubmed id 32586993 and pubmed url https://pubmed.ncbi.nlm.nih.gov/32586993/
+This is the DOI: 10.1126/science.aaz5667, and pubmed id 32586993 and pubmed url <https://pubmed.ncbi.nlm.nih.gov/32586993/>
+
+## 2024.09.10 - There are Negative Fitness Values
+
+I didn't think we would ever encounter this since the fitness score is computed as the ratio of mutant over wild type. This is likely an artifact of data processing, normalization, standardization, etc. Based on this definition it is strange to keep the negative as it violates our current data validation. [[torchcell.datamodels.schema]]. I think for this instance we should correct to 0.0 with the validator but provide a warning. I think this is okay given so few data points are negative and for all practical purpose negative means `0.0` or a dead cell.
+
+Table S3.
+
+| Query strain ID        | Query allele name | Array strain ID | Array allele name | Combined mutant type | Raw genetic interaction score (epsilon) | Adjusted genetic interaction score (epsilon or tau) | P-value  | Query single/double mutant fitness | Array single mutant fitness | Double/triple mutant fitness | Double/triple mutant fitness standard deviation |
+| ---------------------- | ----------------- | --------------- | ----------------- | -------------------- | --------------------------------------- | --------------------------------------------------- | -------- | ---------------------------------- | --------------------------- | ---------------------------- | ----------------------------------------------- |
+| YMR198W+YDL227C_tm467  | cik1Δ+hoΔ         | YPR162C_tsa1247 | orc4-5001         | digenic              | -0.718108                               | -0.718108                                           | 1.71E-57 |                                    | 0.6379                      | -0.0802                      | 0.0671                                          |
+| YAL056W+YOR371C_tm1601 | gpb2Δ+gpb1Δ       | YNL102W_tsa345  | pol1-17           | trigenic             | -0.523199                               | 0.160684                                            | 0.00E+00 | 0.9083                             | 0.5481                      | -0.0254                      | 0                                               |
+| YKR095W+YIL149C_tm1623 | mlp1Δ+mlp2Δ       | YMR197C_tsa635  | vti1-11-supp1     | trigenic             | -0.630539                               | -0.818542                                           | 4.35E-35 | 0.8307                             | 0.7494                      | -0.008                       | 0.0559                                          |
+
+Table S1.
+
+| Query strain ID        | Query allele name | Array strain ID | Array allele name | Combined mutant type | Raw genetic interaction score (epsilon) | Adjusted genetic interaction score (epsilon or tau) | P-value   | Query single/double mutant fitness | Array single mutant fitness | Double/triple mutant fitness | Double/triple mutant fitness standard deviation |
+| ---------------------- | ----------------- | --------------- | ----------------- | -------------------- | --------------------------------------- | --------------------------------------------------- | --------- | ---------------------------------- | --------------------------- | ---------------------------- | ----------------------------------------------- |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YBR131W_dma294  | ccz1Δ             | digenic              | -0.872019                               | -0.872019                                           | 0.00E+00  |                                    | 0.744                       | -0.128                       | 0                                               |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YPL226W_dma4968 | new1Δ             | digenic              | -0.375281                               | -0.375281                                           | 1.11E-85  |                                    | 0.327                       | -0.0483                      | 0.0149                                          |
+| YHR030C+YKL161C_tm61   | slt2Δ+kdx1Δ       | YGR157W_dma1899 | cho2Δ             | trigenic             | -0.256726                               | -0.045604                                           | 8.74E-38  | 0.8665                             | 0.247                       | -0.0427                      | 0.0196                                          |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YFL007W_dma5286 | blm10Δ            | digenic              | -1.077915                               | -1.077915                                           | 0.00E+00  |                                    | 1.036                       | -0.0419                      | 0.0275                                          |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YHR003C_dma2083 | tcd1Δ             | digenic              | -1.006909                               | -1.006909                                           | 0.00E+00  |                                    | 0.965                       | -0.0419                      | 0                                               |
+| YCR069W+YNR028W_tm163  | cpr4Δ+cpr8Δ       | YGL023C_dma1597 | pib2Δ             | trigenic             | -0.876595                               | -0.850199                                           | 2.52E-61  | 0.8946                             | 0.943                       | -0.033                       | 0.056                                           |
+| YHR030C+YDL227C_tm432  | slt2Δ+hoΔ         | YGR157W_dma1899 | cho2Δ             | digenic              | -0.280035                               | -0.280035                                           | 1.89E-12  |                                    | 0.247                       | -0.033                       | 0.0527                                          |
+| YDR077W+YER150W_tm3410 | sed1Δ+spi1Δ       | YAL025C_tsa1066 | MAK16-ph          | trigenic             | -0.741312                               | -0.722245                                           | 0.00E+00  |                                    | 0.716                       | -0.0253                      | 0                                               |
+| YER059W+YDL227C_tm545  | pcl6Δ+hoΔ         | YKR092C_dma3002 | srp40Δ            | digenic              | -0.952263                               | -0.952263                                           | 0.00E+00  |                                    | 0.927                       | -0.0253                      | 0                                               |
+| YER059W+YDL227C_tm545  | pcl6Δ+hoΔ         | YLR077W_dma3164 | fmp25Δ            | digenic              | -1.012256                               | -1.012256                                           | 0.00E+00  |                                    | 0.996                       | -0.0163                      | 0.0119                                          |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YLR077W_dma3164 | fmp25Δ            | digenic              | -1.011758                               | -1.011758                                           | 4.23E-120 |                                    | 0.996                       | -0.0158                      | 0.048                                           |
+| YER059W+YDL227C_tm545  | pcl6Δ+hoΔ         | YPL226W_dma4968 | new1Δ             | digenic              | -0.342596                               | -0.342596                                           | 0.00E+00  |                                    | 0.327                       | -0.0156                      | 0                                               |
+| YMR199W+YPL256C_tm1604 | cln1Δ+cln2Δ       | YLR337C_dma3380 | vrp1Δ             | trigenic             | -0.355614                               | -0.355614                                           | 5.81E-03  |                                    | 0.53                        | -0.0156                      | 0.0901                                          |
+| YDR483W+YDL227C_tm704  | kre2Δ+hoΔ         | YGR121C_dma1881 | mep1Δ             | digenic              | -1.024336                               | -1.024336                                           | 0.00E+00  |                                    | 1.01                        | -0.0143                      | 0.0209                                          |
+| YAL056W+YDL227C_tm1888 | gpb2Δ+hoΔ         | YHR081W_dma2126 | lrp1Δ             | digenic              | -0.499073                               | -0.499073                                           | 3.99E-09  |                                    | 0.49                        | -0.0091                      | 0.2276                                          |

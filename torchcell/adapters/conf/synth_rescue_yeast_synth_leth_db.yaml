@@ -1,6 +1,6 @@
-# torchcell/adapters/conf/tmi_kuzmin_2018_adapter.yaml
-# [[torchcell.adapters.conf.tmi_kuzmin_2018_adapter.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/tmi_kuzmin_2018_adapter.yaml
+# torchcell/adapters/conf/synth_rescue_yeast_synth_leth_db.yaml
+# [[torchcell.adapters.conf.synth_rescue_yeast_synth_leth_db.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/synth_rescue_yeast_synth_leth_db.yaml
 
 cell_adapter:
   node_methods:
@@ -15,8 +15,8 @@ cell_adapter:
     - method_name: media reference
     - method_name: temperature (chunked)
     - method_name: temperature reference
-    - method_name: gene interaction phenotype (chunked)
-    - method_name: gene interaction phenotype reference
+    - method_name: synthetic rescue phenotype (chunked)
+    - method_name: synthetic rescue phenotype reference
     - method_name: dataset
     - method_name: publication (chunked)
   edge_methods:

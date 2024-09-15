@@ -62,7 +62,9 @@ install_package() {
 docker exec tc-neo4j python -m pip install --upgrade pip
 # Install required packages inside the container
 docker exec tc-neo4j python -m pip uninstall torchcell -y
+
 install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
+docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
 # docker exec tc-neo4j python -m pip uninstall biocypher -y
 install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
 install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
@@ -80,7 +82,7 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 #torchcell.knowledge_graphs.smf_costanzo_2016_kg
 #torchcell.knowledge_graphs.dmf_tmi_combine_kg
 
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_costanzo_2016_kg
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

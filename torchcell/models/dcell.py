@@ -2,7 +2,6 @@
 # [[torchcell.models.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell.py
 # Test file: torchcell/models/test_dcell.py
-
 from collections import OrderedDict
 
 import networkx as nx
@@ -270,17 +269,20 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
-        preprocess={"duplicate_resolution": "low_dmf_std"},
-        # subset_n=100,
-    )
-    smf_dataset = SmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf"),
-        preprocess={"duplicate_resolution": "low_std_both"},
-        skip_process_file_exist_check=True,
-    )
-    gene_set = smf_dataset.gene_set.union(dmf_dataset.gene_set)
+    # dmf_dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
+    #     preprocess={"duplicate_resolution": "low_dmf_std"},
+    #     # subset_n=100,
+    # )
+    # smf_dataset = SmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf"),
+    #     preprocess={"duplicate_resolution": "low_std_both"},
+    #     skip_process_file_exist_check=True,
+    # )
+    # gene_set = smf_dataset.gene_set.union(dmf_dataset.gene_set)
+    genome.drop_chrmt()
+    genome.drop_chrmt()
+    gene_set = genome.gene_set
     #
     print(graph.G_go.number_of_nodes())
     G = graph.G_go.copy()
@@ -312,7 +314,7 @@ def main():
 
     batch = Batch.from_data_list([G_mutant, G_mutant])
     subsystem_outputs = dcell(batch)
-    dcell_linear = DCellLinear(dcell.subsystems, output_size=1)
+    dcell_linear = DCellLinear(dcell.subsystems, output_size=2)
     output = dcell_linear(subsystem_outputs)
     # Compute the loss
     loss = criterion(output, target, dcell.parameters())
@@ -321,7 +323,21 @@ def main():
     loss.backward()
 
     print(f"Loss: {loss.item()}")
-    print()
+
+    def count_model_parameters(model: torch.nn.Module) -> int:
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+        # Count parameters in both models
+
+    params_dcell = count_model_parameters(dcell)
+    params_dcell_linear = count_model_parameters(dcell_linear)
+    print(f"params_dcell: {params_dcell}")
+    print(f"params_dcell_linear: {params_dcell_linear}")
+
+    # Sum total parameters
+    total_params = params_dcell + params_dcell_linear
+
+    print(f"total parameters: {total_params}")
 
 
 if __name__ == "__main__":

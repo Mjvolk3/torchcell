@@ -1,5 +1,4 @@
 from biocypher import BioCypher
-import torchcell
 import logging
 from dotenv import load_dotenv
 import os
@@ -15,9 +14,12 @@ import uuid
 import hydra
 import time
 import certifi
-from torchcell.adapters import SmfCostanzo2016Adapter
-from torchcell.datasets.scerevisiae.costanzo2016 import SmfCostanzo2016Dataset
+from torchcell.datasets import dataset_registry
+from torchcell.knowledge_graphs import dataset_adapter_map
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.graph import SCerevisiaeGraph
 
+import inspect
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -40,12 +42,7 @@ def get_num_workers() -> int:
     return mp.cpu_count()
 
 
-@hydra.main(
-    version_base=None,
-    config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="smf_costanzo2016_kg",
-    # config_name=None,
-)
+@hydra.main(version_base=None, config_path="conf", config_name="gene_essentiality_sgd")
 def main(cfg) -> str:
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
@@ -60,9 +57,6 @@ def main(cfg) -> str:
         group=group,
         save_code=True,
     )
-    # wandb.run.log_code(
-    #     "/".join(osp.join(torchcell.__path__[0], __file__).split("/")[:-1])
-    # )
     wandb.log({"slurm_job_id": str(slurm_job_id)})
     # Use this function to get the number of workers
     num_workers = get_num_workers()
@@ -91,13 +85,43 @@ def main(cfg) -> str:
     )
 
     # Define dataset configurations
-    dataset_configs = [
-        {
-            "class": SmfCostanzo2016Dataset,
-            "path": osp.join(DATA_ROOT, "data/torchcell/tmi_kuzmin2018"),
-            "kwargs": {"io_workers": num_workers},
+    dataset_configs = []
+    for dataset in wandb.config.datasets:
+        # We need workers according to system but other kwargs
+        # come from yaml, like subsetting, etc.
+        if wandb.config.datasets[dataset]["kwargs"] is not None:
+            kwargs = {
+                **wandb.config.datasets[dataset]["kwargs"],
+                **{"io_workers": num_workers},
+            }
+        else:
+            kwargs = {"io_workers": num_workers}
+
+        dataset_class = dataset_registry[dataset]
+
+        # Start special cases
+        # Handle special cases...
+        # Concerned about this as it makes things much less general.
+        if "scerevisiae_graph" in inspect.signature(dataset_class.__init__).parameters:
+            genome = SCerevisiaeGenome(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+            )
+            graph = SCerevisiaeGraph(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+            )
+            kwargs["scerevisiae_graph"] = graph
+        if "genome" in inspect.signature(dataset_class.__init__).parameters:
+            genome = SCerevisiaeGenome(
+                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+            )
+            kwargs["genome"] = genome
+
+        dataset_config = {
+            "class": dataset_registry[dataset],
+            "path": osp.join(DATA_ROOT, wandb.config.datasets[dataset]["path"]),
+            "kwargs": kwargs,
         }
-    ]
+        dataset_configs.append(dataset_config)  
 
     # Instantiate datasets
     datasets = []
@@ -114,9 +138,6 @@ def main(cfg) -> str:
         instantiation_time = end_time - start_time
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
         datasets.append(dataset)
-
-    # Define dataset-adapter mapping
-    dataset_adapter_map = {SmfCostanzo2016Dataset: SmfCostanzo2016Adapter}
 
     # Instantiate adapters based on the dataset-adapter mapping
     adapters = [

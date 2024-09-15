@@ -1,7 +1,6 @@
-# torchcell/knowledge_graphs/conf/kg.yaml
-# [[torchcell.knowledge_graphs.conf.kg.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/kg.yaml
-# Test file: tests/torchcell/knowledge_graphs/conf/test_kg.yaml
+# torchcell/knowledge_graphs/conf/gene_essentiality_sgd.yaml
+# [[torchcell.knowledge_graphs.conf.gene_essentiality_sgd.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/conf/gene_essentiality_sgd.yaml
 
 defaults:
   - default
@@ -17,7 +16,7 @@ adapters:
   loader_batch_size: 1e3 #1e4
 
 datasets:
-  SmfCostanzo2016Dataset:
-    path: data/torchcell/smf_costanzo2016
+  GeneEssentialitySgdDataset:
+    path: data/torchcell/gene_essentiality_sgd
     kwargs: null
 

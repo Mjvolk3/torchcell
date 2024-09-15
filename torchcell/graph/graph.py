@@ -1197,7 +1197,6 @@ def old_main() -> None:
     # plot_go_graph(graph.G_go)
     plotly_go_graph(G)
     plot_go_node_types(G)
-    print()
 
 
 def main():

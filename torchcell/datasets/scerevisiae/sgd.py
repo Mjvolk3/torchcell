@@ -1,6 +1,8 @@
-# torchcell/datasets/scerevisiae/sgd_gene_essentiality
-# [[torchcell.datasets.scerevisiae.sgd_gene_essentiality]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd_gene_essentiality
+# torchcell/datasets/scerevisiae/gene_essentiality_sgd
+# [[torchcell.datasets.scerevisiae.gene_essentiality_sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/gene_essentiality_sgd
+# Test file: tests/torchcell/datasets/scerevisiae/test_gene_essentiality_sgd.py
+
 import logging
 import re
 from urllib.parse import urlparse
@@ -100,10 +102,10 @@ def get_publication_info(pubmed_id):
 
 
 @register_dataset
-class SgdGeneEssentialityDataset(ExperimentDataset):
+class GeneEssentialitySgdDataset(ExperimentDataset):
     def __init__(
         self,
-        root: str = "data/torchcell/sgd_gene_essentiality",
+        root: str = "data/torchcell/gene_essentiality_sgd",
         scerevisiae_graph: SCerevisiaeGraph = None,
         io_workers: int = 0,
         transform: Callable | None = None,
@@ -137,6 +139,7 @@ class SgdGeneEssentialityDataset(ExperimentDataset):
 
     @post_process
     def process(self):
+        self.scerevisiae_graph.read_raw()
         log.info("Processing SGD Gene Essentiality Data...")
 
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -249,9 +252,8 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    graph.read_raw()
 
-    dataset = SgdGeneEssentialityDataset(scerevisiae_graph=graph)
+    dataset = GeneEssentialitySgdDataset(scerevisiae_graph=graph)
     print(dataset)
 
 

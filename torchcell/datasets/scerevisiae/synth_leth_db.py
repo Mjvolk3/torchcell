@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 
 
 @register_dataset
-class SynthLethalityYeastDataset(ExperimentDataset):
+class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_leth_db_yeast",
@@ -50,6 +50,9 @@ class SynthLethalityYeastDataset(ExperimentDataset):
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
+        # delete to remove: cannot pickle 'sqlite3.Connection' object
+        del genome
+        del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
@@ -207,7 +210,7 @@ class SynthLethalityYeastDataset(ExperimentDataset):
 
 
 @register_dataset
-class SynthRescueYeastDataset(ExperimentDataset):
+class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
     def __init__(
         self,
         root: str = "data/torchcell/syn_rescue_db_yeast",
@@ -219,6 +222,9 @@ class SynthRescueYeastDataset(ExperimentDataset):
         self.genome = genome
         self.gene_name_to_systematic = {}
         self._build_gene_name_mapping()
+        # delete to remove: cannot pickle 'sqlite3.Connection' object
+        del genome
+        del self.genome
         super().__init__(root, io_workers, transform, pre_transform)
 
     def _build_gene_name_mapping(self):
@@ -388,10 +394,10 @@ def main():
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
     )
 
-    lethality_dataset = SynthLethalityYeastDataset(genome=genome)
+    lethality_dataset = SynthLethalityYeastSynthLethDbDataset(genome=genome)
     print(lethality_dataset)
 
-    rescue_dataset = SynthRescueYeastDataset(genome=genome)
+    rescue_dataset = SynthRescueYeastSynthLethDbDataset(genome=genome)
     print(rescue_dataset)
 
 

@@ -1,3 +1,4 @@
+from .cell_adapter import CellAdapter
 from .costanzo2016_adapter import (
     SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
@@ -17,7 +18,13 @@ from .kuzmin2020_adapter import (
     DmiKuzmin2020Adapter,
     TmiKuzmin2020Adapter,
 )
-from .cell_adapter import CellAdapter
+
+from .sgd import GeneEssentialitySgdAdapter
+
+from .synth_leth_db import (
+    SynthLethalityYeastSynthLethDbAdapter,
+    SynthRescueYeastSynthLethDbAdapter,
+)
 
 cell_adapters = ["CellAdapter"]
 
@@ -43,6 +50,19 @@ kuzmin2020_adapters = [
     "TmiKuzmin2020Adapter",
 ]
 
+gene_essentiality_adapters = ["GeneEssentialitySgdAdapter"]
+
+synth_leth_db_adapters = [
+    "SynthLethalityYeastSynthLethDbAdapter",
+    "SynthRescueYeastSynthLethDbAdapter",
+]
+
+
 __all__ = (
-    cell_adapters + costanzo2016_adapters + kuzmin2018_adapters + kuzmin2020_adapters
+    cell_adapters
+    + costanzo2016_adapters
+    + kuzmin2018_adapters
+    + kuzmin2020_adapters
+    + gene_essentiality_adapters
+    + synth_leth_db_adapters
 )

@@ -21,15 +21,15 @@ datasets:
     path: data/torchcell/smf_costanzo2016
     kwargs: null
   DmfCostanzo2016Dataset:
-    path: data/torchcell/dmf_costanzo2016_1e5
+    path: data/torchcell/dmf_costanzo2016_1e6
     kwargs:
       # batch_size: 1000 # 1e3
-      subset_n: 100000 # 1e5
+      subset_n: 1000000 # 1e5
   DmiCostanzo2016Dataset:
-    path: data/torchcell/dmi_costanzo2016_1e5
+    path: data/torchcell/dmi_costanzo2016_1e6
     kwargs:
       # batch_size: 1000 # 1e3
-      subset_n: 100000 # 1e5
+      subset_n: 1000000 # 1e5
 
   # Kuzmin 2018
   SmfKuzmin2018Dataset:

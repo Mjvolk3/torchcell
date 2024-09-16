@@ -2,14 +2,14 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726426880619
+updated: 1726436564289
 created: 1726425036900
 ---
 
 ## 2024.09.15
 
 - [x] [[2024.09.15 - Rename to Match other Datasets|dendron://torchcell/torchcell.datasets.scerevisiae.sgd#20240915---rename-to-match-other-datasets]]
-
+- [ ] #ramble If want to be able to create kgs in container we would need all data dirs. Especially relevant for when we have a path dependency like `data/sgd/genome` [[torchcell.datasets.scerevisiae.sgd]]
 - [ ] Write adapters for remaining datasets → trying to generalize.
 
 - [ ] Add a kg for each dataset class

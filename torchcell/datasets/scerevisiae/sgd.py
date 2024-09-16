@@ -1,7 +1,8 @@
-# torchcell/datasets/scerevisiae/gene_essentiality_sgd
-# [[torchcell.datasets.scerevisiae.gene_essentiality_sgd]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/gene_essentiality_sgd
-# Test file: tests/torchcell/datasets/scerevisiae/test_gene_essentiality_sgd.py
+# torchcell/datasets/scerevisiae/sgd
+# [[torchcell.datasets.scerevisiae.sgd]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd
+# Test file: tests/torchcell/datasets/scerevisiae/test_sgd.py
+
 
 import logging
 import re

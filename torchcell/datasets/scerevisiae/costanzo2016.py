@@ -937,12 +937,20 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-if __name__ == "__main__":
+def main():
     from dotenv import load_dotenv
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
+    # Single mutant fitness
+    dataset = SmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
+    )
+    print(len(dataset))
+    print(dataset[100])
+
+    # Double mutant fitness
     dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_1e5"),
         io_workers=10,
@@ -951,61 +959,14 @@ if __name__ == "__main__":
     )
     print(len(dataset))
     print(dataset[0])
-    # dataset = DmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_delete"),
-    #     subset_n=int(1e4),
-    #     io_workers=10,
-    #     batch_size=int(1e3),
-    # )
 
-    # dataset.gene_set = dataset.compute_gene_set()
-    # dataset.experiment_reference_index
-    # print(type(dataset[0]))
-    # print(dataset[0][0])
-    # print(type(dataset[0][0]))
-    # print(type(dataset[0][1]))
-    # print(dataset[0][1])
-    # dataset.experiment_reference_index
-    # dataset[0]
-    # serialized_data = dataset[0]["experiment"].model_dump()
-    # new_instance = FitnessExperiment.model_validate(serialized_data)
-    # print(new_instance == dataset[0]['experiment'])
-    # Usage example
-    # print(len(dataset))
-    # print(dataset.experiment_reference_index)
-    # data_loader = CpuExperimentLoader(dataset, batch_size=1, io_workers=1)
-    # # Fetch and print the first 3 batches
-    # for i, batch in enumerate(data_loader):
-    #     # batch_transformed = list(map(dataset.transform_item, batch))
-    #     print(batch[0])
-    #     print("---")
-    #     if i == 3:
-    #         break
-    # # Clean up worker processes
-    # data_loader.close()
-    # print("completed")
-
-    ######
-    # Single mutant fitness
-    # smf_dataset = SmfCostanzo2016Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/smf_costanzo2016"), io_workers=10
-    # )
-    # print(len(smf_dataset))
-    # print(smf_dataset[100])
-    # serialized_data = smf_dataset[100]["experiment"].model_dump()
-    # new_instance = FitnessExperiment.model_validate(serialized_   data)
-    # print(new_instance == serialized_data)
-    # data_loader = CpuExperimentLoader(smf_dataset, batch_size=1, io_workers=1)
-    # Fetch and print the first 3 batches
-    # for i, batch in enumerate(data_loader):
-    #     # batch_transformed = list(map(smf_dataset.transform_item, batch))
-    #     print(batch[0])
-    #     print("---")
-    #     if i == 3:
-    #         break
-    # # Clean up worker processes
-    # data_loader.close()
-    # print("completed")
+    dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
+        io_workers=10,
+        batch_size=int(1e4),
+    )
+    print(len(dataset))
+    print(dataset[0])
 
     # Interactions
     dataset = DmiCostanzo2016Dataset(
@@ -1015,4 +976,13 @@ if __name__ == "__main__":
     )
     print(len(dataset))
     print(dataset[0])
-    # print(len(dataset))
+
+    dataset = DmiCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016"), io_workers=10
+    )
+    print(len(dataset))
+    print(dataset[0])
+
+
+if __name__ == "__main__":
+    main()

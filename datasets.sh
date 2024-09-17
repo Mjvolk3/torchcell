@@ -7,8 +7,8 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 
 # Run the Python scripts
-python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/sgd_gene_essentiality.py
-python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/syn_leth_db_yeast.py
+python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/sgd.py
+python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/synth_leth_db.py
 python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/kuzmin2020.py
 python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/kuzmin2018.py
 python /Users/michaelvolk/Documents/projects/torchcell/torchcell/datasets/scerevisiae/costanzo2016.py

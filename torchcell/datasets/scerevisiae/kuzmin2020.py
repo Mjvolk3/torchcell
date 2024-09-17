@@ -108,9 +108,10 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         df = df[df["Mutant type"] == "Single mutant"]
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
+        df = df.dropna(subset=['Fitness'])
         df = df.reset_index(drop=True)
         return df
-
+    
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
@@ -252,7 +253,8 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
 
         # Process S5 to get double mutant data
         df_s5_double = df_s5[df_s5["Mutant type"] == "Double mutant"]
-
+        df_s5_double = df_s5_double.dropna(subset=["Fitness"])
+        
         # Merge combined data with S5 to get standard deviations
         df = pd.merge(
             df_combined,
@@ -1081,14 +1083,14 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         return experiment, reference, publication
 
 
-if __name__ == "__main__":
+def main():
     # Test the datasets
     datasets = [
         SmfKuzmin2020Dataset(),
-        # DmfKuzmin2020Dataset(),
-        # TmfKuzmin2020Dataset(),
-        # DmiKuzmin2020Dataset(),
-        # TmiKuzmin2020Dataset(),
+        DmfKuzmin2020Dataset(),
+        TmfKuzmin2020Dataset(),
+        DmiKuzmin2020Dataset(),
+        TmiKuzmin2020Dataset(),
     ]
 
     for dataset in datasets:
@@ -1096,3 +1098,7 @@ if __name__ == "__main__":
         print(f"Length: {len(dataset)}")
         print(f"First item: {dataset[0]}")
         print("\n")
+
+
+if __name__ == "__main__":
+    main()

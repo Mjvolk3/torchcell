@@ -7,7 +7,7 @@ import re
 from typing import List, Union, Dict, Type, Optional, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 from torchcell.datamodels.pydant import ModelStrict
-
+import math
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -289,6 +289,8 @@ class FitnessPhenotype(Phenotype, ModelStrict):
 
     @field_validator("fitness")
     def validate_fitness(cls, v):
+        if math.isnan(v):
+            raise ValueError("Fitness cannot be NaN")
         if v <= 0:
             return 0.0
         return v
@@ -431,6 +433,11 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
     )
     p_value: float | None = Field(default=None, description="p-value of interaction")
 
+    @field_validator("interaction")
+    def validate_fitness(cls, v):
+        if math.isnan(v):
+            raise ValueError("Interaction cannot be NaN")
+        return v
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing

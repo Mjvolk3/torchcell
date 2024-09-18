@@ -961,6 +961,15 @@ def main():
     print(dataset[0])
 
     dataset = DmfCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016_5e5"),
+        io_workers=10,
+        batch_size=int(1e4),
+        subset_n=int(5e5),
+    )
+    print(len(dataset))
+    print(dataset[0])
+
+    dataset = DmfCostanzo2016Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dmf_costanzo2016"),
         io_workers=10,
         batch_size=int(1e4),
@@ -973,6 +982,14 @@ def main():
         root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_1e5"),
         io_workers=10,
         subset_n=int(1e5),
+    )
+    print(len(dataset))
+    print(dataset[0])
+
+    dataset = DmiCostanzo2016Dataset(
+        root=osp.join(DATA_ROOT, "data/torchcell/dmi_costanzo2016_5e5"),
+        io_workers=10,
+        subset_n=int(5e5),
     )
     print(len(dataset))
     print(dataset[0])

@@ -2,7 +2,7 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726694122574
+updated: 1726695213685
 created: 1726425036900
 ---
 
@@ -28,18 +28,16 @@ created: 1726425036900
 
 - [x] Check on local build → Looks like everything worked now we can create `1e03`, `1e04`, and `1e05` datasets. → this build takes `8 hr`
 - [x] Check on `GH` build → we had a process in pool terminate abruptly... investigating. → looks like we ran out of memory... The issue seems to be event 15 which is publication node. I don't remember if we changed the representation of publication after `tmiKuzmin2018` worked where we didn't have any memory reduction on publication nodes. Regardless we will try this and relaunch. → [[2024.09.18 - OOM on Publication Node|dendron://torchcell/torchcell.adapters.conf.dmf_costanzo2016_adapter.yaml#20240918---oom-on-publication-node]] → relaunched after change.
-
 - [x] Fix torchcell availability on local db → import from shell
-- [ ] There is an issue that we don't have all of the datasets in the db.. Specifically we don't have the `SyntheticRescue` or `GeneEssentiality` Datasets.
+- [x] There is an issue that we don't have all of the datasets in the db.. Specifically we don't have the `SyntheticRescue` or `GeneEssentiality` Datasets. → fixed in steps below.
 - [x] Why so few phenotypes in `SynthLethal` → [[2024.09.18 - Few Phenotype Nodes|dendron://torchcell/torchcell.adapters.conf.synth_lethality_yeast_synth_leth_db.yaml#20240918---few-phenotype-nodes]] → this is not an issue
 - [x] SynthRescue has an error. → [[2024.09.18 - Troubleshooting Biocypher Build|dejndron://torchcell/torchcell.adapters.synth_leth_db#20240918---troubleshooting-biocypher-build]]
 - [x] Check gene essentiality. → issue was were trying to add `label_statistic_name` to property in [[torchcell.adapters.cell_adapter]] when this doesn't exist
-- [ ] Try to build kg with `Syn` and `GeneEssentiality`
-
-- [ ] Run `Synth` adapters without build.
-- [ ] Run `GeneEssentiality` adapter without build.
-- [ ] Run `Synth` and `GeneEssentiality` adapter with build.
-- [ ] Inspect graph in neo4j browser
+- [x] Run `Synth` adapters without build.
+- [x] Run `GeneEssentiality` adapter without build.
+- [x] Run `Synth` and `GeneEssentiality` adapter with build.
+- [x] Inspect graph in neo4j browser → All datasets exists and look correct.
+- [ ] Run rebuild of small kg in it's entirety
 
 - [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
 

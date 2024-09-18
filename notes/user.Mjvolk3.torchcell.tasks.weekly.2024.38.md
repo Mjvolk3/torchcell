@@ -2,7 +2,7 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726687055870
+updated: 1726694122574
 created: 1726425036900
 ---
 
@@ -31,6 +31,15 @@ created: 1726425036900
 
 - [x] Fix torchcell availability on local db → import from shell
 - [ ] There is an issue that we don't have all of the datasets in the db.. Specifically we don't have the `SyntheticRescue` or `GeneEssentiality` Datasets.
+- [x] Why so few phenotypes in `SynthLethal` → [[2024.09.18 - Few Phenotype Nodes|dendron://torchcell/torchcell.adapters.conf.synth_lethality_yeast_synth_leth_db.yaml#20240918---few-phenotype-nodes]] → this is not an issue
+- [x] SynthRescue has an error. → [[2024.09.18 - Troubleshooting Biocypher Build|dejndron://torchcell/torchcell.adapters.synth_leth_db#20240918---troubleshooting-biocypher-build]]
+- [x] Check gene essentiality. → issue was were trying to add `label_statistic_name` to property in [[torchcell.adapters.cell_adapter]] when this doesn't exist
+- [ ] Try to build kg with `Syn` and `GeneEssentiality`
+
+- [ ] Run `Synth` adapters without build.
+- [ ] Run `GeneEssentiality` adapter without build.
+- [ ] Run `Synth` and `GeneEssentiality` adapter with build.
+- [ ] Inspect graph in neo4j browser
 
 - [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
 

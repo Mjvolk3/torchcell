@@ -108,7 +108,6 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         print("Converting gene names to systematic names...")
         df["n1.systematic_name"] = df["n1.name"].apply(self.get_systematic_name)
         df["n2.systematic_name"] = df["n2.name"].apply(self.get_systematic_name)
-
         return df
 
     def get_systematic_name(self, gene_name):

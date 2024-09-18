@@ -19,6 +19,7 @@ cell_adapter:
     - method_name: fitness phenotype reference
     - method_name: dataset
     - method_name: publication (chunked)
+      memory_reduction_factor: 0.5
   edge_methods:
     - method_name: experiment reference to dataset
     - method_name: experiment to dataset (chunked)

@@ -574,13 +574,11 @@ class CellAdapter:
 
         graph_level = phenotype.graph_level
         label_name = phenotype.label_name
-        label_statistic_name = phenotype.label_statistic_name
         is_essential = phenotype.is_essential
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
-            "label_statistic_name": label_statistic_name,
             "is_essential": is_essential,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
@@ -730,13 +728,11 @@ class CellAdapter:
 
             graph_level = phenotype.graph_level
             label_name = phenotype.label_name
-            label_statistic_name = phenotype.label_statistic_name
             is_essential = phenotype.is_essential
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
-                "label_statistic_name": label_statistic_name,
                 "is_essential": is_essential,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }

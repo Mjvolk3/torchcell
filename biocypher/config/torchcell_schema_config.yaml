@@ -111,7 +111,7 @@ gene essentiality phenotype:
     properties:
         graph_level: str
         label_name: str
-        is_essential: float
+        is_essential: bool
         serialized_data: str
 
 synthetic lethality phenotype:
@@ -121,7 +121,7 @@ synthetic lethality phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        is_synthetic_lethal: float
+        is_synthetic_lethal: bool
         statistic_score: float
         serialized_data: str
 
@@ -132,7 +132,7 @@ synthetic rescue phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        is_synthetic_lethal: float
+        is_synthetic_lethal: bool
         statistic_score: float
         serialized_data: str
 # PHENOTYPES END

@@ -36,7 +36,7 @@ class GeneEssentialitySgdAdapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "gene_essentiality_sgd.yaml")
+        config_path = osp.join(current_dir, "conf", "gene_essentiality_sgd_adapter.yaml")
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")

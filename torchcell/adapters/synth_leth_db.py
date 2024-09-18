@@ -1,3 +1,8 @@
+# torchcell/adapters/synth_leth_db
+# [[torchcell.adapters.synth_leth_db]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/synth_leth_db
+# Test file: tests/torchcell/adapters/test_synth_leth_db.py
+
 from tqdm import tqdm
 import hashlib
 import json
@@ -35,7 +40,7 @@ class SynthLethalityYeastSynthLethDbAdapter(CellAdapter):
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(
-            current_dir, "conf", "synth_lethality_yeast_synth_leth_db.yaml"
+            current_dir, "conf", "synth_lethality_yeast_synth_leth_db_adapter.yaml"
         )
 
         if not osp.exists(config_path):
@@ -71,7 +76,7 @@ class SynthRescueYeastSynthLethDbAdapter(CellAdapter):
         current_dir = osp.dirname(osp.abspath(__file__))
 
         config_path = osp.join(
-            current_dir, "conf", "synth_rescue_yeast_synth_leth_db.yaml"
+            current_dir, "conf", "synth_rescue_yeast_synth_leth_db_adapter.yaml"
         )
 
         if not osp.exists(config_path):

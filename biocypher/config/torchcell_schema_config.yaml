@@ -132,7 +132,7 @@ synthetic rescue phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        is_synthetic_lethal: bool
+        is_synthetic_rescue: bool
         statistic_score: float
         serialized_data: str
 # PHENOTYPES END

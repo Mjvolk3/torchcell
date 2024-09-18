@@ -2,50 +2,38 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726436564289
+updated: 1726685129368
 created: 1726425036900
 ---
 
 ## 2024.09.15
 
 - [x] [[2024.09.15 - Rename to Match other Datasets|dendron://torchcell/torchcell.datasets.scerevisiae.sgd#20240915---rename-to-match-other-datasets]]
-- [ ] #ramble If want to be able to create kgs in container we would need all data dirs. Especially relevant for when we have a path dependency like `data/sgd/genome` [[torchcell.datasets.scerevisiae.sgd]]
-- [ ] Write adapters for remaining datasets → trying to generalize.
-
-- [ ] Add a kg for each dataset class
-
-- [ ] `GH` ssh security
-
-- [ ] Build kgs
-
-- [ ] Run KG build for kuzmin2020 interactions
-
-- [ ] Update combine to add a `README.md` which can serve as a trace to combined data.
-- [ ] Combined datasets and update readonly db.
-
-- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
+- [x] #ramble If want to be able to create kgs in container we would need all data dirs. Especially relevant for when we have a path dependency like `data/sgd/genome` [[torchcell.datasets.scerevisiae.sgd]]
+- [x] Write adapters for remaining datasets → trying to generalize.
+- [x] Add a kg for each dataset class
 
 ## 2024.09.16
 
-- [ ]
+- [x] Build kgs → failed due to config error some nans
+- [x] Fix [[torchcell.datasets.scerevisiae.kuzmin2020]] to filter out nans → had to fix `smf` and `dmf`
+
+## 2024.09.17
+
+- [x] Build kgs → failed due to config error floats when they should be bool.
+- [x] `GH` ssh security  → now we require pass phrase, password and 2FA... 😅
+- [x] Launch builds for local small build [[scerevisiae_small_global_kg|dendron://torchcell/torchcell.knowledge_graphs.conf.scerevisiae_small_global_kg.yaml]] and large `GH` build [[torchcell.knowledge_graphs.conf.scerevisiae_global_kg.yaml]]
+
+## 2024.09.18
+
+- [x] Check on local build → Looks like everything worked now we can create `1e03`, `1e04`, and `1e05` datasets. → this build takes `8 hr`
+- [ ] Check on `GH` build → we had a process in pool terminate abruptly... investigating. → looks like we ran out of memory... The issue seems to be event 15 which is publication node. I don't remember if we changed the representation of publication after `tmiKuzmin2018` worked where we didn't have any memory reduction on publication nodes. Regardless we will try this and relaunch.
+
+```yaml
+- method_name: publication (chunked)
+  memory_reduction_factor: 0.5
+```
+
+- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
 
 ***
-
-- [ ] Zendron on `zotero_out`
-- [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
-- [ ] Add expression dataset for mechanistic aware single fitness
-- [ ] Add expression from double fitness
-- [ ] Add fitness from singles
-- [ ] Add fitness from doubles
-- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
-- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
-- [ ] `ExperimentReferenceOf` looks broken.
-- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
-- [ ] Try to link docker and slurm with `cgroup`
-- [ ] Run build bash script for testing.
-- [ ] `gh` Test build under resource constraints.
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Remove software update on image entry point
-- [ ] dataset registry not working again because circular import

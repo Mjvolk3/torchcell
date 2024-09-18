@@ -16,54 +16,54 @@ adapters:
   loader_batch_size: 1e3 #1e4
 
 datasets:
-  # # Costanzo 2016
-  # SmfCostanzo2016Dataset:
-  #   path: data/torchcell/smf_costanzo2016
-  #   kwargs: null
-  # DmfCostanzo2016Dataset:
-  #   path: data/torchcell/dmf_costanzo2016_1e5
-  #   kwargs:
-  #     # batch_size: 1000 # 1e3
-  #     subset_n: 500000 # 5e5
-  # DmiCostanzo2016Dataset:
-  #   path: data/torchcell/dmi_costanzo2016_1e5
-  #   kwargs:
-  #     # batch_size: 1000 # 1e3
-  #     subset_n: 500000 # 5e5
+  # Costanzo 2016
+  SmfCostanzo2016Dataset:
+    path: data/torchcell/smf_costanzo2016
+    kwargs: null
+  DmfCostanzo2016Dataset:
+    path: data/torchcell/dmf_costanzo2016_1e5
+    kwargs:
+      # batch_size: 1000 # 1e3
+      subset_n: 500000 # 5e5
+  DmiCostanzo2016Dataset:
+    path: data/torchcell/dmi_costanzo2016_1e5
+    kwargs:
+      # batch_size: 1000 # 1e3
+      subset_n: 500000 # 5e5
 
-  # # Kuzmin 2018
-  # SmfKuzmin2018Dataset:
-  #   path: data/torchcell/smf_kuzmin2018
-  #   kwargs: null
-  # DmfKuzmin2018Dataset:
-  #   path: data/torchcell/dmf_kuzmin2018
-  #   kwargs: null
-  # TmfKuzmin2018Dataset:
-  #   path: data/torchcell/tmf_kuzmin2018
-  #   kwargs: null
-  # DmiKuzmin2018Dataset:
-  #   path: data/torchcell/dmi_kuzmin2018
-  #   kwargs: null
-  # TmiKuzmin2018Dataset:
-  #   path: data/torchcell/tmi_kuzmin2018
-  #   kwargs: null
+  # Kuzmin 2018
+  SmfKuzmin2018Dataset:
+    path: data/torchcell/smf_kuzmin2018
+    kwargs: null
+  DmfKuzmin2018Dataset:
+    path: data/torchcell/dmf_kuzmin2018
+    kwargs: null
+  TmfKuzmin2018Dataset:
+    path: data/torchcell/tmf_kuzmin2018
+    kwargs: null
+  DmiKuzmin2018Dataset:
+    path: data/torchcell/dmi_kuzmin2018
+    kwargs: null
+  TmiKuzmin2018Dataset:
+    path: data/torchcell/tmi_kuzmin2018
+    kwargs: null
 
-  # # Kuzmin 2020
-  # SmfKuzmin2020Dataset:
-  #   path: data/torchcell/smf_kuzmin2020
-  #   kwargs: null
-  # DmfKuzmin2020Dataset:
-  #   path: data/torchcell/dmf_kuzmin2020
-  #   kwargs: null
-  # TmfKuzmin2020Dataset:
-  #   path: data/torchcell/tmf_kuzmin2020
-  #   kwargs: null
-  # DmiKuzmin2020Dataset:
-  #   path: data/torchcell/dmi_kuzmin2020
-  #   kwargs: null
-  # TmiKuzmin2020Dataset:
-  #   path: data/torchcell/tmi_kuzmin2020
-  #   kwargs: null
+  # Kuzmin 2020
+  SmfKuzmin2020Dataset:
+    path: data/torchcell/smf_kuzmin2020
+    kwargs: null
+  DmfKuzmin2020Dataset:
+    path: data/torchcell/dmf_kuzmin2020
+    kwargs: null
+  TmfKuzmin2020Dataset:
+    path: data/torchcell/tmf_kuzmin2020
+    kwargs: null
+  DmiKuzmin2020Dataset:
+    path: data/torchcell/dmi_kuzmin2020
+    kwargs: null
+  TmiKuzmin2020Dataset:
+    path: data/torchcell/tmi_kuzmin2020
+    kwargs: null
 
   # Synth Leth
   SynthLethalityYeastSynthLethDbDataset:

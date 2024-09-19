@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 from torch_geometric.data import Dataset
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.graph import (
     filter_by_contained_genes,
     filter_by_date,

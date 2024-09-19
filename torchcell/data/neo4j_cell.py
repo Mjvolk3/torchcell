@@ -15,7 +15,7 @@ import networkx as nx
 import numpy as np
 from pydantic import field_validator
 from tqdm import tqdm
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from typing import Any, Dict
 from torch_geometric.data import HeteroData
@@ -252,7 +252,7 @@ class Neo4jCellDataset(Dataset):
         node_embeddings: list[BaseEmbeddingDataset] = None,
         deduplicator: Deduplicator = None,
         max_size: int = None,
-        uri: str = "bolt://gilahyper.zapto.org:7687",
+        uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
         password: str = "torchcell",
         transform: Callable | None = None,
@@ -766,58 +766,9 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    # query = """
-    #     MATCH (e:Experiment)<-[:GenotypeMemberOf]-(g:Genotype)<-[:PerturbationMemberOf]-(p:Perturbation)
-    #     WITH e, g, COLLECT(p) AS perturbations
-    #     WHERE ALL(p IN perturbations WHERE p.perturbation_type = 'deletion')
-    #     WITH DISTINCT e, perturbations
-    #     MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
-    #     MATCH (e)<-[:PhenotypeMemberOf]-(phen:Phenotype)
-    #     WHERE phen.graph_level = 'global'
-    #     AND (phen.label = 'smf' OR phen.label = 'dmf' OR phen.label = 'tmf')
-    #     AND phen.fitness_std < 0.005
-    #     MATCH (e)<-[:EnvironmentMemberOf]-(env:Environment)
-    #     MATCH (env)<-[:MediaMemberOf]-(m:Media {name: 'YEPD'})
-    #     MATCH (env)<-[:TemperatureMemberOf]-(t:Temperature {value: 30})
-    #     WITH e, ref, perturbations
-    #     WHERE ALL(p IN perturbations WHERE p.systematic_gene_name IN $gene_set)
-    #     RETURN e, ref
-    # """
-    with open("experiments/smf-dmf-tmf-001/query.cql", "r") as f:
+    
+    with open("experiments/003-fit-int/queries/test_query.cql", "r") as f:
         query = f.read()
-    ### Simplest case - works
-    # dataset = Neo4jCellDataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/neo4j"), query=query
-    # )
-    # print(dataset[0])
-    # print()
-
-    ### Add a Genome for sequence data - works
-    # genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    # genome.drop_chrmt()
-    # genome.drop_empty_go()
-    # dataset = Neo4jCellDataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/neo4j"), query=query, genome=genome
-    # )
-    # print(dataset[0])
-    # print()
-
-    ## Add Graph - works
-    # genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    # genome.drop_chrmt()
-    # genome.drop_empty_go()
-
-    # graph = SCerevisiaeGraph(
-    #     data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
-    # )
-    # dataset = Neo4jCellDataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/neo4j"),
-    #     query=query,
-    #     genome=genome,
-    #     graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
-    # )
-    # print(dataset[0])
-    # print()
 
     ### Add Embeddings
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
@@ -842,7 +793,7 @@ def main():
     )
     deduplicator = ExperimentDeduplicator()
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments-old-fitness/smf-dmf-tmf_1e02"
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/test_dataset"
     )
     dataset = Neo4jCellDataset(
         root=dataset_root,

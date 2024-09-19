@@ -10,7 +10,6 @@ import torch
 from torch_geometric.data import Data, InMemoryDataset
 
 
-
 class BaseEmbeddingDataset(InMemoryDataset, ABC):
     def __init__(
         self,
@@ -115,18 +114,18 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
                         duplicate_dna_windows_keys.append(key)
                     else:
                         # Merge the dna_windows dictionaries
-                        current_data_dict[data_item.id].dna_windows[
-                            key
-                        ] = data_item.dna_windows[key]
+                        current_data_dict[data_item.id].dna_windows[key] = (
+                            data_item.dna_windows[key]
+                        )
                 # Check for duplicate keys in embeddings
                 for key in data_item.embeddings:
                     if key in current_data_dict[data_item.id].embeddings:
                         duplicate_embeddings_keys.append(key)
                     else:
                         # Merge the embeddings dictionaries
-                        current_data_dict[data_item.id].embeddings[
-                            key
-                        ] = data_item.embeddings[key]
+                        current_data_dict[data_item.id].embeddings[key] = (
+                            data_item.embeddings[key]
+                        )
             else:
                 combined_data_list.append(data_item)
 

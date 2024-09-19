@@ -56,7 +56,7 @@ from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import DCellDataset, OneHotGeneDataset
 from torchcell.datasets.codon_frequency import CodonFrequencyDataset
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import (

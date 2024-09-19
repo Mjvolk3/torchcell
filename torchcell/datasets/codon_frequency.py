@@ -9,7 +9,7 @@ import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome, compute_codon_frequency
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

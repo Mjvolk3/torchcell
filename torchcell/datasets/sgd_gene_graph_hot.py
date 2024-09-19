@@ -8,7 +8,7 @@ import os
 import os.path as osp
 import torch
 from torch_geometric.data import Data
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from typing import Callable
 import networkx as nx
 

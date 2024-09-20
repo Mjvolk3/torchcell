@@ -11,7 +11,7 @@ from goatools.obo_parser import GODag
 from sortedcontainers import SortedSet
 from torch_geometric.data import download_url
 
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 import torchcell
 

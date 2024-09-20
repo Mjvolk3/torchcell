@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 # Assuming you've imported your necessary classes/methods at the top
 from torchcell.graph import SCerevisiaeGraph, filter_by_date, filter_go_IGI
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")

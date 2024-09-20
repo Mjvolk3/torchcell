@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import wandb
 from torchcell.datasets import NucleotideTransformerDataset
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import os.path as osp
 import os
 

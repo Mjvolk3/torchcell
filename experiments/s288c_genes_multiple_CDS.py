@@ -1,14 +1,14 @@
 # experiments/S288C_genes_multiple_CDS.py
-# [[experiments.S288C_genes_multiple_CDS]]
+# [[experiments.s288c_genes_multiple_CDS]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/S288C_genes_multiple_CDS.py
 # Test file: experiments/test_S288C_genes_multiple_CDS.py
 
 
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import numpy as np
 
 

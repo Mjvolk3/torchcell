@@ -44,7 +44,7 @@ from torchcell.datamodels import (
     GeneInteractionExperimentReference,
 )
 from torchcell.sequence import GeneSet, Genome
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
 from abc import ABC, abstractmethod
 from scipy.stats import t

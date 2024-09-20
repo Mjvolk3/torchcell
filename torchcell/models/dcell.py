@@ -258,7 +258,7 @@ def main():
         SmfCostanzo2016Dataset,
     )
     from torchcell.losses import DCellLoss
-    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

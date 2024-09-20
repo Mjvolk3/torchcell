@@ -1325,8 +1325,8 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] [[455 Proteins in S288C that are geq 1022 Amino Acids|dendron://torchcell/torchcell.models.esm2#455-proteins-in-S288C-that-are-geq-1022-amino-acids]]
 - [x] See if T5 Model can handle max protein size. "Here, we trained models that were affected by this limitations (ProtBERT, ProtAlbert, ProtElectra) first on proteins of length 512, then on proteins 1024. Only setting the length of the positional encoding to 40k after pre-training allowed the models to process protein sequences up to a length of 40k. ([Elnaggar et al., 2022, p. 7114](zotero://select/library/items/6FEQEKR6)) ([pdf](zotero://open-pdf/library/items/HMD9SDQ2?page=3&annotation=PTEJIYQC))" → We can embed all proteins with this.
-- [x] Figure out how to handle pseudogenes [[6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#6-pseudogenes-from-cmd-f-orf_trans_all_r64-4-1_20230830fasta]]
-- [x] Figure out how to identify noncoding → [[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
+- [x] Figure out how to handle pseudogenes [[6 Pseudogenes From cmd F orf_trans_all_R64-4-1_20230830.fasta|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#6-pseudogenes-from-cmd-f-orf_trans_all_r64-4-1_20230830fasta]]
+- [x] Figure out how to identify noncoding → [[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
 - [x] Compute protT5 embeddings → This had to be done on `Delta` because the model is not working for me on cpu currently. [Github Issue](https://github.com/agemagician/ProtTrans/issues/130). More on embeddings - [[Embed all Proteins Can Like 0 Non Expressed Protein|dendron://torchcell/torchcell.datasets.protT5#embed-all-proteins-can-like-0-non-expressed-protein]]
 - [x] Check if we can add in protein embeddings. → We used `protein_data` as an attribute, which prevents us from adding embeddings datasets.
 - [x] Close `genetic_interaction_score`,`dmf_costanzo_linear` [Wandb_Log](https://wandb.ai/zhao-group/torchcell/groups/2514760_3e78b6beb5b847285ef128c72f402d96b88fbb592e9ecb98a745b43db0a857c1/workspace?workspace=user-mjvolk3). You cannot learn the `genetic_interaction_score` by simply `one_hot` encoding the genes.
@@ -1501,7 +1501,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Unify `wandb` when training on multiple gpus previous is slurm job id and date. Don't think this will work across sweeps. Add agent id. → Agent id is not accessible. Instead I chose to use a hashing of the config. I also got rid of date because if the launch on different gpus happens right around midnight this could create some error. The Hashing method should be unique to the model config.
 - [x] Track value of `WT` embedding.
 - [x] Launch experiments on [[Delta|dendron://Kbase/computer.delta]]
-- [x] `DDP` is with genome `sqlite` → First tracked this error [[2023.09.09|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230909]], made some proper documentation [[DDP sqlite gff error|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#ddp-sqlite-gff-error]] → I still have not confirmed if this is the issue because there was another issue related to combining data
+- [x] `DDP` is with genome `sqlite` → First tracked this error [[2023.09.09|dendron://torchcell/user.Mjvolk3.torchcell.tasks#20230909]], made some proper documentation [[DDP sqlite gff error|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#ddp-sqlite-gff-error]] → I still have not confirmed if this is the issue because there was another issue related to combining data
 - [x] Fix issue related to combining data. → There is some dark magic 🪄 that I am unfamiliar with here, but I found a workable solution for now. [[Parse Genome and Return None For Dunder Add|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#parse-genome-and-return-none-for-dunder-add]]
 - [x] Configure `weight_decay` and `learning_rate`
 - [x] Launch [Wandb - 1e5 Deep Set DDP Find Unused](https://wandb.ai/zhao-group/torchcell/groups/2459252_ad9b6cf8e9b4acd6438053d0ff7a6d814888f8e2931913741695b28cdffa1030/workspace?workspace=user-mjvolk3)
@@ -1521,7 +1521,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 ## 2023.09.27
 
-- [x] Respose to [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2) → [[How input_ids_len Changes with Different Sequences|dendron://torchcell/torchcell.models.fungal_up_down_transformer#how-input_ids_len-changes-with-different-sequences]], [[Window Five Prime S288c Genes Less Than 1003 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#window-five-prime-S288C-genes-less-than-1003-bp]], [[Window Three Prime S288c Genes Less Than 300 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#window-three-prime-S288C-genes-less-than-300-bp]]
+- [x] Respose to [Github Issue Selecting Upstream Sequence](https://github.com/gagneurlab/SpeciesLM/issues/2) → [[How input_ids_len Changes with Different Sequences|dendron://torchcell/torchcell.models.fungal_up_down_transformer#how-input_ids_len-changes-with-different-sequences]], [[Window Five Prime S288c Genes Less Than 1003 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#window-five-prime-S288C-genes-less-than-1003-bp]], [[Window Three Prime S288c Genes Less Than 300 bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#window-three-prime-S288C-genes-less-than-300-bp]]
 - [x] [[Test_fungal_up_down_transformer|dendron://torchcell/tests.torchcell.models.test_fungal_up_down_transformer]]
 - [x] Document [[Fungal_up_down_transformer|dendron://torchcell/torchcell.models.fungal_up_down_transformer]] → Added some documentation and made docs. Still difficult for me to tell how the raw strings will render using sphinx.
 - [x] Generate new embeddings using upstream model change.
@@ -1595,7 +1595,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 ## 2023.09.23
 
-- [x] Test genome [[torchcell.sequence.genome.scerevisiae.S288C]] → [[Gene class looks more like ORF|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
+- [x] Test genome [[torchcell.sequence.genome.scerevisiae.s288c]] → [[Gene class looks more like ORF|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#gene-class-looks-more-like-orf]], forgot about 1 bp shift, this was messing up all windows [[Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---adjust--1-on-start-for-negative-sequence]]. We still report the start and end as they are reported in `gff` so the length of seq is `1bp` longer than `end-start`.
 - [x] Write fungal utr model → done but there are still some issues with deciding how to pad the upstream sequence. [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
 - [x] Email `SpeciesLM` Model authors about this [[ModelUsage.py Padding for Upstream Models|dendron://torchcell/torchcell.models.fungal_up_down_transformer#modelusagepy-padding-for-upstream-models]]
 - [x] Write fungal utr dataset → [[Model Variants Support|dendron://torchcell/torchcell.datasets.fungal_up_down_transformer#model-variants-support]]
@@ -1622,8 +1622,8 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 - [x] Make docs → Changed to `pyg` template as it is simpler
 - [x] Make  `pytest --cov=torchcell --cov-report html tests/` task → have to use full paths to executables.
-- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI S288C we cannot compute UTR lengths|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C_ncbi#using-the-ncbi-S288C-we-cannot-compute-utr-lengths]]
-- 🔲 Test genome [[torchcell.sequence.genome.scerevisiae.S288C]]
+- [x] Check non-coding exons `noncoding_exon` features to see if they can imply `3'utr`. There are no `exons` in the sgd `.gff` → [[Using the NCBI S288C we cannot compute UTR lengths|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_ncbi#using-the-ncbi-S288C-we-cannot-compute-utr-lengths]]
+- 🔲 Test genome [[torchcell.sequence.genome.scerevisiae.s288c]]
 
 ## 2023.09.21
 
@@ -1633,7 +1633,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 ## 2023.09.20
 
 - [x] Email Fungal UTR authors to clarify some of the 5 utr selections
-- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
+- [x] The genbank files `.gbff` contain all information in one file, which could be streamline for creating the genome class. See if it is worth converting to genbank files. → I explored [[GeneBank for Constructing Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c_gb#genebank-for-constructing-genome]] and decided against it for now. We show that any missing information can be recovered from various APIs [[GFF File Does not Contain EC Number|dendron://torchcell/torchcell.multidigraph.uniprot_api_ec#gff-file-does-not-contain-ec-number]]
 - [x] Complete coverage on data → [[Data|dendron://torchcell/torchcell.sequence.data]] made some progress
 - [x] Previous task was to organize Umap visualization overlays. Now delete since these are now invalid.
 - 🔲 Make  `pytest --cov=torchcell --cov-report html tests/` task
@@ -1657,9 +1657,9 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 
 ## 2023.09.19
 
-- [x] Clarify notes on [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence]]
-- [x] Add protein to `Genome` → [[Adding Protein to Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#adding-protein-to-genome]]
-- [x] Resolve start and stop codon issues → [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence]]
+- [x] Clarify notes on [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
+- [x] Add protein to `Genome` → [[Adding Protein to Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#adding-protein-to-genome]]
+- [x] Resolve start and stop codon issues → [[Selecting Gene Sequence|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence]]
 - [x] There is a very annoying issue where the gff annoation  `self.seq = str(self.fasta_dna[chr].seq[self.start - 1 : self.end])`. The issue is that gff files are genearlly 1-indexed. → I think we are able to mostly bypass having to rewrite the `calculate_window` functions in [[Data|dendron://torchcell/torchcell.sequence.data]] since we can just pass in `self.start-1`
 
 ## 2023.09.18
@@ -1991,7 +1991,7 @@ https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz ( sha256)
 - [x] Look into why `src/package` not typically used. Looks like `.egg` is generally not comitted to project. → it is fine to keep src.
 - 🔲 Make it so genome can call on methods with `__getitem__` like so `genome["YDR210W].seq`, `genome["YDR210W].window(6e4)`, `genome["YDR210W].window(6e4, is_max_size=False)`, `genome["YDR210W].window_5utr(1000)`, `genome["YDR210W].window_3utr(300)`, etc. Think we can do this by having a wrapper object around the db.
 - 🔲 Allow for indexing on gene name in torch datasets. `dataset[0]`, `dataset["YDR210W"]`
-- 🔲 Around 32 genes are under 6kb... need to find a way around this. Also made mistake thinking the nucleotide transformer could handle 60kb... whoops. We can still use the Enformer for these large windows. Could also use 3 embeddings to capture the gene with nt transformer. Looks like this is the largest gene in yeast `YKR054C, length: 12278` → [[S288C DNA length for DNA LLMs|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#S288C-dna-length-for-dna-llms]]
+- 🔲 Around 32 genes are under 6kb... need to find a way around this. Also made mistake thinking the nucleotide transformer could handle 60kb... whoops. We can still use the Enformer for these large windows. Could also use 3 embeddings to capture the gene with nt transformer. Looks like this is the largest gene in yeast `YKR054C, length: 12278` → [[S288C DNA length for DNA LLMs|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#S288C-dna-length-for-dna-llms]]
 
 ## 2023.08.03
 

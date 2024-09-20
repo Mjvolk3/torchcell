@@ -161,7 +161,7 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
 def main():
     from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     import os.path as osp
     import os
 

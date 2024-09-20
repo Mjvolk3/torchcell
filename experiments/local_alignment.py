@@ -2,7 +2,7 @@ from Bio import pairwise2
 from Bio import SeqIO
 from Bio.Seq import Seq
 
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import numpy as np
 import pandas as pd
 

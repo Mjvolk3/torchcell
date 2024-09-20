@@ -7,7 +7,7 @@ import pytest
 from dotenv import load_dotenv
 
 from torchcell.sequence import DnaSelectionResult
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 load_dotenv()
 

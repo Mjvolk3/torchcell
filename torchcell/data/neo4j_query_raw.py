@@ -445,7 +445,7 @@ if __name__ == "__main__":
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
     genome.drop_chrmt()

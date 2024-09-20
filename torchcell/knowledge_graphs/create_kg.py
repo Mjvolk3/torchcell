@@ -16,7 +16,7 @@ import time
 import certifi
 from torchcell.datasets import dataset_registry
 from torchcell.knowledge_graphs import dataset_adapter_map
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.graph import SCerevisiaeGraph
 
 import inspect

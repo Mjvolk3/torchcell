@@ -26,4 +26,4 @@ created: 1721590753227
 ## 2024.07.21
 
 - [x] After merge delete feature branch. Drop all stashes
-- [x] Add genes essentiality dataset. → requires fix on genome looks like SGD changed path names. → fixed url for [[torchcell.sequence.genome.scerevisiae.S288C]] but this doesn't contain gene data needed for essentiality. → in the works.
+- [x] Add genes essentiality dataset. → requires fix on genome looks like SGD changed path names. → fixed url for [[torchcell.sequence.genome.scerevisiae.s288c]] but this doesn't contain gene data needed for essentiality. → in the works.

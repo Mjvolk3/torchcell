@@ -2,7 +2,7 @@
 id: 1hgbsx08cn7ji8gfrv84w88
 title: costanzo2016
 desc: ''
-updated: 1705363909750
+updated: 1726857736361
 created: 1704437089340
 ---
 
@@ -250,7 +250,7 @@ class SmfCostanzo2016Dataset:
         """
         # Common attributes for both temperatures
         reference_genome = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         # Deal with different types of perturbations

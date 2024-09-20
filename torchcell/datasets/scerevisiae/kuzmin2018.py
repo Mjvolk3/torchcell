@@ -188,7 +188,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
         if row["smf_type"] == "query_smf":
@@ -423,7 +423,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -636,7 +636,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -853,7 +853,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -1054,7 +1054,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []

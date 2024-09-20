@@ -221,7 +221,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     ):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         # Deal with different types of perturbations
@@ -503,7 +503,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     ):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -810,7 +810,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="S288C"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []

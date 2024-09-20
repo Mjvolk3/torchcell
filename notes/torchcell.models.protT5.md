@@ -5,7 +5,7 @@ desc: ''
 updated: 1697581024465
 created: 1697572017828
 ---
-[[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
+[[Dubious ORFs are Unlikley to Encode an Expressed Protein|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#dubious-orfs-are-unlikley-to-encode-an-expressed-protein]]
 
 ## ProtT5 Embedding Input and Output
 

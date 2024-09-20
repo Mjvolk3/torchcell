@@ -26,8 +26,8 @@ notes
 ├── experiments.dmf_costanzo_deepset.results.01.md
 ├── experiments.dmf_costanzo_deepset.results.01.report.md
 ├── experiments.dmf_fitness_demo.md
-├── experiments.s288c_genes_multiple_CDS.md
-├── experiments.s288c_stop_start_codons.md
+├── experiments.S288C_genes_multiple_CDS.md
+├── experiments.S288C_stop_start_codons.md
 ├── meet.Sebastian-Lobentanzer.2023.12.18.md
 ├── mermaid-filter.err
 ├── neo4j.delta.md
@@ -131,9 +131,9 @@ notes
 ├── torchcell.neo4j_fitness_query.md
 ├── torchcell.ontology.tc_ontology.md
 ├── torchcell.sequence.data.md
-├── torchcell.sequence.genome.scerevisiae.s288c.md
-├── torchcell.sequence.genome.scerevisiae.s288c_gb.md
-├── torchcell.sequence.genome.scerevisiae.s288c_ncbi.md
+├── torchcell.sequence.genome.scerevisiae.S288C.md
+├── torchcell.sequence.genome.scerevisiae.S288C_gb.md
+├── torchcell.sequence.genome.scerevisiae.S288C_ncbi.md
 ├── torchcell.sgd.genome.md
 ├── torchcell.sgd.sequence.md
 ├── torchcell.sgd.validation.raw_structure.md

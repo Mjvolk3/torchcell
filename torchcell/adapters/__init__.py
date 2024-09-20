@@ -19,9 +19,9 @@ from .kuzmin2020_adapter import (
     TmiKuzmin2020Adapter,
 )
 
-from .sgd import GeneEssentialitySgdAdapter
+from .sgd_adapter import GeneEssentialitySgdAdapter
 
-from .synth_leth_db import (
+from .synth_leth_db_adapter import (
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
 )

@@ -246,7 +246,7 @@ class SmfCostanzo2016Dataset:
         """
         # Common attributes for both temperatures
         reference_genome = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
 
         # Deal with different types of perturbations

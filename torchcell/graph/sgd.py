@@ -255,7 +255,7 @@ async def download_gene_chunk(chunk, create_gene_fn, validate_flag):
 
 
 def main_get_all_genes():
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
     genome = SCerevisiaeGenome()
     locus_ids = list(genome.gene_set)
@@ -274,7 +274,7 @@ if __name__ == "__main__":
 
 
 # def main_get_all_genes():
-#     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+#     from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 #     genome = SCerevisiaeGenome()
 #     # genome.drop_chrmt()
@@ -293,7 +293,7 @@ if __name__ == "__main__":
 #     load_dotenv()
 #     DATA_ROOT = os.getenv("DATA_ROOT")
 #     from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
-#     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+#     from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 #     dmf_dataset = DmfCostanzo2016Dataset(
 #         root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e4"),

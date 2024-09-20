@@ -59,7 +59,7 @@ def plot_mean_std_with_specified_std(
 
 
 def main():
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
     from torchcell import datamodels
 
     wandb.init(mode="online", project="tcdb-explore")

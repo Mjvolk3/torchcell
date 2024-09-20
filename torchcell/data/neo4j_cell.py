@@ -44,9 +44,10 @@ from torchcell.datamodels import (
     GeneInteractionExperimentReference,
 )
 from torchcell.sequence import GeneSet, Genome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
 from abc import ABC, abstractmethod
+from scipy.stats import t
 
 log = logging.getLogger(__name__)
 
@@ -190,16 +191,19 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     # Add fitness phenotype data
     phenotype = data["experiment"].phenotype
     processed_graph["gene"].graph_level = phenotype.graph_level
-    processed_graph["gene"].label = phenotype.label
-    processed_graph["gene"].label_statistic = phenotype.label_statistic
+    processed_graph["gene"].label_name = phenotype.label_name
+    processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
     # TODO we actually want to do this renaming in the datamodel
     # We do it here to replicate behavior for downstream
     # Will break with anything other than fitness obviously
     # [[2024.08.12 - Making Sublcasses More Generic For Downstream Querying|dendron://torchcell/torchcell.datamodels.schema#20240812---making-sublcasses-more-generic-for-downstream-querying]]
     # processed_graph["gene"].label_value = phenotype.fitness
     # processed_graph["gene"].label_value_std = phenotype.fitness_std
-    processed_graph["gene"].label_value = phenotype.interaction
-    processed_graph["gene"].label_value_std = phenotype.p_value
+    processed_graph["gene"][phenotype.label_name] = phenotype[phenotype.label_name]
+    if phenotype.label_statistic_name is not None:
+        processed_graph["gene"][phenotype.label_statistic_name] = phenotype[
+            phenotype.label_statistic_name
+        ]
 
     # Mapping of node IDs to their new indices after filtering
     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
@@ -472,11 +476,11 @@ class Neo4jCellDataset(Dataset):
             cursor = txn.cursor()
             for idx, (key, value) in enumerate(cursor):
                 data = pickle.loads(value)
-                label = data["experiment"].phenotype.label
+                label_name = data["experiment"].phenotype.label_name
 
-                if label not in phenotype_label_index:
-                    phenotype_label_index[label] = []
-                phenotype_label_index[label].append(idx)
+                if label_name not in phenotype_label_index:
+                    phenotype_label_index[label_name] = []
+                phenotype_label_index[label_name].append(idx)
 
         self.close_lmdb()  # Close the LMDB environment
 
@@ -548,7 +552,7 @@ class ExperimentDeduplicator(Deduplicator):
         graph_levels = set(
             exp["experiment"].phenotype.graph_level for exp in duplicate_experiments
         )
-        labels = set(exp["experiment"].phenotype.label for exp in duplicate_experiments)
+        labels = set(exp["experiment"].phenotype.label_name for exp in duplicate_experiments)
 
         if len(graph_levels) > 1 or len(labels) > 1:
             raise ValueError(
@@ -576,7 +580,7 @@ class ExperimentDeduplicator(Deduplicator):
         # Create a new GeneInteractionPhenotype with the mean values
         mean_phenotype = GeneInteractionPhenotype(
             graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
-            label=duplicate_experiments[0]["experiment"].phenotype.label,
+            label=duplicate_experiments[0]["experiment"].phenotype.label_name,
             label_statistic=duplicate_experiments[0][
                 "experiment"
             ].phenotype.label_statistic,
@@ -766,7 +770,7 @@ def main():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    
+
     with open("experiments/003-fit-int/queries/test_query.cql", "r") as f:
         query = f.read()
 

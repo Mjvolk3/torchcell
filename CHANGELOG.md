@@ -1970,7 +1970,7 @@
 
 * print data ([`4ea041d`](https://github.com/Mjvolk3/torchcell/commit/4ea041dd451f1fca910e1934567b15365580fea1))
 
-* s288c check for db ([`0d9f398`](https://github.com/Mjvolk3/torchcell/commit/0d9f398824bd7a51af4144a21d54ff7e357c2345))
+* S288C check for db ([`0d9f398`](https://github.com/Mjvolk3/torchcell/commit/0d9f398824bd7a51af4144a21d54ff7e357c2345))
 
 * dmf deepset do, bnorm ([`570ecaf`](https://github.com/Mjvolk3/torchcell/commit/570ecaf6fe7442dd52b2268b3fcc4a39bd20aaa6))
 
@@ -2226,7 +2226,7 @@
 
 * scrap model, smf fitnes pred lin on nt tformer ([`7fe6334`](https://github.com/Mjvolk3/torchcell/commit/7fe63344402cdebaabd7c04f9dc39f46dd8fec7c))
 
-* s288c feature types ([`a236cd5`](https://github.com/Mjvolk3/torchcell/commit/a236cd5fef528e37e72cf4fa994cf689065d9ca3))
+* S288C feature types ([`a236cd5`](https://github.com/Mjvolk3/torchcell/commit/a236cd5fef528e37e72cf4fa994cf689065d9ca3))
 
 * dmypy json, not sure if needed ([`6ee6c36`](https://github.com/Mjvolk3/torchcell/commit/6ee6c36bb7a055484523623d7d7045cd3b9558ea))
 
@@ -2708,7 +2708,7 @@
 
 * print data ([`eda18f5`](https://github.com/Mjvolk3/torchcell/commit/eda18f5b0fe39ad70192d787bbe53b2fd1674616))
 
-* s288c check for db ([`194d014`](https://github.com/Mjvolk3/torchcell/commit/194d014657e950c9b32a6a9242d7e0a3bce8f3c6))
+* S288C check for db ([`194d014`](https://github.com/Mjvolk3/torchcell/commit/194d014657e950c9b32a6a9242d7e0a3bce8f3c6))
 
 * dmf deepset do, bnorm ([`43178f7`](https://github.com/Mjvolk3/torchcell/commit/43178f70c95e32715fe42dff7ee28b74d920f228))
 
@@ -2964,7 +2964,7 @@
 
 * scrap model, smf fitnes pred lin on nt tformer ([`a6d833f`](https://github.com/Mjvolk3/torchcell/commit/a6d833fbd1fd374dd4ffb357c32af7a7b5b1398d))
 
-* s288c feature types ([`c770f28`](https://github.com/Mjvolk3/torchcell/commit/c770f2886560520c321f160e1e60cae430d09057))
+* S288C feature types ([`c770f28`](https://github.com/Mjvolk3/torchcell/commit/c770f2886560520c321f160e1e60cae430d09057))
 
 * dmypy json, not sure if needed ([`29278d3`](https://github.com/Mjvolk3/torchcell/commit/29278d3df52ca7c23f9d553fa0a7008297642fce))
 

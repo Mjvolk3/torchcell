@@ -7,7 +7,7 @@ from torchcell.datasets import (
     OneHotGeneDataset,
     ProtT5Dataset,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 if __name__ == "__main__":
     from dotenv import load_dotenv

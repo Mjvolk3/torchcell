@@ -35,7 +35,7 @@ from torchcell.datasets import (
     CalmDataset,
     RandomEmbeddingDataset,
 )
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist

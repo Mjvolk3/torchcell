@@ -15,7 +15,7 @@ from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 if __name__ == "__main__":
     # genome

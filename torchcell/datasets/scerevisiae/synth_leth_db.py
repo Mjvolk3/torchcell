@@ -28,7 +28,7 @@ from torchcell.datamodels.schema import (
     Publication,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from pydantic import field_validator
 import re
 import logging

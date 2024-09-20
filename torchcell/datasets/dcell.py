@@ -29,7 +29,7 @@ from torchcell.graph import (
 )
 from torchcell.models import DCell, DCellLinear, dcell, dcell_from_networkx
 from torchcell.sequence import GeneSet, Genome
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 

@@ -45,31 +45,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Function to install a package and check for success
-install_package() {
-    package=$1
-    url=$2
-
-    echo "Installing $package..."
-    docker exec tc-neo4j python -m pip install $url >install_$package.log 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Failed to install $package. See install_$package.log for details."
-        exit 1
-    fi
-    echo "$package installed successfully."
-    sleep 5
-}
 
 docker exec tc-neo4j python -m pip install --upgrade pip
 # Install required packages inside the container
 docker exec tc-neo4j python -m pip uninstall torchcell -y
 
-install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
 docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
-# docker exec tc-neo4j python -m pip uninstall biocypher -y
-install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
-install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
-# install_package "memory-profiler" "memory-profiler"
+docker exec tc-neo4j python -m pip uninstall biocypher -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 

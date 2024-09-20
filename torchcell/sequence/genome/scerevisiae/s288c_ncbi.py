@@ -1,5 +1,5 @@
 # torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
-# [[torchcell.sequence.genome.scerevisiae.S288C_ncbi]]
+# [[torchcell.sequence.genome.scerevisiae.s288c_ncbi]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
 # Test file: torchcell/sequence/genome/scerevisiae/test_S288C_ncbi.py
 

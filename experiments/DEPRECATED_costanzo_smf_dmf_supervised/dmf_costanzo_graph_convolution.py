@@ -27,7 +27,7 @@ from torchcell.datasets import (
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import GraphAttention, GraphConvolution, Mlp
 from torchcell.multidigraph.graph import SCerevisiaeGraph
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.trainers import GraphConvRegressionTask
 
 log = logging.getLogger(__name__)

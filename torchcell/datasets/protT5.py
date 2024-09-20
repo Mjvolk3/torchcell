@@ -14,7 +14,7 @@ from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.protT5 import ProtT5
 from torchcell.sequence import GeneSet, ParsedGenome
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class ProtT5Dataset(BaseEmbeddingDataset):

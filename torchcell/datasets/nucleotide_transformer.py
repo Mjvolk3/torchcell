@@ -14,7 +14,7 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class NucleotideTransformerDataset(BaseEmbeddingDataset):

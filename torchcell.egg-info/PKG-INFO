@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.2.7
+Version: 0.2.8
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -77,4 +77,4 @@ Packaging: Add packing <!-- ![Python application](https://github.com/mjvolk3/tor
 
 Testing: ![Code Styling](https://github.com/mjvolk3/torchcell/workflows/Code%20Styling/badge.svg) [![codecov](https://codecov.io/gh/mjvolk3/torchcell/branch/main/graph/badge.svg)](https://codecov.io/gh/mjvolk3/torchcell)
 
-Docs to come soon!!
+Docs to come soon!!!

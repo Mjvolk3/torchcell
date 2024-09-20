@@ -1,7 +1,7 @@
-# torchcell/sequence/genome/scerevisiae/s288c.py
-# [[torchcell.sequence.genome.scerevisiae.s288c]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/s288c.py
-# Test file: torchcell/sequence/genome/scerevisiae/test_s288c.py
+# torchcell/sequence/genome/scerevisiae/S288C.py
+# [[torchcell.sequence.genome.scerevisiae.S288C]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C.py
+# Test file: torchcell/sequence/genome/scerevisiae/test_S288C.py
 
 import glob
 import gzip
@@ -400,7 +400,7 @@ class SCerevisiaeGenome(Genome):
         reference_genome = "S288C_reference_genome"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
-        self.sequence_s288c = "sequence/S288C_reference"
+        self.sequence_S288C = "sequence/S288C_reference"
         self.genome_version_full = reference_genome + "_" + self.genome_version
 
         self._dna_fasta_path: str = osp.join(
@@ -478,7 +478,7 @@ class SCerevisiaeGenome(Genome):
         """
         zipped_version = f"{self.genome_version_full}.tgz"
         url = osp.join(
-            self.sgd_base_url, self.sequence_s288c, "genome_releases", zipped_version
+            self.sgd_base_url, self.sequence_S288C, "genome_releases", zipped_version
         )
 
         save_dir = self.data_root

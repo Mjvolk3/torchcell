@@ -13,7 +13,7 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.esm2 import Esm2
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 
 class Esm2Dataset(BaseEmbeddingDataset):

@@ -11,7 +11,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 
 class RandomEmbeddingDataset(BaseEmbeddingDataset):

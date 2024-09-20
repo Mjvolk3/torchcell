@@ -32,7 +32,7 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.models import DeepSet, Mlp
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 
 # from wandb_osh.lightning_hooks import TriggerWandbSyncLightningCallback

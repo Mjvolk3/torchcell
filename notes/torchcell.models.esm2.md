@@ -31,9 +31,9 @@ Traceback (most recent call last):
 ValueError: Token length 1026 exceeds the model's maximum length of 1024.
 ```
 
-## 455 Proteins in s288c that are geq 1022 Amino Acids
+## 455 Proteins in S288C that are geq 1022 Amino Acids
 
-![](./assets/images/src.torchcell.models.esm2.md.455-proteins-in-s288c-that-are-1022-amino-acids.png)
+![](./assets/images/src.torchcell.models.esm2.md.455-proteins-in-S288C-that-are-1022-amino-acids.png)
 
 ```python
 load_dotenv()

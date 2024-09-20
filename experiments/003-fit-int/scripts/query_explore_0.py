@@ -5,7 +5,7 @@ from torchcell.graph import SCerevisiaeGraph
 from torchcell.datamodules import CellDataModule
 import os
 import json
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from tqdm import tqdm
 

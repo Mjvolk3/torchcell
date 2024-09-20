@@ -1,16 +1,16 @@
 ---
-id: 4cqsio17g9ah781p52q8q8g
-title: S288c_ncbi
+id: nxrhx6g926jjlmcqhhit4n1
+title: S288C_ncbi
 desc: ''
 updated: 1695438608971
 created: 1695437930099
 ---
 
-## Using the NCBI s288c we cannot compute UTR lengths
+## Using the NCBI S288C we cannot compute UTR lengths
 
 We copied the NCBI `gff` downloaded from [NCBI Genome Assembly R64](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000146045.2/) into `torchcell/data/sgd/genome/S288C_reference_genome_R64-4-1_20230830/ncbi_genomic.gff`
 
-![](./assets/images/Histogram_S_cerevisiae_s288c_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png)
+![](./assets/images/Histogram_S_cerevisiae_S288C_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png)
 
 Copying code here as it is in `main` and if we pursue the `ncbi` root we will need to overwrite it.
 
@@ -66,7 +66,7 @@ def main() -> None:
     # Plot histograms
     plt.figure(figsize=(12, 6))
     plt.suptitle(
-        "Histogram S cerevisiae s288c Genome CDS-Exon to get UTR\nTakeaway - All Exons match the CDS\nCannot compute UTRs from GFF"
+        "Histogram S cerevisiae S288C Genome CDS-Exon to get UTR\nTakeaway - All Exons match the CDS\nCannot compute UTRs from GFF"
     )
     plt.subplot(1, 2, 1)
     plt.hist(utr_5_lengths, bins=30, edgecolor="k", color="blue", alpha=0.7)
@@ -82,7 +82,7 @@ def main() -> None:
 
     plt.tight_layout()
     plt.savefig(
-        "notes/assets/images/Histogram_S_cerevisiae_s288c_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png"
+        "notes/assets/images/Histogram_S_cerevisiae_S288C_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png"
     )
     plt.show()
 

@@ -28,7 +28,7 @@ from torchcell.datasets import (
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSetTransformer, Mlp
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.trainers import RegressionTaskDeepSetTransformer
 
 log = logging.getLogger(__name__)

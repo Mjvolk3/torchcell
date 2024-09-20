@@ -2,7 +2,7 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726763358746
+updated: 1726777197524
 created: 1726425036900
 ---
 
@@ -43,7 +43,18 @@ created: 1726425036900
 ## 2024.09.19
 
 - [x] Check small build
-- [ ] Check large build
+- [x] Check large build → Running, looks a little faster than before not sure why.
+- [x] Get `raw_query` to work → had to just add publication key
+- [x] Fix circular import → moved `BaseEmbedding` to `data`
+
+- [ ] 
+- [ ]
+- [ ] Add
+
+- [ ] Change "interaction" to "gene_interaction"
+- [ ] Rebuild local database
+- [ ] Rebuild large database
+
 
 - [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
 

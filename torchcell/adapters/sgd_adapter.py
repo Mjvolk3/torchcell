@@ -67,7 +67,7 @@ if __name__ == "__main__":
     import multiprocessing as mp
     import math
     from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

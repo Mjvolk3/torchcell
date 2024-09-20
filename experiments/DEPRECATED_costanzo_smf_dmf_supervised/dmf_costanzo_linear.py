@@ -30,7 +30,7 @@ from torchcell.datasets import (
 )
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.models import DeepSet, Mlp, SimpleLinearModel
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.trainers import SimpleLinearRegressionTask
 
 log = logging.getLogger(__name__)

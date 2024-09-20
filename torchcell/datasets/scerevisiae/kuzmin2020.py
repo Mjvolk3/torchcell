@@ -108,14 +108,14 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         df = df[df["Mutant type"] == "Single mutant"]
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        df = df.dropna(subset=['Fitness'])
+        df = df.dropna(subset=["Fitness"])
         df = df.reset_index(drop=True)
         return df
-    
+
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         if "delta" in row["Allele1"]:
@@ -254,7 +254,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         # Process S5 to get double mutant data
         df_s5_double = df_s5[df_s5["Mutant type"] == "Double mutant"]
         df_s5_double = df_s5_double.dropna(subset=["Fitness"])
-        
+
         # Merge combined data with S5 to get standard deviations
         df = pd.merge(
             df_combined,
@@ -336,7 +336,7 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -550,7 +550,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row, phenotype_reference_std):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -769,13 +769,13 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        
+
         return df.reset_index(drop=True)
 
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -832,11 +832,13 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
+            gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
-        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(
+            gene_interaction=0.0, p_value=None
+        )
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,
@@ -972,13 +974,13 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         df = df.replace("'", "_prime", regex=True)
         df = df.replace("Δ", "_delta", regex=True)
-        
+
         return df.reset_index(drop=True)
 
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="s288c"
+            species="Saccharomyces cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -1053,11 +1055,13 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
+            gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
-        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(
+            gene_interaction=0.0, p_value=None
+        )
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

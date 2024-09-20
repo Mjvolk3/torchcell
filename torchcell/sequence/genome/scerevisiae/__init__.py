@@ -1,3 +1,3 @@
-from .s288c import SCerevisiaeGenome
+from .S288C import SCerevisiaeGenome
 
 __all__ = ["SCerevisiaeGenome"]

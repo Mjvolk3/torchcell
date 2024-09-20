@@ -1,6 +1,6 @@
 ---
 id: 9rijjyg8k6nasnucyb5g4s4
-title: S288c
+title: S288C
 desc: ''
 updated: 1697572209673
 created: 1694979540546
@@ -71,13 +71,13 @@ It seems the only genes with no start codons are genes with `five_prime_UTR_intr
 
 This is a summarizing figure of the sequence selection process.
 
-![](./assets/drawio/s288c_selecting_gene_sequence.drawio.png)
+![](./assets/drawio/S288C_selecting_gene_sequence.drawio.png)
 
 ### Selecting Gene Sequence - Based on CDS with Five prime UTR intron
 
 [YBL092W five prime UTR intron](https://www.yeastgenome.org/locus/S000000188)
 
-![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.YBL092W-five-prime-utr-intron.png)
+![](./assets/images/src.torchcell.sequence.genome.scerevisiae.S288C.md.YBL092W-five-prime-utr-intron.png)
 
 ### Selecting Gene Sequence - Adjust -1 on Start for Negative Sequence
 
@@ -176,9 +176,9 @@ dataset_five_prime.loc[dataset_five_prime['gene_id'] == "YBL092W", "five_prime_s
 
 ⛔️ Previous query was incorrect, which led to the following BLASTn
 
-![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.YBL092W-SpeciesLM-BLASTn.png)
+![](./assets/images/src.torchcell.sequence.genome.scerevisiae.S288C.md.YBL092W-SpeciesLM-BLASTn.png)
 
-![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.YBL092W-SpeciesLM_five_prime_utr-CDS-BLASTn.png)
+![](./assets/images/src.torchcell.sequence.genome.scerevisiae.S288C.md.YBL092W-SpeciesLM_five_prime_utr-CDS-BLASTn.png)
 
 BLASTn says that this sequence exists at chromosome = chrII ,start = 532762, end = 533764. This is much further from the position of "YBL092W". Again I cannot make sense of their selection. They must be using a different genome.
 
@@ -251,7 +251,7 @@ genome['YAL037W'].window(3000)
 
 Number of genes with multiple CDS: 1459
 
-[[s288c_genes_multiple_CDS|dendron://torchcell/experiments.s288c_genes_multiple_CDS]]
+[[S288C_genes_multiple_CDS|dendron://torchcell/experiments.S288C_genes_multiple_CDS]]
 
 `"data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/orf_coding_all_R64-3-1_20210421.fasta"`
 
@@ -293,7 +293,7 @@ dataset_five_prime.loc[dataset_five_prime['gene_id'] == "YIL111W", "five_prime_s
 >>>"AAAAACGATAAATTTGTGCTCGACTTGCAAGTAATGATATTGTTGAAGGATATCGACTTGCTCTCAAAGGACAACCAACCAACTTCTGAGAAGATTCCCGTCGATCCCTCGCACCTGACTCCATTGTGGAATATGTTGAAATTCATTTTCCTGTATGGAGGTAGTTATGATGATAAAAAGAACAACATGGAAAATAAAAGATATGTTGTAAACTTTGATGGGGTTGATTTGGACACAAAGATTGGGTATGAGCTTTTGGAGTACAAAAAATTTGTTAGTTTGCCCATGGCGTGGATTAAATGGGATAACGTTGTTATTGAAAACCACGCAAAAAGAAAAGAAATTGAAGGAAATATGATTCAAATATCAATAAACGAATTTGCACGATGGAGAAACGATAAGCTGAACAAAGCGCAGCAGCCGACGCGCAAACAGCGTTCTCTAAAAATACCTCGAGAGTTACCGGTTAAATTTCAACACCGTATGAGCATATCCTCCGTCCTCCAGCAGACATCCAAAGAACCATTTTGGTAAAACAATTCATCGGTCCGTTGGCATATGCTCATACATAGTTGCATTTTCGATTCATTAAATACTATTCATGTTAACATAATTCCATATAATCGTACTGTTTTGTCATTATTATATCGGCATGACACTCACCAATTTCTTTTTTTGATTTTGTATTGTTCGATAAGGCAACGAACGAGTACTCGAAAAAATGTCATGGACCCCTTAAAATTACTGAGGGGTTCAGAAAATACCGTGCAAAAGACGAAAAAAGACGAATTTCATTTGATTTATATTTTATAAATGACTGTTGCATTAAACAATAGACCAATTATTTCAATTTAATATTCTTTGCAGGAAACTTTCACAATGGAATAACGCCACATATTCATTGTAAAGAGCATGTATAACAAACACTGATTTTTGTTTTGAGTTTTAAAAGATATCCATTTACTAACATTCGAGGTGTACAAGCACAAGTTTTGCAGTGTTG"
 ```
 
-[[S288c_stop_start_codons|dendron://torchcell/experiments.s288c_stop_start_codons]]
+[[S288c_stop_start_codons|dendron://torchcell/experiments.S288C_stop_start_codons]]
 
 ```python
 no_start_codon
@@ -361,25 +361,25 @@ Updated 2023.09.24
 
 ### SpeciesLM FASTA S288c Genome Comparison for GitHub Issue - YAL037W
 
-[[Selecting Gene Sequence - YAL037W Normal Gene Selection|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---yal037w-normal-gene-selection]]
+[[Selecting Gene Sequence - YAL037W Normal Gene Selection|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence---yal037w-normal-gene-selection]]
 
 ![](./assets/images/SpeciesLM-FASTA-S288c_Genome-YAL037W.png)
 
 ### SpeciesLM FASTA S288c Genome Comparison for GitHub Issue - YDL061C
 
-[[Selecting Gene Sequence - YDL061C upsteam five prime UTR intron|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---ydl061c-upsteam-five-prime-utr-intron]]
+[[Selecting Gene Sequence - YDL061C upsteam five prime UTR intron|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence---ydl061c-upsteam-five-prime-utr-intron]]
 
 ![](./assets/images/SpeciesLM-FASTA-S288c_Genome-YDL061C.png)
 
 ### SpeciesLM FASTA S288c Genome Comparison for GitHub Issue - YIL111W
 
-[[Selecting Gene Sequence - Genes with 2 CDS and First CDS is 1bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---genes-with-2-cds-and-first-cds-is-1bp]]
+[[Selecting Gene Sequence - Genes with 2 CDS and First CDS is 1bp|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence---genes-with-2-cds-and-first-cds-is-1bp]]
 
 ![](./assets/images/SpeciesLM-FASTA-S288c_Genome-YIL111W.png)
 
 ### SpeciesLM FASTA S288c Genome Comparison for GitHub Issue - YBL092W
 
-[[Selecting Gene Sequence - YBL092W upsteam five prime UTR intron|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c#selecting-gene-sequence---ybl092w-upsteam-five-prime-utr-intron]]
+[[Selecting Gene Sequence - YBL092W upsteam five prime UTR intron|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C#selecting-gene-sequence---ybl092w-upsteam-five-prime-utr-intron]]
 
 ![](./assets/images/SpeciesLM-FASTA-S288c_Genome-YBL092W.png)
 
@@ -517,7 +517,7 @@ self.db = gffutils.create_db(
 
 SGD YAR064W Pseudogene with Regulation Interactions. We should keep genes if there are in anyway tied to other genes via any of the biological networks. This isn't absolutely necessary, but for now it is a nice heuristic with yeast.
 
-![](./assets/images/src.torchcell.sequence.genome.scerevisiae.s288c.md.sgd-YAR064W-pseudogene-with-regulation-interactions.png)
+![](./assets/images/src.torchcell.sequence.genome.scerevisiae.S288C.md.sgd-YAR064W-pseudogene-with-regulation-interactions.png)
 
 ## Dubious ORFs are Unlikley to Encode an Expressed Protein
 

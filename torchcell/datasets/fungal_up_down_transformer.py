@@ -18,7 +18,7 @@ from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
 from torchcell.sequence import GeneSet, ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
 
 class FungalUpDownTransformerDataset(BaseEmbeddingDataset):

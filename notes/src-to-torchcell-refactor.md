@@ -55,6 +55,6 @@ src.torchcell.datasets.scerevisiae.costanzo2016.md	-->	torchcell.datasets.scerev
 src.torchcell.datasets.scerevisiae.fungal_utr.md	-->	torchcell.datasets.scerevisiae.fungal_utr.md
 src.torchcell.sgd.validation.raw_structure.md	-->	torchcell.sgd.validation.raw_structure.md
 src.torchcell.graph.validation.locus_related.locus.md	-->	torchcell.graph.validation.locus_related.locus.md
-src.torchcell.sequence.genome.scerevisiae.s288c.md	-->	torchcell.sequence.genome.scerevisiae.s288c.md
-src.torchcell.sequence.genome.scerevisiae.s288c_gb.md	-->	torchcell.sequence.genome.scerevisiae.s288c_gb.md
-src.torchcell.sequence.genome.scerevisiae.s288c_ncbi.md	-->	torchcell.sequence.genome.scerevisiae.s288c_ncbi.md```
+src.torchcell.sequence.genome.scerevisiae.S288C.md	-->	torchcell.sequence.genome.scerevisiae.S288C.md
+src.torchcell.sequence.genome.scerevisiae.S288C_gb.md	-->	torchcell.sequence.genome.scerevisiae.S288C_gb.md
+src.torchcell.sequence.genome.scerevisiae.S288C_ncbi.md	-->	torchcell.sequence.genome.scerevisiae.S288C_ncbi.md```

@@ -5,7 +5,7 @@ from omegaconf import DictConfig, OmegaConf
 import wandb
 from tqdm import tqdm
 from dotenv import load_dotenv
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
 from torchcell.datamodules import CellDataModule
 from torchcell.utils import format_scientific_notation

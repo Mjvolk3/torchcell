@@ -8,6 +8,7 @@ from typing import List, Union, Dict, Type, Optional, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 from torchcell.datamodels.pydant import ModelStrict
 import math
+
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
 
@@ -425,19 +426,23 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
     graph_level: str = "hyperedge"
-    label_name: str = "interaction"
+    # UGH this should be gene interaction
+    label_name: str = "gene_interaction"
     label_statistic_name: str = "p_value"
-    interaction: float = Field(
-        description="""epsilon, tau, or analogous interaction value.
+    gene_interaction: float = Field(
+        description="""epsilon, tau, or analogous gene interaction value.
         Computed from composite fitness phenotypes."""
     )
-    p_value: float | None = Field(default=None, description="p-value of interaction")
+    p_value: float | None = Field(
+        default=None, description="p-value of gene interaction"
+    )
 
-    @field_validator("interaction")
+    @field_validator("gene_interaction")
     def validate_fitness(cls, v):
         if math.isnan(v):
-            raise ValueError("Interaction cannot be NaN")
+            raise ValueError("Gene interaction cannot be NaN")
         return v
+
     # IDEA
     # This is going to be standard for all child classes of Phenotype
     # This could alternatively be moved to testing

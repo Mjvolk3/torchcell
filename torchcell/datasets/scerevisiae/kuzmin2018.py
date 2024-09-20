@@ -188,7 +188,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
         # genotype
         if row["smf_type"] == "query_smf":
@@ -423,7 +423,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -636,7 +636,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
     def create_experiment(dataset_name, row, phenotype_reference_std):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -853,7 +853,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -901,12 +901,12 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
+            gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,
@@ -1054,7 +1054,7 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -1118,12 +1118,12 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
+            gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
             p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

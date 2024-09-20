@@ -27,7 +27,7 @@ from torchcell.multidigraph.validation.locus_related.locus import (
     validate_data,
 )
 
-# Copy paste from the s288c gff file
+# Copy paste from the S288C gff file
 # Parent=YBL105C_id001,YBL105C_id002;Name=YBL105C_CDS;orf_classification=Verified;protein_id=UniProtKB:P24583
 
 

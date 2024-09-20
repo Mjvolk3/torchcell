@@ -1,7 +1,7 @@
-# torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
-# [[torchcell.sequence.genome.scerevisiae.s288c_ncbi]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/s288c_ncbi.py
-# Test file: torchcell/sequence/genome/scerevisiae/test_s288c_ncbi.py
+# torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
+# [[torchcell.sequence.genome.scerevisiae.S288C_ncbi]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
+# Test file: torchcell/sequence/genome/scerevisiae/test_S288C_ncbi.py
 
 import glob
 import gzip
@@ -355,7 +355,7 @@ class SCerevisiaeGenome(Genome):
         genome_reference = "S288C_genome_reference"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
-        self.sequence_s288c = "sequence/S288C_reference"
+        self.sequence_S288C = "sequence/S288C_reference"
         self.genome_version_full = genome_reference + "_" + self.genome_version
 
         self._dna_fasta_path: str = osp.join(
@@ -426,7 +426,7 @@ class SCerevisiaeGenome(Genome):
         """
         zipped_version = f"{self.genome_version_full}.tgz"
         url = osp.join(
-            self.sgd_base_url, self.sequence_s288c, "genome_releases", zipped_version
+            self.sgd_base_url, self.sequence_S288C, "genome_releases", zipped_version
         )
 
         save_dir = self.data_root
@@ -721,7 +721,7 @@ def main() -> None:
     # Plot histograms
     plt.figure(figsize=(12, 6))
     plt.suptitle(
-        "Histogram S cerevisiae s288c Genome CDS-Exon to get UTR\nTakeaway - All Exons match the CDS\nCannot compute UTRs from GFF"
+        "Histogram S cerevisiae S288C Genome CDS-Exon to get UTR\nTakeaway - All Exons match the CDS\nCannot compute UTRs from GFF"
     )
     plt.subplot(1, 2, 1)
     plt.hist(utr_5_lengths, bins=30, edgecolor="k", color="blue", alpha=0.7)
@@ -737,7 +737,7 @@ def main() -> None:
 
     plt.tight_layout()
     plt.savefig(
-        "notes/assets/images/Histogram_S_cerevisiae_s288c_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png"
+        "notes/assets/images/Histogram_S_cerevisiae_S288C_Genome_CDS-Exon_to_get_UTR_cannot_compute_UTRs_from_GFF.png"
     )
     plt.show()
 

@@ -53,7 +53,7 @@ from torchcell.models.llm import NucleotideModel
 from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet, Genome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 from attrs import define, field
 from neo4j import GraphDatabase
 

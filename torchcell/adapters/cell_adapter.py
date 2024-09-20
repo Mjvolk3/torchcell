@@ -46,6 +46,14 @@ class CellAdapter:
         self.event = 0
         wandb.init()
         self.log_method_table()
+        wandb.log(
+            {
+                "current_adapter_dataset_name": self.dataset.name,
+                "current_adapter_dataset_start_time": datetime.now().strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            }
+        )
 
         # Supported methods
         self.node_methods = [

@@ -232,7 +232,7 @@ if __name__ == "__main__":
     bc.write_edges(adapter.get_edges())
     bc.write_import_call()
     bc.write_schema_info(as_node=True)
-    bc.summary()
+    # bc.summary()
 
     # ## Dmf
     # bc = BioCypher(

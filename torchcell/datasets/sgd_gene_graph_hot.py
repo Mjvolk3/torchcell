@@ -170,7 +170,7 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
 
 def main():
     from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
     DATA_ROOT = os.getenv("DATA_ROOT")
     genome = SCerevisiaeGenome(data_root=osp.join(DATA_ROOT, "data/sgd/genome"))

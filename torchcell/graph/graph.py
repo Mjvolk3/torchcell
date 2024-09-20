@@ -35,7 +35,7 @@ from torch_geometric.utils import from_networkx
 from tqdm import tqdm
 
 from torchcell.sequence import GeneSet, Genome, ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 import torchcell
 
 log = logging.getLogger(__name__)

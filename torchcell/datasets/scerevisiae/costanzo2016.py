@@ -221,7 +221,7 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
     ):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
 
         # Deal with different types of perturbations
@@ -503,7 +503,7 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
     ):
         # Common attributes for both temperatures
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
         # genotype
         perturbations = []
@@ -810,7 +810,7 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
     @staticmethod
     def create_experiment(dataset_name, row):
         genome_reference = ReferenceGenome(
-            species="saccharomyces Cerevisiae", strain="s288c"
+            species="saccharomyces Cerevisiae", strain="S288C"
         )
 
         perturbations = []
@@ -907,11 +907,11 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            interaction=row["Genetic interaction score (ε)"], p_value=row["P-value"]
+            gene_interaction=row["Genetic interaction score (ε)"], p_value=row["P-value"]
         )
 
         # By definition, the reference interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

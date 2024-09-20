@@ -101,7 +101,7 @@ gene interaction phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        interaction: float
+        gene_interaction: float
         p_value: float
         serialized_data: str
 

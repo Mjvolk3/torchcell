@@ -242,7 +242,7 @@ def main():
     import os
     from dotenv import load_dotenv
     from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.sequence.genome.scerevisiae.S288C import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

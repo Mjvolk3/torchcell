@@ -97,7 +97,7 @@ We can search these terms on the AmiGO2.
 [GO:0005671 AmiGO2](https://amigo.geneontology.org/amigo/medial_search?q=GO%3A0005671&searchtype=all)
 [GO:0051312 AmiGO2](https://amigo.geneontology.org/amigo/medial_search?q=GO%3A0051312&searchtype=all)
 
-All of these terms are obsolete. We can assume that terms that don't show up in the `go_dag` are deprecated. We do this in [[S288c Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.s288c]]. Here is the code snippet that does this.
+All of these terms are obsolete. We can assume that terms that don't show up in the `go_dag` are deprecated. We do this in [[S288c Genome|dendron://torchcell/torchcell.sequence.genome.scerevisiae.S288C]]. Here is the code snippet that does this.
 
 ```python
 for term in feature.attributes["Ontology_term"]:

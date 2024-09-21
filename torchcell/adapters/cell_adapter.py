@@ -552,14 +552,14 @@ class CellAdapter:
         graph_level = phenotype.graph_level
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
-        interaction = phenotype.interaction
+        gene_interaction = phenotype.gene_interaction
         p_value = phenotype.p_value
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
-            "interaction": interaction,
+            "gene_interaction": gene_interaction,
             "p_value": p_value,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
@@ -704,14 +704,14 @@ class CellAdapter:
             graph_level = phenotype.graph_level
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
-            interaction = phenotype.interaction
+            gene_interaction = phenotype.gene_interaction
             p_value = phenotype.p_value
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
-                "interaction": interaction,
+                "gene_interaction": gene_interaction,
                 "p_value": p_value,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }

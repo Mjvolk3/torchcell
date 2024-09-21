@@ -1,7 +1,9 @@
-# torchcell/sequence/genome/scerevisiae/S288C.py
-# [[torchcell.sequence.genome.scerevisiae.S288C]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C.py
-# Test file: torchcell/sequence/genome/scerevisiae/test_S288C.py
+# torchcell/sequence/genome/scerevisiae/s288c
+# [[torchcell.sequence.genome.scerevisiae.s288c]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/s288c
+# Test file: tests/torchcell/sequence/genome/scerevisiae/test_s288c.py
+
+
 
 import glob
 import gzip

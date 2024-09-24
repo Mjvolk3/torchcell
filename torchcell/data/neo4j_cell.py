@@ -7,7 +7,6 @@ import json
 import logging
 import os
 import os.path as osp
-import pickle
 from collections.abc import Callable
 import lmdb
 import networkx as nx
@@ -15,42 +14,20 @@ from pydantic import field_validator
 from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
-from typing import Any, Dict
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
-
-from torchcell.datamodels import (
-    Environment,
-    Genotype,
-    FitnessExperiment,
-    FitnessExperimentReference,
-    FitnessPhenotype,
-    Media,
-    ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
-    SgaNatMxDeletionPerturbation,
-    SgaDampPerturbation,
-    SgaSuppressorAllelePerturbation,
-    SgaTsAllelePerturbation,
-    Temperature,
-    Experiment,
-    ExperimentReference,
-    MeanDeletionPerturbation,
-    ExperimentReference,
-    GeneInteractionPhenotype,
-    GeneInteractionExperiment,
-    GeneInteractionExperimentReference,
-)
-from torchcell.datamodels import Converter, GeneEssentialityToFitnessConverter
+from torchcell.datamodels import Converter
 from torchcell.data.deduplicate import ExperimentDeduplicator, Deduplicator
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jQueryRaw
-import os
-import lmdb
-import pickle
+from torchcell.datamodels import ExperimentType, ExperimentReferenceType
+from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
 from typing import Type, Optional
 from enum import Enum, auto
+from torchcell.datamodels.schema import (
+    EXPERIMENT_TYPE_MAP,
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+)
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +65,7 @@ def create_embedding_graph(
 
 
 # @profile
-def to_cell_data(graphs: Dict[str, nx.Graph]) -> HeteroData:
+def to_cell_data(graphs: dict[str, nx.Graph]) -> HeteroData:
     hetero_data = HeteroData()
 
     # Get the node identifiers from the "base" graph
@@ -153,8 +130,22 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     return G
 
 
-def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
-    processed_graph = HeteroData()  # breakpoint here
+def process_graph(
+    cell_graph: HeteroData, data: dict[str, ExperimentType | ExperimentReferenceType]
+) -> HeteroData:
+    if "experiment" not in data or "experiment_reference" not in data:
+        raise ValueError(
+            "Data must contain both 'experiment' and 'experiment_reference' keys"
+        )
+
+    if not isinstance(data["experiment"], ExperimentType) or not isinstance(
+        data["experiment_reference"], ExperimentReferenceType
+    ):
+        raise TypeError(
+            "'experiment' and 'experiment_reference' must be instances of ExperimentType and ExperimentReferenceType respectively"
+        )
+
+    processed_graph = HeteroData()
 
     # Nodes to remove based on the perturbations
     nodes_to_remove = {
@@ -186,11 +177,13 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     processed_graph["gene"].graph_level = phenotype.graph_level
     processed_graph["gene"].label_name = phenotype.label_name
     processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
-    processed_graph["gene"][phenotype.label_name] = phenotype[phenotype.label_name]
+    processed_graph["gene"][phenotype.label_name] = getattr(
+        phenotype, phenotype.label_name
+    )
     if phenotype.label_statistic_name is not None:
-        processed_graph["gene"][phenotype.label_statistic_name] = phenotype[
-            phenotype.label_statistic_name
-        ]
+        processed_graph["gene"][phenotype.label_statistic_name] = getattr(
+            phenotype, phenotype.label_statistic_name
+        )
 
     # Mapping of node IDs to their new indices after filtering
     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
@@ -257,6 +250,7 @@ class Neo4jCellDataset(Dataset):
         converter: Optional[Type[Converter]] = None,
         deduplicator: Optional[Type[Deduplicator]] = None,
         aggregator: Optional[Type[Aggregator]] = None,
+        overwrite_intermediates: bool = False,
         max_size: int = None,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
@@ -269,13 +263,15 @@ class Neo4jCellDataset(Dataset):
         # Here for straight pass through - Fails without...
         self.env = None
         self.root = root
-
+        self.overwrite_intermediates = overwrite_intermediates
         self._phenotype_label_index = None
 
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
 
         self.raw_db = self.load_raw(uri, username, password, root, query, self.genome)
+
+        print()
 
         self.converter = (
             converter(root=self.root, query=self.raw_db) if converter else None
@@ -325,11 +321,11 @@ class Neo4jCellDataset(Dataset):
 
     def _determine_processing_steps(self):
         steps = [ProcessingStep.RAW]
-        if self.converter:
+        if self.converter is not None:
             steps.append(ProcessingStep.CONVERSION)
-        if self.deduplicator:
+        if self.deduplicator is not None:
             steps.append(ProcessingStep.DEDUPLICATION)
-        if self.aggregator:
+        if self.aggregator is not None:
             steps.append(ProcessingStep.AGGREGATION)
         steps.append(ProcessingStep.PROCESSED)
         return steps
@@ -464,12 +460,20 @@ class Neo4jCellDataset(Dataset):
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
-            data = pickle.loads(serialized_data)
-            subsetted_graph = process_graph(self.cell_graph, data)
-            # if self.transform:
-            #     subsetted_graph = self.transform(subsetted_graph)
-            # TODO consider clearing env on every get so we can pickle
-            # self.env = None
+            data = json.loads(serialized_data.decode("utf-8"))
+            experiment_class = EXPERIMENT_TYPE_MAP[
+                data["experiment"]["experiment_type"]
+            ]
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                data["experiment_reference"]["experiment_reference_type"]
+            ]
+            reconstructed_data = {
+                "experiment": experiment_class(**data["experiment"]),
+                "experiment_reference": experiment_reference_class(
+                    **data["experiment_reference"]
+                ),
+            }
+            subsetted_graph = process_graph(self.cell_graph, reconstructed_data)
             return subsetted_graph
 
     def _init_lmdb_read(self):
@@ -505,12 +509,23 @@ class Neo4jCellDataset(Dataset):
         with self.env.begin() as txn:
             cursor = txn.cursor()
             for idx, (key, value) in enumerate(cursor):
-                data = pickle.loads(value)
-                label_name = data["experiment"].phenotype.label_name
+                try:
+                    data = json.loads(value.decode("utf-8"))
+                    experiment_class = EXPERIMENT_TYPE_MAP[
+                        data["experiment"]["experiment_type"]
+                    ]
+                    experiment = experiment_class(**data["experiment"])
+                    label_name = experiment.phenotype.label_name
 
-                if label_name not in phenotype_label_index:
-                    phenotype_label_index[label_name] = []
-                phenotype_label_index[label_name].append(idx)
+                    if label_name not in phenotype_label_index:
+                        phenotype_label_index[label_name] = []
+                    phenotype_label_index[label_name].append(idx)
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                except Exception as e:
+                    print(
+                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                    )
 
         self.close_lmdb()  # Close the LMDB environment
 
@@ -538,6 +553,10 @@ def main():
     from dotenv import load_dotenv
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.datamodules import CellDataModule
+    from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
+        GeneEssentialityToFitnessConverter,
+    )
+
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )

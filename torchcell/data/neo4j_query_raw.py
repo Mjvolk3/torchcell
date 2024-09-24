@@ -12,7 +12,6 @@ from attrs import define, field
 import os.path as osp
 import concurrent.futures
 from typing import Union
-from torchcell.datamodels.schema import *
 from torchcell.datamodels.schema import (
     EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
@@ -23,7 +22,6 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from torchcell.sequence import GeneSet
 import logging
-import json
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

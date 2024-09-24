@@ -11,6 +11,10 @@ from torchcell.datamodels.schema import (
     FitnessPhenotype,
 )
 from torchcell.datamodels.conversion import Converter, ConversionEntry, ConversionMap
+from typing import Callable, Type, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
 
 
 def gene_essentiality_to_fitness_experiment(
@@ -42,7 +46,7 @@ def gene_essentiality_to_fitness_reference(
 
 
 class GeneEssentialityToFitnessConverter(Converter):
-    def __init__(self, root: str, query):
+    def __init__(self, root: str, query: "Neo4jQueryRaw"):
         super().__init__(root, query)
 
     @property

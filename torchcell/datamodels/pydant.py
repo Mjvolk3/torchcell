@@ -16,3 +16,4 @@ class ModelStrictArbitrary(BaseModel):
         extra = "forbid"
         frozen = True
         arbitrary_types_allowed = True
+

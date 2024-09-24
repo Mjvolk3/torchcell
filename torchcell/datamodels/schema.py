@@ -426,7 +426,6 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
     graph_level: str = "hyperedge"
-    # UGH this should be gene interaction
     label_name: str = "gene_interaction"
     label_statistic_name: str = "p_value"
     gene_interaction: float = Field(

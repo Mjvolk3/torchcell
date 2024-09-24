@@ -75,7 +75,8 @@ class Converter(ABC):
     def convert(self, data: dict) -> dict:
         if "experiment" not in data or "experiment_reference" not in data:
             raise ValueError(
-                "Input data must contain both 'experiment' and 'experiment_reference' keys"
+                "Input data must contain both 'experiment' and "
+                "'experiment_reference' keys"
             )
 
         converted_data = {}

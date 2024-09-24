@@ -17,7 +17,7 @@ from torch_geometric.data import Dataset
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datamodels import Converter
-from torchcell.data.deduplicate import ExperimentDeduplicator, Deduplicator
+from torchcell.data.deduplicate import MeanExperimentDeduplicator, Deduplicator
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.datamodels import ExperimentType, ExperimentReferenceType
@@ -601,7 +601,7 @@ def main():
             "fudt_5prime": fudt_5prime_dataset,
         },
         converter=GeneEssentialityToFitnessConverter,
-        deduplicator=ExperimentDeduplicator,
+        deduplicator=MeanExperimentDeduplicator,
         max_size=int(1e2),
     )
     print(len(dataset))

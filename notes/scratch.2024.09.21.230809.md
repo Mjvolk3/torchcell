@@ -1,0 +1,8 @@
+---
+id: j30y0u0sbvbrg443blm2fc0
+title: '230809'
+desc: ''
+updated: 1726978112166
+created: 1726978091479
+---
+serialized_data: {"experiment_type": "gene interaction", "dataset_name": "TmiKuzmin2018Dataset", "genotype": {"perturbations": [{"systematic_gene_name": "YBR030W", "perturbed_gene_name": "rkm3_delta", "description": "Deletion via KanMX or NatMX gene replacement", "perturbation_type": "deletion", "deletion_description": "Deletion via KanMX gene replacement.", "deletion_type": "KanMX", "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.", "strain_id": "YBR030W+YOR021C_tm2720", "kanmx_deletion_type": "SGA"}, {"systematic_gene_name": "YGR004W", "perturbed_gene_name": "pex31_delta", "description": "Deletion via KanMX or NatMX gene replacement", "perturbation_type": "deletion", "deletion_description": "Deletion via KanMX gene replacement.", "deletion_type": "KanMX", "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.", "strain_id": "YGR004W_dma1779", "kanmx_deletion_type": "SGA"}, {"systematic_gene_name": "YOR021C", "perturbed_gene_name": "sfm1_delta", "description": "Deletion via KanMX or NatMX gene replacement", "perturbation_type": "deletion", "deletion_description": "Deletion via KanMX gene replacement.", "deletion_type": "KanMX", "kan_mx_description": "KanMX Deletion Perturbation information specific to SGA experiments.", "strain_id": "YBR030W+YOR021C_tm2720", "kanmx_deletion_type": "SGA"}]}, "environment": {"media": {"name": "YEPD", "state": "solid"}, "temperature": {"value": 30.0, "unit": "Celsius"}}, "phenotype": {"graph_level": "hyperedge", "label_name": "interaction", "label_statistic_name": "p_value", "interaction": -0.017921, "p_value": 0.3103}}

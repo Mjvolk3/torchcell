@@ -21,4 +21,7 @@ functions = [
     "post_process",
 ]
 
-__all__ = data + deduplicators + dataset
+
+gene_essentiality_to_fitness = ["GeneEssentialityToFitnessConverter"]
+
+__all__ = data + deduplicators + dataset + functions

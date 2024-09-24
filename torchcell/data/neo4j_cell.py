@@ -9,10 +9,8 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable
-import hashlib
 import lmdb
 import networkx as nx
-import numpy as np
 from pydantic import field_validator
 from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
@@ -43,23 +41,18 @@ from torchcell.datamodels import (
     GeneInteractionExperiment,
     GeneInteractionExperimentReference,
 )
+from torchcell.datamodels import Converter, GeneEssentialityToFitnessConverter
+from torchcell.data.deduplicate import ExperimentDeduplicator, Deduplicator
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jQueryRaw
-from abc import ABC, abstractmethod
-from scipy.stats import t
+import os
+import lmdb
+import pickle
+from typing import Type, Optional
+from enum import Enum, auto
 
 log = logging.getLogger(__name__)
-
-
-class Deduplicator(ABC):
-    @abstractmethod
-    def duplicate_check(self, data: Any) -> dict[str, list[int]]: ...
-
-    @abstractmethod
-    def create_mean_entry(
-        self, duplicate_experiments: list[dict[str, Any]]
-    ) -> dict[str, Experiment | ExperimentReference]: ...
 
 
 class ParsedGenome(ModelStrictArbitrary):
@@ -193,12 +186,6 @@ def process_graph(cell_graph: HeteroData, data: dict[str, Any]) -> HeteroData:
     processed_graph["gene"].graph_level = phenotype.graph_level
     processed_graph["gene"].label_name = phenotype.label_name
     processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
-    # TODO we actually want to do this renaming in the datamodel
-    # We do it here to replicate behavior for downstream
-    # Will break with anything other than fitness obviously
-    # [[2024.08.12 - Making Sublcasses More Generic For Downstream Querying|dendron://torchcell/torchcell.datamodels.schema#20240812---making-sublcasses-more-generic-for-downstream-querying]]
-    # processed_graph["gene"].label_value = phenotype.fitness
-    # processed_graph["gene"].label_value_std = phenotype.fitness_std
     processed_graph["gene"][phenotype.label_name] = phenotype[phenotype.label_name]
     if phenotype.label_statistic_name is not None:
         processed_graph["gene"][phenotype.label_statistic_name] = phenotype[
@@ -245,6 +232,19 @@ def parse_genome(genome) -> ParsedGenome:
         return ParsedGenome(**data)
 
 
+class ProcessingStep(Enum):
+    RAW = auto()
+    CONVERSION = auto()
+    DEDUPLICATION = auto()
+    AGGREGATION = auto()
+    PROCESSED = auto()
+
+
+# TODO implement
+class Aggregator:
+    pass
+
+
 class Neo4jCellDataset(Dataset):
     # @profile
     def __init__(
@@ -254,7 +254,9 @@ class Neo4jCellDataset(Dataset):
         genome: Genome = None,
         graphs: dict[str, nx.Graph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
-        deduplicator: Deduplicator = None,
+        converter: Optional[Type[Converter]] = None,
+        deduplicator: Optional[Type[Deduplicator]] = None,
+        aggregator: Optional[Type[Aggregator]] = None,
         max_size: int = None,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
@@ -269,20 +271,24 @@ class Neo4jCellDataset(Dataset):
         self.root = root
 
         self._phenotype_label_index = None
-        # set deduplicator
-        self.deduplicator = deduplicator
+
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
 
         self.raw_db = self.load_raw(uri, username, password, root, query, self.genome)
+
+        self.converter = (
+            converter(root=self.root, query=self.raw_db) if converter else None
+        )
+        self.deduplicator = deduplicator(root=self.root) if deduplicator else None
+        self.aggregator = aggregator(root=self.root) if aggregator else None
+
+        self.processing_steps = self._determine_processing_steps()
+
         base_graph = self.get_init_graphs(self.raw_db, self.genome)
-        self.gene_set = GeneSet(base_graph.nodes())  # breakpoint here
+        self.gene_set = GeneSet(base_graph.nodes())
 
         super().__init__(root, transform, pre_transform, pre_filter)
-
-        ###
-        # base_graph = self.get_init_graphs(self.raw_db, self.genome)
-        # self.gene_set = self.compute_gene_set(base_graph)
 
         # graphs
         self.graphs = graphs
@@ -317,7 +323,25 @@ class Neo4jCellDataset(Dataset):
         # compute index
         self.phenotype_label_index
 
-    # @profile
+    def _determine_processing_steps(self):
+        steps = [ProcessingStep.RAW]
+        if self.converter:
+            steps.append(ProcessingStep.CONVERSION)
+        if self.deduplicator:
+            steps.append(ProcessingStep.DEDUPLICATION)
+        if self.aggregator:
+            steps.append(ProcessingStep.AGGREGATION)
+        steps.append(ProcessingStep.PROCESSED)
+        return steps
+
+    def _get_lmdb_path(self, step: ProcessingStep):
+        if step == ProcessingStep.RAW:
+            return os.path.join(self.root, "raw", "lmdb")
+        elif step == ProcessingStep.PROCESSED:
+            return os.path.join(self.processed_dir, "lmdb")
+        else:
+            return os.path.join(self.root, step.name.lower(), "lmdb")
+
     def get_init_graphs(self, raw_db, genome):
         # Setting priority
         if genome is None:
@@ -359,45 +383,52 @@ class Neo4jCellDataset(Dataset):
         return "lmdb"
 
     def process(self):
-        if not self.raw_db:
-            # TODO this doesn't make much sense...
-            self.load_raw()
+        current_step = ProcessingStep.RAW
+        for next_step in self.processing_steps[1:]:
+            input_path = self._get_lmdb_path(current_step)
+            output_path = self._get_lmdb_path(next_step)
 
-        log.info("Processing raw data into LMDB")
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
+            if next_step == ProcessingStep.CONVERSION:
+                self.converter.process(input_path, output_path)
+            elif next_step == ProcessingStep.DEDUPLICATION:
+                self.deduplicator.process(input_path, output_path)
+            elif next_step == ProcessingStep.AGGREGATION:
+                self.aggregator.process(input_path, output_path)
+            elif next_step == ProcessingStep.PROCESSED:
+                self._copy_lmdb(input_path, output_path)
 
-        if self.deduplicator is not None:
-            # Deduplicate domain overlaps and compute mean entries
-            duplicate_check = self.deduplicator.duplicate_check(self.raw_db)
-            deduplicated_data = []
-            log.info("Deduplicating domain overlaps...")
-            for hash_key, indices in tqdm(duplicate_check.items()):
-                if len(indices) > 1:
-                    # Compute mean entry for duplicate experiments
-                    duplicate_experiments = [self.raw_db[i] for i in indices]
-                    mean_entry = self.deduplicator.create_mean_entry(
-                        duplicate_experiments
-                    )
-                    deduplicated_data.append(mean_entry)
-                else:
-                    # Keep non-duplicate experiments as is
-                    deduplicated_data.append(self.raw_db[indices[0]])
-        else:
-            deduplicated_data = list(self.raw_db)  # Convert to list
+            if self.overwrite_intermediates and next_step != ProcessingStep.PROCESSED:
+                os.remove(input_path)
 
-        # Randomly sample the data if max_size is specified
-        if self.max_size is not None and self.max_size < len(deduplicated_data):
-            log.info(f"Randomly sampling {self.max_size} data points...")
-            indices = torch.randperm(len(deduplicated_data))[: self.max_size].tolist()
-            deduplicated_data = [
-                deduplicated_data[i] for i in indices
-            ]  # Use list comprehension
+            current_step = next_step
 
+        if self.max_size:
+            self._apply_max_size(self._get_lmdb_path(ProcessingStep.PROCESSED))
+
+    def _copy_lmdb(self, src_path: str, dst_path: str):
+        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
+        env_src = lmdb.open(src_path, readonly=True)
+        env_dst = lmdb.open(dst_path, map_size=int(1e12))
+
+        with env_src.begin() as txn_src, env_dst.begin(write=True) as txn_dst:
+            cursor = txn_src.cursor()
+            for key, value in cursor:
+                txn_dst.put(key, value)
+
+        env_src.close()
+        env_dst.close()
+
+    def _apply_max_size(self, lmdb_path: str):
+        env = lmdb.open(lmdb_path, map_size=int(1e12))
         with env.begin(write=True) as txn:
-            for idx, data in enumerate(tqdm(deduplicated_data)):
-                txn.put(f"{idx}".encode(), pickle.dumps(data))
-
-        self.close_lmdb()
+            cursor = txn.cursor()
+            count = 0
+            for key, _ in cursor:
+                count += 1
+                if count > self.max_size:
+                    if not cursor.delete():
+                        print(f"Failed to delete key: {key}")
+        env.close()
 
     @property
     def gene_set(self):
@@ -424,7 +455,6 @@ class Neo4jCellDataset(Dataset):
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value
 
-    # @profile
     def get(self, idx):
         """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
@@ -502,262 +532,6 @@ class Neo4jCellDataset(Dataset):
         return self._phenotype_label_index
 
 
-# used for computing p-values when we only have label and p-value.
-def compute_p_value_for_mean(x: list[float], p_values: list[float]) -> float:
-    if len(x) != len(p_values):
-        raise ValueError("x and p_values must have the same length.")
-
-    n = len(x)
-
-    if n < 2:
-        raise ValueError("At least two data points are required.")
-
-    # Calculate the mean of the x values
-    mean_x = np.mean(x)
-
-    # Calculate the sample standard deviation (Bessel's correction applied)
-    sample_std_dev = np.std(x, ddof=1)
-
-    # Calculate the standard error of the mean (SEM)
-    sem = sample_std_dev / np.sqrt(n)
-
-    # Compute the t-statistic for the mean
-    t_stat = mean_x / sem
-
-    # Compute the p-value (two-tailed test)
-    p_value_for_mean = t.sf(np.abs(t_stat), df=n - 1) * 2
-
-    return p_value_for_mean
-
-
-class ExperimentDeduplicator(Deduplicator):
-    def duplicate_check(self, data) -> dict[str, list[int]]:
-        duplicate_check = {}
-        for idx, item in enumerate(data):
-            perturbations = item["experiment"].genotype.perturbations
-            sorted_gene_names = sorted(
-                [pert.systematic_gene_name for pert in perturbations]
-            )
-            hash_key = hashlib.sha256(str(sorted_gene_names).encode()).hexdigest()
-
-            if hash_key not in duplicate_check:
-                duplicate_check[hash_key] = []
-            duplicate_check[hash_key].append(idx)
-        return duplicate_check
-
-    def create_mean_entry(
-        self, duplicate_experiments
-    ) -> dict[str, Experiment | ExperimentReference]:
-        # Check if all phenotypes have the same graph_level and label
-        graph_levels = set(
-            exp["experiment"].phenotype.graph_level for exp in duplicate_experiments
-        )
-        labels = set(exp["experiment"].phenotype.label_name for exp in duplicate_experiments)
-
-        if len(graph_levels) > 1 or len(labels) > 1:
-            raise ValueError(
-                "Duplicate experiments have different phenotype graph_level or label values."
-            )
-
-        interaction_values = [
-            exp["experiment"].phenotype.interaction
-            for exp in duplicate_experiments
-            if exp["experiment"].phenotype.interaction is not None
-        ]
-
-        interaction_p_values = [
-            exp["experiment"].phenotype.p_value
-            for exp in duplicate_experiments
-            if exp["experiment"].phenotype.p_value is not None
-        ]
-
-        # Calculate the mean fitness and mean standard deviation, handling empty lists
-        mean_interaction = np.mean(interaction_values) if interaction_values else None
-        aggregated_p_value = compute_p_value_for_mean(
-            interaction_values, interaction_p_values
-        )
-
-        # Create a new GeneInteractionPhenotype with the mean values
-        mean_phenotype = GeneInteractionPhenotype(
-            graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
-            label=duplicate_experiments[0]["experiment"].phenotype.label_name,
-            label_statistic=duplicate_experiments[0][
-                "experiment"
-            ].phenotype.label_statistic,
-            interaction=mean_interaction,
-            p_value=aggregated_p_value,
-        )
-
-        mean_perturbations = []
-        for pert in duplicate_experiments[0]["experiment"].genotype.perturbations:
-            mean_pert = MeanDeletionPerturbation(
-                systematic_gene_name=pert.systematic_gene_name,
-                perturbed_gene_name=pert.perturbed_gene_name,
-                num_duplicates=len(duplicate_experiments),
-            )
-            mean_perturbations.append(mean_pert)
-
-        mean_genotype = Genotype(perturbations=mean_perturbations)
-
-        mean_experiment = GeneInteractionExperiment(
-            genotype=mean_genotype,
-            environment=duplicate_experiments[0]["experiment"].environment,
-            phenotype=mean_phenotype,
-        )
-
-        # Create a new FitnessExperimentReference with the mean values
-        interaction_ref_values = [
-            exp["experiment_reference"].phenotype_reference.interaction
-            for exp in duplicate_experiments
-            if exp["experiment_reference"].phenotype_reference.interaction is not None
-        ]
-
-        # Calculate the mean reference fitness and mean reference standard deviation, handling empty lists
-        mean_fitness_ref = (
-            np.mean(interaction_ref_values) if interaction_ref_values else None
-        )
-
-        mean_phenotype_reference = GeneInteractionPhenotype(
-            graph_level=duplicate_experiments[0][
-                "experiment_reference"
-            ].phenotype_reference.graph_level,
-            label=duplicate_experiments[0][
-                "experiment_reference"
-            ].phenotype_reference.label,
-            label_statistic=duplicate_experiments[0][
-                "experiment_reference"
-            ].phenotype_reference.label_statistic,
-            interaction=mean_fitness_ref,
-            p_value=None,
-        )
-
-        # For now we don't deal with reference harmonization - just take first reference
-        mean_reference = GeneInteractionExperimentReference(
-            genome_reference=duplicate_experiments[0][
-                "experiment_reference"
-            ].genome_reference,
-            environment_reference=duplicate_experiments[0][
-                "experiment_reference"
-            ].environment_reference,
-            phenotype_reference=mean_phenotype_reference,
-        )
-
-        return {"experiment": mean_experiment, "experiment_reference": mean_reference}
-
-
-class FitnessExperimentDeduplicator(Deduplicator):
-    def duplicate_check(self, data) -> dict[str, list[int]]:
-        duplicate_check = {}
-        for idx, item in enumerate(data):
-            perturbations = item["experiment"].genotype.perturbations
-            sorted_gene_names = sorted(
-                [pert.systematic_gene_name for pert in perturbations]
-            )
-            hash_key = hashlib.sha256(str(sorted_gene_names).encode()).hexdigest()
-
-            if hash_key not in duplicate_check:
-                duplicate_check[hash_key] = []
-            duplicate_check[hash_key].append(idx)
-        return duplicate_check
-
-    def create_mean_entry(
-        self, duplicate_experiments
-    ) -> dict[str, Experiment | ExperimentReference]:
-        # Check if all phenotypes have the same graph_level and label
-        graph_levels = set(
-            exp["experiment"].phenotype.graph_level for exp in duplicate_experiments
-        )
-        labels = set(exp["experiment"].phenotype.label for exp in duplicate_experiments)
-
-        if len(graph_levels) > 1 or len(labels) > 1:
-            raise ValueError(
-                "Duplicate experiments have different phenotype graph_level or label values."
-            )
-
-        # Extract fitness values and standard deviations, excluding None values
-        fitness_values = [
-            exp["experiment"].phenotype.fitness
-            for exp in duplicate_experiments
-            if exp["experiment"].phenotype.fitness is not None
-        ]
-        fitness_stds = [
-            exp["experiment"].phenotype.fitness_std
-            for exp in duplicate_experiments
-            if exp["experiment"].phenotype.fitness_std is not None
-        ]
-
-        # Calculate the mean fitness and mean standard deviation, handling empty lists
-        mean_fitness = np.mean(fitness_values) if fitness_values else None
-        mean_fitness_std = np.mean(fitness_stds) if fitness_stds else None
-
-        # Create a new FitnessPhenotype with the mean values
-        mean_phenotype = FitnessPhenotype(
-            graph_level=duplicate_experiments[0]["experiment"].phenotype.graph_level,
-            label=duplicate_experiments[0]["experiment"].phenotype.label,
-            label_statistic=duplicate_experiments[0][
-                "experiment"
-            ].phenotype.label_statistic,
-            fitness=mean_fitness,
-            fitness_std=mean_fitness_std,
-        )
-
-        mean_perturbations = []
-        for pert in duplicate_experiments[0]["experiment"].genotype.perturbations:
-            mean_pert = MeanDeletionPerturbation(
-                systematic_gene_name=pert.systematic_gene_name,
-                perturbed_gene_name=pert.perturbed_gene_name,
-                num_duplicates=len(duplicate_experiments),
-            )
-            mean_perturbations.append(mean_pert)
-
-        mean_genotype = Genotype(perturbations=mean_perturbations)
-
-        mean_experiment = FitnessExperiment(
-            genotype=mean_genotype,
-            environment=duplicate_experiments[0]["experiment"].environment,
-            phenotype=mean_phenotype,
-        )
-
-        # Create a new FitnessExperimentReference with the mean values
-        fitness_ref_values = [
-            exp["reference"].phenotype_reference.fitness
-            for exp in duplicate_experiments
-            if exp["reference"].phenotype_reference.fitness is not None
-        ]
-        fitness_ref_stds = [
-            exp["reference"].phenotype_reference.fitness_std
-            for exp in duplicate_experiments
-            if exp["reference"].phenotype_reference.fitness_std is not None
-        ]
-
-        # Calculate the mean reference fitness and mean reference standard deviation, handling empty lists
-        mean_fitness_ref = np.mean(fitness_ref_values) if fitness_ref_values else None
-        mean_fitness_ref_std = np.mean(fitness_ref_stds) if fitness_ref_stds else None
-
-        mean_phenotype_reference = FitnessPhenotype(
-            graph_level=duplicate_experiments[0][
-                "reference"
-            ].phenotype_reference.graph_level,
-            label=duplicate_experiments[0]["reference"].phenotype_reference.label,
-            label_statistic=duplicate_experiments[0][
-                "reference"
-            ].phenotype_reference.label_statistic,
-            fitness=mean_fitness_ref,
-            fitness_std=mean_fitness_ref_std,
-        )
-
-        # For now we don't deal with reference harmonization - just take first reference
-        mean_reference = FitnessExperimentReference(
-            genome_reference=duplicate_experiments[0]["reference"].genome_reference,
-            environment_reference=duplicate_experiments[0][
-                "reference"
-            ].environment_reference,
-            phenotype_reference=mean_phenotype_reference,
-        )
-
-        return {"experiment": mean_experiment, "reference": mean_reference}
-
-
 def main():
     # genome
     import os.path as osp
@@ -795,7 +569,6 @@ def main():
         genome=genome,
         model_name="species_downstream",
     )
-    deduplicator = ExperimentDeduplicator()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/test_dataset"
     )
@@ -808,7 +581,8 @@ def main():
             "fudt_3prime": fudt_3prime_dataset,
             "fudt_5prime": fudt_5prime_dataset,
         },
-        deduplicator=deduplicator,
+        converter=GeneEssentialityToFitnessConverter,
+        deduplicator=ExperimentDeduplicator,
         max_size=int(1e2),
     )
     print(len(dataset))
@@ -825,7 +599,7 @@ def main():
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
         pass
-        print()
+        print(batch)
 
     print("finished")
 

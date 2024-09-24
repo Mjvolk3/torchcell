@@ -2,7 +2,7 @@
 id: jculhuhy90fej0ip6fe2am5
 title: '38'
 desc: ''
-updated: 1726974973246
+updated: 1727194350731
 created: 1726425036900
 ---
 
@@ -50,16 +50,3 @@ created: 1726425036900
 ## 2024.09.21
 
 - [x] Split out deduplication, type conversion, and aggregation.
-- [ ] Add in conversion with simple example first. Use essential to fitness.`ABC` should take in a raw dataset and return a conversion map.
-- [ ]
-- [ ]
-- [ ]
-- [ ] Add
-
-- [ ] Change "interaction" to "gene_interaction"
-- [ ] Rebuild local database
-- [ ] Rebuild large database
-
-- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
-
-***

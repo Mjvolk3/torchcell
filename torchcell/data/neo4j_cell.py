@@ -10,6 +10,7 @@ import os.path as osp
 from collections.abc import Callable
 import lmdb
 import networkx as nx
+from typing import Any
 from pydantic import field_validator
 from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
@@ -17,7 +18,7 @@ from torch_geometric.data import Dataset
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datamodels import Converter
-from torchcell.data.deduplicate import MeanExperimentDeduplicator, Deduplicator
+from torchcell.data.deduplicate import Deduplicator
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.datamodels import ExperimentType, ExperimentReferenceType
@@ -28,6 +29,7 @@ from torchcell.datamodels.schema import (
     EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
 )
+from abc import ABC, abstractmethod
 
 log = logging.getLogger(__name__)
 
@@ -130,166 +132,214 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     return G
 
 
-# def process_graph(
-#     cell_graph: HeteroData, data: dict[str, ExperimentType | ExperimentReferenceType]
-# ) -> HeteroData:
-#     if "experiment" not in data or "experiment_reference" not in data:
-#         raise ValueError(
-#             "Data must contain both 'experiment' and 'experiment_reference' keys"
-#         )
+class GraphProcessor(ABC):
+    @abstractmethod
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: Any,
+        data: (
+            dict[str, ExperimentType | ExperimentReferenceType]
+            | list[dict[str, ExperimentType | ExperimentReferenceType]]
+        ),
+    ) -> HeteroData:
+        pass
 
-#     if not isinstance(data["experiment"], ExperimentType) or not isinstance(
-#         data["experiment_reference"], ExperimentReferenceType
-#     ):
-#         raise TypeError(
-#             "'experiment' and 'experiment_reference' must be instances of ExperimentType and ExperimentReferenceType respectively"
-#         )
 
-#     processed_graph = HeteroData()
-
-#     # Nodes to remove based on the perturbations
-#     nodes_to_remove = {
-#         pert.systematic_gene_name for pert in data["experiment"].genotype.perturbations
-#     }
-
-#     # Assuming all nodes are of type 'gene', and copying node information to processed_graph
-#     processed_graph["gene"].node_ids = [
-#         nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
-#     ]
-#     processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
-#     # Additional information regarding perturbations
-#     processed_graph["gene"].ids_pert = list(nodes_to_remove)
-#     processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
-#         [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
-#         dtype=torch.long,
-#     )
-
-#     # Populate x and x_pert attributes
-#     node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
-#     x = cell_graph["gene"].x
-#     processed_graph["gene"].x = x[
-#         torch.tensor([node_mapping[nid] for nid in processed_graph["gene"].node_ids])
-#     ]
-#     processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
-
-#     # Add fitness phenotype data
-#     phenotype = data["experiment"].phenotype
-#     processed_graph["gene"].graph_level = phenotype.graph_level
-#     processed_graph["gene"].label_name = phenotype.label_name
-#     processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
-#     processed_graph["gene"][phenotype.label_name] = getattr(
-#         phenotype, phenotype.label_name
-#     )
-#     if phenotype.label_statistic_name is not None:
-#         processed_graph["gene"][phenotype.label_statistic_name] = getattr(
-#             phenotype, phenotype.label_statistic_name
-#         )
-
-#     # Mapping of node IDs to their new indices after filtering
-#     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
-
-#     # Processing edges
-#     for edge_type in cell_graph.edge_types:
-#         src_type, _, dst_type = edge_type
-#         edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
-#         filtered_edges = []
-
-#         for src, dst in edge_index.T:
-#             src_id = cell_graph[src_type].node_ids[src]
-#             dst_id = cell_graph[dst_type].node_ids[dst]
-
-#             if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
-#                 new_src = new_index_map[src_id]
-#                 new_dst = new_index_map[dst_id]
-#                 filtered_edges.append([new_src, new_dst])
-
-#         if filtered_edges:
-#             new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
-#             processed_graph[src_type, _, dst_type].edge_index = new_edge_index
-#             processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[1]
-#         else:
-#             processed_graph[src_type, _, dst_type].edge_index = torch.empty(
-#                 (2, 0), dtype=torch.long
+# class PhenotypeProcessor(GraphProcessor):
+#     def process(
+#         self,
+#         cell_graph: HeteroData,
+#         phenotype_info: Any,
+#         data: (
+#             dict[str, ExperimentType | ExperimentReferenceType]
+#             | list[dict[str, ExperimentType | ExperimentReferenceType]]
+#         ),
+#     ) -> HeteroData:
+#         if "experiment" not in data or "experiment_reference" not in data:
+#             raise ValueError(
+#                 "Data must contain both 'experiment' and 'experiment_reference' keys"
 #             )
-#             processed_graph[src_type, _, dst_type].num_edges = 0
 
-#     return processed_graph
+#         if not isinstance(data["experiment"], ExperimentType) or not isinstance(
+#             data["experiment_reference"], ExperimentReferenceType
+#         ):
+#             raise TypeError(
+#                 "'experiment' and 'experiment_reference' must be instances of"
+#                 "ExperimentType and ExperimentReferenceType respectively"
+#             )
+
+#         processed_graph = HeteroData()
+
+#         # Nodes to remove based on the perturbations
+#         nodes_to_remove = {
+#             pert.systematic_gene_name
+#             for pert in data["experiment"].genotype.perturbations
+#         }
+
+#         # Assuming all nodes are of type 'gene', and copying node
+#         # information to processed_graph
+#         processed_graph["gene"].node_ids = [
+#             nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
+#         ]
+#         processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
+#         # Additional information regarding perturbations
+#         processed_graph["gene"].ids_pert = list(nodes_to_remove)
+#         processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
+#             [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
+#             dtype=torch.long,
+#         )
+
+#         # Populate x and x_pert attributes
+#         node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
+#         x = cell_graph["gene"].x
+#         processed_graph["gene"].x = x[
+#             torch.tensor(
+#                 [node_mapping[nid] for nid in processed_graph["gene"].node_ids]
+#             )
+#         ]
+#         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
+
+#         # Add phenotype data using model_dump()
+#         processed_graph["gene"].experiment = [data["experiment"]]
+
+#         # Mapping of node IDs to their new indices after filtering
+#         new_index_map = {
+#             nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
+#         }
+
+#         # Processing edges
+#         for edge_type in cell_graph.edge_types:
+#             src_type, _, dst_type = edge_type
+#             edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
+#             filtered_edges = []
+
+#             for src, dst in edge_index.T:
+#                 src_id = cell_graph[src_type].node_ids[src]
+#                 dst_id = cell_graph[dst_type].node_ids[dst]
+
+#                 if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
+#                     new_src = new_index_map[src_id]
+#                     new_dst = new_index_map[dst_id]
+#                     filtered_edges.append([new_src, new_dst])
+
+#             if filtered_edges:
+#                 new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
+#                 processed_graph[src_type, _, dst_type].edge_index = new_edge_index
+#                 processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
+#                     1
+#                 ]
+#             else:
+#                 processed_graph[src_type, _, dst_type].edge_index = torch.empty(
+#                     (2, 0), dtype=torch.long
+#                 )
+#                 processed_graph[src_type, _, dst_type].num_edges = 0
+
+#         return processed_graph
 
 
-def process_graph(
-    cell_graph: HeteroData, data: dict[str, ExperimentType | ExperimentReferenceType]
-) -> HeteroData:
-    if "experiment" not in data or "experiment_reference" not in data:
-        raise ValueError(
-            "Data must contain both 'experiment' and 'experiment_reference' keys"
-        )
+class PhenotypeProcessor(GraphProcessor):
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: Any,
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
 
-    if not isinstance(data["experiment"], ExperimentType) or not isinstance(
-        data["experiment_reference"], ExperimentReferenceType
-    ):
-        raise TypeError(
-            "'experiment' and 'experiment_reference' must be instances of ExperimentType and ExperimentReferenceType respectively"
-        )
+        processed_graph = HeteroData()
 
-    processed_graph = HeteroData()
-
-    # Nodes to remove based on the perturbations
-    nodes_to_remove = {
-        pert.systematic_gene_name for pert in data["experiment"].genotype.perturbations
-    }
-
-    # Assuming all nodes are of type 'gene', and copying node information to processed_graph
-    processed_graph["gene"].node_ids = [
-        nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
-    ]
-    processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
-    # Additional information regarding perturbations
-    processed_graph["gene"].ids_pert = list(nodes_to_remove)
-    processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
-        [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
-        dtype=torch.long,
-    )
-
-    # Populate x and x_pert attributes
-    node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
-    x = cell_graph["gene"].x
-    processed_graph["gene"].x = x[
-        torch.tensor([node_mapping[nid] for nid in processed_graph["gene"].node_ids])
-    ]
-    processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
-
-    # Add phenotype data using model_dump()
-    processed_graph["gene"].experiment = [data["experiment"]]
-
-    # Mapping of node IDs to their new indices after filtering
-    new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
-
-    # Processing edges
-    for edge_type in cell_graph.edge_types:
-        src_type, _, dst_type = edge_type
-        edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
-        filtered_edges = []
-
-        for src, dst in edge_index.T:
-            src_id = cell_graph[src_type].node_ids[src]
-            dst_id = cell_graph[dst_type].node_ids[dst]
-
-            if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
-                new_src = new_index_map[src_id]
-                new_dst = new_index_map[dst_id]
-                filtered_edges.append([new_src, new_dst])
-
-        if filtered_edges:
-            new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
-            processed_graph[src_type, _, dst_type].edge_index = new_edge_index
-            processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[1]
-        else:
-            processed_graph[src_type, _, dst_type].edge_index = torch.empty(
-                (2, 0), dtype=torch.long
+        # Collect all nodes to remove across all experiments
+        nodes_to_remove = set()
+        for item in data:
+            if "experiment" not in item or "experiment_reference" not in item:
+                raise ValueError(
+                    "Each item in data must contain both 'experiment' and "
+                    "'experiment_reference' keys"
+                )
+            nodes_to_remove.update(
+                pert.systematic_gene_name
+                for pert in item["experiment"].genotype.perturbations
             )
-            processed_graph[src_type, _, dst_type].num_edges = 0
 
-    return processed_graph
+        # Process node information
+        processed_graph["gene"].node_ids = [
+            nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
+        ]
+        processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
+        processed_graph["gene"].ids_pert = list(nodes_to_remove)
+        processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
+            [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
+            dtype=torch.long,
+        )
+
+        # Populate x and x_pert attributes
+        node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
+        x = cell_graph["gene"].x
+        processed_graph["gene"].x = x[
+            torch.tensor(
+                [node_mapping[nid] for nid in processed_graph["gene"].node_ids]
+            )
+        ]
+        processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
+
+        # TODO try to uncomment and see what happens.
+        # Add all experiments to the processed graph
+        # processed_graph["gene"].experiments = [item["experiment"] for item in data]
+        # processed_graph["gene"].experiment_references = [
+        #     item["experiment_reference"] for item in data
+        # ]
+
+        # add all phenotype fields
+        phenotype_fields = []
+        for phenotype in phenotype_info:
+            phenotype_fields.append(phenotype.model_fields["label_name"].default)
+            phenotype_fields.append(
+                phenotype.model_fields["label_statistic_name"].default
+            )
+        for field in phenotype_fields:
+            processed_graph["gene"][field] = []
+
+        # add experiment data if it exists
+        for item in data:
+            for field in phenotype_fields:
+                value = getattr(item["experiment"].phenotype, field)
+                if value is None:
+                    value = []
+                processed_graph["gene"][field] = torch.tensor(value)
+
+        # Process edges
+        new_index_map = {
+            nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
+        }
+        for edge_type in cell_graph.edge_types:
+            src_type, _, dst_type = edge_type
+            edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
+            filtered_edges = []
+
+            for src, dst in edge_index.T:
+                src_id = cell_graph[src_type].node_ids[src]
+                dst_id = cell_graph[dst_type].node_ids[dst]
+
+                if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
+                    new_src = new_index_map[src_id]
+                    new_dst = new_index_map[dst_id]
+                    filtered_edges.append([new_src, new_dst])
+
+            if filtered_edges:
+                new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
+                processed_graph[src_type, _, dst_type].edge_index = new_edge_index
+                processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
+                    1
+                ]
+            else:
+                processed_graph[src_type, _, dst_type].edge_index = torch.empty(
+                    (2, 0), dtype=torch.long
+                )
+                processed_graph[src_type, _, dst_type].num_edges = 0
+
+        return processed_graph
 
 
 def parse_genome(genome) -> ParsedGenome:
@@ -323,11 +373,11 @@ class Neo4jCellDataset(Dataset):
         genome: Genome = None,
         graphs: dict[str, nx.Graph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
+        graph_processor: GraphProcessor = None,
         converter: Optional[Type[Converter]] = None,
-        deduplicator: Optional[Type[Deduplicator]] = None,
-        aggregator: Optional[Type[Aggregator]] = None,
+        deduplicator: Type[Deduplicator] = None,
+        aggregator: Type[Aggregator] = None,
         overwrite_intermediates: bool = False,
-        max_size: int = None,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
         password: str = "torchcell",
@@ -335,11 +385,11 @@ class Neo4jCellDataset(Dataset):
         pre_transform: Callable | None = None,
         pre_filter: Callable | None = None,
     ):
-        self.max_size = max_size
         # Here for straight pass through - Fails without...
         self.env = None
         self.root = root
         self.overwrite_intermediates = overwrite_intermediates
+        self.process_graph = graph_processor
         self._phenotype_label_index = None
 
         # HACK to get around sql db issue
@@ -474,9 +524,6 @@ class Neo4jCellDataset(Dataset):
 
             current_step = next_step
 
-        if self.max_size:
-            self._apply_max_size(self._get_lmdb_path(ProcessingStep.PROCESSED))
-
     def _copy_lmdb(self, src_path: str, dst_path: str):
         os.makedirs(os.path.dirname(dst_path), exist_ok=True)
         env_src = lmdb.open(src_path, readonly=True)
@@ -489,18 +536,6 @@ class Neo4jCellDataset(Dataset):
 
         env_src.close()
         env_dst.close()
-
-    def _apply_max_size(self, lmdb_path: str):
-        env = lmdb.open(lmdb_path, map_size=int(1e12))
-        with env.begin(write=True) as txn:
-            cursor = txn.cursor()
-            count = 0
-            for key, _ in cursor:
-                count += 1
-                if count > self.max_size:
-                    if not cursor.delete():
-                        print(f"Failed to delete key: {key}")
-        env.close()
 
     @property
     def gene_set(self):
@@ -536,21 +571,29 @@ class Neo4jCellDataset(Dataset):
             serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
-            data = json.loads(serialized_data.decode("utf-8"))
-            experiment_class = EXPERIMENT_TYPE_MAP[
-                data["experiment"]["experiment_type"]
-            ]
-            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                data["experiment_reference"]["experiment_reference_type"]
-            ]
-            reconstructed_data = {
-                "experiment": experiment_class(**data["experiment"]),
-                "experiment_reference": experiment_reference_class(
-                    **data["experiment_reference"]
-                ),
-            }
-            subsetted_graph = process_graph(self.cell_graph, reconstructed_data)
-            return subsetted_graph
+            data_list = json.loads(serialized_data.decode("utf-8"))
+
+            data = []
+            for item in data_list:
+                experiment_class = EXPERIMENT_TYPE_MAP[
+                    item["experiment"]["experiment_type"]
+                ]
+                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                    item["experiment_reference"]["experiment_reference_type"]
+                ]
+                reconstructed_data = {
+                    "experiment": experiment_class(**item["experiment"]),
+                    "experiment_reference": experiment_reference_class(
+                        **item["experiment_reference"]
+                    ),
+                }
+                data.append(reconstructed_data)
+
+            processed_graph = self.process_graph.process(
+                self.cell_graph, self.aggregator.phenotype_info, data
+            )
+
+        return processed_graph
 
     def _init_lmdb_read(self):
         """Initialize the LMDB environment."""
@@ -586,16 +629,17 @@ class Neo4jCellDataset(Dataset):
             cursor = txn.cursor()
             for idx, (key, value) in enumerate(cursor):
                 try:
-                    data = json.loads(value.decode("utf-8"))
-                    experiment_class = EXPERIMENT_TYPE_MAP[
-                        data["experiment"]["experiment_type"]
-                    ]
-                    experiment = experiment_class(**data["experiment"])
-                    label_name = experiment.phenotype.label_name
+                    data_list = json.loads(value.decode("utf-8"))
+                    for data in data_list:
+                        experiment_class = EXPERIMENT_TYPE_MAP[
+                            data["experiment"]["experiment_type"]
+                        ]
+                        experiment = experiment_class(**data["experiment"])
+                        label_name = experiment.phenotype.label_name
 
-                    if label_name not in phenotype_label_index:
-                        phenotype_label_index[label_name] = []
-                    phenotype_label_index[label_name].append(idx)
+                        if label_name not in phenotype_label_index:
+                            phenotype_label_index[label_name] = []
+                        phenotype_label_index[label_name].append(idx)
                 except json.JSONDecodeError:
                     print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
                 except Exception as e:
@@ -608,7 +652,7 @@ class Neo4jCellDataset(Dataset):
         return phenotype_label_index
 
     @property
-    def phenotype_label_index(self) -> dict[str, list[bool]]:
+    def phenotype_label_index(self) -> dict[str, list[int]]:
         if osp.exists(osp.join(self.processed_dir, "phenotype_label_index.json")):
             with open(
                 osp.join(self.processed_dir, "phenotype_label_index.json"), "r"
@@ -621,6 +665,52 @@ class Neo4jCellDataset(Dataset):
             ) as file:
                 json.dump(self._phenotype_label_index, file)
         return self._phenotype_label_index
+
+    # def compute_phenotype_label_index(self) -> dict[str, list[int]]:
+    #     print("Computing phenotype label index...")
+    #     phenotype_label_index = {}
+
+    #     self._init_lmdb_read()  # Initialize the LMDB environment for reading
+
+    #     with self.env.begin() as txn:
+    #         cursor = txn.cursor()
+    #         for idx, (key, value) in enumerate(cursor):
+    #             try:
+    #                 data = json.loads(value.decode("utf-8"))
+    #                 experiment_class = EXPERIMENT_TYPE_MAP[
+    #                     data["experiment"]["experiment_type"]
+    #                 ]
+    #                 experiment = experiment_class(**data["experiment"])
+    #                 label_name = experiment.phenotype.label_name
+
+    #                 if label_name not in phenotype_label_index:
+    #                     phenotype_label_index[label_name] = []
+    #                 phenotype_label_index[label_name].append(idx)
+    #             except json.JSONDecodeError:
+    #                 print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+    #             except Exception as e:
+    #                 print(
+    #                     f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+    #                 )
+
+    #     self.close_lmdb()  # Close the LMDB environment
+
+    #     return phenotype_label_index
+
+    # @property
+    # def phenotype_label_index(self) -> dict[str, list[bool]]:
+    #     if osp.exists(osp.join(self.processed_dir, "phenotype_label_index.json")):
+    #         with open(
+    #             osp.join(self.processed_dir, "phenotype_label_index.json"), "r"
+    #         ) as file:
+    #             self._phenotype_label_index = json.load(file)
+    #     else:
+    #         self._phenotype_label_index = self.compute_phenotype_label_index()
+    #         with open(
+    #             osp.join(self.processed_dir, "phenotype_label_index.json"), "w"
+    #         ) as file:
+    #             json.dump(self._phenotype_label_index, file)
+    #     return self._phenotype_label_index
 
 
 def main():
@@ -636,6 +726,8 @@ def main():
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
+    from torchcell.data import MeanExperimentDeduplicator
+    from torchcell.data import GenotypeAggregator
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -678,7 +770,8 @@ def main():
         },
         converter=GeneEssentialityToFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
-        max_size=int(1e2),
+        aggregator=GenotypeAggregator,
+        graph_processor=PhenotypeProcessor(),
     )
     print(len(dataset))
     # Data module testing

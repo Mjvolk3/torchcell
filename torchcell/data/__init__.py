@@ -8,11 +8,21 @@ from .experiment_dataset import (
     compute_experiment_reference_index_sequential,
     compute_experiment_reference_index_parallel,
 )
-from .deduplicate import MeanExperimentDeduplicator
+from .deduplicate import Deduplicator
+from .mean_experiment_deduplicate import MeanExperimentDeduplicator
+from .aggregate import Aggregator
+from .genotype_aggregate import GenotypeAggregator
 
 data = ["ExperimentReferenceIndex", "ReferenceIndex", "compute_md5_hash"]
 
+# deduplicate
+base_deduplicator = ["Deduplicator"]
 deduplicators = ["MeanExperimentDeduplicator"]
+
+# aggregate
+base_aggregator = ["Aggregator"]
+aggregators = ["GenotypeAggregator"]
+
 # "Neo4jCellDataset"
 # dataset = ["ExperimentDataset", "Neo4jQueryRaw", "Neo4jCellDataset"]
 dataset = ["ExperimentDataset", "Neo4jCellDataset"]
@@ -26,4 +36,12 @@ functions = [
 
 gene_essentiality_to_fitness = ["GeneEssentialityToFitnessConverter"]
 
-__all__ = data + deduplicators + dataset + functions
+__all__ = (
+    data
+    + base_deduplicator
+    + deduplicators
+    + base_aggregator
+    + aggregators
+    + dataset
+    + functions
+)

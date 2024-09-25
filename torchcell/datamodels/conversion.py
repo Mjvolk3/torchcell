@@ -72,7 +72,9 @@ class Converter(ABC):
             self.env.close()
             self.env = None
 
-    def convert(self, data: dict) -> dict:
+    def convert(
+        self, data: dict[str, Union[ExperimentType, ExperimentReferenceType]]
+    ) -> dict:
         if "experiment" not in data or "experiment_reference" not in data:
             raise ValueError(
                 "Input data must contain both 'experiment' and "
@@ -136,11 +138,34 @@ class Converter(ABC):
                 tqdm(cursor, desc="Converting and writing to LMDB")
             ):
                 try:
-                    data = json.loads(value.decode("utf-8"))
-                    original_hash = self._compute_hash(data)
+                    data_dict = json.loads(value.decode("utf-8"))
+
+                    # Reconstruct Pydantic objects
+                    experiment_class = EXPERIMENT_TYPE_MAP[
+                        data_dict["experiment"]["experiment_type"]
+                    ]
+                    experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                        data_dict["experiment_reference"]["experiment_reference_type"]
+                    ]
+
+                    data = {
+                        "experiment": experiment_class(**data_dict["experiment"]),
+                        "experiment_reference": experiment_reference_class(
+                            **data_dict["experiment_reference"]
+                        ),
+                    }
+
+                    original_hash = self._compute_hash(data_dict)
 
                     converted_data = self.convert(data)
-                    converted_hash = self._compute_hash(converted_data)
+                    converted_hash = self._compute_hash(
+                        {
+                            "experiment": converted_data["experiment"].model_dump(),
+                            "experiment_reference": converted_data[
+                                "experiment_reference"
+                            ].model_dump(),
+                        }
+                    )
 
                     if original_hash != converted_hash:
                         converted_count += 1
@@ -148,7 +173,12 @@ class Converter(ABC):
                     txn_output.put(
                         key,
                         json.dumps(
-                            converted_data, default=lambda o: o.model_dump()
+                            {
+                                "experiment": converted_data["experiment"].model_dump(),
+                                "experiment_reference": converted_data[
+                                    "experiment_reference"
+                                ].model_dump(),
+                            }
                         ).encode(),
                     )
                     total_count += 1
@@ -156,7 +186,6 @@ class Converter(ABC):
                     log.error(
                         f"Error decoding JSON for entry {idx}. Skipping this entry."
                     )
-
                 except Exception as e:
                     log.error(
                         f"Error processing entry {idx}: {str(e)}. Skipping this entry."

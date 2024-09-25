@@ -2,7 +2,7 @@
 id: eml0ufuhov06z54rkakmhpj
 title: '39'
 desc: ''
-updated: 1727214171742
+updated: 1727224974888
 created: 1727139041563
 ---
 ## 2024.09.23
@@ -18,14 +18,16 @@ created: 1727139041563
 - [x] Solved some import errors with conditional typing checking. → [[torchcell.datamodels.gene_essentiality_to_fitness_conversion]], [[Conversion|dendron://torchcell/torchcell.datamodels.conversion]]
 - [x] [[torchcell.datamodels.conversion]] works
 - [x] [[torchcell.data.deduplicate]] works
-- [ ] Refactor [[torchcell.data.deduplicate]] to make it more general.
-- [ ] Test out essentiality conversion and deduplication with `smf` queries
+- [x] Refactor [[torchcell.data.deduplicate]] to make it more general.
+- [x] Should we add the possibility for multiple deduplicators? There are some forms of deduplication that are not guaranteed to eliminate not a function error? → #ramble Turns out we don't need to do this because the only layer that matters is the first layer of attr. These are all that needs to be the same and then we should be able to put on any object. This means we can put on the entire experiment. The current plan is to have a generic `process_graph` that just adds the entire experiment. If this is too much data we can always use more specialized versions that cut out data.
+- [ ] Test out conversion and deduplication with `smf` queries essentiality.
 - [ ] Write Aggregator
+- [ ] pass a `process_graph` function in the initializer. It should return with standard types.
 
 ***
 
 - [ ] Add in conversion with simple example first. Use essential to fitness.`ABC` should take in a raw dataset and return a conversion map.
-- [ ] Add
+- [ ] Add possibility for multiple deduplicators... deduplicators should be broadly broken into two classes those that guarantee functional mapping, `mean`, `max` type deduplication and those that don't have this guarantee.
 - [ ] Change "interaction" to "gene_interaction"
 - [ ] Rebuild local database
 - [ ] Rebuild large database

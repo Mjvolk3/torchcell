@@ -130,6 +130,92 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     return G
 
 
+# def process_graph(
+#     cell_graph: HeteroData, data: dict[str, ExperimentType | ExperimentReferenceType]
+# ) -> HeteroData:
+#     if "experiment" not in data or "experiment_reference" not in data:
+#         raise ValueError(
+#             "Data must contain both 'experiment' and 'experiment_reference' keys"
+#         )
+
+#     if not isinstance(data["experiment"], ExperimentType) or not isinstance(
+#         data["experiment_reference"], ExperimentReferenceType
+#     ):
+#         raise TypeError(
+#             "'experiment' and 'experiment_reference' must be instances of ExperimentType and ExperimentReferenceType respectively"
+#         )
+
+#     processed_graph = HeteroData()
+
+#     # Nodes to remove based on the perturbations
+#     nodes_to_remove = {
+#         pert.systematic_gene_name for pert in data["experiment"].genotype.perturbations
+#     }
+
+#     # Assuming all nodes are of type 'gene', and copying node information to processed_graph
+#     processed_graph["gene"].node_ids = [
+#         nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
+#     ]
+#     processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
+#     # Additional information regarding perturbations
+#     processed_graph["gene"].ids_pert = list(nodes_to_remove)
+#     processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
+#         [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
+#         dtype=torch.long,
+#     )
+
+#     # Populate x and x_pert attributes
+#     node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
+#     x = cell_graph["gene"].x
+#     processed_graph["gene"].x = x[
+#         torch.tensor([node_mapping[nid] for nid in processed_graph["gene"].node_ids])
+#     ]
+#     processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
+
+#     # Add fitness phenotype data
+#     phenotype = data["experiment"].phenotype
+#     processed_graph["gene"].graph_level = phenotype.graph_level
+#     processed_graph["gene"].label_name = phenotype.label_name
+#     processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
+#     processed_graph["gene"][phenotype.label_name] = getattr(
+#         phenotype, phenotype.label_name
+#     )
+#     if phenotype.label_statistic_name is not None:
+#         processed_graph["gene"][phenotype.label_statistic_name] = getattr(
+#             phenotype, phenotype.label_statistic_name
+#         )
+
+#     # Mapping of node IDs to their new indices after filtering
+#     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
+
+#     # Processing edges
+#     for edge_type in cell_graph.edge_types:
+#         src_type, _, dst_type = edge_type
+#         edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
+#         filtered_edges = []
+
+#         for src, dst in edge_index.T:
+#             src_id = cell_graph[src_type].node_ids[src]
+#             dst_id = cell_graph[dst_type].node_ids[dst]
+
+#             if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
+#                 new_src = new_index_map[src_id]
+#                 new_dst = new_index_map[dst_id]
+#                 filtered_edges.append([new_src, new_dst])
+
+#         if filtered_edges:
+#             new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
+#             processed_graph[src_type, _, dst_type].edge_index = new_edge_index
+#             processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[1]
+#         else:
+#             processed_graph[src_type, _, dst_type].edge_index = torch.empty(
+#                 (2, 0), dtype=torch.long
+#             )
+#             processed_graph[src_type, _, dst_type].num_edges = 0
+
+#     return processed_graph
+
+
 def process_graph(
     cell_graph: HeteroData, data: dict[str, ExperimentType | ExperimentReferenceType]
 ) -> HeteroData:
@@ -172,18 +258,8 @@ def process_graph(
     ]
     processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
 
-    # Add fitness phenotype data
-    phenotype = data["experiment"].phenotype
-    processed_graph["gene"].graph_level = phenotype.graph_level
-    processed_graph["gene"].label_name = phenotype.label_name
-    processed_graph["gene"].label_statistic_name = phenotype.label_statistic_name
-    processed_graph["gene"][phenotype.label_name] = getattr(
-        phenotype, phenotype.label_name
-    )
-    if phenotype.label_statistic_name is not None:
-        processed_graph["gene"][phenotype.label_statistic_name] = getattr(
-            phenotype, phenotype.label_statistic_name
-        )
+    # Add phenotype data using model_dump()
+    processed_graph["gene"].experiment = [data["experiment"]]
 
     # Mapping of node IDs to their new indices after filtering
     new_index_map = {nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)}
@@ -607,10 +683,12 @@ def main():
     print(len(dataset))
     # Data module testing
 
+    dataset[2]
+
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        batch_size=8,
+        batch_size=4,
         random_seed=42,
         num_workers=4,
         pin_memory=False,
@@ -618,7 +696,7 @@ def main():
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
         pass
-        print(batch)
+        # print(batch)
 
     print("finished")
 

@@ -2,7 +2,7 @@
 id: 2qlur6rz1mzpmtltyf7w0j0
 title: Ontology_pydantic
 desc: ''
-updated: 1725849448274
+updated: 1727273812496
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -232,6 +232,10 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         return v
 ```
 
-I thought about just having `label_name:str` and then having the corresponding str as a key in the pydantic model. I previously thought that the issue with this was that we wouldn't be able to access the data, and we won't with dot notation but we can with dict notation. 
+I thought about just having `label_name:str` and then having the corresponding str as a key in the pydantic model. I previously thought that the issue with this was that we wouldn't be able to access the data, and we won't with dot notation but we can with dict notation.
 
 I think instead what we do is have some named vocab that matches `label_name` to the key of the child class.
+
+## 2024.09.25 - Dataset Name on Experiment Reference
+
+#ramble it is a bit strange having `dataset_name` because then all references will be distinct in some way. Not sure if this is a concern or not because we could always check if references are same via properties.

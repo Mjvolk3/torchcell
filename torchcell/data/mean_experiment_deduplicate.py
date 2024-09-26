@@ -68,7 +68,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
 
         dataset_name = ("+").join(
-            [i["experiment"].dataset_name for i in duplicate_experiments]
+            sorted([i["experiment"].dataset_name for i in duplicate_experiments])
         )
 
         mean_experiment = FitnessExperiment(
@@ -108,7 +108,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
 
         dataset_name = ("+").join(
-            [i["experiment"].dataset_name for i in duplicate_experiments]
+            sorted([i["experiment"].dataset_name for i in duplicate_experiments])
         )
 
         mean_experiment = GeneInteractionExperiment(
@@ -163,7 +163,9 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         dataset_name = ("+").join(
-            [i["experiment_reference"].dataset_name for i in duplicate_experiments]
+            sorted(
+                [i["experiment_reference"].dataset_name for i in duplicate_experiments]
+            )
         )
 
         return FitnessExperimentReference(
@@ -196,7 +198,9 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         dataset_name = ("+").join(
-            [i["experiment_reference"].dataset_name for i in duplicate_experiments]
+            sorted(
+                [i["experiment_reference"].dataset_name for i in duplicate_experiments]
+            )
         )
 
         return GeneInteractionExperimentReference(

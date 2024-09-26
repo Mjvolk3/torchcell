@@ -302,12 +302,16 @@ class PhenotypeProcessor(GraphProcessor):
             processed_graph["gene"][field] = []
 
         # add experiment data if it exists
-        for item in data:
-            for field in phenotype_fields:
-                value = getattr(item["experiment"].phenotype, field)
-                if value is None:
-                    value = []
-                processed_graph["gene"][field] = torch.tensor(value)
+        for field in phenotype_fields:
+            field_values = []
+            for item in data:
+                value = getattr(item["experiment"].phenotype, field, None)
+                if value is not None:
+                    field_values.append(value)
+            if field_values:
+                processed_graph["gene"][field] = torch.tensor(field_values)
+            else:
+                processed_graph["gene"][field] = torch.tensor([float("nan")])
 
         # Process edges
         new_index_map = {
@@ -391,6 +395,8 @@ class Neo4jCellDataset(Dataset):
         self.overwrite_intermediates = overwrite_intermediates
         self.process_graph = graph_processor
         self._phenotype_label_index = None
+        self._dataset_name_index = None
+        self._perturbation_count_index = None
 
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
@@ -444,6 +450,8 @@ class Neo4jCellDataset(Dataset):
 
         # compute index
         self.phenotype_label_index
+        self.dataset_name_index
+        self.perturbation_count_index
 
     def _determine_processing_steps(self):
         steps = [ProcessingStep.RAW]
@@ -666,6 +674,107 @@ class Neo4jCellDataset(Dataset):
                 json.dump(self._phenotype_label_index, file)
         return self._phenotype_label_index
 
+    def compute_dataset_name_index(self) -> dict[str, list[int]]:
+        print("Computing dataset name index...")
+        dataset_name_index = {}
+
+        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            for idx, (key, value) in enumerate(cursor):
+                try:
+                    data_list = json.loads(value.decode("utf-8"))
+                    for data in data_list:
+                        experiment_class = EXPERIMENT_TYPE_MAP[
+                            data["experiment"]["experiment_type"]
+                        ]
+                        experiment = experiment_class(**data["experiment"])
+                        dataset_name = experiment.dataset_name
+
+                        if dataset_name not in dataset_name_index:
+                            dataset_name_index[dataset_name] = []
+                        dataset_name_index[dataset_name].append(idx)
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                except Exception as e:
+                    print(
+                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                    )
+
+        self.close_lmdb()  # Close the LMDB environment
+
+        return dataset_name_index
+
+    @property
+    def dataset_name_index(self) -> dict[str, list[int]]:
+        if osp.exists(osp.join(self.processed_dir, "dataset_name_index.json")):
+            with open(
+                osp.join(self.processed_dir, "dataset_name_index.json"), "r"
+            ) as file:
+                self._dataset_name_index = json.load(file)
+        else:
+            self._dataset_name_index = self.compute_dataset_name_index()
+            with open(
+                osp.join(self.processed_dir, "dataset_name_index.json"), "w"
+            ) as file:
+                json.dump(self._dataset_name_index, file)
+        return self._dataset_name_index
+
+    def compute_perturbation_count_index(self) -> dict[int, list[int]]:
+        print("Computing perturbation count index...")
+        perturbation_count_index = {}
+
+        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            for idx, (key, value) in enumerate(cursor):
+                try:
+                    data_list = json.loads(value.decode("utf-8"))
+                    for data in data_list:
+                        experiment_class = EXPERIMENT_TYPE_MAP[
+                            data["experiment"]["experiment_type"]
+                        ]
+                        experiment = experiment_class(**data["experiment"])
+                        perturbation_count = len(experiment.genotype.perturbations)
+
+                        if perturbation_count not in perturbation_count_index:
+                            perturbation_count_index[perturbation_count] = []
+                        perturbation_count_index[perturbation_count].append(idx)
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                except Exception as e:
+                    print(
+                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                    )
+
+        self.close_lmdb()  # Close the LMDB environment
+
+        return perturbation_count_index
+
+    @property
+    def perturbation_count_index(self) -> dict[int, list[int]]:
+        if osp.exists(osp.join(self.processed_dir, "perturbation_count_index.json")):
+            with open(
+                osp.join(self.processed_dir, "perturbation_count_index.json"), "r"
+            ) as file:
+                self._perturbation_count_index = json.load(file)
+                # Convert string keys back to integers
+                self._perturbation_count_index = {
+                    int(k): v for k, v in self._perturbation_count_index.items()
+                }
+        else:
+            self._perturbation_count_index = self.compute_perturbation_count_index()
+            with open(
+                osp.join(self.processed_dir, "perturbation_count_index.json"), "w"
+            ) as file:
+                # Convert integer keys to strings for JSON serialization
+                json.dump(
+                    {str(k): v for k, v in self._perturbation_count_index.items()}, file
+                )
+        return self._perturbation_count_index
+
     # def compute_phenotype_label_index(self) -> dict[str, list[int]]:
     #     print("Computing phenotype label index...")
     #     phenotype_label_index = {}
@@ -781,7 +890,7 @@ def main():
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        batch_size=4,
+        batch_size=2,
         random_seed=42,
         num_workers=4,
         pin_memory=False,
@@ -789,7 +898,7 @@ def main():
     data_module.setup()
     for batch in tqdm(data_module.all_dataloader()):
         pass
-        # print(batch)
+    print(batch)
 
     print("finished")
 

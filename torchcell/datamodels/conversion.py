@@ -195,7 +195,7 @@ class Converter(ABC):
         self.close_lmdb()
 
         log.info(f"Conversion complete. LMDB database written to {output_path}")
-        log.info(f"Number of instances actually converted: {converted_count}")
+        log.info(f"Number of instances converted: {converted_count}")
         log.info(f"Total number of instances processed: {total_count}")
 
     def __getitem__(self, index: Union[int, slice, list]):

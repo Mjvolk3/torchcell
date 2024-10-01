@@ -284,8 +284,8 @@ class Phenotype(ModelStrict):
 class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "fitness"
-    label_statistic_name: str = "std"
-    fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
+    label_statistic_name: str = "fitness_std"
+    fitness_std: float = Field(description="wt_growth_rate/ko_growth_rate")
     std: float | None = Field(description="fitness standard deviation")
 
     @field_validator("fitness")
@@ -349,14 +349,14 @@ class GeneEssentialityPhenotype(Phenotype, ModelStrict):
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
     graph_level: str = "hyperedge"
     label_name: str = "is_synthetic_lethal"
-    label_statistic_name: str = "statistic_score"
+    label_statistic_name: str = "synthetic_lethality_statistic_score"
     is_synthetic_lethal: bool = Field(
         default=True,
         description="synthetic lethality occurs when the combination of mutations in"
         "two or more genes leads to cell death, whereas a mutation in only one of these"
         "genes does not affect the viability of the cell.",
     )
-    statistic_score: float | None = Field(
+    synthetic_lethality_statistic_score: float | None = Field(
         default=None,
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
@@ -388,7 +388,7 @@ class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
 class SyntheticRescuePhenotype(Phenotype, ModelStrict):
     graph_level: str = "hyperedge"
     label_name: str = "is_synthetic_rescue"
-    label_statistic_name: str = "statistic_score"
+    label_statistic_name: str = "synthetic_rescue_statistic_score"
     is_synthetic_rescue: bool = Field(
         default=True,
         description="synthetic rescue occurs when a mutation in one gene compensates"
@@ -427,7 +427,7 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
     graph_level: str = "hyperedge"
     label_name: str = "gene_interaction"
-    label_statistic_name: str = "p_value"
+    label_statistic_name: str = "gene_interaction_p_value"
     gene_interaction: float = Field(
         description="""epsilon, tau, or analogous gene interaction value.
         Computed from composite fitness phenotypes."""

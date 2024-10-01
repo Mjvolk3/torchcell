@@ -284,13 +284,15 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         # Phenotype based on temperature
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
-        phenotype = FitnessPhenotype(fitness=row[smf_key], std=row[smf_std_key])
+        phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=row[smf_std_key])
 
         if row["Temperature"] == 26:
             phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -603,13 +605,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         # Phenotype based on temperature
         dmf_key = "Double mutant fitness"
         dmf_std_key = "Double mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(fitness=row[dmf_key], std=row[dmf_std_key])
+        phenotype = FitnessPhenotype(fitness=row[dmf_key], fitness_std=row[dmf_std_key])
 
         if row["Temperature"] == 26:
             phenotype_reference_std = phenotype_reference_std_26
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -907,11 +911,14 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
         environment_reference = environment.model_copy()
 
         phenotype = GeneInteractionPhenotype(
-            gene_interaction=row["Genetic interaction score (ε)"], p_value=row["P-value"]
+            gene_interaction=row["Genetic interaction score (ε)"],
+            gene_interaction_p_value=row["P-value"],
         )
 
         # By definition, the reference interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(
+            gene_interaction=0.0, gene_interaction_p_value=None
+        )
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

@@ -2,7 +2,7 @@
 id: eml0ufuhov06z54rkakmhpj
 title: '39'
 desc: ''
-updated: 1727284551291
+updated: 1727811991828
 created: 1727139041563
 ---
 ## 2024.09.23
@@ -26,44 +26,20 @@ created: 1727139041563
 
 - [x] Email Cheng
 - [x] Email Ge
-- [x] Email Rena
+- [x] Email Rana
 - [x] [[2024.09.25 - Dataset Name on Experiment Reference|dendron://torchcell/torchcell.datamodels.schema#20240925---dataset-name-on-experiment-reference]]
 - [x] #ramble I think the issue with putting pydantic model on graph is that it cannot be transferred to gpu. → this is true... this means we need a generic way of converting the experiments
+- [x] pass a `process_graph` function in the initializer. It should return with standard types. → returns a `HeteroData` obj.
+- [x] Write Aggregator to create list of `experiments` or `phenotype`
+- [x] Test out larger `smf` and `essentiality` query
+- [x] Run query on `DmfCostanzo2016` and `DmiCostanzo2016` to see if we get dataset.
 
-- [ ] Write Aggregator to create list of `experiments` or `phenotype`
+## 2024.09.26
+
+- [x] This should take in `Neo4jCellDataset` and return `Neo4jCellSubsetDataset`. We can use any of the indices to make this subsetting.→ This is what I wrote earlier... "write function to subset dataset. We want to do this based off of `label_name`, `label_statistic_name`, `dataset`". → I think it is fine to have a class initialized by a `Neo4jCellDataset` that runs subsetting methods according to available indices. → Still deciding how to handle this.
+
+## 2024.09.27
+
+- [x] Slides
 
 
-
-- [ ] Test out larger `smf` and `essentiality` query
-- [ ] pass a `process_graph` function in the initializer. It should return with standard types.
-- [ ] Run query on `DmfCostanzo2016` and `DmiCostanzo2016` to see if the data added same... Or just check data and make conclusion. Could also look in browser. First datasets don't need `Costanzo2016`.
-- [ ] Write function to subset dataset. We want to do this based off of `label_name`, `label_statistic_name`, `dataset`.
-
-- [ ] Write `1e3`, `1e4`, `5e4` ,`1e5`, `5e5` ,`1e6`, and `all`.
-- [ ] Check data distributions for all data.
-
-- [ ] Write DiffPool Model. Match model hyperparameters to DCell. Make sure all intermediates includes attention and pool mapping are returned and can be inspected for interpretability.
-- [ ] Write Training Script for DiffPool
-- [ ] How to handle `None` label
-- [ ] Run training on small data. Set up with data parallel in mind.
-- [ ] Run test on `Delta`.
-
-- [ ] Setup for training on `1e4` and choose reasonable number of hyper parameters for sweep. Launch sweep. Try to avoid data parallel on this and sweep with multiple GPUs. Probably don't use batch size as one of params.
-
-- [ ] Add naming to statistic label, then rebuild db.
-
-- [ ] `GH` rebuild. Get art first.
-- [ ] Random forest regression can be used for multi-label prediction
-
-- [ ] Email Exxact
-
-***
-
-- [ ] Email Illinois Computes
-- [ ] Add in conversion with simple example first. Use essential to fitness.`ABC` should take in a raw dataset and return a conversion map.
-- [ ] Add possibility for multiple deduplicators... deduplicators should be broadly broken into two classes those that guarantee functional mapping, `mean`, `max` type deduplication and those that don't have this guarantee.
-- [ ] Change "interaction" to "gene_interaction"
-- [ ] Rebuild local database
-- [ ] Rebuild large database
-
-- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.

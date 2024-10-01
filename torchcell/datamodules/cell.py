@@ -42,6 +42,8 @@ class CellDataModule(L.LightningDataModule):
             len(self.dataset) * self.train_ratio / self.batch_size
         )
 
+    # TODO the ratios aren't giving 0.8, 0.1, 0.1...abs
+    # we get stuff like this 'train_samples': 7999, 'val_samples': 999, 'test_samples': 1002,
     def setup(self, stage=None):
         # Set the random seed for reproducibility
         torch.manual_seed(self.random_seed)
@@ -153,7 +155,7 @@ class CellDataModule(L.LightningDataModule):
             follow_batch=["x", "x_pert"],
         )
         if self.prefetch:
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)
         return loader
 

@@ -1,3 +1,8 @@
+# torchcell/data/mean_experiment_deduplicate
+# [[torchcell.data.mean_experiment_deduplicate]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/mean_experiment_deduplicate
+# Test file: tests/torchcell/data/test_mean_experiment_deduplicate.py
+
 import hashlib
 import numpy as np
 from typing import Any
@@ -22,11 +27,16 @@ class MeanExperimentDeduplicator(Deduplicator):
     def duplicate_check(self, data: list[dict[str, Any]]) -> dict[str, list[int]]:
         duplicate_check = {}
         for idx, item in enumerate(data):
-            perturbations = item["experiment"].genotype.perturbations
+            experiment = item["experiment"]
+            experiment_type = experiment.experiment_type
+            perturbations = experiment.genotype.perturbations
             sorted_gene_names = sorted(
                 [pert.systematic_gene_name for pert in perturbations]
             )
-            hash_key = hashlib.sha256(str(sorted_gene_names).encode()).hexdigest()
+            
+            # Create a hash key that includes both experiment type and perturbations
+            hash_input = f"{experiment_type}:{str(sorted_gene_names)}"
+            hash_key = hashlib.sha256(hash_input.encode()).hexdigest()
 
             if hash_key not in duplicate_check:
                 duplicate_check[hash_key] = []

@@ -831,7 +831,9 @@ def main():
     from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
         GeneEssentialityToFitnessConverter,
     )
-
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
@@ -877,7 +879,7 @@ def main():
             "fudt_3prime": fudt_3prime_dataset,
             "fudt_5prime": fudt_5prime_dataset,
         },
-        converter=GeneEssentialityToFitnessConverter,
+        converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
         graph_processor=PhenotypeProcessor(),
@@ -885,7 +887,8 @@ def main():
     print(len(dataset))
     # Data module testing
 
-    dataset[2]
+    print(dataset[2])
+    # print(dataset[10000])
 
     data_module = CellDataModule(
         dataset=dataset,
@@ -901,6 +904,35 @@ def main():
     print(batch)
 
     print("finished")
+
+    # from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    # from torchcell.utils import format_scientific_notation
+
+    # size = 1e4
+    # seed = 42
+    # data_module = PerturbationSubsetDataModule(
+    #     dataset=dataset,
+    #     size=int(size),
+    #     batch_size=2,
+    #     num_workers=4,
+    #     pin_memory=True,
+    #     cache_dir=osp.join(
+    #         dataset_root,
+    #         f"perturbation_subset_cache_{format_scientific_notation(size)}_{seed}",
+    #     ),
+    #     original_cache_dir=osp.join(dataset_root, "data_module_cache"),
+    #     seed=seed,
+    # )
+    # data_module.setup()
+
+    # subset_info = data_module.get_subset_info()
+    # print(subset_info)
+
+    # for batch in tqdm(data_module.train_dataloader()):
+    #     # Your training code here
+    #     pass
+
+    # print()
 
 
 if __name__ == "__main__":

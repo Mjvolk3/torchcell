@@ -178,11 +178,12 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         )
 
         phenotype = SyntheticLethalityPhenotype(
-            is_synthetic_lethal=True, statistic_score=float(row["r.statistic_score"])
+            is_synthetic_lethal=True,
+            synthetic_lethality_statistic_score=float(row["r.statistic_score"]),
         )
 
         phenotype_reference = SyntheticLethalityPhenotype(
-            is_synthetic_lethal=False, statistic_score=None
+            is_synthetic_lethal=False, synthetic_lethality_statistic_score=None
         )
 
         experiment = SyntheticLethalityExperiment(
@@ -348,7 +349,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
         phenotype = SyntheticRescuePhenotype(
             is_synthetic_rescue=True,
-            statistic_score=(
+            synthetic_rescue_statistic_score=(
                 float(row["r.statistic_score"])
                 if pd.notna(row["r.statistic_score"])
                 else None
@@ -356,7 +357,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         )
 
         phenotype_reference = SyntheticRescuePhenotype(
-            is_synthetic_rescue=False, statistic_score=None
+            is_synthetic_rescue=False, synthetic_rescue_statistic_score=None
         )
 
         experiment = SyntheticRescueExperiment(

@@ -265,9 +265,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         # We have no reported std for single mutants
         # Could use mean of all stds, would be a conservative estimate
         # Using nan for now
-        phenotype = FitnessPhenotype(fitness=row[smf_key], std=None)
+        phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -478,9 +478,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             dmf_key = "Query single/double mutant fitness"
             # std of these fitnesses not reported
             fitness_std = np.nan
-        phenotype = FitnessPhenotype(fitness=row[dmf_key], std=fitness_std)
+        phenotype = FitnessPhenotype(fitness=row[dmf_key], fitness_std=fitness_std)
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -702,9 +702,9 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(fitness=row[tmf_key], std=row[tmf_std_key])
+        phenotype = FitnessPhenotype(fitness=row[tmf_key], fitness_std=row[tmf_std_key])
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -902,11 +902,11 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
-            p_value=row["P-value"],
+            gene_interaction_p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, gene_interaction_p_value=None)
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,
@@ -1119,11 +1119,11 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
-            p_value=row["P-value"],
+            gene_interaction_p_value=row["P-value"],
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, gene_interaction_p_value=None)
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

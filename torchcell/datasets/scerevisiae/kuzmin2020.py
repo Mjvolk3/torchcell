@@ -139,9 +139,9 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["Fitness"], std=row["St.dev."])
+        phenotype = FitnessPhenotype(fitness=row["Fitness"], fitness_std=row["St.dev."])
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -393,9 +393,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["fitness"], std=row["fitness_std"])
+        phenotype = FitnessPhenotype(fitness=row["fitness"], fitness_std=row["fitness_std"])
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -624,9 +624,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["fitness"], std=row["fitness_std"])
+        phenotype = FitnessPhenotype(fitness=row["fitness"], fitness_std=row["fitness_std"])
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -833,11 +833,11 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
 
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
-            p_value=row["P-value"],
+            gene_interaction_p_value=row["P-value"],
         )
 
         phenotype_reference = GeneInteractionPhenotype(
-            gene_interaction=0.0, p_value=None
+            gene_interaction=0.0, gene_interaction_p_value=None
         )
 
         reference = GeneInteractionExperimentReference(
@@ -1056,11 +1056,11 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 
         phenotype = GeneInteractionPhenotype(
             gene_interaction=row["Adjusted genetic interaction score (epsilon or tau)"],
-            p_value=row["P-value"],
+            gene_interaction_p_value=row["P-value"],
         )
 
         phenotype_reference = GeneInteractionPhenotype(
-            gene_interaction=0.0, p_value=None
+            gene_interaction=0.0, gene_interaction_p_value=None
         )
 
         reference = GeneInteractionExperimentReference(

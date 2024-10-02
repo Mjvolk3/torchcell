@@ -522,14 +522,14 @@ class CellAdapter:
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
         fitness = phenotype.fitness
-        std = phenotype.std
+        fitness_std = phenotype.fitness_std
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "fitness": fitness,
-            "std": std,
+            "fitness_std": fitness_std,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -553,14 +553,14 @@ class CellAdapter:
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
         gene_interaction = phenotype.gene_interaction
-        p_value = phenotype.p_value
+        gene_interaction_p_value = phenotype.gene_interaction_p_value
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "gene_interaction": gene_interaction,
-            "p_value": p_value,
+            "gene_interaction_p_value": gene_interaction_p_value,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -611,14 +611,16 @@ class CellAdapter:
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
         is_synthetic_lethal = phenotype.is_synthetic_lethal
-        statistic_score = phenotype.statistic_score
+        synthetic_lethality_statistic_score = (
+            phenotype.synthetic_lethality_statistic_score
+        )
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "is_synthetic_lethal": is_synthetic_lethal,
-            "statistic_score": statistic_score,
+            "statistic_score": synthetic_lethality_statistic_score,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -642,14 +644,14 @@ class CellAdapter:
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
         is_synthetic_rescue = phenotype.is_synthetic_rescue
-        statistic_score = phenotype.statistic_score
+        synthetic_rescue_statistic_score = phenotype.synthetic_rescue_statistic_score
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "is_synthetic_rescue": is_synthetic_rescue,
-            "statistic_score": statistic_score,
+            "synthetic_rescue_statistic_score": synthetic_rescue_statistic_score,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -672,14 +674,14 @@ class CellAdapter:
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
             fitness = phenotype.fitness
-            std = phenotype.std
+            fitness_std = phenotype.fitness_std
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
                 "fitness": fitness,
-                "std": std,
+                "fitness_std": fitness_std,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
@@ -705,14 +707,14 @@ class CellAdapter:
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
             gene_interaction = phenotype.gene_interaction
-            p_value = phenotype.p_value
+            gene_interaction_p_value = phenotype.gene_interaction_p_value
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
                 "gene_interaction": gene_interaction,
-                "p_value": p_value,
+                "gene_interaction_p_value": gene_interaction_p_value,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
@@ -767,14 +769,14 @@ class CellAdapter:
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
             is_synthetic_lethal = phenotype.is_synthetic_lethal
-            statistic_score = phenotype.statistic_score
+            statistic_score = phenotype.synthetic_lethality_statistic_score
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
                 "is_synthetic_lethal": is_synthetic_lethal,
-                "statistic_score": statistic_score,
+                "synthetic_lethality_statistic_score": statistic_score,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
@@ -800,14 +802,16 @@ class CellAdapter:
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
             is_synthetic_rescue = phenotype.is_synthetic_rescue
-            statistic_score = phenotype.statistic_score
+            synthetic_rescue_statistic_score = (
+                phenotype.synthetic_rescue_statistic_score
+            )
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
                 "is_synthetic_rescue": is_synthetic_rescue,
-                "statistic_score": statistic_score,
+                "synthetic_rescue_statistic_score": synthetic_rescue_statistic_score,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 

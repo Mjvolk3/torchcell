@@ -285,8 +285,8 @@ class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "fitness"
     label_statistic_name: str = "fitness_std"
-    fitness_std: float = Field(description="wt_growth_rate/ko_growth_rate")
-    std: float | None = Field(description="fitness standard deviation")
+    fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
+    fitness_std: float | None = Field(description="fitness standard deviation")
 
     @field_validator("fitness")
     def validate_fitness(cls, v):
@@ -395,7 +395,7 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
         "for the deleterious effects of a mutation in another gene, thereby restoring"
         "normal function or viability to the cell",
     )
-    statistic_score: float | None = Field(
+    synthetic_rescue_statistic_score: float | None = Field(
         default=None,
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
@@ -432,7 +432,7 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
         description="""epsilon, tau, or analogous gene interaction value.
         Computed from composite fitness phenotypes."""
     )
-    p_value: float | None = Field(
+    gene_interaction_p_value: float | None = Field(
         default=None, description="p-value of gene interaction"
     )
 

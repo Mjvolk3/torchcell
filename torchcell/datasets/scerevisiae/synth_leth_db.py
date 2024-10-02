@@ -85,22 +85,26 @@ class SynthLethalityYeastSynthLethDbDataset(ExperimentDataset):
         return SyntheticLethalityExperimentReference
 
     def download(self):
-        url = (
-            "https://synlethdb.sist.shanghaitech.edu.cn/static/download/SL/Yeast_SL.csv"
-        )
+        url = "https://drive.google.com/uc?export=download&id=1_56ebyBatapNml8S5HlJW7Dz1l0DZZIq"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
 
-        if not os.path.exists(self.raw_dir):
-            os.makedirs(self.raw_dir)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        log.info(f"Downloading {url} to {download_path}")
 
-        print(f"Downloading {url} to {download_path}")
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        session = requests.Session()
+        response = session.get(url, stream=True)
+
+        if "download_warning" in response.cookies:
+            params = {"confirm": response.cookies["download_warning"]}
+            response = session.get(url, params=params, stream=True)
+
+        response.raise_for_status()
 
         with open(download_path, "wb") as f:
-            f.write(response.content)
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
 
-        print("Download completed.")
+        log.info("Download completed successfully.")
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None
@@ -257,20 +261,26 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
         return SyntheticRescueExperimentReference
 
     def download(self):
-        url = "https://synlethdb.sist.shanghaitech.edu.cn/static/download/nonSL/Yeast_SR.csv"
+        url = "https://drive.google.com/uc?export=download&id=1lBaApm70E05JnkrE1Hwmn8gT1cV5Bzlt"
         download_path = os.path.join(self.raw_dir, self.raw_file_names[0])
 
-        if not os.path.exists(self.raw_dir):
-            os.makedirs(self.raw_dir)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        log.info(f"Downloading {url} to {download_path}")
 
-        print(f"Downloading {url} to {download_path}")
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        session = requests.Session()
+        response = session.get(url, stream=True)
+
+        if "download_warning" in response.cookies:
+            params = {"confirm": response.cookies["download_warning"]}
+            response = session.get(url, params=params, stream=True)
+
+        response.raise_for_status()
 
         with open(download_path, "wb") as f:
-            f.write(response.content)
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
 
-        print("Download completed.")
+        log.info("Download completed successfully.")
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict | None = None

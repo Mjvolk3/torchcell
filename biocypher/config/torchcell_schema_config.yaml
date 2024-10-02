@@ -91,7 +91,7 @@ fitness phenotype:
         label_name: str
         label_statistic_name: str
         fitness: float
-        std: float
+        fitness_std: float
         serialized_data: str
 
 gene interaction phenotype:
@@ -102,7 +102,7 @@ gene interaction phenotype:
         label_name: str
         label_statistic_name: str
         gene_interaction: float
-        p_value: float
+        gene_interaction_p_value: float
         serialized_data: str
 
 gene essentiality phenotype:
@@ -122,7 +122,7 @@ synthetic lethality phenotype:
         label_name: str
         label_statistic_name: str
         is_synthetic_lethal: bool
-        statistic_score: float
+        synthetic_lethality_statistic_score: float
         serialized_data: str
 
 synthetic rescue phenotype:
@@ -133,7 +133,7 @@ synthetic rescue phenotype:
         label_name: str
         label_statistic_name: str
         is_synthetic_rescue: bool
-        statistic_score: float
+        synthetic_rescue_statistic_score: float
         serialized_data: str
 # PHENOTYPES END
 

@@ -620,7 +620,7 @@ class CellAdapter:
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "is_synthetic_lethal": is_synthetic_lethal,
-            "statistic_score": synthetic_lethality_statistic_score,
+            "synthetic_lethality_statistic_score": synthetic_lethality_statistic_score,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 

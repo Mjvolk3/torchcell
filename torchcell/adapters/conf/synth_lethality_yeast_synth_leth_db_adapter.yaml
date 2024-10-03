@@ -2,7 +2,6 @@
 # [[torchcell.adapters.conf.synth_lethality_yeast_synth_leth_db.yaml]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/synth_lethality_yeast_synth_leth_db.yaml
 
-
 cell_adapter:
   node_methods:
     - method_name: experiment reference

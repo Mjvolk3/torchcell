@@ -21,7 +21,7 @@ def gene_essentiality_to_fitness_experiment(
     experiment: GeneEssentialityExperiment,
 ) -> FitnessExperiment | None:
     if experiment.phenotype.is_essential:
-        fitness_phenotype = FitnessPhenotype(fitness=0.0, std=None)
+        fitness_phenotype = FitnessPhenotype(fitness=0.0, fitness_std=None)
         return FitnessExperiment(
             experiment_type="fitness",
             dataset_name=experiment.dataset_name,
@@ -35,7 +35,7 @@ def gene_essentiality_to_fitness_experiment(
 def gene_essentiality_to_fitness_reference(
     reference: GeneEssentialityExperimentReference,
 ) -> FitnessExperimentReference:
-    fitness_phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
+    fitness_phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
     return FitnessExperimentReference(
         experiment_reference_type="fitness",
         dataset_name=reference.dataset_name,

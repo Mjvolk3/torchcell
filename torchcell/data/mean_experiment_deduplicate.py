@@ -33,7 +33,7 @@ class MeanExperimentDeduplicator(Deduplicator):
             sorted_gene_names = sorted(
                 [pert.systematic_gene_name for pert in perturbations]
             )
-            
+
             # Create a hash key that includes both experiment type and perturbations
             hash_input = f"{experiment_type}:{str(sorted_gene_names)}"
             hash_key = hashlib.sha256(hash_input.encode()).hexdigest()
@@ -63,9 +63,9 @@ class MeanExperimentDeduplicator(Deduplicator):
             if exp["experiment"].phenotype.fitness is not None
         ]
         fitness_stds = [
-            exp["experiment"].phenotype.std
+            exp["experiment"].phenotype.fitness_std
             for exp in duplicate_experiments
-            if exp["experiment"].phenotype.std is not None
+            if exp["experiment"].phenotype.fitness_std is not None
         ]
 
         mean_fitness = np.mean(fitness_values) if fitness_values else None
@@ -101,9 +101,9 @@ class MeanExperimentDeduplicator(Deduplicator):
             if exp["experiment"].phenotype.gene_interaction is not None
         ]
         p_values = [
-            exp["experiment"].phenotype.p_value
+            exp["experiment"].phenotype.gene_interaction_p_valu
             for exp in duplicate_experiments
-            if exp["experiment"].phenotype.p_value is not None
+            if exp["experiment"].phenotype.gene_interaction_p_valu is not None
         ]
 
         mean_interaction = np.mean(interaction_values) if interaction_values else None

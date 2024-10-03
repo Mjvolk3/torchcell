@@ -21,7 +21,7 @@ def synthetic_lethality_to_fitness_experiment(
     experiment: SyntheticLethalityExperiment,
 ) -> FitnessExperiment | None:
     if experiment.phenotype.is_synthetic_lethal:
-        fitness_phenotype = FitnessPhenotype(fitness=0.0, std=None)
+        fitness_phenotype = FitnessPhenotype(fitness=0.0, fitness_std=None)
         return FitnessExperiment(
             experiment_type="fitness",
             dataset_name=experiment.dataset_name,
@@ -35,7 +35,7 @@ def synthetic_lethality_to_fitness_experiment(
 def synthetic_lethality_to_fitness_reference(
     reference: SyntheticLethalityExperimentReference,
 ) -> FitnessExperimentReference:
-    fitness_phenotype_reference = FitnessPhenotype(fitness=1.0, std=None)
+    fitness_phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
     return FitnessExperimentReference(
         experiment_reference_type="fitness",
         dataset_name=reference.dataset_name,

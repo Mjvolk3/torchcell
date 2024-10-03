@@ -2,7 +2,7 @@
 id: h59o9thoyum3pqfxrxqbrcu
 title: '40'
 desc: ''
-updated: 1727814330418
+updated: 1727992376528
 created: 1727811879911
 ---
 ## 2024.10.01
@@ -11,6 +11,16 @@ created: 1727811879911
 - [x] Handle `None` in deduplicate. → We seem to already be handing `None` fine. → [[torchcell.data.mean_experiment_deduplicate]]
 - [x] Unique naming of statistic field. → we also did not remove `dataset_name` from the reference like we were thinking of doing because the uniqueness of the reference would be maintained without the `dataset_name`. References can be converted to be unified.
 - [ ] Rebuild database.
+
+## 2024.10.03
+
+- [ ] GH
+
+## 2024.10.03
+
+- [ ] Synthetic Lethality phenotypes not linked to query. Breaks `PhenotypeMemberOf` relation. → Checked two of these broken edge types.
+- [ ] `SynthLethalityYeastSynthLethDbDataset` is a missing node. Breaks `ExperimentMemberOf` relation. 
+- [ ] `Mentions` relation is broken. All the `to` and `from` look mostly different and this is really only in the case of a secondary data source like synthetic lethality.
 
 ***
 

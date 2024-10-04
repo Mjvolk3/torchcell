@@ -2,7 +2,7 @@
 id: h59o9thoyum3pqfxrxqbrcu
 title: '40'
 desc: ''
-updated: 1727992376528
+updated: 1728008292146
 created: 1727811879911
 ---
 ## 2024.10.01
@@ -18,9 +18,12 @@ created: 1727811879911
 
 ## 2024.10.03
 
-- [ ] Synthetic Lethality phenotypes not linked to query. Breaks `PhenotypeMemberOf` relation. → Checked two of these broken edge types.
-- [ ] `SynthLethalityYeastSynthLethDbDataset` is a missing node. Breaks `ExperimentMemberOf` relation. 
-- [ ] `Mentions` relation is broken. All the `to` and `from` look mostly different and this is really only in the case of a secondary data source like synthetic lethality.
+- [x] Synthetic Lethality phenotypes not linked to query. Breaks `PhenotypeMemberOf` relation. → Checked two of these broken edge types.
+- [x] `SynthLethalityYeastSynthLethDbDataset` is a missing node. Breaks `ExperimentMemberOf` relation.
+- [x] `Mentions` relation is broken. All the `to` and `from` look mostly different and this is really only in the case of a secondary data source like synthetic lethality.
+- [x] Fixed typo in `cell_adapter`
+- [x] Test smaller build with just synthetic lethality. Now import errors.
+- [ ] Run small build again with synthetic lethality fix.
 
 ***
 

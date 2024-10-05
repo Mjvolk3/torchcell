@@ -73,7 +73,9 @@ class MeanExperimentDeduplicator(Deduplicator):
             np.sqrt(np.mean(np.array(fitness_stds) ** 2)) if fitness_stds else None
         )
 
-        mean_phenotype = FitnessPhenotype(fitness=mean_fitness, std=mean_fitness_std)
+        mean_phenotype = FitnessPhenotype(
+            fitness=mean_fitness, fitness_std=mean_fitness_std
+        )
 
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
 
@@ -101,9 +103,9 @@ class MeanExperimentDeduplicator(Deduplicator):
             if exp["experiment"].phenotype.gene_interaction is not None
         ]
         p_values = [
-            exp["experiment"].phenotype.gene_interaction_p_valu
+            exp["experiment"].phenotype.gene_interaction_p_value
             for exp in duplicate_experiments
-            if exp["experiment"].phenotype.gene_interaction_p_valu is not None
+            if exp["experiment"].phenotype.gene_interaction_p_value is not None
         ]
 
         mean_interaction = np.mean(interaction_values) if interaction_values else None
@@ -112,7 +114,8 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype = GeneInteractionPhenotype(
-            gene_interaction=mean_interaction, p_value=aggregated_p_value
+            gene_interaction=mean_interaction,
+            gene_interaction_p_value=aggregated_p_value,
         )
 
         mean_genotype = self._create_mean_genotype(duplicate_experiments)
@@ -169,7 +172,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype_reference = FitnessPhenotype(
-            fitness=mean_fitness_ref, std=mean_fitness_ref_std
+            fitness=mean_fitness_ref, fitness_std=mean_fitness_ref_std
         )
 
         dataset_name = ("+").join(
@@ -204,7 +207,7 @@ class MeanExperimentDeduplicator(Deduplicator):
         )
 
         mean_phenotype_reference = GeneInteractionPhenotype(
-            gene_interaction=mean_interaction_ref, p_value=None
+            gene_interaction=mean_interaction_ref, gene_interaction_p_value=None
         )
 
         dataset_name = ("+").join(

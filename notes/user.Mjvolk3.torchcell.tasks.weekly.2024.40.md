@@ -2,7 +2,7 @@
 id: h59o9thoyum3pqfxrxqbrcu
 title: '40'
 desc: ''
-updated: 1728008292146
+updated: 1728074097681
 created: 1727811879911
 ---
 ## 2024.10.01
@@ -23,7 +23,12 @@ created: 1727811879911
 - [x] `Mentions` relation is broken. All the `to` and `from` look mostly different and this is really only in the case of a secondary data source like synthetic lethality.
 - [x] Fixed typo in `cell_adapter`
 - [x] Test smaller build with just synthetic lethality. Now import errors.
-- [ ] Run small build again with synthetic lethality fix.
+- [x] Run small build again with synthetic lethality fix.
+
+## 2024.10.04
+
+- [ ] Change `tree` to `blob` on front matter.
+- [ ] Query datset
 
 ***
 

@@ -2,7 +2,6 @@
 # [[torchcell.datamodules.cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
 # Test file: torchcell/datamodules/test_cell.py
-
 import json
 import os
 import lightning as L
@@ -12,9 +11,29 @@ from tqdm import tqdm
 import logging
 import os.path as osp
 from torch_geometric.loader import PrefetchLoader
+from torchcell.datamodels import ModelStrict
+from typing import List
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+
+class DataModuleIndex(ModelStrict):
+    train: List[int]
+    val: List[int]
+    test: List[int]
+    
+    @property
+    def train_ratio(self):
+        return len(self.train) / (len(self.train) + len(self.val) + len(self.test))
+    
+    @property
+    def val_ratio(self):
+        return len(self.val) / (len(self.train) + len(self.val) + len(self.test))
+    
+    @property
+    def test_ratio(self):
+        return len(self.test) / (len(self.train) + len(self.val) + len(self.test))
 
 
 class CellDataModule(L.LightningDataModule):
@@ -41,106 +60,99 @@ class CellDataModule(L.LightningDataModule):
         self.train_epoch_size = int(
             len(self.dataset) * self.train_ratio / self.batch_size
         )
+        self._index: DataModuleIndex = None
 
-    # TODO the ratios aren't giving 0.8, 0.1, 0.1...abs
-    # we get stuff like this 'train_samples': 7999, 'val_samples': 999, 'test_samples': 1002,
-    def setup(self, stage=None):
-        # Set the random seed for reproducibility
-        torch.manual_seed(self.random_seed)
+    @property
+    def index(self) -> DataModuleIndex:
+        if self._index is None:
+            self._load_or_compute_index()
+        return self._index
 
-        # Create cache directory if it doesn't exist
+    def _load_or_compute_index(self):
         os.makedirs(self.cache_dir, exist_ok=True)
-
-        # Check if cached indices exist
-        cached_indices_file = osp.join(self.cache_dir, "cached_indices.json")
-        if osp.exists(cached_indices_file):
+        index_file = osp.join(self.cache_dir, "index.json")
+        if osp.exists(index_file):
             try:
-                # Load cached indices from file
-                with open(cached_indices_file, "r") as f:
-                    log.info(f"Loading cached indices from {cached_indices_file}")
-                    cached_data = json.load(f)
-                    train_indices = cached_data["train_indices"]
-                    val_indices = cached_data["val_indices"]
-                    test_indices = cached_data["test_indices"]
-                    phenotype_label_index = (
-                        self.dataset.phenotype_label_index
-                    )  # Assign the phenotype_label_index
-            except json.decoder.JSONDecodeError:
-                # If JSON decoding fails, regenerate the cached indices
-                print(
-                    "Cached indices JSON is corrupted. Regenerating cached indices..."
-                )
-                os.remove(cached_indices_file)
-                self.setup(stage)
-                return
+                with open(index_file, "r") as f:
+                    log.info(f"Loading index from {index_file}")
+                    index_dict = json.load(f)
+                    # Handle backward compatibility
+                    if "train_indices" in index_dict:
+                        index_dict = {
+                            "train": index_dict["train_indices"],
+                            "val": index_dict["val_indices"],
+                            "test": index_dict["test_indices"],
+                        }
+                    self._index = DataModuleIndex(**index_dict)
+            except Exception as e:
+                print(f"Error loading index: {e}. Regenerating...")
+                self._compute_and_save_index(index_file)
         else:
-            log.info("Generating indices for train, val, and test sets...")
-            # Get the phenotype label index from the dataset
-            phenotype_label_index = self.dataset.phenotype_label_index
+            self._compute_and_save_index(index_file)
 
-            # Split the indices for each phenotype label into train, val, and test sets
-            train_indices = []
-            val_indices = []
-            test_indices = []
+    def _compute_and_save_index(self, index_file):
+        log.info("Generating index for train, val, and test sets...")
+        torch.manual_seed(self.random_seed)
+        phenotype_label_index = self.dataset.phenotype_label_index
 
-            for label, indices in phenotype_label_index.items():
-                num_samples = len(indices)
-                num_train = int(self.train_ratio * num_samples)
-                num_val = int(self.val_ratio * num_samples)
+        train_index, val_index, test_index = [], [], []
 
-                # Shuffle the indices before subsetting
-                shuffled_indices = torch.randperm(num_samples).tolist()
-                label_indices = [indices[i] for i in shuffled_indices]
+        for label, indices in tqdm(phenotype_label_index.items()):
+            num_samples = len(indices)
+            num_train = int(self.train_ratio * num_samples)
+            num_val = int(self.val_ratio * num_samples)
 
-                label_train_indices = label_indices[:num_train]
-                label_val_indices = label_indices[num_train : num_train + num_val]
-                label_test_indices = label_indices[num_train + num_val :]
+            shuffled_indices = torch.randperm(num_samples).tolist()
+            label_indices = [indices[i] for i in shuffled_indices]
 
-                train_indices.extend(label_train_indices)
-                val_indices.extend(label_val_indices)
-                test_indices.extend(label_test_indices)
+            train_index.extend(label_indices[:num_train])
+            val_index.extend(label_indices[num_train : num_train + num_val])
+            test_index.extend(label_indices[num_train + num_val :])
 
-            # Cache the computed indices
-            cached_data = {
-                "train_indices": train_indices,
-                "val_indices": val_indices,
-                "test_indices": test_indices,
-            }
-            with open(cached_indices_file, "w") as f:
-                json.dump(cached_data, f)
+        self._index = DataModuleIndex(
+            train=train_index, val=val_index, test=test_index
+        )
 
-        # Create subset datasets for train, val, and test
-        self.train_dataset = torch.utils.data.Subset(self.dataset, train_indices)
-        self.val_dataset = torch.utils.data.Subset(self.dataset, val_indices)
-        self.test_dataset = torch.utils.data.Subset(self.dataset, test_indices)
+        with open(index_file, "w") as f:
+            json.dump(self._index.dict(), f)
 
-        # Create phenotype label indices for each split
+    def setup(self, stage=None):
+        train_index = self.index.train
+        val_index = self.index.val
+        test_index = self.index.test
+        phenotype_label_index = self.dataset.phenotype_label_index
+
+        self.train_dataset = torch.utils.data.Subset(self.dataset, train_index)
+        self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
+        self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
+
         (self.train_phenotype_label_index, self.train_subset_phenotype_label_index) = (
             self.create_subset_phenotype_label_index(
-                train_indices, phenotype_label_index
+                train_index, phenotype_label_index
             )
         )
         (self.val_phenotype_label_index, self.val_subset_phenotype_label_index) = (
-            self.create_subset_phenotype_label_index(val_indices, phenotype_label_index)
+            self.create_subset_phenotype_label_index(val_index, phenotype_label_index)
         )
         (self.test_phenotype_label_index, self.test_subset_phenotype_label_index) = (
             self.create_subset_phenotype_label_index(
-                test_indices, phenotype_label_index
+                test_index, phenotype_label_index
             )
         )
 
     def create_subset_phenotype_label_index(
-        self, subset_indices, phenotype_label_index
+        self, subset_index, phenotype_label_index
     ):
         subset_phenotype_label_index = {}
         subset_phenotype_label_index_mapped = {}
 
-        for label, indices in phenotype_label_index.items():
-            subset_indices_set = set(subset_indices)
-            subset_label_indices = [idx for idx in indices if idx in subset_indices_set]
+        log.info("Creating subset phenotype label index...")
+        for label, indices in tqdm(phenotype_label_index.items()):
+            subset_index_set = set(subset_index)
+            subset_label_indices = [idx for idx in indices if idx in subset_index_set]
             subset_phenotype_label_index[label] = subset_label_indices
             subset_phenotype_label_index_mapped[label] = [
-                subset_indices.index(idx) for idx in subset_label_indices
+                subset_index.index(idx) for idx in subset_label_indices
             ]
 
         return subset_phenotype_label_index, subset_phenotype_label_index_mapped

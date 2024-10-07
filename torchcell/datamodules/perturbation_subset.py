@@ -56,7 +56,8 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
 
         if not min_size <= size <= max_size:
             raise ValueError(
-                f"Invalid subset size. Size must be between {min_size} (smallest perturbation level) and {max_size}. "
+                f"Invalid subset size. Size must be between {min_size} "
+                "(smallest perturbation level) and {max_size}. "
                 f"Provided size: {size}"
             )
 

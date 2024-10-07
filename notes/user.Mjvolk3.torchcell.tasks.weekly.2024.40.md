@@ -2,7 +2,7 @@
 id: h59o9thoyum3pqfxrxqbrcu
 title: '40'
 desc: ''
-updated: 1728074097681
+updated: 1728255414450
 created: 1727811879911
 ---
 ## 2024.10.01
@@ -10,11 +10,11 @@ created: 1727811879911
 - [x] Composition converter. → We have a decent composite strategy for now [[torchcell.datamodels.fitness_composite_conversion]]
 - [x] Handle `None` in deduplicate. → We seem to already be handing `None` fine. → [[torchcell.data.mean_experiment_deduplicate]]
 - [x] Unique naming of statistic field. → we also did not remove `dataset_name` from the reference like we were thinking of doing because the uniqueness of the reference would be maintained without the `dataset_name`. References can be converted to be unified.
-- [ ] Rebuild database.
+- [x] Rebuild database.
 
-## 2024.10.03
+## 2024.10.02
 
-- [ ] GH
+- [x] GH maintenance.
 
 ## 2024.10.03
 
@@ -27,15 +27,23 @@ created: 1727811879911
 
 ## 2024.10.04
 
+- [x] Query dataset → failed due to typos. fixed. →failed rerun due to low memory. → rerun
+
+## 2024.10.05
+
+- [x] Meet with Rana → Discussed making dataset easily accessible.
+- [x] Database failed due to low memory. → Reran after deleting `database/biocypher-out`
+
+## 2024.10.06
+
+- [ ] Create dataset subsets. `1e4`, `5e4` ,`1e5`, `5e5` ,`1e6`, and `all`.
 - [ ] Change `tree` to `blob` on front matter.
-- [ ] Query datset
 
 ***
 
 - [ ] Ran query after fixing
 - [ ] Email Exxact
 
-- [ ] Write `1e3`, `1e4`, `5e4` ,`1e5`, `5e5` ,`1e6`, and `all`.
 - [ ] Check data distributions for all data.
 
 - [ ] Write DiffPool Model. Match model hyperparameters to DCell. Make sure all intermediates includes attention and pool mapping are returned and can be inspected for interpretability.

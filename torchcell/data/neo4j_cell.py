@@ -631,7 +631,7 @@ class Neo4jCellDataset(Dataset):
         print("Computing phenotype label index...")
         phenotype_label_index = {}
 
-        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+        self._init_lmdb_read()
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -646,8 +646,8 @@ class Neo4jCellDataset(Dataset):
                         label_name = experiment.phenotype.label_name
 
                         if label_name not in phenotype_label_index:
-                            phenotype_label_index[label_name] = []
-                        phenotype_label_index[label_name].append(idx)
+                            phenotype_label_index[label_name] = set()
+                        phenotype_label_index[label_name].add(idx)
                 except json.JSONDecodeError:
                     print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
                 except Exception as e:
@@ -655,7 +655,11 @@ class Neo4jCellDataset(Dataset):
                         f"Error processing entry {idx}: {str(e)}. Skipping this entry."
                     )
 
-        self.close_lmdb()  # Close the LMDB environment
+        self.close_lmdb()
+
+        # Convert sets to sorted lists
+        for key in phenotype_label_index:
+            phenotype_label_index[key] = sorted(list(phenotype_label_index[key]))
 
         return phenotype_label_index
 
@@ -678,7 +682,7 @@ class Neo4jCellDataset(Dataset):
         print("Computing dataset name index...")
         dataset_name_index = {}
 
-        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+        self._init_lmdb_read()
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -693,8 +697,8 @@ class Neo4jCellDataset(Dataset):
                         dataset_name = experiment.dataset_name
 
                         if dataset_name not in dataset_name_index:
-                            dataset_name_index[dataset_name] = []
-                        dataset_name_index[dataset_name].append(idx)
+                            dataset_name_index[dataset_name] = set()
+                        dataset_name_index[dataset_name].add(idx)
                 except json.JSONDecodeError:
                     print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
                 except Exception as e:
@@ -702,7 +706,11 @@ class Neo4jCellDataset(Dataset):
                         f"Error processing entry {idx}: {str(e)}. Skipping this entry."
                     )
 
-        self.close_lmdb()  # Close the LMDB environment
+        self.close_lmdb()
+
+        # Convert sets to sorted lists
+        for key in dataset_name_index:
+            dataset_name_index[key] = sorted(list(dataset_name_index[key]))
 
         return dataset_name_index
 
@@ -725,7 +733,7 @@ class Neo4jCellDataset(Dataset):
         print("Computing perturbation count index...")
         perturbation_count_index = {}
 
-        self._init_lmdb_read()  # Initialize the LMDB environment for reading
+        self._init_lmdb_read()
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -740,8 +748,8 @@ class Neo4jCellDataset(Dataset):
                         perturbation_count = len(experiment.genotype.perturbations)
 
                         if perturbation_count not in perturbation_count_index:
-                            perturbation_count_index[perturbation_count] = []
-                        perturbation_count_index[perturbation_count].append(idx)
+                            perturbation_count_index[perturbation_count] = set()
+                        perturbation_count_index[perturbation_count].add(idx)
                 except json.JSONDecodeError:
                     print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
                 except Exception as e:
@@ -749,7 +757,11 @@ class Neo4jCellDataset(Dataset):
                         f"Error processing entry {idx}: {str(e)}. Skipping this entry."
                     )
 
-        self.close_lmdb()  # Close the LMDB environment
+        self.close_lmdb()
+
+        # Convert sets to sorted lists
+        for key in perturbation_count_index:
+            perturbation_count_index[key] = sorted(list(perturbation_count_index[key]))
 
         return perturbation_count_index
 
@@ -774,52 +786,6 @@ class Neo4jCellDataset(Dataset):
                     {str(k): v for k, v in self._perturbation_count_index.items()}, file
                 )
         return self._perturbation_count_index
-
-    # def compute_phenotype_label_index(self) -> dict[str, list[int]]:
-    #     print("Computing phenotype label index...")
-    #     phenotype_label_index = {}
-
-    #     self._init_lmdb_read()  # Initialize the LMDB environment for reading
-
-    #     with self.env.begin() as txn:
-    #         cursor = txn.cursor()
-    #         for idx, (key, value) in enumerate(cursor):
-    #             try:
-    #                 data = json.loads(value.decode("utf-8"))
-    #                 experiment_class = EXPERIMENT_TYPE_MAP[
-    #                     data["experiment"]["experiment_type"]
-    #                 ]
-    #                 experiment = experiment_class(**data["experiment"])
-    #                 label_name = experiment.phenotype.label_name
-
-    #                 if label_name not in phenotype_label_index:
-    #                     phenotype_label_index[label_name] = []
-    #                 phenotype_label_index[label_name].append(idx)
-    #             except json.JSONDecodeError:
-    #                 print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
-    #             except Exception as e:
-    #                 print(
-    #                     f"Error processing entry {idx}: {str(e)}. Skipping this entry."
-    #                 )
-
-    #     self.close_lmdb()  # Close the LMDB environment
-
-    #     return phenotype_label_index
-
-    # @property
-    # def phenotype_label_index(self) -> dict[str, list[bool]]:
-    #     if osp.exists(osp.join(self.processed_dir, "phenotype_label_index.json")):
-    #         with open(
-    #             osp.join(self.processed_dir, "phenotype_label_index.json"), "r"
-    #         ) as file:
-    #             self._phenotype_label_index = json.load(file)
-    #     else:
-    #         self._phenotype_label_index = self.compute_phenotype_label_index()
-    #         with open(
-    #             osp.join(self.processed_dir, "phenotype_label_index.json"), "w"
-    #         ) as file:
-    #             json.dump(self._phenotype_label_index, file)
-    #     return self._phenotype_label_index
 
 
 def main():
@@ -905,8 +871,8 @@ def main():
 
     print("finished")
 
-    # from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    # from torchcell.utils import format_scientific_notation
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.utils import format_scientific_notation
 
     # size = 1e4
     # seed = 42

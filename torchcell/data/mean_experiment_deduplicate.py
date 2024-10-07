@@ -159,9 +159,9 @@ class MeanExperimentDeduplicator(Deduplicator):
             if exp["experiment_reference"].phenotype_reference.fitness is not None
         ]
         fitness_ref_stds = [
-            exp["experiment_reference"].phenotype_reference.std
+            exp["experiment_reference"].phenotype_reference.fitness_std
             for exp in duplicate_experiments
-            if exp["experiment_reference"].phenotype_reference.std is not None
+            if exp["experiment_reference"].phenotype_reference.fitness_std is not None
         ]
 
         mean_fitness_ref = np.mean(fitness_ref_values) if fitness_ref_values else None

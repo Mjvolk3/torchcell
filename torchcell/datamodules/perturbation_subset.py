@@ -1,309 +1,243 @@
+# torchcell/datamodules/perturbation_subset
+# [[torchcell.datamodules.perturbation_subset]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/perturbation_subset
+# Test file: tests/torchcell/datamodules/test_perturbation_subset.py
+
 import os
 import os.path as osp
 import json
 import random
-from typing import Optional, Dict, List, Tuple
+from typing import Optional
 import pytorch_lightning as pl
 from torch.utils.data import Subset
-from torch_geometric.loader import DataLoader
-from torch_geometric.data import Dataset
-from tqdm import tqdm
+from torchcell.utils import format_scientific_notation
+from torchcell.datamodules import (
+    IndexSplit,
+    DatasetSplit,
+    DataModuleIndex,
+    DataModuleIndexDetails,
+)
+from torch_geometric.loader import DataLoader, PrefetchLoader
+import torch
 
 
 class PerturbationSubsetDataModule(pl.LightningDataModule):
     def __init__(
         self,
-        dataset: Dataset,
+        cell_data_module,
         size: int,
         batch_size: int = 32,
         num_workers: int = 0,
         pin_memory: bool = False,
-        cache_dir: Optional[str] = None,
-        original_cache_dir: Optional[str] = None,
+        prefetch: bool = False,
         seed: int = 42,
     ):
         super().__init__()
-        self.dataset = dataset
+        self.cell_data_module = cell_data_module
+        self.size = size
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
-        self.cache_dir = cache_dir or osp.join(
-            dataset.root, "perturbation_subset_cache"
-        )
-        self.original_cache_dir = original_cache_dir or osp.join(
-            dataset.root, "data_module_cache"
-        )
+        self.prefetch = prefetch
         self.seed = seed
-        os.makedirs(self.cache_dir, exist_ok=True)
 
-        self.pert_count_index = None
-        self._set_size(size)
+        self.cache_dir = self.cell_data_module.cache_dir
+        self.subset_dir = osp.join(
+            self.cache_dir, f"perturbation_subset_{format_scientific_notation(size)}"
+        )
+        os.makedirs(self.subset_dir, exist_ok=True)
+
         random.seed(self.seed)
-        self.subset_info = None
-        self.split_ratio = None
+        self._index = None
+        self._index_details = None
 
-    def _calculate_min_size(self) -> int:
-        return min(len(indices) for indices in self.pert_count_index.values())
+    @property
+    def index(self) -> DataModuleIndex:
+        if self._index is None:
+            self._load_or_compute_index()
+        return self._index
 
-    def _set_size(self, size: int):
+    @property
+    def index_details(self) -> DataModuleIndexDetails:
+        if self._index_details is None:
+            self._load_or_compute_index()
+        return self._index_details
+
+    def _load_or_compute_index(self):
+        index_file = osp.join(
+            self.subset_dir, f"index_{format_scientific_notation(self.size)}.json"
+        )
+        details_file = osp.join(
+            self.subset_dir,
+            f"index_details_{format_scientific_notation(self.size)}.json",
+        )
+
+        if osp.exists(index_file) and osp.exists(details_file):
+            with open(index_file, "r") as f:
+                self._index = DataModuleIndex(**json.load(f))
+            with open(details_file, "r") as f:
+                self._index_details = DataModuleIndexDetails(**json.load(f))
+        else:
+            self._create_subset()
+            self._save_index()
+
+    def _create_subset(self):
+        cell_index_details = self.cell_data_module.index_details
+        cell_index = self.cell_data_module.index
+
+        # Calculate original split ratios
+        total_samples = sum(
+            len(getattr(cell_index, split)) for split in ["train", "val", "test"]
+        )
+        original_ratios = {
+            split: len(getattr(cell_index, split)) / total_samples
+            for split in ["train", "val", "test"]
+        }
+
+        # Calculate target sizes for each split
+        target_sizes = {
+            split: int(self.size * ratio) for split, ratio in original_ratios.items()
+        }
+
+        selected_indices = {split: [] for split in ["train", "val", "test"]}
+
+        for split in ["train", "val", "test"]:
+            pert_count_index = getattr(
+                cell_index_details, split
+            ).perturbation_count_index
+            remaining_size = target_sizes[split]
+
+            # First, select all perturbation count 1 data
+            single_pert_indices = pert_count_index[1].indices
+            selected_indices[split].extend(single_pert_indices[:remaining_size])
+            remaining_size -= len(selected_indices[split])
+
+            if remaining_size > 0:
+                # Equally sample from other perturbation levels
+                other_pert_levels = [
+                    level for level in pert_count_index.keys() if level != 1
+                ]
+                while remaining_size > 0 and other_pert_levels:
+                    samples_per_level = max(1, remaining_size // len(other_pert_levels))
+                    for level in other_pert_levels:
+                        available_indices = set(pert_count_index[level].indices) - set(
+                            selected_indices[split]
+                        )
+                        sampled = random.sample(
+                            list(available_indices),
+                            min(samples_per_level, len(available_indices)),
+                        )
+                        selected_indices[split].extend(sampled)
+                        remaining_size -= len(sampled)
+                        if remaining_size <= 0:
+                            break
+                    other_pert_levels = [
+                        level
+                        for level in other_pert_levels
+                        if set(pert_count_index[level].indices)
+                        - set(selected_indices[split])
+                    ]
+
+        self._index = DataModuleIndex(
+            train=sorted(selected_indices["train"]),
+            val=sorted(selected_indices["val"]),
+            test=sorted(selected_indices["test"]),
+        )
+        self._create_index_details()
+
+    def _create_index_details(self):
+        cell_index_details = self.cell_data_module.index_details
+        methods = cell_index_details.methods
+
+        self._index_details = DataModuleIndexDetails(
+            methods=methods,
+            train=self._create_dataset_split(
+                self._index.train, cell_index_details.train, methods
+            ),
+            val=self._create_dataset_split(
+                self._index.val, cell_index_details.val, methods
+            ),
+            test=self._create_dataset_split(
+                self._index.test, cell_index_details.test, methods
+            ),
+        )
+
+    def _create_dataset_split(
+        self, indices: list[int], cell_split: DatasetSplit, methods: list[str]
+    ) -> DatasetSplit:
+        dataset_split = DatasetSplit()
+        for method in methods:
+            split_data = {}
+            method_data = getattr(cell_split, method)
+            if method_data is not None:
+                for key, index_split in method_data.items():
+                    if method == "perturbation_count_index":
+                        key = int(
+                            key
+                        )  # Convert key to int for perturbation_count_index
+                    intersect = sorted(list(set(indices) & set(index_split.indices)))
+                    split_data[key] = IndexSplit(
+                        indices=intersect, count=len(intersect)
+                    )
+                setattr(dataset_split, method, split_data)
+        return dataset_split
+
+    def _save_index(self):
         with open(
-            osp.join(self.dataset.processed_dir, "perturbation_count_index.json"), "r"
+            osp.join(
+                self.subset_dir, f"index_{format_scientific_notation(self.size)}.json"
+            ),
+            "w",
         ) as f:
-            self.pert_count_index = {int(k): v for k, v in json.load(f).items()}
-
-        min_size = self._calculate_min_size()
-        max_size = len(self.dataset)
-
-        if not min_size <= size <= max_size:
-            raise ValueError(
-                f"Invalid subset size. Size must be between {min_size} "
-                "(smallest perturbation level) and {max_size}. "
-                f"Provided size: {size}"
-            )
-
-        self.size = size
+            json.dump(self._index.dict(), f, indent=2)
+        with open(
+            osp.join(
+                self.subset_dir,
+                f"index_details_{format_scientific_notation(self.size)}.json",
+            ),
+            "w",
+        ) as f:
+            json.dump(self._index_details.dict(), f, indent=2)
 
     def setup(self, stage: Optional[str] = None):
         print("Setting up PerturbationSubsetDataModule...")
-        # Always load the original split
-        with open(osp.join(self.original_cache_dir, "cached_indices.json"), "r") as f:
-            self.original_split = json.load(f)
 
-        self.split_ratio = self._calculate_split_ratio()
-        print(f"Original split ratio: {self.split_ratio}")
-
-        cached_subset = self._load_cached_subset()
-        if cached_subset:
-            print("Loading cached subset...")
-            (
-                self.train_indices,
-                self.val_indices,
-                self.test_indices,
-                self.selected_indices,
-                self.subset_info,
-            ) = cached_subset
-        else:
-            print("Creating new subset...")
-            max_pert = max(self.pert_count_index.keys())
-
-            pert_sizes = self._calculate_pert_sizes(max_pert)
-            self.selected_indices = self._select_indices(pert_sizes)
-            self.train_indices, self.val_indices, self.test_indices = (
-                self._split_indices(self.selected_indices)
-            )
-            self._calculate_subset_info()
-            self._save_subset_indices()
+        if self._index is None or self._index_details is None:
+            self._load_or_compute_index()
 
         print("Creating subset datasets...")
-        self.train_dataset = Subset(self.dataset, self.train_indices)
-        self.val_dataset = Subset(self.dataset, self.val_indices)
-        self.test_dataset = Subset(self.dataset, self.test_indices)
-        self.full_test_dataset = Subset(
-            self.dataset, self.original_split["test_indices"]
-        )
+        self.train_dataset = Subset(self.cell_data_module.dataset, self.index.train)
+        self.val_dataset = Subset(self.cell_data_module.dataset, self.index.val)
+        self.test_dataset = Subset(self.cell_data_module.dataset, self.index.test)
         print("Setup complete.")
 
-    def _calculate_split_ratio(self) -> Tuple[float, float, float]:
-        total = sum(len(indices) for indices in self.original_split.values())
-        train_ratio = len(self.original_split["train_indices"]) / total
-        val_ratio = len(self.original_split["val_indices"]) / total
-        test_ratio = len(self.original_split["test_indices"]) / total
-        return train_ratio, val_ratio, test_ratio
-
-    def _calculate_pert_sizes(self, max_pert: int) -> Dict[int, int]:
-        print(f"Calculating sizes for {max_pert} perturbation levels...")
-        pert_sizes = {}
-        remaining_size = self.size
-
-        # First, allocate all instances of the smallest perturbation
-        min_pert_level = min(self.pert_count_index.keys())
-        min_pert_count = len(self.pert_count_index[min_pert_level])
-        pert_sizes[min_pert_level] = min(min_pert_count, remaining_size)
-        remaining_size -= pert_sizes[min_pert_level]
-
-        if remaining_size > 0:
-            # Distribute remaining size equally among other perturbation levels
-            other_pert_levels = [
-                i for i in range(1, max_pert + 1) if i != min_pert_level
-            ]
-            num_other_levels = len(other_pert_levels)
-
-            for i in other_pert_levels:
-                pert_size = min(
-                    len(self.pert_count_index[i]), remaining_size // num_other_levels
-                )
-                pert_sizes[i] = pert_size
-                remaining_size -= pert_size
-
-        print(f"Perturbation sizes: {pert_sizes}")
-        return pert_sizes
-
-    def _select_indices(self, pert_sizes: Dict[int, int]) -> List[int]:
-        print("Selecting indices...")
-        selected = []
-        for pert_level, size in pert_sizes.items():
-            if pert_level == min(pert_sizes.keys()):
-                # For the smallest perturbation level, select all available indices up to the size
-                selected += self.pert_count_index[pert_level][:size]
-            else:
-                # For other perturbation levels, randomly sample
-                selected += random.sample(self.pert_count_index[pert_level], size)
-        return selected
-
-    def _split_indices(
-        self, indices: List[int]
-    ) -> tuple[List[int], List[int], List[int]]:
-        print("Splitting indices...")
-        train = []
-        val = []
-        test = []
-        for idx in tqdm(indices, desc="Splitting indices"):
-            if idx in self.original_split["train_indices"]:
-                train.append(idx)
-            elif idx in self.original_split["val_indices"]:
-                val.append(idx)
-            elif idx in self.original_split["test_indices"]:
-                test.append(idx)
-
-        # Adjust split to match original ratio as closely as possible
-        total = len(indices)
-        train_target = int(self.split_ratio[0] * total)
-        val_target = int(self.split_ratio[1] * total)
-        test_target = total - train_target - val_target
-
-        while len(train) > train_target:
-            idx = train.pop()
-            if len(val) < val_target:
-                val.append(idx)
-            else:
-                test.append(idx)
-
-        while len(val) > val_target:
-            idx = val.pop()
-            if len(train) < train_target:
-                train.append(idx)
-            else:
-                test.append(idx)
-
-        while len(test) > test_target:
-            idx = test.pop()
-            if len(train) < train_target:
-                train.append(idx)
-            else:
-                val.append(idx)
-
-        actual_ratio = (len(train) / total, len(val) / total, len(test) / total)
-        print(f"Target split ratio: {self.split_ratio}")
-        print(f"Actual split ratio: {actual_ratio}")
-
-        return train, val, test
-
-    def _calculate_pert_sizes(self, max_pert: int) -> Dict[int, int]:
-        print(f"Calculating sizes for {max_pert} perturbation levels...")
-        pert_sizes = {}
-        remaining_size = self.size
-
-        # First, allocate all instances of the smallest perturbation (level 1)
-        min_pert_level = min(self.pert_count_index.keys())
-        min_pert_count = len(self.pert_count_index[min_pert_level])
-        pert_sizes[min_pert_level] = min(min_pert_count, remaining_size)
-        remaining_size -= pert_sizes[min_pert_level]
-
-        if remaining_size > 0:
-            # Prepare to distribute equally across the remaining perturbation levels
-            other_pert_levels = [
-                i for i in range(2, max_pert + 1)
-            ]  # Exclude the minimum perturbation level (1)
-
-            # Allocate perturbations in equal amounts across the levels
-            # Continue until we run out of remaining size or perturbations
-            while remaining_size > 0 and other_pert_levels:
-                max_possible_per_level = min(
-                    len(self.pert_count_index[level]) for level in other_pert_levels
-                )
-                pert_per_level = min(
-                    max_possible_per_level, remaining_size // len(other_pert_levels)
-                )
-
-                if pert_per_level == 0:
-                    break
-
-                for level in other_pert_levels:
-                    pert_sizes[level] = pert_per_level
-                    remaining_size -= pert_per_level
-
-                # Remove levels that have been fully allocated
-                other_pert_levels = [
-                    level for level in other_pert_levels if remaining_size > 0
-                ]
-
-        print(f"Perturbation sizes: {pert_sizes}")
-        return pert_sizes
-
-    def _save_subset_indices(self):
-        print("Saving subset indices...")
-        subset_data = {
-            "train_indices": self.train_indices,
-            "val_indices": self.val_indices,
-            "test_indices": self.test_indices,
-            "selected_indices": self.selected_indices,
-            "subset_info": self.subset_info,
-            "seed": self.seed,
-            "size": self.size,
-        }
-        with open(osp.join(self.cache_dir, "subset_indices.json"), "w") as f:
-            json.dump(subset_data, f)
-
-    def _load_cached_subset(
-        self,
-    ) -> Optional[tuple[List[int], List[int], List[int], List[int], Dict[str, int]]]:
-        cache_file = osp.join(self.cache_dir, "subset_indices.json")
-        if osp.exists(cache_file):
-            with open(cache_file, "r") as f:
-                cached_data = json.load(f)
-            if cached_data["seed"] == self.seed and cached_data["size"] == self.size:
-                return (
-                    cached_data["train_indices"],
-                    cached_data["val_indices"],
-                    cached_data["test_indices"],
-                    cached_data["selected_indices"],
-                    cached_data["subset_info"],
-                )
-        return None
-
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_dataset,
+    def _get_dataloader(self, dataset, shuffle=False):
+        loader = DataLoader(
+            dataset,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=shuffle,
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
+            follow_batch=["x", "x_pert"],
         )
+        if self.prefetch:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            return PrefetchLoader(loader, device=device)
+        return loader
+
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self):
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num,
+        return self._get_dataloader(self.val_dataset)
+
+    def test_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def all_dataloader(self):
+        return self._get_dataloader(self.cell_data_module.dataset)
+
+    def test_cell_module_dataloader(self):
+        return self._get_dataloader(
+            Subset(self.cell_data_module.dataset, self.cell_data_module.index.test)
         )
-
-    def _calculate_subset_info(self):
-        print("Calculating subset info...")
-        pert_counts = {i: 0 for i in self.pert_count_index.keys()}
-
-        for pert_level, indices in self.pert_count_index.items():
-            pert_counts[pert_level] = len(set(self.selected_indices) & set(indices))
-
-        self.subset_info = {
-            "total_samples": self.size,
-            "train_samples": len(self.train_indices),
-            "val_samples": len(self.val_indices),
-            "test_samples": len(self.test_indices),
-            "pert_samples": pert_counts,
-        }
-
-    def get_subset_info(self) -> Dict[str, int]:
-        if self.subset_info is None:
-            self._calculate_subset_info()
-        return self.subset_info

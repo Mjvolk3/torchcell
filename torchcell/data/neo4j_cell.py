@@ -146,98 +146,6 @@ class GraphProcessor(ABC):
         pass
 
 
-# class PhenotypeProcessor(GraphProcessor):
-#     def process(
-#         self,
-#         cell_graph: HeteroData,
-#         phenotype_info: Any,
-#         data: (
-#             dict[str, ExperimentType | ExperimentReferenceType]
-#             | list[dict[str, ExperimentType | ExperimentReferenceType]]
-#         ),
-#     ) -> HeteroData:
-#         if "experiment" not in data or "experiment_reference" not in data:
-#             raise ValueError(
-#                 "Data must contain both 'experiment' and 'experiment_reference' keys"
-#             )
-
-#         if not isinstance(data["experiment"], ExperimentType) or not isinstance(
-#             data["experiment_reference"], ExperimentReferenceType
-#         ):
-#             raise TypeError(
-#                 "'experiment' and 'experiment_reference' must be instances of"
-#                 "ExperimentType and ExperimentReferenceType respectively"
-#             )
-
-#         processed_graph = HeteroData()
-
-#         # Nodes to remove based on the perturbations
-#         nodes_to_remove = {
-#             pert.systematic_gene_name
-#             for pert in data["experiment"].genotype.perturbations
-#         }
-
-#         # Assuming all nodes are of type 'gene', and copying node
-#         # information to processed_graph
-#         processed_graph["gene"].node_ids = [
-#             nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
-#         ]
-#         processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
-#         # Additional information regarding perturbations
-#         processed_graph["gene"].ids_pert = list(nodes_to_remove)
-#         processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
-#             [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
-#             dtype=torch.long,
-#         )
-
-#         # Populate x and x_pert attributes
-#         node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
-#         x = cell_graph["gene"].x
-#         processed_graph["gene"].x = x[
-#             torch.tensor(
-#                 [node_mapping[nid] for nid in processed_graph["gene"].node_ids]
-#             )
-#         ]
-#         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
-
-#         # Add phenotype data using model_dump()
-#         processed_graph["gene"].experiment = [data["experiment"]]
-
-#         # Mapping of node IDs to their new indices after filtering
-#         new_index_map = {
-#             nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
-#         }
-
-#         # Processing edges
-#         for edge_type in cell_graph.edge_types:
-#             src_type, _, dst_type = edge_type
-#             edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
-#             filtered_edges = []
-
-#             for src, dst in edge_index.T:
-#                 src_id = cell_graph[src_type].node_ids[src]
-#                 dst_id = cell_graph[dst_type].node_ids[dst]
-
-#                 if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
-#                     new_src = new_index_map[src_id]
-#                     new_dst = new_index_map[dst_id]
-#                     filtered_edges.append([new_src, new_dst])
-
-#             if filtered_edges:
-#                 new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
-#                 processed_graph[src_type, _, dst_type].edge_index = new_edge_index
-#                 processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
-#                     1
-#                 ]
-#             else:
-#                 processed_graph[src_type, _, dst_type].edge_index = torch.empty(
-#                     (2, 0), dtype=torch.long
-#                 )
-#                 processed_graph[src_type, _, dst_type].num_edges = 0
-
-#         return processed_graph
-
-
 class PhenotypeProcessor(GraphProcessor):
     def process(
         self,
@@ -805,6 +713,8 @@ def main():
     )
     from torchcell.data import MeanExperimentDeduplicator
     from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.utils import format_scientific_notation
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -854,51 +764,44 @@ def main():
     # Data module testing
 
     print(dataset[2])
+    dataset.close_lmdb()
     # print(dataset[10000])
 
-    data_module = CellDataModule(
+    # Assuming you have already created your dataset and CellDataModule
+    cell_data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
         batch_size=2,
         random_seed=42,
         num_workers=4,
         pin_memory=False,
     )
-    data_module.setup()
-    for batch in tqdm(data_module.all_dataloader()):
+    cell_data_module.setup()
+
+    for batch in tqdm(cell_data_module.train_dataloader()):
+        break
+
+    # Now, instantiate the updated PerturbationSubsetDataModule
+    size = 1e4
+    seed = 42
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+
+    # Set up the data module
+    perturbation_subset_data_module.setup()
+
+    # Use the data loaders
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        # Your training code here
         pass
-    print(batch)
-
-    print("finished")
-
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.utils import format_scientific_notation
-
-    # size = 1e4
-    # seed = 42
-    # data_module = PerturbationSubsetDataModule(
-    #     dataset=dataset,
-    #     size=int(size),
-    #     batch_size=2,
-    #     num_workers=4,
-    #     pin_memory=True,
-    #     cache_dir=osp.join(
-    #         dataset_root,
-    #         f"perturbation_subset_cache_{format_scientific_notation(size)}_{seed}",
-    #     ),
-    #     original_cache_dir=osp.join(dataset_root, "data_module_cache"),
-    #     seed=seed,
-    # )
-    # data_module.setup()
-
-    # subset_info = data_module.get_subset_info()
-    # print(subset_info)
-
-    # for batch in tqdm(data_module.train_dataloader()):
-    #     # Your training code here
-    #     pass
-
-    # print()
 
 
 if __name__ == "__main__":

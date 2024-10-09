@@ -2,7 +2,7 @@
 id: p5c3e0lblbs5ycsjspvi525
 title: '41'
 desc: ''
-updated: 1728338750395
+updated: 1728340692573
 created: 1728315119855
 ---
 ## 2024.10.07
@@ -10,9 +10,11 @@ created: 1728315119855
 - [x] [[torchcell.datamodules.cell]] should create indices just based off what it inherits from the dataset. It should not have to iterate over data.
 - [x] Add a method to summarize split details. → this works nice for now.
 - [x] Contacted [[ncsa.help]] about `vm` activation
+- [x] Create [[torchcell.datamodules.perturbation_subset]] to make sure that we have all single perturbations, and then equal counts of 2 and 3 from there. with increasing dataset sizes. We should be able to use the `split_index` for this. → It looks pretty good for now.
 
-- [ ] Create [[torchcell.datamodules.perturbation_subset]] to make sure that we have all single perturbations, and then equal counts of 2 and 3 from there. with increasing dataset sizes. We should be able to use the `split_index` for this
 - [ ] Create dataset subsets. `1e4`, `5e4` ,`1e5`, `5e5` ,`1e6`, and `all`.
+- [ ] Create tables of subsets.
+- [ ] Create plots of subsets.
 
 - [ ] Write DiffPool Model. Match model hyperparameters to DCell. Make sure all intermediates includes attention and pool mapping are returned and can be inspected for interpretability.
 - [ ] Write Training Script for DiffPool

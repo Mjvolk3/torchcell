@@ -34,6 +34,10 @@ from abc import ABC, abstractmethod
 log = logging.getLogger(__name__)
 
 
+# Do we need this?
+# class DatasetIndex(ModelStrict):
+#     index: dict[str|int, list[int]]
+
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
@@ -702,9 +706,6 @@ def main():
     from dotenv import load_dotenv
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.datamodules import CellDataModule
-    from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
-        GeneEssentialityToFitnessConverter,
-    )
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -714,12 +715,11 @@ def main():
     from torchcell.data import MeanExperimentDeduplicator
     from torchcell.data import GenotypeAggregator
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.utils import format_scientific_notation
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    with open("experiments/003-fit-int/queries/test_query.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
         query = f.read()
 
     ### Add Embeddings
@@ -744,7 +744,7 @@ def main():
         model_name="species_downstream",
     )
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/003-fit-int/test_dataset"
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
     dataset = Neo4jCellDataset(
         root=dataset_root,
@@ -801,7 +801,7 @@ def main():
     # Use the data loaders
     for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
         # Your training code here
-        pass
+        break
 
 
 if __name__ == "__main__":

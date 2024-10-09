@@ -53,23 +53,24 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
 
     @property
     def index(self) -> DataModuleIndex:
-        if self._index is None:
+        if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
-        if self._index_details is None:
+        if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index_details
 
     def _load_or_compute_index(self):
         index_file = osp.join(
-            self.subset_dir, f"index_{format_scientific_notation(self.size)}.json"
+            self.subset_dir,
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
         )
         details_file = osp.join(
             self.subset_dir,
-            f"index_details_{format_scientific_notation(self.size)}.json",
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
         )
 
         if osp.exists(index_file) and osp.exists(details_file):
@@ -98,6 +99,10 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
         target_sizes = {
             split: int(self.size * ratio) for split, ratio in original_ratios.items()
         }
+
+        # Adjust for rounding errors to ensure we get exactly self.size samples
+        difference = self.size - sum(target_sizes.values())
+        target_sizes["train"] += difference  # Add any difference to the train set
 
         selected_indices = {split: [] for split in ["train", "val", "test"]}
 
@@ -145,6 +150,12 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
         )
         self._create_index_details()
 
+        # Verify total size
+        total_selected = sum(len(indices) for indices in selected_indices.values())
+        assert (
+            total_selected == self.size
+        ), f"Expected {self.size} samples, but got {total_selected}"
+
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
         methods = cell_index_details.methods
@@ -185,7 +196,8 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
     def _save_index(self):
         with open(
             osp.join(
-                self.subset_dir, f"index_{format_scientific_notation(self.size)}.json"
+                self.subset_dir,
+                f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
             ),
             "w",
         ) as f:
@@ -193,16 +205,31 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
         with open(
             osp.join(
                 self.subset_dir,
-                f"index_details_{format_scientific_notation(self.size)}.json",
+                f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
             ),
             "w",
         ) as f:
             json.dump(self._index_details.dict(), f, indent=2)
 
+    def _cached_files_exist(self):
+        index_file = osp.join(
+            self.subset_dir,
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+        details_file = osp.join(
+            self.subset_dir,
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+        return osp.exists(index_file) and osp.exists(details_file)
+
     def setup(self, stage: Optional[str] = None):
         print("Setting up PerturbationSubsetDataModule...")
 
-        if self._index is None or self._index_details is None:
+        if (
+            self._index is None
+            or self._index_details is None
+            or not self._cached_files_exist()
+        ):
             self._load_or_compute_index()
 
         print("Creating subset datasets...")

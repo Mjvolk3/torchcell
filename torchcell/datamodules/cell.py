@@ -151,6 +151,42 @@ class DataModuleIndex(ModelStrict):
         return f"DataModuleIndex(train={train_str}, val={val_str}, test={test_str})"
 
 
+class DatasetIndexSplit(ModelStrict):
+    train: dict[Union[str, int], list[int]] = None
+    val: dict[Union[str, int], list[int]] = None
+    test: dict[Union[str, int], list[int]] = None
+
+
+def overlap_dataset_index_split(
+    dataset_index: dict[str | int, list[int]], data_module_index: DataModuleIndex
+) -> DatasetIndexSplit:
+    train_set = set(data_module_index.train)
+    val_set = set(data_module_index.val)
+    test_set = set(data_module_index.test)
+
+    train_dict = {}
+    val_dict = {}
+    test_dict = {}
+
+    for dataset_name, indices in dataset_index.items():
+        train_indices = sorted(list(set(indices) & train_set))
+        val_indices = sorted(list(set(indices) & val_set))
+        test_indices = sorted(list(set(indices) & test_set))
+
+        if train_indices:
+            train_dict[dataset_name] = train_indices
+        if val_indices:
+            val_dict[dataset_name] = val_indices
+        if test_indices:
+            test_dict[dataset_name] = test_indices
+
+    return DatasetIndexSplit(
+        train=train_dict if train_dict else None,
+        val=val_dict if val_dict else None,
+        test=test_dict if test_dict else None,
+    )
+
+
 class CellDataModule(L.LightningDataModule):
     def __init__(
         self,
@@ -187,20 +223,22 @@ class CellDataModule(L.LightningDataModule):
 
     @property
     def index(self) -> DataModuleIndex:
-        if self._index is None:
+        if self._index is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index
 
     @property
     def index_details(self) -> DataModuleIndexDetails:
-        if self._index_details is None:
+        if self._index_details is None or not self._cached_files_exist():
             self._load_or_compute_index()
         return self._index_details
 
     def _load_or_compute_index(self):
         os.makedirs(self.cache_dir, exist_ok=True)
-        index_file = osp.join(self.cache_dir, "index.json")
-        details_file = osp.join(self.cache_dir, "index_details.json")
+        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        details_file = osp.join(
+            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+        )
         if osp.exists(index_file) and osp.exists(details_file):
             try:
                 with open(index_file, "r") as f:
@@ -325,6 +363,13 @@ class CellDataModule(L.LightningDataModule):
             json.dump(self._index.dict(), f, indent=2)
         with open(details_file, "w") as f:
             json.dump(self._index_details.dict(), f, indent=2)
+
+    def _cached_files_exist(self):
+        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        details_file = osp.join(
+            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+        )
+        return osp.exists(index_file) and osp.exists(details_file)
 
     def setup(self, stage=None):
         train_index = self.index.train

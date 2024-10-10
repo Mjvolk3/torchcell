@@ -1,6 +1,7 @@
-# torchcell/trainers/fit_int_regression
-# [[torchcell.trainers.fit_int_regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_regression
+# torchcell/trainers/fit_int_gat_diffpool_regression
+# [[torchcell.trainers.fit_int_gat_diffpool_regression]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_gat_diffpool_regression
+# Test file: tests/torchcell/trainers/test_fit_int_gat_diffpool_regression.py
 
 
 import math
@@ -107,8 +108,6 @@ class CombinedMSELoss(nn.Module):
 
 
 class RegressionTask(L.LightningModule):
-    """LightningModule for training models on graph-based regression datasets."""
-
     def __init__(
         self,
         model: nn.Module,
@@ -118,6 +117,8 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
+        link_pred_loss_weight: float = 1.0,
+        entropy_loss_weight: float = 1.0,
     ):
         super().__init__()
         self.boxplot_every_n_epochs = boxplot_every_n_epochs
@@ -133,7 +134,9 @@ class RegressionTask(L.LightningModule):
         self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
 
         # loss
-        self.loss = CombinedMSELoss(weights=torch.ones(2))
+        self.combined_mse_loss = CombinedMSELoss(weights=torch.ones(2))
+        self.link_pred_loss_weight = link_pred_loss_weight
+        self.entropy_loss_weight = entropy_loss_weight
 
         # optimizer
         self.learning_rate = learning_rate
@@ -179,12 +182,24 @@ class RegressionTask(L.LightningModule):
 
     def setup(self, stage=None):
         self.model = self.model.to(self.device)
-        self.loss.weights = self.loss.weights.to(self.device)
+        self.combined_mse_loss.weights = self.combined_mse_loss.weights.to(self.device)
 
-    def forward(self, x, batch):
-        x_nodes, x_set = self.model["main"](x, batch)
-        y_hat = self.model["top"](x_set)
-        return y_hat
+    def forward(self, x, edge_indices, batch):
+        (
+            out,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+        ) = self.model["main"](x, edge_indices, batch)
+        y_hat = self.model["top"](out)
+        return (
+            y_hat,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+        )
 
     def on_train_start(self):
         parameter_size = sum(p.numel() for p in self.parameters())
@@ -192,17 +207,36 @@ class RegressionTask(L.LightningModule):
         self.log("model/parameters_size", parameter_size_float, on_epoch=True)
 
     def training_step(self, batch, batch_idx):
-        x, batch_vector = (batch["gene"].x, batch["gene"].batch)
+        x = batch["gene"].x
+        edge_indices = [
+            batch["gene", "physical_interaction", "gene"].edge_index,
+            batch["gene", "regulatory_interaction", "gene"].edge_index,
+        ]
+        batch_vector = batch["gene"].batch
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
-        y_hat = self(x, batch_vector)
+        (
+            y_hat,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+        ) = self(x, edge_indices, batch_vector)
 
         opt = self.optimizers()
         opt.zero_grad()
 
-        loss, dim_losses = self.loss(y_hat, y)
+        # Combined MSE loss
+        mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
 
-        self.manual_backward(loss)
+        # Weighted link prediction and entropy losses
+        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+
+        # Total loss
+        total_loss = mse_loss + link_pred_loss + entropy_loss
+
+        self.manual_backward(total_loss)
         if self.clip_grad_norm:
             nn.utils.clip_grad_norm_(
                 self.parameters(), max_norm=self.clip_grad_norm_max_norm
@@ -212,7 +246,8 @@ class RegressionTask(L.LightningModule):
 
         # Logging
         batch_size = batch_vector[-1].item() + 1
-        self.log("train/loss", loss, batch_size=batch_size, sync_dist=True)
+        self.log("train/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("train/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "train/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
         )
@@ -222,12 +257,21 @@ class RegressionTask(L.LightningModule):
             batch_size=batch_size,
             sync_dist=True,
         )
+        self.log(
+            "train/link_pred_loss",
+            link_pred_loss,
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "train/entropy_loss", entropy_loss, batch_size=batch_size, sync_dist=True
+        )
 
         # Update metrics
         self.train_metrics["fitness"](y_hat[:, 0], y[:, 0])
         self.train_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
 
-        return loss
+        return total_loss
 
     def on_train_epoch_end(self):
         # Compute and log metrics for each metric type
@@ -238,17 +282,37 @@ class RegressionTask(L.LightningModule):
             metric_dict.reset()  # Reset metrics after logging
 
     def validation_step(self, batch, batch_idx):
-        x, batch_vector = (batch["gene"].x, batch["gene"].batch)
+        x = batch["gene"].x
+        edge_indices = [
+            batch["gene", "physical_interaction", "gene"].edge_index,
+            batch["gene", "regulatory_interaction", "gene"].edge_index,
+        ]
+        batch_vector = batch["gene"].batch
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
-        y_hat = self(x, batch_vector)
-        loss, dim_losses = self.loss(y_hat, y)
+        (
+            y_hat,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+        ) = self(x, edge_indices, batch_vector)
+
+        # Combined MSE loss
+        mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
+
+        # Weighted link prediction and entropy losses
+        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+
+        # Total loss
+        total_loss = mse_loss + link_pred_loss + entropy_loss
+
         batch_size = batch_vector[-1].item() + 1
 
-        # Log the total loss
-        self.log("val/loss", loss, batch_size=batch_size, sync_dist=True)
-
-        # Log individual dimension losses
+        # Log the losses
+        self.log("val/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("val/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "val/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
         )
@@ -257,6 +321,12 @@ class RegressionTask(L.LightningModule):
             dim_losses[1],
             batch_size=batch_size,
             sync_dist=True,
+        )
+        self.log(
+            "val/link_pred_loss", link_pred_loss, batch_size=batch_size, sync_dist=True
+        )
+        self.log(
+            "val/entropy_loss", entropy_loss, batch_size=batch_size, sync_dist=True
         )
 
         # Update metrics
@@ -360,21 +430,57 @@ class RegressionTask(L.LightningModule):
             )
 
     def test_step(self, batch, batch_idx):
-        # Extract the batch vector
-        print()
-        x, y, batch_vector = (
-            batch["gene"].x,
-            batch["gene"].label_value,
-            batch["gene"].batch,
-        )
-        y_hat = self(x, batch_vector)
-        loss = self.loss(y_hat, y)
+        x = batch["gene"].x
+        edge_indices = [
+            batch["gene", "physical_interaction", "gene"].edge_index,
+            batch["gene", "regulatory_interaction", "gene"].edge_index,
+        ]
+        batch_vector = batch["gene"].batch
+        y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
+
+        (
+            y_hat,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+        ) = self(x, edge_indices, batch_vector)
+
+        # Combined MSE loss
+        mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
+
+        # Weighted link prediction and entropy losses
+        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+
+        # Total loss
+        total_loss = mse_loss + link_pred_loss + entropy_loss
+
         batch_size = batch_vector[-1].item() + 1
-        self.log("test/loss", loss, batch_size=batch_size, sync_dist=True)
+
+        # Log the losses
+        self.log("test/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("test/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            "test/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
+        )
+        self.log(
+            "test/gene_interaction_loss",
+            dim_losses[1],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            "test/link_pred_loss", link_pred_loss, batch_size=batch_size, sync_dist=True
+        )
+        self.log(
+            "test/entropy_loss", entropy_loss, batch_size=batch_size, sync_dist=True
+        )
+
         # Update metrics
         self.test_metrics["fitness"](y_hat[:, 0], y[:, 0])
         self.test_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
-        #
+
         self.true_values.append(y.detach())
         self.predictions.append(y_hat.detach())
 

@@ -4,13 +4,14 @@ from torchcell.datamodules.cell import DatasetIndexSplit
 from collections import defaultdict
 
 
-def plot_dataset_name_index_split(
+def plot_dataset_index_split(
     split_index: DatasetIndexSplit, title: str, save_path: str, threshold: float = 0.02
 ):
     # Reverse the order: train on top, val in the middle, and test at the bottom
     splits = ["train", "val", "test"][::-1]
 
     fig, ax = plt.subplots(figsize=(16, 6))  # Increased figure width for a wider plot
+    fig.suptitle(f"{title}\n(percents < 3% not printed)", fontsize=14)
 
     # Define your color list
     color_list = [
@@ -72,8 +73,16 @@ def plot_dataset_name_index_split(
             split_labels[split] = (final_labels, final_sizes, final_percentages)
             final_labels_all_splits.update(final_labels)
 
-    # Now that we have reduced labels, assign colors to them
-    unique_labels = sorted(final_labels_all_splits)
+    # Separate integers and strings, then sort them independently
+    int_labels = sorted(
+        [label for label in final_labels_all_splits if isinstance(label, int)]
+    )
+    str_labels = sorted(
+        [label for label in final_labels_all_splits if isinstance(label, str)]
+    )
+    unique_labels = int_labels + str_labels
+
+    # Ensure we have enough colors
     if len(unique_labels) > len(color_list):
         raise ValueError(
             f"Not enough colors for all labels. {len(unique_labels)} labels but only {len(color_list)} colors provided."
@@ -89,6 +98,30 @@ def plot_dataset_name_index_split(
             split, ([], [], [])
         )
         if final_labels:
+            # Sort the labels, sizes, and percentages together
+            int_labels = sorted(
+                [
+                    (label, size, pct)
+                    for label, size, pct in zip(
+                        final_labels, final_sizes, final_percentages
+                    )
+                    if isinstance(label, int)
+                ],
+                key=lambda x: x[0],
+            )
+            str_labels = sorted(
+                [
+                    (label, size, pct)
+                    for label, size, pct in zip(
+                        final_labels, final_sizes, final_percentages
+                    )
+                    if isinstance(label, str)
+                ],
+                key=lambda x: x[0],
+            )
+            sorted_data = int_labels + str_labels
+            final_labels, final_sizes, final_percentages = zip(*sorted_data)
+
             total = sum(final_sizes)
             cumulative = 0
 
@@ -106,17 +139,18 @@ def plot_dataset_name_index_split(
                     ),  # Avoid duplicate labels in legend
                 )
 
-                # Add smaller percentage text inside the bar
-                ax.text(
-                    cumulative + percent / 2,  # Center of the current bar
-                    i,  # y-position (split index)
-                    f"{percent:.1f}%",  # Percentage text
-                    va="center",
-                    ha="center",
-                    color="white",
-                    fontsize=7,  # Decreased font size for percentages
-                    weight="bold",
-                )
+                # Only plot percentages >= 3%
+                if percent >= 3:
+                    ax.text(
+                        cumulative + percent / 2,  # Center text for normal case
+                        i,  # y-position (split index)
+                        f"{percent:.1f}%",  # Percentage text
+                        va="center",
+                        ha="center",  # Adjusted alignment
+                        color="white",  # Use white text for visibility
+                        fontsize=7,  # Decreased font size for percentages
+                        weight="bold",
+                    )
 
                 cumulative += percent  # Update the cumulative width
                 legend_labels.add(label)  # Track labels used in legend
@@ -134,6 +168,7 @@ def plot_dataset_name_index_split(
     # Add legend outside the plot
     handles, labels = ax.get_legend_handles_labels()
     by_label = dict(zip(labels, handles))
+
     ax.legend(
         by_label.values(),
         by_label.keys(),
@@ -145,7 +180,6 @@ def plot_dataset_name_index_split(
 
     # Set labels and titles
     ax.set_xlabel("Percentage", fontsize=12)
-    ax.set_title(f"{title}", fontsize=14)
 
     plt.tight_layout()
     plt.savefig(save_path, bbox_inches="tight", dpi=300)

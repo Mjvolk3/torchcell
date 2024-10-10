@@ -8,7 +8,7 @@ import os.path as osp
 import json
 import random
 from typing import Optional
-import pytorch_lightning as pl
+import lightning as L
 from torch.utils.data import Subset
 from torchcell.utils import format_scientific_notation
 from torchcell.datamodules import (
@@ -21,7 +21,7 @@ from torch_geometric.loader import DataLoader, PrefetchLoader
 import torch
 
 
-class PerturbationSubsetDataModule(pl.LightningDataModule):
+class PerturbationSubsetDataModule(L.LightningDataModule):
     def __init__(
         self,
         cell_data_module,
@@ -34,6 +34,7 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
+        self.dataset = cell_data_module.dataset
         self.size = size
         self.batch_size = batch_size
         self.num_workers = num_workers
@@ -233,9 +234,9 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
             self._load_or_compute_index()
 
         print("Creating subset datasets...")
-        self.train_dataset = Subset(self.cell_data_module.dataset, self.index.train)
-        self.val_dataset = Subset(self.cell_data_module.dataset, self.index.val)
-        self.test_dataset = Subset(self.cell_data_module.dataset, self.index.test)
+        self.train_dataset = Subset(self.dataset, self.index.train)
+        self.val_dataset = Subset(self.dataset, self.index.val)
+        self.test_dataset = Subset(self.dataset, self.index.test)
         print("Setup complete.")
 
     def _get_dataloader(self, dataset, shuffle=False):
@@ -262,9 +263,9 @@ class PerturbationSubsetDataModule(pl.LightningDataModule):
         return self._get_dataloader(self.test_dataset)
 
     def all_dataloader(self):
-        return self._get_dataloader(self.cell_data_module.dataset)
+        return self._get_dataloader(self.dataset)
 
     def test_cell_module_dataloader(self):
         return self._get_dataloader(
-            Subset(self.cell_data_module.dataset, self.cell_data_module.index.test)
+            Subset(self.dataset, self.cell_data_module.index.test)
         )

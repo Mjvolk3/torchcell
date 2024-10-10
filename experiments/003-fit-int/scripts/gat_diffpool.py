@@ -1,7 +1,7 @@
-# experiments/003-fit-int/scripts/mp_diffpool
-# [[experiments.003-fit-int.scripts.mp_diffpool]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/mp_diffpool
-# Test file: experiments/003-fit-int/scripts/test_mp_diffpool.py
+# experiments/003-fit-int/scripts/gat_diffpool
+# [[experiments.003-fit-int.scripts.gat_diffpool]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/gat_diffpool
+# Test file: experiments/003-fit-int/scripts/test_gat_diffpool.py
 
 import hashlib
 import json
@@ -32,25 +32,33 @@ from torchcell.datasets import (
     CalmDataset,
     RandomEmbeddingDataset,
 )
-from torchcell.models import DeepSet, Mlp
+from torchcell.models import Mlp
+from torchcell.models.gat_diffpool import GatDiffPool
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset, ExperimentDeduplicator
-
-# from wandb_osh.lightning_hooks import TriggerWandbSyncLightningCallback
-from torchcell.trainers import RegressionTask
+from torchcell.trainers.fit_int_gat_diffpool_regression import RegressionTask
 from torchcell.utils import format_scientific_notation
-import torch
 import torch.distributed as dist
 import socket
+from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.data import MeanExperimentDeduplicator
+from torchcell.data import GenotypeAggregator
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+from torchcell.data import Neo4jCellDataset
+from torchcell.data.neo4j_cell import PhenotypeProcessor
+
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="deep_set")
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="gat_diffpool",
+)
 def main(cfg: DictConfig) -> None:
-    print("Starting Deep Set 🌋")
+    print("Starting GatDiffPool 🌋")
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
@@ -64,7 +72,7 @@ def main(cfg: DictConfig) -> None:
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",  # "online", "offline", "disabled"
+        mode="online",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -96,10 +104,10 @@ def main(cfg: DictConfig) -> None:
     graphs = {}
     if wandb.config.cell_dataset["graphs"] is None:
         graphs = None
-    elif "physical" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"physical": graph.G_physical}
-    elif "regulatory" in wandb.config.cell_dataset["graphs"]:
-        graphs = {"regulatory": graph.G_regulatory}
+    if "physical" in wandb.config.cell_dataset["graphs"]:
+        graphs["physical"] = graph.G_physical
+    if "regulatory" in wandb.config.cell_dataset["graphs"]:
+        graphs["regulatory"]= graph.G_regulatory
 
     # Node embedding datasets
     node_embeddings = {}
@@ -274,63 +282,88 @@ def main(cfg: DictConfig) -> None:
     print(node_embeddings)
     print("=============")
 
-    # Experiments
-    with open((osp.join(osp.dirname(__file__), "query.cql")), "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
         query = f.read()
-
-    deduplicator = ExperimentDeduplicator()
-
-    # Convert max_size to float, then format it in concise scientific notation
-    max_size_str = format_scientific_notation(
-        float(wandb.config.cell_dataset["max_size"])
-    )
     dataset_root = osp.join(
-        DATA_ROOT, f"data/torchcell/experiments/smf-dmf-tmf_{max_size_str}"
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    print("-------------------------")
-    print(f"dataset_root:{dataset_root}")
-    print("-------------------------")
 
-    cell_dataset = Neo4jCellDataset(
+    dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         genome=genome,
         graphs=graphs,
         node_embeddings=node_embeddings,
-        deduplicator=deduplicator,
-        max_size=int(wandb.config.cell_dataset["max_size"]),
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=PhenotypeProcessor(),
     )
 
-    # Instantiate your data module and model
+    # Base Module
+    seed = 42
     data_module = CellDataModule(
-        dataset=cell_dataset,
+        dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        batch_size=wandb.config.data_module["batch_size"],  # Update batch_size
-        random_seed=42,
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=wandb.config.data_module["batch_size"],
+        random_seed=seed,
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
     )
+    data_module.setup()
+
+    # Subset Module
+    if wandb.config.data_module["is_perturbation_subset"]:
+        data_module = PerturbationSubsetDataModule(
+            cell_data_module=data_module,
+            size=int(wandb.config.data_module["perturbation_subset_size"]),
+            batch_size=wandb.config.data_module["batch_size"],
+            num_workers=wandb.config.data_module["num_workers"],
+            pin_memory=wandb.config.data_module["pin_memory"],
+            prefetch=False,
+            seed=seed,
+        )
+        data_module.setup()
 
     # Anytime data is accessed lmdb must be closed.
-    input_dim = cell_dataset.num_features["gene"]
-    cell_dataset.close_lmdb()
+    input_dim = dataset.num_features["gene"]
+    max_num_nodes = len(dataset.gene_set)
+    dataset.close_lmdb()
+    num_graphs = len(wandb.config.cell_dataset["graphs"])
 
     model = ModuleDict(
         {
-            "main": DeepSet(
+            "main": GatDiffPool(
                 in_channels=input_dim,
-                hidden_channels=wandb.config.models["graph"]["hidden_channels"],
-                out_channels=wandb.config.models["graph"]["out_channels"],
-                num_node_layers=wandb.config.models["graph"]["num_node_layers"],
-                num_set_layers=wandb.config.models["graph"]["num_set_layers"],
+                initial_gat_hidden_channels=wandb.config.models["graph"][
+                    "initial_gat_hidden_channels"
+                ],
+                initial_gat_out_channels=wandb.config.models["graph"][
+                    "initial_gat_out_channels"
+                ],
+                diffpool_hidden_channels=wandb.config.models["graph"][
+                    "diffpool_hidden_channels"
+                ],
+                diffpool_out_channels=wandb.config.models["graph"][
+                    "diffpool_out_channels"
+                ],
+                num_initial_gat_layers=wandb.config.models["graph"][
+                    "num_initial_gat_layers"
+                ],
+                num_diffpool_layers=wandb.config.models["graph"]["num_diffpool_layers"],
+                num_graphs=num_graphs,
+                max_num_nodes=max_num_nodes,
+                gat_dropout_prob=wandb.config.models["graph"]["gat_dropout_prob"],
+                last_layer_dropout_prob=wandb.config.models["graph"][
+                    "last_layer_dropout_prob"
+                ],
                 norm=wandb.config.models["graph"]["norm"],
                 activation=wandb.config.models["graph"]["activation"],
-                skip_node=wandb.config.models["graph"]["skip_node"],
-                skip_set=wandb.config.models["graph"]["skip_set"],
-                aggregation=wandb.config.models["graph"]["aggregation"],
+                gat_skip_connection=wandb.config.models["graph"]["gat_skip_connection"],
             ),
             "top": Mlp(
-                in_channels=wandb.config.models["graph"]["out_channels"],
+                in_channels=wandb.config.models["graph"]["diffpool_out_channels"],
                 hidden_channels=wandb.config.models["pred_head"]["hidden_channels"],
                 out_channels=wandb.config.models["pred_head"]["out_channels"],
                 num_layers=wandb.config.models["pred_head"]["num_layers"],
@@ -343,16 +376,14 @@ def main(cfg: DictConfig) -> None:
     )
     task = RegressionTask(
         model=model,
-        target=wandb.config.regression_task["target"],
         learning_rate=wandb.config.regression_task["learning_rate"],
         weight_decay=wandb.config.regression_task["weight_decay"],
-        loss=wandb.config.regression_task["loss"],
         batch_size=wandb.config.data_module["batch_size"],
-        train_epoch_size=data_module.train_epoch_size,
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        alpha=wandb.config.regression_task["alpha"],
+        link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
+        entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
     )
 
     # Checkpoint Callback
@@ -384,7 +415,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Start the training
-    trainer.fit(task, data_module)
+    trainer.fit(model=task, datamodule=data_module)
 
 
 if __name__ == "__main__":

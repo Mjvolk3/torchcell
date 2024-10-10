@@ -19,12 +19,12 @@ class GatDiffPool(nn.Module):
         num_initial_gat_layers: int,
         num_diffpool_layers: int,
         num_graphs: int,
-        max_num_nodes: int, 
-        gat_dropout_prob: float = 0.2,
-        last_layer_dropout_prob: float = 0.5,
+        max_num_nodes: int,
+        gat_dropout_prob: float = 0.0,
+        last_layer_dropout_prob: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
-        gat_skip_connection: bool = False,
+        gat_skip_connection: bool = True,
     ):
         super().__init__()
 
@@ -84,7 +84,7 @@ class GatDiffPool(nn.Module):
             for i in range(1, num_diffpool_layers + 1)
         ]
         cluster_sizes[-1] = 1  # Ensure the last cluster size is 1
-        print(f"Cluster sizes: {cluster_sizes}")
+        # print(f"Cluster sizes: {cluster_sizes}")
 
         # DiffPool layers
         self.diffpool_layers = nn.ModuleList(
@@ -189,15 +189,15 @@ class GatDiffPool(nn.Module):
                 x_graph = x_out
                 attention_weights.append(att_weights)
 
-            print(f"Graph {i} after initial GAT layers shape: {x_graph.shape}")
+            # print(f"Graph {i} after initial GAT layers shape: {x_graph.shape}")
 
             # Convert to dense batch
             x_dense, mask = to_dense_batch(x_graph, batch)
             adj = to_dense_adj(edge_index, batch)
 
-            print(
-                f"x_dense shape: {x_dense.shape}, mask shape: {mask.shape}, adj shape: {adj.shape}"
-            )
+            # print(
+            #     f"x_dense shape: {x_dense.shape}, mask shape: {mask.shape}, adj shape: {adj.shape}"
+            # )
 
             # DiffPool layers
             x_pool, adj_pool = x_dense, adj
@@ -209,7 +209,7 @@ class GatDiffPool(nn.Module):
                 link_pred_losses.append(link_loss)
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
-                print(f"Graph {i}, DiffPool layer {k} output shape: {x_pool.shape}")
+                # print(f"Graph {i}, DiffPool layer {k} output shape: {x_pool.shape}")
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
                 if k < len(self.diffpool_layers[i]) - 1:
@@ -235,9 +235,9 @@ class GatDiffPool(nn.Module):
                             x_out = x_out + x_pool_flat
                         x_pool = x_out.view(x_pool.size(0), -1, x_out.size(-1))
                         attention_weights.append(att_weights)
-                    print(
-                        f"Graph {i}, Post-pooling GAT layer {k} output shape: {x_pool.shape}"
-                    )
+                    # print(
+                    #     f"Graph {i}, Post-pooling GAT layer {k} output shape: {x_pool.shape}"
+                    # )
 
                 # Update mask for the next iteration
                 mask = torch.ones(
@@ -251,13 +251,13 @@ class GatDiffPool(nn.Module):
 
         # Concatenate outputs from all graphs
         x_concat = torch.cat(graph_outputs, dim=-1)
-        print(f"Concatenated output shape: {x_concat.shape}")
+        # print(f"Concatenated output shape: {x_concat.shape}")
 
         # Final linear layer with activation and dropout
         out = self.final_linear(x_concat.squeeze(1))
         out = self.activation(out)
         out = F.dropout(out, p=self.last_layer_dropout_prob, training=self.training)
-        print(f"Final output shape: {out.shape}")
+        # print(f"Final output shape: {out.shape}")
 
         return (
             out,
@@ -398,28 +398,28 @@ def main():
 
     # Print model size
     total_params = sum(p.numel() for p in model.parameters())
-    print(f"Total number of parameters: {total_params}")
+    # print(f"Total number of parameters: {total_params}")
 
-    print(f"Input x shape: {x.shape}")
-    print(f"Edge index physical shape: {edge_index_physical.shape}")
-    print(f"Edge index regulatory shape: {edge_index_regulatory.shape}")
-    print(f"Batch index shape: {batch_index.shape}")
-    print(f"Batch size: {batch_index.max().item() + 1}")
+    # print(f"Input x shape: {x.shape}")
+    # print(f"Edge index physical shape: {edge_index_physical.shape}")
+    # print(f"Edge index regulatory shape: {edge_index_regulatory.shape}")
+    # print(f"Batch index shape: {batch_index.shape}")
+    # print(f"Batch size: {batch_index.max().item() + 1}")
 
     # Forward pass
     out, attention_weights, cluster_assignments, link_pred_losses, entropy_losses = (
         model(x, [edge_index_physical, edge_index_regulatory], batch_index)
     )
 
-    print("Output shape:", out.shape)
-    print("Number of attention weight tensors:", len(attention_weights))
-    print("First attention weight shape:", attention_weights[0][0].shape)
-    print("Last attention weight shape:", attention_weights[-1][0].shape)
-    print("Number of cluster assignment tensors:", len(cluster_assignments))
-    print("First cluster assignment shape:", cluster_assignments[0].shape)
-    print("Last cluster assignment shape:", cluster_assignments[-1].shape)
-    print("Link prediction losses:", link_pred_losses)
-    print("Entropy losses:", entropy_losses)
+    # print("Output shape:", out.shape)
+    # print("Number of attention weight tensors:", len(attention_weights))
+    # print("First attention weight shape:", attention_weights[0][0].shape)
+    # print("Last attention weight shape:", attention_weights[-1][0].shape)
+    # print("Number of cluster assignment tensors:", len(cluster_assignments))
+    # print("First cluster assignment shape:", cluster_assignments[0].shape)
+    # print("Last cluster assignment shape:", cluster_assignments[-1].shape)
+    # print("Link prediction losses:", link_pred_losses)
+    # print("Entropy losses:", entropy_losses)
 
 
 if __name__ == "__main__":

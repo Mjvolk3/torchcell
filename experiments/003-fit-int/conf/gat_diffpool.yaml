@@ -1,0 +1,56 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # mode: offline # disabled, offline, online
+  project: torchcell_test_gat_diffpool
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory] # [physical], [regulatory], [physical, regulatory], []
+  node_embeddings: [codon_frequency]
+  # [one_hot_gene], [codon_frequency], [calm], [fudt_downstream], [fudt_upstream], [prot_T5_all], [prot_T5_no_dubious], [nt_window_5979], [nt_window_three_prime_300], [nt_window_five_prime_1003], [esm2_t33_650M_UR50D_all], [esm2_t33_650M_UR50D_no_dubious], [normalized_chrom_pathways], [random_1000], [random_100], [random_10], [random_1]
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 1e4 #7e3
+  batch_size: 2
+  num_workers: 4
+  pin_memory: true
+
+trainer:
+  max_epochs: 2
+  strategy: auto # ddp, auto
+  accelerator: cpu
+
+models:
+  graph:
+    num_initial_gat_layers: 3
+    initial_gat_hidden_channels: 64
+    initial_gat_out_channels: 32
+    gat_dropout_prob: 0.0
+    gat_skip_connection: true
+    num_diffpool_layers: 6
+    diffpool_hidden_channels: 32
+    diffpool_out_channels: 16
+    last_layer_dropout_prob: 0.2
+    norm: batch
+    activation: relu
+  pred_head:
+    hidden_channels: 0
+    out_channels: 2
+    num_layers: 1
+    dropout_prob: 0.0
+    norm: null
+    activation: null
+    output_activation: null
+
+regression_task:
+  boxplot_every_n_epochs: 1
+  learning_rate: 1e-4
+  weight_decay: 1e-5
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10
+  link_pred_loss_weight: 1.0
+  entropy_loss_weight: 1.0

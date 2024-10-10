@@ -34,7 +34,7 @@ from torchcell.datasets import (
 )
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers.fit_int_regression import RegressionTask
+from torchcell.trainers.fit_int_regression_deep_set import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket

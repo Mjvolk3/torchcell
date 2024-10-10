@@ -6,6 +6,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from scipy import stats
 
 
 def box_plot(true_values, predictions) -> plt.Figure:
@@ -14,6 +15,16 @@ def box_plot(true_values, predictions) -> plt.Figure:
         true_values = true_values.cpu().numpy()
     if isinstance(predictions, torch.Tensor):
         predictions = predictions.cpu().numpy()
+
+    # mask = ~np.isnan(true_values) & ~np.isnan(predictions)
+    mask = ~np.isnan(true_values)
+    true_values = true_values[mask]
+    predictions = predictions[mask]
+
+    # Calculate correlations and R2
+    pearson_corr, _ = stats.pearsonr(true_values, predictions)
+    spearman_corr, _ = stats.spearmanr(true_values, predictions)
+    r_squared = stats.linregress(predictions, true_values).rvalue ** 2
 
     # Define bins
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
@@ -86,7 +97,7 @@ def box_plot(true_values, predictions) -> plt.Figure:
         # Get current x-values (endpoints) of the median line
         x = median.get_xdata()
         # Adjust the endpoints to reduce the width
-        width_reduction = 0.05
+        width_reduction = 0.03
         x[0] += width_reduction
         x[1] -= width_reduction
         # Set the modified x-values back to the median line
@@ -129,20 +140,42 @@ def box_plot(true_values, predictions) -> plt.Figure:
     for label in ax.get_yticklabels():
         label.set_fontname(font_name)
 
+    # Add title with correlation information
+    title = f"Pearson: {pearson_corr:.3f}, Spearman: {spearman_corr:.3f}, R²: {r_squared:.3f}"
+    ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
+
     plt.tight_layout()
 
     return fig
 
 
-def main():
-    # import matplotlib.font_manager as fm
+def generate_simulated_data(n_samples=10000):
+    # Generate true values
+    true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
+    true_values = np.clip(true_values, 0, 1.2)  # Clip values between 0 and 1.2
 
-    # fonts = fm.findSystemFonts()
-    # for font in fonts:
-    #     print(font)
-    predictions = torch.load("predictions.pt")
-    true_values = torch.load("true_values.pt")
-    box_plot(true_values, predictions)
+    # Generate predictions with some noise and bias
+    predictions = true_values + np.random.normal(loc=0, scale=0.1, size=n_samples)
+    predictions = np.clip(predictions, 0, 1.2)  # Clip values between 0 and 1.2
+
+    # Add some outliers and wild type (WT) samples
+    wt_samples = np.random.normal(loc=1, scale=0.05, size=n_samples // 20)
+    wt_samples = np.clip(wt_samples, 0.9, 1.1)
+
+    true_values = np.concatenate([true_values, wt_samples])
+    predictions = np.concatenate(
+        [
+            predictions,
+            wt_samples + np.random.normal(loc=0, scale=0.02, size=n_samples // 20),
+        ]
+    )
+
+    return torch.tensor(true_values), torch.tensor(predictions)
+
+
+def main():
+    true_values, predictions = generate_simulated_data()
+    fig = box_plot(true_values, predictions)
     plt.show()
 
 

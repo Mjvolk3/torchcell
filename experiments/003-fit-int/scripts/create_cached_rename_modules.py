@@ -13,7 +13,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
 from torchcell.data.neo4j_cell import PhenotypeProcessor
 from tqdm import tqdm
-from torchcell.viz.datamodules import plot_dataset_name_index_split
+from torchcell.viz.datamodules import plot_dataset_index_split
 from torchcell.datamodules.cell import overlap_dataset_index_split
 from torchcell.utils import format_scientific_notation
 
@@ -86,22 +86,22 @@ def main():
     for batch in tqdm(cell_data_module.train_dataloader()):
         break
 
-    ## Cell Data Module - Dataset Index Plotting - Start
     exp_name = "experiments-003"
     query_name = "query-001-small-build"
     dm_name = "cell-data-module"
 
+    ## Cell Data Module - Dataset Index Plotting - Start
+
+    ## Dataset Index Plotting - Start
+    size_str = str(len(dataset))
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
     split_index = overlap_dataset_index_split(
         dataset_index=dataset.dataset_name_index,
         data_module_index=cell_data_module.index,
     )
-
-    ## Dataset Index Plotting - Start
-    size_str = str(int(dataset.size))
-    # dataset name index
-    ds_index = "dataset-name-index"
-    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -113,7 +113,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=cell_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -125,15 +125,184 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=cell_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    # ## Cell Data Module - Dataset Index Plotting - End
+
+    ## Subset
+    dm_name = "perturbation-subset-data-module"
+    # 1e3 Module
+    size = 1e3
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+    perturbation_subset_data_module.setup()
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        break
+
+    ## Dataset Index Plotting - Start
+    size_str = format_scientific_notation(size)
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
     )
-    ## Cell Data Module - Dataset Index Plotting - End
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    ## Dataset Index Plotting - End
 
-    ## Subset
-    dm_name = "perturbation-subset-data-module"
+    # 5e3 Module
+    size = 5e3
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+    perturbation_subset_data_module.setup()
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        break
+
+    ## Dataset Index Plotting - Start
+    size_str = format_scientific_notation(size)
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    ## Dataset Index Plotting - End
+
+    # 5e3 Module
+    size = 7e3
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+    perturbation_subset_data_module.setup()
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        break
+
+    ## Dataset Index Plotting - Start
+    size_str = format_scientific_notation(size)
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    ## Dataset Index Plotting - End
+
     # 1e4 Module
     size = 1e4
     perturbation_subset_data_module = PerturbationSubsetDataModule(
@@ -149,17 +318,16 @@ def main():
     for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
         break
 
-    split_index = overlap_dataset_index_split(
-        dataset_index=dataset.dataset_name_index,
-        data_module_index=perturbation_subset_data_module.index,
-    )
-
     ## Dataset Index Plotting - Start
     size_str = format_scientific_notation(size)
     # dataset name index
     ds_index = "dataset-name-index"
     title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -171,7 +339,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -183,10 +351,11 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
     )
     ## Dataset Index Plotting - End
 
@@ -210,7 +379,11 @@ def main():
     # dataset name index
     ds_index = "dataset-name-index"
     title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -222,7 +395,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -234,10 +407,11 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
     )
     ## Dataset Index Plotting - End
 
@@ -261,7 +435,11 @@ def main():
     # dataset name index
     ds_index = "dataset-name-index"
     title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -273,7 +451,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -285,10 +463,11 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
     )
     ## Dataset Index Plotting - End
 
@@ -312,7 +491,11 @@ def main():
     # dataset name index
     ds_index = "dataset-name-index"
     title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -324,7 +507,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -336,10 +519,11 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
     )
     ## Dataset Index Plotting - End
 
@@ -363,7 +547,11 @@ def main():
     # dataset name index
     ds_index = "dataset-name-index"
     title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-    plot_dataset_name_index_split(
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -375,7 +563,7 @@ def main():
         dataset_index=dataset.phenotype_label_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
@@ -387,10 +575,11 @@ def main():
         dataset_index=dataset.perturbation_count_index,
         data_module_index=perturbation_subset_data_module.index,
     )
-    plot_dataset_name_index_split(
+    plot_dataset_index_split(
         split_index=split_index,
         title=title,
         save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
     )
     ## Dataset Index Plotting - End
 

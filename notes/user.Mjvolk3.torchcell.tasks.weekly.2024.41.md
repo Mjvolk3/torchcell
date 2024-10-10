@@ -2,7 +2,7 @@
 id: p5c3e0lblbs5ycsjspvi525
 title: '41'
 desc: ''
-updated: 1728340692573
+updated: 1728540170688
 created: 1728315119855
 ---
 ## 2024.10.07
@@ -22,6 +22,17 @@ created: 1728315119855
 - [ ] Run training on small data. Set up with data parallel in mind.
 - [ ] Run test on `Delta`.
 - [ ] Setup for training on `1e4` and choose reasonable number of hyper parameters for sweep. Launch sweep. Try to avoid data parallel on this and sweep with multiple GPUs. Probably don't use batch size as one of params.
+
+## 2024.10.09
+
+- [x] [[Dataset_index_split|dendron://torchcell/experiments.003-fit-int.dataset_index_split]]
+- [x] Get a `DeepSet` model working first.
+- [x] Message passing with `DiffPool` → working model but needs revision
+- [ ] Create regression task
+- [ ] Write function to get distributions over different dataset sizes... use this to prepare traditional machine learning datasets.
+
+- [ ] Add self loops
+- [ ] !!!!!!!!! apply skip gat to all gat layers.
 
 ***
 

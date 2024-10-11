@@ -18,6 +18,7 @@ class GatDiffPool(nn.Module):
         diffpool_out_channels: int,
         num_initial_gat_layers: int,
         num_diffpool_layers: int,
+        num_post_pool_gat_layers: int,
         num_graphs: int,
         max_num_nodes: int,
         gat_dropout_prob: float = 0.0,
@@ -25,6 +26,7 @@ class GatDiffPool(nn.Module):
         norm: str = "batch",
         activation: str = "relu",
         gat_skip_connection: bool = True,
+        pruned_max_average_node_degree: Optional[int] = None,  # New parameter
     ):
         super().__init__()
 
@@ -35,7 +37,7 @@ class GatDiffPool(nn.Module):
         self.gat_skip_connection = gat_skip_connection
         self.activation = act_register[activation]
         self.last_layer_dropout_prob = last_layer_dropout_prob
-
+        self.pruned_max_average_node_degree = pruned_max_average_node_degree
         # Initial GAT layers
         self.initial_gat_layers = nn.ModuleList(
             [
@@ -84,7 +86,7 @@ class GatDiffPool(nn.Module):
             for i in range(1, num_diffpool_layers + 1)
         ]
         cluster_sizes[-1] = 1  # Ensure the last cluster size is 1
-        # print(f"Cluster sizes: {cluster_sizes}")
+        print(f"Cluster sizes: {cluster_sizes}")
 
         # DiffPool layers
         self.diffpool_layers = nn.ModuleList(
@@ -119,12 +121,12 @@ class GatDiffPool(nn.Module):
                                     heads=1,
                                     dropout=gat_dropout_prob,
                                 )
-                                for _ in range(2)  # 2 layers of GAT after each pooling
+                                for _ in range(
+                                    num_post_pool_gat_layers
+                                )  # Use the new parameter
                             ]
                         )
-                        for _ in range(
-                            num_diffpool_layers - 1
-                        )  # One less than DiffPool layers
+                        for _ in range(num_diffpool_layers - 1)
                     ]
                 )
                 for _ in range(num_graphs)
@@ -139,18 +141,17 @@ class GatDiffPool(nn.Module):
                         nn.ModuleList(
                             [
                                 self.get_norm_layer(norm, diffpool_hidden_channels)
-                                for _ in range(2)  # 2 layers of GAT after each pooling
+                                for _ in range(
+                                    num_post_pool_gat_layers
+                                )  # Use the new parameter
                             ]
                         )
-                        for _ in range(
-                            num_diffpool_layers - 1
-                        )  # One less than DiffPool layers
+                        for _ in range(num_diffpool_layers - 1)
                     ]
                 )
                 for _ in range(num_graphs)
             ]
         )
-
         # Final linear layer
         self.final_linear = nn.Linear(
             num_graphs * diffpool_hidden_channels, diffpool_out_channels
@@ -179,7 +180,7 @@ class GatDiffPool(nn.Module):
             for j, (gat_layer, norm_layer) in enumerate(
                 zip(self.initial_gat_layers[i], self.initial_gat_norm_layers[i])
             ):
-                x_out, att_weights = gat_layer(
+                x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
                 )
                 x_out = norm_layer(x_out)
@@ -187,17 +188,12 @@ class GatDiffPool(nn.Module):
                 if self.gat_skip_connection and x_graph.shape == x_out.shape:
                     x_out = x_out + x_graph
                 x_graph = x_out
-                attention_weights.append(att_weights)
 
-            # print(f"Graph {i} after initial GAT layers shape: {x_graph.shape}")
+                attention_weights.append((edge_index, att_weights))
 
             # Convert to dense batch
             x_dense, mask = to_dense_batch(x_graph, batch)
             adj = to_dense_adj(edge_index, batch)
-
-            # print(
-            #     f"x_dense shape: {x_dense.shape}, mask shape: {mask.shape}, adj shape: {adj.shape}"
-            # )
 
             # DiffPool layers
             x_pool, adj_pool = x_dense, adj
@@ -209,7 +205,12 @@ class GatDiffPool(nn.Module):
                 link_pred_losses.append(link_loss)
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
-                # print(f"Graph {i}, DiffPool layer {k} output shape: {x_pool.shape}")
+
+                # Prune edges after pooling if specified
+                if self.pruned_max_average_node_degree is not None:
+                    adj_pool = self.prune_edges_dense(
+                        adj_pool, self.pruned_max_average_node_degree
+                    )
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
                 if k < len(self.diffpool_layers[i]) - 1:
@@ -221,10 +222,9 @@ class GatDiffPool(nn.Module):
                     ):
                         x_pool_flat = x_pool.view(-1, x_pool.size(-1))
                         adj_pool_flat = adj_pool.view(-1, adj_pool.size(-1))
+                        edge_index_pool = adj_pool_flat.nonzero().t()
                         x_out, att_weights = gat_layer(
-                            x_pool_flat,
-                            adj_pool_flat.nonzero().t(),
-                            return_attention_weights=True,
+                            x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
                         x_out = norm_layer(x_out)
                         x_out = self.activation(x_out)
@@ -235,9 +235,6 @@ class GatDiffPool(nn.Module):
                             x_out = x_out + x_pool_flat
                         x_pool = x_out.view(x_pool.size(0), -1, x_out.size(-1))
                         attention_weights.append(att_weights)
-                    # print(
-                    #     f"Graph {i}, Post-pooling GAT layer {k} output shape: {x_pool.shape}"
-                    # )
 
                 # Update mask for the next iteration
                 mask = torch.ones(
@@ -251,13 +248,11 @@ class GatDiffPool(nn.Module):
 
         # Concatenate outputs from all graphs
         x_concat = torch.cat(graph_outputs, dim=-1)
-        # print(f"Concatenated output shape: {x_concat.shape}")
 
         # Final linear layer with activation and dropout
         out = self.final_linear(x_concat.squeeze(1))
         out = self.activation(out)
         out = F.dropout(out, p=self.last_layer_dropout_prob, training=self.training)
-        # print(f"Final output shape: {out.shape}")
 
         return (
             out,
@@ -266,6 +261,49 @@ class GatDiffPool(nn.Module):
             link_pred_losses,
             entropy_losses,
         )
+
+    def prune_edges_dense(self, adj, k):
+        """
+        Prune edges in a dense adjacency matrix to keep only the top k*n edges.
+
+        Args:
+        adj (torch.Tensor): Dense adjacency matrix of shape (batch_size, num_nodes, num_nodes)
+        k (int): Maximum average number of edges to keep per node
+
+        Returns:
+        torch.Tensor: Pruned dense adjacency matrix
+        """
+        batch_size, num_nodes, _ = adj.shape
+        max_edges_to_keep = k * num_nodes
+
+        # Create a mask for the upper triangular part (excluding diagonal)
+        mask = torch.triu(torch.ones_like(adj), diagonal=1)
+
+        # Apply the mask and flatten the adjacency matrix
+        adj_masked = adj * mask
+        adj_flat = adj_masked.view(batch_size, -1)
+
+        # Count the number of non-zero edges for each batch item
+        num_edges = torch.sum(adj_flat != 0, dim=1)
+
+        # Determine the number of edges to keep for each batch item
+        edges_to_keep = torch.min(
+            num_edges, torch.tensor(max_edges_to_keep, device=adj.device)
+        )
+
+        # Create a new adjacency matrix with only the top edges
+        new_adj = torch.zeros_like(adj_masked)
+        for i in range(batch_size):
+            # Sort the edges for this batch item
+            values, indices = torch.sort(adj_flat[i], descending=True)
+            # Keep only the top k edges (or fewer if there aren't enough edges)
+            top_indices = indices[: edges_to_keep[i]]
+            new_adj[i].view(-1)[top_indices] = values[: edges_to_keep[i]]
+
+        # Make the adjacency matrix symmetric
+        new_adj = new_adj + new_adj.transpose(-1, -2)
+
+        return new_adj
 
 
 def load_sample_data_batch():
@@ -349,7 +387,7 @@ def load_sample_data_batch():
     cell_data_module.setup()
 
     # 1e4 Module
-    size = 1e4
+    size = 1e1
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
@@ -387,39 +425,41 @@ def main():
         diffpool_out_channels=16,
         num_initial_gat_layers=3,
         num_diffpool_layers=6,
+        num_post_pool_gat_layers=2,
         num_graphs=2,
         max_num_nodes=max_num_nodes,
-        gat_dropout_prob=0.2,
+        gat_dropout_prob=0.0,
         last_layer_dropout_prob=0.5,
         norm="batch",
         activation="relu",
         gat_skip_connection=True,
+        pruned_max_average_node_degree=3,
     )
 
     # Print model size
     total_params = sum(p.numel() for p in model.parameters())
-    # print(f"Total number of parameters: {total_params}")
+    print(f"Total number of parameters: {total_params}")
 
-    # print(f"Input x shape: {x.shape}")
-    # print(f"Edge index physical shape: {edge_index_physical.shape}")
-    # print(f"Edge index regulatory shape: {edge_index_regulatory.shape}")
-    # print(f"Batch index shape: {batch_index.shape}")
-    # print(f"Batch size: {batch_index.max().item() + 1}")
+    print(f"Input x shape: {x.shape}")
+    print(f"Edge index physical shape: {edge_index_physical.shape}")
+    print(f"Edge index regulatory shape: {edge_index_regulatory.shape}")
+    print(f"Batch index shape: {batch_index.shape}")
+    print(f"Batch size: {batch_index.max().item() + 1}")
 
     # Forward pass
     out, attention_weights, cluster_assignments, link_pred_losses, entropy_losses = (
         model(x, [edge_index_physical, edge_index_regulatory], batch_index)
     )
 
-    # print("Output shape:", out.shape)
-    # print("Number of attention weight tensors:", len(attention_weights))
-    # print("First attention weight shape:", attention_weights[0][0].shape)
-    # print("Last attention weight shape:", attention_weights[-1][0].shape)
-    # print("Number of cluster assignment tensors:", len(cluster_assignments))
-    # print("First cluster assignment shape:", cluster_assignments[0].shape)
-    # print("Last cluster assignment shape:", cluster_assignments[-1].shape)
-    # print("Link prediction losses:", link_pred_losses)
-    # print("Entropy losses:", entropy_losses)
+    print("Output shape:", out.shape)
+    print("Number of attention weight tensors:", len(attention_weights))
+    print("First attention weight shape:", attention_weights[0][0].shape)
+    print("Last attention weight shape:", attention_weights[-1][0].shape)
+    print("Number of cluster assignment tensors:", len(cluster_assignments))
+    print("First cluster assignment shape:", cluster_assignments[0].shape)
+    print("Last cluster assignment shape:", cluster_assignments[-1].shape)
+    print("Link prediction losses:", link_pred_losses)
+    print("Entropy losses:", entropy_losses)
 
 
 if __name__ == "__main__":

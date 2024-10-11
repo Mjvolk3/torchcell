@@ -15,14 +15,15 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1e4 #7e3
-  batch_size: 16
-  num_workers: 6
+  batch_size: 64
+  num_workers: 16
   pin_memory: true
+  prefetch: true
 
 trainer:
   max_epochs: 30
   strategy: auto # ddp, auto
-  accelerator: cpu
+  accelerator: gpu
 
 models:
   graph:

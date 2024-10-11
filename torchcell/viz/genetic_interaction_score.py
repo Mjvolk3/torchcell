@@ -103,7 +103,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
         median.set_color("#D86B2B")
         median.set_linewidth(4.0)
         x = median.get_xdata()
-        width_reduction = 0.03
+        width_reduction = 0.026
         x[0] += width_reduction
         x[1] -= width_reduction
         median.set_xdata(x)
@@ -151,7 +151,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     # Add title with correlation information
     title = f"Pearson: {pearson_corr:.3f}, Spearman: {spearman_corr:.3f}, R²: {r_squared:.3f}"
     ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
-    
+
     plt.tight_layout()
 
     return fig

@@ -97,7 +97,7 @@ def box_plot(true_values, predictions) -> plt.Figure:
         # Get current x-values (endpoints) of the median line
         x = median.get_xdata()
         # Adjust the endpoints to reduce the width
-        width_reduction = 0.03
+        width_reduction = 0.026
         x[0] += width_reduction
         x[1] -= width_reduction
         # Set the modified x-values back to the median line

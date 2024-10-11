@@ -34,7 +34,7 @@ from torchcell.datasets import (
 )
 from torchcell.models import DeepSet, Mlp
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers.fit_int_regression_deep_set import RegressionTask
+from torchcell.trainers.fit_int_deep_set_regression import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket
@@ -319,7 +319,7 @@ def main(cfg: DictConfig) -> None:
             batch_size=wandb.config.data_module["batch_size"],
             num_workers=wandb.config.data_module["num_workers"],
             pin_memory=wandb.config.data_module["pin_memory"],
-            prefetch=False,
+            prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
         )
         data_module.setup()
@@ -385,7 +385,7 @@ def main(cfg: DictConfig) -> None:
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
-        devices=devices,
+        devices=1, #devices
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

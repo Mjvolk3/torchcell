@@ -17,7 +17,7 @@ len([gene for gene in genome.gene_set if len(genome[gene]) > 5979])
 42
 ```
 
-![](./assets/images/Scerevisiae-s288c-Gene-Length-Distribution-resized-2023.09.26.png)
+![](./assets/images/Scerevisiae-S288C-Gene-Length-Distribution-resized-2023.09.26.png)
 
 ## Five Prime, CDS, Three Prime Larger than Nucleotide Transformer Window
 

@@ -4,14 +4,9 @@
 # Test file: tests/torchcell/data/test_data.py
 
 import hashlib
-import json
-from typing import List, Union
-
+from typing import List
 from pydantic import field_validator
-
 from torchcell.datamodels import ModelStrict, ExperimentReferenceType
-
-from typing import Union
 
 
 class ExperimentReferenceIndex(ModelStrict):

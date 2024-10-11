@@ -2,7 +2,7 @@
 id: 8xq4nxh3mki8vcznor43jxb
 title: '145537'
 desc: ''
-updated: 1710791739206
+updated: 1726857736359
 created: 1710791739206
 ---
 
@@ -413,7 +413,7 @@ function variables
 'experiment':
 FitnessExperiment(genotype=Genotype(perturbations=[SgaKanMxDeletionPerturbation(systematic_gene_name='YGR023W', perturbed_gene_name='mtl1', description='Deletion via KanMX or NatMX gene replacement', perturbation_type='deletion', deletion_description='Deletion via KanMX gene replacement.', deletion_type='KanMX', kan_mx_description='KanMX Deletion Perturbation information specific to SGA experiments.', strain_id='YGR023W_dma1811', kanmx_deletion_type='SGA'), SgaNatMxDeletionPerturbation(systematic_gene_name='YIL167W', perturbed_gene_name='sdl1', description='Deletion via KanMX or NatMX gene replacement', perturbation_type='deletion', deletion_description='Deletion via NatMX gene replacement.', deletion_type='NatMX', nat_mx_description='NatMX Deletion Perturbation information specific to SGA experiments.', strain_id='YIL167W_sn4320', natmx_deletion_type='SGA')]), environment=Environment(media=Media(name='YEPD', state='solid'), temperature=Temperature(value=30.0, unit='Celsius')), phenotype=FitnessPhenotype(...
 'reference':
-FitnessExperimentReference(reference_genome=ReferenceGenome(species='saccharomyces Cerevisiae', strain='s288c'), reference_environment=Environment(media=Media(name='YEPD', state='solid'), temperature=Temperature(value=30.0, unit='Celsius')), reference_phenotype=FitnessPhenotype(graph_level='global', label='smf', label_error='smf_std', fitness=1.0, fitness_std=0.040367310730687875))
+FitnessExperimentReference(reference_genome=ReferenceGenome(species='Saccharomyces cerevisiae', strain='S288C'), reference_environment=Environment(media=Media(name='YEPD', state='solid'), temperature=Temperature(value=30.0, unit='Celsius')), reference_phenotype=FitnessPhenotype(graph_level='global', label='smf', label_error='smf_std', fitness=1.0, fitness_std=0.040367310730687875))
 len():
 2
 data['experiment']

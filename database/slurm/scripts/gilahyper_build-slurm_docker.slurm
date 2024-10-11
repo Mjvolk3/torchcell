@@ -52,6 +52,7 @@ docker rm -f tc-neo4j-readonly || true
 echo "Starting Docker container within SLURM cgroup..."
 
 # We don't forward ports for the writable container, as it will be stopped after the database is created
+# HACK added sgd but this is because some of datasets need sgd.
 docker run \
     --cpus=$SLURM_CPUS_PER_TASK \
     -e SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK \
@@ -62,13 +63,14 @@ docker run \
     --restart=unless-stopped \
     -v $(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out \
     -v $(pwd)/database/data/torchcell:/var/lib/neo4j/data/torchcell \
+    -v $(pwd)/database/data/sgd:/var/lib/neo4j/data/sgd \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
     -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -v $(pwd)/database/plugins:/plugins \
-    -v $(pwd)/database/metrics:/ metrics \
+    -v $(pwd)/database/metrics:/metrics \
     -e NEO4J_AUTH=neo4j/torchcell \
     -e NEO4J_dbms_read__only=false \
     -e NEO4J_apoc_export_file_enabled=true \
@@ -105,7 +107,7 @@ echo "----------------NOW_BUILDING_GRAPHS---------------------"
 #torchcell.torchcell.knowledge_graphs.create_scerevisiae_kg
 #torchcell.knowledge_graphs.dmi_costanzo_2016_kg
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.gene_interactions_scerevisae_kg; then
+if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=scerevisiae_global_kg; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1

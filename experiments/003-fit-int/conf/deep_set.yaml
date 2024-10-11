@@ -15,7 +15,7 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1e4 #7e3
-  batch_size: 64
+  batch_size: 128
   num_workers: 16
   pin_memory: true
   prefetch: true

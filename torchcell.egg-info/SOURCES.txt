@@ -52,9 +52,13 @@ torchcell/adapters/conf/tmi_kuzmin2018_adapter.yaml
 torchcell/adapters/conf/tmi_kuzmin2020_adapter.yaml
 torchcell/cell/__init__.py
 torchcell/data/__init__.py
+torchcell/data/aggregate.py
 torchcell/data/data.py
+torchcell/data/deduplicate.py
 torchcell/data/embedding.py
 torchcell/data/experiment_dataset.py
+torchcell/data/genotype_aggregate.py
+torchcell/data/mean_experiment_deduplicate.py
 torchcell/data/neo4j_cell.py
 torchcell/data/neo4j_query_raw.py
 torchcell/database/__init__.py
@@ -63,11 +67,16 @@ torchcell/database/build_command.py
 torchcell/database/directory_setup.py
 torchcell/database/tcdb.py
 torchcell/datamodels/__init__.py
+torchcell/datamodels/conversion.py
+torchcell/datamodels/fitness_composite_conversion.py
+torchcell/datamodels/gene_essentiality_to_fitness_conversion.py
 torchcell/datamodels/pydant.py
 torchcell/datamodels/schema.py
+torchcell/datamodels/synthetic_lethality_to_fitness_conversion.py
 torchcell/datamodules/__init__.py
 torchcell/datamodules/cell.py
 torchcell/datamodules/dcell.py
+torchcell/datamodules/perturbation_subset.py
 torchcell/dataset_preprocess/__init__.py
 torchcell/dataset_readers/__init__.py
 torchcell/dataset_readers/reader.py
@@ -162,6 +171,7 @@ torchcell/models/dcell.py
 torchcell/models/deep_set.py
 torchcell/models/esm2.py
 torchcell/models/fungal_up_down_transformer.py
+torchcell/models/gat_diffpool.py
 torchcell/models/graph_attention.py
 torchcell/models/graph_convolution.py
 torchcell/models/linear.py
@@ -195,9 +205,6 @@ torchcell/sequence/data_scratch.py
 torchcell/sequence/sequence_plot.py
 torchcell/sequence/sequence_scratch.py
 torchcell/sequence/genome/__init__.py
-torchcell/sequence/genome/scerevisiae/S288C.py
-torchcell/sequence/genome/scerevisiae/S288C_gb.py
-torchcell/sequence/genome/scerevisiae/S288C_ncbi.py
 torchcell/sequence/genome/scerevisiae/__init__.py
 torchcell/sequence/genome/scerevisiae/s288c.py
 torchcell/sequence/genome/scerevisiae/s288c_gb.py
@@ -206,6 +213,8 @@ torchcell/trainers/__init__.py
 torchcell/trainers/cell.py
 torchcell/trainers/dcell_regression.py
 torchcell/trainers/dcell_regression_slim.py
+torchcell/trainers/fit_int_deep_set_regression.py
+torchcell/trainers/fit_int_gat_diffpool_regression.py
 torchcell/trainers/graph_convolution_regression.py
 torchcell/trainers/neo_regression.py
 torchcell/trainers/regression.py
@@ -213,6 +222,7 @@ torchcell/trainers/regression_deep_set_transformer.py
 torchcell/trainers/simple_linear_regression.py
 torchcell/trainers/utils.py
 torchcell/viz/__init__.py
+torchcell/viz/datamodules.py
 torchcell/viz/fitness.py
 torchcell/viz/genetic_interaction_score.py
 torchcell/yeastmine/__init__.py

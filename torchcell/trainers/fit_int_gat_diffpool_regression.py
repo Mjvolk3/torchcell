@@ -234,9 +234,9 @@ class RegressionTask(L.LightningModule):
         entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
 
         # Total loss
-        total_loss = mse_loss + link_pred_loss + entropy_loss
+        loss = mse_loss + link_pred_loss + entropy_loss
 
-        self.manual_backward(total_loss)
+        self.manual_backward(loss)
         if self.clip_grad_norm:
             nn.utils.clip_grad_norm_(
                 self.parameters(), max_norm=self.clip_grad_norm_max_norm
@@ -246,7 +246,7 @@ class RegressionTask(L.LightningModule):
 
         # Logging
         batch_size = batch_vector[-1].item() + 1
-        self.log("train/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("train/loss", loss, batch_size=batch_size, sync_dist=True)
         self.log("train/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "train/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
@@ -271,7 +271,7 @@ class RegressionTask(L.LightningModule):
         self.train_metrics["fitness"](y_hat[:, 0], y[:, 0])
         self.train_metrics["gene_interaction"](y_hat[:, 1], y[:, 1])
 
-        return total_loss
+        return loss
 
     def on_train_epoch_end(self):
         # Compute and log metrics for each metric type
@@ -306,12 +306,12 @@ class RegressionTask(L.LightningModule):
         entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
 
         # Total loss
-        total_loss = mse_loss + link_pred_loss + entropy_loss
+        loss = mse_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
         # Log the losses
-        self.log("val/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("val/loss", loss, batch_size=batch_size, sync_dist=True)
         self.log("val/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "val/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
@@ -454,12 +454,12 @@ class RegressionTask(L.LightningModule):
         entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
 
         # Total loss
-        total_loss = mse_loss + link_pred_loss + entropy_loss
+        loss = mse_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
         # Log the losses
-        self.log("test/total_loss", total_loss, batch_size=batch_size, sync_dist=True)
+        self.log("test/loss", loss, batch_size=batch_size, sync_dist=True)
         self.log("test/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "test/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True

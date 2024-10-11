@@ -1048,6 +1048,50 @@ def plotly_go_graph(G):
     fig.show()
 
 
+def plot_go_node_types(G):
+    # Define a color map for namespaces
+    namespace_colors = {
+        "super_root": "#122A4B",
+        "biological_process": "#FF552E",
+        "molecular_function": "#8286C2",
+        "cellular_component": "#D23943",
+        "missing": "#AAAAAA",  # Color for missing namespace
+    }
+
+    # Count the occurrences of each namespace type
+    namespace_counts = {
+        "super_root": 0,
+        "biological_process": 0,
+        "molecular_function": 0,
+        "cellular_component": 0,
+        "missing": 0,
+    }
+
+    # Traverse the nodes and count their namespace type
+    for node in G.nodes(data=True):
+        namespace = node[1].get("namespace", "missing")
+        if namespace in namespace_counts:
+            namespace_counts[namespace] += 1
+        else:
+            namespace_counts["missing"] += 1
+
+    # Prepare data for Plotly bar chart
+    namespaces = list(namespace_counts.keys())
+    counts = list(namespace_counts.values())
+    colors = [namespace_colors[ns] for ns in namespaces]
+
+    # Create a bar chart using Plotly
+    fig = go.Figure(
+        data=[go.Bar(x=namespaces, y=counts, marker_color=colors)],
+        layout=go.Layout(
+            title="GO Node Types Distribution",
+            xaxis_title="GO Node Type",
+            yaxis_title="Number of Nodes",
+        ),
+    )
+    fig.show()
+
+
 def plot_pathway_annotations(G_gene: nx.Graph):
     # Create a list to store the number of pathway annotations for each gene
     pathway_counts = []
@@ -1064,7 +1108,12 @@ def plot_pathway_annotations(G_gene: nx.Graph):
 
     # Create the histogram
     plt.figure(figsize=(12, 6))
-    plt.hist(pathway_counts, bins=range(max(pathway_counts) + 2), edgecolor='black', alpha=0.7)
+    plt.hist(
+        pathway_counts,
+        bins=range(max(pathway_counts) + 2),
+        edgecolor="black",
+        alpha=0.7,
+    )
     plt.xlabel("Number of Pathway Annotations")
     plt.ylabel("Number of Genes")
     plt.title("Histogram of Pathway Annotations per Gene")
@@ -1073,11 +1122,17 @@ def plot_pathway_annotations(G_gene: nx.Graph):
     # Add labels for the count of genes in each bin
     for i in range(max(pathway_counts) + 1):
         count = sum(count == i for count in pathway_counts)
-        plt.text(i, count + 0.1, str(count), ha='center', va='bottom')
+        plt.text(i, count + 0.1, str(count), ha="center", va="bottom")
 
     # Add text displaying the fraction of genes with at least one annotation
-    plt.text(0.95, 0.95, f"Fraction of genes with annotation: {fraction_with_annotation:.2f}",
-             transform=plt.gca().transAxes, ha='right', va='top')
+    plt.text(
+        0.95,
+        0.95,
+        f"Fraction of genes with annotation: {fraction_with_annotation:.2f}",
+        transform=plt.gca().transAxes,
+        ha="right",
+        va="top",
+    )
     plt.savefig("./notes/assets/images/pathway-annotations-per-gene.png", dpi=300)
     plt.tight_layout()
     plt.show()
@@ -1106,17 +1161,17 @@ def old_main() -> None:
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
     #
-    dmf_dataset = DmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
-        preprocess={"duplicate_resolution": "low_dmf_std"},
-        # subset_n=100,
-    )
-    smf_dataset = SmfCostanzo2016Dataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf"),
-        preprocess={"duplicate_resolution": "low_std_both"},
-        skip_process_file_exist_check=True,
-    )
-    gene_set = smf_dataset.gene_set.union(dmf_dataset.gene_set)
+    # dmf_dataset = DmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),
+    #     preprocess={"duplicate_resolution": "low_dmf_std"},
+    #     # subset_n=100,
+    # )
+    # smf_dataset = SmfCostanzo2016Dataset(
+    #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_smf"),
+    #     preprocess={"duplicate_resolution": "low_std_both"},
+    #     skip_process_file_exist_check=True,
+    # )
+    gene_set = genome.gene_set
     #
     print(graph.G_go.number_of_nodes())
     G = graph.G_go.copy()
@@ -1141,7 +1196,7 @@ def old_main() -> None:
     # plot_annotation_dates_by_month(graph.G_go)
     # plot_go_graph(graph.G_go)
     plotly_go_graph(G)
-    print()
+    plot_go_node_types(G)
 
 
 def main():
@@ -1157,13 +1212,13 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-
+    print()
     # Plot the pathway annotations per gene
-    # plot_pathway_annotations(graph.G_gene)
+    plot_pathway_annotations(graph.G_gene)
 
 
 if __name__ == "__main__":
-    main()
+    old_main()
     # main_go()
 
     # # TODO maybe remove

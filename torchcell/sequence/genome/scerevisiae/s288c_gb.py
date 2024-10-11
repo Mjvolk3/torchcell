@@ -1,7 +1,7 @@
-# torchcell/sequence/genome/scerevisiae/s288c_gb.py
+# torchcell/sequence/genome/scerevisiae/S288C_gb.py
 # [[torchcell.sequence.genome.scerevisiae.s288c_gb]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/s288c_gb.py
-# Test file: torchcell/sequence/genome/scerevisiae/test_s288c_gb.py
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_gb.py
+# Test file: torchcell/sequence/genome/scerevisiae/test_S288C_gb.py
 
 import glob
 import gzip
@@ -125,7 +125,7 @@ class SCerevisiaeGenome:
             print("---")
 
         # Define the destination directory
-        destination_directory = os.path.abspath("data/scerevisiae/genome/s288c/")
+        destination_directory = os.path.abspath("data/scerevisiae/genome/S288C/")
 
         # Create destination directory if it does not exist
         os.makedirs(destination_directory, exist_ok=True)
@@ -155,7 +155,7 @@ def main():
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/scerevisiae/genome/s288c")
+        data_root=osp.join(DATA_ROOT, "data/scerevisiae/genome/S288C")
     )
     pass
 

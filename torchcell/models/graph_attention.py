@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import nn
 from torch_geometric.nn import GATConv
-from torch_geometric.nn import GCNConv as GCN
 from torch_scatter import scatter_add
 
 from torchcell.models import DeepSet
@@ -31,7 +30,7 @@ class GraphAttention(nn.Module):
         super().__init__()
 
         self.deepset = DeepSet(
-            input_dim=input_dim,
+            in_channels=input_dim,
             node_layers=node_layers,
             set_layers=[],
             dropout_prob=dropout_prob,

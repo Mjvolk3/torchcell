@@ -43,6 +43,10 @@ from .schema import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
 )
 
+from .conversion import ConversionEntry, ConversionMap, Converter
+
+# from .gene_essentiality_to_fitness_conversion import GeneEssentialityToFitnessConverter
+
 core_models = ["ModelStrict", "ModelStrictArbitrary"]
 
 schema_classes = [
@@ -80,6 +84,11 @@ schema_classes = [
     "Publication",
 ]
 
+conversion = ["ConversionEntry", "ConversionMap", "Converter"]
+
+# converters = ["GeneEssentialityToFitnessConverter"]
+
 maps = ["EXPERIMENT_TYPE_MAP", "EXPERIMENT_REFERENCE_TYPE_MAP"]
 
-__all__ = core_models + schema_classes
+# __all__ = core_models + schema_classes + conversion + converters
+__all__ = core_models + schema_classes + conversion

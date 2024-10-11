@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/gat_diffpool.py
-project: torchcell_test_gat_diffpool
+project: torchcell_fit-int-003_gat_diffpool_1e04
 method: grid
 
 # method: bayes
@@ -75,7 +75,7 @@ parameters:
           gat_skip_connection:
             values: [true]
           num_diffpool_layers:
-            values: [4]
+            values: [4, 5 ,6]
           num_post_pool_gat_layers:
             values: [1]
           diffpool_hidden_channels:
@@ -113,17 +113,17 @@ parameters:
       boxplot_every_n_epochs:
         values: [1]
       learning_rate:
-        values: [1e-4]
+        values: [1e-5, 1e-4]
       weight_decay:
-        values: [1e-5]
+        values: [1e-5, 1e-4]
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
         values: [10]
       link_pred_loss_weight:
-        values: [1.0]
+        values: [1.0, 10.0]
       entropy_loss_weight:
-        values: [1.0]
+        values: [1.0, 10.0]
 
 command:
   - ${env}

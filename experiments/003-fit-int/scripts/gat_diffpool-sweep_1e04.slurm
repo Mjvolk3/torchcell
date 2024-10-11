@@ -39,7 +39,7 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 # 2>&1 stderr to stdout, extract sweep id.
 #SWEEP_FILE=conf/sweep_test.yaml
-SWEEP_FILE=experiments/fit-int-003/conf/gat_diffpool-sweep_1e04_00.yaml
+SWEEP_FILE=experiments/fit-int-003/conf/gat_diffpool-sweep_1e04.yaml
 SWEEP_ID=2y8cl62c
 PROJECT_NAME=torchcell_fit-int-003_gat_diffpool_1e04
 

@@ -13,7 +13,7 @@ from torch_geometric.data import Data
 from tqdm import tqdm
 
 from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datasets.embedding import BaseEmbeddingDataset
+from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )

@@ -1,6 +1,6 @@
 ---
-id: 119togmo1rze74fbueeywjd
-title: S288c_gb
+id: so3nq0xn7wui34tonjosjtk
+title: S288C_gb
 desc: ''
 updated: 1695247042877
 created: 1695246868534

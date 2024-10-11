@@ -2,7 +2,7 @@
 id: xnqyw5xv3ehhaieqrd7hlo9
 title: '35'
 desc: ''
-updated: 1724945020982
+updated: 1725815941312
 created: 1724674431881
 ---
 ## 2024.08.26
@@ -17,22 +17,13 @@ created: 1724674431881
 - [x] Fix type case to numeric iss ue is [[Svr|dendron://torchcell/experiments.smf-dmf-tmf-001.svr]]
 - [x] Fix no cross validation in [[Svr|dendron://torchcell/experiments.smf-dmf-tmf-001.svr]]
 
-- [ ] Create scripts for traditional ml `002-dmi-tmi`.
-
-- [ ] Revert to `39f8c79e5a93953c240965becba6e0c59bb54026` to create random `6579` `random`.
-
-- [ ] Bring in kuzmin2020 dataset.
-- [ ] Plots on data distributions.
-- [ ] Run KG build for kuzmin2020 interactions
-- [ ] Update combine to add a `README.md` which can serve as a trace to combined data.
-- [ ] Combined datasets and update readonly db.
-
-- [ ] Create `1e03`, `1e04`, and `1e05` datasets with positive `tmi`. → This will be difficult because it'll be hard to balance mutant types. We could just use triple mutants with the plan to down select by enriched double mutants.
+- [x] Create scripts for traditional ml `002-dmi-tmi`.
+- [x] Revert to `39f8c79e5a93953c240965becba6e0c59bb54026` to create random `6579` `random`. → only have partial interactions. Missing a few `1e05` bc takes long time to compute. Still not sure if necessary.
 
 ## 2024.08.27
 
 - [x] Try to compute `random_6579` for traditional. → Couldn't complete. `1e5` `no_pert` had some memory issues.
-- [ ] Traditional ml on interactions.
+- [x] Traditional ml on interactions.
 
 ## 2024.08.28
 
@@ -44,27 +35,6 @@ created: 1724674431881
 
 ## 2024.08.29
 
-- [ ] Create slides for group presentation
-- [ ] ![](./assets/drawio/data-duplication-example-scenario.drawio.png)
-- [ ] Check on db url update.
-
-***
-
-- [ ] Zendron on `zotero_out`
-- [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
-- [ ] Add expression dataset for mechanistic aware single fitness
-- [ ] Add expression from double fitness
-- [ ] Add fitness from singles
-- [ ] Add fitness from doubles
-- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
-- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
-- [ ] `ExperimentReferenceOf` looks broken.
-- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
-- [ ] Try to link docker and slurm with `cgroup`
-- [ ] Run build bash script for testing.
-- [ ] `gh` Test build under resource constraints.
-- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
-- [ ] Remove software update on image entry point
-- [ ] dataset registry not working again because circular import
+- [x] Create slides for group presentation
+- [x] ![](./assets/drawio/data-duplication-example-scenario.drawio.png)
+- [x] Check on db url update. → worked with cPanel to find NCSA resources on campus that could potentially host db. NCSA [Illinois Computes](https://www.ncsa.illinois.edu/about/illinois-computes/).

@@ -2,7 +2,7 @@
 id: jpty5nvb4k9nbcb2di640st
 title: Torchcell
 desc: ''
-updated: 1702611988600
+updated: 1727150891611
 created: 1690517112184
 ---
 
@@ -85,8 +85,6 @@ class Fitness26C(Fitness):
 This should allow us to group up experiments. SGD already has a phenotpye ontology we can use as reference.
 
 ## Gene Probing Hypothesis
-
-
 
 ## Summing vs. Merging Experiment Datasets
 

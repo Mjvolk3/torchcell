@@ -82,13 +82,14 @@ temperature:
         serialized_data: str
 
 # TODO expand out to include different phenotypes.
+# PHENOTYPES START
 fitness phenotype:
     is_a: phenotypic feature
     represented_as: node
     properties:
         graph_level: str
-        label: str
-        label_statistic: str
+        label_name: str
+        label_statistic_name: str
         fitness: float
         fitness_std: float
         serialized_data: str
@@ -98,11 +99,43 @@ gene interaction phenotype:
     represented_as: node
     properties:
         graph_level: str
-        label: str
-        label_statistic: str
-        interaction: float
-        p_value: float
+        label_name: str
+        label_statistic_name: str
+        gene_interaction: float
+        gene_interaction_p_value: float
         serialized_data: str
+
+gene essentiality phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        is_essential: bool
+        serialized_data: str
+
+synthetic lethality phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        is_synthetic_lethal: bool
+        synthetic_lethality_statistic_score: float
+        serialized_data: str
+
+synthetic rescue phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        is_synthetic_rescue: bool
+        synthetic_rescue_statistic_score: float
+        serialized_data: str
+# PHENOTYPES END
 
 # RELATIONSHIPS
 genotype member of:
@@ -123,10 +156,18 @@ environment member of:
     source: environment
     target: [experiment, experiment reference]
 
+# If you have multiple sources you must specify the input_label type
 phenotype member of:
     is_a: participates in
     represented_as: edge
-    source: fitness phenotype
+    input_label: phenotype
+    source:
+        [
+            fitness phenotype,
+            gene essentiality phenotype,
+            synthetic lethality phenotype,
+            synthetic rescue phenotype,
+        ]
     target: [experiment, experiment reference]
 
 media member of:

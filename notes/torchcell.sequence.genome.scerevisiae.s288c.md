@@ -1,6 +1,6 @@
 ---
 id: 9rijjyg8k6nasnucyb5g4s4
-title: S288c
+title: S288C
 desc: ''
 updated: 1697572209673
 created: 1694979540546
@@ -71,7 +71,7 @@ It seems the only genes with no start codons are genes with `five_prime_UTR_intr
 
 This is a summarizing figure of the sequence selection process.
 
-![](./assets/drawio/s288c_selecting_gene_sequence.drawio.png)
+![](./assets/drawio/S288C_selecting_gene_sequence.drawio.png)
 
 ### Selecting Gene Sequence - Based on CDS with Five prime UTR intron
 
@@ -251,7 +251,7 @@ genome['YAL037W'].window(3000)
 
 Number of genes with multiple CDS: 1459
 
-[[s288c_genes_multiple_CDS|dendron://torchcell/experiments.s288c_genes_multiple_CDS]]
+[[S288C_genes_multiple_CDS|dendron://torchcell/experiments.s288c_genes_multiple_CDS]]
 
 `"data/sgd/genome/S288C_reference_genome_R64-3-1_20210421/orf_coding_all_R64-3-1_20210421.fasta"`
 

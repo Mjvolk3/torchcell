@@ -12,7 +12,6 @@ from attrs import define, field
 import os.path as osp
 import concurrent.futures
 from typing import Union
-from torchcell.datamodels.schema import *
 from torchcell.datamodels.schema import (
     EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
@@ -23,7 +22,6 @@ import multiprocessing as mp
 from concurrent.futures import ProcessPoolExecutor
 from torchcell.sequence import GeneSet
 import logging
-import json
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -204,6 +202,7 @@ class Neo4jQueryRaw:
             # Create an instance of the FitnessExperiment model
             experiment_class = EXPERIMENT_TYPE_MAP[e_node_data["experiment_type"]]
             experiment = experiment_class(
+                dataset_name=e_node_data["dataset_name"],
                 genotype=e_node_data["genotype"],
                 environment=e_node_data["environment"],
                 phenotype=e_node_data["phenotype"],
@@ -451,14 +450,15 @@ if __name__ == "__main__":
     genome.drop_empty_go()
     # TODO change to process and io workers
     neo4j_db = Neo4jQueryRaw(
-        uri="bolt://gilahyper.zapto.org:7687",  # Include the database name here
+        uri="bolt://localhost:7687",  # Include the database name here
+        # uri="bolt://gilahyper.zapto.org:7687",  # Include the database name here
         username="neo4j",
         password="torchcell",
         root_dir=osp.join(DATA_ROOT, "data/torchcell/neo4j_query_test"),
         query="""
-            MATCH (e)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
+            MATCH (e:Experiment)<-[:ExperimentReferenceOf]-(ref:ExperimentReference)
             RETURN e, ref
-            LIMIT 100000;
+            LIMIT 10;
         """,
         io_workers=10,
         num_workers=10,

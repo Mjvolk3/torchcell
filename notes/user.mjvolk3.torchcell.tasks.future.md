@@ -2,11 +2,31 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1720114876200
+updated: 1726683670942
 created: 1675887826601
 ---
 ## Future
 
+- [ ] Update combine to add a `README.md` which can serve as a trace to combined data.
+- [ ] Combined datasets and update readonly db.
+- [ ] Zendron on `zotero_out`
+- [ ] Add in transformation to essentiality to growth type phenotype. This should probably be enforced after querying during data selection and deduplication. The rule is something like if we can find some reasonable fixed function for transforming labels we add them. Don't know of a great way of doing this but. Possible we can even add these relations to the Biolink ontology. In theory this could go on indefinitely but I think one layer of abstraction will serve a lot of good at little cost.
+- [ ] Add expression dataset for mechanistic aware single fitness
+- [ ] Add expression from double fitness
+- [ ] Add fitness from singles
+- [ ] Add fitness from doubles
+- [ ] We need a new project documents reproducible procedure on `gh` for restarting slurm, docker, etc.
+- [ ] Run container locally with [[torchcell.knowledge_graphs.minimal_kg]] → Had to restart to make sure previous torchcell db was deleted. → struggling with `database/build/build_linux-arm.sh` retrying from build image. → Cannot install CaLM... →
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+- [ ] Expand [[paper-outline-02|dendron://torchcell/paper.outline.02]]
+- [ ] `ExperimentReferenceOf` looks broken.
+- [ ] Make sure ports are getting forwarded correctly and that we can connect to the database over the network. We need to verify that we can connect with the neo4j browser.
+- [ ] Try to link docker and slurm with `cgroup`
+- [ ] Run build bash script for testing.
+- [ ] `gh` Test build under resource constraints.
+- [ ] Change logo on docs → to do this we need a `torchcell_sphinx_theme`. → cloned, changed all `pyg_spinx_theme` to `torchcell_sphinx_theme`, pushed, trying rebuild.
+- [ ] Remove software update on image entry point
+- [ ] dataset registry not working again because circular import
 - [ ] Check ontology vs SGD ontology GAF.
 - [ ] Compute flops of different networks. There are python libraries to do this for `nn.Module`
 - [ ] From datasets I think it would be nice to return the data objects, but then adapters would have to be fixed. We opted not to do this is originally because it made multiprocessing easier, but I think we can use the deserialization in the adapter if we write the model and just make `transform_item` transform into dict, then it would be much more like a dump method. Should be done after pipeline completion.

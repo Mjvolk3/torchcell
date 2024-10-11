@@ -20,6 +20,7 @@ docker run --cpus=10 \
     -p 7474:7474 -p 7687:7687 \
     -v "$(pwd)/database/biocypher-out:/var/lib/neo4j/biocypher-out" \
     -v "$(pwd)/data/torchcell:/var/lib/neo4j/data/torchcell" \
+    -v "$(pwd)/data/sgd:/var/lib/neo4j/data/sgd" \
     -v "$(pwd)/database/data:/var/lib/neo4j/data" \
     -v "$(pwd)/database/.env:/.env" \
     -v "$(pwd)/biocypher:/var/lib/neo4j/biocypher" \
@@ -44,29 +45,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Function to install a package and check for success
-install_package() {
-    package=$1
-    url=$2
-
-    echo "Installing $package..."
-    docker exec tc-neo4j python -m pip install $url >install_$package.log 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Failed to install $package. See install_$package.log for details."
-        exit 1
-    fi
-    echo "$package installed successfully."
-    sleep 5
-}
 
 docker exec tc-neo4j python -m pip install --upgrade pip
 # Install required packages inside the container
 docker exec tc-neo4j python -m pip uninstall torchcell -y
-install_package "torchcell" "git+https://github.com/Mjvolk3/torchcell.git@main"
-# docker exec tc-neo4j python -m pip uninstall biocypher -y
-install_package "biocypher" "git+https://github.com/Mjvolk3/biocypher@main"
-install_package "CaLM" "git+https://github.com/oxpig/CaLM@main"
-# install_package "memory-profiler" "memory-profiler"
+
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
+docker exec tc-neo4j python -m pip uninstall biocypher -y
+docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
@@ -74,13 +62,10 @@ echo "Logging in to wandb..."
 docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 
 # Execute the Python script inside the Docker container and capture the output
-# docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_scerevisiae_kg_small
-#TODO change back to kg_small.
-# torchcell.knowledge_graphs.tmi_kuzmin_2018_kg
-#torchcell.knowledge_graphs.smf_costanzo_2016_kg
-#torchcell.knowledge_graphs.dmf_tmi_combine_kg
+#Works
+#docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=gene_essentiality_sgd
 
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.smf_costanzo_2016_kg
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=scerevisiae_small_global_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)
@@ -104,5 +89,5 @@ docker exec tc-neo4j /bin/bash -c "chmod a-w '${dir_path}'"
 
 echo "Build and run process completed."
 
-docker stop tc-neo4j 
+docker stop tc-neo4j
 docker start tc-neo4j

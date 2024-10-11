@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: torchcell
-Version: 0.2.7
+Version: 0.2.8
 Summary: An example package
 Author-email: Michael Volk <michaeljvolk7@gmail.com>
 Project-URL: Homepage, https://github.com/Mjvolk3/Dendron-Template
@@ -24,7 +24,7 @@ Requires-Dist: deepdiff>=7.0.1
 Requires-Dist: torch>=2.4.0
 Requires-Dist: torch_geometric>=2.4.0
 Requires-Dist: torchmetrics>=1.2.1
-Requires-Dist: lightning>=2.1.2
+Requires-Dist: lightning>=2.4.0
 Requires-Dist: wandb>=0.17.5
 Requires-Dist: wandb_osh>=1.2.2
 Requires-Dist: matplotlib>=3.7.2
@@ -77,4 +77,4 @@ Packaging: Add packing <!-- ![Python application](https://github.com/mjvolk3/tor
 
 Testing: ![Code Styling](https://github.com/mjvolk3/torchcell/workflows/Code%20Styling/badge.svg) [![codecov](https://codecov.io/gh/mjvolk3/torchcell/branch/main/graph/badge.svg)](https://codecov.io/gh/mjvolk3/torchcell)
 
-Docs to come soon!!
+Docs to come soon!!!

@@ -4,11 +4,10 @@
 # Test file: tests/torchcell/datamodels/test_schema.py
 
 import re
-from typing import List, Union, Dict, Type
-import json
+from typing import List, Union, Dict, Type, Optional, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
-from enum import Enum, auto
 from torchcell.datamodels.pydant import ModelStrict
+import math
 
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
@@ -255,69 +254,216 @@ class Phenotype(ModelStrict):
     graph_level: str = Field(
         description="most natural level of graph at which phenotype is observed"
     )
-    label: str = Field(description="name of label")
-    label_statistic: str | None = Field(
-        description="name of error or confidence statistic related to label"
+    label_name: str = Field(description="name of label")
+    label_statistic_name: Optional[str] = Field(
+        default=None,
+        description="name of error or confidence statistic related to label",
     )
 
-    # admittedly, graph_level is subjective
-    # choose most natural level considering whole cell
-    @field_validator("graph_level", mode="after")
-    @classmethod
-    def validate_level(cls, v):
-        levels = {"edge", "node", "subgraph", "global", "metabolism"}
+    @model_validator(mode="after")
+    def validate_fields(self):
+        valid_graph_levels = {
+            "edge",
+            "node",
+            "hyperedge",
+            "subgraph",
+            "global",
+            "metabolism",
+            "gene ontology",
+        }
+        if self.graph_level not in valid_graph_levels:
+            raise ValueError(
+                f"graph_level must be one of: {', '.join(valid_graph_levels)}"
+            )
+        return self
 
-        if v not in levels:
-            raise ValueError("level must be one of: edge, node, global, metabolism")
-
-        return v
+    def __getitem__(self, key):
+        return getattr(self, key)
 
 
 class FitnessPhenotype(Phenotype, ModelStrict):
+    graph_level: str = "global"
+    label_name: str = "fitness"
+    label_statistic_name: str = "fitness_std"
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: float | None = Field(
-        default=None, description="fitness standard deviation"
-    )
+    fitness_std: float | None = Field(description="fitness standard deviation")
+
+    @field_validator("fitness")
+    def validate_fitness(cls, v):
+        if math.isnan(v):
+            raise ValueError("Fitness cannot be NaN")
+        if v <= 0:
+            return 0.0
+        return v
+
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
 
 
 class GeneEssentialityPhenotype(Phenotype, ModelStrict):
-    gene_essentiality: bool = Field(
+    graph_level: str = "node"
+    label_name: str = "is_essential"
+    is_essential: bool = Field(
         default=True, description="gene knockout leading cell death."
     )
 
+    # IDEA
+    # This is going to be standard for all child classes of Phenotype
+    # This could alternatively be moved to testing
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        # Check if label_name is a class attribute
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        # Check if label_statistic_name is a class attribute (if it's not None)
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
+
 
 class SyntheticLethalityPhenotype(Phenotype, ModelStrict):
-    synthetic_lethality: bool = Field(
+    graph_level: str = "hyperedge"
+    label_name: str = "is_synthetic_lethal"
+    label_statistic_name: str = "synthetic_lethality_statistic_score"
+    is_synthetic_lethal: bool = Field(
         default=True,
         description="synthetic lethality occurs when the combination of mutations in"
         "two or more genes leads to cell death, whereas a mutation in only one of these"
         "genes does not affect the viability of the cell.",
     )
-    statistic_score: float | None = Field(
+    synthetic_lethality_statistic_score: float | None = Field(
         default=None,
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
 
+    # IDEA
+    # This is going to be standard for all child classes of Phenotype
+    # This could alternatively be moved to testing
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        # Check if label_name is a class attribute
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        # Check if label_statistic_name is a class attribute (if it's not None)
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
+
 
 class SyntheticRescuePhenotype(Phenotype, ModelStrict):
-    synthetic_rescue: bool = Field(
+    graph_level: str = "hyperedge"
+    label_name: str = "is_synthetic_rescue"
+    label_statistic_name: str = "synthetic_rescue_statistic_score"
+    is_synthetic_rescue: bool = Field(
         default=True,
         description="synthetic rescue occurs when a mutation in one gene compensates"
         "for the deleterious effects of a mutation in another gene, thereby restoring"
         "normal function or viability to the cell",
     )
-    statistic_score: float | None = Field(
+    synthetic_rescue_statistic_score: float | None = Field(
         default=None,
         description="statistical score computed in [SynLethDB](https://synlethdb.sist.shanghaitech.edu.cn/#/",
     )
 
+    # IDEA
+    # This is going to be standard for all child classes of Phenotype
+    # This could alternatively be moved to testing
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        # Check if label_name is a class attribute
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        # Check if label_statistic_name is a class attribute (if it's not None)
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
+
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
-    interaction: float = Field(
-        description="""epsilon, tau, or analogous interaction value.
+    graph_level: str = "hyperedge"
+    label_name: str = "gene_interaction"
+    label_statistic_name: str = "gene_interaction_p_value"
+    gene_interaction: float = Field(
+        description="""epsilon, tau, or analogous gene interaction value.
         Computed from composite fitness phenotypes."""
     )
-    p_value: float | None = Field(default=None, description="p-value of interaction")
+    gene_interaction_p_value: float | None = Field(
+        default=None, description="p-value of gene interaction"
+    )
+
+    @field_validator("gene_interaction")
+    def validate_fitness(cls, v):
+        if math.isnan(v):
+            raise ValueError("Gene interaction cannot be NaN")
+        return v
+
+    # IDEA
+    # This is going to be standard for all child classes of Phenotype
+    # This could alternatively be moved to testing
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        # Check if label_name is a class attribute
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        # Check if label_statistic_name is a class attribute (if it's not None)
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
 
 
 class Publication(ModelStrict):
@@ -337,6 +483,7 @@ class Publication(ModelStrict):
 
 class ExperimentReference(ModelStrict):
     experiment_reference_type: str = "base"
+    dataset_name: str
     genome_reference: ReferenceGenome
     environment_reference: Environment
     phenotype_reference: Phenotype
@@ -344,6 +491,7 @@ class ExperimentReference(ModelStrict):
 
 class Experiment(ModelStrict):
     experiment_type: str = "base"
+    dataset_name: str
     genotype: Genotype
     environment: Environment
     phenotype: Phenotype
@@ -375,7 +523,8 @@ class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
     experiment_reference_type: str = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
-#shouldn't it jut be one gene for genotype?
+
+# shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene essentiality"
     genotype: Union[Genotype, List[Genotype,]]

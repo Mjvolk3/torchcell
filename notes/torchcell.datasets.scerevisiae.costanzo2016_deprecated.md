@@ -463,7 +463,7 @@ pd.Series([np.log10(len(i)) for i in genome.go_genes.values()]).hist()`
 
 Gene Ontology counts for genes in `SCerevisiaeGenome`.
 
-![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-s288c-debug-console.png)
+![](./assets/images/user.Mjvolk3.torchcell.tasks.md.go-genes-scerevisiae-S288C-debug-console.png)
 
 ## Using LMDB with Dataloader num_workers ge 0
 

@@ -255,7 +255,7 @@ def get_chr_from_description(description: str) -> int:
         >>> get_chr_from_description("[location=mitochondrion] some other info")
         0
     """
-    # CHECK - format might be specific yeast s288c genome
+    # CHECK - format might be specific yeast S288C genome
     desc_split = description.split()
     for part in desc_split:
         if part.startswith("[chromosome="):

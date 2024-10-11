@@ -1,7 +1,7 @@
-# experiments/s288c_stop_start_codons.py
+# experiments/S288C_stop_start_codons.py
 # [[experiments.s288c_stop_start_codons]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/s288c_stop_start_codons.py
-# Test file: experiments/test_s288c_stop_start_codons.py
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/S288C_stop_start_codons.py
+# Test file: experiments/test_S288C_stop_start_codons.py
 
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import numpy as np

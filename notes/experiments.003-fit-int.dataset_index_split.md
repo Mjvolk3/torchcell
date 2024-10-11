@@ -2,7 +2,7 @@
 id: hi7fjywckmnzybnoe0nykyf
 title: Dataset_index_split
 desc: ''
-updated: 1728524978151
+updated: 1728633042751
 created: 1728507905538
 ---
 
@@ -29,6 +29,25 @@ created: 1728507905538
 ![](./assets/images/experiments-003_query-001-small-build_cell-data-module_size_1340841_seed_42_perturbation-count-index.png)
 ![](./assets/images/experiments-003_query-001-small-build_cell-data-module_size_1340841_seed_42_phenotype-label-index.png)
 ![](./assets/images/experiments-003_query-001-small-build_cell-data-module_size_1340841_seed_42_dataset-name-index.png)
+
+
+## 5e01  Perturbation Subset
+
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_perturbation-count-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_phenotype-label-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_dataset-name-index.png)
+
+## 1e02 Perturbation Subset
+
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_perturbation-count-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_phenotype-label-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_1e02_seed_42_dataset-name-index.png)
+
+## 5e02 Perturbation Subset
+
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_5e02_seed_42_perturbation-count-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_5e02_seed_42_phenotype-label-index.png)
+![](./assets/images/experiments-003_query-001-small-build_perturbation-subset-data-module_size_5e02_seed_42_dataset-name-index.png))
 
 ## 1e03 Perturbation Subset
 

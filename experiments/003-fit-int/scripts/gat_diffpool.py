@@ -45,11 +45,36 @@ from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.data import Neo4jCellDataset
 from torchcell.data.neo4j_cell import PhenotypeProcessor
-
+from lightning.pytorch.profilers import AdvancedProfiler
+from typing import Any
+from lightning.pytorch.profilers import AdvancedProfiler
+import cProfile
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
+
+
+class CustomAdvancedProfiler(AdvancedProfiler):
+    def __init__(self, dirpath: str, filename: str, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.dirpath = dirpath
+        self.filename = filename
+        self.profiler = cProfile.Profile()
+
+    def start(self, action_name: str) -> None:
+        super().start(action_name)
+        self.profiler.enable()
+
+    def stop(self, action_name: str) -> None:
+        self.profiler.disable()
+        super().stop(action_name)
+
+    def summary(self) -> str:
+        os.makedirs(self.dirpath, exist_ok=True)
+        file_path = os.path.join(self.dirpath, self.filename)
+        self.profiler.dump_stats(file_path)
+        return f"Profiler output saved to {file_path}"
 
 
 @hydra.main(
@@ -107,7 +132,7 @@ def main(cfg: DictConfig) -> None:
     if "physical" in wandb.config.cell_dataset["graphs"]:
         graphs["physical"] = graph.G_physical
     if "regulatory" in wandb.config.cell_dataset["graphs"]:
-        graphs["regulatory"]= graph.G_regulatory
+        graphs["regulatory"] = graph.G_regulatory
 
     # Node embedding datasets
     node_embeddings = {}
@@ -321,7 +346,7 @@ def main(cfg: DictConfig) -> None:
             batch_size=wandb.config.data_module["batch_size"],
             num_workers=wandb.config.data_module["num_workers"],
             pin_memory=wandb.config.data_module["pin_memory"],
-            prefetch=False,
+            prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
         )
         data_module.setup()
@@ -352,6 +377,9 @@ def main(cfg: DictConfig) -> None:
                     "num_initial_gat_layers"
                 ],
                 num_diffpool_layers=wandb.config.models["graph"]["num_diffpool_layers"],
+                num_post_pool_gat_layers=wandb.config.models["graph"][
+                    "num_post_pool_gat_layers"
+                ],
                 num_graphs=num_graphs,
                 max_num_nodes=max_num_nodes,
                 gat_dropout_prob=wandb.config.models["graph"]["gat_dropout_prob"],
@@ -361,6 +389,9 @@ def main(cfg: DictConfig) -> None:
                 norm=wandb.config.models["graph"]["norm"],
                 activation=wandb.config.models["graph"]["activation"],
                 gat_skip_connection=wandb.config.models["graph"]["gat_skip_connection"],
+                pruned_max_average_node_degree=wandb.config.models["graph"][
+                    "pruned_max_average_node_degree"
+                ],
             ),
             "top": Mlp(
                 in_channels=wandb.config.models["graph"]["diffpool_out_channels"],
@@ -403,6 +434,10 @@ def main(cfg: DictConfig) -> None:
     else:
         devices = num_devices
 
+    # In your main function:
+    # profiler = CustomAdvancedProfiler(
+    #     dirpath="profiles", filename="advanced_profiler_output.prof"
+    # )
     torch.set_float32_matmul_precision("medium")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
@@ -411,6 +446,8 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
+        # profiler=profiler,  #
+        # log_every_n_steps=2,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

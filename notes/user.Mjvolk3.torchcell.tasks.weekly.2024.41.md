@@ -2,7 +2,7 @@
 id: p5c3e0lblbs5ycsjspvi525
 title: '41'
 desc: ''
-updated: 1728540170688
+updated: 1728554751352
 created: 1728315119855
 ---
 ## 2024.10.07
@@ -28,11 +28,16 @@ created: 1728315119855
 - [x] [[Dataset_index_split|dendron://torchcell/experiments.003-fit-int.dataset_index_split]]
 - [x] Get a `DeepSet` model working first.
 - [x] Message passing with `DiffPool` → working model but needs revision
-- [ ] Create regression task
-- [ ] Write function to get distributions over different dataset sizes... use this to prepare traditional machine learning datasets.
+- [x] Create regression task
+
+## 2024.10.10
 
 - [ ] Add self loops
 - [ ] !!!!!!!!! apply skip gat to all gat layers.
+- [x] [[2024.10.10 - Fixing Install on Rocky Linux 9|dendron://torchcell/python.lib.torch-scatter#20241010---fixing-install-on-rocky-linux-9]]
+- [ ] permanently fix mount with fstab
+
+- [ ] Write function to get distributions over different dataset sizes... use this to prepare traditional machine learning datasets.
 
 ***
 

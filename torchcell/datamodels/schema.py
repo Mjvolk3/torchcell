@@ -553,6 +553,15 @@ class SyntheticRescueExperiment(Experiment, ModelStrict):
     phenotype: SyntheticRescuePhenotype
 
 
+PhenotypeType = Union[
+    Phenotype,
+    FitnessPhenotype,
+    GeneInteractionPhenotype,
+    GeneEssentialityPhenotype,
+    SyntheticLethalityPhenotype,
+    SyntheticRescuePhenotype,
+]
+
 ExperimentType = Union[
     Experiment,
     FitnessExperiment,

@@ -10,22 +10,36 @@ from scipy import stats
 
 
 def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
+    # Convert input to numpy arrays
     if isinstance(true_values, torch.Tensor):
         true_values = true_values.cpu().numpy()
     if isinstance(predictions, torch.Tensor):
         predictions = predictions.cpu().numpy()
 
-    # mask = ~np.isnan(true_values) & ~np.isnan(predictions)
-    mask = ~np.isnan(true_values)
+    # Calculate percentage of NaN predictions
+    nan_percentage = np.isnan(predictions).mean() * 100
+
+    mask = ~np.isnan(true_values) & ~np.isnan(predictions)
     true_values = true_values[mask]
     predictions = predictions[mask]
 
-    # Calculate correlations and R2
-    pearson_corr, _ = stats.pearsonr(true_values, predictions)
-    spearman_corr, _ = stats.spearmanr(true_values, predictions)
-    r_squared = stats.linregress(predictions, true_values).rvalue ** 2
+    # Calculate correlations and R2 with error handling
+    try:
+        pearson_corr, _ = stats.pearsonr(true_values, predictions)
+    except ValueError:
+        pearson_corr = np.nan
 
-    # Define bins for the second image
+    try:
+        spearman_corr, _ = stats.spearmanr(true_values, predictions)
+    except ValueError:
+        spearman_corr = np.nan
+
+    try:
+        r_squared = stats.linregress(predictions, true_values).rvalue ** 2
+    except ValueError:
+        r_squared = np.nan
+
+    # Define bins for the genetic interaction score
     bins = [
         -float("inf"),
         -0.40,
@@ -52,7 +66,6 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
         binned_true_values.append(binned_values)
 
     # Create a box plot using matplotlib
-    # width / height
     aspect_ratio = 1.18
     height = 6
     width = height * aspect_ratio
@@ -62,12 +75,10 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     # Equally spaced box positions
     box_positions = [i + 0.5 for i in range(len(bins) - 1)]
 
-    # Compute tick values with three decimal places
+    # Compute tick values
     xticks = [f"{bin_val:.2f}" for bin_val in bins[:-1]]
-    # Add 'inf' as the first and last tick label
     xticks[0] = "-Inf"
     xticks.append("Inf")
-
     # Tick positions
     tick_positions = [i for i in range(len(bins))]
 
@@ -75,11 +86,11 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     for pos in tick_positions:
         ax.axvline(x=pos, color="#838383", linewidth=0.8, zorder=0)
 
-    # Set spines
+    # set the spine - outside box
     for spine in ax.spines.values():
         spine.set_linewidth(1.4)
 
-    # Boxplots
+    # Create the box plot
     boxplots = ax.boxplot(
         binned_true_values,
         patch_artist=True,
@@ -91,7 +102,7 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
         zorder=1,
     )
 
-    # Apply coloring
+    # Apply coloring to the boxes, whiskers, and medians
     for patch in boxplots["boxes"]:
         patch.set_facecolor("#F6A9A3")
         patch.set_edgecolor("#D86B2B")
@@ -110,18 +121,12 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Add a black horizontal line at y=0
     ax.axhline(y=0, color="black", linewidth=1.4, zorder=2)
-    # Add a vertical black line at x=0
-    x_position_for_zero_bin = bins.index(0.00)
-    ax.axvline(x=x_position_for_zero_bin, color="black", linewidth=1.4, zorder=2)
+    # Add a vertical black line at x=6 (0.00 on the tick label)
+    ax.axvline(x=6, color="black", linewidth=1.4, zorder=2)
+
     # Set tick labels
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(xticks, ha="center", rotation=45, fontsize=16.0)
-    # After setting your x-ticks
-    labels = [item.get_text() for item in ax.get_xticklabels()]
-    formatted_labels = [
-        label.replace("-", "–") if "-" in label else label for label in labels
-    ]
-    ax.set_xticklabels(formatted_labels)
+    ax.set_xticklabels(xticks, ha="center", rotation=45)
 
     # Adjust x and y label positions
     ax.set_xlabel(
@@ -133,7 +138,6 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
 
     # Set y-axis limits and ticks
     y_ticks = [-0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4]
-    # Leave half space above max and below min
     y_min, y_max = (min(y_ticks) - 0.05, max(y_ticks) + 0.05)
     ax.set_ylim(y_min, y_max)
     ax.set_yticks(y_ticks)
@@ -148,9 +152,14 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
     for label in ax.get_yticklabels():
         label.set_fontname(font_name)
 
-    # Add title with correlation information
-    title = f"Pearson: {pearson_corr:.3f}, Spearman: {spearman_corr:.3f}, R²: {r_squared:.3f}"
-    ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
+    # Update the title to include NaN percentage in scientific notation and handle NaN values correctly
+    title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+        f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
+        f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
+        f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
+        nan_percentage,
+    )
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
 
     plt.tight_layout()
 
@@ -184,6 +193,53 @@ def generate_simulated_data(n_samples=10000):
 
     return torch.tensor(true_values), torch.tensor(predictions)
 
+def generate_simulated_data_with_nan(n_samples=10000):
+    # Generate true genetic interaction scores
+    true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
+    true_values = np.clip(true_values, -0.8, 0.8)  # Clip values to a reasonable range
+
+    # Generate predictions with some noise and bias
+    predictions = true_values + np.random.normal(loc=0, scale=0.1, size=n_samples)
+    predictions = np.clip(predictions, -0.8, 0.8)
+
+    # Add some extreme interactions (both positive and negative)
+    extreme_samples = np.random.uniform(low=-0.8, high=0.8, size=n_samples // 50)
+    extreme_predictions = extreme_samples + np.random.normal(loc=0, scale=0.05, size=n_samples // 50)
+
+    true_values = np.concatenate([true_values, extreme_samples])
+    predictions = np.concatenate([predictions, extreme_predictions])
+
+    # Add some NaN values (about 5% of the data)
+    nan_mask = np.random.choice([True, False], size=true_values.shape, p=[0.05, 0.95])
+    true_values[nan_mask] = np.nan
+    predictions[nan_mask] = np.nan
+
+    # Add some infinite values (about 1% of the data)
+    inf_mask = np.random.choice([True, False], size=true_values.shape, p=[0.01, 0.99])
+    true_values[inf_mask] = np.inf * np.sign(true_values[inf_mask])
+    predictions[inf_mask] = np.inf * np.sign(predictions[inf_mask])
+
+    # Add a bin with all identical values to potentially break correlation calculations
+    identical_values = np.full(n_samples // 100, 0.1)
+    true_values = np.concatenate([true_values, identical_values])
+    predictions = np.concatenate([predictions, identical_values])
+
+    # Add a bin with only two distinct values to potentially break certain statistical calculations
+    two_value_bin = np.random.choice([0.2, 0.3], size=n_samples // 100)
+    true_values = np.concatenate([true_values, two_value_bin])
+    predictions = np.concatenate([predictions, two_value_bin])
+
+    # Shuffle the arrays to mix up the special cases
+    shuffle_idx = np.random.permutation(len(true_values))
+    true_values = true_values[shuffle_idx]
+    predictions = predictions[shuffle_idx]
+
+    return torch.tensor(true_values), torch.tensor(predictions)
+
+# def main():
+#     true_values, predictions = generate_simulated_data_with_nan()
+#     fig = box_plot(true_values, predictions)
+#     plt.show()
 
 def main():
     true_values, predictions = generate_simulated_data()

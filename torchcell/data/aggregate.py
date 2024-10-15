@@ -40,6 +40,7 @@ class Aggregator(ABC):
     ) -> list[dict[str, ExperimentType | ExperimentReferenceType]]:
         return [exp for exp_list in experiments_to_aggregate for exp in exp_list]
 
+    # TODO now that phenotype info is moved to [[torchcell.data.neo4j_cell]] we can probably remove this
     @property
     def phenotype_info(self) -> list[Type[Phenotype]]:
         if self._phenotype_info is None:

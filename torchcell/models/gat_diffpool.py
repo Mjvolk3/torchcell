@@ -1,3 +1,8 @@
+# torchcell/models/gat_diffpool
+# [[torchcell.models.gat_diffpool]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
+# Test file: tests/torchcell/models/test_gat_diffpool.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

@@ -38,6 +38,7 @@ log = logging.getLogger(__name__)
 # class DatasetIndex(ModelStrict):
 #     index: dict[str|int, list[int]]
 
+
 class ParsedGenome(ModelStrictArbitrary):
     gene_set: GeneSet
 
@@ -313,6 +314,7 @@ class Neo4jCellDataset(Dataset):
         # HACK to get around sql db issue
         self.genome = parse_genome(genome)
 
+        # BUG do we need to load raw here.. multi process access issue on raw during sweep training
         self.raw_db = self.load_raw(uri, username, password, root, query, self.genome)
 
         print()
@@ -325,7 +327,7 @@ class Neo4jCellDataset(Dataset):
 
         self.processing_steps = self._determine_processing_steps()
 
-        base_graph = self.get_init_graphs(self.raw_db, self.genome)
+        base_graph = self.get_init_graphs(self.genome)
         self.gene_set = GeneSet(base_graph.nodes())
 
         super().__init__(root, transform, pre_transform, pre_filter)
@@ -384,13 +386,18 @@ class Neo4jCellDataset(Dataset):
         else:
             return os.path.join(self.root, step.name.lower(), "lmdb")
 
-    def get_init_graphs(self, raw_db, genome):
-        # Setting priority
-        if genome is None:
-            cell_graph = create_graph_from_gene_set(raw_db.gene_set)
-        elif genome:
-            cell_graph = create_graph_from_gene_set(genome.gene_set)
+    def get_init_graphs(self, genome):
+        # BUG we are using this version to try and remove dependency on raw_db
+        cell_graph = create_graph_from_gene_set(genome.gene_set)
         return cell_graph
+    
+    # def get_init_graphs(self, raw_db, genome):
+    #     # Setting priority
+    #     if genome is None:
+    #         cell_graph = create_graph_from_gene_set(raw_db.gene_set)
+    #     elif genome:
+    #         cell_graph = create_graph_from_gene_set(genome.gene_set)
+    #     return cell_graph
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -483,12 +490,11 @@ class Neo4jCellDataset(Dataset):
         self._gene_set = value
 
     def get(self, idx):
-        """Initialize LMDB if it hasn't been initialized yet."""
         if self.env is None:
             self._init_lmdb_read()
 
         with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode())
+            serialized_data = txn.get(f"{idx}".encode("utf-8"))
             if serialized_data is None:
                 return None
             data_list = json.loads(serialized_data.decode("utf-8"))
@@ -547,9 +553,10 @@ class Neo4jCellDataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            for idx, (key, value) in enumerate(cursor):
+            for key, value in cursor:
                 try:
-                    data_list = json.loads(value.decode("utf-8"))
+                    idx = int(key.decode())
+                    data_list = json.loads(value.decode())
                     for data in data_list:
                         experiment_class = EXPERIMENT_TYPE_MAP[
                             data["experiment"]["experiment_type"]
@@ -561,17 +568,21 @@ class Neo4jCellDataset(Dataset):
                             phenotype_label_index[label_name] = set()
                         phenotype_label_index[label_name].add(idx)
                 except json.JSONDecodeError:
-                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                    print(f"Error decoding JSON for entry {key}. Skipping this entry.")
+                except ValueError:
+                    print(
+                        f"Error converting key to integer: {key}. Skipping this entry."
+                    )
                 except Exception as e:
                     print(
-                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                        f"Error processing entry {key}: {str(e)}. Skipping this entry."
                     )
 
         self.close_lmdb()
 
         # Convert sets to sorted lists
-        for key in phenotype_label_index:
-            phenotype_label_index[key] = sorted(list(phenotype_label_index[key]))
+        for label in phenotype_label_index:
+            phenotype_label_index[label] = sorted(list(phenotype_label_index[label]))
 
         return phenotype_label_index
 
@@ -598,9 +609,10 @@ class Neo4jCellDataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            for idx, (key, value) in enumerate(cursor):
+            for key, value in cursor:
                 try:
-                    data_list = json.loads(value.decode("utf-8"))
+                    idx = int(key.decode())
+                    data_list = json.loads(value.decode())
                     for data in data_list:
                         experiment_class = EXPERIMENT_TYPE_MAP[
                             data["experiment"]["experiment_type"]
@@ -612,17 +624,21 @@ class Neo4jCellDataset(Dataset):
                             dataset_name_index[dataset_name] = set()
                         dataset_name_index[dataset_name].add(idx)
                 except json.JSONDecodeError:
-                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                    print(f"Error decoding JSON for entry {key}. Skipping this entry.")
+                except ValueError:
+                    print(
+                        f"Error converting key to integer: {key}. Skipping this entry."
+                    )
                 except Exception as e:
                     print(
-                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                        f"Error processing entry {key}: {str(e)}. Skipping this entry."
                     )
 
         self.close_lmdb()
 
         # Convert sets to sorted lists
-        for key in dataset_name_index:
-            dataset_name_index[key] = sorted(list(dataset_name_index[key]))
+        for name in dataset_name_index:
+            dataset_name_index[name] = sorted(list(dataset_name_index[name]))
 
         return dataset_name_index
 
@@ -649,9 +665,10 @@ class Neo4jCellDataset(Dataset):
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
-            for idx, (key, value) in enumerate(cursor):
+            for key, value in cursor:
                 try:
-                    data_list = json.loads(value.decode("utf-8"))
+                    idx = int(key.decode())
+                    data_list = json.loads(value.decode())
                     for data in data_list:
                         experiment_class = EXPERIMENT_TYPE_MAP[
                             data["experiment"]["experiment_type"]
@@ -663,17 +680,23 @@ class Neo4jCellDataset(Dataset):
                             perturbation_count_index[perturbation_count] = set()
                         perturbation_count_index[perturbation_count].add(idx)
                 except json.JSONDecodeError:
-                    print(f"Error decoding JSON for entry {idx}. Skipping this entry.")
+                    print(f"Error decoding JSON for entry {key}. Skipping this entry.")
+                except ValueError:
+                    print(
+                        f"Error converting key to integer: {key}. Skipping this entry."
+                    )
                 except Exception as e:
                     print(
-                        f"Error processing entry {idx}: {str(e)}. Skipping this entry."
+                        f"Error processing entry {key}: {str(e)}. Skipping this entry."
                     )
 
         self.close_lmdb()
 
         # Convert sets to sorted lists
-        for key in perturbation_count_index:
-            perturbation_count_index[key] = sorted(list(perturbation_count_index[key]))
+        for count in perturbation_count_index:
+            perturbation_count_index[count] = sorted(
+                list(perturbation_count_index[count])
+            )
 
         return perturbation_count_index
 
@@ -763,10 +786,12 @@ def main():
     print(len(dataset))
     # Data module testing
 
-    print(dataset[2])
+    # print(dataset[7])
+    print(dataset[183])
     dataset.close_lmdb()
     # print(dataset[10000])
 
+    
     # Assuming you have already created your dataset and CellDataModule
     cell_data_module = CellDataModule(
         dataset=dataset,
@@ -782,26 +807,37 @@ def main():
     for batch in tqdm(cell_data_module.train_dataloader()):
         break
 
-    # Now, instantiate the updated PerturbationSubsetDataModule
-    size = 1e4
-    seed = 42
-    perturbation_subset_data_module = PerturbationSubsetDataModule(
-        cell_data_module=cell_data_module,
-        size=int(size),
-        batch_size=2,
-        num_workers=4,
-        pin_memory=True,
-        prefetch=False,
-        seed=seed,
-    )
+    # for i in tqdm(
+    #     range(len(cell_data_module.index_details.train.perturbation_count_index[1].indices))
+    # ):
+    #     single_pert_index = (
+    #         cell_data_module.index_details.train.perturbation_count_index[1].indices[i]
+    #     )
+    #     if len(dataset[single_pert_index]["gene"].ids_pert) != 1:
+    #         train_not_single_pert.append(single_pert_index)
 
-    # Set up the data module
-    perturbation_subset_data_module.setup()
+    # print("len train_not_single_pert", len(train_not_single_pert))
 
-    # Use the data loaders
-    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
-        # Your training code here
-        break
+    # # Now, instantiate the updated PerturbationSubsetDataModule
+    # size = 1e4
+    # seed = 42
+    # perturbation_subset_data_module = PerturbationSubsetDataModule(
+    #     cell_data_module=cell_data_module,
+    #     size=int(size),
+    #     batch_size=2,
+    #     num_workers=4,
+    #     pin_memory=True,
+    #     prefetch=False,
+    #     seed=seed,
+    # )
+
+    # # Set up the data module
+    # perturbation_subset_data_module.setup()
+
+    # # Use the data loaders
+    # for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+    #     # Your training code here
+    #     break
 
 
 if __name__ == "__main__":

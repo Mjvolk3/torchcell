@@ -1,0 +1,36 @@
+program: experiments/003-fit-int/scripts/traditional_ml_dataset.py
+project: torchcell_003-fit-int-traditional_ml_dataset
+method: grid
+
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [null] #[[physical, regulatory]]
+      node_embeddings:
+        values: [[random_1]]
+      is_pert:
+        values: [true] # [true, false]
+      aggregation:
+        values: [mean] # [mean, sum]
+  data_module:
+    parameters:
+      batch_size:
+        values: [32]
+      num_workers:
+        values: [10]
+      pin_memory:
+        values: [false]
+      prefetch:
+        values: [true]
+      is_perturbation_subset:
+        values: [true]
+      perturbation_subset_size:
+        values: [1e4, 5e4, 1e5] # [1e4, 5e4, 1e5, 5e5, 1e6]
+  device:
+    values: [cpu]
+
+command:
+  - ${env}
+  - python
+  - ${program}

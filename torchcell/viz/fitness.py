@@ -16,15 +16,28 @@ def box_plot(true_values, predictions) -> plt.Figure:
     if isinstance(predictions, torch.Tensor):
         predictions = predictions.cpu().numpy()
 
-    # mask = ~np.isnan(true_values) & ~np.isnan(predictions)
-    mask = ~np.isnan(true_values)
+    # Calculate percentage of NaN predictions
+    nan_percentage = np.isnan(predictions).mean() * 100
+
+    mask = ~np.isnan(true_values) & ~np.isnan(predictions)
     true_values = true_values[mask]
     predictions = predictions[mask]
 
-    # Calculate correlations and R2
-    pearson_corr, _ = stats.pearsonr(true_values, predictions)
-    spearman_corr, _ = stats.spearmanr(true_values, predictions)
-    r_squared = stats.linregress(predictions, true_values).rvalue ** 2
+    # Calculate correlations and R2 with error handling
+    try:
+        pearson_corr, _ = stats.pearsonr(true_values, predictions)
+    except ValueError:
+        pearson_corr = np.nan
+
+    try:
+        spearman_corr, _ = stats.spearmanr(true_values, predictions)
+    except ValueError:
+        spearman_corr = np.nan
+
+    try:
+        r_squared = stats.linregress(predictions, true_values).rvalue ** 2
+    except ValueError:
+        r_squared = np.nan
 
     # Define bins
     bins = [0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, float("inf")]
@@ -140,9 +153,14 @@ def box_plot(true_values, predictions) -> plt.Figure:
     for label in ax.get_yticklabels():
         label.set_fontname(font_name)
 
-    # Add title with correlation information
-    title = f"Pearson: {pearson_corr:.3f}, Spearman: {spearman_corr:.3f}, R²: {r_squared:.3f}"
-    ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
+    # Update the title to include NaN percentage in scientific notation and handle NaN values correctly
+    title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+        f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
+        f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
+        f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
+        nan_percentage,
+    )
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
 
     plt.tight_layout()
 
@@ -173,8 +191,53 @@ def generate_simulated_data(n_samples=10000):
     return torch.tensor(true_values), torch.tensor(predictions)
 
 
+def generate_simulated_data_with_nan(n_samples=10000):
+    # Generate true values
+    true_values = np.random.normal(loc=0.8, scale=0.2, size=n_samples)
+    true_values = np.clip(true_values, 0, 1.2)  # Clip values between 0 and 1.2
+
+    # Generate predictions with some noise and bias
+    predictions = true_values + np.random.normal(loc=0, scale=0.1, size=n_samples)
+    predictions = np.clip(predictions, 0, 1.2)  # Clip values between 0 and 1.2
+
+    # Add some outliers and wild type (WT) samples
+    wt_samples = np.random.normal(loc=1, scale=0.05, size=n_samples // 20)
+    wt_samples = np.clip(wt_samples, 0.9, 1.1)
+
+    true_values = np.concatenate([true_values, wt_samples])
+    predictions = np.concatenate(
+        [
+            predictions,
+            wt_samples + np.random.normal(loc=0, scale=0.02, size=n_samples // 20),
+        ]
+    )
+
+    # Add a bin with identical values
+    identical_values = np.full(n_samples // 50, 0.5)
+    true_values = np.concatenate([true_values, identical_values])
+    predictions = np.concatenate([predictions, identical_values])
+
+    # Add some NaN values
+    nan_mask = np.random.choice([True, False], size=true_values.shape, p=[0.01, 0.99])
+    true_values[nan_mask] = np.nan
+    predictions[nan_mask] = np.nan
+
+    # Add some infinite values
+    inf_mask = np.random.choice([True, False], size=true_values.shape, p=[0.005, 0.995])
+    true_values[inf_mask] = np.inf
+    predictions[inf_mask] = np.inf
+
+    return torch.tensor(true_values), torch.tensor(predictions)
+
+
+# def main():
+#     true_values, predictions = generate_simulated_data()
+#     fig = box_plot(true_values, predictions)
+#     plt.show()
+
+
 def main():
-    true_values, predictions = generate_simulated_data()
+    true_values, predictions = generate_simulated_data_with_nan()
     fig = box_plot(true_values, predictions)
     plt.show()
 

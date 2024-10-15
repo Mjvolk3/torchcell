@@ -1,0 +1,24 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  mode: online
+  project: torchcell_003-fit-int-traditional_ml_dataset
+  tags: []
+
+cell_dataset:
+  graphs: null #[physical, regulatory]
+  node_embeddings: [random_1]
+  is_pert: false
+  aggregation: mean
+
+data_module:
+  batch_size: 32
+  num_workers: 10
+  pin_memory: false
+  prefetch: true
+  is_perturbation_subset: true
+  perturbation_subset_size: 1e4
+
+device: cpu

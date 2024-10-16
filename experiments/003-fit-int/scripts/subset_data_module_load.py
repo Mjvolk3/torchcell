@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.datamodules import CellDataModule
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
-from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
 from torchcell.data import MeanExperimentDeduplicator
 from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
@@ -14,6 +13,7 @@ from torchcell.data import Neo4jCellDataset
 from torchcell.data.neo4j_cell import PhenotypeProcessor
 from tqdm import tqdm
 from torchcell.utils import format_scientific_notation
+from torchcell.datasets import CodonFrequencyDataset
 
 
 def main():
@@ -26,16 +26,10 @@ def main():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-
-    fudt_3prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fudt_embedding",
+    
+    codon_frequency = CodonFrequencyDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
         genome=genome,
-        model_name="species_downstream",
-    )
-    fudt_5prime_dataset = FungalUpDownTransformerDataset(
-        root="data/scerevisiae/fudt_embedding",
-        genome=genome,
-        model_name="species_downstream",
     )
 
     with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
@@ -49,8 +43,7 @@ def main():
         gene_set=genome.gene_set,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         node_embeddings={
-            "fudt_3prime": fudt_3prime_dataset,
-            "fudt_5prime": fudt_5prime_dataset,
+            "codon_frequency": codon_frequency,
         },
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,

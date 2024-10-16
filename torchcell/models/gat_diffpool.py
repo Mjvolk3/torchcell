@@ -1,3 +1,8 @@
+# torchcell/models/gat_diffpool
+# [[torchcell.models.gat_diffpool]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
+# Test file: tests/torchcell/models/test_gat_diffpool.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -419,17 +424,17 @@ def main():
     # Model configuration
     model = GatDiffPool(
         in_channels=x.size(1),
-        initial_gat_hidden_channels=64,
+        initial_gat_hidden_channels=32,
         initial_gat_out_channels=32,
         diffpool_hidden_channels=32,
-        diffpool_out_channels=16,
+        diffpool_out_channels=32,
         num_initial_gat_layers=3,
-        num_diffpool_layers=6,
-        num_post_pool_gat_layers=2,
+        num_diffpool_layers=4,
+        num_post_pool_gat_layers=1,
         num_graphs=2,
         max_num_nodes=max_num_nodes,
         gat_dropout_prob=0.0,
-        last_layer_dropout_prob=0.5,
+        last_layer_dropout_prob=0.2,
         norm="batch",
         activation="relu",
         gat_skip_connection=True,

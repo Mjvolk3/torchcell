@@ -21,7 +21,7 @@ from torchmetrics import (
     SpearmanCorrCoef,
 )
 from tqdm import tqdm
-
+from torch_geometric.utils import add_self_loops
 import wandb
 from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
@@ -209,8 +209,8 @@ class RegressionTask(L.LightningModule):
     def training_step(self, batch, batch_idx):
         x = batch["gene"].x
         edge_indices = [
-            batch["gene", "physical_interaction", "gene"].edge_index,
-            batch["gene", "regulatory_interaction", "gene"].edge_index,
+            add_self_loops(batch["gene", "physical_interaction", "gene"].edge_index),
+            add_self_loops(batch["gene", "regulatory_interaction", "gene"].edge_index),
         ]
         batch_vector = batch["gene"].batch
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
@@ -284,8 +284,8 @@ class RegressionTask(L.LightningModule):
     def validation_step(self, batch, batch_idx):
         x = batch["gene"].x
         edge_indices = [
-            batch["gene", "physical_interaction", "gene"].edge_index,
-            batch["gene", "regulatory_interaction", "gene"].edge_index,
+            add_self_loops(batch["gene", "physical_interaction", "gene"].edge_index),
+            add_self_loops(batch["gene", "regulatory_interaction", "gene"].edge_index),
         ]
         batch_vector = batch["gene"].batch
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
@@ -432,8 +432,8 @@ class RegressionTask(L.LightningModule):
     def test_step(self, batch, batch_idx):
         x = batch["gene"].x
         edge_indices = [
-            batch["gene", "physical_interaction", "gene"].edge_index,
-            batch["gene", "regulatory_interaction", "gene"].edge_index,
+            add_self_loops(batch["gene", "physical_interaction", "gene"].edge_index),
+            add_self_loops(batch["gene", "regulatory_interaction", "gene"].edge_index),
         ]
         batch_vector = batch["gene"].batch
         y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)

@@ -46,7 +46,7 @@ def main():
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
-        genome=genome,
+        gene_set=genome.gene_set,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         node_embeddings={
             "fudt_3prime": fudt_3prime_dataset,
@@ -86,9 +86,10 @@ def main():
 
     for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
         break
-    
+
     print(dataset[0])
     print(batch)
+
 
 if __name__ == "__main__":
     main()

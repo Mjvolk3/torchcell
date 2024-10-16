@@ -442,7 +442,7 @@ def main(cfg: DictConfig) -> None:
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
-        devices=1, # FLAG
+        devices=devices,  # FLAG
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

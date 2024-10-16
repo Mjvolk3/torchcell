@@ -15,6 +15,7 @@ from pydantic import field_validator
 from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
+from torch_geometric.utils import add_self_loops
 from torch_geometric.data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datamodels import Converter
@@ -74,7 +75,9 @@ def create_embedding_graph(
 
 
 # @profile
-def to_cell_data(graphs: dict[str, nx.Graph]) -> HeteroData:
+def to_cell_data(
+    graphs: dict[str, nx.Graph], is_add_self_loops: bool = True
+) -> HeteroData:
     hetero_data = HeteroData()
 
     # Get the node identifiers from the "base" graph
@@ -106,6 +109,10 @@ def to_cell_data(graphs: dict[str, nx.Graph]) -> HeteroData:
 
             # Determine edge type based on graph_type and assign edge indices
             edge_type = ("gene", f"{graph_type}_interaction", "gene")
+            # Add self-loops if required
+            if is_add_self_loops:
+                edge_index, _ = add_self_loops(edge_index)
+
             hetero_data[edge_type].edge_index = edge_index
             hetero_data[edge_type].num_edges = edge_index.size(1)
         else:

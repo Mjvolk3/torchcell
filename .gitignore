@@ -42,7 +42,7 @@ slurm/output
 slurm/error
 experiments/smf-dmf-tmf-001/slurm/*
 experiments/002-dmi-tmi/slurm/*
-
+experiments/003-fit-int/slurm/*
 
 # docx
 CHBE-symposium.docx

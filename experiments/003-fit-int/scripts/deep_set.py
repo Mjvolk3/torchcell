@@ -289,7 +289,7 @@ def main(cfg: DictConfig) -> None:
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
-        genome=genome,
+        gene_set=genome.gene_set,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,

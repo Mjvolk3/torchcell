@@ -39,7 +39,7 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
 SWEEP_ID=ug52ua9d
-PROJECT_NAME=torchcell_003-fit-int_gat_diffpool_5e04
+PROJECT_NAME=torchcell_003-fit-int_gat_diffpool_5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

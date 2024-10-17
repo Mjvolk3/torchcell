@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=001-GD_1e05-codon_frequency
+#SBATCH --job-name=001-GD_1e5-codon_frequency
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=243G
@@ -36,7 +36,7 @@ lscpu
 cat /proc/meminfo
 nvidia-smi
 
-python experiments/003-fit-int/scripts/gat_diffpool.py +config_name=001-gat_diffpool-1e05-codon_frequency
+python experiments/003-fit-int/scripts/gat_diffpool.py +config_name=001-gat_diffpool-1e5-codon_frequency
 
 
 

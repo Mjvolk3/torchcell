@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=GD_1e05
+#SBATCH --job-name=GD_1e5
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=243G
@@ -40,7 +40,7 @@ wandb artifact cache cleanup 1GB
 
 # This one is offline
 SWEEP_ID=l0laxo2c
-PROJECT_NAME=torchcell_003-fit-int_gat_diffpool_1e05
+PROJECT_NAME=torchcell_003-fit-int_gat_diffpool_1e5
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

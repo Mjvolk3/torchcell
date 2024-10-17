@@ -583,6 +583,8 @@ class Neo4jCellDataset(Dataset):
             lock=False,
             readahead=False,
             meminit=False,
+            max_readers=256,
+            max_spare_txns=16
         )
 
     def len(self) -> int:

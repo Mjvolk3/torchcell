@@ -43,7 +43,7 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [8] # 16 OOM, could probably do 12 (will be at edge)
+        values: [12] # 16 OOM, could probably do 12 (will be at edge)
       num_workers:
         values: [12]
       pin_memory:

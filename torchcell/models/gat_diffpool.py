@@ -26,14 +26,18 @@ class GatDiffPool(nn.Module):
         num_post_pool_gat_layers: int,
         num_graphs: int,
         max_num_nodes: int,
+        cluster_size_decay_factor: float = 2.0,
         gat_dropout_prob: float = 0.0,
         last_layer_dropout_prob: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
         gat_skip_connection: bool = True,
         pruned_max_average_node_degree: Optional[int] = None,  # New parameter
+        weight_init: str = "default",
     ):
         super().__init__()
+        self.weight_init = weight_init
+        self.cluster_size_decay_factor = cluster_size_decay_factor
 
         assert norm in ["batch", "instance", "layer"], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
@@ -86,11 +90,11 @@ class GatDiffPool(nn.Module):
         )
 
         # Calculate cluster sizes
-        cluster_sizes = [
-            max(1, int(max_num_nodes / (2**i)))
-            for i in range(1, num_diffpool_layers + 1)
-        ]
-        cluster_sizes[-1] = 1  # Ensure the last cluster size is 1
+        cluster_sizes = []
+        for i in range(1, num_diffpool_layers+1):
+            size = max(1, int(max_num_nodes / (self.cluster_size_decay_factor ** i)))
+            cluster_sizes.append(size)
+        cluster_sizes[-1] = 1  # Ensure the last cluster size is always 1
         print(f"Cluster sizes: {cluster_sizes}")
 
         # DiffPool layers
@@ -161,6 +165,64 @@ class GatDiffPool(nn.Module):
         self.final_linear = nn.Linear(
             num_graphs * diffpool_hidden_channels, diffpool_out_channels
         )
+        # initialize weights
+        self.init_weights()
+
+    def init_weights(self):
+        def init_func(module):
+            if isinstance(module, nn.Linear):
+                if self.weight_init == "xavier_uniform":
+                    nn.init.xavier_uniform_(module.weight)
+                elif self.weight_init == "xavier_normal":
+                    nn.init.xavier_normal_(module.weight)
+                elif self.weight_init == "kaiming_uniform":
+                    nn.init.kaiming_uniform_(module.weight, nonlinearity="relu")
+                elif self.weight_init == "kaiming_normal":
+                    nn.init.kaiming_normal_(module.weight, nonlinearity="relu")
+                elif self.weight_init != "default":
+                    raise ValueError(
+                        f"Unsupported initialization method: {self.weight_init}"
+                    )
+
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+
+            elif isinstance(module, GATv2Conv):
+                if self.weight_init != "default":
+                    if hasattr(module, "lin_l"):
+                        if self.weight_init == "xavier_uniform":
+                            nn.init.xavier_uniform_(module.lin_l.weight)
+                            nn.init.xavier_uniform_(module.lin_r.weight)
+                        elif self.weight_init == "xavier_normal":
+                            nn.init.xavier_normal_(module.lin_l.weight)
+                            nn.init.xavier_normal_(module.lin_r.weight)
+                        elif self.weight_init == "kaiming_uniform":
+                            nn.init.kaiming_uniform_(
+                                module.lin_l.weight, nonlinearity="relu"
+                            )
+                            nn.init.kaiming_uniform_(
+                                module.lin_r.weight, nonlinearity="relu"
+                            )
+                        elif self.weight_init == "kaiming_normal":
+                            nn.init.kaiming_normal_(
+                                module.lin_l.weight, nonlinearity="relu"
+                            )
+                            nn.init.kaiming_normal_(
+                                module.lin_r.weight, nonlinearity="relu"
+                            )
+                    if hasattr(module, "att"):
+                        nn.init.xavier_uniform_(module.att)
+                    if module.bias is not None:
+                        nn.init.zeros_(module.bias)
+
+            elif isinstance(module, (nn.BatchNorm1d, nn.InstanceNorm1d, nn.LayerNorm)):
+                if module.weight is not None:
+                    nn.init.ones_(module.weight)
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+
+        if self.weight_init != "default":
+            self.apply(init_func)
 
     def get_norm_layer(self, norm, channels):
         if norm == "batch":
@@ -424,21 +486,23 @@ def main():
     # Model configuration
     model = GatDiffPool(
         in_channels=x.size(1),
-        initial_gat_hidden_channels=32,
-        initial_gat_out_channels=32,
-        diffpool_hidden_channels=32,
-        diffpool_out_channels=32,
-        num_initial_gat_layers=3,
-        num_diffpool_layers=4,
+        initial_gat_hidden_channels=4,
+        initial_gat_out_channels=4,
+        diffpool_hidden_channels=4,
+        diffpool_out_channels=4,
+        num_initial_gat_layers=1,
+        num_diffpool_layers=3,
         num_post_pool_gat_layers=1,
         num_graphs=2,
         max_num_nodes=max_num_nodes,
         gat_dropout_prob=0.0,
         last_layer_dropout_prob=0.2,
-        norm="batch",
+        cluster_size_decay_factor=10.0,
+        norm="layer",
         activation="relu",
         gat_skip_connection=True,
         pruned_max_average_node_degree=3,
+        weight_init="xavier_uniform",
     )
 
     # Print model size

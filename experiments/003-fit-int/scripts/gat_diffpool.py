@@ -377,6 +377,9 @@ def main(cfg: DictConfig) -> None:
                     "num_initial_gat_layers"
                 ],
                 num_diffpool_layers=wandb.config.models["graph"]["num_diffpool_layers"],
+                cluster_size_decay_factor=wandb.config.models["graph"][
+                    "cluster_size_decay_factor"
+                ],
                 num_post_pool_gat_layers=wandb.config.models["graph"][
                     "num_post_pool_gat_layers"
                 ],
@@ -392,6 +395,7 @@ def main(cfg: DictConfig) -> None:
                 pruned_max_average_node_degree=wandb.config.models["graph"][
                     "pruned_max_average_node_degree"
                 ],
+                weight_init=wandb.config.models["graph"]["weight_init"],
             ),
             "top": Mlp(
                 in_channels=wandb.config.models["graph"]["diffpool_out_channels"],

@@ -32,15 +32,17 @@ models:
     initial_gat_out_channels: 32
     gat_dropout_prob: 0.0
     gat_skip_connection: true
-    num_diffpool_layers: 4
+    num_diffpool_layers: 2
+    cluster_size_decay_factor: 10.0
     num_post_pool_gat_layers: 1
     diffpool_hidden_channels: 32
     diffpool_out_channels: 16
     last_layer_dropout_prob: 0.2
-    norm: batch
+    norm: layer
     activation: relu
     pruned_max_average_node_degree: 3
-  
+    weight_init: xavier_uniform
+
   pred_head:
     hidden_channels: 0
     out_channels: 2

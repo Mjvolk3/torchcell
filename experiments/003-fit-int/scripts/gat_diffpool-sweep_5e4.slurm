@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=GD_5e04
+#SBATCH --job-name=GD_5e4
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
 #SBATCH --constraint="scratch"
 ### GPU options ###

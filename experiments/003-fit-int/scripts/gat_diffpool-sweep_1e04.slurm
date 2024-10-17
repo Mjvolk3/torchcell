@@ -37,9 +37,7 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
-# 2>&1 stderr to stdout, extract sweep id.
-#SWEEP_FILE=conf/sweep_test.yaml
-SWEEP_FILE=experiments/003-fit-int/conf/gat_diffpool-sweep_1e04.yaml
+
 SWEEP_ID=o2jf0ogo
 PROJECT_NAME=torchcell_003-fit-int_gat_diffpool_1e04
 

@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/gat_diffpool.py
-project: torchcell_003-fit-int_gat_diffpool_5e04
+project: torchcell_003-fit-int_gat_diffpool_1e5
 method: grid
 
 # method: bayes
@@ -41,7 +41,7 @@ parameters:
       is_perturbation_subset:
         values: [true]
       perturbation_subset_size:
-        values: [5e4]
+        values: [1e5]
       batch_size:
         values: [12] # 16 OOM, could probably do 12 (will be at edge)
       num_workers:
@@ -133,4 +133,3 @@ command:
   - ${env}
   - python
   - ${program}
-s

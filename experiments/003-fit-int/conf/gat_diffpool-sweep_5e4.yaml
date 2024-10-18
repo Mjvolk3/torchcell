@@ -65,31 +65,31 @@ parameters:
       graph:
         parameters:
           num_initial_gat_layers:
-            values: [3]
+            values: [2]
           initial_gat_hidden_channels:
-            values: [4]
+            values: [8]
           initial_gat_out_channels:
-            values: [4]
+            values: [8]
           gat_dropout_prob:
             values: [0.0]
           gat_skip_connection:
             values: [true]
           num_diffpool_layers:
-            values: [2, 3]
+            values: [3, 4]
           cluster_size_decay_factor:
             values: [10.0]
           num_post_pool_gat_layers:
             values: [1]
           diffpool_hidden_channels:
-            values: [4]
+            values: [8]
           diffpool_out_channels:
-            values: [4]
+            values: [8]
           last_layer_dropout_prob:
-            values: [0.2]
+            values: [0.0]
           norm:
-            values: [layer]
+            values: [instance]
           activation:
-            values: [relu]
+            values: [gelu]
           pruned_max_average_node_degree:
             values: [3]
           weight_init:
@@ -117,13 +117,13 @@ parameters:
       boxplot_every_n_epochs:
         values: [1]
       learning_rate:
-        values: [1e-5, 1e-4]
+        values: [1e-6] #[1e-5, 1e-4]
       weight_decay:
-        values: [1e-4, 1e-3]
+        values: [1e-2] #[1e-4, 1e-3]
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [10]
+        values: [0.5]
       link_pred_loss_weight:
         values: [0.01, 0.1]
       entropy_loss_weight:

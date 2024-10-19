@@ -15,8 +15,8 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1e3 #7e3
-  batch_size: 4
-  num_workers: 6
+  batch_size: 2
+  num_workers: 2
   pin_memory: true
   prefetch: true
 
@@ -28,18 +28,18 @@ trainer:
 models:
   graph:
     num_initial_gat_layers: 2
-    initial_gat_hidden_channels: 32
-    initial_gat_out_channels: 32
+    initial_gat_hidden_channels: 8
+    initial_gat_out_channels: 8
     gat_dropout_prob: 0.0
     gat_skip_connection: true
-    num_diffpool_layers: 2
+    num_diffpool_layers: 3
     cluster_size_decay_factor: 10.0
     num_post_pool_gat_layers: 1
-    diffpool_hidden_channels: 32
-    diffpool_out_channels: 16
-    last_layer_dropout_prob: 0.2
-    norm: layer
-    activation: relu
+    diffpool_hidden_channels: 8
+    diffpool_out_channels: 8
+    last_layer_dropout_prob: 0.0
+    norm: instance
+    activation: gelu
     pruned_max_average_node_degree: 3
     weight_init: xavier_uniform
 

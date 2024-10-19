@@ -14,23 +14,23 @@ parameters:
             [codon_frequency],
             [fudt_downstream],
             [fudt_upstream],
-            [prot_T5_all],
-            [prot_T5_no_dubious],
-            [nt_window_5979],
-            [nt_window_three_prime_300],
-            [nt_window_five_prime_1003],
-            [esm2_t33_650M_UR50D_all],
-            [esm2_t33_650M_UR50D_no_dubious],
-            [normalized_chrom_pathways],
-            [random_1000],
-            [random_100],
-            [random_10],
-            [random_1],
+            # [prot_T5_all],
+            # [prot_T5_no_dubious],
+            # [nt_window_5979],
+            # [nt_window_three_prime_300],
+            # [nt_window_five_prime_1003],
+            # [esm2_t33_650M_UR50D_all],
+            # [esm2_t33_650M_UR50D_no_dubious],
+            # [normalized_chrom_pathways],
+            # [random_1000],
+            # [random_100],
+            # [random_10],
+            # [random_1],
           ]
       is_pert:
-        values: [true] # [true, false]
+        values: [true, false] # [true, false]
       aggregation:
-        values: [mean] # [mean, sum]
+        values: [mean, sum] # [mean, sum]
   data_module:
     parameters:
       batch_size:
@@ -44,7 +44,7 @@ parameters:
       is_perturbation_subset:
         values: [true]
       perturbation_subset_size:
-        values: [1e4, 5e4, 1e5, 5e5] # [1e4, 5e4, 1e5, 5e5]
+        values: [1e4, 5e4, 1e5] # [1e4, 5e4, 1e5, 5e5]
   device:
     values: [cpu]
 

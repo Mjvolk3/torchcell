@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/gat_diffpool.py
-project: torchcell_003-fit-int_gat_diffpool_1e04
+project: torchcell_003-fit-int_gat_diffpool_1e4
 method: grid
 
 # method: bayes

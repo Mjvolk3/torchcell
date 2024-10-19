@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+from torch_geometric.nn import BatchNorm, LayerNorm, GraphNorm, InstanceNorm
 import torch.nn.functional as F
 from torch_geometric.nn import GATv2Conv, dense_diff_pool
 from torch_geometric.utils import to_dense_batch, to_dense_adj
@@ -29,7 +30,7 @@ class GatDiffPool(nn.Module):
         cluster_size_decay_factor: float = 2.0,
         gat_dropout_prob: float = 0.0,
         last_layer_dropout_prob: float = 0.2,
-        norm: str = "batch",
+        norm: str = "instance",
         activation: str = "relu",
         gat_skip_connection: bool = True,
         pruned_max_average_node_degree: Optional[int] = None,  # New parameter
@@ -39,7 +40,7 @@ class GatDiffPool(nn.Module):
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
 
-        assert norm in ["batch", "instance", "layer"], "Invalid norm type"
+        assert norm in ["batch", "instance", "layer", "graph"], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
 
         self.num_graphs = num_graphs
@@ -91,8 +92,8 @@ class GatDiffPool(nn.Module):
 
         # Calculate cluster sizes
         cluster_sizes = []
-        for i in range(1, num_diffpool_layers+1):
-            size = max(1, int(max_num_nodes / (self.cluster_size_decay_factor ** i)))
+        for i in range(1, num_diffpool_layers + 1):
+            size = max(1, int(max_num_nodes / (self.cluster_size_decay_factor**i)))
             cluster_sizes.append(size)
         cluster_sizes[-1] = 1  # Ensure the last cluster size is always 1
         print(f"Cluster sizes: {cluster_sizes}")
@@ -226,11 +227,15 @@ class GatDiffPool(nn.Module):
 
     def get_norm_layer(self, norm, channels):
         if norm == "batch":
-            return nn.BatchNorm1d(channels)
+            return BatchNorm(channels)
         elif norm == "instance":
-            return nn.InstanceNorm1d(channels, affine=True)
+            return InstanceNorm(channels)
         elif norm == "layer":
-            return nn.LayerNorm(channels)
+            return LayerNorm(channels)
+        elif norm == "graph":
+            return GraphNorm(channels)
+        else:
+            raise ValueError(f"Unsupported normalization type: {norm}")
 
     def forward(self, x, edge_indices: List[torch.Tensor], batch):
         graph_outputs = []
@@ -250,7 +255,10 @@ class GatDiffPool(nn.Module):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
                 )
-                x_out = norm_layer(x_out)
+                if isinstance(norm_layer, GraphNorm):
+                    x_out = norm_layer(x_out, batch)
+                else:
+                    x_out = norm_layer(x_out)
                 x_out = self.activation(x_out)
                 if self.gat_skip_connection and x_graph.shape == x_out.shape:
                     x_out = x_out + x_graph
@@ -273,6 +281,10 @@ class GatDiffPool(nn.Module):
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
 
+                # Update batch information after pooling
+                batch_size, num_nodes, _ = x_pool.size()
+                new_batch = torch.arange(batch_size).repeat_interleave(num_nodes).to(x_pool.device)
+
                 # Prune edges after pooling if specified
                 if self.pruned_max_average_node_degree is not None:
                     adj_pool = self.prune_edges_dense(
@@ -293,12 +305,12 @@ class GatDiffPool(nn.Module):
                         x_out, att_weights = gat_layer(
                             x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
-                        x_out = norm_layer(x_out)
+                        if isinstance(norm_layer, GraphNorm):
+                            x_out = norm_layer(x_out, new_batch)
+                        else:
+                            x_out = norm_layer(x_out)
                         x_out = self.activation(x_out)
-                        if (
-                            self.gat_skip_connection
-                            and x_pool_flat.shape == x_out.shape
-                        ):
+                        if self.gat_skip_connection and x_pool_flat.shape == x_out.shape:
                             x_out = x_out + x_pool_flat
                         x_pool = x_out.view(x_pool.size(0), -1, x_out.size(-1))
                         attention_weights.append(att_weights)
@@ -328,7 +340,6 @@ class GatDiffPool(nn.Module):
             link_pred_losses,
             entropy_losses,
         )
-
     def prune_edges_dense(self, adj, k):
         """
         Prune edges in a dense adjacency matrix to keep only the top k*n edges.
@@ -486,11 +497,11 @@ def main():
     # Model configuration
     model = GatDiffPool(
         in_channels=x.size(1),
-        initial_gat_hidden_channels=4,
-        initial_gat_out_channels=4,
-        diffpool_hidden_channels=4,
-        diffpool_out_channels=4,
-        num_initial_gat_layers=1,
+        initial_gat_hidden_channels=8,
+        initial_gat_out_channels=8,
+        diffpool_hidden_channels=8,
+        diffpool_out_channels=8,
+        num_initial_gat_layers=2,
         num_diffpool_layers=3,
         num_post_pool_gat_layers=1,
         num_graphs=2,
@@ -498,8 +509,8 @@ def main():
         gat_dropout_prob=0.0,
         last_layer_dropout_prob=0.2,
         cluster_size_decay_factor=10.0,
-        norm="layer",
-        activation="relu",
+        norm="graph",
+        activation="gelu",
         gat_skip_connection=True,
         pruned_max_average_node_degree=3,
         weight_init="xavier_uniform",

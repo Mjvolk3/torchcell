@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/gat_diffpool.py
-project: torchcell_003-fit-int_gat_diffpool_5e04
+project: torchcell_003-fit-int_gat_diffpool_1e5
 method: grid
 
 # method: bayes
@@ -41,7 +41,7 @@ parameters:
       is_perturbation_subset:
         values: [true]
       perturbation_subset_size:
-        values: [5e4]
+        values: [1e5]
       batch_size:
         values: [12] # 16 OOM, could probably do 12 (will be at edge)
       num_workers:
@@ -67,9 +67,9 @@ parameters:
           num_initial_gat_layers:
             values: [3]
           initial_gat_hidden_channels:
-            values: [4]
+            values: [8]
           initial_gat_out_channels:
-            values: [4]
+            values: [8]
           gat_dropout_prob:
             values: [0.0]
           gat_skip_connection:
@@ -81,15 +81,15 @@ parameters:
           num_post_pool_gat_layers:
             values: [1]
           diffpool_hidden_channels:
-            values: [4]
+            values: [8]
           diffpool_out_channels:
-            values: [4]
+            values: [8]
           last_layer_dropout_prob:
             values: [0.2]
           norm:
-            values: [layer]
+            values: [instance]
           activation:
-            values: [relu]
+            values: [gelu]
           pruned_max_average_node_degree:
             values: [3]
           weight_init:
@@ -117,20 +117,19 @@ parameters:
       boxplot_every_n_epochs:
         values: [1]
       learning_rate:
-        values: [1e-5, 1e-4]
+        values: [1e-6] #[1e-5, 1e-4]
       weight_decay:
-        values: [1e-4, 1e-3]
+        values: [1e-1, 1e-2] #[1e-4, 1e-3]
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [10]
+        values: [0.5]
       link_pred_loss_weight:
-        values: [0.01, 0.1]
+        values: [0.01] #[0.01, 0.1]
       entropy_loss_weight:
-        values: [0.01, 0.1]
+        values: [0.01] #[0.01, 0.1]
 
 command:
   - ${env}
   - python
   - ${program}
-s

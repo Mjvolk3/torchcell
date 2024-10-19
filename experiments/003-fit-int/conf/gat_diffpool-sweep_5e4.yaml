@@ -75,7 +75,7 @@ parameters:
           gat_skip_connection:
             values: [true]
           num_diffpool_layers:
-            values: [3, 4]
+            values: [4]
           cluster_size_decay_factor:
             values: [10.0]
           num_post_pool_gat_layers:
@@ -87,7 +87,7 @@ parameters:
           last_layer_dropout_prob:
             values: [0.0]
           norm:
-            values: [instance]
+            values: [instance, layer, batch, graph]
           activation:
             values: [gelu]
           pruned_max_average_node_degree:
@@ -125,9 +125,9 @@ parameters:
       clip_grad_norm_max_norm:
         values: [0.5]
       link_pred_loss_weight:
-        values: [0.01, 0.1]
+        values: [0.01]
       entropy_loss_weight:
-        values: [0.01, 0.1]
+        values: [0.01]
 
 command:
   - ${env}

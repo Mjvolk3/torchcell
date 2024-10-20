@@ -409,6 +409,7 @@ def main(cfg: DictConfig) -> None:
             ),
         }
     )
+    wandb.watch(model['main'], log="gradients", log_freq=100, log_graph=False)
     task = RegressionTask(
         model=model,
         learning_rate=wandb.config.regression_task["learning_rate"],

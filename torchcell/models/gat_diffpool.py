@@ -40,7 +40,7 @@ class GatDiffPool(nn.Module):
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
 
-        assert norm in ["batch", "instance", "layer", "graph"], "Invalid norm type"
+        assert norm in [None, "batch", "instance", "layer", "graph"], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
 
         self.num_graphs = num_graphs
@@ -226,7 +226,9 @@ class GatDiffPool(nn.Module):
             self.apply(init_func)
 
     def get_norm_layer(self, norm, channels):
-        if norm == "batch":
+        if norm is None:
+            return nn.Identity()
+        elif norm == "batch":
             return BatchNorm(channels)
         elif norm == "instance":
             return InstanceNorm(channels)
@@ -249,16 +251,16 @@ class GatDiffPool(nn.Module):
 
             # Initial GAT layers
             x_graph = x
-            for j, (gat_layer, norm_layer) in enumerate(
-                zip(self.initial_gat_layers[i], self.initial_gat_norm_layers[i])
-            ):
+            for j, gat_layer in enumerate(self.initial_gat_layers[i]):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
                 )
-                if isinstance(norm_layer, GraphNorm):
-                    x_out = norm_layer(x_out, batch)
-                else:
-                    x_out = norm_layer(x_out)
+                if self.initial_gat_norm_layers is not None:
+                    norm_layer = self.initial_gat_norm_layers[i][j]
+                    if isinstance(norm_layer, GraphNorm):
+                        x_out = norm_layer(x_out, batch)
+                    else:
+                        x_out = norm_layer(x_out)
                 x_out = self.activation(x_out)
                 if self.gat_skip_connection and x_graph.shape == x_out.shape:
                     x_out = x_out + x_graph
@@ -293,22 +295,19 @@ class GatDiffPool(nn.Module):
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
                 if k < len(self.diffpool_layers[i]) - 1:
-                    for l, (gat_layer, norm_layer) in enumerate(
-                        zip(
-                            self.post_pool_gat_layers[i][k],
-                            self.post_pool_gat_norm_layers[i][k],
-                        )
-                    ):
+                    for l, gat_layer in enumerate(self.post_pool_gat_layers[i][k]):
                         x_pool_flat = x_pool.view(-1, x_pool.size(-1))
                         adj_pool_flat = adj_pool.view(-1, adj_pool.size(-1))
                         edge_index_pool = adj_pool_flat.nonzero().t()
                         x_out, att_weights = gat_layer(
                             x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
-                        if isinstance(norm_layer, GraphNorm):
-                            x_out = norm_layer(x_out, new_batch)
-                        else:
-                            x_out = norm_layer(x_out)
+                        if self.post_pool_gat_norm_layers is not None:
+                            norm_layer = self.post_pool_gat_norm_layers[i][k][l]
+                            if isinstance(norm_layer, GraphNorm):
+                                x_out = norm_layer(x_out, new_batch)
+                            else:
+                                x_out = norm_layer(x_out)
                         x_out = self.activation(x_out)
                         if self.gat_skip_connection and x_pool_flat.shape == x_out.shape:
                             x_out = x_out + x_pool_flat
@@ -340,6 +339,7 @@ class GatDiffPool(nn.Module):
             link_pred_losses,
             entropy_losses,
         )
+        
     def prune_edges_dense(self, adj, k):
         """
         Prune edges in a dense adjacency matrix to keep only the top k*n edges.

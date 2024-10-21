@@ -526,7 +526,7 @@ def main():
         norm="graph",
         activation="gelu",
         gat_skip_connection=True,
-        pruned_max_average_node_degree=3,
+        pruned_max_average_node_degree=None,
         weight_init="xavier_uniform",
     )
 

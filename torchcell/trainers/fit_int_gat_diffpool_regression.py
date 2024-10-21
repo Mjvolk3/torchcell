@@ -31,6 +31,7 @@ import torch
 from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
 import logging
 import sys
+from typing import Optional
 
 log = logging.getLogger(__name__)
 
@@ -129,31 +130,14 @@ class RegressionTask(L.LightningModule):
         boxplot_every_n_epochs: int = 1,
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
+        grad_accumulation_schedule: Optional[dict[int, int]] = None,
     ):
         super().__init__()
-        self.boxplot_every_n_epochs = boxplot_every_n_epochs
-        # target for training
-
-        # Lightning settings, doing this for WT embedding
-        self.automatic_optimization = False
+        self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-
-        # clip grad norm
-        self.clip_grad_norm = clip_grad_norm
-        self.clip_grad_norm_max_norm = clip_grad_norm_max_norm
-
-        # loss
         self.combined_mse_loss = CombinedMSELoss(weights=torch.ones(2))
-        self.link_pred_loss_weight = link_pred_loss_weight
-        self.entropy_loss_weight = entropy_loss_weight
-
-        # optimizer
-        self.learning_rate = learning_rate
-        self.weight_decay = weight_decay
-
-        # batch_size
-        self.batch_size = batch_size
+        self.current_accumulation_steps = 1
 
         metrics = MetricCollection(
             {
@@ -183,16 +167,26 @@ class RegressionTask(L.LightningModule):
                 "gene_interaction": metrics.clone(prefix="test/gene_interaction/"),
             }
         )
-        #hjjjjjj TODO not sure if these are needed for corr ?
+
         self.true_values = []
         self.predictions = []
-
-        # wandb model artifact logging
         self.last_logged_best_step = None
+        self.automatic_optimization = False
 
     def setup(self, stage=None):
         self.model = self.model.to(self.device)
         self.combined_mse_loss.weights = self.combined_mse_loss.weights.to(self.device)
+
+    def update_accumulation_steps(self, epoch):
+        if self.hparams.grad_accumulation_schedule is not None:
+            self.current_accumulation_steps = max(
+                [
+                    steps
+                    for e, steps in self.hparams.grad_accumulation_schedule.items()
+                    if int(e) <= epoch
+                ],
+                default=1,
+            )
 
     def forward(self, x, edge_indices, batch):
         (
@@ -215,6 +209,8 @@ class RegressionTask(L.LightningModule):
         parameter_size = sum(p.numel() for p in self.parameters())
         parameter_size_float = float(parameter_size)
         self.log("model/parameters_size", parameter_size_float, on_epoch=True)
+        # set grad accumulator
+        self.update_accumulation_steps(self.current_epoch)
 
     def training_step(self, batch, batch_idx):
         x = batch["gene"].x
@@ -233,15 +229,12 @@ class RegressionTask(L.LightningModule):
             entropy_losses,
         ) = self(x, edge_indices, batch_vector)
 
-        opt = self.optimizers()
-        opt.zero_grad()
-
         # Combined MSE loss
         mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
         loss = mse_loss + link_pred_loss + entropy_loss
@@ -281,13 +274,23 @@ class RegressionTask(L.LightningModule):
             # Terminate the program
             sys.exit(1)
 
+        # Scale loss by accumulation steps
+        if self.hparams.grad_accumulation_schedule is not None:
+            loss = loss / self.current_accumulation_steps
+
+        opt = self.optimizers()
         self.manual_backward(loss)
-        if self.clip_grad_norm:
-            nn.utils.clip_grad_norm_(
-                self.parameters(), max_norm=self.clip_grad_norm_max_norm
-            )
-        opt.step()
-        opt.zero_grad()
+
+        if (
+            self.hparams.grad_accumulation_schedule is None
+            or (batch_idx + 1) % self.current_accumulation_steps == 0
+        ):
+            if self.hparams.clip_grad_norm:
+                nn.utils.clip_grad_norm_(
+                    self.parameters(), max_norm=self.hparams.clip_grad_norm_max_norm
+                )
+            opt.step()
+            opt.zero_grad()
 
         # Logging
         batch_size = batch_vector[-1].item() + 1
@@ -347,8 +350,8 @@ class RegressionTask(L.LightningModule):
         mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
         loss = mse_loss + link_pred_loss + entropy_loss
@@ -431,7 +434,7 @@ class RegressionTask(L.LightningModule):
 
         # Skip plotting during sanity check
         if self.trainer.sanity_checking or (
-            self.current_epoch % self.boxplot_every_n_epochs != 0
+            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
         ):
             return
 
@@ -495,8 +498,8 @@ class RegressionTask(L.LightningModule):
         mse_loss, dim_losses = self.combined_mse_loss(y_hat, y)
 
         # Weighted link prediction and entropy losses
-        link_pred_loss = sum(link_pred_losses) * self.link_pred_loss_weight
-        entropy_loss = sum(entropy_losses) * self.entropy_loss_weight
+        link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
+        entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
         loss = mse_loss + link_pred_loss + entropy_loss
@@ -556,6 +559,8 @@ class RegressionTask(L.LightningModule):
     def configure_optimizers(self):
         params = list(self.model.parameters())
         optimizer = torch.optim.Adam(
-            params, lr=self.learning_rate, weight_decay=self.weight_decay
+            params,
+            lr=self.hparams.learning_rate,
+            weight_decay=self.hparams.weight_decay,
         )
         return optimizer

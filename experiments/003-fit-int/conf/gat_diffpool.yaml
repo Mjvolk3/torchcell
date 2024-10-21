@@ -31,17 +31,17 @@ models:
     num_initial_gat_layers: 1
     initial_gat_hidden_channels: 4
     initial_gat_out_channels: 4
-    gat_dropout_prob: 0.0
+    gat_dropout_prob: 0.2
     gat_skip_connection: false
     num_diffpool_layers: 2
     cluster_size_decay_factor: 10.0
     num_post_pool_gat_layers: 1
     diffpool_hidden_channels: 4
     diffpool_out_channels: 4
-    last_layer_dropout_prob: 0.0
-    norm: layer
-    activation: relu
-    pruned_max_average_node_degree: 10
+    last_layer_dropout_prob: 0.2
+    norm: graph
+    activation: gelu
+    pruned_max_average_node_degree: null
     weight_init: xavier_uniform
 
   pred_head:
@@ -55,9 +55,13 @@ models:
 
 regression_task:
   boxplot_every_n_epochs: 1
-  learning_rate: 1e-7
-  weight_decay: 1e-1
-  clip_grad_norm: false
+  learning_rate: 1e-6
+  weight_decay: 1e-3
+  clip_grad_norm: true
   clip_grad_norm_max_norm: 1.0
   link_pred_loss_weight: 1.0
   entropy_loss_weight: 1.0
+  grad_accumulation_schedule:
+    0: 24
+    4: 4
+    8: 1

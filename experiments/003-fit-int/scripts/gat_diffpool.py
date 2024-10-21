@@ -18,7 +18,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torchcell.graph import SCerevisiaeGraph
-
+from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import (
@@ -444,13 +444,15 @@ def main(cfg: DictConfig) -> None:
     #     dirpath="profiles", filename="advanced_profiler_output.prof"
     # )
     torch.set_float32_matmul_precision("medium")
+    
+    #accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,  # FLAG
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback], #[checkpoint_callback, accumulator],
         # profiler=profiler,  #
         # log_every_n_steps=2,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],

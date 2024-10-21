@@ -32,6 +32,9 @@ from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
 import logging
 import sys
 from typing import Optional
+import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 log = logging.getLogger(__name__)
 
@@ -122,8 +125,8 @@ class RegressionTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
-        learning_rate: float = 1e-3,
-        weight_decay: float = 1e-5,
+        optimizer_config: dict,
+        lr_scheduler_config: dict,
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
@@ -293,7 +296,14 @@ class RegressionTask(L.LightningModule):
             opt.zero_grad()
 
         # Logging
+        # Log the learning rate
         batch_size = batch_vector[-1].item() + 1
+        self.log(
+            "learning_rate",
+            self.optimizers().param_groups[0]["lr"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
         self.log("train/loss", loss, batch_size=batch_size, sync_dist=True)
         self.log("train/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
         self.log(
@@ -557,10 +567,29 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
 
     def configure_optimizers(self):
-        params = list(self.model.parameters())
-        optimizer = torch.optim.Adam(
-            params,
-            lr=self.hparams.learning_rate,
-            weight_decay=self.hparams.weight_decay,
-        )
-        return optimizer
+        optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])
+        optimizer_params = {
+            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+        }
+
+        # Replace 'learning_rate' with 'lr' if present
+        if "learning_rate" in optimizer_params:
+            optimizer_params["lr"] = optimizer_params.pop("learning_rate")
+
+        optimizer = optimizer_class(self.parameters(), **optimizer_params)
+
+        # Remove 'type' from lr_scheduler_config before passing to ReduceLROnPlateau
+        scheduler_params = {
+            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+        }
+        scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val/loss",
+                "interval": "epoch",
+                "frequency": 1,
+            },
+        }

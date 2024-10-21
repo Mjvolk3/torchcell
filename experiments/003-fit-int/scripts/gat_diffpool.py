@@ -412,8 +412,8 @@ def main(cfg: DictConfig) -> None:
     wandb.watch(model["main"], log="gradients", log_freq=100, log_graph=False)
     task = RegressionTask(
         model=model,
-        learning_rate=wandb.config.regression_task["learning_rate"],
-        weight_decay=wandb.config.regression_task["weight_decay"],
+        optimizer_config=wandb.config.regression_task["optimizer"],
+        lr_scheduler_config=wandb.config.regression_task["lr_scheduler"],
         batch_size=wandb.config.data_module["batch_size"],
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],

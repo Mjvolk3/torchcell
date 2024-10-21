@@ -9,7 +9,7 @@ from torch_geometric.nn import BatchNorm, LayerNorm, GraphNorm, InstanceNorm
 import torch.nn.functional as F
 from torch_geometric.nn import GATv2Conv, dense_diff_pool
 from torch_geometric.utils import to_dense_batch, to_dense_adj
-from typing import Dict, List, Optional
+from typing import Optional
 
 from torchcell.models.act import act_register
 
@@ -245,7 +245,7 @@ class GatDiffPool(nn.Module):
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
 
-    def forward(self, x, edge_indices: List[torch.Tensor], batch):
+    def forward(self, x, edge_indices: list[torch.Tensor], batch):
         graph_outputs = []
         attention_weights = []
         cluster_assignments = []
@@ -296,6 +296,10 @@ class GatDiffPool(nn.Module):
                     .repeat_interleave(num_nodes)
                     .to(x_pool.device)
                 )
+
+                # HACK Add self-loops by setting diagonal to 1
+                # we do this to try to avoid 0 edges in mp which might cause NaNs
+                adj_pool.diagonal(dim1=-2, dim2=-1).fill_(1)
 
                 # Prune edges after pooling if specified
                 if self.pruned_max_average_node_degree is not None:
@@ -514,7 +518,7 @@ def main():
         initial_gat_hidden_channels=8,
         initial_gat_out_channels=8,
         diffpool_hidden_channels=8,
-        diffpool_out_channels=8,
+        diffpool_out_channels=1,
         num_initial_gat_layers=2,
         num_diffpool_layers=3,
         num_post_pool_gat_layers=1,

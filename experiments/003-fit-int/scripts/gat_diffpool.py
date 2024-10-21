@@ -97,7 +97,7 @@ def main(cfg: DictConfig) -> None:
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",  # "online", "offline", "disabled"
+        mode="online",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -420,6 +420,9 @@ def main(cfg: DictConfig) -> None:
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
         entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
+        grad_accumulation_schedule=wandb.config.regression_task[
+            "grad_accumulation_schedule"
+        ],
     )
 
     # Checkpoint Callback
@@ -436,9 +439,9 @@ def main(cfg: DictConfig) -> None:
     num_devices = torch.cuda.device_count()
     if wandb.config.trainer["devices"] != "auto":
         devices = wandb.config.trainer["devices"]
-    elif wandb.config.trainer["devices"] == "auto":
+    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
         devices = num_devices
-    elif num_devices == 0:
+    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
         # if there are no GPUs available, use 1 CPU
         devices = 1
 
@@ -446,16 +449,16 @@ def main(cfg: DictConfig) -> None:
     # profiler = CustomAdvancedProfiler(
     #     dirpath="profiles", filename="advanced_profiler_output.prof"
     # )
+    print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
 
-    # accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,  # FLAG
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback],  # [checkpoint_callback, accumulator],
+        callbacks=[checkpoint_callback],
         # profiler=profiler,  #
         # log_every_n_steps=2,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],

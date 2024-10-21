@@ -29,6 +29,10 @@ import torchcell
 from torchmetrics import Metric
 import torch
 from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
+import logging
+import sys
+
+log = logging.getLogger(__name__)
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -241,6 +245,41 @@ class RegressionTask(L.LightningModule):
 
         # Total loss
         loss = mse_loss + link_pred_loss + entropy_loss
+
+        if torch.isnan(loss):
+            log.error(
+                "NaN loss detected. Logging relevant information and terminating."
+            )
+            log.error(f"Batch index: {batch_idx}")
+            log.error(f"y: {y}")
+            log.error(f"y_hat: {y_hat}")
+            log.error(f"x: {x}")
+            log.error(f"edge_indices: {edge_indices}")
+            log.error(f"batch_vector: {batch_vector}")
+            log.error(f"mse_loss: {mse_loss}")
+            log.error(f"dim_losses: {dim_losses}")
+            log.error(f"link_pred_loss: {link_pred_loss}")
+            log.error(f"entropy_loss: {entropy_loss}")
+            log.error(f"attention_weights: {attention_weights}")
+            log.error(f"cluster_assignments: {cluster_assignments}")
+
+            # Optionally, you can also log this information to a file
+            with open("nan_loss_debug.log", "w") as f:
+                f.write(f"Batch index: {batch_idx}\n")
+                f.write(f"y: {y}\n")
+                f.write(f"y_hat: {y_hat}\n")
+                f.write(f"x: {x}\n")
+                f.write(f"edge_indices: {edge_indices}\n")
+                f.write(f"batch_vector: {batch_vector}\n")
+                f.write(f"mse_loss: {mse_loss}\n")
+                f.write(f"dim_losses: {dim_losses}\n")
+                f.write(f"link_pred_loss: {link_pred_loss}\n")
+                f.write(f"entropy_loss: {entropy_loss}\n")
+                f.write(f"attention_weights: {attention_weights}\n")
+                f.write(f"cluster_assignments: {cluster_assignments}\n")
+
+            # Terminate the program
+            sys.exit(1)
 
         self.manual_backward(loss)
         if self.clip_grad_norm:

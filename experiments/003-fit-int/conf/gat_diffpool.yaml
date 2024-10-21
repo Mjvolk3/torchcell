@@ -24,6 +24,7 @@ trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
   accelerator: cpu
+  devices: auto # auto or int
 
 models:
   graph:
@@ -40,7 +41,7 @@ models:
     last_layer_dropout_prob: 0.0
     norm: layer
     activation: relu
-    pruned_max_average_node_degree: 3
+    pruned_max_average_node_degree: 10
     weight_init: xavier_uniform
 
   pred_head:

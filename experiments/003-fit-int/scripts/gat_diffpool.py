@@ -409,7 +409,7 @@ def main(cfg: DictConfig) -> None:
             ),
         }
     )
-    wandb.watch(model['main'], log="gradients", log_freq=100, log_graph=False)
+    wandb.watch(model["main"], log="gradients", log_freq=100, log_graph=False)
     task = RegressionTask(
         model=model,
         learning_rate=wandb.config.regression_task["learning_rate"],
@@ -434,25 +434,28 @@ def main(cfg: DictConfig) -> None:
     log.info(device)
 
     num_devices = torch.cuda.device_count()
-    if num_devices == 0:  # if there are no GPUs available, use 1 CPU
-        devices = 1
-    else:
+    if wandb.config.trainer["devices"] != "auto":
+        devices = wandb.config.trainer["devices"]
+    elif wandb.config.trainer["devices"] == "auto":
         devices = num_devices
+    elif num_devices == 0:
+        # if there are no GPUs available, use 1 CPU
+        devices = 1
 
     # In your main function:
     # profiler = CustomAdvancedProfiler(
     #     dirpath="profiles", filename="advanced_profiler_output.prof"
     # )
     torch.set_float32_matmul_precision("medium")
-    
-    #accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
+
+    # accumulator = GradientAccumulationScheduler(scheduling={0: 8, 4: 4, 8: 1})
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,  # FLAG
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback], #[checkpoint_callback, accumulator],
+        callbacks=[checkpoint_callback],  # [checkpoint_callback, accumulator],
         # profiler=profiler,  #
         # log_every_n_steps=2,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],

@@ -14,9 +14,9 @@ cell_dataset:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e3 #7e3
-  batch_size: 2
-  num_workers: 2
+  perturbation_subset_size: 5e4 #7e3
+  batch_size: 4
+  num_workers: 4
   pin_memory: true
   prefetch: true
 
@@ -27,20 +27,20 @@ trainer:
 
 models:
   graph:
-    num_initial_gat_layers: 2
-    initial_gat_hidden_channels: 8
-    initial_gat_out_channels: 8
+    num_initial_gat_layers: 1
+    initial_gat_hidden_channels: 4
+    initial_gat_out_channels: 4
     gat_dropout_prob: 0.0
-    gat_skip_connection: true
-    num_diffpool_layers: 3
+    gat_skip_connection: false
+    num_diffpool_layers: 2
     cluster_size_decay_factor: 10.0
     num_post_pool_gat_layers: 1
-    diffpool_hidden_channels: 8
-    diffpool_out_channels: 8
+    diffpool_hidden_channels: 4
+    diffpool_out_channels: 4
     last_layer_dropout_prob: 0.0
-    norm: instance
-    activation: gelu
-    pruned_max_average_node_degree: null
+    norm: layer
+    activation: relu
+    pruned_max_average_node_degree: 3
     weight_init: xavier_uniform
 
   pred_head:
@@ -54,9 +54,9 @@ models:
 
 regression_task:
   boxplot_every_n_epochs: 1
-  learning_rate: 1e-4
-  weight_decay: 1e-5
-  clip_grad_norm: true
-  clip_grad_norm_max_norm: 10
+  learning_rate: 1e-7
+  weight_decay: 1e-1
+  clip_grad_norm: false
+  clip_grad_norm_max_norm: 1.0
   link_pred_loss_weight: 1.0
   entropy_loss_weight: 1.0

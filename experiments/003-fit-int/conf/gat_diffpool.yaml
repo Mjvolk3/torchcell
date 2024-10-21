@@ -40,7 +40,7 @@ models:
     last_layer_dropout_prob: 0.0
     norm: instance
     activation: gelu
-    pruned_max_average_node_degree: 3
+    pruned_max_average_node_degree: null
     weight_init: xavier_uniform
 
   pred_head:

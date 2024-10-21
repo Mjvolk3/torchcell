@@ -183,7 +183,7 @@ class RegressionTask(L.LightningModule):
                 "gene_interaction": metrics.clone(prefix="test/gene_interaction/"),
             }
         )
-        # TODO not sure if these are needed for corr ?
+        #hjjjjjj TODO not sure if these are needed for corr ?
         self.true_values = []
         self.predictions = []
 

@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch_geometric.nn import BatchNorm, LayerNorm, GraphNorm, InstanceNorm
 import torch.nn.functional as F
 from torch_geometric.nn import GATv2Conv, dense_diff_pool
-from torch_geometric.utils import to_dense_batch, to_dense_adj, add_self_loops
+from torch_geometric.utils import to_dense_batch, to_dense_adj
 from typing import Dict, List, Optional
 
 from torchcell.models.act import act_register
@@ -40,7 +40,13 @@ class GatDiffPool(nn.Module):
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
 
-        assert norm in [None, "batch", "instance", "layer", "graph"], "Invalid norm type"
+        assert norm in [
+            None,
+            "batch",
+            "instance",
+            "layer",
+            "graph",
+        ], "Invalid norm type"
         assert activation in act_register.keys(), "Invalid activation type"
 
         self.num_graphs = num_graphs
@@ -255,22 +261,13 @@ class GatDiffPool(nn.Module):
                 x_out, (edge_index, att_weights) = gat_layer(
                     x_graph, edge_index, return_attention_weights=True
                 )
-                if torch.isnan(x_out).any():
-                    print(f"NaN detected after initial GAT layer {j} for graph {i}")
-                
                 if self.initial_gat_norm_layers is not None:
                     norm_layer = self.initial_gat_norm_layers[i][j]
                     if isinstance(norm_layer, GraphNorm):
                         x_out = norm_layer(x_out, batch)
                     else:
                         x_out = norm_layer(x_out)
-                    if torch.isnan(x_out).any():
-                        print(f"NaN detected after normalization in initial GAT layer {j} for graph {i}")
-                
                 x_out = self.activation(x_out)
-                if torch.isnan(x_out).any():
-                    print(f"NaN detected after activation in initial GAT layer {j} for graph {i}")
-                
                 if self.gat_skip_connection and x_graph.shape == x_out.shape:
                     x_out = x_out + x_graph
                 x_graph = x_out
@@ -285,33 +282,26 @@ class GatDiffPool(nn.Module):
             x_pool, adj_pool = x_dense, adj
             for k, diffpool_layer in enumerate(self.diffpool_layers[i]):
                 s = diffpool_layer(x_pool)
-                if torch.isnan(s).any():
-                    print(f"NaN detected in cluster assignment for DiffPool layer {k} for graph {i}")
-                
                 x_pool, adj_pool, link_loss, ent_loss = dense_diff_pool(
                     x_pool, adj_pool, s, mask
                 )
-                if torch.isnan(x_pool).any() or torch.isnan(adj_pool).any():
-                    print(f"NaN detected after DiffPool layer {k} for graph {i}")
-                
                 link_pred_losses.append(link_loss)
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
 
                 # Update batch information after pooling
                 batch_size, num_nodes, _ = x_pool.size()
-                new_batch = torch.arange(batch_size).repeat_interleave(num_nodes).to(x_pool.device)
+                new_batch = (
+                    torch.arange(batch_size)
+                    .repeat_interleave(num_nodes)
+                    .to(x_pool.device)
+                )
 
                 # Prune edges after pooling if specified
                 if self.pruned_max_average_node_degree is not None:
                     adj_pool = self.prune_edges_dense(
                         adj_pool, self.pruned_max_average_node_degree
                     )
-
-                # Add self-loops
-                edge_index_pool, _ = dense_to_sparse(adj_pool)
-                edge_index_pool, _ = add_self_loops(edge_index_pool)
-                adj_pool = to_dense_adj(edge_index_pool, batch_size=adj_pool.size(0))
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
                 if k < len(self.diffpool_layers[i]) - 1:
@@ -322,23 +312,17 @@ class GatDiffPool(nn.Module):
                         x_out, att_weights = gat_layer(
                             x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
-                        if torch.isnan(x_out).any():
-                            print(f"NaN detected after post-pooling GAT layer {k}-{l} for graph {i}")
-                        
                         if self.post_pool_gat_norm_layers is not None:
                             norm_layer = self.post_pool_gat_norm_layers[i][k][l]
                             if isinstance(norm_layer, GraphNorm):
                                 x_out = norm_layer(x_out, new_batch)
                             else:
                                 x_out = norm_layer(x_out)
-                            if torch.isnan(x_out).any():
-                                print(f"NaN detected after normalization in post-pooling GAT layer {k}-{l} for graph {i}")
-                        
                         x_out = self.activation(x_out)
-                        if torch.isnan(x_out).any():
-                            print(f"NaN detected after activation in post-pooling GAT layer {k}-{l} for graph {i}")
-                        
-                        if self.gat_skip_connection and x_pool_flat.shape == x_out.shape:
+                        if (
+                            self.gat_skip_connection
+                            and x_pool_flat.shape == x_out.shape
+                        ):
                             x_out = x_out + x_pool_flat
                         x_pool = x_out.view(x_pool.size(0), -1, x_out.size(-1))
                         attention_weights.append(att_weights)
@@ -358,16 +342,8 @@ class GatDiffPool(nn.Module):
 
         # Final linear layer with activation and dropout
         out = self.final_linear(x_concat.squeeze(1))
-        if torch.isnan(out).any():
-            print("NaN detected after final linear layer")
-        
         out = self.activation(out)
-        if torch.isnan(out).any():
-            print("NaN detected after final activation")
-        
         out = F.dropout(out, p=self.last_layer_dropout_prob, training=self.training)
-        if torch.isnan(out).any():
-            print("NaN detected after final dropout")
 
         return (
             out,
@@ -376,7 +352,7 @@ class GatDiffPool(nn.Module):
             link_pred_losses,
             entropy_losses,
         )
-        
+
     def prune_edges_dense(self, adj, k):
         """
         Prune edges in a dense adjacency matrix to keep only the top k*n edges.
@@ -530,6 +506,7 @@ def main():
     edge_index_physical = batch["gene", "physical_interaction", "gene"].edge_index
     edge_index_regulatory = batch["gene", "regulatory_interaction", "gene"].edge_index
     batch_index = batch["gene"].batch
+    y = batch["gene"].fitness.unsqueeze(1)  # Assuming fitness is the target
 
     # Model configuration
     model = GatDiffPool(
@@ -557,18 +534,46 @@ def main():
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters: {total_params}")
 
-    print(f"Input x shape: {x.shape}")
-    print(f"Edge index physical shape: {edge_index_physical.shape}")
-    print(f"Edge index regulatory shape: {edge_index_regulatory.shape}")
-    print(f"Batch index shape: {batch_index.shape}")
-    print(f"Batch size: {batch_index.max().item() + 1}")
+    # Create optimizer
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Forward pass
     out, attention_weights, cluster_assignments, link_pred_losses, entropy_losses = (
         model(x, [edge_index_physical, edge_index_regulatory], batch_index)
     )
 
-    print("Output shape:", out.shape)
+    # Compute loss
+    mse_loss = F.mse_loss(out, y)
+    link_pred_loss = sum(link_pred_losses)
+    entropy_loss = sum(entropy_losses)
+    total_loss = mse_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss
+
+    print(f"Initial loss: {total_loss.item()}")
+
+    # Backward pass
+    optimizer.zero_grad()
+    total_loss.backward()
+
+    # Check gradients
+    print("\nChecking gradients:")
+    for name, param in model.named_parameters():
+        if param.grad is not None:
+            grad_norm = param.grad.norm()
+            print(f"{name}: grad_norm = {grad_norm}")
+            if torch.isnan(grad_norm):
+                print(f"NaN gradient detected in {name}")
+                print(
+                    f"Parameter stats: min={param.min()}, max={param.max()}, mean={param.mean()}"
+                )
+        else:
+            print(f"{name}: No gradient")
+
+    # Optionally, you can also print the model's state_dict to check parameter values
+    # print("\nModel state_dict:")
+    # for name, param in model.state_dict().items():
+    #     print(f"{name}: min={param.min()}, max={param.max()}, mean={param.mean()}")
+
+    print("\nOutput shape:", out.shape)
     print("Number of attention weight tensors:", len(attention_weights))
     print("First attention weight shape:", attention_weights[0][0].shape)
     print("Last attention weight shape:", attention_weights[-1][0].shape)

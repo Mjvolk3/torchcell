@@ -18,6 +18,7 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 from torchcell.graph import SCerevisiaeGraph
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.datamodules import CellDataModule
@@ -33,9 +34,8 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.models import Mlp
-from torchcell.models.gat_diffpool import GatDiffPool
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers.fit_int_gat_diffpool_regression import RegressionTask
+from torchcell.models.gat_diffpool_inception import GatDiffPool
+from torchcell.trainers.fit_int_gat_diffpool_inception_regression import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket
@@ -80,7 +80,7 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="gat_diffpool",
+    config_name="gat_diffpool_inception",
 )
 def main(cfg: DictConfig) -> None:
     print("Starting GatDiffPool 🌋")
@@ -357,59 +357,31 @@ def main(cfg: DictConfig) -> None:
     dataset.close_lmdb()
     num_graphs = len(wandb.config.cell_dataset["graphs"])
 
-    model = ModuleDict(
-        {
-            "main": GatDiffPool(
-                in_channels=input_dim,
-                initial_gat_hidden_channels=wandb.config.models["graph"][
-                    "initial_gat_hidden_channels"
-                ],
-                initial_gat_out_channels=wandb.config.models["graph"][
-                    "initial_gat_out_channels"
-                ],
-                diffpool_hidden_channels=wandb.config.models["graph"][
-                    "diffpool_hidden_channels"
-                ],
-                diffpool_out_channels=wandb.config.models["graph"][
-                    "diffpool_out_channels"
-                ],
-                num_initial_gat_layers=wandb.config.models["graph"][
-                    "num_initial_gat_layers"
-                ],
-                num_diffpool_layers=wandb.config.models["graph"]["num_diffpool_layers"],
-                cluster_size_decay_factor=wandb.config.models["graph"][
-                    "cluster_size_decay_factor"
-                ],
-                num_post_pool_gat_layers=wandb.config.models["graph"][
-                    "num_post_pool_gat_layers"
-                ],
-                num_graphs=num_graphs,
-                max_num_nodes=max_num_nodes,
-                gat_dropout_prob=wandb.config.models["graph"]["gat_dropout_prob"],
-                last_layer_dropout_prob=wandb.config.models["graph"][
-                    "last_layer_dropout_prob"
-                ],
-                norm=wandb.config.models["graph"]["norm"],
-                activation=wandb.config.models["graph"]["activation"],
-                gat_skip_connection=wandb.config.models["graph"]["gat_skip_connection"],
-                pruned_max_average_node_degree=wandb.config.models["graph"][
-                    "pruned_max_average_node_degree"
-                ],
-                weight_init=wandb.config.models["graph"]["weight_init"],
-            ),
-            "top": Mlp(
-                in_channels=wandb.config.models["graph"]["diffpool_out_channels"],
-                hidden_channels=wandb.config.models["pred_head"]["hidden_channels"],
-                out_channels=wandb.config.models["pred_head"]["out_channels"],
-                num_layers=wandb.config.models["pred_head"]["num_layers"],
-                dropout_prob=wandb.config.models["pred_head"]["dropout_prob"],
-                norm=wandb.config.models["pred_head"]["norm"],
-                activation=wandb.config.models["pred_head"]["activation"],
-                output_activation=wandb.config.models["pred_head"]["output_activation"],
-            ),
-        }
+    model = GatDiffPool(
+        in_channels=input_dim,
+        initial_gat_hidden_channels=wandb.config.model["initial_gat_hidden_channels"],
+        initial_gat_out_channels=wandb.config.model["initial_gat_out_channels"],
+        diffpool_hidden_channels=wandb.config.model["diffpool_hidden_channels"],
+        diffpool_out_channels=wandb.config.model["diffpool_out_channels"],
+        num_initial_gat_layers=wandb.config.model["num_initial_gat_layers"],
+        num_diffpool_layers=wandb.config.model["num_diffpool_layers"],
+        cluster_size_decay_factor=wandb.config.model["cluster_size_decay_factor"],
+        num_post_pool_gat_layers=wandb.config.model["num_post_pool_gat_layers"],
+        num_graphs=num_graphs,
+        max_num_nodes=max_num_nodes,
+        gat_dropout_prob=wandb.config.model["gat_dropout_prob"],
+        last_layer_dropout_prob=wandb.config.model["last_layer_dropout_prob"],
+        norm=wandb.config.model["norm"],
+        activation=wandb.config.model["activation"],
+        gat_skip_connection=wandb.config.model["gat_skip_connection"],
+        pruned_max_average_node_degree=wandb.config.model[
+            "pruned_max_average_node_degree"
+        ],
+        weight_init=wandb.config.model["weight_init"],
+        target_dim=wandb.config.model["target_dim"],
     )
-    wandb.watch(model["main"], log="gradients", log_freq=100, log_graph=False)
+
+    wandb.watch(model, log="gradients", log_freq=100, log_graph=False)
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],
@@ -419,6 +391,7 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         loss_type=wandb.config.regression_task["loss_type"],
+        cluster_loss_weight=wandb.config.regression_task["cluster_loss_weight"],
         link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
         entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
         grad_accumulation_schedule=wandb.config.regression_task[

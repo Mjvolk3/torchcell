@@ -1,7 +1,7 @@
-# torchcell/models/gat_diffpool
-# [[torchcell.models.gat_diffpool]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
-# Test file: tests/torchcell/models/test_gat_diffpool.py
+# torchcell/models/gat_diffpool_inception
+# [[torchcell.models.gat_diffpool_inception]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool_inception
+# Test file: tests/torchcell/models/test_gat_diffpool_inception.py
 
 import torch
 import torch.nn as nn
@@ -40,12 +40,24 @@ class GatDiffPool(nn.Module):
         norm: str = "instance",
         activation: str = "relu",
         gat_skip_connection: bool = True,
-        pruned_max_average_node_degree: Optional[int] = None,  # New parameter
+        pruned_max_average_node_degree: Optional[int] = None,
         weight_init: str = "default",
+        target_dim: int = 2,
+        cluster_reduction: str = "mean",
     ):
         super().__init__()
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
+        self.target_dim = target_dim
+        self.cluster_reduction = cluster_reduction
+
+        # Add linear layers for each diffpool layer
+        self.cluster_prediction_layers = nn.ModuleList(
+            [
+                nn.Linear(diffpool_hidden_channels, target_dim)
+                for _ in range(num_diffpool_layers)
+            ]
+        )
 
         assert norm in [
             None,
@@ -180,6 +192,9 @@ class GatDiffPool(nn.Module):
         self.final_linear = nn.Linear(
             num_graphs * diffpool_hidden_channels, diffpool_out_channels
         )
+
+        self.output_linear = nn.Linear(diffpool_out_channels, target_dim)
+
         # initialize weights
         self.init_weights()
 
@@ -263,6 +278,7 @@ class GatDiffPool(nn.Module):
         cluster_assignments = []
         link_pred_losses = []
         entropy_losses = []
+        cluster_predictions = []
 
         for i in range(self.num_graphs):
             edge_index = edge_indices[i]
@@ -303,6 +319,17 @@ class GatDiffPool(nn.Module):
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
 
+                # Make predictions for each cluster
+                cluster_pred = self.cluster_prediction_layers[k](x_pool)
+                if k < len(self.diffpool_layers[i]) - 1:  # Not the last layer
+                    if self.cluster_reduction == "mean":
+                        cluster_pred = cluster_pred.mean(dim=1)
+                    elif self.cluster_reduction == "sum":
+                        cluster_pred = cluster_pred.sum(dim=1)
+                else:  # Last layer
+                    cluster_pred = cluster_pred.squeeze(1)
+                cluster_predictions.append(cluster_pred)
+
                 # Update batch information after pooling
                 batch_size, num_nodes, _ = x_pool.size()
                 new_batch = (
@@ -311,8 +338,7 @@ class GatDiffPool(nn.Module):
                     .to(x_pool.device)
                 )
 
-                # HACK Add self-loops by setting diagonal to 1
-                # we do this to try to avoid 0 edges in mp which might cause NaNs
+                # Add self-loops by setting diagonal to 1
                 adj_pool.diagonal(dim1=-2, dim2=-1).fill_(1)
 
                 # Prune edges after pooling if specified
@@ -361,16 +387,24 @@ class GatDiffPool(nn.Module):
         x_concat = torch.cat(graph_outputs, dim=-1)
 
         # Final linear layer with activation and dropout
-        out = self.final_linear(x_concat.squeeze(1))
-        out = self.activation(out)
+        final_linear_output = self.final_linear(
+            x_concat.squeeze(1)
+        )  # Save this to track contributions
+        out = self.activation(final_linear_output)
         out = F.dropout(out, p=self.last_layer_dropout_prob, training=self.training)
 
+        # Output layer
+        out = self.output_linear(out)
+
+        # Return contributions as part of the output
         return (
             out,
             attention_weights,
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
+            cluster_predictions,
+            final_linear_output,  # Track the feature contributions here
         )
 
     def prune_edges_dense(self, adj, k):
@@ -526,7 +560,7 @@ def main():
     edge_index_physical = batch["gene", "physical_interaction", "gene"].edge_index
     edge_index_regulatory = batch["gene", "regulatory_interaction", "gene"].edge_index
     batch_index = batch["gene"].batch
-    y = batch["gene"].fitness.unsqueeze(1)  # Assuming fitness is the target
+    y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
     # Model configuration
     model = GatDiffPool(
@@ -534,7 +568,7 @@ def main():
         initial_gat_hidden_channels=8,
         initial_gat_out_channels=8,
         diffpool_hidden_channels=8,
-        diffpool_out_channels=8,
+        diffpool_out_channels=2,
         num_initial_gat_layers=2,
         num_diffpool_layers=3,
         num_post_pool_gat_layers=1,
@@ -548,6 +582,8 @@ def main():
         gat_skip_connection=True,
         pruned_max_average_node_degree=None,
         weight_init="xavier_uniform",
+        target_dim=2,
+        cluster_reduction="mean",
     )
 
     # Print model size
@@ -558,17 +594,30 @@ def main():
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Forward pass
-    out, attention_weights, cluster_assignments, link_pred_losses, entropy_losses = (
-        model(x, [edge_index_physical, edge_index_regulatory], batch_index)
-    )
+    (
+        out,
+        attention_weights,
+        cluster_assignments,
+        link_pred_losses,
+        entropy_losses,
+        cluster_predictions,
+        final_linear_output,  # New: Capture the final linear output
+    ) = model(x, [edge_index_physical, edge_index_regulatory], batch_index)
 
     # Compute loss
     mse_loss = F.mse_loss(out, y)
     link_pred_loss = sum(link_pred_losses)
     entropy_loss = sum(entropy_losses)
-    total_loss = mse_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss
+    cluster_loss = sum(F.mse_loss(pred, y) for pred in cluster_predictions)
+    total_loss = (
+        mse_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss + 0.1 * cluster_loss
+    )
 
     print(f"Initial loss: {total_loss.item()}")
+    print(f"MSE loss: {mse_loss.item()}")
+    print(f"Link prediction loss: {link_pred_loss.item()}")
+    print(f"Entropy loss: {entropy_loss.item()}")
+    print(f"Cluster loss: {cluster_loss.item()}")
 
     # Backward pass
     optimizer.zero_grad()
@@ -588,10 +637,10 @@ def main():
         else:
             print(f"{name}: No gradient")
 
-    # Optionally, you can also print the model's state_dict to check parameter values
-    # print("\nModel state_dict:")
-    # for name, param in model.state_dict().items():
-    #     print(f"{name}: min={param.min()}, max={param.max()}, mean={param.mean()}")
+    # Output the final linear contributions for each graph
+    print("\nFinal linear layer contributions (per sample):")
+    for i, contribution in enumerate(final_linear_output):
+        print(f"Sample {i} final linear contribution: {contribution}")
 
     print("\nOutput shape:", out.shape)
     print("Number of attention weight tensors:", len(attention_weights))
@@ -602,6 +651,11 @@ def main():
     print("Last cluster assignment shape:", cluster_assignments[-1].shape)
     print("Link prediction losses:", link_pred_losses)
     print("Entropy losses:", entropy_losses)
+
+    print("\nCluster predictions:")
+    print("Number of cluster prediction tensors:", len(cluster_predictions))
+    for i, pred in enumerate(cluster_predictions):
+        print(f"Cluster prediction {i} shape:", pred.shape)
 
 
 if __name__ == "__main__":

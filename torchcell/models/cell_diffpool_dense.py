@@ -2,9 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import dense_diff_pool
-from torch_geometric.models.dense_gat_conv import DenseGATConv
+from torchcell.models.dense_gat_conv import DenseGATConv
 from typing import Optional, Literal
 from torchcell.models.act import act_register
+import torch_geometric.transforms as T
+
+from typing import Dict, Optional, Tuple, Union
+
+import torch
+from torch import Tensor
+from torch_geometric.data import HeteroData, Data
+from torchcell.transforms.hetero_to_dense import HeteroToDense
 
 
 class DenseDiffPool(nn.Module):
@@ -28,7 +36,7 @@ class DenseDiffPool(nn.Module):
     ):
         super().__init__()
 
-        # Set parameters
+        # Store parameters
         self.max_num_nodes = max_num_nodes
         self.in_channels = in_channels
         self.activation = act_register[activation]
@@ -43,71 +51,68 @@ class DenseDiffPool(nn.Module):
         self.cluster_sizes[-1] = 1
         print(f"Cluster sizes: {self.cluster_sizes}")
 
-        # Create cluster prediction heads
-        self.cluster_heads = nn.ModuleList()
-        for _ in range(num_pooling_layers):
-            self.cluster_heads.append(nn.Linear(embed_gat_hidden_channels, target_dim))
+        # Create cluster prediction heads using ModuleList
+        self.cluster_heads = nn.ModuleList(
+            [
+                nn.Linear(embed_gat_hidden_channels, target_dim)
+                for _ in range(num_pooling_layers)
+            ]
+        )
 
-        # Create pooling networks (Dense GAT) for each layer
+        # Create pooling networks using ModuleList for better parameter registration
         self.pool_networks = nn.ModuleList()
         for layer in range(num_pooling_layers):
-            pool_gnn = nn.ModuleList()
             curr_in_channels = in_channels if layer == 0 else embed_gat_hidden_channels
 
-            # Add Dense GAT layers for pooling
+            layers = []
             for i in range(num_pool_gat_layers):
                 is_last = i == num_pool_gat_layers - 1
                 out_channels = (
                     self.cluster_sizes[layer] if is_last else pool_gat_hidden_channels
                 )
 
-                pool_gnn.extend(
-                    [
-                        DenseGATConv(
-                            in_channels=curr_in_channels,
-                            out_channels=out_channels,
-                            heads=heads,
-                            concat=concat,
-                            dropout=dropout,
-                        ),
-                        (
-                            self.get_norm_layer(norm, out_channels)
-                            if norm
-                            else nn.Identity()
-                        ),
-                    ]
+                gat = DenseGATConv(
+                    in_channels=curr_in_channels,
+                    out_channels=out_channels,
+                    heads=heads,
+                    concat=concat,
+                    dropout=dropout,
                 )
+                norm_layer = (
+                    self.get_norm_layer(norm, out_channels) if norm else nn.Identity()
+                )
+
+                layers.append(gat)
+                layers.append(norm_layer)
                 curr_in_channels = out_channels
 
-            self.pool_networks.append(pool_gnn)
+            self.pool_networks.append(nn.ModuleList(layers))
 
-        # Create embedding networks (Dense GAT) for each layer
+        # Create embedding networks using ModuleList
         self.embed_networks = nn.ModuleList()
         for layer in range(num_pooling_layers):
-            embed_gnn = nn.ModuleList()
             curr_in_channels = in_channels if layer == 0 else embed_gat_hidden_channels
 
-            # Add Dense GAT layers for embedding
-            for i in range(num_embed_gat_layers):
-                embed_gnn.extend(
-                    [
-                        DenseGATConv(
-                            in_channels=curr_in_channels,
-                            out_channels=embed_gat_hidden_channels,
-                            heads=heads,
-                            concat=concat,
-                            dropout=dropout,
-                        ),
-                        (
-                            self.get_norm_layer(norm, embed_gat_hidden_channels)
-                            if norm
-                            else nn.Identity()
-                        ),
-                    ]
+            layers = []
+            for _ in range(num_embed_gat_layers):
+                gat = DenseGATConv(
+                    in_channels=curr_in_channels,
+                    out_channels=embed_gat_hidden_channels,
+                    heads=heads,
+                    concat=concat,
+                    dropout=dropout,
                 )
+                norm_layer = (
+                    self.get_norm_layer(norm, embed_gat_hidden_channels)
+                    if norm
+                    else nn.Identity()
+                )
+
+                layers.append(gat)
+                layers.append(norm_layer)
                 curr_in_channels = embed_gat_hidden_channels
 
-            self.embed_networks.append(embed_gnn)
+            self.embed_networks.append(nn.ModuleList(layers))
 
         # Final prediction layer
         self.lin = nn.Linear(embed_gat_hidden_channels, target_dim)
@@ -118,10 +123,8 @@ class DenseDiffPool(nn.Module):
         elif norm == "batch":
             return nn.BatchNorm1d(channels)
         elif norm == "layer":
-            # LayerNorm normalizes over the channel dimension
             return nn.LayerNorm(channels)
         elif norm == "instance":
-            # InstanceNorm1d computes mean and std across each channel independently
             return nn.InstanceNorm1d(channels, affine=True)
         else:
             raise ValueError(f"Unsupported normalization type: {norm}")
@@ -131,86 +134,104 @@ class DenseDiffPool(nn.Module):
         batch_size, num_nodes, num_channels = x.size()
 
         if isinstance(norm_layer, nn.BatchNorm1d):
-            # BatchNorm expects [N, C] format
             x = x.view(-1, num_channels)
             x = norm_layer(x)
             x = x.view(batch_size, num_nodes, num_channels)
         elif isinstance(norm_layer, nn.InstanceNorm1d):
-            # InstanceNorm1d expects [N, C, L] format
-            x = x.permute(0, 2, 1)  # [batch_size, channels, nodes]
+            x = x.permute(0, 2, 1)
             x = norm_layer(x)
-            x = x.permute(0, 2, 1)  # [batch_size, nodes, channels]
+            x = x.permute(0, 2, 1)
         elif isinstance(norm_layer, nn.LayerNorm):
-            # LayerNorm can handle [B, N, C] format directly
             x = norm_layer(x)
 
         return x
 
     def forward(self, x, adj, mask=None):
-        """
-        Forward pass with dense tensors.
-
-        Args:
-            x (Tensor): Node feature tensor [batch_size, num_nodes, in_channels]
-            adj (Tensor): Adjacency tensor [batch_size, num_nodes, num_nodes]
-            mask (Tensor, optional): Mask tensor [batch_size, num_nodes]
-        """
-        # Initialize variables to store outputs
+        """Forward pass with proper gradient flow through cluster heads."""
+        pool_attention_weights = []
+        embed_attention_weights = []
         cluster_assignments_list = []
         link_losses = []
         entropy_losses = []
         clusters_out = []
 
-        # Process each pooling layer
+        current_x = x  # Keep original x for cluster predictions
+        current_adj = adj
+        current_mask = mask
+
         for layer, (pool_gnn, embed_gnn) in enumerate(
             zip(self.pool_networks, self.embed_networks)
         ):
-            # Compute cluster assignment matrix (S) using Dense GAT
-            s = x
-            for i in range(0, len(pool_gnn), 2):  # Process conv and norm pairs
+            # Compute cluster assignment matrix
+            s = current_x
+            pool_layer_attention = []
+
+            for i in range(0, len(pool_gnn), 2):
                 conv_layer = pool_gnn[i]
                 norm_layer = pool_gnn[i + 1]
-
-                s = conv_layer(s, adj, mask=mask, add_loop=True)
+                s, attention = conv_layer(
+                    s,
+                    current_adj,
+                    mask=current_mask,
+                    add_loop=True,
+                    return_attention_weights=True,
+                )
+                pool_layer_attention.append(attention)
                 s = self.bn(s, norm_layer)
                 s = self.activation(s)
 
-            # Store cluster assignments
+            pool_attention_weights.append(pool_layer_attention)
             cluster_assignments_list.append(s)
 
-            # Compute node embeddings (Z) using Dense GAT
-            z = x
-            for i in range(0, len(embed_gnn), 2):  # Process conv and norm pairs
+            # Compute node embeddings
+            z = current_x
+            embed_layer_attention = []
+
+            for i in range(0, len(embed_gnn), 2):
                 conv_layer = embed_gnn[i]
                 norm_layer = embed_gnn[i + 1]
-
-                z = conv_layer(z, adj, mask=mask, add_loop=True)
+                z, attention = conv_layer(
+                    z,
+                    current_adj,
+                    mask=current_mask,
+                    add_loop=True,
+                    return_attention_weights=True,
+                )
+                embed_layer_attention.append(attention)
                 z = self.bn(z, norm_layer)
                 z = self.activation(z)
 
-            # Apply diffpool
-            x, adj, link_loss, ent_loss = dense_diff_pool(x=z, adj=adj, s=s, mask=mask)
+            embed_attention_weights.append(embed_layer_attention)
 
-            # After clustering, all nodes are valid (no masking needed)
-            mask = None
+            # Make cluster prediction before pooling
+            if self.cluster_aggregation == "mean":
+                cluster_x = z.mean(dim=1)
+            else:  # sum
+                cluster_x = z.sum(dim=1)
+
+            # Get cluster prediction and ensure it's used in computation graph
+            cluster_pred = self.cluster_heads[layer](cluster_x)
+            clusters_out.append(cluster_pred)
+
+            # Apply diffpool
+            current_x, current_adj, link_loss, ent_loss = dense_diff_pool(
+                x=z, adj=current_adj, s=s, mask=current_mask
+            )
+            current_mask = None  # After clustering, all nodes are valid
 
             # Store losses
             link_losses.append(link_loss)
             entropy_losses.append(ent_loss)
 
-            if self.cluster_aggregation == "mean":
-                cluster_x = x.mean(dim=1)
-            elif self.cluster_aggregation == "sum":
-                cluster_x = x.sum(dim=1)
-            cluster_pred = self.cluster_heads[layer](cluster_x)
-            clusters_out.append(cluster_pred)
-
-        out = self.lin(x.squeeze(1))
+        # Final prediction
+        final_out = self.lin(current_x.squeeze(1))
 
         return (
-            out,
+            final_out,
             link_losses,
             entropy_losses,
+            pool_attention_weights,
+            embed_attention_weights,
             cluster_assignments_list,
             clusters_out,
         )
@@ -219,7 +240,7 @@ class DenseDiffPool(nn.Module):
 class DenseCellDiffPool(nn.Module):
     def __init__(
         self,
-        num_graphs: int,
+        graph_names: list[str],
         max_num_nodes: int,
         in_channels: int,
         pool_gat_hidden_channels: int,
@@ -238,58 +259,66 @@ class DenseCellDiffPool(nn.Module):
     ):
         super().__init__()
 
-        self.num_graphs = num_graphs
-
-        # Store initialization parameters
-        self.init_params = {
-            "max_num_nodes": max_num_nodes,
-            "in_channels": in_channels,
-            "pool_gat_hidden_channels": pool_gat_hidden_channels,
-            "num_pool_gat_layers": num_pool_gat_layers,
-            "embed_gat_hidden_channels": embed_gat_hidden_channels,
-            "num_embed_gat_layers": num_embed_gat_layers,
-            "num_pooling_layers": num_pooling_layers,
-            "cluster_size_decay_factor": cluster_size_decay_factor,
-            "activation": activation,
-            "norm": norm,
-            "target_dim": target_dim,
-            "cluster_aggregation": cluster_aggregation,
-            "heads": heads,
-            "concat": concat,
-            "dropout": dropout,
-        }
-
-        # Initialize models for each graph
-        self.graph_models = nn.ModuleDict()
-
-        # Store parameters
+        self.graph_names = sorted(graph_names)  # Sort for consistent ordering
+        self.num_graphs = len(graph_names)
         self.target_dim = target_dim
         self.activation = act_register[activation]
 
-        # Final combination layer
+        # Create named models for each graph type
+        self.graph_models = nn.ModuleDict(
+            {
+                name: DenseDiffPool(
+                    max_num_nodes=max_num_nodes,
+                    in_channels=in_channels,
+                    pool_gat_hidden_channels=pool_gat_hidden_channels,
+                    num_pool_gat_layers=num_pool_gat_layers,
+                    embed_gat_hidden_channels=embed_gat_hidden_channels,
+                    num_embed_gat_layers=num_embed_gat_layers,
+                    num_pooling_layers=num_pooling_layers,
+                    cluster_size_decay_factor=cluster_size_decay_factor,
+                    activation=activation,
+                    norm=norm,
+                    target_dim=target_dim,
+                    cluster_aggregation=cluster_aggregation,
+                    heads=heads,
+                    concat=concat,
+                    dropout=dropout,
+                )
+                for name in self.graph_names
+            }
+        )
+
+        # Final combination layers
         self.final_combination = nn.Sequential(
-            nn.Linear(target_dim * num_graphs, target_dim * 2),
-            self.activation,
+            nn.Linear(target_dim * self.num_graphs, target_dim * 2),
+            act_register[activation],
             nn.Linear(target_dim * 2, target_dim),
         )
 
-    def _create_model_for_graph(self, graph_name: str):
-        """Helper method to create a new DenseDiffPool model for a graph type"""
-        return DenseDiffPool(**self.init_params)
+        # Verify parameter registration
+        expected_params_per_model = sum(
+            p.numel() for p in next(iter(self.graph_models.values())).parameters()
+        )
+        total_expected = expected_params_per_model * self.num_graphs + sum(
+            p.numel() for p in self.final_combination.parameters()
+        )
+        actual_total = sum(p.numel() for p in self.parameters())
+
+        print(f"Parameters per model: {expected_params_per_model:,}")
+        print(f"Expected total parameters: {total_expected:,}")
+        print(f"Actual total parameters: {actual_total:,}")
+
+        if total_expected != actual_total:
+            raise ValueError(
+                f"Parameter registration mismatch! Expected {total_expected:,} but got {actual_total:,}"
+            )
 
     def forward(self, x, adj_dict: dict[str, torch.Tensor], mask=None):
-        """
-        Forward pass handling multiple graphs with dense tensors.
-
-        Args:
-            x (Tensor): Node features [batch_size, num_nodes, in_channels]
-            adj_dict (dict): Dictionary mapping graph names to adjacency tensors
-            mask (Tensor, optional): Mask tensor [batch_size, num_nodes]
-        """
-        if len(adj_dict) != self.num_graphs:
+        """Forward pass through named graph models."""
+        if set(adj_dict.keys()) != set(self.graph_names):
             raise ValueError(
-                f"Expected {self.num_graphs} graphs but got {len(adj_dict)}. "
-                f"Please provide exactly {self.num_graphs} adjacency matrices."
+                f"Expected adjacency matrices for graphs {self.graph_names}, "
+                f"but got {list(adj_dict.keys())}"
             )
 
         # Store outputs for each graph
@@ -300,42 +329,32 @@ class DenseCellDiffPool(nn.Module):
         graph_embed_attention = {}
         graph_cluster_assignments = {}
         graph_cluster_outputs = {}
-        individual_predictions = {}
 
-        # Process each graph
-        for graph_name, adj in adj_dict.items():
-            # Create model if it doesn't exist
-            if graph_name not in self.graph_models:
-                self.graph_models[graph_name] = self._create_model_for_graph(graph_name)
-
-            # Forward pass through individual graph model
+        # Process each named graph
+        for name in self.graph_names:
+            # Get model outputs
             (
                 out,
                 link_losses,
                 entropy_losses,
-                pool_attention_weights,
-                embed_attention_weights,
-                cluster_assignments_list,
+                pool_attention,
+                embed_attention,
+                cluster_assignments,
                 clusters_out,
-            ) = self.graph_models[graph_name](x, adj, mask)
+            ) = self.graph_models[name](x, adj_dict[name], mask)
 
-            # Store outputs
-            individual_predictions[graph_name] = out
-            graph_outputs[graph_name] = out
-            graph_link_losses[graph_name] = link_losses
-            graph_entropy_losses[graph_name] = entropy_losses
-            graph_pool_attention[graph_name] = pool_attention_weights
-            graph_embed_attention[graph_name] = embed_attention_weights
-            graph_cluster_assignments[graph_name] = cluster_assignments_list
-            graph_cluster_outputs[graph_name] = clusters_out
+            # Store all outputs with graph names
+            graph_outputs[name] = out
+            graph_link_losses[name] = link_losses
+            graph_entropy_losses[name] = entropy_losses
+            graph_pool_attention[name] = pool_attention
+            graph_embed_attention[name] = embed_attention
+            graph_cluster_assignments[name] = cluster_assignments
+            graph_cluster_outputs[name] = clusters_out
 
-        # Combine predictions from all graphs
-        combined_features = []
-        for graph_name in sorted(adj_dict.keys()):
-            combined_features.append(graph_outputs[graph_name])
-
-        combined_features = torch.cat(combined_features, dim=-1)
-        final_output = self.final_combination(combined_features)
+        # Combine predictions in consistent order
+        combined = torch.cat([graph_outputs[name] for name in self.graph_names], dim=-1)
+        final_output = self.final_combination(combined)
 
         return (
             final_output,
@@ -345,16 +364,25 @@ class DenseCellDiffPool(nn.Module):
             graph_embed_attention,
             graph_cluster_assignments,
             graph_cluster_outputs,
-            individual_predictions,
+            graph_outputs,  # Individual predictions
         )
 
-
-class CellDiffPool(nn.Module):
-    def __init__():
-        super().__init__()
-
-    def forward(self, x, edge_indices: list[torch.Tensor], batch):
-        pass
+    @property
+    def num_parameters(self):
+        """Count parameters in all submodules."""
+        model_params = sum(
+            sum(p.numel() for p in model.parameters())
+            for model in self.graph_models.values()
+        )
+        combination_params = sum(p.numel() for p in self.final_combination.parameters())
+        return {
+            "per_model": sum(
+                p.numel() for p in next(iter(self.graph_models.values())).parameters()
+            ),
+            "all_models": model_params,
+            "combination_layer": combination_params,
+            "total": model_params + combination_params,
+        }
 
 
 def load_sample_data_batch():
@@ -407,6 +435,7 @@ def load_sample_data_batch():
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
         graph_processor=PhenotypeProcessor(),
+        transform=HeteroToDense({"gene": len(genome.gene_set)}),
     )
 
     seed = 42
@@ -432,6 +461,7 @@ def load_sample_data_batch():
         pin_memory=True,
         prefetch=False,
         seed=seed,
+        dense=True,
     )
     perturbation_subset_data_module.setup()
 
@@ -442,7 +472,7 @@ def load_sample_data_batch():
     return batch, max_num_nodes
 
 
-def main():
+def main_single():
     from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
     import numpy as np
     from torch_geometric.utils import to_dense_batch, to_dense_adj, dense_to_sparse
@@ -450,16 +480,21 @@ def main():
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
 
-    # Extract relevant information from the batch
-    x = batch["gene"].x
-    edge_index_physical = batch["gene", "physical_interaction", "gene"].edge_index
-    batch_index = batch["gene"].batch
-    y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
+    # Extract relevant information from the batch - now using dense format
+    x = batch["gene"].x  # [batch_size, num_nodes, features]
+    adj = batch[
+        "gene", "physical_interaction", "gene"
+    ].adj  # [batch_size, num_nodes, num_nodes]
+    mask = batch["gene"].mask  # [batch_size, num_nodes]
+    y = torch.stack(
+        [batch["gene"].fitness.squeeze(-1), batch["gene"].gene_interaction.squeeze(-1)],
+        dim=1,
+    )
 
     # Model configuration
     model = DenseDiffPool(
         max_num_nodes=max_num_nodes,
-        in_channels=x.size(1),
+        in_channels=x.size(-1),
         pool_gat_hidden_channels=8,
         num_pool_gat_layers=2,
         embed_gat_hidden_channels=8,
@@ -469,6 +504,9 @@ def main():
         activation="relu",
         norm="batch",
         target_dim=2,
+        heads=1,
+        concat=False,
+        dropout=0.0,
     )
 
     # Count and print total parameters
@@ -484,28 +522,23 @@ def main():
 
     # Initialize loss and optimizer
     criterion = CombinedLoss(loss_type="l1", weights=torch.ones(2))
-    # criterion = CombinedLoss(loss_type="mse", weights=torch.tensor([1.0, 0.0]))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
     model.train()
-    for epoch in range(10):  # Increased to 10 epochs
+    for epoch in range(10):
         optimizer.zero_grad()
 
-        # Convert sparse to dense format
-        adj = to_dense_adj(
-            edge_index=edge_index_physical,
-            batch=batch_index,
-            max_num_nodes=max_num_nodes,
-        )
-        x_dense, mask = to_dense_batch(
-            x=x, batch=batch_index, max_num_nodes=max_num_nodes
-        )
-
-        # Forward pass
-        out, link_losses, entropy_losses, cluster_assignments_list, clusters_out = (
-            model(x_dense, adj, mask)
-        )
+        # Forward pass directly with dense tensors
+        (
+            out,
+            link_losses,
+            entropy_losses,
+            pool_attention_weights,
+            embed_attention_weights,
+            cluster_assignments_list,
+            clusters_out,
+        ) = model(x, adj, mask)
 
         # Compute losses
         main_loss = criterion(out, y)[0]
@@ -546,9 +579,23 @@ def main():
         print(f"Total entropy loss: {total_entropy_loss.item():.4f}")
         for i, c_loss in enumerate(cluster_losses):
             print(f"Cluster {i} loss: {c_loss.item():.4f}")
-        print(
-            f"Total loss: {total_loss.item():.4f}"
-        )  # Changed from main_loss to total_loss
+        print(f"Total loss: {total_loss.item():.4f}")
+
+        # Print attention statistics
+        print("\nAttention Statistics:")
+        for layer, pool_attn in enumerate(pool_attention_weights):
+            for idx, attn in enumerate(pool_attn):
+                print(f"Layer {layer}, Pool Conv {idx}:")
+                print(f"  Mean attention: {attn.mean().item():.4f}")
+                print(f"  Max attention: {attn.max().item():.4f}")
+                print(f"  Min attention: {attn.min().item():.4f}")
+
+        for layer, embed_attn in enumerate(embed_attention_weights):
+            for idx, attn in enumerate(embed_attn):
+                print(f"Layer {layer}, Embed Conv {idx}:")
+                print(f"  Mean attention: {attn.mean().item():.4f}")
+                print(f"  Max attention: {attn.max().item():.4f}")
+                print(f"  Min attention: {attn.min().item():.4f}")
 
         # Optimizer step
         optimizer.step()
@@ -558,6 +605,187 @@ def main():
             print("\nPredictions vs Actual (first batch):")
             print(f"Predictions: {out[0].detach().numpy()}")
             print(f"Actual: {y[0].numpy()}")
+
+            # Print cluster assignment statistics
+            print("\nCluster Assignment Statistics:")
+            for layer, cluster_assign in enumerate(cluster_assignments_list):
+                print(f"Layer {layer}:")
+                print(f"  Mean assignment: {cluster_assign.mean().item():.4f}")
+                print(f"  Max assignment: {cluster_assign.max().item():.4f}")
+                print(f"  Min assignment: {cluster_assign.min().item():.4f}")
+                print(f"  Num clusters: {cluster_assign.size(2)}")
+
+
+def main():
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    import numpy as np
+
+    # Load the sample data batch
+    batch, max_num_nodes = load_sample_data_batch()
+
+    # Extract relevant information from the batch - now using dense format
+    x = batch["gene"].x  # [batch_size, num_nodes, features]
+    adj_physical = batch["gene", "physical_interaction", "gene"].adj
+    adj_regulatory = batch["gene", "regulatory_interaction", "gene"].adj
+    mask = batch["gene"].mask  # [batch_size, num_nodes]
+    y = torch.stack(
+        [batch["gene"].fitness.squeeze(-1), batch["gene"].gene_interaction.squeeze(-1)],
+        dim=1,
+    )
+
+    # Create dictionary of adjacency matrices
+    adj_dict = {
+        "physical_interaction": adj_physical,
+        "regulatory_interaction": adj_regulatory,
+    }
+
+    # Model configuration
+    model = DenseCellDiffPool(
+        graph_names=["physical_interaction", "regulatory_interaction"],
+        max_num_nodes=max_num_nodes,
+        in_channels=x.size(-1),
+        pool_gat_hidden_channels=8,
+        num_pool_gat_layers=2,
+        embed_gat_hidden_channels=8,
+        num_embed_gat_layers=2,
+        num_pooling_layers=3,
+        cluster_size_decay_factor=10.0,
+        activation="relu",
+        norm="batch",
+        target_dim=2,
+        heads=1,
+        concat=False,
+        dropout=0.0,
+    )
+
+    # Count and print total parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"\nTotal parameters: {total_params:,}")
+    print(f"Trainable parameters: {trainable_params:,}")
+    print(f"Total parameters: {model.num_parameters}")
+
+    # Print parameter details for each named component
+    print("\nParameter shapes by layer:")
+    for name, param in model.named_parameters():
+        print(f"{name}: {param.shape}")
+
+    # Initialize loss and optimizer
+    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    # Training loop
+    model.train()
+    for epoch in range(10):
+        optimizer.zero_grad()
+
+        # Forward pass
+        (
+            final_output,
+            graph_link_losses,
+            graph_entropy_losses,
+            graph_pool_attention,
+            graph_embed_attention,
+            graph_cluster_assignments,
+            graph_cluster_outputs,
+            individual_predictions,
+        ) = model(x, adj_dict, mask)
+
+        # Compute main loss
+        main_loss = criterion(final_output, y)[0]
+
+        # Compute individual graph losses
+        individual_losses = {
+            graph_name: criterion(pred, y)[0]
+            for graph_name, pred in individual_predictions.items()
+        }
+
+        # Compute cluster losses for each graph
+        cluster_losses = {
+            graph_name: [criterion(pred, y)[0] for pred in clusters]
+            for graph_name, clusters in graph_cluster_outputs.items()
+        }
+
+        # Combine all losses
+        total_link_loss = sum(sum(losses) for losses in graph_link_losses.values())
+        total_entropy_loss = sum(
+            sum(losses) for losses in graph_entropy_losses.values()
+        )
+        total_cluster_loss = sum(sum(losses) for losses in cluster_losses.values())
+
+        # Total loss with weights
+        total_loss = (
+            main_loss  # Main prediction loss
+            + 0.1 * total_link_loss  # Link prediction losses
+            + 0.1 * total_entropy_loss  # Entropy losses
+            + 0.1 * total_cluster_loss  # Cluster prediction losses
+            + 0.1
+            * sum(individual_losses.values())  # Individual graph prediction losses
+        )
+
+        # Backward pass
+        total_loss.backward()
+
+        # Check for NaN gradients
+        has_nan = False
+        print(f"\nEpoch {epoch + 1}")
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                if torch.isnan(param.grad).any():
+                    print(f"NaN gradient detected in {name}")
+                    has_nan = True
+                grad_norm = param.grad.norm().item()
+                if grad_norm > 10:  # Print large gradients
+                    print(f"Large gradient in {name}: {grad_norm:.4f}")
+
+        if has_nan:
+            print("Training stopped due to NaN gradients")
+            break
+
+        # Print losses
+        print(f"Main loss: {main_loss.item():.4f}")
+        print("Individual graph losses:")
+        for graph_name, loss in individual_losses.items():
+            print(f"{graph_name}: {loss.item():.4f}")
+        print(f"Total link prediction loss: {total_link_loss.item():.4f}")
+        print(f"Total entropy loss: {total_entropy_loss.item():.4f}")
+        print("Cluster losses:")
+        for graph_name, losses in cluster_losses.items():
+            print(f"  {graph_name}:")
+            for i, loss in enumerate(losses):
+                print(f"Layer {i}: {loss.item():.4f}")
+        print(f"Total loss: {total_loss.item():.4f}")
+
+        # Print attention statistics
+        print("\nAttention Statistics:")
+        for graph_name in adj_dict.keys():
+            print(f"\n{graph_name} graph:")
+            for layer, pool_attn in enumerate(graph_pool_attention[graph_name]):
+                for idx, attn in enumerate(pool_attn):
+                    print(f"Layer {layer}, Pool Conv {idx}:")
+                    print(f"Mean attention: {attn.mean().item():.4f}")
+                    print(f"Max attention: {attn.max().item():.4f}")
+                    print(f"Min attention: {attn.min().item():.4f}")
+
+            for layer, embed_attn in enumerate(graph_embed_attention[graph_name]):
+                for idx, attn in enumerate(embed_attn):
+                    print(f"Layer {layer}, Embed Conv {idx}:")
+                    print(f"Mean attention: {attn.mean().item():.4f}")
+                    print(f"Max attention: {attn.max().item():.4f}")
+                    print(f"Min attention: {attn.min().item():.4f}")
+
+        # Optimizer step
+        optimizer.step()
+
+        # Print sample predictions vs actual
+        with torch.no_grad():
+            print("\nPredictions vs Actual (first batch):")
+            print("Combined prediction:")
+            print(f"Prediction: {final_output[0].detach().numpy()}")
+            print(f"Actual: {y[0].numpy()}")
+            print("Individual graph predictions:")
+            for graph_name, pred in individual_predictions.items():
+                print(f"  {graph_name}: {pred[0].detach().numpy()}")
 
 
 if __name__ == "__main__":

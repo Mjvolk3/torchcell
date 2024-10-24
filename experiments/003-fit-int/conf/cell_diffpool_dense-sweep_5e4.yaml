@@ -1,0 +1,115 @@
+program: experiments/003-fit-int/scripts/cell_diffpool_dense.py
+project: torchcell_003-fit-int_cell_diffpool_dense_5e4
+method: grid
+
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [[physical, regulatory]]
+      node_embeddings:
+        values:
+          - [codon_frequency]
+
+  data_module:
+    parameters:
+      is_perturbation_subset:
+        values: [true]
+      perturbation_subset_size:
+        values: [5e4]
+      batch_size:
+        values: [12]
+      num_workers:
+        values: [12]
+      pin_memory:
+        values: [true]
+      prefetch:
+        values: [true]
+
+  trainer:
+    parameters:
+      max_epochs:
+        values: [30]
+      strategy:
+        values: [auto]
+      accelerator:
+        values: [gpu]
+
+  model:
+    parameters:
+      pool_gat_hidden_channels:
+        values: [16]
+      num_pool_gat_layers:
+        values: [2]
+      embed_gat_hidden_channels:
+        values: [16]
+      num_embed_gat_layers:
+        values: [2]
+      num_pooling_layers:
+        values: [5]
+      cluster_size_decay_factor:
+        values: [5.0]
+      activation:
+        values: [relu]
+      norm:
+        values: [batch, layer, instance]
+      target_dim:
+        values: [2]
+      heads:
+        values: [1]
+      concat:
+        values: [false]
+      dropout:
+        values: [0.2]
+
+  regression_task:
+    parameters:
+      loss_type:
+        values: ["mse"]
+      optimizer:
+        parameters:
+          type:
+            values: ["AdamW"]
+          lr:
+            values: [1e-5]
+          weight_decay:
+            values: [1e-4]
+      lr_scheduler:
+        parameters:
+          type:
+            values: ["ReduceLROnPlateau"]
+          mode:
+            values: ["min"]
+          factor:
+            values: [0.2]
+          patience:
+            values: [3]
+          threshold:
+            values: [1e-4]
+          threshold_mode:
+            values: ["rel"]
+          cooldown:
+            values: [2]
+          min_lr:
+            values: [1e-9]
+          eps:
+            values: [1e-10]
+      boxplot_every_n_epochs:
+        values: [1]
+      clip_grad_norm:
+        values: [true]
+      clip_grad_norm_max_norm:
+        values: [1.0]
+      cluster_loss_weight:
+        values: [1.0]
+      link_pred_loss_weight:
+        values: [1.0]
+      entropy_loss_weight:
+        values: [1.0]
+      grad_accumulation_schedule:
+        values: null
+
+command:
+  - ${env}
+  - python
+  - ${program}

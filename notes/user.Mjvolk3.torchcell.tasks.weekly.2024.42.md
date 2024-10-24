@@ -2,7 +2,7 @@
 id: x7735rux2u7r93pv1nejg20
 title: '42'
 desc: ''
-updated: 1729183605565
+updated: 1729524644320
 created: 1728854629343
 ---
 
@@ -26,11 +26,5 @@ created: 1728854629343
 
 ## 2024.10.17
 
-- [ ] `1e5` models on `GH` are failing with nans in loss. We need more regularization. We are not yet doing a phenotype difference. I am not sure how much sense it makes now considering that we have both `fitness` and `gene_interaction`. Fitness on `wt` is 1, but the `gene_interaction` is 0. → I have some suspicion that batch normalization doesn't work well in pooling because the features will start to behave very differently in pooling layers. This might account for some of the instability.
-- [ ]
-- [ ]
-- [ ]
+- [x] `1e5` models on `GH` are failing with nans in loss. We need more regularization. We are not yet doing a phenotype difference. I am not sure how much sense it makes now considering that we have both `fitness` and `gene_interaction`. Fitness on `wt` is 1, but the `gene_interaction` is 0. → I have some suspicion that batch normalization doesn't work well in pooling because the features will start to behave very differently in pooling layers. This might account for some of the instability. → It is unclear what is causing the nans now. They occur after one step of back propagation on M1.
 
-***
-
-- [ ] in `IndexSplit` changes `indices` to `index`...

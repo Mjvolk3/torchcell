@@ -381,7 +381,7 @@ def main(cfg: DictConfig) -> None:
         target_dim=wandb.config.model["target_dim"],
     )
 
-    wandb.watch(model, log="gradients", log_freq=100, log_graph=False)
+    wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],

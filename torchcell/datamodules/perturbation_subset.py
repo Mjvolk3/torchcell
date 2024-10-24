@@ -19,6 +19,8 @@ from torchcell.datamodules import (
 )
 from torch_geometric.loader import DataLoader, PrefetchLoader
 import torch
+from torch_geometric.loader import DenseDataLoader
+# from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 
 
 class PerturbationSubsetDataModule(L.LightningDataModule):
@@ -31,6 +33,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         pin_memory: bool = False,
         prefetch: bool = False,
         seed: int = 42,
+        # dense: bool = False,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -41,6 +44,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.pin_memory = pin_memory
         self.prefetch = prefetch
         self.seed = seed
+        # self.dense = dense
 
         self.cache_dir = self.cell_data_module.cache_dir
         self.subset_dir = osp.join(

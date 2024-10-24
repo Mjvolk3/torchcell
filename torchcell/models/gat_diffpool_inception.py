@@ -552,6 +552,8 @@ def load_sample_data_batch():
 
 
 def main():
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
 
@@ -570,13 +572,13 @@ def main():
         diffpool_hidden_channels=8,
         diffpool_out_channels=2,
         num_initial_gat_layers=2,
-        num_diffpool_layers=3,
+        num_diffpool_layers=10,
         num_post_pool_gat_layers=1,
         num_graphs=2,
         max_num_nodes=max_num_nodes,
         gat_dropout_prob=0.0,
         last_layer_dropout_prob=0.2,
-        cluster_size_decay_factor=10.0,
+        cluster_size_decay_factor=2.0,
         norm="mean_subtraction",
         activation="gelu",
         gat_skip_connection=True,
@@ -586,6 +588,10 @@ def main():
         cluster_reduction="mean",
     )
 
+    # Initialize CombinedLoss with MSE
+    # Using equal weights for both dimensions (fitness and gene interaction)
+    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+
     # Print model size
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters: {total_params}")
@@ -593,69 +599,81 @@ def main():
     # Create optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # Forward pass
-    (
-        out,
-        attention_weights,
-        cluster_assignments,
-        link_pred_losses,
-        entropy_losses,
-        cluster_predictions,
-        final_linear_output,  # New: Capture the final linear output
-    ) = model(x, [edge_index_physical, edge_index_regulatory], batch_index)
+    # Training loop
+    model.train()
+    for epoch in range(3):  # Run for 3 epochs to check gradient flow
+        optimizer.zero_grad()
 
-    # Compute loss
-    mse_loss = F.mse_loss(out, y)
-    link_pred_loss = sum(link_pred_losses)
-    entropy_loss = sum(entropy_losses)
-    cluster_loss = sum(F.mse_loss(pred, y) for pred in cluster_predictions)
-    total_loss = (
-        mse_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss + 0.1 * cluster_loss
-    )
+        # Forward pass
+        (
+            out,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+            cluster_predictions,
+            final_linear_output,
+        ) = model(x, [edge_index_physical, edge_index_regulatory], batch_index)
 
-    print(f"Initial loss: {total_loss.item()}")
-    print(f"MSE loss: {mse_loss.item()}")
-    print(f"Link prediction loss: {link_pred_loss.item()}")
-    print(f"Entropy loss: {entropy_loss.item()}")
-    print(f"Cluster loss: {cluster_loss.item()}")
+        # Compute primary loss using CombinedLoss
+        main_loss, dim_losses = criterion(out, y)
 
-    # Backward pass
-    optimizer.zero_grad()
-    total_loss.backward()
+        # Compute auxiliary losses
+        link_pred_loss = sum(link_pred_losses)
+        entropy_loss = sum(entropy_losses)
+        cluster_loss = sum(criterion(pred, y)[0] for pred in cluster_predictions)
 
-    # Check gradients
-    print("\nChecking gradients:")
-    for name, param in model.named_parameters():
-        if param.grad is not None:
-            grad_norm = param.grad.norm()
-            print(f"{name}: grad_norm = {grad_norm}")
-            if torch.isnan(grad_norm):
-                print(f"NaN gradient detected in {name}")
-                print(
-                    f"Parameter stats: min={param.min()}, max={param.max()}, mean={param.mean()}"
-                )
-        else:
-            print(f"{name}: No gradient")
+        # Combine all losses
+        total_loss = (
+            main_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss + 0.1 * cluster_loss
+        )
+        
 
-    # Output the final linear contributions for each graph
-    print("\nFinal linear layer contributions (per sample):")
-    for i, contribution in enumerate(final_linear_output):
-        print(f"Sample {i} final linear contribution: {contribution}")
+        # Print losses
+        print(f"\nEpoch {epoch + 1}")
+        print(f"Main loss: {main_loss.item():.4f}")
+        print(
+            f"Dimension losses: fitness={dim_losses[0].item():.4f}, "
+            f"gene_interaction={dim_losses[1].item():.4f}"
+        )
+        print(f"Link prediction loss: {link_pred_loss.item():.4f}")
+        print(f"Entropy loss: {entropy_loss.item():.4f}")
+        print(f"Cluster loss: {cluster_loss.item():.4f}")
+        print(f"Total loss: {total_loss.item():.4f}")
 
-    print("\nOutput shape:", out.shape)
-    print("Number of attention weight tensors:", len(attention_weights))
-    print("First attention weight shape:", attention_weights[0][0].shape)
-    print("Last attention weight shape:", attention_weights[-1][0].shape)
-    print("Number of cluster assignment tensors:", len(cluster_assignments))
-    print("First cluster assignment shape:", cluster_assignments[0].shape)
-    print("Last cluster assignment shape:", cluster_assignments[-1].shape)
-    print("Link prediction losses:", link_pred_losses)
-    print("Entropy losses:", entropy_losses)
+        # Backward pass
+        total_loss.backward()
 
-    print("\nCluster predictions:")
-    print("Number of cluster prediction tensors:", len(cluster_predictions))
-    for i, pred in enumerate(cluster_predictions):
-        print(f"Cluster prediction {i} shape:", pred.shape)
+        # Check gradients - Fixed this section
+        print("\nGradient norms:")
+        for name, param in model.named_parameters():  # Changed from model.parameters()
+            if param.grad is not None:
+                grad_norm = param.grad.norm().item()
+                print(f"{name}: {grad_norm:.4f}")
+
+                # Check for NaN gradients
+                if torch.isnan(param.grad).any():
+                    print(f"WARNING: NaN gradient detected in {name}")
+                    print(
+                        f"Parameter stats: min={param.min().item():.4f}, "
+                        f"max={param.max().item():.4f}, "
+                        f"mean={param.mean().item():.4f}"
+                    )
+
+        # Update weights
+        optimizer.step()
+
+        # Verify model outputs after update
+        with torch.no_grad():
+            new_out = model(
+                x, [edge_index_physical, edge_index_regulatory], batch_index
+            )[0]
+            print("\nOutput statistics after update:")
+            print(f"Output mean: {new_out.mean().item():.4f}")
+            print(f"Output std: {new_out.std().item():.4f}")
+            print(
+                f"Output range: [{new_out.min().item():.4f}, {new_out.max().item():.4f}]"
+            )
 
 
 if __name__ == "__main__":

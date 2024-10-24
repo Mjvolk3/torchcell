@@ -2,7 +2,7 @@
 id: oe8qr09nxwfjdurm4uep2fx
 title: '43'
 desc: ''
-updated: 1729712793104
+updated: 1729740623705
 created: 1729524650965
 ---
 
@@ -16,7 +16,6 @@ created: 1729524650965
 
 - [ ] Check losses can be back prop.
 
-
 ## 2024.10.22
 
 ## 2024.10.23
@@ -24,7 +23,8 @@ created: 1729524650965
 - [ ] Investigate the proposed dense loader found on github branch.
 - [ ] Implement single dense sparse dense Diffpool
 - [ ] Implement single Dense DiffPool
-
+- [x] dense loading sizes with temp code show matching sizes `adj` compared to `edge_index` [[221008|dendron://torchcell/scratch.2024.10.23.221008]] → for now we can try to move ahead with this to see if training works.
+- [ ] 
 
 ***
 

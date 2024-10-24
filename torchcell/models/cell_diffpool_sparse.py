@@ -275,7 +275,7 @@ class SingleDiffPool(nn.Module):
 class CellDiffPool(nn.Module):
     def __init__(
         self,
-        num_graphs: int,
+        graph_names: list[str],  # e.g. ["physical", "regulatory"]
         max_num_nodes: int,
         in_channels: int,
         pool_gat_hidden_channels: int,
@@ -291,51 +291,65 @@ class CellDiffPool(nn.Module):
     ):
         super().__init__()
 
-        self.num_graphs = num_graphs
-
-        # Store initialization parameters
-        self.init_params = {
-            "max_num_nodes": max_num_nodes,
-            "in_channels": in_channels,
-            "pool_gat_hidden_channels": pool_gat_hidden_channels,
-            "num_pool_gat_layers": num_pool_gat_layers,
-            "embed_gat_hidden_channels": embed_gat_hidden_channels,
-            "num_embed_gat_layers": num_embed_gat_layers,
-            "num_pooling_layers": num_pooling_layers,
-            "cluster_size_decay_factor": cluster_size_decay_factor,
-            "activation": activation,
-            "norm": norm,
-            "target_dim": target_dim,
-            "cluster_aggregation": cluster_aggregation,
-        }
-
-        # Initialize an empty ModuleDict to store SingleDiffPool models
-        # We'll create the models dynamically when we see the edge indices in forward
-        self.graph_models = nn.ModuleDict()
-
-        # Store the target dimension for the final output
+        self.graph_names = sorted(graph_names)  # Sort for consistent ordering
         self.target_dim = target_dim
         self.activation = act_register[activation]
-        # Create a final layer to combine all graph outputs
-        # Input dimension is target_dim * num_graphs
+
+        # Create models for each graph type using ModuleDict
+        self.graph_models = nn.ModuleDict(
+            {
+                name: SingleDiffPool(
+                    max_num_nodes=max_num_nodes,
+                    in_channels=in_channels,
+                    pool_gat_hidden_channels=pool_gat_hidden_channels,
+                    num_pool_gat_layers=num_pool_gat_layers,
+                    embed_gat_hidden_channels=embed_gat_hidden_channels,
+                    num_embed_gat_layers=num_embed_gat_layers,
+                    num_pooling_layers=num_pooling_layers,
+                    cluster_size_decay_factor=cluster_size_decay_factor,
+                    activation=activation,
+                    norm=norm,
+                    target_dim=target_dim,
+                    cluster_aggregation=cluster_aggregation,
+                )
+                for name in self.graph_names
+            }
+        )
+
+        # Final combination layers
         self.final_combination = nn.Sequential(
-            nn.Linear(target_dim * num_graphs, target_dim * 2),
+            nn.Linear(target_dim * len(self.graph_names), target_dim * 2),
             self.activation,
             nn.Linear(target_dim * 2, target_dim),
         )
 
-    def _create_model_for_graph(self, graph_name: str):
-        """Helper method to create a new SingleDiffPool model for a graph type"""
-        return SingleDiffPool(**self.init_params)
+        # Verify parameter registration
+        expected_params_per_model = sum(
+            p.numel() for p in next(iter(self.graph_models.values())).parameters()
+        )
+        total_expected = expected_params_per_model * len(self.graph_names) + sum(
+            p.numel() for p in self.final_combination.parameters()
+        )
+        actual_total = sum(p.numel() for p in self.parameters())
 
-    def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
-        if len(edge_indices) != self.num_graphs:
+        print(f"Parameters per model: {expected_params_per_model:,}")
+        print(f"Expected total parameters: {total_expected:,}")
+        print(f"Actual total parameters: {actual_total:,}")
+
+        if total_expected != actual_total:
             raise ValueError(
-                f"Expected {self.num_graphs} graphs but got {len(edge_indices)}. "
-                f"Please provide exactly {self.num_graphs} edge indices."
+                f"Parameter registration mismatch! Expected {total_expected:,} but got {actual_total:,}"
             )
 
-        # Dictionary to store outputs from each graph
+    def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
+        """Forward pass through all graph models."""
+        if set(edge_indices.keys()) != set(self.graph_names):
+            raise ValueError(
+                f"Expected edge indices for graphs {self.graph_names}, "
+                f"but got {list(edge_indices.keys())}"
+            )
+
+        # Process each graph
         graph_outputs = {}
         graph_link_losses = {}
         graph_entropy_losses = {}
@@ -345,41 +359,33 @@ class CellDiffPool(nn.Module):
         graph_cluster_outputs = {}
         individual_predictions = {}
 
-        # Process each graph
-        for graph_name, edge_index in edge_indices.items():
-            # Create model if it doesn't exist
-            if graph_name not in self.graph_models:
-                self.graph_models[graph_name] = self._create_model_for_graph(graph_name)
-
-            # Get predictions for this graph
+        # Process each graph in consistent order
+        for name in self.graph_names:
+            # Forward pass through corresponding model
             (
                 out,
                 link_losses,
                 entropy_losses,
-                pool_attention_weights,
-                embed_attention_weights,
-                cluster_assignments_list,
+                pool_attention,
+                embed_attention,
+                cluster_assignments,
                 clusters_out,
-            ) = self.graph_models[graph_name](x, edge_index, batch)
+            ) = self.graph_models[name](x, edge_indices[name], batch)
 
             # Store all outputs
-            individual_predictions[graph_name] = out
-            graph_outputs[graph_name] = out
-            graph_link_losses[graph_name] = link_losses
-            graph_entropy_losses[graph_name] = entropy_losses
-            graph_pool_attention[graph_name] = pool_attention_weights
-            graph_embed_attention[graph_name] = embed_attention_weights
-            graph_cluster_assignments[graph_name] = cluster_assignments_list
-            graph_cluster_outputs[graph_name] = clusters_out
+            graph_outputs[name] = out
+            graph_link_losses[name] = link_losses
+            graph_entropy_losses[name] = entropy_losses
+            graph_pool_attention[name] = pool_attention
+            graph_embed_attention[name] = embed_attention
+            graph_cluster_assignments[name] = cluster_assignments
+            graph_cluster_outputs[name] = clusters_out
+            individual_predictions[name] = out
 
-        # Combine predictions from all graphs
-        combined_features = []
-        for graph_name in sorted(
-            edge_indices.keys()
-        ):  # Sort to ensure consistent order
-            combined_features.append(graph_outputs[graph_name])
-
-        combined_features = torch.cat(combined_features, dim=-1)
+        # Combine predictions in consistent order
+        combined_features = torch.cat(
+            [graph_outputs[name] for name in self.graph_names], dim=-1
+        )
         final_output = self.final_combination(combined_features)
 
         return (
@@ -392,6 +398,23 @@ class CellDiffPool(nn.Module):
             graph_cluster_outputs,
             individual_predictions,
         )
+
+    @property
+    def num_parameters(self):
+        """Count parameters in all submodules."""
+        model_params = sum(
+            sum(p.numel() for p in model.parameters())
+            for model in self.graph_models.values()
+        )
+        combination_params = sum(p.numel() for p in self.final_combination.parameters())
+        return {
+            "per_model": sum(
+                p.numel() for p in next(iter(self.graph_models.values())).parameters()
+            ),
+            "all_models": model_params,
+            "combination_layer": combination_params,
+            "total": model_params + combination_params,
+        }
 
 
 def load_sample_data_batch():
@@ -503,7 +526,7 @@ def main_single():
         num_pooling_layers=3,
         cluster_size_decay_factor=10.0,
         activation="relu",
-        norm="mean_subtraction",
+        norm="batch",
         target_dim=2,
     )
 
@@ -609,9 +632,10 @@ def main():
         "regulatory": edge_index_regulatory,
     }
 
+
     # Model configuration
     model = CellDiffPool(
-        num_graphs=2,  # physical and regulatory
+        graph_names=["physical", "regulatory"],
         max_num_nodes=max_num_nodes,
         in_channels=x.size(1),
         pool_gat_hidden_channels=8,
@@ -621,9 +645,12 @@ def main():
         num_pooling_layers=3,
         cluster_size_decay_factor=10.0,
         activation="relu",
-        norm="mean_subtraction",
+        norm="layer",
         target_dim=2,
     )
+    params = model.num_parameters
+    print(f"Parameters per model: {params['per_model']:,}")
+    print(f"Total parameters: {params['total']:,}")
 
     # Count and print total parameters
     total_params = sum(p.numel() for p in model.parameters())
@@ -712,14 +739,14 @@ def main():
         print(f"Main loss: {main_loss.item():.4f}")
         print("Individual graph losses:")
         for graph_name, loss in individual_losses.items():
-            print(f"  {graph_name}: {loss.item():.4f}")
+            print(f"{graph_name}: {loss.item():.4f}")
         print(f"Total link prediction loss: {total_link_loss.item():.4f}")
         print(f"Total entropy loss: {total_entropy_loss.item():.4f}")
         print("Cluster losses:")
         for graph_name, losses in cluster_losses.items():
             print(f"  {graph_name}:")
             for i, loss in enumerate(losses):
-                print(f"    Layer {i}: {loss.item():.4f}")
+                print(f"Layer {i}: {loss.item():.4f}")
         print(f"Total loss: {total_loss.item():.4f}")
 
         # Optimizer step
@@ -729,8 +756,8 @@ def main():
         with torch.no_grad():
             print("\nPredictions vs Actual (first batch):")
             print("Combined prediction:")
-            print(f"  Prediction: {final_output[0].detach().numpy()}")
-            print(f"  Actual: {y[0].numpy()}")
+            print(f"Prediction: {final_output[0].detach().numpy()}")
+            print(f"Actual: {y[0].numpy()}")
             print("Individual graph predictions:")
             for graph_name, pred in individual_predictions.items():
                 print(f"  {graph_name}: {pred[0].detach().numpy()}")

@@ -32,16 +32,16 @@ model:
   initial_gat_out_channels: 8
   gat_dropout_prob: 0.2
   gat_skip_connection: true
-  num_diffpool_layers: 5
-  cluster_size_decay_factor: 10.0
+  num_diffpool_layers: 10
+  cluster_size_decay_factor: 2.0
   num_post_pool_gat_layers: 1
   diffpool_hidden_channels: 8
   diffpool_out_channels: 8
   last_layer_dropout_prob: 0.2
-  norm: mean_subtraction # layer, instance, batch, graph, pair, mean_subtraction
+  norm: layer # layer, instance, batch, graph, pair, mean_subtraction
   activation: gelu
   pruned_max_average_node_degree: null
-  weight_init: xavier_uniform
+  weight_init: xavier_normal
   target_dim: 2
 
 regression_task:
@@ -63,11 +63,11 @@ regression_task:
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
   clip_grad_norm_max_norm: 1.0
-  cluster_loss_weight: 1.0
-  link_pred_loss_weight: 1.0
-  entropy_loss_weight: 1.0
-  grad_accumulation_schedule: null
-  # grad_accumulation_schedule:
-  #   0: 24
-  #   4: 4
-  #   8: 1
+  cluster_loss_weight: 1.0 #1.0
+  link_pred_loss_weight: 1.0 # 1.0
+  entropy_loss_weight: 1.0 # 1.0
+  # grad_accumulation_schedule: null
+  grad_accumulation_schedule:
+    0: 24
+    4: 4
+    8: 1

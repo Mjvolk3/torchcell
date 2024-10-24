@@ -34,7 +34,7 @@ import sys
 from typing import Optional
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss, NaNTolerantPearsonCorrCoef, NaNTolerantSpearmanCorrCoef
 
 log = logging.getLogger(__name__)
 
@@ -85,109 +85,6 @@ def log_error_information(
         f.write(f"attention_weights: {attention_weights}\n")
         f.write(f"cluster_assignments: {cluster_assignments}\n")
 
-
-class NaNTolerantCorrelation(Metric):
-    def __init__(self, base_metric, default_value=torch.nan):
-        super().__init__()
-        self.base_metric = base_metric()
-        self.default_value = default_value
-
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
-        # Create a mask for non-NaN values
-        mask = ~torch.isnan(preds) & ~torch.isnan(target)
-
-        # If there are any non-NaN values, update the metric
-        if torch.any(mask):
-            self.base_metric.update(preds[mask], target[mask])
-
-    def compute(self):
-        try:
-            # Compute the metric if there were valid samples
-            result = self.base_metric.compute()
-        except ValueError:
-            # If no valid samples, return torch.nan
-            result = self.default_value
-        return result
-
-
-class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(PearsonCorrCoef)
-
-
-class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(SpearmanCorrCoef)
-
-
-class MultiDimNaNTolerantL1Loss(nn.Module):
-    def __init__(self):
-        super(MultiDimNaNTolerantL1Loss, self).__init__()
-
-    def forward(self, y_pred, y_true):
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-        mask = ~torch.isnan(y_true)
-        n_valid = mask.sum(dim=0)
-        y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
-        absolute_error = torch.abs(y_pred - y_true_masked)
-        dim_losses = (absolute_error * mask.float()).sum(dim=0)
-        dim_means = torch.where(
-            n_valid > 0, dim_losses / n_valid.float(), torch.zeros_like(dim_losses)
-        )
-        return dim_means
-
-
-class MultiDimNaNTolerantMSELoss(nn.Module):
-    def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
-
-    def forward(self, y_pred, y_true):
-        # Ensure y_pred and y_true have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-
-        # Create a mask for non-NaN values
-        mask = ~torch.isnan(y_true)
-
-        # Count the number of non-NaN elements per dimension
-        n_valid = mask.sum(dim=0)
-
-        # Replace NaN values with 0 in y_true (they won't contribute to the loss due to masking)
-        y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
-
-        # Calculate squared error
-        squared_error = torch.pow(y_pred - y_true_masked, 2)
-
-        # Sum the errors for each dimension, considering only non-NaN elements
-        dim_losses = (squared_error * mask.float()).sum(dim=0)
-
-        # Calculate mean loss for each dimension, avoiding division by zero
-        dim_means = torch.where(
-            n_valid > 0, dim_losses / n_valid.float(), torch.zeros_like(dim_losses)
-        )
-
-        return dim_means
-
-
-class CombinedLoss(nn.Module):
-    def __init__(self, loss_type="mse", weights=None):
-        super(CombinedLoss, self).__init__()
-        self.loss_type = loss_type
-        if loss_type == "mse":
-            self.loss_fn = MultiDimNaNTolerantMSELoss()
-        elif loss_type == "l1":
-            self.loss_fn = MultiDimNaNTolerantL1Loss()
-        else:
-            raise ValueError(f"Unsupported loss type: {loss_type}")
-        self.weights = weights if weights is not None else torch.ones(2)
-
-    def forward(self, y_pred, y_true):
-        dim_losses = self.loss_fn(y_pred, y_true)
-        weighted_loss = (dim_losses * self.weights).sum() / self.weights.sum()
-        return weighted_loss, dim_losses
 
 
 class RegressionTask(L.LightningModule):

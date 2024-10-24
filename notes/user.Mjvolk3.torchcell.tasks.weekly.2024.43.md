@@ -2,7 +2,7 @@
 id: oe8qr09nxwfjdurm4uep2fx
 title: '43'
 desc: ''
-updated: 1729555363713
+updated: 1729712793104
 created: 1729524650965
 ---
 
@@ -13,7 +13,18 @@ created: 1729524650965
 - [x] Add self loops. → instead of using function `add_self_loops` or `add_remaining_self_loops`, we just add ones to the diagonal since we are already in dense representation.
 - [x] Add optional learning rate scheduler. → added but it never even comes into effect since nans effect us earlier.
 - [ ] Consider `global_add_pool`, or `global_mean_pool`
-- [ ]
+
+- [ ] Check losses can be back prop.
+
+
+## 2024.10.22
+
+## 2024.10.23
+
+- [ ] Investigate the proposed dense loader found on github branch.
+- [ ] Implement single dense sparse dense Diffpool
+- [ ] Implement single Dense DiffPool
+
 
 ***
 

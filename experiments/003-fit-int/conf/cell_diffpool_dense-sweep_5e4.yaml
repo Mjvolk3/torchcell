@@ -18,9 +18,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [12]
+        values: [6]
       num_workers:
-        values: [12]
+        values: [6]
       pin_memory:
         values: [true]
       prefetch:
@@ -99,15 +99,15 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [1.0]
+        values: [0.1, 1.0]
       cluster_loss_weight:
         values: [1.0]
       link_pred_loss_weight:
-        values: [1.0]
+        values: [0.1]
       entropy_loss_weight:
-        values: [1.0]
+        values: [0.1]
       grad_accumulation_schedule:
-        values: null
+        values: [null]
 
 command:
   - ${env}

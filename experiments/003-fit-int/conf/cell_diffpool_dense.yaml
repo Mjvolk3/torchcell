@@ -15,24 +15,24 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  batch_size: 4
-  num_workers: 4
+  batch_size: 6 # ok: 4; oom: 8, 12
+  num_workers: 6
   pin_memory: true
   prefetch: true
 
 trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
-  accelerator: cpu
-  devices: auto # auto or int
+  accelerator: gpu
+  devices: 1 # auto or int
 
 model:
-  pool_gat_hidden_channels: 8
+  pool_gat_hidden_channels: 16
   num_pool_gat_layers: 2
-  embed_gat_hidden_channels: 8
+  embed_gat_hidden_channels: 16
   num_embed_gat_layers: 2
-  num_pooling_layers: 3
-  cluster_size_decay_factor: 10.0
+  num_pooling_layers: 5
+  cluster_size_decay_factor: 5.0
   activation: relu
   norm: batch
   target_dim: 2

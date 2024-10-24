@@ -1,7 +1,7 @@
-# torchcell/models/gat_diffpool
-# [[torchcell.models.gat_diffpool]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool
-# Test file: tests/torchcell/models/test_gat_diffpool.py
+# torchcell/models/gat_diffpool_inception
+# [[torchcell.models.gat_diffpool_inception]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/gat_diffpool_inception
+# Test file: tests/torchcell/models/test_gat_diffpool_inception.py
 
 import torch
 import torch.nn as nn
@@ -40,12 +40,24 @@ class GatDiffPool(nn.Module):
         norm: str = "instance",
         activation: str = "relu",
         gat_skip_connection: bool = True,
-        pruned_max_average_node_degree: Optional[int] = None,  # New parameter
+        pruned_max_average_node_degree: Optional[int] = None,
         weight_init: str = "default",
+        target_dim: int = 2,
+        cluster_reduction: str = "mean",
     ):
         super().__init__()
         self.weight_init = weight_init
         self.cluster_size_decay_factor = cluster_size_decay_factor
+        self.target_dim = target_dim
+        self.cluster_reduction = cluster_reduction
+
+        # Add linear layers for each diffpool layer
+        self.cluster_prediction_layers = nn.ModuleList(
+            [
+                nn.Linear(diffpool_hidden_channels, target_dim)
+                for _ in range(num_diffpool_layers)
+            ]
+        )
 
         assert norm in [
             None,
@@ -180,6 +192,9 @@ class GatDiffPool(nn.Module):
         self.final_linear = nn.Linear(
             num_graphs * diffpool_hidden_channels, diffpool_out_channels
         )
+
+        self.output_linear = nn.Linear(diffpool_out_channels, target_dim)
+
         # initialize weights
         self.init_weights()
 
@@ -263,6 +278,7 @@ class GatDiffPool(nn.Module):
         cluster_assignments = []
         link_pred_losses = []
         entropy_losses = []
+        cluster_predictions = []
 
         for i in range(self.num_graphs):
             edge_index = edge_indices[i]
@@ -303,6 +319,17 @@ class GatDiffPool(nn.Module):
                 entropy_losses.append(ent_loss)
                 cluster_assignments.append(s)
 
+                # Make predictions for each cluster
+                cluster_pred = self.cluster_prediction_layers[k](x_pool)
+                if k < len(self.diffpool_layers[i]) - 1:  # Not the last layer
+                    if self.cluster_reduction == "mean":
+                        cluster_pred = cluster_pred.mean(dim=1)
+                    elif self.cluster_reduction == "sum":
+                        cluster_pred = cluster_pred.sum(dim=1)
+                else:  # Last layer
+                    cluster_pred = cluster_pred.squeeze(1)
+                cluster_predictions.append(cluster_pred)
+
                 # Update batch information after pooling
                 batch_size, num_nodes, _ = x_pool.size()
                 new_batch = (
@@ -311,8 +338,7 @@ class GatDiffPool(nn.Module):
                     .to(x_pool.device)
                 )
 
-                # HACK Add self-loops by setting diagonal to 1
-                # we do this to try to avoid 0 edges in mp which might cause NaNs
+                # Add self-loops by setting diagonal to 1
                 adj_pool.diagonal(dim1=-2, dim2=-1).fill_(1)
 
                 # Prune edges after pooling if specified
@@ -361,16 +387,24 @@ class GatDiffPool(nn.Module):
         x_concat = torch.cat(graph_outputs, dim=-1)
 
         # Final linear layer with activation and dropout
-        out = self.final_linear(x_concat.squeeze(1))
-        out = self.activation(out)
+        final_linear_output = self.final_linear(
+            x_concat.squeeze(1)
+        )  # Save this to track contributions
+        out = self.activation(final_linear_output)
         out = F.dropout(out, p=self.last_layer_dropout_prob, training=self.training)
 
+        # Output layer
+        out = self.output_linear(out)
+
+        # Return contributions as part of the output
         return (
             out,
             attention_weights,
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
+            cluster_predictions,
+            final_linear_output,  # Track the feature contributions here
         )
 
     def prune_edges_dense(self, adj, k):
@@ -518,6 +552,8 @@ def load_sample_data_batch():
 
 
 def main():
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
 
@@ -526,7 +562,7 @@ def main():
     edge_index_physical = batch["gene", "physical_interaction", "gene"].edge_index
     edge_index_regulatory = batch["gene", "regulatory_interaction", "gene"].edge_index
     batch_index = batch["gene"].batch
-    y = batch["gene"].fitness.unsqueeze(1)  # Assuming fitness is the target
+    y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
     # Model configuration
     model = GatDiffPool(
@@ -534,21 +570,27 @@ def main():
         initial_gat_hidden_channels=8,
         initial_gat_out_channels=8,
         diffpool_hidden_channels=8,
-        diffpool_out_channels=8,
+        diffpool_out_channels=2,
         num_initial_gat_layers=2,
-        num_diffpool_layers=3,
+        num_diffpool_layers=10,
         num_post_pool_gat_layers=1,
         num_graphs=2,
         max_num_nodes=max_num_nodes,
         gat_dropout_prob=0.0,
         last_layer_dropout_prob=0.2,
-        cluster_size_decay_factor=10.0,
+        cluster_size_decay_factor=2.0,
         norm="mean_subtraction",
         activation="gelu",
         gat_skip_connection=True,
         pruned_max_average_node_degree=None,
         weight_init="xavier_uniform",
+        target_dim=2,
+        cluster_reduction="mean",
     )
+
+    # Initialize CombinedLoss with MSE
+    # Using equal weights for both dimensions (fitness and gene interaction)
+    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
 
     # Print model size
     total_params = sum(p.numel() for p in model.parameters())
@@ -557,51 +599,81 @@ def main():
     # Create optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # Forward pass
-    out, attention_weights, cluster_assignments, link_pred_losses, entropy_losses = (
-        model(x, [edge_index_physical, edge_index_regulatory], batch_index)
-    )
+    # Training loop
+    model.train()
+    for epoch in range(3):  # Run for 3 epochs to check gradient flow
+        optimizer.zero_grad()
 
-    # Compute loss
-    mse_loss = F.mse_loss(out, y)
-    link_pred_loss = sum(link_pred_losses)
-    entropy_loss = sum(entropy_losses)
-    total_loss = mse_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss
+        # Forward pass
+        (
+            out,
+            attention_weights,
+            cluster_assignments,
+            link_pred_losses,
+            entropy_losses,
+            cluster_predictions,
+            final_linear_output,
+        ) = model(x, [edge_index_physical, edge_index_regulatory], batch_index)
 
-    print(f"Initial loss: {total_loss.item()}")
+        # Compute primary loss using CombinedLoss
+        main_loss, dim_losses = criterion(out, y)
 
-    # Backward pass
-    optimizer.zero_grad()
-    total_loss.backward()
+        # Compute auxiliary losses
+        link_pred_loss = sum(link_pred_losses)
+        entropy_loss = sum(entropy_losses)
+        cluster_loss = sum(criterion(pred, y)[0] for pred in cluster_predictions)
 
-    # Check gradients
-    print("\nChecking gradients:")
-    for name, param in model.named_parameters():
-        if param.grad is not None:
-            grad_norm = param.grad.norm()
-            print(f"{name}: grad_norm = {grad_norm}")
-            if torch.isnan(grad_norm):
-                print(f"NaN gradient detected in {name}")
-                print(
-                    f"Parameter stats: min={param.min()}, max={param.max()}, mean={param.mean()}"
-                )
-        else:
-            print(f"{name}: No gradient")
+        # Combine all losses
+        total_loss = (
+            main_loss + 0.1 * link_pred_loss + 0.1 * entropy_loss + 0.1 * cluster_loss
+        )
+        
 
-    # Optionally, you can also print the model's state_dict to check parameter values
-    # print("\nModel state_dict:")
-    # for name, param in model.state_dict().items():
-    #     print(f"{name}: min={param.min()}, max={param.max()}, mean={param.mean()}")
+        # Print losses
+        print(f"\nEpoch {epoch + 1}")
+        print(f"Main loss: {main_loss.item():.4f}")
+        print(
+            f"Dimension losses: fitness={dim_losses[0].item():.4f}, "
+            f"gene_interaction={dim_losses[1].item():.4f}"
+        )
+        print(f"Link prediction loss: {link_pred_loss.item():.4f}")
+        print(f"Entropy loss: {entropy_loss.item():.4f}")
+        print(f"Cluster loss: {cluster_loss.item():.4f}")
+        print(f"Total loss: {total_loss.item():.4f}")
 
-    print("\nOutput shape:", out.shape)
-    print("Number of attention weight tensors:", len(attention_weights))
-    print("First attention weight shape:", attention_weights[0][0].shape)
-    print("Last attention weight shape:", attention_weights[-1][0].shape)
-    print("Number of cluster assignment tensors:", len(cluster_assignments))
-    print("First cluster assignment shape:", cluster_assignments[0].shape)
-    print("Last cluster assignment shape:", cluster_assignments[-1].shape)
-    print("Link prediction losses:", link_pred_losses)
-    print("Entropy losses:", entropy_losses)
+        # Backward pass
+        total_loss.backward()
+
+        # Check gradients - Fixed this section
+        print("\nGradient norms:")
+        for name, param in model.named_parameters():  # Changed from model.parameters()
+            if param.grad is not None:
+                grad_norm = param.grad.norm().item()
+                print(f"{name}: {grad_norm:.4f}")
+
+                # Check for NaN gradients
+                if torch.isnan(param.grad).any():
+                    print(f"WARNING: NaN gradient detected in {name}")
+                    print(
+                        f"Parameter stats: min={param.min().item():.4f}, "
+                        f"max={param.max().item():.4f}, "
+                        f"mean={param.mean().item():.4f}"
+                    )
+
+        # Update weights
+        optimizer.step()
+
+        # Verify model outputs after update
+        with torch.no_grad():
+            new_out = model(
+                x, [edge_index_physical, edge_index_regulatory], batch_index
+            )[0]
+            print("\nOutput statistics after update:")
+            print(f"Output mean: {new_out.mean().item():.4f}")
+            print(f"Output std: {new_out.std().item():.4f}")
+            print(
+                f"Output range: [{new_out.min().item():.4f}, {new_out.max().item():.4f}]"
+            )
 
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ import sys
 from typing import Optional
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss, NaNTolerantPearsonCorrCoef, NaNTolerantSpearmanCorrCoef
 
 log = logging.getLogger(__name__)
 
@@ -42,108 +42,49 @@ style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle"
 plt.style.use(style_file_path)
 
 
-class NaNTolerantCorrelation(Metric):
-    def __init__(self, base_metric, default_value=torch.nan):
-        super().__init__()
-        self.base_metric = base_metric()
-        self.default_value = default_value
+def log_error_information(
+    batch_idx,
+    y,
+    y_hat,
+    x,
+    edge_indices,
+    batch_vector,
+    head_loss,
+    dim_losses,
+    link_pred_loss,
+    entropy_loss,
+    attention_weights,
+    cluster_assignments,
+):
+    log.error("NaN loss detected. Logging relevant information and terminating.")
+    log.error(f"Batch index: {batch_idx}")
+    log.error(f"y: {y}")
+    log.error(f"y_hat: {y_hat}")
+    log.error(f"x: {x}")
+    log.error(f"edge_indices: {edge_indices}")
+    log.error(f"batch_vector: {batch_vector}")
+    log.error(f"head_loss: {head_loss}")
+    log.error(f"dim_losses: {dim_losses}")
+    log.error(f"link_pred_loss: {link_pred_loss}")
+    log.error(f"entropy_loss: {entropy_loss}")
+    log.error(f"attention_weights: {attention_weights}")
+    log.error(f"cluster_assignments: {cluster_assignments}")
 
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
-        # Create a mask for non-NaN values
-        mask = ~torch.isnan(preds) & ~torch.isnan(target)
+    # Optionally, you can also log this information to a file
+    with open("nan_loss_debug.log", "w") as f:
+        f.write(f"Batch index: {batch_idx}\n")
+        f.write(f"y: {y}\n")
+        f.write(f"y_hat: {y_hat}\n")
+        f.write(f"x: {x}\n")
+        f.write(f"edge_indices: {edge_indices}\n")
+        f.write(f"batch_vector: {batch_vector}\n")
+        f.write(f"head_loss: {head_loss}\n")
+        f.write(f"dim_losses: {dim_losses}\n")
+        f.write(f"link_pred_loss: {link_pred_loss}\n")
+        f.write(f"entropy_loss: {entropy_loss}\n")
+        f.write(f"attention_weights: {attention_weights}\n")
+        f.write(f"cluster_assignments: {cluster_assignments}\n")
 
-        # If there are any non-NaN values, update the metric
-        if torch.any(mask):
-            self.base_metric.update(preds[mask], target[mask])
-
-    def compute(self):
-        try:
-            # Compute the metric if there were valid samples
-            result = self.base_metric.compute()
-        except ValueError:
-            # If no valid samples, return torch.nan
-            result = self.default_value
-        return result
-
-
-class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(PearsonCorrCoef)
-
-
-class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(SpearmanCorrCoef)
-
-
-class MultiDimNaNTolerantL1Loss(nn.Module):
-    def __init__(self):
-        super(MultiDimNaNTolerantL1Loss, self).__init__()
-
-    def forward(self, y_pred, y_true):
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-        mask = ~torch.isnan(y_true)
-        n_valid = mask.sum(dim=0)
-        y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
-        absolute_error = torch.abs(y_pred - y_true_masked)
-        dim_losses = (absolute_error * mask.float()).sum(dim=0)
-        dim_means = torch.where(
-            n_valid > 0, dim_losses / n_valid.float(), torch.zeros_like(dim_losses)
-        )
-        return dim_means
-
-
-class MultiDimNaNTolerantMSELoss(nn.Module):
-    def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
-
-    def forward(self, y_pred, y_true):
-        # Ensure y_pred and y_true have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-
-        # Create a mask for non-NaN values
-        mask = ~torch.isnan(y_true)
-
-        # Count the number of non-NaN elements per dimension
-        n_valid = mask.sum(dim=0)
-
-        # Replace NaN values with 0 in y_true (they won't contribute to the loss due to masking)
-        y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
-
-        # Calculate squared error
-        squared_error = torch.pow(y_pred - y_true_masked, 2)
-
-        # Sum the errors for each dimension, considering only non-NaN elements
-        dim_losses = (squared_error * mask.float()).sum(dim=0)
-
-        # Calculate mean loss for each dimension, avoiding division by zero
-        dim_means = torch.where(
-            n_valid > 0, dim_losses / n_valid.float(), torch.zeros_like(dim_losses)
-        )
-
-        return dim_means
-
-
-class CombinedLoss(nn.Module):
-    def __init__(self, loss_type="mse", weights=None):
-        super(CombinedLoss, self).__init__()
-        self.loss_type = loss_type
-        if loss_type == "mse":
-            self.loss_fn = MultiDimNaNTolerantMSELoss()
-        elif loss_type == "l1":
-            self.loss_fn = MultiDimNaNTolerantL1Loss()
-        else:
-            raise ValueError(f"Unsupported loss type: {loss_type}")
-        self.weights = weights if weights is not None else torch.ones(2)
-
-    def forward(self, y_pred, y_true):
-        dim_losses = self.loss_fn(y_pred, y_true)
-        weighted_loss = (dim_losses * self.weights).sum() / self.weights.sum()
-        return weighted_loss, dim_losses
 
 
 class RegressionTask(L.LightningModule):
@@ -157,6 +98,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
         loss_type: str = "mse",
+        cluster_loss_weight: float = 1.0,
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
@@ -218,21 +160,7 @@ class RegressionTask(L.LightningModule):
             )
 
     def forward(self, x, edge_indices, batch):
-        (
-            out,
-            attention_weights,
-            cluster_assignments,
-            link_pred_losses,
-            entropy_losses,
-        ) = self.model["main"](x, edge_indices, batch)
-        y_hat = self.model["top"](out)
-        return (
-            y_hat,
-            attention_weights,
-            cluster_assignments,
-            link_pred_losses,
-            entropy_losses,
-        )
+        return self.model(x, edge_indices, batch)
 
     def on_train_start(self):
         parameter_size = sum(p.numel() for p in self.parameters())
@@ -256,51 +184,43 @@ class RegressionTask(L.LightningModule):
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
+            cluster_predictions,
+            final_linear_output,
         ) = self(x, edge_indices, batch_vector)
 
         # Combined loss
-        mse_loss, dim_losses = self.combined_loss(y_hat, y)
+        head_loss, dim_losses = self.combined_loss(y_hat, y)
+
+        # Cluster loss
+        cluster_predictions_tensor = torch.stack(cluster_predictions)
+        expanded_y = y.unsqueeze(0).expand_as(cluster_predictions_tensor)
+        cluster_loss, _ = self.combined_loss(cluster_predictions_tensor, expanded_y)
+        cluster_loss = self.hparams.cluster_loss_weight * (
+            cluster_loss / len(cluster_predictions)
+        )
 
         # Weighted link prediction and entropy losses
         link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
         entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss = head_loss + cluster_loss + link_pred_loss + entropy_loss
 
         if torch.isnan(loss):
-            log.error(
-                "NaN loss detected. Logging relevant information and terminating."
+            log_error_information(
+                batch_idx,
+                y,
+                y_hat,
+                x,
+                edge_indices,
+                batch_vector,
+                head_loss,
+                dim_losses,
+                link_pred_loss,
+                entropy_loss,
+                attention_weights,
+                cluster_assignments,
             )
-            log.error(f"Batch index: {batch_idx}")
-            log.error(f"y: {y}")
-            log.error(f"y_hat: {y_hat}")
-            log.error(f"x: {x}")
-            log.error(f"edge_indices: {edge_indices}")
-            log.error(f"batch_vector: {batch_vector}")
-            log.error(f"mse_loss: {mse_loss}")
-            log.error(f"dim_losses: {dim_losses}")
-            log.error(f"link_pred_loss: {link_pred_loss}")
-            log.error(f"entropy_loss: {entropy_loss}")
-            log.error(f"attention_weights: {attention_weights}")
-            log.error(f"cluster_assignments: {cluster_assignments}")
-
-            # Optionally, you can also log this information to a file
-            with open("nan_loss_debug.log", "w") as f:
-                f.write(f"Batch index: {batch_idx}\n")
-                f.write(f"y: {y}\n")
-                f.write(f"y_hat: {y_hat}\n")
-                f.write(f"x: {x}\n")
-                f.write(f"edge_indices: {edge_indices}\n")
-                f.write(f"batch_vector: {batch_vector}\n")
-                f.write(f"mse_loss: {mse_loss}\n")
-                f.write(f"dim_losses: {dim_losses}\n")
-                f.write(f"link_pred_loss: {link_pred_loss}\n")
-                f.write(f"entropy_loss: {entropy_loss}\n")
-                f.write(f"attention_weights: {attention_weights}\n")
-                f.write(f"cluster_assignments: {cluster_assignments}\n")
-
-            # Terminate the program
             sys.exit(1)
 
         # Scale loss by accumulation steps
@@ -322,7 +242,6 @@ class RegressionTask(L.LightningModule):
             opt.zero_grad()
 
         # Logging
-        # Log the learning rate
         batch_size = batch_vector[-1].item() + 1
         self.log(
             "learning_rate",
@@ -331,7 +250,10 @@ class RegressionTask(L.LightningModule):
             sync_dist=True,
         )
         self.log("train/loss", loss, batch_size=batch_size, sync_dist=True)
-        self.log("train/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            "train/clustering_loss", cluster_loss, batch_size=batch_size, sync_dist=True
+        )
+        self.log("train/head_loss", head_loss, batch_size=batch_size, sync_dist=True)
         self.log(
             "train/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
         )
@@ -380,23 +302,36 @@ class RegressionTask(L.LightningModule):
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
+            cluster_predictions,
+            final_linear_output,
         ) = self(x, edge_indices, batch_vector)
 
         # Combined loss
-        mse_loss, dim_losses = self.combined_loss(y_hat, y)
+        head_loss, dim_losses = self.combined_loss(y_hat, y)
+
+        # Cluster loss
+        cluster_predictions_tensor = torch.stack(cluster_predictions)
+        expanded_y = y.unsqueeze(0).expand_as(cluster_predictions_tensor)
+        cluster_loss, _ = self.combined_loss(cluster_predictions_tensor, expanded_y)
+        cluster_loss = self.hparams.cluster_loss_weight * (
+            cluster_loss / len(cluster_predictions)
+        )
 
         # Weighted link prediction and entropy losses
         link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
         entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss = head_loss + cluster_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
         # Log the losses
         self.log("val/loss", loss, batch_size=batch_size, sync_dist=True)
-        self.log("val/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
+        self.log("val/head_loss", head_loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            "val/clustering_loss", cluster_loss, batch_size=batch_size, sync_dist=True
+        )
         self.log(
             "val/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
         )
@@ -528,23 +463,36 @@ class RegressionTask(L.LightningModule):
             cluster_assignments,
             link_pred_losses,
             entropy_losses,
+            cluster_predictions,
+            final_linear_output,
         ) = self(x, edge_indices, batch_vector)
 
         # Combined loss
-        mse_loss, dim_losses = self.combined_loss(y_hat, y)
+        head_loss, dim_losses = self.combined_loss(y_hat, y)
+
+        # Cluster loss
+        cluster_predictions_tensor = torch.stack(cluster_predictions)
+        expanded_y = y.unsqueeze(0).expand_as(cluster_predictions_tensor)
+        cluster_loss, _ = self.combined_loss(cluster_predictions_tensor, expanded_y)
+        cluster_loss = self.hparams.cluster_loss_weight * (
+            cluster_loss / len(cluster_predictions)
+        )
 
         # Weighted link prediction and entropy losses
         link_pred_loss = sum(link_pred_losses) * self.hparams.link_pred_loss_weight
         entropy_loss = sum(entropy_losses) * self.hparams.entropy_loss_weight
 
         # Total loss
-        loss = mse_loss + link_pred_loss + entropy_loss
+        loss = head_loss + cluster_loss + link_pred_loss + entropy_loss
 
         batch_size = batch_vector[-1].item() + 1
 
         # Log the losses
         self.log("test/loss", loss, batch_size=batch_size, sync_dist=True)
-        self.log("test/mse_loss", mse_loss, batch_size=batch_size, sync_dist=True)
+        self.log("test/head_loss", head_loss, batch_size=batch_size, sync_dist=True)
+        self.log(
+            "test/clustering_loss", cluster_loss, batch_size=batch_size, sync_dist=True
+        )
         self.log(
             "test/fitness_loss", dim_losses[0], batch_size=batch_size, sync_dist=True
         )

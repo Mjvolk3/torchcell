@@ -1,6 +1,7 @@
 program: experiments/003-fit-int/scripts/cell_sagpool.py
 project: torchcell_003-fit-int_cell_sagpool_5e4
-method: grid
+# method: grid
+method: random
 
 parameters:
   cell_dataset:
@@ -45,6 +46,8 @@ parameters:
         values: [9]
       pooling_ratio:
         values: [0.5]
+      min_score:
+        values: [null]
       activation:
         values: [relu]
       norm:

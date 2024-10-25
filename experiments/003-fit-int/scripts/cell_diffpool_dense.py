@@ -23,6 +23,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.datamodules import CellDataModule
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
@@ -359,6 +360,19 @@ def main(cfg: DictConfig) -> None:
     input_dim = dataset.num_features["gene"]
     max_num_nodes = len(dataset.gene_set)
     dataset.close_lmdb()
+    # device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    log.info(device)
+
+    num_devices = torch.cuda.device_count()
+    if wandb.config.trainer["devices"] != "auto":
+        devices = wandb.config.trainer["devices"]
+    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
+        devices = num_devices
+    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
+        # if there are no GPUs available, use 1 CPU
+        devices = 1
+
 
     # The graph names are derived from the cell_dataset.graphs config
     graph_names = [
@@ -384,13 +398,22 @@ def main(cfg: DictConfig) -> None:
     )
     # Log model parameters
     param_counts = model.num_parameters
-    wandb.log({
-        "model/params_per_model": param_counts["per_model"],
-        "model/params_all_models": param_counts["all_models"],
-        "model/params_combination_layer": param_counts["combination_layer"],
-        "model/params_total": param_counts["total"]
-    })
+    wandb.log(
+        {
+            "model/params_per_model": param_counts["per_model"],
+            "model/params_all_models": param_counts["all_models"],
+            "model/params_combination_layer": param_counts["combination_layer"],
+            "model/params_total": param_counts["total"],
+        }
+    )
     wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
+
+    # loss
+    loss_func = CombinedLoss(
+        loss_type=wandb.config.regression_task["loss_type"],
+        weights=torch.ones(2).to(device),
+    )
+
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],
@@ -399,7 +422,7 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        loss_type=wandb.config.regression_task["loss_type"],
+        loss_func=loss_func,
         cluster_loss_weight=wandb.config.regression_task["cluster_loss_weight"],
         link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
         entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
@@ -415,18 +438,6 @@ def main(cfg: DictConfig) -> None:
         monitor="val/loss",
         mode="min",
     )
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    log.info(device)
-
-    num_devices = torch.cuda.device_count()
-    if wandb.config.trainer["devices"] != "auto":
-        devices = wandb.config.trainer["devices"]
-    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
-        devices = num_devices
-    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
-        # if there are no GPUs available, use 1 CPU
-        devices = 1
 
     # In your main function:
     # profiler = CustomAdvancedProfiler(

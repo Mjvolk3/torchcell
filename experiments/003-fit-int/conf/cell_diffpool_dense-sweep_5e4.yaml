@@ -18,9 +18,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [6]
+        values: [4]
       num_workers:
-        values: [6]
+        values: [4]
       pin_memory:
         values: [true]
       prefetch:
@@ -29,26 +29,28 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [30]
+        values: [5]
       strategy:
         values: [auto]
       accelerator:
         values: [gpu]
+      devices:
+        values: [auto]
 
   model:
     parameters:
       pool_gat_hidden_channels:
-        values: [16]
+        values: [4]
       num_pool_gat_layers:
         values: [2]
       embed_gat_hidden_channels:
-        values: [16]
+        values: [4]
       num_embed_gat_layers:
         values: [2]
       num_pooling_layers:
         values: [5]
       cluster_size_decay_factor:
-        values: [5.0]
+        values: [6.0]
       activation:
         values: [relu]
       norm:
@@ -71,7 +73,7 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-5]
+            values: [1e-4]
           weight_decay:
             values: [1e-4]
       lr_scheduler:
@@ -101,7 +103,7 @@ parameters:
       clip_grad_norm_max_norm:
         values: [0.1, 1.0]
       cluster_loss_weight:
-        values: [1.0]
+        values: [0.1, 1.0, 10.0]
       link_pred_loss_weight:
         values: [0.1]
       entropy_loss_weight:

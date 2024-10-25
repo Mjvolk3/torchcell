@@ -83,7 +83,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
-        loss_type: str = "mse",
+        loss_func: nn.Module = None,
         cluster_loss_weight: float = 1.0,
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
@@ -93,7 +93,7 @@ class RegressionTask(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-        self.combined_loss = CombinedLoss(loss_type=loss_type, weights=torch.ones(2))
+        self.combined_loss = loss_func
         self.current_accumulation_steps = 1
 
         metrics = MetricCollection(

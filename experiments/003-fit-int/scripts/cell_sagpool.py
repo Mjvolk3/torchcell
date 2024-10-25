@@ -16,6 +16,8 @@ from torchcell.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+
 from torchcell.datamodules import CellDataModule
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
@@ -382,6 +384,12 @@ def main(cfg: DictConfig) -> None:
     )
     wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
+    # loss
+    loss_func = CombinedLoss(
+        loss_type=wandb.config.regression_task["loss_type"],
+        weights=torch.ones(2).to(device),
+    )
+
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],
@@ -393,7 +401,7 @@ def main(cfg: DictConfig) -> None:
         intermediate_loss_weight=wandb.config.regression_task[
             "intermediate_loss_weight"
         ],
-        loss_type=wandb.config.regression_task["loss_type"],
+        loss_func=loss_func,
         grad_accumulation_schedule=wandb.config.regression_task[
             "grad_accumulation_schedule"
         ],

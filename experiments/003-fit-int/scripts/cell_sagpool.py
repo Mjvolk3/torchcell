@@ -352,10 +352,20 @@ def main(cfg: DictConfig) -> None:
     # max_num_nodes = len(dataset.gene_set)
     dataset.close_lmdb()
 
+    # Device setup
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    log.info(device)
+
+    num_devices = torch.cuda.device_count()
+    if wandb.config.trainer["devices"] != "auto":
+        devices = wandb.config.trainer["devices"]
+    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
+        devices = num_devices
+    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
+        # if there are no GPUs available, use 1 CPU
+        devices = 1
     # The graph names are derived from the cell_dataset.graphs config
-    graph_names = [
-        f"{name}" for name in wandb.config.cell_dataset["graphs"]
-    ]
+    graph_names = [f"{name}" for name in wandb.config.cell_dataset["graphs"]]
 
     model = CellSAGPool(
         graph_names=graph_names,
@@ -370,8 +380,8 @@ def main(cfg: DictConfig) -> None:
         heads=wandb.config.model["heads"],
         dropout=wandb.config.model["dropout"],
     )
-
     wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],
@@ -396,18 +406,6 @@ def main(cfg: DictConfig) -> None:
         monitor="val/loss",
         mode="min",
     )
-
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    log.info(device)
-
-    num_devices = torch.cuda.device_count()
-    if wandb.config.trainer["devices"] != "auto":
-        devices = wandb.config.trainer["devices"]
-    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
-        devices = num_devices
-    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
-        # if there are no GPUs available, use 1 CPU
-        devices = 1
 
     # In your main function:
     # profiler = CustomAdvancedProfiler(

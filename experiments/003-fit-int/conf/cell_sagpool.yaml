@@ -23,8 +23,8 @@ data_module:
 trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
-  accelerator: gpu
-  devices: 1 # auto or int
+  accelerator: cpu
+  devices: auto # auto or int
 
 model:
   hidden_channels: 16 # Base hidden dimension

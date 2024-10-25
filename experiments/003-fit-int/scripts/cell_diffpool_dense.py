@@ -382,7 +382,14 @@ def main(cfg: DictConfig) -> None:
         concat=wandb.config.model["concat"],
         dropout=wandb.config.model["dropout"],
     )
-
+    # Log model parameters
+    param_counts = model.num_parameters
+    wandb.log({
+        "model/params_per_model": param_counts["per_model"],
+        "model/params_all_models": param_counts["all_models"],
+        "model/params_combination_layer": param_counts["combination_layer"],
+        "model/params_total": param_counts["total"]
+    })
     wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
     task = RegressionTask(
         model=model,

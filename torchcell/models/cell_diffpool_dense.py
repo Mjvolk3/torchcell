@@ -495,12 +495,12 @@ def main_single():
     model = DenseDiffPool(
         max_num_nodes=max_num_nodes,
         in_channels=x.size(-1),
-        pool_gat_hidden_channels=8,
-        num_pool_gat_layers=2,
-        embed_gat_hidden_channels=8,
+        pool_gat_hidden_channels=4,
+        num_pool_gat_layers=5,
+        embed_gat_hidden_channels=4,
         num_embed_gat_layers=2,
-        num_pooling_layers=3,
-        cluster_size_decay_factor=10.0,
+        num_pooling_layers=6,
+        cluster_size_decay_factor=7.0,
         activation="relu",
         norm="batch",
         target_dim=2,
@@ -644,12 +644,12 @@ def main():
         graph_names=["physical_interaction", "regulatory_interaction"],
         max_num_nodes=max_num_nodes,
         in_channels=x.size(-1),
-        pool_gat_hidden_channels=8,
+        pool_gat_hidden_channels=4,
         num_pool_gat_layers=2,
-        embed_gat_hidden_channels=8,
+        embed_gat_hidden_channels=4,
         num_embed_gat_layers=2,
-        num_pooling_layers=3,
-        cluster_size_decay_factor=10.0,
+        num_pooling_layers=5,
+        cluster_size_decay_factor=6.0,
         activation="relu",
         norm="batch",
         target_dim=2,
@@ -789,4 +789,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main_single()

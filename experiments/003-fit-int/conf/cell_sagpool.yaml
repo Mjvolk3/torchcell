@@ -1,0 +1,64 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # mode: offline # disabled, offline, online
+  project: torchcell_test_cell_sagpool
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory] # [physical], [regulatory], [physical, regulatory], []
+  node_embeddings: [codon_frequency]
+  # [one_hot_gene], [codon_frequency], [calm], [fudt_downstream], [fudt_upstream], [prot_T5_all], [prot_T5_no_dubious], [nt_window_5979], [nt_window_three_prime_300], [nt_window_five_prime_1003], [esm2_t33_650M_UR50D_all], [esm2_t33_650M_UR50D_no_dubious], [normalized_chrom_pathways], [random_1000], [random_100], [random_10], [random_1]
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 5e4 #7e3
+  batch_size: 4
+  num_workers: 4
+  pin_memory: true
+  prefetch: true
+
+trainer:
+  max_epochs: 2
+  strategy: auto # ddp, auto
+  accelerator: cpu
+  devices: auto # auto or int
+
+model:
+  hidden_channels: 16 # Base hidden dimension
+  num_layers: 9 # Number of SAGPool layers
+  pooling_ratio: 0.5 # Ratio of nodes to keep after pooling
+  min_score: null # Optional threshold for node selection
+  activation: relu
+  norm: layer
+  target_dim: 2
+  heads: 4
+  dropout: 0.1
+
+regression_task:
+  loss_type: "mse"
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-4
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  boxplot_every_n_epochs: 1
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 1.0
+  intermediate_loss_weight: 1.0
+  grad_accumulation_schedule: null
+  # grad_accumulation_schedule:
+  #   0: 24
+  #   4: 4
+  #   8: 1

@@ -18,9 +18,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [4]
+        values: [12]
       num_workers:
-        values: [4]
+        values: [12]
       pin_memory:
         values: [true]
       prefetch:
@@ -40,11 +40,11 @@ parameters:
   model:
     parameters:
       hidden_channels:
-        values: [16, 32]
+        values: [8, 16]
       num_layers:
-        values: [6, 9]
+        values: [9]
       pooling_ratio:
-        values: [0.5, 0.7]
+        values: [0.5]
       activation:
         values: [relu]
       norm:
@@ -52,9 +52,9 @@ parameters:
       target_dim:
         values: [2]
       heads:
-        values: [4]
+        values: [1, 4]
       dropout:
-        values: [0.1, 0.2]
+        values: [0.2]
 
   regression_task:
     parameters:
@@ -67,7 +67,7 @@ parameters:
           lr:
             values: [1e-4, 1e-5]
           weight_decay:
-            values: [1e-4]
+            values: [1e-2, 1e-4, 1e-6]
       lr_scheduler:
         parameters:
           type:
@@ -93,9 +93,9 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [1.0]
+        values: [0.1, 1.0,]
       intermediate_loss_weight:
-        values: [1.0]
+        values: [0.1, 1.0, 10.0]
       grad_accumulation_schedule:
         values: [null]
 

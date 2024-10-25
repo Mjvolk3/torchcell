@@ -91,7 +91,7 @@ parameters:
           activation:
             values: [gelu]
           pruned_max_average_node_degree:
-            values: [3]
+            values: [3, 100, null]
           weight_init:
             values: [xavier_uniform]
 
@@ -117,7 +117,7 @@ parameters:
       boxplot_every_n_epochs:
         values: [1]
       learning_rate:
-        values: [1e-6, 1e-5, 1e-4, 1e-3] #[1e-5, 1e-4]
+        values: [1e-3] #[1e-5, 1e-4]
       weight_decay:
         values: [1e-1] #[1e-4, 1e-3]
       clip_grad_norm:
@@ -125,9 +125,9 @@ parameters:
       clip_grad_norm_max_norm:
         values: [0.1]
       link_pred_loss_weight:
-        values: [0.01] #[0.01, 0.1]
+        values: [0.1, 0.01] #[0.01, 0.1]
       entropy_loss_weight:
-        values: [0.01] #[0.01, 0.1]
+        values: [0.1, 0.01] #[0.01, 0.1]
 
 command:
   - ${env}

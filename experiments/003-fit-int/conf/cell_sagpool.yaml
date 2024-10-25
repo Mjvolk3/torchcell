@@ -15,16 +15,16 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  batch_size: 4
-  num_workers: 4
+  batch_size: 12
+  num_workers: 12
   pin_memory: true
   prefetch: true
 
 trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
-  accelerator: cpu
-  devices: auto # auto or int
+  accelerator: gpu
+  devices: 1 # auto or int
 
 model:
   hidden_channels: 16 # Base hidden dimension

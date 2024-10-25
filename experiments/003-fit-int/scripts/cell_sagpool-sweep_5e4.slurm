@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=CDD_5e4
+#SBATCH --job-name=CSP_5e4
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
 #SBATCH --constraint="scratch"
 ### GPU options ###
@@ -38,8 +38,8 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=
-PROJECT_NAME=torchcell_003-fit-int_cell_diffpool_dense_5e4
+SWEEP_ID=5b2smc7c
+PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

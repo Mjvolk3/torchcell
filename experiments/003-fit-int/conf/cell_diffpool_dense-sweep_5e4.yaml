@@ -109,8 +109,9 @@ parameters:
         values: [0.1]
       entropy_loss_weight:
         values: [0.1]
-      grad_accumulation_schedule:sq
-        values: [null]
+      grad_accumulation_schedule:
+        values: #[null]
+          - { 0: 3 }
 
 command:
   - ${env}

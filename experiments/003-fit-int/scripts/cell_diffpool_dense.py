@@ -99,7 +99,7 @@ def main(cfg: DictConfig) -> None:
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online",  # "online", "offline", "disabled"
+        mode="offline",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -390,7 +390,7 @@ def main(cfg: DictConfig) -> None:
         "model/params_combination_layer": param_counts["combination_layer"],
         "model/params_total": param_counts["total"]
     })
-    wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+    wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],

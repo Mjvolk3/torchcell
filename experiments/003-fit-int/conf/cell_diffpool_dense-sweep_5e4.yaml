@@ -19,7 +19,7 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [4]
+        values: [2]
       num_workers:
         values: [4]
       pin_memory:
@@ -111,7 +111,7 @@ parameters:
         values: [0.1]
       grad_accumulation_schedule:
         values: #[null]
-          - { 0: 3 }
+          - { 0: 6 }
 
 command:
   - ${env}

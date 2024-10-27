@@ -277,7 +277,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
-        return self._get_dataloader(self.train_dataset, shuffle=False)
+        return self._get_dataloader(self.train_dataset, shuffle=True)
 
     def val_dataloader(self):
         return self._get_dataloader(self.val_dataset)

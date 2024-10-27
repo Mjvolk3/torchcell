@@ -2,7 +2,7 @@
 id: 2n07pysnkm8d4laupomc1l6
 title: Supported_data_table
 desc: ''
-updated: 1724960544518
+updated: 1729890657919
 created: 1697768273584
 ---
 ## Supported Datasets
@@ -32,12 +32,12 @@ created: 1697768273584
 | $\text{ODuibhir\_2014}$      | $1,312$              | $1$                    | $\text{smf}$                    | $\text{global, node}$ | $\text{growth rate}$                |     $\checkmark$     |
 | $\text{Kemmeren\_2014}$      | $1,484$              | $1$                    | $\text{expr}$                   | $\text{global, node}$ | $\text{sm microarray expression}$   |     $\checkmark$     |
 | $\text{Sameith\_2015}$       | $72$                 | $1$                    | $\text{expr}$                   | $\text{global, node}$ | $\text{dm microarray expression}$   |     $\checkmark$     |
-| $\text{Zelezniak\_2018}$     | $97$                 | $1$                    | $\text{prot abund., met conc.}$ | $\text{global, node}$ | $\text{sm kinase deletion mutants}$ |                      |
-| $\text{Wildenhain\_2015}$    | $195$                | $4,915$                | $\text{smf}$                    | $\text{global}$       | $\text{smf drug tolerance}$         |                      |
-| $\text{Lian\_2017}$          | $18,000$             | $1$                    | $\text{AID}$                    | $\text{global}$       | $\text{AID furfural tolderance}$    |                      |
-| $\text{FitDb}$               | $~6,000$             | $1,144$                | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                |                      |
+| $\text{Zelezniak\_2018}$     | $97$                 | $1$                    | $\text{prot abund., met conc.}$ | $\text{global, node}$ | $\text{sm kinase deletion mutants}$ |     $\checkmark$     |
+| $\text{Wildenhain\_2015}$    | $195$                | $4,915$                | $\text{smf}$                    | $\text{global}$       | $\text{smf drug tolerance}$         | $\text{in progress}$ |
+| $\text{Lian\_2017}$          | $18,000$             | $1$                    | $\text{AID}$                    | $\text{global}$       | $\text{AID furfural tolderance}$    |     $\checkmark$     |
+| $\text{FitDb}$               | $~6,000$             | $1,144$                | $\text{smf}$                    | $\text{global}$       | $\text{growth rate}$                | $\text{in progress}$ |
 
-- Just approximate on `Kuzmin_2020` for now
+  - Just approximate on `Kuzmin_2020` for now
   - 537,911 dmf, dmi
   - 256,862 tmf, tmi
   - 480 smf

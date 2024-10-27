@@ -18,9 +18,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [4]
+        values: [2]
       num_workers:
-        values: [4]
+        values: [2]
       pin_memory:
         values: [true]
       prefetch:
@@ -109,7 +109,8 @@ parameters:
       entropy_loss_weight:
         values: [0.1]
       grad_accumulation_schedule:
-        values: [null]
+        values:
+          - { 0: 2, 4: 3, 8: 1 }
 
 command:
   - ${env}

@@ -21,7 +21,7 @@ parameters:
       batch_size:
         values: [2]
       num_workers:
-        values: [4]
+        values: [2]
       pin_memory:
         values: [true]
       prefetch:

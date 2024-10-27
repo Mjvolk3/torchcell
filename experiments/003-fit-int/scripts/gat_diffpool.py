@@ -409,7 +409,7 @@ def main(cfg: DictConfig) -> None:
             ),
         }
     )
-    wandb.watch(model["main"], log="gradients", log_freq=100, log_graph=False)
+    # wandb.watch(model["main"], log="gradients", log_freq=100, log_graph=False)
     task = RegressionTask(
         model=model,
         optimizer_config=wandb.config.regression_task["optimizer"],

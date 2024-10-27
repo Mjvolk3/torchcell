@@ -1,6 +1,7 @@
 program: experiments/003-fit-int/scripts/cell_diffpool_dense.py
 project: torchcell_003-fit-int_cell_diffpool_dense_5e4
-method: grid
+# method: grid
+method: random
 
 parameters:
   cell_dataset:
@@ -109,8 +110,8 @@ parameters:
       entropy_loss_weight:
         values: [0.1]
       grad_accumulation_schedule:
-        values:
-          - { 0: 2, 4: 3, 8: 1 }
+        values: #[null]
+          - { 0: 3 }
 
 command:
   - ${env}

@@ -2,13 +2,14 @@
 #SBATCH --job-name=CSP_5e4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=243G
+#SBATCH --mem=500G 
 #SBATCH --gres=gpu:4
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
 #SBATCH --output=/scratch/projects/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/projects/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
+# 243G
 
 echo "Running on $(hostname)"
 
@@ -39,7 +40,7 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
 # This one is offline
-SWEEP_ID=5b2smc7c
+SWEEP_ID=pizn2ph1
 PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
 
 echo "-----------------"
@@ -57,3 +58,4 @@ for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
     (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
 done
 wait
+e

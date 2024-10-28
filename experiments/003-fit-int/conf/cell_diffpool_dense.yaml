@@ -18,12 +18,12 @@ data_module:
   num_workers: 10
   batch_size: 2 # ok: 4; oom: 8, 12
   pin_memory: true
-  prefetch: true
+  prefetch: false
 
 trainer:
   max_epochs: 2
   strategy: auto # ddp, auto
-  accelerator: cpu
+  accelerator: gpu
   devices: auto # auto or int
 
 model:
@@ -34,7 +34,7 @@ model:
   num_pooling_layers: 5
   cluster_size_decay_factor: 5.0
   activation: relu
-  norm: batch
+  norm: layer
   target_dim: 2
   heads: 1
   concat: false
@@ -62,8 +62,7 @@ regression_task:
   cluster_loss_weight: 1.0 #1.0
   link_pred_loss_weight: 1.0 # 1.0
   entropy_loss_weight: 1.0 # 1.0
-  grad_accumulation_schedule: null
-  # grad_accumulation_schedule:
-  #   0: 24
-  #   4: 4
-  #   8: 1
+  grad_accumulation_schedule:
+    0: 12
+  
+  # grad_accumulation_schedule: null

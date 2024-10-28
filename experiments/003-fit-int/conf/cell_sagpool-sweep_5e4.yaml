@@ -19,9 +19,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [12]
+        values: [32]
       num_workers:
-        values: [12]
+        values: [16]
       pin_memory:
         values: [true]
       prefetch:
@@ -30,7 +30,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [30]
+        values: [5]
       strategy:
         values: [auto]
       accelerator:
@@ -57,7 +57,7 @@ parameters:
       heads:
         values: [1, 4]
       dropout:
-        values: [0.2]
+        values: [0.1, 0.2]
 
   regression_task:
     parameters:
@@ -96,7 +96,7 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [0.1, 1.0,]
+        values: [0.1, 1.0]
       intermediate_loss_weight:
         values: [0.1, 1.0, 10.0]
       grad_accumulation_schedule:

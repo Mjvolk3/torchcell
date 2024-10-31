@@ -518,6 +518,7 @@ class Neo4jCellDataset(Dataset):
         env_src.close()
         env_dst.close()
 
+    #TODO change to query_gene_set
     @property
     def gene_set(self):
         try:

@@ -197,7 +197,6 @@ class SingleSAGPool(nn.Module):
             )
             pool_sizes.append(nodes_after_pool)
 
-
             # Print node selection information
             for b in range(batch_size):
                 batch_mask = batch == b
@@ -340,6 +339,29 @@ class CellSAGPool(nn.Module):
             graph_pool_sizes,
             graph_node_selections,  # Return node selections
         )
+
+    @property
+    def num_parameters(self) -> dict:
+        """Count parameters in all submodules."""
+        # First, get parameters from one of the models to calculate per_model
+        sample_model = next(iter(self.graph_models.values()))
+        per_model = sum(p.numel() for p in sample_model.parameters())
+
+        # Calculate total parameters for all graph models
+        model_params = sum(
+            sum(p.numel() for p in model.parameters())
+            for model in self.graph_models.values()
+        )
+
+        # Calculate parameters in the final combination layer
+        combination_params = sum(p.numel() for p in self.final_combination.parameters())
+
+        return {
+            "per_model": per_model,
+            "all_models": model_params,
+            "combination_layer": combination_params,
+            "total": model_params + combination_params,
+        }
 
 
 def load_sample_data_batch():

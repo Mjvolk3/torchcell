@@ -45,8 +45,10 @@ from torchcell.data.neo4j_cell import PhenotypeProcessor
 from lightning.pytorch.profilers import AdvancedProfiler
 from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
+from torchcell.profilers.pytorch import PyTorchProfiler
 import cProfile
 from torchcell.transforms.hetero_to_dense import HeteroToDense
+
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -423,6 +425,42 @@ def main(cfg: DictConfig) -> None:
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
 
+    # TODO Profiling - start
+    if wandb_cfg["profiler"]["is_pytorch"]:
+        # Create profile directory structure
+        profile_dir = osp.join(DATA_ROOT, "profiles", str(hostname_slurm_job_id))
+        print(f"Profile directory: {profile_dir}")
+        os.makedirs(profile_dir, exist_ok=True)
+
+        # Determine available activities based on device
+        activities = []
+        if torch.cuda.is_available():
+            activities.append(torch.profiler.ProfilerActivity.CUDA)
+        activities.append(torch.profiler.ProfilerActivity.CPU)
+
+        profiler = PyTorchProfiler(
+            dirpath=profile_dir,
+            filename="profiler_output",
+            schedule=torch.profiler.schedule(
+                wait=100,  # Wait for 5 steps
+                warmup=1,  # Add 1 warmup step
+                active=1,  # Profile for 3 steps
+                repeat=100,  # Repeat every 100 steps
+                skip_first=100,
+            ),
+            on_trace_ready=torch.profiler.tensorboard_trace_handler(profile_dir),
+            activities=activities,
+            with_stack=True,
+            export_to_chrome=True,
+            with_steps=True,
+            profile_memory=True,
+            record_shapes=True,
+            with_flops=True,
+            with_modules=True,
+        )
+    else:
+        profiler = None
+
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -430,7 +468,7 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        # profiler=profiler,  #
+        profiler=profiler,
         log_every_n_steps=1,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )

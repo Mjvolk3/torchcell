@@ -454,7 +454,7 @@ def main(cfg: DictConfig) -> None:
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
         # profiler=profiler,  #
-        log_every_n_steps=1,
+        # log_every_n_steps=1,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

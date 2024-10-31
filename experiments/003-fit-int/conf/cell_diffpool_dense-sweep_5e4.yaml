@@ -19,9 +19,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [2]
+        values: [6]
       num_workers:
-        values: [2]
+        values: [12]
       pin_memory:
         values: [true]
       prefetch:
@@ -55,7 +55,7 @@ parameters:
       activation:
         values: [relu]
       norm:
-        values: [batch, layer, instance]
+        values: [layer] #[batch, layer, instance]
       target_dim:
         values: [2]
       heads:
@@ -74,7 +74,7 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-4]
+            values: [1e-3, 1e-4]
           weight_decay:
             values: [1e-4]
       lr_scheduler:

@@ -84,6 +84,7 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 )
 def main(cfg: DictConfig) -> None:
     print("Starting CellSagPool 🎱")
+    os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
@@ -384,7 +385,7 @@ def main(cfg: DictConfig) -> None:
         heads=wandb.config.model["heads"],
         dropout=wandb.config.model["dropout"],
     )
-    wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+    # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
     loss_func = CombinedLoss(
@@ -468,8 +469,8 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        profiler=profiler,
-        log_every_n_steps=1,
+        # profiler=profiler,  #
+        # log_every_n_steps=1,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

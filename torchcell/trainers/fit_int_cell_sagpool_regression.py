@@ -110,9 +110,9 @@ class RegressionTask(L.LightningModule):
 
         metrics = MetricCollection(
             {
-                "RMSE": MeanSquaredError(squared=False),
-                "MSE": MeanSquaredError(),
-                "MAE": MeanAbsoluteError(),
+                "RMSE": NaNTolerantRMSE(),
+                "MSE": NaNTolerantMSE(),
+                "MAE": NaNTolerantMAE(),
                 "PearsonR": NaNTolerantPearsonCorrCoef(),
                 "SpearmanR": NaNTolerantSpearmanCorrCoef(),
             }

@@ -25,8 +25,8 @@ data_module:
 
 trainer:
   max_epochs: 2
-  strategy: auto # ddp, auto
-  accelerator: cpu
+  strategy: ddp # ddp, auto
+  accelerator: gpu
   devices: auto # auto or int
 
 model:

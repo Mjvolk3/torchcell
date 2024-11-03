@@ -37,7 +37,7 @@ parameters:
       max_epochs:
         values: [5]
       strategy:
-        values: [auto]
+        values: [ddp]
       accelerator:
         values: [gpu]
       devices:
@@ -46,9 +46,9 @@ parameters:
   model:
     parameters:
       hidden_channels:
-        values: [8, 16] #[8, 16]
+        values: [8] #[8, 16]
       num_layers:
-        values: [6, 9]
+        values: [6]
       pooling_ratio:
         values: [0.5]
       min_score:
@@ -56,11 +56,11 @@ parameters:
       activation:
         values: [relu]
       norm:
-        values: [batch, layer, instance]
+        values: [layer] #[batch, layer, instance]
       target_dim:
         values: [2]
       heads:
-        values: [1, 4] #[1, 4]
+        values: [1] #[1, 4]
       dropout:
         values: [0.2] #[0.1, 0.2]
 
@@ -73,9 +73,9 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3, 5e-3, 1e-4] #[1e-4, 1e-5]
+            values: [1e-3] #[1e-3, 5e-3, 1e-4] #[1e-4, 1e-5]
           weight_decay:
-            values: [1e-2, 1e-4, 1e-6]
+            values: [1e-2] #[1e-2, 1e-4, 1e-6]
       lr_scheduler:
         parameters:
           type:
@@ -101,9 +101,9 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [0.1, 1.0]
+        values: [0.1] #[0.1, 1.0]
       intermediate_loss_weight:
-        values: [0.1, 1.0, 10.0]
+        values: [0.1] #[0.1, 1.0, 10.0]
       grad_accumulation_schedule:
         values: [null]
 

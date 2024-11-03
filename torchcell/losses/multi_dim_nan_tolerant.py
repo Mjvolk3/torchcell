@@ -158,8 +158,11 @@ class CombinedLoss(nn.Module):
         else:
             raise ValueError(f"Unsupported loss type: {loss_type}")
 
-        self.weights = weights if weights is not None else torch.ones(2)
-        self.weights = self.weights / self.weights.sum()  # Normalize weights
+        # Register weights as a buffer so it's automatically moved with the module
+        self.register_buffer(
+            "weights",
+            torch.ones(2) if weights is None else weights / weights.sum()
+        )
 
     def forward(self, y_pred, y_true):
         """
@@ -177,6 +180,7 @@ class CombinedLoss(nn.Module):
 
         # Apply weights only to dimensions that have valid samples
         valid_dims = mask.any(dim=0)  # Dimensions with at least one valid sample
+        # weights is already on the correct device due to register_buffer
         weights = self.weights * valid_dims.float()
         weight_sum = weights.sum().clamp(min=1e-8)  # Avoid division by zero
 

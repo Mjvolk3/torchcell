@@ -45,9 +45,9 @@ from torchcell.data.neo4j_cell import PhenotypeProcessor
 from lightning.pytorch.profilers import AdvancedProfiler
 from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
-from torchcell.profilers.pytorch import PyTorchProfiler
 import cProfile
 from torchcell.transforms.hetero_to_dense import HeteroToDense
+# from torchcell.profilers.pytorch import PyTorchProfiler
 
 
 log = logging.getLogger(__name__)
@@ -385,6 +385,15 @@ def main(cfg: DictConfig) -> None:
         heads=wandb.config.model["heads"],
         dropout=wandb.config.model["dropout"],
     )
+    # Log model parameters
+    param_counts = model.num_parameters
+    wandb.log({
+        "model/params_per_model": param_counts["per_model"],
+        "model/params_all_models": param_counts["all_models"],
+        "model/params_combination_layer": param_counts["combination_layer"],
+        "model/params_total": param_counts["total"],
+    })
+    
     # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
@@ -413,7 +422,7 @@ def main(cfg: DictConfig) -> None:
 
     # Checkpoint Callback
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
-    os.makedirs(exist_ok=True)
+    os.makedirs(model_base_path, exist_ok=True)
     checkpoint_callback = ModelCheckpoint(
         dirpath=osp.join(model_base_path, group),
         save_top_k=1,
@@ -428,42 +437,43 @@ def main(cfg: DictConfig) -> None:
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
 
-    # TODO Profiling - start
-    if wandb_cfg["profiler"]["is_pytorch"]:
-        # Create profile directory structure
-        profile_dir = osp.join(DATA_ROOT, "profiles", str(hostname_slurm_job_id))
-        print(f"Profile directory: {profile_dir}")
-        os.makedirs(profile_dir, exist_ok=True)
+    # TODO import type issues 
+    # if wandb_cfg["profiler"]["is_pytorch"]:
+    #     Create profile directory structure
+    #     profile_dir = osp.join(DATA_ROOT, "profiles", str(hostname_slurm_job_id))
+    #     print(f"Profile directory: {profile_dir}")
+    #     os.makedirs(profile_dir, exist_ok=True)
 
-        # Determine available activities based on device
-        activities = []
-        if torch.cuda.is_available():
-            activities.append(torch.profiler.ProfilerActivity.CUDA)
-        activities.append(torch.profiler.ProfilerActivity.CPU)
+    #     Determine available activities based on device
+    #     activities = []
+    #     if torch.cuda.is_available():
+    #         activities.append(torch.profiler.ProfilerActivity.CUDA)
+    #     activities.append(torch.profiler.ProfilerActivity.CPU)
 
-        profiler = PyTorchProfiler(
-            dirpath=profile_dir,
-            filename="profiler_output",
-            schedule=torch.profiler.schedule(
-                wait=100,  # Wait for 5 steps
-                warmup=1,  # Add 1 warmup step
-                active=1,  # Profile for 3 steps
-                repeat=100,  # Repeat every 100 steps
-                skip_first=100,
-            ),
-            on_trace_ready=torch.profiler.tensorboard_trace_handler(profile_dir),
-            activities=activities,
-            with_stack=True,
-            export_to_chrome=True,
-            with_steps=True,
-            profile_memory=True,
-            record_shapes=True,
-            with_flops=True,
-            with_modules=True,
-        )
-    else:
-        profiler = None
+    #     profiler = PyTorchProfiler(
+    #         dirpath=profile_dir,
+    #         filename="profiler_output",
+    #         schedule=torch.profiler.schedule(
+    #             wait=100,  # Wait for 5 steps
+    #             warmup=1,  # Add 1 warmup step
+    #             active=1,  # Profile for 3 steps
+    #             repeat=100,  # Repeat every 100 steps
+    #             skip_first=100,
+    #         ),
+    #         on_trace_ready=torch.profiler.tensorboard_trace_handler(profile_dir),
+    #         activities=activities,
+    #         with_stack=True,
+    #         export_to_chrome=True,
+    #         with_steps=True,
+    #         profile_memory=True,
+    #         record_shapes=True,
+    #         with_flops=True,
+    #         with_modules=True,
+    #     )
+    # else:
+    #     profiler = None
 
+    profiler = None
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -471,8 +481,8 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        # profiler=profiler,  #
-        log_every_n_steps=500,
+        profiler=profiler,  #
+        log_every_n_steps=10,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

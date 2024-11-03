@@ -53,6 +53,8 @@ from lightning.pytorch.profilers import AdvancedProfiler
 import cProfile
 from torchcell.transforms.hetero_to_dense import HeteroToDense
 
+os.environ["WANDB__SERVICE_WAIT"] = "600"
+
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -87,6 +89,7 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 )
 def main(cfg: DictConfig) -> None:
     print("Starting GatDiffPool 🌋")
+    os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
@@ -454,7 +457,7 @@ def main(cfg: DictConfig) -> None:
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
         # profiler=profiler,  #
-        # log_every_n_steps=1,
+        log_every_n_steps=500,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

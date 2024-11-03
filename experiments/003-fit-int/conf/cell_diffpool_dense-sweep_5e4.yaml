@@ -1,7 +1,7 @@
 program: experiments/003-fit-int/scripts/cell_diffpool_dense.py
 project: torchcell_003-fit-int_cell_diffpool_dense_5e4
-# method: grid
-method: random
+method: grid
+# method: random
 
 parameters:
   cell_dataset:
@@ -23,14 +23,14 @@ parameters:
       num_workers:
         values: [12]
       pin_memory:
-        values: [true]
+        values: [true, false]
       prefetch:
-        values: [true]
+        values: [true, false]
 
   trainer:
     parameters:
       max_epochs:
-        values: [5]
+        values: [3]
       strategy:
         values: [auto]
       accelerator:
@@ -74,7 +74,7 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3, 1e-4]
+            values: [1e-4] #[1e-3, 1e-4]
           weight_decay:
             values: [1e-4]
       lr_scheduler:
@@ -102,9 +102,9 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [0.1, 1.0]
+        values: [0.1] #[0.1, 1.0]
       cluster_loss_weight:
-        values: [0.1, 1.0, 10.0]
+        values: [0.1] # [0.1, 1.0, 10.0]
       link_pred_loss_weight:
         values: [0.1]
       entropy_loss_weight:

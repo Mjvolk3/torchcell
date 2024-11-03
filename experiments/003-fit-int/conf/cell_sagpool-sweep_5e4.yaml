@@ -19,18 +19,18 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [32]
+        values: [64]
       num_workers:
         values: [16]
       pin_memory:
         values: [true]
       prefetch:
-        values: [true]
+        values: [true, false]
 
   trainer:
     parameters:
       max_epochs:
-        values: [5]
+        values: [3]
       strategy:
         values: [auto]
       accelerator:

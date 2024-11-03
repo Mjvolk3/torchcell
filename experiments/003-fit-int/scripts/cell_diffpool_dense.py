@@ -99,8 +99,8 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
     experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
-    )
+        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}")
+    
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline",  # "online", "offline", "disabled"
@@ -409,7 +409,7 @@ def main(cfg: DictConfig) -> None:
             "model/params_total": param_counts["total"],
         }
     )
-    wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
+    # wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
 
     # loss
     loss_func = CombinedLoss(
@@ -435,8 +435,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Checkpoint Callback
+    model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
+    os.makedirs(model_base_path, exist_ok=True)
     checkpoint_callback = ModelCheckpoint(
-        dirpath=f"models/checkpoints/{group}",
+        dirpath=osp.join(model_base_path, group),
         save_top_k=1,
         monitor="val/loss",
         mode="min",
@@ -459,6 +461,7 @@ def main(cfg: DictConfig) -> None:
         # profiler=profiler,  #
         log_every_n_steps=500,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
+        detect_anomaly=True,
     )
 
     # Start the training

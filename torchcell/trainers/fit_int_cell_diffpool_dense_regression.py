@@ -11,8 +11,11 @@ import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
-from torchcell.losses.multi_dim_nan_tolerant import (
-    CombinedLoss,
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+from torchcell.metrics.nan_tolerant_metrics import (
+    NaNTolerantMSE,
+    NaNTolerantMAE,
+    NaNTolerantRMSE,
     NaNTolerantPearsonCorrCoef,
     NaNTolerantSpearmanCorrCoef,
 )
@@ -98,9 +101,9 @@ class RegressionTask(L.LightningModule):
 
         metrics = MetricCollection(
             {
-                "RMSE": MeanSquaredError(squared=False),
-                "MSE": MeanSquaredError(),
-                "MAE": MeanAbsoluteError(),
+                "RMSE": NaNTolerantRMSE(),
+                "MSE": NaNTolerantMSE(),
+                "MAE": NaNTolerantMAE(),
                 "PearsonR": NaNTolerantPearsonCorrCoef(),
                 "SpearmanR": NaNTolerantSpearmanCorrCoef(),
             }

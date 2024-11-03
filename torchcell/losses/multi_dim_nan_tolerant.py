@@ -29,40 +29,6 @@ from typing import Optional
 import torch.optim as optim
 
 
-class NaNTolerantCorrelation(Metric):
-    def __init__(self, base_metric, default_value=torch.nan):
-        super().__init__()
-        self.base_metric = base_metric()
-        self.default_value = default_value
-
-    def update(self, preds: torch.Tensor, target: torch.Tensor):
-        # Create a mask for non-NaN values
-        mask = ~torch.isnan(preds) & ~torch.isnan(target)
-
-        # If there are any non-NaN values, update the metric
-        if torch.any(mask):
-            self.base_metric.update(preds[mask], target[mask])
-
-    def compute(self):
-        try:
-            # Compute the metric if there were valid samples
-            result = self.base_metric.compute()
-        except ValueError:
-            # If no valid samples, return torch.nan
-            result = self.default_value
-        return result
-
-
-class NaNTolerantPearsonCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(PearsonCorrCoef)
-
-
-class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
-    def __init__(self):
-        super().__init__(SpearmanCorrCoef)
-
-
 class MultiDimNaNTolerantL1Loss(nn.Module):
     def __init__(self):
         super(MultiDimNaNTolerantL1Loss, self).__init__()

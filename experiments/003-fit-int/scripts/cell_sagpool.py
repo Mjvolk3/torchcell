@@ -94,7 +94,7 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
     experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", str(hostname_slurm_job_id)
+        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}"
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
@@ -412,8 +412,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Checkpoint Callback
+    model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
+    os.makedirs(exist_ok=True)
     checkpoint_callback = ModelCheckpoint(
-        dirpath=f"models/checkpoints/{group}",
+        dirpath=osp.join(model_base_path, group),
         save_top_k=1,
         monitor="val/loss",
         mode="min",
@@ -470,7 +472,7 @@ def main(cfg: DictConfig) -> None:
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
         # profiler=profiler,  #
-        # log_every_n_steps=1,
+        log_every_n_steps=500,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
     )
 

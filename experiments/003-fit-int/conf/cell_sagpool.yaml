@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_test_cell_sagpool
+  project: torchcell_003-fit-int_cell_sagpool_5e4 # torchcell_test_cell_sagpool
   tags: []
 
 cell_dataset:
@@ -18,15 +18,15 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  batch_size: 12
-  num_workers: 12
+  batch_size: 64
+  num_workers: 16
   pin_memory: true
   prefetch: true
 
 trainer:
-  max_epochs: 2
-  strategy: auto # ddp, auto
-  accelerator: cpu
+  max_epochs: 30
+  strategy: ddp # ddp, auto
+  accelerator: gpu #cpu
   devices: auto # auto or int
 
 model:
@@ -44,8 +44,8 @@ regression_task:
   loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-4
-    weight_decay: 1e-4
+    lr: 1e-3
+    weight_decay: 1e-3
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -58,8 +58,8 @@ regression_task:
     eps: 1e-10
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
-  clip_grad_norm_max_norm: 1.0
-  intermediate_loss_weight: 1.0
+  clip_grad_norm_max_norm: 0.1
+  intermediate_loss_weight: 10.0
   grad_accumulation_schedule: null
   # grad_accumulation_schedule:
   #   0: 24

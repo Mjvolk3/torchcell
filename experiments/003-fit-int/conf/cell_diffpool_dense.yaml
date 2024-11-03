@@ -15,14 +15,14 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  num_workers: 10
+  num_workers: 4
   batch_size: 2 # ok: 4; oom: 8, 12
-  pin_memory: true
+  pin_memory: false
   prefetch: false
 
 trainer:
   max_epochs: 2
-  strategy: auto # ddp, auto
+  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
   devices: auto # auto or int
 
@@ -44,7 +44,7 @@ regression_task:
   loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-5
+    lr: 1e-4
     weight_decay: 1e-4
   lr_scheduler:
     type: "ReduceLROnPlateau"

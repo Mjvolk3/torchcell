@@ -60,9 +60,9 @@ parameters:
       target_dim:
         values: [2]
       heads:
-        values: [4] #[1, 4]
+        values: [1] #[1, 4]
       dropout:
-        values: [0.2] #[0.1, 0.2]
+        values: [0.2, 0.4] #[0.1, 0.2]
 
   regression_task:
     parameters:
@@ -101,9 +101,9 @@ parameters:
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
-        values: [0.1]
+        values: [1.0] #[0.1]
       intermediate_loss_weight:
-        values: [1.0, 10.0]
+        values: [1.0]
       grad_accumulation_schedule:
         values: [null]
 

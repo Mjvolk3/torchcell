@@ -1,3 +1,8 @@
+# experiments/003-fit-int/scripts/cell_gin_diffpool_dense
+# [[experiments.003-fit-int.scripts.cell_gin_diffpool_dense]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/cell_gin_diffpool_dense
+# Test file: experiments/003-fit-int/scripts/test_cell_gin_diffpool_dense.py
+
 import hashlib
 import json
 import logging
@@ -16,9 +21,8 @@ from torchcell.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
-from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
-
 from torchcell.datamodules import CellDataModule
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
@@ -31,8 +35,8 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.models import Mlp
-from torchcell.models.cell_sagpool import CellSAGPool
-from torchcell.trainers.fit_int_cell_sagpool_regression import RegressionTask
+from torchcell.models.cell_gin_diffpool_dense import DenseCellDiffPool
+from torchcell.trainers.fit_int_cell_diffpool_dense_regression import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket
@@ -47,8 +51,8 @@ from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
 import cProfile
 from torchcell.transforms.hetero_to_dense import HeteroToDense
-# from torchcell.profilers.pytorch import PyTorchProfiler
 
+os.environ["WANDB__SERVICE_WAIT"] = "600"
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -80,10 +84,10 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="cell_sagpool",
+    config_name="cell_diffpool_dense",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting CellSagPool 🎱")
+    print("Starting GatDiffPool 🌋")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -94,8 +98,8 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
     experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}"
-    )
+        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}")
+    
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline",  # "online", "offline", "disabled"
@@ -324,6 +328,7 @@ def main(cfg: DictConfig) -> None:
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
         graph_processor=PhenotypeProcessor(),
+        transform=HeteroToDense({"gene": len(genome.gene_set)}),
     )
 
     # Base Module
@@ -349,15 +354,15 @@ def main(cfg: DictConfig) -> None:
             pin_memory=wandb.config.data_module["pin_memory"],
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
+            dense=True,
         )
         data_module.setup()
 
     # Anytime data is accessed lmdb must be closed.
     input_dim = dataset.num_features["gene"]
-    # max_num_nodes = len(dataset.gene_set)
+    max_num_nodes = len(dataset.gene_set)
     dataset.close_lmdb()
-
-    # Device setup
+    # device
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
 
@@ -369,32 +374,41 @@ def main(cfg: DictConfig) -> None:
     elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
         # if there are no GPUs available, use 1 CPU
         devices = 1
-    # The graph names are derived from the cell_dataset.graphs config
-    graph_names = [f"{name}" for name in wandb.config.cell_dataset["graphs"]]
 
-    model = CellSAGPool(
+
+    # The graph names are derived from the cell_dataset.graphs config
+    graph_names = [
+        f"{name}_interaction" for name in wandb.config.cell_dataset["graphs"]
+    ]
+
+    model = DenseCellDiffPool(
         graph_names=graph_names,
+        max_num_nodes=max_num_nodes,  # From len(dataset.gene_set)
         in_channels=input_dim,
-        hidden_channels=wandb.config.model["hidden_channels"],
-        num_layers=wandb.config.model["num_layers"],
-        pooling_ratio=wandb.config.model["pooling_ratio"],
-        min_score=wandb.config.model["min_score"],
+        pool_gat_hidden_channels=wandb.config.model["pool_gat_hidden_channels"],
+        num_pool_gat_layers=wandb.config.model["num_pool_gat_layers"],
+        embed_gat_hidden_channels=wandb.config.model["embed_gat_hidden_channels"],
+        num_embed_gat_layers=wandb.config.model["num_embed_gat_layers"],
+        num_pooling_layers=wandb.config.model["num_pooling_layers"],
+        cluster_size_decay_factor=wandb.config.model["cluster_size_decay_factor"],
         activation=wandb.config.model["activation"],
         norm=wandb.config.model["norm"],
         target_dim=wandb.config.model["target_dim"],
         heads=wandb.config.model["heads"],
+        concat=wandb.config.model["concat"],
         dropout=wandb.config.model["dropout"],
     )
     # Log model parameters
     param_counts = model.num_parameters
-    wandb.log({
-        "model/params_per_model": param_counts["per_model"],
-        "model/params_all_models": param_counts["all_models"],
-        "model/params_combination_layer": param_counts["combination_layer"],
-        "model/params_total": param_counts["total"],
-    })
-    
-    # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+    wandb.log(
+        {
+            "model/params_per_model": param_counts["per_model"],
+            "model/params_all_models": param_counts["all_models"],
+            "model/params_combination_layer": param_counts["combination_layer"],
+            "model/params_total": param_counts["total"],
+        }
+    )
+    # wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
 
     # loss
     loss_func = CombinedLoss(
@@ -410,14 +424,13 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        intermediate_loss_weight=wandb.config.regression_task[
-            "intermediate_loss_weight"
-        ],
         loss_func=loss_func,
+        cluster_loss_weight=wandb.config.regression_task["cluster_loss_weight"],
+        link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
+        entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
         grad_accumulation_schedule=wandb.config.regression_task[
             "grad_accumulation_schedule"
         ],
-        device=device,
     )
 
     # Checkpoint Callback
@@ -437,43 +450,6 @@ def main(cfg: DictConfig) -> None:
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
 
-    # TODO import type issues 
-    # if wandb_cfg["profiler"]["is_pytorch"]:
-    #     Create profile directory structure
-    #     profile_dir = osp.join(DATA_ROOT, "profiles", str(hostname_slurm_job_id))
-    #     print(f"Profile directory: {profile_dir}")
-    #     os.makedirs(profile_dir, exist_ok=True)
-
-    #     Determine available activities based on device
-    #     activities = []
-    #     if torch.cuda.is_available():
-    #         activities.append(torch.profiler.ProfilerActivity.CUDA)
-    #     activities.append(torch.profiler.ProfilerActivity.CPU)
-
-    #     profiler = PyTorchProfiler(
-    #         dirpath=profile_dir,
-    #         filename="profiler_output",
-    #         schedule=torch.profiler.schedule(
-    #             wait=100,  # Wait for 5 steps
-    #             warmup=1,  # Add 1 warmup step
-    #             active=1,  # Profile for 3 steps
-    #             repeat=100,  # Repeat every 100 steps
-    #             skip_first=100,
-    #         ),
-    #         on_trace_ready=torch.profiler.tensorboard_trace_handler(profile_dir),
-    #         activities=activities,
-    #         with_stack=True,
-    #         export_to_chrome=True,
-    #         with_steps=True,
-    #         profile_memory=True,
-    #         record_shapes=True,
-    #         with_flops=True,
-    #         with_modules=True,
-    #     )
-    # else:
-    #     profiler = None
-
-    profiler = None
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -481,9 +457,10 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        profiler=profiler,  #
-        log_every_n_steps=10,
+        # profiler=profiler,  #
+        log_every_n_steps=500,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
+        detect_anomaly=True,
     )
 
     # Start the training

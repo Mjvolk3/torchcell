@@ -78,39 +78,33 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
     def forward(self, y_pred, y_true):
         """
         Compute MSE loss while properly handling NaN values.
-
-        Args:
-            y_pred (torch.Tensor): Predictions [batch_size, num_dims]
-            y_true (torch.Tensor): Ground truth [batch_size, num_dims]
-
-        Returns:
-            tuple: (dim_means, mask) - Loss per dimension and validity mask
         """
-        # Ensure tensors have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-
+        device = y_pred.device
+        
+        # Ensure tensors have the same shape and device
+        assert y_pred.shape == y_true.shape, "Predictions and targets must have the same shape"
+        y_true = y_true.to(device)
+        
         # Create mask for non-NaN values
         mask = ~torch.isnan(y_true)
-
+        
         # Count valid samples per dimension
-        n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
-
-        # Zero out predictions where target is NaN to avoid gradient computation
-        y_pred_masked = y_pred * mask.float()
-        y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
-
+        n_valid = mask.sum(dim=0).clamp(min=1)
+        
+        # Zero out predictions where target is NaN
+        y_pred_masked = y_pred * mask
+        y_true_masked = y_true.masked_fill(~mask, 0)
+        
         # Compute squared error only for valid elements
         squared_error = (y_pred_masked - y_true_masked).pow(2)
-
-        # Sum errors for each dimension (only valid elements contribute)
+        
+        # Sum errors for each dimension
         dim_losses = squared_error.sum(dim=0)
-
+        
         # Compute mean loss per dimension
         dim_means = dim_losses / n_valid
 
-        return dim_means, mask
+        return dim_means.to(device), mask.to(device)
 
 
 class CombinedLoss(nn.Module):
@@ -124,52 +118,36 @@ class CombinedLoss(nn.Module):
         else:
             raise ValueError(f"Unsupported loss type: {loss_type}")
 
-        self.weights = weights if weights is not None else torch.ones(2)
-        self.weights = self.weights / self.weights.sum()  # Normalize weights
+        # Register weights as a buffer so it's automatically moved with the module
+        self.register_buffer(
+            "weights",
+            torch.ones(2) if weights is None else weights / weights.sum()
+        )
 
     def forward(self, y_pred, y_true):
         """
         Compute weighted loss while handling NaN values.
-
-        Args:
-            y_pred (torch.Tensor): Predictions [batch_size, num_dims]
-            y_true (torch.Tensor): Ground truth [batch_size, num_dims]
-
-        Returns:
-            tuple: (total_loss, dim_losses)
         """
+        # Get device from input
+        device = y_pred.device
+        
+        # Ensure inputs are on same device
+        y_pred = y_pred.to(device)
+        y_true = y_true.to(device)
+        weights = self.weights.to(device)
+
         # Compute per-dimension losses and get validity mask
         dim_losses, mask = self.loss_fn(y_pred, y_true)
+        
+        # Ensure all intermediate computations stay on device
+        valid_dims = mask.any(dim=0).to(device)
+        weights = weights * valid_dims
+        weight_sum = weights.sum().clamp(min=1e-8)
 
-        # Apply weights only to dimensions that have valid samples
-        valid_dims = mask.any(dim=0)  # Dimensions with at least one valid sample
-        weights = self.weights * valid_dims.float()
-        weight_sum = weights.sum().clamp(min=1e-8)  # Avoid division by zero
-
-        # Compute weighted average loss
+        # Compute weighted average loss (all tensors now on same device)
         weighted_loss = (dim_losses * weights).sum() / weight_sum
 
-        return weighted_loss, dim_losses
-
-    @torch.no_grad()
-    def compute_metrics(self, y_pred, y_true):
-        """
-        Compute additional metrics for monitoring.
-        """
-        metrics = {}
-        mask = ~torch.isnan(y_true)
-
-        for dim in range(y_true.shape[1]):
-            dim_mask = mask[:, dim]
-            if dim_mask.any():
-                dim_pred = y_pred[dim_mask, dim]
-                dim_true = y_true[dim_mask, dim]
-                metrics[f"dim_{dim}_samples"] = dim_mask.sum().item()
-                metrics[f"dim_{dim}_mean_error"] = (
-                    (dim_pred - dim_true).abs().mean().item()
-                )
-
-        return metrics
+        return weighted_loss.to(device), dim_losses.to(device)
 
 
 if __name__ == "__main__":

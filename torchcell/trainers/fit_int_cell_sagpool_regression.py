@@ -6,8 +6,11 @@ import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
-from torchcell.losses.multi_dim_nan_tolerant import (
-    CombinedLoss,
+from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+from torchcell.metrics.nan_tolerant_metrics import (
+    NaNTolerantMSE,
+    NaNTolerantMAE,
+    NaNTolerantRMSE,
     NaNTolerantPearsonCorrCoef,
     NaNTolerantSpearmanCorrCoef,
 )
@@ -107,11 +110,11 @@ class RegressionTask(L.LightningModule):
 
         metrics = MetricCollection(
             {
-                "RMSE": MeanSquaredError(squared=False),
-                "MSE": MeanSquaredError(),
-                "MAE": MeanAbsoluteError(),
-                "PearsonR": NaNTolerantPearsonCorrCoef(),
-                "SpearmanR": NaNTolerantSpearmanCorrCoef(),
+                # "RMSE": NaNTolerantRMSE(),
+                "MSE": NaNTolerantMSE(),
+                # "MAE": NaNTolerantMAE(),
+                # "PearsonR": NaNTolerantPearsonCorrCoef(),
+                # # "SpearmanR": NaNTolerantSpearmanCorrCoef(),
             }
         )
 
@@ -213,39 +216,41 @@ class RegressionTask(L.LightningModule):
         batch_size = x.size(0)
 
         # Logging
-        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
-        self.log(f"{stage}/head_loss", head_loss, batch_size=batch_size, sync_dist=True)
+        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True) # OK
+        self.log(f"{stage}/head_loss", head_loss, batch_size=batch_size, sync_dist=True) # OK
         self.log(
             f"{stage}/intermediate_loss",
             intermediate_losses,
             batch_size=batch_size,
             sync_dist=True,
-        )
+        ) # OK
         self.log(
             f"{stage}/graph_losses", graph_losses, batch_size=batch_size, sync_dist=True
-        )
+        ) # OK
         self.log(
             f"{stage}/fitness_loss",
             dim_losses[0],
             batch_size=batch_size,
             sync_dist=True,
-        )
+        ) # OK
         self.log(
             f"{stage}/gene_interaction_loss",
             dim_losses[1],
             batch_size=batch_size,
             sync_dist=True,
-        )
+        ) # OK
 
         # Log pooling information
+        device = next(self.parameters()).device  # or size.device
         for graph_name, pool_sizes in graph_pool_sizes.items():
             for layer_idx, size in enumerate(pool_sizes):
+                mean_size = torch.mean(size.to(dtype=torch.float32, device=device))
                 self.log(
                     f"{stage}/{graph_name}/layer_{layer_idx}_pool_size",
-                    size.float().mean(),
+                    mean_size,
                     batch_size=batch_size,
                     sync_dist=True,
-                )
+                ) # OK after device
 
         # Update metrics
         metrics = getattr(self, f"{stage}_metrics")

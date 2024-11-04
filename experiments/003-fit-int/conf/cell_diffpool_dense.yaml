@@ -15,10 +15,10 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  num_workers: 4
+  num_workers: 0
   batch_size: 2 # ok: 4; oom: 8, 12
-  pin_memory: false
-  prefetch: false
+  pin_memory: true
+  prefetch: true
 
 trainer:
   max_epochs: 2

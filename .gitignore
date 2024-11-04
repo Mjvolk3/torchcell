@@ -103,4 +103,5 @@ experiments/embeddings/slurm/error/
 # TEMPORARY
 # notes/assets/images/*
 *.log
+logs.sh
 # duplicate_check.json

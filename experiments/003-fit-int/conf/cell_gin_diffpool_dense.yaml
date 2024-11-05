@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_test_cell_diffpool_dense
+  project: torchcell_test_cell_gin_diffpool_dense
   tags: []
 
 cell_dataset:
@@ -15,30 +15,31 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  num_workers: 0
+  num_workers: 4
   batch_size: 2 # ok: 4; oom: 8, 12
-  pin_memory: true
-  prefetch: true
+  pin_memory: false
+  prefetch: false
 
 trainer:
   max_epochs: 2
-  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
-  accelerator: gpu
+  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
+  accelerator: cpu
   devices: auto # auto or int
 
 model:
-  pool_gat_hidden_channels: 16
-  num_pool_gat_layers: 2
-  embed_gat_hidden_channels: 16
-  num_embed_gat_layers: 2
+  hidden_channels: 16
+  num_layers: 3
   num_pooling_layers: 5
   cluster_size_decay_factor: 5.0
   activation: relu
-  norm: layer
+  conv_norm: layer
+  mlp_norm: layer
   target_dim: 2
-  heads: 1
-  concat: false
-  dropout: 0.1
+  cluster_aggregation: mean
+  add_skip_connections: true
+  gin_self_loop: true
+  train_eps: true
+  eps: 0.0
 
 regression_task:
   loss_type: "mse"
@@ -64,5 +65,5 @@ regression_task:
   entropy_loss_weight: 1.0 # 1.0
   grad_accumulation_schedule:
     0: 12
-  
+
   # grad_accumulation_schedule: null

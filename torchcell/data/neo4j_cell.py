@@ -75,6 +75,7 @@ def create_embedding_graph(
 
 
 # @profile
+# TODO we could remove is_add_remaining_self_loops and put it in transforms
 def to_cell_data(
     graphs: dict[str, nx.Graph], is_add_remaining_self_loops: bool = True
 ) -> HeteroData:

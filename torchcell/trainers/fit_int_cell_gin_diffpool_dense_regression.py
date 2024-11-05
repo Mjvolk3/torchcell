@@ -175,7 +175,7 @@ class RegressionTask(L.LightningModule):
             dim=1,
         )
 
-        # Forward pass with dense GIN model - updated to handle 6 return values
+        # Forward pass with dense GIN model
         (
             final_output,
             graph_link_losses,
@@ -190,7 +190,7 @@ class RegressionTask(L.LightningModule):
 
         # Compute individual prediction losses
         individual_losses = {
-            graph_name: criterion(pred, y)[0]
+            graph_name: self.combined_loss(pred, y)[0]
             for graph_name, pred in individual_predictions.items()
         }
 
@@ -198,9 +198,9 @@ class RegressionTask(L.LightningModule):
         cluster_losses = {}
         total_cluster_loss = 0
         for graph_name, clusters in graph_cluster_outputs.items():
-            graph_cluster_loss = sum(criterion(pred, y)[0] for pred in clusters) / len(
-                clusters
-            )
+            graph_cluster_loss = sum(
+                self.combined_loss(pred, y)[0] for pred in clusters
+            ) / len(clusters)
             cluster_losses[graph_name] = graph_cluster_loss
             total_cluster_loss += graph_cluster_loss
 

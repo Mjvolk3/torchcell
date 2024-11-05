@@ -16,7 +16,7 @@ data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
   num_workers: 4
-  batch_size: 2 # ok: 4; oom: 8, 12
+  batch_size: 2 # ok: 4; oom: 8, 12... ok gh: 6
   pin_memory: false
   prefetch: false
 
@@ -45,8 +45,8 @@ regression_task:
   loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-4
-    weight_decay: 1e-4
+    lr: 1e-3
+    weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"

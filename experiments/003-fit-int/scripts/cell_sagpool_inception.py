@@ -95,7 +95,7 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
     experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}"
+        DATA_ROOT, "wandb-experiments", group
     )
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(

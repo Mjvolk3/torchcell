@@ -1,3 +1,8 @@
+# torchcell/models/cell_gin_diffpool_dense
+# [[torchcell.models.cell_gin_diffpool_dense]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_gin_diffpool_dense
+# Test file: tests/torchcell/models/test_cell_gin_diffpool_dense.py
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

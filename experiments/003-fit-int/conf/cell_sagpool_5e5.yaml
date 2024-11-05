@@ -17,7 +17,7 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 #5e4 #7e3
+  perturbation_subset_size: 5e5
   batch_size: 64
   num_workers: 16
   pin_memory: true
@@ -31,8 +31,8 @@ trainer:
 
 model:
   hidden_channels: 16 # Base hidden dimension
-  num_layers: 12 # Number of SAGPool layers
-  pooling_ratio: 0.6 # Ratio of nodes to keep after pooling
+  num_layers: 9 # Number of SAGPool layers
+  pooling_ratio: 0.5 # Ratio of nodes to keep after pooling
   min_score: null # Optional threshold for node selection
   activation: relu
   norm: layer
@@ -45,7 +45,7 @@ regression_task:
   optimizer:
     type: "AdamW"
     lr: 1e-3
-    weight_decay: 1e-8
+    weight_decay: 1e-3
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -58,7 +58,7 @@ regression_task:
     eps: 1e-10
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
-  clip_grad_norm_max_norm: 10.0
+  clip_grad_norm_max_norm: 0.1
   intermediate_loss_weight: 1.0 # 10.0
   grad_accumulation_schedule: null
   # grad_accumulation_schedule:

@@ -2,7 +2,7 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1726683670942
+updated: 1730794638395
 created: 1675887826601
 ---
 ## Future
@@ -59,6 +59,7 @@ created: 1675887826601
 - [ ] We have this strange issue that whatever is run from the terminal in docker ends up getting prepended to the `neo4j.conf` file... Not sure how this makes any sense. [[2024.03.21 - Terminal Commands Copied into neo4j.conf File|dendron://torchcell/neo4j.conf#20240321---terminal-commands-copied-into-neo4jconf-file]]
 - [ ] Add dataset to experiment and reference for index subsetting by dataset. This probably makes most sense for reducing `dmf` count. We would like the coherence for keeping as much `dmf` data from `Kuzmin` as possible.
 - [ ] [[2024.04.04 - MODEL_TO_WINDOW changed to some configuration|dendron://torchcell/torchcell.datasets.embedding#20240404---model_to_window-changed-to-some-configuration]]
+- [ ] in `IndexSplit` changes `indices` to `index`...
 
 ## Far Future
 

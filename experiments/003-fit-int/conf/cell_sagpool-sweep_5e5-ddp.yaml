@@ -1,0 +1,113 @@
+program: experiments/003-fit-int/scripts/cell_sagpool.py
+project: torchcell_003-fit-int_cell_sagpool_5e4
+method: grid
+# method: random
+
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [[physical, regulatory]]
+      node_embeddings:
+        values:
+          - [codon_frequency]
+
+  profiler:
+    parameters:
+      is_pytoch: 
+        values: [false]
+
+  data_module:
+    parameters:
+      is_perturbation_subset:
+        values: [true]
+      perturbation_subset_size:
+        values: [5e5]
+      batch_size:
+        values: [64] #[64] #96 OOM
+      num_workers:
+        values: [16]
+      pin_memory:
+        values: [true]
+      prefetch:
+        values: [true] #[true, false]
+
+  trainer:
+    parameters:
+      max_epochs:
+        values: [16]
+      strategy:
+        values: [auto]
+      accelerator:
+        values: [gpu]
+      devices:
+        values: [auto]
+
+  model:
+    parameters:
+      hidden_channels:
+        values: [16] #[8, 16]
+      num_layers:
+        values: [9]
+      pooling_ratio:
+        values: [0.5]
+      min_score:
+        values: [null]
+      activation:
+        values: [relu]
+      norm:
+        values: [batch, layer]
+      target_dim:
+        values: [2]
+      heads:
+        values: [1] #[1, 4]
+      dropout:
+        values: [0.2, 0.4] #[0.1, 0.2]
+
+  regression_task:
+    parameters:
+      loss_type:
+        values: ["mse"]
+      optimizer:
+        parameters:
+          type:
+            values: ["AdamW"]
+          lr:
+            values: [1e-3] #[1e-4, 1e-5]
+          weight_decay:
+            values: [1e-3]
+      lr_scheduler:
+        parameters:
+          type:
+            values: ["ReduceLROnPlateau"]
+          mode:
+            values: ["min"]
+          factor:
+            values: [0.2]
+          patience:
+            values: [3]
+          threshold:
+            values: [1e-4]
+          threshold_mode:
+            values: ["rel"]
+          cooldown:
+            values: [2]
+          min_lr:
+            values: [1e-9]
+          eps:
+            values: [1e-10]
+      boxplot_every_n_epochs:
+        values: [1]
+      clip_grad_norm:
+        values: [true]
+      clip_grad_norm_max_norm:
+        values: [1.0] #[0.1]
+      intermediate_loss_weight:
+        values: [1.0]
+      grad_accumulation_schedule:
+        values: [null]
+
+command:
+  - ${env}
+  - python
+  - ${program}

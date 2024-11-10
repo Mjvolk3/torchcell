@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --mem=128g #243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
+#SBATCH --mem=243g #243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
@@ -9,7 +9,7 @@
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
 #SBATCH --constraint="scratch"
 ### GPU options ###
-#SBATCH --gpus-per-node=2
+#SBATCH --gpus-per-node=4
 #SBATCH --gpu-bind=none     # <- or closest
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
@@ -38,8 +38,8 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=ow1gqtkc
-PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
+#SWEEP_ID=ow1gqtkc
+#PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"
@@ -61,5 +61,7 @@ mkdir /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_J
 #wait
 
 #wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1
+
+#srun python /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/cell_sagpool.py --config-name cell_sagpool_5e5.yaml > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1
 
 srun python /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/cell_sagpool.py > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1

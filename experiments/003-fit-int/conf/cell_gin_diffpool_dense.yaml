@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_003-fit-int_cell_sagpool_5e5 # torchcell_test_cell_sagpool
+  project: torchcell_test_cell_gin_diffpool_dense
   tags: []
 
 cell_dataset:
@@ -12,39 +12,40 @@ cell_dataset:
   node_embeddings: [codon_frequency]
   # [one_hot_gene], [codon_frequency], [calm], [fudt_downstream], [fudt_upstream], [prot_T5_all], [prot_T5_no_dubious], [nt_window_5979], [nt_window_three_prime_300], [nt_window_five_prime_1003], [esm2_t33_650M_UR50D_all], [esm2_t33_650M_UR50D_no_dubious], [normalized_chrom_pathways], [random_1000], [random_100], [random_10], [random_1]
 
-profiler:
-  is_pytorch: true
-
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 #5e4 #7e3
-  batch_size: 64
-  num_workers: 16
-  pin_memory: true
-  prefetch: true
+  perturbation_subset_size: 5e4 #7e3
+  num_workers: 4
+  batch_size: 2 # ok: 4; oom: 8, 12... ok gh: 6
+  pin_memory: false
+  prefetch: false
 
 trainer:
-  max_epochs: 30
-  strategy: ddp # ddp, auto
-  accelerator: gpu #cpu
+  max_epochs: 2
+  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
+  accelerator: cpu
   devices: auto # auto or int
 
 model:
-  hidden_channels: 16 # Base hidden dimension
-  num_layers: 12 # Number of SAGPool layers
-  pooling_ratio: 0.6 # Ratio of nodes to keep after pooling
-  min_score: null # Optional threshold for node selection
-  activation: relu
-  norm: layer
+  hidden_channels: 16
+  num_layers: 2
+  num_pooling_layers: 7 
+  cluster_size_decay_factor: 3.0
+  activation: gelu
+  conv_norm: layer
+  mlp_norm: layer
   target_dim: 2
-  heads: 4
-  dropout: 0.1
+  cluster_aggregation: mean
+  add_skip_connections: true
+  gin_self_loop: true
+  train_eps: true
+  eps: 0.0
 
 regression_task:
   loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-3
+    lr: 1e-4
     weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
@@ -58,10 +59,11 @@ regression_task:
     eps: 1e-10
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
-  clip_grad_norm_max_norm: 10.0
-  intermediate_loss_weight: 1.0 # 10.0
-  grad_accumulation_schedule: null
-  # grad_accumulation_schedule:
-  #   0: 24
-  #   4: 4
-  #   8: 1
+  clip_grad_norm_max_norm: 1.0
+  cluster_loss_weight: 1.0 #1.0
+  link_pred_loss_weight: 0.01 # 1.0
+  entropy_loss_weight: 0.01 # 1.0
+  grad_accumulation_schedule:
+    0: 12
+
+  # grad_accumulation_schedule: null

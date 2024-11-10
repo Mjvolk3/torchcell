@@ -36,7 +36,7 @@ from torchcell.datasets import (
 )
 from torchcell.models import Mlp
 from torchcell.models.cell_gin_diffpool_dense import DenseCellDiffPool
-from torchcell.trainers.fit_int_cell_diffpool_dense_regression import RegressionTask
+from torchcell.trainers.fit_int_cell_gin_diffpool_dense_regression import RegressionTask
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket
@@ -84,10 +84,10 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="cell_diffpool_dense",
+    config_name="cell_gin_diffpool_dense",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting GatDiffPool 🌋")
+    print("Starting Gin CellDiffPool 🌾")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -98,8 +98,9 @@ def main(cfg: DictConfig) -> None:
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
     experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", f"{hostname_slurm_job_id}_{group}")
-    
+        DATA_ROOT, "wandb-experiments", group
+    )
+
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
         mode="offline",  # "online", "offline", "disabled"
@@ -375,7 +376,6 @@ def main(cfg: DictConfig) -> None:
         # if there are no GPUs available, use 1 CPU
         devices = 1
 
-
     # The graph names are derived from the cell_dataset.graphs config
     graph_names = [
         f"{name}_interaction" for name in wandb.config.cell_dataset["graphs"]
@@ -383,20 +383,21 @@ def main(cfg: DictConfig) -> None:
 
     model = DenseCellDiffPool(
         graph_names=graph_names,
-        max_num_nodes=max_num_nodes,  # From len(dataset.gene_set)
+        max_num_nodes=max_num_nodes,
         in_channels=input_dim,
-        pool_gat_hidden_channels=wandb.config.model["pool_gat_hidden_channels"],
-        num_pool_gat_layers=wandb.config.model["num_pool_gat_layers"],
-        embed_gat_hidden_channels=wandb.config.model["embed_gat_hidden_channels"],
-        num_embed_gat_layers=wandb.config.model["num_embed_gat_layers"],
+        hidden_channels=wandb.config.model["hidden_channels"],
+        num_layers=wandb.config.model["num_layers"],
         num_pooling_layers=wandb.config.model["num_pooling_layers"],
         cluster_size_decay_factor=wandb.config.model["cluster_size_decay_factor"],
         activation=wandb.config.model["activation"],
-        norm=wandb.config.model["norm"],
+        conv_norm=wandb.config.model["conv_norm"],
+        mlp_norm=wandb.config.model["mlp_norm"],
         target_dim=wandb.config.model["target_dim"],
-        heads=wandb.config.model["heads"],
-        concat=wandb.config.model["concat"],
-        dropout=wandb.config.model["dropout"],
+        cluster_aggregation=wandb.config.model["cluster_aggregation"],
+        add_skip_connections=wandb.config.model["add_skip_connections"],
+        gin_self_loop=wandb.config.model["gin_self_loop"],
+        train_eps=wandb.config.model["train_eps"],
+        eps=wandb.config.model["eps"],
     )
     # Log model parameters
     param_counts = model.num_parameters

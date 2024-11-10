@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_003-fit-int_cell_sagpool_5e5 # torchcell_test_cell_sagpool
+  project: torchcell_003-fit-int_cell_sagpool_inception_5e4 # torchcell_test_cell_sagpool
   tags: []
 
 cell_dataset:
@@ -17,9 +17,9 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 #5e4 #7e3
-  batch_size: 64
-  num_workers: 16
+  perturbation_subset_size: 5e4 #7e3
+  batch_size: 64 #64
+  num_workers: 16 #16
   pin_memory: true
   prefetch: true
 
@@ -30,15 +30,24 @@ trainer:
   devices: auto # auto or int
 
 model:
-  hidden_channels: 16 # Base hidden dimension
-  num_layers: 12 # Number of SAGPool layers
-  pooling_ratio: 0.6 # Ratio of nodes to keep after pooling
-  min_score: null # Optional threshold for node selection
+  # Graph layer parameters
+  hidden_channels: 16
+  num_layers: 12
+  pooling_ratio: 0.6
+  min_score: null
   activation: relu
   norm: layer
   target_dim: 2
   heads: 4
   dropout: 0.1
+  # Intermediate MLP parameters
+  num_intermediate_layers: 4
+  intermediate_hidden_channels: 16
+  intermediate_norm: layer
+  # Final combination parameters
+  final_hidden_channels: 16
+  final_num_layers: 4
+  final_norm: layer
 
 regression_task:
   loss_type: "mse"
@@ -58,8 +67,8 @@ regression_task:
     eps: 1e-10
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
-  clip_grad_norm_max_norm: 10.0
-  intermediate_loss_weight: 1.0 # 10.0
+  clip_grad_norm_max_norm: 1.0
+  intermediate_loss_weight: 1.0
   grad_accumulation_schedule: null
   # grad_accumulation_schedule:
   #   0: 24

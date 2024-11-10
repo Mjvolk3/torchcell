@@ -27,7 +27,7 @@ import logging
 import sys
 from typing import Optional
 import torch.optim as optim
-
+import torch.nn.functional as F
 
 class MultiDimNaNTolerantL1Loss(nn.Module):
     def __init__(self):
@@ -80,27 +80,29 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
         Compute MSE loss while properly handling NaN values.
         """
         device = y_pred.device
-        
+
         # Ensure tensors have the same shape and device
-        assert y_pred.shape == y_true.shape, "Predictions and targets must have the same shape"
+        assert (
+            y_pred.shape == y_true.shape
+        ), "Predictions and targets must have the same shape"
         y_true = y_true.to(device)
-        
+
         # Create mask for non-NaN values
         mask = ~torch.isnan(y_true)
-        
+
         # Count valid samples per dimension
         n_valid = mask.sum(dim=0).clamp(min=1)
-        
+
         # Zero out predictions where target is NaN
         y_pred_masked = y_pred * mask
         y_true_masked = y_true.masked_fill(~mask, 0)
-        
+
         # Compute squared error only for valid elements
         squared_error = (y_pred_masked - y_true_masked).pow(2)
-        
+
         # Sum errors for each dimension
         dim_losses = squared_error.sum(dim=0)
-        
+
         # Compute mean loss per dimension
         dim_means = dim_losses / n_valid
 
@@ -120,8 +122,7 @@ class CombinedLoss(nn.Module):
 
         # Register weights as a buffer so it's automatically moved with the module
         self.register_buffer(
-            "weights",
-            torch.ones(2) if weights is None else weights / weights.sum()
+            "weights", torch.ones(2) if weights is None else weights / weights.sum()
         )
 
     def forward(self, y_pred, y_true):
@@ -130,7 +131,7 @@ class CombinedLoss(nn.Module):
         """
         # Get device from input
         device = y_pred.device
-        
+
         # Ensure inputs are on same device
         y_pred = y_pred.to(device)
         y_true = y_true.to(device)
@@ -138,13 +139,108 @@ class CombinedLoss(nn.Module):
 
         # Compute per-dimension losses and get validity mask
         dim_losses, mask = self.loss_fn(y_pred, y_true)
-        
+
         # Ensure all intermediate computations stay on device
         valid_dims = mask.any(dim=0).to(device)
         weights = weights * valid_dims
         weight_sum = weights.sum().clamp(min=1e-8)
 
         # Compute weighted average loss (all tensors now on same device)
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
+
+        return weighted_loss.to(device), dim_losses.to(device)
+
+
+class MultiDimNaNTolerantBCELoss(nn.Module):
+    def __init__(self, eps=1e-7):
+        super(MultiDimNaNTolerantBCELoss, self).__init__()
+        self.eps = eps
+
+    def forward(self, y_pred, y_true, threshold):
+        """
+        Compute Binary Cross Entropy loss while properly handling NaN values.
+        Uses numerically stable computations to prevent overflow.
+        """
+        device = y_pred.device
+
+        # Ensure tensors have the same shape
+        assert (
+            y_pred.shape == y_true.shape
+        ), "Predictions and targets must have the same shape"
+        assert (
+            threshold.shape[0] == y_pred.shape[1]
+        ), "Threshold tensor must match number of dimensions"
+
+        # Move tensors to the same device
+        y_true = y_true.to(device)
+        threshold = threshold.to(device)
+
+        # Create mask for non-NaN values
+        mask = ~torch.isnan(y_true)
+
+        # Count valid samples per dimension
+        n_valid = mask.sum(dim=0).clamp(min=1)
+
+        # Binarize the true values using threshold
+        y_true_binary = torch.where(
+            mask, (y_true > threshold).float(), torch.zeros_like(y_true)
+        )
+
+        # Clamp predictions to prevent numerical overflow in sigmoid
+        y_pred_clamped = y_pred.clamp(-100, 100)
+
+        # Use PyTorch's numerically stable BCE with logits
+        bce = F.binary_cross_entropy_with_logits(
+            y_pred_clamped, y_true_binary, reduction="none"
+        )
+
+        # Apply mask
+        bce = bce * mask.float()
+
+        # Sum errors for each dimension
+        dim_losses = bce.sum(dim=0)
+
+        # Compute mean loss per dimension
+        dim_means = dim_losses / n_valid
+
+        return dim_means.to(device), mask.to(device)
+
+
+class CombinedBCELoss(nn.Module):
+    def __init__(self, weights=None):
+        super(CombinedBCELoss, self).__init__()
+        self.loss_fn = MultiDimNaNTolerantBCELoss()
+
+        # Register weights as a buffer
+        self.register_buffer(
+            "weights", torch.ones(2) if weights is None else weights / weights.sum()
+        )
+
+        # Register threshold as a buffer
+        self.register_buffer(
+            "threshold", torch.tensor([0.9305, -0.0018])  # Your empirical thresholds
+        )
+
+    def forward(self, y_pred, y_true):
+        """
+        Compute weighted BCE loss while handling NaN values.
+        """
+        device = y_pred.device
+
+        # Ensure inputs are on same device
+        y_pred = y_pred.to(device)
+        y_true = y_true.to(device)
+        weights = self.weights.to(device)
+
+        # Compute per-dimension losses and get validity mask
+        dim_losses, mask = self.loss_fn(y_pred, y_true, self.threshold)
+
+        # Ensure all intermediate computations stay on device
+        valid_dims = mask.any(dim=0).to(device)
+        weights = weights * valid_dims
+        weight_sum = weights.sum().clamp(min=1e-8)
+
+        # Compute weighted average loss
         weighted_loss = (dim_losses * weights).sum() / weight_sum
 
         return weighted_loss.to(device), dim_losses.to(device)

@@ -1,7 +1,7 @@
-# torchcell/trainers/fit_int_cell_gin_diffpool_dense_regression
-# [[torchcell.trainers.fit_int_cell_gin_diffpool_dense_regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_cell_gin_diffpool_dense_regression
-# Test file: tests/torchcell/trainers/test_fit_int_cell_gin_diffpool_dense_regression.py
+# torchcell/trainers/fit_int_cell_gin_diffpool_dense_binary
+# [[torchcell.trainers.fit_int_cell_gin_diffpool_dense_binary]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_cell_gin_diffpool_dense_binary
+# Test file: tests/torchcell/trainers/test_fit_int_cell_gin_diffpool_dense_binary.py
 
 
 import lightning as L
@@ -12,13 +12,11 @@ import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
-from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
-from torchcell.metrics.nan_tolerant_metrics import (
-    NaNTolerantMSE,
-    NaNTolerantMAE,
-    NaNTolerantRMSE,
-    NaNTolerantPearsonCorrCoef,
-    NaNTolerantSpearmanCorrCoef,
+from torchcell.losses.multi_dim_nan_tolerant import CombinedBCELoss
+from torchcell.metrics.nan_tolerant_classification_metrics import (
+    NaNTolerantAUROC,
+    NaNTolerantAccuracy,
+    NaNTolerantF1Score,
 )
 import logging
 import sys
@@ -102,11 +100,9 @@ class RegressionTask(L.LightningModule):
 
         metrics = MetricCollection(
             {
-                "RMSE": NaNTolerantRMSE(),
-                "MSE": NaNTolerantMSE(),
-                "MAE": NaNTolerantMAE(),
-                "PearsonR": NaNTolerantPearsonCorrCoef(),
-                "SpearmanR": NaNTolerantSpearmanCorrCoef(),
+                "Accuracy": NaNTolerantAccuracy(),
+                "F1": NaNTolerantF1Score(),
+                "AUROC": NaNTolerantAUROC(),
             }
         )
 
@@ -362,38 +358,23 @@ class RegressionTask(L.LightningModule):
             metric_dict.reset()  # Reset metrics after logging
 
         # Skip plotting during sanity check
-        if self.trainer.sanity_checking or (
-            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
-        ):
+        if self.trainer.sanity_checking:
             return
 
-        # Convert lists to tensors
+        # Convert lists to tensors just for logging artifact
         true_values = torch.cat(self.true_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
-        self.compute_prediction_stats(true_values, predictions, stage="val")
-
-        # Create and log box plots for both fitness and gene interaction
-        fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
-        wandb.log({"fitness_binned_values_box_plot": wandb.Image(fig_fitness)})
-        plt.close(fig_fitness)
-
-        fig_gi = genetic_interaction_score.box_plot(
-            true_values[:, 1], predictions[:, 1]
-        )
-        wandb.log({"gene_interaction_binned_values_box_plot": wandb.Image(fig_gi)})
-        plt.close(fig_gi)
 
         # Clear the stored values for the next epoch
         self.true_values = []
         self.predictions = []
 
-        # Logging model artifact
+        # Log model artifact if needed
         current_global_step = self.global_step
         if (
             self.trainer.checkpoint_callback.best_model_path
             and current_global_step != self.last_logged_best_step
         ):
-            # Save model as a W&B artifact
             artifact = wandb.Artifact(
                 name=f"model-global_step-{current_global_step}",
                 type="model",
@@ -402,9 +383,7 @@ class RegressionTask(L.LightningModule):
             )
             artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
             wandb.log_artifact(artifact)
-            self.last_logged_best_step = (
-                current_global_step  # update the last logged step
-            )
+            self.last_logged_best_step = current_global_step
 
     def compute_prediction_stats(self, true_values, predictions, stage="val"):
         # Define the bin edges for each dimension

@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_test_cell_gin_diffpool_dense
+  project: torchcell_test_cell_gin_diffpool_dense_binary
   tags: []
 
 cell_dataset:
@@ -42,7 +42,7 @@ model:
   eps: 0.0
 
 regression_task:
-  loss_type: "mse"
+  # loss_type: "mse"
   optimizer:
     type: "AdamW"
     lr: 1e-4

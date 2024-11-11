@@ -68,35 +68,40 @@ class NaNTolerantAccuracy(Metric):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(
-        self,
-        threshold: torch.Tensor = torch.tensor([0.9305, -0.0018]),
-        num_outputs: int = 1,
-        **kwargs: Any,
-    ):
+    def __init__(self, threshold=torch.tensor([0.9305, -0.0018]), **kwargs: Any):
         super().__init__(**kwargs)
-        self.num_outputs = num_outputs
         self.register_buffer("threshold", threshold)
-        self.add_state(
-            "correct", default=torch.zeros(num_outputs), dist_reduce_fx="sum"
-        )
+        self.add_state("correct", default=torch.zeros(1), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        valid_mask, valid_preds, valid_target = _handle_nan_mask(preds, target)
+        # Get index from input shape
+        index = 0 if preds.ndim == 1 else 1
+        threshold_idx = 0 if index == 0 else preds.shape[1]-1
+
+        # Handle NaN values
+        valid_mask = ~torch.isnan(target)
         if valid_mask.any():
+            valid_preds = preds[valid_mask]
+            valid_target = target[valid_mask]
+
             # Apply sigmoid to predictions
             valid_preds = torch.sigmoid(valid_preds)
-            # Binarize targets using threshold
-            valid_target = (valid_target > self.threshold).float()
-            self.correct += torch.sum(
-                (valid_preds > 0.5) == (valid_target > 0.5), dim=0
-            )
+            
+            # Get correct threshold
+            threshold = self.threshold[threshold_idx].to(valid_target.device)
+            
+            # Binarize target using threshold
+            valid_target = (valid_target > threshold).float()
+            
+            # Compare predictions
+            correct_preds = (valid_preds > 0.5) == valid_target
+            self.correct += torch.sum(correct_preds)
             self.total += valid_mask.sum()
 
     def compute(self) -> Tensor:
         if self.total == 0:
-            return torch.full_like(self.correct, float("nan"))
+            return torch.tensor(float("nan"), device=self.threshold.device)
         return self.correct.float() / self.total
 
 
@@ -105,42 +110,43 @@ class NaNTolerantF1Score(Metric):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(
-        self,
-        threshold: torch.Tensor = torch.tensor([0.9305, -0.0018]),
-        num_outputs: int = 1,
-        **kwargs: Any,
-    ):
+    def __init__(self, threshold=torch.tensor([0.9305, -0.0018]), **kwargs: Any):
         super().__init__(**kwargs)
-        self.num_outputs = num_outputs
         self.register_buffer("threshold", threshold)
-
-        self.add_state(
-            "true_positives", default=torch.zeros(num_outputs), dist_reduce_fx="sum"
-        )
-        self.add_state(
-            "false_positives", default=torch.zeros(num_outputs), dist_reduce_fx="sum"
-        )
-        self.add_state(
-            "false_negatives", default=torch.zeros(num_outputs), dist_reduce_fx="sum"
-        )
+        self.add_state("true_positives", default=torch.zeros(1), dist_reduce_fx="sum")
+        self.add_state("false_positives", default=torch.zeros(1), dist_reduce_fx="sum")
+        self.add_state("false_negatives", default=torch.zeros(1), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        stats, _ = _nan_tolerant_binary_update(
-            preds, target, self.threshold, self.num_outputs
-        )
-        tp, _, fp, fn = stats
-        self.true_positives += tp
-        self.false_positives += fp
-        self.false_negatives += fn
+        # Get index from input shape
+        index = 0 if preds.ndim == 1 else 1
+        threshold_idx = 0 if index == 0 else preds.shape[1]-1
+
+        # Handle NaN values
+        valid_mask = ~torch.isnan(target)
+        if valid_mask.any():
+            valid_preds = preds[valid_mask]
+            valid_target = target[valid_mask]
+
+            # Apply sigmoid to predictions
+            valid_preds = torch.sigmoid(valid_preds)
+            
+            # Get correct threshold
+            threshold = self.threshold[threshold_idx].to(valid_target.device)
+            
+            # Binarize target using threshold
+            valid_target = (valid_target > threshold).float()
+            
+            # Binary predictions
+            binary_preds = (valid_preds > 0.5).float()
+            
+            self.true_positives += torch.sum((binary_preds == 1) & (valid_target == 1))
+            self.false_positives += torch.sum((binary_preds == 1) & (valid_target == 0))
+            self.false_negatives += torch.sum((binary_preds == 0) & (valid_target == 1))
 
     def compute(self) -> Tensor:
-        precision = self.true_positives / (
-            self.true_positives + self.false_positives + 1e-10
-        )
-        recall = self.true_positives / (
-            self.true_positives + self.false_negatives + 1e-10
-        )
+        precision = self.true_positives / (self.true_positives + self.false_positives + 1e-10)
+        recall = self.true_positives / (self.true_positives + self.false_negatives + 1e-10)
         f1 = 2 * (precision * recall) / (precision + recall + 1e-10)
         return f1
 
@@ -150,44 +156,48 @@ class NaNTolerantAUROC(Metric):
     higher_is_better = True
     full_state_update = False
 
-    def __init__(
-        self,
-        threshold: torch.Tensor = torch.tensor([0.9305, -0.0018]),
-        num_outputs: int = 1,
-        **kwargs: Any,
-    ):
+    def __init__(self, threshold=torch.tensor([0.9305, -0.0018]), **kwargs: Any):
         super().__init__(**kwargs)
-        self.num_outputs = num_outputs
         self.register_buffer("threshold", threshold)
         self.add_state("preds", default=[], dist_reduce_fx="cat")
         self.add_state("target", default=[], dist_reduce_fx="cat")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        valid_mask, valid_preds, valid_target = _handle_nan_mask(preds, target)
+        # Get index from input shape
+        index = 0 if preds.ndim == 1 else 1
+        threshold_idx = 0 if index == 0 else preds.shape[1]-1
+
+        # Handle NaN values
+        valid_mask = ~torch.isnan(target)
         if valid_mask.any():
+            valid_preds = preds[valid_mask]
+            valid_target = target[valid_mask]
+
             # Apply sigmoid to predictions
             valid_preds = torch.sigmoid(valid_preds)
-            # Binarize targets using threshold
-            valid_target = (valid_target > self.threshold).float()
+            
+            # Get correct threshold
+            threshold = self.threshold[threshold_idx].to(valid_target.device)
+            
+            # Binarize target using threshold
+            valid_target = (valid_target > threshold).float()
+            
             self.preds.append(valid_preds)
             self.target.append(valid_target)
 
     def compute(self) -> Tensor:
         if not self.preds:
-            return torch.tensor(float("nan"))
-
+            return torch.tensor(float("nan"), device=self.threshold.device)
+        
         preds = torch.cat(self.preds)
         target = torch.cat(self.target)
-
+        
         # Sort predictions and corresponding targets
         sorted_indices = torch.argsort(preds, descending=True)
         sorted_target = target[sorted_indices]
-
+        
         # Calculate TPR and FPR at each threshold
         tpr = torch.cumsum(sorted_target, 0) / (torch.sum(sorted_target) + 1e-10)
-        fpr = torch.cumsum(1 - sorted_target, 0) / (
-            torch.sum(1 - sorted_target) + 1e-10
-        )
-
-        # Compute AUC using trapezoidal rule
+        fpr = torch.cumsum(1 - sorted_target, 0) / (torch.sum(1 - sorted_target) + 1e-10)
+        
         return torch.trapz(tpr, fpr)

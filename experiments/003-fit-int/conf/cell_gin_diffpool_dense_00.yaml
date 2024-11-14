@@ -14,7 +14,7 @@ cell_dataset:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e5 #7e3
+  perturbation_subset_size: 5e4 #7e3
   num_workers: 4
   batch_size: 4 # ok: 4; oom: 8, 12... ok gh: 6
   pin_memory: true
@@ -24,18 +24,18 @@ trainer:
   max_epochs: 30
   strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
-  devices: 4 # auto or int
+  devices: 2 # auto or int
 
 model:
   hidden_channels: 16
-  num_layers: 2
-  num_pooling_layers: 7
-  cluster_size_decay_factor: 3.0
-  activation: gelu
+  num_layers: 3
+  num_pooling_layers: 5
+  cluster_size_decay_factor: 5.0
+  activation: relu
   conv_norm: layer
   mlp_norm: layer
   target_dim: 2
-  cluster_aggregation: sum
+  cluster_aggregation: mean
   add_skip_connections: true
   gin_self_loop: true
   train_eps: true
@@ -45,7 +45,7 @@ regression_task:
   loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-4
+    lr: 1e-3
     weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
@@ -61,8 +61,8 @@ regression_task:
   clip_grad_norm: true
   clip_grad_norm_max_norm: 1.0
   cluster_loss_weight: 1.0 #1.0
-  link_pred_loss_weight: 0.01 # 1.0
-  entropy_loss_weight: 0.01 # 1.0
+  link_pred_loss_weight: 1.0 # 1.0
+  entropy_loss_weight: 1.0 # 1.0
   grad_accumulation_schedule:
     0: 12
 

@@ -21,10 +21,10 @@ data_module:
   prefetch: true
 
 trainer:
-  max_epochs: 30
-  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
+  max_epochs: 40
+  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
-  devices: 1 # auto or int
+  devices: 4 # auto or int
 
 model:
   hidden_channels: 8

@@ -100,9 +100,9 @@ class RegressionTask(L.LightningModule):
 
         metrics = MetricCollection(
             {
-                "Accuracy": NaNTolerantAccuracy(),
-                "F1": NaNTolerantF1Score(),
-                "AUROC": NaNTolerantAUROC(),
+                "Accuracy": NaNTolerantAccuracy(task="binary"),
+                "F1": NaNTolerantF1Score(task="binary"),
+                "AUROC": NaNTolerantAUROC(task="binary"),
             }
         )
 
@@ -181,21 +181,31 @@ class RegressionTask(L.LightningModule):
             individual_predictions,
         ) = self(x, adj_dict, mask)
 
-        # Compute head loss
-        head_loss, dim_losses = self.combined_loss(final_output, y)
+        # Define thresholds for each dimension
+        thresholds = torch.tensor([0.9305, -0.0018], device=y.device)
 
-        # Compute individual prediction losses
+        # Create binary targets
+        binary_targets = torch.zeros_like(y)
+        for i in range(y.shape[1]):
+            binary_targets[:, i] = torch.where(
+                ~torch.isnan(y[:, i]), (y[:, i] > thresholds[i]).float(), float("nan")
+            )
+
+        # Compute head loss with binary targets
+        head_loss, dim_losses = self.combined_loss(final_output, binary_targets)
+
+        # Compute individual prediction losses with binary targets
         individual_losses = {
-            graph_name: self.combined_loss(pred, y)[0]
+            graph_name: self.combined_loss(pred, binary_targets)[0]
             for graph_name, pred in individual_predictions.items()
         }
 
-        # Compute cluster losses for each graph
+        # Compute cluster losses for each graph with binary targets
         cluster_losses = {}
         total_cluster_loss = 0
         for graph_name, clusters in graph_cluster_outputs.items():
             graph_cluster_loss = sum(
-                self.combined_loss(pred, y)[0] for pred in clusters
+                self.combined_loss(pred, binary_targets)[0] for pred in clusters
             ) / len(clusters)
             cluster_losses[graph_name] = graph_cluster_loss
             total_cluster_loss += graph_cluster_loss
@@ -210,9 +220,7 @@ class RegressionTask(L.LightningModule):
             sum(sum(losses) for losses in graph_entropy_losses.values())
             * self.hparams.entropy_loss_weight
         )
-        total_individual_loss = (
-            sum(individual_losses.values()) * 0.1
-        )  # Weight for individual predictions
+        total_individual_loss = sum(individual_losses.values()) * 0.1
 
         # Total loss
         loss = (
@@ -226,7 +234,7 @@ class RegressionTask(L.LightningModule):
         if torch.isnan(loss):
             log_error_information(
                 batch_idx,
-                y,
+                binary_targets,
                 final_output,
                 x,
                 adj_dict,
@@ -292,16 +300,29 @@ class RegressionTask(L.LightningModule):
                 sync_dist=True,
             )
 
-        # Update metrics
+        # Update metrics with binary outputs and targets, masking out NaN values
         metrics = getattr(self, f"{stage}_metrics")
-        metrics["fitness"](final_output[:, 0], y[:, 0])
-        metrics["gene_interaction"](final_output[:, 1], y[:, 1])
+
+        # Handle fitness metrics
+        fitness_mask = ~torch.isnan(binary_targets[:, 0])
+        if fitness_mask.any():
+            metrics["fitness"](
+                torch.sigmoid(final_output[fitness_mask, 0]),
+                binary_targets[fitness_mask, 0],
+            )
+
+        # Handle gene interaction metrics
+        gi_mask = ~torch.isnan(binary_targets[:, 1])
+        if gi_mask.any():
+            metrics["gene_interaction"](
+                torch.sigmoid(final_output[gi_mask, 1]), binary_targets[gi_mask, 1]
+            )
 
         if stage in ["val", "test"]:
-            self.true_values.append(y.detach())
+            self.true_values.append(binary_targets.detach())
             self.predictions.append(final_output.detach())
 
-        return loss, final_output, y
+        return loss, final_output, binary_targets
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")

@@ -29,6 +29,7 @@ from typing import Optional
 import torch.optim as optim
 import torch.nn.functional as F
 
+
 class MultiDimNaNTolerantL1Loss(nn.Module):
     def __init__(self):
         super(MultiDimNaNTolerantL1Loss, self).__init__()
@@ -156,54 +157,36 @@ class MultiDimNaNTolerantBCELoss(nn.Module):
         super(MultiDimNaNTolerantBCELoss, self).__init__()
         self.eps = eps
 
-    def forward(self, y_pred, y_true, threshold):
+    def forward(self, y_pred, y_true):
         """
         Compute Binary Cross Entropy loss while properly handling NaN values.
-        Uses numerically stable computations to prevent overflow.
+        Only computes loss for non-NaN target values.
         """
         device = y_pred.device
-
-        # Ensure tensors have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
-        assert (
-            threshold.shape[0] == y_pred.shape[1]
-        ), "Threshold tensor must match number of dimensions"
-
-        # Move tensors to the same device
-        y_true = y_true.to(device)
-        threshold = threshold.to(device)
 
         # Create mask for non-NaN values
         mask = ~torch.isnan(y_true)
 
         # Count valid samples per dimension
-        n_valid = mask.sum(dim=0).clamp(min=1)
+        n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
 
-        # Binarize the true values using threshold
-        y_true_binary = torch.where(
-            mask, (y_true > threshold).float(), torch.zeros_like(y_true)
-        )
-
-        # Clamp predictions to prevent numerical overflow in sigmoid
+        # Clamp predictions to prevent numerical overflow
         y_pred_clamped = y_pred.clamp(-100, 100)
 
-        # Use PyTorch's numerically stable BCE with logits
+        # Zero out predictions where target is NaN
+        y_pred_masked = y_pred_clamped * mask.float()
+        y_true_masked = y_true.masked_fill(~mask, 0)
+
+        # Compute BCE with logits
         bce = F.binary_cross_entropy_with_logits(
-            y_pred_clamped, y_true_binary, reduction="none"
+            y_pred_masked, y_true_masked, reduction="none"
         )
 
-        # Apply mask
+        # Apply mask and compute mean per dimension
         bce = bce * mask.float()
+        dim_losses = bce.sum(dim=0) / n_valid
 
-        # Sum errors for each dimension
-        dim_losses = bce.sum(dim=0)
-
-        # Compute mean loss per dimension
-        dim_means = dim_losses / n_valid
-
-        return dim_means.to(device), mask.to(device)
+        return dim_losses.to(device), mask.to(device)
 
 
 class CombinedBCELoss(nn.Module):
@@ -214,11 +197,6 @@ class CombinedBCELoss(nn.Module):
         # Register weights as a buffer
         self.register_buffer(
             "weights", torch.ones(2) if weights is None else weights / weights.sum()
-        )
-
-        # Register threshold as a buffer
-        self.register_buffer(
-            "threshold", torch.tensor([0.9305, -0.0018])  # Your empirical thresholds
         )
 
     def forward(self, y_pred, y_true):
@@ -233,9 +211,9 @@ class CombinedBCELoss(nn.Module):
         weights = self.weights.to(device)
 
         # Compute per-dimension losses and get validity mask
-        dim_losses, mask = self.loss_fn(y_pred, y_true, self.threshold)
+        dim_losses, mask = self.loss_fn(y_pred, y_true)
 
-        # Ensure all intermediate computations stay on device
+        # Weight the losses based on valid dimensions
         valid_dims = mask.any(dim=0).to(device)
         weights = weights * valid_dims
         weight_sum = weights.sum().clamp(min=1e-8)

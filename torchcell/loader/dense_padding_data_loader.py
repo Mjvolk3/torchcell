@@ -406,7 +406,7 @@ class DensePaddingCollater:
         return self(batch)
 
 
-class DensePaddingDataLoader(torch.utils.data.DataLoader):
+class DensePaddingDataLoader(torch.utils.data.DataLoader): 
     r"""A data loader which merges data objects from a `torch_geometric.data.Dataset` to a mini-
     batch using padding along with a new dimension. Data objects can be either of type
     `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.

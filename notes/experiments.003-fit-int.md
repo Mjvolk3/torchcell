@@ -1,6 +1,6 @@
 ---
 id: 38h6ocou3r6j9z2qai0x11z
-title: 003 Fit Int Leth
+title: 003 Fit Int
 desc: ''
 updated: 1725926406229
 created: 1725919115953

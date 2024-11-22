@@ -1,11 +1,11 @@
 ---
-id: npnx8tcaaynzwpmpzgll41l
-title: '141624'
+id: 618l4iz33lp9xt1qq4exbww
+title: Classification Objectives
 desc: ''
-updated: 1731102178381
-created: 1731096987900
+updated: 1731867339701
+created: 1731867245942
 ---
-I'll summarize the key loss functions and explain each term:
+Facilitated with ChatGPT while referencing papers. 
 
 - Standard Regression (MSE):
 

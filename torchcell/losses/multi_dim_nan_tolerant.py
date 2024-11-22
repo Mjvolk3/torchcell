@@ -25,7 +25,7 @@ import torch
 from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
 import logging
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 import torch.optim as optim
 import torch.nn.functional as F
 
@@ -51,7 +51,7 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
         ), "Predictions and targets must have the same shape"
 
         # Create mask for non-NaN values
-        mask = ~torch.isnan(y_true)
+        mask = ~torch.isfloat("nan")(y_true)
 
         # Count valid samples per dimension
         n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
@@ -89,7 +89,7 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
         y_true = y_true.to(device)
 
         # Create mask for non-NaN values
-        mask = ~torch.isnan(y_true)
+        mask = ~torch.isfloat("nan")(y_true)
 
         # Count valid samples per dimension
         n_valid = mask.sum(dim=0).clamp(min=1)
@@ -152,77 +152,149 @@ class CombinedLoss(nn.Module):
         return weighted_loss.to(device), dim_losses.to(device)
 
 
-class MultiDimNaNTolerantBCELoss(nn.Module):
-    def __init__(self, eps=1e-7):
-        super(MultiDimNaNTolerantBCELoss, self).__init__()
+class MultiDimNaNTolerantCELoss(nn.Module):
+    def __init__(self, num_classes: int, num_tasks: int = 2, eps: float = 1e-7):
+        """
+        Cross Entropy loss that handles NaN values and supports any number of classes per task.
+
+        Args:
+            num_classes: Number of classes (bins) per task
+            num_tasks: Number of tasks (e.g., 2 for fitness and gene_interaction)
+            eps: Small value for numerical stability
+        """
+        super().__init__()
+        self.num_classes = num_classes
+        self.num_tasks = num_tasks
         self.eps = eps
 
-    def forward(self, y_pred, y_true):
+    def forward(
+        self, logits: torch.Tensor, targets: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Compute Binary Cross Entropy loss while properly handling NaN values.
-        Only computes loss for non-NaN target values.
+        Compute Cross Entropy loss while handling NaN values.
+
+        Args:
+            logits: Model predictions [batch_size, num_tasks * num_classes]
+            targets: Target labels [batch_size, num_tasks * num_classes]
+
+        Returns:
+            tuple: (dim_losses, mask)
         """
-        device = y_pred.device
+        device = logits.device
+        batch_size = logits.shape[0]
 
-        # Create mask for non-NaN values
-        mask = ~torch.isnan(y_true)
+        # Reshape inputs to separate tasks
+        logits = logits.view(batch_size, self.num_tasks, self.num_classes)
+        targets = targets.view(batch_size, self.num_tasks, self.num_classes)
 
-        # Count valid samples per dimension
-        n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
+        # Move tensors to correct device
+        logits = logits.to(device)
+        targets = targets.to(device)
 
-        # Clamp predictions to prevent numerical overflow
-        y_pred_clamped = y_pred.clamp(-100, 100)
+        # Create mask for non-NaN entries
+        mask = ~torch.isnan(targets).any(dim=-1)  # [batch_size, num_tasks]
 
-        # Zero out predictions where target is NaN
-        y_pred_masked = y_pred_clamped * mask.float()
-        y_true_masked = y_true.masked_fill(~mask, 0)
+        # Count valid samples per task
+        valid_samples = mask.sum(dim=0).clamp(min=1)  # [num_tasks]
 
-        # Compute BCE with logits
-        bce = F.binary_cross_entropy_with_logits(
-            y_pred_masked, y_true_masked, reduction="none"
-        )
+        # Apply log_softmax to get log probabilities
+        log_probs = F.log_softmax(
+            logits, dim=-1
+        )  # [batch_size, num_tasks, num_classes]
 
-        # Apply mask and compute mean per dimension
-        bce = bce * mask.float()
-        dim_losses = bce.sum(dim=0) / n_valid
+        # Replace NaN targets with 0 to avoid NaN propagation
+        targets = torch.nan_to_num(targets, nan=0.0)
+
+        # Compute cross entropy loss (-sum(target * log_prob))
+        loss = -(targets * log_probs).sum(dim=-1)  # [batch_size, num_tasks]
+
+        # Mask out invalid entries
+        masked_loss = loss * mask.float()
+
+        # Compute mean loss per dimension
+        dim_losses = masked_loss.sum(dim=0) / valid_samples
 
         return dim_losses.to(device), mask.to(device)
 
 
-class CombinedBCELoss(nn.Module):
-    def __init__(self, weights=None):
-        super(CombinedBCELoss, self).__init__()
-        self.loss_fn = MultiDimNaNTolerantBCELoss()
+class CombinedCELoss(nn.Module):
+    def __init__(
+        self,
+        num_classes: int,
+        num_tasks: int = 2,
+        weights: Optional[torch.Tensor] = None,
+    ):
+        """
+        Combined Cross Entropy loss with dimension-wise weighting.
 
-        # Register weights as a buffer
-        self.register_buffer(
-            "weights", torch.ones(2) if weights is None else weights / weights.sum()
+        Args:
+            num_classes: Number of classes (bins) per task
+            num_tasks: Number of tasks
+            weights: Optional tensor of weights for each dimension [num_tasks]
+        """
+        super().__init__()
+        self.num_classes = num_classes
+        self.num_tasks = num_tasks
+        self.loss_fn = MultiDimNaNTolerantCELoss(
+            num_classes=num_classes, num_tasks=num_tasks
         )
 
-    def forward(self, y_pred, y_true):
-        """
-        Compute weighted BCE loss while handling NaN values.
-        """
-        device = y_pred.device
+        # Register weights as a buffer
+        if weights is None:
+            weights = torch.ones(num_tasks)
+        self.register_buffer("weights", weights / weights.sum())
 
-        # Ensure inputs are on same device
-        y_pred = y_pred.to(device)
-        y_true = y_true.to(device)
-        weights = self.weights.to(device)
+    def forward(
+        self, logits: torch.Tensor, targets: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute weighted cross entropy loss.
+
+        Args:
+            logits: Model predictions [batch_size, num_tasks * num_classes]
+            targets: Target labels [batch_size, num_tasks * num_classes]
+
+        Returns:
+            tuple: (total_loss, dim_losses)
+        """
+        device = logits.device
 
         # Compute per-dimension losses and get validity mask
-        dim_losses, mask = self.loss_fn(y_pred, y_true)
+        dim_losses, mask = self.loss_fn(logits, targets)
 
-        # Weight the losses based on valid dimensions
-        valid_dims = mask.any(dim=0).to(device)
-        weights = weights * valid_dims
+        # Get mask for valid dimensions
+        valid_dims = mask.any(dim=0)
+        weights = self.weights.to(device)
+
+        # Apply weights only to valid dimensions
+        weights = weights * valid_dims.float()
         weight_sum = weights.sum().clamp(min=1e-8)
 
         # Compute weighted average loss
-        weighted_loss = (dim_losses * weights).sum() / weight_sum
+        total_loss = (dim_losses * weights).sum() / weight_sum
 
-        return weighted_loss.to(device), dim_losses.to(device)
+        return total_loss.to(device), dim_losses.to(device)
 
 
 if __name__ == "__main__":
-    pass
+    # Test case
+    logits = torch.tensor(
+        [
+            [0.6370, -0.0156, 0.2711, -0.2273],
+            [-0.2947, -0.1466, 1.2458, -0.9816],
+            [-0.4593, -0.2630, 1.2785, -0.8181],
+            [-0.2947, -0.1466, 1.2459, -0.9816],
+        ]
+    )
+    y = torch.tensor(
+        [
+            [0.0, 1.0, 0.0, 1.0],
+            [0.0, 1.0, float("nan"), float("nan")],
+            [0.0, 1.0, float("nan"), float("nan")],
+            [0.0, 1.0, 0.0, 1.0],
+        ]
+    )
+    loss = CombinedCELoss(num_classes=2, num_tasks=2)
+    total_loss, dim_losses = loss(logits, y)
+    print(f"Total loss: {total_loss}")
+    print(f"Dimension losses: {dim_losses}")

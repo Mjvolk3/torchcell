@@ -32,8 +32,8 @@ model:
   num_pooling_layers: 5 
   cluster_size_decay_factor: 6.0
   activation: gelu
-  conv_norm: layer
-  mlp_norm: layer
+  conv_norm: instance
+  mlp_norm: instance
   target_dim: 2
   cluster_aggregation: mean
   add_skip_connections: true

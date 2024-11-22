@@ -16,7 +16,7 @@ created: 1725815628586
 ## 2024.09.09
 
 - [x] [[Versus Delta Speed|dendron://Kbase/gilahyper.versus-delta-speed]]
-- [x] Planning [[2024.09.09 - Thinking About Pooling GNNs|dendron://torchcell/experiments.003-fit-int-leth#20240909---thinking-about-pooling-gnns]]
+- [x] Planning [[2024.09.09 - Thinking About Pooling GNNs|dendron://torchcell/experiments.003-fit-int#20240909---thinking-about-pooling-gnns]]
 - [x] #ramble GO graph looks like the levels don't necessarily feed into levels directly above... We might be able to git fewer levels by looking at direct connections to levels above which could give a smart number pooling layers for the model.
 
 - [x] Fix all of [[torchcell.datasets.scerevisiae.costanzo2016]]

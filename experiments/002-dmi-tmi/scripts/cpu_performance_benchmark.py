@@ -36,8 +36,10 @@ def run_benchmark(repeats: int, matrix_size: int) -> list:
 
 
 # Running benchmark 5 times with matrix size 1000
-repeats = 5
-matrix_size = 4000
+repeats = 1
+matrix_size = 100
+print(f"repeat: {repeats}, matrix_size: {matrix_size}")
+
 results = run_benchmark(repeats, matrix_size)
 
 # Calculate mean and standard deviation

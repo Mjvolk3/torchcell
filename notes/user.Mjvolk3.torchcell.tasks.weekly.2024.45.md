@@ -2,7 +2,7 @@
 id: gze5rnzin8yb1h9qlo36f7q
 title: '45'
 desc: ''
-updated: 1730921983533
+updated: 1731867413987
 created: 1730794204188
 ---
 ## 2024.11.05
@@ -15,8 +15,4 @@ created: 1730794204188
 - [x] Implement `gin_diffpool`
 - [x] Change `{hostname_slurm_job_id}_{group}` to just `{group}` since it already contains hostname.
 - [x] Submit `gh` performance ticket
-- [ ] Run DDP `gin_diffpool
-
-## 2024.11.06
-
-- [ ] Spearman needs to be fixed unbounded. I saw values around 3.
+- [x] Run DDP `gin_diffpool

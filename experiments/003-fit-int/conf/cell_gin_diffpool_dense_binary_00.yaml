@@ -1,3 +1,4 @@
+# https://wandb.ai/zhao-group/torchcell_test_cell_gin_diffpool_dense_binary/runs/4a1lv0n9?nw=nwusermjvolk3
 defaults:
   - default
   - _self_
@@ -27,7 +28,7 @@ trainer:
   devices: 4 # auto or int
 
 model:
-  hidden_channels: 8
+  hidden_channels: 16
   num_layers: 2
   num_pooling_layers: 7 
   cluster_size_decay_factor: 3.0
@@ -45,8 +46,8 @@ regression_task:
   # loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-5
-    weight_decay: 1e-6
+    lr: 1e-4
+    weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -61,8 +62,8 @@ regression_task:
   clip_grad_norm: true
   clip_grad_norm_max_norm: 1.0
   cluster_loss_weight: 1.0 #1.0
-  link_pred_loss_weight: 1.0 # 1.0
-  entropy_loss_weight: 1.0 # 1.0
+  link_pred_loss_weight: 0.01 # 1.0
+  entropy_loss_weight: 0.01 # 1.0
   grad_accumulation_schedule:
     0: 12
 

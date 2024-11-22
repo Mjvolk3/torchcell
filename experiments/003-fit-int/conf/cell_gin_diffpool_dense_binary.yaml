@@ -15,22 +15,22 @@ cell_dataset:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #7e3
-  num_workers: 4
-  batch_size: 4 # ok: 4; oom: 8, 12... ok gh: 6
-  pin_memory: false
-  prefetch: false
+  num_workers: 12
+  batch_size: 12 # ok: 4; oom: 8, 12... ok gh: 6
+  pin_memory: true
+  prefetch: true
 
 trainer:
-  max_epochs: 2
-  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
+  max_epochs: 40
+  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
-  devices: 1 # auto or int
+  devices: 4 # auto or int
 
 model:
-  hidden_channels: 16
+  hidden_channels: 8
   num_layers: 2
-  num_pooling_layers: 7 
-  cluster_size_decay_factor: 3.0
+  num_pooling_layers: 5 
+  cluster_size_decay_factor: 6.0
   activation: gelu
   conv_norm: instance
   mlp_norm: instance

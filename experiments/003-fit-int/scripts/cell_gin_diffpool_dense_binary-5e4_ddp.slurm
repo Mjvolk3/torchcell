@@ -14,23 +14,23 @@
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type="END"
 # #SBATCH --output=/dev/null
-#SBATCH --output=/scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
-#SBATCH --error=/scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
+#SBATCH --output=/work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
+#SBATCH --error=/work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 
 
 module reset # drop modules and explicitly loado the ones needed
              # (good job metadata and reproducibility)
-             # $WORK and $SCRATCH are now set
+             # $WORK and $ime are now set
 source ~/.bashrc
 
-cd /scratch/bbub/mjvolk3/torchcell
+cd /work/hdd/bbub/mjvolk3/torchcell
 pwd
 lscpu
 nvidia-smi 
 cat /proc/meminfo
 #module load anaconda3_cpu
 module list  # job documentation and metadata
-conda activate /scratch/bbub/miniconda3/envs/torchcell
+conda activate /work/hdd/bbub/miniconda3/envs/torchcell
 
 # TODO Needed for sweep... need to look into this more.
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
@@ -51,16 +51,16 @@ echo "SLURM_JOB_NUM_NODES: $SLURM_JOB_NUM_NODES"
 echo "-----------------"
 
 
-mkdir /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
+mkdir /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
 
 # Use for Agent logging. Only use in testing.
 # Not sure if visivles devices scales with num nodes or resets to 0
 #for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-#    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
+#    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
 #done
 #wait
 
-#wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1
+#wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1
 
 
-srun python /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/cell_gin_diffpool_dense_binary.py > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1
+srun python /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/cell_gin_diffpool_dense_binary.py > /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1

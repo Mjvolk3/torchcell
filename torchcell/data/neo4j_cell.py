@@ -9,7 +9,9 @@ import os
 import os.path as osp
 from collections.abc import Callable
 import lmdb
+import pandas as pd
 import networkx as nx
+import numpy as np
 from typing import Any
 from pydantic import field_validator
 from tqdm import tqdm
@@ -325,6 +327,9 @@ class Neo4jCellDataset(Dataset):
         self._dataset_name_index = None
         self._perturbation_count_index = None
 
+        # Cached label df for converting regression to classification
+        self._label_df = None
+
         self.gene_set = gene_set
 
         # raw db processing
@@ -503,6 +508,8 @@ class Neo4jCellDataset(Dataset):
 
         # Compute phenotype info - used in get item
         self.compute_phenotype_info()
+        # Compute and cache label DataFrame explicitly
+        self._label_df = self.label_df
         # clean up raw db
         raw_db.env = None
 
@@ -519,7 +526,7 @@ class Neo4jCellDataset(Dataset):
         env_src.close()
         env_dst.close()
 
-    #TODO change to query_gene_set
+    # TODO change to query_gene_set
     @property
     def gene_set(self):
         try:
@@ -586,7 +593,7 @@ class Neo4jCellDataset(Dataset):
             readahead=False,
             meminit=False,
             max_readers=256,
-            max_spare_txns=16
+            max_spare_txns=16,
         )
 
     def len(self) -> int:
@@ -602,6 +609,77 @@ class Neo4jCellDataset(Dataset):
         if self.env is not None:
             self.env.close()
             self.env = None
+
+    @property
+    def label_df(self) -> pd.DataFrame:
+        """Cache and return a DataFrame containing all labels and their indices."""
+        label_cache_path = osp.join(self.processed_dir, "label_df.parquet")
+
+        # Return cached DataFrame if already loaded in memory and valid
+        if hasattr(self, "_label_df") and isinstance(self._label_df, pd.DataFrame):
+            return self._label_df
+
+        # Load from disk if previously cached
+        if osp.exists(label_cache_path):
+            self._label_df = pd.read_parquet(label_cache_path)
+            return self._label_df
+
+        print("Computing label DataFrame...")
+
+        # Get label names from phenotype_info
+        label_names = [
+            phenotype.model_fields["label_name"].default
+            for phenotype in self.phenotype_info
+        ]
+
+        # Initialize data dictionary with index and label columns
+        data_dict = {"index": [], **{label_name: [] for label_name in label_names}}
+
+        # Open LMDB for reading
+        self._init_lmdb_read()
+
+        # Iterate through all entries in the database
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            for key, value in cursor:
+                idx = int(key.decode())
+                data_list = json.loads(value.decode())
+
+                # Initialize row with index and NaN for all labels
+                row_data = {"index": idx}
+                for label_name in label_names:
+                    row_data[label_name] = np.nan
+
+                # Check all experiments in data_list
+                for data in data_list:
+                    experiment = EXPERIMENT_TYPE_MAP[
+                        data["experiment"]["experiment_type"]
+                    ](**data["experiment"])
+
+                    # Add each label if it exists
+                    for label_name in label_names:
+                        try:
+                            value = getattr(experiment.phenotype, label_name)
+                            if not np.isnan(
+                                value
+                            ):  # Only update if we find a non-NaN value
+                                row_data[label_name] = value
+                        except AttributeError:
+                            continue  # Try next experiment if label doesn't exist in this one
+
+                # Add row data to data_dict
+                for key, value in row_data.items():
+                    data_dict[key].append(value)
+
+        self.close_lmdb()
+
+        # Create DataFrame
+        self._label_df = pd.DataFrame(data_dict)
+
+        # Cache the DataFrame
+        self._label_df.to_parquet(label_cache_path)
+
+        return self._label_df
 
     def compute_phenotype_label_index(self) -> dict[str, list[int]]:
         print("Computing phenotype label index...")
@@ -842,6 +920,7 @@ def main():
         graph_processor=PhenotypeProcessor(),
     )
     print(len(dataset))
+    dataset.label_df
     # Data module testing
 
     # print(dataset[7])
@@ -897,5 +976,423 @@ def main():
     #     break
 
 
+def main_transform():
+    """Test the label binning transforms on the dataset with proper initialization."""
+    import os.path as osp
+    from dotenv import load_dotenv
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import copy
+    import torch
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
+    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, PhenotypeProcessor
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
+    from torchcell.transforms.regression_to_classification import (
+        LabelBinningTransform,
+        LabelNormalizationTransform,
+    )
+    from torch_geometric.transforms import Compose
+
+    # Dataset setup code unchanged...
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+
+    graphs = {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    node_embeddings = {
+        "fudt_3prime": fudt_3prime_dataset,
+        "fudt_5prime": fudt_5prime_dataset,
+    }
+
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs=graphs,
+        node_embeddings=node_embeddings,
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=PhenotypeProcessor(),
+    )
+
+    # Configure transforms
+    norm_configs = {
+        "fitness": {"strategy": "minmax"},
+        "gene_interaction": {"strategy": "minmax"},
+    }
+
+    bin_configs = {
+        "fitness": {
+            "num_bins": 10,
+            "strategy": "equal_width",
+            "store_continuous": True,
+            "sigma": 0.1,
+            "label_type": "soft",
+        },
+        "gene_interaction": {
+            "num_bins": 5,
+            "strategy": "equal_frequency",
+            "store_continuous": True,
+            "label_type": "ordinal",
+        },
+    }
+
+    # Create transforms and compose them
+    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
+    binning_transform = LabelBinningTransform(dataset, bin_configs)
+    transform = Compose([normalize_transform, binning_transform])
+
+    # Apply transform to dataset
+    dataset.transform = transform
+
+    # Test transforms
+    test_indices = [10, 100, 1000]
+    print("\nTesting transforms...")
+    for idx in test_indices:
+        print(f"\nSample {idx}:")
+        data = dataset[idx]  # This will apply the composed transform
+
+        # Get original data (without transform)
+        dataset.transform = None
+        original_data = dataset[idx]
+
+        # Restore transform
+        dataset.transform = transform
+
+        # Print results for each label
+        for label in norm_configs.keys():
+            print(f"\n{label}:")
+            print(f"Original:     {original_data['gene'][label].item():.4f}")
+            print(f"Normalized:   {data['gene'][f'{label}_continuous'].item():.4f}")
+            print(f"Original (stored): {data['gene'][f'{label}_original'].item():.4f}")
+
+            if bin_configs[label]["label_type"] == "soft":
+                print(f"Soft labels shape: {data['gene'][label].shape}")
+                print(f"Soft labels sum:   {data['gene'][label].sum().item():.4f}")
+            elif bin_configs[label]["label_type"] == "ordinal":
+                print(f"Ordinal labels shape: {data['gene'][label].shape}")
+                print(f"Ordinal values:      {data['gene'][label].numpy()}")
+
+    # Visualization
+    fig, axes = plt.subplots(3, 2, figsize=(15, 15))
+    fig.suptitle("Label Distributions: Original, Normalized, and Binned", fontsize=16)
+
+    # Sample data for visualization
+    sample_size = min(1000, len(dataset))
+    sample_indices = np.random.choice(len(dataset), sample_size, replace=False)
+
+    # Get original distribution data
+    dataset.transform = None
+    original_data = {label: [] for label in norm_configs.keys()}
+    for idx in sample_indices:
+        data = dataset[idx]
+        for label in norm_configs.keys():
+            if not torch.isnan(data["gene"][label]).any():
+                original_data[label].append(data["gene"][label].item())
+
+    # Restore transform and get transformed data
+    dataset.transform = transform
+    transformed_data = {
+        label: {"normalized": [], "binned": []} for label in norm_configs.keys()
+    }
+
+    for idx in sample_indices:
+        data = dataset[idx]
+        for label in norm_configs.keys():
+            if not torch.isnan(data["gene"][f"{label}_continuous"]).any():
+                transformed_data[label]["normalized"].append(
+                    data["gene"][f"{label}_continuous"].item()
+                )
+                transformed_data[label]["binned"].append(data["gene"][label].numpy())
+
+    # Plot distributions
+    for i, label in enumerate(norm_configs.keys()):
+        # Original distribution
+        sns.histplot(original_data[label], bins=50, ax=axes[0, i], stat="density")
+        axes[0, i].set_title(f"Original {label}")
+
+        # Normalized distribution
+        sns.histplot(
+            transformed_data[label]["normalized"],
+            bins=50,
+            ax=axes[1, i],
+            stat="density",
+        )
+        axes[1, i].set_title(f"Normalized {label}")
+
+        # Binned distribution
+        binned = np.array(transformed_data[label]["binned"])
+        if bin_configs[label]["label_type"] == "soft":
+            mean_soft = np.mean(binned, axis=0)
+            axes[2, i].bar(range(len(mean_soft)), mean_soft)
+            axes[2, i].set_title(f"Mean Soft Labels {label}")
+        else:
+            mean_ordinal = np.mean(binned, axis=0)
+            axes[2, i].bar(range(len(mean_ordinal)), mean_ordinal)
+            axes[2, i].set_title(f"Mean Ordinal Values {label}")
+
+    plt.tight_layout()
+    plt.show()
+
+    dataset.close_lmdb()
+
+
+def main_transform_dense():
+    """Test label transforms and dense conversion with perturbation subset."""
+    import os.path as osp
+    from dotenv import load_dotenv
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import copy
+    import torch
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
+    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, PhenotypeProcessor
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
+    from torchcell.transforms.regression_to_classification import (
+        LabelBinningTransform,
+        LabelNormalizationTransform,
+        InverseCompose,
+    )
+    from torchcell.transforms.hetero_to_dense import HeteroToDense
+    from torch_geometric.transforms import Compose
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+
+    # Setup dataset (unchanged)
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    # Dataset setup
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+
+    graphs = {"physical": graph.G_physical, "regulatory": graph.G_regulatory}
+    node_embeddings = {
+        "fudt_3prime": fudt_3prime_dataset,
+        "fudt_5prime": fudt_5prime_dataset,
+    }
+
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+
+    # First create dataset without transforms
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs=graphs,
+        node_embeddings=node_embeddings,
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=PhenotypeProcessor(),
+    )
+
+    # Configure transforms
+    norm_configs = {
+        "fitness": {"strategy": "minmax"},
+        "gene_interaction": {"strategy": "minmax"},
+    }
+
+    bin_configs = {
+        "fitness": {
+            "num_bins": 2,
+            "strategy": "equal_frequency",
+            "store_continuous": True,
+            # "sigma": 0.1,
+            "label_type": "categorical",
+        },
+        "gene_interaction": {
+            "num_bins": 2,
+            "strategy": "equal_frequency",
+            "store_continuous": True,
+            # "sigma": 0.1,
+            "label_type": "categorical",
+            # "num_bins": 5,
+            # "strategy": "equal_frequency",
+            # "store_continuous": True,
+            # "label_type": "ordinal",
+        },
+    }
+
+    # Create transforms and compose them with dataset stats
+    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
+    binning_transform = LabelBinningTransform(dataset, bin_configs)
+    # TODO will need to implement inverse maybe?
+    # dense_transform = HeteroToDense({"gene": len(genome.gene_set)})
+
+    # Apply transforms to dataset
+    forward_transform = Compose(
+        [normalize_transform, binning_transform]
+    )
+    inverse_transform = InverseCompose(forward_transform)
+
+    # I want to be able to do this
+    dataset.transform = forward_transform
+
+    # Create base data module
+    base_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=32,
+        random_seed=42,
+        num_workers=4,
+        pin_memory=True,
+    )
+    base_data_module.setup()
+
+    # Create perturbation subset module
+    subset_size = 10000
+    subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=base_data_module,
+        size=subset_size,
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=42,
+        dense=True,  # Important for dense format
+    )
+    subset_data_module.setup()
+
+    # Test transforms on subset
+    print("\nTesting transforms on subset...")
+    train_loader = subset_data_module.train_dataloader()
+    batch = next(iter(train_loader))
+
+    print("\nBatch structure:")
+    print(f"Batch keys: {batch.keys}")
+    print(f"\nNode features shape: {batch['gene'].x.shape}")
+    print(f"Adjacency matrix shapes:")
+    # print(f"Physical: {batch['gene', 'physical_interaction', 'gene'].adj.shape}")
+    # print(f"Regulatory: {batch['gene', 'regulatory_interaction', 'gene'].adj.shape}")
+
+    # Check label shapes and values
+    print("\nLabel information:")
+    for label in norm_configs.keys():
+        print(f"\n{label}:")
+        if bin_configs[label]["label_type"] == "soft":
+            print(f"Soft label shape: {batch['gene'][label].shape}")
+            # Handle potentially extra dimensions in soft labels
+            soft_labels = batch["gene"][label].squeeze()
+            if soft_labels.dim() == 3:  # If [batch, 1, num_classes]
+                soft_labels = soft_labels.squeeze(1)
+            print(f"Soft label sums (first 5):")
+            print(soft_labels.sum(dim=-1)[:5])  # Sum over classes
+        else:
+            print(f"Ordinal label shape: {batch['gene'][label].shape}")
+            ordinal_labels = batch["gene"][label].squeeze()
+            if ordinal_labels.dim() == 3:  # If [batch, 1, num_thresholds]
+                ordinal_labels = ordinal_labels.squeeze(1)
+            print(f"Ordinal values (first 5):")
+            print(ordinal_labels[:5])
+
+        # Handle continuous and original values
+        cont_vals = batch["gene"][f"{label}_continuous"].squeeze()
+        orig_vals = batch["gene"][f"{label}_original"].squeeze()
+        print(f"Continuous values (first 5): {cont_vals[:5]}")
+        print(f"Original values (first 5): {orig_vals[:5]}")
+
+    # Create visualization of distributions in batch
+    fig, axes = plt.subplots(2, 2, figsize=(15, 12))
+    fig.suptitle("Label Distributions in Dense Batch", fontsize=16)
+
+    for i, label in enumerate(norm_configs.keys()):
+        # Original values
+        orig_values = batch["gene"][f"{label}_original"].squeeze().cpu().numpy()
+        valid_mask = ~np.isnan(orig_values)
+        orig_values = orig_values[valid_mask]
+        sns.histplot(orig_values, bins=50, ax=axes[0, i], stat="density")
+        axes[0, i].set_title(f"Original {label}")
+
+        # Transformed values
+        if bin_configs[label]["label_type"] == "soft":
+            soft_labels = batch["gene"][label].squeeze()
+            if soft_labels.dim() == 3:
+                soft_labels = soft_labels.squeeze(1)
+            mean_soft = soft_labels.mean(dim=0).cpu().numpy()
+            axes[1, i].bar(range(len(mean_soft)), mean_soft)
+            axes[1, i].set_title(f"Mean Soft Labels {label}")
+            axes[1, i].set_xlabel("Class")
+            axes[1, i].set_ylabel("Mean Probability")
+        else:
+            ordinal_labels = batch["gene"][label].squeeze()
+            if ordinal_labels.dim() == 3:
+                ordinal_labels = ordinal_labels.squeeze(1)
+            mean_ordinal = ordinal_labels.mean(dim=0).cpu().numpy()
+            axes[1, i].bar(range(len(mean_ordinal)), mean_ordinal)
+            axes[1, i].set_title(f"Mean Ordinal Values {label}")
+            axes[1, i].set_xlabel("Threshold")
+            axes[1, i].set_ylabel("Mean Value")
+
+    plt.tight_layout()
+    plt.show()
+
+    dataset.close_lmdb()
+
+
 if __name__ == "__main__":
-    main()
+    main_transform_dense()

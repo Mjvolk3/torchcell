@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_003-fit-int_hetero_gnn_pool_5e4 # torchcell_test_cell_sagpool
+  project: torchcell_003-fit-int_hetero_gnn_pool_1e4 # torchcell_test_cell_sagpool
   tags: []
 
 cell_dataset:
@@ -23,25 +23,25 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 #5e4 #7e3
-  batch_size: 32
+  perturbation_subset_size: 1e4 #5e4 #7e3
+  batch_size: 16
   num_workers: 8
   pin_memory: true
   prefetch: true
 
 trainer:
-  max_epochs: 8
+  max_epochs: 2
   strategy: auto # ddp, auto
   accelerator: cpu #cpu
   devices: auto # auto or int
 
 model:
   # Basic model parameters
-  hidden_channels: 32
-  num_layers: 2
+  hidden_channels: 16
+  num_layers: 12
   conv_type: "GCN" # ["GCN", "GAT", "Transformer", "GIN"]
   pooling: "mean" # ["mean", "max", "add"]
-  activation: "gelu"
+  activation: "relu"
   norm: "layer"
   target_dim: 2
   dropout: 0.1
@@ -49,7 +49,7 @@ model:
   # Uncomment the conv_type specific config
   # GCN layer config
   gcn_bias: true
-  gcn_add_self_loops: false
+  gcn_add_self_loops: true
   gcn_normalize: false
   gcn_is_skip_connection: true
 
@@ -83,7 +83,7 @@ regression_task:
   loss_type: "ce"
   optimizer:
     type: "AdamW"
-    lr: 1e-5
+    lr: 1e-3
     weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
@@ -98,6 +98,7 @@ regression_task:
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
+  intermediate_loss_weight: 1.0 # 10.0
   grad_accumulation_schedule: null
   # grad_accumulation_schedule:
   #   0: 24

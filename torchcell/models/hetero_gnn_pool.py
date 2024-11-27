@@ -261,6 +261,74 @@ class HeteroGnnPool(nn.Module):
             return global_max_pool(x, batch)
         raise ValueError(f"Invalid pooling type: {self.pooling}")
 
+    def _get_head_norm(
+        self, channels: int, norm_type: Optional[str]
+    ) -> Optional[nn.Module]:
+        """Get standard PyTorch normalization layer for prediction head."""
+        if norm_type is None:
+            return None
+
+        norm_layers = {
+            "batch": nn.BatchNorm1d,
+            "layer": nn.LayerNorm,
+            "instance": nn.InstanceNorm1d,
+        }
+
+        if norm_type not in norm_layers:
+            raise ValueError(f"Unsupported head normalization type: {norm_type}")
+
+        if norm_type == "layer":
+            return norm_layers[norm_type](channels)
+        else:  # batch or instance norm
+            return norm_layers[norm_type](channels, track_running_stats=True)
+
+    def _build_prediction_head(
+        self,
+        in_channels: int,
+        hidden_channels: int,
+        out_channels: int,
+        num_layers: int,
+        dropout: float,
+        activation: str,
+        residual: bool,
+        norm: Optional[str],
+    ) -> nn.Module:
+        if num_layers < 1:
+            raise ValueError("Prediction head must have at least one layer")
+
+        activation_fn = act_register[activation]
+        layers = []
+        dims = []
+
+        # Calculate dimensions for each layer
+        if num_layers == 1:
+            dims = [in_channels, out_channels]
+        else:
+            dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
+
+        # Build layers
+        for i in range(num_layers):
+            # Add linear layer
+            layers.append(nn.Linear(dims[i], dims[i + 1]))
+
+            # Add normalization, activation, and dropout (except for last layer)
+            if i < num_layers - 1:
+                if norm is not None:
+                    norm_layer = self._get_head_norm(dims[i + 1], norm)
+                    if norm_layer is not None:
+                        layers.append(norm_layer)
+
+                layers.append(activation_fn())
+
+                if dropout > 0:
+                    layers.append(nn.Dropout(dropout))
+
+        return PredictionHead(
+            layers=nn.ModuleList(layers),
+            residual=residual and num_layers > 1,
+            dims=dims,
+        )
+
     def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
         from torch_geometric.utils import add_self_loops
 
@@ -326,7 +394,6 @@ class HeteroGnnPool(nn.Module):
             "conv_layers": conv_params,
             "norm_layers": norm_params,
             "final_layers": final_params,
-            "breakdown_total": conv_params + norm_params + final_params,
             "total": total_trainable,
         }
 

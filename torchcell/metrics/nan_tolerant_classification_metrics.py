@@ -176,3 +176,89 @@ class NaNTolerantAUROC(NaNTolerantMetricBase):
         auc = torch.sum(width * height)
 
         return auc
+
+
+class NaNTolerantPrecision(NaNTolerantMetricBase):
+    is_differentiable = True
+    higher_is_better = True
+    full_state_update = False
+
+    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        super().__init__(**kwargs)
+        self.task = task
+        if task == "binary":
+            num_classes = 2
+        else:
+            num_classes = kwargs.get("num_classes", 2)
+            if num_classes is None:
+                raise ValueError("num_classes must be provided for multiclass task")
+
+        self.add_state("tp", default=torch.zeros(num_classes), dist_reduce_fx="sum")
+        self.add_state("fp", default=torch.zeros(num_classes), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        preds, target = self._prepare_inputs(preds, target)
+        if preds.numel() > 0:
+            if self.task == "binary":
+                preds = torch.softmax(preds, dim=-1)
+                pred_classes = torch.argmax(preds, dim=1)
+            else:
+                pred_classes = torch.argmax(preds, dim=1)
+
+            target = target.long()
+            for i in range(len(self.tp)):
+                self.tp[i] += ((pred_classes == i) & (target == i)).sum()
+                self.fp[i] += ((pred_classes == i) & (target != i)).sum()
+
+    def compute(self) -> Tensor:
+        if self.tp.sum() == 0:
+            return self._create_tensor_on_device(float("nan"))
+
+        precision = self.tp / (self.tp + self.fp + 1e-10)
+
+        if self.task == "binary":
+            return precision[1]  # Return precision for positive class only
+        return precision.mean()  # Return macro precision for multiclass
+
+
+class NaNTolerantRecall(NaNTolerantMetricBase):
+    is_differentiable = True
+    higher_is_better = True
+    full_state_update = False
+
+    def __init__(self, task: Literal["binary", "multiclass"] = "binary", **kwargs):
+        super().__init__(**kwargs)
+        self.task = task
+        if task == "binary":
+            num_classes = 2
+        else:
+            num_classes = kwargs.get("num_classes", 2)
+            if num_classes is None:
+                raise ValueError("num_classes must be provided for multiclass task")
+
+        self.add_state("tp", default=torch.zeros(num_classes), dist_reduce_fx="sum")
+        self.add_state("fn", default=torch.zeros(num_classes), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        preds, target = self._prepare_inputs(preds, target)
+        if preds.numel() > 0:
+            if self.task == "binary":
+                preds = torch.softmax(preds, dim=-1)
+                pred_classes = torch.argmax(preds, dim=1)
+            else:
+                pred_classes = torch.argmax(preds, dim=1)
+
+            target = target.long()
+            for i in range(len(self.tp)):
+                self.tp[i] += ((pred_classes == i) & (target == i)).sum()
+                self.fn[i] += ((pred_classes != i) & (target == i)).sum()
+
+    def compute(self) -> Tensor:
+        if self.tp.sum() == 0:
+            return self._create_tensor_on_device(float("nan"))
+
+        recall = self.tp / (self.tp + self.fn + 1e-10)
+
+        if self.task == "binary":
+            return recall[1]  # Return recall for positive class only
+        return recall.mean()  # Return macro recall for multiclass

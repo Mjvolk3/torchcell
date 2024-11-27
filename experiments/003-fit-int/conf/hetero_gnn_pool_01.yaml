@@ -24,7 +24,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 5e4 #5e4 #7e3
-  batch_size: 32
+  batch_size: 16
   num_workers: 8
   pin_memory: true
   prefetch: true
@@ -37,11 +37,11 @@ trainer:
 
 model:
   # Basic model parameters
-  hidden_channels: 32
-  num_layers: 2
+  hidden_channels: 16
+  num_layers: 12
   conv_type: "GCN" # ["GCN", "GAT", "Transformer", "GIN"]
   pooling: "mean" # ["mean", "max", "add"]
-  activation: "gelu"
+  activation: "relu"
   norm: "layer"
   target_dim: 2
   dropout: 0.1
@@ -49,7 +49,7 @@ model:
   # Uncomment the conv_type specific config
   # GCN layer config
   gcn_bias: true
-  gcn_add_self_loops: false
+  gcn_add_self_loops: true
   gcn_normalize: false
   gcn_is_skip_connection: true
 
@@ -83,8 +83,8 @@ regression_task:
   loss_type: "ce"
   optimizer:
     type: "AdamW"
-    lr: 1e-5
-    weight_decay: 1e-8
+    lr: 1e-3
+    weight_decay: 1e-5
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -98,6 +98,7 @@ regression_task:
   boxplot_every_n_epochs: 1
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
+  intermediate_loss_weight: 1.0 # 10.0
   grad_accumulation_schedule: null
   # grad_accumulation_schedule:
   #   0: 24

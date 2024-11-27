@@ -62,6 +62,80 @@ load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 
 
+def analyze_label_distribution(data_module):
+    """Analyze distribution of labels across all dataloaders with live updates."""
+    stages = ["train", "val", "test"]
+    dataloaders = {
+        "test": data_module.test_dataloader(),
+        "val": data_module.val_dataloader(),
+        "train": data_module.train_dataloader(),
+    }
+
+    for stage, dataloader in dataloaders.items():
+        # Initialize counters
+        fitness_counts = {"[0,1]": 0, "[1,0]": 0, "nan": 0}
+        gi_counts = {"[0,1]": 0, "[1,0]": 0, "nan": 0}
+
+        print(f"\nAnalyzing {stage} set:")
+        for batch_idx, batch in enumerate(dataloader):
+            # Get fitness and GI labels
+            fitness = batch["gene"].fitness
+            gene_interaction = batch["gene"].gene_interaction
+
+            # Count fitness labels
+            for i in range(len(fitness)):
+                if torch.isnan(fitness[i]).any():
+                    fitness_counts["nan"] += 1
+                elif torch.allclose(fitness[i], torch.tensor([0.0, 1.0])):
+                    fitness_counts["[0,1]"] += 1
+                elif torch.allclose(fitness[i], torch.tensor([1.0, 0.0])):
+                    fitness_counts["[1,0]"] += 1
+
+            # Count GI labels
+            for i in range(len(gene_interaction)):
+                if torch.isnan(gene_interaction[i]).any():
+                    gi_counts["nan"] += 1
+                elif torch.allclose(gene_interaction[i], torch.tensor([0.0, 1.0])):
+                    gi_counts["[0,1]"] += 1
+                elif torch.allclose(gene_interaction[i], torch.tensor([1.0, 0.0])):
+                    gi_counts["[1,0]"] += 1
+
+            # Print running ratios every few batches
+            if batch_idx % 10 == 0:
+                total_fitness = sum(fitness_counts.values())
+                total_gi = sum(gi_counts.values())
+                print(f"\nBatch {batch_idx} Running Totals:")
+                print(
+                    f"Fitness - [0,1]:{fitness_counts['[0,1]']}, [1,0]:{fitness_counts['[1,0]']}, nan:{fitness_counts['nan']}"
+                )
+                print(
+                    f"GI      - [0,1]:{gi_counts['[0,1]']}, [1,0]:{gi_counts['[1,0]']}, nan:{gi_counts['nan']}"
+                )
+                if total_fitness > 0:
+                    print(
+                        f"Fitness Ratios - [0,1]:{fitness_counts['[0,1]']/total_fitness:.3f}, [1,0]:{fitness_counts['[1,0]']/total_fitness:.3f}, nan:{fitness_counts['nan']/total_fitness:.3f}"
+                    )
+                if total_gi > 0:
+                    print(
+                        f"GI Ratios      - [0,1]:{gi_counts['[0,1]']/total_gi:.3f}, [1,0]:{gi_counts['[1,0]']/total_gi:.3f}, nan:{gi_counts['nan']/total_gi:.3f}"
+                    )
+
+        # Print final summary
+        print(f"\nFinal {stage} Summary:")
+        total_fitness = sum(fitness_counts.values())
+        total_gi = sum(gi_counts.values())
+
+        print(f"\nFitness Total: {total_fitness}")
+        for label, count in fitness_counts.items():
+            ratio = count / total_fitness if total_fitness > 0 else 0
+            print(f"{label}: {count} (ratio: {ratio:.3f})")
+
+        print(f"\nGene Interaction Total: {total_gi}")
+        for label, count in gi_counts.items():
+            ratio = count / total_gi if total_gi > 0 else 0
+            print(f"{label}: {count} (ratio: {ratio:.3f})")
+
+
 class CustomAdvancedProfiler(AdvancedProfiler):
     def __init__(self, dirpath: str, filename: str, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -103,7 +177,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",  # "online", "offline", "disabled"
+        mode="online",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -397,6 +471,12 @@ def main(cfg: DictConfig) -> None:
         data_module.setup()
 
     # Anytime data is accessed lmdb must be closed.
+
+    # HACK - start# In main(), replace training with:
+    # print("\nAnalyzing label distribution across datasets...")
+    # analyze_label_distribution(data_module)
+    # return
+    # HACK - end
     input_dim = dataset.num_features["gene"]
     # max_num_nodes = len(dataset.gene_set)
     dataset.close_lmdb()
@@ -484,7 +564,6 @@ def main(cfg: DictConfig) -> None:
             "model/params_conv_layers": param_counts["conv_layers"],
             "model/params_norm_layers": param_counts["norm_layers"],
             "model/params_final_layers": param_counts["final_layers"],
-            "model/params_breakdown_total": param_counts["breakdown_total"],
             "model/params_total": param_counts["total"],
         }
     )
@@ -492,7 +571,24 @@ def main(cfg: DictConfig) -> None:
     # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
-    loss_func = CombinedCELoss(num_classes=target_dim, weights=torch.ones(2).to(device))
+    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
+        phenotype_counts = {}
+        for i in ["train", "val", "test"]:
+            phenotypes = getattr(data_module.index_details, i).phenotype_label_index
+            temp_counts = {k: v.count for k, v in phenotypes.items()}
+            for k, v in temp_counts.items():
+                if k in phenotype_counts:
+                    phenotype_counts[k] += v
+                else:
+                    phenotype_counts[k] = v
+        weights = torch.tensor(
+            [1 - v / sum(phenotype_counts.values()) for v in phenotype_counts.values()]
+        ).to(device)
+    else:
+        weights = torch.ones(2).to(device)
+
+    if wandb.config.regression_task["loss_type"] == "ce":
+        loss_func = CombinedCELoss(num_classes=target_dim, weights=weights)
 
     task = ClassificationTask(
         model=model,
@@ -502,9 +598,6 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
-        intermediate_loss_weight=wandb.config.regression_task[
-            "intermediate_loss_weight"
-        ],
         loss_func=loss_func,
         grad_accumulation_schedule=wandb.config.regression_task[
             "grad_accumulation_schedule"
@@ -581,6 +674,7 @@ def main(cfg: DictConfig) -> None:
 
     # Start the training
     trainer.fit(model=task, datamodule=data_module)
+    trainer.test(model=task, datamodule=data_module)
 
 
 if __name__ == "__main__":

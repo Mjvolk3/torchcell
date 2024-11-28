@@ -154,11 +154,16 @@ def box_plot(true_values, predictions) -> plt.Figure:
         label.set_fontname(font_name)
 
     # Update the title to include NaN percentage in scientific notation and handle NaN values correctly
-    title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+    # title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+    #     f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
+    #     f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
+    #     f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
+    #     nan_percentage,
+    # )
+    title = "Pearson: {}, Spearman: {}, R²: {}".format(
         f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
         f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
         f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
-        nan_percentage,
     )
     ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
 

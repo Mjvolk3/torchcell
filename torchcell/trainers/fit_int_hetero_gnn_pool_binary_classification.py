@@ -14,10 +14,19 @@ from torchcell.metrics.nan_tolerant_classification_metrics import (
     NaNTolerantAccuracy,
     NaNTolerantF1Score,
     NaNTolerantAUROC,
+    NaNTolerantPrecision,
+    NaNTolerantRecall,
+)
+from torchcell.metrics.nan_tolerant_metrics import (
+    NaNTolerantMSE,
+    NaNTolerantRMSE,
+    NaNTolerantR2Score,
+    NaNTolerantPearsonCorrCoef,
 )
 from torchcell.viz import fitness, genetic_interaction_score
 import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
+from torch_geometric.data import HeteroData
 
 log = logging.getLogger(__name__)
 
@@ -33,7 +42,6 @@ class ClassificationTask(L.LightningModule):
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
-        intermediate_loss_weight: float = 0.1,
         loss_func: nn.Module = None,
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
@@ -47,45 +55,117 @@ class ClassificationTask(L.LightningModule):
         self.current_accumulation_steps = 1
 
         # Define classification metrics
-        metrics = MetricCollection(
+        class_metrics = MetricCollection(
             {
                 "Accuracy": NaNTolerantAccuracy(task="binary"),
                 "F1": NaNTolerantF1Score(task="binary"),
-                # "AUROC": NaNTolerantAUROC(task="binary"),
+                "Precision": NaNTolerantPrecision(task="binary"),
+                "Recall": NaNTolerantRecall(task="binary"),
             }
         )
 
-        self.train_metrics = nn.ModuleDict(
+        # Define regression metrics
+        reg_metrics = MetricCollection(
             {
-                "fitness": metrics.clone(prefix="train/fitness/"),
-                "gene_interaction": metrics.clone(prefix="train/gene_interaction/"),
-            }
-        )
-        self.val_metrics = nn.ModuleDict(
-            {
-                "fitness": metrics.clone(prefix="val/fitness/"),
-                "gene_interaction": metrics.clone(prefix="val/gene_interaction/"),
-            }
-        )
-        self.test_metrics = nn.ModuleDict(
-            {
-                "fitness": metrics.clone(prefix="test/fitness/"),
-                "gene_interaction": metrics.clone(prefix="test/gene_interaction/"),
+                "MSE": NaNTolerantMSE(squared=True),
+                "RMSE": NaNTolerantMSE(squared=False),
+                "R2": NaNTolerantR2Score(),
+                "Pearson": NaNTolerantPearsonCorrCoef(),
             }
         )
 
-        self.true_values = []
+        # Create metrics for each stage (train/val/test)
+        for stage in ["train", "val", "test"]:
+            metrics_dict = nn.ModuleDict(
+                {
+                    "fitness": class_metrics.clone(prefix=f"{stage}/fitness/"),
+                    "gene_interaction": class_metrics.clone(
+                        prefix=f"{stage}/gene_interaction/"
+                    ),
+                    "fitness_reg": reg_metrics.clone(prefix=f"{stage}/fitness_reg/"),
+                    "gene_interaction_reg": reg_metrics.clone(
+                        prefix=f"{stage}/gene_interaction_reg/"
+                    ),
+                }
+            )
+            setattr(self, f"{stage}_metrics", metrics_dict)
+
+        self.true_reg_values = []
         self.predictions = []
         self.last_logged_best_step = None
         self.automatic_optimization = False
+
+    def _log_prediction_table(
+        self,
+        stage: str,
+        true_reg_values: torch.Tensor,
+        true_class_values: torch.Tensor,
+        logits: torch.Tensor,
+        inverse_preds: torch.Tensor,
+    ):
+        """Log a wandb table with all prediction forms for comparison."""
+        num_bins = logits.shape[1] // 2  # Number of bins per target
+
+        # Convert logits to softmax separately for each label
+        fitness_softmax = torch.softmax(logits[:, :num_bins], dim=1)
+        gi_softmax = torch.softmax(logits[:, num_bins:], dim=1)
+
+        # Create dynamic column headers
+        columns = ["True Reg (Fitness)", "True Reg (GI)"]
+
+        # Add classification truth columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"True Class {target} (Bin {i})" for i in range(num_bins)])
+
+        # Add logits columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"Logits {target} (Bin {i})" for i in range(num_bins)])
+
+        # Add softmax columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"Softmax {target} (Bin {i})" for i in range(num_bins)])
+
+        # Add regression prediction columns
+        columns.extend(["Pred Reg (Fitness)", "Pred Reg (GI)"])
+
+        # Create table data
+        data = []
+        for i in range(len(true_reg_values)):
+            row = []
+            # Add true regression values
+            row.extend([true_reg_values[i, 0].item(), true_reg_values[i, 1].item()])
+
+            # Add true class values for both fitness and GI
+            row.extend(
+                [true_class_values[i, j].item() for j in range(num_bins)]
+            )  # Fitness bins
+            row.extend(
+                [true_class_values[i, j + num_bins].item() for j in range(num_bins)]
+            )  # GI bins
+
+            # Add logits for both fitness and GI
+            row.extend([logits[i, j].item() for j in range(num_bins)])  # Fitness logits
+            row.extend(
+                [logits[i, j + num_bins].item() for j in range(num_bins)]
+            )  # GI logits
+
+            # Add softmax values for both fitness and GI
+            row.extend([fitness_softmax[i, j].item() for j in range(num_bins)])
+            row.extend([gi_softmax[i, j].item() for j in range(num_bins)])
+
+            # Add predicted regression values
+            row.extend([inverse_preds[i, 0].item(), inverse_preds[i, 1].item()])
+
+            data.append(row)
+
+        # Create and log wandb table
+        table = wandb.Table(columns=columns, data=data)
+        wandb.log({f"{stage}/second_to_last_batch_predictions": table}, commit=False)
 
     def forward(self, x_dict, edge_index_dict, batch_dict):
         return self.model(x_dict, edge_index_dict, batch_dict)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
-        """
-        Shared step for training, validation and testing.
-        """
         # Create input dictionaries
         x_dict = {"gene": batch["gene"].x}
         edge_index_dict = {
@@ -101,12 +181,11 @@ class ClassificationTask(L.LightningModule):
         # Forward pass to get logits
         logits = self(x_dict, edge_index_dict, batch_dict)
         batch_size = x_dict["gene"].size(0)
-        num_classes = self.loss_func.num_classes
 
-        # Extract and reshape targets - these are one-hot encoded from your transform
-        fitness = batch["gene"].fitness  # Shape: [batch_size, 2]
-        gene_interaction = batch["gene"].gene_interaction  # Shape: [batch_size, 2]
-        y = torch.cat([fitness, gene_interaction], dim=1)  # Shape: [batch_size, 4]
+        # Extract targets
+        fitness = batch["gene"].fitness
+        gene_interaction = batch["gene"].gene_interaction
+        y = torch.cat([fitness, gene_interaction], dim=1)
 
         # Calculate loss
         loss, dim_losses = self.loss_func(logits, y)
@@ -126,26 +205,73 @@ class ClassificationTask(L.LightningModule):
             sync_dist=True,
         )
 
-        # Update metrics
+        # Split logits for each task
+        fitness_logits = logits[:, :2]
+        gene_int_logits = logits[:, 2:]
+
+        # Update classification metrics
         metrics = getattr(self, f"{stage}_metrics")
+        metrics["fitness"](fitness_logits, fitness)
+        metrics["gene_interaction"](gene_int_logits, gene_interaction)
 
-        # Split logits and targets for each task
-        fitness_logits = logits[:, :2]  # First task's logits [batch_size, 2]
-        gene_int_logits = logits[:, 2:]  # Second task's logits [batch_size, 2]
+        # For regression metrics, transform predictions back to regression space
+        # Use detached tensors for metrics
+        pred_data = HeteroData()
+        pred_data["gene"] = {
+            "fitness": fitness_logits.detach(),  # Detach here
+            "gene_interaction": gene_int_logits.detach(),  # Detach here
+        }
+        reg_pred_data = self.inverse_transform(pred_data)
 
-        # Convert targets to class indices for metrics (from one-hot to indices)
-        fitness_target = torch.argmax(fitness, dim=1)  # Shape: [batch_size]
-        gene_int_target = torch.argmax(gene_interaction, dim=1)  # Shape: [batch_size]
+        # Get original regression values
+        y_original = torch.cat(
+            [
+                batch["gene"].fitness_original.view(-1, 1),
+                batch["gene"].gene_interaction_original.view(-1, 1),
+            ],
+            dim=1,
+        )
 
-        # Update metrics for each task
-        metrics["fitness"](fitness_logits, fitness_target)
-        metrics["gene_interaction"](gene_int_logits, gene_int_target)
+        # Update regression metrics
+        metrics["fitness_reg"](reg_pred_data["gene"]["fitness"], y_original[:, 0])
+        metrics["gene_interaction_reg"](
+            reg_pred_data["gene"]["gene_interaction"], y_original[:, 1]
+        )
 
+        # Store for validation/test plotting
         if stage in ["val", "test"]:
-            # Store original one-hot targets and predicted probabilities
-            self.true_values.append(y.detach())
-            self.predictions.append(torch.softmax(logits, dim=-1).detach())
+            self.true_reg_values.append(y_original.detach())
+            self.predictions.append(logits.detach())
 
+        # log table
+        num_batches = (
+            self.trainer.num_training_batches
+            if stage == "train"
+            else (
+                self.trainer.num_val_batches
+                if stage == "val"
+                else self.trainer.num_test_batches
+            )
+        )
+        num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
+
+        if batch_idx == num_batches - 2:  # Second to last batch
+            # Get inverse predictions
+            pred_reg_values = torch.cat(
+                [
+                    reg_pred_data["gene"]["fitness"].view(-1, 1),
+                    reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
+                ],
+                dim=1,
+            )
+
+            self._log_prediction_table(
+                stage=stage,
+                true_reg_values=y_original,
+                true_class_values=y,
+                logits=logits,
+                inverse_preds=pred_reg_values,
+            )
 
         return loss, logits, y
 
@@ -186,41 +312,55 @@ class ClassificationTask(L.LightningModule):
         loss, _, _ = self._shared_step(batch, batch_idx, "test")
         return loss
 
+    def on_train_epoch_end(self):
+        for metric_name, metric_dict in self.train_metrics.items():
+            computed_metrics = metric_dict.compute()
+            for name, value in computed_metrics.items():
+                self.log(name, value, sync_dist=True)
+            metric_dict.reset()
+
     def on_validation_epoch_end(self):
-        # Compute and log metrics
+        # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = metric_dict.compute()
             for name, value in computed_metrics.items():
-                self.log(f"val/{metric_name}/{name}", value, sync_dist=True)
+                self.log(name, value, sync_dist=True)
             metric_dict.reset()
 
-        # Skip plotting during sanity check
         if self.trainer.sanity_checking or (
             self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
         ):
             return
 
-        # Combine predictions and true values from all batches
-        true_values = torch.cat(self.true_values, dim=0)
+        true_reg_values = torch.cat(self.true_reg_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
-        # Create box plots for both fitness and gene interaction
+        # Create HeteroData object for predictions
+        pred_data = HeteroData()
+        pred_data["gene"] = {
+            "fitness": torch.softmax(predictions[:, :2], dim=1),
+            "gene_interaction": torch.softmax(predictions[:, 2:], dim=1),
+        }
+
+        # Apply inverse transform only to predictions
+        pred_data = self.inverse_transform(pred_data)
+
+        # Extract values for plotting
+        true_fitness = true_reg_values[:, 0]
+        true_gi = true_reg_values[:, 1]
+        pred_fitness = pred_data["gene"]["fitness"]
+        pred_gi = pred_data["gene"]["gene_interaction"]
+
         if not self.trainer.sanity_checking:
-            # Fitness box plot
-            fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
+            fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
             wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
 
-            # Gene interaction box plot
-            fig_gi = genetic_interaction_score.box_plot(
-                true_values[:, 1], predictions[:, 1]
-            )
+            fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
             wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
 
-        # Clear the stored values for the next epoch
-        self.true_values = []
+        self.true_reg_values = []
         self.predictions = []
 
-        # Log model artifact
         current_global_step = self.global_step
         if (
             self.trainer.checkpoint_callback.best_model_path
@@ -235,6 +375,46 @@ class ClassificationTask(L.LightningModule):
             artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
             wandb.log_artifact(artifact)
             self.last_logged_best_step = current_global_step
+
+    def on_test_epoch_end(self):
+        # Log metrics
+        for metric_name, metric_dict in self.test_metrics.items():
+            computed_metrics = metric_dict.compute()
+            for name, value in computed_metrics.items():
+                self.log(name, value, sync_dist=True)
+            metric_dict.reset()
+
+        if self.trainer.sanity_checking:
+            return
+
+        true_reg_values = torch.cat(self.true_reg_values, dim=0)
+        predictions = torch.cat(self.predictions, dim=0)
+
+        # Create HeteroData object for predictions
+        pred_data = HeteroData()
+        pred_data["gene"] = {
+            "fitness": torch.softmax(predictions[:, :2], dim=1),
+            "gene_interaction": torch.softmax(predictions[:, 2:], dim=1),
+        }
+
+        # Apply inverse transform only to predictions
+        pred_data = self.inverse_transform(pred_data)
+
+        # Extract values for plotting
+        true_fitness = true_reg_values[:, 0]
+        true_gi = true_reg_values[:, 1]
+        pred_fitness = pred_data["gene"]["fitness"]
+        pred_gi = pred_data["gene"]["gene_interaction"]
+
+        # Create box plots - note the test/ prefix instead of val/
+        fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
+        wandb.log({"test/fitness_box_plot": wandb.Image(fig_fitness)})
+
+        fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
+        wandb.log({"test/gene_interaction_box_plot": wandb.Image(fig_gi)})
+
+        self.true_reg_values = []
+        self.predictions = []
 
     def configure_optimizers(self):
         optimizer_class = getattr(optim, self.hparams.optimizer_config["type"])

@@ -22,6 +22,44 @@ from torch_geometric.typing import EdgeType
 from torchcell.models.act import act_register
 
 
+class ProjectedGATConv(nn.Module):
+    def __init__(self, gat_conv, out_dim):
+        super().__init__()
+        self.gat = gat_conv
+        self.project = nn.Linear(gat_conv.heads * gat_conv.out_channels, out_dim)
+
+    def forward(self, x, edge_index):
+        x = self.gat(x, edge_index)  # Shape: (..., heads * out_channels)
+        return self.project(x)  # Shape: (..., out_dim)
+
+
+class PredictionHead(nn.Module):
+    def __init__(self, layers: nn.ModuleList, residual: bool, dims: List[int]):
+        super().__init__()
+        self.layers = layers
+        self.residual = residual
+        self.dims = dims
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        input_x = x
+        current_idx = 0
+
+        for i, layer in enumerate(self.layers):
+            x = layer(x)
+
+            # Apply residual connection if dimensions match and it's a linear layer
+            if (
+                self.residual
+                and isinstance(layer, nn.Linear)
+                and self.dims[current_idx] == self.dims[current_idx + 1]
+            ):
+                x = x + input_x
+                input_x = x
+                current_idx += 1
+
+        return x
+
+
 class HeteroGnnPool(nn.Module):
     def __init__(
         self,
@@ -32,10 +70,15 @@ class HeteroGnnPool(nn.Module):
         edge_types: List[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
         layer_config: Optional[Dict] = None,
-        pooling: Literal["add", "mean", "max"] = "mean",
+        pooling: Literal["sum", "mean", "max"] = "mean",
         activation: str = "relu",
         norm: Optional[str] = None,
-        pred_head_dropout: float = 0.0,
+        head_num_layers: int = 2,
+        head_hidden_channels: Optional[int] = None,
+        head_dropout: float = 0.0,
+        head_activation: str = "relu",
+        head_residual: bool = False,
+        head_norm: Optional[Literal["batch", "layer", "instance"]] = None,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -53,10 +96,21 @@ class HeteroGnnPool(nn.Module):
 
         self._build_network()
 
-        # Prediction head
-        self.lin1 = nn.Linear(self.dims["actual_hidden"], hidden_channels)
-        self.lin2 = nn.Linear(hidden_channels, out_channels)
-        self.dropout = nn.Dropout(pred_head_dropout)
+        # Build prediction head
+        self.pred_head = self._build_prediction_head(
+            in_channels=self.dims["actual_hidden"],
+            hidden_channels=(
+                head_hidden_channels
+                if head_hidden_channels is not None
+                else hidden_channels
+            ),
+            out_channels=out_channels,
+            num_layers=head_num_layers,
+            dropout=head_dropout,
+            activation=head_activation,
+            residual=head_residual,
+            norm=head_norm,
+        )
 
     def _get_layer_config(self, layer_config: Optional[Dict]) -> Dict:
         default_configs = {
@@ -103,12 +157,21 @@ class HeteroGnnPool(nn.Module):
     def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> Dict:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
-        if self.conv_type in ["GAT", "Transformer"] and self.layer_config.get(
-            "concat", True
-        ):
+        if self.conv_type in ["GAT", "Transformer"]:
             heads = self.layer_config.get("heads", 1)
-            dims["actual_hidden"] = hidden_channels
-            dims["conv_hidden"] = hidden_channels // heads
+            if self.layer_config.get("concat", True):
+                # For concatenation with output projection:
+                dims["actual_hidden"] = (
+                    hidden_channels  # Final output dim after projection
+                )
+                dims["conv_hidden"] = hidden_channels // heads  # Per-head dim
+                dims["concat_dim"] = (
+                    hidden_channels  # Dim after concatenation (before projection)
+                )
+            else:
+                # For averaging case:
+                dims["actual_hidden"] = hidden_channels
+                dims["conv_hidden"] = hidden_channels
         else:
             dims["actual_hidden"] = hidden_channels
             dims["conv_hidden"] = hidden_channels
@@ -174,7 +237,7 @@ class HeteroGnnPool(nn.Module):
                 )
 
             elif self.conv_type == "GAT":
-                conv_dict[edge_type] = GATv2Conv(
+                base_gat = GATv2Conv(
                     in_dim,
                     self.dims["conv_hidden"],
                     **{
@@ -191,6 +254,12 @@ class HeteroGnnPool(nn.Module):
                         ]
                     },
                 )
+                if self.layer_config.get("concat", True):
+                    conv_dict[edge_type] = ProjectedGATConv(
+                        base_gat, self.dims["actual_hidden"]
+                    )
+                else:
+                    conv_dict[edge_type] = base_gat
 
             elif self.conv_type == "Transformer":
                 conv_dict[edge_type] = TransformerConv(
@@ -253,7 +322,7 @@ class HeteroGnnPool(nn.Module):
         return norm_layer(channels)
 
     def _global_pool(self, x: torch.Tensor, batch: torch.Tensor) -> torch.Tensor:
-        if self.pooling == "add":
+        if self.pooling == "sum":
             return global_add_pool(x, batch)
         elif self.pooling == "mean":
             return global_mean_pool(x, batch)
@@ -268,19 +337,12 @@ class HeteroGnnPool(nn.Module):
         if norm_type is None:
             return None
 
-        norm_layers = {
-            "batch": nn.BatchNorm1d,
-            "layer": nn.LayerNorm,
-            "instance": nn.InstanceNorm1d,
-        }
-
-        if norm_type not in norm_layers:
+        if norm_type == "batch":
+            return nn.BatchNorm1d(channels, track_running_stats=True)
+        elif norm_type == "layer":
+            return nn.LayerNorm(channels)
+        else:
             raise ValueError(f"Unsupported head normalization type: {norm_type}")
-
-        if norm_type == "layer":
-            return norm_layers[norm_type](channels)
-        else:  # batch or instance norm
-            return norm_layers[norm_type](channels, track_running_stats=True)
 
     def _build_prediction_head(
         self,
@@ -296,7 +358,8 @@ class HeteroGnnPool(nn.Module):
         if num_layers < 1:
             raise ValueError("Prediction head must have at least one layer")
 
-        activation_fn = act_register[activation]
+        activation_fn = act_register[activation]  # This gives us an instance
+        activation_class = type(activation_fn)  # Get the class from the instance
         layers = []
         dims = []
 
@@ -318,7 +381,7 @@ class HeteroGnnPool(nn.Module):
                     if norm_layer is not None:
                         layers.append(norm_layer)
 
-                layers.append(activation_fn())
+                layers.append(activation_class())  # Create new instance using the class
 
                 if dropout > 0:
                     layers.append(nn.Dropout(dropout))
@@ -329,6 +392,51 @@ class HeteroGnnPool(nn.Module):
             dims=dims,
         )
 
+    # def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
+    #     from torch_geometric.utils import add_self_loops
+
+    #     # Handle self-loops for GIN and Transformer only
+    #     if self.conv_type in ["GIN", "Transformer"] and self.layer_config.get(
+    #         "add_self_loops", True
+    #     ):
+    #         edge_index_dict = {
+    #             k: add_self_loops(v)[0] for k, v in edge_index_dict.items()
+    #         }
+
+    #     # First layer
+    #     if self.conv_type == "Transformer" and edge_attr_dict is not None:
+    #         x_dict = self.convs[0](x_dict, edge_index_dict, edge_attr_dict)
+    #     else:
+    #         x_dict = self.convs[0](x_dict, edge_index_dict)
+
+    #     x_dict = {key: self.activation(self.norms[0](x)) for key, x in x_dict.items()}
+
+    #     # Remaining layers with skip connections
+    #     for i in range(1, self.num_layers):
+    #         prev_x_dict = x_dict
+
+    #         if self.conv_type == "Transformer" and edge_attr_dict is not None:
+    #             x_dict = self.convs[i](x_dict, edge_index_dict, edge_attr_dict)
+    #         else:
+    #             x_dict = self.convs[i](x_dict, edge_index_dict)
+
+    #         x_dict = {
+    #             key: self.activation(self.norms[i](x)) for key, x in x_dict.items()
+    #         }
+
+    #         if self.conv_type != "Transformer" and self.layer_config.get(
+    #             "is_skip_connection", False
+    #         ):
+    #             x_dict = {
+    #                 key: x + prev_x_dict[key] if key in prev_x_dict else x
+    #                 for key, x in x_dict.items()
+    #             }
+
+    #     # Global pooling and prediction head
+    #     x = self._global_pool(x_dict["gene"], batch_dict["gene"])
+    #     x = self.pred_head(x)
+
+    #     return x
     def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
         from torch_geometric.utils import add_self_loops
 
@@ -346,7 +454,10 @@ class HeteroGnnPool(nn.Module):
         else:
             x_dict = self.convs[0](x_dict, edge_index_dict)
 
-        x_dict = {key: self.activation(self.norms[0](x)) for key, x in x_dict.items()}
+        # Apply norm after convolution
+        x_dict = {key: x for key, x in x_dict.items()}  # Get conv output first
+        x_dict = {key: self.norms[0](x) for key, x in x_dict.items()}  # Then normalize
+        x_dict = {key: self.activation(x) for key, x in x_dict.items()}  # Then activate
 
         # Remaining layers with skip connections
         for i in range(1, self.num_layers):
@@ -357,9 +468,10 @@ class HeteroGnnPool(nn.Module):
             else:
                 x_dict = self.convs[i](x_dict, edge_index_dict)
 
-            x_dict = {
-                key: self.activation(self.norms[i](x)) for key, x in x_dict.items()
-            }
+            # Same order: conv -> norm -> activation
+            x_dict = {key: x for key, x in x_dict.items()}
+            x_dict = {key: self.norms[i](x) for key, x in x_dict.items()}
+            x_dict = {key: self.activation(x) for key, x in x_dict.items()}
 
             if self.conv_type != "Transformer" and self.layer_config.get(
                 "is_skip_connection", False
@@ -369,11 +481,9 @@ class HeteroGnnPool(nn.Module):
                     for key, x in x_dict.items()
                 }
 
-        # Global pooling and prediction
+        # Global pooling and prediction head
         x = self._global_pool(x_dict["gene"], batch_dict["gene"])
-        x = self.activation(self.lin1(x))
-        x = self.dropout(x)
-        x = self.lin2(x)
+        x = self.pred_head(x)
 
         return x
 
@@ -385,15 +495,13 @@ class HeteroGnnPool(nn.Module):
         norm_params = sum(
             sum(p.numel() for p in norm.parameters()) for norm in self.norms
         )
-        final_params = sum(p.numel() for p in self.lin1.parameters()) + sum(
-            p.numel() for p in self.lin2.parameters()
-        )
+        pred_head_params = sum(p.numel() for p in self.pred_head.parameters())
         total_trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
 
         return {
             "conv_layers": conv_params,
             "norm_layers": norm_params,
-            "final_layers": final_params,
+            "pred_head": pred_head_params,
             "total": total_trainable,
         }
 
@@ -515,16 +623,16 @@ def main():
         "GCN": {
             "bias": True,
             "dropout": 0.1,
-            "add_self_loops": True,  # Built-in parameter
+            "add_self_loops": False,
             "normalize": False,
             "is_skip_connection": True,
         },
         "GAT": {
-            "heads": 4,
+            "heads": 10,
             "concat": True,
             "dropout": 0.1,
             "bias": True,
-            "add_self_loops": True,  # Built-in parameter
+            "add_self_loops": False,
             "share_weights": False,
             "is_skip_connection": True,
         },
@@ -536,31 +644,37 @@ def main():
             "edge_dim": None,
             "bias": True,
             "root_weight": True,
-            "add_self_loops": True,  # Handle manually
+            "add_self_loops": True,
         },
         "GIN": {
             "train_eps": True,
             "hidden_multiplier": 2.0,
             "dropout": 0.1,
-            "add_self_loops": True,  # Handle manually
+            "add_self_loops": True,
             "is_skip_connection": True,
             "num_mlp_layers": 3,
             "is_mlp_skip_connection": True,
         },
     }
 
+    # Create model with new prediction head configuration
     model = HeteroGnnPool(
         in_channels=x_dict["gene"].size(1),
-        hidden_channels=16,
+        hidden_channels=32,
         out_channels=2,
         num_layers=3,
         edge_types=edge_types,
-        conv_type="Transformer",
-        layer_config=configs["Transformer"],
+        conv_type="GAT",
+        layer_config=configs["GAT"],
         pooling="mean",
         activation="relu",
         norm="batch",
-        pred_head_dropout=0.1,
+        head_num_layers=3,  # 3-layer prediction head
+        head_hidden_channels=16,
+        head_dropout=0.1,  # 10% dropout
+        head_activation="relu",  # ReLU activation
+        head_residual=True,  # Use residual connections
+        head_norm="batch",  # Use batch normalization
     )
 
     print("\nModel architecture:")
@@ -569,6 +683,7 @@ def main():
     print(model.num_parameters)
 
     # Initialize loss and optimizer
+
     criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 

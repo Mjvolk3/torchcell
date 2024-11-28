@@ -393,6 +393,8 @@ def main(cfg: DictConfig) -> None:
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
 
+    if wandb.config.cell_dataset["graph_processor"] == "subgraph_representation":
+        graph_processor = PhenotypeProcessor()
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -402,7 +404,7 @@ def main(cfg: DictConfig) -> None:
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=graph_processor,
     )
     ### TODO add changes to binary classification - start
     # Configure transforms for binary classification
@@ -554,7 +556,12 @@ def main(cfg: DictConfig) -> None:
         pooling=wandb.config.model["pooling"],
         activation=wandb.config.model["activation"],
         norm=wandb.config.model["norm"],
-        pred_head_dropout=wandb.config.model["dropout"],
+        head_num_layers=wandb.config.model["head_num_layers"],
+        head_hidden_channels=wandb.config.model["head_hidden_channels"],
+        head_dropout=wandb.config.model["head_dropout"],
+        head_activation=wandb.config.model["head_activation"],
+        head_residual=wandb.config.model["head_residual"],
+        head_norm=wandb.config.model["head_norm"],
     )
 
     # Log model parameters
@@ -563,12 +570,12 @@ def main(cfg: DictConfig) -> None:
         {
             "model/params_conv_layers": param_counts["conv_layers"],
             "model/params_norm_layers": param_counts["norm_layers"],
-            "model/params_final_layers": param_counts["final_layers"],
+            "model/params_final_layers": param_counts["pred_head"],
             "model/params_total": param_counts["total"],
         }
     )
 
-    # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+    wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
     if wandb.config.regression_task["is_weighted_phenotype_loss"]:

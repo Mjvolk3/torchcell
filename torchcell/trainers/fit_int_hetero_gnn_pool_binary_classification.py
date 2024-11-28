@@ -111,21 +111,19 @@ class ClassificationTask(L.LightningModule):
         gi_softmax = torch.softmax(logits[:, num_bins:], dim=1)
 
         # Create dynamic column headers
-        columns = []
-        # Add regression truth columns
-        columns.extend(["True Reg (Fitness)", "True Reg (GI)"])
+        columns = ["True Reg (Fitness)", "True Reg (GI)"]
 
-        # Add classification truth columns - grouped by target
-        columns.extend([f"True Class Fitness (Bin {i})" for i in range(num_bins)])
-        columns.extend([f"True Class GI (Bin {i})" for i in range(num_bins)])
+        # Add classification truth columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"True Class {target} (Bin {i})" for i in range(num_bins)])
 
-        # Add logits columns - grouped by target
-        columns.extend([f"Logits Fitness (Bin {i})" for i in range(num_bins)])
-        columns.extend([f"Logits GI (Bin {i})" for i in range(num_bins)])
+        # Add logits columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"Logits {target} (Bin {i})" for i in range(num_bins)])
 
-        # Add softmax columns - grouped by target
-        columns.extend([f"Softmax Fitness (Bin {i})" for i in range(num_bins)])
-        columns.extend([f"Softmax GI (Bin {i})" for i in range(num_bins)])
+        # Add softmax columns for both fitness and GI
+        for target in ["Fitness", "GI"]:
+            columns.extend([f"Softmax {target} (Bin {i})" for i in range(num_bins)])
 
         # Add regression prediction columns
         columns.extend(["Pred Reg (Fitness)", "Pred Reg (GI)"])
@@ -137,21 +135,22 @@ class ClassificationTask(L.LightningModule):
             # Add true regression values
             row.extend([true_reg_values[i, 0].item(), true_reg_values[i, 1].item()])
 
-            # Add true class values for fitness
-            row.extend([true_class_values[i, j].item() for j in range(num_bins)])
-            # Add true class values for GI
+            # Add true class values for both fitness and GI
             row.extend(
-                [true_class_values[i, num_bins + j].item() for j in range(num_bins)]
-            )
+                [true_class_values[i, j].item() for j in range(num_bins)]
+            )  # Fitness bins
+            row.extend(
+                [true_class_values[i, j + num_bins].item() for j in range(num_bins)]
+            )  # GI bins
 
-            # Add logits for fitness
-            row.extend([logits[i, j].item() for j in range(num_bins)])
-            # Add logits for GI
-            row.extend([logits[i, num_bins + j].item() for j in range(num_bins)])
+            # Add logits for both fitness and GI
+            row.extend([logits[i, j].item() for j in range(num_bins)])  # Fitness logits
+            row.extend(
+                [logits[i, j + num_bins].item() for j in range(num_bins)]
+            )  # GI logits
 
-            # Add softmax values for fitness
+            # Add softmax values for both fitness and GI
             row.extend([fitness_softmax[i, j].item() for j in range(num_bins)])
-            # Add softmax values for GI
             row.extend([gi_softmax[i, j].item() for j in range(num_bins)])
 
             # Add predicted regression values

@@ -41,7 +41,7 @@ from torchcell.data import MeanExperimentDeduplicator
 from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import PhenotypeProcessor
+from torchcell.data.neo4j_cell import SubgraphRepresentation
 from lightning.pytorch.profilers import AdvancedProfiler
 from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
@@ -323,7 +323,7 @@ def main(cfg: DictConfig) -> None:
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
 
     # Base Module

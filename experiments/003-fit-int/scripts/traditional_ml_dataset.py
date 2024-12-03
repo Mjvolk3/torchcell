@@ -16,7 +16,7 @@ from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import PhenotypeProcessor
+from torchcell.data.neo4j_cell import SubgraphRepresentation
 from torchcell.utils import format_scientific_notation
 
 load_dotenv()
@@ -103,7 +103,7 @@ def main(cfg: DictConfig) -> None:
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
 
     base_data_module = CellDataModule(

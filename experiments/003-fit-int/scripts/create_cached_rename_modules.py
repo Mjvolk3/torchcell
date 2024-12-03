@@ -11,7 +11,7 @@ from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModu
 import json
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import PhenotypeProcessor
+from torchcell.data.neo4j_cell import SubgraphRepresentation
 from tqdm import tqdm
 from torchcell.viz.datamodules import plot_dataset_index_split
 from torchcell.datamodules.cell import overlap_dataset_index_split
@@ -62,7 +62,7 @@ def main():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
     print(len(dataset))
     # Data module testing

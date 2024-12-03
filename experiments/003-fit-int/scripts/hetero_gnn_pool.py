@@ -47,7 +47,11 @@ from torchcell.data import MeanExperimentDeduplicator
 from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import PhenotypeProcessor
+from torchcell.data.neo4j_cell import (
+    SubgraphRepresentation,
+    NodeFeature,
+    NodeAugmentation,
+)
 from lightning.pytorch.profilers import AdvancedProfiler
 from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
@@ -394,7 +398,12 @@ def main(cfg: DictConfig) -> None:
     )
 
     if wandb.config.cell_dataset["graph_processor"] == "subgraph_representation":
-        graph_processor = PhenotypeProcessor()
+        graph_processor = SubgraphRepresentation()
+    elif wandb.config.cell_dataset["graph_processor"] == "node_feature":
+        graph_processor = NodeFeature()
+    elif wandb.config.cell_dataset["graph_processor"] == "node_augmentation":
+        graph_processor = NodeAugmentation()
+
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,

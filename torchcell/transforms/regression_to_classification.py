@@ -343,12 +343,7 @@ class LabelBinningTransform(BaseTransform):
         return data
 
     def inverse(self, data: HeteroData, seed: int = 42) -> HeteroData:
-        """Inverse transform to recover continuous values using random sampling within bins.
-
-        Args:
-            data: HeteroData object containing one-hot encoded labels
-            seed: Random seed for reproducible sampling within bins (default: 42)
-        """
+        """Inverse transform to recover continuous values using random sampling within bins."""
         # Set random seed for reproducibility
         torch.manual_seed(seed)
 
@@ -356,14 +351,17 @@ class LabelBinningTransform(BaseTransform):
 
         for label, config in self.label_configs.items():
             if label in data["gene"]:
+                # Get device from input data
+                device = data["gene"][label].device
+                
                 label_type = config.get("label_type", "categorical").lower()
-                bin_edges = torch.tensor(self.label_metadata[label]["bin_edges"])
+                # Move bin edges to correct device
+                bin_edges = torch.tensor(self.label_metadata[label]["bin_edges"], device=device)
                 values = data["gene"][label]
 
                 if not isinstance(values, torch.Tensor):
-                    values = torch.tensor(values, dtype=torch.float)
+                    values = torch.tensor(values, dtype=torch.float, device=device)
 
-                # Get the original shape
                 original_shape = values.shape
 
                 # Check for NaN values first
@@ -376,67 +374,58 @@ class LabelBinningTransform(BaseTransform):
                         else torch.isnan(values)
                     )
 
-                # Initialize continuous values with NaN
+                # Initialize continuous values with NaN on correct device
                 continuous_values = torch.full(
-                    original_shape[:-1], float("nan"), dtype=torch.float
+                    original_shape[:-1], float("nan"), dtype=torch.float, device=device
                 )
 
-                # Only process non-NaN values
                 non_nan_mask = ~nan_mask
                 if non_nan_mask.any():
                     valid_values = values[non_nan_mask]
 
-                    # Convert based on label type
                     if label_type == "soft":
                         probs = valid_values.view(-1, original_shape[-1])
-                        bin_indices = torch.multinomial(probs, num_samples=1).squeeze(
-                            -1
-                        )
-                        temp_values = torch.zeros_like(bin_indices, dtype=torch.float)
+                        bin_indices = torch.multinomial(probs, num_samples=1).squeeze(-1)
+                        temp_values = torch.zeros_like(bin_indices, dtype=torch.float, device=device)
 
                         for i in range(len(bin_edges) - 1):
                             mask = bin_indices == i
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
-                                # Use seeded random sampling
                                 temp_values[mask] = (
-                                    torch.rand(size) * (high - low) + low
+                                    torch.rand(size, device=device) * (high - low) + low
                                 )
 
                         continuous_values[non_nan_mask] = temp_values
 
                     elif label_type == "categorical":
                         indices = torch.argmax(valid_values, dim=-1)
-                        temp_values = torch.zeros_like(indices, dtype=torch.float)
+                        temp_values = torch.zeros_like(indices, dtype=torch.float, device=device)
 
                         for i in range(len(bin_edges) - 1):
                             mask = indices == i
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
-                                # Use seeded random sampling
                                 temp_values[mask] = (
-                                    torch.rand(size) * (high - low) + low
+                                    torch.rand(size, device=device) * (high - low) + low
                                 )
 
                         continuous_values[non_nan_mask] = temp_values
 
                     elif label_type == "ordinal":
                         n_thresholds = len(bin_edges) - 2
-                        crossings = torch.sum(valid_values > 0.5, dim=-1).clamp(
-                            0, n_thresholds
-                        )
-                        temp_values = torch.zeros_like(crossings, dtype=torch.float)
+                        crossings = torch.sum(valid_values > 0.5, dim=-1).clamp(0, n_thresholds)
+                        temp_values = torch.zeros_like(crossings, dtype=torch.float, device=device)
 
                         for i in range(len(bin_edges) - 1):
                             mask = crossings == i
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
-                                # Use seeded random sampling
                                 temp_values[mask] = (
-                                    torch.rand(size) * (high - low) + low
+                                    torch.rand(size, device=device) * (high - low) + low
                                 )
 
                         continuous_values[non_nan_mask] = temp_values

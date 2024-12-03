@@ -163,7 +163,19 @@ class GraphProcessor(ABC):
         pass
 
 
-class PhenotypeProcessor(GraphProcessor):
+class SubgraphRepresentation(GraphProcessor):
+    """
+    Processes gene knockout data by removing perturbed nodes from the graph, keeping 
+    track of their features, and updating edge connectivity.
+
+    Node Transforms:
+        X ∈ ℝ^(N×d) → X_remain ∈ ℝ^((N-p)×d), X_pert ∈ ℝ^(p×d)
+        where N is total nodes, p is perturbed nodes, d is feature dimension
+
+    Edge Transforms:
+        E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
+        where |E| is original edge count, |E'| is edges after removing perturbed nodes
+    """
     def process(
         self,
         cell_graph: HeteroData,
@@ -208,13 +220,6 @@ class PhenotypeProcessor(GraphProcessor):
             )
         ]
         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
-
-        # TODO try to uncomment and see what happens.
-        # Add all experiments to the processed graph
-        # processed_graph["gene"].experiments = [item["experiment"] for item in data]
-        # processed_graph["gene"].experiment_references = [
-        #     item["experiment_reference"] for item in data
-        # ]
 
         # add all phenotype fields
         phenotype_fields = []
@@ -267,6 +272,170 @@ class PhenotypeProcessor(GraphProcessor):
                     (2, 0), dtype=torch.long
                 )
                 processed_graph[src_type, _, dst_type].num_edges = 0
+
+        return processed_graph
+
+
+class NodeFeature(GraphProcessor):
+    """
+    Processes gene knockout data by appending an inverse indicator vector to node features.
+    For knocked out genes, the indicator is 0, while remaining genes get 1.
+
+    Transforms: X ∈ ℝ^(N×d) → X ∈ ℝ^(N×(d+1))
+    """
+
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
+
+        processed_graph = HeteroData()
+
+        # Get nodes to knockout from experiment data
+        nodes_to_knockout: set[str] = set()
+        for item in data:
+            if "experiment" not in item or "experiment_reference" not in item:
+                raise ValueError(
+                    "Each item in data must contain both 'experiment' and "
+                    "'experiment_reference' keys"
+                )
+            nodes_to_knockout.update(
+                pert.systematic_gene_name
+                for pert in item["experiment"].genotype.perturbations
+            )
+
+        # Create mapping of node IDs to indices
+        node_mapping: dict[str, int] = {
+            nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)
+        }
+
+        # Create inverse indicator vector (1 for remaining nodes, 0 for knocked out)
+        num_nodes = len(cell_graph["gene"].node_ids)
+        indicator = torch.ones(num_nodes, 1, dtype=torch.float)
+        for node in nodes_to_knockout:
+            if node in node_mapping:
+                indicator[node_mapping[node]] = 0.0
+
+        # Concatenate original features with indicator
+        processed_graph["gene"].x = torch.cat([cell_graph["gene"].x, indicator], dim=1)
+
+        # Copy over other attributes
+        processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
+        processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
+
+        # Process phenotype fields
+        phenotype_fields: list[str] = []
+        for phenotype in phenotype_info:
+            phenotype_fields.extend(
+                [
+                    phenotype.model_fields["label_name"].default,
+                    phenotype.model_fields["label_statistic_name"].default,
+                ]
+            )
+
+        # Add phenotype data
+        for field in phenotype_fields:
+            field_values: list[float] = []
+            for item in data:
+                value = getattr(item["experiment"].phenotype, field, None)
+                if value is not None:
+                    field_values.append(value)
+            if field_values:
+                processed_graph["gene"][field] = torch.tensor(field_values)
+            else:
+                processed_graph["gene"][field] = torch.tensor([float("nan")])
+
+        # Copy edge information
+        for edge_type in cell_graph.edge_types:
+            src_type, rel_type, dst_type = edge_type
+            processed_graph[edge_type].edge_index = cell_graph[edge_type].edge_index
+            processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
+
+        return processed_graph
+
+
+class NodeAugmentation(GraphProcessor):
+    """
+    Processes gene knockout data by multiplying (broadcasting) node features with an inverse indicator vector.
+    Features of knocked out genes are zeroed out, while remaining genes keep their features.
+
+    Transforms: X ∈ ℝ^(N×d) → X ∈ ℝ^(N×d)
+    """
+
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
+
+        processed_graph = HeteroData()
+
+        # Get nodes to knockout from experiment data
+        nodes_to_knockout: set[str] = set()
+        for item in data:
+            if "experiment" not in item or "experiment_reference" not in item:
+                raise ValueError(
+                    "Each item in data must contain both 'experiment' and "
+                    "'experiment_reference' keys"
+                )
+            nodes_to_knockout.update(
+                pert.systematic_gene_name
+                for pert in item["experiment"].genotype.perturbations
+            )
+
+        # Create mapping of node IDs to indices
+        node_mapping: dict[str, int] = {
+            nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)
+        }
+
+        # Create inverse indicator vector (1 for remaining nodes, 0 for knocked out)
+        num_nodes = len(cell_graph["gene"].node_ids)
+        indicator = torch.ones(num_nodes, 1, dtype=torch.float)
+        for node in nodes_to_knockout:
+            if node in node_mapping:
+                indicator[node_mapping[node]] = 0.0
+
+        # Multiply features by indicator (broadcasting across feature dimension)
+        processed_graph["gene"].x = cell_graph["gene"].x * indicator
+
+        # Copy over other attributes
+        processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
+        processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
+
+        # Process phenotype fields
+        phenotype_fields: list[str] = []
+        for phenotype in phenotype_info:
+            phenotype_fields.extend(
+                [
+                    phenotype.model_fields["label_name"].default,
+                    phenotype.model_fields["label_statistic_name"].default,
+                ]
+            )
+
+        # Add phenotype data
+        for field in phenotype_fields:
+            field_values: list[float] = []
+            for item in data:
+                value = getattr(item["experiment"].phenotype, field, None)
+                if value is not None:
+                    field_values.append(value)
+            if field_values:
+                processed_graph["gene"][field] = torch.tensor(field_values)
+            else:
+                processed_graph["gene"][field] = torch.tensor([float("nan")])
+
+        # Copy edge information
+        for edge_type in cell_graph.edge_types:
+            src_type, rel_type, dst_type = edge_type
+            processed_graph[edge_type].edge_index = cell_graph[edge_type].edge_index
+            processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
 
         return processed_graph
 
@@ -917,7 +1086,7 @@ def main():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
     print(len(dataset))
     dataset.label_df
@@ -991,7 +1160,7 @@ def main_transform():
         CompositeFitnessConverter,
     )
     from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, PhenotypeProcessor
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
@@ -1046,7 +1215,7 @@ def main_transform():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
 
     # Configure transforms
@@ -1186,7 +1355,7 @@ def main_transform_dense():
         CompositeFitnessConverter,
     )
     from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, PhenotypeProcessor
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
@@ -1247,7 +1416,7 @@ def main_transform_dense():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
 
     # Configure transforms
@@ -1284,9 +1453,7 @@ def main_transform_dense():
     # dense_transform = HeteroToDense({"gene": len(genome.gene_set)})
 
     # Apply transforms to dataset
-    forward_transform = Compose(
-        [normalize_transform, binning_transform]
-    )
+    forward_transform = Compose([normalize_transform, binning_transform])
     inverse_transform = InverseCompose(forward_transform)
 
     # I want to be able to do this

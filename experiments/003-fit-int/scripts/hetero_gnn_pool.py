@@ -177,7 +177,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online",  # "online", "offline", "disabled"
+        mode="offline",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -575,7 +575,7 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
+    # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
     if wandb.config.regression_task["is_weighted_phenotype_loss"]:

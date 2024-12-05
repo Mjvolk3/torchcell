@@ -1,3 +1,4 @@
+# https://wandb.ai/zhao-group/torchcell_test_cell_gin_diffpool_dense_binary/runs/4a1lv0n9?nw=nwusermjvolk3
 defaults:
   - default
   - _self_
@@ -14,26 +15,26 @@ cell_dataset:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e4 #7e3
-  num_workers: 12
-  batch_size: 12 # ok: 4; oom: 8, 12... ok gh: 6
+  perturbation_subset_size: 5e4 #7e3
+  num_workers: 3
+  batch_size: 3 # ok: 4; oom: 8, 12... ok gh: 6
   pin_memory: true
   prefetch: false
 
 trainer:
   max_epochs: 40
-  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
+  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
-  devices: 1 # auto or int
+  devices: 4 # auto or int
 
 model:
-  hidden_channels: 8
+  hidden_channels: 16
   num_layers: 2
-  num_pooling_layers: 5 
-  cluster_size_decay_factor: 6.0
+  num_pooling_layers: 7 
+  cluster_size_decay_factor: 3.0
   activation: gelu
-  conv_norm: instance
-  mlp_norm: instance
+  conv_norm: layer
+  mlp_norm: layer
   target_dim: 2
   cluster_aggregation: mean
   add_skip_connections: true
@@ -45,8 +46,8 @@ regression_task:
   # loss_type: "mse"
   optimizer:
     type: "AdamW"
-    lr: 1e-5
-    weight_decay: 1e-6
+    lr: 1e-4
+    weight_decay: 1e-8
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -61,8 +62,8 @@ regression_task:
   clip_grad_norm: true
   clip_grad_norm_max_norm: 1.0
   cluster_loss_weight: 1.0 #1.0
-  link_pred_loss_weight: 1.0 # 1.0
-  entropy_loss_weight: 1.0 # 1.0
+  link_pred_loss_weight: 0.01 # 1.0
+  entropy_loss_weight: 0.01 # 1.0
   grad_accumulation_schedule:
     0: 12
 

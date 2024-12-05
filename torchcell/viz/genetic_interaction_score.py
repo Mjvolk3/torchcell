@@ -153,11 +153,16 @@ def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure
         label.set_fontname(font_name)
 
     # Update the title to include NaN percentage in scientific notation and handle NaN values correctly
-    title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+    # title = "Pearson: {}, Spearman: {}, R²: {}, NaN: {:.1e}%".format(
+    #     f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
+    #     f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
+    #     f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
+    #     nan_percentage,
+    # )
+    title = "Pearson: {}, Spearman: {}, R²: {}".format(
         f"{pearson_corr:.3f}" if not np.isnan(pearson_corr) else "N/A",
         f"{spearman_corr:.3f}" if not np.isnan(spearman_corr) else "N/A",
         f"{r_squared:.3f}" if not np.isnan(r_squared) else "N/A",
-        nan_percentage,
     )
     ax.set_title(title, fontsize=12, fontweight="bold", pad=10)
 
@@ -193,6 +198,7 @@ def generate_simulated_data(n_samples=10000):
 
     return torch.tensor(true_values), torch.tensor(predictions)
 
+
 def generate_simulated_data_with_nan(n_samples=10000):
     # Generate true genetic interaction scores
     true_values = np.random.normal(loc=0, scale=0.2, size=n_samples)
@@ -204,7 +210,9 @@ def generate_simulated_data_with_nan(n_samples=10000):
 
     # Add some extreme interactions (both positive and negative)
     extreme_samples = np.random.uniform(low=-0.8, high=0.8, size=n_samples // 50)
-    extreme_predictions = extreme_samples + np.random.normal(loc=0, scale=0.05, size=n_samples // 50)
+    extreme_predictions = extreme_samples + np.random.normal(
+        loc=0, scale=0.05, size=n_samples // 50
+    )
 
     true_values = np.concatenate([true_values, extreme_samples])
     predictions = np.concatenate([predictions, extreme_predictions])
@@ -236,10 +244,12 @@ def generate_simulated_data_with_nan(n_samples=10000):
 
     return torch.tensor(true_values), torch.tensor(predictions)
 
+
 # def main():
 #     true_values, predictions = generate_simulated_data_with_nan()
 #     fig = box_plot(true_values, predictions)
 #     plt.show()
+
 
 def main():
     true_values, predictions = generate_simulated_data()

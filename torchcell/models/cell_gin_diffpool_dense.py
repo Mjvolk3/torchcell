@@ -408,7 +408,7 @@ def load_sample_data_batch():
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import PhenotypeProcessor
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from tqdm import tqdm
 
     load_dotenv()
@@ -439,7 +439,7 @@ def load_sample_data_batch():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
         transform=HeteroToDense({"gene": len(genome.gene_set)}),
     )
 

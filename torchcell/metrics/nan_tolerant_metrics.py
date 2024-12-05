@@ -379,15 +379,15 @@ class NaNTolerantSpearmanCorrCoef(Metric):
         # Check if we have any valid samples
         if self.num_samples == 0:
             # Create nan tensor on same device as num_samples
-            return torch.tensor(float('nan'), device=self.num_samples.device)
-        
+            return torch.tensor(float("nan"), device=self.num_samples.device)
+
         try:
             # Concatenate all collected values
             preds = dim_zero_cat(self.preds)
             target = dim_zero_cat(self.target)
         except (RuntimeError, IndexError):
             # Handle case where concatenation fails
-            return torch.tensor(float('nan'), device=self.num_samples.device)
+            return torch.tensor(float("nan"), device=self.num_samples.device)
 
         # Convert to ranks
         preds_rank = torch.argsort(torch.argsort(preds)).float()
@@ -397,15 +397,17 @@ class NaNTolerantSpearmanCorrCoef(Metric):
         pearson = NaNTolerantPearsonCorrCoef(num_outputs=self.num_outputs)
         pearson = pearson.to(preds.device)  # Move to same device as data
         return pearson(preds_rank, target_rank)
-    
+
+
 #######
-    
+
+
 class NaNTolerantMetricBase(Metric):
     def __init__(self, **kwargs):
         # Configure for DDP compatibility
-        kwargs['compute_on_cpu'] = False      # Keep computation on GPU
-        kwargs['sync_on_compute'] = False     # Let Lightning handle sync
-        kwargs['dist_sync_on_step'] = True    # Sync after each step
+        kwargs["compute_on_cpu"] = False  # Keep computation on GPU
+        kwargs["sync_on_compute"] = False  # Let Lightning handle sync
+        kwargs["dist_sync_on_step"] = True  # Sync after each step
         super().__init__(**kwargs)
         # Register device tracking buffer
         self.register_buffer("_device_buffer", torch.zeros(1))
@@ -431,14 +433,14 @@ class NaNTolerantMSE(NaNTolerantMetricBase):
         self.num_outputs = num_outputs
 
         self.add_state(
-            "sum_squared_error", 
-            default=torch.zeros(num_outputs), 
+            "sum_squared_error",
+            default=torch.zeros(num_outputs),
             dist_reduce_fx="sum",
             persistent=True,  # Save in state dict
         )
         self.add_state(
-            "total", 
-            default=torch.tensor(0), 
+            "total",
+            default=torch.tensor(0),
             dist_reduce_fx="sum",
             persistent=True,  # Save in state dict
         )
@@ -454,9 +456,81 @@ class NaNTolerantMSE(NaNTolerantMetricBase):
     def compute(self) -> Tensor:
         # Handle empty case
         if self.total == 0:
-            return self._create_tensor_on_device(float('nan'), self.num_outputs)
+            return self._create_tensor_on_device(float("nan"), self.num_outputs)
 
         mean_squared_error = _nan_tolerant_error_compute(
             self.sum_squared_error, self.total
         )
         return mean_squared_error if self.squared else torch.sqrt(mean_squared_error)
+
+
+class NaNTolerantR2Score(NaNTolerantMetricBase):
+    is_differentiable = True
+    higher_is_better = True
+    full_state_update = False
+
+    def __init__(self, num_outputs: int = 1, **kwargs: Any):
+        super().__init__(**kwargs)
+        self.num_outputs = num_outputs
+
+        # For computing R², we need both squared error and total variance
+        self.add_state(
+            "sum_squared_error",
+            default=torch.zeros(num_outputs),
+            dist_reduce_fx="sum",
+            persistent=True,
+        )
+        self.add_state(
+            "sum_squared_deviation",
+            default=torch.zeros(num_outputs),
+            dist_reduce_fx="sum",
+            persistent=True,
+        )
+        self.add_state(
+            "total", default=torch.tensor(0), dist_reduce_fx="sum", persistent=True
+        )
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        """Update state with predictions and targets."""
+        self._track_device(preds)
+
+        # Handle NaN values
+        valid_mask = ~torch.isnan(preds) & ~torch.isnan(target)
+        if not torch.any(valid_mask):
+            return
+
+        # Get valid samples
+        valid_preds = preds[valid_mask]
+        valid_target = target[valid_mask]
+
+        # Compute target mean for this batch
+        target_mean = torch.mean(valid_target)
+
+        # Update squared error and total variance
+        squared_error = (valid_preds - valid_target) ** 2
+        squared_deviation = (valid_target - target_mean) ** 2
+
+        if self.num_outputs > 1:
+            self.sum_squared_error += torch.sum(squared_error, dim=0)
+            self.sum_squared_deviation += torch.sum(squared_deviation, dim=0)
+        else:
+            self.sum_squared_error += torch.sum(squared_error)
+            self.sum_squared_deviation += torch.sum(squared_deviation)
+
+        self.total += valid_mask.sum()
+
+    def compute(self) -> Tensor:
+        """Compute R² score."""
+        # Handle empty case
+        if self.total == 0:
+            return self._create_tensor_on_device(float("nan"), self.num_outputs)
+
+        # Compute R² score: 1 - (sum squared error / sum squared deviation)
+        # Handle the case where deviation is 0 (constant target)
+        r2 = torch.where(
+            self.sum_squared_deviation != 0,
+            1 - self.sum_squared_error / self.sum_squared_deviation,
+            torch.tensor(float("nan"), device=self.sum_squared_error.device),
+        )
+
+        return r2

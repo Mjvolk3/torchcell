@@ -26,6 +26,7 @@ def benchmark(num_jobs: int, matrix_size: int) -> float:
 def run_benchmark(repeats: int, matrix_size: int) -> list:
     """Run the benchmark multiple times and return the results."""
     cpu_count = multiprocessing.cpu_count()
+    print(f"cpu count: {cpu_count}")
     times = []
 
     for _ in range(repeats):
@@ -38,8 +39,8 @@ def run_benchmark(repeats: int, matrix_size: int) -> list:
 # Running benchmark 5 times with matrix size 1000
 repeats = 5
 matrix_size = 4000
-print(f"repeat: {repeats}, matrix_size: {matrix_size}")
-
+print(f"repeats: {repeats}")
+print(f"matrix_size: {matrix_size}")
 results = run_benchmark(repeats, matrix_size)
 
 # Calculate mean and standard deviation

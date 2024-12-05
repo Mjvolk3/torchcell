@@ -10,7 +10,7 @@ from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModu
 import json
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import PhenotypeProcessor
+from torchcell.data.neo4j_cell import SubgraphRepresentation
 from tqdm import tqdm
 from torchcell.utils import format_scientific_notation
 from torchcell.datasets import CodonFrequencyDataset
@@ -48,7 +48,7 @@ def main():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=PhenotypeProcessor(),
+        graph_processor=SubgraphRepresentation(),
     )
 
     seed = 42

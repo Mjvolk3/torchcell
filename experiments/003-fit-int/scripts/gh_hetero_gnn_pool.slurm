@@ -1,6 +1,6 @@
 #!/bin/bash
 #!/bin/bash
-#SBATCH --job-name=CGDDB_5e4
+#SBATCH --job-name=HGP_5e4
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=300G
@@ -43,13 +43,4 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 mkdir /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
 
-# Use for Agent logging. Only use in testing.
-# Not sure if visivles devices scales with num nodes or resets to 0
-#for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-#    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
-#done
-#wait
-
-#wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1
-srun python /home/michaelvolk/Documents/projects/torchcell/experiments/003-fit-int/scripts/cell_gin_diffpool_dense_binary.py > /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1
-
+srun python /home/michaelvolk/Documents/projects/torchcell/experiments/003-fit-int/scripts/hetero_gnn_pool.py > /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1

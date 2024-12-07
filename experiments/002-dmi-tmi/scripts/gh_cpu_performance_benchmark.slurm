@@ -2,7 +2,7 @@
 #SBATCH --job-name=CPU_PERF
 #SBATCH --ntasks=1               # Set to the desired number of tasks (agents)
 #SBATCH --cpus-per-task=128           # Adjust the number of CPUs per task based on your requirements
-#SBATCH --mem=240G                  # Total memory for the job
+#SBATCH --mem=995G                  # Total memory for the job
 #SBATCH --gres=gpu:0                # No GPUs
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -27,4 +27,4 @@ lscpu
 cat /proc/meminfo
 
 # Run Script
-python /home/michaelvolk/Documents/projects/torchcell/torchcell/scratch/cpu_performance_benchmark.py
+srun python /home/michaelvolk/Documents/projects/torchcell/torchcell/scratch/cpu_performance_benchmark.py

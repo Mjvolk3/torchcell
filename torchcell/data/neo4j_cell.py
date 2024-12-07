@@ -1562,4 +1562,5 @@ def main_transform_dense():
 
 
 if __name__ == "__main__":
-    main_transform_dense()
+    # main_transform_dense()
+    main()

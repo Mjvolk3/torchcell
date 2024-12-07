@@ -15,4 +15,3 @@ created: 1732548647061
 ## 2024.11.26
 
 - [x] Parameterize head prediction.
-

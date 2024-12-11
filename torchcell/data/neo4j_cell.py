@@ -1427,18 +1427,18 @@ def main_transform_dense():
 
     bin_configs = {
         "fitness": {
-            "num_bins": 2,
+            "num_bins": 32,
             "strategy": "equal_frequency",
             "store_continuous": True,
             # "sigma": 0.1,
-            "label_type": "categorical",
+            "label_type": "soft",
         },
         "gene_interaction": {
-            "num_bins": 2,
+            "num_bins": 32,
             "strategy": "equal_frequency",
             "store_continuous": True,
             # "sigma": 0.1,
-            "label_type": "categorical",
+            "label_type": "soft",
             # "num_bins": 5,
             # "strategy": "equal_frequency",
             # "store_continuous": True,
@@ -1448,7 +1448,7 @@ def main_transform_dense():
 
     # Create transforms and compose them with dataset stats
     normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
-    binning_transform = LabelBinningTransform(dataset, bin_configs)
+    binning_transform = LabelBinningTransform(dataset, bin_configs, normalize_transform)
     # TODO will need to implement inverse maybe?
     # dense_transform = HeteroToDense({"gene": len(genome.gene_set)})
 
@@ -1562,5 +1562,5 @@ def main_transform_dense():
 
 
 if __name__ == "__main__":
-    # main_transform_dense()
-    main()
+    main_transform_dense()
+    # main()

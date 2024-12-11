@@ -270,8 +270,9 @@ class CombinedCELoss(nn.Module):
         weights = weights * valid_dims.float()
         weight_sum = weights.sum().clamp(min=1e-8)
 
+        dim_losses = weights * dim_losses
         # Compute weighted average loss
-        total_loss = (dim_losses * weights).sum() / weight_sum
+        total_loss = (dim_losses).sum() / weight_sum
 
         return total_loss.to(device), dim_losses.to(device)
 

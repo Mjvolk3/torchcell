@@ -35,6 +35,7 @@ class ClassificationTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
+        bins: int,
         inverse_transform: BaseTransform,
         optimizer_config: dict,
         lr_scheduler_config: dict,
@@ -54,13 +55,17 @@ class ClassificationTask(L.LightningModule):
         self.loss_func = loss_func
         self.current_accumulation_steps = 1
 
+        if bins == 2:
+            task = "binary"
+        else:
+            task = "multiclass"
         # Define classification metrics
         class_metrics = MetricCollection(
             {
-                "Accuracy": NaNTolerantAccuracy(task="binary"),
-                "F1": NaNTolerantF1Score(task="binary"),
-                "Precision": NaNTolerantPrecision(task="binary"),
-                "Recall": NaNTolerantRecall(task="binary"),
+                "Accuracy": NaNTolerantAccuracy(task=task),
+                "F1": NaNTolerantF1Score(task=task),
+                "Precision": NaNTolerantPrecision(task=task),
+                "Recall": NaNTolerantRecall(task=task),
             }
         )
 
@@ -102,6 +107,7 @@ class ClassificationTask(L.LightningModule):
         true_class_values: torch.Tensor,
         logits: torch.Tensor,
         inverse_preds: torch.Tensor,
+        dim_losses: torch.Tensor,  # Add dim_losses parameter
     ):
         """Log a wandb table with all prediction forms for comparison."""
         num_bins = logits.shape[1] // 2  # Number of bins per target
@@ -110,51 +116,52 @@ class ClassificationTask(L.LightningModule):
         fitness_softmax = torch.softmax(logits[:, :num_bins], dim=1)
         gi_softmax = torch.softmax(logits[:, num_bins:], dim=1)
 
-        # Create dynamic column headers
-        columns = ["True Reg (Fitness)", "True Reg (GI)"]
+        # Create column headers - Complete all Fitness metrics first, then all GI metrics
+        columns = [
+            # Fitness metrics
+            "True Reg (Fitness)"
+        ]
+        columns.extend([f"True Class Fitness (Bin {i})" for i in range(num_bins)])
+        columns.extend([f"Logits Fitness (Bin {i})" for i in range(num_bins)])
+        columns.extend([f"Softmax Fitness (Bin {i})" for i in range(num_bins)])
+        columns.append("Pred Reg (Fitness)")
+        columns.append("Fitness Loss")  # Add Fitness Loss column
 
-        # Add classification truth columns for both fitness and GI
-        for target in ["Fitness", "GI"]:
-            columns.extend([f"True Class {target} (Bin {i})" for i in range(num_bins)])
-
-        # Add logits columns for both fitness and GI
-        for target in ["Fitness", "GI"]:
-            columns.extend([f"Logits {target} (Bin {i})" for i in range(num_bins)])
-
-        # Add softmax columns for both fitness and GI
-        for target in ["Fitness", "GI"]:
-            columns.extend([f"Softmax {target} (Bin {i})" for i in range(num_bins)])
-
-        # Add regression prediction columns
-        columns.extend(["Pred Reg (Fitness)", "Pred Reg (GI)"])
+        # GI metrics
+        columns.append("True Reg (GI)")
+        columns.extend([f"True Class GI (Bin {i})" for i in range(num_bins)])
+        columns.extend([f"Logits GI (Bin {i})" for i in range(num_bins)])
+        columns.extend([f"Softmax GI (Bin {i})" for i in range(num_bins)])
+        columns.append("Pred Reg (GI)")
+        columns.append("GI Loss")  # Add GI Loss column
 
         # Create table data
         data = []
         for i in range(len(true_reg_values)):
             row = []
-            # Add true regression values
-            row.extend([true_reg_values[i, 0].item(), true_reg_values[i, 1].item()])
-
-            # Add true class values for both fitness and GI
+            # All Fitness metrics in sequence
+            row.append(true_reg_values[i, 0].item())  # True Reg Fitness
             row.extend(
                 [true_class_values[i, j].item() for j in range(num_bins)]
-            )  # Fitness bins
+            )  # True Class Fitness
+            row.extend([logits[i, j].item() for j in range(num_bins)])  # Fitness logits
+            row.extend(
+                [fitness_softmax[i, j].item() for j in range(num_bins)]
+            )  # Fitness softmax
+            row.append(inverse_preds[i, 0].item())  # Predicted Reg Fitness
+            row.append(dim_losses[0].item())  # Fitness Loss
+
+            # All GI metrics in sequence
+            row.append(true_reg_values[i, 1].item())  # True Reg GI
             row.extend(
                 [true_class_values[i, j + num_bins].item() for j in range(num_bins)]
-            )  # GI bins
-
-            # Add logits for both fitness and GI
-            row.extend([logits[i, j].item() for j in range(num_bins)])  # Fitness logits
+            )  # True Class GI
             row.extend(
                 [logits[i, j + num_bins].item() for j in range(num_bins)]
             )  # GI logits
-
-            # Add softmax values for both fitness and GI
-            row.extend([fitness_softmax[i, j].item() for j in range(num_bins)])
-            row.extend([gi_softmax[i, j].item() for j in range(num_bins)])
-
-            # Add predicted regression values
-            row.extend([inverse_preds[i, 0].item(), inverse_preds[i, 1].item()])
+            row.extend([gi_softmax[i, j].item() for j in range(num_bins)])  # GI softmax
+            row.append(inverse_preds[i, 1].item())  # Predicted Reg GI
+            row.append(dim_losses[1].item())  # GI Loss
 
             data.append(row)
 
@@ -162,25 +169,32 @@ class ClassificationTask(L.LightningModule):
         table = wandb.Table(columns=columns, data=data)
         wandb.log({f"{stage}/second_to_last_batch_predictions": table}, commit=False)
 
-    def forward(self, x_dict, edge_index_dict, batch_dict):
-        return self.model(x_dict, edge_index_dict, batch_dict)
+    # def forward(self, x_dict, edge_index_dict, batch_dict):
+    #     if self.model.learnable_embedding:
+    #         return self.model(None, edge_index_dict, batch_dict)
+    #     else:
+    #         return self.model(x_dict, edge_index_dict, batch_dict)
+    def forward(self, batch):
+        return self.model(batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
         # Create input dictionaries
-        x_dict = {"gene": batch["gene"].x}
-        edge_index_dict = {
-            ("gene", "physical_interaction", "gene"): batch[
-                "gene", "physical_interaction", "gene"
-            ].edge_index,
-            ("gene", "regulatory_interaction", "gene"): batch[
-                "gene", "regulatory_interaction", "gene"
-            ].edge_index,
-        }
-        batch_dict = {"gene": batch["gene"].batch}
+        # x_dict = {"gene": batch["gene"].x}
+        # edge_index_dict = {
+        #     ("gene", "physical_interaction", "gene"): batch[
+        #         "gene", "physical_interaction", "gene"
+        #     ].edge_index,
+        #     ("gene", "regulatory_interaction", "gene"): batch[
+        #         "gene", "regulatory_interaction", "gene"
+        #     ].edge_index,
+        # }
+        # batch_dict = {"gene": batch["gene"].batch}
 
         # Forward pass to get logits
-        logits = self(x_dict, edge_index_dict, batch_dict)
-        batch_size = x_dict["gene"].size(0)
+        # logits = self(x_dict, edge_index_dict, batch_dict)
+        logits = self(batch)
+        # batch_size = x_dict["gene"].size(0)
+        batch_size = logits.size(0)
 
         # Extract targets
         fitness = batch["gene"].fitness
@@ -206,13 +220,18 @@ class ClassificationTask(L.LightningModule):
         )
 
         # Split logits for each task
-        fitness_logits = logits[:, :2]
-        gene_int_logits = logits[:, 2:]
+        num_classes = self.hparams.bins
+        fitness_logits = logits[:, :num_classes]
+        gene_int_logits = logits[:, num_classes:]
+
+        # Convert targets to class indices for metrics
+        fitness_targets = torch.argmax(fitness, dim=1)
+        gene_int_targets = torch.argmax(gene_interaction, dim=1)
 
         # Update classification metrics
         metrics = getattr(self, f"{stage}_metrics")
-        metrics["fitness"](fitness_logits, fitness)
-        metrics["gene_interaction"](gene_int_logits, gene_interaction)
+        metrics["fitness"](fitness_logits, fitness_targets)
+        metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
         # For regression metrics, transform predictions back to regression space
         # Use detached tensors for metrics
@@ -271,6 +290,7 @@ class ClassificationTask(L.LightningModule):
                 true_class_values=y,
                 logits=logits,
                 inverse_preds=pred_reg_values,
+                dim_losses=dim_losses,
             )
 
         return loss, logits, y
@@ -337,9 +357,10 @@ class ClassificationTask(L.LightningModule):
 
         # Create HeteroData object for predictions
         pred_data = HeteroData()
+        num_bins = self.hparams.bins
         pred_data["gene"] = {
-            "fitness": torch.softmax(predictions[:, :2], dim=1),
-            "gene_interaction": torch.softmax(predictions[:, 2:], dim=1),
+            "fitness": predictions[:, :num_bins],
+            "gene_interaction": predictions[:, num_bins:],
         }
 
         # Apply inverse transform only to predictions

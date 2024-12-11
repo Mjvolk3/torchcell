@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mem=240g
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=128  # Increase the number of tasks per node to the desired number of agents
-#SBATCH --cpus-per-task=1  # Adjust the number of CPUs per task based on your requirements
+#SBATCH --ntasks-per-node=1  # Increase the number of tasks per node to the desired number of agents
+#SBATCH --cpus-per-task=128  # Adjust the number of CPUs per task based on your requirements
 #SBATCH --partition=cpu
 #SBATCH --account=bbub-delta-cpu
 #SBATCH --job-name=CPU_PERF
@@ -13,7 +13,7 @@
 #SBATCH --output=/scratch/bbub/mjvolk3/torchcell/experiments/002-dmi-tmi/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/bbub/mjvolk3/torchcell/experiments/002-dmi-tmi/slurm/output/%x_%j.out
 
-module reset
+module resets
 source ~/.bashrc
 cd /scratch/bbub/mjvolk3/torchcell
 pwd
@@ -26,4 +26,4 @@ echo "job is starting on `hostname`"
 
 ##
 
-python /scratch/bbub/mjvolk3/torchcell/experiments/002-dmi-tmi/scripts/cpu_performance_benchmark.py
+srun python /scratch/bbub/mjvolk3/torchcell/experiments/002-dmi-tmi/scripts/cpu_performance_benchmark.py

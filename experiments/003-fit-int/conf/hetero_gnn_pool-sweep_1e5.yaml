@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
-project: torchcell_003-fit-int_hetero_gnn_pool_5e4
+project: torchcell_003-fit-int_hetero_gnn_pool_1e5
 method: random
 
 parameters:
@@ -40,11 +40,11 @@ parameters:
       is_perturbation_subset:
         values: [true]
       perturbation_subset_size:
-        values: [5e4]
+        values: [1e5]
       batch_size:
-        values: [16]
+        values: [32]
       num_workers:
-        values: [8]
+        values: [12]
       pin_memory:
         values: [true]
       prefetch:

@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: random
+method: grid
 
 parameters:
   cell_dataset:
@@ -28,7 +28,7 @@ parameters:
           # - [random_1]
 
       graph_processor:
-        values: [subgraph_representation, node_feature, node_augmentation] # subgraph_representation, node_feature, node_augmentation
+        values: [node_feature, node_augmentation] # subgraph_representation, node_feature, node_augmentation
 
   profiler:
     parameters:
@@ -65,7 +65,7 @@ parameters:
     parameters:
       # Common parameters for all conv types
       hidden_channels:
-        values: [128]
+        values: [64]
       num_layers:
         values: [2]
       conv_type:
@@ -85,7 +85,7 @@ parameters:
       head_num_layers:
         values: [4]
       head_hidden_channels:
-        values: [64]
+        values: [32]
       head_dropout:
         values: [0.2]
       head_activation:

@@ -26,9 +26,7 @@ parameters:
           - [random_100]
           # - [random_10]
           # - [random_1]
-          # - [learnable_embedding]
-      learnable_embedding_input_channels:
-        values: [64]
+
       graph_processor:
         values: [subgraph_representation]
 

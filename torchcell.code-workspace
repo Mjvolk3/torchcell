@@ -510,6 +510,15 @@
                 "internalConsoleOptions": "openOnSessionStart"
             },
             {
+                "name": "Pytest Current Line",
+                "type": "debugpy",
+                "request": "launch",
+                "module": "pytest",
+                "args": ["${relativeFile}::${selectedText}"],
+                "justMyCode": true,
+                "console": "integratedTerminal"
+            },
+            {
                 "name": "Python: yeast8",
                 "type": "debugpy",
                 "request": "launch",

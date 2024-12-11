@@ -14,7 +14,7 @@ cell_dataset:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 #7e3
+  perturbation_subset_size: 1e4 #7e3
   num_workers: 12
   batch_size: 12 # ok: 4; oom: 8, 12... ok gh: 6
   pin_memory: true
@@ -22,9 +22,9 @@ data_module:
 
 trainer:
   max_epochs: 40
-  strategy: ddp # ddp, auto, ddp_spawn(for troubleshooting)
+  strategy: auto # ddp, auto, ddp_spawn(for troubleshooting)
   accelerator: gpu
-  devices: 4 # auto or int
+  devices: 1 # auto or int
 
 model:
   hidden_channels: 8

@@ -79,6 +79,8 @@ class HeteroGnnPool(nn.Module):
         head_activation: str = "relu",
         head_residual: bool = False,
         head_norm: Optional[Literal["batch", "layer", "instance"]] = None,
+        learnable_embedding: bool = False,
+        num_nodes: Optional[int] = None,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -87,9 +89,25 @@ class HeteroGnnPool(nn.Module):
         self.activation = act_register[activation]
         self.conv_type = conv_type
         self.norm = norm
+        self.learnable_embedding = learnable_embedding
+
+        if learnable_embedding and num_nodes is None:
+            raise ValueError(
+                "num_nodes must be provided when using learnable_embedding"
+            )
 
         self.layer_config = self._get_layer_config(layer_config)
         self.dims = self._calculate_dimensions(in_channels, hidden_channels)
+
+        # Initialize learnable embedding if specified
+        if learnable_embedding:
+            self.node_embedding = nn.Embedding(
+                num_embeddings=num_nodes,
+                embedding_dim=in_channels,
+                max_norm=1.0,  # Hardcoded max_norm=1.0
+            )
+        else:
+            self.node_embedding = None
 
         self.convs = nn.ModuleList()
         self.norms = nn.ModuleList()
@@ -393,54 +411,55 @@ class HeteroGnnPool(nn.Module):
         )
 
     # def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
-    #     from torch_geometric.utils import add_self_loops
-
-    #     # Handle self-loops for GIN and Transformer only
-    #     if self.conv_type in ["GIN", "Transformer"] and self.layer_config.get(
-    #         "add_self_loops", True
-    #     ):
-    #         edge_index_dict = {
-    #             k: add_self_loops(v)[0] for k, v in edge_index_dict.items()
-    #         }
-
-    #     # First layer
-    #     if self.conv_type == "Transformer" and edge_attr_dict is not None:
-    #         x_dict = self.convs[0](x_dict, edge_index_dict, edge_attr_dict)
-    #     else:
-    #         x_dict = self.convs[0](x_dict, edge_index_dict)
-
-    #     x_dict = {key: self.activation(self.norms[0](x)) for key, x in x_dict.items()}
-
-    #     # Remaining layers with skip connections
-    #     for i in range(1, self.num_layers):
-    #         prev_x_dict = x_dict
-
-    #         if self.conv_type == "Transformer" and edge_attr_dict is not None:
-    #             x_dict = self.convs[i](x_dict, edge_index_dict, edge_attr_dict)
-    #         else:
-    #             x_dict = self.convs[i](x_dict, edge_index_dict)
-
-    #         x_dict = {
-    #             key: self.activation(self.norms[i](x)) for key, x in x_dict.items()
-    #         }
-
-    #         if self.conv_type != "Transformer" and self.layer_config.get(
-    #             "is_skip_connection", False
-    #         ):
-    #             x_dict = {
-    #                 key: x + prev_x_dict[key] if key in prev_x_dict else x
-    #                 for key, x in x_dict.items()
-    #             }
-
-    #     # Global pooling and prediction head
-    #     x = self._global_pool(x_dict["gene"], batch_dict["gene"])
-    #     x = self.pred_head(x)
-
-    #     return x
-    def forward(self, x_dict, edge_index_dict, batch_dict, edge_attr_dict=None):
+    def forward(self, batch):
         from torch_geometric.utils import add_self_loops
 
-        # Handle self-loops for GIN and Transformer only
+        if self.learnable_embedding:
+            device = batch["gene"].batch.device
+            batch_size = len(batch["gene"].x_ptr) - 1
+            nodes_per_graph = self.node_embedding.num_embeddings
+
+            # Get base embeddings for all graphs
+            all_indices = torch.arange(nodes_per_graph, device=device).repeat(
+                batch_size
+            )
+            all_embeddings = self.node_embedding(all_indices)
+
+            # Calculate adjusted perturbation indices for the full batch
+            adjusted_pert_indices = []
+            for i in range(batch_size):
+                start_idx = batch["gene"].x_pert_ptr[i]
+                end_idx = batch["gene"].x_pert_ptr[i + 1]
+                # Get indices for this graph
+                graph_pert_indices = batch["gene"].cell_graph_idx_pert[
+                    start_idx:end_idx
+                ]
+                # Adjust indices by batch position
+                adjusted_pert_indices.append(graph_pert_indices + (i * nodes_per_graph))
+
+            adjusted_pert_indices = torch.cat(adjusted_pert_indices)
+
+            # Create mask and remove perturbed rows
+            mask = torch.ones(len(all_embeddings), dtype=torch.bool, device=device)
+            mask[adjusted_pert_indices] = False
+            x_dict = {"gene": all_embeddings[mask]}
+
+            assert x_dict["gene"].shape[0] == batch["gene"].x.shape[0]
+
+        else:
+            x_dict = {"gene": batch["gene"].x}
+
+        # Create edge_index_dict from batch
+        edge_index_dict = {
+            ("gene", "physical_interaction", "gene"): batch[
+                "gene", "physical_interaction", "gene"
+            ].edge_index,
+            ("gene", "regulatory_interaction", "gene"): batch[
+                "gene", "regulatory_interaction", "gene"
+            ].edge_index,
+        }
+
+        # Rest of forward pass logic
         if self.conv_type in ["GIN", "Transformer"] and self.layer_config.get(
             "add_self_loops", True
         ):
@@ -448,27 +467,23 @@ class HeteroGnnPool(nn.Module):
                 k: add_self_loops(v)[0] for k, v in edge_index_dict.items()
             }
 
-        # First layer
-        if self.conv_type == "Transformer" and edge_attr_dict is not None:
-            x_dict = self.convs[0](x_dict, edge_index_dict, edge_attr_dict)
+        if self.conv_type == "Transformer":
+            x_dict = self.convs[0](x_dict, edge_index_dict)
         else:
             x_dict = self.convs[0](x_dict, edge_index_dict)
 
-        # Apply norm after convolution
-        x_dict = {key: x for key, x in x_dict.items()}  # Get conv output first
-        x_dict = {key: self.norms[0](x) for key, x in x_dict.items()}  # Then normalize
-        x_dict = {key: self.activation(x) for key, x in x_dict.items()}  # Then activate
+        x_dict = {key: x for key, x in x_dict.items()}
+        x_dict = {key: self.norms[0](x) for key, x in x_dict.items()}
+        x_dict = {key: self.activation(x) for key, x in x_dict.items()}
 
-        # Remaining layers with skip connections
         for i in range(1, self.num_layers):
             prev_x_dict = x_dict
 
-            if self.conv_type == "Transformer" and edge_attr_dict is not None:
-                x_dict = self.convs[i](x_dict, edge_index_dict, edge_attr_dict)
+            if self.conv_type == "Transformer":
+                x_dict = self.convs[i](x_dict, edge_index_dict)
             else:
                 x_dict = self.convs[i](x_dict, edge_index_dict)
 
-            # Same order: conv -> norm -> activation
             x_dict = {key: x for key, x in x_dict.items()}
             x_dict = {key: self.norms[i](x) for key, x in x_dict.items()}
             x_dict = {key: self.activation(x) for key, x in x_dict.items()}
@@ -481,8 +496,7 @@ class HeteroGnnPool(nn.Module):
                     for key, x in x_dict.items()
                 }
 
-        # Global pooling and prediction head
-        x = self._global_pool(x_dict["gene"], batch_dict["gene"])
+        x = self._global_pool(x_dict["gene"], batch["gene"].batch)
         x = self.pred_head(x)
 
         return x
@@ -557,14 +571,13 @@ def load_sample_data_batch():
         aggregator=GenotypeAggregator,
         graph_processor=SubgraphRepresentation(),
     )
-
     seed = 42
     # Base Module
     cell_data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=2,
+        batch_size=16,
         random_seed=seed,
         num_workers=4,
         pin_memory=False,
@@ -572,11 +585,11 @@ def load_sample_data_batch():
     cell_data_module.setup()
 
     # 1e4 Module
-    size = 1e1
+    size = 5e4
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=2,
+        batch_size=16,
         num_workers=4,
         pin_memory=True,
         prefetch=False,
@@ -595,7 +608,7 @@ def main():
     from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
 
     # Load sample data
-    batch, _ = load_sample_data_batch()
+    batch, max_num_nodes = load_sample_data_batch()
 
     # Prepare input dictionaries
     x_dict = {"gene": batch["gene"].x}
@@ -657,15 +670,18 @@ def main():
         },
     }
 
+    learnable_embedding = True
+
     # Create model with new prediction head configuration
     model = HeteroGnnPool(
-        in_channels=x_dict["gene"].size(1),
+        # in_channels=x_dict["gene"].size(1),
+        in_channels=4,
         hidden_channels=32,
         out_channels=2,
         num_layers=3,
         edge_types=edge_types,
-        conv_type="GAT",
-        layer_config=configs["GAT"],
+        conv_type="GIN",
+        layer_config=configs["GIN"],
         pooling="mean",
         activation="relu",
         norm="batch",
@@ -675,6 +691,8 @@ def main():
         head_activation="relu",  # ReLU activation
         head_residual=True,  # Use residual connections
         head_norm="batch",  # Use batch normalization
+        num_nodes=max_num_nodes,  # required when learnable_embedding=True
+        learnable_embedding=learnable_embedding,
     )
 
     print("\nModel architecture:")
@@ -687,13 +705,12 @@ def main():
     criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    # Training loop
     model.train()
     for epoch in range(5):
         optimizer.zero_grad()
 
-        # Forward pass
-        out = model(x_dict, edge_index_dict, batch_dict)
+        # Forward pass with batch
+        out = model(batch)
 
         # Calculate loss
         loss, _ = criterion(out, y)

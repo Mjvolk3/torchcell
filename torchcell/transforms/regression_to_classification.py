@@ -152,17 +152,25 @@ class LabelNormalizationTransform(BaseTransform):
 
 
 class BaseBinningStrategy(ABC):
-    def clamp_values(self, values: torch.Tensor, bin_edges: torch.Tensor) -> torch.Tensor:
+    def clamp_values(
+        self, values: torch.Tensor, bin_edges: torch.Tensor
+    ) -> torch.Tensor:
         """Clamp values to be within bin edge range."""
+        # Move bin_edges to the same device as values
+        bin_edges = bin_edges.to(values.device)
         return torch.clamp(values, min=bin_edges[0], max=bin_edges[-1])
 
     def compute_ordinal_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
         """Compute ordinal labels with clamping for out-of-bounds values."""
-        ordinal_labels = torch.zeros((len(values), len(bin_edges) - 2))
+        # Move bin_edges to the same device as values
+        bin_edges = bin_edges.to(values.device)
+        ordinal_labels = torch.zeros(
+            (len(values), len(bin_edges) - 2), device=values.device
+        )
         clamped_values = self.clamp_values(values, bin_edges)
-        
+
         for i, val in enumerate(values):
             if torch.isnan(val):
                 ordinal_labels[i] = torch.nan
@@ -178,11 +186,13 @@ class BaseBinningStrategy(ABC):
         sigma_scale: float = 3,
     ) -> torch.Tensor:
         """Compute soft labels with clamping for out-of-bounds values."""
+        # Move bin_edges to the same device as values
+        bin_edges = bin_edges.to(values.device)
         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
         min_bin_width = torch.min(bin_edges[1:] - bin_edges[:-1])
         sigma = min_bin_width * sigma_scale
-        
-        soft_labels = torch.zeros((len(values), len(bin_centers)))
+
+        soft_labels = torch.zeros((len(values), len(bin_centers)), device=values.device)
         clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
@@ -203,8 +213,10 @@ class BaseBinningStrategy(ABC):
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
         """Compute one-hot labels with clamping for out-of-bounds values."""
+        # Move bin_edges to the same device as values
+        bin_edges = bin_edges.to(values.device)
         num_bins = len(bin_edges) - 1
-        onehot = torch.zeros((len(values), num_bins))
+        onehot = torch.zeros((len(values), num_bins), device=values.device)
         clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
@@ -212,7 +224,9 @@ class BaseBinningStrategy(ABC):
                 onehot[i] = torch.nan
             else:
                 # Use clamped value for bin assignment
-                bin_idx = torch.searchsorted(bin_edges, clamped_values[i], right=True) - 1
+                bin_idx = (
+                    torch.searchsorted(bin_edges, clamped_values[i], right=True) - 1
+                )
                 # Clamp to handle any numerical precision edge cases
                 bin_idx = torch.clamp(bin_idx, 0, num_bins - 1)
                 onehot[i, bin_idx] = 1.0
@@ -331,9 +345,9 @@ class LabelBinningTransform(BaseTransform):
                 temp_data["gene"] = {label: bin_edges_normalized}
                 temp_data = self.normalizer.inverse(temp_data)
                 # Fetch the denormalized bin edges using the correct label
-                self.label_metadata[label]["bin_edges_denormalized"] = temp_data["gene"][
-                    label
-                ].numpy()
+                self.label_metadata[label]["bin_edges_denormalized"] = temp_data[
+                    "gene"
+                ][label].numpy()
 
     def forward(self, data: HeteroData) -> HeteroData:
         """Transform the data by binning specified labels."""

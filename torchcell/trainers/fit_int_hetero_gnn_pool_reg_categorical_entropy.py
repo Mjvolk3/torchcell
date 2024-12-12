@@ -199,9 +199,6 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
     def _shared_step(self, batch, batch_idx, stage="train"):
         continuous_pred, pooled_features = self(batch)
-        print(
-            f"Model output gradients: {continuous_pred.requires_grad}, {pooled_features.requires_grad}"
-        )
         batch_size = continuous_pred.size(0)
 
         # Extract targets

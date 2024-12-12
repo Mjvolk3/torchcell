@@ -10,6 +10,7 @@ import torch.optim as optim
 from typing import Optional
 import os.path as osp
 from torch.nn.functional import binary_cross_entropy_with_logits
+from torchcell.losses.multi_dim_nan_tolerant import MseCategoricalEntropyRegLoss
 from torchcell.metrics.nan_tolerant_classification_metrics import (
     NaNTolerantAccuracy,
     NaNTolerantF1Score,
@@ -37,6 +38,7 @@ class ClassificationTask(L.LightningModule):
         model: nn.Module,
         bins: int,
         inverse_transform: BaseTransform,
+        forward_transform: BaseTransform,
         optimizer_config: dict,
         lr_scheduler_config: dict,
         batch_size: int = None,
@@ -208,19 +210,52 @@ class ClassificationTask(L.LightningModule):
         # }
         # batch_dict = {"gene": batch["gene"].batch}
 
-        # Forward pass to get logits
-        # logits = self(x_dict, edge_index_dict, batch_dict)
-        logits, _ = self(batch)
-        # batch_size = x_dict["gene"].size(0)
-        batch_size = logits.size(0)
+        if isinstance(self.loss_func, MseCategoricalEntropyRegLoss):
+            continuous_pred, pooled_features = self(batch)
+            # batch_size = x_dict["gene"].size(0)
+            batch_size = continuous_pred.size(0)
 
-        # Extract targets
-        fitness = batch["gene"].fitness
-        gene_interaction = batch["gene"].gene_interaction
-        y = torch.cat([fitness, gene_interaction], dim=1)
+            # Extract targets
+            fitness = batch["gene"].fitness
+            gene_interaction = batch["gene"].gene_interaction
+            y = torch.cat([fitness, gene_interaction], dim=1)
+            y_cont_target_fitness = batch["gene"].fitness_original.view(-1, 1)
+            y_cont_target_gene_interaction = batch[
+                "gene"
+            ].gene_interaction_original.view(-1, 1)
+            y_cont_target = torch.cat(
+                [y_cont_target_fitness, y_cont_target_gene_interaction], dim=1
+            )
+            temp_data = HeteroData()
+            temp_data["gene"].fitness = continuous_pred[:, 0]
+            temp_data["gene"].gene_interaction = continuous_pred[:, 1]
+            # TODO check if we have issue since if out of bounds of conversion range we could get all 0s. In my sample we did get all 0s. If any samples on edge could put in edge bin on forward. clamp.
+            binned_data = self.hparams.forward_transform(temp_data)
+            logits = torch.cat(
+                [binned_data["gene"].fitness, binned_data["gene"].gene_interaction],
+                dim=1,
+            )
 
-        # Calculate loss
-        loss, dim_losses = self.loss_func(logits, y)
+            loss, loss_components = self.loss_func(
+                continuous_pred=continuous_pred,
+                continuous_target=y_cont_target,
+                logits=logits,
+                categorical_target=y,
+                pooled_features=pooled_features,
+            )
+        else:
+            # Forward pass to get logits
+            # logits = self(x_dict, edge_index_dict, batch_dict)
+            logits, pooled_features = self(batch)
+            # batch_size = x_dict["gene"].size(0)
+            batch_size = logits.size(0)
+
+            # Extract targets
+            fitness = batch["gene"].fitness
+            gene_interaction = batch["gene"].gene_interaction
+            y = torch.cat([fitness, gene_interaction], dim=1)
+            # Calculate loss
+            loss, dim_losses = self.loss_func(logits, y)
 
         # Logging
         self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)

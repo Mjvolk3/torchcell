@@ -496,10 +496,10 @@ class HeteroGnnPool(nn.Module):
                     for key, x in x_dict.items()
                 }
 
-        x = self._global_pool(x_dict["gene"], batch["gene"].batch)
-        x = self.pred_head(x)
+        x_pool = self._global_pool(x_dict["gene"], batch["gene"].batch)
+        x = self.pred_head(x_pool)
 
-        return x
+        return x, x_pool
 
     @property
     def num_parameters(self) -> Dict[str, int]:
@@ -722,5 +722,81 @@ def main():
         print(f"Epoch {epoch + 1}, Loss: {loss.item():.4f}")
 
 
+def main_ordinal_reg():
+    from torchcell.losses.multi_dim_nan_tolerant import (
+        CombinedLoss,
+        OrdinalEntropyRegLoss,
+    )
+
+    # Load sample data
+    batch, max_num_nodes = load_sample_data_batch()
+
+    # Define edge types
+    edge_types = [
+        ("gene", "physical_interaction", "gene"),
+        ("gene", "regulatory_interaction", "gene"),
+    ]
+
+    # Create model with same architecture
+    model = HeteroGnnPool(
+        in_channels=4,
+        hidden_channels=32,
+        out_channels=2,
+        num_layers=3,
+        edge_types=edge_types,
+        conv_type="GIN",
+        layer_config={"train_eps": True, "hidden_multiplier": 2.0},
+        pooling="mean",
+        activation="relu",
+        norm="batch",
+        head_num_layers=3,
+        head_hidden_channels=16,
+        num_nodes=max_num_nodes,
+        learnable_embedding=True,
+    )
+
+    # Initialize losses and optimizer
+    # Based on paper experiments, lambda_d and lambda_t around 0.1-0.5 work well
+    mse_criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    # entropy_criterion = OrdinalEntropyRegLoss(lambda_d=0.1, lambda_t=0.5)
+    # TODO tighness looks like it's always 0.
+    entropy_criterion = OrdinalEntropyRegLoss(lambda_d=1000, lambda_t=1000)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    # Get targets
+    y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
+    valid_mask = ~torch.isnan(y).any(dim=1)
+
+    # Training loop
+    model.train()
+    print("\nStarting training with ordinal entropy regularization:")
+
+    for epoch in range(5):
+        optimizer.zero_grad()
+
+        # Forward pass
+        predictions, pooled_features = model(batch)
+
+        # Calculate losses
+        mse_loss, _ = mse_criterion(predictions, y)
+        entropy_loss, diversity_loss, tightness_loss = entropy_criterion(
+            pooled_features, y, valid_mask
+        )
+
+        # Combine losses
+        total_loss = mse_loss + entropy_loss
+
+        # Backward pass
+        total_loss.backward()
+        optimizer.step()
+
+        print(f"Epoch {epoch + 1}:")
+        print(f"  MSE Loss: {mse_loss.item():.2e}")
+        print(f"  Diversity Loss (Ld): {diversity_loss.item():.2e}")
+        print(f"  Tightness Loss (Lt): {tightness_loss.item():.2e}")
+        print(f"  Total Loss: {total_loss.item():.2e}")
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    main_ordinal_reg()

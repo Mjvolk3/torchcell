@@ -19,6 +19,7 @@ import wandb
 from torchcell.losses.multi_dim_nan_tolerant import (
     CombinedCELoss,
     CombinedOrdinalCELoss,
+    MseCategoricalEntropyRegLoss,
 )
 from torch_geometric.transforms import Compose
 from torchcell.transforms.regression_to_classification import (
@@ -563,6 +564,8 @@ def main(cfg: DictConfig) -> None:
 
     if wandb.config.transforms["label_type"] == "ordinal":
         out_channels = num_tasks * (wandb.config.transforms["num_bins"] - 1)
+    elif wandb.config.regression_task["loss_type"] == "mse_entropy_reg":
+        out_channels = num_tasks
     else:
         out_channels = num_tasks * wandb.config.transforms["num_bins"]
 
@@ -627,6 +630,14 @@ def main(cfg: DictConfig) -> None:
             num_tasks=2,  # For fitness and gene interaction
             weights=weights,
         )
+    elif wandb.config.regression_task["loss_type"] == "mse_entropy_reg":
+        loss_func = MseCategoricalEntropyRegLoss(
+            num_classes=wandb.config.transforms["num_bins"],
+            num_tasks=2,
+            weights=weights,
+            lambda_d=0.1,
+            lambda_t=0.5,
+        )
 
     task = ClassificationTask(
         model=model,
@@ -643,6 +654,7 @@ def main(cfg: DictConfig) -> None:
         ],
         device=device,
         inverse_transform=inverse_transform,
+        forward_transform=forward_transform,
     )
 
     # Checkpoint Callback

@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_003-fit-int_cell_sagpool_5e5 # torchcell_test_cell_sagpool
+  project: torchcell_003-fit-int_cell_sagpool_5e4 # torchcell_test_cell_sagpool
   tags: []
 
 cell_dataset:
@@ -31,7 +31,7 @@ trainer:
 
 model:
   hidden_channels: 16 # Base hidden dimension
-  num_layers: 12 # Number of SAGPool layers
+  num_layers: 3 # Number of SAGPool layers
   pooling_ratio: 0.6 # Ratio of nodes to keep after pooling
   min_score: null # Optional threshold for node selection
   activation: relu

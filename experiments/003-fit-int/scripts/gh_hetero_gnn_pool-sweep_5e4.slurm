@@ -1,18 +1,15 @@
 #!/bin/bash
-#!/bin/bash
-#SBATCH --job-name=CDD_5e4
+#SBATCH --job-name=CSP_5e4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16
-#SBATCH --mem=900G
+#SBATCH --mem=900G 
 #SBATCH --gres=gpu:4
 #SBATCH --time=365-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
 #SBATCH --output=/scratch/projects/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 #SBATCH --error=/scratch/projects/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
-
-# FLAG - trying for ddp [trbl](https://github.com/Lightning-AI/pytorch-lightning/issues/18221)
-#export NCCL_P2P_DISABLE=1
+# 243G
 
 echo "Running on $(hostname)"
 
@@ -41,14 +38,24 @@ cat /proc/meminfo
 # Job specific settings
 echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
-mkdir /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
 
-# Use for Agent logging. Only use in testing.
+# This one is offline
+SWEEP_ID=skdufehc
+PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
+
+echo "-----------------"
+echo "SWEEP_ID: $SWEEP_ID"
+echo "SLURM_JOB_ID: $SLURM_JOB_ID"
+echo "PROJECT_NAME: $PROJECT_NAME"
+echo "-----------------"
+echo "SLURM_NTASKS: $SLURM_NTASKS"
+echo "-----------------"
+
+mkdir -p /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
+
 # Not sure if visivles devices scales with num nodes or resets to 0
-#for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-#    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
-#done
-#wait
-
-#wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1
-srun python /home/michaelvolk/Documents/projects/torchcell/experiments/003-fit-int/scripts/cell_sagpool.py > /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1
+for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
+    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /scratch/projects/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
+done
+wait
+e

@@ -19,6 +19,7 @@ import wandb
 from torchcell.losses.multi_dim_nan_tolerant import (
     CombinedCELoss,
     CombinedOrdinalCELoss,
+    MseCategoricalEntropyRegLoss,
 )
 from torch_geometric.transforms import Compose
 from torchcell.transforms.regression_to_classification import (
@@ -39,8 +40,8 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.models.hetero_gnn_pool import HeteroGnnPool
-from torchcell.trainers.fit_int_hetero_gnn_pool_binary_classification import (
-    ClassificationTask,
+from torchcell.trainers.fit_int_hetero_gnn_pool_reg_categorical_entropy import (
+    RegCategoricalEntropyTask,
 )
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
@@ -168,7 +169,7 @@ class CustomAdvancedProfiler(AdvancedProfiler):
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_gnn_pool",
+    config_name="hetero_gnn_pool_reg_categorical_entropy",
 )
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroGnnPool 🎻")
@@ -563,6 +564,8 @@ def main(cfg: DictConfig) -> None:
 
     if wandb.config.transforms["label_type"] == "ordinal":
         out_channels = num_tasks * (wandb.config.transforms["num_bins"] - 1)
+    elif wandb.config.regression_task["loss_type"] == "mse_entropy_reg":
+        out_channels = num_tasks
     else:
         out_channels = num_tasks * wandb.config.transforms["num_bins"]
 
@@ -617,18 +620,15 @@ def main(cfg: DictConfig) -> None:
     else:
         weights = torch.ones(2).to(device)
 
-    if wandb.config.regression_task["loss_type"] == "ce":
-        loss_func = CombinedCELoss(
-            num_classes=wandb.config.transforms["num_bins"], weights=weights
-        )
-    elif wandb.config.regression_task["loss_type"] == "ce_ordinal":
-        loss_func = CombinedOrdinalCELoss(
-            num_classes=wandb.config.transforms["num_bins"],
-            num_tasks=2,  # For fitness and gene interaction
-            weights=weights,
-        )
+    loss_func = MseCategoricalEntropyRegLoss(
+        num_classes=wandb.config.transforms["num_bins"],
+        num_tasks=2,
+        weights=weights,
+        lambda_d=0.1,
+        lambda_t=0.5,
+    )
 
-    task = ClassificationTask(
+    task = RegCategoricalEntropyTask(
         model=model,
         bins=wandb.config.transforms["num_bins"],
         optimizer_config=wandb.config.regression_task["optimizer"],
@@ -643,6 +643,7 @@ def main(cfg: DictConfig) -> None:
         ],
         device=device,
         inverse_transform=inverse_transform,
+        forward_transform=forward_transform,
     )
 
     # Checkpoint Callback

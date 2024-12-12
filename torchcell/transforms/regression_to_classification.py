@@ -399,9 +399,7 @@ class LabelBinningTransform(BaseTransform):
                     dtype=torch.float32,
                 )
 
-                # Convert logits to probabilities first
-                values = torch.softmax(data["gene"][label], dim=-1)
-
+                values = data["gene"][label]
                 if not isinstance(values, torch.Tensor):
                     values = torch.tensor(values, dtype=torch.float, device=device)
 
@@ -421,50 +419,16 @@ class LabelBinningTransform(BaseTransform):
                 if non_nan_mask.any():
                     valid_values = values[non_nan_mask]
 
-                    if label_type == "soft":
-                        window_size = 2
-                        # Get bin centers
-                        bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
-
-                        # Find the highest probability bin for each sample
-                        max_prob_bins = torch.argmax(valid_values, dim=-1)
-
-                        expected_values = torch.zeros(
-                            len(valid_values), device=device, dtype=torch.float32
-                        )
-
-                        for i in range(len(valid_values)):
-                            peak_bin = max_prob_bins[i]
-                            # Attempt to get window around peak bin
-                            start_idx = max(0, peak_bin - window_size)
-                            end_idx = min(len(bin_centers), peak_bin + window_size + 1)
-
-                            # If we cannot get a full window (e.g., because the peak bin is at the boundary),
-                            # just use the single peak bin center.
-                            if (end_idx - start_idx) < (2 * window_size + 1):
-                                expected_values[i] = bin_centers[peak_bin]
-                            else:
-                                window_probs = valid_values[i, start_idx:end_idx]
-                                window_centers = bin_centers[start_idx:end_idx]
-
-                                # Normalize probabilities in window
-                                window_probs = window_probs / window_probs.sum()
-
-                                # Compute weighted average in window
-                                expected_values[i] = (
-                                    window_probs * window_centers
-                                ).sum()
-
-                        continuous_values[non_nan_mask] = expected_values
-
-                    elif label_type == "categorical":
-                        indices = torch.argmax(valid_values, dim=-1)
+                    if label_type == "ordinal":
+                        # For ordinal labels, count number of 1s to determine bin
+                        # Don't apply softmax since ordinal values should already be 0 or 1
+                        crossings = torch.sum(valid_values > 0.5, dim=-1)
                         temp_values = torch.zeros_like(
-                            indices, dtype=torch.float, device=device
+                            crossings, dtype=torch.float, device=device
                         )
 
                         for i in range(len(bin_edges) - 1):
-                            mask = indices == i
+                            mask = crossings == i
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()
@@ -474,17 +438,47 @@ class LabelBinningTransform(BaseTransform):
 
                         continuous_values[non_nan_mask] = temp_values
 
-                    elif label_type == "ordinal":
-                        n_thresholds = len(bin_edges) - 2
-                        crossings = torch.sum(valid_values > 0.5, dim=-1).clamp(
-                            0, n_thresholds
+                    elif label_type == "soft":
+                        window_size = 2
+                        # Convert logits to probabilities
+                        probs = torch.softmax(valid_values, dim=-1)
+                        # Get bin centers
+                        bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
+
+                        # Find the highest probability bin for each sample
+                        max_prob_bins = torch.argmax(probs, dim=-1)
+
+                        expected_values = torch.zeros(
+                            len(valid_values), device=device, dtype=torch.float32
                         )
+
+                        for i in range(len(valid_values)):
+                            peak_bin = max_prob_bins[i]
+                            start_idx = max(0, peak_bin - window_size)
+                            end_idx = min(len(bin_centers), peak_bin + window_size + 1)
+
+                            if (end_idx - start_idx) < (2 * window_size + 1):
+                                expected_values[i] = bin_centers[peak_bin]
+                            else:
+                                window_probs = probs[i, start_idx:end_idx]
+                                window_centers = bin_centers[start_idx:end_idx]
+                                window_probs = window_probs / window_probs.sum()
+                                expected_values[i] = (
+                                    window_probs * window_centers
+                                ).sum()
+
+                        continuous_values[non_nan_mask] = expected_values
+
+                    elif label_type == "categorical":
+                        # Convert logits to probabilities
+                        probs = torch.softmax(valid_values, dim=-1)
+                        indices = torch.argmax(probs, dim=-1)
                         temp_values = torch.zeros_like(
-                            crossings, dtype=torch.float, device=device
+                            indices, dtype=torch.float, device=device
                         )
 
                         for i in range(len(bin_edges) - 1):
-                            mask = crossings == i
+                            mask = indices == i
                             if mask.any():
                                 low, high = bin_edges[i], bin_edges[i + 1]
                                 size = mask.sum()

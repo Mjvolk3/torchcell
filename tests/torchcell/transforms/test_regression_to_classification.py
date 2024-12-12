@@ -354,3 +354,279 @@ class TestInverseCompose:
             high = bin_edges_denormalized[mb + 1] + eps
             val = recovered["gene"]["fitness"][i].float()
             assert low <= val <= high, f"Value {val} not within [{low}, {high}]"
+
+
+class TestOrdinalBinning:
+    @pytest.fixture
+    def mock_dataset(self):
+        class MockDataset:
+            def __init__(self):
+                self.label_df = pd.DataFrame(
+                    {
+                        "fitness": np.concatenate(
+                            [
+                                np.linspace(0, 0.3, 33),
+                                np.linspace(0.3, 0.7, 34),
+                                np.linspace(0.7, 1.0, 33),
+                            ]
+                        )
+                    }
+                )
+
+        return MockDataset()
+
+    @pytest.fixture
+    def bin_transform(self, mock_dataset):
+        label_configs = {
+            "fitness": {
+                "strategy": "equal_width",
+                "num_bins": 4,  # Using 4 bins for simpler testing
+                "label_type": "ordinal",
+            }
+        }
+        return LabelBinningTransform(mock_dataset, label_configs)
+
+    def test_ordinal_forward(self, bin_transform):
+        data = HeteroData()
+        data["gene"]["fitness"] = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
+
+        # Apply forward transform
+        transformed = bin_transform(data)
+        ordinal_labels = transformed["gene"]["fitness"]
+
+        # Check shape: should be (5, 3) since 4 bins means 3 thresholds
+        assert ordinal_labels.shape == (5, 3)
+
+        # Check if values are binary (0 or 1)
+        assert torch.all((ordinal_labels == 0) | (ordinal_labels == 1))
+
+        # Check ordinal property: if a higher threshold is 1, all lower thresholds should be 1
+        for i in range(ordinal_labels.shape[0]):
+            for j in range(1, ordinal_labels.shape[1]):
+                if ordinal_labels[i, j] == 1:
+                    assert torch.all(ordinal_labels[i, :j] == 1)
+
+    def test_ordinal_inverse(self, bin_transform):
+        data = HeteroData()
+        ordinal_labels = torch.tensor(
+            [
+                [0.0, 0.0, 0.0],  # lowest bin
+                [1.0, 0.0, 0.0],  # second bin
+                [1.0, 1.0, 0.0],  # third bin
+                [1.0, 1.0, 1.0],  # highest bin
+            ]
+        )
+        data["gene"]["fitness"] = ordinal_labels
+
+        # Apply inverse transform
+        recovered = bin_transform.inverse(data)
+        continuous_values = recovered["gene"]["fitness"]
+
+        # Get bin edges from transform
+        bin_edges = torch.tensor(bin_transform.label_metadata["fitness"]["bin_edges"])
+
+        # Check that values fall within expected bins
+        assert (
+            continuous_values[0] >= bin_edges[0]
+            and continuous_values[0] <= bin_edges[1]
+        )
+        assert (
+            continuous_values[1] >= bin_edges[1]
+            and continuous_values[1] <= bin_edges[2]
+        )
+        assert (
+            continuous_values[2] >= bin_edges[2]
+            and continuous_values[2] <= bin_edges[3]
+        )
+        assert (
+            continuous_values[3] >= bin_edges[3]
+            and continuous_values[3] <= bin_edges[4]
+        )
+
+    # TestOrdinalBinning::test_ordinal_round_trip
+    def test_ordinal_round_trip(self, bin_transform):
+        # Original data
+        data = HeteroData()
+        original_values = torch.tensor([0.0, 0.25, 0.5, 0.75, 1.0])
+        data["gene"]["fitness"] = original_values
+
+        # Forward transform
+        transformed = bin_transform(data)
+
+        # Inverse transform
+        recovered = bin_transform.inverse(transformed)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get bin edges
+        bin_edges = torch.tensor(bin_transform.label_metadata["fitness"]["bin_edges"])
+
+        # Function to determine bin index that handles edge cases
+        def get_bin_index(value, edges):
+            if value <= edges[0]:
+                return 0
+            if value >= edges[-1]:
+                return len(edges) - 2
+            idx = torch.searchsorted(edges, value.item()) - 1
+            return idx
+
+        # Check that each recovered value falls in the same bin as its original value
+        for orig, rec in zip(original_values, recovered_values):
+            orig_bin = get_bin_index(orig, bin_edges)
+            rec_bin = get_bin_index(rec, bin_edges)
+            assert (
+                orig_bin == rec_bin
+            ), f"Original value {orig} and recovered value {rec} are in different bins"
+
+    def test_ordinal_with_nans(self, bin_transform):
+        data = HeteroData()
+        data["gene"]["fitness"] = torch.tensor(
+            [0.0, float("nan"), 0.5, float("nan"), 1.0]
+        )
+
+        # Forward transform
+        transformed = bin_transform(data)
+        ordinal_labels = transformed["gene"]["fitness"]
+
+        # Check that NaN values are preserved in forward transform
+        assert torch.isnan(ordinal_labels[1]).all()
+        assert torch.isnan(ordinal_labels[3]).all()
+
+        # Inverse transform
+        recovered = bin_transform.inverse(transformed)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Check that NaN values are preserved in inverse transform
+        assert torch.isnan(recovered_values[1])
+        assert torch.isnan(recovered_values[3])
+
+        # Check that non-NaN values are handled correctly
+        bin_edges = torch.tensor(bin_transform.label_metadata["fitness"]["bin_edges"])
+        assert (
+            recovered_values[0] >= bin_edges[0] and recovered_values[0] <= bin_edges[1]
+        )
+        assert (
+            recovered_values[2] >= bin_edges[1] and recovered_values[2] <= bin_edges[-1]
+        )
+        assert (
+            recovered_values[4] >= bin_edges[-2]
+            and recovered_values[4] <= bin_edges[-1]
+        )
+
+
+class TestOrdinalNormBinning:
+    @pytest.fixture
+    def mock_dataset(self):
+        class MockDataset:
+            def __init__(self):
+                self.label_df = pd.DataFrame(
+                    {
+                        "fitness": np.array(
+                            [
+                                -1.0,  # Below 0
+                                0.0,  # At 0
+                                0.5,  # Middle
+                                1.0,  # At 1
+                                2.0,  # Above 1
+                                np.nan,  # NaN value
+                                1.5,  # Another above 1
+                                np.nan,  # Another NaN
+                            ],
+                            dtype=np.float32,
+                        )
+                    }
+                )
+
+        return MockDataset()
+
+    @pytest.fixture
+    def transforms(self, mock_dataset):
+        norm_config = {"fitness": {"strategy": "minmax"}}
+        norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
+
+        bin_config = {
+            "fitness": {
+                "strategy": "equal_width",
+                "num_bins": 4,
+                "label_type": "ordinal",
+            }
+        }
+        bin_transform = LabelBinningTransform(
+            mock_dataset, bin_config, normalizer=norm_transform
+        )
+        return [norm_transform, bin_transform]
+
+    def test_full_round_trip_with_stages(self, transforms, mock_dataset):
+        """Test the full round trip, verifying intermediate stages"""
+        norm_transform, bin_transform = transforms
+
+        # Original data
+        data = HeteroData()
+        original_values = torch.tensor(
+            [-1.0, 0.0, 0.5, 1.0, 2.0, float("nan"), 1.5, float("nan")],
+            dtype=torch.float32,
+        )
+        data["gene"]["fitness"] = original_values
+
+        # Create composed transforms
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+
+        # Do full forward transform
+        transformed = forward_transform(data)
+        ordinal_labels = transformed["gene"]["fitness"]
+
+        # Verify ordinal properties
+        valid_mask = ~torch.isnan(ordinal_labels).any(dim=1)
+        assert torch.all(
+            (ordinal_labels[valid_mask] == 0) | (ordinal_labels[valid_mask] == 1)
+        )
+
+        # Check ordinal property (if higher threshold is 1, lower ones must be 1)
+        for i in range(len(ordinal_labels)):
+            if valid_mask[i]:
+                for j in range(1, ordinal_labels.shape[1]):
+                    if ordinal_labels[i, j] == 1:
+                        assert torch.all(ordinal_labels[i, :j] == 1)
+
+        # Verify NaN preservation in transform
+        nan_mask = torch.isnan(original_values)
+        assert torch.all(torch.isnan(ordinal_labels[nan_mask]).all(dim=1))
+
+        # Do full inverse transform
+        recovered = inverse_transform(transformed)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get stored denormalized bin edges
+        bin_edges = torch.tensor(
+            bin_transform.label_metadata["fitness"]["bin_edges_denormalized"],
+            dtype=torch.float32,
+        )
+
+        def get_bin_index(value, edges):
+            if torch.isnan(value):
+                return -1
+            if value <= edges[0]:
+                return 0
+            if value >= edges[-1]:
+                return len(edges) - 2
+            idx = torch.searchsorted(edges, value.item()) - 1
+            return idx
+
+        # Check bins and NaN preservation
+        for orig, rec in zip(original_values, recovered_values):
+            if torch.isnan(orig):
+                assert torch.isnan(rec), f"NaN value not preserved: got {rec}"
+            else:
+                orig_bin = get_bin_index(orig, bin_edges)
+                rec_bin = get_bin_index(rec, bin_edges)
+                assert orig_bin == rec_bin, (
+                    f"Original value {orig} (bin {orig_bin}) and "
+                    f"recovered value {rec} (bin {rec_bin}) are in different bins"
+                )
+
+        # Verify intermediate normalized values are in [0,1]
+        normalized = norm_transform(data)
+        norm_values = normalized["gene"]["fitness"]
+        valid_mask = ~torch.isnan(norm_values)
+        assert torch.all(norm_values[valid_mask] >= 0)
+        assert torch.all(norm_values[valid_mask] <= 1)

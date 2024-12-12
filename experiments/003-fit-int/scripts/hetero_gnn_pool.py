@@ -67,7 +67,7 @@ from torchcell.transforms.hetero_to_dense import HeteroToDense
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-WAND_MODE = os.getenv("WAND_MODE")
+WANDB_MODE = os.getenv("WAND_MODE")
 
 
 def analyze_label_distribution(data_module):

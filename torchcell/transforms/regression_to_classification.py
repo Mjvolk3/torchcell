@@ -152,27 +152,22 @@ class LabelNormalizationTransform(BaseTransform):
 
 
 class BaseBinningStrategy(ABC):
-    @abstractmethod
-    def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
-        """Compute bin edges and metadata for values"""
-        pass
+    def clamp_values(self, values: torch.Tensor, bin_edges: torch.Tensor) -> torch.Tensor:
+        """Clamp values to be within bin edge range."""
+        return torch.clamp(values, min=bin_edges[0], max=bin_edges[-1])
 
     def compute_ordinal_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute ordinal labels for values.
-        For n bins, returns n-1 binary values representing threshold crossings.
-        Example for 3 bins: [0,0] -> bin 1, [1,0] -> bin 2, [1,1] -> bin 3
-        """
+        """Compute ordinal labels with clamping for out-of-bounds values."""
         ordinal_labels = torch.zeros((len(values), len(bin_edges) - 2))
+        clamped_values = self.clamp_values(values, bin_edges)
+        
         for i, val in enumerate(values):
             if torch.isnan(val):
                 ordinal_labels[i] = torch.nan
             else:
-                ordinal_labels[i] = (val > bin_edges[1:-1]).float()
+                ordinal_labels[i] = (clamped_values[i] > bin_edges[1:-1]).float()
         return ordinal_labels
 
     def compute_soft_labels(
@@ -182,23 +177,20 @@ class BaseBinningStrategy(ABC):
         strategy: str = "equal_width",
         sigma_scale: float = 3,
     ) -> torch.Tensor:
-        """
-        Compute soft labels with consistent heights and widths.
-        """
+        """Compute soft labels with clamping for out-of-bounds values."""
         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
-
-        # Use the minimum bin width for consistent gaussian spread
         min_bin_width = torch.min(bin_edges[1:] - bin_edges[:-1])
         sigma = min_bin_width * sigma_scale
-
+        
         soft_labels = torch.zeros((len(values), len(bin_centers)))
+        clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
             if torch.isnan(val):
                 soft_labels[i] = torch.nan
             else:
-                # Fixed-width gaussian for all bins
-                distances = torch.abs(val - bin_centers)
+                # Use clamped value for gaussian computation
+                distances = torch.abs(clamped_values[i] - bin_centers)
                 soft_labels[i] = torch.exp(-0.5 * (distances / sigma) ** 2)
 
                 # Normalize to sum to 1
@@ -210,20 +202,17 @@ class BaseBinningStrategy(ABC):
     def compute_onehot_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute one-hot encoded labels.
-        For n bins, bin_edges should have n+1 values defining n intervals.
-        Returns one-hot encoded tensor of shape (len(values), num_bins).
-        """
+        """Compute one-hot labels with clamping for out-of-bounds values."""
         num_bins = len(bin_edges) - 1
         onehot = torch.zeros((len(values), num_bins))
+        clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
             if torch.isnan(val):
                 onehot[i] = torch.nan
             else:
-                # Use searchsorted for more intuitive bin assignment
-                bin_idx = torch.searchsorted(bin_edges, val, right=True) - 1
+                # Use clamped value for bin assignment
+                bin_idx = torch.searchsorted(bin_edges, clamped_values[i], right=True) - 1
                 # Clamp to handle any numerical precision edge cases
                 bin_idx = torch.clamp(bin_idx, 0, num_bins - 1)
                 onehot[i, bin_idx] = 1.0

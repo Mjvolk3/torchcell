@@ -180,7 +180,7 @@ class BaseBinningStrategy(ABC):
         values: torch.Tensor,
         bin_edges: torch.Tensor,
         strategy: str = "equal_width",
-        sigma_scale: float = 2,
+        sigma_scale: float = 3,
     ) -> torch.Tensor:
         """
         Compute soft labels with consistent heights and widths.

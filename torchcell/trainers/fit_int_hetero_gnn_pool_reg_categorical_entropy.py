@@ -32,7 +32,7 @@ from torch_geometric.data import HeteroData
 log = logging.getLogger(__name__)
 
 
-class ClassificationTask(L.LightningModule):
+class RegCategoricalEntropyTask(L.LightningModule):
     def __init__(
         self,
         model: nn.Module,
@@ -198,86 +198,97 @@ class ClassificationTask(L.LightningModule):
         return self.model(batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
-        # Create input dictionaries
-        # x_dict = {"gene": batch["gene"].x}
-        # edge_index_dict = {
-        #     ("gene", "physical_interaction", "gene"): batch[
-        #         "gene", "physical_interaction", "gene"
-        #     ].edge_index,
-        #     ("gene", "regulatory_interaction", "gene"): batch[
-        #         "gene", "regulatory_interaction", "gene"
-        #     ].edge_index,
-        # }
-        # batch_dict = {"gene": batch["gene"].batch}
+        continuous_pred, pooled_features = self(batch)
+        print(
+            f"Model output gradients: {continuous_pred.requires_grad}, {pooled_features.requires_grad}"
+        )
+        batch_size = continuous_pred.size(0)
 
-        if isinstance(self.loss_func, MseCategoricalEntropyRegLoss):
-            continuous_pred, pooled_features = self(batch)
-            # batch_size = x_dict["gene"].size(0)
-            batch_size = continuous_pred.size(0)
+        # Extract targets
+        fitness = batch["gene"].fitness
+        gene_interaction = batch["gene"].gene_interaction
+        y = torch.cat([fitness, gene_interaction], dim=1)
+        y_cont_target_fitness = batch["gene"].fitness_original.view(-1, 1)
+        y_cont_target_gene_interaction = batch["gene"].gene_interaction_original.view(
+            -1, 1
+        )
+        y_cont_target = torch.cat(
+            [y_cont_target_fitness, y_cont_target_gene_interaction], dim=1
+        )
 
-            # Extract targets
-            fitness = batch["gene"].fitness
-            gene_interaction = batch["gene"].gene_interaction
-            y = torch.cat([fitness, gene_interaction], dim=1)
-            y_cont_target_fitness = batch["gene"].fitness_original.view(-1, 1)
-            y_cont_target_gene_interaction = batch[
-                "gene"
-            ].gene_interaction_original.view(-1, 1)
-            y_cont_target = torch.cat(
-                [y_cont_target_fitness, y_cont_target_gene_interaction], dim=1
-            )
-            temp_data = HeteroData()
-            temp_data["gene"].fitness = continuous_pred[:, 0]
-            temp_data["gene"].gene_interaction = continuous_pred[:, 1]
-            # TODO check if we have issue since if out of bounds of conversion range we could get all 0s. In my sample we did get all 0s. If any samples on edge could put in edge bin on forward. clamp.
+        # Keep gradients when creating HeteroData
+        temp_data = HeteroData()
+        with torch.set_grad_enabled(True):
+            temp_data["gene"].fitness = continuous_pred[:, 0].clone()
+            temp_data["gene"].gene_interaction = continuous_pred[:, 1].clone()
             binned_data = self.hparams.forward_transform(temp_data)
-            logits = torch.cat(
-                [binned_data["gene"].fitness, binned_data["gene"].gene_interaction],
-                dim=1,
-            )
 
-            loss, loss_components = self.loss_func(
-                continuous_pred=continuous_pred,
-                continuous_target=y_cont_target,
-                logits=logits,
-                categorical_target=y,
-                pooled_features=pooled_features,
-            )
-        else:
-            # Forward pass to get logits
-            # logits = self(x_dict, edge_index_dict, batch_dict)
-            logits, pooled_features = self(batch)
-            # batch_size = x_dict["gene"].size(0)
-            batch_size = logits.size(0)
+        logits = torch.cat(
+            [binned_data["gene"].fitness, binned_data["gene"].gene_interaction], dim=1
+        ).requires_grad_(True)
 
-            # Extract targets
-            fitness = batch["gene"].fitness
-            gene_interaction = batch["gene"].gene_interaction
-            y = torch.cat([fitness, gene_interaction], dim=1)
-            # Calculate loss
-            loss, dim_losses = self.loss_func(logits, y)
+        # Get loss and components
+        loss, loss_components = self.loss_func(
+            continuous_pred=continuous_pred,
+            continuous_target=y_cont_target,
+            logits=logits,
+            categorical_target=y,
+            pooled_features=pooled_features,
+        )
 
-        # Logging
-        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
+        # Log all loss components
+        self.log(
+            f"{stage}/loss",
+            loss_components["total_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/mse_total",
+            loss_components["mse_total"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/entropy_total",
+            loss_components["entropy_total"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/diversity_loss",
+            loss_components["diversity_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/tightness_loss",
+            loss_components["tightness_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+
+        # Log per-dimension losses
+        dim_losses = loss_components["dim_losses"]
         self.log(
             f"{stage}/fitness_loss",
-            dim_losses[0],
+            (dim_losses[:, 0]).mean(),
             batch_size=batch_size,
             sync_dist=True,
         )
         self.log(
             f"{stage}/gene_interaction_loss",
-            dim_losses[1],
+            (dim_losses[:, 1]).mean(),
             batch_size=batch_size,
             sync_dist=True,
         )
 
-        # Split logits for each task
+        # Split logits for metrics
         num_classes = self.hparams.bins
         fitness_logits = logits[:, :num_classes]
         gene_int_logits = logits[:, num_classes:]
 
-        # Convert targets to class indices for metrics
+        # Convert targets for metrics
         fitness_targets = torch.argmax(fitness, dim=1)
         gene_int_targets = torch.argmax(gene_interaction, dim=1)
 
@@ -286,16 +297,15 @@ class ClassificationTask(L.LightningModule):
         metrics["fitness"](fitness_logits, fitness_targets)
         metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
-        # For regression metrics, transform predictions back to regression space
-        # Use detached tensors for metrics
+        # For regression metrics - use detached tensors only for metrics
         pred_data = HeteroData()
         pred_data["gene"] = {
-            "fitness": fitness_logits.detach(),  # Detach here
-            "gene_interaction": gene_int_logits.detach(),  # Detach here
+            "fitness": fitness_logits.detach(),
+            "gene_interaction": gene_int_logits.detach(),
         }
         reg_pred_data = self.inverse_transform(pred_data)
 
-        # Get original regression values
+        # Original regression values for metrics
         y_original = torch.cat(
             [
                 batch["gene"].fitness_original.view(-1, 1),
@@ -315,7 +325,7 @@ class ClassificationTask(L.LightningModule):
             self.true_reg_values.append(y_original.detach())
             self.predictions.append(logits.detach())
 
-        # log table
+        # Handle prediction table logging
         num_batches = (
             self.trainer.num_training_batches
             if stage == "train"
@@ -327,8 +337,7 @@ class ClassificationTask(L.LightningModule):
         )
         num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
 
-        if batch_idx == num_batches - 2:  # Second to last batch
-            # Get inverse predictions
+        if batch_idx == num_batches - 2:
             pred_reg_values = torch.cat(
                 [
                     reg_pred_data["gene"]["fitness"].view(-1, 1),
@@ -343,7 +352,7 @@ class ClassificationTask(L.LightningModule):
                 true_class_values=y,
                 logits=logits,
                 inverse_preds=pred_reg_values,
-                dim_losses=dim_losses,
+                dim_losses=dim_losses,  # Using dim_losses from components
             )
 
         return loss, logits, y

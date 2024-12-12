@@ -589,9 +589,7 @@ class CategoricalEntropyRegLoss(nn.Module):
 
 class MseCategoricalEntropyRegLoss(nn.Module):
     """
-    Combines MSE loss on continuous values with entropy regularization on categorical logits.
-    - MSE operates on continuous predictions/targets
-    - Entropy reg uses logits (raw outputs before softmax) and one-hot targets
+    Combines MSE loss with entropy regularization, tracking per-dimension losses.
     """
 
     def __init__(
@@ -617,62 +615,55 @@ class MseCategoricalEntropyRegLoss(nn.Module):
             lambda_d=lambda_d, lambda_t=lambda_t, num_classes=num_classes
         )
 
+        self.lambda_d = lambda_d
+        self.lambda_t = lambda_t
+
     def forward(
         self,
-        continuous_pred: torch.Tensor,  # Continuous predictions [batch_size, num_tasks]
-        continuous_target: torch.Tensor,  # Continuous targets [batch_size, num_tasks]
-        logits: torch.Tensor,  # Logits [batch_size, num_tasks * num_classes]
-        categorical_target: torch.Tensor,  # One-hot targets [batch_size, num_tasks * num_classes]
-        pooled_features: torch.Tensor,  # Pooled features [batch_size, feature_dim]
+        continuous_pred: torch.Tensor,
+        continuous_target: torch.Tensor,
+        logits: torch.Tensor,
+        categorical_target: torch.Tensor,
+        pooled_features: torch.Tensor,
     ) -> Tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
-        Forward pass handling both continuous values (for MSE) and logits (for entropy reg).
-
-        Args:
-            continuous_pred: Continuous predictions for MSE loss
-            continuous_target: Continuous targets for MSE loss
-            logits: Raw logits (before softmax) for entropy regularization
-            categorical_target: One-hot encoded targets for entropy regularization
-            pooled_features: Pooled node features for entropy regularization
-
-        Returns:
-            tuple: (total_loss, loss_components)
+        Forward pass tracking all loss components.
+        Returns total loss and dictionary of component losses.
         """
         device = continuous_pred.device
 
-        # Get validity mask from continuous targets
+        # Get validity mask
         mask = ~torch.isnan(continuous_target).any(dim=1)
 
-        # Calculate MSE loss on continuous values
+        # Calculate MSE loss with dimension tracking
         mse_losses, valid_mask = self.mse_loss(continuous_pred, continuous_target)
+
         weights = self.weights.to(device)
 
         # Apply weights only to valid dimensions
         weights = weights * valid_mask.float()
         weight_sum = weights.sum().clamp(min=1e-8)
 
-        # Compute weighted MSE loss
-        weighted_mse_losses = weights * mse_losses
-        mse_total = weighted_mse_losses.sum() / weight_sum
+        # Keep per-dimension MSE losses and compute weighted total
+        dim_losses = weights * mse_losses
+        mse_total = dim_losses.sum() / weight_sum
 
-        # Convert logits to probabilities for entropy regularization
-        probs = F.softmax(logits.view(-1, self.num_classes), dim=1)
-        probs = probs.view(logits.shape)
-
-        # Calculate entropy regularization losses using probabilities
+        # Calculate entropy regularization losses
         entropy_total, diversity_loss, tightness_loss = self.entropy_reg(
-            pooled_features, categorical_target, mask  # One-hot targets
+            pooled_features, categorical_target, mask
         )
 
-        # Combine losses
+        # Ensure all components have gradients
         total_loss = mse_total + entropy_total
 
-        # Return total loss and components
+        # Return total loss and all components for logging
         loss_components = {
-            "mse_loss": mse_total.detach(),
-            "entropy_loss": entropy_total.detach(),
-            "diversity_loss": diversity_loss.detach(),
-            "tightness_loss": tightness_loss.detach(),
+            "total_loss": total_loss,
+            "mse_total": mse_total,
+            "dim_losses": dim_losses,
+            "entropy_total": entropy_total,
+            "diversity_loss": diversity_loss,
+            "tightness_loss": tightness_loss,
         }
 
         return total_loss, loss_components

@@ -1,0 +1,114 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # mode: offline # disabled, offline, online
+  project: torchcell_003-fit-int_hetero_gnn_pool_5e4 # torchcell_test_cell_sagpool
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory] # [physical], [regulatory], [physical, regulatory], []
+  node_embeddings: [learnable_embedding] #[codon_frequency]
+  # [one_hot_gene], [codon_frequency], [calm], [fudt_downstream], [fudt_upstream], [prot_T5_all], [prot_T5_no_dubious], [nt_window_5979], [nt_window_three_prime_300], [nt_window_five_prime_1003], [esm2_t33_650M_UR50D_all], [esm2_t33_650M_UR50D_no_dubious], [normalized_chrom_pathways], [random_1000], [random_100], [random_10], [random_1]... alt [learnable_embedding]
+  learnable_embedding_input_channels: 64 # ignored if node_embedding is not learnable embedding
+  graph_processor: subgraph_representation #subgraph_representation, node_feature, node_augmentation 
+
+transforms:
+  num_bins: 32 # 2 - Binary classification
+  strategy: "equal_frequency" # or "equal_width"
+  store_continuous: true
+  label_type: soft # categorical, soft
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 5e4 #5e4 #7e3
+  batch_size: 16
+  num_workers: 8
+  pin_memory: true
+  prefetch: true
+
+trainer:
+  max_epochs: 20
+  strategy: auto # ddp, auto
+  accelerator: cpu #cpu
+  devices: auto # auto or int
+
+model:
+  # Basic model parameters
+  hidden_channels: 64
+  num_layers: 2
+  conv_type: "GCN" # ["GCN", "GAT", "Transformer", "GIN"]
+  pooling: "sum" # ["mean", "max", "sum"]
+  activation: "gelu"
+  norm: "batch"
+  num_tasks: 2
+  dropout: 0.2
+
+  # Prediction head parameters
+  head_num_layers: 10
+  head_hidden_channels: 32  # Optional, defaults to hidden_channels if not specified
+  head_dropout: 0.2
+  head_activation: "gelu"
+  head_residual: true
+  head_norm: "batch"  # ["batch", "layer"]
+
+  # GCN layer config
+  gcn_bias: true
+  gcn_add_self_loops: false
+  gcn_normalize: false
+  gcn_is_skip_connection: true
+
+  # # GAT layer config
+  gat_heads: 10
+  gat_concat: false
+  gat_bias: true
+  gat_add_self_loops: false
+  gat_share_weights: false
+  gat_is_skip_connection: true
+
+  # # Transformer layer config
+  transformer_heads: 4
+  transformer_concat: true
+  transformer_beta: true
+  transformer_bias: true
+  transformer_root_weight: true
+  transformer_add_self_loops: false
+  transformer_edge_dim: null
+
+  # # GIN layer config
+  gin_train_eps: true
+  gin_hidden_multiplier: 2.0
+  gin_add_self_loops: true
+  gin_is_skip_connection: true
+  gin_num_mlp_layers: 3
+  gin_is_mlp_skip_connection: true
+
+regression_task:
+  is_weighted_phenotype_loss: true
+  loss_type: "mse_entropy_reg"
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  boxplot_every_n_epochs: 1
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  # grad_accumulation_schedule:
+  #   0: 24
+  #   4: 4
+  #   8: 1

@@ -16,7 +16,10 @@ from torchcell.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
-from torchcell.losses.multi_dim_nan_tolerant import CombinedCELoss
+from torchcell.losses.multi_dim_nan_tolerant import (
+    CombinedCELoss,
+    CombinedOrdinalCELoss,
+)
 from torch_geometric.transforms import Compose
 from torchcell.transforms.regression_to_classification import (
     LabelBinningTransform,
@@ -181,7 +184,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",  # "online", "offline", "disabled"
+        mode="online",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -385,6 +388,8 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="random_1",
         )
+    if "learnable_embedding" == wandb.config.cell_dataset["node_embeddings"][0]:
+        learnable_embedding = True
 
     print("=============")
     print("node.embeddings")
@@ -451,7 +456,7 @@ def main(cfg: DictConfig) -> None:
     inverse_transform = InverseCompose(forward_transform)
     dataset.transform = forward_transform
     # Model output dimension is determined by num_bins
-    target_dim = wandb.config.transforms["num_bins"]
+    num_tasks = wandb.config.model["num_tasks"]
 
     ### TODO add changes to binary classification - end
 
@@ -488,8 +493,10 @@ def main(cfg: DictConfig) -> None:
     # analyze_label_distribution(data_module)
     # return
     # HACK - end
-    input_dim = dataset.num_features["gene"]
-    # max_num_nodes = len(dataset.gene_set)
+    if not learnable_embedding:
+        input_dim = dataset.num_features["gene"]
+    else:
+        input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
     dataset.close_lmdb()
 
     # Device setup
@@ -554,10 +561,15 @@ def main(cfg: DictConfig) -> None:
             "dropout": wandb.config.model["dropout"],
         }
 
+    if wandb.config.transforms["label_type"] == "ordinal":
+        out_channels = num_tasks * (wandb.config.transforms["num_bins"] - 1)
+    else:
+        out_channels = num_tasks * wandb.config.transforms["num_bins"]
+
     model = HeteroGnnPool(
         in_channels=input_dim,
         hidden_channels=wandb.config.model["hidden_channels"],
-        out_channels=target_dim * wandb.config.transforms["num_bins"],
+        out_channels=out_channels,
         num_layers=wandb.config.model["num_layers"],
         edge_types=edge_types,
         conv_type=conv_type,
@@ -571,6 +583,8 @@ def main(cfg: DictConfig) -> None:
         head_activation=wandb.config.model["head_activation"],
         head_residual=wandb.config.model["head_residual"],
         head_norm=wandb.config.model["head_norm"],
+        learnable_embedding=learnable_embedding,
+        num_nodes=len(dataset.gene_set),
     )
 
     # Log model parameters
@@ -604,10 +618,19 @@ def main(cfg: DictConfig) -> None:
         weights = torch.ones(2).to(device)
 
     if wandb.config.regression_task["loss_type"] == "ce":
-        loss_func = CombinedCELoss(num_classes=target_dim, weights=weights)
+        loss_func = CombinedCELoss(
+            num_classes=wandb.config.transforms["num_bins"], weights=weights
+        )
+    elif wandb.config.regression_task["loss_type"] == "ce_ordinal":
+        loss_func = CombinedOrdinalCELoss(
+            num_classes=wandb.config.transforms["num_bins"],
+            num_tasks=2,  # For fitness and gene interaction
+            weights=weights,
+        )
 
     task = ClassificationTask(
         model=model,
+        bins=wandb.config.transforms["num_bins"],
         optimizer_config=wandb.config.regression_task["optimizer"],
         lr_scheduler_config=wandb.config.regression_task["lr_scheduler"],
         batch_size=wandb.config.data_module["batch_size"],

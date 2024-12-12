@@ -1,3 +1,8 @@
+# torchcell/transforms/regression_to_classification
+# [[torchcell.transforms.regression_to_classification]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/transforms/regression_to_classification
+# Test file: tests/torchcell/transforms/test_regression_to_classification.py
+
 import numpy as np
 import torch
 import pandas as pd
@@ -20,6 +25,11 @@ import torch
 from torch_geometric.data import HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
 import copy
+from typing import List, Union
+from torch_geometric.transforms import Compose, BaseTransform
+from torch_geometric.data import HeteroData, Batch
+import copy
+import torch
 
 ### Normalize
 
@@ -142,66 +152,67 @@ class LabelNormalizationTransform(BaseTransform):
 
 
 class BaseBinningStrategy(ABC):
-    @abstractmethod
-    def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict]:
-        """Compute bin edges and metadata for values"""
-        pass
+    def clamp_values(self, values: torch.Tensor, bin_edges: torch.Tensor) -> torch.Tensor:
+        """Clamp values to be within bin edge range."""
+        return torch.clamp(values, min=bin_edges[0], max=bin_edges[-1])
 
     def compute_ordinal_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute ordinal labels for values.
-        For n bins, returns n-1 binary values representing threshold crossings.
-        Example for 3 bins: [0,0] -> bin 1, [1,0] -> bin 2, [1,1] -> bin 3
-        """
+        """Compute ordinal labels with clamping for out-of-bounds values."""
         ordinal_labels = torch.zeros((len(values), len(bin_edges) - 2))
+        clamped_values = self.clamp_values(values, bin_edges)
+        
         for i, val in enumerate(values):
             if torch.isnan(val):
                 ordinal_labels[i] = torch.nan
             else:
-                ordinal_labels[i] = (val > bin_edges[1:-1]).float()
+                ordinal_labels[i] = (clamped_values[i] > bin_edges[1:-1]).float()
         return ordinal_labels
 
     def compute_soft_labels(
-        self, values: torch.Tensor, bin_edges: torch.Tensor, sigma: float = 1.0
+        self,
+        values: torch.Tensor,
+        bin_edges: torch.Tensor,
+        strategy: str = "equal_width",
+        sigma_scale: float = 3,
     ) -> torch.Tensor:
-        """
-        Compute soft labels using Gaussian distribution.
-        Returns probabilities for each bin based on distance from bin centers.
-        """
+        """Compute soft labels with clamping for out-of-bounds values."""
         bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
+        min_bin_width = torch.min(bin_edges[1:] - bin_edges[:-1])
+        sigma = min_bin_width * sigma_scale
+        
         soft_labels = torch.zeros((len(values), len(bin_centers)))
+        clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
             if torch.isnan(val):
                 soft_labels[i] = torch.nan
             else:
-                # Calculate Gaussian probability for each bin
-                probs = norm.pdf(bin_centers, loc=val.item(), scale=sigma)
-                soft_labels[i] = torch.tensor(probs / probs.sum())
+                # Use clamped value for gaussian computation
+                distances = torch.abs(clamped_values[i] - bin_centers)
+                soft_labels[i] = torch.exp(-0.5 * (distances / sigma) ** 2)
+
+                # Normalize to sum to 1
+                if torch.sum(soft_labels[i]) > 0:
+                    soft_labels[i] = soft_labels[i] / torch.sum(soft_labels[i])
 
         return soft_labels
 
     def compute_onehot_labels(
         self, values: torch.Tensor, bin_edges: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Compute one-hot encoded labels.
-        For n bins, bin_edges should have n+1 values defining n intervals.
-        Returns one-hot encoded tensor of shape (len(values), num_bins).
-        """
+        """Compute one-hot labels with clamping for out-of-bounds values."""
         num_bins = len(bin_edges) - 1
         onehot = torch.zeros((len(values), num_bins))
+        clamped_values = self.clamp_values(values, bin_edges)
 
         for i, val in enumerate(values):
             if torch.isnan(val):
                 onehot[i] = torch.nan
             else:
-                # Use searchsorted for more intuitive bin assignment
-                bin_idx = torch.searchsorted(bin_edges, val, right=True) - 1
+                # Use clamped value for bin assignment
+                bin_idx = torch.searchsorted(bin_edges, clamped_values[i], right=True) - 1
                 # Clamp to handle any numerical precision edge cases
                 bin_idx = torch.clamp(bin_idx, 0, num_bins - 1)
                 onehot[i, bin_idx] = 1.0
@@ -309,6 +320,21 @@ class LabelBinningTransform(BaseTransform):
             )
             self.label_metadata[label] = metadata
 
+        # If normalizer is provided, also store denormalized bin edges
+        if self.normalizer is not None:
+            for label, metadata in self.label_metadata.items():
+                bin_edges_normalized = torch.tensor(
+                    metadata["bin_edges"], dtype=torch.float
+                )
+                temp_data = HeteroData()
+                # Use the actual label name instead of 'temp_label'
+                temp_data["gene"] = {label: bin_edges_normalized}
+                temp_data = self.normalizer.inverse(temp_data)
+                # Fetch the denormalized bin edges using the correct label
+                self.label_metadata[label]["bin_edges_denormalized"] = temp_data["gene"][
+                    label
+                ].numpy()
+
     def forward(self, data: HeteroData) -> HeteroData:
         """Transform the data by binning specified labels."""
         data = copy.copy(data)
@@ -333,8 +359,10 @@ class LabelBinningTransform(BaseTransform):
                     onehot_labels = strategy.compute_onehot_labels(values, bin_edges)
                     data["gene"][label] = onehot_labels
                 elif label_type == "soft":
-                    sigma = config.get("sigma", 1.0)
-                    soft_labels = strategy.compute_soft_labels(values, bin_edges, sigma)
+                    sigma = config.get("sigma", 3)
+                    soft_labels = strategy.compute_soft_labels(
+                        values, bin_edges, strategy, sigma
+                    )
                     data["gene"][label] = soft_labels
                 elif label_type == "ordinal":
                     ordinal_labels = strategy.compute_ordinal_labels(values, bin_edges)
@@ -344,37 +372,33 @@ class LabelBinningTransform(BaseTransform):
 
     def inverse(self, data: HeteroData, seed: int = 42) -> HeteroData:
         """Inverse transform to recover continuous values using random sampling within bins."""
-        # Set random seed for reproducibility
         torch.manual_seed(seed)
-
         data = copy.copy(data)
 
         for label, config in self.label_configs.items():
             if label in data["gene"]:
-                # Get device from input data
                 device = data["gene"][label].device
-                
                 label_type = config.get("label_type", "categorical").lower()
-                # Move bin edges to correct device
-                bin_edges = torch.tensor(self.label_metadata[label]["bin_edges"], device=device)
-                values = data["gene"][label]
+                bin_edges = torch.tensor(
+                    self.label_metadata[label]["bin_edges"],
+                    device=device,
+                    dtype=torch.float32,
+                )
+
+                # Convert logits to probabilities first
+                values = torch.softmax(data["gene"][label], dim=-1)
 
                 if not isinstance(values, torch.Tensor):
                     values = torch.tensor(values, dtype=torch.float, device=device)
 
                 original_shape = values.shape
 
-                # Check for NaN values first
-                if len(values.shape) > 2:
-                    nan_mask = torch.all(torch.isnan(values), dim=-1)
-                else:
-                    nan_mask = (
-                        torch.isnan(values).any(dim=-1)
-                        if len(values.shape) > 1
-                        else torch.isnan(values)
-                    )
-
-                # Initialize continuous values with NaN on correct device
+                # Check for NaN values
+                nan_mask = (
+                    torch.isnan(values).any(dim=-1)
+                    if len(values.shape) > 1
+                    else torch.isnan(values)
+                )
                 continuous_values = torch.full(
                     original_shape[:-1], float("nan"), dtype=torch.float, device=device
                 )
@@ -384,24 +408,46 @@ class LabelBinningTransform(BaseTransform):
                     valid_values = values[non_nan_mask]
 
                     if label_type == "soft":
-                        probs = valid_values.view(-1, original_shape[-1])
-                        bin_indices = torch.multinomial(probs, num_samples=1).squeeze(-1)
-                        temp_values = torch.zeros_like(bin_indices, dtype=torch.float, device=device)
+                        window_size = 2
+                        # Get bin centers
+                        bin_centers = (bin_edges[1:] + bin_edges[:-1]) / 2
 
-                        for i in range(len(bin_edges) - 1):
-                            mask = bin_indices == i
-                            if mask.any():
-                                low, high = bin_edges[i], bin_edges[i + 1]
-                                size = mask.sum()
-                                temp_values[mask] = (
-                                    torch.rand(size, device=device) * (high - low) + low
-                                )
+                        # Find the highest probability bin for each sample
+                        max_prob_bins = torch.argmax(valid_values, dim=-1)
 
-                        continuous_values[non_nan_mask] = temp_values
+                        expected_values = torch.zeros(
+                            len(valid_values), device=device, dtype=torch.float32
+                        )
+
+                        for i in range(len(valid_values)):
+                            peak_bin = max_prob_bins[i]
+                            # Attempt to get window around peak bin
+                            start_idx = max(0, peak_bin - window_size)
+                            end_idx = min(len(bin_centers), peak_bin + window_size + 1)
+
+                            # If we cannot get a full window (e.g., because the peak bin is at the boundary),
+                            # just use the single peak bin center.
+                            if (end_idx - start_idx) < (2 * window_size + 1):
+                                expected_values[i] = bin_centers[peak_bin]
+                            else:
+                                window_probs = valid_values[i, start_idx:end_idx]
+                                window_centers = bin_centers[start_idx:end_idx]
+
+                                # Normalize probabilities in window
+                                window_probs = window_probs / window_probs.sum()
+
+                                # Compute weighted average in window
+                                expected_values[i] = (
+                                    window_probs * window_centers
+                                ).sum()
+
+                        continuous_values[non_nan_mask] = expected_values
 
                     elif label_type == "categorical":
                         indices = torch.argmax(valid_values, dim=-1)
-                        temp_values = torch.zeros_like(indices, dtype=torch.float, device=device)
+                        temp_values = torch.zeros_like(
+                            indices, dtype=torch.float, device=device
+                        )
 
                         for i in range(len(bin_edges) - 1):
                             mask = indices == i
@@ -416,8 +462,12 @@ class LabelBinningTransform(BaseTransform):
 
                     elif label_type == "ordinal":
                         n_thresholds = len(bin_edges) - 2
-                        crossings = torch.sum(valid_values > 0.5, dim=-1).clamp(0, n_thresholds)
-                        temp_values = torch.zeros_like(crossings, dtype=torch.float, device=device)
+                        crossings = torch.sum(valid_values > 0.5, dim=-1).clamp(
+                            0, n_thresholds
+                        )
+                        temp_values = torch.zeros_like(
+                            crossings, dtype=torch.float, device=device
+                        )
 
                         for i in range(len(bin_edges) - 1):
                             mask = crossings == i
@@ -439,13 +489,6 @@ class LabelBinningTransform(BaseTransform):
         if label not in self.label_metadata:
             raise ValueError(f"No binning metadata found for label {label}")
         return self.label_metadata[label]
-
-
-from typing import List, Union
-from torch_geometric.transforms import Compose, BaseTransform
-from torch_geometric.data import HeteroData, Batch
-import copy
-import torch
 
 
 class InverseCompose(BaseTransform):

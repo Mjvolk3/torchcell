@@ -110,23 +110,20 @@ class ClassificationTask(L.LightningModule):
         inverse_preds: torch.Tensor,
         dim_losses: torch.Tensor,
     ):
-        """Log a wandb table with all prediction forms for comparison."""
+        """Log a wandb table with all prediction forms for comparison, without logging logits."""
         num_tasks = logits.shape[1] // (
             true_class_values.shape[1] // 2
         )  # Number of tasks (2 for fitness and GI)
         num_bins = true_class_values.shape[1] // 2  # Number of bins per task
 
-        # For ordinal labels, transform logits to cumulative probabilities
+        # Convert logits to probabilities using softmax
+        # Each task has num_bins logits, so we apply softmax per-task
         task_probs = []
         for i in range(num_tasks):
             start_idx = i * num_bins
             end_idx = (i + 1) * num_bins
-            # For ordinal labels, each logit represents a threshold
-            # Convert to probability of being greater than each threshold
             task_logits = logits[:, start_idx:end_idx]
-            task_probs.append(
-                torch.sigmoid(task_logits)
-            )  # Use sigmoid for each threshold
+            task_probs.append(torch.softmax(task_logits, dim=1))
 
         # Create column headers for each task
         columns = []
@@ -141,12 +138,9 @@ class ClassificationTask(L.LightningModule):
                 [f"True Class {task_name} (Bin {i})" for i in range(num_bins)]
             )
 
-            # Logits
-            columns.extend([f"Logits {task_name} (Bin {i})" for i in range(num_bins)])
-
-            # Threshold probabilities
+            # Softmax probabilities
             columns.extend(
-                [f"Threshold Prob {task_name} (Bin {i})" for i in range(num_bins)]
+                [f"Softmax Prob {task_name} (Bin {i})" for i in range(num_bins)]
             )
 
             # Predicted regression value
@@ -172,12 +166,7 @@ class ClassificationTask(L.LightningModule):
                     [true_class_values[i, j].item() for j in range(start_idx, end_idx)]
                 )
 
-                # Logits
-                start_idx = task_idx * num_bins
-                end_idx = (task_idx + 1) * num_bins
-                row.extend([logits[i, j].item() for j in range(start_idx, end_idx)])
-
-                # Threshold probabilities
+                # Softmax probabilities
                 row.extend([task_probs[task_idx][i, j].item() for j in range(num_bins)])
 
                 # Predicted regression value

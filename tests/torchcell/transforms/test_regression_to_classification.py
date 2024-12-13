@@ -555,6 +555,7 @@ class TestOrdinalNormBinning:
         )
         return [norm_transform, bin_transform]
 
+    # TestOrdinalNormBinning::test_full_round_trip_with_stages
     def test_full_round_trip_with_stages(self, transforms, mock_dataset):
         """Test the full round trip, verifying intermediate stages"""
         norm_transform, bin_transform = transforms

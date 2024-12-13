@@ -644,6 +644,8 @@ def main(cfg: DictConfig) -> None:
         ],
         device=device,
         inverse_transform=inverse_transform,
+        label_type=wandb.config.transforms["label_type"],
+
     )
 
     # Checkpoint Callback

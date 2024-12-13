@@ -37,6 +37,7 @@ class ClassificationTask(L.LightningModule):
         model: nn.Module,
         bins: int,
         inverse_transform: BaseTransform,
+        label_type: str,
         optimizer_config: dict,
         lr_scheduler_config: dict,
         batch_size: int = None,
@@ -115,12 +116,17 @@ class ClassificationTask(L.LightningModule):
         )  # Number of tasks (2 for fitness and GI)
         num_bins = true_class_values.shape[1] // 2  # Number of bins per task
 
-        # Convert logits to softmax separately for each task
-        task_softmax = []
+        # For ordinal labels, transform logits to cumulative probabilities
+        task_probs = []
         for i in range(num_tasks):
             start_idx = i * num_bins
             end_idx = (i + 1) * num_bins
-            task_softmax.append(torch.softmax(logits[:, start_idx:end_idx], dim=1))
+            # For ordinal labels, each logit represents a threshold
+            # Convert to probability of being greater than each threshold
+            task_logits = logits[:, start_idx:end_idx]
+            task_probs.append(
+                torch.sigmoid(task_logits)
+            )  # Use sigmoid for each threshold
 
         # Create column headers for each task
         columns = []
@@ -130,7 +136,7 @@ class ClassificationTask(L.LightningModule):
             # True regression value
             columns.append(f"True Reg ({task_name})")
 
-            # True class values
+            # True class values (ordinal thresholds)
             columns.extend(
                 [f"True Class {task_name} (Bin {i})" for i in range(num_bins)]
             )
@@ -138,8 +144,10 @@ class ClassificationTask(L.LightningModule):
             # Logits
             columns.extend([f"Logits {task_name} (Bin {i})" for i in range(num_bins)])
 
-            # Softmax
-            columns.extend([f"Softmax {task_name} (Bin {i})" for i in range(num_bins)])
+            # Threshold probabilities
+            columns.extend(
+                [f"Threshold Prob {task_name} (Bin {i})" for i in range(num_bins)]
+            )
 
             # Predicted regression value
             columns.append(f"Pred Reg ({task_name})")
@@ -169,10 +177,8 @@ class ClassificationTask(L.LightningModule):
                 end_idx = (task_idx + 1) * num_bins
                 row.extend([logits[i, j].item() for j in range(start_idx, end_idx)])
 
-                # Softmax
-                row.extend(
-                    [task_softmax[task_idx][i, j].item() for j in range(num_bins)]
-                )
+                # Threshold probabilities
+                row.extend([task_probs[task_idx][i, j].item() for j in range(num_bins)])
 
                 # Predicted regression value
                 row.append(inverse_preds[i, task_idx].item())
@@ -196,22 +202,8 @@ class ClassificationTask(L.LightningModule):
         return self.model(batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
-        # Create input dictionaries
-        # x_dict = {"gene": batch["gene"].x}
-        # edge_index_dict = {
-        #     ("gene", "physical_interaction", "gene"): batch[
-        #         "gene", "physical_interaction", "gene"
-        #     ].edge_index,
-        #     ("gene", "regulatory_interaction", "gene"): batch[
-        #         "gene", "regulatory_interaction", "gene"
-        #     ].edge_index,
-        # }
-        # batch_dict = {"gene": batch["gene"].batch}
-
         # Forward pass to get logits
-        # logits = self(x_dict, edge_index_dict, batch_dict)
         logits, _ = self(batch)
-        # batch_size = x_dict["gene"].size(0)
         batch_size = logits.size(0)
 
         # Extract targets
@@ -242,9 +234,14 @@ class ClassificationTask(L.LightningModule):
         fitness_logits = logits[:, :num_classes]
         gene_int_logits = logits[:, num_classes:]
 
-        # Convert targets to class indices for metrics
-        fitness_targets = torch.argmax(fitness, dim=1)
-        gene_int_targets = torch.argmax(gene_interaction, dim=1)
+        # Convert targets to class indices based on label type
+        if self.hparams.label_type == "ordinal":
+            # For ordinal labels, count number of 1s to determine class
+            fitness_targets = torch.sum(fitness > 0.5, dim=1)
+            gene_int_targets = torch.sum(gene_interaction > 0.5, dim=1)
+        else:  # categorical or soft
+            fitness_targets = torch.argmax(fitness, dim=1)
+            gene_int_targets = torch.argmax(gene_interaction, dim=1)
 
         # Update classification metrics
         metrics = getattr(self, f"{stage}_metrics")

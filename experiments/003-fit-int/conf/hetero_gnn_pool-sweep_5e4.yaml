@@ -58,11 +58,11 @@ parameters:
       batch_size:
         values: [64]
       num_workers:
-        values: [12]
+        values: [16]
       pin_memory:
         values: [true]
       prefetch:
-        values: [true]
+        values: [false]
 
   trainer:
     parameters:

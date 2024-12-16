@@ -184,7 +184,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online",  # "online", "offline", "disabled"
+        mode="offline",  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -388,6 +388,7 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="random_1",
         )
+    learnable_embedding = False
     if "learnable_embedding" == wandb.config.cell_dataset["node_embeddings"][0]:
         learnable_embedding = True
 

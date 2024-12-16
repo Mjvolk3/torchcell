@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: grid
+method: random
 
 parameters:
   cell_dataset:
@@ -13,7 +13,7 @@ parameters:
           # - [one_hot_gene]
           # - [calm]
           # - [fudt_downstream]
-          # - [fudt_upstream]
+          - [fudt_upstream]
           # - [prot_T5_all]
           # - [prot_T5_no_dubious]
           # - [nt_window_5979]
@@ -174,9 +174,9 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-4]
+            values: [1e-3, 1e-4, 1e-5, 1e-6]
           weight_decay:
-            values: [1e-6]
+            values: [1e-3, 1e-5, 1e-7]
       lr_scheduler:
         parameters:
           type:

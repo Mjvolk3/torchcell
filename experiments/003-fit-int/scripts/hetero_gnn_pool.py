@@ -389,6 +389,7 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="random_1",
         )
+    learnable_embedding = False
     if "learnable_embedding" == wandb.config.cell_dataset["node_embeddings"][0]:
         learnable_embedding = True
 
@@ -644,6 +645,7 @@ def main(cfg: DictConfig) -> None:
         ],
         device=device,
         inverse_transform=inverse_transform,
+        forward_transform=forward_transform,
         label_type=wandb.config.transforms["label_type"],
 
     )

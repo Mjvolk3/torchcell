@@ -68,6 +68,7 @@ from torchcell.transforms.hetero_to_dense import HeteroToDense
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
+WANDB_MODE = os.getenv("WANDB_MODE")
 
 
 def analyze_label_distribution(data_module):
@@ -185,7 +186,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="online",  # "online", "offline", "disabled"
+        mode=WANDB_MODE,  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,

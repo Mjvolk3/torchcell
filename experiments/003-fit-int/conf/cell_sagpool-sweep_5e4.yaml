@@ -24,7 +24,7 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [64] #[64] #96 OOM
+        values: [32] #[64] #96 OOM
       num_workers:
         values: [16]
       pin_memory:

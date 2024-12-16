@@ -90,7 +90,8 @@ class HeteroGnnPool(nn.Module):
         self.conv_type = conv_type
         self.norm = norm
         self.learnable_embedding = learnable_embedding
-
+        # for use in scripts
+        self.out_channels = out_channels
         if learnable_embedding and num_nodes is None:
             raise ValueError(
                 "num_nodes must be provided when using learnable_embedding"

@@ -631,3 +631,226 @@ class TestOrdinalNormBinning:
         valid_mask = ~torch.isnan(norm_values)
         assert torch.all(norm_values[valid_mask] >= 0)
         assert torch.all(norm_values[valid_mask] <= 1)
+
+    # TestOrdinalNormBinning::test_ordinal_roundtrip_bin_containment
+    def test_ordinal_roundtrip_bin_containment(self, transforms, mock_dataset):
+        """Test that inverse transform outputs values within their predicted bin ranges for ordinal labels."""
+        norm_transform, bin_transform = transforms
+
+        # Original data
+        data = HeteroData()
+        original_values = torch.tensor(
+            [-1.0, 0.0, 0.5, 1.0, 2.0, float("nan"), 1.5, float("nan")],
+            dtype=torch.float32,
+        )
+        data["gene"]["fitness"] = original_values
+
+        # Create composed transforms
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+
+        # Do forward transform
+        transformed = forward_transform(data)
+
+        # Get the predicted bins from the ordinal encoding
+        ordinal_labels = transformed["gene"]["fitness"]
+        valid_mask = ~torch.isnan(ordinal_labels).any(dim=1)
+        predicted_bins = torch.sum(ordinal_labels[valid_mask] > 0.5, dim=1)
+
+        # Do inverse transform
+        recovered = inverse_transform(transformed)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get bin edges
+        bin_edges_denorm = torch.tensor(
+            bin_transform.label_metadata["fitness"]["bin_edges_denormalized"],
+            dtype=torch.float32,
+        )
+
+        # Check that each recovered value falls within its predicted bin
+        for i, (rec_val, pred_bin) in enumerate(
+            zip(recovered_values[valid_mask], predicted_bins)
+        ):
+            bin_start = bin_edges_denorm[pred_bin]
+            bin_end = bin_edges_denorm[pred_bin + 1]
+
+            assert bin_start <= rec_val <= bin_end, (
+                f"Recovered value {rec_val} is outside its predicted bin "
+                f"[{bin_start}, {bin_end}] for bin {pred_bin}"
+            )
+
+        # Verify NaN values are preserved
+        assert torch.all(torch.isnan(recovered_values) == torch.isnan(original_values))
+
+
+class TestModelOutputSimulation:
+    @pytest.fixture
+    def mock_dataset(self):
+        class MockDataset:
+            def __init__(self):
+                self.label_df = pd.DataFrame(
+                    {"fitness": np.linspace(0, 1, 100)}  # Nice distribution from 0 to 1
+                )
+
+        return MockDataset()
+
+    def test_categorical_logits(self, mock_dataset):
+        """Test categorical classification with model-like logit outputs."""
+        # Setup transforms
+        norm_config = {"fitness": {"strategy": "minmax"}}
+        bin_config = {
+            "fitness": {
+                "strategy": "equal_width",
+                "num_bins": 4,
+                "label_type": "categorical",
+            }
+        }
+
+        norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
+        bin_transform = LabelBinningTransform(mock_dataset, bin_config, norm_transform)
+        transforms = [norm_transform, bin_transform]
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+
+        # Simulate model outputs (large logit differences for clear predictions)
+        batch_size = 4
+        num_bins = 4
+        logits = torch.zeros(batch_size, num_bins)
+        # Each row strongly predicts a different bin
+        for i in range(batch_size):
+            logits[i, i] = 10.0  # High confidence prediction
+
+        # Create data object with our "model outputs"
+        pred_data = HeteroData()
+        pred_data["gene"] = {"fitness": logits}
+
+        # Apply inverse transform
+        recovered = inverse_transform(pred_data)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get bin edges for verification
+        bin_edges = torch.tensor(
+            bin_transform.label_metadata["fitness"]["bin_edges_denormalized"],
+            dtype=torch.float32,
+        )
+
+        # Verify each value falls within its predicted bin
+        for i in range(batch_size):
+            pred_bin = i  # We constructed logits to predict bin i for row i
+            bin_start = bin_edges[pred_bin]
+            bin_end = bin_edges[pred_bin + 1]
+
+            assert (
+                bin_start <= recovered_values[i] <= bin_end
+            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+
+    def test_soft_logits(self, mock_dataset):
+        """Test soft classification with model-like logit outputs."""
+        # Setup transforms
+        norm_config = {"fitness": {"strategy": "minmax"}}
+        bin_config = {
+            "fitness": {
+                "strategy": "equal_width",
+                "num_bins": 4,
+                "label_type": "soft",
+                "sigma": 0.1,
+            }
+        }
+
+        norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
+        bin_transform = LabelBinningTransform(mock_dataset, bin_config, norm_transform)
+        transforms = [norm_transform, bin_transform]
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+
+        # Simulate model outputs (softer predictions)
+        batch_size = 4
+        num_bins = 4
+        logits = torch.zeros(batch_size, num_bins)
+        # Create predictions with some uncertainty
+        for i in range(batch_size):
+            logits[i, i] = 5.0  # Main prediction
+            if i > 0:
+                logits[i, i - 1] = 2.0  # Some weight to adjacent bin
+            if i < num_bins - 1:
+                logits[i, i + 1] = 2.0  # Some weight to adjacent bin
+
+        # Create data object with our "model outputs"
+        pred_data = HeteroData()
+        pred_data["gene"] = {"fitness": logits}
+
+        # Apply inverse transform
+        recovered = inverse_transform(pred_data)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get bin edges for verification
+        bin_edges = torch.tensor(
+            bin_transform.label_metadata["fitness"]["bin_edges_denormalized"],
+            dtype=torch.float32,
+        )
+
+        # Verify each value falls within expected range
+        for i in range(batch_size):
+            pred_bin = i  # Peak prediction is still bin i
+            bin_start = bin_edges[pred_bin]
+            bin_end = bin_edges[pred_bin + 1]
+
+            assert (
+                bin_start <= recovered_values[i] <= bin_end
+            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+
+    def test_ordinal_logits(self, mock_dataset):
+        """Test ordinal classification with model-like logit outputs."""
+        # Setup transforms
+        norm_config = {"fitness": {"strategy": "minmax"}}
+        bin_config = {
+            "fitness": {
+                "strategy": "equal_width",
+                "num_bins": 4,
+                "label_type": "ordinal",
+            }
+        }
+
+        norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
+        bin_transform = LabelBinningTransform(mock_dataset, bin_config, norm_transform)
+        transforms = [norm_transform, bin_transform]
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+
+        # Simulate model outputs for ordinal case (n-1 thresholds for n bins)
+        batch_size = 4
+        num_thresholds = 3  # 4 bins = 3 thresholds
+        logits = torch.zeros(batch_size, num_thresholds)
+
+        # Create different threshold patterns
+        # Row 0: All negative = bin 0
+        logits[0] = torch.tensor([-10.0, -10.0, -10.0])
+        # Row 1: One positive = bin 1
+        logits[1] = torch.tensor([10.0, -10.0, -10.0])
+        # Row 2: Two positive = bin 2
+        logits[2] = torch.tensor([10.0, 10.0, -10.0])
+        # Row 3: All positive = bin 3
+        logits[3] = torch.tensor([10.0, 10.0, 10.0])
+
+        # Create data object with our "model outputs"
+        pred_data = HeteroData()
+        pred_data["gene"] = {"fitness": logits}
+
+        # Apply inverse transform
+        recovered = inverse_transform(pred_data)
+        recovered_values = recovered["gene"]["fitness"]
+
+        # Get bin edges for verification
+        bin_edges = torch.tensor(
+            bin_transform.label_metadata["fitness"]["bin_edges_denormalized"],
+            dtype=torch.float32,
+        )
+
+        # Verify each value falls within its predicted bin
+        for i in range(batch_size):
+            bin_start = bin_edges[i]  # Constructed so row i should be in bin i
+            bin_end = bin_edges[i + 1]
+
+            assert (
+                bin_start <= recovered_values[i] <= bin_end
+            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"

@@ -27,6 +27,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.data import HeteroData
+from torchcell.transforms.regression_to_classification import LabelBinningTransform
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class ClassificationTask(L.LightningModule):
         model: nn.Module,
         bins: int,
         inverse_transform: BaseTransform,
+        forward_transform: BaseTransform,
         label_type: str,
         optimizer_config: dict,
         lr_scheduler_config: dict,
@@ -110,76 +112,88 @@ class ClassificationTask(L.LightningModule):
         inverse_preds: torch.Tensor,
         dim_losses: torch.Tensor,
     ):
-        """Log a wandb table with all prediction forms for comparison, without logging logits."""
-        num_tasks = logits.shape[1] // (
-            true_class_values.shape[1] // 2
-        )  # Number of tasks (2 for fitness and GI)
-        num_bins = true_class_values.shape[1] // 2  # Number of bins per task
+        """Log two tables (one per task) with regression values, bin information, and ranges."""
+        num_bins = true_class_values.shape[1] // 2
+        task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
 
-        # Convert logits to probabilities using softmax
-        # Each task has num_bins logits, so we apply softmax per-task
-        task_probs = []
-        for i in range(num_tasks):
-            start_idx = i * num_bins
-            end_idx = (i + 1) * num_bins
+        # Get the binning transform from the forward transform composition
+        forward_transform = self.hparams.forward_transform
+        binning_transform = next(
+            t
+            for t in forward_transform.transforms
+            if isinstance(t, LabelBinningTransform)
+        )
+
+        # Process each task separately
+        for task_idx, (display_name, metadata_key) in enumerate(task_mapping):
+            # Get logits for this task
+            start_idx = task_idx * num_bins
+            end_idx = (task_idx + 1) * num_bins
             task_logits = logits[:, start_idx:end_idx]
-            task_probs.append(torch.softmax(task_logits, dim=1))
 
-        # Create column headers for each task
-        columns = []
-        task_names = ["Fitness", "GI"]
+            # Get denormalized bin edges from forward transform metadata
+            bin_edges_denorm = binning_transform.label_metadata[metadata_key][
+                "bin_edges_denormalized"
+            ]
+            bin_edges_denorm = torch.tensor(bin_edges_denorm, dtype=torch.float32)
 
-        for task_idx, task_name in enumerate(task_names):
-            # True regression value
-            columns.append(f"True Reg ({task_name})")
-
-            # True class values (ordinal thresholds)
-            columns.extend(
-                [f"True Class {task_name} (Bin {i})" for i in range(num_bins)]
-            )
-
-            # Softmax probabilities
-            columns.extend(
-                [f"Softmax Prob {task_name} (Bin {i})" for i in range(num_bins)]
-            )
-
-            # Predicted regression value
-            columns.append(f"Pred Reg ({task_name})")
-
-            # Loss
-            columns.append(f"{task_name} Loss")
-
-        # Create table data
-        data = []
-        for i in range(len(true_reg_values)):
-            row = []
-
-            # Add data for each task
-            for task_idx in range(num_tasks):
-                # True regression value
-                row.append(true_reg_values[i, task_idx].item())
-
-                # True class values
-                start_idx = task_idx * num_bins
-                end_idx = (task_idx + 1) * num_bins
-                row.extend(
-                    [true_class_values[i, j].item() for j in range(start_idx, end_idx)]
+            # Determine true and predicted bins based on label type
+            if self.hparams.label_type == "ordinal":
+                # For ordinal, count number of 1s for true bins
+                true_bins = torch.sum(
+                    true_class_values[:, start_idx:end_idx] > 0.5, dim=1
                 )
+                # For predictions, count number of positive logits
+                pred_bins = torch.sum(task_logits > 0, dim=1)
+            else:  # categorical
+                true_bins = torch.argmax(true_class_values[:, start_idx:end_idx], dim=1)
+                pred_bins = torch.argmax(task_logits, dim=1)
 
-                # Softmax probabilities
-                row.extend([task_probs[task_idx][i, j].item() for j in range(num_bins)])
+            # Create table columns
+            columns = [
+                f"True Reg ({display_name})",
+                f"True Bin",
+                f"True Bin Start",
+                f"True Bin End",
+                f"Predicted Bin",
+                f"Predicted Bin Start",
+                f"Predicted Bin End",
+                f"Predicted Reg ({display_name})",
+                f"{display_name} Loss",
+            ]
 
-                # Predicted regression value
-                row.append(inverse_preds[i, task_idx].item())
+            # Prepare table data
+            table_data = []
+            for i in range(len(true_reg_values)):
+                true_bin = true_bins[i].item()
+                pred_bin = pred_bins[i].item()
 
-                # Loss for this task
-                row.append(dim_losses[task_idx].item())
+                # Get bin ranges for true bin (clamp to valid indices)
+                true_bin_clamped = max(0, min(true_bin, len(bin_edges_denorm) - 2))
+                true_bin_start = bin_edges_denorm[true_bin_clamped].item()
+                true_bin_end = bin_edges_denorm[true_bin_clamped + 1].item()
 
-            data.append(row)
+                # Get bin ranges for predicted bin (clamp to valid indices)
+                pred_bin_clamped = max(0, min(pred_bin, len(bin_edges_denorm) - 2))
+                pred_bin_start = bin_edges_denorm[pred_bin_clamped].item()
+                pred_bin_end = bin_edges_denorm[pred_bin_clamped + 1].item()
 
-        # Create and log wandb table
-        table = wandb.Table(columns=columns, data=data)
-        wandb.log({f"{stage}/second_to_last_batch_predictions": table}, commit=False)
+                row = [
+                    true_reg_values[i, task_idx].item(),
+                    true_bin,
+                    true_bin_start,
+                    true_bin_end,
+                    pred_bin,
+                    pred_bin_start,
+                    pred_bin_end,
+                    inverse_preds[i, task_idx].item(),
+                    dim_losses[task_idx].item(),
+                ]
+                table_data.append(row)
+
+            # Create and log table
+            table = wandb.Table(columns=columns, data=table_data)
+            wandb.log({f"{stage}/{metadata_key}_predictions": table}, commit=False)
 
     # def forward(self, x_dict, edge_index_dict, batch_dict):
     #     if self.model.learnable_embedding:
@@ -226,8 +240,15 @@ class ClassificationTask(L.LightningModule):
         # Convert targets to class indices based on label type
         if self.hparams.label_type == "ordinal":
             # For ordinal labels, count number of 1s to determine class
-            fitness_targets = torch.sum(fitness > 0.5, dim=1)
-            gene_int_targets = torch.sum(gene_interaction > 0.5, dim=1)
+            # Handle NaN values
+            fitness_nan_mask = torch.isnan(fitness).any(dim=1)
+            gene_int_nan_mask = torch.isnan(gene_interaction).any(dim=1)
+
+            # Create float tensors to store targets
+            fitness_targets = torch.sum(fitness > 0.5, dim=1).float()
+            gene_int_targets = torch.sum(gene_interaction > 0.5, dim=1).float()
+            fitness_targets[fitness_nan_mask] = float("nan")
+            gene_int_targets[gene_int_nan_mask] = float("nan")
         else:  # categorical or soft
             fitness_targets = torch.argmax(fitness, dim=1)
             gene_int_targets = torch.argmax(gene_interaction, dim=1)
@@ -237,13 +258,22 @@ class ClassificationTask(L.LightningModule):
         metrics["fitness"](fitness_logits, fitness_targets)
         metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
-        # For regression metrics, transform predictions back to regression space
-        # Use detached tensors for metrics
         pred_data = HeteroData()
-        pred_data["gene"] = {
-            "fitness": fitness_logits.detach(),  # Detach here
-            "gene_interaction": gene_int_logits.detach(),  # Detach here
-        }
+        if self.hparams.label_type == "ordinal":
+            # For ordinal, convert logits to binary thresholds
+            pred_data["gene"] = {
+                "fitness": (fitness_logits > 0)
+                .float()
+                .detach(),  # Convert to ordinal thresholds
+                "gene_interaction": (gene_int_logits > 0).float().detach(),
+            }
+        else:  # categorical
+            # For categorical, keep raw logits for softmax in inverse transform
+            pred_data["gene"] = {
+                "fitness": fitness_logits.detach(),
+                "gene_interaction": gene_int_logits.detach(),
+            }
+
         reg_pred_data = self.inverse_transform(pred_data)
 
         # Get original regression values
@@ -361,11 +391,19 @@ class ClassificationTask(L.LightningModule):
 
         # Create HeteroData object for predictions
         pred_data = HeteroData()
-        num_bins = self.hparams.bins
-        pred_data["gene"] = {
-            "fitness": predictions[:, :num_bins],
-            "gene_interaction": predictions[:, num_bins:],
-        }
+        num_bins = self.model.out_channels
+        if self.hparams.label_type == "ordinal":
+            # For ordinal, convert predictions to binary thresholds
+            pred_data["gene"] = {
+                "fitness": (predictions[:, :num_bins] > 0).float(),
+                "gene_interaction": (predictions[:, num_bins:] > 0).float(),
+            }
+        else:  # categorical
+            # For categorical, keep raw logits
+            pred_data["gene"] = {
+                "fitness": predictions[:, :num_bins],
+                "gene_interaction": predictions[:, num_bins:],
+            }
 
         # Apply inverse transform only to predictions
         pred_data = self.inverse_transform(pred_data)
@@ -417,10 +455,19 @@ class ClassificationTask(L.LightningModule):
 
         # Create HeteroData object for predictions
         pred_data = HeteroData()
-        pred_data["gene"] = {
-            "fitness": torch.softmax(predictions[:, :2], dim=1),
-            "gene_interaction": torch.softmax(predictions[:, 2:], dim=1),
-        }
+        num_bins = self.model.out_channels
+        if self.hparams.label_type == "ordinal":
+            # For ordinal, convert predictions to binary thresholds
+            pred_data["gene"] = {
+                "fitness": (predictions[:, :num_bins] > 0).float(),
+                "gene_interaction": (predictions[:, num_bins:] > 0).float(),
+            }
+        else:  # categorical
+            # For categorical, keep raw logits
+            pred_data["gene"] = {
+                "fitness": predictions[:, :num_bins],
+                "gene_interaction": predictions[:, num_bins:],
+            }
 
         # Apply inverse transform only to predictions
         pred_data = self.inverse_transform(pred_data)

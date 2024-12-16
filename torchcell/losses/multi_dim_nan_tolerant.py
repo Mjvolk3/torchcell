@@ -392,6 +392,7 @@ class CombinedOrdinalCELoss(nn.Module):
         num_tasks: int = 2,
         weights: Optional[torch.Tensor] = None,
     ):
+        
         """
         Args:
             num_classes: Number of ordinal classes per task

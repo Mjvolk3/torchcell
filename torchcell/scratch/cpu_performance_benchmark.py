@@ -42,13 +42,14 @@ def run_benchmark(repeats: int, matrix_size: int, base_seed: int) -> list:
     for i in range(repeats):
         print(f"Running benchmark {i+1}/{repeats}")
         duration = benchmark(cpu_count, matrix_size, base_seed + i * cpu_count)
+        print(f"Duration (s): {duration}")
         times.append(duration)
     
     return times
 
 if __name__ == "__main__":
     # Running benchmark 5 times with matrix size 4000
-    repeats = 5
+    repeats = 40
     matrix_size = 4000
     base_seed = 42  # Set a base seed for reproducibility
     

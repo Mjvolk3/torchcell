@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: grid
+method: random
 
 parameters:
   cell_dataset:
@@ -9,26 +9,39 @@ parameters:
         values: [[physical, regulatory]]
       node_embeddings:
         values:
-          - [codon_frequency]
-          - [one_hot_gene]
-          - [calm]
-          - [fudt_downstream]
-          - [fudt_upstream]
-          - [prot_T5_all]
+          # - [codon_frequency]
+          # - [one_hot_gene]
+          # - [calm]
+          # - [fudt_downstream]
+          # - [fudt_upstream]
+          # - [prot_T5_all]
           # - [prot_T5_no_dubious]
-          - [nt_window_5979]
+          # - [nt_window_5979]
           # - [nt_window_three_prime_300]
           # - [nt_window_five_prime_1003]
-          - [esm2_t33_650M_UR50D_all]
+          # - [esm2_t33_650M_UR50D_all]
           # - [esm2_t33_650M_UR50D_no_dubious]
           # - [normalized_chrom_pathways]
           # - [random_1000]
-          - [random_100]
+          # - [random_100]
           # - [random_10]
           # - [random_1]
+          - [learnable_embedding]
+      learnable_embedding_input_channels: 
+        values: [64]
 
       graph_processor:
-        values: [subgraph_representation]
+        values: [subgraph_representation] # [subgraph_representation, node_feature, node_augmentation]
+
+  transforms:
+    num_bins: 
+      values: [32]
+    strategy: 
+      values: ["equal_frequency"] # or "equal_width"
+    store_continuous: 
+      values: [true]
+    label_type: 
+      values: [soft]
 
   profiler:
     parameters:
@@ -42,7 +55,7 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [16]
+        values: [64]
       num_workers:
         values: [8]
       pin_memory:
@@ -53,7 +66,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [20]
+        values: [40]
       strategy:
         values: [auto]
       accelerator:
@@ -76,14 +89,14 @@ parameters:
         values: ["gelu"]
       norm:
         values: ["batch", "layer"]
-      target_dim:
+      num_tasks:
         values: [2]
       dropout:
         values: [0.2]
 
       # Prediction head parameters
       head_num_layers:
-        values: [4]
+        values: [10]
       head_hidden_channels:
         values: [32]
       head_dropout:
@@ -160,7 +173,7 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3, 1e-5]
+            values: [1e-3, 1e-4, 1e-5, 1e-6]
           weight_decay:
             values: [1e-3, 1e-5, 1e-7]
       lr_scheduler:

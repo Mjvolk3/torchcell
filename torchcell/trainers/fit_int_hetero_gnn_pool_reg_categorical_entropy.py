@@ -11,19 +11,9 @@ from typing import Optional
 import os.path as osp
 from torch.nn.functional import binary_cross_entropy_with_logits
 from torchcell.losses.multi_dim_nan_tolerant import MseCategoricalEntropyRegLoss
-from torchcell.metrics.nan_tolerant_classification_metrics import (
-    NaNTolerantAccuracy,
-    NaNTolerantF1Score,
-    NaNTolerantAUROC,
-    NaNTolerantPrecision,
-    NaNTolerantRecall,
-)
-from torchcell.metrics.nan_tolerant_metrics import (
-    NaNTolerantMSE,
-    NaNTolerantRMSE,
-    NaNTolerantR2Score,
-    NaNTolerantPearsonCorrCoef,
-)
+from torchmetrics import Accuracy, F1Score, Precision, Recall
+from torchmetrics import MeanSquaredError, R2Score, PearsonCorrCoef, SpearmanCorrCoef
+
 from torchcell.viz import fitness, genetic_interaction_score
 import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
@@ -66,20 +56,21 @@ class RegCategoricalEntropyTask(L.LightningModule):
         # Define classification metrics
         class_metrics = MetricCollection(
             {
-                "Accuracy": NaNTolerantAccuracy(task=task),
-                "F1": NaNTolerantF1Score(task=task),
-                "Precision": NaNTolerantPrecision(task=task),
-                "Recall": NaNTolerantRecall(task=task),
+                "Accuracy": Accuracy(task=task, num_classes=bins),
+                "F1": F1Score(task=task, num_classes=bins),
+                "Precision": Precision(task=task, num_classes=bins),
+                "Recall": Recall(task=task, num_classes=bins),
             }
         )
 
         # Define regression metrics
         reg_metrics = MetricCollection(
             {
-                "MSE": NaNTolerantMSE(squared=True),
-                "RMSE": NaNTolerantMSE(squared=False),
-                "R2": NaNTolerantR2Score(),
-                "Pearson": NaNTolerantPearsonCorrCoef(),
+                "MSE": MeanSquaredError(squared=True),
+                "RMSE": MeanSquaredError(squared=False),
+                # "R2": R2Score(),
+                "Pearson": PearsonCorrCoef(),
+                # "Spearman": SpearmanCorrCoef(),
             }
         )
 
@@ -201,6 +192,25 @@ class RegCategoricalEntropyTask(L.LightningModule):
     #     else:
     #         return self.model(x_dict, edge_index_dict, batch_dict)
 
+    def _compute_metrics_safely(self, metrics_dict):
+        """Safely compute metrics with sufficient samples."""
+        results = {}
+        for metric_name, metric in metrics_dict.items():
+            try:
+                results[metric_name] = metric.compute()
+            except ValueError as e:
+                # Skip metrics that need more samples or have no samples during sanity checking
+                if any(
+                    msg in str(e)
+                    for msg in [
+                        "Needs at least two samples",
+                        "No samples to concatenate",
+                    ]
+                ):
+                    continue
+                raise e
+        return results
+
     def forward(self, batch):
         return self.model(batch)
 
@@ -296,14 +306,28 @@ class RegCategoricalEntropyTask(L.LightningModule):
         fitness_targets = torch.argmax(fitness, dim=1)
         gene_int_targets = torch.argmax(gene_interaction, dim=1)
 
-        # Update classification metrics
+        # Update metrics with NaN masking
         metrics = getattr(self, f"{stage}_metrics")
-        metrics["fitness"](fitness_logits, fitness_targets)
-        metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
-        # Update regression metrics - use continuous predictions directly
-        metrics["fitness_reg"](continuous_pred[:, 0], y_cont_target[:, 0])
-        metrics["gene_interaction_reg"](continuous_pred[:, 1], y_cont_target[:, 1])
+        # Fitness metrics
+        fitness_mask = ~torch.isnan(y_cont_target[:, 0])
+        if fitness_mask.any():
+            metrics["fitness"](
+                fitness_logits[fitness_mask], fitness_targets[fitness_mask]
+            )
+            metrics["fitness_reg"](
+                continuous_pred[fitness_mask, 0], y_cont_target[fitness_mask, 0]
+            )
+
+        # Gene interaction metrics
+        gi_mask = ~torch.isnan(y_cont_target[:, 1])
+        if gi_mask.any():
+            metrics["gene_interaction"](
+                gene_int_logits[gi_mask], gene_int_targets[gi_mask]
+            )
+            metrics["gene_interaction_reg"](
+                continuous_pred[gi_mask, 1], y_cont_target[gi_mask, 1]
+            )
 
         # Store for validation/test plotting - use continuous predictions directly
         if stage in ["val", "test"]:
@@ -373,15 +397,14 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
     def on_train_epoch_end(self):
         for metric_name, metric_dict in self.train_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
 
     def on_validation_epoch_end(self):
-        # Log metrics
         for metric_name, metric_dict in self.val_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
@@ -429,9 +452,8 @@ class RegCategoricalEntropyTask(L.LightningModule):
             self.last_logged_best_step = current_global_step
 
     def on_test_epoch_end(self):
-        # Log metrics
         for metric_name, metric_dict in self.test_metrics.items():
-            computed_metrics = metric_dict.compute()
+            computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()

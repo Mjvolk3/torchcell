@@ -390,6 +390,7 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="random_1",
         )
+    learnable_embedding = False
     if "learnable_embedding" == wandb.config.cell_dataset["node_embeddings"][0]:
         learnable_embedding = True
 
@@ -625,8 +626,8 @@ def main(cfg: DictConfig) -> None:
         num_classes=wandb.config.transforms["num_bins"],
         num_tasks=2,
         weights=weights,
-        lambda_d=0.1,
-        lambda_t=0.5,
+        lambda_d=wandb.config.regression_task["loss_lambda_d"],
+        lambda_t=wandb.config.regression_task["loss_lambda_t"],
     )
 
     task = RegCategoricalEntropyTask(

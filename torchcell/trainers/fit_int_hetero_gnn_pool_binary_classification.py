@@ -28,6 +28,7 @@ import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.data import HeteroData
 from torchcell.transforms.regression_to_classification import LabelBinningTransform
+import matplotlib.pyplot as plt
 
 log = logging.getLogger(__name__)
 
@@ -308,24 +309,24 @@ class ClassificationTask(L.LightningModule):
         )
         num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
 
-        if batch_idx == num_batches - 2:  # Second to last batch
-            # Get inverse predictions
-            pred_reg_values = torch.cat(
-                [
-                    reg_pred_data["gene"]["fitness"].view(-1, 1),
-                    reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
-                ],
-                dim=1,
-            )
+        # if batch_idx == num_batches - 2:  # Second to last batch
+        # Get inverse predictions
+        pred_reg_values = torch.cat(
+            [
+                reg_pred_data["gene"]["fitness"].view(-1, 1),
+                reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
+            ],
+            dim=1,
+        )
 
-            self._log_prediction_table(
-                stage=stage,
-                true_reg_values=y_original,
-                true_class_values=y,
-                logits=logits,
-                inverse_preds=pred_reg_values,
-                dim_losses=dim_losses,
-            )
+        self._log_prediction_table(
+            stage=stage,
+            true_reg_values=y_original,
+            true_class_values=y,
+            logits=logits,
+            inverse_preds=pred_reg_values,
+            dim_losses=dim_losses,
+        )
 
         return loss, logits, y
 
@@ -417,10 +418,12 @@ class ClassificationTask(L.LightningModule):
         if not self.trainer.sanity_checking:
             fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
             wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
-
+            plt.close(fig_fitness)
+            
             fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
             wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
-
+            plt.close(fig_gi)
+            
         self.true_reg_values = []
         self.predictions = []
 

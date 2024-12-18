@@ -28,6 +28,8 @@ from torchcell.viz import fitness, genetic_interaction_score
 import torch.nn.functional as F
 from torch_geometric.transforms import BaseTransform
 from torch_geometric.data import HeteroData
+from torchcell.transforms.regression_to_classification import LabelBinningTransform
+import matplotlib.pyplot as plt
 
 log = logging.getLogger(__name__)
 
@@ -111,82 +113,87 @@ class RegCategoricalEntropyTask(L.LightningModule):
         inverse_preds: torch.Tensor,
         dim_losses: torch.Tensor,
     ):
-        """Log a wandb table with all prediction forms for comparison."""
-        num_tasks = logits.shape[1] // (
-            true_class_values.shape[1] // 2
-        )  # Number of tasks (2 for fitness and GI)
-        num_bins = true_class_values.shape[1] // 2  # Number of bins per task
+        """Log two tables (one per task) with essential regression and bin information."""
+        num_bins = true_class_values.shape[1] // 2
+        task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
 
-        # Convert logits to softmax separately for each task
-        task_softmax = []
-        for i in range(num_tasks):
-            start_idx = i * num_bins
-            end_idx = (i + 1) * num_bins
-            task_softmax.append(torch.softmax(logits[:, start_idx:end_idx], dim=1))
+        # Get the binning transform from the forward transform composition
+        forward_transform = self.hparams.forward_transform
+        binning_transform = next(
+            t
+            for t in forward_transform.transforms
+            if isinstance(t, LabelBinningTransform)
+        )
 
-        # Create column headers for each task
-        columns = []
-        task_names = ["Fitness", "GI"]
+        # Get mean losses per dimension
+        mean_dim_losses = dim_losses.mean(dim=0)  # Average across batch dimension
 
-        for task_idx, task_name in enumerate(task_names):
-            # True regression value
-            columns.append(f"True Reg ({task_name})")
+        # Process each task separately
+        for task_idx, (display_name, metadata_key) in enumerate(task_mapping):
+            # Get logits for this task
+            start_idx = task_idx * num_bins
+            end_idx = (task_idx + 1) * num_bins
+            task_logits = logits[:, start_idx:end_idx]
 
-            # True class values
-            columns.extend(
-                [f"True Class {task_name} (Bin {i})" for i in range(num_bins)]
-            )
+            # Get denormalized bin edges from forward transform metadata
+            bin_edges_denorm = binning_transform.label_metadata[metadata_key][
+                "bin_edges_denormalized"
+            ]
+            bin_edges_denorm = torch.tensor(bin_edges_denorm, dtype=torch.float32)
 
-            # Logits
-            columns.extend([f"Logits {task_name} (Bin {i})" for i in range(num_bins)])
+            # Determine true and predicted bins
+            true_bins = torch.argmax(true_class_values[:, start_idx:end_idx], dim=1)
+            pred_bins = torch.argmax(task_logits, dim=1)
 
-            # Softmax
-            columns.extend([f"Softmax {task_name} (Bin {i})" for i in range(num_bins)])
+            # Create table columns
+            columns = [
+                f"True Reg ({display_name})",
+                f"True Bin",
+                f"True Bin Start",
+                f"True Bin End",
+                f"Predicted Bin",
+                f"Predicted Bin Start",
+                f"Predicted Bin End",
+                f"Predicted Reg ({display_name})",
+                f"{display_name} Loss",
+                f"{display_name} Sample Loss",
+            ]
 
-            # Predicted regression value
-            columns.append(f"Pred Reg ({task_name})")
+            # Prepare table data
+            table_data = []
+            for i in range(len(true_reg_values)):
+                true_bin = true_bins[i].item()
+                pred_bin = pred_bins[i].item()
 
-            # Loss
-            columns.append(f"{task_name} Loss")
+                # Get bin ranges for true bin (clamp to valid indices)
+                true_bin_clamped = max(0, min(true_bin, len(bin_edges_denorm) - 2))
+                true_bin_start = bin_edges_denorm[true_bin_clamped].item()
+                true_bin_end = bin_edges_denorm[true_bin_clamped + 1].item()
 
-        # Create table data
-        data = []
-        for i in range(len(true_reg_values)):
-            row = []
+                # Get bin ranges for predicted bin (clamp to valid indices)
+                pred_bin_clamped = max(0, min(pred_bin, len(bin_edges_denorm) - 2))
+                pred_bin_start = bin_edges_denorm[pred_bin_clamped].item()
+                pred_bin_end = bin_edges_denorm[pred_bin_clamped + 1].item()
 
-            # Add data for each task
-            for task_idx in range(num_tasks):
-                # True regression value
-                row.append(true_reg_values[i, task_idx].item())
+                # Basic information
+                row = [
+                    true_reg_values[i, task_idx].item(),
+                    true_bin,
+                    true_bin_start,
+                    true_bin_end,
+                    pred_bin,
+                    pred_bin_start,
+                    pred_bin_end,
+                    inverse_preds[i, task_idx].item(),
+                    mean_dim_losses[task_idx].item(),  # Mean loss for this dimension
+                    dim_losses[i, task_idx].item(),  # Individual sample loss
+                ]
 
-                # True class values
-                start_idx = task_idx * num_bins
-                end_idx = (task_idx + 1) * num_bins
-                row.extend(
-                    [true_class_values[i, j].item() for j in range(start_idx, end_idx)]
-                )
+                table_data.append(row)
 
-                # Logits
-                start_idx = task_idx * num_bins
-                end_idx = (task_idx + 1) * num_bins
-                row.extend([logits[i, j].item() for j in range(start_idx, end_idx)])
-
-                # Softmax
-                row.extend(
-                    [task_softmax[task_idx][i, j].item() for j in range(num_bins)]
-                )
-
-                # Predicted regression value
-                row.append(inverse_preds[i, task_idx].item())
-
-                # Loss for this task
-                row.append(dim_losses[task_idx].item())
-
-            data.append(row)
-
-        # Create and log wandb table
-        table = wandb.Table(columns=columns, data=data)
-        wandb.log({f"{stage}/second_to_last_batch_predictions": table}, commit=False)
+            # Create and log table
+            table = wandb.Table(columns=columns, data=table_data)
+            wandb.log({f"{stage}/{metadata_key}_predictions": table}, commit=False)
 
     # def forward(self, x_dict, edge_index_dict, batch_dict):
     #     if self.model.learnable_embedding:
@@ -280,12 +287,12 @@ class RegCategoricalEntropyTask(L.LightningModule):
             sync_dist=True,
         )
 
-        # Split logits for metrics
+        # Split logits for classification metrics
         num_classes = self.hparams.bins
         fitness_logits = logits[:, :num_classes]
         gene_int_logits = logits[:, num_classes:]
 
-        # Convert targets for metrics
+        # Convert targets for classification metrics
         fitness_targets = torch.argmax(fitness, dim=1)
         gene_int_targets = torch.argmax(gene_interaction, dim=1)
 
@@ -294,33 +301,14 @@ class RegCategoricalEntropyTask(L.LightningModule):
         metrics["fitness"](fitness_logits, fitness_targets)
         metrics["gene_interaction"](gene_int_logits, gene_int_targets)
 
-        # For regression metrics - use detached tensors only for metrics
-        pred_data = HeteroData()
-        pred_data["gene"] = {
-            "fitness": fitness_logits.detach(),
-            "gene_interaction": gene_int_logits.detach(),
-        }
-        reg_pred_data = self.inverse_transform(pred_data)
+        # Update regression metrics - use continuous predictions directly
+        metrics["fitness_reg"](continuous_pred[:, 0], y_cont_target[:, 0])
+        metrics["gene_interaction_reg"](continuous_pred[:, 1], y_cont_target[:, 1])
 
-        # Original regression values for metrics
-        y_original = torch.cat(
-            [
-                batch["gene"].fitness_original.view(-1, 1),
-                batch["gene"].gene_interaction_original.view(-1, 1),
-            ],
-            dim=1,
-        )
-
-        # Update regression metrics
-        metrics["fitness_reg"](reg_pred_data["gene"]["fitness"], y_original[:, 0])
-        metrics["gene_interaction_reg"](
-            reg_pred_data["gene"]["gene_interaction"], y_original[:, 1]
-        )
-
-        # Store for validation/test plotting
+        # Store for validation/test plotting - use continuous predictions directly
         if stage in ["val", "test"]:
-            self.true_reg_values.append(y_original.detach())
-            self.predictions.append(logits.detach())
+            self.true_reg_values.append(y_cont_target.detach())
+            self.predictions.append(continuous_pred.detach())
 
         # Handle prediction table logging
         num_batches = (
@@ -335,21 +323,13 @@ class RegCategoricalEntropyTask(L.LightningModule):
         num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
 
         if batch_idx == num_batches - 2:
-            pred_reg_values = torch.cat(
-                [
-                    reg_pred_data["gene"]["fitness"].view(-1, 1),
-                    reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
-                ],
-                dim=1,
-            )
-
             self._log_prediction_table(
                 stage=stage,
-                true_reg_values=y_original,
+                true_reg_values=y_cont_target,
                 true_class_values=y,
                 logits=logits,
-                inverse_preds=pred_reg_values,
-                dim_losses=dim_losses,  # Using dim_losses from components
+                inverse_preds=continuous_pred,
+                dim_losses=dim_losses,
             )
 
         return loss, logits, y
@@ -411,32 +391,24 @@ class RegCategoricalEntropyTask(L.LightningModule):
         ):
             return
 
+        # Get the stored values
         true_reg_values = torch.cat(self.true_reg_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
-        # Create HeteroData object for predictions
-        pred_data = HeteroData()
-        num_bins = self.hparams.bins
-        pred_data["gene"] = {
-            "fitness": predictions[:, :num_bins],
-            "gene_interaction": predictions[:, num_bins:],
-        }
-
-        # Apply inverse transform only to predictions
-        pred_data = self.inverse_transform(pred_data)
-
-        # Extract values for plotting
+        # Extract values for plotting - use continuous predictions directly
         true_fitness = true_reg_values[:, 0]
         true_gi = true_reg_values[:, 1]
-        pred_fitness = pred_data["gene"]["fitness"]
-        pred_gi = pred_data["gene"]["gene_interaction"]
+        pred_fitness = predictions[:, 0]
+        pred_gi = predictions[:, 1]
 
         if not self.trainer.sanity_checking:
             fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
             wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
+            plt.close(fig_fitness)
 
             fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
             wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
+            plt.close(fig_gi)
 
         self.true_reg_values = []
         self.predictions = []
@@ -467,31 +439,24 @@ class RegCategoricalEntropyTask(L.LightningModule):
         if self.trainer.sanity_checking:
             return
 
+        # Get the stored values
         true_reg_values = torch.cat(self.true_reg_values, dim=0)
         predictions = torch.cat(self.predictions, dim=0)
 
-        # Create HeteroData object for predictions
-        pred_data = HeteroData()
-        pred_data["gene"] = {
-            "fitness": torch.softmax(predictions[:, :2], dim=1),
-            "gene_interaction": torch.softmax(predictions[:, 2:], dim=1),
-        }
-
-        # Apply inverse transform only to predictions
-        pred_data = self.inverse_transform(pred_data)
-
-        # Extract values for plotting
+        # Extract values for plotting - use continuous predictions directly
         true_fitness = true_reg_values[:, 0]
         true_gi = true_reg_values[:, 1]
-        pred_fitness = pred_data["gene"]["fitness"]
-        pred_gi = pred_data["gene"]["gene_interaction"]
+        pred_fitness = predictions[:, 0]
+        pred_gi = predictions[:, 1]
 
-        # Create box plots - note the test/ prefix instead of val/
+        # Create box plots - note the test/ prefix
         fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
         wandb.log({"test/fitness_box_plot": wandb.Image(fig_fitness)})
+        plt.close(fig_fitness)
 
         fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
         wandb.log({"test/gene_interaction_box_plot": wandb.Image(fig_gi)})
+        plt.close(fig_gi)
 
         self.true_reg_values = []
         self.predictions = []

@@ -392,7 +392,6 @@ class CombinedOrdinalCELoss(nn.Module):
         num_tasks: int = 2,
         weights: Optional[torch.Tensor] = None,
     ):
-        
         """
         Args:
             num_classes: Number of ordinal classes per task
@@ -442,22 +441,11 @@ class CombinedOrdinalCELoss(nn.Module):
 
 
 class CategoricalEntropyRegLoss(nn.Module):
-    """
-    Entropy regularization loss for categorical targets that encourages feature diversity
-    while maintaining categorical structure through tightness.
-
-    Works with both hard categorical (one-hot) and soft categorical (probability distribution) targets.
-    """
+    """Entropy regularization loss that works with both soft and one-hot categorical targets."""
 
     def __init__(
         self, lambda_d: float = 0.1, lambda_t: float = 0.1, num_classes: int = 32
     ):
-        """
-        Args:
-            lambda_d: Weight for diversity loss term (Ld)
-            lambda_t: Weight for tightness loss term (Lt)
-            num_classes: Number of classes per target dimension (e.g. num_bins)
-        """
         super().__init__()
         self.lambda_d = lambda_d
         self.lambda_t = lambda_t
@@ -469,73 +457,77 @@ class CategoricalEntropyRegLoss(nn.Module):
         return (diff**2).sum(dim=-1)  # [N, N]
 
     def compute_target_distances(self, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Compute distances between categorical targets.
-        Works with both one-hot and soft targets.
-        """
-        # For each target dimension, compute KL divergence
-        target_dists = []
+        """Compute KL divergence distances between probability distributions."""
+        # Add small epsilon to avoid numerical issues
+        eps = 1e-10
         num_dims = targets.shape[1] // self.num_classes
+        target_dists = []
 
         for i in range(num_dims):
             start_idx = i * self.num_classes
             end_idx = (i + 1) * self.num_classes
             # Get probabilities for this dimension
             probs = targets[:, start_idx:end_idx]
-            # Add small epsilon to avoid log(0)
-            probs = probs + 1e-10
+
+            # For categorical (one-hot), this just ensures sum is 1
+            # For soft labels, this normalizes the probabilities
+            probs = probs + eps
             probs = probs / probs.sum(dim=1, keepdim=True)
 
-            # Compute KL divergence between all pairs
+            # Compute symmetric KL divergence between all pairs
             kl_div = torch.zeros(
                 (probs.shape[0], probs.shape[0]), device=targets.device
             )
             for j in range(probs.shape[0]):
                 p = probs[j : j + 1]  # [1, num_classes]
                 q = probs  # [N, num_classes]
-                kl = (p * (torch.log(p) - torch.log(q))).sum(dim=1)
-                kl_div[j] = kl
+                # Symmetric KL divergence
+                kl_pq = (p * (torch.log(p) - torch.log(q))).sum(dim=1)
+                kl_qp = (q * (torch.log(q) - torch.log(p.expand_as(q)))).sum(dim=1)
+                kl_div[j] = (kl_pq + kl_qp) / 2
 
             target_dists.append(kl_div)
 
         # Average across dimensions
         return torch.stack(target_dists).mean(dim=0)
 
-    def compute_centers(self, features: torch.Tensor, targets: torch.Tensor):
-        """Compute feature centers for categorical targets."""
+    def compute_centers(self, features: torch.Tensor, targets: torch.Tensor) -> dict:
+        """Compute weighted feature centers for each class in each dimension."""
         centers = {}
         num_dims = targets.shape[1] // self.num_classes
 
-        # Get class indices for each dimension
-        class_indices = []
-        for i in range(num_dims):
-            start_idx = i * self.num_classes
-            end_idx = (i + 1) * self.num_classes
-            probs = targets[:, start_idx:end_idx]
-            # For soft targets, take argmax
-            class_idx = torch.argmax(probs, dim=1)
-            class_indices.append(class_idx)
+        for dim in range(num_dims):
+            centers[dim] = {}
+            start_idx = dim * self.num_classes
+            end_idx = (dim + 1) * self.num_classes
 
-        class_indices = torch.stack(class_indices, dim=1)  # [N, num_dims]
+            # Get probabilities for this dimension
+            probs = targets[:, start_idx:end_idx]  # [N, num_classes]
 
-        # Compute centers for each unique combination of classes
-        for i in range(features.size(0)):
-            target_key = tuple(class_indices[i].cpu().numpy())
-            if target_key not in centers:
-                # Find features with same class combination
-                same_target = torch.all(class_indices == class_indices[i], dim=1)
-                if same_target.sum() > 0:
-                    centers[target_key] = features[same_target].mean(dim=0)
+            # For each class, compute weighted center
+            for class_idx in range(self.num_classes):
+                # Use class probabilities as weights
+                weights = probs[:, class_idx]  # [N]
+
+                # Only compute center if we have non-zero weights
+                if weights.sum() > 0:
+                    # Normalize weights
+                    weights = weights / weights.sum()
+                    # Compute weighted center
+                    center = (features * weights.unsqueeze(1)).sum(dim=0)
+                    centers[dim][class_idx] = center
 
         return centers
 
     def forward(
         self, features: torch.Tensor, targets: torch.Tensor, mask: torch.Tensor
-    ):
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
+        Forward pass computing diversity and tightness losses.
+
         Args:
-            features: Node features before prediction head [batch_size, feature_dim]
-            targets: Categorical target values [batch_size, num_dims * num_classes]
+            features: Node features [batch_size, feature_dim]
+            targets: Probability distributions [batch_size, num_dims * num_classes]
             mask: Valid sample mask [batch_size]
         """
         device = features.device
@@ -565,17 +557,26 @@ class CategoricalEntropyRegLoss(nn.Module):
         # Compute tightness loss (Lt)
         centers = self.compute_centers(valid_features, valid_targets)
         tightness_losses = []
+        num_dims = valid_targets.shape[1] // self.num_classes
 
-        for i in range(valid_features.size(0)):
-            target_key = tuple(
-                torch.argmax(valid_targets[i].view(-1, self.num_classes), dim=1)
-                .cpu()
-                .numpy()
-            )
+        # Compute weighted tightness loss for each sample
+        for dim in range(num_dims):
+            start_idx = dim * self.num_classes
+            end_idx = (dim + 1) * self.num_classes
+            probs = valid_targets[:, start_idx:end_idx]  # [N, num_classes]
 
-            if target_key in centers:
-                diff = valid_features[i] - centers[target_key]
-                tightness_losses.append((diff**2).sum())
+            for i in range(valid_features.size(0)):
+                sample_losses = []
+                # Weight the distance to each center by the sample's probability for that class
+                for class_idx in range(self.num_classes):
+                    if class_idx in centers[dim]:
+                        diff = valid_features[i] - centers[dim][class_idx]
+                        class_prob = probs[i, class_idx]
+                        if class_prob > 0:
+                            sample_losses.append(class_prob * (diff**2).sum())
+
+                if sample_losses:
+                    tightness_losses.append(torch.stack(sample_losses).sum())
 
         if tightness_losses:
             tightness_loss = torch.stack(tightness_losses).mean()

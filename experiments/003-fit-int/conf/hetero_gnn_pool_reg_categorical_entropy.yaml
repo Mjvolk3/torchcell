@@ -90,6 +90,8 @@ model:
 regression_task:
   is_weighted_phenotype_loss: true
   loss_type: "mse_entropy_reg"
+  loss_lambda_d: 0.1
+  loss_lambda_t: 0.5
   optimizer:
     type: "AdamW"
     lr: 1e-4

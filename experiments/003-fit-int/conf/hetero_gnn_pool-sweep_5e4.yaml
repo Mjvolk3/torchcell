@@ -62,12 +62,12 @@ parameters:
       pin_memory:
         values: [true]
       prefetch:
-        values: [false]
+        values: [true]
 
   trainer:
     parameters:
       max_epochs:
-        values: [40]
+        values: [100]
       strategy:
         values: [auto]
       accelerator:
@@ -83,9 +83,9 @@ parameters:
       num_layers:
         values: [2]
       conv_type:
-        values: ["GCN", "GAT", "Transformer", "GIN"]
+        values: ["GCN"] #["GCN", "GAT", "Transformer", "GIN"]
       pooling:
-        values: ["sum", "mean"]
+        values: ["mean"] #["sum", "mean"]
       activation:
         values: ["gelu"]
       norm:
@@ -174,9 +174,9 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-4]
+            values: [1e-4, 1e-6]
           weight_decay:
-            values: [1e-6]
+            values: [1e-6, 1e-8]
       lr_scheduler:
         parameters:
           type:

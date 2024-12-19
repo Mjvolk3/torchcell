@@ -1,4 +1,4 @@
-program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
+program: experiments/003-fit-int/scripts/hetero_gnn_pool_regression.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
 method: random
 
@@ -8,7 +8,26 @@ parameters:
       graphs:
         values: [[physical, regulatory]]
       node_embeddings:
-        values: [[codon_frequency]]
+        values:
+        - [codon_frequency]
+        - [learnable_embedding]
+        # - [one_hot_gene]
+        # - [calm]
+        # - [fudt_downstream]
+        # - [fudt_upstream]
+        # - [prot_T5_all]
+        # - [prot_T5_no_dubious]
+        # - [nt_window_5979]
+        # - [nt_window_three_prime_300]
+        # - [nt_window_five_prime_1003]
+        # - [esm2_t33_650M_UR50D_all]
+        # - [esm2_t33_650M_UR50D_no_dubious]
+        # - [normalized_chrom_pathways]
+        # - [random_1000]
+        # - [random_100]
+        # - [random_10]
+        # - [random_1]
+
       learnable_embedding_input_channels:
         values: [64]
       graph_processor:
@@ -75,7 +94,7 @@ parameters:
       activation:
         values: ["gelu"]
       norm:
-        values: ["batch"]
+        values: ["batch", "layer"]
       num_tasks:
         values: [2]
       dropout:
@@ -151,13 +170,13 @@ parameters:
       loss_type:
         values: ["quantile"]
       quantile_spacing:
-        values: [0.1]
+        values: [0.1, 0.05]
       optimizer:
         parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3]
+            values: [1e-3, 1e-5]
           weight_decay:
             values: [1e-9]
       lr_scheduler:

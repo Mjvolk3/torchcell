@@ -378,7 +378,7 @@ def load_sample_data_batch():
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load sample data batch
     batch, max_num_nodes = load_sample_data_batch()
@@ -431,7 +431,7 @@ def main():
         print(f"Layer {i}: {size}")
 
     # Initialize loss and optimizer
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop

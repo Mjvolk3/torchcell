@@ -309,24 +309,23 @@ class ClassificationTask(L.LightningModule):
         )
         num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
 
-        # if batch_idx == num_batches - 2:  # Second to last batch
-        # Get inverse predictions
-        pred_reg_values = torch.cat(
-            [
-                reg_pred_data["gene"]["fitness"].view(-1, 1),
-                reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
-            ],
-            dim=1,
-        )
-
-        self._log_prediction_table(
-            stage=stage,
-            true_reg_values=y_original,
-            true_class_values=y,
-            logits=logits,
-            inverse_preds=pred_reg_values,
-            dim_losses=dim_losses,
-        )
+        if batch_idx == num_batches - 2:
+            # Get inverse predictions
+            pred_reg_values = torch.cat(
+                [
+                    reg_pred_data["gene"]["fitness"].view(-1, 1),
+                    reg_pred_data["gene"]["gene_interaction"].view(-1, 1),
+                ],
+                dim=1,
+            )
+            self._log_prediction_table(
+                stage=stage,
+                true_reg_values=y_original,
+                true_class_values=y,
+                logits=logits,
+                inverse_preds=pred_reg_values,
+                dim_losses=dim_losses,
+            )
 
         return loss, logits, y
 

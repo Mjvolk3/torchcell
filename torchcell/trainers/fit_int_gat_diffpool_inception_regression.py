@@ -34,7 +34,7 @@ import sys
 from typing import Optional
 import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss, NaNTolerantPearsonCorrCoef, NaNTolerantSpearmanCorrCoef
+from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss, NaNTolerantPearsonCorrCoef, NaNTolerantSpearmanCorrCoef
 
 log = logging.getLogger(__name__)
 
@@ -107,7 +107,7 @@ class RegressionTask(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-        self.combined_loss = CombinedLoss(loss_type=loss_type, weights=torch.ones(2))
+        self.combined_loss = CombinedRegressionLoss(loss_type=loss_type, weights=torch.ones(2))
         self.current_accumulation_steps = 1
 
         metrics = MetricCollection(

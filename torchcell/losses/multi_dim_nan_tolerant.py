@@ -72,9 +72,9 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
         return dim_means, mask
 
 
-class MultiDimNaNTolerantMSELoss(nn.Module):
+class NaNTolerantMSELoss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
+        super(NaNTolerantMSELoss, self).__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -110,46 +110,121 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
         return dim_means.to(device), mask.to(device)
 
 
-class CombinedLoss(nn.Module):
-    def __init__(self, loss_type="mse", weights=None):
-        super(CombinedLoss, self).__init__()
+class NaNTolerantQuantileLoss(nn.Module):
+    """
+    Quantile regression loss that handles NaN values.
+    For each quantile q, the loss is:
+    L = q * (y - y_pred) if y > y_pred
+    L = (1-q) * (y_pred - y) if y <= y_pred
+    """
+
+    def __init__(self, quantiles: list[float]):
+        """
+        Args:
+            quantiles: List of quantiles to predict, e.g. [0.1, 0.5, 0.9]
+        """
+        super().__init__()
+        self.register_buffer("quantiles", torch.tensor(quantiles))
+
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        # Handle NaN values by creating a mask
+        mask = ~torch.isnan(targets)
+        if not mask.any():
+            return torch.tensor(0.0, device=predictions.device)
+
+        # Filter out NaN values
+        valid_predictions = predictions[mask]
+        valid_targets = targets[mask]
+
+        losses = []
+        for q in self.quantiles:
+            diff = valid_targets - valid_predictions
+            loss = torch.max(q * diff, (q - 1) * diff)
+            losses.append(loss.mean())
+
+        return torch.stack(losses).sum()
+
+
+class CombinedRegressionLoss(nn.Module):
+    def __init__(self, loss_type="mse", weights=None, quantile_spacing=None):
+        super(CombinedRegressionLoss, self).__init__()
         self.loss_type = loss_type
+
         if loss_type == "mse":
-            self.loss_fn = MultiDimNaNTolerantMSELoss()
+            self.loss_fn = NaNTolerantMSELoss()
         elif loss_type == "l1":
             self.loss_fn = MultiDimNaNTolerantL1Loss()
+        elif loss_type == "quantile":
+            if quantile_spacing is None:
+                raise ValueError("quantile_spacing must be provided for quantile loss")
+            quantiles = torch.arange(quantile_spacing, 1.0, quantile_spacing).tolist()
+            self.loss_fn = NaNTolerantQuantileLoss(quantiles=quantiles)
         else:
             raise ValueError(f"Unsupported loss type: {loss_type}")
 
         # Register weights as a buffer so it's automatically moved with the module
-        self.register_buffer(
-            "weights", torch.ones(2) if weights is None else weights / weights.sum()
-        )
+        if weights is None:
+            weights = torch.ones(2)
+        self.register_buffer("weights", weights / weights.sum())
 
     def forward(self, y_pred, y_true):
         """
         Compute weighted loss while handling NaN values.
         """
-        # Get device from input
         device = y_pred.device
-
-        # Ensure inputs are on same device
-        y_pred = y_pred.to(device)
         y_true = y_true.to(device)
-        weights = self.weights.to(device)
 
-        # Compute per-dimension losses and get validity mask
-        dim_losses, mask = self.loss_fn(y_pred, y_true)
+        # Create mask for valid (non-NaN) values
+        mask = ~torch.isnan(y_true)
+        valid_dims = mask.any(dim=0)
 
-        # Ensure all intermediate computations stay on device
-        valid_dims = mask.any(dim=0).to(device)
-        weights = weights * valid_dims
+        # Adjust weights
+        weights = self.weights * valid_dims
         weight_sum = weights.sum().clamp(min=1e-8)
 
-        # Compute weighted average loss (all tensors now on same device)
+        # Initialize list to store per-dimension losses
+        dim_losses = []
+
+        # Compute loss for each dimension
+        for dim in range(y_true.shape[1]):
+            # Get mask for this dimension
+            dim_mask = mask[:, dim]
+
+            if not dim_mask.any():
+                # Create zero tensor with consistent shape
+                dim_losses.append(torch.tensor([0.0], device=device))
+                continue
+
+            # Get valid values for this dimension
+            valid_preds = y_pred[dim_mask, dim]
+            valid_targets = y_true[dim_mask, dim]
+
+            # Compute loss based on type
+            if self.loss_type == "quantile":
+                valid_preds = valid_preds.unsqueeze(-1)
+                valid_targets = valid_targets.unsqueeze(-1)
+                dim_loss = self.loss_fn(valid_preds, valid_targets)
+                # Ensure consistent shape
+                dim_loss = dim_loss.reshape(1)
+            else:
+                valid_preds = valid_preds.unsqueeze(-1)
+                valid_targets = valid_targets.unsqueeze(-1)
+                dim_loss = self.loss_fn(valid_preds, valid_targets)[0].squeeze()
+                # Ensure consistent shape
+                dim_loss = dim_loss.reshape(1)
+
+            dim_losses.append(dim_loss)
+
+        # Stack dimension losses - now all tensors should have shape [1]
+        dim_losses = torch.stack(dim_losses)
+
+        # Compute weighted average loss
         weighted_loss = (dim_losses * weights).sum() / weight_sum
 
-        return weighted_loss.to(device), dim_losses.to(device)
+        return weighted_loss, dim_losses.squeeze()
+
+
+#############
 
 
 class MultiDimNaNTolerantCELoss(nn.Module):
@@ -612,7 +687,7 @@ class MseCategoricalEntropyRegLoss(nn.Module):
         self.register_buffer("weights", weights / weights.sum())
 
         # Initialize MSE and entropy components
-        self.mse_loss = MultiDimNaNTolerantMSELoss()
+        self.mse_loss = NaNTolerantMSELoss()
         self.entropy_reg = CategoricalEntropyRegLoss(
             lambda_d=lambda_d, lambda_t=lambda_t, num_classes=num_classes
         )

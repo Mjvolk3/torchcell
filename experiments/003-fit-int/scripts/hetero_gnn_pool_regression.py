@@ -1,8 +1,3 @@
-# experiments/003-fit-int/scripts/cell_gin_diffpool_dense
-# [[experiments.003-fit-int.scripts.cell_gin_diffpool_dense]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/cell_gin_diffpool_dense
-# Test file: experiments/003-fit-int/scripts/test_cell_gin_diffpool_dense.py
-
 import hashlib
 import json
 import logging
@@ -21,8 +16,14 @@ from torchcell.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
-from torchcell.datamodules import CellDataModule
 from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
+from torch_geometric.transforms import Compose
+from torchcell.transforms.regression_to_classification import (
+    LabelBinningTransform,
+    LabelNormalizationTransform,
+    InverseCompose,
+)
+from torchcell.datamodules import CellDataModule
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
@@ -34,9 +35,9 @@ from torchcell.datasets import (
     CalmDataset,
     RandomEmbeddingDataset,
 )
-from torchcell.models import Mlp
-from torchcell.models.cell_gin_diffpool_dense import DenseCellDiffPool
-from torchcell.trainers.fit_int_cell_gin_diffpool_dense_regression import RegressionTask
+from torchcell.models.hetero_gnn_pool import HeteroGnnPool
+from torchcell.trainers.fit_int_hetero_gnn_pool_regression import RegressionTask
+
 from torchcell.utils import format_scientific_notation
 import torch.distributed as dist
 import socket
@@ -45,18 +46,98 @@ from torchcell.data import MeanExperimentDeduplicator
 from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import SubgraphRepresentation
+from torchcell.data.neo4j_cell import (
+    SubgraphRepresentation,
+    NodeFeature,
+    NodeAugmentation,
+)
 from lightning.pytorch.profilers import AdvancedProfiler
 from typing import Any
 from lightning.pytorch.profilers import AdvancedProfiler
 import cProfile
 from torchcell.transforms.hetero_to_dense import HeteroToDense
 
-os.environ["WANDB__SERVICE_WAIT"] = "600"
+# from torchcell.profilers.pytorch import PyTorchProfiler
+
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
+WANDB_MODE = os.getenv("WAND_MODE")
+
+
+def analyze_label_distribution(data_module):
+    """Analyze distribution of labels across all dataloaders with live updates."""
+    stages = ["train", "val", "test"]
+    dataloaders = {
+        "test": data_module.test_dataloader(),
+        "val": data_module.val_dataloader(),
+        "train": data_module.train_dataloader(),
+    }
+
+    for stage, dataloader in dataloaders.items():
+        # Initialize counters
+        fitness_counts = {"[0,1]": 0, "[1,0]": 0, "nan": 0}
+        gi_counts = {"[0,1]": 0, "[1,0]": 0, "nan": 0}
+
+        print(f"\nAnalyzing {stage} set:")
+        for batch_idx, batch in enumerate(dataloader):
+            # Get fitness and GI labels
+            fitness = batch["gene"].fitness
+            gene_interaction = batch["gene"].gene_interaction
+
+            # Count fitness labels
+            for i in range(len(fitness)):
+                if torch.isnan(fitness[i]).any():
+                    fitness_counts["nan"] += 1
+                elif torch.allclose(fitness[i], torch.tensor([0.0, 1.0])):
+                    fitness_counts["[0,1]"] += 1
+                elif torch.allclose(fitness[i], torch.tensor([1.0, 0.0])):
+                    fitness_counts["[1,0]"] += 1
+
+            # Count GI labels
+            for i in range(len(gene_interaction)):
+                if torch.isnan(gene_interaction[i]).any():
+                    gi_counts["nan"] += 1
+                elif torch.allclose(gene_interaction[i], torch.tensor([0.0, 1.0])):
+                    gi_counts["[0,1]"] += 1
+                elif torch.allclose(gene_interaction[i], torch.tensor([1.0, 0.0])):
+                    gi_counts["[1,0]"] += 1
+
+            # Print running ratios every few batches
+            if batch_idx % 10 == 0:
+                total_fitness = sum(fitness_counts.values())
+                total_gi = sum(gi_counts.values())
+                print(f"\nBatch {batch_idx} Running Totals:")
+                print(
+                    f"Fitness - [0,1]:{fitness_counts['[0,1]']}, [1,0]:{fitness_counts['[1,0]']}, nan:{fitness_counts['nan']}"
+                )
+                print(
+                    f"GI      - [0,1]:{gi_counts['[0,1]']}, [1,0]:{gi_counts['[1,0]']}, nan:{gi_counts['nan']}"
+                )
+                if total_fitness > 0:
+                    print(
+                        f"Fitness Ratios - [0,1]:{fitness_counts['[0,1]']/total_fitness:.3f}, [1,0]:{fitness_counts['[1,0]']/total_fitness:.3f}, nan:{fitness_counts['nan']/total_fitness:.3f}"
+                    )
+                if total_gi > 0:
+                    print(
+                        f"GI Ratios      - [0,1]:{gi_counts['[0,1]']/total_gi:.3f}, [1,0]:{gi_counts['[1,0]']/total_gi:.3f}, nan:{gi_counts['nan']/total_gi:.3f}"
+                    )
+
+        # Print final summary
+        print(f"\nFinal {stage} Summary:")
+        total_fitness = sum(fitness_counts.values())
+        total_gi = sum(gi_counts.values())
+
+        print(f"\nFitness Total: {total_fitness}")
+        for label, count in fitness_counts.items():
+            ratio = count / total_fitness if total_fitness > 0 else 0
+            print(f"{label}: {count} (ratio: {ratio:.3f})")
+
+        print(f"\nGene Interaction Total: {total_gi}")
+        for label, count in gi_counts.items():
+            ratio = count / total_gi if total_gi > 0 else 0
+            print(f"{label}: {count} (ratio: {ratio:.3f})")
 
 
 class CustomAdvancedProfiler(AdvancedProfiler):
@@ -81,13 +162,66 @@ class CustomAdvancedProfiler(AdvancedProfiler):
         return f"Profiler output saved to {file_path}"
 
 
+def configure_transforms(dataset, config):
+    """
+    Configure transforms based on config settings, supporting combinations of normalization and binning.
+
+    Args:
+        dataset: The dataset to transform
+        config: Transform configuration from wandb.config.transforms
+
+    Returns:
+        tuple: (forward_transform, inverse_transform)
+    """
+    from torch_geometric.transforms import Compose
+    from torchcell.transforms.regression_to_classification import (
+        LabelNormalizationTransform,
+        LabelBinningTransform,
+        InverseCompose,
+    )
+
+    transforms = []
+    label_columns = [col for col in dataset.label_df.columns if col != "index"]
+
+    # Configure normalization if enabled
+    if config["norm"]:
+        norm_config = {"strategy": config["norm_strategy"]}
+        norm_configs = {col: norm_config for col in label_columns}
+        normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
+        transforms.append(normalize_transform)
+
+    # Configure binning if enabled
+    if config["bin"]:
+        bin_config = {
+            "num_bins": config["num_bins"],
+            "strategy": config["bin_strategy"],
+            "store_continuous": config["store_continuous"],
+            "label_type": config["label_type"],
+        }
+        bin_configs = {col: bin_config for col in label_columns}
+        # Pass the normalization transform if it exists
+        norm_transform = transforms[0] if transforms else None
+        binning_transform = LabelBinningTransform(dataset, bin_configs, norm_transform)
+        transforms.append(binning_transform)
+
+    # Create forward and inverse transforms
+    if transforms:
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(forward_transform)
+    else:
+        forward_transform = None
+        inverse_transform = None
+
+    return forward_transform, inverse_transform
+
+
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="cell_gin_diffpool_dense",
+    config_name="hetero_gnn_pool_regression",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting Gin CellDiffPool 🌾")
+    print("Starting HeteroGnnPool 🎻")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -97,13 +231,10 @@ def main(cfg: DictConfig) -> None:
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"
-    experiment_dir = osp.join(
-        DATA_ROOT, "wandb-experiments", group
-    )
-
+    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
     wandb.init(
-        mode="offline",  # "online", "offline", "disabled"
+        mode=WANDB_MODE,  # "online", "offline", "disabled"
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
@@ -307,6 +438,9 @@ def main(cfg: DictConfig) -> None:
             genome=genome,
             model_name="random_1",
         )
+    learnable_embedding = False
+    if "learnable_embedding" == wandb.config.cell_dataset["node_embeddings"][0]:
+        learnable_embedding = True
 
     print("=============")
     print("node.embeddings")
@@ -319,6 +453,13 @@ def main(cfg: DictConfig) -> None:
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
 
+    if wandb.config.cell_dataset["graph_processor"] == "subgraph_representation":
+        graph_processor = SubgraphRepresentation()
+    elif wandb.config.cell_dataset["graph_processor"] == "node_feature":
+        graph_processor = NodeFeature()
+    elif wandb.config.cell_dataset["graph_processor"] == "node_augmentation":
+        graph_processor = NodeAugmentation()
+
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
@@ -328,9 +469,16 @@ def main(cfg: DictConfig) -> None:
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=SubgraphRepresentation(),
-        transform=HeteroToDense({"gene": len(genome.gene_set)}),
+        graph_processor=graph_processor,
     )
+
+    forward_transform, inverse_transform = configure_transforms(
+        dataset, wandb.config.transforms
+    )
+    if forward_transform:
+        dataset.transform = forward_transform
+
+    num_tasks = wandb.config.model["num_tasks"]
 
     # Base Module
     seed = 42
@@ -355,15 +503,23 @@ def main(cfg: DictConfig) -> None:
             pin_memory=wandb.config.data_module["pin_memory"],
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
-            dense=True,
         )
         data_module.setup()
 
     # Anytime data is accessed lmdb must be closed.
-    input_dim = dataset.num_features["gene"]
-    max_num_nodes = len(dataset.gene_set)
+
+    # HACK - start# In main(), replace training with:
+    # print("\nAnalyzing label distribution across datasets...")
+    # analyze_label_distribution(data_module)
+    # return
+    # HACK - end
+    if not learnable_embedding:
+        input_dim = dataset.num_features["gene"]
+    else:
+        input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
     dataset.close_lmdb()
-    # device
+
+    # Device setup
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
 
@@ -376,45 +532,118 @@ def main(cfg: DictConfig) -> None:
         # if there are no GPUs available, use 1 CPU
         devices = 1
 
-    # The graph names are derived from the cell_dataset.graphs config
-    graph_names = [
-        f"{name}_interaction" for name in wandb.config.cell_dataset["graphs"]
+    # Convert graph names to edge types
+    edge_types = [
+        ("gene", f"{name}_interaction", "gene")
+        for name in wandb.config.cell_dataset["graphs"]
     ]
 
-    model = DenseCellDiffPool(
-        graph_names=graph_names,
-        max_num_nodes=max_num_nodes,
+    # Layer config based on conv_type
+    conv_type = wandb.config.model["conv_type"]
+    layer_config = {}
+
+    if conv_type == "GCN":
+        layer_config = {
+            "bias": wandb.config.model["gcn_bias"],
+            "add_self_loops": wandb.config.model["gcn_add_self_loops"],
+            "normalize": wandb.config.model["gcn_normalize"],
+            "is_skip_connection": wandb.config.model["gcn_is_skip_connection"],
+        }
+    elif conv_type == "GAT":
+        layer_config = {
+            "heads": wandb.config.model["gat_heads"],
+            "concat": wandb.config.model["gat_concat"],
+            "bias": wandb.config.model["gat_bias"],
+            "add_self_loops": wandb.config.model["gat_add_self_loops"],
+            "share_weights": wandb.config.model["gat_share_weights"],
+            "is_skip_connection": wandb.config.model["gat_is_skip_connection"],
+            "dropout": wandb.config.model["dropout"],
+        }
+    elif conv_type == "Transformer":
+        layer_config = {
+            "heads": wandb.config.model["transformer_heads"],
+            "concat": wandb.config.model["transformer_concat"],
+            "beta": wandb.config.model["transformer_beta"],
+            "bias": wandb.config.model["transformer_bias"],
+            "root_weight": wandb.config.model["transformer_root_weight"],
+            "add_self_loops": wandb.config.model["transformer_add_self_loops"],
+            "edge_dim": wandb.config.model["transformer_edge_dim"],
+            "dropout": wandb.config.model["dropout"],
+        }
+    elif conv_type == "GIN":
+        layer_config = {
+            "train_eps": wandb.config.model["gin_train_eps"],
+            "hidden_multiplier": wandb.config.model["gin_hidden_multiplier"],
+            "add_self_loops": wandb.config.model["gin_add_self_loops"],
+            "is_skip_connection": wandb.config.model["gin_is_skip_connection"],
+            "num_mlp_layers": wandb.config.model["gin_num_mlp_layers"],
+            "is_mlp_skip_connection": wandb.config.model["gin_is_mlp_skip_connection"],
+            "dropout": wandb.config.model["dropout"],
+        }
+
+    if wandb.config.transforms["label_type"] == "ordinal":
+        out_channels = num_tasks * (wandb.config.transforms["num_bins"] - 1)
+    else:
+        out_channels = num_tasks * wandb.config.transforms["num_bins"]
+
+    model = HeteroGnnPool(
         in_channels=input_dim,
         hidden_channels=wandb.config.model["hidden_channels"],
+        out_channels=out_channels,
         num_layers=wandb.config.model["num_layers"],
-        num_pooling_layers=wandb.config.model["num_pooling_layers"],
-        cluster_size_decay_factor=wandb.config.model["cluster_size_decay_factor"],
+        edge_types=edge_types,
+        conv_type=conv_type,
+        layer_config=layer_config,
+        pooling=wandb.config.model["pooling"],
         activation=wandb.config.model["activation"],
-        conv_norm=wandb.config.model["conv_norm"],
-        mlp_norm=wandb.config.model["mlp_norm"],
-        target_dim=wandb.config.model["target_dim"],
-        cluster_aggregation=wandb.config.model["cluster_aggregation"],
-        add_skip_connections=wandb.config.model["add_skip_connections"],
-        gin_self_loop=wandb.config.model["gin_self_loop"],
-        train_eps=wandb.config.model["train_eps"],
-        eps=wandb.config.model["eps"],
+        norm=wandb.config.model["norm"],
+        head_num_layers=wandb.config.model["head_num_layers"],
+        head_hidden_channels=wandb.config.model["head_hidden_channels"],
+        head_dropout=wandb.config.model["head_dropout"],
+        head_activation=wandb.config.model["head_activation"],
+        head_residual=wandb.config.model["head_residual"],
+        head_norm=wandb.config.model["head_norm"],
+        learnable_embedding=learnable_embedding,
+        num_nodes=len(dataset.gene_set),
     )
+
     # Log model parameters
     param_counts = model.num_parameters
     wandb.log(
         {
-            "model/params_per_model": param_counts["per_model"],
-            "model/params_all_models": param_counts["all_models"],
-            "model/params_combination_layer": param_counts["combination_layer"],
+            "model/params_conv_layers": param_counts["conv_layers"],
+            "model/params_norm_layers": param_counts["norm_layers"],
+            "model/params_final_layers": param_counts["pred_head"],
             "model/params_total": param_counts["total"],
         }
     )
-    # wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
+
+    # wandb.watch(model, log="gradients", log_freq=1, log_graph=False)
 
     # loss
+    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
+        phenotype_counts = {}
+        for i in ["train", "val", "test"]:
+            phenotypes = getattr(data_module.index_details, i).phenotype_label_index
+            temp_counts = {k: v.count for k, v in phenotypes.items()}
+            for k, v in temp_counts.items():
+                if k in phenotype_counts:
+                    phenotype_counts[k] += v
+                else:
+                    phenotype_counts[k] = v
+        weights = torch.tensor(
+            [1 - v / sum(phenotype_counts.values()) for v in phenotype_counts.values()]
+        ).to(device)
+    else:
+        weights = torch.ones(2).to(device)
+
+    # Initialize CombinedRegressionLoss with appropriate parameters
     loss_func = CombinedRegressionLoss(
         loss_type=wandb.config.regression_task["loss_type"],
-        weights=torch.ones(2).to(device),
+        weights=weights,
+        quantile_spacing=wandb.config.regression_task.get(
+            "quantile_spacing", 0.1
+        ),  # only used for quantile loss
     )
 
     task = RegressionTask(
@@ -426,12 +655,12 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb.config.regression_task["boxplot_every_n_epochs"],
         loss_func=loss_func,
-        cluster_loss_weight=wandb.config.regression_task["cluster_loss_weight"],
-        link_pred_loss_weight=wandb.config.regression_task["link_pred_loss_weight"],
-        entropy_loss_weight=wandb.config.regression_task["entropy_loss_weight"],
         grad_accumulation_schedule=wandb.config.regression_task[
             "grad_accumulation_schedule"
         ],
+        device=device,
+        inverse_transform=inverse_transform,
+        forward_transform=forward_transform,
     )
 
     # Checkpoint Callback
@@ -448,9 +677,46 @@ def main(cfg: DictConfig) -> None:
     # profiler = CustomAdvancedProfiler(
     #     dirpath="profiles", filename="advanced_profiler_output.prof"
     # )
+
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
 
+    # if wandb_cfg["profiler"]["is_pytorch"]:
+    #     Create profile directory structure
+    #     profile_dir = osp.join(DATA_ROOT, "profiles", str(hostname_slurm_job_id))
+    #     print(f"Profile directory: {profile_dir}")
+    #     os.makedirs(profile_dir, exist_ok=True)
+
+    #     Determine available activities based on device
+    #     activities = []
+    #     if torch.cuda.is_available():
+    #         activities.append(torch.profiler.ProfilerActivity.CUDA)
+    #     activities.append(torch.profiler.ProfilerActivity.CPU)
+
+    #     profiler = PyTorchProfiler(
+    #         dirpath=profile_dir,
+    #         filename="profiler_output",
+    #         schedule=torch.profiler.schedule(
+    #             wait=100,  # Wait for 5 steps
+    #             warmup=1,  # Add 1 warmup step
+    #             active=1,  # Profile for 3 steps
+    #             repeat=100,  # Repeat every 100 steps
+    #             skip_first=100,
+    #         ),
+    #         on_trace_ready=torch.profiler.tensorboard_trace_handler(profile_dir),
+    #         activities=activities,
+    #         with_stack=True,
+    #         export_to_chrome=True,
+    #         with_steps=True,
+    #         profile_memory=True,
+    #         record_shapes=True,
+    #         with_flops=True,
+    #         with_modules=True,
+    #     )
+    # else:
+    #     profiler = None
+
+    profiler = None
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -458,14 +724,14 @@ def main(cfg: DictConfig) -> None:
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],
-        # profiler=profiler,  #
-        log_every_n_steps=500,
+        profiler=profiler,  #
+        log_every_n_steps=10,
         # callbacks=[checkpoint_callback, TriggerWandbSyncLightningCallback()],
-        detect_anomaly=True,
     )
 
     # Start the training
     trainer.fit(model=task, datamodule=data_module)
+    trainer.test(model=task, datamodule=data_module)
 
 
 if __name__ == "__main__":

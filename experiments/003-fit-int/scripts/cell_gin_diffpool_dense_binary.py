@@ -23,7 +23,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.datamodules import CellDataModule
-from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,

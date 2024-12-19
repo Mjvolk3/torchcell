@@ -467,7 +467,7 @@ def analyze_node_selections(node_selections, graph_name):
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data as before...
     batch, _ = load_sample_data_batch()
@@ -498,7 +498,7 @@ def main():
     )
 
     print(f"\nModel parameters: {model.num_parameters}")
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop

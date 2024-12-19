@@ -606,7 +606,7 @@ def load_sample_data_batch():
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load sample data
     batch, max_num_nodes = load_sample_data_batch()
@@ -703,7 +703,7 @@ def main():
 
     # Initialize loss and optimizer
 
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     model.train()
@@ -725,7 +725,7 @@ def main():
 
 def main_ordinal_reg():
     from torchcell.losses.multi_dim_nan_tolerant import (
-        CombinedLoss,
+        CombinedRegressionLoss,
         OrdinalEntropyRegLoss,
     )
 
@@ -758,7 +758,7 @@ def main_ordinal_reg():
 
     # Initialize losses and optimizer
     # Based on paper experiments, lambda_d and lambda_t around 0.1-0.5 work well
-    mse_criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    mse_criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     # entropy_criterion = OrdinalEntropyRegLoss(lambda_d=0.1, lambda_t=0.5)
     # TODO tighness looks like it's always 0.
     entropy_criterion = OrdinalEntropyRegLoss(lambda_d=1000, lambda_t=1000)

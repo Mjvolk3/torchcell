@@ -17,6 +17,8 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
+from torchcell.losses.multi_dim_nan_tolerant import WeightedDistLoss
+
 from torch_geometric.transforms import Compose
 from torchcell.transforms.regression_to_classification import (
     LabelBinningTransform,
@@ -637,14 +639,21 @@ def main(cfg: DictConfig) -> None:
     else:
         weights = torch.ones(2).to(device)
 
-    # Initialize CombinedRegressionLoss with appropriate parameters
-    loss_func = CombinedRegressionLoss(
-        loss_type=wandb.config.regression_task["loss_type"],
-        weights=weights,
-        quantile_spacing=wandb.config.regression_task.get(
-            "quantile_spacing", 0.1
-        ),  # only used for quantile loss
-    )
+    if wandb.config.regression_task["loss_type"] in ["mse", "quantile"]:
+        quantile_spacing = wandb.config.regression_task["quantile_config"]["spacing"]
+        loss_func = CombinedRegressionLoss(
+            loss_type=wandb.config.regression_task["loss_type"],
+            weights=weights,
+            quantile_spacing=quantile_spacing
+        )
+    elif wandb.config.regression_task["loss_type"] == "dist_loss":
+        dist_loss_config = wandb.config.regression_task["dist_loss_config"]
+        loss_func = WeightedDistLoss(
+            weights=weights,  # Correct parameter name
+            num_bins=dist_loss_config["num_bins"],
+            bandwidth=dist_loss_config["bandwidth"],
+            eps=dist_loss_config["eps"]
+        )
 
     task = RegressionTask(
         model=model,

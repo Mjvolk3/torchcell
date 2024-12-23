@@ -1,3 +1,8 @@
+# torchcell/losses/multi_dim_nan_tolerant
+# [[torchcell.losses.multi_dim_nan_tolerant]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/multi_dim_nan_tolerant
+# Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
+
 import math
 import os.path as osp
 import lightning as L
@@ -27,6 +32,9 @@ import logging
 import sys
 from typing import Optional, Tuple
 import torch.optim as optim
+import torch.nn.functional as F
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -143,6 +151,155 @@ class NaNTolerantQuantileLoss(nn.Module):
             losses.append(loss.mean())
 
         return torch.stack(losses).sum()
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class WeightedDistLoss(nn.Module):
+    def __init__(self, num_bins=100, bandwidth=0.5, weights=None, eps=1e-7):
+        """
+        Weighted NaN-tolerant implementation of Dist Loss that inherently combines
+        distribution alignment and prediction errors through MSE between pseudo-labels
+        and pseudo-predictions.
+
+        Args:
+            num_bins: Number of bins for KDE
+            bandwidth: Kernel bandwidth for KDE
+            weights: Optional tensor of weights for each dimension
+            eps: Small value for numerical stability
+        """
+        super().__init__()
+        self.num_bins = num_bins
+        self.bandwidth = bandwidth
+        self.eps = eps
+
+        # Register weights as a buffer
+        if weights is None:
+            weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+        self.register_buffer("weights", weights / weights.sum())
+
+    def kde(self, x: torch.Tensor, eval_points: torch.Tensor) -> torch.Tensor:
+        """
+        Kernel Density Estimation with Gaussian kernel.
+        Handles NaN values by excluding them from density estimation.
+        """
+        # Remove NaN values
+        x = x[~torch.isnan(x)]
+        if x.size(0) == 0:
+            return torch.zeros_like(eval_points)
+
+        # Reshape for broadcasting
+        x = x.view(-1, 1)
+        eval_points = eval_points.view(1, -1)
+
+        # Compute Gaussian kernel
+        kernel = torch.exp(-0.5 * ((x - eval_points) / self.bandwidth) ** 2)
+        kernel = kernel.mean(dim=0)  # Average across samples
+
+        return kernel / (kernel.sum() + self.eps)  # Normalize
+
+    def generate_pseudo_labels(
+        self, y_true: torch.Tensor, batch_size: int
+    ) -> torch.Tensor:
+        """
+        Generate pseudo-labels using KDE for current batch.
+
+        Args:
+            y_true: Ground truth values with possible NaN entries
+            batch_size: Number of pseudo-labels to generate
+
+        Returns:
+            Pseudo-labels sampled from estimated distribution
+        """
+        # Define evaluation points based on batch statistics
+        valid_vals = y_true[~torch.isnan(y_true)]
+        if valid_vals.size(0) == 0:
+            return torch.zeros(batch_size, device=y_true.device)
+
+        min_val = valid_vals.min()
+        max_val = valid_vals.max()
+        eval_points = torch.linspace(
+            min_val, max_val, self.num_bins, device=y_true.device
+        )
+
+        # Estimate density using batch data
+        density = self.kde(y_true, eval_points)
+
+        # Generate cumulative distribution
+        cdf = torch.cumsum(density, 0)
+        cdf = cdf / (cdf[-1] + self.eps)
+
+        # Generate uniform samples for current batch
+        u = torch.linspace(0, 1, batch_size, device=y_true.device)
+
+        # Find bins using binary search
+        inds = torch.searchsorted(cdf, u)
+        inds = torch.clamp(inds, 0, self.num_bins - 1)
+
+        # Linear interpolation between bin edges
+        pseudo_labels = eval_points[inds]
+
+        return pseudo_labels
+
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute Dist Loss using MSE between pseudo-labels and sorted predictions.
+        This inherently combines distribution alignment and prediction errors.
+
+        Args:
+            y_pred: Predictions [batch_size, num_dims]
+            y_true: Ground truth [batch_size, num_dims]
+
+        Returns:
+            tuple: (weighted_loss, dim_losses)
+                - weighted_loss: Total weighted loss across dimensions
+                - dim_losses: Individual losses per dimension
+        """
+        device = y_pred.device
+        y_true = y_true.to(device)
+
+        batch_size, num_dims = y_true.shape
+        dim_losses = torch.zeros(num_dims, device=device)
+
+        # Create mask for valid dimensions
+        mask = ~torch.isnan(y_true)
+        valid_dims = mask.any(dim=0)
+
+        # Adjust weights based on valid dimensions
+        weights = self.weights * valid_dims
+        weight_sum = weights.sum().clamp(min=1e-8)
+
+        # Process each dimension separately
+        for dim in range(num_dims):
+            # Skip if all values are NaN
+            if not valid_dims[dim]:
+                continue
+
+            # Get values for current dimension
+            true_dim = y_true[:, dim]
+            pred_dim = y_pred[:, dim]
+
+            # Generate pseudo-labels and sort predictions
+            pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size)
+            pseudo_preds = torch.sort(pred_dim[~torch.isnan(pred_dim)])[0]
+
+            # Pad predictions if needed
+            if pseudo_preds.size(0) < batch_size:
+                padding = torch.zeros(batch_size - pseudo_preds.size(0), device=device)
+                pseudo_preds = torch.cat([pseudo_preds, padding])
+
+            # Compute MSE between distributions (inherently combines alignment and prediction errors)
+            dim_losses[dim] = F.mse_loss(pseudo_preds, pseudo_labels)
+
+        # Compute weighted average loss
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
+
+        return weighted_loss, dim_losses
 
 
 class CombinedRegressionLoss(nn.Module):

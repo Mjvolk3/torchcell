@@ -250,6 +250,26 @@ def _nan_tolerant_pearson_update(
     return mean_x, mean_y, var_x, var_y, corr_xy, n_total
 
 
+class NaNTolerantMetricBase(Metric):
+    def __init__(self, **kwargs):
+        # Configure for DDP compatibility
+        kwargs["compute_on_cpu"] = False  # Keep computation on GPU
+        kwargs["sync_on_compute"] = False  # Let Lightning handle sync
+        kwargs["dist_sync_on_step"] = True  # Sync after each step
+        super().__init__(**kwargs)
+        # Register device tracking buffer
+        self.register_buffer("_device_buffer", torch.zeros(1))
+
+    def _track_device(self, tensor: Tensor) -> None:
+        """Track the device of input tensors"""
+        if tensor.device != self._device_buffer.device:
+            self._device_buffer = self._device_buffer.to(tensor.device)
+
+    def _create_tensor_on_device(self, value, *shape):
+        """Create a new tensor on the tracked device"""
+        return torch.full(shape, value, device=self._device_buffer.device)
+
+
 class NaNTolerantPearsonCorrCoef(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = None  # both -1 and 1 are optimal

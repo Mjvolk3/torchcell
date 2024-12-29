@@ -77,9 +77,9 @@ parameters:
       strategy:
         values: [auto]
       accelerator:
-        values: [cpu]
+        values: [gpu]
       devices:
-        values: [auto]
+        values: [1]
 
   model:
     parameters:
@@ -170,7 +170,7 @@ parameters:
       loss_type:
         values: ["quantile"]
       quantile_spacing:
-        values: [0.1, 0.05]
+        values: [0.1, 0.03125] 
       optimizer:
         parameters:
           type:

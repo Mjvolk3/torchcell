@@ -9,8 +9,8 @@ parameters:
         values: [[physical, regulatory]]
       node_embeddings:
         values:
-        - [codon_frequency]
-        - [learnable_embedding]
+          - [codon_frequency]
+          - [learnable_embedding]
         # - [one_hot_gene]
         # - [calm]
         # - [fudt_downstream]
@@ -169,8 +169,18 @@ parameters:
         values: [true]
       loss_type:
         values: ["quantile"]
-      quantile_spacing:
-        values: [0.1, 0.03125] 
+      quantile_config:
+        parameters:
+          spacing:
+            values: [0.1, 0.03125] 
+      dist_loss_config:
+        parameters:
+          num_bins:
+            values: [100]
+          bandwidth:
+            values: [0.5]
+          eps:
+            values: [1e-7]
       optimizer:
         parameters:
           type:

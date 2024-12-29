@@ -1,6 +1,6 @@
-program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
+program: experiments/003-fit-int/scripts/hetero_gnn_pool_reg_categorical_entropy.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: random
+method: grid
 
 parameters:
   cell_dataset:
@@ -9,7 +9,7 @@ parameters:
         values: [[physical, regulatory]]
       node_embeddings:
         values:
-          # - [codon_frequency]
+          - [codon_frequency]
           # - [one_hot_gene]
           # - [calm]
           # - [fudt_downstream]
@@ -66,13 +66,13 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [20]
+        values: [100]
       strategy:
         values: [auto]
       accelerator:
-        values: [cpu]
+        values: [gpu]
       devices:
-        values: [auto]
+        values: [1]
 
   model:
     parameters:
@@ -87,7 +87,7 @@ parameters:
       activation:
         values: ["gelu"]
       norm:
-        values: ["batch"]
+        values: ["batch", "layer"]
       num_tasks:
         values: [2]
       dropout:
@@ -163,9 +163,9 @@ parameters:
       loss_type:
         values: ["mse_entropy_reg"]
       loss_lambda_d:
-        values: [0.1]
+        values: [0.1, 0.01]
       loss_lambda_t:
-        values: [0.5]
+        values: [0.1, 0.01]
       optimizer:
         parameters:
           type:

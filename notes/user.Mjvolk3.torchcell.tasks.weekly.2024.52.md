@@ -2,7 +2,7 @@
 id: myw7o5hfntoey72klrmmr08
 title: '52'
 desc: ''
-updated: 1734987165531
+updated: 1735008197910
 created: 1734910103631
 ---
 ## 2024.12.22
@@ -14,7 +14,7 @@ created: 1734910103631
  ⏰ One thing today: Metabolism Label Split Regression Run
 
 - [x] Edit regression sweep accounting for dist loss. → need to check on `GH` first
-- [ ] Add genome.
+- [x] Add genome. → We have genome with hypergraph
 - [ ]
 
 - [ ] Implement intact and pert phenotype processor.

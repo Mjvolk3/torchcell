@@ -161,13 +161,28 @@ class RegressionTask(L.LightningModule):
             self.true_values.append(targets.detach())
             self.predictions.append(predictions.detach())
         
-        # Log prediction table
-        self._log_prediction_table(
-            stage=stage,
-            true_values=targets,
-            predictions=predictions,
-            dim_losses=dim_losses,
+        
+        # Handle prediction table logging
+        num_batches = (
+            self.trainer.num_training_batches
+            if stage == "train"
+            else (
+                self.trainer.num_val_batches
+                if stage == "val"
+                else self.trainer.num_test_batches
+            )
         )
+        
+        num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
+        
+        if batch_idx == num_batches - 2:
+            # Log prediction table
+            self._log_prediction_table(
+                stage=stage,
+                true_values=targets,
+                predictions=predictions,
+                dim_losses=dim_losses,
+            )
 
         return loss, predictions, targets
 

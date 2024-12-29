@@ -90,8 +90,18 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  loss_type: "mse" #quantile
-  quantile_spacing: 0.1 
+  loss_type: "dist_loss" #quantile # dist_loss
+  
+  # Quantile Loss
+  quantile_config:
+    spacing: 0.1
+  
+  # Dist loss
+  dist_loss_config:
+    num_bins: 100
+    bandwidth: 0.5
+    eps: 1e-7
+
   optimizer:
     type: "AdamW"
     lr: 1e-3

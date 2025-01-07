@@ -102,6 +102,9 @@ class YeastGEM:
                 # Always create forward edge
                 fwd_edge_id = f"{base_edge_id}_fwd"
                 edge_dict[fwd_edge_id] = list(metabolites.keys())
+                stoichiometry = {
+                    f"stoich_coefficient-{k}": v for k, v in metabolites.items()
+                }
                 edge_props[fwd_edge_id] = {
                     "genes": genes,
                     "reaction_id": reaction.id,
@@ -110,20 +113,27 @@ class YeastGEM:
                     "products": products,
                     "equation": reaction.reaction,
                     "reversibility": reaction.reversibility,
+                    "stoichiometry": list(stoichiometry.values()),
+                    **stoichiometry,
                 }
 
                 # Create reverse edge if reaction is reversible
                 if reaction.reversibility:
                     rev_edge_id = f"{base_edge_id}_rev"
                     edge_dict[rev_edge_id] = list(metabolites.keys())
+                    stoichiometry = {
+                        f"stoich_coefficient-{k}": -v for k, v in metabolites.items()
+                    }
                     edge_props[rev_edge_id] = {
                         "genes": genes,
                         "reaction_id": reaction.id,
                         "direction": "reverse",
-                        "reactants": products,  # Swap reactants and products for reverse
+                        "reactants": products,
                         "products": reactants,
                         "equation": reaction.reaction,
                         "reversibility": reaction.reversibility,
+                        "stoichiometry": list(stoichiometry.values()),
+                        **stoichiometry,
                     }
 
         # Create and return the hypergraph
@@ -379,7 +389,8 @@ def main():
 
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     yeast_gem = YeastGEM()
-
+    H = yeast_gem.reaction_map
+    H.edges["r_0001_comb3_fwd"].properties
     # PLOTTING
     # Plot first 4 reactions
     for i in range(20):

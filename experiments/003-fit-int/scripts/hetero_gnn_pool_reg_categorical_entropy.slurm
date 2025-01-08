@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --mem=243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
-#SBATCH --nodes=2
+#SBATCH --mem=243g #243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=HGPRC_5e4
+#SBATCH --job-name=HGPRCE
 #SBATCH --time=48:00:00      # hh:mm:ss for the job, 48 hr max.
 #SBATCH --constraint="scratch"
 ### GPU options ###
@@ -38,8 +38,8 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=4n431ae3
-PROJECT_NAME=torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
+#SWEEP_ID=ow1gqtkc
+#PROJECT_NAME=torchcell_003-fit-int_cell_sagpool_5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"
@@ -53,9 +53,4 @@ echo "-----------------"
 
 mkdir /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
 
-# Use for Agent logging. Only use in testing.
-# Not sure if visivles devices scales with num nodes or resets to 0
-for ((i=0; i<$SLURM_GPUS_ON_NODE*$SLURM_JOB_NUM_NODES; i++)); do
-    (CUDA_VISIBLE_DEVICES=$i wandb agent zhao-group/$PROJECT_NAME/$SWEEP_ID > /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent-$PROJECT_NAME-$SWEEP_ID$i.log 2>&1) &
-done
-wait
+srun python /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/hetero_gnn_pool_reg_categorical_entropy.py > /work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID/agent.log 2>&1

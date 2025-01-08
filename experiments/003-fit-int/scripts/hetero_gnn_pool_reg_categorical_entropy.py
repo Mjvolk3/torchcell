@@ -167,6 +167,43 @@ class CustomAdvancedProfiler(AdvancedProfiler):
         return f"Profiler output saved to {file_path}"
 
 
+def get_slurm_nodes():
+    try:
+        # Print all relevant env vars for debugging
+        print("SLURM_JOB_NUM_NODES:", os.environ.get('SLURM_JOB_NUM_NODES'))
+        print("SLURM_NNODES:", os.environ.get('SLURM_NNODES'))
+        print("SLURM_NPROCS:", os.environ.get('SLURM_NPROCS'))
+        
+        # Try SLURM_NNODES first as it's more commonly used
+        if 'SLURM_NNODES' in os.environ:
+            return int(os.environ['SLURM_NNODES'])
+        # Fall back to SLURM_JOB_NUM_NODES
+        elif 'SLURM_JOB_NUM_NODES' in os.environ:
+            return int(os.environ['SLURM_JOB_NUM_NODES'])
+        else:
+            return 1
+    except (TypeError, ValueError) as e:
+        print(f"Error getting node count: {e}")
+        return 1
+
+def get_num_devices():
+    # First check wandb config
+    if wandb.config.trainer["devices"] != "auto":
+        return wandb.config.trainer["devices"]
+    
+    # If "auto", check SLURM first
+    slurm_devices = os.environ.get('SLURM_GPUS_ON_NODE')
+    if slurm_devices is not None:
+        return int(slurm_devices)
+    
+    # If no SLURM, fall back to torch.cuda detection
+    num_devices = torch.cuda.device_count()
+    if num_devices > 0:
+        return num_devices
+    
+    # If no GPUs available, use 1 CPU
+    return 1
+
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
@@ -506,14 +543,7 @@ def main(cfg: DictConfig) -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
 
-    num_devices = torch.cuda.device_count()
-    if wandb.config.trainer["devices"] != "auto":
-        devices = wandb.config.trainer["devices"]
-    elif wandb.config.trainer["devices"] == "auto" and num_devices > 0:
-        devices = num_devices
-    elif wandb.config.trainer["devices"] == "auto" and num_devices == 0:
-        # if there are no GPUs available, use 1 CPU
-        devices = 1
+    devices = get_num_devices()
 
     # Convert graph names to edge types
     edge_types = [
@@ -700,12 +730,13 @@ def main(cfg: DictConfig) -> None:
     #     )
     # else:
     #     profiler = None
-
+    num_nodes = get_slurm_nodes()
     profiler = None
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,  # FLAG
+        num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
         callbacks=[checkpoint_callback],

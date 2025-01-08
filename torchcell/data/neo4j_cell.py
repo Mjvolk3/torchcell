@@ -11,6 +11,7 @@ from collections.abc import Callable
 import lmdb
 import pandas as pd
 import networkx as nx
+import hypernetx as hnx
 import numpy as np
 from typing import Any
 from pydantic import field_validator
@@ -79,7 +80,9 @@ def create_embedding_graph(
 # @profile
 # TODO we could remove is_add_remaining_self_loops and put it in transforms
 def to_cell_data(
-    graphs: dict[str, nx.Graph], is_add_remaining_self_loops: bool = True
+    graphs: dict[str, nx.Graph],
+    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph],
+    is_add_remaining_self_loops: bool = True,
 ) -> HeteroData:
     hetero_data = HeteroData()
 
@@ -134,6 +137,57 @@ def to_cell_data(
                 (hetero_data["gene"].x, embeddings), dim=1
             )
 
+    # Process each incidence graph. For the case of metabolism we need to add the metabolite nodes and edges are sets of genes so not sure how to handle this. For now we could just call them genes as opposed to gene. or reaction-genes.
+    # Process hypergraph - add metabolites as nodes
+    if "metabolism" in incidence_graphs:
+        hypergraph = incidence_graphs["metabolism"]
+
+        # Get unique metabolites and create mapping
+        metabolites = sorted(
+            list({m for edge_id in hypergraph.edges for m in hypergraph.edges[edge_id]})
+        )
+        metabolite_mapping = {m: idx for idx, m in enumerate(metabolites)}
+
+        hetero_data["metabolite"].num_nodes = len(metabolites)
+        hetero_data["metabolite"].node_ids = metabolites
+
+        # Build hyperedge index and stoichiometry in PyG format
+        node_indices = []
+        edge_indices = []
+        stoich_coeffs = []
+        reaction_to_genes = {}
+
+        for edge_idx, edge_id in enumerate(hypergraph.edges):
+            edge = hypergraph.edges[edge_id]
+            # Store gene associations
+            if "genes" in edge.properties:
+                reaction_to_genes[edge_idx] = list(edge.properties["genes"])
+
+            # For each metabolite in this reaction (hyperedge)
+            for m in edge:
+                # Add node index
+                node_indices.append(metabolite_mapping[m])
+                # Add edge index (which reaction this metabolite belongs to)
+                edge_indices.append(edge_idx)
+                # Add corresponding stoichiometry using your notation
+                stoich_coeffs.append(edge.properties[f"stoich_coefficient-{m}"])
+
+        # Stack indices to create hyperedge_index
+        hyperedge_index = torch.stack(
+            [
+                torch.tensor(node_indices, dtype=torch.long),
+                torch.tensor(edge_indices, dtype=torch.long),
+            ]
+        )
+
+        stoich_coeffs = torch.tensor(stoich_coeffs, dtype=torch.float)
+
+        edge_type = ("metabolite", "reaction_genes", "metabolite")
+        hetero_data[edge_type].hyperedge_index = hyperedge_index
+        hetero_data[edge_type].stoichiometry = stoich_coeffs
+        hetero_data[edge_type].num_edges = len(hyperedge_index[1,:].unique())
+        hetero_data[edge_type].reaction_to_genes = reaction_to_genes
+
     return hetero_data
 
 
@@ -165,7 +219,7 @@ class GraphProcessor(ABC):
 
 class SubgraphRepresentation(GraphProcessor):
     """
-    Processes gene knockout data by removing perturbed nodes from the graph, keeping 
+    Processes gene knockout data by removing perturbed nodes from the graph, keeping
     track of their features, and updating edge connectivity.
 
     Node Transforms:
@@ -176,6 +230,7 @@ class SubgraphRepresentation(GraphProcessor):
         E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
         where |E| is original edge count, |E'| is edges after removing perturbed nodes
     """
+
     def process(
         self,
         cell_graph: HeteroData,
@@ -470,6 +525,7 @@ class Neo4jCellDataset(Dataset):
         query: str = None,
         gene_set: GeneSet = None,
         graphs: dict[str, nx.Graph] = None,
+        incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
         graph_processor: GraphProcessor = None,
         converter: Optional[Type[Converter]] = None,
@@ -537,7 +593,7 @@ class Neo4jCellDataset(Dataset):
                 # Integrate node embeddings into graphs
 
         # cell graph used in get item
-        self.cell_graph = to_cell_data(graphs)
+        self.cell_graph = to_cell_data(graphs, incidence_graphs)
 
         # Clean up hanging env, for multiprocessing
         self.env = None
@@ -1145,6 +1201,94 @@ def main():
     #     break
 
 
+def main_incidence():
+    # genome
+    import os.path as osp
+    from dotenv import load_dotenv
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
+    from torchcell.data import MeanExperimentDeduplicator
+    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    ### Add Embeddings
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    with open("gene_set.json", "w") as f:
+        json.dump(list(genome.gene_set), f)
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        incidence_graphs={"metabolism": YeastGEM().reaction_map},
+        node_embeddings={
+            "fudt_3prime": fudt_3prime_dataset,
+            "fudt_5prime": fudt_5prime_dataset,
+        },
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=SubgraphRepresentation(),
+    )
+    print(len(dataset))
+    dataset.label_df
+    # Data module testing
+
+    # print(dataset[7])
+    print(dataset[183])
+    dataset.close_lmdb()
+    # print(dataset[10000])
+
+    # Assuming you have already created your dataset and CellDataModule
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=2,
+        random_seed=42,
+        num_workers=4,
+        pin_memory=False,
+    )
+    cell_data_module.setup()
+
+    for batch in tqdm(cell_data_module.train_dataloader()):
+        break
+
+
 def main_transform():
     """Test the label binning transforms on the dataset with proper initialization."""
     import os.path as osp
@@ -1563,4 +1707,4 @@ def main_transform_dense():
 
 if __name__ == "__main__":
     # main_transform_dense()
-    main()
+    main_incidence()

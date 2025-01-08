@@ -2,7 +2,7 @@
 id: ngv3l4ot5sgfmxnk5mlvqid
 title: '02'
 desc: ''
-updated: 1736272526393
+updated: 1736282296235
 created: 1736127191615
 ---
 
@@ -27,8 +27,8 @@ Run crashes after 15 hours. From a quick look there aren't any obvious memory ho
 - [x] Memory build up clarification with image and links previous day
 - [x] Submitted for more `Delta` allocation. Running low.
 
-- [ ] Pass hypergraph through dataset
-- [ ] Adjust cell graph to handle hypergraphs
+- [ ] Pass incidence metabolism hypergraph through dataset
+- [ ] Adjust `to_cell_data` to handle incidence graphs
 - [ ] Write new phenotype processor to handle message passing on multigraph
 
 ***

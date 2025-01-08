@@ -10,12 +10,14 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import re
 import hypernetx as hnx
+from torchcell.sequence import GeneSet
 
 
 @define
 class YeastGEM:
     root: str = field(default="data/torchcell/yeast-GEM")
     version: str = field(default="9.0.2")
+    gene_set: Optional[GeneSet] = field(default=None)
     _model: Optional[cobra.Model] = field(default=None, init=False)
     _compound_graph: Optional[nx.DiGraph] = field(default=None, init=False)
     model_dir: str = field(init=False)
@@ -67,10 +69,10 @@ class YeastGEM:
 
     @property
     def reaction_map(self) -> hnx.Hypergraph:
-        """Create hypergraph where edges represent reactions with gene combinations."""
+        """Create a hypergraph where edges represent reactions with gene combinations."""
         # Dictionary to store edges for the hypergraph
-        edge_dict = {}  # Edge dictionary
-        edge_props = {}  # Edge properties dictionary
+        edge_dict = {}
+        edge_props = {}
 
         # Process each reaction
         for reaction in self.model.reactions:
@@ -95,6 +97,21 @@ class YeastGEM:
             for idx, genes in enumerate(gene_combinations):
                 if not genes:
                     continue
+
+                # Check against the gene_set if provided
+                if self.gene_set is not None:
+                    genes_not_in_set = genes - self.gene_set
+
+                    if genes_not_in_set == genes:
+                        # All genes are outside the gene_set, skip the edge
+                        continue
+                    elif genes_not_in_set:
+                        # Convert to a standard set for proper string formatting
+                        print(
+                            f"Warning: Partial gene set overlap for edge {reaction.id}_comb{idx}. "
+                            f"Genes not in set: {set(genes_not_in_set)}. "
+                            f"Full gene set for this reaction: {set(genes)}"
+                        )
 
                 # Create base edge ID for this gene combination
                 base_edge_id = f"{reaction.id}_comb{idx}"
@@ -393,7 +410,7 @@ def main():
     H.edges["r_0001_comb3_fwd"].properties
     # PLOTTING
     # Plot first 4 reactions
-    for i in range(20):
+    for i in range(5):
         reaction = list(yeast_gem.model.reactions)[i]
         print(f"Reaction ID: {reaction.id}")
         print(f"Reaction: {reaction.reaction}")
@@ -427,5 +444,28 @@ def main():
     #     )
 
 
+def main_with_gene_set():
+    from dotenv import load_dotenv
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    # Setup dataset (unchanged)
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    # Without edge drop
+    yeast_gem = YeastGEM()
+    H = yeast_gem.reaction_map
+    print(f"H num edges without gene_set edge drop: {len(H.edges)}")
+
+    # Dataset setup
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+
+    yeast_gem = YeastGEM(gene_set=genome.gene_set)
+    H = yeast_gem.reaction_map
+    print(f"H num edges with gene_set edge drop: {len(H.edges)}")
+
+
 if __name__ == "__main__":
-    main()
+    # main()
+    main_with_gene_set()

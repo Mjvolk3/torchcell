@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool_regression.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
-method: random
+method: grid
 
 parameters:
   cell_dataset:
@@ -77,9 +77,9 @@ parameters:
       strategy:
         values: [auto]
       accelerator:
-        values: [cpu]
+        values: [gpu]
       devices:
-        values: [auto]
+        values: [1]
 
   model:
     parameters:
@@ -168,17 +168,17 @@ parameters:
       is_weighted_phenotype_loss:
         values: [true]
       loss_type:
-        values: ["quantile"]
+        values: ["dist_loss"]
       quantile_config:
         parameters:
           spacing:
-            values: [0.1, 0.05]
+            values: [0.1] #[0.1, 0.03125] 
       dist_loss_config:
         parameters:
           num_bins:
             values: [100]
           bandwidth:
-            values: [0.5]
+            values: [0.1, 0.5]
           eps:
             values: [1e-7]
       optimizer:

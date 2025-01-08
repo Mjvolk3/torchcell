@@ -81,7 +81,7 @@ def create_embedding_graph(
 # TODO we could remove is_add_remaining_self_loops and put it in transforms
 def to_cell_data(
     graphs: dict[str, nx.Graph],
-    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph],
+    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
     is_add_remaining_self_loops: bool = True,
 ) -> HeteroData:
     hetero_data = HeteroData()
@@ -139,6 +139,7 @@ def to_cell_data(
 
     # Process each incidence graph. For the case of metabolism we need to add the metabolite nodes and edges are sets of genes so not sure how to handle this. For now we could just call them genes as opposed to gene. or reaction-genes.
     # Process hypergraph - add metabolites as nodes
+    incidence_graphs = incidence_graphs if incidence_graphs is not None else []
     if "metabolism" in incidence_graphs:
         hypergraph = incidence_graphs["metabolism"]
 
@@ -185,7 +186,7 @@ def to_cell_data(
         edge_type = ("metabolite", "reaction_genes", "metabolite")
         hetero_data[edge_type].hyperedge_index = hyperedge_index
         hetero_data[edge_type].stoichiometry = stoich_coeffs
-        hetero_data[edge_type].num_edges = len(hyperedge_index[1,:].unique())
+        hetero_data[edge_type].num_edges = len(hyperedge_index[1, :].unique())
         hetero_data[edge_type].reaction_to_genes = reaction_to_genes
 
     return hetero_data

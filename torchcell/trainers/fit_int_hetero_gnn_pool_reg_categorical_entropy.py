@@ -51,7 +51,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
         # hetero for binning
         self._temp_data = HeteroData()
-        self._temp_data["gene"] = {}
+        self._temp_data["gene"].x = None
 
         if bins == 2:
             task = "binary"
@@ -236,15 +236,20 @@ class RegCategoricalEntropyTask(L.LightningModule):
 
         # Keep gradients when creating HeteroData
         with torch.set_grad_enabled(True):
-            self._temp_data["gene"].fitness = continuous_pred[:, 0]  # No clone needed
-            self._temp_data["gene"].gene_interaction = continuous_pred[:, 1]
+            # Properly set data in HeteroData object using dictionary access
+            self._temp_data["gene"].x = None  # Reset x if needed
+            self._temp_data["gene"]["fitness"] = continuous_pred[:, 0]
+            self._temp_data["gene"]["gene_interaction"] = continuous_pred[:, 1]
+
             binned_data = self.hparams.forward_transform(self._temp_data)
             logits = torch.cat(
-                [binned_data["gene"].fitness, binned_data["gene"].gene_interaction], dim=1
+                [binned_data["gene"].fitness, binned_data["gene"].gene_interaction],
+                dim=1,
             ).requires_grad_(True)
-            # Clear references but don't delete the reusable object
-            self._temp_data["gene"].fitness = None
-            self._temp_data["gene"].gene_interaction = None
+
+            # Clear references
+            self._temp_data["gene"]["fitness"] = None
+            self._temp_data["gene"]["gene_interaction"] = None
 
         # Get loss and components
         loss, loss_components = self.loss_func(

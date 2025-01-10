@@ -2,11 +2,11 @@
 id: hi7fjywckmnzybnoe0nykyf
 title: Dataset_index_split
 desc: ''
-updated: 1728633042751
+updated: 1736351007591
 created: 1728507905538
 ---
 
-## Entire Datsaet
+## Entire Dataset
 
 | split | index_type               | key              | count   | ratio | total   |
 |-------|--------------------------|------------------|---------|-------|---------|
@@ -17,7 +17,7 @@ created: 1728507905538
 | train | phenotype_label_index    | gene_interaction | 854275  | 0.835 | 1023196 |
 | val   | perturbation_count_index | 1                | 345     | 0.061 | 5665    |
 | val   | perturbation_count_index | 2                | 86407   | 0.083 | 1036030 |
-| val   | perturbation_count_index | 3           ex     | 47332   | 0.158 | 299146  |
+| val   | perturbation_count_index | 3                | 47332   | 0.158 | 299146  |
 | val   | phenotype_label_index    | fitness          | 134084  | 0.100 | 1340841 |
 | val   | phenotype_label_index    | gene_interaction | 84578   | 0.083 | 1023196 |
 | test  | perturbation_count_index | 1                | 348     | 0.061 | 5665    |

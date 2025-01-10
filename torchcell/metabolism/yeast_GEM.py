@@ -366,7 +366,7 @@ def plot_random_network(
     plt.figure(figsize=(20, 20))
 
     if layout == "spring":
-        layout_kwargs = ({"k": 10, "iterations": 1000},)
+        layout_kwargs = {"k": 10, "iterations": 1000}
         layout = spring_layout
     elif layout == "spectral":
         layout_kwargs = {}
@@ -379,16 +379,16 @@ def plot_random_network(
         H_sub,
         with_node_labels=False,
         with_edge_labels=False,
-        edges_kwargs={
-            "edgecolors": "black",
-            "facecolors": lambda e: (
-                "lightblue"
-                if H_sub.edges[e].properties["direction"] == "forward"
-                else "lightgreen"
-            ),
-            "alpha": 0.1,
-            "linewidths": 2.0,
-        },
+        # edges_kwargs={
+        #     "edgecolors": "black",
+        #     "facecolors": lambda e: (
+        #         "lightblue"
+        #         if H_sub.edges[e].properties["direction"] == "forward"
+        #         else "lightgreen"
+        #     ),
+        #     "alpha": 0.1,
+        #     "linewidths": 2.0,
+        # },
         nodes_kwargs={"alpha": 0.4},
         layout=layout,
         layout_kwargs=layout_kwargs,
@@ -399,6 +399,179 @@ def plot_random_network(
     plt.close()
 
 
+def plot_bipartite_network(
+    yeast_gem: YeastGEM,
+    reaction_id: str = None,
+    output_path: str = "bipartite_network.png",
+    figsize=(20, 15),
+):
+    """
+    Plot a bipartite network visualization of genes to metabolites.
+    If reaction_id is provided, only plot that specific reaction's network.
+    """
+    import networkx as nx
+
+    # Create bipartite graph
+    B = nx.Graph()
+
+    # Get the hypergraph
+    H = yeast_gem.reaction_map
+
+    # Filter edges if reaction_id is provided
+    edges_to_process = {}
+    if reaction_id:
+        for eid, props in H.edges.properties.items():
+            if props["reaction_id"] == reaction_id:
+                edges_to_process[eid] = H.edges.elements[eid]
+    else:
+        edges_to_process = H.edges.elements
+
+    # Add nodes and edges
+    genes_set = set()
+    metabolites_set = set()
+
+    # First pass: collect all nodes
+    for eid, edge_data in edges_to_process.items():
+        edge_props = H.edges[eid].properties
+        genes = edge_props["genes"]
+        metabolites = edge_data
+
+        genes_set.update(genes)
+        metabolites_set.update(metabolites)
+
+    # Add nodes with proper bipartite attribute
+    B.add_nodes_from(genes_set, bipartite=0, node_type="gene")
+    B.add_nodes_from(metabolites_set, bipartite=1, node_type="metabolite")
+
+    # Second pass: add edges
+    for eid, edge_data in edges_to_process.items():
+        edge_props = H.edges[eid].properties
+        genes = edge_props["genes"]
+        metabolites = edge_data
+        direction = edge_props["direction"]
+
+        # Add edges between each gene and each metabolite
+        for gene in genes:
+            for metabolite in metabolites:
+                # Edge color based on whether metabolite is reactant or product
+                if metabolite in edge_props["reactants"]:
+                    edge_type = "reactant"
+                else:
+                    edge_type = "product"
+
+                B.add_edge(gene, metabolite, edge_type=edge_type, direction=direction)
+
+    # Create layout
+    # Separate layout for genes and metabolites
+    pos = nx.spring_layout(B, k=2.0)
+
+    # Draw the network
+    plt.figure(figsize=figsize)
+
+    # Draw nodes
+    gene_nodes = [n for n, d in B.nodes(data=True) if d["node_type"] == "gene"]
+    metabolite_nodes = [
+        n for n, d in B.nodes(data=True) if d["node_type"] == "metabolite"
+    ]
+
+    nx.draw_networkx_nodes(
+        B,
+        pos,
+        nodelist=gene_nodes,
+        node_color="lightblue",
+        node_size=1000,
+        alpha=0.7,
+        label="Genes",
+    )
+
+    nx.draw_networkx_nodes(
+        B,
+        pos,
+        nodelist=metabolite_nodes,
+        node_color="lightgreen",
+        node_size=1000,
+        alpha=0.7,
+        label="Metabolites",
+    )
+
+    # Draw edges with different colors based on type
+    edges_reactant_fwd = [
+        (u, v)
+        for (u, v, d) in B.edges(data=True)
+        if d["edge_type"] == "reactant" and d["direction"] == "forward"
+    ]
+    edges_product_fwd = [
+        (u, v)
+        for (u, v, d) in B.edges(data=True)
+        if d["edge_type"] == "product" and d["direction"] == "forward"
+    ]
+    edges_reactant_rev = [
+        (u, v)
+        for (u, v, d) in B.edges(data=True)
+        if d["edge_type"] == "reactant" and d["direction"] == "reverse"
+    ]
+    edges_product_rev = [
+        (u, v)
+        for (u, v, d) in B.edges(data=True)
+        if d["edge_type"] == "product" and d["direction"] == "reverse"
+    ]
+
+    nx.draw_networkx_edges(
+        B,
+        pos,
+        edgelist=edges_reactant_fwd,
+        edge_color="red",
+        alpha=0.4,
+        label="Reactant (Forward)",
+    )
+    nx.draw_networkx_edges(
+        B,
+        pos,
+        edgelist=edges_product_fwd,
+        edge_color="blue",
+        alpha=0.4,
+        label="Product (Forward)",
+    )
+    nx.draw_networkx_edges(
+        B,
+        pos,
+        edgelist=edges_reactant_rev,
+        edge_color="orange",
+        alpha=0.4,
+        label="Reactant (Reverse)",
+    )
+    nx.draw_networkx_edges(
+        B,
+        pos,
+        edgelist=edges_product_rev,
+        edge_color="purple",
+        alpha=0.4,
+        label="Product (Reverse)",
+    )
+
+    # Add labels
+    labels = {node: node for node in B.nodes()}
+    nx.draw_networkx_labels(B, pos, labels, font_size=8)
+
+    plt.title(
+        "Bipartite Network: Genes to Metabolites"
+        + (f" for {reaction_id}" if reaction_id else ""),
+        pad=20,
+    )
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.axis("off")
+
+    # Save with high quality
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    # Print some statistics
+    print(f"\nNetwork Statistics:")
+    print(f"Number of genes: {len(gene_nodes)}")
+    print(f"Number of metabolites: {len(metabolite_nodes)}")
+    print(f"Number of edges: {B.number_of_edges()}")
+
+
 def main():
     from dotenv import load_dotenv
 
@@ -406,22 +579,21 @@ def main():
 
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     yeast_gem = YeastGEM()
-    H = yeast_gem.reaction_map
-    H.edges["r_0001_comb3_fwd"].properties
-    # PLOTTING
-    # Plot first 4 reactions
-    for i in range(5):
-        reaction = list(yeast_gem.model.reactions)[i]
-        print(f"Reaction ID: {reaction.id}")
-        print(f"Reaction: {reaction.reaction}")
-        print(f"Gene rule: {reaction.gene_reaction_rule}")
 
-        # Plot using standalone function
-        plot_reaction_map(
-            yeast_gem,
-            reaction.id,
-            osp.join(ASSET_IMAGES_DIR, f"reaction_map_{reaction.id}.png"),
-        )
+    # # PLOTTING
+    # # Plot first 4 reactions
+    # for i in range(5):
+    #     reaction = list(yeast_gem.model.reactions)[i]
+    #     print(f"Reaction ID: {reaction.id}")
+    #     print(f"Reaction: {reaction.reaction}")
+    #     print(f"Gene rule: {reaction.gene_reaction_rule}")
+
+    #     # Plot using standalone function
+    #     plot_reaction_map(
+    #         yeast_gem,
+    #         reaction.id,
+    #         osp.join(ASSET_IMAGES_DIR, f"reaction_map_{reaction.id}.png"),
+    #     )
 
     # # Plot full network
     # plot_full_network(
@@ -429,19 +601,19 @@ def main():
     # )
 
     # Plot random networks
-    # import random
+    import random
 
-    # random.seed(42)  # For reproducibility
-    # layout = "spring"
-    # for n_edges in [5, 10, 20, 50, 100, 1000, 4881]:
-    #     plot_random_network(
-    #         yeast_gem,
-    #         n_edges=n_edges,
-    #         layout="spring",
-    #         output_path=osp.join(
-    #             ASSET_IMAGES_DIR, f"yeast_metabolic_random_{layout}_{n_edges}.png"
-    #         ),
-    #     )
+    random.seed(42)  # For reproducibility
+    layout = "spring"
+    for n_edges in [5, 10, 20, 50, 100, 1000, 4881]:
+        plot_random_network(
+            yeast_gem,
+            n_edges=n_edges,
+            layout="spring",
+            output_path=osp.join(
+                ASSET_IMAGES_DIR, f"yeast_metabolic_random_nc_{layout}_{n_edges}.png"
+            ),
+        )
 
 
 def main_with_gene_set():
@@ -466,6 +638,29 @@ def main_with_gene_set():
     print(f"H num edges with gene_set edge drop: {len(H.edges)}")
 
 
+def main_bipartite():
+    from dotenv import load_dotenv
+    load_dotenv()
+    
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    yeast_gem = YeastGEM()
+    
+    # Plot bipartite network for specific reactions
+    for i in range(5):
+        reaction = list(yeast_gem.model.reactions)[i]
+        plot_bipartite_network(
+            yeast_gem,
+            reaction_id=reaction.id,
+            output_path=osp.join(ASSET_IMAGES_DIR, f"bipartite_network_{reaction.id}.png")
+        )
+    
+    # Plot full bipartite network
+    plot_bipartite_network(
+        yeast_gem,
+        output_path=osp.join(ASSET_IMAGES_DIR, "full_bipartite_network.png")
+    )
+
+
 if __name__ == "__main__":
-    # main()
-    main_with_gene_set()
+    main_bipartite()
+    # main_with_gene_set()

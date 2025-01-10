@@ -2,7 +2,7 @@
 id: ngv3l4ot5sgfmxnk5mlvqid
 title: '02'
 desc: ''
-updated: 1736282296235
+updated: 1736546061111
 created: 1736127191615
 ---
 
@@ -26,10 +26,20 @@ Run crashes after 15 hours. From a quick look there aren't any obvious memory ho
 - [x] Issue on multi-node DDP → [NCSA Jira Issue](https://jira.ncsa.illinois.edu/servicedesk/customer/user/requests?status=open)
 - [x] Memory build up clarification with image and links previous day
 - [x] Submitted for more `Delta` allocation. Running low.
+- [x] Pass incidence metabolism hypergraph through dataset
+- [x] Adjust `to_cell_data` to handle incidence graphs → have a prototype but needs fixing
 
-- [ ] Pass incidence metabolism hypergraph through dataset
-- [ ] Adjust `to_cell_data` to handle incidence graphs
+## 2025.01.08
+
+- [x] Prepare slides → ![ordinal classificaiton](/assets/drawio/ordinal_classification.drawio.png)
+
+## 2025.01.10
+
+- [ ] Fix current failure in trying to overcome memory hog.
+- [x] Adjust `to_cell_data` to handle incidence graphs
 - [ ] Write new phenotype processor to handle message passing on multigraph
+
+- [ ]
 
 ***
 

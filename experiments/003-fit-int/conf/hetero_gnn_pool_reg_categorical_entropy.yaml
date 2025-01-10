@@ -35,7 +35,7 @@ trainer:
   max_epochs: 100
   strategy: ddp # ddp, auto
   accelerator: gpu #cpu
-  devices: 4 # auto or int
+  devices: 1 # auto or int
 
 model:
   # Basic model parameters

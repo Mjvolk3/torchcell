@@ -2,10 +2,10 @@
 id: 618l4iz33lp9xt1qq4exbww
 title: Classification Objectives
 desc: ''
-updated: 1731867339701
+updated: 1736362837645
 created: 1731867245942
 ---
-Facilitated with ChatGPT while referencing papers. 
+Facilitated with ChatGPT while referencing papers.
 
 - Standard Regression (MSE):
 
@@ -141,13 +141,13 @@ $$
 
 ***
 
-## Regression to classification:
-
 ### Standard Regression (MSE):
 
 $$
 L_{MSE} = \frac{1}{N}\sum_{i=1}^N (y_i - \hat{y}_i)^2
 $$
+
+## Regression to classification:
 
 ### Standard Classification (Cross Entropy):
 
@@ -155,14 +155,20 @@ $$
 L_{CE} = -\frac{1}{N}\sum_{i=1}^N \sum_{k=1}^K y_{ik}\log(\hat{y}_{ik})
 $$
 
+- Bad Idea: Doesn't capture ordinality
+
+## Regression to classification:
+
 ### Soft Label Classification:
 
 $$
 L_{soft} = -\frac{1}{N}\sum_{i=1}^N \sum_{k=1}^K s_{ik}\log(\hat{y}{ik})
 $$
 
-- where $s{ik}$ is soft assignment (e.g., Gaussian centered at true bin)
+- Where $s_{ik}$ is soft assignment (e.g., Gaussian centered at true bin)
 - Preserves ordinal relationship through soft bin assignments
+
+***
 
 ### Ordinal Classification (Binary Cross Entropy per threshold):
 
@@ -170,14 +176,16 @@ $$
 L_{OCE} = -\frac{1}{N}\sum_{i=1}^N \sum_{k=1}^{K-1} [y_{ik}\log(\hat{p}_{ik}) + (1-y_{ik})\log(1-\hat{p}_{ik})]
 $$
 
-- where $y_{ik} = 1$ if $y_i > k$, and $\hat{p}_{ik} = \sigma(f(x_i) - b_k)$ for monotonicity
+- Where $y_{ik} = 1$ if $y_i > k$, and $\hat{p}_{ik} = \sigma(f(x_i) - b_k)$ for monotonicity
 - Preserves ordinal relationship through architecture
+
+***
 
 ### Regression with Ordinal Entropy Regularization:
 
 $$L_{total} = L_{MSE} + \lambda_d L_d + \lambda_t L_t$$
 
-where:
+Where:
 
 $$
 L_d = -\frac{1}{M(M-1)}\sum_{i=1}^M\sum_{i\neq j} ||y_i - y_j||^2 \cdot ||z_i^c - z_j^c||^2
@@ -189,9 +197,11 @@ $$
 L_t = \frac{1}{N}\sum_{i=1}^N ||z_i - z_i^c||^2
 $$
 
-- pull together if similar
+- Pull together if similar
 
 - Preserves ordinal relationship through regularization. Contrastive regression loss.
+
+***
 
 ## Bin Sizing
 

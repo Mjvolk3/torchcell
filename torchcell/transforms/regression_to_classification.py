@@ -366,7 +366,7 @@ class LabelBinningTransform(BaseTransform):
 
                 # Store continuous values if requested
                 if config.get("store_continuous", True):
-                    data["gene"][f"{label}_continuous"] = values.clone()
+                    data["gene"][f"{label}_continuous"] = values
 
                 label_type = config.get("label_type", "categorical").lower()
                 if label_type == "categorical":

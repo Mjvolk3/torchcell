@@ -478,7 +478,7 @@ def load_sample_data_batch():
 
 
 def main_single():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
     import numpy as np
     from torch_geometric.utils import to_dense_batch, to_dense_adj, dense_to_sparse
 
@@ -528,7 +528,7 @@ def main_single():
         print(f"{name}: {param.shape}")
 
     # Initialize loss and optimizer
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
@@ -602,7 +602,7 @@ def main_single():
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
     import numpy as np
 
     # Load the sample data batch
@@ -657,7 +657,7 @@ def main():
         print(f"{name}: {param.shape}")
 
     # Initialize loss and optimizer
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop

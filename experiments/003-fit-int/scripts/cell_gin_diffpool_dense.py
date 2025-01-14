@@ -22,7 +22,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from lightning.pytorch.callbacks import GradientAccumulationScheduler
 import wandb
 from torchcell.datamodules import CellDataModule
-from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 from torchcell.datasets import (
     FungalUpDownTransformerDataset,
     OneHotGeneDataset,
@@ -412,7 +412,7 @@ def main(cfg: DictConfig) -> None:
     # wandb.watch(model, log="gradients", log_freq=10, log_graph=False)
 
     # loss
-    loss_func = CombinedLoss(
+    loss_func = CombinedRegressionLoss(
         loss_type=wandb.config.regression_task["loss_type"],
         weights=torch.ones(2).to(device),
     )

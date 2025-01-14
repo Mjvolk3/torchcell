@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: random
+method: grid 
 
 parameters:
   cell_dataset:
@@ -9,7 +9,7 @@ parameters:
         values: [[physical, regulatory]]
       node_embeddings:
         values:
-          # - [codon_frequency]
+          - [codon_frequency]
           # - [one_hot_gene]
           # - [calm]
           # - [fudt_downstream]
@@ -26,7 +26,7 @@ parameters:
           # - [random_100]
           # - [random_10]
           # - [random_1]
-          - [learnable_embedding]
+          # - [learnable_embedding]
       learnable_embedding_input_channels:
         values: [64]
 
@@ -83,9 +83,9 @@ parameters:
       num_layers:
         values: [2]
       conv_type:
-        values: ["GCN", "GAT", "Transformer", "GIN"]
+        values: ["GCN"] #["GCN", "GAT", "Transformer", "GIN"]
       pooling:
-        values: ["sum", "mean"]
+        values: ["sum"] #["sum", "mean"]
       activation:
         values: ["gelu"]
       norm:
@@ -174,9 +174,9 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3, 1e-4, 1e-5, 1e-6]
+            values: [1e-3, 1e-4] # [1e-3, 1e-4, 1e-5, 1e-6]
           weight_decay:
-            values: [1e-3, 1e-5, 1e-7]
+            values: [1e-6] #[1e-3, 1e-5, 1e-7]
       lr_scheduler:
         parameters:
           type:

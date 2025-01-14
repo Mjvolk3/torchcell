@@ -1,3 +1,9 @@
+# torchcell/models/hetero_gnn_pool
+# [[torchcell.models.hetero_gnn_pool]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_gnn_pool
+# Test file: tests/torchcell/models/test_hetero_gnn_pool.py
+
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -799,5 +805,5 @@ def main_ordinal_reg():
 
 
 if __name__ == "__main__":
-    # main()
-    main_ordinal_reg()
+    main()
+    # main_ordinal_reg()

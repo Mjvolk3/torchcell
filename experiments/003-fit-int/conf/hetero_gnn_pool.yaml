@@ -18,7 +18,7 @@ transforms:
   num_bins: 32 # 2 - Binary classification
   strategy: "equal_frequency" # or "equal_width"
   store_continuous: true
-  label_type: ordinal # categorical, ordinal, soft
+  label_type: soft # categorical, ordinal, soft
 
 profiler:
   is_pytorch: true
@@ -89,7 +89,7 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  loss_type: "ce_ordinal"
+  loss_type: "ce" # ce_ordinal
   optimizer:
     type: "AdamW"
     lr: 1e-3

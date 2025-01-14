@@ -511,7 +511,7 @@ def load_sample_data_batch():
 
 
 def main_single():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data
     batch, _ = load_sample_data_batch()
@@ -550,7 +550,7 @@ def main_single():
     total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"\nTotal trainable parameters: {total_params:,}")
 
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
@@ -627,7 +627,7 @@ def analyze_node_selections(node_selections, graph_name):
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load and prepare data
     batch, _ = load_sample_data_batch()
@@ -683,7 +683,7 @@ def main():
     print(f"Combination layer parameters: {params['combination_layer']:,}")
     print(f"Total parameters: {params['total']:,}")
 
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop

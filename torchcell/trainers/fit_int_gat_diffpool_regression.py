@@ -128,9 +128,9 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
         return dim_means
 
 
-class CombinedLoss(nn.Module):
+class CombinedRegressionLoss(nn.Module):
     def __init__(self, loss_type="mse", weights=None):
-        super(CombinedLoss, self).__init__()
+        super(CombinedRegressionLoss, self).__init__()
         self.loss_type = loss_type
         if loss_type == "mse":
             self.loss_fn = MultiDimNaNTolerantMSELoss()
@@ -165,7 +165,7 @@ class RegressionTask(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-        self.combined_loss = CombinedLoss(loss_type=loss_type, weights=torch.ones(2))
+        self.combined_loss = CombinedRegressionLoss(loss_type=loss_type, weights=torch.ones(2))
         self.current_accumulation_steps = 1
 
         metrics = MetricCollection(

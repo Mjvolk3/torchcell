@@ -465,7 +465,7 @@ def load_sample_data_batch():
 
 
 def main():
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedLoss
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
 
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
@@ -501,9 +501,9 @@ def main():
         cluster_reduction="mean",
     )
 
-    # Initialize CombinedLoss with MSE
+    # Initialize CombinedRegressionLoss with MSE
     # Using equal weights for both dimensions (fitness and gene interaction)
-    criterion = CombinedLoss(loss_type="mse", weights=torch.ones(2))
+    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2))
 
     # Print model size
     total_params = sum(p.numel() for p in model.parameters())
@@ -528,7 +528,7 @@ def main():
             final_linear_output,
         ) = model(x, [edge_index_physical, edge_index_regulatory], batch_index)
 
-        # Compute primary loss using CombinedLoss
+        # Compute primary loss using CombinedRegressionLoss
         main_loss, dim_losses = criterion(out, y)
 
         # Compute auxiliary losses

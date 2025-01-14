@@ -224,39 +224,53 @@ def _nan_tolerant_pearson_update(
     if not torch.any(valid_mask):
         return mean_x, mean_y, var_x, var_y, corr_xy, n_total
 
-    # Ensure tensors are on the same device
-    device = preds.device
+    # Get valid samples
     valid_preds = preds[valid_mask]
     valid_target = target[valid_mask]
+    n = valid_mask.sum()
 
-    # Move all state tensors to the input device if needed
-    mean_x = mean_x.to(device)
-    mean_y = mean_y.to(device)
-    var_x = var_x.to(device)
-    var_y = var_y.to(device)
-    corr_xy = corr_xy.to(device)
-    n_total = n_total.to(device)
+    # Compute means for this batch
+    batch_mean_x = valid_preds.mean()
+    batch_mean_y = valid_target.mean()
 
-    # First compute sum on original device, then convert
-    n = torch.tensor(valid_mask.sum().item(), dtype=n_total.dtype, device=device)
-    n_total = n_total + n
-
-    # Update means
-    delta_x = valid_preds - mean_x
-    mean_x = mean_x + delta_x.sum() / n_total
-
-    delta_y = valid_target - mean_y
-    mean_y = mean_y + delta_y.sum() / n_total
+    # Update overall means
+    new_n = n_total + n
+    delta_x = batch_mean_x - mean_x
+    delta_y = batch_mean_y - mean_y
+    mean_x = mean_x + (delta_x * n) / new_n
+    mean_y = mean_y + (delta_y * n) / new_n
 
     # Update variances and correlation
-    var_x = var_x + (delta_x * (valid_preds - mean_x)).sum()
-    var_y = var_y + (delta_y * (valid_target - mean_y)).sum()
-    corr_xy = corr_xy + (delta_x * delta_y).sum()
+    var_x = var_x + ((valid_preds - mean_x) ** 2).sum()
+    var_y = var_y + ((valid_target - mean_y) ** 2).sum()
+    corr_xy = corr_xy + ((valid_preds - mean_x) * (valid_target - mean_y)).sum()
+
+    n_total = new_n
 
     return mean_x, mean_y, var_x, var_y, corr_xy, n_total
 
 
-class NaNTolerantPearsonCorrCoef(Metric):
+class NaNTolerantMetricBase(Metric):
+    def __init__(self, **kwargs):
+        # Configure for DDP compatibility
+        kwargs["compute_on_cpu"] = False  # Keep computation on GPU
+        kwargs["sync_on_compute"] = False  # Let Lightning handle sync
+        kwargs["dist_sync_on_step"] = True  # Sync after each step
+        super().__init__(**kwargs)
+        # Register device tracking buffer
+        self.register_buffer("_device_buffer", torch.zeros(1))
+
+    def _track_device(self, tensor: Tensor) -> None:
+        """Track the device of input tensors"""
+        if tensor.device != self._device_buffer.device:
+            self._device_buffer = self._device_buffer.to(tensor.device)
+
+    def _create_tensor_on_device(self, value, *shape):
+        """Create a new tensor on the tracked device"""
+        return torch.full(shape, value, device=self._device_buffer.device)
+
+
+class NaNTolerantPearsonCorrCoef(NaNTolerantMetricBase):
     is_differentiable = True
     higher_is_better = None  # both -1 and 1 are optimal
     full_state_update = True
@@ -268,69 +282,57 @@ class NaNTolerantPearsonCorrCoef(Metric):
 
         self.num_outputs = num_outputs
 
-        # States with no reduction function - we'll handle reduction in compute()
+        # Track sufficient statistics
+        self.add_state("sum_x", default=torch.zeros(num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_y", default=torch.zeros(num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_xy", default=torch.zeros(num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_x2", default=torch.zeros(num_outputs), dist_reduce_fx="sum")
+        self.add_state("sum_y2", default=torch.zeros(num_outputs), dist_reduce_fx="sum")
         self.add_state(
-            "mean_x", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
-        )
-        self.add_state(
-            "mean_y", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
-        )
-        self.add_state(
-            "var_x", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
-        )
-        self.add_state(
-            "var_y", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
-        )
-        self.add_state(
-            "corr_xy", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
-        )
-        self.add_state(
-            "n_total", default=torch.zeros(self.num_outputs), dist_reduce_fx=None
+            "n_samples", default=torch.zeros(num_outputs), dist_reduce_fx="sum"
         )
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         """Update state with predictions and targets."""
-        self.mean_x, self.mean_y, self.var_x, self.var_y, self.corr_xy, self.n_total = (
-            _nan_tolerant_pearson_update(
-                preds,
-                target,
-                self.mean_x,
-                self.mean_y,
-                self.var_x,
-                self.var_y,
-                self.corr_xy,
-                self.n_total,
-                self.num_outputs,
-            )
-        )
+        self._track_device(preds)
+
+        # Handle NaN values
+        valid_mask = ~torch.isnan(preds) & ~torch.isnan(target)
+        if not torch.any(valid_mask):
+            return
+
+        preds = preds[valid_mask]
+        target = target[valid_mask]
+
+        # Update sufficient statistics
+        self.sum_x += preds.sum()
+        self.sum_y += target.sum()
+        self.sum_xy += (preds * target).sum()
+        self.sum_x2 += (preds**2).sum()
+        self.sum_y2 += (target**2).sum()
+        self.n_samples += valid_mask.sum()
 
     def compute(self) -> Tensor:
-        """Compute Pearson correlation coefficient over state."""
-        # Handle multi-device aggregation if needed
-        if (self.num_outputs == 1 and self.mean_x.numel() > 1) or (
-            self.num_outputs > 1 and self.mean_x.ndim > 1
-        ):
-            _, _, var_x, var_y, corr_xy, n_total = _final_aggregation(
-                self.mean_x,
-                self.mean_y,
-                self.var_x,
-                self.var_y,
-                self.corr_xy,
-                self.n_total,
-            )
-        else:
-            var_x = self.var_x
-            var_y = self.var_y
-            corr_xy = self.corr_xy
-            n_total = self.n_total
+        """Compute Pearson correlation coefficient."""
+        # Handle no samples case
+        if self.n_samples == 0:
+            return self._create_tensor_on_device(float("nan"), self.num_outputs)
 
-        # Handle zero-division and no-sample cases
-        if n_total == 0:
-            return torch.full_like(var_x, float("nan"))
+        # Calculate means
+        mean_x = self.sum_x / self.n_samples
+        mean_y = self.sum_y / self.n_samples
 
+        # Calculate covariance and standard deviations
+        cov_xy = (self.sum_xy / self.n_samples) - (mean_x * mean_y)
+        var_x = (self.sum_x2 / self.n_samples) - (mean_x**2)
+        var_y = (self.sum_y2 / self.n_samples) - (mean_y**2)
+
+        # Handle zero variance case
         denom = torch.sqrt(var_x * var_y)
         pearson = torch.where(
-            denom > 0, corr_xy / denom, torch.tensor(float("nan"), device=denom.device)
+            denom > 0,
+            cov_xy / denom,
+            torch.tensor(float("nan"), device=self._device_buffer.device),
         )
 
         return pearson

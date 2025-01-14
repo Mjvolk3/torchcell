@@ -1,3 +1,8 @@
+# torchcell/losses/multi_dim_nan_tolerant
+# [[torchcell.losses.multi_dim_nan_tolerant]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/multi_dim_nan_tolerant
+# Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
+
 import math
 import os.path as osp
 import lightning as L
@@ -27,6 +32,9 @@ import logging
 import sys
 from typing import Optional, Tuple
 import torch.optim as optim
+import torch.nn.functional as F
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -72,9 +80,9 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
         return dim_means, mask
 
 
-class MultiDimNaNTolerantMSELoss(nn.Module):
+class NaNTolerantMSELoss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
+        super(NaNTolerantMSELoss, self).__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -110,46 +118,270 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
         return dim_means.to(device), mask.to(device)
 
 
-class CombinedLoss(nn.Module):
-    def __init__(self, loss_type="mse", weights=None):
-        super(CombinedLoss, self).__init__()
+class NaNTolerantQuantileLoss(nn.Module):
+    """
+    Quantile regression loss that handles NaN values.
+    For each quantile q, the loss is:
+    L = q * (y - y_pred) if y > y_pred
+    L = (1-q) * (y_pred - y) if y <= y_pred
+    """
+
+    def __init__(self, quantiles: list[float]):
+        """
+        Args:
+            quantiles: List of quantiles to predict, e.g. [0.1, 0.5, 0.9]
+        """
+        super().__init__()
+        self.register_buffer("quantiles", torch.tensor(quantiles))
+
+    def forward(self, predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        # Handle NaN values by creating a mask
+        mask = ~torch.isnan(targets)
+        if not mask.any():
+            return torch.tensor(0.0, device=predictions.device)
+
+        # Filter out NaN values
+        valid_predictions = predictions[mask]
+        valid_targets = targets[mask]
+
+        losses = []
+        for q in self.quantiles:
+            diff = valid_targets - valid_predictions
+            loss = torch.max(q * diff, (q - 1) * diff)
+            losses.append(loss.mean())
+
+        return torch.stack(losses).sum()
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class WeightedDistLoss(nn.Module):
+    def __init__(self, num_bins=100, bandwidth=0.5, weights=None, eps=1e-7):
+        """
+        Weighted NaN-tolerant implementation of Dist Loss that inherently combines
+        distribution alignment and prediction errors through MSE between pseudo-labels
+        and pseudo-predictions.
+
+        Args:
+            num_bins: Number of bins for KDE
+            bandwidth: Kernel bandwidth for KDE
+            weights: Optional tensor of weights for each dimension
+            eps: Small value for numerical stability
+        """
+        super().__init__()
+        self.num_bins = num_bins
+        self.bandwidth = bandwidth
+        self.eps = eps
+
+        # Register weights as a buffer
+        if weights is None:
+            weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+        self.register_buffer("weights", weights / weights.sum())
+
+    def kde(self, x: torch.Tensor, eval_points: torch.Tensor) -> torch.Tensor:
+        """
+        Kernel Density Estimation with Gaussian kernel.
+        Handles NaN values by excluding them from density estimation.
+        """
+        # Remove NaN values
+        x = x[~torch.isnan(x)]
+        if x.size(0) == 0:
+            return torch.zeros_like(eval_points)
+
+        # Reshape for broadcasting
+        x = x.view(-1, 1)
+        eval_points = eval_points.view(1, -1)
+
+        # Compute Gaussian kernel
+        kernel = torch.exp(-0.5 * ((x - eval_points) / self.bandwidth) ** 2)
+        kernel = kernel.mean(dim=0)  # Average across samples
+
+        return kernel / (kernel.sum() + self.eps)  # Normalize
+
+    def generate_pseudo_labels(
+        self, y_true: torch.Tensor, batch_size: int
+    ) -> torch.Tensor:
+        """
+        Generate pseudo-labels using KDE for current batch.
+
+        Args:
+            y_true: Ground truth values with possible NaN entries
+            batch_size: Number of pseudo-labels to generate
+
+        Returns:
+            Pseudo-labels sampled from estimated distribution
+        """
+        # Define evaluation points based on batch statistics
+        valid_vals = y_true[~torch.isnan(y_true)]
+        if valid_vals.size(0) == 0:
+            return torch.zeros(batch_size, device=y_true.device)
+
+        min_val = valid_vals.min()
+        max_val = valid_vals.max()
+        eval_points = torch.linspace(
+            min_val, max_val, self.num_bins, device=y_true.device
+        )
+
+        # Estimate density using batch data
+        density = self.kde(y_true, eval_points)
+
+        # Generate cumulative distribution
+        cdf = torch.cumsum(density, 0)
+        cdf = cdf / (cdf[-1] + self.eps)
+
+        # Generate uniform samples for current batch
+        u = torch.linspace(0, 1, batch_size, device=y_true.device)
+
+        # Find bins using binary search
+        inds = torch.searchsorted(cdf, u)
+        inds = torch.clamp(inds, 0, self.num_bins - 1)
+
+        # Linear interpolation between bin edges
+        pseudo_labels = eval_points[inds]
+
+        return pseudo_labels
+
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute Dist Loss using MSE between pseudo-labels and sorted predictions.
+        This inherently combines distribution alignment and prediction errors.
+
+        Args:
+            y_pred: Predictions [batch_size, num_dims]
+            y_true: Ground truth [batch_size, num_dims]
+
+        Returns:
+            tuple: (weighted_loss, dim_losses)
+                - weighted_loss: Total weighted loss across dimensions
+                - dim_losses: Individual losses per dimension
+        """
+        device = y_pred.device
+        y_true = y_true.to(device)
+
+        batch_size, num_dims = y_true.shape
+        dim_losses = torch.zeros(num_dims, device=device)
+
+        # Create mask for valid dimensions
+        mask = ~torch.isnan(y_true)
+        valid_dims = mask.any(dim=0)
+
+        # Adjust weights based on valid dimensions
+        weights = self.weights * valid_dims
+        weight_sum = weights.sum().clamp(min=1e-8)
+
+        # Process each dimension separately
+        for dim in range(num_dims):
+            # Skip if all values are NaN
+            if not valid_dims[dim]:
+                continue
+
+            # Get values for current dimension
+            true_dim = y_true[:, dim]
+            pred_dim = y_pred[:, dim]
+
+            # Generate pseudo-labels and sort predictions
+            pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size)
+            pseudo_preds = torch.sort(pred_dim[~torch.isnan(pred_dim)])[0]
+
+            # Pad predictions if needed
+            if pseudo_preds.size(0) < batch_size:
+                padding = torch.zeros(batch_size - pseudo_preds.size(0), device=device)
+                pseudo_preds = torch.cat([pseudo_preds, padding])
+
+            # Compute MSE between distributions (inherently combines alignment and prediction errors)
+            dim_losses[dim] = F.mse_loss(pseudo_preds, pseudo_labels)
+
+        # Compute weighted average loss
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
+
+        return weighted_loss, dim_losses
+
+
+class CombinedRegressionLoss(nn.Module):
+    def __init__(self, loss_type="mse", weights=None, quantile_spacing=None):
+        super(CombinedRegressionLoss, self).__init__()
         self.loss_type = loss_type
+
         if loss_type == "mse":
-            self.loss_fn = MultiDimNaNTolerantMSELoss()
+            self.loss_fn = NaNTolerantMSELoss()
         elif loss_type == "l1":
             self.loss_fn = MultiDimNaNTolerantL1Loss()
+        elif loss_type == "quantile":
+            if quantile_spacing is None:
+                raise ValueError("quantile_spacing must be provided for quantile loss")
+            quantiles = torch.arange(quantile_spacing, 1.0, quantile_spacing).tolist()
+            self.loss_fn = NaNTolerantQuantileLoss(quantiles=quantiles)
         else:
             raise ValueError(f"Unsupported loss type: {loss_type}")
 
         # Register weights as a buffer so it's automatically moved with the module
-        self.register_buffer(
-            "weights", torch.ones(2) if weights is None else weights / weights.sum()
-        )
+        if weights is None:
+            weights = torch.ones(2)
+        self.register_buffer("weights", weights / weights.sum())
 
     def forward(self, y_pred, y_true):
         """
         Compute weighted loss while handling NaN values.
         """
-        # Get device from input
         device = y_pred.device
-
-        # Ensure inputs are on same device
-        y_pred = y_pred.to(device)
         y_true = y_true.to(device)
-        weights = self.weights.to(device)
 
-        # Compute per-dimension losses and get validity mask
-        dim_losses, mask = self.loss_fn(y_pred, y_true)
+        # Create mask for valid (non-NaN) values
+        mask = ~torch.isnan(y_true)
+        valid_dims = mask.any(dim=0)
 
-        # Ensure all intermediate computations stay on device
-        valid_dims = mask.any(dim=0).to(device)
-        weights = weights * valid_dims
+        # Adjust weights
+        weights = self.weights * valid_dims
         weight_sum = weights.sum().clamp(min=1e-8)
 
-        # Compute weighted average loss (all tensors now on same device)
+        # Initialize list to store per-dimension losses
+        dim_losses = []
+
+        # Compute loss for each dimension
+        for dim in range(y_true.shape[1]):
+            # Get mask for this dimension
+            dim_mask = mask[:, dim]
+
+            if not dim_mask.any():
+                # Create zero tensor with consistent shape
+                dim_losses.append(torch.tensor([0.0], device=device))
+                continue
+
+            # Get valid values for this dimension
+            valid_preds = y_pred[dim_mask, dim]
+            valid_targets = y_true[dim_mask, dim]
+
+            # Compute loss based on type
+            if self.loss_type == "quantile":
+                valid_preds = valid_preds.unsqueeze(-1)
+                valid_targets = valid_targets.unsqueeze(-1)
+                dim_loss = self.loss_fn(valid_preds, valid_targets)
+                # Ensure consistent shape
+                dim_loss = dim_loss.reshape(1)
+            else:
+                valid_preds = valid_preds.unsqueeze(-1)
+                valid_targets = valid_targets.unsqueeze(-1)
+                dim_loss = self.loss_fn(valid_preds, valid_targets)[0].squeeze()
+                # Ensure consistent shape
+                dim_loss = dim_loss.reshape(1)
+
+            dim_losses.append(dim_loss)
+
+        # Stack dimension losses - now all tensors should have shape [1]
+        dim_losses = torch.stack(dim_losses)
+
+        # Compute weighted average loss
         weighted_loss = (dim_losses * weights).sum() / weight_sum
 
-        return weighted_loss.to(device), dim_losses.to(device)
+        return weighted_loss, dim_losses.squeeze()
+
+
+#############
 
 
 class MultiDimNaNTolerantCELoss(nn.Module):
@@ -392,7 +624,6 @@ class CombinedOrdinalCELoss(nn.Module):
         num_tasks: int = 2,
         weights: Optional[torch.Tensor] = None,
     ):
-        
         """
         Args:
             num_classes: Number of ordinal classes per task
@@ -442,22 +673,11 @@ class CombinedOrdinalCELoss(nn.Module):
 
 
 class CategoricalEntropyRegLoss(nn.Module):
-    """
-    Entropy regularization loss for categorical targets that encourages feature diversity
-    while maintaining categorical structure through tightness.
-
-    Works with both hard categorical (one-hot) and soft categorical (probability distribution) targets.
-    """
+    """Entropy regularization loss that works with both soft and one-hot categorical targets."""
 
     def __init__(
         self, lambda_d: float = 0.1, lambda_t: float = 0.1, num_classes: int = 32
     ):
-        """
-        Args:
-            lambda_d: Weight for diversity loss term (Ld)
-            lambda_t: Weight for tightness loss term (Lt)
-            num_classes: Number of classes per target dimension (e.g. num_bins)
-        """
         super().__init__()
         self.lambda_d = lambda_d
         self.lambda_t = lambda_t
@@ -469,73 +689,77 @@ class CategoricalEntropyRegLoss(nn.Module):
         return (diff**2).sum(dim=-1)  # [N, N]
 
     def compute_target_distances(self, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Compute distances between categorical targets.
-        Works with both one-hot and soft targets.
-        """
-        # For each target dimension, compute KL divergence
-        target_dists = []
+        """Compute KL divergence distances between probability distributions."""
+        # Add small epsilon to avoid numerical issues
+        eps = 1e-10
         num_dims = targets.shape[1] // self.num_classes
+        target_dists = []
 
         for i in range(num_dims):
             start_idx = i * self.num_classes
             end_idx = (i + 1) * self.num_classes
             # Get probabilities for this dimension
             probs = targets[:, start_idx:end_idx]
-            # Add small epsilon to avoid log(0)
-            probs = probs + 1e-10
+
+            # For categorical (one-hot), this just ensures sum is 1
+            # For soft labels, this normalizes the probabilities
+            probs = probs + eps
             probs = probs / probs.sum(dim=1, keepdim=True)
 
-            # Compute KL divergence between all pairs
+            # Compute symmetric KL divergence between all pairs
             kl_div = torch.zeros(
                 (probs.shape[0], probs.shape[0]), device=targets.device
             )
             for j in range(probs.shape[0]):
                 p = probs[j : j + 1]  # [1, num_classes]
                 q = probs  # [N, num_classes]
-                kl = (p * (torch.log(p) - torch.log(q))).sum(dim=1)
-                kl_div[j] = kl
+                # Symmetric KL divergence
+                kl_pq = (p * (torch.log(p) - torch.log(q))).sum(dim=1)
+                kl_qp = (q * (torch.log(q) - torch.log(p.expand_as(q)))).sum(dim=1)
+                kl_div[j] = (kl_pq + kl_qp) / 2
 
             target_dists.append(kl_div)
 
         # Average across dimensions
         return torch.stack(target_dists).mean(dim=0)
 
-    def compute_centers(self, features: torch.Tensor, targets: torch.Tensor):
-        """Compute feature centers for categorical targets."""
+    def compute_centers(self, features: torch.Tensor, targets: torch.Tensor) -> dict:
+        """Compute weighted feature centers for each class in each dimension."""
         centers = {}
         num_dims = targets.shape[1] // self.num_classes
 
-        # Get class indices for each dimension
-        class_indices = []
-        for i in range(num_dims):
-            start_idx = i * self.num_classes
-            end_idx = (i + 1) * self.num_classes
-            probs = targets[:, start_idx:end_idx]
-            # For soft targets, take argmax
-            class_idx = torch.argmax(probs, dim=1)
-            class_indices.append(class_idx)
+        for dim in range(num_dims):
+            centers[dim] = {}
+            start_idx = dim * self.num_classes
+            end_idx = (dim + 1) * self.num_classes
 
-        class_indices = torch.stack(class_indices, dim=1)  # [N, num_dims]
+            # Get probabilities for this dimension
+            probs = targets[:, start_idx:end_idx]  # [N, num_classes]
 
-        # Compute centers for each unique combination of classes
-        for i in range(features.size(0)):
-            target_key = tuple(class_indices[i].cpu().numpy())
-            if target_key not in centers:
-                # Find features with same class combination
-                same_target = torch.all(class_indices == class_indices[i], dim=1)
-                if same_target.sum() > 0:
-                    centers[target_key] = features[same_target].mean(dim=0)
+            # For each class, compute weighted center
+            for class_idx in range(self.num_classes):
+                # Use class probabilities as weights
+                weights = probs[:, class_idx]  # [N]
+
+                # Only compute center if we have non-zero weights
+                if weights.sum() > 0:
+                    # Normalize weights
+                    weights = weights / weights.sum()
+                    # Compute weighted center
+                    center = (features * weights.unsqueeze(1)).sum(dim=0)
+                    centers[dim][class_idx] = center
 
         return centers
 
     def forward(
         self, features: torch.Tensor, targets: torch.Tensor, mask: torch.Tensor
-    ):
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
+        Forward pass computing diversity and tightness losses.
+
         Args:
-            features: Node features before prediction head [batch_size, feature_dim]
-            targets: Categorical target values [batch_size, num_dims * num_classes]
+            features: Node features [batch_size, feature_dim]
+            targets: Probability distributions [batch_size, num_dims * num_classes]
             mask: Valid sample mask [batch_size]
         """
         device = features.device
@@ -565,17 +789,26 @@ class CategoricalEntropyRegLoss(nn.Module):
         # Compute tightness loss (Lt)
         centers = self.compute_centers(valid_features, valid_targets)
         tightness_losses = []
+        num_dims = valid_targets.shape[1] // self.num_classes
 
-        for i in range(valid_features.size(0)):
-            target_key = tuple(
-                torch.argmax(valid_targets[i].view(-1, self.num_classes), dim=1)
-                .cpu()
-                .numpy()
-            )
+        # Compute weighted tightness loss for each sample
+        for dim in range(num_dims):
+            start_idx = dim * self.num_classes
+            end_idx = (dim + 1) * self.num_classes
+            probs = valid_targets[:, start_idx:end_idx]  # [N, num_classes]
 
-            if target_key in centers:
-                diff = valid_features[i] - centers[target_key]
-                tightness_losses.append((diff**2).sum())
+            for i in range(valid_features.size(0)):
+                sample_losses = []
+                # Weight the distance to each center by the sample's probability for that class
+                for class_idx in range(self.num_classes):
+                    if class_idx in centers[dim]:
+                        diff = valid_features[i] - centers[dim][class_idx]
+                        class_prob = probs[i, class_idx]
+                        if class_prob > 0:
+                            sample_losses.append(class_prob * (diff**2).sum())
+
+                if sample_losses:
+                    tightness_losses.append(torch.stack(sample_losses).sum())
 
         if tightness_losses:
             tightness_loss = torch.stack(tightness_losses).mean()
@@ -611,7 +844,7 @@ class MseCategoricalEntropyRegLoss(nn.Module):
         self.register_buffer("weights", weights / weights.sum())
 
         # Initialize MSE and entropy components
-        self.mse_loss = MultiDimNaNTolerantMSELoss()
+        self.mse_loss = NaNTolerantMSELoss()
         self.entropy_reg = CategoricalEntropyRegLoss(
             lambda_d=lambda_d, lambda_t=lambda_t, num_classes=num_classes
         )

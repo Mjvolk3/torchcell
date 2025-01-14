@@ -11,6 +11,7 @@ from collections.abc import Callable
 import lmdb
 import pandas as pd
 import networkx as nx
+import hypernetx as hnx
 import numpy as np
 from typing import Any
 from pydantic import field_validator
@@ -18,7 +19,8 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from torch_geometric.utils import add_remaining_self_loops
-from torch_geometric.data import HeteroData
+# from torch_geometric.data import HeteroData
+from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datamodels import Converter
 from torchcell.data.deduplicate import Deduplicator
@@ -79,7 +81,9 @@ def create_embedding_graph(
 # @profile
 # TODO we could remove is_add_remaining_self_loops and put it in transforms
 def to_cell_data(
-    graphs: dict[str, nx.Graph], is_add_remaining_self_loops: bool = True
+    graphs: dict[str, nx.Graph],
+    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
+    is_add_remaining_self_loops: bool = True,
 ) -> HeteroData:
     hetero_data = HeteroData()
 
@@ -134,6 +138,59 @@ def to_cell_data(
                 (hetero_data["gene"].x, embeddings), dim=1
             )
 
+    # Process each incidence graph. For the case of metabolism we need to add the metabolite nodes and edges are sets of genes so not sure how to handle this. For now we could just call them genes as opposed to gene. or reaction-genes.
+    # Process hypergraph - add metabolites as nodes
+    incidence_graphs = incidence_graphs if incidence_graphs is not None else []
+    if "metabolism" in incidence_graphs:
+        hypergraph = incidence_graphs["metabolism"]
+
+        # Get unique metabolites and create mapping
+        metabolites = sorted(
+            list({m for edge_id in hypergraph.edges for m in hypergraph.edges[edge_id]})
+        )
+        metabolite_mapping = {m: idx for idx, m in enumerate(metabolites)}
+
+        hetero_data["metabolite"].num_nodes = len(metabolites)
+        hetero_data["metabolite"].node_ids = metabolites
+
+        # Build hyperedge index and stoichiometry in PyG format
+        node_indices = []
+        edge_indices = []
+        stoich_coeffs = []
+        reaction_to_genes = {}
+
+        for edge_idx, edge_id in enumerate(hypergraph.edges):
+            edge = hypergraph.edges[edge_id]
+            # Store gene associations
+            if "genes" in edge.properties:
+                reaction_to_genes[edge_idx] = list(edge.properties["genes"])
+
+            # For each metabolite in this reaction (hyperedge)
+            for m in edge:
+                # Add node index
+                node_indices.append(metabolite_mapping[m])
+                # Add edge index (which reaction this metabolite belongs to)
+                edge_indices.append(edge_idx)
+                # Add corresponding stoichiometry using your notation
+                stoich_coeffs.append(edge.properties[f"stoich_coefficient-{m}"])
+
+        # Stack indices to create hyperedge_index
+        hyperedge_index = torch.stack(
+            [
+                torch.tensor(node_indices, dtype=torch.long),
+                torch.tensor(edge_indices, dtype=torch.long),
+            ]
+        )
+
+        stoich_coeffs = torch.tensor(stoich_coeffs, dtype=torch.float)
+
+        edge_type = ("metabolite", "reaction_genes", "metabolite")
+        hetero_data[edge_type].hyperedge_index = hyperedge_index
+        hetero_data[edge_type].stoichiometry = stoich_coeffs
+        hetero_data[edge_type].num_edges = len(hyperedge_index[1, :].unique())
+        hetero_data[edge_type].reaction_to_genes = reaction_to_genes
+        # hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
+
     return hetero_data
 
 
@@ -141,7 +198,7 @@ def to_cell_data(
 def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     """
     Create a graph where nodes are gene names from the GeneSet.
-    Initially, this graph will have no edges.
+    Initially, this graph will ha   ve no edges.
     """
     G = nx.Graph()
     for gene_name in gene_set:
@@ -165,7 +222,7 @@ class GraphProcessor(ABC):
 
 class SubgraphRepresentation(GraphProcessor):
     """
-    Processes gene knockout data by removing perturbed nodes from the graph, keeping 
+    Processes gene knockout data by removing perturbed nodes from the graph, keeping
     track of their features, and updating edge connectivity.
 
     Node Transforms:
@@ -176,6 +233,7 @@ class SubgraphRepresentation(GraphProcessor):
         E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
         where |E| is original edge count, |E'| is edges after removing perturbed nodes
     """
+
     def process(
         self,
         cell_graph: HeteroData,
@@ -440,6 +498,135 @@ class NodeAugmentation(GraphProcessor):
         return processed_graph
 
 
+class Identity(GraphProcessor):
+    """
+    Processes graph data by preserving the original graph structure and storing perturbation
+    and phenotype data alongside it for later processing.
+
+    This processor:
+    1. Keeps the original graph structure intact
+    2. Stores perturbation information separately
+    3. Records phenotype data without modifying the graph
+    4. Can be used as a base for applying perturbations later in the pipeline
+
+    Attributes remain unchanged:
+        - Node features: X ∈ ℝ^(N×d) stays as X ∈ ℝ^(N×d)
+        - Edge structure: E ∈ ℤ^(2×|E|) stays as E ∈ ℤ^(2×|E|)
+    """
+
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
+
+        # Create a new HeteroData object to store the processed graph
+        processed_graph = HeteroData()
+
+        # Copy the original graph structure and features
+        processed_graph["gene"].x = cell_graph["gene"].x
+        processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
+        processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
+
+        # Store perturbation information
+        perturbed_genes = set()
+        for item in data:
+            if "experiment" not in item or "experiment_reference" not in item:
+                raise ValueError(
+                    "Each item in data must contain both 'experiment' and "
+                    "'experiment_reference' keys"
+                )
+            perturbed_genes.update(
+                pert.systematic_gene_name
+                for pert in item["experiment"].genotype.perturbations
+            )
+
+        # Store perturbation information in the graph
+        processed_graph["gene"].perturbed_genes = list(perturbed_genes)
+        processed_graph["gene"].perturbation_indices = torch.tensor(
+            [cell_graph["gene"].node_ids.index(nid) for nid in perturbed_genes],
+            dtype=torch.long,
+        )
+
+        # Add phenotype fields
+        phenotype_fields = []
+        for phenotype in phenotype_info:
+            phenotype_fields.append(phenotype.model_fields["label_name"].default)
+            phenotype_fields.append(
+                phenotype.model_fields["label_statistic_name"].default
+            )
+
+        # Add experiment data
+        for field in phenotype_fields:
+            field_values = []
+            for item in data:
+                value = getattr(item["experiment"].phenotype, field, None)
+                if value is not None:
+                    field_values.append(value)
+            if field_values:
+                processed_graph["gene"][field] = torch.tensor(field_values)
+            else:
+                processed_graph["gene"][field] = torch.tensor([float("nan")])
+
+        # Copy edge information
+        for edge_type in cell_graph.edge_types:
+            if edge_type[1] in ["physical_interaction", "regulatory_interaction"]:
+                processed_graph[edge_type].edge_index = cell_graph[edge_type].edge_index
+                processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
+
+        # Copy over all metabolite information if it exists
+        print("Debug - Cell graph node types:", cell_graph.node_types)
+        print("Debug - Cell graph edge types:", cell_graph.edge_types)
+
+        if "metabolite" in cell_graph.node_types:
+            print("Debug - Found metabolite node type")
+            processed_graph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
+            processed_graph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
+
+            # Copy metabolite reaction edges and data if they exist
+            edge_type = ("metabolite", "reaction_genes", "metabolite")
+            if any(e_type == edge_type for e_type in cell_graph.edge_types):
+                print("Debug - Found metabolite reaction edge type")
+                # Copy hypergraph structure
+                processed_graph[edge_type].hyperedge_index = cell_graph[
+                    edge_type
+                ].hyperedge_index
+                processed_graph[edge_type].stoichiometry = cell_graph[
+                    edge_type
+                ].stoichiometry
+                processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
+
+                # Preserve original reaction_to_genes mapping
+                processed_graph[edge_type].reaction_to_genes = cell_graph[
+                    edge_type
+                ].reaction_to_genes
+
+                # Create reaction_to_genes_indices mapping
+                node_id_to_idx = {
+                    nid: idx for idx, nid in enumerate(cell_graph["gene"].node_ids)
+                }
+                reaction_to_genes_indices = {}
+
+                for reaction_idx, genes in cell_graph[
+                    edge_type
+                ].reaction_to_genes.items():
+                    gene_indices = []
+                    for gene in genes:
+                        # Get index if gene exists in node_ids, else use -1 (will be converted to nan)
+                        gene_idx = node_id_to_idx.get(gene, -1)
+                        gene_indices.append(gene_idx)
+                    reaction_to_genes_indices[reaction_idx] = gene_indices
+
+                processed_graph[edge_type].reaction_to_genes_indices = (
+                    reaction_to_genes_indices
+                )
+
+        return processed_graph
+
+
 def parse_genome(genome) -> ParsedGenome:
     if genome is None:
         return None
@@ -470,6 +657,7 @@ class Neo4jCellDataset(Dataset):
         query: str = None,
         gene_set: GeneSet = None,
         graphs: dict[str, nx.Graph] = None,
+        incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
         graph_processor: GraphProcessor = None,
         converter: Optional[Type[Converter]] = None,
@@ -537,7 +725,7 @@ class Neo4jCellDataset(Dataset):
                 # Integrate node embeddings into graphs
 
         # cell graph used in get item
-        self.cell_graph = to_cell_data(graphs)
+        self.cell_graph = to_cell_data(graphs, incidence_graphs)
 
         # Clean up hanging env, for multiprocessing
         self.env = None
@@ -1145,6 +1333,94 @@ def main():
     #     break
 
 
+def main_incidence():
+    # genome
+    import os.path as osp
+    from dotenv import load_dotenv
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
+    from torchcell.data import MeanExperimentDeduplicator
+    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    ### Add Embeddings
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    with open("gene_set.json", "w") as f:
+        json.dump(list(genome.gene_set), f)
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        incidence_graphs={"metabolism": YeastGEM().reaction_map},
+        node_embeddings={
+            "fudt_3prime": fudt_3prime_dataset,
+            "fudt_5prime": fudt_5prime_dataset,
+        },
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=Identity(),
+    )
+    print(len(dataset))
+    dataset.label_df
+    # Data module testing
+
+    # print(dataset[7])
+    print(dataset[183])
+    dataset.close_lmdb()
+    # print(dataset[10000])
+
+    # Assuming you have already created your dataset and CellDataModule
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=2,
+        random_seed=42,
+        num_workers=4,
+        pin_memory=False,
+    )
+    cell_data_module.setup()
+
+    for batch in tqdm(cell_data_module.train_dataloader()):
+        break
+
+
 def main_transform():
     """Test the label binning transforms on the dataset with proper initialization."""
     import os.path as osp
@@ -1562,5 +1838,6 @@ def main_transform_dense():
 
 
 if __name__ == "__main__":
-    main_transform_dense()
+    # main_transform_dense()
     # main()
+    main_incidence()

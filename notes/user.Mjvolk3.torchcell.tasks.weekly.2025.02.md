@@ -2,7 +2,7 @@
 id: ngv3l4ot5sgfmxnk5mlvqid
 title: '02'
 desc: ''
-updated: 1736546061111
+updated: 1736718012070
 created: 1736127191615
 ---
 
@@ -35,32 +35,6 @@ Run crashes after 15 hours. From a quick look there aren't any obvious memory ho
 
 ## 2025.01.10
 
-- [ ] Fix current failure in trying to overcome memory hog.
+- [x] Fix current failure in trying to overcome memory hog. → Running experiment on `Delta`
 - [x] Adjust `to_cell_data` to handle incidence graphs
-- [ ] Write new phenotype processor to handle message passing on multigraph
-
-- [ ]
-
-***
-
-- [ ] Implement intact and pert phenotype processor.
-- [ ] Synthesize Results in report. Discussion on consideration of use alternative methods like mse plus a divergence measure.
-- [ ] Run metabolism label split regression run
-- [ ] Information Diff., WL Kernel
-
-## Notes on Metabolism
-
-- Can get Gibbs Free Energy of reaction from [MetaCyc](https://biocyc.org/reaction?orgid=META&id=D-LACTATE-DEHYDROGENASE-CYTOCHROME-RXN)
-- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.met_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
-
-## Notes Related to Dango
-
-Breakout into specific notes on Dango.
-
-- [ ] Verify
-
-> Pearson correlation between the trigenic interaction scores of two individual replicates is around 0.59, which is much lower than the Pearson correlation between the digenic interaction score of two replicates from the same data source (0.88). ([Zhang et al., 2020, p. 3](zotero://select/library/items/PJFDVT8Y)) ([pdf](zotero://open-pdf/library/items/AFBC5E89?page=3&annotation=D8D949VF))
-
-- [ ] Plot P-Values of current dataset to compare to predicted interactions. Can do for both digenic and trigenic interactions. Do this over queried datasets.
-
-- [ ] What is purpose of the pretraining portion? Why not just take embeddings and put into this hypergraph embedding portion?
+- [x] Write new phenotype processor to handle message passing on multigraph → `Identity()`

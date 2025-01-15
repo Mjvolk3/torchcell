@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # mode: offline # disabled, offline, online
-  project: torchcell_003-fit-int_hetero_gnn_pool_5e5 # torchcell_test_cell_sagpool
+  project: torchcell_003-fit-int_hetero_gnn_pool_5e4 # torchcell_test_cell_sagpool
   tags: []
 
 cell_dataset:
@@ -25,7 +25,7 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e5 #5e4 #7e3
+  perturbation_subset_size: 5e4 #5e4 #7e3
   batch_size: 64
   num_workers: 12
   pin_memory: true

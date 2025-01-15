@@ -79,7 +79,7 @@ parameters:
       accelerator:
         values: [gpu]
       devices:
-        values: [auto]
+        values: [1]
 
   model:
     parameters:

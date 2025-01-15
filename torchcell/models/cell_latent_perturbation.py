@@ -1421,10 +1421,11 @@ def main(device="cuda"):
         print(f"{component}: {count:,} parameters")
 
     # Training setup
+    loss_type="l1"
     criterion = CombinedRegressionLoss(
-        loss_type="logcosh", weights=torch.ones(2, device=device)
+        loss_type=loss_type, weights=torch.ones(2, device=device)
     )
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.000001)
 
     # Get targets and move to device
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
@@ -1433,7 +1434,7 @@ def main(device="cuda"):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 2
+    num_epochs = 1000
 
     try:
         for epoch in range(num_epochs):
@@ -1491,7 +1492,7 @@ def main(device="cuda"):
     plt.savefig(
         osp.join(
             ASSET_IMAGES_DIR,
-            f"cell_latent_perturbation_training_loss_{timestamp()}.png",
+            f"cell_latent_perturbation_training_loss_{loss_type}_{timestamp()}.png",
         )
     )
     plt.close()
@@ -1499,7 +1500,7 @@ def main(device="cuda"):
     # Move predictions to CPU for correlation plotting
     correlation_save_path = osp.join(
         ASSET_IMAGES_DIR,
-        f"cell_latent_perturbation_correlation_plots_{timestamp()}.png",
+        f"cell_latent_perturbation_correlation_plots_{loss_type}_{timestamp()}.png",
     )
     plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
 

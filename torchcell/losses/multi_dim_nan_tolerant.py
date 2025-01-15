@@ -55,7 +55,7 @@ class NaNTolerantL1Loss(nn.Module):
         ), "Predictions and targets must have the same shape"
 
         # Create mask for non-NaN values
-        mask = ~torch.isfloat("nan")(y_true)
+        mask = ~torch.isnan(y_true)
 
         # Count valid samples per dimension
         n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
@@ -74,6 +74,74 @@ class NaNTolerantL1Loss(nn.Module):
         dim_means = dim_losses / n_valid
 
         return dim_means, mask
+
+
+class NaNTolerantHuberLoss(nn.Module):
+    def __init__(self, delta=1.0):
+        """
+        Initialize Huber loss with NaN handling.
+
+        Args:
+            delta (float): Threshold where the loss transitions from quadratic to linear.
+                         Default is 1.0
+        """
+        super(NaNTolerantHuberLoss, self).__init__()
+        self.delta = delta
+
+    def forward(self, y_pred, y_true):
+        """
+        Compute Huber loss while properly handling NaN values.
+
+        Args:
+            y_pred (torch.Tensor): Predictions [batch_size, num_dims]
+            y_true (torch.Tensor): Ground truth [batch_size, num_dims]
+
+        Returns:
+            tuple: (dim_means, mask) - Loss per dimension and validity mask
+        """
+        device = y_pred.device
+
+        # Ensure tensors have the same shape and device
+        assert (
+            y_pred.shape == y_true.shape
+        ), "Predictions and targets must have the same shape"
+        y_true = y_true.to(device)
+
+        # Create mask for non-NaN values
+        mask = ~torch.isnan(y_true)
+
+        # Count valid samples per dimension
+        n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
+
+        # Zero out predictions where target is NaN
+        y_pred_masked = y_pred * mask
+        y_true_masked = y_true.masked_fill(~mask, 0)
+
+        # Compute absolute error
+        abs_error = torch.abs(y_pred_masked - y_true_masked)
+
+        # Apply Huber loss formula
+        quadratic_mask = abs_error <= self.delta
+        linear_mask = ~quadratic_mask
+
+        # Quadratic portion: 0.5 * error^2
+        quadratic_loss = 0.5 * abs_error.pow(2) * quadratic_mask.float()
+
+        # Linear portion: delta * error - 0.5 * delta^2
+        linear_loss = (
+            self.delta * abs_error - 0.5 * self.delta**2
+        ) * linear_mask.float()
+
+        # Combine losses
+        huber_loss = quadratic_loss + linear_loss
+
+        # Sum errors for each dimension (only valid elements contribute)
+        dim_losses = huber_loss.sum(dim=0)
+
+        # Compute mean loss per dimension
+        dim_means = dim_losses / n_valid
+
+        return dim_means.to(device), mask.to(device)
 
 
 class NaNTolerantLogCoshLoss(nn.Module):
@@ -345,7 +413,9 @@ class WeightedDistLoss(nn.Module):
 
 
 class CombinedRegressionLoss(nn.Module):
-    def __init__(self, loss_type="mse", weights=None, quantile_spacing=None):
+    def __init__(
+        self, loss_type="mse", weights=None, quantile_spacing=None, huber_delta=1.0
+    ):
         super(CombinedRegressionLoss, self).__init__()
         self.loss_type = loss_type
 
@@ -355,6 +425,8 @@ class CombinedRegressionLoss(nn.Module):
             self.loss_fn = NaNTolerantL1Loss()
         elif loss_type == "logcosh":
             self.loss_fn = NaNTolerantLogCoshLoss()
+        elif loss_type == "huber":
+            self.loss_fn = NaNTolerantHuberLoss(delta=huber_delta)
         elif loss_type == "quantile":
             if quantile_spacing is None:
                 raise ValueError("quantile_spacing must be provided for quantile loss")
@@ -970,49 +1042,89 @@ class MseCategoricalEntropyRegLoss(nn.Module):
 #     print(f"Total loss: {total_loss}")
 #     print(f"Dimension losses: {dim_losses}")
 
+# if __name__ == "__main__":
+#     torch.manual_seed(42)
+
+#     print("Testing Ordinal Loss with Monotonic Thresholds:")
+#     for num_classes in [2, 4, 8]:
+#         print(f"\nTesting with {num_classes} classes:")
+
+#         batch_size = 4
+#         num_tasks = 2
+
+#         # Create test data
+#         logits = torch.randn(batch_size, num_tasks * (num_classes - 1)) * 0.5
+#         targets = torch.zeros(batch_size, num_tasks * num_classes)
+
+#         # Create ordered targets
+#         for i in range(batch_size):
+#             for task in range(num_tasks):
+#                 class_idx = min(i, num_classes - 1)
+#                 start_idx = task * num_classes
+#                 targets[i, start_idx + class_idx] = 1.0
+
+#         # Add NaN values
+#         targets[1, num_classes:] = float("nan")
+#         targets[2, num_classes:] = float("nan")
+
+#         # Test loss
+#         loss_fn = CombinedOrdinalCELoss(num_classes=num_classes, num_tasks=num_tasks)
+#         total_loss, dim_losses = loss_fn(logits, targets)
+
+#         print(f"\nLoss values:")
+#         print(f"Total loss: {total_loss:.4f}")
+#         print(f"Dimension losses: {dim_losses}")
+
+#         # Verify monotonicity
+#         params = list(loss_fn.parameters())
+#         monotonic_thresholds = loss_fn.loss_fn.thresholds
+#         raw_thresholds = loss_fn.loss_fn.raw_thresholds
+
+#         print("\nThreshold Information:")
+#         print(f"Raw parameters:\n{raw_thresholds}")
+#         print(f"Monotonic thresholds:\n{monotonic_thresholds}")
+
+#         # Verify monotonicity explicitly
+#         diffs = monotonic_thresholds[:, 1:] - monotonic_thresholds[:, :-1]
+#         print(f"Consecutive differences:\n{diffs}")
+#         print(f"All thresholds monotonically increasing: {torch.all(diffs > 0).item()}")
+
 if __name__ == "__main__":
     torch.manual_seed(42)
+    print("\nTesting LogCosh Loss:")
 
-    print("Testing Ordinal Loss with Monotonic Thresholds:")
-    for num_classes in [2, 4, 8]:
-        print(f"\nTesting with {num_classes} classes:")
+    # Create test data
+    batch_size = 4
+    num_tasks = 2
+    y_pred = torch.tensor([[1.0, 2.0], [0.5, 1.5], [2.0, 3.0], [1.5, 2.5]])
 
-        batch_size = 4
-        num_tasks = 2
+    y_true = torch.tensor(
+        [
+            [1.2, 2.1],
+            [0.4, float("nan")],  # Add NaN to test NaN handling
+            [float("nan"), 3.2],
+            [1.4, 2.3],
+        ]
+    )
 
-        # Create test data
-        logits = torch.randn(batch_size, num_tasks * (num_classes - 1)) * 0.5
-        targets = torch.zeros(batch_size, num_tasks * num_classes)
+    # Initialize loss function
+    loss_fn = CombinedRegressionLoss(loss_type="logcosh")
 
-        # Create ordered targets
-        for i in range(batch_size):
-            for task in range(num_tasks):
-                class_idx = min(i, num_classes - 1)
-                start_idx = task * num_classes
-                targets[i, start_idx + class_idx] = 1.0
+    # Compute loss
+    total_loss, dim_losses = loss_fn(y_pred, y_true)
 
-        # Add NaN values
-        targets[1, num_classes:] = float("nan")
-        targets[2, num_classes:] = float("nan")
+    print(f"\nInput tensors:")
+    print(f"Predictions:\n{y_pred}")
+    print(f"Targets:\n{y_true}")
+    print(f"\nLoss values:")
+    print(f"Total loss: {total_loss:.4f}")
+    print(f"Dimension losses: {dim_losses}")
 
-        # Test loss
-        loss_fn = CombinedOrdinalCELoss(num_classes=num_classes, num_tasks=num_tasks)
-        total_loss, dim_losses = loss_fn(logits, targets)
+    # Test with custom weights
+    weights = torch.tensor([0.7, 0.3])
+    weighted_loss_fn = CombinedRegressionLoss(loss_type="logcosh", weights=weights)
+    weighted_total_loss, weighted_dim_losses = weighted_loss_fn(y_pred, y_true)
 
-        print(f"\nLoss values:")
-        print(f"Total loss: {total_loss:.4f}")
-        print(f"Dimension losses: {dim_losses}")
-
-        # Verify monotonicity
-        params = list(loss_fn.parameters())
-        monotonic_thresholds = loss_fn.loss_fn.thresholds
-        raw_thresholds = loss_fn.loss_fn.raw_thresholds
-
-        print("\nThreshold Information:")
-        print(f"Raw parameters:\n{raw_thresholds}")
-        print(f"Monotonic thresholds:\n{monotonic_thresholds}")
-
-        # Verify monotonicity explicitly
-        diffs = monotonic_thresholds[:, 1:] - monotonic_thresholds[:, :-1]
-        print(f"Consecutive differences:\n{diffs}")
-        print(f"All thresholds monotonically increasing: {torch.all(diffs > 0).item()}")
+    print(f"\nWeighted loss values (weights={weights}):")
+    print(f"Total weighted loss: {weighted_total_loss:.4f}")
+    print(f"Weighted dimension losses: {weighted_dim_losses}")

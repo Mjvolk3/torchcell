@@ -508,7 +508,7 @@ class NodeAugmentation(GraphProcessor):
         return processed_graph
 
 
-class Identity(GraphProcessor):
+class Unperturbed(GraphProcessor):
     """
     Processes graph data by preserving the original graph structure and storing perturbation
     and phenotype data alongside it for later processing.

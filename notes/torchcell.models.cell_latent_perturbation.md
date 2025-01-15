@@ -2,7 +2,7 @@
 id: ag34jzhlovb8gvtskj3vtao
 title: Cell_latent_perturbation
 desc: ''
-updated: 1736897288517
+updated: 1736901336982
 created: 1736717938501
 ---
 
@@ -298,7 +298,7 @@ HeteroData(
     num_edges=143824,
   },
   (gene, regulatory_interaction, gene)={
-    edge_index=[2, 16061],
+    edge_index=[2, 16061], ^zfasr72w1mhv
     num_edges=16061,
   },
   (metabolite, reaction_genes, metabolite)={

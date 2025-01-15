@@ -1065,14 +1065,14 @@ class CellLatentPerturbation(nn.Module):
             intact_emb = embeddings[intact_masks[i]]
             pert_emb = embeddings[pert_masks[i]]
 
-            print(f"\nBatch {i} split details:")
-            print(f"  Total nodes: {len(whole_emb)}")
-            print(f"  Intact nodes: {len(intact_emb)}")
-            print(f"  Perturbed nodes: {len(pert_emb)}")
+            # print(f"\nBatch {i} split details:")
+            # print(f"  Total nodes: {len(whole_emb)}")
+            # print(f"  Intact nodes: {len(intact_emb)}")
+            # print(f"  Perturbed nodes: {len(pert_emb)}")
 
             if len(pert_emb) > 0:
                 pert_indices = torch.where(pert_masks[i])[0] - starts[i]
-                print(f"  Perturbation indices: {pert_indices.tolist()}")
+                # print(f"  Perturbation indices: {pert_indices.tolist()}")
 
             embeddings_split.append((whole_emb, intact_emb, pert_emb))
 
@@ -1129,11 +1129,11 @@ class CellLatentPerturbation(nn.Module):
         combined_embeddings = self.combiner(
             torch.cat([gene_embeddings, metabolism_embeddings], dim=-1)
         )
-        print("Combined embeddings shape:", combined_embeddings.shape)
+        # print("Combined embeddings shape:", combined_embeddings.shape)
 
         # Split embeddings for each batch item
         embeddings_split = self._split_embeddings(combined_embeddings, batch)
-        print(f"Number of splits: {len(embeddings_split)}")
+        # print(f"Number of splits: {len(embeddings_split)}")
 
         # Process embeddings using optimized batch processing
         z_whole, z_intact, z_pert = self._process_batch_embeddings(embeddings_split)
@@ -1199,7 +1199,7 @@ def load_sample_data_batch():
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import Identity
+    from torchcell.data.neo4j_cell import Unperturbed
     from tqdm import tqdm
     from torchcell.metabolism.yeast_GEM import YeastGEM
 
@@ -1232,7 +1232,7 @@ def load_sample_data_batch():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=Identity(),
+        graph_processor=Unperturbed(),
     )
     seed = 42
     # Base Module
@@ -1332,7 +1332,7 @@ def plot_correlations(predictions, true_values, save_path):
     plt.close()
 
 
-def main(device='cuda'):
+def main(device="cuda"):
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
@@ -1342,10 +1342,10 @@ def main(device='cuda'):
     import torch
 
     # Check if CUDA is available when device='cuda' is requested
-    if device == 'cuda' and not torch.cuda.is_available():
+    if device == "cuda" and not torch.cuda.is_available():
         print("CUDA is not available. Falling back to CPU.")
-        device = 'cpu'
-    
+        device = "cpu"
+
     device = torch.device(device)
     print(f"\nUsing device: {device}")
 
@@ -1356,7 +1356,7 @@ def main(device='cuda'):
 
     # Load sample data including metabolism
     batch, max_num_nodes = load_sample_data_batch()
-    
+
     # Move batch to device
     batch = batch.to(device)
 
@@ -1410,7 +1410,9 @@ def main(device='cuda'):
         norm="layer",
         dropout=0.1,
         num_nodes=max_num_nodes,
-    ).to(device)  # Move model to device
+    ).to(
+        device
+    )  # Move model to device
 
     print("\nModel architecture:")
     print(model)
@@ -1419,7 +1421,9 @@ def main(device='cuda'):
         print(f"{component}: {count:,} parameters")
 
     # Training setup
-    criterion = CombinedRegressionLoss(loss_type="mse", weights=torch.ones(2, device=device))
+    criterion = CombinedRegressionLoss(
+        loss_type="logcosh", weights=torch.ones(2, device=device)
+    )
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Get targets and move to device
@@ -1429,7 +1433,7 @@ def main(device='cuda'):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 1000
+    num_epochs = 2
 
     try:
         for epoch in range(num_epochs):
@@ -1446,11 +1450,15 @@ def main(device='cuda'):
                 print("Predictions shape:", predictions.shape)
                 print("Targets shape:", y.shape)
                 print("Loss components:", loss_components)
-                
+
                 # Print memory usage if using CUDA
-                if device.type == 'cuda':
-                    print(f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB")
-                    print(f"GPU memory cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB")
+                if device.type == "cuda":
+                    print(
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                    )
+                    print(
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                    )
 
             # Store loss value
             losses.append(loss.item())
@@ -1461,7 +1469,7 @@ def main(device='cuda'):
 
     except RuntimeError as e:
         print(f"\nError during training: {e}")
-        if device.type == 'cuda':
+        if device.type == "cuda":
             print("\nThis might be a GPU memory issue. Try:")
             print("1. Reducing batch size")
             print("2. Reducing model size")
@@ -1480,12 +1488,18 @@ def main(device='cuda'):
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig(osp.join(ASSET_IMAGES_DIR, f"cell_latent_perturbation_training_loss_{timestamp()}.png"))
+    plt.savefig(
+        osp.join(
+            ASSET_IMAGES_DIR,
+            f"cell_latent_perturbation_training_loss_{timestamp()}.png",
+        )
+    )
     plt.close()
 
     # Move predictions to CPU for correlation plotting
     correlation_save_path = osp.join(
-        ASSET_IMAGES_DIR, f"cell_latent_perturbation_correlation_plots_{timestamp()}.png"
+        ASSET_IMAGES_DIR,
+        f"cell_latent_perturbation_correlation_plots_{timestamp()}.png",
     )
     plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
 
@@ -1497,17 +1511,17 @@ def main(device='cuda'):
         final_loss, final_components = criterion(final_predictions, y)
         print(f"Final loss: {final_loss.item():.4f}")
         print("Loss components:", final_components)
-        
-        if device.type == 'cuda':
+
+        if device.type == "cuda":
             print(f"\nFinal GPU memory usage:")
             print(f"Allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB")
             print(f"Cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB")
 
     # Optional: Clear CUDA cache if using GPU
-    if device.type == 'cuda':
+    if device.type == "cuda":
         torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
     # You can easily switch between CPU and GPU by changing the device parameter
-    main(device='cuda')  # or main(device='cpu') for CPU
+    main(device="cuda")  # or main(device='cpu') for CPU

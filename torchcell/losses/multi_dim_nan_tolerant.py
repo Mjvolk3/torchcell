@@ -970,49 +970,92 @@ class MseCategoricalEntropyRegLoss(nn.Module):
 #     print(f"Total loss: {total_loss}")
 #     print(f"Dimension losses: {dim_losses}")
 
+# if __name__ == "__main__":
+#     torch.manual_seed(42)
+
+#     print("Testing Ordinal Loss with Monotonic Thresholds:")
+#     for num_classes in [2, 4, 8]:
+#         print(f"\nTesting with {num_classes} classes:")
+
+#         batch_size = 4
+#         num_tasks = 2
+
+#         # Create test data
+#         logits = torch.randn(batch_size, num_tasks * (num_classes - 1)) * 0.5
+#         targets = torch.zeros(batch_size, num_tasks * num_classes)
+
+#         # Create ordered targets
+#         for i in range(batch_size):
+#             for task in range(num_tasks):
+#                 class_idx = min(i, num_classes - 1)
+#                 start_idx = task * num_classes
+#                 targets[i, start_idx + class_idx] = 1.0
+
+#         # Add NaN values
+#         targets[1, num_classes:] = float("nan")
+#         targets[2, num_classes:] = float("nan")
+
+#         # Test loss
+#         loss_fn = CombinedOrdinalCELoss(num_classes=num_classes, num_tasks=num_tasks)
+#         total_loss, dim_losses = loss_fn(logits, targets)
+
+#         print(f"\nLoss values:")
+#         print(f"Total loss: {total_loss:.4f}")
+#         print(f"Dimension losses: {dim_losses}")
+
+#         # Verify monotonicity
+#         params = list(loss_fn.parameters())
+#         monotonic_thresholds = loss_fn.loss_fn.thresholds
+#         raw_thresholds = loss_fn.loss_fn.raw_thresholds
+
+#         print("\nThreshold Information:")
+#         print(f"Raw parameters:\n{raw_thresholds}")
+#         print(f"Monotonic thresholds:\n{monotonic_thresholds}")
+
+#         # Verify monotonicity explicitly
+#         diffs = monotonic_thresholds[:, 1:] - monotonic_thresholds[:, :-1]
+#         print(f"Consecutive differences:\n{diffs}")
+#         print(f"All thresholds monotonically increasing: {torch.all(diffs > 0).item()}")
+
 if __name__ == "__main__":
     torch.manual_seed(42)
-
-    print("Testing Ordinal Loss with Monotonic Thresholds:")
-    for num_classes in [2, 4, 8]:
-        print(f"\nTesting with {num_classes} classes:")
-
-        batch_size = 4
-        num_tasks = 2
-
-        # Create test data
-        logits = torch.randn(batch_size, num_tasks * (num_classes - 1)) * 0.5
-        targets = torch.zeros(batch_size, num_tasks * num_classes)
-
-        # Create ordered targets
-        for i in range(batch_size):
-            for task in range(num_tasks):
-                class_idx = min(i, num_classes - 1)
-                start_idx = task * num_classes
-                targets[i, start_idx + class_idx] = 1.0
-
-        # Add NaN values
-        targets[1, num_classes:] = float("nan")
-        targets[2, num_classes:] = float("nan")
-
-        # Test loss
-        loss_fn = CombinedOrdinalCELoss(num_classes=num_classes, num_tasks=num_tasks)
-        total_loss, dim_losses = loss_fn(logits, targets)
-
-        print(f"\nLoss values:")
-        print(f"Total loss: {total_loss:.4f}")
-        print(f"Dimension losses: {dim_losses}")
-
-        # Verify monotonicity
-        params = list(loss_fn.parameters())
-        monotonic_thresholds = loss_fn.loss_fn.thresholds
-        raw_thresholds = loss_fn.loss_fn.raw_thresholds
-
-        print("\nThreshold Information:")
-        print(f"Raw parameters:\n{raw_thresholds}")
-        print(f"Monotonic thresholds:\n{monotonic_thresholds}")
-
-        # Verify monotonicity explicitly
-        diffs = monotonic_thresholds[:, 1:] - monotonic_thresholds[:, :-1]
-        print(f"Consecutive differences:\n{diffs}")
-        print(f"All thresholds monotonically increasing: {torch.all(diffs > 0).item()}")
+    print("\nTesting LogCosh Loss:")
+    
+    # Create test data
+    batch_size = 4
+    num_tasks = 2
+    y_pred = torch.tensor([
+        [1.0, 2.0],
+        [0.5, 1.5],
+        [2.0, 3.0],
+        [1.5, 2.5]
+    ])
+    
+    y_true = torch.tensor([
+        [1.2, 2.1],
+        [0.4, float('nan')],  # Add NaN to test NaN handling
+        [float('nan'), 3.2],
+        [1.4, 2.3]
+    ])
+    
+    # Initialize loss function
+    loss_fn = CombinedRegressionLoss(loss_type="logcosh")
+    
+    # Compute loss
+    total_loss, dim_losses = loss_fn(y_pred, y_true)
+    
+    print(f"\nInput tensors:")
+    print(f"Predictions:\n{y_pred}")
+    print(f"Targets:\n{y_true}")
+    print(f"\nLoss values:")
+    print(f"Total loss: {total_loss:.4f}")
+    print(f"Dimension losses: {dim_losses}")
+    
+    # Test with custom weights
+    weights = torch.tensor([0.7, 0.3])
+    weighted_loss_fn = CombinedRegressionLoss(loss_type="logcosh", weights=weights)
+    weighted_total_loss, weighted_dim_losses = weighted_loss_fn(y_pred, y_true)
+    
+    print(f"\nWeighted loss values (weights={weights}):")
+    print(f"Total weighted loss: {weighted_total_loss:.4f}")
+    print(f"Weighted dimension losses: {weighted_dim_losses}")

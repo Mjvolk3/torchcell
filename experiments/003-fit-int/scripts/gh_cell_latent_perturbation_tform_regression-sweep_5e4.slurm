@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=HGP_5e4
+#SBATCH --job-name=CLPT_5e4
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=250G 
@@ -40,8 +40,8 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
 # This one is offline
-SWEEP_ID=h5p9wrsl
-PROJECT_NAME=torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
+SWEEP_ID=wqhwn6oj
+PROJECT_NAME=torchcell_003-fit-int_cell_latent_perturbation_tform_5e4_regression
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

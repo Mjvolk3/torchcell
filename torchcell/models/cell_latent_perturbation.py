@@ -1240,7 +1240,7 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=12,
+        batch_size=15,
         random_seed=seed,
         num_workers=4,
         pin_memory=False,
@@ -1252,7 +1252,7 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=12,
+        batch_size=15,
         num_workers=4,
         pin_memory=True,
         prefetch=False,
@@ -1429,7 +1429,7 @@ def main(device='cuda'):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 10000
+    num_epochs = 1000
 
     try:
         for epoch in range(num_epochs):
@@ -1480,12 +1480,12 @@ def main(device='cuda'):
     plt.legend()
     plt.tight_layout()
 
-    plt.savefig(osp.join(ASSET_IMAGES_DIR, f"training_loss_{timestamp()}.png"))
+    plt.savefig(osp.join(ASSET_IMAGES_DIR, f"cell_latent_perturbation_training_loss_{timestamp()}.png"))
     plt.close()
 
     # Move predictions to CPU for correlation plotting
     correlation_save_path = osp.join(
-        ASSET_IMAGES_DIR, f"correlation_plots_{timestamp()}.png"
+        ASSET_IMAGES_DIR, f"cell_latent_perturbation_correlation_plots_{timestamp()}.png"
     )
     plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
 

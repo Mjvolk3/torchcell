@@ -1,5 +1,5 @@
-program: experiments/003-fit-int/scripts/hetero_gnn_pool_regression.py
-project: torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
+program: experiments/003-fit-int/scripts/cell_latent_perturbation_tform_regression.py
+project: torchcell_003-fit-int_cell_latent_perturbation_tform_5e4_regression
 method: grid
 
 parameters:
@@ -31,7 +31,9 @@ parameters:
       learnable_embedding_input_channels:
         values: [64]
       graph_processor:
-        values: [subgraph_representation]
+        values: [unperturbed]
+      incidence_graphs:
+        values: [[metabolism]]
 
   transforms:
     parameters:
@@ -62,9 +64,9 @@ parameters:
       perturbation_subset_size:
         values: [5e4]
       batch_size:
-        values: [16]
+        values: [6]
       num_workers:
-        values: [8]
+        values: [6]
       pin_memory:
         values: [true]
       prefetch:
@@ -77,41 +79,25 @@ parameters:
       strategy:
         values: [auto]
       accelerator:
-        values: [gpu]
+        values: [cpu]
       devices:
         values: [1]
 
   model:
     parameters:
+      in_channels:
+        values: [64]
       hidden_channels:
         values: [64]
-      num_layers:
+      out_channels:
         values: [2]
-      conv_type:
-        values: ["GCN"]
-      pooling:
-        values: ["sum"]
-      activation:
-        values: ["gelu"]
-      norm:
-        values: ["batch", "layer"]
-      num_tasks:
+      
+      gene_encoder_num_layers:
         values: [2]
-      dropout:
-        values: [0.2]
-
-      head_num_layers:
-        values: [10]
-      head_hidden_channels:
-        values: [32]
-      head_dropout:
-        values: [0.2]
-      head_activation:
-        values: ["gelu"]
-      head_residual:
-        values: [true]
-      head_norm:
-        values: ["batch"]
+      gene_encoder_conv_type:
+        values: ["GIN"]
+      gene_encoder_head_num_layers:
+        values: [2]
 
       gcn_bias:
         values: [true]
@@ -163,24 +149,60 @@ parameters:
       gin_is_mlp_skip_connection:
         values: [true]
 
+      metabolism_num_layers:
+        values: [2]
+      metabolism_attention:
+        values: [true]
+      metabolism_hyperconv_layers:
+        values: [2]
+      metabolism_use_skip:
+        values: [true]
+
+      set_transformer_heads:
+        values: [4]
+      set_transformer_layers:
+        values: [2]
+
+      combiner_num_layers:
+        values: [2]
+      combiner_hidden_factor:
+        values: [1.0]
+
+      head_hidden_factor:
+        values: [1.0]
+      head_num_layers:
+        values: [3]
+
+      activation:
+        values: ["relu"]
+      norm:
+        values: ["layer"]
+      dropout:
+        values: [0.1]
+      num_tasks:
+        values: [2]
+
   regression_task:
     parameters:
       is_weighted_phenotype_loss:
         values: [true]
       loss_type:
-        values: ["logcosh"]
+        values: ["mse", "quantile", "logcosh", "dist_loss"]
+      
       quantile_config:
         parameters:
           spacing:
-            values: [0.1] #[0.1, 0.03125] 
+            values: [0.03125] #[0.1]
+            
       dist_loss_config:
         parameters:
           num_bins:
-            values: [100]
+            values: [32]
           bandwidth:
-            values: [0.1, 0.5]
+            values: [0.1] #[0.1, 0.5]
           eps:
             values: [1e-7]
+            
       optimizer:
         parameters:
           type:
@@ -189,8 +211,8 @@ parameters:
             values: [1e-3, 1e-5]
           weight_decay:
             values: [1e-9]
+            
       lr_scheduler:
-      
         parameters:
           type:
             values: ["ReduceLROnPlateau"]
@@ -210,6 +232,7 @@ parameters:
             values: [1e-9]
           eps:
             values: [1e-10]
+            
       boxplot_every_n_epochs:
         values: [1]
       clip_grad_norm:
@@ -218,7 +241,7 @@ parameters:
         values: [10.0]
       grad_accumulation_schedule:
         values: [null]
-
+  
 command:
   - ${env}
   - python

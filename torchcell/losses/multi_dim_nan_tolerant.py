@@ -55,7 +55,7 @@ class NaNTolerantL1Loss(nn.Module):
         ), "Predictions and targets must have the same shape"
 
         # Create mask for non-NaN values
-        mask = ~torch.isfloat("nan")(y_true)
+        mask = ~torch.isnan(y_true)
 
         # Count valid samples per dimension
         n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero

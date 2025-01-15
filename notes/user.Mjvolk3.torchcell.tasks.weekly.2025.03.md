@@ -2,7 +2,7 @@
 id: wqwnnd3noe8djjjsc7m440v
 title: '03'
 desc: ''
-updated: 1736897326453
+updated: 1736900012197
 created: 1736717919222
 ---
 ⏰ One thing: Metabolism Label Split Regression Run
@@ -23,8 +23,12 @@ created: 1736717919222
 - [x] [[Hetero_data|dendron://torchcell/torchcell.data.hetero_data]] → monkey patch `__repr__` to get better printing. [[2025.01.14 - Sample of Dataset|dendron://torchcell/torchcell.models.cell_latent_perturbation#20250114---sample-of-dataset]]
 - [x] Begin RMA process for GH
 - [x] Exploring alternative data structure. → [[2025.01.14 - Current Batching Versus Proposed Efficient Batching|dendron://torchcell/torchcell.models.cell_latent_perturbation#20250114---current-batching-versus-proposed-efficient-batching]] → Added `Perturbation(GraphProcessor)`
-- [ ] Add skip connections to `hypergraph_conv` [[torchcell/models/cell_latent_perturbation.py#^ebhvzdc73ycd]]
+- [x] Add skip connections to `hypergraph_conv`
+- [x] Remove excess data `attrs` for improved virtual mem → `reaction_to_genes_indices`
+- [x] Check model works on `cpu` and `gpu`
+- [ ] Add `log(cosh)`
 - [ ] Model walk through check each method [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
+
 
 
 ***

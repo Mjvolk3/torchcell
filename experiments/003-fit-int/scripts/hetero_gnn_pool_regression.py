@@ -220,39 +220,41 @@ def configure_transforms(dataset, config):
 def get_slurm_nodes():
     try:
         # Print all relevant env vars for debugging
-        print("SLURM_JOB_NUM_NODES:", os.environ.get('SLURM_JOB_NUM_NODES'))
-        print("SLURM_NNODES:", os.environ.get('SLURM_NNODES'))
-        print("SLURM_NPROCS:", os.environ.get('SLURM_NPROCS'))
-        
+        print("SLURM_JOB_NUM_NODES:", os.environ.get("SLURM_JOB_NUM_NODES"))
+        print("SLURM_NNODES:", os.environ.get("SLURM_NNODES"))
+        print("SLURM_NPROCS:", os.environ.get("SLURM_NPROCS"))
+
         # Try SLURM_NNODES first as it's more commonly used
-        if 'SLURM_NNODES' in os.environ:
-            return int(os.environ['SLURM_NNODES'])
+        if "SLURM_NNODES" in os.environ:
+            return int(os.environ["SLURM_NNODES"])
         # Fall back to SLURM_JOB_NUM_NODES
-        elif 'SLURM_JOB_NUM_NODES' in os.environ:
-            return int(os.environ['SLURM_JOB_NUM_NODES'])
+        elif "SLURM_JOB_NUM_NODES" in os.environ:
+            return int(os.environ["SLURM_JOB_NUM_NODES"])
         else:
             return 1
     except (TypeError, ValueError) as e:
         print(f"Error getting node count: {e}")
         return 1
 
+
 def get_num_devices():
     # First check wandb config
     if wandb.config.trainer["devices"] != "auto":
         return wandb.config.trainer["devices"]
-    
+
     # If "auto", check SLURM first
-    slurm_devices = os.environ.get('SLURM_GPUS_ON_NODE')
+    slurm_devices = os.environ.get("SLURM_GPUS_ON_NODE")
     if slurm_devices is not None:
         return int(slurm_devices)
-    
+
     # If no SLURM, fall back to torch.cuda detection
     num_devices = torch.cuda.device_count()
     if num_devices > 0:
         return num_devices
-    
+
     # If no GPUs available, use 1 CPU
     return 1
+
 
 @hydra.main(
     version_base=None,
@@ -670,12 +672,12 @@ def main(cfg: DictConfig) -> None:
     else:
         weights = torch.ones(2).to(device)
 
-    if wandb.config.regression_task["loss_type"] in ["mse", "quantile"]:
+    if wandb.config.regression_task["loss_type"] in ["mse", "logcosh", "quantile"]:
         quantile_spacing = wandb.config.regression_task["quantile_config"]["spacing"]
         loss_func = CombinedRegressionLoss(
             loss_type=wandb.config.regression_task["loss_type"],
             weights=weights,
-            quantile_spacing=quantile_spacing
+            quantile_spacing=quantile_spacing,
         )
     elif wandb.config.regression_task["loss_type"] == "dist_loss":
         dist_loss_config = wandb.config.regression_task["dist_loss_config"]
@@ -683,7 +685,7 @@ def main(cfg: DictConfig) -> None:
             weights=weights,  # Correct parameter name
             num_bins=dist_loss_config["num_bins"],
             bandwidth=dist_loss_config["bandwidth"],
-            eps=dist_loss_config["eps"]
+            eps=dist_loss_config["eps"],
         )
 
     task = RegressionTask(

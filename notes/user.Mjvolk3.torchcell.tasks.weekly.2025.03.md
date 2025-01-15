@@ -2,7 +2,7 @@
 id: wqwnnd3noe8djjjsc7m440v
 title: '03'
 desc: ''
-updated: 1736900012197
+updated: 1736901340128
 created: 1736717919222
 ---
 ⏰ One thing: Metabolism Label Split Regression Run
@@ -26,10 +26,10 @@ created: 1736717919222
 - [x] Add skip connections to `hypergraph_conv`
 - [x] Remove excess data `attrs` for improved virtual mem → `reaction_to_genes_indices`
 - [x] Check model works on `cpu` and `gpu`
-- [ ] Add `log(cosh)`
+- [x] Add `log(cosh)`
+- [ ] Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses.
+- [ ] Experiment scripts and lightning module for [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
 - [ ] Model walk through check each method [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
-
-
 
 ***
 

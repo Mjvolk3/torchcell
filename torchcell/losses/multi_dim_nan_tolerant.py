@@ -2,7 +2,6 @@
 # [[torchcell.losses.multi_dim_nan_tolerant]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/multi_dim_nan_tolerant
 # Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
-
 import math
 import os.path as osp
 import lightning as L
@@ -33,14 +32,11 @@ import sys
 from typing import Optional, Tuple
 import torch.optim as optim
 import torch.nn.functional as F
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 
-class MultiDimNaNTolerantL1Loss(nn.Module):
+class NaNTolerantL1Loss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantL1Loss, self).__init__()
+        super(NaNTolerantL1Loss, self).__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -78,6 +74,57 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
         dim_means = dim_losses / n_valid
 
         return dim_means, mask
+
+
+class NaNTolerantLogCoshLoss(nn.Module):
+    def __init__(self):
+        super(NaNTolerantLogCoshLoss, self).__init__()
+
+    def forward(self, y_pred, y_true):
+        """
+        Compute log(cosh) loss while properly handling NaN values.
+
+        The log(cosh) loss is defined as:
+        L = log(cosh(y_pred - y_true))
+
+        Args:
+            y_pred (torch.Tensor): Predictions [batch_size, num_dims]
+            y_true (torch.Tensor): Ground truth [batch_size, num_dims]
+
+        Returns:
+            tuple: (dim_means, mask) - Loss per dimension and validity mask
+        """
+        device = y_pred.device
+
+        # Ensure tensors have the same shape and device
+        assert (
+            y_pred.shape == y_true.shape
+        ), "Predictions and targets must have the same shape"
+        y_true = y_true.to(device)
+
+        # Create mask for non-NaN values
+        mask = ~torch.isnan(y_true)
+
+        # Count valid samples per dimension
+        n_valid = mask.sum(dim=0).clamp(min=1)  # Avoid division by zero
+
+        # Zero out predictions where target is NaN
+        y_pred_masked = y_pred * mask
+        y_true_masked = y_true.masked_fill(~mask, 0)
+
+        # Compute log(cosh(x)) loss only for valid elements
+        diff = y_pred_masked - y_true_masked
+        logcosh = torch.log(
+            torch.cosh(diff + 1e-12)
+        )  # Add small epsilon for numerical stability
+
+        # Sum errors for each dimension (only valid elements contribute)
+        dim_losses = logcosh.sum(dim=0)
+
+        # Compute mean loss per dimension
+        dim_means = dim_losses / n_valid
+
+        return dim_means.to(device), mask.to(device)
 
 
 class NaNTolerantMSELoss(nn.Module):
@@ -151,11 +198,6 @@ class NaNTolerantQuantileLoss(nn.Module):
             losses.append(loss.mean())
 
         return torch.stack(losses).sum()
-
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
 
 
 class WeightedDistLoss(nn.Module):
@@ -310,7 +352,9 @@ class CombinedRegressionLoss(nn.Module):
         if loss_type == "mse":
             self.loss_fn = NaNTolerantMSELoss()
         elif loss_type == "l1":
-            self.loss_fn = MultiDimNaNTolerantL1Loss()
+            self.loss_fn = NaNTolerantL1Loss()
+        elif loss_type == "logcosh":
+            self.loss_fn = NaNTolerantLogCoshLoss()
         elif loss_type == "quantile":
             if quantile_spacing is None:
                 raise ValueError("quantile_spacing must be provided for quantile loss")

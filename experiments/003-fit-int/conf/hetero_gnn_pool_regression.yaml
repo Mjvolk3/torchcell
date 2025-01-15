@@ -26,7 +26,7 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 5e4 
+  perturbation_subset_size: 5e4
   batch_size: 16
   num_workers: 8
   pin_memory: true
@@ -90,12 +90,12 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  loss_type: "dist_loss" #quantile # dist_loss
-  
+  loss_type: "logcosh" #quantile # dist_loss
+
   # Quantile Loss
   quantile_config:
     spacing: 0.1
-  
+
   # Dist loss
   dist_loss_config:
     num_bins: 100

@@ -168,7 +168,7 @@ parameters:
       is_weighted_phenotype_loss:
         values: [true]
       loss_type:
-        values: ["dist_loss"]
+        values: ["logcosh"]
       quantile_config:
         parameters:
           spacing:

@@ -10,7 +10,7 @@ parameters:
       node_embeddings:
         values:
           - [codon_frequency]
-          - [learnable_embedding]
+        # - [learnable_embedding]
         # - [one_hot_gene]
         # - [calm]
         # - [fudt_downstream]
@@ -68,7 +68,7 @@ parameters:
       num_workers:
         values: [6]
       pin_memory:
-        values: [true]
+        values: [false] #[true]
       prefetch:
         values: [true]
 
@@ -79,7 +79,7 @@ parameters:
       strategy:
         values: [auto]
       accelerator:
-        values: [cpu]
+        values: [gpu]
       devices:
         values: [1]
 

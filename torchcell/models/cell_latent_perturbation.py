@@ -673,13 +673,15 @@ class MetabolismProcessor(nn.Module):
         self,
         metabolite_dim: int,
         hidden_dim: int,
-        hyperconv_num_layers: int = 2,  # Added parameter for hypergraph conv layers
-        set_net_num_layers: int = 2,  # Added unified parameter for set net layers
+        hyperconv_num_layers: int = 2,
+        set_net_num_layers: int = 2,
         use_attention: bool = False,
+        use_skip: bool = False,  # New parameter for skip connections
         dropout: float = 0.1,
     ):
         super().__init__()
         self.use_attention = use_attention
+        self.use_skip = use_skip  # Store skip connection flag
         self.hyperconv_num_layers = hyperconv_num_layers
 
         # Learnable embeddings for hyperedges (reactions)
@@ -698,6 +700,12 @@ class MetabolismProcessor(nn.Module):
                 for i in range(hyperconv_num_layers)
             ]
         )
+
+        # Add layer norms for skip connections if enabled
+        if use_skip:
+            self.layer_norms = nn.ModuleList(
+                [nn.LayerNorm(hidden_dim) for _ in range(hyperconv_num_layers)]
+            )
 
         # SetNets with unified number of layers
         self.reaction_set_net = SetNet(
@@ -742,26 +750,33 @@ class MetabolismProcessor(nn.Module):
             num_reactions = hyperedge_index[1].max().item() + 1
             # Expand the learnable embedding for each reaction
             hyperedge_features = self.hyperedge_embedding.expand(num_reactions, -1)
-
-            print(f"Number of metabolites: {num_metabolites}")
-            print(f"Number of reactions: {num_reactions}")
-            print(f"Hyperedge index shape: {hyperedge_index.shape}")
-            print(f"Stoichiometry shape: {stoichiometry.shape}")
-            print(f"Max metabolite index: {hyperedge_index[0].max().item()}")
-            print(f"Max reaction index: {hyperedge_index[1].max().item()}")
         else:
             hyperedge_features = None
 
-        # Apply multiple hypergraph convolution layers
+        # Apply multiple hypergraph convolution layers with optional skip connections
+        prev_embeddings = metabolite_embeddings
         for i in range(self.hyperconv_num_layers):
-            metabolite_embeddings = self.hyper_convs[i](
-                x=metabolite_embeddings,
+            # Apply hypergraph convolution
+            current_embeddings = self.hyper_convs[i](
+                x=prev_embeddings,
                 edge_index=hyperedge_index,
                 stoich=stoichiometry,
                 hyperedge_attr=hyperedge_features,
             )
-            # Apply tanh activation after each convolution
-            metabolite_embeddings = torch.tanh(metabolite_embeddings)
+
+            # Apply tanh activation
+            current_embeddings = torch.tanh(current_embeddings)
+
+            # Apply skip connection if enabled (except for first layer)
+            if self.use_skip and i > 0:
+                # Apply layer norm before skip connection
+                normalized_current = self.layer_norms[i](current_embeddings)
+                normalized_prev = self.layer_norms[i](prev_embeddings)
+                metabolite_embeddings = normalized_current + normalized_prev
+            else:
+                metabolite_embeddings = current_embeddings
+
+            prev_embeddings = metabolite_embeddings
 
         # Create reaction-to-metabolite sparse matrix
         indices = torch.stack([hyperedge_index[1], hyperedge_index[0]])
@@ -843,6 +858,7 @@ class CellLatentPerturbation(nn.Module):
         metabolism_attention: bool = False,
         metabolism_hyperconv_layers: int = 2,
         metabolism_setnet_layers: int = 2,
+        metabolism_use_skip: bool = True,
         # Set processor params
         set_transformer_heads: int = 4,
         set_transformer_layers: int = 2,
@@ -888,6 +904,7 @@ class CellLatentPerturbation(nn.Module):
             hyperconv_num_layers=metabolism_hyperconv_layers,
             set_net_num_layers=metabolism_setnet_layers,
             use_attention=metabolism_attention,
+            use_skip=metabolism_use_skip,  # Pass the skip connection parameter
             dropout=dropout,
         )
 
@@ -1353,7 +1370,7 @@ def main():
     model = CellLatentPerturbation(
         # Base dimensions
         in_channels=64,
-        hidden_channels=16,
+        hidden_channels=32,
         out_channels=2,
         # Gene encoder config
         gene_encoder_num_layers=2,
@@ -1365,11 +1382,11 @@ def main():
         metabolism_attention=True,
         metabolism_hyperconv_layers=2,  # Added parameter
         metabolism_setnet_layers=2,  # Added parameter
-        # Set processor config
-        set_transformer_heads=4,
+        metabolism_use_skip=True,
+        set_transformer_heads=8,
         set_transformer_layers=3,
         set_net_node_layers=3,
-        set_net_set_layers=2,
+        set_net_set_layers=3,
         # Combiner config
         combiner_num_layers=2,
         combiner_hidden_factor=1.0,

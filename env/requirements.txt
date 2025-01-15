@@ -114,5 +114,6 @@
     # GEM
     cobra>=0.29.1
 
-    # Hypergraph
+    # Hypergraph - fastjsonschema needed as extra dep for hypernetx
     hypernetx>=2.3.10
+    fastjsonschema>=2.21.1

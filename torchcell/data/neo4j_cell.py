@@ -19,6 +19,7 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from torch_geometric.utils import add_remaining_self_loops
+
 # from torch_geometric.data import HeteroData
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ModelStrictArbitrary
@@ -138,7 +139,6 @@ def to_cell_data(
                 (hetero_data["gene"].x, embeddings), dim=1
             )
 
-    # Process each incidence graph. For the case of metabolism we need to add the metabolite nodes and edges are sets of genes so not sure how to handle this. For now we could just call them genes as opposed to gene. or reaction-genes.
     # Process hypergraph - add metabolites as nodes
     incidence_graphs = incidence_graphs if incidence_graphs is not None else []
     if "metabolism" in incidence_graphs:
@@ -158,12 +158,22 @@ def to_cell_data(
         edge_indices = []
         stoich_coeffs = []
         reaction_to_genes = {}
+        reaction_to_genes_indices = {}  # New dictionary for gene indices
 
         for edge_idx, edge_id in enumerate(hypergraph.edges):
             edge = hypergraph.edges[edge_id]
             # Store gene associations
             if "genes" in edge.properties:
-                reaction_to_genes[edge_idx] = list(edge.properties["genes"])
+                genes = list(edge.properties["genes"])
+                reaction_to_genes[edge_idx] = genes
+
+                # Create gene indices list for this reaction
+                gene_indices = []
+                for gene in genes:
+                    # Get index if gene exists in node_ids mapping, else use -1
+                    gene_idx = node_idx_mapping.get(gene, -1)
+                    gene_indices.append(gene_idx)
+                reaction_to_genes_indices[edge_idx] = gene_indices
 
             # For each metabolite in this reaction (hyperedge)
             for m in edge:
@@ -189,7 +199,7 @@ def to_cell_data(
         hetero_data[edge_type].stoichiometry = stoich_coeffs
         hetero_data[edge_type].num_edges = len(hyperedge_index[1, :].unique())
         hetero_data[edge_type].reaction_to_genes = reaction_to_genes
-        # hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
+        hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
 
     return hetero_data
 
@@ -523,10 +533,9 @@ class Identity(GraphProcessor):
         if not data:
             raise ValueError("Data list is empty")
 
-        # Create a new HeteroData object to store the processed graph
         processed_graph = HeteroData()
 
-        # Copy the original graph structure and features
+        # Copy graph structure and features
         processed_graph["gene"].x = cell_graph["gene"].x
         processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
         processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
@@ -544,7 +553,6 @@ class Identity(GraphProcessor):
                 for pert in item["experiment"].genotype.perturbations
             )
 
-        # Store perturbation information in the graph
         processed_graph["gene"].perturbed_genes = list(perturbed_genes)
         processed_graph["gene"].perturbation_indices = torch.tensor(
             [cell_graph["gene"].node_ids.index(nid) for nid in perturbed_genes],
@@ -577,19 +585,13 @@ class Identity(GraphProcessor):
                 processed_graph[edge_type].edge_index = cell_graph[edge_type].edge_index
                 processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
 
-        # Copy over all metabolite information if it exists
-        print("Debug - Cell graph node types:", cell_graph.node_types)
-        print("Debug - Cell graph edge types:", cell_graph.edge_types)
-
+        # Handle metabolite data
         if "metabolite" in cell_graph.node_types:
-            print("Debug - Found metabolite node type")
             processed_graph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
             processed_graph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
 
-            # Copy metabolite reaction edges and data if they exist
             edge_type = ("metabolite", "reaction_genes", "metabolite")
             if any(e_type == edge_type for e_type in cell_graph.edge_types):
-                print("Debug - Found metabolite reaction edge type")
                 # Copy hypergraph structure
                 processed_graph[edge_type].hyperedge_index = cell_graph[
                     edge_type
@@ -599,12 +601,7 @@ class Identity(GraphProcessor):
                 ].stoichiometry
                 processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
 
-                # Preserve original reaction_to_genes mapping
-                processed_graph[edge_type].reaction_to_genes = cell_graph[
-                    edge_type
-                ].reaction_to_genes
-
-                # Create reaction_to_genes_indices mapping
+                # Only create reaction_to_genes_indices mapping
                 node_id_to_idx = {
                     nid: idx for idx, nid in enumerate(cell_graph["gene"].node_ids)
                 }
@@ -615,7 +612,6 @@ class Identity(GraphProcessor):
                 ].reaction_to_genes.items():
                     gene_indices = []
                     for gene in genes:
-                        # Get index if gene exists in node_ids, else use -1 (will be converted to nan)
                         gene_idx = node_id_to_idx.get(gene, -1)
                         gene_indices.append(gene_idx)
                     reaction_to_genes_indices[reaction_idx] = gene_indices
@@ -625,6 +621,78 @@ class Identity(GraphProcessor):
                 )
 
         return processed_graph
+
+
+class Perturbation(GraphProcessor):
+    """
+    Processes graph data by storing only perturbation-specific information without duplicating
+    the base graph structure. This allows sharing a single base graph across instances while
+    only tracking what changes between instances (perturbations and associated measurements).
+
+    This processor:
+    1. Stores perturbation information and measurements
+    2. Does not duplicate the base graph structure
+    3. Intended to be used with a shared base graph stored at the dataset level
+
+    Key differences from Identity processor:
+    - Does not store complete graph structure
+    - Only tracks instance-specific perturbation data
+    - Reduces memory usage by avoiding graph duplication
+    """
+
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
+
+        # Create a minimal HeteroData object to store perturbation data
+        processed_data = HeteroData()
+
+        # Store perturbation information
+        perturbed_genes = set()
+        for item in data:
+            if "experiment" not in item or "experiment_reference" not in item:
+                raise ValueError(
+                    "Each item in data must contain both 'experiment' and "
+                    "'experiment_reference' keys"
+                )
+            perturbed_genes.update(
+                pert.systematic_gene_name
+                for pert in item["experiment"].genotype.perturbations
+            )
+
+        # Store perturbation indices
+        processed_data["gene"].perturbed_genes = list(perturbed_genes)
+        processed_data["gene"].perturbation_indices = torch.tensor(
+            [cell_graph["gene"].node_ids.index(nid) for nid in perturbed_genes],
+            dtype=torch.long,
+        )
+
+        # Add phenotype fields
+        phenotype_fields = []
+        for phenotype in phenotype_info:
+            phenotype_fields.append(phenotype.model_fields["label_name"].default)
+            phenotype_fields.append(
+                phenotype.model_fields["label_statistic_name"].default
+            )
+
+        # Add experiment data
+        for field in phenotype_fields:
+            field_values = []
+            for item in data:
+                value = getattr(item["experiment"].phenotype, field, None)
+                if value is not None:
+                    field_values.append(value)
+            if field_values:
+                processed_data["gene"][field] = torch.tensor(field_values)
+            else:
+                processed_data["gene"][field] = torch.tensor([float("nan")])
+
+        return processed_data
 
 
 def parse_genome(genome) -> ParsedGenome:
@@ -1394,7 +1462,7 @@ def main_incidence():
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=Identity(),
+        graph_processor=Perturbation(),
     )
     print(len(dataset))
     dataset.label_df

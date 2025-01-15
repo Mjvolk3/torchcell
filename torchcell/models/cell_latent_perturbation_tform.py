@@ -1,7 +1,3 @@
-# torchcell/models/cell_latent_perturbation
-# [[torchcell.models.cell_latent_perturbation]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_latent_perturbation
-# Test file: tests/torchcell/models/test_cell_latent_perturbation.py
 
 import torch
 import torch.nn as nn
@@ -930,13 +926,13 @@ class CellLatentPerturbation(nn.Module):
         self.combiner = nn.Sequential(*combiner_layers)
 
         # Set processors
-        self.whole_intact_processor = SetNet(
+        # With:
+        self.whole_intact_processor = SetTransformer(
             input_dim=hidden_channels,
             hidden_dim=hidden_channels,
-            num_node_layers=set_net_node_layers,
-            num_set_layers=set_net_set_layers,
+            num_heads=set_transformer_heads,
+            num_layers=set_transformer_layers,
             dropout=dropout,
-            pooling="mean",
         )
 
         self.perturbed_processor = SetTransformer(
@@ -1097,20 +1093,22 @@ class CellLatentPerturbation(nn.Module):
         z_intact = torch.zeros_like(z_whole)
         z_pert = torch.zeros_like(z_whole)
 
-        # Process whole and intact in parallel using batch operations
-        # Stack whole and intact embeddings from all batches
-        whole_embs = [emb[0] for emb in embeddings_split]  # List of whole embeddings
-        intact_embs = [emb[1] for emb in embeddings_split]  # List of intact embeddings
+        # Process whole and intact embeddings
+        for i, (whole_emb, intact_emb, _) in enumerate(embeddings_split):
+            # Reshape for SetTransformer: (num_nodes, input_dim) -> (1, num_nodes, input_dim)
+            whole_emb = whole_emb.unsqueeze(0)  # Add batch dimension
+            intact_emb = intact_emb.unsqueeze(0)  # Add batch dimension
+            
+            # Process through SetTransformer
+            z_whole[i] = self.whole_intact_processor(whole_emb).squeeze(0)  # Remove batch dimension
+            z_intact[i] = self.whole_intact_processor(intact_emb).squeeze(0)  # Remove batch dimension
 
-        # Process through whole_intact_processor
-        for i, (whole_emb, intact_emb) in enumerate(zip(whole_embs, intact_embs)):
-            z_whole[i] = self.whole_intact_processor(whole_emb)
-            z_intact[i] = self.whole_intact_processor(intact_emb)
-
-        # Process perturbed embeddings (can't batch due to variable sizes)
+        # Process perturbed embeddings
         for i, (_, _, pert_emb) in enumerate(embeddings_split):
             if len(pert_emb) > 0:
-                z_pert[i] = self.perturbed_processor(pert_emb.unsqueeze(0)).squeeze(0)
+                # Reshape for SetTransformer: (num_nodes, input_dim) -> (1, num_nodes, input_dim)
+                pert_emb = pert_emb.unsqueeze(0)  # Add batch dimension
+                z_pert[i] = self.perturbed_processor(pert_emb).squeeze(0)  # Remove batch dimension
 
         return z_whole, z_intact, z_pert
 
@@ -1240,9 +1238,9 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=15,
+        batch_size=6,
         random_seed=seed,
-        num_workers=4,
+        num_workers=6,
         pin_memory=False,
     )
     cell_data_module.setup()
@@ -1252,8 +1250,8 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=15,
-        num_workers=4,
+        batch_size=6,
+        num_workers=6,
         pin_memory=True,
         prefetch=False,
         seed=seed,
@@ -1381,38 +1379,43 @@ def main(device="cuda"):
     model = CellLatentPerturbation(
         # Base dimensions
         in_channels=64,
-        hidden_channels=32,
+        hidden_channels=64,
         out_channels=2,
-        # Gene encoder config
+        
+        # Gene encoder config (unchanged)
         gene_encoder_num_layers=2,
         gene_encoder_conv_type="GIN",
         gene_encoder_layer_config=layer_config,
         gene_encoder_head_num_layers=2,
-        # Metabolism processor config
+        
+        # Metabolism processor config (unchanged)
         metabolism_num_layers=2,
         metabolism_attention=True,
-        metabolism_hyperconv_layers=2,  # Added parameter
-        metabolism_setnet_layers=2,  # Added parameter
+        metabolism_hyperconv_layers=2,
+        metabolism_setnet_layers=2,
         metabolism_use_skip=True,
-        set_transformer_heads=8,
-        set_transformer_layers=3,
-        set_net_node_layers=3,
-        set_net_set_layers=3,
-        # Combiner config
+        
+        # Set processor params - updated for both SetTransformers
+        set_transformer_heads=4,        # Reduced from 8 to 4 for efficiency
+        set_transformer_layers=2,       # Reduced from 3 to 2 for efficiency
+        set_net_node_layers=2,         # These parameters won't be used anymore but kept for compatibility
+        set_net_set_layers=2,          # These parameters won't be used anymore but kept for compatibility
+        
+        # Combiner config (unchanged)
         combiner_num_layers=2,
         combiner_hidden_factor=1.0,
-        # Head config
+        
+        # Head config (unchanged)
         head_hidden_factor=1.0,
         head_num_layers=3,
-        # Global config
+        
+        # Global config (unchanged)
         edge_types=edge_types,
         activation="relu",
         norm="layer",
         dropout=0.1,
         num_nodes=max_num_nodes,
-    ).to(
-        device
-    )  # Move model to device
+    ).to(device)
 
     print("\nModel architecture:")
     print(model)
@@ -1421,7 +1424,7 @@ def main(device="cuda"):
         print(f"{component}: {count:,} parameters")
 
     # Training setup
-    loss_type="logcosh"
+    loss_type="mse"
     criterion = CombinedRegressionLoss(
         loss_type=loss_type, weights=torch.ones(2, device=device)
     )
@@ -1492,7 +1495,7 @@ def main(device="cuda"):
     plt.savefig(
         osp.join(
             ASSET_IMAGES_DIR,
-            f"cell_latent_perturbation_training_loss_{loss_type}_{timestamp()}.png",
+            f"cell_latent_perturbation_tform_training_loss_{loss_type}_{timestamp()}.png",
         )
     )
     plt.close()
@@ -1500,7 +1503,7 @@ def main(device="cuda"):
     # Move predictions to CPU for correlation plotting
     correlation_save_path = osp.join(
         ASSET_IMAGES_DIR,
-        f"cell_latent_perturbation_correlation_plots_{loss_type}_{timestamp()}.png",
+        f"cell_latent_perturbation_tform_correlation_plots_{loss_type}_{timestamp()}.png",
     )
     plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
 

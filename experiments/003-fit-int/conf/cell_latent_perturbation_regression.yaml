@@ -1,0 +1,142 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_003-fit-int_cell_latent_perturbation_5e4_regression
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: [codon_frequency]
+  learnable_embedding_input_channels: 64
+  graph_processor: unperturbed
+  incidence_graphs: [metabolism] # Add metabolism data
+
+transforms:
+  norm: true
+  norm_strategy: "minmax"
+  bin: false
+  bin_strategy: "equal_frequency"
+  num_bins: 32
+  store_continuous: true
+  label_type: soft
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 5e4
+  batch_size: 16
+  num_workers: 8
+  pin_memory: true
+  prefetch: true
+
+trainer:
+  max_epochs: 100
+  strategy: auto
+  accelerator: cpu
+  devices: auto
+
+model:
+  # Base dimensions
+  in_channels: 64
+  hidden_channels: 64
+  out_channels: 2
+
+  # Gene encoder params
+  gene_encoder_num_layers: 2
+  gene_encoder_conv_type: "GIN" # ["GCN", "GAT", "Transformer", "GIN"]
+  gene_encoder_head_num_layers: 2
+
+  # GCN layer config
+  gcn_bias: true
+  gcn_add_self_loops: false
+  gcn_normalize: false
+  gcn_is_skip_connection: true
+
+  # GAT layer config
+  gat_heads: 10
+  gat_concat: false
+  gat_bias: true
+  gat_add_self_loops: false
+  gat_share_weights: false
+  gat_is_skip_connection: true
+
+  # Transformer layer config
+  transformer_heads: 4
+  transformer_concat: true
+  transformer_beta: true
+  transformer_bias: true
+  transformer_root_weight: true
+  transformer_add_self_loops: false
+  transformer_edge_dim: null
+
+  # GIN layer config (current default)
+  gin_train_eps: true
+  gin_hidden_multiplier: 2.0
+  gin_add_self_loops: true
+  gin_is_skip_connection: true
+  gin_num_mlp_layers: 3
+  gin_is_mlp_skip_connection: true
+
+  # Metabolism processor params
+  metabolism_num_layers: 2
+  metabolism_attention: true
+  metabolism_hyperconv_layers: 2
+  metabolism_setnet_layers: 2
+  metabolism_use_skip: true
+
+  # Set processor params
+  set_transformer_heads: 4
+  set_transformer_layers: 2
+  set_net_node_layers: 2
+  set_net_set_layers: 2
+
+  # Combiner params
+  combiner_num_layers: 2
+  combiner_hidden_factor: 1.0
+
+  # Head params
+  head_hidden_factor: 1.0
+  head_num_layers: 3
+
+  # Global params
+  activation: "relu"
+  norm: "layer"
+  dropout: 0.1
+  num_tasks: 2
+
+regression_task:
+  is_weighted_phenotype_loss: true
+  loss_type: "logcosh"
+
+  quantile_config:
+    spacing: 0.1
+
+  dist_loss_config:
+    num_bins: 100
+    bandwidth: 0.5
+    eps: 1e-7
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-3
+    weight_decay: 1e-9
+
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+
+  boxplot_every_n_epochs: 1
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null

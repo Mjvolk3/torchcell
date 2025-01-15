@@ -1,6 +1,6 @@
 program: experiments/003-fit-int/scripts/hetero_gnn_pool.py
 project: torchcell_003-fit-int_hetero_gnn_pool_5e4
-method: grid
+method: grid 
 
 parameters:
   cell_dataset:
@@ -26,7 +26,7 @@ parameters:
           # - [random_100]
           # - [random_10]
           # - [random_1]
-          - [learnable_embedding]
+          # - [learnable_embedding]
       learnable_embedding_input_channels:
         values: [64]
 

@@ -1,3 +1,8 @@
+# torchcell/metabolism/yeast_GEM
+# [[torchcell.metabolism.yeast_GEM]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/yeast_GEM
+# Test file: tests/torchcell/metabolism/test_yeast_GEM.py
+
 import os.path as osp
 import os
 import zipfile
@@ -17,9 +22,10 @@ from torchcell.sequence import GeneSet
 class YeastGEM:
     root: str = field(default="data/torchcell/yeast-GEM")
     version: str = field(default="9.0.2")
-    gene_set: Optional[GeneSet] = field(default=None)
+    induced_gene_set: Optional[GeneSet] = field(default=None)
     _model: Optional[cobra.Model] = field(default=None, init=False)
     _compound_graph: Optional[nx.DiGraph] = field(default=None, init=False)
+    _gene_set: Optional[GeneSet] = field(default=None, init=False)
     model_dir: str = field(init=False)
 
     def __attrs_post_init__(self):
@@ -53,6 +59,7 @@ class YeastGEM:
 
     def _parse_gene_combinations(self, rule: str) -> list[set[str]]:
         """Parse gene rule into list of AND-connected gene sets."""
+        # Might be able to do this more elegantly using cobra
         if not rule or rule == "":
             return [set()]
 
@@ -98,12 +105,12 @@ class YeastGEM:
                 if not genes:
                     continue
 
-                # Check against the gene_set if provided
-                if self.gene_set is not None:
-                    genes_not_in_set = genes - self.gene_set
+                # Check against the induced_gene_set if provided
+                if self.induced_gene_set is not None:
+                    genes_not_in_set = genes - self.induced_gene_set
 
                     if genes_not_in_set == genes:
-                        # All genes are outside the gene_set, skip the edge
+                        # All genes are outside the induced_gene_set, skip the edge
                         continue
                     elif genes_not_in_set:
                         # Convert to a standard set for proper string formatting
@@ -155,6 +162,15 @@ class YeastGEM:
 
         # Create and return the hypergraph
         return hnx.Hypergraph(edge_dict, edge_properties=edge_props)
+
+    @property
+    def gene_set(self) -> GeneSet:
+        """Returns a GeneSet containing all genes in the model."""
+        if self._gene_set is None:
+            # Use cobra's built-in genes property which properly parses GPRs
+            all_genes = {gene.id for gene in self.model.genes}
+            self._gene_set = GeneSet(all_genes)
+        return self._gene_set
 
 
 def plot_reaction_map(
@@ -640,24 +656,26 @@ def main_with_gene_set():
 
 def main_bipartite():
     from dotenv import load_dotenv
+
     load_dotenv()
-    
+
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     yeast_gem = YeastGEM()
-    
+
     # Plot bipartite network for specific reactions
     for i in range(5):
         reaction = list(yeast_gem.model.reactions)[i]
         plot_bipartite_network(
             yeast_gem,
             reaction_id=reaction.id,
-            output_path=osp.join(ASSET_IMAGES_DIR, f"bipartite_network_{reaction.id}.png")
+            output_path=osp.join(
+                ASSET_IMAGES_DIR, f"bipartite_network_{reaction.id}.png"
+            ),
         )
-    
+
     # Plot full bipartite network
     plot_bipartite_network(
-        yeast_gem,
-        output_path=osp.join(ASSET_IMAGES_DIR, "full_bipartite_network.png")
+        yeast_gem, output_path=osp.join(ASSET_IMAGES_DIR, "full_bipartite_network.png")
     )
 
 

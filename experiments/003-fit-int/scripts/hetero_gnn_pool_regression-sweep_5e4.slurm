@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mem=243g # up to 256 gb cpu... 256 doesn't work, 128 does... for cpu but not for gpu? 64 works for gpu.
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=16    # <- match to OMP_NUM_THREADS
 #SBATCH --partition=gpuA40x4      # <- or one of: gpuA100x4 gpuA40x4 gpuA100x8 gpuMI100x8
@@ -38,7 +38,7 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=9rfp048b
+SWEEP_ID=ceigxhfc
 PROJECT_NAME=torchcell_003-fit-int_hetero_gnn_pool_5e4_regression
 
 echo "-----------------"

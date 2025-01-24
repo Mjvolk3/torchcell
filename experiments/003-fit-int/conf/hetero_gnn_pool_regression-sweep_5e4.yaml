@@ -79,7 +79,7 @@ parameters:
       accelerator:
         values: [gpu]
       devices:
-        values: [auto]
+        values: [1]
 
   model:
     parameters:
@@ -88,7 +88,7 @@ parameters:
       num_layers:
         values: [2]
       conv_type:
-        values: ["GCN"]
+        values: ["GCN", "GIN"]
       pooling:
         values: ["sum"]
       activation:
@@ -178,7 +178,7 @@ parameters:
           num_bins:
             values: [100]
           bandwidth:
-            values: [0.1, 0.5]
+            values: [0.1] #[0.1, 0.5]
           eps:
             values: [1e-7]
       optimizer:

@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1737674686587
+updated: 1737680302357
 created: 1737507788186
 ---
 
@@ -827,3 +827,6 @@ Where:
 - $Y, \hat{Y} \in \mathbb{R}^{2 \times b}$ (ground truth and predictions)
 - $z_P, z_I, z_W \in \mathbb{R}^{h}$ (latent representations)
 - $\lambda_1, \lambda_2, \lambda_3 \in \mathbb{R}^+$ (loss weights)
+
+
+![](./assets/images/output.svg)

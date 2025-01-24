@@ -2,7 +2,7 @@
 id: wqwnnd3noe8djjjsc7m440v
 title: '03'
 desc: ''
-updated: 1736901340128
+updated: 1737507335975
 created: 1736717919222
 ---
 ⏰ One thing: Metabolism Label Split Regression Run
@@ -27,30 +27,11 @@ created: 1736717919222
 - [x] Remove excess data `attrs` for improved virtual mem → `reaction_to_genes_indices`
 - [x] Check model works on `cpu` and `gpu`
 - [x] Add `log(cosh)`
-- [ ] Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses.
-- [ ] Experiment scripts and lightning module for [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
-- [ ] Model walk through check each method [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
+- 🔲 Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses. → still not solved.
+- [x] Experiment scripts and lightning module for [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
+- 🔲 Model walk through check each method [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]]
 
-***
+## 2025.01.16
 
-- [ ] Implement intact and pert phenotype processor.
-- [ ] Synthesize Results in report. Discussion on consideration of use alternative methods like mse plus a divergence measure.
-- [ ] Run metabolism label split regression run
-- [ ] Information Diff., WL Kernel
-
-## Notes on Metabolism
-
-- Can get Gibbs Free Energy of reaction from [MetaCyc](https://biocyc.org/reaction?orgid=META&id=D-LACTATE-DEHYDROGENASE-CYTOCHROME-RXN)
-- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.met_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
-
-## Notes Related to Dango
-
-Breakout into specific notes on Dango.
-
-- [ ] Verify
-
-> Pearson correlation between the trigenic interaction scores of two individual replicates is around 0.59, which is much lower than the Pearson correlation between the digenic interaction score of two replicates from the same data source (0.88). ([Zhang et al., 2020, p. 3](zotero://select/library/items/PJFDVT8Y)) ([pdf](zotero://open-pdf/library/items/AFBC5E89?page=3&annotation=D8D949VF))
-
-- [ ] Plot P-Values of current dataset to compare to predicted interactions. Can do for both digenic and trigenic interactions. Do this over queried datasets.
-
-- [ ] What is purpose of the pretraining portion? Why not just take embeddings and put into this hypergraph embedding portion?
+- [x] Investigate results → Things don't look like they are working well. Maybe it is still too early to tell in the training process. We aren't seeing distribution matching on quantile loss. Other losses `dist`, `mse`, `logcosh` don't look any good.
+- [x] See if all genes are in encoded vectors from genome. If this is true, we could distribute embeddings at the beginning of training. → Confirmed all genes in GEM are in genome. `YeastGEM().gene_set -  SCerevisiaeGenome().gene_set -> GeneSet(size=0, items=[])`

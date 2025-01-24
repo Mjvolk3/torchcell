@@ -336,7 +336,7 @@ class HeteroGnn(nn.Module):
                     **{
                         k: v
                         for k, v in self.layer_config.items()
-                        if k in ["bias", "add_self_loops", "normalize"]
+                        if k in ["bias", "add_self_loops"]
                     },
                 )
 
@@ -614,14 +614,14 @@ class MetabolismProcessor(nn.Module):
         self.use_skip = use_skip
         self.hidden_dim = hidden_dim
 
-        # Add learnable metabolite embedding
+        # Constants from the diagram/math
+        self.num_metabolites = 2534
+        self.num_reactions = 4881
+
         self.metabolite_embedding = nn.Embedding(
-            num_embeddings=2534,  # Number of metabolites from diagram
-            embedding_dim=hidden_dim,
-            max_norm=1.0,
+            self.num_metabolites, hidden_dim, max_norm=1.0
         )
 
-        # Hypergraph convolution layers
         self.hyper_convs = nn.ModuleList(
             [
                 StoichiometricHypergraphConv(
@@ -640,152 +640,113 @@ class MetabolismProcessor(nn.Module):
                 [nn.LayerNorm(hidden_dim) for _ in range(hyperconv_num_layers)]
             )
 
-        # Set transformers for metabolite → reaction → gene mappings
-        self.metabolite_to_reaction = SetTransformerAggregation(
-            channels=hidden_dim,
-            num_encoder_blocks=2,
-            num_decoder_blocks=1,
-            heads=set_transformer_heads,
-            concat=False,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
-        )
+        transformer_config = {
+            "channels": hidden_dim,
+            "num_encoder_blocks": 2,
+            "num_decoder_blocks": 1,
+            "heads": set_transformer_heads,
+            "concat": False,
+            "layer_norm": True,
+            "dropout": dropout,
+            "use_isab": False,
+        }
 
-        self.reaction_to_gene = SetTransformerAggregation(
-            channels=hidden_dim,
-            num_encoder_blocks=2,
-            num_decoder_blocks=1,
-            heads=set_transformer_heads,
-            concat=False,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
-        )
+        self.metabolite_to_reaction = SetTransformerAggregation(**transformer_config)
+        self.reaction_to_gene = SetTransformerAggregation(**transformer_config)
+        self.reaction_sab = SetTransformerAggregation(**transformer_config)
 
-        # SAB for processing gene features into reaction embeddings
-        self.reaction_sab = SetTransformerAggregation(
-            channels=hidden_dim,
-            num_encoder_blocks=2,
-            num_decoder_blocks=1,
-            heads=4,
-            concat=False,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
-        )
+    def _aggregate_by_index(
+        self, features: torch.Tensor, indices: torch.Tensor, dim_size: int
+    ) -> torch.Tensor:
+        """Aggregates features by indices using mean pooling."""
+        from torch_scatter import scatter_mean
 
-    def forward(self, batch) -> torch.Tensor:
-        # Extract hypergraph information
+        return scatter_mean(features, indices, dim=0, dim_size=dim_size)
+
+    def forward(self, batch):
+        device = batch[
+            "metabolite", "reaction-genes", "metabolite"
+        ].hyperedge_index.device
+        num_genes = batch["gene"].num_nodes
+
+        # Get graph components
         hyperedge_index = batch[
             "metabolite", "reaction-genes", "metabolite"
         ].hyperedge_index
         stoichiometry = batch[
             "metabolite", "reaction-genes", "metabolite"
         ].stoichiometry
-        num_metabolites = batch["metabolite"].num_nodes
-        device = hyperedge_index.device
-
-        # Get gene features and reaction mapping for reaction embeddings
         gene_features = batch["gene"].x
         reaction_to_genes = batch[
             "metabolite", "reaction-genes", "metabolite"
         ].reaction_to_genes_indices
 
-        # Process genes grouped by reaction using SAB to get reaction embeddings
-        reaction_gene_features = []
+        # Initialize embeddings
+        metabolite_indices = torch.arange(self.num_metabolites, device=device)
+        metabolite_embeddings = self.metabolite_embedding(metabolite_indices)
+        gene_embeddings = torch.zeros(num_genes, self.hidden_dim, device=device)
+
+        # Process genes to reactions (Hr)
+        reaction_features = []
         reaction_indices = []
         for rxn_idx, gene_indices in reaction_to_genes.items():
             if isinstance(gene_indices, (list, tuple)):
-                reaction_gene_features.extend(
-                    [gene_features[idx] for idx in gene_indices]
-                )
-                reaction_indices.extend([rxn_idx] * len(gene_indices))
+                for gene_idx in gene_indices:
+                    reaction_features.append(gene_features[gene_idx])
+                    reaction_indices.append(rxn_idx)
 
-        # Apply SAB to get reaction embeddings
-        if reaction_gene_features:
-            all_gene_features = torch.stack(reaction_gene_features)
-            reaction_indices = torch.tensor(reaction_indices, device=device)
-            reaction_embeddings = self.reaction_sab(all_gene_features, reaction_indices)
+        if reaction_features:
+            features_tensor = torch.stack(reaction_features)
+            indices_tensor = torch.tensor(reaction_indices, device=device)
+            reaction_embeddings = self._aggregate_by_index(
+                features_tensor, indices_tensor, self.num_reactions
+            )
         else:
-            num_reactions = hyperedge_index[1].max().item() + 1
             reaction_embeddings = torch.zeros(
-                num_reactions, self.hidden_dim, device=device
+                self.num_reactions, self.hidden_dim, device=device
             )
 
-        # Get learnable metabolite embeddings
-        metabolite_indices = torch.arange(num_metabolites, device=device)
-        metabolite_embeddings = self.metabolite_embedding(metabolite_indices)
-
-        # Process through hypergraph convolutions
-        prev_embeddings = metabolite_embeddings
+        # Process through hypergraph convolutions (Zm)
+        current = metabolite_embeddings
         for i, conv in enumerate(self.hyper_convs):
-            current = conv(
-                x=prev_embeddings,
+            next_emb = conv(
+                x=current,
                 edge_index=hyperedge_index,
                 stoich=stoichiometry,
                 hyperedge_attr=reaction_embeddings,
             )
-            current = torch.tanh(current)
-
+            next_emb = torch.tanh(next_emb)
             if self.use_skip and i > 0:
-                current = self.layer_norms[i](current + prev_embeddings)
+                next_emb = self.layer_norms[i](next_emb + current)
+            current = next_emb
 
-            prev_embeddings = current
+        metabolite_embeddings = current
 
-        metabolite_embeddings = prev_embeddings
+        # Process metabolites to reactions (Zr)
+        metabolite_indices = hyperedge_index[0]
+        reaction_indices = hyperedge_index[1]
+        reaction_embeddings = self._aggregate_by_index(
+            metabolite_embeddings[metabolite_indices],
+            reaction_indices,
+            self.num_reactions,
+        )
 
-        # Group metabolites by reaction
-        reaction_metabolites = defaultdict(list)
-        for met_idx, rxn_idx in hyperedge_index.t():
-            reaction_metabolites[rxn_idx.item()].append(metabolite_embeddings[met_idx])
+        # Process reactions to genes (Zmg)
+        gene_features = []
+        gene_indices = []
+        for rxn_idx, gene_indices_list in reaction_to_genes.items():
+            if isinstance(gene_indices_list, (list, tuple)):
+                for gene_idx in gene_indices_list:
+                    gene_features.append(reaction_embeddings[rxn_idx])
+                    gene_indices.append(gene_idx)
 
-        # Process reactions through SAB
-        all_reaction_embeddings = []
-        reaction_batch_indices = []
-        for rxn_idx in reaction_metabolites:
-            rxn_mets = torch.stack(reaction_metabolites[rxn_idx])
-            all_reaction_embeddings.append(rxn_mets)
-            reaction_batch_indices.extend(
-                [rxn_idx] * len(reaction_metabolites[rxn_idx])
+        if gene_features:
+            features_tensor = torch.stack(gene_features)
+            indices_tensor = torch.tensor(gene_indices, device=device)
+            metabolic_embeddings = self._aggregate_by_index(
+                features_tensor, indices_tensor, num_genes
             )
-
-        if all_reaction_embeddings:
-            all_reaction_mets = torch.cat(all_reaction_embeddings, dim=0)
-            reaction_batch_indices = torch.tensor(reaction_batch_indices, device=device)
-            reaction_embeddings = self.metabolite_to_reaction(
-                all_reaction_mets, reaction_batch_indices
-            )
-        else:
-            num_reactions = hyperedge_index[1].max().item() + 1
-            reaction_embeddings = torch.zeros(
-                num_reactions, self.hidden_dim, device=device
-            )
-
-        # Group reactions by gene
-        gene_reactions = defaultdict(list)
-        for rxn_idx, gene_indices in reaction_to_genes.items():
-            if isinstance(gene_indices, (list, tuple)):
-                for gene_idx in gene_indices:
-                    gene_reactions[gene_idx].append(reaction_embeddings[rxn_idx])
-
-        # Process reactions for each gene through SAB
-        all_gene_reactions = []
-        gene_batch_indices = []
-        for gene_idx in range(batch["gene"].num_nodes):
-            if gene_idx in gene_reactions:
-                gene_rxns = torch.stack(gene_reactions[gene_idx])
-                all_gene_reactions.append(gene_rxns)
-                gene_batch_indices.extend([gene_idx] * len(gene_reactions[gene_idx]))
-
-        if all_gene_reactions:
-            all_gene_rxns = torch.cat(all_gene_reactions, dim=0)
-            gene_batch_indices = torch.tensor(gene_batch_indices, device=device)
-            gene_embeddings = self.reaction_to_gene(all_gene_rxns, gene_batch_indices)
-        else:
-            gene_embeddings = torch.zeros(
-                batch["gene"].num_nodes, self.hidden_dim, device=device
-            )
+            gene_embeddings = metabolic_embeddings
 
         return gene_embeddings
 
@@ -938,12 +899,21 @@ class IsomorphicCell(nn.Module):
         layers.append(nn.Linear(current_dim, out_dim))
         return nn.Sequential(*layers)
 
-    def _get_perturbed_mask(self, batch):
-        device = batch["gene"].x.device
-        mask = torch.zeros(batch["gene"].num_nodes, dtype=torch.bool, device=device)
-        if hasattr(batch["gene"], "ids_pert"):
-            mask[batch["gene"].ids_pert] = True
-        return mask
+    # TODO check for other uses of batch["gene"].ids_pert
+    def _get_perturbed_indices(self, batch):
+        """Returns list of perturbed indices for each batch item"""
+        batch_size = batch["gene"].ptr.size(0) - 1
+        pert_indices = []
+
+        # Get start/end indices for each batch item
+        for i in range(batch_size):
+            start_idx = batch["gene"].x_pert_ptr[i]
+            end_idx = batch["gene"].x_pert_ptr[i + 1]
+            # Get indices for this batch item
+            item_indices = batch["gene"].cell_graph_idx_pert[start_idx:end_idx].tolist()
+            pert_indices.append(item_indices)
+
+        return pert_indices
 
     def forward_single(self, batch):
         # Gene path - pass preprocessed features to gene_encoder
@@ -957,25 +927,30 @@ class IsomorphicCell(nn.Module):
         return z
 
     def forward(self, cell_graph, batch):
-        batch_size = batch["gene"].ptr.size(0) - 1
-
-        # Process whole graph and split out perturbed
         z_w = self.forward_single(cell_graph)
-        pert_mask = self._get_perturbed_mask(batch)
-        z_p = z_w[pert_mask]
+        pert_indices = self._get_perturbed_indices(batch)
+        batch_size = len(pert_indices)
 
-        # Process through set transformers
-        z_w = self.isab(z_w, batch_size=1)
-        z_p = self.perturbed_sab(z_p, batch_size=1)
+        # Expand z_w for batch dimension
+        # batch_size, nodes, hidden_dim 
+        z_w_expanded = z_w.expand(batch_size, -1, -1)
+
+        # Collect perturbed vectors for each batch item
+        z_p_list = []
+        for i, indices in enumerate(pert_indices):
+            z_p_list.append(z_w_expanded[i, indices])
 
         # Process intact graph
         z_i = self.forward_single(batch)
         z_i = self.isab(z_i, batch_size=batch_size)
 
-        # Calculate growth and predictions
+        # Process perturbed embeddings
+        z_p = torch.cat(z_p_list, dim=0)  # [total_num_perts, hidden_dim]
+        z_p = self.perturbed_sab(z_p, batch_size=batch_size)
+
+        # Calculate final outputs
         growth_w = self.growth_head(z_w)
         growth_i = self.growth_head(z_i)
-
         fitness_ratio = growth_i / (growth_w + 1e-8)
         gene_interaction = self.gene_interaction_head(z_p)
 
@@ -1225,7 +1200,7 @@ def plot_correlations(predictions, true_values, save_path):
     plt.close()
 
 
-def main(device="cpu"):
+def main(device="gpu"):
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv

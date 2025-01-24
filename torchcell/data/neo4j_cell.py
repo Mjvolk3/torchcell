@@ -194,7 +194,7 @@ def to_cell_data(
 
         stoich_coeffs = torch.tensor(stoich_coeffs, dtype=torch.float)
 
-        edge_type = ("metabolite", "reaction_genes", "metabolite")
+        edge_type = ("metabolite", "reaction-genes", "metabolite")
         hetero_data[edge_type].hyperedge_index = hyperedge_index
         hetero_data[edge_type].stoichiometry = stoich_coeffs
         hetero_data[edge_type].num_edges = len(hyperedge_index[1, :].unique())
@@ -230,6 +230,120 @@ class GraphProcessor(ABC):
         pass
 
 
+# class SubgraphRepresentation(GraphProcessor):
+#     """
+#     Processes gene knockout data by removing perturbed nodes from the graph, keeping
+#     track of their features, and updating edge connectivity.
+
+#     Node Transforms:
+#         X ∈ ℝ^(N×d) → X_remain ∈ ℝ^((N-p)×d), X_pert ∈ ℝ^(p×d)
+#         where N is total nodes, p is perturbed nodes, d is feature dimension
+
+#     Edge Transforms:
+#         E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
+#         where |E| is original edge count, |E'| is edges after removing perturbed nodes
+#     """
+
+#     def process(
+#         self,
+#         cell_graph: HeteroData,
+#         phenotype_info: list[PhenotypeType],
+#         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+#     ) -> HeteroData:
+#         if not data:
+#             raise ValueError("Data list is empty")
+
+#         processed_graph = HeteroData()
+
+#         # Collect all nodes to remove across all experiments
+#         nodes_to_remove = set()
+#         for item in data:
+#             if "experiment" not in item or "experiment_reference" not in item:
+#                 raise ValueError(
+#                     "Each item in data must contain both 'experiment' and "
+#                     "'experiment_reference' keys"
+#                 )
+#             nodes_to_remove.update(
+#                 pert.systematic_gene_name
+#                 for pert in item["experiment"].genotype.perturbations
+#             )
+
+#         # Process node information
+#         processed_graph["gene"].node_ids = [
+#             nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
+#         ]
+#         processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
+#         processed_graph["gene"].ids_pert = list(nodes_to_remove)
+#         processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
+#             [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
+#             dtype=torch.long,
+#         )
+
+#         # Populate x and x_pert attributes
+#         node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
+#         x = cell_graph["gene"].x
+#         processed_graph["gene"].x = x[
+#             torch.tensor(
+#                 [node_mapping[nid] for nid in processed_graph["gene"].node_ids]
+#             )
+#         ]
+#         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
+
+#         # add all phenotype fields
+#         phenotype_fields = []
+#         for phenotype in phenotype_info:
+#             phenotype_fields.append(phenotype.model_fields["label_name"].default)
+#             phenotype_fields.append(
+#                 phenotype.model_fields["label_statistic_name"].default
+#             )
+#         for field in phenotype_fields:
+#             processed_graph["gene"][field] = []
+
+#         # add experiment data if it exists
+#         for field in phenotype_fields:
+#             field_values = []
+#             for item in data:
+#                 value = getattr(item["experiment"].phenotype, field, None)
+#                 if value is not None:
+#                     field_values.append(value)
+#             if field_values:
+#                 processed_graph["gene"][field] = torch.tensor(field_values)
+#             else:
+#                 processed_graph["gene"][field] = torch.tensor([float("nan")])
+
+#         # Process edges
+#         new_index_map = {
+#             nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
+#         }
+#         for edge_type in cell_graph.edge_types:
+#             src_type, _, dst_type = edge_type
+#             edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
+#             filtered_edges = []
+
+#             for src, dst in edge_index.T:
+#                 src_id = cell_graph[src_type].node_ids[src]
+#                 dst_id = cell_graph[dst_type].node_ids[dst]
+
+#                 if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
+#                     new_src = new_index_map[src_id]
+#                     new_dst = new_index_map[dst_id]
+#                     filtered_edges.append([new_src, new_dst])
+
+#             if filtered_edges:
+#                 new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
+#                 processed_graph[src_type, _, dst_type].edge_index = new_edge_index
+#                 processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
+#                     1
+#                 ]
+#             else:
+#                 processed_graph[src_type, _, dst_type].edge_index = torch.empty(
+#                     (2, 0), dtype=torch.long
+#                 )
+#                 processed_graph[src_type, _, dst_type].num_edges = 0
+
+#         return processed_graph
+
+
 class SubgraphRepresentation(GraphProcessor):
     """
     Processes gene knockout data by removing perturbed nodes from the graph, keeping
@@ -243,6 +357,97 @@ class SubgraphRepresentation(GraphProcessor):
         E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
         where |E| is original edge count, |E'| is edges after removing perturbed nodes
     """
+
+    def process_regular_edges(
+        self, edge_type, cell_graph, processed_graph, new_index_map, nodes_to_remove
+    ):
+        """Process regular edges (physical_interaction, regulatory_interaction)"""
+        src_type, rel_type, dst_type = edge_type
+        edge_index = cell_graph[edge_type].edge_index.numpy()
+        filtered_edges = []
+
+        for src, dst in edge_index.T:
+            src_id = cell_graph[src_type].node_ids[src]
+            dst_id = cell_graph[dst_type].node_ids[dst]
+
+            if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
+                new_src = new_index_map[src_id]
+                new_dst = new_index_map[dst_id]
+                filtered_edges.append([new_src, new_dst])
+
+        if filtered_edges:
+            new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
+            processed_graph[edge_type].edge_index = new_edge_index
+            processed_graph[edge_type].num_edges = new_edge_index.shape[1]
+        else:
+            processed_graph[edge_type].edge_index = torch.empty(
+                (2, 0), dtype=torch.long
+            )
+            processed_graph[edge_type].num_edges = 0
+
+    def process_hyperedges(
+        self, edge_type, cell_graph, processed_graph, new_index_map, nodes_to_remove
+    ):
+        """Process hyperedges (reaction-genes)"""
+        # Get the indices dictionary to find reactions to remove
+        reaction_to_genes_indices = cell_graph[edge_type].reaction_to_genes_indices
+
+        # Find reactions containing perturbed genes
+        perturbed_indices = set()
+        for gene_idx in processed_graph["gene"].cell_graph_idx_pert:
+            reactions_with_gene = [
+                reaction_idx
+                for reaction_idx, gene_list in reaction_to_genes_indices.items()
+                if gene_idx.item() in gene_list
+            ]
+            perturbed_indices.update(reactions_with_gene)
+
+        # Get hyperedge data
+        hyperedge_index = cell_graph[edge_type].hyperedge_index
+        stoichiometry = cell_graph[edge_type].stoichiometry
+
+        # Create mask for valid reactions by checking bottom row indices
+        valid_mask = torch.ones(hyperedge_index.shape[1], dtype=torch.bool)
+        for i, reaction_idx in enumerate(hyperedge_index[1]):
+            if reaction_idx.item() in perturbed_indices:
+                valid_mask[i] = False
+
+        if valid_mask.any():  # If we have any valid reactions left
+            new_hyperedge_index = hyperedge_index[:, valid_mask]
+            new_stoichiometry = stoichiometry[valid_mask]
+
+            # Create new reaction indices mapping for the remaining reactions
+            unique_edges = torch.unique(new_hyperedge_index[1])
+            edge_map = {old.item(): new for new, old in enumerate(unique_edges)}
+
+            # Update reaction indices
+            new_hyperedge_index[1] = torch.tensor(
+                [edge_map[idx.item()] for idx in new_hyperedge_index[1]]
+            )
+
+            # Store updated data
+            processed_graph[edge_type].hyperedge_index = new_hyperedge_index
+            processed_graph[edge_type].stoichiometry = new_stoichiometry
+            processed_graph[edge_type].reaction_to_genes = cell_graph[
+                edge_type
+            ].reaction_to_genes
+            processed_graph[edge_type].reaction_to_genes_indices = cell_graph[
+                edge_type
+            ].reaction_to_genes_indices
+            processed_graph[edge_type].num_edges = len(unique_edges)
+        else:
+            # If all reactions are filtered out
+            processed_graph[edge_type].hyperedge_index = torch.empty(
+                (2, 0), dtype=torch.long
+            )
+            processed_graph[edge_type].stoichiometry = torch.empty(0, dtype=torch.float)
+            processed_graph[edge_type].reaction_to_genes = cell_graph[
+                edge_type
+            ].reaction_to_genes
+            processed_graph[edge_type].reaction_to_genes_indices = cell_graph[
+                edge_type
+            ].reaction_to_genes_indices
+            processed_graph[edge_type].num_edges = 0
 
     def process(
         self,
@@ -289,7 +494,7 @@ class SubgraphRepresentation(GraphProcessor):
         ]
         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
 
-        # add all phenotype fields
+        # Add all phenotype fields
         phenotype_fields = []
         for phenotype in phenotype_info:
             phenotype_fields.append(phenotype.model_fields["label_name"].default)
@@ -299,7 +504,7 @@ class SubgraphRepresentation(GraphProcessor):
         for field in phenotype_fields:
             processed_graph["gene"][field] = []
 
-        # add experiment data if it exists
+        # Add experiment data if it exists
         for field in phenotype_fields:
             field_values = []
             for item in data:
@@ -315,31 +520,30 @@ class SubgraphRepresentation(GraphProcessor):
         new_index_map = {
             nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
         }
+
+        # Handle metabolite nodes if they exist
+        if "metabolite" in cell_graph.node_types:
+            processed_graph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
+            processed_graph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
+
+        # Process each edge type
         for edge_type in cell_graph.edge_types:
-            src_type, _, dst_type = edge_type
-            edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
-            filtered_edges = []
-
-            for src, dst in edge_index.T:
-                src_id = cell_graph[src_type].node_ids[src]
-                dst_id = cell_graph[dst_type].node_ids[dst]
-
-                if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
-                    new_src = new_index_map[src_id]
-                    new_dst = new_index_map[dst_id]
-                    filtered_edges.append([new_src, new_dst])
-
-            if filtered_edges:
-                new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
-                processed_graph[src_type, _, dst_type].edge_index = new_edge_index
-                processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
-                    1
-                ]
-            else:
-                processed_graph[src_type, _, dst_type].edge_index = torch.empty(
-                    (2, 0), dtype=torch.long
+            if "-" in edge_type[1]:  # Hyperedge case
+                self.process_hyperedges(
+                    edge_type,
+                    cell_graph,
+                    processed_graph,
+                    new_index_map,
+                    nodes_to_remove,
                 )
-                processed_graph[src_type, _, dst_type].num_edges = 0
+            else:  # Regular edge case
+                self.process_regular_edges(
+                    edge_type,
+                    cell_graph,
+                    processed_graph,
+                    new_index_map,
+                    nodes_to_remove,
+                )
 
         return processed_graph
 
@@ -590,7 +794,7 @@ class Unperturbed(GraphProcessor):
             processed_graph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
             processed_graph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
 
-            edge_type = ("metabolite", "reaction_genes", "metabolite")
+            edge_type = ("metabolite", "reaction-genes", "metabolite")
             if any(e_type == edge_type for e_type in cell_graph.edge_types):
                 # Copy hypergraph structure
                 processed_graph[edge_type].hyperedge_index = cell_graph[

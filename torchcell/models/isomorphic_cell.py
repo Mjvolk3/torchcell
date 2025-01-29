@@ -818,111 +818,207 @@ class GeneMapper(nn.Module):
 
 
 class MetabolismProcessor(nn.Module):
-    """
-    High-level module that:
-    1. Builds gene context (GeneContextProcessor)
-    2. Embeds metabolites
-    3. Passes metabolite embeddings + reaction context into
-       StoichiometricHypergraphConv
-    4. Maps back from metabolite -> reaction -> gene
-    """
-
     def __init__(
         self,
-        metabolite_dim: int,  # dimension of gene_features input to gene_context
+        metabolite_dim: int,
         hidden_dim: int,
         num_layers: dict = {"gene_context": 2, "metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
         num_heads: int = 4,
-        num_metabolites: int = 2534,  # or pass dynamically
-        num_reactions: int = 4881,  # or pass dynamically
     ):
         super().__init__()
 
-        # Embedding for all metabolites (global indexing or as needed)
-        self.num_metabolites = num_metabolites
-        self.hidden_dim = hidden_dim
+        # Metabolite embeddings
         self.metabolite_embedding = nn.Embedding(
-            self.num_metabolites, hidden_dim, max_norm=1.0
+            num_embeddings=metabolite_dim, embedding_dim=hidden_dim, max_norm=1.0
         )
 
-        # Gene context block
-        self.gene_context = GeneContextProcessor(
-            in_channels=metabolite_dim,
-            hidden_channels=hidden_dim,
-            num_layers=num_layers["gene_context"],
+        # Gene to Reaction SAB
+        self.gene_reaction_transformer = SetTransformerAggregation(
+            channels=hidden_dim,
+            num_encoder_blocks=2,
+            heads=num_heads,
+            layer_norm=True,
             dropout=dropout,
+            use_isab=False,
         )
 
-        # Metabolite updates
-        self.metabolite_processor = MetaboliteProcessor(
-            hidden_channels=hidden_dim,
-            num_layers=num_layers["metabolite"],
+        # Metabolite processing with stoichiometry
+        self.metabolite_processor = nn.ModuleList(
+            [
+                StoichiometricHypergraphConv(
+                    in_channels=hidden_dim,
+                    out_channels=hidden_dim,
+                    use_attention=use_attention,
+                    attention_mode="node",
+                    dropout=dropout,
+                )
+                for _ in range(num_layers["metabolite"])
+            ]
+        )
+
+        # Metabolite to Reaction SAB
+        self.reaction_metabolite_transformer = SetTransformerAggregation(
+            channels=hidden_dim,
+            num_encoder_blocks=2,
+            heads=num_heads,
+            layer_norm=True,
             dropout=dropout,
-            use_attention=use_attention,
+            use_isab=False,
         )
 
-        # Reaction/gene mapping
-        self.reaction_mapper = ReactionMapper(
-            hidden_channels=hidden_dim, num_heads=num_heads, dropout=dropout
-        )
-        self.gene_mapper = GeneMapper(
-            hidden_channels=hidden_dim, num_heads=num_heads, dropout=dropout
-        )
-
-    def forward(self, batch) -> torch.Tensor:
-        """
-        Forward pass for a single HeteroData or a mini-batch.
-
-        Returns:
-            Z_mg: (n_g, hidden_dim) final gene embeddings from metabolic path
-        """
-        device = batch[
-            "metabolite", "reaction-genes", "metabolite"
-        ].hyperedge_index.device
-        num_genes = batch["gene"].num_nodes
-
-        # 1) Gene context
-        gene_features = batch["gene"].x
-        reaction_to_genes = batch[
-            "metabolite", "reaction-genes", "metabolite"
-        ].reaction_to_genes_indices
-        H_g, H_r = self.gene_context(gene_features, reaction_to_genes)
-
-        # 2) Metabolite embeddings
-        # If you want to embed all known metabolites:
-        # metabolite_indices = torch.arange(self.num_metabolites, device=device)
-        # metabolite_embeddings = self.metabolite_embedding(metabolite_indices)
-
-        # Alternatively, if your batch only has a subset of metabolite nodes:
-        # local_idx = batch["metabolite"].node_ids  # or .ids if you store them
-        # metabolite_embeddings = self.metabolite_embedding(local_idx)
-
-        metabolite_indices = torch.arange(self.num_metabolites, device=device)
-        metabolite_embeddings = self.metabolite_embedding(metabolite_indices)
-
-        # 3) Stoichiometric hypergraph convolution
-        hyperedge_index = batch[
-            "metabolite", "reaction-genes", "metabolite"
-        ].hyperedge_index
-        stoichiometry = batch[
-            "metabolite", "reaction-genes", "metabolite"
-        ].stoichiometry
-        Z_m = self.metabolite_processor(
-            metabolite_embeddings,
-            hyperedge_index,
-            stoichiometry,
-            H_r,  # reaction_features
+    def whole_forward(self, graph) -> torch.Tensor:
+        """Forward pass for single instance (whole cell graph)"""
+        # 1. Gene -> Reaction context
+        gpr_edge_index = graph["gene", "gpr", "reaction"].hyperedge_index
+        gpr_edge_index, _ = sort_edge_index(
+            gpr_edge_index, edge_attr=None, sort_by_row=False
         )
 
-        # 4) Reaction mapping
-        Z_r = self.reaction_mapper(Z_m, hyperedge_index)
+        # Get sorted indices and features
+        gene_x = graph["gene"].x
+        reaction_indices = gpr_edge_index[1]
+        gene_indices = gpr_edge_index[0]
 
-        # 5) Gene mapping
-        Z_mg = self.gene_mapper(Z_r, reaction_to_genes, num_genes)
+        sorted_indices = torch.sort(reaction_indices).indices
+        reaction_indices = reaction_indices[sorted_indices]
+        gene_indices = gene_indices[sorted_indices]
+
+        H_r = self.gene_reaction_transformer(
+            gene_x[gene_indices], reaction_indices, dim_size=graph["reaction"].num_nodes
+        )
+
+        # 2. Initialize and process metabolites
+        Z_m = self.metabolite_embedding(
+            torch.arange(graph["metabolite"].num_nodes, device=gene_x.device)
+        )
+
+        # Sort metabolite edges
+        met_edge_index = graph["metabolite", "reaction", "metabolite"].hyperedge_index
+        stoich = graph["metabolite", "reaction", "metabolite"].stoichiometry
+        met_edge_index, stoich = sort_edge_index(
+            met_edge_index, edge_attr=stoich, sort_by_row=False
+        )
+
+        # Process metabolites
+        for conv in self.metabolite_processor:
+            Z_m = conv(
+                x=Z_m, edge_index=met_edge_index, stoich=stoich, hyperedge_attr=H_r
+            )
+
+        # 3. Metabolite -> Reaction mapping
+        metabolite_indices = met_edge_index[0]
+        reaction_indices = met_edge_index[1]
+
+        sorted_indices = torch.sort(reaction_indices).indices
+        reaction_indices = reaction_indices[sorted_indices]
+        metabolite_indices = metabolite_indices[sorted_indices]
+
+        Z_r = self.reaction_metabolite_transformer(
+            Z_m[metabolite_indices],
+            reaction_indices,
+            dim_size=graph["reaction"].num_nodes,
+        )
+
+        # 4. Reaction -> Gene mapping
+        gene_indices = gpr_edge_index[0]
+        reaction_indices = gpr_edge_index[1]
+
+        sorted_indices = torch.sort(gene_indices).indices
+        gene_indices = gene_indices[sorted_indices]
+        reaction_indices = reaction_indices[sorted_indices]
+
+        Z_mg = self.gene_reaction_transformer(
+            Z_r[reaction_indices], gene_indices, dim_size=graph["gene"].num_nodes
+        )
 
         return Z_mg
+
+    def intact_perturbed_forward(self, batch: HeteroData) -> torch.Tensor:
+        # 1. Gene -> Reaction context (unchanged)
+        gpr_edge_index = batch["gene", "gpr", "reaction"].hyperedge_index
+        gpr_edge_index, _ = sort_edge_index(
+            gpr_edge_index,
+            edge_attr=None,
+            sort_by_row=False,
+            num_nodes=batch["reaction"].num_nodes,
+        )
+        
+        gene_x = batch["gene"].x
+        H_r = self.gene_reaction_transformer(
+            gene_x[gpr_edge_index[0]],
+            index=gpr_edge_index[1],
+            dim_size=batch["reaction"].num_nodes,
+        )
+        
+        # 2. Initialize and process metabolites
+        Z_m = self.metabolite_embedding(
+            torch.arange(batch["metabolite"].num_nodes, device=gene_x.device)
+        )
+        
+        # Get metabolite edges and sort them
+        met_edge_index = batch["metabolite", "reaction", "metabolite"].hyperedge_index
+        stoich = batch["metabolite", "reaction", "metabolite"].stoichiometry
+        
+        # Move to CPU for checking
+        met_edge_index_cpu = met_edge_index.cpu()
+        num_metabolites = Z_m.size(0)
+        num_reactions = H_r.size(0)
+        
+        # Check indices before sorting
+        if met_edge_index_cpu[0].max() >= num_metabolites:
+            raise ValueError(f"Invalid metabolite index: {met_edge_index_cpu[0].max()} >= {num_metabolites}")
+        if met_edge_index_cpu[1].max() >= num_reactions:
+            raise ValueError(f"Invalid reaction index: {met_edge_index_cpu[1].max()} >= {num_reactions}")
+        
+        # Sort edges with explicit size constraints
+        met_edge_index_sorted, stoich_sorted = sort_edge_index(
+            met_edge_index,
+            edge_attr=stoich,
+            sort_by_row=False,
+            num_nodes=num_metabolites
+        )
+        
+        # Process metabolites with explicit sizes
+        for conv in self.metabolite_processor:
+            Z_m = conv(
+                x=Z_m,
+                edge_index=met_edge_index_sorted,
+                stoich=stoich_sorted,
+                hyperedge_attr=H_r,
+                num_edges=num_reactions  # Explicitly pass number of reactions
+            )
+        
+        # Rest of the code remains the same
+        metabolite_indices = met_edge_index_sorted[0]
+        reaction_indices = met_edge_index_sorted[1]
+        
+        Z_r = self.reaction_metabolite_transformer(
+            Z_m[metabolite_indices],
+            index=reaction_indices,
+            dim_size=batch["reaction"].num_nodes.sum(),
+        )
+        
+        gene_indices = gpr_edge_index[0]
+        reaction_indices = gpr_edge_index[1]
+        
+        Z_mg = self.gene_reaction_transformer(
+            Z_r[reaction_indices],
+            index=gene_indices,
+            dim_size=batch["gene"].num_nodes.sum(),
+        )
+        
+        return Z_mg
+
+    def forward(self, data) -> torch.Tensor:
+        # Check if we're dealing with batched data
+        is_batched = hasattr(data["gene"], "batch")
+
+        if is_batched:
+            return self.intact_perturbed_forward(data)
+        else:
+            return self.whole_forward(data)
 
 
 class IsomorphicCell(nn.Module):
@@ -1005,7 +1101,9 @@ class IsomorphicCell(nn.Module):
         )
 
         self.metabolism_processor = MetabolismProcessor(
-            metabolite_dim=hidden_channels,
+            metabolite_dim=metabolism_config.get(
+                "metabolite_dim", 2534
+            ),  # Changed from gene_dim
             hidden_dim=hidden_channels,
             num_layers={
                 "gene_context": num_layers["metabolism"],
@@ -1219,6 +1317,18 @@ def initialize_model(dataset, device, config=None):
         edge_types=config["edge_types"],
         num_layers=config["num_layers"],
         dropout=config["dropout"],
+        gene_encoder_config=config["gene_encoder_config"],
+        metabolism_config=config.get(
+            "metabolism_config",
+            {
+                "metabolite_dim": 2534,  # This should match your number of metabolites
+                "hidden_dim": config["hidden_channels"],
+                "use_attention": True,
+                "num_heads": 4,
+                "dropout": config["dropout"],
+            },
+        ),
+        set_transformer_config=config["set_transformer_config"],
     ).to(device)
 
     return model

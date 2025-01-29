@@ -2,7 +2,7 @@
 id: y8oq40dcoz8lblgisqd11k7
 title: Manual Sync
 desc: ''
-updated: 1736127044152
+updated: 1738002396205
 created: 1715730599462
 ---
 ## Sync run from an offline job
@@ -18,4 +18,3 @@ After `cd`, copy paste.
 ```bash
 for d in $(ls -t -d */); do wandb sync $d; done
 ```
-  

@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1737680302357
+updated: 1738136806606
 created: 1737507788186
 ---
 
@@ -828,5 +828,286 @@ Where:
 - $z_P, z_I, z_W \in \mathbb{R}^{h}$ (latent representations)
 - $\lambda_1, \lambda_2, \lambda_3 \in \mathbb{R}^+$ (loss weights)
 
-
 ![](./assets/images/output.svg)
+
+## 2025.01.27 - Metabolism Processor
+
+```mermaid
+graph TD
+    subgraph InputData["Input Data"]
+        gene_feat["Gene Features<br>$$\quad X_g \in \mathbb{R}^{n_g \times d}$$"]
+        met_data["Metabolite Data<br>hyperedge_index: [2, 20960]<br>stoichiometry: [20960]<br>reaction_to_genes_indices: dict(4881)"]
+    end
+
+    subgraph Preprocessing["Preprocessing"]
+        preproc["Preprocessor MLP<br>$$\quad H_g = \text{MLP}(X_g) \in \mathbb{R}^{n_g \times h}$$"]
+        gene2rxn["Gene → Reaction Context SAB<br>$$\quad H_r = \text{SAB}(H_g, I_{r→g}) \in \mathbb{R}^{n_r \times h}$$"]
+    end
+
+    subgraph MetabolismPath["Metabolism Path"]
+        direction TB
+        met2met["Metabolite → Metabolite<br>StoichiometricHypergraphConv<br>$$\quad Z_m = \text{SHConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$$"]
+        met2rxn["Metabolite → Reaction SAB<br>$$\quad Z_r = \text{SAB}(Z_m, I_{m→r}) \in \mathbb{R}^{n_r \times h}$$"]
+        rxn2gene["Reaction → Gene SAB<br>$$\quad Z_{mg} = \text{SAB}(Z_r, I_{r→g}) \in \mathbb{R}^{n_g \times h}$$"]
+    end
+
+    gene_feat --> preproc
+    preproc --> gene2rxn
+    met_data --> met2met
+    gene2rxn --> met2met
+    met2met --> met2rxn
+    met2rxn --> rxn2gene
+
+    style InputData fill:#e1f5fe,stroke:#333,stroke-width:2px
+    style Preprocessing fill:#fffde7,stroke:#333,stroke-width:2px
+    style MetabolismPath fill:#e8f5e9,stroke:#333,stroke-width:2px
+```
+
+## 2025.01.27 - Metabolism Processor Algorithm
+
+### Data Structures
+
+1. **Input Dimensions**:
+   - $n_m = 2534$ (number of metabolites)
+   - $n_r = 4881$ (number of reactions)
+   - $n_g$ (number of genes)
+   - $h$ (hidden dimension)
+
+2. **Input Matrices**:
+   - $X_g \in \mathbb{R}^{n_g \times d}$ (gene features)
+   - $E_m \in \mathbb{R}^{n_m \times h}$ (metabolite embeddings)
+   - $I_{m→r} \in \{0,1\}^{n_m \times n_r}$ (metabolite-to-reaction incidence matrix) - This is essentially the hyperedge index.
+   - $I_{r→g} \in \{0,1\}^{n_r \times n_g}$ (reaction-to-gene incidence matrix) - This is technically another hyperedge index and could be stored as we store the hyperedge index of the metabolism hypergraph.
+   - $S \in \mathbb{R}^{n_r}$ (stoichiometric coefficients)
+
+### Metabolism Processor Algorithm Steps
+
+#### 1. Gene Context Processing
+
+**Function**: `process_gene_context`
+
+- **Input**: Gene features $X_g$
+- **Process**: Transform gene features to provide reaction context
+- **Output**: $H_g \in \mathbb{R}^{n_g \times h}$
+
+```python
+H_g = MLP(X_g)  # Initial transformation
+H_r = SAB(H_g, I_{r→g})  # Aggregate gene features per reaction
+```
+
+#### 2. Metabolite Processing
+
+**Function**: `process_metabolites`
+
+- **Input**: $E_m, H_r, I_{m→r}, S$
+- **Process**: Apply stoichiometric hypergraph convolution
+- **Output**: $Z_m \in \mathbb{R}^{n_m \times h}$
+
+```python
+Z_m = StoichiometricHypergraphConv(
+    x=E_m,
+    edge_index=hyperedge_index,
+    stoich=S,
+    hyperedge_attr=H_r
+)
+```
+
+#### 3. Reaction Mapping
+
+**Function**: `metabolites_to_reactions`
+
+- **Input**: $Z_m, I_{m→r}$
+- **Process**: Map metabolite features to reactions using Set Attention Block
+- **Output**: $Z_r \in \mathbb{R}^{n_r \times h}$
+
+```python
+Z_r = SAB(Z_m, I_{m→r})  # Aggregate metabolite features per reaction
+```
+
+#### 4. Gene Mapping
+
+**Function**: `reactions_to_genes`
+
+- **Input**: $Z_r, I_{r→g}$
+- **Process**: Map reaction features to genes using Set Attention Block
+- **Output**: $Z_{mg} \in \mathbb{R}^{n_g \times h}$
+
+```python
+Z_{mg} = SAB(Z_r, I_{r→g})  # Aggregate reaction features per gene
+```
+
+### Key Components
+
+1. **SetTransformer (SAB)**:
+   - Processes sets of varying size
+   - Performs permutation-invariant aggregation
+   - Maintains dimensional consistency
+
+2. **StoichiometricHypergraphConv**:
+   - Handles hypergraph structure of metabolic network
+   - Incorporates stoichiometric coefficients
+   - Processes reaction context from genes
+
+3. **Dimension Handling**:
+   - All intermediate representations maintain $h$ dimensions
+   - Supports batch processing
+   - Preserves sparsity in graph operations
+
+### Implementation Notes
+
+1. **Memory Efficiency**:
+   - Uses sparse matrix operations
+   - Implements batched processing
+   - Handles variable-sized sets
+
+2. **Numerical Stability**:
+   - Uses layer normalization
+   - Implements skip connections
+   - Handles potential numerical instabilities
+
+3. **Performance Optimization**:
+   - Caches intermediate computations
+   - Uses efficient sparse operations
+   - Implements parallel processing where possible
+
+## 2025.01.28 - Dicts are a Nightmare Change Choice of Data Preprocessing
+
+Whole Graph
+
+```python
+dataset.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6579,
+    node_ids=[6579],
+    x=[6579, 64],
+  },
+  metabolite={
+    num_nodes=2534,
+    node_ids=[2534],
+  },
+  reaction={
+    num_nodes=4881,
+    node_ids=[4881],
+  },
+  (gene, physical_interaction, gene)={
+    edge_index=[2, 143824],
+    num_edges=143824,
+  },
+  (gene, regulatory_interaction, gene)={
+    edge_index=[2, 16061],
+    num_edges=16061,
+  },
+  (metabolite, reaction, metabolite)={
+    hyperedge_index=[2, 20960],
+    stoichiometry=[20960],
+    num_edges=4881,
+    reaction_to_genes=dict(len=4881),
+    reaction_to_genes_indices=dict(len=4881),
+  },
+  (gene, gpr, reaction)={
+    hyperedge_index=[2, 5430],
+    num_edges=4881,
+  }
+)
+```
+
+Intact/Perturbed Graph
+
+```python
+dataset[4]
+HeteroData(
+  gene={
+    node_ids=[6577],
+    num_nodes=6577,
+    ids_pert=[2],
+    cell_graph_idx_pert=[2],
+    x=[6577, 64],
+    x_pert=[2, 64],
+    fitness=[1],
+    fitness_std=[1],
+    gene_interaction=[1],
+    gene_interaction_p_value=[1],
+  },
+  metabolite={
+    node_ids=[2534],
+    num_nodes=2534,
+  },
+  reaction={
+    num_nodes=4880,
+    node_ids=[4880],
+  },
+  (gene, physical_interaction, gene)={
+    edge_index=[2, 143786],
+    num_edges=143786,
+  },
+  (gene, regulatory_interaction, gene)={
+    edge_index=[2, 16056],
+    num_edges=16056,
+  },
+  (gene, gpr, reaction)={
+    hyperedge_index=[2, 5428],
+    num_edges=4880,
+  },
+  (metabolite, reaction, metabolite)={
+    hyperedge_index=[2, 20954],
+    stoichiometry=[20954],
+    num_edges=4880,
+  }
+)
+```
+
+Batched
+
+```python
+batch
+HeteroDataBatch(
+  gene={
+    node_ids=[2],
+    num_nodes=13154,
+    ids_pert=[2],
+    cell_graph_idx_pert=[4],
+    x=[13154, 64],
+    x_batch=[13154],
+    x_ptr=[3],
+    x_pert=[4, 64],
+    x_pert_batch=[4],
+    x_pert_ptr=[3],
+    fitness=[2],
+    fitness_std=[2],
+    gene_interaction=[2],
+    gene_interaction_p_value=[2],
+    batch=[13154],
+    ptr=[3],
+  },
+  metabolite={
+    node_ids=[2],
+    num_nodes=5068,
+    batch=[5068],
+    ptr=[3],
+  },
+  reaction={
+    num_nodes=9762,
+    node_ids=[2],
+    batch=[9762],
+    ptr=[3],
+  },
+  (gene, physical_interaction, gene)={
+    edge_index=[2, 287558],
+    num_edges=[2],
+  },
+  (gene, regulatory_interaction, gene)={
+    edge_index=[2, 32109],
+    num_edges=[2],
+  },
+  (gene, gpr, reaction)={
+    hyperedge_index=[2, 10860],
+    num_edges=[2],
+  },
+  (metabolite, reaction, metabolite)={
+    hyperedge_index=[2, 41920],
+    stoichiometry=[41920],
+    num_edges=[2],
+  }
+)
+```

@@ -1,9 +1,3 @@
-# torchcell/models/isomorphic_cell
-# [[torchcell.models.isomorphic_cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/isomorphic_cell
-# Test file: tests/torchcell/models/test_isomorphic_cell.py
-
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -29,10 +23,9 @@ from typing import Optional, Literal
 from torch_geometric.typing import EdgeType
 from torchcell.models.act import act_register
 from collections import defaultdict
-from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
 
 from typing import Any, Union, Optional
-from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
 import torch
 from torch import Tensor
 import torch.nn as nn
@@ -40,6 +33,33 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
 from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
+
+
+class AttentionalGraphAggregation(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        super().__init__()
+
+        # Gate network to compute attention scores
+        self.gate_nn = nn.Sequential(
+            nn.Linear(in_channels, in_channels // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(in_channels // 2, 1),
+        )
+
+        # Optional transformation network
+        self.transform_nn = nn.Sequential(
+            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
+        )
+
+        self.aggregator = AttentionalAggregation(
+            gate_nn=self.gate_nn, nn=self.transform_nn
+        )
+
+    def forward(
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+    ) -> torch.Tensor:
+        return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 class PreProcessor(nn.Module):
@@ -625,13 +645,9 @@ class GeneContextProcessor(nn.Module):
             current_dim = hidden_channels
         self.mlp = nn.Sequential(*layers)
 
-        self.sab = SetTransformerAggregation(
-            channels=hidden_channels,
-            num_encoder_blocks=2,
-            heads=4,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
+        # Replace SAB with AttentionalGraphAggregation
+        self.aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
     def forward(
@@ -655,7 +671,7 @@ class GeneContextProcessor(nn.Module):
             sorted_idx = torch.argsort(rxn_indices)
             rxn_feats = rxn_feats[sorted_idx]
             rxn_indices = rxn_indices[sorted_idx]
-            H_r = self.sab(rxn_feats, rxn_indices)
+            H_r = self.aggregator(rxn_feats, rxn_indices)
         else:
             # No genes => zero out
             # (assuming reaction indices go up to some known maximum)
@@ -735,36 +751,25 @@ class MetaboliteProcessor(nn.Module):
 
 class ReactionMapper(nn.Module):
     """
-    Aggregates metabolite features -> reaction embeddings via SetTransformer.
+    Aggregates metabolite features -> reaction embeddings via attention.
     """
 
-    def __init__(self, hidden_channels: int, num_heads: int = 4, dropout: float = 0.1):
+    def __init__(self, hidden_channels: int, dropout: float = 0.1):
         super().__init__()
-        self.sab = SetTransformerAggregation(
-            channels=hidden_channels,
-            num_encoder_blocks=2,
-            heads=num_heads,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
+        self.aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
     def forward(
         self, metabolite_features: torch.Tensor, hyperedge_index: torch.Tensor
     ) -> torch.Tensor:
-        """
-        Convert (metabolite -> reaction) indexing into a set-based aggregation.
-
-        hyperedge_index[0]: metabolite indices
-        hyperedge_index[1]: reaction indices
-        """
         # Sort edges by reaction index
         rxn_indices = hyperedge_index[1]
         sorted_idx = torch.argsort(rxn_indices)
         feats = metabolite_features[hyperedge_index[0][sorted_idx]]
         rxn_indices = rxn_indices[sorted_idx]
 
-        Z_r = self.sab(feats, rxn_indices)
+        Z_r = self.aggregator(feats, index=rxn_indices)
         return Z_r
 
 
@@ -773,15 +778,10 @@ class GeneMapper(nn.Module):
     Aggregates reaction features -> gene embeddings.
     """
 
-    def __init__(self, hidden_channels: int, num_heads: int = 4, dropout: float = 0.1):
+    def __init__(self, hidden_channels: int, dropout: float = 0.1):
         super().__init__()
-        self.sab = SetTransformerAggregation(
-            channels=hidden_channels,
-            num_encoder_blocks=2,
-            heads=num_heads,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
+        self.aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
     def forward(
@@ -790,10 +790,6 @@ class GeneMapper(nn.Module):
         reaction_to_genes: dict[int, list[int]],
         num_genes: int,
     ) -> torch.Tensor:
-        """
-        For each reaction -> set of genes, gather reaction_features and pool
-        them into per-gene embeddings. Then create an embedding for each gene.
-        """
         feats_list = []
         gene_idx_list = []
         for rxn_idx, g_indices in reaction_to_genes.items():
@@ -808,9 +804,8 @@ class GeneMapper(nn.Module):
             sorted_idx = torch.argsort(gene_idx)
             feats = feats[sorted_idx]
             gene_idx = gene_idx[sorted_idx]
-            Z_mg = self.sab(feats, gene_idx)
+            Z_mg = self.aggregator(feats, index=gene_idx)
         else:
-            # If no genes are connected, return zeros
             Z_mg = torch.zeros(
                 (num_genes, reaction_features.size(1)), device=reaction_features.device
             )
@@ -825,7 +820,6 @@ class MetabolismProcessor(nn.Module):
         num_layers: dict = {"metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
-        num_heads: int = 2,
     ):
         super().__init__()
 
@@ -834,14 +828,9 @@ class MetabolismProcessor(nn.Module):
             num_embeddings=metabolite_dim, embedding_dim=hidden_dim, max_norm=1.0
         )
 
-        # Gene to Reaction SAB
-        self.gene_reaction_transformer = SetTransformerAggregation(
-            channels=hidden_dim,
-            num_encoder_blocks=2,
-            heads=num_heads,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
+        # Gene to Reaction aggregation
+        self.gene_reaction_aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_dim, out_channels=hidden_dim, dropout=dropout
         )
 
         # Metabolite processing with stoichiometry
@@ -858,14 +847,9 @@ class MetabolismProcessor(nn.Module):
             ]
         )
 
-        # Metabolite to Reaction SAB
-        self.reaction_metabolite_transformer = SetTransformerAggregation(
-            channels=hidden_dim,
-            num_encoder_blocks=2,
-            heads=num_heads,
-            layer_norm=True,
-            dropout=dropout,
-            use_isab=False,
+        # Metabolite to Reaction aggregation
+        self.reaction_metabolite_aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_dim, out_channels=hidden_dim, dropout=dropout
         )
 
     def whole_forward(self, graph) -> torch.Tensor:
@@ -876,17 +860,14 @@ class MetabolismProcessor(nn.Module):
             gpr_edge_index, edge_attr=None, sort_by_row=False
         )
 
-        # Get sorted indices and features
         gene_x = graph["gene"].x
         reaction_indices = gpr_edge_index[1]
         gene_indices = gpr_edge_index[0]
 
-        sorted_indices = torch.sort(reaction_indices).indices
-        reaction_indices = reaction_indices[sorted_indices]
-        gene_indices = gene_indices[sorted_indices]
-
-        H_r = self.gene_reaction_transformer(
-            gene_x[gene_indices], reaction_indices, dim_size=graph["reaction"].num_nodes
+        H_r = self.gene_reaction_aggregator(
+            gene_x[gene_indices],
+            index=reaction_indices,
+            dim_size=graph["reaction"].num_nodes,
         )
 
         # 2. Initialize and process metabolites
@@ -911,13 +892,9 @@ class MetabolismProcessor(nn.Module):
         metabolite_indices = met_edge_index[0]
         reaction_indices = met_edge_index[1]
 
-        sorted_indices = torch.sort(reaction_indices).indices
-        reaction_indices = reaction_indices[sorted_indices]
-        metabolite_indices = metabolite_indices[sorted_indices]
-
-        Z_r = self.reaction_metabolite_transformer(
+        Z_r = self.reaction_metabolite_aggregator(
             Z_m[metabolite_indices],
-            reaction_indices,
+            index=reaction_indices,
             dim_size=graph["reaction"].num_nodes,
         )
 
@@ -925,30 +902,22 @@ class MetabolismProcessor(nn.Module):
         gene_indices = gpr_edge_index[0]
         reaction_indices = gpr_edge_index[1]
 
-        sorted_indices = torch.sort(gene_indices).indices
-        gene_indices = gene_indices[sorted_indices]
-        reaction_indices = reaction_indices[sorted_indices]
-
-        Z_mg = self.gene_reaction_transformer(
-            Z_r[reaction_indices], gene_indices, dim_size=graph["gene"].num_nodes
+        Z_mg = self.gene_reaction_aggregator(
+            Z_r[reaction_indices], index=gene_indices, dim_size=graph["gene"].num_nodes
         )
 
         return Z_mg
 
     def intact_perturbed_forward(self, batch: HeteroData) -> torch.Tensor:
+        """Forward pass for batched data"""
         # 1. Gene -> Reaction mapping
         gpr_edge_index = batch["gene", "gpr", "reaction"].hyperedge_index
-        gpr_num_nodes = batch["gene"].num_nodes + batch["reaction"].num_nodes
-        gpr_edge_index, _ = sort_edge_index(
-            gpr_edge_index, edge_attr=None, sort_by_row=False, num_nodes=gpr_num_nodes
-        )
         gene_x = batch["gene"].x
 
-        # Get sorted indices and features
         reaction_indices = gpr_edge_index[1]
         gene_indices = gpr_edge_index[0]
 
-        H_r = self.gene_reaction_transformer(
+        H_r = self.gene_reaction_aggregator(
             gene_x[gene_indices],
             index=reaction_indices,
             dim_size=batch["reaction"].num_nodes,
@@ -962,13 +931,6 @@ class MetabolismProcessor(nn.Module):
         # Get and sort metabolite edges
         met_edge_index = batch["metabolite", "reaction", "metabolite"].hyperedge_index
         stoich = batch["metabolite", "reaction", "metabolite"].stoichiometry
-        # met_nodes = batch["metabolite"].num_nodes
-        # met_edge_index, stoich = sort_edge_index(
-        #     met_edge_index, edge_attr=stoich, sort_by_row=False, num_nodes=met_nodes
-        # )
-        # met_edge_index, _ = sort_edge_index(
-        #     met_edge_index, edge_attr=None, sort_by_row=False, num_nodes=met_nodes
-        # )
 
         # Process metabolites
         for conv in self.metabolite_processor:
@@ -984,7 +946,7 @@ class MetabolismProcessor(nn.Module):
         metabolite_indices = met_edge_index[0]
         reaction_indices = met_edge_index[1]
 
-        Z_r = self.reaction_metabolite_transformer(
+        Z_r = self.reaction_metabolite_aggregator(
             Z_m[metabolite_indices],
             index=reaction_indices,
             dim_size=batch["reaction"].num_nodes,
@@ -994,16 +956,14 @@ class MetabolismProcessor(nn.Module):
         gene_indices = gpr_edge_index[0]
         reaction_indices = gpr_edge_index[1]
 
-        Z_mg = self.gene_reaction_transformer(
+        Z_mg = self.gene_reaction_aggregator(
             Z_r[reaction_indices], index=gene_indices, dim_size=batch["gene"].num_nodes
         )
 
         return Z_mg
 
     def forward(self, data) -> torch.Tensor:
-        # Check if we're dealing with batched data
         is_batched = hasattr(data["gene"], "batch")
-
         if is_batched:
             return self.intact_perturbed_forward(data)
         else:
@@ -1024,8 +984,8 @@ class IsomorphicCell(nn.Module):
         },
         dropout: float = 0.1,
         gene_encoder_config: Optional[dict] = None,
-        metabolism_config: Optional[dict] = None,
-        set_transformer_config: Optional[dict] = None,
+        num_nodes: Optional[dict] = None,
+        attention_config: Optional[dict] = None,
         preprocessor_config: Optional[dict] = None,
         combiner_config: Optional[dict] = None,
         prediction_head_config: Optional[dict] = None,
@@ -1037,26 +997,14 @@ class IsomorphicCell(nn.Module):
         if preprocessor_config:
             self.preprocessor_config.update(preprocessor_config)
 
-        self.metabolism_config = {
+        self.num_nodes = {
             "use_attention": True,
             "set_transformer_heads": 4,
             "use_skip": True,
             "dropout": dropout,
         }
-        if metabolism_config:
-            self.metabolism_config.update(metabolism_config)
-
-        self.set_transformer_config = {
-            "num_encoder_blocks": 2,
-            "num_decoder_blocks": 1,
-            "heads": 4,
-            "concat": False,
-            "layer_norm": True,
-            "dropout": dropout,
-            "num_induced_points": 32,
-        }
-        if set_transformer_config:
-            self.set_transformer_config.update(set_transformer_config)
+        if num_nodes:
+            self.num_nodes.update(num_nodes)
 
         self.combiner_config = {"dropout": dropout}
         if combiner_config:
@@ -1090,17 +1038,11 @@ class IsomorphicCell(nn.Module):
         )
 
         self.metabolism_processor = MetabolismProcessor(
-            metabolite_dim=metabolism_config.get(
-                "metabolite_dim", 2534
-            ),  # Changed from gene_dim
+            metabolite_dim=num_nodes.get("metabolite_dim", 2534),
             hidden_dim=hidden_channels,
-            num_layers={
-                "gene_context": num_layers["metabolism"],
-                "metabolite": num_layers["metabolism"],
-            },
-            dropout=self.metabolism_config["dropout"],
-            use_attention=self.metabolism_config["use_attention"],
-            num_heads=self.metabolism_config["set_transformer_heads"],
+            num_layers={"metabolite": num_layers["metabolism"]},
+            dropout=self.num_nodes["dropout"],
+            use_attention=self.num_nodes["use_attention"],
         )
 
         self.combiner = Combiner(
@@ -1109,18 +1051,12 @@ class IsomorphicCell(nn.Module):
             dropout=self.combiner_config["dropout"],
         )
 
-        transformer_config = {
-            k: v
-            for k, v in self.set_transformer_config.items()
-            if k not in ["channels"]
-        }
-
-        self.isab = SetTransformerAggregation(
-            channels=hidden_channels, use_isab=True, **transformer_config
+        self.whole_intact_aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
-        self.perturbed_sab = SetTransformerAggregation(
-            channels=hidden_channels, use_isab=False, **transformer_config
+        self.perturbed_aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
         self.growth_head = self._build_mlp(
@@ -1190,44 +1126,55 @@ class IsomorphicCell(nn.Module):
         return z
 
     def forward(self, cell_graph, batch):
-        # z_w = self.forward_single(cell_graph)
+        # Process whole graph first - z_w shape: [6607, 64]
+        z_w = self.forward_single(cell_graph)
         pert_indices = self._get_perturbed_indices(batch)
         batch_size = len(pert_indices)
 
-        # # Expand z_w for batch dimension
-        # # batch_size, nodes, hidden_dim
-        # z_w_expanded = z_w.expand(batch_size, -1, -1)
+        # Expand z_w for batch dimension - [batch_size, 6607, 64]
+        z_w_expanded = z_w.expand(batch_size, -1, -1)
 
-        # # Collect perturbed vectors for each batch item
-        # z_p_list = []
-        # for i, indices in enumerate(pert_indices):
-        #     z_p_list.append(z_w_expanded[i, indices])
+        # Collect perturbed vectors for each batch item
+        z_p_list = []
+        batch_indices_list = []
+        for i, indices in enumerate(pert_indices):
+            z_p_list.append(z_w_expanded[i, indices])
+            batch_indices_list.append(torch.full((len(indices),), i, device=z_w.device))
 
-        # Process intact graph
+        # Process intact graph - z_i shape: [13211, 64]
         z_i = self.forward_single(batch)
-        z_i = self.isab(z_i, batch_size=batch_size)
+        
+        # Use batch["gene"].batch directly for intact graph aggregation
+        # batch["gene"].batch shape: [13211]
+        z_i = self.whole_intact_aggregator(
+            z_i, 
+            index=batch["gene"].batch,
+        )
 
         # Process perturbed embeddings
-        # z_p = torch.cat(z_p_list, dim=0)  # [total_num_perts, hidden_dim]
-        # z_p = self.perturbed_sab(z_p, batch_size=batch_size)
+        z_p = torch.cat(z_p_list, dim=0)  # [total_num_perts, 64]
+        batch_idx_pert = torch.cat(batch_indices_list, dim=0)
+        z_p = self.perturbed_aggregator(
+            z_p, 
+            index=batch_idx_pert,
+            dim_size=batch_size
+        )
 
-        # # Calculate final outputs
-        # growth_w = self.growth_head(z_w)
-        # growth_i = self.growth_head(z_i)
-        # fitness_ratio = growth_i / (growth_w + 1e-8)
-        # gene_interaction = self.gene_interaction_head(z_p)
+        # Calculate final outputs
+        growth_w = self.growth_head(z_w)  # [6607, 1]
+        growth_i = self.growth_head(z_i)  # [batch_size, 1]
+        fitness_ratio = growth_i / (growth_w + 1e-8)
+        gene_interaction = self.gene_interaction_head(z_p)  # [batch_size, 1]
 
-        # predictions = torch.cat([fitness_ratio, gene_interaction], dim=1)
+        predictions = torch.cat([fitness_ratio, gene_interaction], dim=1)
 
-        # return predictions, {
-        #     "z_w": z_w,
-        #     "z_p": z_p,
-        #     "z_i": z_i,
-        #     "growth_w": growth_w,
-        #     "growth_i": growth_i,
-        # }
-
-        return z_i
+        return predictions, {
+            "z_w": z_w,
+            "z_p": z_p,
+            "z_i": z_i,
+            "growth_w": growth_w,
+            "growth_i": growth_i,
+        }
 
 
 def initialize_model(dataset, device, config=None):
@@ -1267,23 +1214,11 @@ def initialize_model(dataset, device, config=None):
             "head_norm": "layer",
         },
         # Metabolism processor settings
-        "metabolism_config": {
+        "num_nodes": {
+            "metabolite_dim": 2534,
             "use_attention": True,
-            "attention_mode": "node",
-            "heads": 4,
-            "concat": True,
-            "negative_slope": 0.2,
-            "set_transformer_heads": 4,
             "use_skip": True,
-        },
-        # Set transformer settings
-        "set_transformer_config": {
-            "num_encoder_blocks": 2,
-            "num_decoder_blocks": 1,
-            "heads": 4,
-            "concat": False,
-            "layer_norm": True,
-            "num_induced_points": 32,
+            "dropout": 0.1,
         },
         # General settings
         "dropout": 0.1,
@@ -1309,17 +1244,7 @@ def initialize_model(dataset, device, config=None):
         num_layers=config["num_layers"],
         dropout=config["dropout"],
         gene_encoder_config=config["gene_encoder_config"],
-        metabolism_config=config.get(
-            "metabolism_config",
-            {
-                "metabolite_dim": 2534,  # This should match your number of metabolites
-                "hidden_dim": config["hidden_channels"],
-                "use_attention": True,
-                "num_heads": 2,
-                "dropout": config["dropout"],
-            },
-        ),
-        set_transformer_config=config["set_transformer_config"],
+        num_nodes=config["num_nodes"],
     ).to(device)
 
     return model

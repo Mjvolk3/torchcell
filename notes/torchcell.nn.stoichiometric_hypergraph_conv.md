@@ -1,8 +1,8 @@
 ---
 id: dxrsq9k73rbu63vfo76tqyf
-title: Met_hypergraph_conv
+title: Stoichiometric_hypergraph_conv
 desc: ''
-updated: 1738019137523
+updated: 1738205207942
 created: 1736144453668
 ---
 ## 2025.01.27
@@ -219,3 +219,9 @@ def forward(
 - **Attention** modulates these base weights if `use_attention=True`.
 
 This operator is especially useful for modeling reaction networks where **directionality** (sign) and **relative magnitude** (stoichiometric ratio) are critical.
+
+***
+
+Refine ideas from here.
+
+[[175438|dendron://torchcell/scratch.2025.01.29.175438]]

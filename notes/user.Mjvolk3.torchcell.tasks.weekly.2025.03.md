@@ -2,7 +2,7 @@
 id: wqwnnd3noe8djjjsc7m440v
 title: '03'
 desc: ''
-updated: 1737507335975
+updated: 1738205262286
 created: 1736717919222
 ---
 ⏰ One thing: Metabolism Label Split Regression Run
@@ -13,7 +13,7 @@ created: 1736717919222
 
 ## 2025.01.13
 
-- [x] Working prototype [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]] → Added in stoichiometry for [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.met_hypergraph_conv]]
+- [x] Working prototype [[Cell_latent_perturbation|dendron://torchcell/torchcell.models.cell_latent_perturbation]] → Added in stoichiometry for [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 - [x] Overfit on one batch size of 16
 - [x] Optimized some for loop to matrix ops
 

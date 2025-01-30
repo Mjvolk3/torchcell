@@ -24,7 +24,7 @@ from torch_geometric.nn import (
     global_max_pool,
     HypergraphConv,
 )
-from torchcell.nn.met_hypergraph_conv import StoichHypergraphConv
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from typing import Optional, Literal
 from torch_geometric.typing import EdgeType
 from torchcell.models.act import act_register

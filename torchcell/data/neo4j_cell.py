@@ -146,7 +146,7 @@ def to_cell_data(
 
         hetero_data["metabolite"].num_nodes = len(metabolites)
         hetero_data["metabolite"].node_ids = metabolites
-        
+
         # Add reaction nodes
         num_reactions = len(hypergraph.edges)
         hetero_data["reaction"].num_nodes = num_reactions
@@ -1301,6 +1301,72 @@ class Neo4jCellDataset(Dataset):
                     {str(k): v for k, v in self._perturbation_count_index.items()}, file
                 )
         return self._perturbation_count_index
+
+    def compute_is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
+        print("Computing is any perturbed gene index...")
+        is_any_perturbed_gene_index = {}
+
+        self._init_lmdb_read()
+
+        with self.env.begin() as txn:
+            cursor = txn.cursor()
+            for key, value in cursor:
+                try:
+                    idx = int(key.decode())
+                    data_list = json.loads(value.decode())
+                    for data in data_list:
+                        experiment_class = EXPERIMENT_TYPE_MAP[
+                            data["experiment"]["experiment_type"]
+                        ]
+                        experiment = experiment_class(**data["experiment"])
+                        # Get perturbed genes for this experiment
+                        perturbed_genes = {
+                            pert.systematic_gene_name
+                            for pert in experiment.genotype.perturbations
+                        }
+
+                        # Add index to each perturbed gene's list
+                        for gene in perturbed_genes:
+                            if gene not in is_any_perturbed_gene_index:
+                                is_any_perturbed_gene_index[gene] = set()
+                            is_any_perturbed_gene_index[gene].add(idx)
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON for entry {key}. Skipping this entry.")
+                except ValueError:
+                    print(
+                        f"Error converting key to integer: {key}. Skipping this entry."
+                    )
+                except Exception as e:
+                    print(
+                        f"Error processing entry {key}: {str(e)}. Skipping this entry."
+                    )
+
+        self.close_lmdb()
+
+        # Convert sets to sorted lists
+        for gene in is_any_perturbed_gene_index:
+            is_any_perturbed_gene_index[gene] = sorted(
+                list(is_any_perturbed_gene_index[gene])
+            )
+
+        return is_any_perturbed_gene_index
+
+    @property
+    def is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
+        if osp.exists(osp.join(self.processed_dir, "is_any_perturbed_gene_index.json")):
+            with open(
+                osp.join(self.processed_dir, "is_any_perturbed_gene_index.json"), "r"
+            ) as file:
+                self._is_any_perturbed_gene_index = json.load(file)
+        else:
+            self._is_any_perturbed_gene_index = (
+                self.compute_is_any_perturbed_gene_index()
+            )
+            with open(
+                osp.join(self.processed_dir, "is_any_perturbed_gene_index.json"), "w"
+            ) as file:
+                json.dump(self._is_any_perturbed_gene_index, file)
+        return self._is_any_perturbed_gene_index
 
 
 def main():

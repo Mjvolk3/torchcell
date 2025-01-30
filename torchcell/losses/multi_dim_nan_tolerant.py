@@ -35,6 +35,33 @@ import torch.nn.functional as F
 
 
 class WeightedSupCRLoss(nn.Module):
+    """
+    An O(N^2 * log N) implementation of the SupCR loss that avoids building
+    an (N x N x N) indicator tensor. Instead, it does a row-wise sort and
+    suffix-sum trick to handle the "distance >= threshold" condition.
+
+    For each dimension (excluding NaN labels), we do:
+
+      1) Compute pairwise label distances and exponentiated similarities.
+      2) For each anchor i in [0..N-1]:
+         - Sort row i's label distances d_i,k in ascending order.
+         - Compute a suffix sum over exp(sim_i,k) in that sorted order.
+         - For each j != i, use binary search (torch.searchsorted) to find
+           all k with d_i,k >= d_i,j. Summation is a single suffix-sum lookup.
+         - Accumulate -log(numer/denom) for both
+           the perturbed and the intact embeddings.
+
+    Complexity is roughly O(N^2 log N) because each anchor row i
+    does a sort (O(N log N)) plus an O(N) pass. For large N, this
+    is typically faster and more memory-efficient than an O(N^3)
+    broadcast approach.
+
+    The final dimension loss is the total sum across i != j, scaled
+    by 1/(N*(N-1)). We then sum dimension losses (with optional
+    dimension weighting) and return a scalar plus the vector of
+    per-dimension losses.
+    """
+
     def __init__(
         self,
         temperature: float = 0.1,
@@ -45,14 +72,27 @@ class WeightedSupCRLoss(nn.Module):
         self.temperature = temperature
         self.eps = eps
 
+        # By default, assume 2 label dimensions with equal weight
         if weights is None:
-            weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+            weights = torch.ones(2)
         self.register_buffer("weights", weights / weights.sum())
 
+    def _reversed_cumsum(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Compute cumulative sum in reverse order.
+        For x = [x0, x1, ..., xN-1],
+        _reversed_cumsum(x)[m] = sum_{k=m..N-1} x_k.
+        """
+        return torch.flip(torch.cumsum(torch.flip(x, dims=(0,)), dim=0), dims=(0,))
+
     def compute_similarity(self, embeddings: torch.Tensor) -> torch.Tensor:
-        """Compute pairwise cosine similarities between embeddings."""
-        embeddings_norm = F.normalize(embeddings, dim=1)
-        return torch.mm(embeddings_norm, embeddings_norm.t()) / self.temperature
+        """
+        Compute the (N x N) matrix of un-exponentiated similarities,
+        using cosine similarity scaled by 1/temperature.
+        """
+        normed = F.normalize(embeddings, p=2, dim=1)  # [N, d]
+        # similarity[i,j] = dot(normed[i], normed[j]) / temperature
+        return torch.mm(normed, normed.t()) / self.temperature
 
     def compute_dimension_loss(
         self,
@@ -60,58 +100,80 @@ class WeightedSupCRLoss(nn.Module):
         intact_embeddings: torch.Tensor,
         labels: torch.Tensor,
     ) -> torch.Tensor:
-        """Compute SupCR loss for a single dimension, handling NaN values."""
-        device = perturbed_embeddings.device
-        batch_size = labels.shape[0]
+        """
+        Compute the SupCR loss for one label dimension, ignoring samples
+        with NaN in that dimension. Uses a row-wise sort + suffix sum approach
+        to handle the "distance >= threshold" condition in O(N log N) per anchor i.
 
-        # Mask for valid (non-NaN) labels
+        The returned scalar is the average over all valid i != j pairs.
+        """
+        device = labels.device
+
+        # 1) Filter out NaNs
         valid_mask = ~torch.isnan(labels)
-        if valid_mask.sum() < 2:  # Need at least 2 valid samples to compute loss
+        if valid_mask.sum() < 2:
             return torch.tensor(0.0, device=device)
 
-        # Filter out invalid samples
-        valid_labels = labels[valid_mask]
-        valid_perturbed = perturbed_embeddings[valid_mask]
-        valid_intact = intact_embeddings[valid_mask]
+        valid_labels = labels[valid_mask]  # shape [M]
+        valid_pert = perturbed_embeddings[valid_mask]  # shape [M, d]
+        valid_int = intact_embeddings[valid_mask]  # shape [M, d]
+        M = valid_labels.size(0)
 
-        # Compute similarity matrices for valid samples
-        perturbed_sims = self.compute_similarity(valid_perturbed)
-        intact_sims = self.compute_similarity(valid_intact)
+        # 2) Build pairwise label distances & exponentiated sims
+        #    shape [M, M]
+        dists = torch.abs(valid_labels.unsqueeze(0) - valid_labels.unsqueeze(1))
+        pert_sims = self.compute_similarity(valid_pert)  # un-exponentiated
+        int_sims = self.compute_similarity(valid_int)
 
-        # Compute pairwise label distances
-        label_dists = torch.abs(valid_labels.unsqueeze(0) - valid_labels.unsqueeze(1))
+        exp_pert = torch.exp(pert_sims)  # shape [M, M]
+        exp_int = torch.exp(int_sims)  # shape [M, M]
 
-        # Create mask for valid pairs (excluding self-pairs)
-        valid_pairs = ~torch.eye(valid_labels.shape[0], dtype=torch.bool, device=device)
+        # We'll skip diagonal i==j
+        eye_mask = ~torch.eye(M, dtype=torch.bool, device=device)
 
-        # Compute loss terms
-        loss = torch.tensor(0.0, device=device)
-        for i in range(valid_labels.shape[0]):
-            for j in range(valid_labels.shape[0]):
-                if i == j:
-                    continue
+        accum_loss = torch.tensor(0.0, device=device)
+        accum_count = 0
 
-                # Count samples where d(y_i, y_k) >= d(y_i, y_j)
-                d_ij = label_dists[i, j]
-                indicator = (label_dists[i] >= d_ij).float()
+        # 3) For each anchor i, sort row i's distances (d_i,j) in ascending order
+        for i in range(M):
+            row_dists = dists[i]  # shape [M], distances d(i,j) for j in [0..M-1]
 
-                # Compute loss for perturbed embeddings
-                numerator_p = torch.exp(perturbed_sims[i, j])
-                denominator_p = (
-                    (torch.exp(perturbed_sims[i]) * indicator).sum().clamp(min=self.eps)
-                )
-                loss -= torch.log(numerator_p / denominator_p)
+            # Sort ascending
+            sorted_dists_i, idx_i = row_dists.sort()  # shape [M]
 
-                # Compute loss for intact embeddings
-                numerator_i = torch.exp(intact_sims[i, j])
-                denominator_i = (
-                    (torch.exp(intact_sims[i]) * indicator).sum().clamp(min=self.eps)
-                )
-                loss -= torch.log(numerator_i / denominator_i)
+            # The exponentiated similarities for row i, in that sorted order
+            sorted_pert_i = exp_pert[i][idx_i]  # shape [M]
+            sorted_int_i = exp_int[i][idx_i]  # shape [M]
 
-        # Normalize by the number of valid pairs
-        num_valid_pairs = valid_pairs.sum().clamp(min=1)
-        return loss / num_valid_pairs
+            # Build suffix sums so suffix[m] = sum_{k=m..end} sorted_pert_i[k]
+            suffix_pert_i = self._reversed_cumsum(sorted_pert_i)
+            suffix_int_i = self._reversed_cumsum(sorted_int_i)
+
+            # For each j, we want to quickly find how many k have d(i,k) >= d(i,j).
+            # That is a single searchsorted call on sorted_dists_i.
+            insertion_positions = torch.searchsorted(
+                sorted_dists_i, row_dists, side="left"
+            )  # shape [M]
+
+            # Denominator for row i, each j => suffix_pert_i[index], suffix_int_i[index]
+            denom_pert_i = suffix_pert_i[insertion_positions].clamp(min=self.eps)
+            denom_int_i = suffix_int_i[insertion_positions].clamp(min=self.eps)
+
+            # Numerator = exp_sims[i,j]
+            numer_pert_i = exp_pert[i]  # shape [M]
+            numer_int_i = exp_int[i]  # shape [M]
+
+            row_loss_pert = -torch.log(numer_pert_i / denom_pert_i)
+            row_loss_int = -torch.log(numer_int_i / denom_int_i)
+            row_loss = row_loss_pert + row_loss_int
+
+            # Exclude j==i
+            valid_j_mask = eye_mask[i]
+            accum_loss += row_loss[valid_j_mask].sum()
+            accum_count += valid_j_mask.sum().item()
+
+        # Final average over i!=j
+        return accum_loss / max(accum_count, 1)
 
     def forward(
         self,
@@ -119,23 +181,23 @@ class WeightedSupCRLoss(nn.Module):
         intact_embeddings: torch.Tensor,
         labels: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Forward pass computing weighted loss across dimensions."""
-        device = perturbed_embeddings.device
+        """
+        Summation of dimension losses (NaN-tolerant). Then apply dimension weights.
+        Returns (weighted_loss, dim_losses).
+        """
         num_dims = labels.shape[1]
+        device = labels.device
         dim_losses = torch.zeros(num_dims, device=device)
 
-        # Compute loss for each dimension
         for dim in range(num_dims):
             dim_losses[dim] = self.compute_dimension_loss(
                 perturbed_embeddings, intact_embeddings, labels[:, dim]
             )
 
-        # Apply dimension weights
-        weights = self.weights
-        weight_sum = weights.sum().clamp(min=self.eps)
-        weighted_loss = (dim_losses * weights).sum() / weight_sum
-
-        return weighted_loss, dim_losses
+        # Weighted combination of dimension losses
+        w = self.weights
+        total_loss = (dim_losses * w).sum() / w.sum().clamp(min=self.eps)
+        return total_loss, dim_losses
 
 
 class NaNTolerantL1Loss(nn.Module):

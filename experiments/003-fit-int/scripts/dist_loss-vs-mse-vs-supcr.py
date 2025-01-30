@@ -127,14 +127,57 @@ class Visualization:
         plt.close()
 
     def plot_distribution(self, true_values, predictions, loss_name, dim):
+        """Plot distribution comparison with Wasserstein distance and Jensen-Shannon divergence."""
         true_values_np = true_values.detach().cpu().numpy()
         predictions_np = predictions.detach().cpu().numpy()
 
-        plt.figure(figsize=(7, 6))
-        sns.histplot(true_values_np, color="blue", label="True", kde=True, alpha=0.6)
-        sns.histplot(
-            predictions_np, color="red", label="Predicted", kde=True, alpha=0.6
+        # Remove NaN values
+        mask = ~np.isnan(true_values_np)
+        true_values_clean = true_values_np[mask]
+        predictions_clean = predictions_np[mask]
+
+        # Calculate Wasserstein distance
+        wasserstein_distance = stats.wasserstein_distance(
+            true_values_clean, predictions_clean
         )
+
+        # Calculate Jensen-Shannon divergence using histograms
+        bins = min(100, int(np.sqrt(len(true_values_clean))))
+        true_hist, bin_edges = np.histogram(true_values_clean, bins=bins, density=True)
+        pred_hist, _ = np.histogram(predictions_clean, bins=bin_edges, density=True)
+
+        # Add small epsilon to avoid log(0)
+        epsilon = 1e-10
+        true_hist = true_hist + epsilon
+        pred_hist = pred_hist + epsilon
+
+        # Normalize
+        true_hist = true_hist / true_hist.sum()
+        pred_hist = pred_hist / pred_hist.sum()
+
+        # Calculate Jensen-Shannon divergence
+        m = 0.5 * (true_hist + pred_hist)
+        js_divergence = 0.5 * (
+            stats.entropy(true_hist, m) + stats.entropy(pred_hist, m)
+        )
+
+        # Create the plot
+        plt.figure(figsize=(7, 6))
+        sns.histplot(true_values_clean, color="blue", label="True", kde=True, alpha=0.6)
+        sns.histplot(
+            predictions_clean, color="red", label="Predicted", kde=True, alpha=0.6
+        )
+
+        # Add metrics as text
+        plt.text(
+            0.02,
+            0.98,
+            f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_divergence:.4f}",
+            transform=plt.gca().transAxes,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+        )
+
         plt.legend()
         plt.title(f"{loss_name} - Distribution Matching Target {dim}")
 
@@ -165,29 +208,87 @@ class Visualization:
         plt.savefig(save_path, bbox_inches="tight")
         plt.close()
 
+    def plot_loss_curves(self, losses: dict, loss_name: str):
+        """Plot training loss curves."""
+        plt.figure(figsize=(12, 8))
+
+        # Plot normalized losses
+        plt.subplot(2, 1, 1)
+        for key in ["norm_mse", "norm_div", "norm_con"]:
+            if len(losses[key]) > 0:  # Only plot if we have data
+                plt.plot(losses[key], label=key)
+        plt.title(f"{loss_name} - Normalized Loss Components")
+        plt.xlabel("Training Steps")
+        plt.ylabel("Loss Proportion")
+        plt.legend()
+        plt.grid(True)
+
+        # Plot raw losses
+        plt.subplot(2, 1, 2)
+        plt.plot(losses["total_loss"], label="total", linewidth=2)
+        for key in ["raw_mse", "raw_div", "raw_con"]:
+            if len(losses[key]) > 0:  # Only plot if we have data
+                plt.plot(losses[key], label=key, alpha=0.7)
+        plt.title(f"{loss_name} - Raw Loss Components")
+        plt.xlabel("Training Steps")
+        plt.ylabel("Loss Value")
+        plt.legend()
+        plt.grid(True)
+
+        plt.tight_layout()
+        save_path = osp.join(
+            self.base_dir, f"loss_curves_{loss_name}_{timestamp()}.png"
+        )
+        plt.savefig(save_path, bbox_inches="tight")
+        plt.close()
+
+
+class LossTracker:
+    def __init__(self):
+        self.losses = {
+            "total_loss": [],
+            "norm_mse": [],
+            "norm_div": [],
+            "norm_con": [],
+            "raw_mse": [],
+            "raw_div": [],
+            "raw_con": [],
+        }
+
+    def update(self, loss_dict: dict):
+        for key, value in loss_dict.items():
+            self.losses[key].append(value.item())
+
+    def get_losses(self):
+        return self.losses
+
 
 def train_and_evaluate(
     model, loss_fn, train_loader, val_loader, optimizer, num_epochs=2, device="cuda"
 ):
     print("Train.")
+    loss_tracker = LossTracker()
+
     for epoch in range(num_epochs):
         model.train()
-        for batch in tqdm(train_loader):
-            batch = batch.to(device)  # Move batch to device
+        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}"):
+            batch = batch.to(device)
             optimizer.zero_grad()
             pred, u = model(batch)
             loss_dict = loss_fn(pred, batch.y, u)
             loss_dict["total_loss"].backward()
             optimizer.step()
 
+            # Track losses
+            loss_tracker.update(loss_dict)
+
     model.eval()
     all_preds, all_labels, all_embeddings = [], [], []
     print("Evaluate.")
     with torch.no_grad():
         for batch in tqdm(val_loader):
-            batch = batch.to(device)  # Move batch to device
+            batch = batch.to(device)
             pred, u = model(batch)
-            # Move predictions back to CPU for collection
             all_preds.append(pred.cpu())
             all_labels.append(batch.y.cpu())
             all_embeddings.append(u.cpu())
@@ -196,6 +297,7 @@ def train_and_evaluate(
         torch.cat(all_preds, dim=0),
         torch.cat(all_labels, dim=0),
         torch.cat(all_embeddings, dim=0),
+        loss_tracker.get_losses(),
     )
 
 
@@ -203,6 +305,7 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
     print(f"Using device: {device}")
 
     # Dataset setup
+    # SUBSET
     dataset = QM9(root="/tmp/QM9")
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -220,15 +323,15 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
     loss_configs = {
         # "MSE": {"lambda_1": 0, "lambda_2": 0},
         "DistLoss_1e-2": {"lambda_1": 1e-2, "lambda_2": 0},
-        "DistLoss_1e-1": {"lambda_1": 1e-1, "lambda_2": 0},
-        "DistLoss_1e0": {"lambda_1": 1e0, "lambda_2": 0},
-        "DistLoss_1e1": {"lambda_1": 1e1, "lambda_2": 0},
-        "DistLoss_1e2": {"lambda_1": 1e2, "lambda_2": 0},
+        # "DistLoss_1e-1": {"lambda_1": 1e-1, "lambda_2": 0},
+        # "DistLoss_1e0": {"lambda_1": 1e0, "lambda_2": 0},
+        # "DistLoss_1e1": {"lambda_1": 1e1, "lambda_2": 0},
+        # "DistLoss_1e2": {"lambda_1": 1e2, "lambda_2": 0},
         "SupCR_1e-2": {"lambda_1": 0, "lambda_2": 1e-2},
-        "SupCR_1e-1": {"lambda_1": 0, "lambda_2": 1e-1},
-        "SupCR_1e0": {"lambda_1": 0, "lambda_2": 1e0},
-        "SupCR_1e1": {"lambda_1": 0, "lambda_2": 1e1},
-        "SupCR_1e2": {"lambda_1": 0, "lambda_2": 1e2},
+        # "SupCR_1e-1": {"lambda_1": 0, "lambda_2": 1e-1},
+        # "SupCR_1e0": {"lambda_1": 0, "lambda_2": 1e0},
+        # "SupCR_1e1": {"lambda_1": 0, "lambda_2": 1e1},
+        # "SupCR_1e2": {"lambda_1": 0, "lambda_2": 1e2},
     }
 
     for loss_name, config in loss_configs.items():
@@ -239,38 +342,27 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
         loss_fn = CellLoss(**config, device=device)  # Pass device here
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
-        val_preds, val_labels, val_z = train_and_evaluate(
+        val_preds, val_labels, val_z, losses = train_and_evaluate(
             model, loss_fn, train_loader, val_loader, optimizer, device=device
         )
 
         # Generate and save plots for each target dimension
         num_targets = val_labels.shape[1]
         for dim in range(num_targets):
+
+            # Plot loss curves
+            viz.plot_loss_curves(losses, loss_name)
             # Plot correlations
-            viz.plot_correlations(
-                val_preds[:, dim],
-                val_labels[:, dim],
-                dim,
-                loss_name
-            )
+            viz.plot_correlations(val_preds[:, dim], val_labels[:, dim], dim, loss_name)
 
             # Plot distributions
-            viz.plot_distribution(
-                val_labels[:, dim],
-                val_preds[:, dim],
-                loss_name,
-                dim
-            )
+            viz.plot_distribution(val_labels[:, dim], val_preds[:, dim], loss_name, dim)
 
             # Plot UMAP projections
-            viz.plot_umap(
-                val_z,
-                val_labels[:, dim],
-                loss_name,
-                dim
-            )
+            viz.plot_umap(val_z, val_labels[:, dim], loss_name, dim)
 
         print(f"Completed visualization for {loss_name}")
+
 
 if __name__ == "__main__":
     # Set up CUDA if available

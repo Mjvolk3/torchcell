@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1738136806606
+updated: 1738197852295
 created: 1737507788186
 ---
 
@@ -1111,3 +1111,4 @@ HeteroDataBatch(
   }
 )
 ```
+

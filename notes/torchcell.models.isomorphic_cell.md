@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1738197852295
+updated: 1738204967584
 created: 1737507788186
 ---
 
@@ -362,7 +362,7 @@ graph TD
 
 4. **Stoichiometric Hypergraph**:
    - Input: $X_H \in \mathbb{R}^{m \times h}, I_{\text{met}} \in \{0, 1\}^{m \times n}$
-   - Output: $E_H = \text{StoichiometricHypergraphConv}(X_H, I_{\text{met}}) \in \mathbb{R}^{e_H \times h}$
+   - Output: $E_H = \text{StoichHypergraphConv}(X_H, I_{\text{met}}) \in \mathbb{R}^{e_H \times h}$
 
 5. **Reaction-to-Gene Mapping**:
    - Input: $E_H \in \mathbb{R}^{e_H \times h}, I_{\text{rxn}} \in \{0, 1\}^{e_H \times n}$
@@ -778,7 +778,7 @@ $\text{forward}(\mathcal{G}) → (Z, z):$
    - $Z_g = \text{HeteroGNN}(H_g, \mathcal{E}_g) \in \mathbb{R}^{n_g \times h}$
 
    Metabolic Path:
-   - $Z_m = \text{StoichiometricHypergraphConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$, where $n_m = 2534$ (metabolites)
+   - $Z_m = \text{StoichHypergraphConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$, where $n_m = 2534$ (metabolites)
    - $Z_r = \text{SAB}(Z_m, I_{m→r}) \in \mathbb{R}^{n_r \times h}$
    - $Z_{mg} = \text{SAB}(Z_r, I_{r→g}) \in \mathbb{R}^{n_g \times h}$
 
@@ -846,7 +846,7 @@ graph TD
 
     subgraph MetabolismPath["Metabolism Path"]
         direction TB
-        met2met["Metabolite → Metabolite<br>StoichiometricHypergraphConv<br>$$\quad Z_m = \text{SHConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$$"]
+        met2met["Metabolite → Metabolite<br>StoichHypergraphConv<br>$$\quad Z_m = \text{SHConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$$"]
         met2rxn["Metabolite → Reaction SAB<br>$$\quad Z_r = \text{SAB}(Z_m, I_{m→r}) \in \mathbb{R}^{n_r \times h}$$"]
         rxn2gene["Reaction → Gene SAB<br>$$\quad Z_{mg} = \text{SAB}(Z_r, I_{r→g}) \in \mathbb{R}^{n_g \times h}$$"]
     end
@@ -904,7 +904,7 @@ H_r = SAB(H_g, I_{r→g})  # Aggregate gene features per reaction
 - **Output**: $Z_m \in \mathbb{R}^{n_m \times h}$
 
 ```python
-Z_m = StoichiometricHypergraphConv(
+Z_m = StoichHypergraphConv(
     x=E_m,
     edge_index=hyperedge_index,
     stoich=S,
@@ -943,7 +943,7 @@ Z_{mg} = SAB(Z_r, I_{r→g})  # Aggregate reaction features per gene
    - Performs permutation-invariant aggregation
    - Maintains dimensional consistency
 
-2. **StoichiometricHypergraphConv**:
+2. **StoichHypergraphConv**:
    - Handles hypergraph structure of metabolic network
    - Incorporates stoichiometric coefficients
    - Processes reaction context from genes

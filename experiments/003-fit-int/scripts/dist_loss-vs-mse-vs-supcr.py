@@ -264,7 +264,7 @@ class LossTracker:
 
 
 def train_and_evaluate(
-    model, loss_fn, train_loader, val_loader, optimizer, num_epochs=2, device="cuda"
+    model, loss_fn, train_loader, val_loader, optimizer, num_epochs=20, device="cuda"
 ):
     print("Train.")
     loss_tracker = LossTracker()
@@ -321,17 +321,18 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
 
     # Loss configurations
     loss_configs = {
-        # "MSE": {"lambda_1": 0, "lambda_2": 0},
-        "DistLoss_1e-2": {"lambda_1": 1e-2, "lambda_2": 0},
+        # # "MSE": {"lambda_1": 0, "lambda_2": 0},
+        # "DistLoss_1e-2": {"lambda_1": 1e-2, "lambda_2": 0},
         # "DistLoss_1e-1": {"lambda_1": 1e-1, "lambda_2": 0},
         # "DistLoss_1e0": {"lambda_1": 1e0, "lambda_2": 0},
         # "DistLoss_1e1": {"lambda_1": 1e1, "lambda_2": 0},
         # "DistLoss_1e2": {"lambda_1": 1e2, "lambda_2": 0},
-        "SupCR_1e-2": {"lambda_1": 0, "lambda_2": 1e-2},
+        # "SupCR_1e-2": {"lambda_1": 0, "lambda_2": 1e-2},
         # "SupCR_1e-1": {"lambda_1": 0, "lambda_2": 1e-1},
         # "SupCR_1e0": {"lambda_1": 0, "lambda_2": 1e0},
         # "SupCR_1e1": {"lambda_1": 0, "lambda_2": 1e1},
         # "SupCR_1e2": {"lambda_1": 0, "lambda_2": 1e2},
+        "Dist_1e01_CR_1e0": {"lambda_1": 1e0, "lambda_2": 1e0},
     }
 
     for loss_name, config in loss_configs.items():

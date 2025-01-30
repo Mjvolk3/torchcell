@@ -3,7 +3,7 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from torchcell.nn.met_hypergraph_conv import StoichiometricHypergraphConv
+from torchcell.nn.met_hypergraph_conv import StoichHypergraphConv
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ def complex_data():
 
 
 def test_basic_initialization():
-    conv = StoichiometricHypergraphConv(in_channels=2, out_channels=2)
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2)
     assert conv.in_channels == 2
     assert conv.out_channels == 2
     assert not conv.is_stoich_gated
@@ -51,23 +51,21 @@ def test_basic_initialization():
 
 
 def test_gated_initialization():
-    conv = StoichiometricHypergraphConv(
-        in_channels=2, out_channels=2, is_stoich_gated=True
-    )
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2, is_stoich_gated=True)
     assert conv.is_stoich_gated
     assert hasattr(conv, "gate_lin")
 
 
 def test_forward_shape(basic_data):
     x, edge_index, stoich = basic_data
-    conv = StoichiometricHypergraphConv(in_channels=2, out_channels=2)
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2)
     out = conv(x, edge_index, stoich)
     assert out.shape == (2, 2)
 
 
 def test_forward_shape_complex(complex_data):
     x, edge_index, stoich = complex_data
-    conv = StoichiometricHypergraphConv(in_channels=3, out_channels=2)
+    conv = StoichHypergraphConv(in_channels=3, out_channels=2)
     out = conv(x, edge_index, stoich)
     assert out.shape == (4, 2)
 
@@ -75,10 +73,10 @@ def test_forward_shape_complex(complex_data):
 def test_gated_vs_nongated(basic_data):
     x, edge_index, stoich = basic_data
 
-    conv_normal = StoichiometricHypergraphConv(
+    conv_normal = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=False
     )
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=True
     )
 
@@ -92,7 +90,7 @@ def test_attention_mechanism(complex_data):
     x, edge_index, stoich = complex_data
     hyperedge_attr = torch.randn(1, 3)  # One hyperedge with 3 features
 
-    conv = StoichiometricHypergraphConv(
+    conv = StoichHypergraphConv(
         in_channels=3, out_channels=2, use_attention=True, heads=2
     )
 
@@ -104,7 +102,7 @@ def test_zero_stoichiometry(basic_data):
     x, edge_index, _ = basic_data
     stoich = torch.tensor([0.0, 0.0], dtype=torch.float)
 
-    conv = StoichiometricHypergraphConv(in_channels=2, out_channels=2)
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2)
     out = conv(x, edge_index, stoich)
 
     assert torch.allclose(out, torch.zeros_like(out))
@@ -113,7 +111,7 @@ def test_zero_stoichiometry(basic_data):
 def test_activation_effects(basic_data):
     x, edge_index, stoich = basic_data
 
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=True
     )
 
@@ -130,9 +128,7 @@ def test_gradient_flow(basic_data):
     x, edge_index, stoich = basic_data
     x.requires_grad_(True)
 
-    conv = StoichiometricHypergraphConv(
-        in_channels=2, out_channels=2, is_stoich_gated=True
-    )
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2, is_stoich_gated=True)
 
     out = conv(x, edge_index, stoich)
     loss = out.sum()
@@ -148,7 +144,7 @@ def test_basic_structure(basic_data):
     edge_index = torch.tensor([[0, 1], [0, 0]])
     stoich = torch.tensor([-1.0, 2.0])
 
-    conv = StoichiometricHypergraphConv(in_channels=2, out_channels=2)
+    conv = StoichHypergraphConv(in_channels=2, out_channels=2)
     out = conv(x, edge_index, stoich)
 
     assert out.shape == (2, 2)
@@ -166,10 +162,10 @@ def test_tanh_activation_comparison():
     stoich_orig = torch.tensor([-1.0, 2.0])
     stoich_flip = torch.tensor([2.0, -1.0])  # Changed to ensure different magnitudes
 
-    conv_normal = StoichiometricHypergraphConv(
+    conv_normal = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=False
     )
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=True
     )
 
@@ -217,10 +213,10 @@ def test_relu_activation_cases():
     # Test positive stoichiometry
     stoich_pos = torch.tensor([1.0, 1.0])
 
-    conv_normal = StoichiometricHypergraphConv(
+    conv_normal = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=False
     )
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=True
     )
 
@@ -251,10 +247,10 @@ def test_gelu_activation_cases():
     # Test positive stoichiometry
     stoich_pos = torch.tensor([1.0, 1.0])
 
-    conv_normal = StoichiometricHypergraphConv(
+    conv_normal = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=False
     )
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=2, out_channels=2, is_stoich_gated=True
     )
 

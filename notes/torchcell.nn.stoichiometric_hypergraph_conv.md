@@ -7,9 +7,9 @@ created: 1736144453668
 ---
 ## 2025.01.27
 
-# StoichiometricHypergraphConv Class Documentation
+# StoichHypergraphConv Class Documentation
 
-This document explains how the **`StoichiometricHypergraphConv`** operator implements a hypergraph-like convolution using stoichiometric coefficients and optional attention.
+This document explains how the **`StoichHypergraphConv`** operator implements a hypergraph-like convolution using stoichiometric coefficients and optional attention.
 
 ---
 
@@ -36,7 +36,7 @@ where:
 ## Class Signature
 
 ```python
-class StoichiometricHypergraphConv(MessagePassing):
+class StoichHypergraphConv(MessagePassing):
     def __init__(
         self,
         in_channels: int,
@@ -212,7 +212,7 @@ def forward(
 
 ## Summary
 
-**`StoichiometricHypergraphConv`** extends a hypergraph convolution to leverage **signed stoichiometric coefficients** for metabolic or reaction-based hypergraph data. It optionally **incorporates an attention mechanism**, where each node-edge interaction is reweighted via learned attention scores.
+**`StoichHypergraphConv`** extends a hypergraph convolution to leverage **signed stoichiometric coefficients** for metabolic or reaction-based hypergraph data. It optionally **incorporates an attention mechanism**, where each node-edge interaction is reweighted via learned attention scores.
 
 - **Double Propagation** (node $\to$ edge, then edge $\to$ node) mimics the $\mathbf{H} \mathbf{B}^{-1} \mathbf{H}^\top$ structure.
 - **Stoichiometric Coefficients** serve as the edge weights $\mathbf{W}$, providing domain-specific weighting (reactants vs. products).

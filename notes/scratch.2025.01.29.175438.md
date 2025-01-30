@@ -2,7 +2,7 @@
 id: 4lc3sil0nwkh3jdq9q645on
 title: '175438'
 desc: ''
-updated: 1738204035517
+updated: 1738204967585
 created: 1738194883820
 ---
 I'll write out the mathematical representation of the gating mechanism in the stoichiometric hypergraph convolution layer.
@@ -321,7 +321,7 @@ graph LR
 
 ***
 
-Let me present a clear comparison of gated vs non-gated StoichiometricHypergraphConvolution using concrete data.
+Let me present a clear comparison of gated vs non-gated StoichHypergraphConvolution using concrete data.
 
 **Input Data Structure:**
 

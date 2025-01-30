@@ -2,7 +2,7 @@
 id: bz6qscgraqfjq0zct9u54qk
 title: '212028'
 desc: ''
-updated: 1737678527627
+updated: 1738204967586
 created: 1737602430560
 ---
 ## 2025.01.22 - Algorithm
@@ -152,7 +152,7 @@ $\text{forward}(\mathcal{G}) → (Z, z):$
    - $Z_g = \text{HeteroGNN}(H_g, \mathcal{E}_g) \in \mathbb{R}^{n_g \times h}$
 
    Metabolic Path:
-   - $Z_m = \text{StoichiometricHypergraphConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$, where $n_m = 2534$ (metabolites)
+   - $Z_m = \text{StoichHypergraphConv}(E_m, H_r, \mathcal{E}_r, S) \in \mathbb{R}^{n_m \times h}$, where $n_m = 2534$ (metabolites)
    - $Z_r = \text{SAB}(Z_m, I_{m→r}) \in \mathbb{R}^{n_r \times h}$
    - $Z_{mg} = \text{SAB}(Z_r, I_{r→g}) \in \mathbb{R}^{n_g \times h}$
 

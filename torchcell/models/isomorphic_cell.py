@@ -24,7 +24,7 @@ from torch_geometric.nn import (
     global_max_pool,
     HypergraphConv,
 )
-from torchcell.nn.met_hypergraph_conv import StoichiometricHypergraphConv
+from torchcell.nn.met_hypergraph_conv import StoichHypergraphConv
 from typing import Optional, Literal
 from torch_geometric.typing import EdgeType
 from torchcell.models.act import act_register
@@ -670,7 +670,7 @@ class GeneContextProcessor(nn.Module):
 
 class MetaboliteProcessor(nn.Module):
     """
-    Repeatedly applies StoichiometricHypergraphConv to metabolite embeddings
+    Repeatedly applies StoichHypergraphConv to metabolite embeddings
     using reaction features as hyperedge_attr (when use_attention=True).
     """
 
@@ -684,7 +684,7 @@ class MetaboliteProcessor(nn.Module):
         super().__init__()
         self.conv_layers = nn.ModuleList(
             [
-                StoichiometricHypergraphConv(
+                StoichHypergraphConv(
                     in_channels=hidden_channels,
                     out_channels=hidden_channels,
                     use_attention=use_attention,
@@ -847,7 +847,7 @@ class MetabolismProcessor(nn.Module):
         # Metabolite processing with stoichiometry
         self.metabolite_processor = nn.ModuleList(
             [
-                StoichiometricHypergraphConv(
+                StoichHypergraphConv(
                     in_channels=hidden_dim,
                     out_channels=hidden_dim,
                     use_attention=use_attention,

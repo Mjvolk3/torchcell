@@ -17,7 +17,7 @@ from torch_geometric.nn.inits import glorot, zeros
 from torch_geometric.utils import scatter, softmax
 
 
-class StoichiometricHypergraphConv(MessagePassing):
+class StoichHypergraphConv(MessagePassing):
     def __init__(
         self,
         in_channels: int,
@@ -200,7 +200,7 @@ class StoichiometricHypergraphConv(MessagePassing):
 
 # def main():
 #     # Create instance
-#     conv = StoichiometricHypergraphConv(in_channels=64, out_channels=32)
+#     conv = StoichHypergraphConv(in_channels=64, out_channels=32)
 
 #     # Example data
 #     x = torch.randn(4, 64)  # 4 nodes with 64 features each
@@ -222,10 +222,10 @@ def main():
     torch.manual_seed(42)
 
     # Create instances for comparison
-    conv_gated = StoichiometricHypergraphConv(
+    conv_gated = StoichHypergraphConv(
         in_channels=3, out_channels=2, is_stoich_gated=True
     )
-    conv_normal = StoichiometricHypergraphConv(
+    conv_normal = StoichHypergraphConv(
         in_channels=3, out_channels=2, is_stoich_gated=False
     )
 

@@ -34,6 +34,110 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
+class WeightedSupCRLoss(nn.Module):
+    def __init__(
+        self,
+        temperature: float = 0.1,
+        weights: Optional[torch.Tensor] = None,
+        eps: float = 1e-7,
+    ) -> None:
+        super().__init__()
+        self.temperature = temperature
+        self.eps = eps
+
+        if weights is None:
+            weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+        self.register_buffer("weights", weights / weights.sum())
+
+    def compute_similarity(self, embeddings: torch.Tensor) -> torch.Tensor:
+        """Compute pairwise cosine similarities between embeddings."""
+        embeddings_norm = F.normalize(embeddings, dim=1)
+        return torch.mm(embeddings_norm, embeddings_norm.t()) / self.temperature
+
+    def compute_dimension_loss(
+        self,
+        perturbed_embeddings: torch.Tensor,
+        intact_embeddings: torch.Tensor,
+        labels: torch.Tensor,
+    ) -> torch.Tensor:
+        """Compute SupCR loss for a single dimension, handling NaN values."""
+        device = perturbed_embeddings.device
+        batch_size = labels.shape[0]
+
+        # Mask for valid (non-NaN) labels
+        valid_mask = ~torch.isnan(labels)
+        if valid_mask.sum() < 2:  # Need at least 2 valid samples to compute loss
+            return torch.tensor(0.0, device=device)
+
+        # Filter out invalid samples
+        valid_labels = labels[valid_mask]
+        valid_perturbed = perturbed_embeddings[valid_mask]
+        valid_intact = intact_embeddings[valid_mask]
+
+        # Compute similarity matrices for valid samples
+        perturbed_sims = self.compute_similarity(valid_perturbed)
+        intact_sims = self.compute_similarity(valid_intact)
+
+        # Compute pairwise label distances
+        label_dists = torch.abs(valid_labels.unsqueeze(0) - valid_labels.unsqueeze(1))
+
+        # Create mask for valid pairs (excluding self-pairs)
+        valid_pairs = ~torch.eye(valid_labels.shape[0], dtype=torch.bool, device=device)
+
+        # Compute loss terms
+        loss = torch.tensor(0.0, device=device)
+        for i in range(valid_labels.shape[0]):
+            for j in range(valid_labels.shape[0]):
+                if i == j:
+                    continue
+
+                # Count samples where d(y_i, y_k) >= d(y_i, y_j)
+                d_ij = label_dists[i, j]
+                indicator = (label_dists[i] >= d_ij).float()
+
+                # Compute loss for perturbed embeddings
+                numerator_p = torch.exp(perturbed_sims[i, j])
+                denominator_p = (
+                    (torch.exp(perturbed_sims[i]) * indicator).sum().clamp(min=self.eps)
+                )
+                loss -= torch.log(numerator_p / denominator_p)
+
+                # Compute loss for intact embeddings
+                numerator_i = torch.exp(intact_sims[i, j])
+                denominator_i = (
+                    (torch.exp(intact_sims[i]) * indicator).sum().clamp(min=self.eps)
+                )
+                loss -= torch.log(numerator_i / denominator_i)
+
+        # Normalize by the number of valid pairs
+        num_valid_pairs = valid_pairs.sum().clamp(min=1)
+        return loss / num_valid_pairs
+
+    def forward(
+        self,
+        perturbed_embeddings: torch.Tensor,
+        intact_embeddings: torch.Tensor,
+        labels: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """Forward pass computing weighted loss across dimensions."""
+        device = perturbed_embeddings.device
+        num_dims = labels.shape[1]
+        dim_losses = torch.zeros(num_dims, device=device)
+
+        # Compute loss for each dimension
+        for dim in range(num_dims):
+            dim_losses[dim] = self.compute_dimension_loss(
+                perturbed_embeddings, intact_embeddings, labels[:, dim]
+            )
+
+        # Apply dimension weights
+        weights = self.weights
+        weight_sum = weights.sum().clamp(min=self.eps)
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
+
+        return weighted_loss, dim_losses
+
+
 class NaNTolerantL1Loss(nn.Module):
     def __init__(self):
         super(NaNTolerantL1Loss, self).__init__()

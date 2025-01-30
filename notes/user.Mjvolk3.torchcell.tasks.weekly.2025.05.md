@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738205321467
+updated: 1738213396963
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -21,12 +21,12 @@ created: 1737999272613
 
 - [x] [[Isomorphic_cell_attentional|dendron://torchcell/torchcell.models.isomorphic_cell_attentional]] → [AttentionalAggr](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.aggr.AttentionalAggregation.html)
 - [x] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]] → [[Stoichiometric_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
+- [x] Implement `SupCR` loss. → [[SupCR|dendron://torchcell/torchcell.losses.SupCR]]
 
+- [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working. Let's also add in `SupCR`.
 
-- [ ] Implement `SupCR` loss.
-- [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working.
 - [ ] Test edge attention on hypergraph conv
-- [ ] 
+- [ ]
 
 ***
 

@@ -40,7 +40,7 @@ from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
 
 
-class AttentionalGraphAggregation(nn.Module):o
+class AttentionalGraphAggregation(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
 
@@ -185,12 +185,12 @@ class HeteroGnn(nn.Module):
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
         layer_config: Optional[dict] = None,
-        activation: str = "relu",
+        activation: str = "gelu",
         norm: Optional[str] = None,
         head_num_layers: int = 2,
         head_hidden_channels: Optional[int] = None,
         head_dropout: float = 0.0,
-        head_activation: str = "relu",
+        head_activation: str = "gelu",
         head_residual: bool = False,
         head_norm: Optional[Literal["batch", "layer", "instance"]] = None,
         learnable_embedding: bool = False,
@@ -690,11 +690,6 @@ class GeneContextProcessor(nn.Module):
 
 
 class MetaboliteProcessor(nn.Module):
-    """
-    Repeatedly applies StoichHypergraphConv to metabolite embeddings
-    using reaction features as hyperedge_attr (when use_attention=True).
-    """
-
     def __init__(
         self,
         hidden_channels: int,
@@ -712,6 +707,7 @@ class MetaboliteProcessor(nn.Module):
                     attention_mode="node",
                     dropout=dropout,
                     bias=True,
+                    use_skip=True,  # Enable skip connections
                 )
                 for _ in range(num_layers)
             ]
@@ -820,21 +816,21 @@ class GeneMapper(nn.Module):
 class MetabolismProcessor(nn.Module):
     def __init__(
         self,
-        metabolite_dim: int,
+        max_metabolite_nodes: int,
         hidden_dim: int,
         num_layers: dict[str, int] = {"metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
     ):
         super().__init__()
-        self.metabolite_dim = metabolite_dim
+        self.max_metabolite_nodes = max_metabolite_nodes
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.use_attention = use_attention
 
         # Metabolite embeddings
         self.metabolite_embedding = nn.Embedding(
-            num_embeddings=metabolite_dim, embedding_dim=hidden_dim, max_norm=1.0
+            num_embeddings=max_metabolite_nodes, embedding_dim=hidden_dim, max_norm=1.0
         )
 
         # Gene -> Reaction aggregation
@@ -889,7 +885,9 @@ class MetabolismProcessor(nn.Module):
 
         # Generate metabolite embeddings
         metabolite_indices = torch.arange(num_metabolites, device=device)
-        metabolite_indices = torch.clamp(metabolite_indices, 0, self.metabolite_dim - 1)
+        metabolite_indices = torch.clamp(
+            metabolite_indices, 0, self.max_metabolite_nodes - 1
+        )
         Z_m = self.metabolite_embedding(metabolite_indices)
 
         # Get and sort metabolite edges
@@ -946,7 +944,7 @@ class MetabolismProcessor(nn.Module):
         # 2. Initialize metabolite features
         device = gene_x.device
         batch_size = len(batch["metabolite"].ptr) - 1
-        metabolites_per_graph = self.metabolite_dim  # 2534
+        metabolites_per_graph = self.max_metabolite_nodes  # 2534
         num_metabolites = batch["metabolite"].num_nodes
 
         # Safety check
@@ -959,7 +957,9 @@ class MetabolismProcessor(nn.Module):
         metabolite_indices = torch.arange(metabolites_per_graph, device=device)
         # Repeat indices for each graph in batch
         metabolite_indices = metabolite_indices.repeat(batch_size)
-        metabolite_indices = torch.clamp(metabolite_indices, 0, self.metabolite_dim - 1)
+        metabolite_indices = torch.clamp(
+            metabolite_indices, 0, self.max_metabolite_nodes - 1
+        )
         Z_m = self.metabolite_embedding(metabolite_indices)
 
         # Get and process metabolite edges
@@ -1023,7 +1023,7 @@ class IsomorphicCell(nn.Module):
         },
         dropout: float = 0.1,
         gene_encoder_config: Optional[dict] = None,
-        num_nodes: Optional[dict] = None,
+        metabolism_config: Optional[dict] = None,
         attention_config: Optional[dict] = None,
         preprocessor_config: Optional[dict] = None,
         combiner_config: Optional[dict] = None,
@@ -1036,14 +1036,14 @@ class IsomorphicCell(nn.Module):
         if preprocessor_config:
             self.preprocessor_config.update(preprocessor_config)
 
-        self.num_nodes = {
+        self.metabolism_config = {
             "use_attention": True,
             "set_transformer_heads": 4,
             "use_skip": True,
             "dropout": dropout,
         }
-        if num_nodes:
-            self.num_nodes.update(num_nodes)
+        if metabolism_config:
+            self.metabolism_config.update(metabolism_config)
 
         self.combiner_config = {"dropout": dropout}
         if combiner_config:
@@ -1052,7 +1052,7 @@ class IsomorphicCell(nn.Module):
         self.prediction_head_config = {
             "hidden_layers": [hidden_channels],
             "dropout": dropout,
-            "activation": "relu",
+            "activation": "gelu",
             "use_layer_norm": True,
             "residual": True,
         }
@@ -1077,11 +1077,11 @@ class IsomorphicCell(nn.Module):
         )
 
         self.metabolism_processor = MetabolismProcessor(
-            metabolite_dim=num_nodes.get("metabolite_dim", 2534),
+            max_metabolite_nodes=metabolism_config.get("max_metabolite_nodes", 2534),
             hidden_dim=hidden_channels,
             num_layers={"metabolite": num_layers["metabolism"]},
-            dropout=self.num_nodes["dropout"],
-            use_attention=self.num_nodes["use_attention"],
+            dropout=self.metabolism_config["dropout"],
+            use_attention=self.metabolism_config["use_attention"],
         )
 
         self.combiner = Combiner(
@@ -1272,7 +1272,7 @@ def initialize_model(dataset, device, config=None):
         # Layer counts
         "num_layers": {
             "preprocessor": 2,
-            "gene_encoder": 2,
+            "gene_encoder": 3,
             "metabolism": 2,
             "combiner": 2,
         },
@@ -1288,18 +1288,18 @@ def initialize_model(dataset, device, config=None):
                 "num_mlp_layers": 3,
                 "is_mlp_skip_connection": True,
             },
-            "activation": "relu",
+            "activation": "gelu",
             "norm": "layer",
             "head_num_layers": 2,
             "head_hidden_channels": None,
             "head_dropout": 0.1,
-            "head_activation": "relu",
+            "head_activation": "gelu",
             "head_residual": True,
             "head_norm": "layer",
         },
         # Metabolism processor settings
-        "num_nodes": {
-            "metabolite_dim": 2534,
+        "metabolism_config": {
+            "max_metabolite_nodes": 2534,
             "use_attention": True,
             "use_skip": True,
             "dropout": 0.1,
@@ -1328,7 +1328,7 @@ def initialize_model(dataset, device, config=None):
         num_layers=config["num_layers"],
         dropout=config["dropout"],
         gene_encoder_config=config["gene_encoder_config"],
-        num_nodes=config["num_nodes"],
+        metabolism_config=config["metabolism_config"],
     ).to(device)
     print(model.num_parameters)
 
@@ -1536,7 +1536,7 @@ def main(device="gpu"):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 2
+    num_epochs = 10
 
     try:
         for epoch in range(num_epochs):
@@ -1592,15 +1592,14 @@ def main(device="gpu"):
     plt.savefig(
         osp.join(
             ASSET_IMAGES_DIR,
-            f"cell_latent_perturbation_tform_training_loss_{loss_type}_{timestamp()}.png",
+            f"isomorphic_cell_attentional_training_loss_{loss_type}_{timestamp()}.png",
         )
     )
     plt.close()
-
     # Move predictions to CPU for correlation plotting
     correlation_save_path = osp.join(
         ASSET_IMAGES_DIR,
-        f"cell_latent_perturbation_tform_correlation_plots_{loss_type}_{timestamp()}.png",
+        f"isomorphic_cell_attentional_correlation_plots_{loss_type}_{timestamp()}.png",
     )
     plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
 

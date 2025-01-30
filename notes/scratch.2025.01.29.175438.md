@@ -2,7 +2,7 @@
 id: 4lc3sil0nwkh3jdq9q645on
 title: '175438'
 desc: ''
-updated: 1738199818914
+updated: 1738202191776
 created: 1738194883820
 ---
 I'll write out the mathematical representation of the gating mechanism in the stoichiometric hypergraph convolution layer.
@@ -711,3 +711,50 @@ Third, many reactions lack reliable kinetic parameter measurements. Building the
 I would suggest starting with kinetic parameters as training features, allowing the gating mechanism to learn their effects. If the model struggles to capture known kinetic relationships, you could then experiment with incorporating them into the architecture more directly. This maintains flexibility while still taking advantage of our mechanistic understanding.
 
 Would you like to explore specific approaches for incorporating kinetic parameters as training features in a way that maximizes their utility for the model?
+
+***
+
+**1. With Gating Mechanism**
+
+The node update equation for node $i$ is:
+
+$$h_i^{(l+1)} = \sigma\left(\sum_{e \in \mathcal{E}} \sum_{j \in \mathcal{N}_e} g_{ij} \cdot \text{sign}(s_{ij}) \cdot |s_{ij}| \cdot W^{(l)}h_j^{(l)}\right)$$
+
+where:
+
+- $h_i^{(l)}$ is node $i$'s features at layer $l$
+- $\mathcal{E}$ is the set of hyperedges
+- $\mathcal{N}_e$ is the set of nodes in hyperedge $e$
+- $g_{ij}$ is the learned gate
+- $s_{ij}$ is the stoichiometric coefficient
+- $W^{(l)}$ is the learnable weight matrix
+- $\sigma$ is a nonlinear activation
+
+**Example with Gating:**
+For node $v_1$ with initial features $h_1^{(0)} = 1.0$:
+
+1. Decompose stoichiometry:
+   $$s_1 = -1 = \text{sign}(s_1) \cdot |s_1| = (-1) \cdot 1$$
+
+2. Apply gate (assume learned $g_{12} = 0.8$):
+   $$m_1 = g_{12} \cdot (-1) \cdot 1 \cdot W^{(0)}h_2^{(0)} = -0.8 W^{(0)}h_2^{(0)}$$
+
+3. Sign information is preserved in final message
+
+**2. Without Gating Mechanism**
+
+The non-gated update equation:
+
+$$h_i^{(l+1)} = \sigma\left(\sum_{e \in \mathcal{E}} \sum_{j \in \mathcal{N}_e} s_{ij} \cdot W^{(l)}h_j^{(l)}\right)$$
+
+Problems arise when using common activation functions:
+
+1. With ReLU:
+   $$\sigma(x) = \max(0,x)$$
+   - Negative values are zeroed out
+   - Lost information about reactants ($s_1 = -1$)
+
+2. With tanh:
+   $$\sigma(x) = \frac{e^x - e^{-x}}{e^x + e^{-x}}$$
+   - Squashes both positive and negative values
+   - Harder to distinguish magnitudes

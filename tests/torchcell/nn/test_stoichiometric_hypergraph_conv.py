@@ -3,7 +3,7 @@ import pytest
 import torch
 from torch_geometric.data import Data
 
-from torchcell.nn.met_hypergraph_conv import StoichHypergraphConv
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 @pytest.fixture

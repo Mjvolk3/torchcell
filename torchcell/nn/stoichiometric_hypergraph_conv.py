@@ -1,7 +1,8 @@
-# torchcell/nn/met_hypergraph_conv
-# [[torchcell.nn.met_hypergraph_conv]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/met_hypergraph_conv
-# Test file: tests/torchcell/nn/test_met_hypergraph_conv.py
+# torchcell/nn/stoichiometric_hypergraph_conv
+# [[torchcell.nn.stoichiometric_hypergraph_conv]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/stoichiometric_hypergraph_conv
+# Test file: tests/torchcell/nn/test_stoichiometric_hypergraph_conv.py
+
 
 from typing import Optional
 

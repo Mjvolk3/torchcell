@@ -20,7 +20,6 @@ from torchmetrics import (
 )
 from tqdm import tqdm
 import wandb
-from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 from torchcell.losses.list_mle import ListMLELoss
 import torchcell
@@ -361,6 +360,50 @@ class NaNTolerantLogCoshLoss(nn.Module):
         return dim_means.to(device), mask.to(device)
 
 
+class WeightedMSELoss(nn.Module):
+    def __init__(self, weights: Optional[torch.Tensor] = None):
+        super().__init__()
+        if weights is not None:
+            self.register_buffer("weights", weights / weights.sum())
+        else:
+            self.weights = None
+
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute weighted MSE loss while properly handling NaN values.
+
+        Args:
+            y_pred: Predictions [batch_size, num_dims]
+            y_true: Ground truth [batch_size, num_dims]
+
+        Returns:
+            tuple: (dim_means, mask) - Loss per dimension and validity mask
+        """
+        device = y_pred.device
+
+        assert (
+            y_pred.shape == y_true.shape
+        ), "Predictions and targets must have same shape"
+        y_true = y_true.to(device)
+
+        mask = ~torch.isnan(y_true)
+        n_valid = mask.sum(dim=0).clamp(min=1)
+
+        y_pred_masked = y_pred * mask
+        y_true_masked = y_true.masked_fill(~mask, 0)
+
+        squared_error = (y_pred_masked - y_true_masked).pow(2)
+        dim_losses = squared_error.sum(dim=0)
+        dim_means = dim_losses / n_valid
+
+        if self.weights is not None:
+            dim_means = dim_means * self.weights
+
+        return dim_means.to(device), mask.to(device)
+
+
 class NaNTolerantMSELoss(nn.Module):
     def __init__(self):
         super(NaNTolerantMSELoss, self).__init__()
@@ -435,7 +478,7 @@ class NaNTolerantQuantileLoss(nn.Module):
 
 
 class WeightedDistLoss(nn.Module):
-    def __init__(self, num_bins=100, bandwidth=0.5, weights=None, eps=1e-7):
+    def __init__(self, num_bins=64, bandwidth=0.5, weights=None, eps=1e-7):
         """
         Weighted NaN-tolerant implementation of Dist Loss that inherently combines
         distribution alignment and prediction errors through MSE between pseudo-labels

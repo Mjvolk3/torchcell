@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738200437861
+updated: 1738205262283
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -20,10 +20,11 @@ created: 1737999272613
 ## 2025.01.29
 
 - [x] [[Isomorphic_cell_attentional|dendron://torchcell/torchcell.models.isomorphic_cell_attentional]] → [AttentionalAggr](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.aggr.AttentionalAggregation.html)
-- [ ] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]]
+- [x] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]] → [[Stoichiometric_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 
-- [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working.
+
 - [ ] Implement `SupCR` loss.
+- [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working.
 
 ***
 
@@ -42,7 +43,7 @@ created: 1737999272613
 ## Notes on Metabolism
 
 - Can get Gibbs Free Energy of reaction from [MetaCyc](https://biocyc.org/reaction?orgid=META&id=D-LACTATE-DEHYDROGENASE-CYTOCHROME-RXN)
-- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.met_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
+- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
 
 ## Notes Related to Dango
 

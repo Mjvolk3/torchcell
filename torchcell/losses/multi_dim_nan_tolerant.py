@@ -412,6 +412,115 @@ class WeightedDistLoss(nn.Module):
         return weighted_loss, dim_losses
 
 
+class WeightedSupCRLoss(nn.Module):
+    def __init__(
+        self,
+        temperature: float = 0.1,
+        weights: Optional[torch.Tensor] = None,
+        eps: float = 1e-7,
+    ) -> None:
+        super().__init__()
+        self.temperature = temperature
+        self.eps = eps
+
+        if weights is None:
+            weights = torch.ones(2)
+        self.register_buffer("weights", weights / weights.sum())
+
+    def compute_similarity(self, embeddings: torch.Tensor) -> torch.Tensor:
+        embeddings_norm = F.normalize(embeddings, dim=1)
+        return torch.mm(embeddings_norm, embeddings_norm.t()) / self.temperature
+
+    def single_embedding_loss(
+        self, embeddings: torch.Tensor, labels: torch.Tensor
+    ) -> torch.Tensor:
+        # Handle NaN values in labels
+        valid_mask = ~torch.isnan(labels)
+        if not valid_mask.any():
+            return torch.tensor(0.0, device=embeddings.device)
+
+        valid_embeddings = embeddings[valid_mask]
+        valid_labels = labels[valid_mask]
+        batch_size = valid_embeddings.shape[0]
+
+        if batch_size <= 1:
+            return torch.tensor(0.0, device=embeddings.device)
+
+        # Compute similarities for valid samples
+        similarities = self.compute_similarity(valid_embeddings)
+
+        # Compute pairwise distances for valid labels
+        label_dists = torch.abs(valid_labels.unsqueeze(0) - valid_labels.unsqueeze(1))
+
+        # Create mask for valid pairs (excluding self-pairs)
+        valid_pairs = ~torch.eye(batch_size, dtype=torch.bool, device=embeddings.device)
+
+        # Compute indicator matrix for positive pairs
+        # For each anchor i, find pairs j where d(y_i, y_j) is among the smallest
+        rankings = label_dists.argsort(dim=1)
+        positive_mask = torch.zeros_like(label_dists, dtype=torch.bool)
+
+        for i in range(batch_size):
+            for j in range(batch_size):
+                if i != j:
+                    d_ij = label_dists[i, j]
+                    positive_mask[i, j] = (label_dists[i] >= d_ij).all()
+
+        positive_mask = positive_mask & valid_pairs
+
+        # Compute exp similarities once
+        exp_sims = torch.exp(similarities)
+
+        # Compute denominators for each anchor point
+        denominators = (exp_sims * positive_mask.float()).sum(dim=1).clamp(min=self.eps)
+
+        # Compute numerators (excluding self-similarity)
+        numerators = exp_sims * valid_pairs.float()
+
+        # Compute loss terms
+        loss_terms = -torch.log(numerators / denominators.unsqueeze(1))
+        loss_terms = loss_terms * positive_mask.float()
+
+        # Average over valid pairs
+        num_valid_pairs = positive_mask.sum().clamp(min=1)
+        return loss_terms.sum() / num_valid_pairs
+
+    def forward(
+        self,
+        perturbed_embeddings: torch.Tensor,
+        intact_embeddings: torch.Tensor,
+        labels: torch.Tensor,
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        device = perturbed_embeddings.device
+        batch_size, num_dims = labels.shape
+        dim_losses = torch.zeros(num_dims, device=device)
+
+        # Create mask for valid dimensions
+        valid_dims = torch.tensor(
+            [(~torch.isnan(labels[:, d])).any() for d in range(num_dims)], device=device
+        )
+
+        # Adjust weights based on valid dimensions
+        weights = self.weights * valid_dims
+        weight_sum = weights.sum().clamp(min=self.eps)
+
+        # Compute loss for each dimension
+        for dim in range(num_dims):
+            if not valid_dims[dim]:
+                continue
+
+            labels_dim = labels[:, dim]
+            perturbed_loss = self.single_embedding_loss(
+                perturbed_embeddings, labels_dim
+            )
+            intact_loss = self.single_embedding_loss(intact_embeddings, labels_dim)
+            dim_losses[dim] = perturbed_loss + intact_loss
+
+        # Compute weighted average loss
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
+        return weighted_loss, dim_losses
+
+
 class CombinedRegressionLoss(nn.Module):
     def __init__(
         self, loss_type="mse", weights=None, quantile_spacing=None, huber_delta=1.0
@@ -1089,42 +1198,103 @@ class MseCategoricalEntropyRegLoss(nn.Module):
 #         print(f"Consecutive differences:\n{diffs}")
 #         print(f"All thresholds monotonically increasing: {torch.all(diffs > 0).item()}")
 
+# if __name__ == "__main__":
+#     torch.manual_seed(42)
+#     print("\nTesting LogCosh Loss:")
+
+#     # Create test data
+#     batch_size = 4
+#     num_tasks = 2
+#     y_pred = torch.tensor([[1.0, 2.0], [0.5, 1.5], [2.0, 3.0], [1.5, 2.5]])
+
+#     y_true = torch.tensor(
+#         [
+#             [1.2, 2.1],
+#             [0.4, float("nan")],  # Add NaN to test NaN handling
+#             [float("nan"), 3.2],
+#             [1.4, 2.3],
+#         ]
+#     )
+
+#     # Initialize loss function
+#     loss_fn = CombinedRegressionLoss(loss_type="logcosh")
+
+#     # Compute loss
+#     total_loss, dim_losses = loss_fn(y_pred, y_true)
+
+#     print(f"\nInput tensors:")
+#     print(f"Predictions:\n{y_pred}")
+#     print(f"Targets:\n{y_true}")
+#     print(f"\nLoss values:")
+#     print(f"Total loss: {total_loss:.4f}")
+#     print(f"Dimension losses: {dim_losses}")
+
+#     # Test with custom weights
+#     weights = torch.tensor([0.7, 0.3])
+#     weighted_loss_fn = CombinedRegressionLoss(loss_type="logcosh", weights=weights)
+#     weighted_total_loss, weighted_dim_losses = weighted_loss_fn(y_pred, y_true)
+
+#     print(f"\nWeighted loss values (weights={weights}):")
+#     print(f"Total weighted loss: {weighted_total_loss:.4f}")
+#     print(f"Weighted dimension losses: {weighted_dim_losses}")
+
 if __name__ == "__main__":
     torch.manual_seed(42)
-    print("\nTesting LogCosh Loss:")
+    print("\nTesting WeightedSupCRLoss:")
 
     # Create test data
     batch_size = 4
-    num_tasks = 2
-    y_pred = torch.tensor([[1.0, 2.0], [0.5, 1.5], [2.0, 3.0], [1.5, 2.5]])
+    embedding_dim = 8
+    num_dims = 2
 
-    y_true = torch.tensor(
-        [
-            [1.2, 2.1],
-            [0.4, float("nan")],  # Add NaN to test NaN handling
-            [float("nan"), 3.2],
-            [1.4, 2.3],
-        ]
+    # Generate random embeddings
+    perturbed_embeddings = torch.randn(batch_size, embedding_dim)
+    intact_embeddings = torch.randn(batch_size, embedding_dim)
+
+    # Create labels with some NaN values
+    labels = torch.tensor(
+        [[1.2, 2.1], [0.4, float("nan")], [float("nan"), 3.2], [1.4, 2.3]]
     )
 
-    # Initialize loss function
-    loss_fn = CombinedRegressionLoss(loss_type="logcosh")
+    # Test unweighted loss
+    loss_fn = WeightedSupCRLoss()
+    total_loss, dim_losses = loss_fn(perturbed_embeddings, intact_embeddings, labels)
 
-    # Compute loss
-    total_loss, dim_losses = loss_fn(y_pred, y_true)
-
-    print(f"\nInput tensors:")
-    print(f"Predictions:\n{y_pred}")
-    print(f"Targets:\n{y_true}")
+    print(f"\nInput shapes:")
+    print(f"Perturbed embeddings: {perturbed_embeddings.shape}")
+    print(f"Intact embeddings: {intact_embeddings.shape}")
+    print(f"Labels: {labels.shape}")
+    print(f"\nLabels:\n{labels}")
     print(f"\nLoss values:")
     print(f"Total loss: {total_loss:.4f}")
     print(f"Dimension losses: {dim_losses}")
 
     # Test with custom weights
     weights = torch.tensor([0.7, 0.3])
-    weighted_loss_fn = CombinedRegressionLoss(loss_type="logcosh", weights=weights)
-    weighted_total_loss, weighted_dim_losses = weighted_loss_fn(y_pred, y_true)
+    weighted_loss_fn = WeightedSupCRLoss(weights=weights)
+    weighted_total_loss, weighted_dim_losses = weighted_loss_fn(
+        perturbed_embeddings, intact_embeddings, labels
+    )
 
     print(f"\nWeighted loss values (weights={weights}):")
     print(f"Total weighted loss: {weighted_total_loss:.4f}")
     print(f"Weighted dimension losses: {weighted_dim_losses}")
+
+    # Test with all NaN dimension
+    labels_with_nan_dim = torch.tensor(
+        [
+            [1.2, float("nan")],
+            [0.4, float("nan")],
+            [1.8, float("nan")],
+            [1.4, float("nan")],
+        ]
+    )
+
+    nan_loss, nan_dim_losses = weighted_loss_fn(
+        perturbed_embeddings, intact_embeddings, labels_with_nan_dim
+    )
+
+    print(f"\nTesting with NaN dimension:")
+    print(f"Labels:\n{labels_with_nan_dim}")
+    print(f"Total loss: {nan_loss:.4f}")
+    print(f"Dimension losses: {nan_dim_losses}")

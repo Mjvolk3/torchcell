@@ -12,13 +12,11 @@ from torchcell.losses.multi_dim_nan_tolerant import (
 from tqdm import tqdm
 from torch import nn
 from torch.utils.data import random_split
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import umap
 import os.path as osp
-import torchcell
 from scipy import stats
 from dotenv import load_dotenv
 
@@ -48,10 +46,12 @@ class GCN(torch.nn.Module):
 
 
 class CellLoss(nn.Module):
-    def __init__(self, lambda_1: float = 1.0, lambda_2: float = 1.0):
+    def __init__(
+        self, lambda_1: float = 1.0, lambda_2: float = 1.0, device: str = "cuda"
+    ):
         super().__init__()
-        self.mse_loss = WeightedMSELoss(weights=torch.ones(19))
-        self.div_loss = WeightedDistLoss(weights=torch.ones(19))
+        self.mse_loss = WeightedMSELoss(weights=torch.ones(19, device=device))
+        self.div_loss = WeightedDistLoss(weights=torch.ones(19, device=device))
         self.con_loss = SupCR()
         self.lambda_1 = lambda_1
         self.lambda_2 = lambda_2
@@ -215,7 +215,7 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
 
     # Loss configurations
     loss_configs = {
-        "MSE": {"lambda_1": 0, "lambda_2": 0},
+        # "MSE": {"lambda_1": 0, "lambda_2": 0},
         "DistLoss_1e-2": {"lambda_1": 1e-2, "lambda_2": 0},
         "DistLoss_1e-1": {"lambda_1": 1e-1, "lambda_2": 0},
         "DistLoss_1e0": {"lambda_1": 1e0, "lambda_2": 0},
@@ -229,10 +229,11 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
     }
 
     for loss_name, config in loss_configs.items():
+
         print(f"Training with {loss_name}")
 
         model = GCN(dataset.num_features, 128, dataset[0].y.shape[-1]).to(device)
-        loss_fn = CellLoss(**config)
+        loss_fn = CellLoss(**config, device=device)  # Pass device here
         optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
         val_preds, val_labels, val_z = train_and_evaluate(

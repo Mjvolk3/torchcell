@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738213396963
+updated: 1738232838618
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -24,6 +24,8 @@ created: 1737999272613
 - [x] Implement `SupCR` loss. → [[SupCR|dendron://torchcell/torchcell.losses.SupCR]]
 
 - [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working. Let's also add in `SupCR`.
+
+- [ ] My intuition is that  
 
 - [ ] Test edge attention on hypergraph conv
 - [ ]

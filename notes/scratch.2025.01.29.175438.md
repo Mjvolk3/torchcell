@@ -2,7 +2,7 @@
 id: 4lc3sil0nwkh3jdq9q645on
 title: '175438'
 desc: ''
-updated: 1738202612166
+updated: 1738204035517
 created: 1738194883820
 ---
 I'll write out the mathematical representation of the gating mechanism in the stoichiometric hypergraph convolution layer.
@@ -782,7 +782,6 @@ flowchart LR
 - Here, the stoichiometric coefficient $s_{ij}$ directly scales the message.  
 - Negative terms can be erased by common activations like ReLU, losing critical sign information.
 
-
 ### Diagram 2: Gated Stoichiometric Message Passing
 
 ```mermaid
@@ -802,9 +801,100 @@ flowchart LR
 - A learnable gate $g_{ij}\in [0,1]$ preserves the sign from $s_{ij}$ and modulates the message magnitude independently of $|s_{ij}|$.  
 - This ensures proportionality and sign are retained while allowing the network to learn which reactions/messages are more or less important.
 
-
 ### Concluding Remarks
 
 - **Non-gated** approaches directly multiply by $s_{ij}$, risking loss of sign if a non-negative activation (e.g., ReLU) is used.  
 - **Gated** approaches keep the stoichiometric sign intact and allow the model to tune each reaction’s impact through $g_{ij}$.  
 - This is especially useful for metabolic or reaction networks, where preserving negative/positive flows is critical and where different pathways need different learned scalings.
+
+***
+
+```python
+# Example 1: Basic Input Data Structure
+nodes = {
+    'A': {'x': torch.tensor([1.0, 0.5])},  # Node features
+    'B': {'x': torch.tensor([0.5, 1.0])}
+}
+
+edge_index = torch.tensor([[0, 1],   # A and B connected to same hyperedge
+                          [0, 0]])    # Both map to hyperedge 0
+
+stoich = torch.tensor([-1.0, 2.0])   # Stoichiometric coefficients
+
+# Example 2: Non-gated vs Gated with tanh activation
+# Original stoichiometry [-1, +2]
+
+# Without gating
+s_AB = -1.0
+x_B = torch.tensor([0.5, 1.0])
+m_AB = s_AB * x_B                # = [-0.5, -1.0]
+h_A = tanh(m_AB)                # = [-0.46, -0.76]
+
+# With gating
+s_AB = -1.0
+x_B = torch.tensor([0.5, 1.0])
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [-0.4, -0.8]
+h_A = tanh(m_AB)                # = [-0.38, -0.66]
+
+# Example 3: Flipped stoichiometry [+1, -2]
+
+# Without gating
+s_AB = 1.0
+x_B = torch.tensor([0.5, 1.0])
+m_AB = s_AB * x_B                # = [0.5, 1.0]
+h_A = tanh(m_AB)                # = [0.46, 0.76]
+
+# With gating
+s_AB = 1.0
+x_B = torch.tensor([0.5, 1.0])
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [0.4, 0.8]
+h_A = tanh(m_AB)                # = [0.38, 0.66]
+
+# Example 4: ReLU Activation Case
+# Original Stoichiometry (s_AB = -1.0)
+
+# Without gating
+m_AB = s_AB * x_B                # = [-0.5, -1.0]
+h_A = ReLU(m_AB)                # = [0.0, 0.0]    # All information lost
+
+# With gating
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [-0.4, -0.8]
+h_A = ReLU(m_AB)                # = [0.0, 0.0]    # Still lost, but gate preserves scaling
+
+# Example 5: ReLU with Flipped Stoichiometry (s_AB = +1.0)
+
+# Without gating
+m_AB = s_AB * x_B                # = [0.5, 1.0]
+h_A = ReLU(m_AB)                # = [0.5, 1.0]    # Preserves positive values
+
+# With gating
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [0.4, 0.8]
+h_A = ReLU(m_AB)                # = [0.4, 0.8]    # Scaled by learned gate
+
+# Example 6: GELU Activation Case
+# Original Stoichiometry (s_AB = -1.0)
+
+# Without gating
+m_AB = s_AB * x_B                # = [-0.5, -1.0]
+h_A = GELU(m_AB)                # = [-0.15, -0.16]  # Partial negative preservation
+
+# With gating
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [-0.4, -0.8]
+h_A = GELU(m_AB)                # = [-0.12, -0.13]  # Scaled negative preservation
+
+# Example 7: GELU with Flipped Stoichiometry (s_AB = +1.0)
+
+# Without gating
+m_AB = s_AB * x_B                # = [0.5, 1.0]
+h_A = GELU(m_AB)                # = [0.35, 0.84]   # Strong positive preservation
+
+# With gating
+g_AB = sigmoid(W_g @ x_B)        # = 0.8 (learned)
+m_AB = g_AB * sign(s_AB) * abs(s_AB) * x_B  # = [0.4, 0.8]
+h_A = GELU(m_AB)                # = [0.27, 0.66]   # Scaled positive preservation
+```

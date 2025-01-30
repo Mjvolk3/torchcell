@@ -22,6 +22,7 @@ class StoichiometricHypergraphConv(MessagePassing):
         self,
         in_channels: int,
         out_channels: int,
+        is_stoich_gated: bool = False,
         use_attention: bool = False,
         attention_mode: str = "node",
         heads: int = 1,
@@ -34,32 +35,37 @@ class StoichiometricHypergraphConv(MessagePassing):
         kwargs.setdefault("aggr", "add")
         super().__init__(flow="source_to_target", node_dim=0, **kwargs)
 
-        assert attention_mode in ["node", "edge"]
-
         self.in_channels = in_channels
         self.out_channels = out_channels
+        self.is_stoich_gated = is_stoich_gated
         self.use_attention = use_attention
         self.attention_mode = attention_mode
+        self.heads = heads if use_attention else 1
+        self.concat = concat
+        self.negative_slope = negative_slope
+        self.dropout = dropout
 
-        if self.use_attention:
-            self.heads = heads
-            self.concat = concat
-            self.negative_slope = negative_slope
-            self.dropout = dropout
-            self.lin = Linear(
-                in_channels,
-                heads * out_channels,
-                bias=False,
-                weight_initializer="glorot",
+        # Main transformation
+        self.lin = Linear(
+            in_channels,
+            heads * out_channels if use_attention else out_channels,
+            bias=False,
+            weight_initializer="glorot",
+        )
+
+        # Gating network
+        if is_stoich_gated:
+            self.gate_lin = Linear(
+                in_channels, 1, bias=True, weight_initializer="glorot"
             )
+
+        # Attention
+        if use_attention:
             self.att = Parameter(torch.empty(1, heads, 2 * out_channels))
         else:
-            self.heads = 1
-            self.concat = True
-            self.lin = Linear(
-                in_channels, out_channels, bias=False, weight_initializer="glorot"
-            )
+            self.register_parameter("att", None)
 
+        # Bias
         if bias and concat:
             self.bias = Parameter(torch.empty(heads * out_channels))
         elif bias and not concat:
@@ -70,11 +76,13 @@ class StoichiometricHypergraphConv(MessagePassing):
         self.reset_parameters()
 
     def reset_parameters(self):
-        super().reset_parameters()
         self.lin.reset_parameters()
+        if self.is_stoich_gated:
+            self.gate_lin.reset_parameters()
         if self.use_attention:
             glorot(self.att)
-        zeros(self.bias)
+        if self.bias is not None:
+            zeros(self.bias)
 
     @disable_dynamic_shapes(required_args=["num_edges"])
     def forward(
@@ -85,40 +93,37 @@ class StoichiometricHypergraphConv(MessagePassing):
         hyperedge_attr: Optional[Tensor] = None,
         num_edges: Optional[int] = None,
     ) -> Tensor:
-        """
-        Args:
-            x (Tensor): Node feature matrix [num_nodes, in_channels]
-            edge_index (Tensor): [2, num_edges] tensor representing standard PyG edge_index
-            stoich (Tensor): [num_edges] tensor of stoichiometric coefficients
-            hyperedge_attr (Tensor, optional): Hyperedge feature matrix
-            num_edges (int, optional): Number of hyperedges
-        """
         num_nodes = x.size(0)
+        num_edges = int(edge_index[1].max()) + 1 if num_edges is None else num_edges
 
-        if num_edges is None:
-            num_edges = 0
-            if edge_index.numel() > 0:
-                num_edges = int(edge_index[1].max()) + 1
+        # Transform node features before splitting for attention
+        x_transformed = self.lin(x)
 
-        x = self.lin(x)
-
+        # Handle attention if enabled
         alpha = None
         if self.use_attention:
             assert hyperedge_attr is not None
-            x = x.view(-1, self.heads, self.out_channels)
+            x_transformed = x_transformed.view(-1, self.heads, self.out_channels)
             hyperedge_attr = self.lin(hyperedge_attr)
             hyperedge_attr = hyperedge_attr.view(-1, self.heads, self.out_channels)
-            x_i = x[edge_index[0]]
+            x_i = x_transformed[edge_index[0]]
             x_j = hyperedge_attr[edge_index[1]]
             alpha = (torch.cat([x_i, x_j], dim=-1) * self.att).sum(dim=-1)
             alpha = F.leaky_relu(alpha, self.negative_slope)
-            if self.attention_mode == "node":
-                alpha = softmax(alpha, edge_index[1], num_nodes=num_edges)
-            else:
-                alpha = softmax(alpha, edge_index[0], num_nodes=num_nodes)
+            alpha = softmax(
+                alpha,
+                edge_index[1] if self.attention_mode == "node" else edge_index[0],
+                num_nodes=num_edges if self.attention_mode == "node" else num_nodes,
+            )
             alpha = F.dropout(alpha, p=self.dropout, training=self.training)
 
-        # Use absolute stoichiometric coefficients for degree calculation
+        # Compute gating coefficients if enabled - using original features
+        gate_values = None
+        if self.is_stoich_gated:
+            gate_values = torch.sigmoid(self.gate_lin(x))
+            gate_values = gate_values[edge_index[0]]
+
+        # Compute normalization coefficients
         D = scatter(
             torch.abs(stoich), edge_index[0], dim=0, dim_size=num_nodes, reduce="sum"
         )
@@ -131,25 +136,29 @@ class StoichiometricHypergraphConv(MessagePassing):
         B = 1.0 / B
         B[B == float("inf")] = 0
 
-        # Propagate messages using stoichiometric weights
+        # Message passing
         out = self.propagate(
             edge_index,
-            x=x,
+            x=x_transformed,
             norm=B,
             alpha=alpha,
             stoich=stoich,
+            gate_values=gate_values,
             size=(num_nodes, num_edges),
         )
+
+        # Second message passing step
         out = self.propagate(
             edge_index.flip([0]),
             x=out,
             norm=D,
             alpha=alpha,
             stoich=stoich,
+            gate_values=gate_values,
             size=(num_edges, num_nodes),
         )
 
-        if self.concat is True:
+        if self.concat:
             out = out.view(-1, self.heads * self.out_channels)
         else:
             out = out.mean(dim=1)
@@ -160,13 +169,22 @@ class StoichiometricHypergraphConv(MessagePassing):
         return out
 
     def message(
-        self, x_j: Tensor, norm_i: Tensor, alpha: Tensor, stoich: Tensor
+        self,
+        x_j: Tensor,
+        norm_i: Tensor,
+        alpha: Optional[Tensor],
+        stoich: Tensor,
+        gate_values: Optional[Tensor],
     ) -> Tensor:
         # Split into magnitude and sign
         magnitude = torch.abs(stoich)
         sign = torch.sign(stoich)
 
-        # Apply magnitude for scaling but preserve sign
+        # Apply gating if enabled
+        if gate_values is not None:
+            magnitude = magnitude * gate_values.view(-1)
+
+        # Combine all components
         out = (
             norm_i.view(-1, 1, 1)
             * magnitude.view(-1, 1, 1)
@@ -201,15 +219,17 @@ class StoichiometricHypergraphConv(MessagePassing):
 
 
 def main():
-    # Set random seed for reproducibility
     torch.manual_seed(42)
 
-    # Create instance
-    conv = StoichiometricHypergraphConv(
-        in_channels=3, out_channels=2
-    )  # Smaller for visualization
+    # Create instances for comparison
+    conv_gated = StoichiometricHypergraphConv(
+        in_channels=3, out_channels=2, is_stoich_gated=True
+    )
+    conv_normal = StoichiometricHypergraphConv(
+        in_channels=3, out_channels=2, is_stoich_gated=False
+    )
 
-    # Example data - simplified for visualization
+    # Example data
     x = torch.tensor(
         [
             [1.0, 0.0, 0.0],  # Node 0
@@ -230,10 +250,6 @@ def main():
 
     stoich = torch.tensor([-1.0, -2.0, 1.0], dtype=torch.float)  # A + 2B -> C
 
-    # Forward pass
-    out = conv(x, edge_index, stoich)
-
-    # Visualize message components
     print("\nInput Features:")
     print(x)
 
@@ -243,42 +259,71 @@ def main():
         role = "Product" if s > 0 else "Reactant"
         print(f"{i}\t{s:.1f}\t{role}")
 
-    # Get normalized coefficients
-    D = scatter(torch.abs(stoich), edge_index[0], dim=0, dim_size=4, reduce="sum")
-    D = 1.0 / D
-    D[D == float("inf")] = 0
-
-    print("\nDegree Normalization (D):")
-    print("Node\tNorm")
-    for i, d in enumerate(D):
-        print(f"{i}\t{d:.3f}")
-
-    # Extract message components from a forward pass
+    # Compare gated and non-gated versions
     with torch.no_grad():
-        # Get transformed features
-        x_transformed = conv.lin(x)
+        out_gated = conv_gated(x, edge_index, stoich)
+        out_normal = conv_normal(x, edge_index, stoich)
 
-        print("\nTransformed Features (after linear layer):")
-        print(x_transformed)
+        # Get normalized coefficients
+        D = scatter(torch.abs(stoich), edge_index[0], dim=0, dim_size=4, reduce="sum")
+        D = 1.0 / D
+        D[D == float("inf")] = 0
 
-        # Compute messages for one edge
+        print("\nDegree Normalization (D):")
+        print("Node\tNorm")
+        for i, d in enumerate(D):
+            print(f"{i}\t{d:.3f}")
+
+        # Show transformed features for both versions
+        print("\nGated Version:")
+        x_transformed_gated = conv_gated.lin(x)
+        print("Transformed Features (after linear layer):")
+        print(x_transformed_gated)
+
+        if conv_gated.is_stoich_gated:
+            gate_values = torch.sigmoid(conv_gated.gate_lin(x[edge_index[0]]))
+            print("\nGate Values:")
+            for i, g in enumerate(gate_values):
+                print(f"Node {i}: {g.item():.3f}")
+
         magnitude = torch.abs(stoich)
         sign = torch.sign(stoich)
-        messages = (
-            magnitude.view(-1, 1) * sign.view(-1, 1) * x_transformed[edge_index[0]]
+        messages_gated = (
+            magnitude.view(-1, 1)
+            * sign.view(-1, 1)
+            * x_transformed_gated[edge_index[0]]
         )
 
-        print("\nMessage Components:")
+        print("\nGated Message Components:")
         print("Node\tMagnitude\tSign\tMessage")
         for i in range(len(stoich)):
-            print(f"{i}\t{magnitude[i]:.1f}\t\t{sign[i]:.1f}\t{messages[i].tolist()}")
+            print(
+                f"{i}\t{magnitude[i]:.1f}\t\t{sign[i]:.1f}\t{messages_gated[i].tolist()}"
+            )
 
-        print("\nAggregated Message:")
-        agg_message = messages.sum(0)
-        print(agg_message.tolist())
+        print("\nGated Final Output Features:")
+        print(out_gated)
 
-        print("\nFinal Output Features:")
-        print(out)
+        print("\nNon-gated Version:")
+        x_transformed_normal = conv_normal.lin(x)
+        print("Transformed Features (after linear layer):")
+        print(x_transformed_normal)
+
+        messages_normal = (
+            magnitude.view(-1, 1)
+            * sign.view(-1, 1)
+            * x_transformed_normal[edge_index[0]]
+        )
+
+        print("\nNon-gated Message Components:")
+        print("Node\tMagnitude\tSign\tMessage")
+        for i in range(len(stoich)):
+            print(
+                f"{i}\t{magnitude[i]:.1f}\t\t{sign[i]:.1f}\t{messages_normal[i].tolist()}"
+            )
+
+        print("\nNon-gated Final Output Features:")
+        print(out_normal)
 
 
 if __name__ == "__main__":

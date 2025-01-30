@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738205262283
+updated: 1738205321467
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -25,6 +25,8 @@ created: 1737999272613
 
 - [ ] Implement `SupCR` loss.
 - [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working.
+- [ ] Test edge attention on hypergraph conv
+- [ ] 
 
 ***
 

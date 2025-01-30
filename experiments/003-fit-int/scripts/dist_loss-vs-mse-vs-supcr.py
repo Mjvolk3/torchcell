@@ -170,9 +170,9 @@ def train_and_evaluate(
     model, loss_fn, train_loader, val_loader, optimizer, num_epochs=2, device="cuda"
 ):
     print("Train.")
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in range(num_epochs):
         model.train()
-        for batch in train_loader:
+        for batch in tqdm(train_loader):
             batch = batch.to(device)  # Move batch to device
             optimizer.zero_grad()
             pred, u = model(batch)
@@ -202,7 +202,7 @@ def train_and_evaluate(
 def main(device="cuda" if torch.cuda.is_available() else "cpu"):
     print(f"Using device: {device}")
 
-    # Dataset setup remains the same
+    # Dataset setup
     dataset = QM9(root="/tmp/QM9")
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -212,6 +212,9 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
 
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+    # Initialize visualization
+    viz = Visualization(base_dir=os.path.join(ASSET_IMAGES_DIR, "loss_comparison"))
 
     # Loss configurations
     loss_configs = {
@@ -239,6 +242,34 @@ def main(device="cuda" if torch.cuda.is_available() else "cpu"):
             model, loss_fn, train_loader, val_loader, optimizer, device=device
         )
 
+        # Generate and save plots for each target dimension
+        num_targets = val_labels.shape[1]
+        for dim in range(num_targets):
+            # Plot correlations
+            viz.plot_correlations(
+                val_preds[:, dim],
+                val_labels[:, dim],
+                dim,
+                loss_name
+            )
+
+            # Plot distributions
+            viz.plot_distribution(
+                val_labels[:, dim],
+                val_preds[:, dim],
+                loss_name,
+                dim
+            )
+
+            # Plot UMAP projections
+            viz.plot_umap(
+                val_z,
+                val_labels[:, dim],
+                loss_name,
+                dim
+            )
+
+        print(f"Completed visualization for {loss_name}")
 
 if __name__ == "__main__":
     # Set up CUDA if available

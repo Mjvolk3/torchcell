@@ -2,7 +2,7 @@
 id: 4lc3sil0nwkh3jdq9q645on
 title: '175438'
 desc: ''
-updated: 1738202532009
+updated: 1738202612166
 created: 1738194883820
 ---
 I'll write out the mathematical representation of the gating mechanism in the stoichiometric hypergraph convolution layer.
@@ -764,8 +764,6 @@ Problems arise when using common activation functions:
 **Concise Summary**  
 Below are two simple diagrams and brief equations illustrating how a gating mechanism in stoichiometric hypergraph message passing differs from a non-gated approach. The key point is that gating maintains the proportional relationships implied by stoichiometric coefficients while providing a learnable scaling factor, allowing sign (reactant/product) and relative magnitudes to be preserved and modulated.
 
----
-
 ### Diagram 1: Non-Gated Stoichiometric Message Passing
 
 ```mermaid
@@ -778,13 +776,12 @@ flowchart LR
 ```
 
 - **Message Equation (no gate):**  
-  \[
+  $$
     m_{ij} = s_{ij} \, W\, x_j.
-  \]
-- Here, the stoichiometric coefficient \(s_{ij}\) directly scales the message.  
+  $$
+- Here, the stoichiometric coefficient $s_{ij}$ directly scales the message.  
 - Negative terms can be erased by common activations like ReLU, losing critical sign information.
 
----
 
 ### Diagram 2: Gated Stoichiometric Message Passing
 
@@ -798,17 +795,16 @@ flowchart LR
 ```
 
 - **Message Equation (with gate):**  
-  \[
+  $$
     m_{ij} = g_{ij} \,\cdot\, \operatorname{sign}(s_{ij})
               \,\cdot\, |s_{ij}|\;\bigl(W\,x_j\bigr).
-  \]
-- A learnable gate \(g_{ij}\in [0,1]\) preserves the sign from \(s_{ij}\) and modulates the message magnitude independently of \(|s_{ij}|\).  
+  $$
+- A learnable gate $g_{ij}\in [0,1]$ preserves the sign from $s_{ij}$ and modulates the message magnitude independently of $|s_{ij}|$.  
 - This ensures proportionality and sign are retained while allowing the network to learn which reactions/messages are more or less important.
 
----
 
 ### Concluding Remarks
 
-- **Non-gated** approaches directly multiply by \(s_{ij}\), risking loss of sign if a non-negative activation (e.g., ReLU) is used.  
-- **Gated** approaches keep the stoichiometric sign intact and allow the model to tune each reaction’s impact through \(g_{ij}\).  
+- **Non-gated** approaches directly multiply by $s_{ij}$, risking loss of sign if a non-negative activation (e.g., ReLU) is used.  
+- **Gated** approaches keep the stoichiometric sign intact and allow the model to tune each reaction’s impact through $g_{ij}$.  
 - This is especially useful for metabolic or reaction networks, where preserving negative/positive flows is critical and where different pathways need different learned scalings.

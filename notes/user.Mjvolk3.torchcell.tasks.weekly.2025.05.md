@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738136934629
+updated: 1738200437861
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -15,7 +15,12 @@ created: 1737999272613
 
 ## 2025.01.28
 
-- [ ] Implement isomorphic cell. Fix Metabolism Processor. → had to change data formatting in [[torchcell.data.neo4j_cell]] converted dicts to hyperedge indices for easier batching processing in algorithm. →
+- [x] Implement isomorphic cell. Fix Metabolism Processor. → had to change data formatting in [[torchcell.data.neo4j_cell]] converted dicts to hyperedge indices for easier batching processing in algorithm. → got to point where we discovered improper data handling that was showing CUDA error. Likely issue is always on data side when there is CUDA error when using `pyg`. Had to switch to simpler attention mechanism to troubleshoot this.
+
+## 2025.01.29
+
+- [x] [[Isomorphic_cell_attentional|dendron://torchcell/torchcell.models.isomorphic_cell_attentional]] → [AttentionalAggr](https://pytorch-geometric.readthedocs.io/en/latest/generated/torch_geometric.nn.aggr.AttentionalAggregation.html)
+- [ ] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]]
 
 - [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working.
 - [ ] Implement `SupCR` loss.

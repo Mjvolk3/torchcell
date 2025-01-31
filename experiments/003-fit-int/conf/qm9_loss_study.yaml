@@ -1,0 +1,17 @@
+# config.yaml
+program: experiments/003-fit-int/scripts/dist_loss-vs-mse-vs-supcr.py
+project: torchcell_qm9_loss_study
+method: grid
+
+wandb:
+  project: "qm9_loss_study"
+
+training:
+  num_epochs: 2
+  learning_rate: 0.01
+  batch_size: 32
+  hidden_channels: 128
+
+loss_sweep:
+  lambda_1: 0
+  lambda_2: 0

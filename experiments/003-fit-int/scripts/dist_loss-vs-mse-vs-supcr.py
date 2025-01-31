@@ -103,66 +103,44 @@ class CellLoss(nn.Module):
 
 
 class MetricTracker:
-    """Tracks metrics and logs to wandb"""
-
     def log_epoch_metrics(
         self,
         epoch: int,
-        val_preds: torch.Tensor,
-        val_labels: torch.Tensor,
-        val_loss_dict: dict,
+        predictions: torch.Tensor,
+        labels: torch.Tensor,
+        loss_dict: dict,
         num_targets: int,
+        phase: str,  # Add phase parameter
     ):
         """Log all metrics for each target dimension"""
         metrics = {}
 
         # Log loss components
-        for key, value in val_loss_dict.items():
-            metrics[f"val_{key}"] = value.item()
+        for key, value in loss_dict.items():
+            metrics[f"{phase}_{key}"] = value.item()
 
         # Calculate metrics for each target dimension
         for dim in range(num_targets):
-            mask = ~torch.isnan(val_labels[:, dim])
-            y_true = val_labels[mask, dim].cpu().numpy()
-            y_pred = val_preds[mask, dim].cpu().numpy()
+            mask = ~torch.isnan(labels[:, dim])
+            y_true = labels[mask, dim].cpu().numpy()
+            y_pred = predictions[mask, dim].cpu().numpy()
 
             # Statistical metrics
             pearson, _ = stats.pearsonr(y_true, y_pred)
             spearman, _ = stats.spearmanr(y_true, y_pred)
             wasserstein = stats.wasserstein_distance(y_true, y_pred)
 
-            # MSE and MAE
-            mse = np.mean((y_true - y_pred) ** 2)
-            mae = np.mean(np.abs(y_true - y_pred))
-
-            # Jensen-Shannon divergence
-            bins = min(100, int(np.sqrt(len(y_true))))
-            true_hist, edges = np.histogram(y_true, bins=bins, density=True)
-            pred_hist, _ = np.histogram(y_pred, bins=edges, density=True)
-
-            epsilon = 1e-10
-            true_hist = (true_hist + epsilon) / (
-                true_hist.sum() + epsilon * len(true_hist)
-            )
-            pred_hist = (pred_hist + epsilon) / (
-                pred_hist.sum() + epsilon * len(pred_hist)
-            )
-
-            m = 0.5 * (true_hist + pred_hist)
-            js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
-
             metrics.update(
                 {
-                    f"target_{dim}/mse": mse,
-                    f"target_{dim}/mae": mae,
-                    f"target_{dim}/pearson": pearson,
-                    f"target_{dim}/spearman": spearman,
-                    f"target_{dim}/wasserstein": wasserstein,
-                    f"target_{dim}/jensen_shannon": js_div,
+                    f"{phase}_target_{dim}/mse": np.mean((y_true - y_pred) ** 2),
+                    f"{phase}_target_{dim}/mae": np.mean(np.abs(y_true - y_pred)),
+                    f"{phase}_target_{dim}/pearson": pearson,
+                    f"{phase}_target_{dim}/spearman": spearman,
+                    f"{phase}_target_{dim}/wasserstein": wasserstein,
                 }
             )
 
-        wandb.log(metrics, step=epoch, commit=True)
+        wandb.log(metrics, step=epoch, commit=False)  # Set commit=False for training
 
 
 class Visualization:
@@ -512,6 +490,7 @@ def train_and_evaluate(
     for epoch in range(num_epochs):
         # Training phase
         model.train()
+        train_preds, train_labels = [], []
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Train)"):
             batch = batch.to(device)
             optimizer.zero_grad()
@@ -520,8 +499,22 @@ def train_and_evaluate(
             loss_dict["total_loss"].backward()
             optimizer.step()
             loss_tracker.update_train(loss_dict)
+            train_preds.append(pred.detach())
+            train_labels.append(batch.y)
 
-        # Validation phase and metrics
+        # Log training metrics
+        train_preds = torch.cat(train_preds, dim=0)
+        train_labels = torch.cat(train_labels, dim=0)
+        metric_tracker.log_epoch_metrics(
+            epoch=epoch,
+            predictions=train_preds,
+            labels=train_labels,
+            loss_dict=loss_dict,
+            num_targets=train_labels.shape[1],
+            phase="train",
+        )
+
+        # Validation phase
         model.eval()
         val_preds, val_labels = [], []
         with torch.no_grad():
@@ -533,16 +526,39 @@ def train_and_evaluate(
                 val_preds.append(pred)
                 val_labels.append(batch.y)
 
-        # Log metrics for this epoch
+        # Log validation metrics
         val_preds = torch.cat(val_preds, dim=0)
         val_labels = torch.cat(val_labels, dim=0)
         metric_tracker.log_epoch_metrics(
             epoch=epoch,
-            val_preds=val_preds,
-            val_labels=val_labels,
-            val_loss_dict=loss_dict,
+            predictions=val_preds,
+            labels=val_labels,
+            loss_dict=loss_dict,
             num_targets=val_labels.shape[1],
+            phase="val",
         )
+        
+        # Commit metrics at end of epoch
+        wandb.log({}, commit=True)
+
+    # Final evaluation for returning predictions
+    model.eval()
+    all_preds, all_labels, all_embeddings = [], [], []
+    with torch.no_grad():
+        for batch in tqdm(val_loader, desc="Final evaluation"):
+            batch = batch.to(device)
+            pred, u = model(batch)
+            all_preds.append(pred.cpu())
+            all_labels.append(batch.y.cpu())
+            all_embeddings.append(u.cpu())
+
+    return (
+        torch.cat(all_preds, dim=0),
+        torch.cat(all_labels, dim=0),
+        torch.cat(all_embeddings, dim=0),
+        loss_tracker.get_losses(),
+        num_epochs,
+    )
 
     # Final evaluation for returning predictions
     model.eval()
@@ -597,6 +613,7 @@ def main(cfg: DictConfig) -> None:
         config=wandb_cfg,
         group=group,
         dir=experiment_dir,
+        job_type="train",
     )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"

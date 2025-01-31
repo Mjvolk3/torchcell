@@ -1,0 +1,36 @@
+program: experiments/003-fit-int/scripts/dist_loss-vs-mse-vs-supcr.py
+project: torchcell_qm9_loss_study
+method: grid
+
+parameters:
+  wandb:
+    parameters:
+      project:
+        values: ["qm9_loss_study"]
+
+  training:
+    parameters:
+      num_epochs:
+        values: [30]
+      learning_rate:
+        values: [1e-3]
+      batch_size:
+        values: [128]
+        # values: [32, 64, 128]
+      hidden_channels:
+        values: [256]
+        # values: [64, 128, 256]
+
+  loss_sweep:
+    parameters:
+      lambda_1: # Weight for distribution loss
+        values: [0.0, 1.0]
+        # values: [0.0, 0.001, 0.01, 0.1, 1.0, 10.0]
+      lambda_2: # Weight for contrastive loss
+        values: [0.0, 1.0]
+        # values: [0.0, 0.001, 0.01, 0.1, 1.0, 10.0]
+
+command:
+  - ${env}
+  - python
+  - ${program}

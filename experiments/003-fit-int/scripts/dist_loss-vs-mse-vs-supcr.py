@@ -573,12 +573,7 @@ def main(cfg: DictConfig) -> None:
     print("Starting QM9 Loss Study 🧪")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
 
-    # Verify environment variables
-    if ASSET_IMAGES_DIR is None:
-        raise ValueError("ASSET_IMAGES_DIR environment variable not set")
-    os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
-
-    # Convert DictConfig to regular dict for wandb
+    # Convert hydra config to dict for wandb
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
 
     # Setup unique run identification
@@ -608,7 +603,7 @@ def main(cfg: DictConfig) -> None:
     print(f"Using device: {device}")
 
     # Dataset setup
-    dataset = QM9(root="/tmp/QM9")[:100000]
+    dataset = QM9(root="/tmp/QM9")
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(
@@ -616,24 +611,28 @@ def main(cfg: DictConfig) -> None:
     )
 
     train_loader = DataLoader(
-        train_dataset, batch_size=cfg.training.batch_size, shuffle=True
+        train_dataset, batch_size=wandb.config.training["batch_size"], shuffle=True
     )
     val_loader = DataLoader(
-        val_dataset, batch_size=cfg.training.batch_size, shuffle=False
+        val_dataset, batch_size=wandb.config.training["batch_size"], shuffle=False
     )
 
     # Model setup
     model = GCN(
-        dataset.num_features, cfg.training.hidden_channels, dataset[0].y.shape[-1]
+        dataset.num_features,
+        wandb.config.training["hidden_channels"],
+        dataset[0].y.shape[-1],
     ).to(device)
 
     loss_fn = CellLoss(
-        lambda_1=cfg.loss_sweep.lambda_1,
-        lambda_2=cfg.loss_sweep.lambda_2,
+        lambda_1=wandb.config.loss_sweep["lambda_1"],
+        lambda_2=wandb.config.loss_sweep["lambda_2"],
         device=device,
     )
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.training.learning_rate)
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=wandb.config.training["learning_rate"]
+    )
 
     # Train and evaluate
     val_preds, val_labels, val_z, losses, num_epochs = train_and_evaluate(
@@ -642,7 +641,7 @@ def main(cfg: DictConfig) -> None:
         train_loader,
         val_loader,
         optimizer,
-        num_epochs=cfg.training.num_epochs,
+        num_epochs=wandb.config.training["num_epochs"],
         device=device,
     )
 

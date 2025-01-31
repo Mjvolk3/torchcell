@@ -1,9 +1,18 @@
+import hydra
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_add_pool
 from torch_geometric.datasets import QM9
 from torch_geometric.loader import DataLoader
 import os
+from omegaconf import DictConfig, OmegaConf
+import uuid
+import json
+import hashlib
+import socket
+import io
+from PIL import Image
+from typing import Any
 from torchcell.losses.multi_dim_nan_tolerant import (
     WeightedDistLoss,
     SupCR,
@@ -19,13 +28,16 @@ import umap
 import os.path as osp
 from scipy import stats
 from dotenv import load_dotenv
-
+import logging
+import wandb
 from torchcell.timestamp import timestamp
 
 load_dotenv()
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
+DATA_ROOT = os.getenv("DATA_ROOT")
 plt.style.use(MPLSTYLE_PATH)
+log = logging.getLogger(__name__)
 
 
 class GCN(torch.nn.Module):
@@ -90,12 +102,148 @@ class CellLoss(nn.Module):
         }
 
 
-class Visualization:
-    def __init__(self, base_dir="results"):
-        self.base_dir = base_dir
-        os.makedirs(base_dir, exist_ok=True)
+class MetricTracker:
+    """Tracks metrics and logs to wandb"""
 
-    def plot_correlations(self, predictions, true_values, dim, loss_name):
+    def log_epoch_metrics(
+        self,
+        epoch: int,
+        val_preds: torch.Tensor,
+        val_labels: torch.Tensor,
+        val_loss_dict: dict,
+        num_targets: int,
+    ):
+        """Log all metrics for each target dimension"""
+        metrics = {}
+
+        # Log loss components
+        for key, value in val_loss_dict.items():
+            metrics[f"val_{key}"] = value.item()
+
+        # Calculate metrics for each target dimension
+        for dim in range(num_targets):
+            mask = ~torch.isnan(val_labels[:, dim])
+            y_true = val_labels[mask, dim].cpu().numpy()
+            y_pred = val_preds[mask, dim].cpu().numpy()
+
+            # Statistical metrics
+            pearson, _ = stats.pearsonr(y_true, y_pred)
+            spearman, _ = stats.spearmanr(y_true, y_pred)
+            wasserstein = stats.wasserstein_distance(y_true, y_pred)
+
+            # MSE and MAE
+            mse = np.mean((y_true - y_pred) ** 2)
+            mae = np.mean(np.abs(y_true - y_pred))
+
+            # Jensen-Shannon divergence
+            bins = min(100, int(np.sqrt(len(y_true))))
+            true_hist, edges = np.histogram(y_true, bins=bins, density=True)
+            pred_hist, _ = np.histogram(y_pred, bins=edges, density=True)
+
+            epsilon = 1e-10
+            true_hist = (true_hist + epsilon) / (
+                true_hist.sum() + epsilon * len(true_hist)
+            )
+            pred_hist = (pred_hist + epsilon) / (
+                pred_hist.sum() + epsilon * len(pred_hist)
+            )
+
+            m = 0.5 * (true_hist + pred_hist)
+            js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
+
+            metrics.update(
+                {
+                    f"target_{dim}/mse": mse,
+                    f"target_{dim}/mae": mae,
+                    f"target_{dim}/pearson": pearson,
+                    f"target_{dim}/spearman": spearman,
+                    f"target_{dim}/wasserstein": wasserstein,
+                    f"target_{dim}/jensen_shannon": js_div,
+                }
+            )
+
+        wandb.log(metrics, step=epoch, commit=True)
+
+
+class Visualization:
+    def __init__(self, base_dir: str, asset_dir: str):
+        """Initialize visualization directories for wandb artifacts and local assets.
+
+        Args:
+            base_dir: Base directory for wandb artifacts
+            asset_dir: Directory for saving asset images locally
+        """
+        if asset_dir is None:
+            raise ValueError("asset_dir cannot be None")
+
+        self.base_dir = base_dir
+        self.asset_dir = asset_dir
+        self.artifact_dir = osp.join(base_dir, "figures")
+
+        # Create directories
+        os.makedirs(self.artifact_dir, exist_ok=True)
+        os.makedirs(self.asset_dir, exist_ok=True)
+
+        log.info(f"Initialized visualization directories:")
+        log.info(f"  Base dir: {self.base_dir}")
+        log.info(f"  Asset dir: {self.asset_dir}")
+        log.info(f"  Artifact dir: {self.artifact_dir}")
+
+        self.artifact = None
+
+    def init_wandb_artifact(self, name: str, artifact_type: str = "figures"):
+        """Initialize a new wandb artifact for storing figures"""
+        self.artifact = wandb.Artifact(name, type=artifact_type)
+
+    def get_base_title(self, loss_name: str, num_epochs: int) -> str:
+        """Generate base title for plots."""
+        return f"Training Results\nLoss: {loss_name}, Epochs: {num_epochs}"
+
+    def save_and_log_figure(
+        self, fig: plt.Figure, name: str, timestamp_str: str
+    ) -> tuple[str, str]:
+        """Save figure locally and log to wandb."""
+        # Save to artifact directory
+        artifact_path = osp.join(self.artifact_dir, f"{name}.png")
+        fig.savefig(artifact_path, bbox_inches="tight", dpi=300)
+
+        # Save to assets directory with timestamp
+        asset_path = osp.join(self.asset_dir, f"{name}_{timestamp_str}.png")
+        fig.savefig(asset_path, bbox_inches="tight", dpi=300)
+
+        # Convert the matplotlib figure to a PNG for wandb
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
+        buf.seek(0)
+
+        # Create wandb Image from the buffer
+        wandb_image = wandb.Image(Image.open(buf))
+
+        # Log to wandb directly
+        wandb.log({name: wandb_image}, commit=True)
+
+        # Add to artifact if initialized
+        if self.artifact is not None:
+            self.artifact.add_file(artifact_path, name=f"figures/{name}.png")
+
+        # Log paths
+        log.info(f"Saved figure '{name}':")
+        log.info(f"  Artifact path: {artifact_path}")
+        log.info(f"  Asset path: {asset_path}")
+
+        # Clean up
+        buf.close()
+        return artifact_path, asset_path
+
+    def plot_correlations(
+        self,
+        predictions: torch.Tensor,
+        true_values: torch.Tensor,
+        dim: int,
+        loss_name: str,
+        num_epochs: int,
+        timestamp_str: str,
+    ):
         predictions_np = predictions.detach().cpu().numpy()
         true_values_np = true_values.detach().cpu().numpy()
 
@@ -107,12 +255,14 @@ class Visualization:
         spearman, _ = stats.spearmanr(x, y)
         mse = np.mean((y - x) ** 2)
 
-        plt.figure(figsize=(7, 6))
+        fig = plt.figure(figsize=(7, 6))
         plt.scatter(x, y, alpha=0.6, color="#2971A0")
         plt.xlabel(f"Predicted Target {dim}")
         plt.ylabel(f"True Target {dim}")
+
+        base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(
-            f"{loss_name} - Target {dim}\nMSE={mse:.3e}, n={len(x)}\n"
+            f"{base_title}\nTarget {dim}\nMSE={mse:.3e}, n={len(x)}\n"
             f"Pearson={pearson:.3f}, Spearman={spearman:.3f}"
         )
 
@@ -120,78 +270,114 @@ class Visualization:
         max_val = max(plt.xlim()[1], plt.ylim()[1])
         plt.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-        save_path = osp.join(
-            self.base_dir, f"correlations_{loss_name}_target_{dim}_{timestamp()}.png"
-        )
-        plt.savefig(save_path, bbox_inches="tight")
+        # Rotate and align the tick labels so they look better
+        plt.xticks(rotation=45, ha="right")
+        plt.yticks(rotation=45, ha="right")
+
+        # Use tight_layout to prevent label cutoff
+        plt.tight_layout()
+
+        self.save_and_log_figure(fig, f"correlations_target_{dim}", timestamp_str)
         plt.close()
 
-    def plot_distribution(self, true_values, predictions, loss_name, dim):
-        """Plot distribution comparison with Wasserstein distance and Jensen-Shannon divergence."""
+    def plot_distribution(
+        self,
+        true_values: torch.Tensor,
+        predictions: torch.Tensor,
+        loss_name: str,
+        dim: int,
+        num_epochs: int,
+        timestamp_str: str,
+    ):
         true_values_np = true_values.detach().cpu().numpy()
         predictions_np = predictions.detach().cpu().numpy()
 
-        # Remove NaN values
         mask = ~np.isnan(true_values_np)
         true_values_clean = true_values_np[mask]
         predictions_clean = predictions_np[mask]
 
-        # Calculate Wasserstein distance
         wasserstein_distance = stats.wasserstein_distance(
             true_values_clean, predictions_clean
         )
 
-        # Calculate Jensen-Shannon divergence using histograms
         bins = min(100, int(np.sqrt(len(true_values_clean))))
         true_hist, bin_edges = np.histogram(true_values_clean, bins=bins, density=True)
         pred_hist, _ = np.histogram(predictions_clean, bins=bin_edges, density=True)
 
-        # Add small epsilon to avoid log(0)
         epsilon = 1e-10
         true_hist = true_hist + epsilon
         pred_hist = pred_hist + epsilon
 
-        # Normalize
         true_hist = true_hist / true_hist.sum()
         pred_hist = pred_hist / pred_hist.sum()
 
-        # Calculate Jensen-Shannon divergence
         m = 0.5 * (true_hist + pred_hist)
         js_divergence = 0.5 * (
             stats.entropy(true_hist, m) + stats.entropy(pred_hist, m)
         )
 
-        # Create the plot
-        plt.figure(figsize=(7, 6))
-        sns.histplot(true_values_clean, color="blue", label="True", kde=True, alpha=0.6)
+        fig = plt.figure(figsize=(10, 6))  # Wider figure to accommodate legend
+
+        # Create histograms with adjusted parameters
         sns.histplot(
-            predictions_clean, color="red", label="Predicted", kde=True, alpha=0.6
+            true_values_clean,
+            color="blue",
+            label="True",
+            kde=True,
+            alpha=0.6,
+            stat="density",
+            common_norm=False,
+        )
+        sns.histplot(
+            predictions_clean,
+            color="red",
+            label="Predicted",
+            kde=True,
+            alpha=0.6,
+            stat="density",
+            common_norm=False,
         )
 
-        # Add metrics as text
+        # Position metrics text and improve readability
         plt.text(
-            0.02,
+            0.98,
             0.98,
             f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_divergence:.4f}",
             transform=plt.gca().transAxes,
             verticalalignment="top",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+            horizontalalignment="right",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.9, edgecolor="gray"),
         )
 
-        plt.legend()
-        plt.title(f"{loss_name} - Distribution Matching Target {dim}")
+        # Improve legend placement and formatting
+        plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
-        save_path = osp.join(
-            self.base_dir, f"distribution_{loss_name}_target_{dim}_{timestamp()}.png"
-        )
-        plt.savefig(save_path, bbox_inches="tight")
+        # Rotate and format x-axis labels
+        plt.xticks(rotation=45, ha="right")
+
+        # Set title and adjust layout
+        base_title = self.get_base_title(loss_name, num_epochs)
+        plt.title(f"{base_title}\nDistribution Matching Target {dim}")
+
+        # Ensure all elements are visible
+        plt.tight_layout()
+
+        self.save_and_log_figure(fig, f"distribution_target_{dim}", timestamp_str)
         plt.close()
 
-    def plot_umap(self, features, labels, loss_name, dim):
+    def plot_umap(
+        self,
+        features: torch.Tensor,
+        labels: torch.Tensor,
+        loss_name: str,
+        dim: int,
+        num_epochs: int,
+        timestamp_str: str,
+    ):
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         embedding = reducer.fit_transform(features.detach().cpu().numpy())
 
-        plt.figure(figsize=(8, 6))
+        fig = plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
             embedding[:, 0],
             embedding[:, 1],
@@ -200,52 +386,102 @@ class Visualization:
             alpha=0.6,
         )
         plt.colorbar(scatter, label="Target Labels")
-        plt.title(f"{loss_name} - UMAP Projection Target {dim}")
+        base_title = self.get_base_title(loss_name, num_epochs)
+        plt.title(f"{base_title}\nUMAP Projection Target {dim}")
 
-        save_path = osp.join(
-            self.base_dir, f"umap_{loss_name}_target_{dim}_{timestamp()}.png"
-        )
-        plt.savefig(save_path, bbox_inches="tight")
+        self.save_and_log_figure(fig, f"umap_target_{dim}", timestamp_str)
         plt.close()
 
-    def plot_loss_curves(self, losses: dict, loss_name: str):
-        """Plot training loss curves."""
-        plt.figure(figsize=(12, 8))
+    def plot_loss_curves(
+        self, losses: dict, loss_name: str, num_epochs: int, timestamp_str: str
+    ):
+        """Plot training and validation losses."""
+        fig = plt.figure(figsize=(12, 12))
 
-        # Plot normalized losses
+        # Get the number of steps per epoch
+        steps_per_epoch = len(losses["train"]["total_loss"]) // num_epochs
+        epoch_steps = np.linspace(1, num_epochs, num_epochs * steps_per_epoch)
+
+        # Plot normalized losses (top subplot)
         plt.subplot(2, 1, 1)
-        for key in ["norm_mse", "norm_div", "norm_con"]:
-            if len(losses[key]) > 0:  # Only plot if we have data
-                plt.plot(losses[key], label=key)
-        plt.title(f"{loss_name} - Normalized Loss Components")
-        plt.xlabel("Training Steps")
+        for phase in ["train", "val"]:
+            for key in ["norm_mse", "norm_div", "norm_con"]:
+                if len(losses[phase][key]) > 0:
+                    plt.plot(
+                        epoch_steps[: len(losses[phase][key])],  # Ensure length matches
+                        losses[phase][key],
+                        label=f"{phase}_{key}",
+                        linestyle="-" if phase == "train" else "--",
+                    )
+        base_title = self.get_base_title(loss_name, num_epochs)
+        plt.title(f"{base_title}\nNormalized Loss Components")
+        plt.xlabel("Epoch")
         plt.ylabel("Loss Proportion")
         plt.legend()
         plt.grid(True)
 
-        # Plot raw losses
+        # Dynamic y-axis limits for raw losses
+        min_val = float("inf")
+        max_val = float("-inf")
+        for phase in ["train", "val"]:
+            for key in ["total_loss", "raw_mse", "raw_div", "raw_con"]:
+                if len(losses[phase][key]) > 0:
+                    min_val = min(min_val, min(losses[phase][key]))
+                    max_val = max(max_val, max(losses[phase][key]))
+
+        y_min = 10 ** (np.floor(np.log10(min_val)) - 1)
+        y_max = 10 ** (np.ceil(np.log10(max_val)) + 1)
+
+        # Plot raw losses with dynamic log scale
         plt.subplot(2, 1, 2)
-        plt.plot(losses["total_loss"], label="total", linewidth=2)
-        for key in ["raw_mse", "raw_div", "raw_con"]:
-            if len(losses[key]) > 0:  # Only plot if we have data
-                plt.plot(losses[key], label=key, alpha=0.7)
-        plt.title(f"{loss_name} - Raw Loss Components")
-        plt.xlabel("Training Steps")
-        plt.ylabel("Loss Value")
+        for phase in ["train", "val"]:
+            plt.plot(
+                epoch_steps[: len(losses[phase]["total_loss"])],
+                losses[phase]["total_loss"],
+                label=f"{phase}_total",
+                linewidth=2,
+                linestyle="-" if phase == "train" else "--",
+            )
+            for key in ["raw_mse", "raw_div", "raw_con"]:
+                if len(losses[phase][key]) > 0:
+                    plt.plot(
+                        epoch_steps[: len(losses[phase][key])],
+                        losses[phase][key],
+                        label=f"{phase}_{key}",
+                        alpha=0.7,
+                        linestyle="-" if phase == "train" else "--",
+                    )
+        plt.title(f"{base_title}\nRaw Loss Components")
+        plt.xlabel("Epoch")
+        plt.ylabel("Log Loss Value")
+        plt.yscale("log")
+        plt.ylim(y_min, y_max)
         plt.legend()
         plt.grid(True)
 
         plt.tight_layout()
-        save_path = osp.join(
-            self.base_dir, f"loss_curves_{loss_name}_{timestamp()}.png"
-        )
-        plt.savefig(save_path, bbox_inches="tight")
+        self.save_and_log_figure(fig, "loss_curves", timestamp_str)
         plt.close()
+
+    def log_artifact(self):
+        """Log the artifact to wandb if it exists"""
+        if self.artifact is not None:
+            wandb.log_artifact(self.artifact)
 
 
 class LossTracker:
     def __init__(self):
-        self.losses = {
+        # Initialize separate dicts for train and val losses
+        self.train_losses = {
+            "total_loss": [],
+            "norm_mse": [],
+            "norm_div": [],
+            "norm_con": [],
+            "raw_mse": [],
+            "raw_div": [],
+            "raw_con": [],
+        }
+        self.val_losses = {
             "total_loss": [],
             "norm_mse": [],
             "norm_div": [],
@@ -255,38 +491,64 @@ class LossTracker:
             "raw_con": [],
         }
 
-    def update(self, loss_dict: dict):
+    def update_train(self, loss_dict: dict):
         for key, value in loss_dict.items():
-            self.losses[key].append(value.item())
+            self.train_losses[key].append(value.item())
+
+    def update_val(self, loss_dict: dict):
+        for key, value in loss_dict.items():
+            self.val_losses[key].append(value.item())
 
     def get_losses(self):
-        return self.losses
+        return {"train": self.train_losses, "val": self.val_losses}
 
 
 def train_and_evaluate(
-    model, loss_fn, train_loader, val_loader, optimizer, num_epochs=20, device="cuda"
+    model, loss_fn, train_loader, val_loader, optimizer, num_epochs=3, device="cuda"
 ):
-    print("Train.")
     loss_tracker = LossTracker()
+    metric_tracker = MetricTracker()
 
     for epoch in range(num_epochs):
+        # Training phase
         model.train()
-        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}"):
+        for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Train)"):
             batch = batch.to(device)
             optimizer.zero_grad()
             pred, u = model(batch)
             loss_dict = loss_fn(pred, batch.y, u)
             loss_dict["total_loss"].backward()
             optimizer.step()
+            loss_tracker.update_train(loss_dict)
 
-            # Track losses
-            loss_tracker.update(loss_dict)
+        # Validation phase and metrics
+        model.eval()
+        val_preds, val_labels = [], []
+        with torch.no_grad():
+            for batch in tqdm(val_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Val)"):
+                batch = batch.to(device)
+                pred, u = model(batch)
+                loss_dict = loss_fn(pred, batch.y, u)
+                loss_tracker.update_val(loss_dict)
+                val_preds.append(pred)
+                val_labels.append(batch.y)
 
+        # Log metrics for this epoch
+        val_preds = torch.cat(val_preds, dim=0)
+        val_labels = torch.cat(val_labels, dim=0)
+        metric_tracker.log_epoch_metrics(
+            epoch=epoch,
+            val_preds=val_preds,
+            val_labels=val_labels,
+            val_loss_dict=loss_dict,
+            num_targets=val_labels.shape[1],
+        )
+
+    # Final evaluation for returning predictions
     model.eval()
     all_preds, all_labels, all_embeddings = [], [], []
-    print("Evaluate.")
     with torch.no_grad():
-        for batch in tqdm(val_loader):
+        for batch in tqdm(val_loader, desc="Final evaluation"):
             batch = batch.to(device)
             pred, u = model(batch)
             all_preds.append(pred.cpu())
@@ -298,80 +560,122 @@ def train_and_evaluate(
         torch.cat(all_labels, dim=0),
         torch.cat(all_embeddings, dim=0),
         loss_tracker.get_losses(),
+        num_epochs,
     )
 
 
-def main(device="cuda" if torch.cuda.is_available() else "cpu"):
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="qm9_loss_study",
+)
+def main(cfg: DictConfig) -> None:
+    print("Starting QM9 Loss Study 🧪")
+    os.environ["WANDB__SERVICE_WAIT"] = "600"
+
+    # Verify environment variables
+    if ASSET_IMAGES_DIR is None:
+        raise ValueError("ASSET_IMAGES_DIR environment variable not set")
+    os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
+
+    # Convert DictConfig to regular dict for wandb
+    wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
+
+    # Setup unique run identification
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
+    hostname = socket.gethostname()
+    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
+
+    # Create hash of config for grouping
+    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+    group = f"{hostname_slurm_job_id}_{hashed_cfg}"
+
+    # Setup wandb experiment directory
+    experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
+    os.makedirs(experiment_dir, exist_ok=True)
+
+    # Initialize wandb
+    wandb.init(
+        mode="online",
+        project=wandb_cfg["wandb"]["project"],
+        config=wandb_cfg,
+        group=group,
+        dir=experiment_dir,
+    )
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
     # Dataset setup
-    # SUBSET
-    dataset = QM9(root="/tmp/QM9")
+    dataset = QM9(root="/tmp/QM9")[:100000]
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(
         dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+    train_loader = DataLoader(
+        train_dataset, batch_size=cfg.training.batch_size, shuffle=True
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=cfg.training.batch_size, shuffle=False
+    )
+
+    # Model setup
+    model = GCN(
+        dataset.num_features, cfg.training.hidden_channels, dataset[0].y.shape[-1]
+    ).to(device)
+
+    loss_fn = CellLoss(
+        lambda_1=cfg.loss_sweep.lambda_1,
+        lambda_2=cfg.loss_sweep.lambda_2,
+        device=device,
+    )
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.training.learning_rate)
+
+    # Train and evaluate
+    val_preds, val_labels, val_z, losses, num_epochs = train_and_evaluate(
+        model,
+        loss_fn,
+        train_loader,
+        val_loader,
+        optimizer,
+        num_epochs=cfg.training.num_epochs,
+        device=device,
+    )
 
     # Initialize visualization
-    viz = Visualization(base_dir=os.path.join(ASSET_IMAGES_DIR, "loss_comparison"))
+    vis = Visualization(experiment_dir, ASSET_IMAGES_DIR)
+    timestamp_str = timestamp()
+    vis.init_wandb_artifact(
+        name=f"figures_{timestamp_str}", artifact_type="training_figures"
+    )
 
-    # Loss configurations
-    loss_configs = {
-        # # "MSE": {"lambda_1": 0, "lambda_2": 0},
-        # "DistLoss_1e-2": {"lambda_1": 1e-2, "lambda_2": 0},
-        # "DistLoss_1e-1": {"lambda_1": 1e-1, "lambda_2": 0},
-        # "DistLoss_1e0": {"lambda_1": 1e0, "lambda_2": 0},
-        # "DistLoss_1e1": {"lambda_1": 1e1, "lambda_2": 0},
-        # "DistLoss_1e2": {"lambda_1": 1e2, "lambda_2": 0},
-        # "SupCR_1e-2": {"lambda_1": 0, "lambda_2": 1e-2},
-        # "SupCR_1e-1": {"lambda_1": 0, "lambda_2": 1e-1},
-        # "SupCR_1e0": {"lambda_1": 0, "lambda_2": 1e0},
-        # "SupCR_1e1": {"lambda_1": 0, "lambda_2": 1e1},
-        # "SupCR_1e2": {"lambda_1": 0, "lambda_2": 1e2},
-        "Dist_1e01_CR_1e0": {"lambda_1": 1e0, "lambda_2": 1e0},
-    }
+    # Generate and save visualizations
+    loss_name = "Combined Loss"
 
-    for loss_name, config in loss_configs.items():
+    # Plot loss curves
+    vis.plot_loss_curves(losses, loss_name, num_epochs, timestamp_str)
 
-        print(f"Training with {loss_name}")
-
-        model = GCN(dataset.num_features, 128, dataset[0].y.shape[-1]).to(device)
-        loss_fn = CellLoss(**config, device=device)  # Pass device here
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
-        val_preds, val_labels, val_z, losses = train_and_evaluate(
-            model, loss_fn, train_loader, val_loader, optimizer, device=device
+    # Plot correlations, distributions and UMAP for each target dimension
+    num_targets = val_labels.shape[1]
+    for dim in range(num_targets):
+        vis.plot_correlations(
+            val_preds, val_labels, dim, loss_name, num_epochs, timestamp_str
+        )
+        vis.plot_distribution(
+            val_labels, val_preds, loss_name, dim, num_epochs, timestamp_str
+        )
+        vis.plot_umap(
+            val_z, val_labels[:, dim], loss_name, dim, num_epochs, timestamp_str
         )
 
-        # Generate and save plots for each target dimension
-        num_targets = val_labels.shape[1]
-        for dim in range(num_targets):
-
-            # Plot loss curves
-            viz.plot_loss_curves(losses, loss_name)
-            # Plot correlations
-            viz.plot_correlations(val_preds[:, dim], val_labels[:, dim], dim, loss_name)
-
-            # Plot distributions
-            viz.plot_distribution(val_labels[:, dim], val_preds[:, dim], loss_name, dim)
-
-            # Plot UMAP projections
-            viz.plot_umap(val_z, val_labels[:, dim], loss_name, dim)
-
-        print(f"Completed visualization for {loss_name}")
+    # Log the artifact
+    vis.log_artifact()
+    wandb.finish()
 
 
 if __name__ == "__main__":
-    # Set up CUDA if available
-    if torch.cuda.is_available():
-        print("CUDA is available. Using GPU.")
-        torch.cuda.empty_cache()
-    else:
-        print("CUDA is not available. Using CPU.")
-
-    # Run main with automatic device selection
     main()

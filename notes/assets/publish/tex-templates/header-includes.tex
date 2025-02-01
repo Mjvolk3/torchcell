@@ -1,6 +1,17 @@
+% Title and section spacing
 \usepackage{titlesec}
 \titlespacing*{\section}{0pt}{1ex}{0.5ex} % # First level header - {left}{before}{after}
 \titlespacing*{\subsection}{0pt}{1.5ex}{1ex} % ## Second level header- {left}{before}{after}
+
+% Title positioning
 \usepackage{titling}
 \setlength{\droptitle}{-4em} % Move title up
 \posttitle{\par\end{center}\vspace{-4.5em}} % Distance between title and text
+
+% Image quality improvements
+\usepackage{graphicx}
+\DeclareGraphicsExtensions{.png,.pdf,.jpg}
+
+% Default image settings
+\setkeys{Gin}{draft=false}
+\setkeys{Gin}{width=\linewidth} % Slightly reduced from full width for better appearance or 0.9\linewidth

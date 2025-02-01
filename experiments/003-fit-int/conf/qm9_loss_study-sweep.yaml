@@ -11,24 +11,24 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [30]
+        values: [5]
+      dataset_size:
+        values: [1000] #[null] for all
       learning_rate:
         values: [1e-3]
       batch_size:
         values: [128]
-        # values: [32, 64, 128]
       hidden_channels:
         values: [256]
-        # values: [64, 128, 256]
+      weight_decay:
+        values: [0.0, 1e-4, 1e-3]
 
-  loss_sweep:
-    parameters:
-      lambda_1: # Weight for distribution loss
-        values: [0.0, 1.0]
-        # values: [0.0, 0.001, 0.01, 0.1, 1.0, 10.0]
-      lambda_2: # Weight for contrastive loss
-        values: [0.0, 1.0]
-        # values: [0.0, 0.001, 0.01, 0.1, 1.0, 10.0]
+loss_sweep:
+  parameters:
+    lambda_1:
+      values: [0, 1e-3, 1e-1, 1e0, 1e1]
+    lambda_2:
+      values: [0, 1e-3, 1e-1, 1e0, 1e1]
 
 command:
   - ${env}

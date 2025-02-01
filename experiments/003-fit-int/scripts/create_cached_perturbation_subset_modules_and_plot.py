@@ -1,3 +1,8 @@
+# experiments/003-fit-int/scripts/create_cached_perturbation_subset_modules_and_plot
+# [[experiments.003-fit-int.scripts.create_cached_perturbation_subset_modules_and_plot]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/create_cached_perturbation_subset_modules_and_plot
+# Test file: experiments/003-fit-int/scripts/test_create_cached_perturbation_subset_modules_and_plot.py
+
 import os
 import os.path as osp
 from dotenv import load_dotenv

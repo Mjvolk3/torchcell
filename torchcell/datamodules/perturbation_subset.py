@@ -22,8 +22,9 @@ import torch
 from torch_geometric.loader import DenseDataLoader
 
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
-
-
+from torchcell.sequence import GeneSet
+from torchcell.datamodules import DataModuleIndex 
+from tqdm import tqdm
 class PerturbationSubsetDataModule(L.LightningDataModule):
     def __init__(
         self,
@@ -35,6 +36,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         prefetch: bool = False,
         seed: int = 42,
         dense: bool = False,
+        gene_subsets: Optional[dict[str, GeneSet]] = None,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -47,12 +49,18 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.seed = seed
         self.dense = dense
 
+        # Use the first key–value pair from the gene_subsets dict (if provided)
+        if gene_subsets is not None and len(gene_subsets) > 0:
+            self.subset_tag, self.gene_subset = list(gene_subsets.items())[0]
+        else:
+            self.subset_tag, self.gene_subset = "all", None
+
         self.cache_dir = self.cell_data_module.cache_dir
         self.subset_dir = osp.join(
-            self.cache_dir, f"perturbation_subset_{format_scientific_notation(size)}"
+            self.cache_dir,
+            f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}"
         )
         os.makedirs(self.subset_dir, exist_ok=True)
-
         random.seed(self.seed)
         self._index = None
         self._index_details = None
@@ -88,79 +96,93 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             self._create_subset()
             self._save_index()
 
+
     def _create_subset(self):
+        tqdm.write("Starting _create_subset()")
+        # Get base indices and details.
         cell_index_details = self.cell_data_module.index_details
         cell_index = self.cell_data_module.index
 
-        # Calculate original split ratios
         total_samples = sum(
             len(getattr(cell_index, split)) for split in ["train", "val", "test"]
         )
+        tqdm.write(f"Total samples in base module: {total_samples}")
         original_ratios = {
             split: len(getattr(cell_index, split)) / total_samples
             for split in ["train", "val", "test"]
         }
+        tqdm.write(f"Original split ratios: {original_ratios}")
 
-        # Calculate target sizes for each split
-        target_sizes = {
-            split: int(self.size * ratio) for split, ratio in original_ratios.items()
-        }
-
-        # Adjust for rounding errors to ensure we get exactly self.size samples
+        target_sizes = {split: int(self.size * ratio) for split, ratio in original_ratios.items()}
         difference = self.size - sum(target_sizes.values())
-        target_sizes["train"] += difference  # Add any difference to the train set
+        target_sizes["train"] += difference
+        tqdm.write(f"Target sizes per split: {target_sizes}")
+
+        # If a gene subset is provided, compute valid indices.
+        valid_indices = None
+        if self.gene_subset is not None:
+            valid_indices = set()
+            dataset = self.cell_data_module.dataset
+            tqdm.write("Computing valid indices based on gene subset")
+            for gene in tqdm(self.gene_subset, desc="Processing gene subset"):
+                if gene in dataset.is_any_perturbed_gene_index:
+                    valid_indices.update(dataset.is_any_perturbed_gene_index[gene])
+            tqdm.write(f"Total valid indices: {len(valid_indices)}")
 
         selected_indices = {split: [] for split in ["train", "val", "test"]}
 
         for split in ["train", "val", "test"]:
-            pert_count_index = getattr(
-                cell_index_details, split
-            ).perturbation_count_index
+            tqdm.write(f"Processing split: {split}")
+            pert_count_index = getattr(cell_index_details, split).perturbation_count_index
             remaining_size = target_sizes[split]
+            tqdm.write(f"Remaining size for {split}: {remaining_size}")
 
-            # First, select all perturbation count 1 data
+            # First, sample from perturbation count 1 indices.
             single_pert_indices = pert_count_index[1].indices
-            selected_indices[split].extend(single_pert_indices[:remaining_size])
-            remaining_size -= len(selected_indices[split])
+            if valid_indices is not None:
+                single_pert_indices = [i for i in single_pert_indices if i in valid_indices]
+            num_single = len(single_pert_indices)
+            tqdm.write(f"Found {num_single} single-perturbation indices for {split}")
+            sampled_single = single_pert_indices[:remaining_size]
+            selected_indices[split].extend(sampled_single)
+            remaining_size -= len(sampled_single)
+            tqdm.write(f"After sampling count=1, remaining size for {split}: {remaining_size}")
 
+            # Then, sample from other perturbation levels if needed.
             if remaining_size > 0:
-                # Equally sample from other perturbation levels
-                other_pert_levels = [
-                    level for level in pert_count_index.keys() if level != 1
-                ]
-                while remaining_size > 0 and other_pert_levels:
-                    samples_per_level = max(1, remaining_size // len(other_pert_levels))
-                    for level in other_pert_levels:
-                        available_indices = set(pert_count_index[level].indices) - set(
-                            selected_indices[split]
-                        )
-                        sampled = random.sample(
-                            list(available_indices),
-                            min(samples_per_level, len(available_indices)),
-                        )
-                        selected_indices[split].extend(sampled)
-                        remaining_size -= len(sampled)
-                        if remaining_size <= 0:
-                            break
-                    other_pert_levels = [
-                        level
-                        for level in other_pert_levels
-                        if set(pert_count_index[level].indices)
-                        - set(selected_indices[split])
+                other_levels = [level for level in pert_count_index.keys() if level != 1]
+                tqdm.write(f"Sampling from other levels for {split}: {other_levels}")
+                while remaining_size > 0 and other_levels:
+                    samples_per_level = max(1, remaining_size // len(other_levels))
+                    tqdm.write(f"Samples per level for {split}: {samples_per_level}")
+                    for level in tqdm(other_levels, desc=f"Sampling levels for {split}"):
+                        available = set(pert_count_index[level].indices) - set(selected_indices[split])
+                        if valid_indices is not None:
+                            available = available.intersection(valid_indices)
+                        if available:
+                            sampled = random.sample(
+                                list(available), min(samples_per_level, len(available))
+                            )
+                            selected_indices[split].extend(sampled)
+                            remaining_size -= len(sampled)
+                            tqdm.write(f"Level {level}: sampled {len(sampled)} indices; remaining {remaining_size}")
+                            if remaining_size <= 0:
+                                break
+                    other_levels = [
+                        level for level in other_levels
+                        if len(set(pert_count_index[level].indices) - set(selected_indices[split])) > 0
                     ]
+                    tqdm.write(f"Updated other levels for {split}: {other_levels}")
 
         self._index = DataModuleIndex(
             train=sorted(selected_indices["train"]),
             val=sorted(selected_indices["val"]),
-            test=sorted(selected_indices["test"]),
+            test=sorted(selected_indices["test"])
         )
-        self._create_index_details()
-
-        # Verify total size
+        self._create_index_details()  # Assuming you have an implementation for this
         total_selected = sum(len(indices) for indices in selected_indices.values())
-        assert (
-            total_selected == self.size
-        ), f"Expected {self.size} samples, but got {total_selected}"
+        tqdm.write(f"Total selected indices: {total_selected}")
+        assert total_selected == self.size, f"Expected {self.size} samples, but got {total_selected}"
 
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
@@ -199,23 +221,20 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 setattr(dataset_split, method, split_data)
         return dataset_split
 
+
     def _save_index(self):
-        with open(
-            osp.join(
-                self.subset_dir,
-                f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
-            ),
-            "w",
-        ) as f:
-            json.dump(self._index.dict(), f, indent=2)
-        with open(
-            osp.join(
-                self.subset_dir,
-                f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
-            ),
-            "w",
-        ) as f:
-            json.dump(self._index_details.dict(), f, indent=2)
+        index_path = osp.join(
+            self.subset_dir,
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json"
+        )
+        details_path = osp.join(
+            self.subset_dir,
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json"
+        )
+        with open(index_path, "w") as f:
+            json.dump(self._index.model_dump(), f, indent=2)
+        with open(details_path, "w") as f:
+            json.dump(self._index_details.model_dump(), f, indent=2)
 
     def _cached_files_exist(self):
         index_file = osp.join(

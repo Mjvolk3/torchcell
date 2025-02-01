@@ -510,7 +510,7 @@ def main(cfg: DictConfig) -> None:
     # Handle incidence graphs
     incidence_graphs = {}
     if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
-        incidence_graphs["metabolism"] = YeastGEM().reaction_map
+        incidence_graphs["metabolism"] = YeastGEM(root=osp.join(DATA_ROOT,"data/torchcell/yeast-GEM")).reaction_map
 
     # Update dataset initialization
     dataset = Neo4jCellDataset(

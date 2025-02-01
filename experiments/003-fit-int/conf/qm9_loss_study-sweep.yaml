@@ -1,4 +1,4 @@
-program: experiments/003-fit-int/scripts/dist_loss-vs-mse-vs-supcr.py
+program: experiments/003-fit-int/scripts/mse_distloss_supcr.py
 project: torchcell_qm9_loss_study
 method: grid
 

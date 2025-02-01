@@ -138,7 +138,8 @@ def main():
         # Plot dataset name index.
         ds_index = "dataset-name-index"
         subset_tag = ",".join(gene_subsets.keys())
-        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}_subset_{subset_tag}"
+        subset_str = f"_subset_{subset_tag}" if subset_tag else ""
+        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}{subset_str}"
         split_index = overlap_dataset_index_split(
             dataset_index=dataset.dataset_name_index,
             data_module_index=perturbation_subset_data_module.index,

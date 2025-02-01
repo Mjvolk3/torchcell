@@ -7,10 +7,12 @@ wandb:
   project: "qm9_loss_study"
 
 training:
-  num_epochs: 3
+  num_epochs: 2
+  dataset_size: 1000
   learning_rate: 0.01
   batch_size: 32
   hidden_channels: 128
+  weight_decay: 0
 
 loss_sweep:
   lambda_1: 0

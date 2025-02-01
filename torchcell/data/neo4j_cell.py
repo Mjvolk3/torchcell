@@ -770,6 +770,7 @@ class Neo4jCellDataset(Dataset):
         self._phenotype_label_index = None
         self._dataset_name_index = None
         self._perturbation_count_index = None
+        self._is_any_perturbed_gene_index = None
 
         # Cached label df for converting regression to classification
         self._label_df = None

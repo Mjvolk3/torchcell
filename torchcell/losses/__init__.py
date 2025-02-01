@@ -1,8 +1,7 @@
 from .dcell import DCellLoss
-from .weighted_mse import WeightedMSELoss
 from .list_mle import ListMLELoss
 
-standard_losses = ["WeightedMSELoss", "ListMLELoss"]
+standard_losses = ["ListMLELoss"]
 
 model_losses = ["DCellLoss"]
 

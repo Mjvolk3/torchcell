@@ -2,7 +2,7 @@
 id: ngv3l4ot5sgfmxnk5mlvqid
 title: '02'
 desc: ''
-updated: 1736718012070
+updated: 1738205262285
 created: 1736127191615
 ---
 
@@ -10,7 +10,7 @@ created: 1736127191615
 
 ## 2025.01.05
 
-- [x] [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.met_hypergraph_conv]]
+- [x] [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 
 ## 2025.01.06
 

@@ -19,7 +19,7 @@ from torch_geometric.nn import (
     global_max_pool,
     HypergraphConv,
 )
-from torchcell.nn.met_hypergraph_conv import StoichiometricHypergraphConv
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from typing import Dict, Optional, List, Literal
 from torch_geometric.typing import EdgeType
 from torchcell.models.act import act_register
@@ -686,7 +686,7 @@ class MetabolismProcessor(nn.Module):
         # Create multiple hypergraph convolution layers
         self.hyper_convs = nn.ModuleList(
             [
-                StoichiometricHypergraphConv(
+                StoichHypergraphConv(
                     in_channels=metabolite_dim if i == 0 else hidden_dim,
                     out_channels=hidden_dim,
                     use_attention=use_attention,

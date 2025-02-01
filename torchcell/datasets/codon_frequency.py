@@ -81,3 +81,10 @@ if __name__ == "__main__":
 
     some_data = dataset[0]  # Should give you the first dataset item
     print(some_data)
+
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+
+    yg = YeastGEM()
+    H = yg.reaction_map
+    print(YeastGEM().gene_set -  SCerevisiaeGenome().gene_set)
+    print()

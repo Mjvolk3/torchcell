@@ -2,7 +2,7 @@
 id: ag34jzhlovb8gvtskj3vtao
 title: Cell_latent_perturbation
 desc: ''
-updated: 1736901336982
+updated: 1737053402488
 created: 1736717938501
 ---
 
@@ -326,3 +326,40 @@ HeteroData(
 ```
 
 At this point I don't know how to take advantage of this because we end up having to duplicate the graph for backpropagation anyways. For now sticking with `Identity()` until it becomes clear how/if we can do this.
+
+## 2025.01.16 - Sample Dataset
+
+```python
+HeteroData(
+  gene={
+    x=[6579, 1536],
+    node_ids=[6579],
+    num_nodes=6579,
+    perturbed_genes=[2],
+    perturbation_indices=[2],
+    fitness=[1],
+    fitness_std=[1],
+    gene_interaction=[1],
+    gene_interaction_p_value=[1],
+  },
+  metabolite={
+    num_nodes=2534,
+    node_ids=[2534],
+  },
+  (gene, physical_interaction, gene)={
+    edge_index=[2, 143824],
+    num_edges=143824,
+  },
+  (gene, regulatory_interaction, gene)={
+    edge_index=[2, 16061],
+    num_edges=16061,
+  },
+  (metabolite, reaction_genes, metabolite)={
+    hyperedge_index=[2, 20960],
+    stoichiometry=[20960],
+    num_edges=4881,
+    reaction_to_genes_indices=dict(len=4881),
+  }
+)
+```
+

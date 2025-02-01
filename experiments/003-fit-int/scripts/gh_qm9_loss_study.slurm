@@ -40,7 +40,7 @@ echo "job is starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
 # This one is offline
-SWEEP_ID=hr6dxl6x
+SWEEP_ID=x4lvx13x
 PROJECT_NAME=torchcell_qm9_loss_study
 
 echo "-----------------"

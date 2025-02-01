@@ -1416,7 +1416,7 @@ def load_sample_data_batch():
         seed=seed,
     )
     perturbation_subset_data_module.setup()
-
+    max_num_nodes = len(dataset.gene_set)
     for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
         break
 

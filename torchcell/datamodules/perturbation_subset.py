@@ -55,13 +55,19 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         if gene_subsets is not None and len(gene_subsets) > 0:
             self.subset_tag, self.gene_subset = list(gene_subsets.items())[0]
         else:
-            self.subset_tag, self.gene_subset = "", None
+            self.subset_tag, self.gene_subset = None, None
 
         self.cache_dir = self.cell_data_module.cache_dir
-        self.subset_dir = osp.join(
-            self.cache_dir,
-            f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}",
-        )
+        if self.subset_tag:
+            self.subset_dir = osp.join(
+                self.cache_dir,
+                f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}",
+            )
+        else:
+            self.subset_dir = osp.join(
+                self.cache_dir,
+                f"perturbation_subset_{format_scientific_notation(size)}",
+            )
         os.makedirs(self.subset_dir, exist_ok=True)
         random.seed(self.seed)
         self._index = None

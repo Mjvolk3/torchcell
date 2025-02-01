@@ -144,51 +144,23 @@ class MetricTracker:
 
 
 class Visualization:
-    def __init__(self, base_dir: str, asset_dir: str):
-        """Initialize visualization directories for wandb artifacts and local assets.
+    def __init__(self, base_dir: str):
+        """Initialize visualization directories for wandb artifacts.
 
         Args:
             base_dir: Base directory for wandb artifacts
-            asset_dir: Directory for saving asset images locally
         """
-        if asset_dir is None:
-            raise ValueError("asset_dir cannot be None")
-
         self.base_dir = base_dir
-        self.asset_dir = asset_dir
         self.artifact_dir = osp.join(base_dir, "figures")
 
         # Create directories
         os.makedirs(self.artifact_dir, exist_ok=True)
-        os.makedirs(self.asset_dir, exist_ok=True)
-
-        log.info(f"Initialized visualization directories:")
-        log.info(f"  Base dir: {self.base_dir}")
-        log.info(f"  Asset dir: {self.asset_dir}")
-        log.info(f"  Artifact dir: {self.artifact_dir}")
-
         self.artifact = None
-
-    def init_wandb_artifact(self, name: str, artifact_type: str = "figures"):
-        """Initialize a new wandb artifact for storing figures"""
-        self.artifact = wandb.Artifact(name, type=artifact_type)
-
-    def get_base_title(self, loss_name: str, num_epochs: int) -> str:
-        """Generate base title for plots."""
-        return f"Training Results\nLoss: {loss_name}, Epochs: {num_epochs}"
 
     def save_and_log_figure(
         self, fig: plt.Figure, name: str, timestamp_str: str
-    ) -> tuple[str, str]:
-        """Save figure locally and log to wandb."""
-        # Save to artifact directory
-        artifact_path = osp.join(self.artifact_dir, f"{name}.png")
-        fig.savefig(artifact_path, bbox_inches="tight", dpi=300)
-
-        # Save to assets directory with timestamp
-        asset_path = osp.join(self.asset_dir, f"{name}_{timestamp_str}.png")
-        fig.savefig(asset_path, bbox_inches="tight", dpi=300)
-
+    ) -> str:
+        """Save figure and log to wandb."""
         # Convert the matplotlib figure to a PNG for wandb
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
@@ -200,18 +172,16 @@ class Visualization:
         # Log to wandb directly
         wandb.log({name: wandb_image}, commit=True)
 
-        # Add to artifact if initialized
-        if self.artifact is not None:
-            self.artifact.add_file(artifact_path, name=f"figures/{name}.png")
-
-        # Log paths
-        log.info(f"Saved figure '{name}':")
-        log.info(f"  Artifact path: {artifact_path}")
-        log.info(f"  Asset path: {asset_path}")
-
         # Clean up
         buf.close()
-        return artifact_path, asset_path
+
+    def init_wandb_artifact(self, name: str, artifact_type: str = "figures"):
+        """Initialize a new wandb artifact for storing figures"""
+        self.artifact = wandb.Artifact(name, type=artifact_type)
+
+    def get_base_title(self, loss_name: str, num_epochs: int) -> str:
+        """Generate base title for plots."""
+        return f"Training Results\nLoss: {loss_name}\n Epochs: {num_epochs}"
 
     def plot_correlations(
         self,
@@ -234,7 +204,7 @@ class Visualization:
         mse = np.mean((y - x) ** 2)
 
         fig = plt.figure(figsize=(7, 6))
-        plt.scatter(x, y, alpha=0.6, color="#2971A0")
+        plt.scatter(x, y, alpha=0.6, color="#2971A0", s=20)
         plt.xlabel(f"Predicted Target {dim}")
         plt.ylabel(f"True Target {dim}")
 
@@ -248,11 +218,8 @@ class Visualization:
         max_val = max(plt.xlim()[1], plt.ylim()[1])
         plt.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-        # Rotate and align the tick labels so they look better
         plt.xticks(rotation=45, ha="right")
         plt.yticks(rotation=45, ha="right")
-
-        # Use tight_layout to prevent label cutoff
         plt.tight_layout()
 
         self.save_and_log_figure(fig, f"correlations_target_{dim}", timestamp_str)
@@ -386,17 +353,21 @@ class Visualization:
             for key in ["norm_mse", "norm_div", "norm_con"]:
                 if len(losses[phase][key]) > 0:
                     plt.plot(
-                        epoch_steps[: len(losses[phase][key])],  # Ensure length matches
+                        epoch_steps[: len(losses[phase][key])],
                         losses[phase][key],
                         label=f"{phase}_{key}",
                         linestyle="-" if phase == "train" else "--",
+                        linewidth=1.0,
+                        alpha=0.5,
                     )
         base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(f"{base_title}\nNormalized Loss Components")
         plt.xlabel("Epoch")
         plt.ylabel("Loss Proportion")
         plt.legend()
-        plt.grid(True)
+        plt.grid(True, alpha=0.3)
+        # Set integer ticks
+        plt.gca().xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         # Dynamic y-axis limits for raw losses
         min_val = float("inf")
@@ -417,7 +388,8 @@ class Visualization:
                 epoch_steps[: len(losses[phase]["total_loss"])],
                 losses[phase]["total_loss"],
                 label=f"{phase}_total",
-                linewidth=2,
+                linewidth=1.0,
+                alpha=0.5,
                 linestyle="-" if phase == "train" else "--",
             )
             for key in ["raw_mse", "raw_div", "raw_con"]:
@@ -426,7 +398,8 @@ class Visualization:
                         epoch_steps[: len(losses[phase][key])],
                         losses[phase][key],
                         label=f"{phase}_{key}",
-                        alpha=0.7,
+                        alpha=0.5,
+                        linewidth=1.0,
                         linestyle="-" if phase == "train" else "--",
                     )
         plt.title(f"{base_title}\nRaw Loss Components")
@@ -435,7 +408,9 @@ class Visualization:
         plt.yscale("log")
         plt.ylim(y_min, y_max)
         plt.legend()
-        plt.grid(True)
+        plt.grid(True, alpha=0.3)
+        # Set integer ticks
+        plt.gca().xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         plt.tight_layout()
         self.save_and_log_figure(fig, "loss_curves", timestamp_str)
@@ -537,7 +512,7 @@ def train_and_evaluate(
             num_targets=val_labels.shape[1],
             phase="val",
         )
-        
+
         # Commit metrics at end of epoch
         wandb.log({}, commit=True)
 
@@ -620,7 +595,10 @@ def main(cfg: DictConfig) -> None:
     print(f"Using device: {device}")
 
     # Dataset setup
-    dataset = QM9(root="/tmp/QM9")
+    if wandb.config.training["dataset_size"] is not None:
+        dataset = QM9(root="/tmp/QM9")[: wandb.config.training["dataset_size"]]
+    else:
+        dataset = QM9(root="/tmp/QM9")
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(
@@ -663,14 +641,14 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Initialize visualization
-    vis = Visualization(experiment_dir, ASSET_IMAGES_DIR)
+    vis = Visualization(experiment_dir)
     timestamp_str = timestamp()
     vis.init_wandb_artifact(
         name=f"figures_{timestamp_str}", artifact_type="training_figures"
     )
 
     # Generate and save visualizations
-    loss_name = "Combined Loss"
+    loss_name = f"MSE+(λ1={wandb.config['loss_sweep']['lambda_1']:.0e})DistLoss+(λ2={wandb.config['loss_sweep']['lambda_2']:.0e})SupCR+(wd={wandb.config['training']['weight_decay']:.0e})L2"
 
     # Plot loss curves
     vis.plot_loss_curves(losses, loss_name, num_epochs, timestamp_str)

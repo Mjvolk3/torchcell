@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738232838618
+updated: 1738371955003
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -23,15 +23,31 @@ created: 1737999272613
 - [x] StoichiometricGraphConv Gating Ideas - [[175438|dendron://torchcell/scratch.2025.01.29.175438]] → [[Stoichiometric_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]]
 - [x] Implement `SupCR` loss. → [[SupCR|dendron://torchcell/torchcell.losses.SupCR]]
 
-- [ ] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working. Let's also add in `SupCR`.
+## 2025.01.30
 
-- [ ] My intuition is that  
+- [x] I am uncertain of dist loss we should cook up simple unrelated benchmark to see if it is working. Let's also add in `SupCR`. → build script to test this.
+- [x] Create is_any index for gene contained in sets of genes in an instance.
 
-- [ ] Test edge attention on hypergraph conv
+## 2025.01.31
+
+- [x] Define sweep that can finish in < 40 hours.
+- [ ] Make sure `Qm9` we have all correct plotting.
+- [ ] Run loss `Qm9` lost test on.
+
+- [ ] Create metabolism subset dataset. Add to index?
+- [ ] Query from subset of genes. Enrich of metabolism.
+- [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
+- [ ] Make sure y distributions look like they y from other datasets.
+- [ ] Plots of dataset breakdown.
+
+500,000 (5e5) - cannot do with current db we have 429042
+500,000 (5e5)
+
 - [ ]
 
 ***
 
+- [ ] Test edge attention on hypergraph conv
 - [ ] Update `cell_latent_perturbation`
 - [ ] `cell_latent_perturbation` remove stoichiometry for reaction aggregation
 - [ ] `cell_latent_perturbation` unify embeddings across graphs

@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738383664702
+updated: 1738401970658
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -32,20 +32,20 @@ created: 1737999272613
 
 - [x] Define sweep that can finish in < 40 hours.
 - [x] Make sure `Qm9` we have all correct plotting.
-- [x] Run `Qm9` small test. → running GH
+- [x] Run `Qm9` small test. → running GH → works move to Delta.
 
-- [ ] Create metabolism subset dataset. Add to index? → I thought maybe we could push it into query but we can't because the `gene_set` needs to be a superset of all possible genes queried. [IMG] . We need to push it into CellDatasetModule, then run Perturbation subset on that. →
+- [x] Create metabolism subset dataset. Add to index? → I thought maybe we could push it into query but we can't because the `gene_set` needs to be a superset of all possible genes queried . We need to push it into CellDatasetModule, then run Perturbation subset on that. → Turns out just needs to be in `PerturbationSubset`. → haven't run yet. takes time.
+- [x] Plots of dataset breakdown. → [[experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]]
 
-
-- [ ] Query from subset of genes. Enrich of metabolism.
-- [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
-- [ ] Make sure y distributions look like they y from other datasets.
-- [ ] Plots of dataset breakdown.
+- [ ] Run [[Metabolism_enriched_perturbation_subset|dendron://torchcell/experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]] overnight.
 
 500,000 (5e5) - cannot do with current db we have 429042
 500,000 (5e5)
 
-- [ ]
+- [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
+- [ ] Make sure y distributions look like they y from other datasets.
+- [ ] Histogram of genes usage in subset... we have these plots somewhere.
+
 
 ***
 

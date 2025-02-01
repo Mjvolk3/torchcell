@@ -83,7 +83,8 @@ def main():
     cell_data_module.setup()
 
     # Process different subset sizes while constraining to metabolism genes.
-    sizes = [5e1, 1e2, 5e2, 1e3, 5e3, 7e3, 1e4, 5e4, 1e5]
+    # sizes = [5e1, 1e2, 5e2, 1e3, 5e3, 7e3, 1e4, 5e4, 1e5]
+    sizes = [2.5e4, 5e4]
     for size in sizes:
         print(f"\nProcessing size {format_scientific_notation(size)}")
 

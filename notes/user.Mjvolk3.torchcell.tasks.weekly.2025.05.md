@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738371955003
+updated: 1738383664702
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -31,10 +31,12 @@ created: 1737999272613
 ## 2025.01.31
 
 - [x] Define sweep that can finish in < 40 hours.
-- [ ] Make sure `Qm9` we have all correct plotting.
-- [ ] Run loss `Qm9` lost test on.
+- [x] Make sure `Qm9` we have all correct plotting.
+- [x] Run `Qm9` small test. → running GH
 
-- [ ] Create metabolism subset dataset. Add to index?
+- [ ] Create metabolism subset dataset. Add to index? → I thought maybe we could push it into query but we can't because the `gene_set` needs to be a superset of all possible genes queried. [IMG] . We need to push it into CellDatasetModule, then run Perturbation subset on that. →
+
+
 - [ ] Query from subset of genes. Enrich of metabolism.
 - [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
 - [ ] Make sure y distributions look like they y from other datasets.

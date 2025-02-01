@@ -1,3 +1,577 @@
+---
+id: m0q8t6lcir70fj78jhfmrsu
+title: '012511'
+desc: ''
+updated: 1738395886374
+created: 1738394714327
+---
+You are trying to to help me implement an updated version of `PerturbationSubsetDataModule`. I want to add an argument `gene_subset`, this will be a gene subset so import `from torchcell.sequence import GeneSet`.
+
+```python
+# torchcell/datamodules/perturbation_subset
+# [[torchcell.datamodules.perturbation_subset]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/perturbation_subset
+# Test file: tests/torchcell/datamodules/test_perturbation_subset.py
+
+import os
+import os.path as osp
+import json
+import random
+from typing import Optional
+import lightning as L
+from torch.utils.data import Subset
+from torchcell.utils import format_scientific_notation
+from torchcell.datamodules import (
+    IndexSplit,
+    DatasetSplit,
+    DataModuleIndex,
+    DataModuleIndexDetails,
+)
+from torch_geometric.loader import DataLoader, PrefetchLoader
+import torch
+from torch_geometric.loader import DenseDataLoader
+
+from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
+
+
+class PerturbationSubsetDataModule(L.LightningDataModule):
+    def __init__(
+        self,
+        cell_data_module,
+        size: int,
+        batch_size: int = 32,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        prefetch: bool = False,
+        seed: int = 42,
+        dense: bool = False,
+    ):
+        super().__init__()
+        self.cell_data_module = cell_data_module
+        self.dataset = cell_data_module.dataset
+        self.size = size
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.prefetch = prefetch
+        self.seed = seed
+        self.dense = dense
+
+        self.cache_dir = self.cell_data_module.cache_dir
+        self.subset_dir = osp.join(
+            self.cache_dir, f"perturbation_subset_{format_scientific_notation(size)}"
+        )
+        os.makedirs(self.subset_dir, exist_ok=True)
+
+        random.seed(self.seed)
+        self._index = None
+        self._index_details = None
+
+    @property
+    def index(self) -> DataModuleIndex:
+        if self._index is None or not self._cached_files_exist():
+            self._load_or_compute_index()
+        return self._index
+
+    @property
+    def index_details(self) -> DataModuleIndexDetails:
+        if self._index_details is None or not self._cached_files_exist():
+            self._load_or_compute_index()
+        return self._index_details
+
+    def _load_or_compute_index(self):
+        index_file = osp.join(
+            self.subset_dir,
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+        details_file = osp.join(
+            self.subset_dir,
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+
+        if osp.exists(index_file) and osp.exists(details_file):
+            with open(index_file, "r") as f:
+                self._index = DataModuleIndex(**json.load(f))
+            with open(details_file, "r") as f:
+                self._index_details = DataModuleIndexDetails(**json.load(f))
+        else:
+            self._create_subset()
+            self._save_index()
+
+    def _create_subset(self):
+        cell_index_details = self.cell_data_module.index_details
+        cell_index = self.cell_data_module.index
+
+        # Calculate original split ratios
+        total_samples = sum(
+            len(getattr(cell_index, split)) for split in ["train", "val", "test"]
+        )
+        original_ratios = {
+            split: len(getattr(cell_index, split)) / total_samples
+            for split in ["train", "val", "test"]
+        }
+
+        # Calculate target sizes for each split
+        target_sizes = {
+            split: int(self.size * ratio) for split, ratio in original_ratios.items()
+        }
+
+        # Adjust for rounding errors to ensure we get exactly self.size samples
+        difference = self.size - sum(target_sizes.values())
+        target_sizes["train"] += difference  # Add any difference to the train set
+
+        selected_indices = {split: [] for split in ["train", "val", "test"]}
+
+        for split in ["train", "val", "test"]:
+            pert_count_index = getattr(
+                cell_index_details, split
+            ).perturbation_count_index
+            remaining_size = target_sizes[split]
+
+            # First, select all perturbation count 1 data
+            single_pert_indices = pert_count_index[1].indices
+            selected_indices[split].extend(single_pert_indices[:remaining_size])
+            remaining_size -= len(selected_indices[split])
+
+            if remaining_size > 0:
+                # Equally sample from other perturbation levels
+                other_pert_levels = [
+                    level for level in pert_count_index.keys() if level != 1
+                ]
+                while remaining_size > 0 and other_pert_levels:
+                    samples_per_level = max(1, remaining_size // len(other_pert_levels))
+                    for level in other_pert_levels:
+                        available_indices = set(pert_count_index[level].indices) - set(
+                            selected_indices[split]
+                        )
+                        sampled = random.sample(
+                            list(available_indices),
+                            min(samples_per_level, len(available_indices)),
+                        )
+                        selected_indices[split].extend(sampled)
+                        remaining_size -= len(sampled)
+                        if remaining_size <= 0:
+                            break
+                    other_pert_levels = [
+                        level
+                        for level in other_pert_levels
+                        if set(pert_count_index[level].indices)
+                        - set(selected_indices[split])
+                    ]
+
+        self._index = DataModuleIndex(
+            train=sorted(selected_indices["train"]),
+            val=sorted(selected_indices["val"]),
+            test=sorted(selected_indices["test"]),
+        )
+        self._create_index_details()
+
+        # Verify total size
+        total_selected = sum(len(indices) for indices in selected_indices.values())
+        assert (
+            total_selected == self.size
+        ), f"Expected {self.size} samples, but got {total_selected}"
+
+    def _create_index_details(self):
+        cell_index_details = self.cell_data_module.index_details
+        methods = cell_index_details.methods
+
+        self._index_details = DataModuleIndexDetails(
+            methods=methods,
+            train=self._create_dataset_split(
+                self._index.train, cell_index_details.train, methods
+            ),
+            val=self._create_dataset_split(
+                self._index.val, cell_index_details.val, methods
+            ),
+            test=self._create_dataset_split(
+                self._index.test, cell_index_details.test, methods
+            ),
+        )
+
+    def _create_dataset_split(
+        self, indices: list[int], cell_split: DatasetSplit, methods: list[str]
+    ) -> DatasetSplit:
+        dataset_split = DatasetSplit()
+        for method in methods:
+            split_data = {}
+            method_data = getattr(cell_split, method)
+            if method_data is not None:
+                for key, index_split in method_data.items():
+                    if method == "perturbation_count_index":
+                        key = int(
+                            key
+                        )  # Convert key to int for perturbation_count_index
+                    intersect = sorted(list(set(indices) & set(index_split.indices)))
+                    split_data[key] = IndexSplit(
+                        indices=intersect, count=len(intersect)
+                    )
+                setattr(dataset_split, method, split_data)
+        return dataset_split
+
+    def _save_index(self):
+        with open(
+            osp.join(
+                self.subset_dir,
+                f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+            ),
+            "w",
+        ) as f:
+            json.dump(self._index.dict(), f, indent=2)
+        with open(
+            osp.join(
+                self.subset_dir,
+                f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+            ),
+            "w",
+        ) as f:
+            json.dump(self._index_details.dict(), f, indent=2)
+
+    def _cached_files_exist(self):
+        index_file = osp.join(
+            self.subset_dir,
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+        details_file = osp.join(
+            self.subset_dir,
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
+        )
+        return osp.exists(index_file) and osp.exists(details_file)
+
+    def setup(self, stage: Optional[str] = None):
+        print("Setting up PerturbationSubsetDataModule...")
+
+        if (
+            self._index is None
+            or self._index_details is None
+            or not self._cached_files_exist()
+        ):
+            self._load_or_compute_index()
+
+        print("Creating subset datasets...")
+        self.train_dataset = Subset(self.dataset, self.index.train)
+        self.val_dataset = Subset(self.dataset, self.index.val)
+        self.test_dataset = Subset(self.dataset, self.index.test)
+        print("Setup complete.")
+
+    def _get_dataloader(self, dataset, shuffle=False):
+        if self.dense:
+            # loader = DenseDataLoader(
+            #     dataset,
+            #     batch_size=self.batch_size,
+            #     shuffle=shuffle,
+            #     num_workers=self.num_workers,
+            #     pin_memory=self.pin_memory,
+            #     # follow_batch=["x", "x_pert"],
+            # )
+            loader = DensePaddingDataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=shuffle,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                follow_batch=["x", "x_pert"],
+            )
+        else:
+            loader = DataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                shuffle=shuffle,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                follow_batch=["x", "x_pert"],
+            )
+        if self.prefetch:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            return PrefetchLoader(loader, device=device)
+        return loader
+
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset, shuffle=True)
+
+    def val_dataloader(self):
+        return self._get_dataloader(self.val_dataset)
+
+    def test_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def all_dataloader(self):
+        return self._get_dataloader(self.dataset)
+
+    def test_cell_module_dataloader(self):
+        return self._get_dataloader(
+            Subset(self.dataset, self.cell_data_module.index.test)
+        )
+```
+
+This script is what we ultimately want to create but for the metabolism gene subset. Notice how we have multiple sizes. We should be able to loop over these. Also we don't need to plot for dataset only over new metabolism limited perturbation subsets. We need a script to test the new gene subsetting and to make subsets and plot relevant results.
+
+```python
+# experiments/003-fit-int/scripts/create_cached_perturbation_subset_modules_and_plot
+# [[experiments.003-fit-int.scripts.create_cached_perturbation_subset_modules_and_plot]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/create_cached_perturbation_subset_modules_and_plot
+# Test file: experiments/003-fit-int/scripts/test_create_cached_perturbation_subset_modules_and_plot.py
+
+import os
+import os.path as osp
+from dotenv import load_dotenv
+from torchcell.graph import SCerevisiaeGraph
+from torchcell.datamodules import CellDataModule
+from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+from torchcell.data import MeanExperimentDeduplicator
+from torchcell.data import GenotypeAggregator
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+import json
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.data import Neo4jCellDataset
+from torchcell.data.neo4j_cell import SubgraphRepresentation
+from tqdm import tqdm
+from torchcell.viz.datamodules import plot_dataset_index_split
+from torchcell.datamodules.cell import overlap_dataset_index_split
+from torchcell.utils import format_scientific_notation
+
+
+def main():
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    ### Add Embeddings
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    with open("gene_set.json", "w") as f:
+        json.dump(list(genome.gene_set), f)
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        node_embeddings={
+            "fudt_3prime": fudt_3prime_dataset,
+            "fudt_5prime": fudt_5prime_dataset,
+        },
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=SubgraphRepresentation(),
+    )
+    print(len(dataset))
+    # Data module testing
+
+    print(dataset[2])
+    dataset.close_lmdb()
+
+    seed = 42
+    # Base Module
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=2,
+        random_seed=seed,
+        num_workers=4,
+        pin_memory=False,
+    )
+    cell_data_module.setup()
+
+    for batch in tqdm(cell_data_module.train_dataloader()):
+        break
+
+    exp_name = "experiments-003"
+    query_name = "query-001-small-build"
+    dm_name = "cell-data-module"
+
+    ## Cell Data Module - Dataset Index Plotting - Start
+
+    ## Dataset Index Plotting - Start
+    size_str = str(len(dataset))
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=cell_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=cell_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=cell_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    # ## Cell Data Module - Dataset Index Plotting - End
+    
+    ## Subset
+    dm_name = "perturbation-subset-data-module"
+    # 5e1 Module
+    size = 5e1
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+    perturbation_subset_data_module.setup()
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        break
+
+    ## Dataset Index Plotting - Start
+    size_str = format_scientific_notation(size)
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    ## Dataset Index Plotting - End
+    
+    ## Subset
+    dm_name = "perturbation-subset-data-module"
+    # 1e2 Module
+    size = 1e2
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=2,
+        num_workers=4,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+    )
+    perturbation_subset_data_module.setup()
+    for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+        break
+
+    ## Dataset Index Plotting - Start
+    size_str = format_scientific_notation(size)
+    # dataset name index
+    ds_index = "dataset-name-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.dataset_name_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # phenotype label index
+    ds_index = "phenotype-label-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.phenotype_label_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+    )
+    # perturbation count index
+    ds_index = "perturbation-count-index"
+    title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
+    split_index = overlap_dataset_index_split(
+        dataset_index=dataset.perturbation_count_index,
+        data_module_index=perturbation_subset_data_module.index,
+    )
+    plot_dataset_index_split(
+        split_index=split_index,
+        title=title,
+        save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
+        threshold=0.0,
+    )
+    ## Dataset Index Plotting - End
+    
+    ## Subset
+    dm_name = "perturbation-subset-data-module"
+    # 5e2 Module
+    size = 5e2
+```
+
+The way we want to subset is by using the `is_any_perturbed_gene_index`. This is an index where `genes:str` are keys and values are list[int] which are the indices.
+
+```python
 # torchcell/data/neo4j_cell
 # [[torchcell.data.neo4j_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_cell
@@ -1352,16 +1926,6 @@ class Neo4jCellDataset(Dataset):
 
         return is_any_perturbed_gene_index
 
-    # HACK
-    def __getstate__(self) -> dict:
-        state = self.__dict__.copy()
-        # Remove the unpicklable lmdb environment.
-        state["env"] = None
-        return state
-
-    def __setstate__(self, state: dict) -> None:
-        self.__dict__.update(state)
-
     @property
     def is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
         if osp.exists(osp.join(self.processed_dir, "is_any_perturbed_gene_index.json")):
@@ -2035,3 +2599,559 @@ if __name__ == "__main__":
     # main_transform_dense()
     # main()
     main_incidence()
+
+```
+
+These are some of the key data structures.
+
+```python
+# torchcell/datamodules/cell.py
+# [[torchcell.datamodules.cell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
+# Test file: torchcell/datamodules/test_cell.py
+import json
+import os
+from typing import List, Dict, Union, Optional, Set
+import pandas as pd
+import lightning as L
+import torch
+import random
+from collections import defaultdict
+import logging
+import os.path as osp
+from torch_geometric.loader import DataLoader, PrefetchLoader
+from torchcell.datamodels import ModelStrict
+from pydantic import BaseModel, model_validator, Field
+
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+
+class IndexSplit(ModelStrict):
+    indices: List[int] = Field(..., description="Must be sorted in ascending order")
+    count: int
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_sorted_indices(cls, values):
+        indices = values.get("indices")
+        if indices and not all(
+            indices[i] <= indices[i + 1] for i in range(len(indices) - 1)
+        ):
+            raise ValueError("Indices must be sorted in ascending order")
+        return values
+
+    def __repr__(self):
+        max_indices = 3
+        indices_str = (
+            f"[{', '.join(map(str, self.indices[:max_indices]))}"
+            f"{', ...' if len(self.indices) > max_indices else ''}]"
+        )
+        return f"IndexSplit(indices={indices_str}, count={self.count})"
+
+
+class DatasetSplit(BaseModel):
+    phenotype_label_index: Optional[Dict[str, IndexSplit]] = None
+    perturbation_count_index: Optional[Dict[int, IndexSplit]] = None
+    dataset_name_index: Optional[Dict[str, IndexSplit]] = None
+
+
+class DataModuleIndexDetails(ModelStrict):
+    methods: List[str]
+    train: DatasetSplit
+    val: DatasetSplit
+    test: DatasetSplit
+
+    def df_summary(self):
+        data = defaultdict(lambda: defaultdict(int))
+        totals = defaultdict(int)
+
+        for split in ["train", "val", "test"]:
+            split_data = getattr(self, split)
+            for index_type, index_data in split_data.dict().items():
+                if index_data is not None:
+                    for key, index_split in index_data.items():
+                        # Handle both IndexSplit objects and dictionaries
+                        if isinstance(index_split, dict):
+                            count = index_split.get("count")
+                        else:
+                            count = index_split.count
+
+                        data[(index_type, key)][split] = count
+                        totals[(index_type, key)] += count
+
+        summary_data = []
+        for (index_type, key), splits in data.items():
+            total = totals[(index_type, key)]
+            for split in ["train", "val", "test"]:
+                count = splits[split]
+                ratio = count / total if total > 0 else 0
+                summary_data.append(
+                    {
+                        "split": split,
+                        "index_type": index_type,
+                        "key": key,
+                        "count": count,
+                        "ratio": ratio,
+                        "total": total,
+                    }
+                )
+
+        df = pd.DataFrame(summary_data)
+
+        # Create a categorical column for 'split' with the desired order
+        df["split"] = pd.Categorical(
+            df["split"], categories=["train", "val", "test"], ordered=True
+        )
+
+        # Sort the DataFrame
+        df = df.sort_values(["split", "index_type", "key"])
+
+        df["ratio"] = df["ratio"].round(3)
+        df = df.reset_index(drop=True)
+
+        return df
+
+    def __str__(self):
+        df = self.df_summary()
+        if df.empty:
+            return "DataModuleIndexDetails(empty)"
+        return df.to_string()
+
+
+class DataModuleIndex(ModelStrict):
+    train: List[int] = Field(..., description="Must be sorted in ascending order")
+    val: List[int] = Field(..., description="Must be sorted in ascending order")
+    test: List[int] = Field(..., description="Must be sorted in ascending order")
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_sorted_and_unique_indices(cls, values):
+        for split in ["train", "val", "test"]:
+            indices = values.get(split, [])
+            if not all(indices[i] <= indices[i + 1] for i in range(len(indices) - 1)):
+                raise ValueError(f"{split} indices must be sorted in ascending order")
+
+        all_indices = (
+            values.get("train", []) + values.get("val", []) + values.get("test", [])
+        )
+        if len(set(all_indices)) != len(all_indices):
+            raise ValueError("Indices in train, val, and test must not overlap")
+
+        return values
+
+    def __repr__(self):
+        max_indices = 3
+        train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
+        val_str_index = f"[{', '.join(map(str, self.val[:max_indices]))}{', ...' if len(self.val) > max_indices else ''}]"
+        test_str_index = f"[{', '.join(map(str, self.test[:max_indices]))}{', ...' if len(self.test) > max_indices else ''}]"
+        return f"DataModuleIndex(train={train_str_index}, val={val_str_index}, test={test_str_index})"
+
+    def __str__(self):
+        max_indices = 3
+        train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
+        val_str_index = f"[{', '.join(map(str, self.val[:max_indices]))}{', ...' if len(self.val) > max_indices else ''}]"
+        test_str_index = f"[{', '.join(map(str, self.test[:max_indices]))}{', ...' if len(self.test) > max_indices else ''}]"
+        train_str = train_str_index + f" ({len(self.train)} indices)"
+        val_str = val_str_index + f" ({len(self.val)} indices)"
+        test_str = test_str_index + f" ({len(self.test)} indices)"
+        return f"DataModuleIndex(train={train_str}, val={val_str}, test={test_str})"
+
+
+class DatasetIndexSplit(ModelStrict):
+    train: dict[Union[str, int], list[int]] = None
+    val: dict[Union[str, int], list[int]] = None
+    test: dict[Union[str, int], list[int]] = None
+
+
+def overlap_dataset_index_split(
+    dataset_index: dict[str | int, list[int]], data_module_index: DataModuleIndex
+) -> DatasetIndexSplit:
+    train_set = set(data_module_index.train)
+    val_set = set(data_module_index.val)
+    test_set = set(data_module_index.test)
+
+    train_dict = {}
+    val_dict = {}
+    test_dict = {}
+
+    for dataset_name, indices in dataset_index.items():
+        train_indices = sorted(list(set(indices) & train_set))
+        val_indices = sorted(list(set(indices) & val_set))
+        test_indices = sorted(list(set(indices) & test_set))
+
+        if train_indices:
+            train_dict[dataset_name] = train_indices
+        if val_indices:
+            val_dict[dataset_name] = val_indices
+        if test_indices:
+            test_dict[dataset_name] = test_indices
+
+    return DatasetIndexSplit(
+        train=train_dict if train_dict else None,
+        val=val_dict if val_dict else None,
+        test=test_dict if test_dict else None,
+    )
+
+
+class CellDataModule(L.LightningDataModule):
+    def __init__(
+        self,
+        dataset,
+        cache_dir: str = "cache",
+        batch_size: int = 32,
+        random_seed: int = 42,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        prefetch: bool = False,
+        split_indices: Union[str, List[str], None] = None,
+    ):
+        super().__init__()
+        self.dataset = dataset
+        self.cache_dir = cache_dir
+        self.batch_size = batch_size
+        self.random_seed = random_seed
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.prefetch = prefetch
+        self.train_ratio = 0.8
+        self.val_ratio = 0.1
+        self.split_indices = (
+            split_indices
+            if isinstance(split_indices, list)
+            else [split_indices] if split_indices else []
+        )
+        self._index = None
+        self._index_details = None
+
+        # Compute index during initialization
+        self.index
+        self.index_details
+
+    @property
+    def index(self) -> DataModuleIndex:
+        if self._index is None or not self._cached_files_exist():
+            self._load_or_compute_index()
+        return self._index
+
+    @property
+    def index_details(self) -> DataModuleIndexDetails:
+        if self._index_details is None or not self._cached_files_exist():
+            self._load_or_compute_index()
+        return self._index_details
+
+    def _load_or_compute_index(self):
+        os.makedirs(self.cache_dir, exist_ok=True)
+        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        details_file = osp.join(
+            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+        )
+        if osp.exists(index_file) and osp.exists(details_file):
+            try:
+                with open(index_file, "r") as f:
+                    log.info(f"Loading index from {index_file}")
+                    index_dict = json.load(f)
+                    self._index = DataModuleIndex(**index_dict)
+                with open(details_file, "r") as f:
+                    log.info(f"Loading index details from {details_file}")
+                    details_dict = json.load(f)
+                    self._index_details = DataModuleIndexDetails(**details_dict)
+            except Exception as e:
+                print(f"Error loading index or details: {e}. Regenerating...")
+                self._compute_and_save_index(index_file, details_file)
+        else:
+            self._compute_and_save_index(index_file, details_file)
+
+    def _compute_and_save_index(self, index_file, details_file):
+        log.info("Generating detailed index...")
+        random.seed(self.random_seed)
+
+        all_indices = set(range(len(self.dataset)))
+        split_data = {
+            "train": defaultdict(set),
+            "val": defaultdict(set),
+            "test": defaultdict(set),
+        }
+
+        # First, split each index independently
+        for index_name in self.split_indices:
+            original_index = getattr(self.dataset, index_name)
+            for key, indices in original_index.items():
+                indices = list(indices)
+                random.shuffle(indices)
+                num_samples = len(indices)
+                num_train = int(self.train_ratio * num_samples)
+                num_val = int(self.val_ratio * num_samples)
+
+                split_data["train"][index_name].update(indices[:num_train])
+                split_data["val"][index_name].update(
+                    indices[num_train : num_train + num_val]
+                )
+                split_data["test"][index_name].update(indices[num_train + num_val :])
+
+        # Then, create initial final splits
+        final_splits = {
+            "train": all_indices.intersection(
+                *[split_data["train"][index] for index in self.split_indices]
+            ),
+            "val": all_indices.intersection(
+                *[split_data["val"][index] for index in self.split_indices]
+            ),
+            "test": all_indices.intersection(
+                *[split_data["test"][index] for index in self.split_indices]
+            ),
+        }
+
+        # Sophisticated assignment of remaining indices
+        remaining = all_indices - (
+            final_splits["train"] | final_splits["val"] | final_splits["test"]
+        )
+        target_ratios = {
+            "train": self.train_ratio,
+            "val": self.val_ratio,
+            "test": 1 - self.train_ratio - self.val_ratio,
+        }
+
+        for index_name in self.split_indices:
+            original_index = getattr(self.dataset, index_name)
+            for key, indices in original_index.items():
+                key_remaining = set(indices) & remaining
+                if not key_remaining:
+                    continue
+
+                current_counts = {
+                    split: len(set(indices) & final_splits[split])
+                    for split in ["train", "val", "test"]
+                }
+                total_count = sum(current_counts.values()) + len(key_remaining)
+
+                for idx in key_remaining:
+                    target_counts = {
+                        split: int(total_count * ratio)
+                        for split, ratio in target_ratios.items()
+                    }
+                    best_split = min(
+                        ["train", "val", "test"],
+                        key=lambda x: (current_counts[x] - target_counts[x])
+                        / target_counts[x],
+                    )
+                    final_splits[best_split].add(idx)
+                    current_counts[best_split] += 1
+                    remaining.remove(idx)
+
+        # Create DataModuleIndexDetails object
+        self._index_details = DataModuleIndexDetails(
+            methods=self.split_indices,
+            train=DatasetSplit(),
+            val=DatasetSplit(),
+            test=DatasetSplit(),
+        )
+
+        for split in ["train", "val", "test"]:
+            for index_name in self.split_indices:
+                original_index = getattr(self.dataset, index_name)
+                split_data = {}
+                for key, indices in original_index.items():
+                    intersect = sorted(list(set(indices) & final_splits[split]))
+                    split_data[key] = IndexSplit(
+                        indices=intersect, count=len(intersect)
+                    )
+                setattr(getattr(self._index_details, split), index_name, split_data)
+
+        # Create DataModuleIndex object
+        self._index = DataModuleIndex(
+            train=sorted(list(final_splits["train"])),
+            val=sorted(list(final_splits["val"])),
+            test=sorted(list(final_splits["test"])),
+        )
+
+        # Save the index and details separately
+        with open(index_file, "w") as f:
+            json.dump(self._index.dict(), f, indent=2)
+        with open(details_file, "w") as f:
+            json.dump(self._index_details.dict(), f, indent=2)
+
+    def _cached_files_exist(self):
+        index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
+        details_file = osp.join(
+            self.cache_dir, f"index_details_seed_{self.random_seed}.json"
+        )
+        return osp.exists(index_file) and osp.exists(details_file)
+
+    def setup(self, stage=None):
+        train_index = self.index.train
+        val_index = self.index.val
+        test_index = self.index.test
+
+        self.train_dataset = torch.utils.data.Subset(self.dataset, train_index)
+        self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
+        self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
+
+    def _get_dataloader(self, dataset, shuffle=False):
+        loader = DataLoader(
+            dataset,
+            batch_size=self.batch_size,
+            shuffle=shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            follow_batch=["x", "x_pert"],
+        )
+        if self.prefetch:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            return PrefetchLoader(loader, device=device)
+        return loader
+
+    def train_dataloader(self):
+        return self._get_dataloader(self.train_dataset, shuffle=True)
+
+    def val_dataloader(self):
+        return self._get_dataloader(self.val_dataset)
+
+    def test_dataloader(self):
+        return self._get_dataloader(self.test_dataset)
+
+    def all_dataloader(self):
+        return self._get_dataloader(self.dataset)
+
+
+if __name__ == "__main__":
+    pass
+
+```
+
+Update `PerturbationSubsetDataModule` so that we give the `gene_subset` arg and subset the instances by any values in the `is_any_perturbed_gene_index`. We only want instances that are associated with genes from metabolism in our `PerturbationSubsetDataModule.`
+
+Also, this was our work in progress in trying to make a script to test the updated `PerturbationSubsetDataModule.` But remember we want to plot like we did for the previous script shown earlier.
+
+```python
+import os
+import os.path as osp
+from dotenv import load_dotenv
+from torchcell.graph import SCerevisiaeGraph
+from torchcell.datamodules import CellDataModule
+from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.data import MeanExperimentDeduplicator
+from torchcell.data import GenotypeAggregator
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+import json
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.data import Neo4jCellDataset
+from torchcell.data.neo4j_cell import SubgraphRepresentation
+from tqdm import tqdm
+from torchcell.utils import format_scientific_notation
+from torchcell.datasets import CodonFrequencyDataset
+from torchcell.metabolism.yeast_GEM import YeastGEM
+
+
+def main():
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+
+    # Initialize genome and GEM
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    # genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    # Initialize GEM and get metabolism genes
+    gem = YeastGEM()
+    metabolism_genes = gem.gene_set
+    print(f"Number of metabolism genes: {len(metabolism_genes)}")
+
+    # Save metabolism genes
+    with open("metabolism_genes.json", "w") as f:
+        json.dump(list(metabolism_genes), f)
+
+    # Setup graph and embeddings
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+
+    codon_frequency = CodonFrequencyDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
+        genome=genome,
+    )
+
+    # Load query and setup dataset
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        node_embeddings={"codon_frequency": codon_frequency},
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=SubgraphRepresentation(),
+    )
+
+    seed = 42
+    # Base Module
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=2,
+        random_seed=seed,
+        num_workers=4,
+        pin_memory=False,
+    )
+    cell_data_module.setup()
+
+    # Process different subset sizes with metabolism genes priority
+    sizes = [5e1]
+    # sizes = [5e1, 1e2, 5e2, 1e3, 5e3, 7e3, 1e4, 5e4, 1e5]
+
+    for size in sizes:
+        print(f"\nProcessing size {format_scientific_notation(size)}")
+
+        perturbation_subset_data_module = PerturbationSubsetDataModule(
+            cell_data_module=cell_data_module,
+            size=int(size),
+            batch_size=2,
+            num_workers=4,
+            pin_memory=True,
+            prefetch=False,
+            seed=seed,
+            priority_genes=metabolism_genes,
+        )
+        perturbation_subset_data_module.setup()
+
+        # Print metabolism gene statistics
+        train_data = [dataset[i] for i in perturbation_subset_data_module.index.train]
+        metabolism_count = sum(
+            1
+            for idx in perturbation_subset_data_module.index.train
+            if any(
+                gene in metabolism_genes
+                for gene, indices in dataset.is_any_perturbed_gene_index.items()
+                if idx in indices
+            )
+        )
+        print(
+            f"Train samples with metabolism genes: {metabolism_count}/{len(train_data)} "
+            f"({metabolism_count/len(train_data)*100:.2f}%)"
+        )
+
+        # Test dataloader
+        for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+            break
+
+        # Save the indices for this size
+        save_dir = osp.join(
+            dataset_root, f"subset_size_{format_scientific_notation(size)}"
+        )
+        os.makedirs(save_dir, exist_ok=True)
+
+        with open(osp.join(save_dir, "index.json"), "w") as f:
+            json.dump(perturbation_subset_data_module.index.dict(), f)
+
+
+if __name__ == "__main__":
+    main()
+```

@@ -307,7 +307,7 @@ def roman_to_int(s: str) -> int:
         "D": 500,
         "M": 1000,
     }
-    result = 0
+    result = 0  
     for i in range(len(s)):
         if i > 0 and roman_to_int_mapping[s[i]] > roman_to_int_mapping[s[i - 1]]:
             result += roman_to_int_mapping[s[i]] - 2 * roman_to_int_mapping[s[i - 1]]

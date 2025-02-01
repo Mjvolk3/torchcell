@@ -141,7 +141,7 @@ def main():
     ## Subset
     dm_name = "perturbation-subset-data-module"
     # 5e1 Module
-    size = 5e1
+    size = 2e1
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),

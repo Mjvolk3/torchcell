@@ -13,7 +13,7 @@ parameters:
       num_epochs:
         values: [5]
       dataset_size:
-        values: [1000] #[null] for all
+        values: [1000] #[null] for all #TODO
       learning_rate:
         values: [1e-3]
       batch_size:
@@ -23,12 +23,12 @@ parameters:
       weight_decay:
         values: [0.0, 1e-4, 1e-3]
 
-loss_sweep:
-  parameters:
-    lambda_1:
-      values: [0, 1e-3, 1e-1, 1e0, 1e1]
-    lambda_2:
-      values: [0, 1e-3, 1e-1, 1e0, 1e1]
+  loss_sweep:
+    parameters:
+      lambda_1:
+        values: [0, 1e-3, 1e-1, 1e0, 1e1]
+      lambda_2:
+        values: [0, 1e-3, 1e-1, 1e0, 1e1]
 
 command:
   - ${env}

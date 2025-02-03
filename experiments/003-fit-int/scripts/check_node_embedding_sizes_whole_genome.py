@@ -1,3 +1,10 @@
+# experiments/003-fit-int/scripts/check_node_embedding_sizes_whole_genome
+# [[experiments.003-fit-int.scripts.check_node_embedding_sizes_whole_genome]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/check_node_embedding_sizes_whole_genome
+# Test file: experiments/003-fit-int/scripts/test_check_node_embedding_sizes_whole_genome.py
+
+
+
 import logging
 import os
 import os.path as osp
@@ -75,7 +82,7 @@ def build_node_embeddings() -> dict[str, Any]:
     node_embeddings["nt_window_three_prime_5979"] = NucleotideTransformerDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),
         genome=genome,
-        model_name="window_three_prime_5979",
+        model_name="nt_window_three_prime_5979",
     )
     node_embeddings["nt_window_five_prime_5979"] = NucleotideTransformerDataset(
         root=osp.join(DATA_ROOT, "data/scerevisiae/nucleotide_transformer_embedding"),

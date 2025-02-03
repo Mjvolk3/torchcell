@@ -55,7 +55,7 @@ Also adapting from [[paper-outline sections|dendron://torchcell/paper.outline#se
 - 1. In the interactions fitness case does fitness data improved interaction prediction?
 - 2. Best model from previous plus training with fitness data.
 - 3. DCell trained on both - Does it improve?
-- 4. 
+- 4.
 - 5. (Transition) Show if models fail on some essential genes
 
 ## Multi-Task Supervised ML with all data.

@@ -1,10 +1,6 @@
-# experiments/003-fit-int/scripts/metabolism_enriched_perturbation_subset
-# [[experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/metabolism_enriched_perturbation_subset
-# Test file: experiments/003-fit-int/scripts/test_metabolism_enriched_perturbation_subset.py
-
 import os
 import os.path as osp
+import json
 from dotenv import load_dotenv
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.datamodules import CellDataModule
@@ -12,7 +8,6 @@ from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessCo
 from torchcell.data import MeanExperimentDeduplicator
 from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-import json
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
 from torchcell.data.neo4j_cell import SubgraphRepresentation
@@ -22,6 +17,57 @@ from torchcell.datasets import CodonFrequencyDataset
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.viz.datamodules import plot_dataset_index_split
 from torchcell.datamodules.cell import overlap_dataset_index_split
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+
+
+def plot_label_histograms(
+    label_df: pd.DataFrame,
+    train_indices: list,
+    val_indices: list,
+    test_indices: list,
+    save_dir: str,
+):
+    # Exclude the index column from plotting.
+    label_cols = [col for col in label_df.columns if col != "index"]
+    # Build data subsets from the label dataframe.
+    train_df = label_df[label_df["index"].isin(train_indices)]
+    val_df = label_df[label_df["index"].isin(val_indices)]
+    test_df = label_df[label_df["index"].isin(test_indices)]
+
+    for col in label_cols:
+        plt.figure(figsize=(8, 6))
+        # Plot full dataset histogram with KDE.
+        sns.histplot(
+            label_df[col],
+            color="gray",
+            stat="density",
+            kde=True,
+            label="All",
+            alpha=0.4,
+        )
+        sns.histplot(
+            train_df[col],
+            color="blue",
+            stat="density",
+            kde=True,
+            label="Train",
+            alpha=0.4,
+        )
+        sns.histplot(
+            val_df[col], color="green", stat="density", kde=True, label="Val", alpha=0.4
+        )
+        sns.histplot(
+            test_df[col], color="red", stat="density", kde=True, label="Test", alpha=0.4
+        )
+        plt.title(f"Histogram for {col}")
+        plt.xlabel(col)
+        plt.ylabel("Density")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(osp.join(save_dir, f"hist_{col}.png"))
+        plt.close()
 
 
 def main():
@@ -83,7 +129,7 @@ def main():
     cell_data_module.setup()
 
     # Process different subset sizes while constraining to metabolism genes.
-    sizes = [5e1, 1e2, 5e2, 1e3, 5e3, 7e3, 1e4, 5e4, 1e5]
+    sizes = [2.5e4, 5e4]
     for size in sizes:
         print(f"\nProcessing size {format_scientific_notation(size)}")
 
@@ -99,22 +145,7 @@ def main():
             gene_subsets=gene_subsets,
         )
         perturbation_subset_data_module.setup()
-
-        # Print metabolism gene statistics.
-        train_data = [dataset[i] for i in perturbation_subset_data_module.index.train]
-        metabolism_count = sum(
-            1
-            for idx in perturbation_subset_data_module.index.train
-            if any(
-                gene in metabolism_genes
-                for gene, indices in dataset.is_any_perturbed_gene_index.items()
-                if idx in indices
-            )
-        )
-        print(
-            f"Train samples with metabolism genes: {metabolism_count}/{len(train_data)} "
-            f"({metabolism_count/len(train_data)*100:.2f}%)"
-        )
+        print("Finished setting up the perturbation subset data module.")
 
         # Test the dataloader.
         for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
@@ -126,18 +157,20 @@ def main():
         )
         os.makedirs(save_dir, exist_ok=True)
         with open(osp.join(save_dir, "index.json"), "w") as f:
-            json.dump(perturbation_subset_data_module.index.model_dump(), f)
+            json.dump(perturbation_subset_data_module.index.model_dump(), f, indent=2)
 
         # Plot the dataset index splits.
         exp_name = "experiments-003"
         query_name = "query-001-small-build"
         dm_name = "perturbation-subset-data-module"
         size_str = format_scientific_notation(size)
+        subset_tag = ",".join(gene_subsets.keys())
+        subset_str = f"_subset_{subset_tag}" if subset_tag else ""
 
         # Plot dataset name index.
         ds_index = "dataset-name-index"
-        subset_tag = ",".join(gene_subsets.keys())
-        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}_subset_{subset_tag}"
+        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}{subset_str}"
+        print("Plotting dataset name index...")
         split_index = overlap_dataset_index_split(
             dataset_index=dataset.dataset_name_index,
             data_module_index=perturbation_subset_data_module.index,
@@ -147,12 +180,12 @@ def main():
             title=title,
             save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
         )
+        print("Finished plotting dataset name index.")
 
         # Plot phenotype label index.
         ds_index = "phenotype-label-index"
-        title = (
-            f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-        )
+        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}{subset_str}"
+        print("Plotting phenotype label index...")
         split_index = overlap_dataset_index_split(
             dataset_index=dataset.phenotype_label_index,
             data_module_index=perturbation_subset_data_module.index,
@@ -162,12 +195,12 @@ def main():
             title=title,
             save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
         )
+        print("Finished plotting phenotype label index.")
 
         # Plot perturbation count index.
         ds_index = "perturbation-count-index"
-        title = (
-            f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}"
-        )
+        title = f"{exp_name}_{query_name}_{dm_name}_size_{size_str}_seed_{seed}_{ds_index}{subset_str}"
+        print("Plotting perturbation count index...")
         split_index = overlap_dataset_index_split(
             dataset_index=dataset.perturbation_count_index,
             data_module_index=perturbation_subset_data_module.index,
@@ -178,6 +211,22 @@ def main():
             save_path=osp.join(ASSET_IMAGES_DIR, f"{title}.png"),
             threshold=0.0,
         )
+        print("Finished plotting perturbation count index.")
+
+        # --- Now plot overlapping histograms for each label ---
+        # Get the full label dataframe from the dataset.
+        label_df = (
+            dataset.label_df
+        )  # assuming dataset.label_df returns a pandas DataFrame
+        # Get the subset indices for train, val, and test.
+        train_indices = perturbation_subset_data_module.index.train
+        val_indices = perturbation_subset_data_module.index.val
+        test_indices = perturbation_subset_data_module.index.test
+        print("Plotting label histograms...")
+        plot_label_histograms(
+            label_df, train_indices, val_indices, test_indices, save_dir
+        )
+        print("Finished plotting label histograms.")
 
 
 if __name__ == "__main__":

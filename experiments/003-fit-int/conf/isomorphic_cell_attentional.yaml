@@ -29,16 +29,16 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 8
-  num_workers: 8
+  batch_size: 64
+  num_workers: 16
   pin_memory: true
   prefetch: true
 
 trainer:
-  max_epochs: 100
+  max_epochs: 1000
   strategy: auto
-  accelerator: cpu
-  devices: auto
+  accelerator: gpu
+  devices: 1
 
 model:
   in_channels: 64

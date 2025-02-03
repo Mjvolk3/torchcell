@@ -1,4 +1,3 @@
-# config.yaml
 program: experiments/003-fit-int/scripts/mse_distloss_supcr.py
 project: torchcell_qm9_loss_study
 method: grid
@@ -17,3 +16,6 @@ training:
 loss_sweep:
   lambda_dist: 0
   lambda_supcr: 0
+
+plotting:
+  max_points: 1000

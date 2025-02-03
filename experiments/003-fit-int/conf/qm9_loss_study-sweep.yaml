@@ -11,9 +11,10 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [30]
+        values: [2]
+        # values: [50]
       dataset_size:
-        values: [10000] #[1000] #[null] for all #TODO
+        values: [50000]  # [1000] #[null] for all #TODO
       learning_rate:
         values: [1e-3]
       batch_size:
@@ -27,9 +28,17 @@ parameters:
   loss_sweep:
     parameters:
       lambda_dist:
-        values: [0, 1e-3, 1e-1, 1e0, 1e1]
+        values: [1e-3]
+        # values: [0, 1e-3, 1e-1, 1e0]
       lambda_supcr:
-        values: [0, 1e-3, 1e-1, 1e0, 1e1]
+        values: [0, 1e-3, 1e-1, 1e0]
+        # values: [1e-3]
+
+  plotting:
+    parameters:
+      max_points: 
+        values: [5000]
+
 
 command:
   - ${env}

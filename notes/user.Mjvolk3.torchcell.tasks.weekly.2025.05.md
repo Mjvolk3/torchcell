@@ -2,7 +2,7 @@
 id: ha7mvvbdznrjbaih4ioyhs4
 title: '05'
 desc: ''
-updated: 1738402573011
+updated: 1738526735158
 created: 1737999272613
 ---
 ## 2025.01.27
@@ -37,48 +37,11 @@ created: 1737999272613
 - [x] Create metabolism subset dataset. Add to index? → I thought maybe we could push it into query but we can't because the `gene_set` needs to be a superset of all possible genes queried . We need to push it into CellDatasetModule, then run Perturbation subset on that. → Turns out just needs to be in `PerturbationSubset`. → haven't run yet. takes time.
 - [x] Plots of dataset breakdown. → [[experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]]
 
+- [x] Run all [[Metabolism_enriched_perturbation_subset|dendron://torchcell/experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]] overnight.
 
-- [ ] Run all [[Metabolism_enriched_perturbation_subset|dendron://torchcell/experiments.003-fit-int.scripts.metabolism_enriched_perturbation_subset]] overnight.
+## 2025.02.01
 
-500,000 (5e5) - cannot do with current db we have 429042
-500,000 (5e5)
-
-- [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
-- [ ] Make sure y distributions look like they y from other datasets.
-- [ ] Histogram of genes usage in subset... we have these plots somewhere.
-
-
-***
-
-- [ ] Test edge attention on hypergraph conv
-- [ ] Update `cell_latent_perturbation`
-- [ ] `cell_latent_perturbation` remove stoichiometry for reaction aggregation
-- [ ] `cell_latent_perturbation` unify embeddings across graphs
-- [ ] `cell_latent_perturbation` use `ISAB` set transformer for `intact_whole`
-- [ ] unified model
-
-- [ ] Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses.
-- [ ] Implement intact and pert phenotype processor.
-- [ ] Synthesize Results in report. Discussion on consideration of use alternative methods like mse plus a divergence measure.
-- [ ] Run metabolism label split regression run
-- [ ] Information Diff., WL Kernel
-
-## Notes on Metabolism
-
-- Can get Gibbs Free Energy of reaction from [MetaCyc](https://biocyc.org/reaction?orgid=META&id=D-LACTATE-DEHYDROGENASE-CYTOCHROME-RXN)
-- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
-
-## Notes Related to Dango
-
-Breakout into specific notes on Dango.
-
-- [ ] Verify
-
-> Pearson correlation between the trigenic interaction scores of two individual replicates is around 0.59, which is much lower than the Pearson correlation between the digenic interaction score of two replicates from the same data source (0.88). ([Zhang et al., 2020, p. 3](zotero://select/library/items/PJFDVT8Y)) ([pdf](zotero://open-pdf/library/items/AFBC5E89?page=3&annotation=D8D949VF))
-
-- [ ] Plot P-Values of current dataset to compare to predicted interactions. Can do for both digenic and trigenic interactions. Do this over queried datasets.
-- [ ] What is purpose of the pretraining portion? Why not just take embeddings and put into this hypergraph embedding portion?
-
-***
-
-[[04|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2025.04]]
+- [x] Write total loss function
+- [x] Test new loss function.
+- [x] Overfit batch
+- [x] Metabolically enriched data. → note with plots.

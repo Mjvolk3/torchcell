@@ -67,7 +67,6 @@ class RegressionTask(L.LightningModule):
     def _shared_step(self, batch, batch_idx, stage="train"):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
-        # Use available targets from the batch
         fitness = batch["gene"].fitness.view(-1, 1)
         gene_interaction = batch["gene"].gene_interaction.view(-1, 1)
         targets = torch.cat([fitness, gene_interaction], dim=1)
@@ -78,7 +77,7 @@ class RegressionTask(L.LightningModule):
             representations["z_p"],
             representations["z_i"],
         )
-        # Expect loss_dict["mse_dim_losses"] to be indexable (list/tuple)
+        # Log overall loss and MSE component losses
         self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
         self.log(
             f"{stage}/fitness_loss",
@@ -89,6 +88,37 @@ class RegressionTask(L.LightningModule):
         self.log(
             f"{stage}/gene_interaction_loss",
             loss_dict["mse_dim_losses"][1],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        # Log additional loss components from ICLoss
+        self.log(
+            f"{stage}/mse_loss",
+            loss_dict["mse_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/dist_loss",
+            loss_dict["dist_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/supcr_loss",
+            loss_dict["supcr_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/cell_loss",
+            loss_dict["cell_loss"],
+            batch_size=batch_size,
+            sync_dist=True,
+        )
+        self.log(
+            f"{stage}/total_loss",
+            loss_dict["total_loss"],
             batch_size=batch_size,
             sync_dist=True,
         )

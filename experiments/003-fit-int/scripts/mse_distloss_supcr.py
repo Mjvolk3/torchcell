@@ -245,7 +245,8 @@ class Visualization:
             true_values_clean, predictions_clean
         )
 
-        bins = min(100, int(np.sqrt(len(true_values_clean))))
+        # bins = min(100, int(np.sqrt(len(true_values_clean))))
+        bins = 100
         true_hist, bin_edges = np.histogram(true_values_clean, bins=bins, density=True)
         pred_hist, _ = np.histogram(predictions_clean, bins=bin_edges, density=True)
 

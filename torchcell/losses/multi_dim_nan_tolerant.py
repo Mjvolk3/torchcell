@@ -125,21 +125,16 @@ class SupCR(nn.Module):
 
 
 class WeightedSupCRCell(nn.Module):
-    """
-    Combines two SupCR losses with optional dimension-wise weighting.
-    """
-
     def __init__(
         self,
         temperature: float = 0.1,
         weights: Optional[torch.Tensor] = None,
         eps: float = 1e-7,
-    ) -> None:
+    ):
         super().__init__()
         if weights is None:
-            weights = torch.ones(2)  # Equal weights for dimensions
+            weights = torch.ones(2)
         self.register_buffer("weights", weights / weights.sum())
-
         self.supcr_perturbed = SupCR(temperature=temperature, eps=eps)
         self.supcr_intact = SupCR(temperature=temperature, eps=eps)
 
@@ -149,14 +144,20 @@ class WeightedSupCRCell(nn.Module):
         intact_embeddings: torch.Tensor,
         labels: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Forward pass computing weighted combination of SupCR losses.
+        device = labels.device
 
-        Args:
-            perturbed_embeddings: Shape [batch_size, embedding_dim]
-            intact_embeddings: Shape [batch_size, embedding_dim]
-            labels: Shape [batch_size, num_dims]
-        """
+        # Create mask for non-NaN values
+        mask = ~torch.isnan(labels)
+
+        # Check which dimensions have ANY valid samples
+        valid_dims = mask.any(dim=0)  # [num_dims]
+
+        # If no dimensions are valid, return zero loss
+        if not valid_dims.any():
+            return torch.tensor(0.0, device=device), torch.zeros_like(
+                valid_dims, dtype=torch.float
+            )
+
         # Compute per-dimension losses for both embedding types
         perturbed_losses = self.supcr_perturbed(perturbed_embeddings, labels)
         intact_losses = self.supcr_intact(intact_embeddings, labels)
@@ -164,8 +165,12 @@ class WeightedSupCRCell(nn.Module):
         # Average the losses from perturbed and intact
         dim_losses = (perturbed_losses + intact_losses) / 2
 
-        # Apply dimension weights
-        weighted_loss = (dim_losses * self.weights).sum() / self.weights.sum()
+        # Zero out weights for completely NaN dimensions
+        weights = self.weights * valid_dims
+        weight_sum = weights.sum().clamp(min=1e-8)
+
+        # Apply dimension weights and compute total loss
+        weighted_loss = (dim_losses * weights).sum() / weight_sum
 
         return weighted_loss, dim_losses
 
@@ -332,22 +337,9 @@ class NaNTolerantLogCoshLoss(nn.Module):
 
 
 class WeightedMSELoss(nn.Module):
-    """
-    A weighted MSE loss that handles NaN values and allows weighting of different target dimensions.
-    Simpler than CombinedLoss but maintains the ability to weight dimensions differently.
-    """
-
     def __init__(self, weights: Optional[torch.Tensor] = None):
-        """
-        Initialize weighted MSE loss.
-
-        Args:
-            weights: Optional tensor of weights for each dimension. If None, equal weights are used.
-                    Shape should match the number of target dimensions.
-        """
         super().__init__()
         if weights is not None:
-            # Normalize weights to sum to 1
             self.register_buffer("weights", weights / weights.sum())
         else:
             self.weights = None
@@ -355,33 +347,25 @@ class WeightedMSELoss(nn.Module):
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute weighted MSE loss while handling NaN values.
-
-        Args:
-            predictions: Model predictions [batch_size, num_dims]
-            targets: Ground truth values [batch_size, num_dims]
-
-        Returns:
-            Tuple containing:
-                - total_loss: Weighted sum of MSE losses across dimensions
-                - dim_losses: Individual MSE losses for each dimension
-        """
         device = predictions.device
         predictions, targets = predictions.to(device), targets.to(device)
-
-        # Ensure inputs have same shape
-        assert (
-            predictions.shape == targets.shape
-        ), "Predictions and targets must have same shape"
 
         # Create mask for non-NaN values
         mask = ~torch.isnan(targets)
 
+        # Check which dimensions have ANY valid samples
+        valid_dims = mask.any(dim=0)  # [num_dims]
+
+        # If no dimensions are valid, return zero loss
+        if not valid_dims.any():
+            return torch.tensor(0.0, device=device), torch.zeros_like(
+                valid_dims, dtype=torch.float
+            )
+
         # Get count of valid samples per dimension, avoid division by zero
         valid_samples = mask.sum(dim=0).clamp(min=1)
 
-        # Zero out predictions where target is NaN to avoid gradient computation
+        # Zero out predictions where target is NaN
         masked_predictions = predictions * mask
         masked_targets = targets.masked_fill(~mask, 0)
 
@@ -391,19 +375,16 @@ class WeightedMSELoss(nn.Module):
         # Average errors over valid samples for each dimension
         dim_losses = squared_errors.sum(dim=0) / valid_samples
 
-        # Apply dimension weights if specified
-        if self.weights is not None:
-            # Only apply weights to dimensions that have valid samples
-            valid_dims = mask.any(dim=0)
-            weights = self.weights * valid_dims
-            weight_sum = weights.sum().clamp(min=1e-8)
+        # Zero out weights for completely NaN dimensions
+        weights = (
+            self.weights * valid_dims
+            if self.weights is not None
+            else valid_dims.float()
+        )
+        weight_sum = weights.sum().clamp(min=1e-8)
 
-            # Compute weighted average
-            total_loss = (dim_losses * weights).sum() / weight_sum
-        else:
-            # If no weights, just average across valid dimensions
-            valid_dims = mask.any(dim=0)
-            total_loss = dim_losses[valid_dims].mean()
+        # Compute weighted average
+        total_loss = (dim_losses * weights).sum() / weight_sum
 
         return total_loss, dim_losses
 
@@ -570,36 +551,30 @@ class WeightedDistLoss(nn.Module):
     def forward(
         self, y_pred: torch.Tensor, y_true: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """
-        Compute Dist Loss using MSE between pseudo-labels and sorted predictions.
-        This inherently combines distribution alignment and prediction errors.
-
-        Args:
-            y_pred: Predictions [batch_size, num_dims]
-            y_true: Ground truth [batch_size, num_dims]
-
-        Returns:
-            tuple: (weighted_loss, dim_losses)
-                - weighted_loss: Total weighted loss across dimensions
-                - dim_losses: Individual losses per dimension
-        """
         device = y_pred.device
         y_true = y_true.to(device)
+
+        # Create mask for non-NaN values
+        mask = ~torch.isnan(y_true)
+
+        # Check which dimensions have ANY valid samples
+        valid_dims = mask.any(dim=0)  # [num_dims]
+
+        # If no dimensions are valid, return zero loss
+        if not valid_dims.any():
+            return torch.tensor(0.0, device=device), torch.zeros_like(
+                valid_dims, dtype=torch.float
+            )
 
         batch_size, num_dims = y_true.shape
         dim_losses = torch.zeros(num_dims, device=device)
 
-        # Create mask for valid dimensions
-        mask = ~torch.isnan(y_true)
-        valid_dims = mask.any(dim=0)
-
-        # Adjust weights based on valid dimensions
+        # Zero out weights for completely NaN dimensions
         weights = self.weights * valid_dims
         weight_sum = weights.sum().clamp(min=1e-8)
 
         # Process each dimension separately
         for dim in range(num_dims):
-            # Skip if all values are NaN
             if not valid_dims[dim]:
                 continue
 

@@ -25,9 +25,9 @@ parameters:
 
   loss_sweep:
     parameters:
-      lambda_1:
+      lambda_dist:
         values: [0, 1e-3, 1e-1, 1e0, 1e1]
-      lambda_2:
+      lambda_supcr:
         values: [0, 1e-3, 1e-1, 1e0, 1e1]
 
 command:

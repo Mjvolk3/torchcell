@@ -77,13 +77,13 @@ class PreProcessor(nn.Module):
     ):
         super().__init__()
         layers = []
-        # Immediately layer normalize the raw input features
-        layers.append(nn.LayerNorm(in_channels))
+        # Use BatchNorm1d instead of LayerNorm for input features
+        layers.append(nn.BatchNorm1d(in_channels))
         # First linear transformation block
         layers.extend(
             [
                 nn.Linear(in_channels, hidden_channels),
-                nn.LayerNorm(hidden_channels),
+                nn.BatchNorm1d(hidden_channels),
                 nn.ReLU(),
                 nn.Dropout(dropout),
             ]
@@ -92,7 +92,7 @@ class PreProcessor(nn.Module):
             layers.extend(
                 [
                     nn.Linear(hidden_channels, hidden_channels),
-                    nn.LayerNorm(hidden_channels),
+                    nn.BatchNorm1d(hidden_channels),
                     nn.ReLU(),
                     nn.Dropout(dropout),
                 ]
@@ -1439,7 +1439,7 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=128,
+        batch_size=2,
         random_seed=seed,
         num_workers=6,
         pin_memory=False,
@@ -1451,7 +1451,7 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=128,
+        batch_size=2,
         num_workers=6,
         pin_memory=True,
         prefetch=False,

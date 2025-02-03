@@ -39,7 +39,7 @@ from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
-
+import torch.distributed as dist
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -425,7 +425,9 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm_max_norm=wandb_cfg["regression_task"]["clip_grad_norm_max_norm"],
         boxplot_every_n_epochs=wandb_cfg["regression_task"]["boxplot_every_n_epochs"],
         loss_func=loss_func,
-        grad_accumulation_schedule=wandb_cfg["regression_task"]["grad_accumulation_schedule"],
+        grad_accumulation_schedule=wandb_cfg["regression_task"][
+            "grad_accumulation_schedule"
+        ],
         device=device,
         inverse_transform=inverse_transform,
         forward_transform=forward_transform,
@@ -454,7 +456,7 @@ def main(cfg: DictConfig) -> None:
         callbacks=[checkpoint_callback],
         profiler=profiler,
         log_every_n_steps=10,
-        overfit_batches=10
+        overfit_batches=1,
     )
 
     trainer.fit(model=task, datamodule=data_module)

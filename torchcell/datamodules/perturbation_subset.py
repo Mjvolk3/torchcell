@@ -20,7 +20,6 @@ from torchcell.datamodules import (
 from torch_geometric.loader import DataLoader, PrefetchLoader
 import torch
 from torch_geometric.loader import DenseDataLoader
-
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
 from torchcell.datamodules import DataModuleIndex
@@ -43,13 +42,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         super().__init__()
         self.cell_data_module = cell_data_module
         self.dataset = cell_data_module.dataset
-        self.size = size
-        self.batch_size = batch_size
-        self.num_workers = num_workers
-        self.pin_memory = pin_memory
-        self.prefetch = prefetch
-        self.seed = seed
-        self.dense = dense
 
         # Use the first key–value pair from the gene_subsets dict (if provided)
         if gene_subsets is not None and len(gene_subsets) > 0:
@@ -57,21 +49,49 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         else:
             self.subset_tag, self.gene_subset = None, None
 
+        # Check that requested size does not exceed maximum possible.
+        self._set_size(size)
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.prefetch = prefetch
+        self.seed = seed
+        self.dense = dense
+
         self.cache_dir = self.cell_data_module.cache_dir
         if self.subset_tag:
             self.subset_dir = osp.join(
                 self.cache_dir,
-                f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}",
+                f"perturbation_subset_{format_scientific_notation(self.size)}_{self.subset_tag}",
             )
         else:
             self.subset_dir = osp.join(
                 self.cache_dir,
-                f"perturbation_subset_{format_scientific_notation(size)}",
+                f"perturbation_subset_{format_scientific_notation(self.size)}",
             )
         os.makedirs(self.subset_dir, exist_ok=True)
         random.seed(self.seed)
         self._index = None
         self._index_details = None
+
+    def _set_size(self, size: int):
+        # Determine maximum possible subset size.
+        if self.gene_subset is not None:
+            valid = set()
+            for gene in self.gene_subset:
+                if gene in self.cell_data_module.dataset.is_any_perturbed_gene_index:
+                    valid.update(
+                        self.cell_data_module.dataset.is_any_perturbed_gene_index[gene]
+                    )
+            max_possible = len(valid)
+        else:
+            max_possible = len(self.dataset)
+        if size > max_possible:
+            raise ValueError(
+                f"Requested subset size {size} exceeds maximum possible {max_possible} "
+                f"for the given gene subset (or full dataset)."
+            )
+        self.size = size
 
     @property
     def index(self) -> DataModuleIndex:
@@ -96,17 +116,18 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         )
 
         if osp.exists(index_file) and osp.exists(details_file):
+            print("Loading cached index files...")
             with open(index_file, "r") as f:
                 self._index = DataModuleIndex(**json.load(f))
             with open(details_file, "r") as f:
                 self._index_details = DataModuleIndexDetails(**json.load(f))
         else:
+            print("Computing subset index...")
             self._create_subset()
             self._save_index()
 
     def _create_subset(self):
         tqdm.write("Starting _create_subset()")
-        # Get base indices and details.
         cell_index_details = self.cell_data_module.index_details
         cell_index = self.cell_data_module.index
 
@@ -127,7 +148,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         target_sizes["train"] += difference
         tqdm.write(f"Target sizes per split: {target_sizes}")
 
-        # If a gene subset is provided, compute valid indices.
         valid_indices = None
         if self.gene_subset is not None:
             valid_indices = set()
@@ -139,7 +159,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             tqdm.write(f"Total valid indices: {len(valid_indices)}")
 
         selected_indices = {split: [] for split in ["train", "val", "test"]}
-
         for split in ["train", "val", "test"]:
             tqdm.write(f"Processing split: {split}")
             pert_count_index = getattr(
@@ -148,7 +167,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             remaining_size = target_sizes[split]
             tqdm.write(f"Remaining size for {split}: {remaining_size}")
 
-            # First, sample from perturbation count 1 indices.
             single_pert_indices = pert_count_index[1].indices
             if valid_indices is not None:
                 single_pert_indices = [
@@ -163,7 +181,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 f"After sampling count=1, remaining size for {split}: {remaining_size}"
             )
 
-            # Then, sample from other perturbation levels if needed.
             if remaining_size > 0:
                 other_levels = [
                     level for level in pert_count_index.keys() if level != 1
@@ -207,7 +224,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             val=sorted(selected_indices["val"]),
             test=sorted(selected_indices["test"]),
         )
-        self._create_index_details()  # Assuming you have an implementation for this
+        self._create_index_details()  # Assumes this method is implemented as below.
         total_selected = sum(len(indices) for indices in selected_indices.values())
         tqdm.write(f"Total selected indices: {total_selected}")
         assert (
@@ -217,7 +234,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
         methods = cell_index_details.methods
-
         self._index_details = DataModuleIndexDetails(
             methods=methods,
             train=self._create_dataset_split(
@@ -241,9 +257,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             if method_data is not None:
                 for key, index_split in method_data.items():
                     if method == "perturbation_count_index":
-                        key = int(
-                            key
-                        )  # Convert key to int for perturbation_count_index
+                        key = int(key)
                     intersect = sorted(list(set(indices) & set(index_split.indices)))
                     split_data[key] = IndexSplit(
                         indices=intersect, count=len(intersect)
@@ -278,14 +292,12 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
     def setup(self, stage: Optional[str] = None):
         print("Setting up PerturbationSubsetDataModule...")
-
         if (
             self._index is None
             or self._index_details is None
             or not self._cached_files_exist()
         ):
             self._load_or_compute_index()
-
         print("Creating subset datasets...")
         self.train_dataset = Subset(self.dataset, self.index.train)
         self.val_dataset = Subset(self.dataset, self.index.val)
@@ -294,14 +306,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
     def _get_dataloader(self, dataset, shuffle=False):
         if self.dense:
-            # loader = DenseDataLoader(
-            #     dataset,
-            #     batch_size=self.batch_size,
-            #     shuffle=shuffle,
-            #     num_workers=self.num_workers,
-            #     pin_memory=self.pin_memory,
-            #     # follow_batch=["x", "x_pert"],
-            # )
             loader = DensePaddingDataLoader(
                 dataset,
                 batch_size=self.batch_size,

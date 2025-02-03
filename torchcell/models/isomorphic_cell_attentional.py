@@ -77,6 +77,9 @@ class PreProcessor(nn.Module):
     ):
         super().__init__()
         layers = []
+        # Immediately layer normalize the raw input features
+        layers.append(nn.LayerNorm(in_channels))
+        # First linear transformation block
         layers.extend(
             [
                 nn.Linear(in_channels, hidden_channels),
@@ -85,7 +88,6 @@ class PreProcessor(nn.Module):
                 nn.Dropout(dropout),
             ]
         )
-
         for _ in range(num_layers - 1):
             layers.extend(
                 [
@@ -95,7 +97,6 @@ class PreProcessor(nn.Module):
                     nn.Dropout(dropout),
                 ]
             )
-
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -515,7 +516,7 @@ class HeteroGnn(nn.Module):
             dims=dims,
         )
 
-    def forward(self, batch):
+    def forward(self, batch, preprocessed_features=None):
         from torch_geometric.utils import add_self_loops
 
         if self.learnable_embedding:
@@ -549,9 +550,15 @@ class HeteroGnn(nn.Module):
             x_dict = {"gene": all_embeddings[mask]}
 
             assert x_dict["gene"].shape[0] == batch["gene"].x.shape[0]
-
         else:
-            x_dict = {"gene": batch["gene"].x}
+            # Use preprocessed features if provided, otherwise use raw features
+            x_dict = {
+                "gene": (
+                    preprocessed_features
+                    if preprocessed_features is not None
+                    else batch["gene"].x
+                )
+            }
 
         # Create edge_index_dict from batch
         edge_index_dict = {
@@ -601,7 +608,6 @@ class HeteroGnn(nn.Module):
                 }
 
         x = x_dict["gene"]
-
         return x
 
     @property
@@ -828,9 +834,14 @@ class MetabolismProcessor(nn.Module):
         self.num_layers = num_layers
         self.use_attention = use_attention
 
-        # Metabolite embeddings
-        self.metabolite_embedding = nn.Embedding(
-            num_embeddings=max_metabolite_nodes, embedding_dim=hidden_dim, max_norm=1.0
+        # Metabolite embeddings - We immeditalely layernorm
+        self.metabolite_embedding = nn.Sequential(
+            nn.Embedding(
+                num_embeddings=max_metabolite_nodes,
+                embedding_dim=hidden_dim,
+                max_norm=1.0,
+            ),
+            nn.LayerNorm(hidden_dim),
         )
 
         # Gene -> Reaction aggregation
@@ -867,11 +878,17 @@ class MetabolismProcessor(nn.Module):
             in_channels=hidden_dim, out_channels=hidden_dim, dropout=dropout
         )
 
-    def whole_forward(self, graph: HeteroData) -> torch.Tensor:
+    def whole_forward(
+        self, graph: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Process single instance (whole cell graph)"""
         # 1. Gene -> Reaction context
         gpr_edge_index = graph["gene", "gpr", "reaction"].hyperedge_index
-        gene_x = graph["gene"].x
+        gene_x = (
+            preprocessed_features
+            if preprocessed_features is not None
+            else graph["gene"].x
+        )
 
         H_r = self.gene_reaction_aggregator(
             x=gene_x[gpr_edge_index[0]],
@@ -929,18 +946,23 @@ class MetabolismProcessor(nn.Module):
 
         return Z_mg
 
-    def intact_perturbed_forward(self, batch: HeteroData) -> torch.Tensor:
+    def intact_perturbed_forward(
+        self, batch: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Process batched data"""
         # 1. Gene -> Reaction mapping
         gpr_edge_index = batch["gene", "gpr", "reaction"].hyperedge_index
-        gene_x = batch["gene"].x
+        gene_x = (
+            preprocessed_features
+            if preprocessed_features is not None
+            else batch["gene"].x
+        )
 
         H_r = self.gene_reaction_aggregator(
             x=gene_x[gpr_edge_index[0]],
             index=gpr_edge_index[1],
             dim_size=batch["reaction"].num_nodes,
         )
-
         # 2. Initialize metabolite features
         device = gene_x.device
         batch_size = len(batch["metabolite"].ptr) - 1
@@ -1000,13 +1022,15 @@ class MetabolismProcessor(nn.Module):
 
         return Z_mg
 
-    def forward(self, data: HeteroData) -> torch.Tensor:
+    def forward(
+        self, data: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         """Main forward pass"""
         is_batched = hasattr(data["gene"], "batch")
         if is_batched:
-            return self.intact_perturbed_forward(data)
+            return self.intact_perturbed_forward(data, preprocessed_features)
         else:
-            return self.whole_forward(data)
+            return self.whole_forward(data, preprocessed_features)
 
 
 class IsomorphicCell(nn.Module):
@@ -1031,7 +1055,7 @@ class IsomorphicCell(nn.Module):
     ):
         super().__init__()
 
-        # Initialize configs
+        # Configurations
         self.preprocessor_config = {"dropout": dropout}
         if preprocessor_config:
             self.preprocessor_config.update(preprocessor_config)
@@ -1060,6 +1084,7 @@ class IsomorphicCell(nn.Module):
             self.prediction_head_config.update(prediction_head_config)
 
         # Initialize components
+        # Preprocessor now immediately normalizes raw gene features via an initial LayerNorm
         self.preprocessor = PreProcessor(
             in_channels=in_channels,
             hidden_channels=hidden_channels,
@@ -1067,6 +1092,7 @@ class IsomorphicCell(nn.Module):
             dropout=self.preprocessor_config["dropout"],
         )
 
+        # Gene encoder: a HeteroGnn that operates on preprocessed features
         self.gene_encoder = HeteroGnn(
             in_channels=hidden_channels,
             hidden_channels=hidden_channels,
@@ -1076,32 +1102,36 @@ class IsomorphicCell(nn.Module):
             **(gene_encoder_config or {}),
         )
 
+        # Metabolism processor uses the same preprocessed gene features
         self.metabolism_processor = MetabolismProcessor(
-            max_metabolite_nodes=metabolism_config.get("max_metabolite_nodes", 2534),
+            max_metabolite_nodes=self.metabolism_config.get(
+                "max_metabolite_nodes", 2534
+            ),
             hidden_dim=hidden_channels,
             num_layers={"metabolite": num_layers["metabolism"]},
             dropout=self.metabolism_config["dropout"],
             use_attention=self.metabolism_config["use_attention"],
         )
 
+        # Combiner to merge gene and metabolism paths
         self.combiner = Combiner(
             hidden_channels=hidden_channels,
             num_layers=num_layers["combiner"],
             dropout=self.combiner_config["dropout"],
         )
 
+        # Aggregators for whole and perturbed graph representations
         self.whole_intact_aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
-
         self.perturbed_aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
+        # Prediction heads for growth (fitness) and gene interaction
         self.growth_head = self._build_mlp(
             hidden_channels, 1, self.prediction_head_config
         )
-
         self.gene_interaction_head = self._build_mlp(
             hidden_channels, 1, self.prediction_head_config
         )
@@ -1137,7 +1167,6 @@ class IsomorphicCell(nn.Module):
         layers.append(nn.Linear(current_dim, out_dim))
         return nn.Sequential(*layers)
 
-    # TODO check for other uses of batch["gene"].ids_pert
     def _get_perturbed_indices(self, batch):
         """Returns list of perturbed indices for each batch item"""
         batch_size = batch["gene"].ptr.size(0) - 1
@@ -1154,13 +1183,9 @@ class IsomorphicCell(nn.Module):
         return pert_indices
 
     def forward_single(self, batch):
-        # Gene path - pass preprocessed features to gene_encoder
-        z_g = self.gene_encoder(batch)
-
-        # Metabolism path
-        z_mg = self.metabolism_processor(batch)
-
-        # Combine paths
+        x = self.preprocessor(batch["gene"].x)
+        z_g = self.gene_encoder(batch, preprocessed_features=x)
+        z_mg = self.metabolism_processor(batch, preprocessed_features=x)
         z = self.combiner(z_g, z_mg)
         return z
 
@@ -1261,13 +1286,13 @@ class IsomorphicCell(nn.Module):
         }
 
 
-def initialize_model(dataset, device, config=None):
+def initialize_model(input_channels, device, config=None):
     if config is None:
         config = {}
 
     default_config = {
         # Model dimensions
-        "in_channels": 64,
+        "in_channels": input_channels,
         "hidden_channels": 64,
         # Layer counts
         "num_layers": {
@@ -1367,10 +1392,26 @@ def load_sample_data_batch():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    codon_frequency = CodonFrequencyDataset(
-        root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
-        genome=genome,
-    )
+    selected_node_embeddings = ["fudt_upstream"]
+    node_embeddings = {}
+    if "fudt_downstream" in selected_node_embeddings:
+        node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+            genome=genome,
+            model_name="species_downstream",
+        )
+
+    if "fudt_upstream" in selected_node_embeddings:
+        node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+            genome=genome,
+            model_name="species_upstream",
+        )
+    elif "fudt_downstream" in selected_node_embeddings:
+        node_embeddings["codon_frequency"] = CodonFrequencyDataset(
+            root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
+            genome=genome,
+        )
 
     with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
         query = f.read()
@@ -1379,13 +1420,14 @@ def load_sample_data_batch():
     )
     gem = YeastGEM()
     reaction_map = gem.reaction_map
+
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         incidence_graphs={"metabolism": reaction_map},
-        node_embeddings={"codon_frequency": codon_frequency},
+        node_embeddings=node_embeddings,
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
@@ -1397,7 +1439,7 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=32,
+        batch_size=128,
         random_seed=seed,
         num_workers=6,
         pin_memory=False,
@@ -1409,7 +1451,7 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=32,
+        batch_size=128,
         num_workers=6,
         pin_memory=True,
         prefetch=False,
@@ -1419,11 +1461,13 @@ def load_sample_data_batch():
     max_num_nodes = len(dataset.gene_set)
     for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
         break
+    input_channels = dataset.cell_graph["gene"].x.size()[-1]
+    return dataset, batch, input_channels, max_num_nodes
 
-    return dataset, batch, max_num_nodes
 
-
-def plot_correlations(predictions, true_values, save_path):
+def plot_correlations(
+    predictions, true_values, save_path, lambda_info="", weight_decay=""
+):
     import numpy as np
     from scipy import stats
     import matplotlib.pyplot as plt
@@ -1434,6 +1478,8 @@ def plot_correlations(predictions, true_values, save_path):
 
     # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    # Add a suptitle with lambda and weight decay information
+    fig.suptitle(f"{lambda_info}, wd={weight_decay}", fontsize=12)
 
     # Colors for plotting
     color = "#2971A0"
@@ -1453,9 +1499,8 @@ def plot_correlations(predictions, true_values, save_path):
     ax1.set_ylabel("True Fitness")
     ax1.set_title(
         f"Fitness\nMSE={mse_fitness:.3e}, n={len(x_fitness)}\n"
-        + f"Pearson={pearson_fitness:.3f}, Spearman={spearman_fitness:.3f}"
+        f"Pearson={pearson_fitness:.3f}, Spearman={spearman_fitness:.3f}"
     )
-
     # Add diagonal line for fitness
     min_val = min(ax1.get_xlim()[0], ax1.get_ylim()[0])
     max_val = max(ax1.get_xlim()[1], ax1.get_ylim()[1])
@@ -1475,33 +1520,33 @@ def plot_correlations(predictions, true_values, save_path):
     ax2.set_ylabel("True Gene Interaction")
     ax2.set_title(
         f"Gene Interaction\nMSE={mse_gi:.3e}, n={len(x_gi)}\n"
-        + f"Pearson={pearson_gi:.3f}, Spearman={spearman_gi:.3f}"
+        f"Pearson={pearson_gi:.3f}, Spearman={spearman_gi:.3f}"
     )
-
     # Add diagonal line for gene interactions
     min_val = min(ax2.get_xlim()[0], ax2.get_ylim()[0])
     max_val = max(ax2.get_xlim()[1], ax2.get_ylim()[1])
     ax2.plot([min_val, max_val], [min_val, max_val], "k--", alpha=0.5)
 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     plt.savefig(save_path)
     plt.close()
 
 
-def main(device="gpu"):
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
+def main(device="cuda"):
+    from torchcell.timestamp import timestamp
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
     import os.path as osp
     import os
-    from torchcell.timestamp import timestamp
     import torch
+    from torchcell.losses.isomorphic_cell_loss import ICLoss
 
-    # Check if CUDA is available when device='cuda' is requested
+    # Convert "gpu" to "cuda" if needed
+    if device.lower() == "gpu":
+        device = "cuda"
     if device == "cuda" and not torch.cuda.is_available():
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
-
     device = torch.device(device)
     print(f"\nUsing device: {device}")
 
@@ -1511,24 +1556,44 @@ def main(device="gpu"):
     plt.style.use(MPLSTYLE_PATH)
 
     # Load sample data including metabolism
-    dataset, batch, max_num_nodes = load_sample_data_batch()
+    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch()
 
     # Move data to device
-    cell_graph = dataset.cell_graph.to(device)  # Base graph for whole
+    cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
     # Model configuration
-    model = initialize_model(dataset, device)
-
+    model = initialize_model(input_channels, device)
     print("\nModel architecture:")
     print(model)
 
-    # Training setup
-    loss_type = "mse"
-    criterion = CombinedRegressionLoss(
-        loss_type=loss_type, weights=torch.ones(2, device=device)
+    # Set lambda values and weight decay
+    lambda_dist = 0.1
+    lambda_supcr = 0.01
+    lambda_cell = 100
+    weight_decay = 1e-6
+
+    # Compute weights (example calculation)
+    total_non_nan = (~batch["gene"].fitness.isnan()).sum() + (
+        ~batch["gene"].gene_interaction.isnan()
+    ).sum()
+    minus_fit_count = 1 - (~batch["gene"].fitness.isnan()).sum()
+    minus_gi_count = 1 - (~batch["gene"].gene_interaction.isnan()).sum()
+    weights = torch.tensor(
+        [minus_fit_count / total_non_nan, minus_gi_count / total_non_nan]
+    ).to(device)
+
+    # Training setup using ICLoss.
+    criterion = ICLoss(
+        lambda_dist=lambda_dist,
+        lambda_supcr=lambda_supcr,
+        lambda_cell=lambda_cell,
+        weights=weights,
     )
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=0.001, weight_decay=weight_decay
+    )
 
     # Get targets and move to device
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
@@ -1537,24 +1602,33 @@ def main(device="gpu"):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 10
+    num_epochs = 10000
 
     try:
         for epoch in range(num_epochs):
             optimizer.zero_grad()
-
-            # Forward pass - now using cell_graph and batch
+            # Forward pass: obtain predictions and representations (including z_w, z_p, z_i)
             predictions, representations = model(cell_graph, batch)
-            loss, loss_components = criterion(predictions, y)
+            loss, loss_components = criterion(
+                predictions,
+                y,
+                representations["z_w"],
+                representations["z_p"],
+                representations["z_i"],
+            )
 
-            # Rest of training loop remains the same
             if epoch % 10 == 0:
                 print(f"\nEpoch {epoch + 1}/{num_epochs}")
                 print(f"Loss: {loss.item():.4f}")
                 print("Predictions shape:", predictions.shape)
                 print("Targets shape:", y.shape)
                 print("Loss components:", loss_components)
-
+                print("MSE dimension losses:", loss_components.get("mse_dim_losses"))
+                print("Dist dimension losses:", loss_components.get("dist_dim_losses"))
+                print(
+                    "SupCR dimension losses:", loss_components.get("supcr_dim_losses")
+                )
+                print("Cell dimension losses:", loss_components.get("cell_dim_losses"))
                 if device.type == "cuda":
                     print(
                         f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
@@ -1577,52 +1651,68 @@ def main(device="gpu"):
             print("4. Using mixed precision training")
         raise
 
-    # Plotting (move tensors to CPU for matplotlib)
+    # Plot training loss
     plt.figure(figsize=(12, 6))
-    plt.plot(
-        range(1, len(losses) + 1), losses, "b-", label=f"{loss_type} Training Loss"
-    )
+    plt.plot(range(1, len(losses) + 1), losses, "b-", label="ICLoss Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss (log scale)")
-    plt.title("Training Loss Over Time")
+    plt.title(
+        f"Training Loss Over Time: λ_dist={lambda_dist}, λ_supcr={lambda_supcr}, λ_cell={lambda_cell}, wd={weight_decay}"
+    )
     plt.grid(True)
     plt.yscale("log")
     plt.legend()
     plt.tight_layout()
-
     plt.savefig(
         osp.join(
             ASSET_IMAGES_DIR,
-            f"isomorphic_cell_attentional_training_loss_{loss_type}_{timestamp()}.png",
+            f"isomorphic_cell_attentional_training_loss_ICLoss_{timestamp()}.png",
         )
     )
     plt.close()
-    # Move predictions to CPU for correlation plotting
+
+    # Plot correlations with lambda and weight decay info
+    from torchcell.models.isomorphic_cell_attentional import plot_correlations
+
     correlation_save_path = osp.join(
         ASSET_IMAGES_DIR,
-        f"isomorphic_cell_attentional_correlation_plots_{loss_type}_{timestamp()}.png",
+        f"isomorphic_cell_attentional_correlation_plots_ICLoss_{timestamp()}.png",
     )
-    plot_correlations(predictions.cpu(), y.cpu(), correlation_save_path)
+    lambda_info = f"λ_dist={lambda_dist}, λ_supcr={lambda_supcr}, λ_cell={lambda_cell}"
+    plot_correlations(
+        predictions.cpu(),
+        y.cpu(),
+        correlation_save_path,
+        lambda_info=lambda_info,
+        weight_decay=weight_decay,
+    )
 
     # Final model evaluation
     print("\nFinal Performance:")
     model.eval()
     with torch.no_grad():
-        final_predictions, _ = model(cell_graph, batch)  # Pass both arguments
-        final_loss, final_components = criterion(final_predictions, y)
+        final_predictions, final_reps = model(cell_graph, batch)
+        final_loss, final_components = criterion(
+            final_predictions,
+            y,
+            final_reps["z_w"],
+            final_reps["z_p"],
+            final_reps["z_i"],
+        )
         print(f"Final loss: {final_loss.item():.4f}")
-        print("Loss components:", final_components)
-
+        print("Final loss components:", final_components)
+        print("Final MSE dimension losses:", final_components.get("mse_dim_losses"))
+        print("Final Dist dimension losses:", final_components.get("dist_dim_losses"))
+        print("Final SupCR dimension losses:", final_components.get("supcr_dim_losses"))
+        print("Final Cell dimension losses:", final_components.get("cell_dim_losses"))
         if device.type == "cuda":
             print(f"\nFinal GPU memory usage:")
             print(f"Allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB")
             print(f"Cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB")
 
-    # Optional: Clear CUDA cache if using GPU
     if device.type == "cuda":
         torch.cuda.empty_cache()
 
 
 if __name__ == "__main__":
-    # You can easily switch between CPU and GPU by changing the device parameter
-    main(device="cpu")  # or main(device='cpu') for CPU
+    main(device="cuda")

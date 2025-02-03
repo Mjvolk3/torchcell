@@ -59,14 +59,14 @@ class GCN(torch.nn.Module):
 
 class CellLoss(nn.Module):
     def __init__(
-        self, lambda_1: float = 1.0, lambda_2: float = 1.0, device: str = "cuda"
+        self, lambda_dist: float = 1.0, lambda_supcr: float = 1.0, device: str = "cuda"
     ):
         super().__init__()
         self.mse_loss = WeightedMSELoss(weights=torch.ones(19, device=device))
         self.div_loss = WeightedDistLoss(weights=torch.ones(19, device=device))
         self.con_loss = SupCR()
-        self.lambda_1 = lambda_1
-        self.lambda_2 = lambda_2
+        self.lambda_dist = lambda_dist
+        self.lambda_supcr = lambda_supcr
 
     def forward(
         self,
@@ -87,8 +87,8 @@ class CellLoss(nn.Module):
         con_loss = self.con_loss(graph_embeddings, targets).mean()
 
         weighted_mse = mse_loss
-        weighted_div = self.lambda_1 * div_loss
-        weighted_con = self.lambda_2 * con_loss
+        weighted_div = self.lambda_dist * div_loss
+        weighted_con = self.lambda_supcr * con_loss
         total = weighted_mse + weighted_div + weighted_con
 
         return {
@@ -621,8 +621,8 @@ def main(cfg: DictConfig) -> None:
     ).to(device)
 
     loss_fn = CellLoss(
-        lambda_1=wandb.config.loss_sweep["lambda_1"],
-        lambda_2=wandb.config.loss_sweep["lambda_2"],
+        lambda_dist=wandb.config.loss_sweep["lambda_dist"],
+        lambda_supcr=wandb.config.loss_sweep["lambda_supcr"],
         device=device,
     )
 
@@ -649,7 +649,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Generate and save visualizations
-    loss_name = f"MSE+(λ1={wandb.config['loss_sweep']['lambda_1']:.0e})DistLoss+(λ2={wandb.config['loss_sweep']['lambda_2']:.0e})SupCR+(wd={wandb.config['training']['weight_decay']:.0e})L2"
+    loss_name = f"MSE+(λ1={wandb.config['loss_sweep']['lambda_dist']:.0e})DistLoss+(λ2={wandb.config['loss_sweep']['lambda_supcr']:.0e})SupCR+(wd={wandb.config['training']['weight_decay']:.0e})L2"
 
     # Plot loss curves
     vis.plot_loss_curves(losses, loss_name, num_epochs, timestamp_str)

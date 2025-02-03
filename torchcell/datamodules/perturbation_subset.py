@@ -23,8 +23,10 @@ from torch_geometric.loader import DenseDataLoader
 
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
-from torchcell.datamodules import DataModuleIndex 
+from torchcell.datamodules import DataModuleIndex
 from tqdm import tqdm
+
+
 class PerturbationSubsetDataModule(L.LightningDataModule):
     def __init__(
         self,
@@ -53,13 +55,19 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         if gene_subsets is not None and len(gene_subsets) > 0:
             self.subset_tag, self.gene_subset = list(gene_subsets.items())[0]
         else:
-            self.subset_tag, self.gene_subset = "all", None
+            self.subset_tag, self.gene_subset = None, None
 
         self.cache_dir = self.cell_data_module.cache_dir
-        self.subset_dir = osp.join(
-            self.cache_dir,
-            f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}"
-        )
+        if self.subset_tag:
+            self.subset_dir = osp.join(
+                self.cache_dir,
+                f"perturbation_subset_{format_scientific_notation(size)}_{self.subset_tag}",
+            )
+        else:
+            self.subset_dir = osp.join(
+                self.cache_dir,
+                f"perturbation_subset_{format_scientific_notation(size)}",
+            )
         os.makedirs(self.subset_dir, exist_ok=True)
         random.seed(self.seed)
         self._index = None
@@ -96,7 +104,6 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             self._create_subset()
             self._save_index()
 
-
     def _create_subset(self):
         tqdm.write("Starting _create_subset()")
         # Get base indices and details.
@@ -113,7 +120,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         }
         tqdm.write(f"Original split ratios: {original_ratios}")
 
-        target_sizes = {split: int(self.size * ratio) for split, ratio in original_ratios.items()}
+        target_sizes = {
+            split: int(self.size * ratio) for split, ratio in original_ratios.items()
+        }
         difference = self.size - sum(target_sizes.values())
         target_sizes["train"] += difference
         tqdm.write(f"Target sizes per split: {target_sizes}")
@@ -133,30 +142,42 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
         for split in ["train", "val", "test"]:
             tqdm.write(f"Processing split: {split}")
-            pert_count_index = getattr(cell_index_details, split).perturbation_count_index
+            pert_count_index = getattr(
+                cell_index_details, split
+            ).perturbation_count_index
             remaining_size = target_sizes[split]
             tqdm.write(f"Remaining size for {split}: {remaining_size}")
 
             # First, sample from perturbation count 1 indices.
             single_pert_indices = pert_count_index[1].indices
             if valid_indices is not None:
-                single_pert_indices = [i for i in single_pert_indices if i in valid_indices]
+                single_pert_indices = [
+                    i for i in single_pert_indices if i in valid_indices
+                ]
             num_single = len(single_pert_indices)
             tqdm.write(f"Found {num_single} single-perturbation indices for {split}")
             sampled_single = single_pert_indices[:remaining_size]
             selected_indices[split].extend(sampled_single)
             remaining_size -= len(sampled_single)
-            tqdm.write(f"After sampling count=1, remaining size for {split}: {remaining_size}")
+            tqdm.write(
+                f"After sampling count=1, remaining size for {split}: {remaining_size}"
+            )
 
             # Then, sample from other perturbation levels if needed.
             if remaining_size > 0:
-                other_levels = [level for level in pert_count_index.keys() if level != 1]
+                other_levels = [
+                    level for level in pert_count_index.keys() if level != 1
+                ]
                 tqdm.write(f"Sampling from other levels for {split}: {other_levels}")
                 while remaining_size > 0 and other_levels:
                     samples_per_level = max(1, remaining_size // len(other_levels))
                     tqdm.write(f"Samples per level for {split}: {samples_per_level}")
-                    for level in tqdm(other_levels, desc=f"Sampling levels for {split}"):
-                        available = set(pert_count_index[level].indices) - set(selected_indices[split])
+                    for level in tqdm(
+                        other_levels, desc=f"Sampling levels for {split}"
+                    ):
+                        available = set(pert_count_index[level].indices) - set(
+                            selected_indices[split]
+                        )
                         if valid_indices is not None:
                             available = available.intersection(valid_indices)
                         if available:
@@ -165,24 +186,33 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                             )
                             selected_indices[split].extend(sampled)
                             remaining_size -= len(sampled)
-                            tqdm.write(f"Level {level}: sampled {len(sampled)} indices; remaining {remaining_size}")
+                            tqdm.write(
+                                f"Level {level}: sampled {len(sampled)} indices; remaining {remaining_size}"
+                            )
                             if remaining_size <= 0:
                                 break
                     other_levels = [
-                        level for level in other_levels
-                        if len(set(pert_count_index[level].indices) - set(selected_indices[split])) > 0
+                        level
+                        for level in other_levels
+                        if len(
+                            set(pert_count_index[level].indices)
+                            - set(selected_indices[split])
+                        )
+                        > 0
                     ]
                     tqdm.write(f"Updated other levels for {split}: {other_levels}")
 
         self._index = DataModuleIndex(
             train=sorted(selected_indices["train"]),
             val=sorted(selected_indices["val"]),
-            test=sorted(selected_indices["test"])
+            test=sorted(selected_indices["test"]),
         )
         self._create_index_details()  # Assuming you have an implementation for this
         total_selected = sum(len(indices) for indices in selected_indices.values())
         tqdm.write(f"Total selected indices: {total_selected}")
-        assert total_selected == self.size, f"Expected {self.size} samples, but got {total_selected}"
+        assert (
+            total_selected == self.size
+        ), f"Expected {self.size} samples, but got {total_selected}"
 
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
@@ -221,15 +251,14 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 setattr(dataset_split, method, split_data)
         return dataset_split
 
-
     def _save_index(self):
         index_path = osp.join(
             self.subset_dir,
-            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json"
+            f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
         )
         details_path = osp.join(
             self.subset_dir,
-            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json"
+            f"index_details_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
         )
         with open(index_path, "w") as f:
             json.dump(self._index.model_dump(), f, indent=2)

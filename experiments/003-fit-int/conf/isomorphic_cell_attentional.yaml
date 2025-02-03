@@ -29,7 +29,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 8
+  batch_size: 16
   num_workers: 8
   pin_memory: true
   prefetch: true
@@ -84,9 +84,9 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  lambda_dist: 0.1
-  lambda_supcr: 0.01
-  lambda_cell: 100
+  lambda_dist: 0.5
+  lambda_supcr: 0.5
+  lambda_cell: 0.1
   optimizer:
     type: "AdamW"
     lr: 1e-3

@@ -1,0 +1,107 @@
+# conf/isomorphic_cell_attentional.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_003-fit-int_isomorphic_cell_attentional
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings: [codon_frequency]
+  learnable_embedding_input_channels: 64
+  graph_processor: unperturbed
+  incidence_graphs: [metabolism]
+
+transforms:
+  norm: true
+  norm_strategy: "minmax"
+  bin: false
+  bin_strategy: "equal_frequency"
+  num_bins: 32
+  store_continuous: true
+  label_type: soft
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 2.5e4
+  batch_size: 8
+  num_workers: 8
+  pin_memory: true
+  prefetch: true
+
+trainer:
+  max_epochs: 100
+  strategy: auto
+  accelerator: cpu
+  devices: auto
+
+model:
+  in_channels: 64
+  hidden_channels: 64
+  num_layers:
+    preprocessor: 2
+    gene_encoder: 2
+    metabolism: 2
+    combiner: 2
+  dropout: 0.1
+  gene_encoder_config:
+    conv_type: "GIN" # Options: "GCN", "GAT", "Transformer", "GIN"
+    layer_config:
+      train_eps: true
+      hidden_multiplier: 2.0
+      add_self_loops: true
+      is_skip_connection: true
+      num_mlp_layers: 3
+      is_mlp_skip_connection: true
+    activation: "gelu"
+    norm: "layer"
+    head_num_layers: 2
+    head_hidden_channels: null
+    head_dropout: 0.1
+    head_activation: "gelu"
+    head_residual: true
+    head_norm: "layer"
+  metabolism_config:
+    max_metabolite_nodes: 2534
+    use_attention: true
+    dropout: 0.1
+  preprocessor_config: {}
+  combiner_config:
+    num_layers: 2
+    hidden_factor: 1.0
+    dropout: 0.1
+  prediction_head_config:
+    hidden_layers: [64]
+    dropout: 0.1
+    activation: "gelu"
+    use_layer_norm: true
+    residual: true
+
+regression_task:
+  is_weighted_phenotype_loss: true
+  lambda_dist: 0.1
+  lambda_supcr: 0.01
+  lambda_cell: 100
+  optimizer:
+    type: "AdamW"
+    lr: 1e-3
+    weight_decay: 1e-9
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  boxplot_every_n_epochs: 1
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null

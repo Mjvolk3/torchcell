@@ -596,10 +596,11 @@ def main(cfg: DictConfig) -> None:
     print(f"Using device: {device}")
 
     # Dataset setup
+    data_root = osp.join(DATA_ROOT, "data/QM9")
     if wandb.config.training["dataset_size"] is not None:
-        dataset = QM9(root="/tmp/QM9")[: wandb.config.training["dataset_size"]]
+        dataset = QM9(root=data_root)[: wandb.config.training["dataset_size"]]
     else:
-        dataset = QM9(root="/tmp/QM9")
+        dataset = QM9(root=data_root)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(

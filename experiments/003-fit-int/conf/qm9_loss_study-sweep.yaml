@@ -11,9 +11,9 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [5]
+        values: [30]
       dataset_size:
-        values: [1000] #[null] for all #TODO
+        values: [10000] #[1000] #[null] for all #TODO
       learning_rate:
         values: [1e-3]
       batch_size:
@@ -21,7 +21,8 @@ parameters:
       hidden_channels:
         values: [256]
       weight_decay:
-        values: [0.0, 1e-4, 1e-3]
+        # values: [0.0, 1e-6, 1e-4]
+        values: [0.0]
 
   loss_sweep:
     parameters:

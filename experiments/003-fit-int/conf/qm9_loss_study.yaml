@@ -15,5 +15,5 @@ training:
   weight_decay: 0
 
 loss_sweep:
-  lambda_1: 0
-  lambda_2: 0
+  lambda_dist: 0
+  lambda_supcr: 0

@@ -45,6 +45,7 @@ log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 WANDB_MODE = os.getenv("WAND_MODE")
+EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
 
 def get_slurm_nodes() -> int:
@@ -303,7 +304,9 @@ def main(cfg: DictConfig) -> None:
     if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
         incidence_graphs["metabolism"] = yeast_gem.reaction_map
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open(
+        osp.join(EXPERIMENT_ROOT, "003-fit-int/queries/001-small-build.cql"), "r"
+    ) as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -456,7 +459,7 @@ def main(cfg: DictConfig) -> None:
         callbacks=[checkpoint_callback],
         profiler=profiler,
         log_every_n_steps=10,
-        overfit_batches=1,
+        overfit_batches=10,
     )
 
     trainer.fit(model=task, datamodule=data_module)

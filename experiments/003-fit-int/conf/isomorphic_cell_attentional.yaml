@@ -35,10 +35,10 @@ data_module:
   prefetch: true
 
 trainer:
-  max_epochs: 100
+  max_epochs: 1000
   strategy: auto
-  accelerator: cpu
-  devices: auto
+  accelerator: gpu
+  devices: 1
 
 model:
   in_channels: 64

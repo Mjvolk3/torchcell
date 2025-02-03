@@ -1,15 +1,15 @@
 program: experiments/003-fit-int/scripts/mse_distloss_supcr.py
-project: torchcell_qm9_loss_study
+project: torchcell_qm9_loss_study_test
 method: grid
 
 wandb:
   project: "qm9_loss_study"
 
 training:
-  num_epochs: 2
-  dataset_size: 1000
-  learning_rate: 0.01
-  batch_size: 32
+  num_epochs: 5
+  dataset_size: 10000
+  learning_rate: 0.001
+  batch_size: 256
   hidden_channels: 128
   weight_decay: 0
 

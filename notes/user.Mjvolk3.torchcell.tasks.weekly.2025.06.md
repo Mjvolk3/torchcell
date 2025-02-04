@@ -2,7 +2,7 @@
 id: 9iva3m2lluhgot3xu1cq9nl
 title: '06'
 desc: ''
-updated: 1738551971891
+updated: 1738644762699
 created: 1738521316295
 ---
 
@@ -23,19 +23,21 @@ created: 1738521316295
 
 ### 2025.02.02 - Iso Attentional Batch Overfit
 
-- [ ]
-- [ ]
-- [ ]
-
-### 2025.02.02 - QM9 Data Grid Search
-
 - [x] 8 ish pm check on progress. Decide on more jobs. → 6pm all finished. → Dist plots bad due to num bins. Down sampling for plotting → 10 min/epoch with `5e4` data, little less than 1/3 of all data... waiting.
-- [ ] Run 2 epoch testrun then predict time for run. →  running single batch.
-- [ ]
+- [x] `Qm9` Run 2 epoch testrun then predict time for run. →  running single batch.
 
-##
+## 2025.02.03
 
-### 2025.02.02 - Node Embeddings for Whole Genome
+- [x] `GH` rsync backup of `/scratch` in `/Documents/projects`
+- [x] Shipped `GH`
+
+- [ ] Sweep file for
+- [ ] Run over fit batch with sweep. This should not be difficult. Should parameterize the overfit number. To have in logs.
+
+- [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+
+***
+**Node Embeddings for Whole Genome**
 
 - [ ] Delay to feature transfer
 - [ ] Find and replace str for moving node embeddings.
@@ -43,14 +45,6 @@ created: 1738521316295
 - [ ] Delete Node embeddings on `Delta`.
 - [ ] Transfer Node embeddings to `Delta`.
 - [ ] Remove node embeddings on `GH` so when we get machine on return things will break until we transfer node embeddings back.
-
-## 2025.02.03
-
-### 2025.02.03 - Notes
-
-- [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
-
-***
 
 - [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
 - [ ] Make sure y distributions look like they y from other datasets.

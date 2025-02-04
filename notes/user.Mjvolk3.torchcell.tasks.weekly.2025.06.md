@@ -2,7 +2,7 @@
 id: 9iva3m2lluhgot3xu1cq9nl
 title: '06'
 desc: ''
-updated: 1738644762699
+updated: 1738659153348
 created: 1738521316295
 ---
 
@@ -35,6 +35,10 @@ created: 1738521316295
 - [ ] Run over fit batch with sweep. This should not be difficult. Should parameterize the overfit number. To have in logs.
 
 - [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+
+## 2025.02.04
+
+Add preprocessor config
 
 ***
 **Node Embeddings for Whole Genome**

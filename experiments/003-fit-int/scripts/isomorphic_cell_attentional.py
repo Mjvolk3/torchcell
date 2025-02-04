@@ -383,6 +383,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     param_counts = model.num_parameters
+    print(param_counts)
     wandb.log(
         {
             "model/params_gene_encoder": param_counts.get("gene_encoder", 0),
@@ -459,7 +460,7 @@ def main(cfg: DictConfig) -> None:
         callbacks=[checkpoint_callback],
         profiler=profiler,
         log_every_n_steps=10,
-        overfit_batches=10,
+        overfit_batches=wandb.config.trainer["overfit_batches"],
     )
 
     trainer.fit(model=task, datamodule=data_module)

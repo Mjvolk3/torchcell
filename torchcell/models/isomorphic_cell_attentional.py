@@ -78,7 +78,8 @@ class PreProcessor(nn.Module):
         super().__init__()
         layers = []
         # Use BatchNorm1d instead of LayerNorm for input features
-        layers.append(nn.BatchNorm1d(in_channels))
+
+        # layers.append(nn.BatchNorm1d(in_channels))
         # First linear transformation block
         layers.extend(
             [
@@ -695,67 +696,6 @@ class GeneContextProcessor(nn.Module):
         return H_g, H_r
 
 
-class MetaboliteProcessor(nn.Module):
-    def __init__(
-        self,
-        hidden_channels: int,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        use_attention: bool = True,
-    ):
-        super().__init__()
-        self.conv_layers = nn.ModuleList(
-            [
-                StoichHypergraphConv(
-                    in_channels=hidden_channels,
-                    out_channels=hidden_channels,
-                    use_attention=use_attention,
-                    attention_mode="node",
-                    dropout=dropout,
-                    bias=True,
-                    use_skip=True,  # Enable skip connections
-                )
-                for _ in range(num_layers)
-            ]
-        )
-        self.layer_norms = nn.ModuleList(
-            [nn.LayerNorm(hidden_channels) for _ in range(num_layers)]
-        )
-
-    def forward(
-        self,
-        metabolite_embeddings: torch.Tensor,
-        hyperedge_index: torch.Tensor,
-        stoichiometry: torch.Tensor,
-        reaction_features: torch.Tensor,
-    ) -> torch.Tensor:
-
-        # Sort edge indices and convert perm to long tensor for indexing
-        edge_index, perm = sort_edge_index(
-            hyperedge_index, edge_attr=stoichiometry, sort_by_row=False
-        )
-        if isinstance(perm, tuple):
-            edge_index, stoich = edge_index, perm[0]
-        else:
-            # Convert perm to long tensor before indexing
-            perm = perm.long()  # or perm.to(torch.long)
-            stoich = stoichiometry[perm]
-
-        x = metabolite_embeddings
-        for conv, norm in zip(self.conv_layers, self.layer_norms):
-            out = conv(
-                x=x,
-                edge_index=edge_index,
-                stoich=stoich,
-                hyperedge_attr=reaction_features,
-            )
-            out = norm(out)
-            out = out + x
-            x = torch.tanh(out)
-
-        return x
-
-
 class ReactionMapper(nn.Module):
     """
     Aggregates metabolite features -> reaction embeddings via attention.
@@ -827,6 +767,7 @@ class MetabolismProcessor(nn.Module):
         num_layers: dict[str, int] = {"metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
+        heads: int = 1,
     ):
         super().__init__()
         self.max_metabolite_nodes = max_metabolite_nodes
@@ -859,6 +800,7 @@ class MetabolismProcessor(nn.Module):
                     attention_mode="node",
                     dropout=dropout,
                     bias=True,
+                    heads=heads,
                 )
                 for _ in range(num_layers["metabolite"])
             ]
@@ -1065,6 +1007,7 @@ class IsomorphicCell(nn.Module):
             "set_transformer_heads": 4,
             "use_skip": True,
             "dropout": dropout,
+            "heads": 1,
         }
         if metabolism_config:
             self.metabolism_config.update(metabolism_config)
@@ -1111,6 +1054,7 @@ class IsomorphicCell(nn.Module):
             num_layers={"metabolite": num_layers["metabolism"]},
             dropout=self.metabolism_config["dropout"],
             use_attention=self.metabolism_config["use_attention"],
+            heads=self.metabolism_config["heads"],
         )
 
         # Combiner to merge gene and metabolism paths
@@ -1137,31 +1081,34 @@ class IsomorphicCell(nn.Module):
         )
 
     def _build_mlp(self, in_dim: int, out_dim: int, config: dict) -> nn.Sequential:
-        layers = []
+        layers: list[nn.Module] = []
         current_dim = in_dim
 
         for hidden_dim in config["hidden_layers"]:
-            # Create a residual block class for skip connections
-            if config["residual"] and current_dim == hidden_dim:
+            # Create a residual block with integrated dropout if applicable.
+            if config.get("residual", False) and current_dim == hidden_dim:
 
                 class ResidualBlock(nn.Module):
-                    def __init__(self, linear):
+                    def __init__(self, linear: nn.Linear, dropout: float) -> None:
                         super().__init__()
                         self.linear = linear
+                        self.dropout = nn.Dropout(dropout)
 
-                    def forward(self, x):
-                        return self.linear(x) + x
+                    def forward(self, x: torch.Tensor) -> torch.Tensor:
+                        return self.dropout(self.linear(x)) + x
 
-                layers.append(ResidualBlock(nn.Linear(current_dim, hidden_dim)))
+                layers.append(
+                    ResidualBlock(nn.Linear(current_dim, hidden_dim), config["dropout"])
+                )
             else:
                 layers.append(nn.Linear(current_dim, hidden_dim))
 
-            if config["use_layer_norm"]:
+            if config.get("use_layer_norm", False):
                 layers.append(nn.LayerNorm(hidden_dim))
 
             layers.append(act_register[config["activation"]])
+            # Add dropout after activation.
             layers.append(nn.Dropout(config["dropout"]))
-
             current_dim = hidden_dim
 
         layers.append(nn.Linear(current_dim, out_dim))
@@ -1248,34 +1195,25 @@ class IsomorphicCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        # Gene encoder parameters
+        preprocessor_params = sum(p.numel() for p in self.preprocessor.parameters())
         gene_encoder_params = sum(p.numel() for p in self.gene_encoder.parameters())
-
-        # Metabolism processor parameters
         metabolism_params = sum(
             p.numel() for p in self.metabolism_processor.parameters()
         )
-
-        # Combiner parameters
         combiner_params = sum(p.numel() for p in self.combiner.parameters())
-
-        # Aggregator parameters
         aggregator_params = sum(
             p.numel()
             for aggregator in [self.whole_intact_aggregator, self.perturbed_aggregator]
             for p in aggregator.parameters()
         )
-
-        # Prediction head parameters
         growth_head_params = sum(p.numel() for p in self.growth_head.parameters())
         interaction_head_params = sum(
             p.numel() for p in self.gene_interaction_head.parameters()
         )
-
-        # Total trainable parameters
         total_trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
 
         return {
+            "preprocessor": preprocessor_params,
             "gene_encoder": gene_encoder_params,
             "metabolism_processor": metabolism_params,
             "combiner": combiner_params,
@@ -1286,22 +1224,18 @@ class IsomorphicCell(nn.Module):
         }
 
 
-def initialize_model(input_channels, device, config=None):
-    if config is None:
-        config = {}
-
-    default_config = {
-        # Model dimensions
+def initialize_model(
+    input_channels: int, device: torch.device, model_config: dict
+) -> IsomorphicCell:
+    default_model_config = {
         "in_channels": input_channels,
         "hidden_channels": 64,
-        # Layer counts
         "num_layers": {
             "preprocessor": 2,
             "gene_encoder": 3,
             "metabolism": 2,
             "combiner": 2,
         },
-        # Gene encoder settings
         "gene_encoder_config": {
             "conv_type": "GIN",
             "layer_config": {
@@ -1322,14 +1256,20 @@ def initialize_model(input_channels, device, config=None):
             "head_residual": True,
             "head_norm": "layer",
         },
-        # Metabolism processor settings
         "metabolism_config": {
             "max_metabolite_nodes": 2534,
             "use_attention": True,
             "use_skip": True,
             "dropout": 0.1,
         },
-        # General settings
+        "combiner_config": {"num_layers": 2, "hidden_factor": 1.0, "dropout": 0.1},
+        "prediction_head_config": {
+            "hidden_layers": [64, 64],
+            "dropout": 0.1,
+            "activation": "gelu",
+            "use_layer_norm": True,
+            "residual": True,
+        },
         "dropout": 0.1,
         "edge_types": [
             ("gene", "physical_interaction", "gene"),
@@ -1337,26 +1277,26 @@ def initialize_model(input_channels, device, config=None):
         ],
     }
 
-    # Update config with user-provided values
-    for k, v in config.items():
-        if isinstance(v, dict):
-            default_config[k].update(v)
+    # Merge provided model_config into defaults
+    for key, value in model_config.items():
+        if key in default_model_config and isinstance(value, dict):
+            default_model_config[key].update(value)
         else:
-            default_config[k] = v
+            default_model_config[key] = value
 
-    config = default_config
-
+    cfg = default_model_config
     model = IsomorphicCell(
-        in_channels=config["in_channels"],
-        hidden_channels=config["hidden_channels"],
-        edge_types=config["edge_types"],
-        num_layers=config["num_layers"],
-        dropout=config["dropout"],
-        gene_encoder_config=config["gene_encoder_config"],
-        metabolism_config=config["metabolism_config"],
+        in_channels=cfg["in_channels"],
+        hidden_channels=cfg["hidden_channels"],
+        edge_types=cfg["edge_types"],
+        num_layers=cfg["num_layers"],
+        dropout=cfg["dropout"],
+        gene_encoder_config=cfg["gene_encoder_config"],
+        metabolism_config=cfg["metabolism_config"],
+        combiner_config=cfg["combiner_config"],
+        prediction_head_config=cfg["prediction_head_config"],
     ).to(device)
     print(model.num_parameters)
-
     return model
 
 

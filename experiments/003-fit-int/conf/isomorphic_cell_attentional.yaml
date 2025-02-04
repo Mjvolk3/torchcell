@@ -14,23 +14,14 @@ cell_dataset:
   graph_processor: unperturbed
   incidence_graphs: [metabolism]
 
-transforms:
-  norm: true
-  norm_strategy: "minmax"
-  bin: false
-  bin_strategy: "equal_frequency"
-  num_bins: 32
-  store_continuous: true
-  label_type: soft
-
 profiler:
   is_pytorch: true
 
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 16
-  num_workers: 8
+  batch_size: 2
+  num_workers: 2
   pin_memory: true
   prefetch: true
 
@@ -39,9 +30,9 @@ trainer:
   strategy: auto
   accelerator: cpu
   devices: 1
+  overfit_batches: 0 # > 0 for overfitting, 0 off.
 
 model:
-  in_channels: 64
   hidden_channels: 64
   num_layers:
     preprocessor: 2
@@ -51,13 +42,26 @@ model:
   dropout: 0.1
   gene_encoder_config:
     conv_type: "GIN" # Options: "GCN", "GAT", "Transformer", "GIN"
+    # GIN
     layer_config:
       train_eps: true
       hidden_multiplier: 2.0
+      dropout: 0.1
       add_self_loops: true
       is_skip_connection: true
       num_mlp_layers: 3
       is_mlp_skip_connection: true
+    
+    # GAT
+    # layer_config:
+    #   heads: 10
+    #   concat: false
+    #   bias: true
+    #   add_self_loops: false
+    #   share_weights: false
+    #   is_skip_connection: true
+
+    # gene_encoder general
     activation: "gelu"
     norm: "layer"
     head_num_layers: 2
@@ -69,14 +73,15 @@ model:
   metabolism_config:
     max_metabolite_nodes: 2534
     use_attention: true
+    heads: 1
     dropout: 0.1
-  preprocessor_config: {}
+  # preprocessor_config: {}
   combiner_config:
     num_layers: 2
     hidden_factor: 1.0
     dropout: 0.1
   prediction_head_config:
-    hidden_layers: [64]
+    hidden_layers: [64, 64]
     dropout: 0.1
     activation: "gelu"
     use_layer_norm: true

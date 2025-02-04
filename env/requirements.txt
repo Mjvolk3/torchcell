@@ -15,7 +15,9 @@
     networkx>=3.2.1
     #dask
     umap-learn>=0.5.3
-
+    # ? not sure which versoin
+    hypernetx>=2.3.10
+    
     # configuration
     hydra-core>=1.3.2
     deepdiff>=7.0.1

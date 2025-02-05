@@ -44,7 +44,7 @@ import torch.distributed as dist
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
-WANDB_MODE = os.getenv("WAND_MODE")
+WANDB_MODE = os.getenv("WANDB_MODE")
 EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
 
@@ -304,6 +304,7 @@ def main(cfg: DictConfig) -> None:
     if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
         incidence_graphs["metabolism"] = yeast_gem.reaction_map
 
+    print(EXPERIMENT_ROOT)
     with open(
         osp.join(EXPERIMENT_ROOT, "003-fit-int/queries/001-small-build.cql"), "r"
     ) as f:

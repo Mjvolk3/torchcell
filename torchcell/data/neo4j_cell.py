@@ -19,6 +19,7 @@ from tqdm import tqdm
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torch_geometric.data import Dataset
 from torch_geometric.utils import add_remaining_self_loops
+from torch_geometric.transforms import NormalizeFeatures
 
 # from torch_geometric.data import HeteroData
 from torchcell.data.hetero_data import HeteroData
@@ -57,23 +58,90 @@ class ParsedGenome(ModelStrictArbitrary):
         return v
 
 
+# HACK - normalize embedding start
+# Probably should reformat data for this, but would need to resave or recompute
+def normalize_tensor_row(x: torch.Tensor | list[torch.Tensor]) -> list[torch.Tensor]:
+    """Normalizes a tensor to sum to 1, after min subtraction."""
+    # Handle list input
+    if isinstance(x, list):
+        x = x[0]
+
+    # Add batch dimension if needed
+    if x.dim() == 1:
+        x = x.unsqueeze(0)
+
+    x = x - x.min()
+    x = x / x.sum(dim=-1, keepdim=True).clamp(min=1.0)
+    return list(x.flatten(-1))
+
+
+# HACK - normalize embedding end
+
+
 # @profile
+# def create_embedding_graph(
+#     gene_set: GeneSet, embeddings: BaseEmbeddingDataset
+# ) -> nx.Graph:
+#     """
+#     Create a NetworkX graph from embeddings.
+#     """
+
+#     # Create an empty NetworkX graph
+#     G = nx.Graph()
+
+#     # Extract and concatenate embeddings for all items in embeddings
+#     for item in embeddings:
+#         keys = item["embeddings"].keys()
+#         if item.id in gene_set:
+#             item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
+#             # HACK - normalize embedding - start
+#             item_embeddings = normalize_tensor_row(item_embeddings)
+#             # HACK - normalize embedding - end
+#             concatenated_embedding = torch.cat(item_embeddings)
+
+#             G.add_node(item.id, embedding=concatenated_embedding)
+
+#     return G
+
+
+def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
+    """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature."""
+    # Get the first key from embeddings dictionary
+    first_key = list(dataset._data.embeddings.keys())[0]
+    embeddings = dataset._data.embeddings[first_key]
+
+    # Normalize each feature (column) independently
+    normalized_embeddings = torch.zeros_like(embeddings)
+    for i in range(embeddings.size(1)):
+        feature = embeddings[:, i]
+        feature_min = feature.min()
+        feature_max = feature.max()
+
+        # If feature_min == feature_max, set to 0.5 to avoid div by zero
+        if feature_min == feature_max:
+            normalized_embeddings[:, i] = 0.5
+        else:
+            normalized_embeddings[:, i] = (feature - feature_min) / (
+                feature_max - feature_min
+            )
+
+    # Update the dataset embeddings
+    dataset._data.embeddings[first_key] = normalized_embeddings
+
+
 def create_embedding_graph(
     gene_set: GeneSet, embeddings: BaseEmbeddingDataset
 ) -> nx.Graph:
-    """
-    Create a NetworkX graph from embeddings.
-    """
-    # Create an empty NetworkX graph
-    G = nx.Graph()
+    """Create a NetworkX graph from embeddings."""
+    # Normalize dataset first
+    min_max_normalize_dataset(embeddings)
 
-    # Extract and concatenate embeddings for all items in embeddings
+    G = nx.Graph()
     for item in embeddings:
         keys = item["embeddings"].keys()
         if item.id in gene_set:
             item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
             concatenated_embedding = torch.cat(item_embeddings)
-
             G.add_node(item.id, embedding=concatenated_embedding)
 
     return G
@@ -1513,6 +1581,7 @@ def main_incidence():
     from torchcell.data import GenotypeAggregator
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
     from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.metabolism.yeast_GEM import YeastGEM
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -1535,20 +1604,19 @@ def main_incidence():
         root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
         genome=genome,
     )
-    # fudt_3prime_dataset = FungalUpDownTransformerDataset(
-    #     root="data/scerevisiae/fudt_embedding",
-    #     genome=genome,
-    #     model_name="species_downstream",
-    # )
-    # fudt_5prime_dataset = FungalUpDownTransformerDataset(
-    #     root="data/scerevisiae/fudt_embedding",
-    #     genome=genome,
-    #     model_name="species_downstream",
-    # )
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    from torchcell.metabolism.yeast_GEM import YeastGEM
 
     dataset = Neo4jCellDataset(
         root=dataset_root,
@@ -1556,7 +1624,11 @@ def main_incidence():
         gene_set=genome.gene_set,
         graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
         incidence_graphs={"metabolism": YeastGEM().reaction_map},
-        node_embeddings={"codon_frequency": codon_frequency},
+        node_embeddings={
+            "codon_frequency": codon_frequency,
+            "fudt_3prime": fudt_3prime_dataset,
+            "fudt_5prime": fudt_5prime_dataset,
+        },
         converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,

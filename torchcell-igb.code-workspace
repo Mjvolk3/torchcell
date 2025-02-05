@@ -1,0 +1,387 @@
+{
+    "folders": [
+        {
+            "name": "torchcell",
+            "path": "."
+        },
+        {   "name": "/home/a-m/mjvolk3/scratch/torchcell",
+            "path": "/home/a-m/mjvolk3/scratch/torchcell"
+        },
+    ],
+    "settings": {
+        "dendron.rootDir": ".",
+        "files.autoSave": "onFocusChange",
+        "pasteImage.path": "${currentFileDir}/assets/images",
+        "pasteImage.prefix": "./",
+        "markdown-preview-enhanced.enableWikiLinkSyntax": true,
+        "markdown-preview-enhanced.wikiLinkFileExtension": ".md",
+        "editor.snippetSuggestions": "inline",
+        "editor.suggest.snippetsPreventQuickSuggestions": false,
+        "editor.suggest.showSnippets": true,
+        "editor.tabCompletion": "on",
+        "dendron.enableSelfContainedVaultWorkspace": true,
+        "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
+        "workbench.colorCustomizations": {
+            "titleBar.activeBackground": "#6d1400df"
+        },
+        "markdownlint.config":{
+            "MD007": { "indent": 2 },
+            "MD008": false,
+            "MD013": false,
+            "MD014": false,
+            "MD018": false,
+            "MD025": false,
+            "MD026": false,
+            "MD033": false,
+            "MD045": false,
+            "MD050": false,
+        },
+        "[markdown]": {
+            "editor.codeActionsOnSave": {
+                "source.fixAll.markdownlint": "explicit"
+            }
+        },
+        "git.autoRepositoryDetection": false,
+        "liveServer.settings.multiRootWorkspaceName": "TorchCell",
+        "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
+        "mypy.enabled": true,
+        "mypy.runUsingActiveInterpreter": false,
+        "mypy.targets": [
+            ".",
+            "${workspaceFolder}/src/*"
+        ],
+        "git.ignoreLimitWarning": true
+    },
+    "extensions": {
+        "recommendations": [
+            "dendron.dendron",
+            "dendron.dendron-paste-image",
+            "dendron.dendron-markdown-shortcuts",
+            "redhat.vscode-yaml"
+        ],
+        "unwantedRecommendations": [
+            "dendron.dendron-markdown-links",
+            "dendron.dendron-markdown-vault",
+            "dendron.dendron-markdown-preview-enhanced",
+            "shd101wyy.markdown-preview-enhanced",
+            "kortina.vscode-markdown-notes",
+            "mushan.vscode-paste-image"
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            // Publish
+            {
+                "label": "Paper: compile",
+                "type": "shell",
+                "command": "bash notes/assets/publish/scripts/compile_paper.sh",
+                "problemMatcher": []
+            },
+            {
+                "label": "Pandoc: quick-pdf",
+                "type": "shell",
+                "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' --strip-comments   && cd ..",
+                "problemMatcher": []
+            },
+            {
+                "label": "Pandoc: bib-pdf",
+                "type": "shell",
+                "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex --citeproc --bibliography assets/publish/bib/bib.bib --metadata csl=assets/publish/bib/nature.csl -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' --strip-comments  && cd ..",
+                "problemMatcher": []
+            },
+            {
+                "label": "Pandoc: bib-tex-pdf",
+                "type": "shell",
+                "command": "./notes/assets/publish/scripts/bib_tex_pdf.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
+                "problemMatcher": []
+            },
+            // Cluster
+            {
+                "label": "nano: Interactive",
+                "type": "shell",
+                "command": "qsub -I -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=3600",
+                "problemMatcher": []
+            },
+            {
+                "label": "nano: qsub main",
+                "type": "shell",
+                "command": "qsub main.script -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=96:00:00 -N ${input:jobName}",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: sacct",
+                "type": "shell",
+                "command": "sacct --starttime=$(date -d '${input:days} days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End,Nodelist",
+                "problemMatcher": [],
+                "inputs": [
+                    {
+                        "id": "days",
+                        "description": "number of days",
+                        "type": "promptString",
+                        "default": "7"
+                    }
+                ]
+            },
+            {
+                "label": "Delta: Interactive gpuA40x",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive gpuA100x",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA100x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive gpuA40x",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=${input:A40x4_mem} --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive MI100x8",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuMI100x8-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=20g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "Delta: Interactive CPU",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=32g --pty bash",
+                "problemMatcher": []
+            },
+            {
+                "label": "genPE: M1 sweep",
+                "type": "shell",
+                "command": "bash src/genPE/sweep_m1.sh",
+                "problemMatcher": []
+            },
+            // Notability
+            {
+                "label": "notability: sync",
+                "type": "shell",
+                "command": "bash notes/assets/notability/scripts/sync.sh",
+                "problemMatcher": []
+            },
+            // mypy
+            {
+                "label": "mypy: file",
+                "type": "shell",
+                "command": "bash mypy/mypy.sh ${file}",
+                "problemMatcher": []
+            },
+            {
+                "label": "mypy: workspace",
+                "type": "shell",
+                "command": "bash mypy/mypy.sh .",
+                "problemMatcher": []
+            },
+            {
+                "label": "dmypy: restart",
+                "type": "shell",
+                "command": "bash mypy/dmypy_restart.sh",
+                "problemMatcher": []
+            },
+            // isort
+            {
+                "label": "isort: file",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
+                "problemMatcher": []
+            },
+            //python
+            {
+                "label": "python: add frontmatter",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/add_frontmatter.py",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared",
+                    "showReuseMessage": true,
+                    "clear": false
+                }
+            },
+            {
+                "label": "python: move file (note & test safe)",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/python_move_dendron_pytest.py",
+                    "${file}",
+                    "${input:newFilePath}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "reveal": "always"
+                }
+            },
+            {
+                "label": "python: create test file",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                    "${workspaceFolder}/notes/assets/scripts/create_python_test_file.py",
+                    "create",
+                    "${file}"
+                ],
+                "problemMatcher": [],
+                "presentation": {
+                    "echo": true,
+                    "reveal": "always",
+                    "focus": false,
+                    "panel": "shared",
+                    "showReuseMessage": true,
+                    "clear": false
+                }
+            },
+            {
+                "label": "python: delete src (note & test safe)",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                  "${workspaceFolder}/notes/assets/scripts/delete_file_and_open_related.py",
+                  "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                  "kind": "build",
+                  "isDefault": true
+                },
+                "presentation": {
+                  "reveal": "always",
+                  "focus": true,  // This will focus the terminal after the task is run
+                  "panel": "shared"
+                }
+            },
+            {
+                "label": "python: open related ",
+                "type": "shell",
+                "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+                "args": [
+                  "${workspaceFolder}/notes/assets/scripts/open_related.py",
+                  "${file}"
+                ],
+                "problemMatcher": [],
+                "group": {
+                  "kind": "build",
+                  "isDefault": true
+                },
+                "presentation": {
+                  "reveal": "always",
+                  "panel": "shared"
+                }
+            },
+        ],
+        "inputs" : [
+            {
+                "id": "newFilePath",
+                "type": "promptString",
+                "description": "Enter the new file path:",
+                "default": "src/torchcell/"
+            },
+            {
+                "id" : "jobName",
+                "description": "name of nano job",
+                "type": "promptString",
+            },
+            {
+                "id" : "days",
+                "description": "number of days",
+                "type": "promptString",
+                "default": "7"
+            },
+            {
+                "id" : "nanoNode",
+                "description": "nano Node",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "6",
+                    "8"
+
+                ]
+            },
+            {
+                "id" : "A40x4_num_gpus",
+                "description": "A40x4 num gpus",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                ],
+                "default": "1"
+            },
+            {
+                "id" : "A40x4_mem",
+                "description": "A40x4 memory ordered by SU equivalence (choose same index as num gpus)",
+                "type": "pickString",
+                "options": [
+                    "62g",
+                    "125g",
+                    "187g",
+                    "243g",
+                ],
+                "default": "62.5"
+            },
+            {
+                "id": "numProcessors",
+                "description": "number of cpus (nano2,nano3 (np=28); others (np=14) )",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "6",
+                    "12",
+                    "14",
+                    "28",
+                ]
+            }
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "name": "Python: Workspace Folder",
+                "type": "python",
+                "request": "launch",
+                "program": "${file}",
+                "console": "integratedTerminal",
+                "justMyCode": false,
+                "cwd": "${workspaceFolder:torchcell}",
+                "subProcess": true
+            },
+            {
+                "name": "Python: torchgeo",
+                "type": "python",
+                "request": "launch",
+                "program": "${file}",
+                "console": "integratedTerminal",
+                "justMyCode": false,
+                "cwd": "${workspaceFolder:torchgeo}",
+                "subProcess": true,
+                "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python"
+            },
+            {
+                "type": "chrome",
+                "name": "http://127.0.0.1:3000/docs/build/html/index.html",
+                "request": "launch",
+                "url": "http://127.0.0.1:3000/docs/build/html/index.html"
+            }
+        ]
+    },
+}

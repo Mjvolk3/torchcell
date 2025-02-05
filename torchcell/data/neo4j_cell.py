@@ -104,29 +104,31 @@ def normalize_tensor_row(x: torch.Tensor | list[torch.Tensor]) -> list[torch.Ten
 #     return G
 
 
-def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
-    """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature."""
-    # Get the first key from embeddings dictionary
-    first_key = list(dataset._data.embeddings.keys())[0]
-    embeddings = dataset._data.embeddings[first_key]
-
+def min_max_normalize_embedding(embedding: torch.Tensor) -> torch.Tensor:
+    """Forces embedding tensor values into [0,1] range using min-max scaling per feature."""
     # Normalize each feature (column) independently
-    normalized_embeddings = torch.zeros_like(embeddings)
-    for i in range(embeddings.size(1)):
-        feature = embeddings[:, i]
+    normalized_embedding = torch.zeros_like(embedding)
+    for i in range(embedding.size(1)):
+        feature = embedding[:, i]
         feature_min = feature.min()
         feature_max = feature.max()
 
         # If feature_min == feature_max, set to 0.5 to avoid div by zero
         if feature_min == feature_max:
-            normalized_embeddings[:, i] = 0.5
+            normalized_embedding[:, i] = 0.5
         else:
-            normalized_embeddings[:, i] = (feature - feature_min) / (
+            normalized_embedding[:, i] = (feature - feature_min) / (
                 feature_max - feature_min
             )
 
-    # Update the dataset embeddings
-    dataset._data.embeddings[first_key] = normalized_embeddings
+    return normalized_embedding
+
+
+def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
+    """Normalizes embeddings across the entire dataset to range [0,1] using min-max scaling per feature."""
+    first_key = list(dataset._data.embeddings.keys())[0]
+    embeddings = dataset._data.embeddings[first_key]
+    dataset._data.embeddings[first_key] = min_max_normalize_embedding(embeddings)
 
 
 def create_embedding_graph(

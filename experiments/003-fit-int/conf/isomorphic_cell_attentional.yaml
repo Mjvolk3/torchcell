@@ -9,7 +9,7 @@ wandb:
 
 cell_dataset:
   graphs: [physical, regulatory]
-  node_embeddings: [codon_frequency]
+  node_embeddings: [codon_frequency, calm]
   learnable_embedding_input_channels: 64
   graph_processor: unperturbed
   incidence_graphs: [metabolism]

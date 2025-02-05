@@ -40,6 +40,7 @@ from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
+from torchcell.timestamp import timestamp
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -368,6 +369,7 @@ def main(cfg: DictConfig) -> None:
         for name in wandb.config.cell_dataset["graphs"]
     ]
 
+    print(f"Instantiating model ({timestamp()})")
     # Instantiate new IsomorphicCell model
     model = IsomorphicCell(
         in_channels=input_dim,
@@ -420,6 +422,7 @@ def main(cfg: DictConfig) -> None:
         weights=weights,
     )
 
+    print(f"Creating regression task ({timestamp()})")
     task = RegressionTask(
         model=model,
         cell_graph=dataset.cell_graph,  # pass cell graph here
@@ -451,6 +454,7 @@ def main(cfg: DictConfig) -> None:
     torch.set_float32_matmul_precision("medium")
     num_nodes = get_slurm_nodes()
     profiler = None
+    print(f"Starting training ({timestamp()})")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],

@@ -6,8 +6,8 @@ wandb:
   project: "qm9_loss_study"
 
 training:
-  num_epochs: 5
-  dataset_size: 10000
+  num_epochs: 2
+  dataset_size: 1000
   learning_rate: 0.001
   batch_size: 256
   hidden_channels: 128

@@ -448,6 +448,9 @@ class SubgraphRepresentation(GraphProcessor):
         """Process physical and regulatory edge indices"""
         ei = cell_graph[edge_type].edge_index
         src, dst = ei
+        # keep_src = torch.isin(src, idx_keep_t)
+        # keep_dst = torch.isin(dst, idx_keep_t)
+        idx_keep_t = idx_keep_t.to(src.device)
         keep_src = torch.isin(src, idx_keep_t)
         keep_dst = torch.isin(dst, idx_keep_t)
         keep = keep_src & keep_dst

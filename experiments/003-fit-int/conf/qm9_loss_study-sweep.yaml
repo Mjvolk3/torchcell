@@ -11,7 +11,7 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [100]
+        values: [30]
         # values: [50]
       dataset_size:
         values: [50000]  # [1000] #[null] for all #TODO

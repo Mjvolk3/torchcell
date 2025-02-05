@@ -352,110 +352,110 @@ class Visualization:
         plt.close()
 
 
-def plot_loss_curves(
-    self, losses: dict, loss_name: str, num_epochs: int, timestamp_str: str
-):
-    """Plot training and validation losses with proper epoch alignment."""
-    fig = plt.figure(figsize=(12, 18))  # Made taller for 3 subplots
-    epochs = np.arange(1, num_epochs + 1)
+    def plot_loss_curves(
+        self, losses: dict, loss_name: str, num_epochs: int, timestamp_str: str
+    ):
+        """Plot training and validation losses with proper epoch alignment."""
+        fig = plt.figure(figsize=(12, 18))  # Made taller for 3 subplots
+        epochs = np.arange(1, num_epochs + 1)
 
-    # Plot normalized losses (top subplot)
-    plt.subplot(3, 1, 1)  # Changed to 3 rows
-    for phase in ["train", "val"]:
-        for key in ["norm_mse", "norm_div", "norm_con"]:
-            values = losses[phase][key]
-            if values:  # Check if we have values to plot
-                plt.plot(
-                    epochs[: len(values)],
-                    values,
-                    label=f"{phase}_{key}",
-                    linestyle="-" if phase == "train" else "--",
-                    linewidth=1.5,
-                    alpha=0.8,
-                )
-
-        base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nNormalized Loss Components")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss Proportion")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-
-        # Plot weighted losses (middle subplot)
-        plt.subplot(3, 1, 2)
+        # Plot normalized losses (top subplot)
+        plt.subplot(3, 1, 1)  # Changed to 3 rows
         for phase in ["train", "val"]:
-            # Plot total loss with thicker line
-            total_values = losses[phase]["total_loss"]
-            if total_values:
-                plt.plot(
-                    epochs[: len(total_values)],
-                    total_values,
-                    label=f"{phase}_total",
-                    linestyle="-" if phase == "train" else "--",
-                    linewidth=2.0,
-                )
-
-            # Plot weighted component losses
-            for key in ["raw_mse", "raw_div", "raw_con"]:
+            for key in ["norm_mse", "norm_div", "norm_con"]:
                 values = losses[phase][key]
-                if values:
+                if values:  # Check if we have values to plot
                     plt.plot(
                         epochs[: len(values)],
                         values,
                         label=f"{phase}_{key}",
                         linestyle="-" if phase == "train" else "--",
                         linewidth=1.5,
-                        alpha=0.7,
+                        alpha=0.8,
                     )
 
-        plt.title(f"{base_title}\nWeighted Loss Components")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss Value")
-        plt.yscale("log")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+            base_title = self.get_base_title(loss_name, num_epochs)
+            plt.title(f"{base_title}\nNormalized Loss Components")
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Proportion")
+            plt.legend()
+            plt.grid(True, alpha=0.3)
 
-        # Plot unweighted losses (bottom subplot)
-        plt.subplot(3, 1, 3)
-        for phase in ["train", "val"]:
-            # Plot total unweighted loss
-            if losses[phase]["unweighted_mse"]:
-                total_unweighted = (
-                    np.array(losses[phase]["unweighted_mse"])
-                    + np.array(losses[phase]["unweighted_div"])
-                    + np.array(losses[phase]["unweighted_con"])
-                )
-                plt.plot(
-                    epochs[: len(total_unweighted)],
-                    total_unweighted,
-                    label=f"{phase}_total_unweighted",
-                    linestyle="-" if phase == "train" else "--",
-                    linewidth=2.0,
-                )
-
-            # Plot unweighted component losses
-            for key in ["unweighted_mse", "unweighted_div", "unweighted_con"]:
-                values = losses[phase][key]
-                if values:
+            # Plot weighted losses (middle subplot)
+            plt.subplot(3, 1, 2)
+            for phase in ["train", "val"]:
+                # Plot total loss with thicker line
+                total_values = losses[phase]["total_loss"]
+                if total_values:
                     plt.plot(
-                        epochs[: len(values)],
-                        values,
-                        label=f"{phase}_{key}",
+                        epochs[: len(total_values)],
+                        total_values,
+                        label=f"{phase}_total",
                         linestyle="-" if phase == "train" else "--",
-                        linewidth=1.5,
-                        alpha=0.7,
+                        linewidth=2.0,
                     )
 
-        plt.title(f"{base_title}\nUnweighted Loss Components")
-        plt.xlabel("Epoch")
-        plt.ylabel("Loss Value")
-        plt.yscale("log")
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+                # Plot weighted component losses
+                for key in ["raw_mse", "raw_div", "raw_con"]:
+                    values = losses[phase][key]
+                    if values:
+                        plt.plot(
+                            epochs[: len(values)],
+                            values,
+                            label=f"{phase}_{key}",
+                            linestyle="-" if phase == "train" else "--",
+                            linewidth=1.5,
+                            alpha=0.7,
+                        )
 
-        plt.tight_layout()
-        self.save_and_log_figure(fig, "loss_curves", timestamp_str)
-        plt.close()
+            plt.title(f"{base_title}\nWeighted Loss Components")
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Value")
+            plt.yscale("log")
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+
+            # Plot unweighted losses (bottom subplot)
+            plt.subplot(3, 1, 3)
+            for phase in ["train", "val"]:
+                # Plot total unweighted loss
+                if losses[phase]["unweighted_mse"]:
+                    total_unweighted = (
+                        np.array(losses[phase]["unweighted_mse"])
+                        + np.array(losses[phase]["unweighted_div"])
+                        + np.array(losses[phase]["unweighted_con"])
+                    )
+                    plt.plot(
+                        epochs[: len(total_unweighted)],
+                        total_unweighted,
+                        label=f"{phase}_total_unweighted",
+                        linestyle="-" if phase == "train" else "--",
+                        linewidth=2.0,
+                    )
+
+                # Plot unweighted component losses
+                for key in ["unweighted_mse", "unweighted_div", "unweighted_con"]:
+                    values = losses[phase][key]
+                    if values:
+                        plt.plot(
+                            epochs[: len(values)],
+                            values,
+                            label=f"{phase}_{key}",
+                            linestyle="-" if phase == "train" else "--",
+                            linewidth=1.5,
+                            alpha=0.7,
+                        )
+
+            plt.title(f"{base_title}\nUnweighted Loss Components")
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Value")
+            plt.yscale("log")
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+
+            plt.tight_layout()
+            self.save_and_log_figure(fig, "loss_curves", timestamp_str)
+            plt.close()
 
     def log_artifact(self):
         if self.artifact is not None:
@@ -539,6 +539,7 @@ def train_and_evaluate(
     for epoch in range(num_epochs):
         # Training phase
         model.train()
+        train_preds, train_labels = [], []
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Train)"):
             batch = batch.to(device)
             optimizer.zero_grad()
@@ -547,6 +548,20 @@ def train_and_evaluate(
             loss_dict["total_loss"].backward()
             optimizer.step()
             loss_tracker.update_train(loss_dict)
+            train_preds.append(pred.detach())
+            train_labels.append(batch.y)
+
+        # Log training metrics
+        train_preds = torch.cat(train_preds, dim=0)
+        train_labels = torch.cat(train_labels, dim=0)
+        metric_tracker.log_epoch_metrics(
+            epoch=epoch,
+            predictions=train_preds,
+            labels=train_labels, 
+            loss_dict=loss_dict,
+            num_targets=train_labels.shape[1],
+            phase="train"
+        )
 
         # Validation phase
         model.eval()

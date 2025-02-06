@@ -20,9 +20,9 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 2
-  num_workers: 0
-  pin_memory: false #true
+  batch_size: 64
+  num_workers: 16
+  pin_memory: true #true
   prefetch: true
 
 trainer:

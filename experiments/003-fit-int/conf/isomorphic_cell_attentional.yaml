@@ -9,7 +9,7 @@ wandb:
 
 cell_dataset:
   graphs: [physical, regulatory]
-  node_embeddings: [codon_frequency, calm]
+  node_embeddings: [codon_frequency ]
   learnable_embedding_input_channels: 64
   graph_processor: unperturbed
   incidence_graphs: [metabolism]
@@ -21,14 +21,14 @@ data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
   batch_size: 2
-  num_workers: 2
-  pin_memory: true
+  num_workers: 0
+  pin_memory: false #true
   prefetch: true
 
 trainer:
   max_epochs: 1000
   strategy: auto
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0 # > 0 for overfitting, 0 off.
 

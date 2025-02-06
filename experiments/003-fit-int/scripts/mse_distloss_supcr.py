@@ -236,24 +236,19 @@ class Visualization:
         num_epochs: int,
         timestamp_str: str,
     ):
-        """Plot distribution matching for a target dimension."""
         true_values_np = true_values.detach().cpu().numpy()
         predictions_np = predictions.detach().cpu().numpy()
 
-        # Clean data
         mask = ~np.isnan(true_values_np[:, dim])
         y_true = true_values_np[mask, dim]
         y_pred = predictions_np[mask, dim]
 
-        # Calculate metrics
         wasserstein_distance = stats.wasserstein_distance(y_true, y_pred)
 
-        # Calculate JS divergence using histograms
         bins = min(100, int(np.sqrt(len(y_true))))
         true_hist, edges = np.histogram(y_true, bins=bins, density=True)
         pred_hist, _ = np.histogram(y_pred, bins=edges, density=True)
 
-        # Add small epsilon to avoid log(0)
         epsilon = 1e-10
         true_hist = (true_hist + epsilon) / (true_hist.sum() + epsilon * len(true_hist))
         pred_hist = (pred_hist + epsilon) / (pred_hist.sum() + epsilon * len(pred_hist))
@@ -261,10 +256,9 @@ class Visualization:
         m = 0.5 * (true_hist + pred_hist)
         js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
 
-        # Create plot
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(12, 6))
+        ax = fig.add_axes([0.1, 0.1, 0.85, 0.8])
 
-        # Plot histograms
         sns.histplot(
             y_true,
             color="blue",
@@ -273,6 +267,7 @@ class Visualization:
             stat="density",
             alpha=0.6,
             bins=bins,
+            ax=ax,
         )
         sns.histplot(
             y_pred,
@@ -282,25 +277,27 @@ class Visualization:
             stat="density",
             alpha=0.6,
             bins=bins,
+            ax=ax,
         )
 
-        # Add metrics text
-        plt.text(
-            0.98,
+        ax.text(
+            0.02,
             0.98,
             f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_div:.4f}",
-            transform=plt.gca().transAxes,
-            verticalalignment="top",
-            horizontalalignment="right",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.9, edgecolor="gray"),
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            bbox=dict(facecolor="white", alpha=0.9, edgecolor="gray"),
+            zorder=100,
         )
 
-        plt.legend()
-        plt.xlabel(f"Target {dim}")
-        plt.ylabel("Density")
+        ax.legend(bbox_to_anchor=(0.98, 0.98), loc="upper right")
+
+        ax.set_xlabel(f"Target {dim}")
+        ax.set_ylabel("Density")
 
         base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nDistribution Matching Target {dim}")
+        ax.set_title(f"{base_title}\nDistribution Matching Target {dim}")
 
         plt.tight_layout()
         self.save_and_log_figure(fig, f"distribution_target_{dim}", timestamp_str)
@@ -357,7 +354,7 @@ class Visualization:
         """Plot training and validation losses in a 2x2 grid."""
         fig = plt.figure(figsize=(20, 16))
         epochs = np.arange(1, num_epochs + 1)
-        
+
         base_title = self.get_base_title(loss_name, num_epochs)
 
         # 1. Raw (Weighted) Losses (top-left)

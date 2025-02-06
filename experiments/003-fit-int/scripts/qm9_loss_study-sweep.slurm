@@ -38,7 +38,7 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=prnkrz41
+SWEEP_ID=en5hhj4j
 PROJECT_NAME=torchcell_qm9_loss_study
 
 echo "-----------------"

@@ -32,7 +32,7 @@ class BaseEmbeddingDataset(InMemoryDataset, ABC):
         super().__init__(root, transform, pre_transform)
         if self.model_name:
             self.data, self.slices = torch.load(
-                self.processed_paths[0], map_location=self.device
+                self.processed_paths[0], map_location=self.device, weights_only=False
             )
         else:
             self.data, self.slices = None, None

@@ -23,7 +23,7 @@ data_module:
   batch_size: 2
   num_workers: 2
   pin_memory: false #true
-  prefetch: true
+  prefetch: false
 
 trainer:
   max_epochs: 1000

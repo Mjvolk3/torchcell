@@ -22,7 +22,7 @@ data_module:
   perturbation_subset_size: 2.5e4
   batch_size: 2
   num_workers: 2
-  pin_memory: true #true
+  pin_memory: false #true
   prefetch: true
 
 trainer:

@@ -30,10 +30,12 @@ class RegressionTask(L.LightningModule):
         inverse_transform: Optional[nn.Module] = None,
     ):
         super().__init__()
-        
+
         self.save_hyperparameters(ignore=["model"])
         self.model = model
-        self.cell_graph = cell_graph.to(self.device)  # new argument
+        # BUG trying to solve pin memory issue
+        # self.cell_graph = cell_graph.to(self.device)  # new argument
+        self.cell_graph = cell_graph
         self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
@@ -60,15 +62,22 @@ class RegressionTask(L.LightningModule):
         self.predictions = []
         self.last_logged_best_step = None
         self.automatic_optimization = False
-    
+
     def on_before_batch_transfer(self, batch, dataloader_idx):
         return batch.to(self.device)
-    
+
     def forward(self, batch):
-        # Move entire HeteroData objects to correct device
+        # Get the target device from the batch
         batch_device = batch["gene"].x.device
-        if self.cell_graph["gene"].x.device != batch_device:
+
+        # Only move cell_graph to device if needed and hasn't been moved yet
+        if (
+            not hasattr(self, "_cell_graph_device")
+            or self._cell_graph_device != batch_device
+        ):
             self.cell_graph = self.cell_graph.to(batch_device)
+            self._cell_graph_device = batch_device
+
         return self.model(self.cell_graph, batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):

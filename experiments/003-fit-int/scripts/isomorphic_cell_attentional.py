@@ -105,14 +105,18 @@ def main(cfg: DictConfig) -> None:
 
     if torch.cuda.is_available() and dist.is_initialized():
         rank = dist.get_rank()
-        genome_data_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
+        genome_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
+        go_root = osp.join(DATA_ROOT, f"data/go/go_{rank}")
     else:
-        genome_data_root = osp.join(DATA_ROOT, "data/sgd/genome")
+        genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
+        go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-    genome = SCerevisiaeGenome(data_root=genome_data_root, overwrite=False)
+    genome = SCerevisiaeGenome(
+        genome_root=genome_root, go_root=go_root, overwrite=False
+    )
     genome.drop_chrmt()
     genome.drop_empty_go()
 
@@ -474,5 +478,6 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     import multiprocessing as mp
+
     mp.set_start_method("spawn", force=True)
     main()

@@ -27,9 +27,9 @@ parameters:
       perturbation_subset_size:
         values: [2.5e4]
       batch_size:
-        values: [64]
+        values: [128]
       num_workers:
-        values: [8]
+        values: [16]
       pin_memory:
         values: [true]
       prefetch:
@@ -41,7 +41,7 @@ parameters:
       strategy:
         values: ["auto"]
       accelerator:
-        values: ["cpu"]
+        values: ["gpu"]
       devices:
         values: [1]
       overfit_baches:
@@ -134,7 +134,7 @@ parameters:
       prediction_head_config:
         parameters:
           hidden_layers:
-            values: [[64, 32, 32]]
+            values: [[32, 32, 32, 32, 32, 32]]
           dropout:
             values: [0.1]
           activation:
@@ -163,7 +163,7 @@ parameters:
           lr:
             values: [1e-3]
           weight_decay:
-            values: [1e-9]
+            values: [1e-8]
       lr_scheduler:
         parameters:
           type:

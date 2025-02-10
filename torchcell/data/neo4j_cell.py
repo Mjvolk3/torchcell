@@ -549,7 +549,7 @@ class SubgraphRepresentation(GraphProcessor):
 
             # Filter gpr edges
             gpr = cell_graph[gpr_key].hyperedge_index
-            keep_g = torch.isin(gpr[0], idx_keep_t)
+            keep_g = torch.isin(gpr[0], idx_keep_t.to(gpr.device))
             keep_r = ~torch.isin(
                 gpr[1], torch.tensor(list(invalid_rxns), device=gpr.device)
             )

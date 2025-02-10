@@ -4,7 +4,6 @@
 # Test file: tests/torchcell/sequence/genome/scerevisiae/test_s288c.py
 
 
-
 import glob
 import gzip
 import logging
@@ -381,7 +380,8 @@ class SCerevisiaeGene(Gene):
 
 @define
 class SCerevisiaeGenome(Genome):
-    data_root: str = field(init=True, repr=False, default="data/sgd/genome")
+    genome_root: str = field(init=True, repr=False, default="data/sgd/genome")
+    go_root: str = field(init=True, repr=False, default="data/go")
     overwrite: bool = field(init=True, repr=True, default=True)
     db: dict[str, SeqRecord] = field(init=False, repr=False)
     fasta_dna = field(init=False, default=None, repr=False)
@@ -406,22 +406,22 @@ class SCerevisiaeGenome(Genome):
         self.genome_version_full = reference_genome + "_" + self.genome_version
 
         self._dna_fasta_path: str = osp.join(
-            self.data_root,
+            self.genome_root,
             self.genome_version_full,
             "S288C_reference_sequence_" + self.genome_version + ".fsa",
         )
         self._gff_path: str = osp.join(
-            self.data_root,
+            self.genome_root,
             self.genome_version_full,
             "saccharomyces_cerevisiae_" + self.genome_version + ".gff",
         )
         self._protein_fasta_path = osp.join(
-            self.data_root,
+            self.genome_root,
             self.genome_version_full,
             "orf_trans_all_" + self.genome_version + ".fasta",
         )
         self._cds_fasta_path = osp.join(
-            self.data_root,
+            self.genome_root,
             self.genome_version_full,
             "orf_coding_all_" + self.genome_version + ".fasta",
         )
@@ -429,7 +429,7 @@ class SCerevisiaeGenome(Genome):
         if not osp.exists(self._dna_fasta_path) or not osp.exists(self._gff_path):
             self.download_and_extract_genome_files()
 
-        db_path = osp.join(self.data_root, "data.db")
+        db_path = osp.join(self.genome_root, "data.db")
 
         # CHECK if this works with ddp
         if osp.exists(db_path) and not self.overwrite:
@@ -464,11 +464,12 @@ class SCerevisiaeGenome(Genome):
         # TODO Not sure if this is now to tightly coupled to GO
         # We do want to remove inaccurate info as early as possible
         # Initialize the GO ontology DAG (Directed Acyclic Graph)
-        data_dir = "data/go"
-        obo_path = "data/go/go.obo"
+        obo_path = osp.join(self.go_root, "go.obo")
         if not osp.exists(obo_path):
-            os.makedirs(data_dir, exist_ok=True)
-            download_url("http://current.geneontology.org/ontology/go.obo", data_dir)
+            os.makedirs(self.go_root, exist_ok=True)
+            download_url(
+                "http://current.geneontology.org/ontology/go.obo", self.go_root
+            )
         self.go_dag = GODag(obo_path)
         # Call the method to remove deprecated GO terms
         # BUG this line doesn't work with ddp, I think the issue is merge=replace
@@ -483,7 +484,7 @@ class SCerevisiaeGenome(Genome):
             self.sgd_base_url, self.sequence_S288C, "genome_releases", zipped_version
         )
 
-        save_dir = self.data_root
+        save_dir = self.genome_root
         download_url(url, save_dir)
         downloaded_file_path = osp.join(save_dir, url.split("/")[-1])
         self.untar_tgz_file(downloaded_file_path, save_dir)
@@ -741,7 +742,9 @@ def main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=False
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
     )
     print()
     # orf_classes = []

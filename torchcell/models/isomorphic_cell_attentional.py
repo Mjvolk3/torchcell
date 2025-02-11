@@ -1309,9 +1309,9 @@ def load_sample_data_batch():
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
+    # from torchcell.datasets.fungal_up_down_transformer import (
+    #     FungalUpDownTransformerDataset,
+    # )
     from torchcell.datasets import CodonFrequencyDataset
     from torchcell.data import MeanExperimentDeduplicator
     from torchcell.data import GenotypeAggregator
@@ -1335,22 +1335,22 @@ def load_sample_data_batch():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    selected_node_embeddings = ["fudt_upstream"]
+    selected_node_embeddings = ["codon_frequency"]
     node_embeddings = {}
-    if "fudt_downstream" in selected_node_embeddings:
-        node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_downstream",
-        )
+    # if "fudt_downstream" in selected_node_embeddings:
+    #     node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
+    #         root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+    #         genome=genome,
+    #         model_name="species_downstream",
+    #     )
 
-    if "fudt_upstream" in selected_node_embeddings:
-        node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_upstream",
-        )
-    elif "codon_frequency" in selected_node_embeddings:
+    # if "fudt_upstream" in selected_node_embeddings:
+    #     node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
+    #         root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+    #         genome=genome,
+    #         model_name="species_upstream",
+    #     )
+    if "codon_frequency" in selected_node_embeddings:
         node_embeddings["codon_frequency"] = CodonFrequencyDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
             genome=genome,

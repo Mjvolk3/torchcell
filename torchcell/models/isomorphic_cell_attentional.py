@@ -1358,7 +1358,7 @@ def load_sample_data_batch():
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    gem = YeastGEM()
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/yeast_gem"))
     reaction_map = gem.reaction_map
 
     dataset = Neo4jCellDataset(
@@ -1503,7 +1503,7 @@ def main(device="cuda"):
     batch = batch.to(device)
 
     # Model configuration
-    model = initialize_model(input_channels, device)
+    model = initialize_model(input_channels, device, {})
     print("\nModel architecture:")
     print(model)
 

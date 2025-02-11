@@ -1350,7 +1350,7 @@ def load_sample_data_batch():
             genome=genome,
             model_name="species_upstream",
         )
-    elif "fudt_downstream" in selected_node_embeddings:
+    elif "codon_frequency" in selected_node_embeddings:
         node_embeddings["codon_frequency"] = CodonFrequencyDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
             genome=genome,

@@ -1325,7 +1325,10 @@ def load_sample_data_batch():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+    )
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()

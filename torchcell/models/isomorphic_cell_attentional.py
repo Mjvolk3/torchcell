@@ -1324,6 +1324,7 @@ def load_sample_data_batch():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    print(DATA_ROOT: DATA_ROOT)
 
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),

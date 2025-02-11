@@ -1324,7 +1324,7 @@ def load_sample_data_batch():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    print(f"DATA_ROOT: {DATA_ROOT}" )
+    print(f"DATA_ROOT: {DATA_ROOT}")
 
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
@@ -1362,7 +1362,7 @@ def load_sample_data_batch():
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/yeast_gem"))
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
     reaction_map = gem.reaction_map
 
     dataset = Neo4jCellDataset(

@@ -63,9 +63,6 @@ class RegressionTask(L.LightningModule):
         self.last_logged_best_step = None
         self.automatic_optimization = False
 
-    def on_before_batch_transfer(self, batch, dataloader_idx):
-        return batch.to(self.device)
-
     def forward(self, batch):
         # Get the target device from the batch
         batch_device = batch["gene"].x.device

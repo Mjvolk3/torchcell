@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1739329770137
+updated: 1739346046595
 created: 1737507788186
 ---
 
@@ -1013,6 +1013,8 @@ HeteroData(
 ```
 
 Intact/Perturbed Graph
+
+Integrated/Perturbed Graph
 
 ```python
 dataset[4]

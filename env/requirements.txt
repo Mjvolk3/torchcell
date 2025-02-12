@@ -23,7 +23,8 @@
     deepdiff>=7.0.1
 
     # torch stack
-    torch>=2.4.0
+    # best to install manual
+    torch==2.4.1
     torch_geometric>=2.6.1
     torchmetrics>=1.2.1
     lightning>=2.4.0
@@ -119,3 +120,6 @@
     # Hypergraph - fastjsonschema needed as extra dep for hypernetx
     hypernetx>=2.3.10
     fastjsonschema>=2.21.1
+
+    #typing?
+    beartype

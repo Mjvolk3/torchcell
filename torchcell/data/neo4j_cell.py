@@ -263,7 +263,7 @@ def to_cell_data(
         edge_type = ("metabolite", "reaction", "metabolite")
         hetero_data[edge_type].hyperedge_index = hyperedge_index
         hetero_data[edge_type].stoichiometry = stoich_coeffs
-        hetero_data[edge_type].num_edges = len(hyperedge_index[1].unique())
+        hetero_data[edge_type].num_edges = len(hyperedge_index[1].unique()) + 1
         hetero_data[edge_type].reaction_to_genes = reaction_to_genes
         hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
 
@@ -715,7 +715,7 @@ class SubgraphRepresentation(GraphProcessor):
         edge_type = ("metabolite", "reaction", "metabolite")
         integrated_subgraph[edge_type].hyperedge_index = new_edge_index
         integrated_subgraph[edge_type].stoichiometry = new_stoich
-        integrated_subgraph[edge_type].num_edges = len(torch.unique(new_edge_index[1]))  # Changed to count unique edges
+        integrated_subgraph[edge_type].num_edges = len(torch.unique(new_edge_index[1])) + 1  # Changed to count unique edges
         integrated_subgraph[edge_type].pert_mask = ~valid_mask
 
         # Update reaction node information

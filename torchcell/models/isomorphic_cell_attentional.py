@@ -1309,6 +1309,7 @@ def load_sample_data_batch():
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+
     # from torchcell.datasets.fungal_up_down_transformer import (
     #     FungalUpDownTransformerDataset,
     # )

@@ -1579,48 +1579,60 @@ class Neo4jCellDataset(Dataset):
 
         self._init_lmdb_read()
 
-        with self.env.begin() as txn:
-            cursor = txn.cursor()
-            for key, value in cursor:
+        try:
+            with self.env.begin() as txn:
+                cursor = txn.cursor()
+                # Convert cursor to list to avoid multiple LMDB transactions
+                entries = [(key, value) for key, value in cursor]
+
+            # Process entries outside of LMDB transaction
+            for key, value in entries:
                 try:
                     idx = int(key.decode())
+                    # Parse JSON once per entry
                     data_list = json.loads(value.decode())
+                    # Process all perturbations in one pass
                     for data in data_list:
-                        experiment_class = EXPERIMENT_TYPE_MAP[
-                            data["experiment"]["experiment_type"]
-                        ]
-                        experiment = experiment_class(**data["experiment"])
-                        # Get perturbed genes for this experiment
-                        perturbed_genes = {
-                            pert.systematic_gene_name
-                            for pert in experiment.genotype.perturbations
-                        }
-
-                        # Add index to each perturbed gene's list
-                        for gene in perturbed_genes:
+                        for pert in data["experiment"]["genotype"]["perturbations"]:
+                            gene = pert["systematic_gene_name"]
                             if gene not in is_any_perturbed_gene_index:
                                 is_any_perturbed_gene_index[gene] = set()
                             is_any_perturbed_gene_index[gene].add(idx)
-                except json.JSONDecodeError:
-                    print(f"Error decoding JSON for entry {key}. Skipping this entry.")
-                except ValueError:
-                    print(
-                        f"Error converting key to integer: {key}. Skipping this entry."
-                    )
-                except Exception as e:
-                    print(
-                        f"Error processing entry {key}: {str(e)}. Skipping this entry."
-                    )
+                except (json.JSONDecodeError, ValueError, KeyError) as e:
+                    print(f"Error processing entry {key}: {e}")
 
-        self.close_lmdb()
+        finally:
+            self.close_lmdb()
 
         # Convert sets to sorted lists
-        for gene in is_any_perturbed_gene_index:
-            is_any_perturbed_gene_index[gene] = sorted(
-                list(is_any_perturbed_gene_index[gene])
-            )
+        return {
+            gene: sorted(list(indices))
+            for gene, indices in is_any_perturbed_gene_index.items()
+        }
 
-        return is_any_perturbed_gene_index
+    @property
+    def is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
+        # Memory cache
+        if hasattr(self, "_is_any_perturbed_gene_index_cache"):
+            return self._is_any_perturbed_gene_index_cache
+
+        cache_path = osp.join(self.processed_dir, "is_any_perturbed_gene_index.json")
+
+        # Try to load from disk cache
+        if osp.exists(cache_path):
+            with open(cache_path, "r") as file:
+                self._is_any_perturbed_gene_index_cache = json.load(file)
+                return self._is_any_perturbed_gene_index_cache
+
+        # Compute if no cache exists
+        result = self.compute_is_any_perturbed_gene_index()
+
+        # Save to both memory and disk cache
+        self._is_any_perturbed_gene_index_cache = result
+        with open(cache_path, "w") as file:
+            json.dump(result, file)
+
+        return result
 
     # HACK
     def __getstate__(self) -> dict:
@@ -1631,23 +1643,6 @@ class Neo4jCellDataset(Dataset):
 
     def __setstate__(self, state: dict) -> None:
         self.__dict__.update(state)
-
-    @property
-    def is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
-        if osp.exists(osp.join(self.processed_dir, "is_any_perturbed_gene_index.json")):
-            with open(
-                osp.join(self.processed_dir, "is_any_perturbed_gene_index.json"), "r"
-            ) as file:
-                self._is_any_perturbed_gene_index = json.load(file)
-        else:
-            self._is_any_perturbed_gene_index = (
-                self.compute_is_any_perturbed_gene_index()
-            )
-            with open(
-                osp.join(self.processed_dir, "is_any_perturbed_gene_index.json"), "w"
-            ) as file:
-                json.dump(self._is_any_perturbed_gene_index, file)
-        return self._is_any_perturbed_gene_index
 
 
 def main():

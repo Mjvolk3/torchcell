@@ -203,7 +203,7 @@ def analyze_embeddings_normalized(
 
 def build_node_embeddings() -> dict[str, Any]:
     genome_data_root: str = osp.join(DATA_ROOT, "data/sgd/genome")
-    genome = SCerevisiaeGenome(data_root=genome_data_root, overwrite=False)
+    genome = SCerevisiaeGenome(genome_root=genome_data_root, overwrite=False)
     # Optionally drop chromosomes if needed:
     # genome.drop_chrmt()
     genome.drop_empty_go()

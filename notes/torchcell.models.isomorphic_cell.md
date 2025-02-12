@@ -2,7 +2,7 @@
 id: agd7d5srxmnqa9mrfkv4zet
 title: Isomorphic_cell
 desc: ''
-updated: 1738204967584
+updated: 1739329770137
 created: 1737507788186
 ---
 
@@ -1101,7 +1101,7 @@ HeteroDataBatch(
     num_edges=[2],
   },
   (gene, gpr, reaction)={
-    hyperedge_index=[2, 10860],
+    hyperedge_index=[2, 10860], # should probably be bipartite_edge_index...
     num_edges=[2],
   },
   (metabolite, reaction, metabolite)={

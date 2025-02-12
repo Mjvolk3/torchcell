@@ -1384,7 +1384,7 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=2,
+        batch_size=32,
         random_seed=seed,
         num_workers=6,
         pin_memory=False,
@@ -1396,7 +1396,7 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=2,
+        batch_size=32,
         num_workers=6,
         pin_memory=True,
         prefetch=False,
@@ -1477,7 +1477,7 @@ def plot_correlations(
     plt.close()
 
 
-def main(device="cuda"):
+def main(device="cpu"):
     from torchcell.timestamp import timestamp
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
@@ -1513,10 +1513,10 @@ def main(device="cuda"):
     print(model)
 
     # Set lambda values and weight decay
-    lambda_dist = 0.1
-    lambda_supcr = 0.01
-    lambda_cell = 100
-    weight_decay = 1e-6
+    lambda_dist = 0.5
+    lambda_supcr = 0.005
+    lambda_cell = 0.1
+    weight_decay = 1e-9
 
     # Compute weights (example calculation)
     total_non_nan = (~batch["gene"].fitness.isnan()).sum() + (

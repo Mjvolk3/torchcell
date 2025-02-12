@@ -1,59 +1,48 @@
 # .pre-commit-config.yaml
 repos:
-    - repo: https://github.com/asottile/pyupgrade
-      rev: v3.10.1
-      hooks:
-          - id: pyupgrade
-            args: [--py311-plus]
-            files: ^(src/torchcell|tests/torchcell)/
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.10.1
+    hooks:
+      - id: pyupgrade
+        args: [--py311-plus]
+        files: ^(src/torchcell|tests/torchcell)/
 
-    - repo: https://github.com/pycqa/isort
-      rev: 5.12.0
-      hooks:
-          - id: isort
-            additional_dependencies: [".[colors]"]
-            files: ^(src/torchcell|tests/torchcell)/
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        additional_dependencies: [".[colors]"]
+        files: ^(src/torchcell|tests/torchcell)/
 
-    - repo: https://github.com/psf/black
-      rev: 23.7.0
-      hooks:
-          - id: black
-            args: [--skip-magic-trailing-comma]
-            files: ^(src/torchcell|tests/torchcell)/
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        args: [--skip-magic-trailing-comma]
+        files: ^(src/torchcell|tests/torchcell)/
 
-    - repo: local
-      hooks:
-          - id: compress-large-pngs
-            name: Compress large PNGs
-            entry: bash notes/assets/scripts/compress_pngs.sh
-            language: system
-            files: \.png$
-            stages: [commit]
-            verbose: true  # Add this line
-            log_file: .git/compress-pngs.log  # Add this line
-            
-    # -   repo: https://github.com/pycqa/flake8.git
-    #     rev: 6.1.0
-    #     hooks:
-    #     -   id: flake8
-    #         files: ^(src/torchcell|tests/torchcell)/
+  # -   repo: https://github.com/pycqa/flake8.git
+  #     rev: 6.1.0
+  #     hooks:
+  #     -   id: flake8
+  #         files: ^(src/torchcell|tests/torchcell)/
 
-    # -   repo: https://github.com/pycqa/pydocstyle
-    #     rev: 6.3.0
-    #     hooks:
-    #     -   id: pydocstyle
-    #         files: ^src/torchcell/
-    #         additional_dependencies: ['.[toml]']
+  # -   repo: https://github.com/pycqa/pydocstyle
+  #     rev: 6.3.0
+  #     hooks:
+  #     -   id: pydocstyle
+  #         files: ^src/torchcell/
+  #         additional_dependencies: ['.[toml]']
 
-    # -   repo: https://github.com/pre-commit/mirrors-mypy
-    #     rev: v1.0.1
-    #     hooks:
-    #     -   id: mypy
-    #         files: ^src/torchcell/
-    #         args: [--strict, --ignore-missing-imports, --show-error-codes]
-    #         additional_dependencies: [
-    #             numpy, openpyxl, xlrd, matplotlib, adjustText, plotly, scipy, networkx, dask, pydot,
-    #             torch, torchvision, torch_geometric, torchmetrics, scikit-learn, transformers,
-    #             biopython, goatools, intermine, gffutils, pandas-stubs, types-tqdm, types-requests, attrs, pydantic,
-    #             aiohttp, pronto, nxontology, python-dotenv, ptpython
-    #         ]
+  # -   repo: https://github.com/pre-commit/mirrors-mypy
+  #     rev: v1.0.1
+  #     hooks:
+  #     -   id: mypy
+  #         files: ^src/torchcell/
+  #         args: [--strict, --ignore-missing-imports, --show-error-codes]
+  #         additional_dependencies: [
+  #             numpy, openpyxl, xlrd, matplotlib, adjustText, plotly, scipy, networkx, dask, pydot,
+  #             torch, torchvision, torch_geometric, torchmetrics, scikit-learn, transformers,
+  #             biopython, goatools, intermine, gffutils, pandas-stubs, types-tqdm, types-requests, attrs, pydantic,
+  #             aiohttp, pronto, nxontology, python-dotenv, ptpython
+  #         ]

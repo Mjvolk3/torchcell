@@ -27,9 +27,9 @@ parameters:
       perturbation_subset_size:
         values: [2.5e4]
       batch_size:
-        values: [128]
+        values: [8]
       num_workers:
-        values: [16]
+        values: [4]
       pin_memory:
         values: [true]
       prefetch:
@@ -65,37 +65,37 @@ parameters:
       gene_encoder_config:
         parameters:
           conv_type:
-            values: ["GAT"]
+            values: ["GIN"]
           # GIN
-          # layer_config:
-          #   parameters:
-          #     train_eps:
-          #       values: [true]
-          #     hidden_multiplier:
-          #       values: [1.0]
-          #     add_self_loops:
-          #       values: [true]
-          #     is_skip_connection:
-          #       values: [true]
-          #     num_mlp_layers:
-          #       values: [3]
-          #     is_mlp_skip_connection:
-          #       values: [true]
-          # GAT
           layer_config:
             parameters:
-              heads:
-                values: [4]
-              concat:
-                values: [false]
-              bias:
+              train_eps:
                 values: [true]
+              hidden_multiplier:
+                values: [1.0]
               add_self_loops:
-                values: [false]
-              share_weights:
-                values: [false]
+                values: [true]
               is_skip_connection:
                 values: [true]
+              num_mlp_layers:
+                values: [3]
+              is_mlp_skip_connection:
+                values: [true]
+          # GAT
+          # layer_config:
+          #   parameters:
+          #     heads:
+          #       values: [4]
+          #     concat:
+          #       values: [false]
+          #     bias:
+          #       values: [true]
+          #     add_self_loops:
+          #       values: [false]
+          #     share_weights:
+          #       values: [false]
+          #     is_skip_connection:
+          #       values: [true]
           # general
           activation:
             values: ["gelu"]

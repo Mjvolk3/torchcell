@@ -111,7 +111,7 @@ def plot_embedding_density(
     )
     g.fig.suptitle(f"{name} Embedding Density", y=1.05)
     save_path = osp.join(save_dir, f"embedding_density_{name}_{timestamp()}.png")
-    g.fig.savefig(save_path, dpi=400, bbox_inches="tight")
+    g.fig.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close(g.fig)
 
 
@@ -138,7 +138,7 @@ def plot_embedding_heatmap(
     ax.set_ylabel("Sample Index")
     plt.colorbar(im, ax=ax, label="Value")
     save_path = osp.join(save_dir, f"embedding_heatmap_{name}_{timestamp()}.png")
-    plt.savefig(save_path, dpi=600, bbox_inches="tight")
+    plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 

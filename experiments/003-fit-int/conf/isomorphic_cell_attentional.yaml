@@ -20,13 +20,13 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 128
+  batch_size: 96
   num_workers: 16
   pin_memory: false #true
   prefetch: false
 
 trainer:
-  max_epochs: 10
+  max_epochs: 60
   strategy: auto
   accelerator: gpu
   devices: 1
@@ -90,7 +90,7 @@ model:
 regression_task:
   is_weighted_phenotype_loss: true
   lambda_dist: 0.5
-  lambda_supcr: 0.5
+  lambda_supcr: 0.005
   lambda_cell: 0.1
   optimizer:
     type: "AdamW"

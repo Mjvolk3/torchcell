@@ -25,11 +25,13 @@ repos:
       hooks:
           - id: compress-large-pngs
             name: Compress large PNGs
-            entry: python notes/assets/scripts/memory_size_reduce_pngs.py
-            language: python
+            entry: bash notes/assets/scripts/compress_pngs.sh
+            language: system
             files: \.png$
             stages: [commit]
-
+            verbose: true  # Add this line
+            log_file: .git/compress-pngs.log  # Add this line
+            
     # -   repo: https://github.com/pycqa/flake8.git
     #     rev: 6.1.0
     #     hooks:

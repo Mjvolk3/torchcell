@@ -22,7 +22,8 @@ torchcell/models/pretrained_LLM/*
 wandb/
 models/checkpoints/
 mechanistic_aware.csv
-
+data/yeast_gem
+data/QM9
 
 # Dendron
 .dendron.port
@@ -98,7 +99,6 @@ experiments/smf-dmf-tmf-001/agent_log
 torchcell/knowledge_graphs/conf/kg.yaml
 experiments/embeddings/slurm/output/
 experiments/embeddings/slurm/error/
-
 
 # TEMPORARY
 # notes/assets/images/*

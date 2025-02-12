@@ -26,9 +26,9 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 1000
+  max_epochs: 1
   strategy: auto
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0 # > 0 for overfitting, 0 off.
 

@@ -29,8 +29,8 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "Job starting on $(hostname)"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=2ymqp4i7c
-PROJECT_NAME=torchcell_003-fit-int_isomorphic_cell_attentional_lambda
+SWEEP_ID=
+PROJECT_NAME=torchcell_003-fit-int_isomorphic_cell_attentional_2.5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

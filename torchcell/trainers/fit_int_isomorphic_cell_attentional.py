@@ -8,6 +8,7 @@ from torchcell.viz import fitness, genetic_interaction_score
 import matplotlib.pyplot as plt
 from typing import Optional
 import logging
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 

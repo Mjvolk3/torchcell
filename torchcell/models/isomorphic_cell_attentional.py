@@ -74,34 +74,57 @@ class PreProcessor(nn.Module):
         hidden_channels: int,
         num_layers: int = 2,
         dropout: float = 0.1,
+        is_residual: bool = True,
+        activation: str = "gelu",
     ):
         super().__init__()
         layers = []
-        # Use BatchNorm1d instead of LayerNorm for input features
+        act = act_register[activation]
 
-        # layers.append(nn.BatchNorm1d(in_channels))
-        # First linear transformation block
-        layers.extend(
-            [
-                nn.Linear(in_channels, hidden_channels),
-                nn.BatchNorm1d(hidden_channels),
-                nn.ReLU(),
-                nn.Dropout(dropout),
-            ]
-        )
-        for _ in range(num_layers - 1):
+        # Initial projection if dimensions don't match
+        if in_channels != hidden_channels:
             layers.extend(
                 [
-                    nn.Linear(hidden_channels, hidden_channels),
+                    nn.Linear(in_channels, hidden_channels),
                     nn.BatchNorm1d(hidden_channels),
-                    nn.ReLU(),
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
+        else:
+            layers.extend([nn.BatchNorm1d(in_channels), act, nn.Dropout(dropout)])
+
+        # Build layers
+        for _ in range(num_layers - 1):
+            if is_residual:
+                block = nn.Sequential(
+                    nn.Linear(hidden_channels, hidden_channels),
+                    nn.BatchNorm1d(hidden_channels),
+                    act,
+                    nn.Dropout(dropout),
+                    nn.Linear(hidden_channels, hidden_channels),
+                    nn.BatchNorm1d(hidden_channels),
+                )
+                layers.append(block)
+            else:
+                layers.extend(
+                    [
+                        nn.Linear(hidden_channels, hidden_channels),
+                        nn.BatchNorm1d(hidden_channels),
+                        act,
+                        nn.Dropout(dropout),
+                    ]
+                )
+
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return self.mlp(x)
+        if hasattr(self.mlp[-1], "forward"):
+            # Regular layer
+            return self.mlp(x)
+        else:
+            # Residual connection
+            return F.gelu(x + self.mlp[-1](x))
 
 
 class Combiner(nn.Module):
@@ -1384,9 +1407,9 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=32,
+        batch_size=4,
         random_seed=seed,
-        num_workers=6,
+        num_workers=2,
         pin_memory=False,
     )
     cell_data_module.setup()
@@ -1396,8 +1419,8 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=32,
-        num_workers=6,
+        batch_size=4,
+        num_workers=2,
         pin_memory=True,
         prefetch=False,
         seed=seed,

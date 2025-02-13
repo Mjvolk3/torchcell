@@ -1,0 +1,200 @@
+program: experiments/003-fit-int/scripts/isomorphic_cell_attentional.py
+project: torchcell_003-fit-int_isomorphic_cell_attentional_2.5e4
+method: grid
+controller:
+  type: local
+  
+parameters:
+  cell_dataset:
+    parameters:
+      graphs:
+        values: [[physical, regulatory]]
+      node_embeddings:
+        values:
+          - [learnable]
+      learnable_embedding_input_channels:
+        values: [64]
+      incidence_graphs:
+        values: [[metabolism]]
+  profiler:
+    parameters:
+      is_pytorch:
+        values: [true]
+  data_module:
+    parameters:
+      is_perturbation_subset:
+        values: [true]
+      perturbation_subset_size:
+        values: [2.5e4]
+      batch_size:
+        values: [100]
+      num_workers:
+        values: [12]
+      pin_memory:
+        values: [true]
+      prefetch:
+        values: [true]
+  trainer:
+    parameters:
+      max_epochs:
+        values: [10]
+      strategy:
+        values: ["auto"]
+      accelerator:
+        values: ["gpu"]
+      devices:
+        values: [1]
+      overfit_baches:
+        values: [0]
+  model:
+    parameters:
+      hidden_channels:
+        values: [16, 64]
+      num_layers:
+        parameters:
+          preprocessor:
+            values: [2]
+          gene_encoder:
+            values: [3]
+          metabolism:
+            values: [2]
+          combiner:
+            values: [2]
+      dropout:
+        values: [0.1]
+      gene_encoder_config:
+        parameters:
+          conv_type:
+            values: ["GAT"]
+          # GIN
+          # layer_config:
+          #   parameters:
+          #     train_eps:
+          #       values: [true]
+          #     hidden_multiplier:
+          #       values: [1.0]
+          #     add_self_loops:
+          #       values: [true]
+          #     is_skip_connection:
+          #       values: [true]
+          #     num_mlp_layers:
+          #       values: [3]
+          #     is_mlp_skip_connection:
+          #       values: [true]
+          # GAT
+          layer_config:
+            parameters:
+              heads:
+                values: [10]
+              concat:
+                values: [false]
+              bias:
+                values: [true]
+              add_self_loops:
+                values: [false]
+              share_weights:
+                values: [false]
+              is_skip_connection:
+                values: [true]
+          # general
+          activation:
+            values: ["gelu"]
+          norm:
+            values: ["layer"]
+          head_num_layers:
+            values: [2]
+          head_hidden_channels:
+            values: [null]
+          head_dropout:
+            values: [0.1]
+          head_activation:
+            values: ["gelu"]
+          head_residual:
+            values: [true]
+          head_norm:
+            values: ["layer"]
+      metabolism_config:
+        parameters:
+          max_metabolite_nodes:
+            values: [2534]
+          use_attention:
+            values: [true]
+          heads:
+            values: [1]
+          dropout:
+            values: [0.1]
+      # preprocessor_config:
+      #   values: [2]
+      combiner_config:
+        parameters:
+          num_layers:
+            values: [2]
+          hidden_factor:
+            values: [1.0]
+          dropout:
+            values: [0.1]
+      prediction_head_config:
+        parameters:
+          hidden_layers:
+            values: [[16, 16, 16, 16]]
+          dropout:
+            values: [0.1]
+          activation:
+            values: ["gelu"]
+          use_layer_norm:
+            values: [true]
+          residual:
+            values: [true]
+  regression_task:
+    parameters:
+      is_weighted_phenotype_loss:
+        values: [true]
+      lambda_dist:
+        values: [0.1, 1]
+        # values: [0.5]
+      lambda_supcr:
+        values: [0.05, 0.005] #[0.1, 1]
+        # values: [0.5]
+      lambda_cell:
+        values: [0.0]
+        # values: [0.1]
+      optimizer:
+        parameters:
+          type:
+            values: ["AdamW"]
+          lr:
+            values: [1e-3, 1e-4]
+          weight_decay:
+            values: [1e-6, 1e-8]
+      lr_scheduler:
+        parameters:
+          type:
+            values: ["ReduceLROnPlateau"]
+          mode:
+            values: ["min"]
+          factor:
+            values: [0.2]
+          patience:
+            values: [3]
+          threshold:
+            values: [1e-4]
+          threshold_mode:
+            values: ["rel"]
+          cooldown:
+            values: [2]
+          min_lr:
+            values: [1e-9]
+          eps:
+            values: [1e-10]
+      clip_grad_norm:
+        values: [true]
+      clip_grad_norm_max_norm:
+        values: [10.0]
+      grad_accumulation_schedule:
+        values: [null]
+      plot_sample_ceiling:
+        values: [5000]
+command:
+  - ${env}
+  - python
+  - ${program}

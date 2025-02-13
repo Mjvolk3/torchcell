@@ -3,7 +3,7 @@
 #SBATCH --mem=256g
 #SBATCH -N 1
 #SBATCH -n 4
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
 #SBATCH --job-name=ICA_2.5e4
 #SBATCH --time=48:00:00

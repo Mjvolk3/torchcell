@@ -32,7 +32,7 @@ cell_dataset:
 
 
   learnable_embedding_input_channels: 64
-  graph_processor: unperturbed
+  # graph_processor: unperturbed
   incidence_graphs: [metabolism]
 
 profiler:

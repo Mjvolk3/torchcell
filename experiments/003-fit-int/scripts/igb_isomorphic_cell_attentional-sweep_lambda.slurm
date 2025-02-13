@@ -9,8 +9,8 @@
 #SBATCH --time=48:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
-#SBATCH --output=/work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
-#SBATCH --error=/work/hdd/bbub/mjvolk3/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
+#SBATCH --output=~/scratch/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
+#SBATCH --error=~/scratch/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 
 
 module purge

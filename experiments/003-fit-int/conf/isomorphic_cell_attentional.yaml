@@ -127,7 +127,7 @@ regression_task:
     cooldown: 2
     min_lr: 1e-9
     eps: 1e-10
-  boxplot_every_n_epochs: 1
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
+  plot_sample_ceiling: 5000

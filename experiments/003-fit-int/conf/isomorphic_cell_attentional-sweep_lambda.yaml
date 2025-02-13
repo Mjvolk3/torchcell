@@ -1,5 +1,5 @@
 program: experiments/003-fit-int/scripts/isomorphic_cell_attentional.py
-project: torchcell_003-fit-int_isomorphic_cell_attentional_lambda
+project: torchcell_003-fit-int_isomorphic_cell_attentional_2.5e4
 method: grid
 
 parameters:
@@ -9,7 +9,7 @@ parameters:
         values: [[physical, regulatory]]
       node_embeddings:
         values:
-          - [codon_frequency]
+          - [learnable]
       learnable_embedding_input_channels:
         values: [64]
       incidence_graphs:
@@ -25,9 +25,9 @@ parameters:
       perturbation_subset_size:
         values: [2.5e4]
       batch_size:
-        values: [8]
+        values: [100]
       num_workers:
-        values: [4]
+        values: [12]
       pin_memory:
         values: [true]
       prefetch:
@@ -35,11 +35,11 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        values: [100]
+        values: [10]
       strategy:
         values: ["auto"]
       accelerator:
-        values: ["cpu"]
+        values: ["gpu"]
       devices:
         values: [1]
       overfit_baches:
@@ -47,7 +47,7 @@ parameters:
   model:
     parameters:
       hidden_channels:
-        values: [32]
+        values: [16, 64]
       num_layers:
         parameters:
           preprocessor:
@@ -83,7 +83,7 @@ parameters:
           layer_config:
             parameters:
               heads:
-                values: [4]
+                values: [10]
               concat:
                 values: [false]
               bias:
@@ -161,9 +161,9 @@ parameters:
           type:
             values: ["AdamW"]
           lr:
-            values: [1e-3]
+            values: [1e-3, 1e-4]
           weight_decay:
-            values: [1e-8]
+            values: [1e-6, 1e-8]
       lr_scheduler:
         parameters:
           type:
@@ -184,15 +184,14 @@ parameters:
             values: [1e-9]
           eps:
             values: [1e-10]
-      boxplot_every_n_epochs:
-        values: [1]
       clip_grad_norm:
         values: [true]
       clip_grad_norm_max_norm:
         values: [10.0]
       grad_accumulation_schedule:
         values: [null]
-
+      plot_sample_ceiling:
+        values: [5000]
 command:
   - ${env}
   - python

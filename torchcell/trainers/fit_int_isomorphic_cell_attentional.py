@@ -4,11 +4,11 @@ import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-from torchcell.viz import fitness, genetic_interaction_score
 import matplotlib.pyplot as plt
 from typing import Optional
 import logging
 from torchcell.viz.visual_regression import Visualization
+from torchcell.timestamp import timestamp
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class RegressionTask(L.LightningModule):
         batch_size: int = None,
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
-        boxplot_every_n_epochs: int = 1,
+        plot_sample_ceiling: int = 1000,
         loss_func: nn.Module = None,
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
@@ -31,11 +31,8 @@ class RegressionTask(L.LightningModule):
         inverse_transform: Optional[nn.Module] = None,
     ):
         super().__init__()
-
         self.save_hyperparameters(ignore=["model"])
         self.model = model
-        # BUG trying to solve pin memory issue
-        # self.cell_graph = cell_graph.to(self.device)  # new argument
         self.cell_graph = cell_graph
         self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
@@ -61,29 +58,25 @@ class RegressionTask(L.LightningModule):
 
         self.true_values = []
         self.predictions = []
-        self.last_logged_best_step = None
+        self.latents = {"z_p": [], "z_i": []}
         self.automatic_optimization = False
 
     def forward(self, batch):
-        # Get the target device from the batch
         batch_device = batch["gene"].x.device
-
-        # Only move cell_graph to device if needed and hasn't been moved yet
         if (
             not hasattr(self, "_cell_graph_device")
             or self._cell_graph_device != batch_device
         ):
             self.cell_graph = self.cell_graph.to(batch_device)
             self._cell_graph_device = batch_device
-
         return self.model(self.cell_graph, batch)
 
     def _shared_step(self, batch, batch_idx, stage="train"):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
-        fitness = batch["gene"].fitness.view(-1, 1)
-        gene_interaction = batch["gene"].gene_interaction.view(-1, 1)
-        targets = torch.cat([fitness, gene_interaction], dim=1)
+        fitness_vals = batch["gene"].fitness.view(-1, 1)
+        gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
+        targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
         loss, loss_dict = self.loss_func(
             predictions,
             targets,
@@ -91,102 +84,50 @@ class RegressionTask(L.LightningModule):
             representations["z_p"],
             representations["z_i"],
         )
-        # Log overall loss and MSE component losses
-        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
-        self.log(
-            f"{stage}/fitness_loss",
-            loss_dict["mse_dim_losses"][0],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            f"{stage}/gene_interaction_loss",
-            loss_dict["mse_dim_losses"][1],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        # Log additional loss components from ICLoss
-        self.log(
-            f"{stage}/mse_loss",
-            loss_dict["mse_loss"],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            f"{stage}/dist_loss",
-            loss_dict["dist_loss"],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            f"{stage}/supcr_loss",
-            loss_dict["supcr_loss"],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            f"{stage}/cell_loss",
-            loss_dict["cell_loss"],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-        self.log(
-            f"{stage}/total_loss",
-            loss_dict["total_loss"],
-            batch_size=batch_size,
-            sync_dist=True,
-        )
-
-        metrics = getattr(self, f"{stage}_metrics")
-        fitness_mask = ~torch.isnan(targets[:, 0])
-        if fitness_mask.any():
-            metrics["fitness"](predictions[fitness_mask, 0], targets[fitness_mask, 0])
-        gi_mask = ~torch.isnan(targets[:, 1])
-        if gi_mask.any():
-            metrics["gene_interaction"](predictions[gi_mask, 1], targets[gi_mask, 1])
+        # Log all loss components with stage prefix.
+        keys = [
+            ("loss", loss),
+            ("fitness_loss", loss_dict["mse_dim_losses"][0]),
+            ("gene_interaction_loss", loss_dict["mse_dim_losses"][1]),
+            ("mse_loss", loss_dict["mse_loss"]),
+            ("dist_loss", loss_dict["dist_loss"]),
+            ("supcr_loss", loss_dict["supcr_loss"]),
+            ("cell_loss", loss_dict["cell_loss"]),
+            ("total_loss", loss_dict["total_loss"]),
+        ]
+        for key, value in keys:
+            self.log(f"{stage}/{key}", value, batch_size=batch_size, sync_dist=True)
+        extra_keys = [
+            "weighted_mse",
+            "weighted_dist",
+            "weighted_supcr",
+            "weighted_cell",
+            "total_weighted",
+            "norm_weighted_mse",
+            "norm_weighted_dist",
+            "norm_weighted_supcr",
+            "norm_weighted_cell",
+            "norm_unweighted_mse",
+            "norm_unweighted_dist",
+            "norm_unweighted_supcr",
+            "norm_unweighted_cell",
+        ]
+        for key in extra_keys:
+            if key in loss_dict:
+                self.log(
+                    f"{stage}/{key}",
+                    loss_dict[key],
+                    batch_size=batch_size,
+                    sync_dist=True,
+                )
         if stage in ["val", "test"]:
             self.true_values.append(targets.detach())
             self.predictions.append(predictions.detach())
-        num_batches = (
-            self.trainer.num_training_batches
-            if stage == "train"
-            else (
-                self.trainer.num_val_batches
-                if stage == "val"
-                else self.trainer.num_test_batches
-            )
-        )
-        num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
-        if batch_idx == num_batches - 2:
-            self._log_prediction_table(
-                stage, targets, predictions, loss_dict["mse_dim_losses"]
-            )
+            if "z_p" in representations:
+                self.latents["z_p"].append(representations["z_p"].detach())
+            if "z_i" in representations:
+                self.latents["z_i"].append(representations["z_i"].detach())
         return loss, predictions, targets
-
-    def _log_prediction_table(
-        self,
-        stage: str,
-        true_values: torch.Tensor,
-        predictions: torch.Tensor,
-        dim_losses,
-    ):
-        task_mapping = [("Fitness", "fitness"), ("GI", "gene_interaction")]
-        for task_idx, (display_name, metadata_key) in enumerate(task_mapping):
-            columns = [
-                f"True {display_name}",
-                f"Predicted {display_name}",
-                f"{display_name} Loss",
-            ]
-            table_data = []
-            for i in range(len(true_values)):
-                row = [
-                    true_values[i, task_idx].item(),
-                    predictions[i, task_idx].item(),
-                    dim_losses[task_idx].item(),
-                ]
-                table_data.append(row)
-            table = wandb.Table(columns=columns, data=table_data)
-            wandb.log({f"{stage}/{metadata_key}_predictions": table}, commit=False)
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
@@ -243,6 +184,35 @@ class RegressionTask(L.LightningModule):
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
+        # Save visual artifacts only on the final training epoch.
+        if self.current_epoch == self.trainer.max_epochs - 1:
+            if self.true_values and self.predictions:
+                true_values = torch.cat(self.true_values, dim=0)
+                predictions = torch.cat(self.predictions, dim=0)
+                latents = {k: torch.cat(v, dim=0) for k, v in self.latents.items()}
+                vis = Visualization(
+                    base_dir=self.trainer.default_root_dir,
+                    max_points=self.hparams.get("plot_sample_ceiling", 1000),
+                )
+                loss_name = (
+                    self.hparams.loss_func.__class__.__name__
+                    if self.hparams.loss_func is not None
+                    else "Loss"
+                )
+                ts = timestamp()
+                vis.visualize_model_outputs(
+                    predictions,
+                    true_values,
+                    latents,
+                    loss_name,
+                    self.current_epoch,
+                    ts,
+                    stage="train",
+                )
+                vis.log_sample_metrics(predictions, true_values, stage="train")
+        self.true_values = []
+        self.predictions = []
+        self.latents = {"z_p": [], "z_i": []}
 
     def on_validation_epoch_end(self):
         for metric_name, metric_dict in self.val_metrics.items():
@@ -250,43 +220,57 @@ class RegressionTask(L.LightningModule):
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
-        if self.trainer.sanity_checking or (
-            self.current_epoch % self.hparams.boxplot_every_n_epochs != 0
-        ):
-            return
-        true_values = torch.cat(self.true_values, dim=0) if self.true_values else None
-        predictions = torch.cat(self.predictions, dim=0) if self.predictions else None
         if (
             not self.trainer.sanity_checking
-            and true_values is not None
-            and predictions is not None
+            and self.current_epoch == self.trainer.max_epochs - 1
         ):
-            if torch.any(~torch.isnan(true_values[:, 0])):
-                fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
-                wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
-                plt.close(fig_fitness)
-            if torch.any(~torch.isnan(true_values[:, 1])):
-                fig_gi = genetic_interaction_score.box_plot(
-                    true_values[:, 1], predictions[:, 1]
+            if self.true_values and self.predictions:
+                true_values = torch.cat(self.true_values, dim=0)
+                predictions = torch.cat(self.predictions, dim=0)
+                latents = {k: torch.cat(v, dim=0) for k, v in self.latents.items()}
+                vis = Visualization(
+                    base_dir=self.trainer.default_root_dir,
+                    max_points=self.hparams.get("plot_sample_ceiling", 1000),
                 )
-                wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
-                plt.close(fig_gi)
+                loss_name = (
+                    self.hparams.loss_func.__class__.__name__
+                    if self.hparams.loss_func is not None
+                    else "Loss"
+                )
+                ts = timestamp()
+                vis.visualize_model_outputs(
+                    predictions,
+                    true_values,
+                    latents,
+                    loss_name,
+                    self.current_epoch,
+                    ts,
+                    stage="val",
+                )
+                vis.log_sample_metrics(predictions, true_values, stage="val")
+            # Also log fitness and gene interaction box plots.
+            true_values = (
+                torch.cat(self.true_values, dim=0) if self.true_values else None
+            )
+            predictions = (
+                torch.cat(self.predictions, dim=0) if self.predictions else None
+            )
+            if true_values is not None and predictions is not None:
+                from torchcell.viz import fitness, genetic_interaction_score
+
+                if torch.any(~torch.isnan(true_values[:, 0])):
+                    fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
+                    wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
+                    plt.close(fig_fitness)
+                if torch.any(~torch.isnan(true_values[:, 1])):
+                    fig_gi = genetic_interaction_score.box_plot(
+                        true_values[:, 1], predictions[:, 1]
+                    )
+                    wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
+                    plt.close(fig_gi)
         self.true_values = []
         self.predictions = []
-        current_global_step = self.global_step
-        if (
-            self.trainer.checkpoint_callback.best_model_path
-            and current_global_step != self.last_logged_best_step
-        ):
-            artifact = wandb.Artifact(
-                name=f"model-global_step-{current_global_step}",
-                type="model",
-                description=f"Model checkpoint at step {current_global_step}",
-                metadata=dict(self.hparams),
-            )
-            artifact.add_file(self.trainer.checkpoint_callback.best_model_path)
-            wandb.log_artifact(artifact)
-            self.last_logged_best_step = current_global_step
+        self.latents = {"z_p": [], "z_i": []}
 
     def on_test_epoch_end(self):
         for metric_name, metric_dict in self.test_metrics.items():
@@ -294,11 +278,32 @@ class RegressionTask(L.LightningModule):
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
-        if self.trainer.sanity_checking:
-            return
-        true_values = torch.cat(self.true_values, dim=0) if self.true_values else None
-        predictions = torch.cat(self.predictions, dim=0) if self.predictions else None
-        if true_values is not None and predictions is not None:
+        if not self.trainer.sanity_checking and self.true_values and self.predictions:
+            true_values = torch.cat(self.true_values, dim=0)
+            predictions = torch.cat(self.predictions, dim=0)
+            latents = {k: torch.cat(v, dim=0) for k, v in self.latents.items()}
+            vis = Visualization(
+                base_dir=self.trainer.default_root_dir,
+                max_points=self.hparams.get("plot_sample_ceiling", 1000),
+            )
+            loss_name = (
+                self.hparams.loss_func.__class__.__name__
+                if self.hparams.loss_func is not None
+                else "Loss"
+            )
+            ts = timestamp()
+            vis.visualize_model_outputs(
+                predictions,
+                true_values,
+                latents,
+                loss_name,
+                self.current_epoch,
+                ts,
+                stage="test",
+            )
+            vis.log_sample_metrics(predictions, true_values, stage="test")
+            from torchcell.viz import fitness, genetic_interaction_score
+
             if torch.any(~torch.isnan(true_values[:, 0])):
                 fig_fitness = fitness.box_plot(true_values[:, 0], predictions[:, 0])
                 wandb.log({"test/fitness_box_plot": wandb.Image(fig_fitness)})
@@ -311,6 +316,7 @@ class RegressionTask(L.LightningModule):
                 plt.close(fig_gi)
         self.true_values = []
         self.predictions = []
+        self.latents = {"z_p": [], "z_i": []}
 
     def configure_optimizers(self):
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])

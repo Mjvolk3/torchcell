@@ -1,49 +1,15 @@
-# torchcell/viz/visual_regression
-# [[torchcell.viz.visual_regression]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/visual_regression
-# Test file: tests/torchcell/viz/test_visual_regression.py
-
-
-import hydra
-import torch
-import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_add_pool
-from torch_geometric.datasets import QM9
-from torch_geometric.loader import DataLoader
-import os
-from omegaconf import DictConfig, OmegaConf
-import uuid
-import json
-import hashlib
-import socket
 import io
-from PIL import Image
-from typing import Any
-from torchcell.losses.multi_dim_nan_tolerant import (
-    WeightedDistLoss,
-    SupCR,
-    WeightedMSELoss,
-)
-from tqdm import tqdm
-from torch import nn
-from torch.utils.data import random_split
+import os
+import os.path as osp
+import wandb
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 import umap
-import os.path as osp
+import seaborn as sns
+from PIL import Image
 from scipy import stats
-from dotenv import load_dotenv
-import logging
-import wandb
+import torch
 from torchcell.timestamp import timestamp
-
-load_dotenv()
-ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
-DATA_ROOT = os.getenv("DATA_ROOT")
-plt.style.use(MPLSTYLE_PATH)
-log = logging.getLogger(__name__)
 
 
 class Visualization:
@@ -78,18 +44,28 @@ class Visualization:
         loss_name: str,
         num_epochs: int,
         timestamp_str: str,
+        stage: str = "",
     ) -> None:
         predictions_np = predictions.detach().cpu().numpy()
         true_values_np = true_values.detach().cpu().numpy()
         mask = ~np.isnan(true_values_np[:, dim])
-        y = true_values_np[mask, dim]
         x = predictions_np[mask, dim]
+        y = true_values_np[mask, dim]
+        if len(x) < 2:
+            print(
+                f"Not enough valid points for correlation plot for target {dim}. Skipping."
+            )
+            return
         if len(x) > self.max_points:
             idx = np.random.choice(len(x), size=self.max_points, replace=False)
             x = x[idx]
             y = y[idx]
-        pearson, _ = stats.pearsonr(x, y)
-        spearman, _ = stats.spearmanr(x, y)
+        try:
+            pearson, _ = stats.pearsonr(x, y)
+            spearman, _ = stats.spearmanr(x, y)
+        except Exception as e:
+            print(f"Correlation calculation failed for target {dim}: {e}")
+            return
         mse = np.mean((y - x) ** 2)
         fig = plt.figure(figsize=(7, 6))
         plt.scatter(x, y, alpha=0.6, color="#2971A0", s=20)
@@ -106,7 +82,12 @@ class Visualization:
         plt.xticks(rotation=45, ha="right")
         plt.yticks(rotation=45, ha="right")
         plt.tight_layout()
-        self.save_and_log_figure(fig, f"correlations_target_{dim}", timestamp_str)
+        key = (
+            f"{stage}/correlations_target_{dim}"
+            if stage
+            else f"correlations_target_{dim}"
+        )
+        self.save_and_log_figure(fig, key, timestamp_str)
         plt.close()
 
     def plot_distribution(
@@ -117,12 +98,18 @@ class Visualization:
         dim: int,
         num_epochs: int,
         timestamp_str: str,
+        stage: str = "",
     ) -> None:
-        true_values_np = true_values.detach().cpu().numpy()
-        predictions_np = predictions.detach().cpu().numpy()
-        mask = ~np.isnan(true_values_np[:, dim])
-        y_true = true_values_np[mask, dim]
-        y_pred = predictions_np[mask, dim]
+        true_np = true_values.detach().cpu().numpy()
+        pred_np = predictions.detach().cpu().numpy()
+        mask = ~np.isnan(true_np[:, dim])
+        y_true = true_np[mask, dim]
+        y_pred = pred_np[mask, dim]
+        if len(y_true) < 2:
+            print(
+                f"Not enough valid points for distribution plot for target {dim}. Skipping."
+            )
+            return
         wasserstein_distance = stats.wasserstein_distance(y_true, y_pred)
         bins = min(100, int(np.sqrt(len(y_true))))
         true_hist, edges = np.histogram(y_true, bins=bins, density=True)
@@ -166,7 +153,12 @@ class Visualization:
         base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(f"{base_title}\nDistribution Matching Target {dim}")
         plt.tight_layout()
-        self.save_and_log_figure(fig, f"distribution_target_{dim}", timestamp_str)
+        key = (
+            f"{stage}/distribution_target_{dim}"
+            if stage
+            else f"distribution_target_{dim}"
+        )
+        self.save_and_log_figure(fig, key, timestamp_str)
         plt.close()
 
     def plot_umap(
@@ -177,17 +169,24 @@ class Visualization:
         dim: int,
         num_epochs: int,
         timestamp_str: str,
+        stage: str = "",
     ) -> None:
         features_np = features.detach().cpu().numpy()
         labels_np = labels.detach().cpu().numpy()
+        valid_mask = ~np.isnan(features_np).any(axis=1)
+        features_np = features_np[valid_mask]
+        labels_np = labels_np[valid_mask]
+        if features_np.shape[0] < 2:
+            print(
+                f"Not enough valid features for UMAP plot for target {dim}. Skipping."
+            )
+            return
         if features_np.shape[0] > self.max_points:
             idx = np.random.choice(
                 features_np.shape[0], size=self.max_points, replace=False
             )
             features_np = features_np[idx]
             labels_np = labels_np[idx]
-        print(f"Features shape: {features_np.shape}")
-        print(f"Labels shape: {labels_np.shape}")
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         embedding = reducer.fit_transform(features_np)
         fig = plt.figure(figsize=(8, 6))
@@ -198,30 +197,51 @@ class Visualization:
         base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(f"{base_title}\nUMAP Projection Target {dim}")
         plt.grid(True, alpha=0.3)
-        self.save_and_log_figure(fig, f"umap_target_{dim}", timestamp_str)
-        plt.close()
-
-    def plot_loss_curves(
-        self, losses: dict, num_epochs: int, timestamp_str: str
-    ) -> None:
-        fig, ax = plt.subplots(figsize=(12, 8))
-        epochs = np.arange(1, num_epochs + 1)
-        for phase in losses.keys():
-            for key, values in losses[phase].items():
-                if values:
-                    ax.plot(epochs[: len(values)], values, label=f"{phase}_{key}")
-        ax.set_xlabel("Epoch")
-        ax.set_ylabel("Loss Value")
-        ax.set_title(f"Loss Curves (Epochs: {num_epochs})")
-        ax.legend()
-        ax.grid(True, alpha=0.3)
         plt.tight_layout()
-        self.save_and_log_figure(fig, "loss_curves_generic", timestamp_str)
+        key = f"{stage}/umap_target_{dim}" if stage else f"umap_target_{dim}"
+        self.save_and_log_figure(fig, key, timestamp_str)
         plt.close()
 
-    def log_artifact(self) -> None:
-        if self.artifact is not None:
-            wandb.log_artifact(self.artifact)
+    def log_sample_metrics(
+        self, predictions: torch.Tensor, true_values: torch.Tensor, stage: str = ""
+    ) -> None:
+        predictions_np = predictions.detach().cpu().numpy()
+        true_values_np = true_values.detach().cpu().numpy()
+        num_targets = true_values_np.shape[1]
+        for dim in range(num_targets):
+            mask = ~np.isnan(true_values_np[:, dim])
+            if np.sum(mask) < 2:
+                print(f"Not enough valid samples for sample metrics for target {dim}.")
+                continue
+            pred_dim = predictions_np[mask, dim]
+            true_dim = true_values_np[mask, dim]
+            mse = np.mean((pred_dim - true_dim) ** 2)
+            mae = np.mean(np.abs(pred_dim - true_dim))
+            pearson, _ = stats.pearsonr(pred_dim, true_dim)
+            spearman, _ = stats.spearmanr(pred_dim, true_dim)
+            wasserstein = stats.wasserstein_distance(true_dim, pred_dim)
+            bins = min(100, int(np.sqrt(len(true_dim))))
+            true_hist, edges = np.histogram(true_dim, bins=bins, density=True)
+            pred_hist, _ = np.histogram(pred_dim, bins=edges, density=True)
+            epsilon = 1e-10
+            true_hist = (true_hist + epsilon) / (
+                true_hist.sum() + epsilon * len(true_hist)
+            )
+            pred_hist = (pred_hist + epsilon) / (
+                pred_hist.sum() + epsilon * len(pred_hist)
+            )
+            m = 0.5 * (true_hist + pred_hist)
+            js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
+            wandb.log(
+                {
+                    f"{stage}/sample/MSE_target_{dim}": mse,
+                    f"{stage}/sample/MAE_target_{dim}": mae,
+                    f"{stage}/sample/Pearson_target_{dim}": pearson,
+                    f"{stage}/sample/Spearman_target_{dim}": spearman,
+                    f"{stage}/sample/Wasserstein_target_{dim}": wasserstein,
+                    f"{stage}/sample/JS_div_target_{dim}": js_div,
+                }
+            )
 
     def visualize_model_outputs(
         self,
@@ -231,30 +251,48 @@ class Visualization:
         loss_name: str,
         num_epochs: int,
         timestamp_str: str,
+        stage: str = "",
     ) -> None:
-        # Plot correlation and distribution plots for both target dimensions.
+        # Generate correlation, distribution, and UMAP plots per target dimension.
         for dim in [0, 1]:
             self.plot_correlations(
-                predictions, true_values, dim, loss_name, num_epochs, timestamp_str
+                predictions,
+                true_values,
+                dim,
+                loss_name,
+                num_epochs,
+                timestamp_str,
+                stage=stage,
             )
             self.plot_distribution(
-                true_values, predictions, loss_name, dim, num_epochs, timestamp_str
+                true_values,
+                predictions,
+                loss_name,
+                dim,
+                num_epochs,
+                timestamp_str,
+                stage=stage,
             )
-        # For latent spaces 'z_p' and 'z_i', plot UMAPs overlayed with each target label.
-        for latent_key in ["z_p", "z_i"]:
-            latent = latents.get(latent_key)
-            if latent is not None:
-                for dim in [0, 1]:
-                    # Use the true target values for the given dimension as overlay labels.
-                    self.plot_umap(
-                        latent,
-                        true_values[:, dim],
-                        loss_name,
-                        dim,
-                        num_epochs,
-                        timestamp_str,
-                    )
-
-
-if __name__ == "__main__":
-    pass
+            self.plot_umap(
+                true_values,
+                true_values[:, dim],
+                loss_name,
+                dim,
+                num_epochs,
+                timestamp_str,
+                stage=stage,
+            )
+        # For each latent representation, plot UMAP with the true target overlay.
+        for latent_key, latent in latents.items():
+            for dim in [0, 1]:
+                self.plot_umap(
+                    latent,
+                    true_values[:, dim],
+                    f"{latent_key} - {loss_name}",
+                    dim,
+                    num_epochs,
+                    timestamp_str,
+                    stage=stage,
+                )
+        # Log additional sample metrics.
+        self.log_sample_metrics(predictions, true_values, stage=stage)

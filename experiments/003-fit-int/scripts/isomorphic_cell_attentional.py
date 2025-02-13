@@ -449,7 +449,7 @@ def main(cfg: DictConfig) -> None:
         batch_size=wandb_cfg["data_module"]["batch_size"],
         clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
         clip_grad_norm_max_norm=wandb_cfg["regression_task"]["clip_grad_norm_max_norm"],
-        boxplot_every_n_epochs=wandb_cfg["regression_task"]["boxplot_every_n_epochs"],
+        plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
         loss_func=loss_func,
         grad_accumulation_schedule=wandb_cfg["regression_task"][
             "grad_accumulation_schedule"

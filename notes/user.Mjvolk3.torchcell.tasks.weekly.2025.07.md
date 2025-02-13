@@ -2,7 +2,7 @@
 id: r1orjyberqc5mathlsswg03
 title: '07'
 desc: ''
-updated: 1739417142633
+updated: 1739422748872
 created: 1739216011880
 ---
 
@@ -17,12 +17,12 @@ created: 1739216011880
 
 - [x] Collected key papers for sparse graph transformer
 - [ ] Reviewed data of IGB run. Model didn't fit... Bit troubling. We plan do changed the model a bit to get matching parameters in both sides of model. Maybe use `GAT` instead. Then run sweep over fitness and gene interactions. First sweep should be short fast, attempt to get quick smooth learning. I also want to use that as an opportunity to add plot logging and adjust the logged metrics.
-
+- [x] - Did new description of data [[2025.02.12 - Data Masking|dendron://torchcell/torchcell.models.isomorphic_cell_attentional#20250212---data-masking]]
+- [x] Did residual connection on preprocessor
+- [x] Did read in model initialization from config.
 
 - [ ] Add learnable embedding.
-- [ ] 
-
-
+- [ ]
 
 - [ ] Fix pin memory not working due to some data being sent to device prior to the pinning.
 - [ ] Fix slow subgraph representation.

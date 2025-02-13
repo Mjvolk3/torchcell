@@ -375,33 +375,47 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Instantiating model ({timestamp()})")
     # Instantiate new IsomorphicCell model
+    gene_encoder_config = dict(wandb.config["model"]["gene_encoder_config"])
+    if any(
+        "learnable" in emb for emb in wandb.config["cell_dataset"]["node_embeddings"]
+    ):
+        gene_encoder_config.update(
+            {
+                "embedding_type": "learnable",
+                "max_num_nodes": dataset.cell_graph["gene"].num_nodes,
+                "learnable_embedding_input_channels": wandb.config["cell_dataset"][
+                    "learnable_embedding_input_channels"
+                ],
+            }
+        )
+
     model = IsomorphicCell(
         in_channels=input_dim,
-        hidden_channels=wandb.config.model["hidden_channels"],
+        hidden_channels=wandb.config["model"]["hidden_channels"],
         edge_types=edge_types,
-        num_layers=wandb.config.model["num_layers"],
-        dropout=wandb.config.model["dropout"],
-        gene_encoder_config=wandb.config.model["gene_encoder_config"],
-        metabolism_config=wandb.config.model["metabolism_config"],
-        attention_config=wandb.config.model.get("attention_config", None),
-        preprocessor_config=wandb.config.model.get("preprocessor_config", {}),
-        combiner_config=wandb.config.model["combiner_config"],
-        prediction_head_config=wandb.config.model["prediction_head_config"],
+        num_layers=wandb.config["model"]["num_layers"],
+        dropout=wandb.config["model"]["dropout"],
+        gene_encoder_config=gene_encoder_config,
+        metabolism_config=wandb.config["model"]["metabolism_config"],
+        attention_config=wandb.config["model"].get("attention_config", None),
+        preprocessor_config=wandb.config["model"].get("preprocessor_config", {}),
+        combiner_config=wandb.config["model"]["combiner_config"],
+        prediction_head_config=wandb.config["model"]["prediction_head_config"],
     )
 
     param_counts = model.num_parameters
-    print(param_counts)
+    print("Parameter counts:", param_counts)
     wandb.log(
         {
+            "model/params_preprocessor": param_counts.get("preprocessor", 0),
             "model/params_gene_encoder": param_counts.get("gene_encoder", 0),
             "model/params_metabolism_processor": param_counts.get(
                 "metabolism_processor", 0
             ),
             "model/params_combiner": param_counts.get("combiner", 0),
+            "model/params_aggregators": param_counts.get("aggregators", 0),
             "model/params_growth_head": param_counts.get("growth_head", 0),
-            "model/params_gene_interaction_head": param_counts.get(
-                "gene_interaction_head", 0
-            ),
+            "model/params_interaction_head": param_counts.get("interaction_head", 0),
             "model/params_total": param_counts.get("total", 0),
         }
     )

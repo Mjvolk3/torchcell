@@ -39,7 +39,7 @@ parameters:
       strategy:
         values: ["auto"]
       accelerator:
-        values: ["gpu"]
+        values: ["cpu"]
       devices:
         values: [1]
       overfit_baches:
@@ -47,13 +47,13 @@ parameters:
   model:
     parameters:
       hidden_channels:
-        values: [64]
+        values: [32]
       num_layers:
         parameters:
           preprocessor:
             values: [2]
           gene_encoder:
-            values: [2]
+            values: [3]
           metabolism:
             values: [2]
           combiner:
@@ -63,37 +63,37 @@ parameters:
       gene_encoder_config:
         parameters:
           conv_type:
-            values: ["GIN"]
+            values: ["GAT"]
           # GIN
-          layer_config:
-            parameters:
-              train_eps:
-                values: [true]
-              hidden_multiplier:
-                values: [1.0]
-              add_self_loops:
-                values: [true]
-              is_skip_connection:
-                values: [true]
-              num_mlp_layers:
-                values: [3]
-              is_mlp_skip_connection:
-                values: [true]
-          # GAT
           # layer_config:
           #   parameters:
-          #     heads:
-          #       values: [4]
-          #     concat:
-          #       values: [false]
-          #     bias:
+          #     train_eps:
           #       values: [true]
+          #     hidden_multiplier:
+          #       values: [1.0]
           #     add_self_loops:
-          #       values: [false]
-          #     share_weights:
-          #       values: [false]
+          #       values: [true]
           #     is_skip_connection:
           #       values: [true]
+          #     num_mlp_layers:
+          #       values: [3]
+          #     is_mlp_skip_connection:
+          #       values: [true]
+          # GAT
+          layer_config:
+            parameters:
+              heads:
+                values: [4]
+              concat:
+                values: [false]
+              bias:
+                values: [true]
+              add_self_loops:
+                values: [false]
+              share_weights:
+                values: [false]
+              is_skip_connection:
+                values: [true]
           # general
           activation:
             values: ["gelu"]
@@ -117,6 +117,8 @@ parameters:
             values: [2534]
           use_attention:
             values: [true]
+          heads:
+            values: [1]
           dropout:
             values: [0.1]
       # preprocessor_config:
@@ -132,7 +134,7 @@ parameters:
       prediction_head_config:
         parameters:
           hidden_layers:
-            values: [[32, 32, 32, 32, 32, 32]]
+            values: [[16, 16, 16, 16]]
           dropout:
             values: [0.1]
           activation:
@@ -149,10 +151,10 @@ parameters:
         values: [0.1, 1]
         # values: [0.5]
       lambda_supcr:
-        values: [0.1, 1]
+        values: [0.05, 0.005] #[0.1, 1]
         # values: [0.5]
       lambda_cell:
-        values: [0.1]
+        values: [0.0]
         # values: [0.1]
       optimizer:
         parameters:

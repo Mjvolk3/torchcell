@@ -47,7 +47,7 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 10
+  max_epochs: 1
   strategy: auto
   accelerator: cpu
   devices: 1

@@ -1480,10 +1480,10 @@ def main(cfg: DictConfig) -> None:
     print("Parameter counts:", model.num_parameters)
 
     # Set lambda values and weight decay
-    lambda_dist = 0.5
-    lambda_supcr = 0.005
-    lambda_cell = 0.1
-    weight_decay = 1e-9
+    lambda_dist = cfg.regression_task.lambda_dist
+    lambda_supcr = cfg.regression_task.lambda_supcr
+    lambda_cell = cfg.regression_task.lambda_cell
+    weight_decay = cfg.regression_task.optimizer.weight_decay
 
     # Compute weights (example calculation)
     total_non_nan = (~batch["gene"].fitness.isnan()).sum() + (
@@ -1503,9 +1503,8 @@ def main(cfg: DictConfig) -> None:
         weights=weights,
     )
 
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=0.001, weight_decay=weight_decay
-    )
+    lr = cfg.regression_task.optimizer.lr
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     # Get targets and move to device
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)

@@ -2,7 +2,7 @@
 id: r1orjyberqc5mathlsswg03
 title: '07'
 desc: ''
-updated: 1739317077900
+updated: 1739417142633
 created: 1739216011880
 ---
 
@@ -11,13 +11,29 @@ created: 1739216011880
 - [x] Add images [[Analyze_feature_distributions|dendron://torchcell/experiments.003-fit-int.scripts.analyze_feature_distributions]]
 - [x] [[Problem Formulation|dendron://torchcell/003-fit-int.problem-formulation]]
 
+## 2025.02.12
+
+🏆 of the day - 4 hour sweeps - learning rate
+
+- [x] Collected key papers for sparse graph transformer
+- [ ] Reviewed data of IGB run. Model didn't fit... Bit troubling. We plan do changed the model a bit to get matching parameters in both sides of model. Maybe use `GAT` instead. Then run sweep over fitness and gene interactions. First sweep should be short fast, attempt to get quick smooth learning. I also want to use that as an opportunity to add plot logging and adjust the logged metrics.
+
+
+- [ ] Add learnable embedding.
+- [ ] 
+
+
+
 - [ ] Fix pin memory not working due to some data being sent to device prior to the pinning.
 - [ ] Fix slow subgraph representation.
 
 - [ ] Add after we get run going on GPU [[torchcell.viz.visual_regression]]
 
-
 - [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+
+## 2025.02.12
+
+🏆 of the day - 10 hour sweeps.
 
 ***
 **Node Embeddings for Whole Genome**

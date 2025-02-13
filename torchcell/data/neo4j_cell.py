@@ -530,17 +530,17 @@ class SubgraphRepresentation(GraphProcessor):
 
         # def validate_indices(graph: HeteroData):
         #     """Validate indices for both regular edges and hyperedges in single or batched graphs."""
-            
-        #     is_batched = any(hasattr(graph[node_type], 'batch') 
+
+        #     is_batched = any(hasattr(graph[node_type], 'batch')
         #                     for node_type in graph.node_types)
-            
+
         #     for edge_type in graph.edge_types:
         #         src_type, edge_name, dst_type = edge_type
         #         edge_store = graph[edge_type]
-                
+
         #         src_size = graph[src_type].num_nodes
         #         dst_size = graph[dst_type].num_nodes
-                
+
         #         # Handle regular edges (physical and regulatory interactions)
         #         if edge_name in ['physical_interaction', 'regulatory_interaction']:
         #             edge_index = edge_store.edge_index
@@ -548,7 +548,7 @@ class SubgraphRepresentation(GraphProcessor):
         #                 f"Source indices out of bounds in {edge_type}"
         #             assert (edge_index[1] < src_size).all(), \
         #                 f"Target indices out of bounds in {edge_type}"
-                        
+
         #             # For regular edges, num_edges should match edge_index size
         #             if hasattr(edge_store, 'num_edges'):
         #                 if is_batched:
@@ -557,7 +557,7 @@ class SubgraphRepresentation(GraphProcessor):
         #                 else:
         #                     assert edge_store.num_edges == edge_index.size(1), \
         #                         f"num_edges mismatch in {edge_type}"
-                        
+
         #         # Handle hyperedges
         #         elif edge_name in ['gpr', 'reaction'] or edge_type == ('metabolite', 'reaction', 'metabolite'):
         #             edge_index = edge_store.hyperedge_index
@@ -565,7 +565,7 @@ class SubgraphRepresentation(GraphProcessor):
         #                 f"Source indices out of bounds in {edge_type}"
         #             assert (edge_index[1] < dst_size).all(), \
         #                 f"Target indices out of bounds in {edge_type}"
-                    
+
         #             # For hyperedges, num_edges should match number of unique hyperedges
         #             if hasattr(edge_store, 'num_edges'):
         #                 if is_batched:
@@ -575,19 +575,18 @@ class SubgraphRepresentation(GraphProcessor):
         #                     # For hypergraphs, num_edges is number of unique hyperedges (reactions)
         #                     assert edge_store.num_edges == len(torch.unique(edge_index[1])), \
         #                         f"num_edges mismatch in {edge_type}: {edge_store.num_edges}, {len(torch.unique(edge_index[1]))}"
-                    
+
         #             # Validate stoichiometry if present
         #             if hasattr(edge_store, 'stoichiometry'):
         #                 assert len(edge_store.stoichiometry) == edge_index.size(1), \
         #                     f"Stoichiometry size mismatch in {edge_type}"
 
-        
         # try:
         #     validate_indices(integrated_subgraph)
         # except AssertionError as e:
         #     print(f"Index validation failed: {e}")
         #     raise
-            
+
         return integrated_subgraph
 
     def _process_gene_info(self, cell_graph: HeteroData, data) -> dict:
@@ -673,15 +672,19 @@ class SubgraphRepresentation(GraphProcessor):
 
         met_edges = cell_graph["metabolite", "reaction", "metabolite"]
         edge_index = met_edges.hyperedge_index.to(self.device)
-        
+
         # Add bounds checking
         max_metabolite_idx = integrated_subgraph["metabolite"].num_nodes
-        max_reaction_idx = len(reaction_info["valid_reactions"])  # Changed to use valid_reactions length
-        
+        max_reaction_idx = len(
+            reaction_info["valid_reactions"]
+        )  # Changed to use valid_reactions length
+
         valid_metabolite_mask = edge_index[0] < max_metabolite_idx
-        valid_reaction_mask = torch.isin(edge_index[1], reaction_info["valid_reactions"])
+        valid_reaction_mask = torch.isin(
+            edge_index[1], reaction_info["valid_reactions"]
+        )
         valid_mask = valid_metabolite_mask & valid_reaction_mask
-        
+
         # Filter edges
         new_edge_index = edge_index[:, valid_mask]
         new_stoich = met_edges.stoichiometry[valid_mask].to(self.device)
@@ -690,8 +693,8 @@ class SubgraphRepresentation(GraphProcessor):
         connected_metabolites = torch.unique(new_edge_index[0])
         metabolite_mask = torch.zeros(
             integrated_subgraph["metabolite"].num_nodes,
-            dtype=torch.bool, 
-            device=self.device
+            dtype=torch.bool,
+            device=self.device,
         )
         metabolite_mask[connected_metabolites] = True
 
@@ -715,12 +718,16 @@ class SubgraphRepresentation(GraphProcessor):
         edge_type = ("metabolite", "reaction", "metabolite")
         integrated_subgraph[edge_type].hyperedge_index = new_edge_index
         integrated_subgraph[edge_type].stoichiometry = new_stoich
-        integrated_subgraph[edge_type].num_edges = len(torch.unique(new_edge_index[1])) + 1  # Changed to count unique edges
+        integrated_subgraph[edge_type].num_edges = (
+            len(torch.unique(new_edge_index[1])) + 1
+        )  # Changed to count unique edges
         integrated_subgraph[edge_type].pert_mask = ~valid_mask
 
         # Update reaction node information
         integrated_subgraph["reaction"].num_nodes = max_reaction_idx
-        integrated_subgraph["reaction"].node_ids = reaction_info["valid_reactions"].tolist()
+        integrated_subgraph["reaction"].node_ids = reaction_info[
+            "valid_reactions"
+        ].tolist()
 
     def _process_reaction_info(
         self, cell_graph: HeteroData, gene_info: dict, integrated_subgraph: HeteroData
@@ -730,7 +737,9 @@ class SubgraphRepresentation(GraphProcessor):
             return {}
 
         # Move edge index to correct device
-        gpr_edge_index = cell_graph["gene", "gpr", "reaction"].hyperedge_index.to(self.device)
+        gpr_edge_index = cell_graph["gene", "gpr", "reaction"].hyperedge_index.to(
+            self.device
+        )
 
         # Create gene mask on correct device
         gene_mask = torch.zeros(
@@ -741,15 +750,15 @@ class SubgraphRepresentation(GraphProcessor):
         # Add bounds checking
         max_gene_idx = cell_graph["gene"].num_nodes
         max_reaction_idx = cell_graph["reaction"].num_nodes
-        
+
         gene_indices = gpr_edge_index[0]
         reaction_indices = gpr_edge_index[1]
-        
+
         # Add bounds checking
         valid_gene_mask = gene_indices < max_gene_idx
         valid_reaction_mask = reaction_indices < max_reaction_idx
         valid_mask = valid_gene_mask & valid_reaction_mask
-        
+
         gene_indices = gene_indices[valid_mask]
         reaction_indices = reaction_indices[valid_mask]
 
@@ -812,7 +821,9 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = (
             new_gpr_edge_index
         )
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = new_gpr_edge_index.size(1)  # Use actual number of edges
+        integrated_subgraph["gene", "gpr", "reaction"].num_edges = (
+            new_gpr_edge_index.size(1)
+        )  # Use actual number of edges
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
         return {

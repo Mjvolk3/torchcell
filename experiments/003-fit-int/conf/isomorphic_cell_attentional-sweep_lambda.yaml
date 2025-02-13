@@ -12,8 +12,6 @@ parameters:
           - [codon_frequency]
       learnable_embedding_input_channels:
         values: [64]
-      graph_processor:
-        values: [unperturbed]
       incidence_graphs:
         values: [[metabolism]]
   profiler:

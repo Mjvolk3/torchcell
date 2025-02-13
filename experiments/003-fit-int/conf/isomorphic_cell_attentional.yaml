@@ -9,7 +9,8 @@ wandb:
 
 cell_dataset:
   graphs: [physical, regulatory]
-  node_embeddings: [learnable]
+  node_embeddings:
+    [learnable]
     # [fudt_upstream, fudt_downstream, esm2_t33_650M_UR50D_all]
     # [codon_frequency]
     # [learnable_embedding]
@@ -30,8 +31,7 @@ cell_dataset:
     # [random_10]
     # [random_1]
 
-
-  learnable_embedding_input_channels: 64
+  learnable_embedding_input_channels: 16
   # graph_processor: unperturbed
   incidence_graphs: [metabolism]
 
@@ -54,7 +54,7 @@ trainer:
   overfit_batches: 0 # > 0 for overfitting, 0 off.
 
 model:
-  hidden_channels: 64
+  hidden_channels: 16
   num_layers:
     preprocessor: 2
     gene_encoder: 3
@@ -102,7 +102,7 @@ model:
     hidden_factor: 1.0
     dropout: 0.1
   prediction_head_config:
-    hidden_layers: [32, 32, 32, 32]
+    hidden_layers: [16, 16, 16, 16]
     dropout: 0.1
     activation: "gelu"
     use_layer_norm: true

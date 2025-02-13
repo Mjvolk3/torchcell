@@ -1024,6 +1024,36 @@ class IsomorphicCell(nn.Module):
     ):
         super().__init__()
 
+        # Check if using learnable embeddings from config
+        if gene_encoder_config is not None:
+            self.use_learned_embedding = "learnable" in gene_encoder_config.get(
+                "embedding_type", ""
+            )
+            if self.use_learned_embedding:
+                self.node_embedding = nn.Embedding(
+                    num_embeddings=gene_encoder_config["max_num_nodes"],
+                    embedding_dim=gene_encoder_config[
+                        "learnable_embedding_input_channels"
+                    ],
+                    max_norm=1.0,
+                )
+                # Filter params for HeteroGnn
+                hetero_gnn_config = {
+                    k: v
+                    for k, v in gene_encoder_config.items()
+                    if k
+                    not in [
+                        "embedding_type",
+                        "max_num_nodes",
+                        "learnable_embedding_input_channels",
+                    ]
+                }
+            else:
+                hetero_gnn_config = gene_encoder_config
+        else:
+            self.use_learned_embedding = False
+            hetero_gnn_config = {}
+            self.node_embedding = None
         # Configurations
         self.preprocessor_config = {"dropout": dropout}
         if preprocessor_config:
@@ -1069,7 +1099,7 @@ class IsomorphicCell(nn.Module):
             out_channels=hidden_channels,
             num_layers=num_layers["gene_encoder"],
             edge_types=edge_types,
-            **(gene_encoder_config or {}),
+            **(hetero_gnn_config or {}),
         )
 
         # Metabolism processor uses the same preprocessed gene features
@@ -1156,10 +1186,48 @@ class IsomorphicCell(nn.Module):
 
         return pert_indices
 
-    def forward_single(self, batch):
-        x = self.preprocessor(batch["gene"].x)
-        z_g = self.gene_encoder(batch, preprocessed_features=x)
-        z_mg = self.metabolism_processor(batch, preprocessed_features=x)
+    def forward_single(self, data: HeteroData) -> torch.Tensor:
+        gene_data = data["gene"]
+        if self.use_learned_embedding:
+            # Check if we have a batched (perturbed) graph
+            if hasattr(gene_data, "ptr"):
+                # Batched perturbed graphs: ptr exists.
+                batch_size = gene_data.ptr.numel() - 1
+                device = (
+                    gene_data.x.device
+                    if hasattr(gene_data, "x")
+                    else gene_data.batch.device
+                )
+                base_embeddings = self.node_embedding.weight  # [num_nodes, emb_dim]
+                # Expand embeddings to match the batch size:
+                replicated = base_embeddings.unsqueeze(0).expand(batch_size, -1, -1)
+                all_embeddings = replicated.reshape(-1, replicated.size(-1))
+                # Expecting pert_mask to be of shape [batch_size * num_nodes]
+                mask = getattr(gene_data, "pert_mask", None)
+                if mask is None:
+                    mask = torch.zeros(
+                        all_embeddings.size(0), dtype=torch.bool, device=device
+                    )
+                x = all_embeddings[~mask]
+            else:
+                # Wildtype (cell_graph): single graph, no ptr.
+                device = (
+                    gene_data.x.device
+                    if hasattr(gene_data, "x")
+                    else self.node_embedding.weight.device
+                )
+                base_embeddings = self.node_embedding.weight  # [num_nodes, emb_dim]
+                mask = getattr(gene_data, "pert_mask", None)
+                if mask is None:
+                    mask = torch.zeros(
+                        base_embeddings.size(0), dtype=torch.bool, device=device
+                    )
+                x = base_embeddings[~mask]
+        else:
+            x = self.preprocessor(gene_data.x)
+
+        z_g = self.gene_encoder(data, preprocessed_features=x)
+        z_mg = self.metabolism_processor(data, preprocessed_features=x)
         z = self.combiner(z_g, z_mg)
         return z
 
@@ -1459,7 +1527,17 @@ def main(cfg: DictConfig) -> None:
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Initialize model using hydra config
+    gene_encoder_config = dict(cfg.model.gene_encoder_config)  # Convert to dict
+    # Add learnable embedding params if specified
+    if any("learnable" in emb for emb in cfg.cell_dataset.node_embeddings):
+        gene_encoder_config.update(
+            {
+                "embedding_type": "learnable",
+                "max_num_nodes": cell_graph["gene"].num_nodes,
+                "learnable_embedding_input_channels": cfg.cell_dataset.learnable_embedding_input_channels,
+            }
+        )
+
     model = IsomorphicCell(
         in_channels=input_channels,
         hidden_channels=cfg.model.hidden_channels,
@@ -1469,11 +1547,11 @@ def main(cfg: DictConfig) -> None:
         ],
         num_layers=cfg.model.num_layers,
         dropout=cfg.model.dropout,
-        gene_encoder_config=cfg.model.gene_encoder_config,
+        gene_encoder_config=gene_encoder_config,  # Use updated dict
         metabolism_config=cfg.model.metabolism_config,
         combiner_config=cfg.model.combiner_config,
         prediction_head_config=cfg.model.prediction_head_config,
-    ).to(device)
+    )
 
     print("\nModel architecture:")
     print(model)
@@ -1513,7 +1591,7 @@ def main(cfg: DictConfig) -> None:
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 10000
+    num_epochs = 100
 
     try:
         for epoch in range(num_epochs):

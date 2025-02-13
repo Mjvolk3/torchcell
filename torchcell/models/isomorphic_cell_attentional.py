@@ -6,6 +6,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import DictConfig, OmegaConf
+import os.path as osp
+import os
+import hydra
 from torch_geometric.nn import (
     HeteroConv,
     GCNConv,
@@ -1247,82 +1251,6 @@ class IsomorphicCell(nn.Module):
         }
 
 
-def initialize_model(
-    input_channels: int, device: torch.device, model_config: dict
-) -> IsomorphicCell:
-    default_model_config = {
-        "in_channels": input_channels,
-        "hidden_channels": 64,
-        "num_layers": {
-            "preprocessor": 2,
-            "gene_encoder": 3,
-            "metabolism": 2,
-            "combiner": 2,
-        },
-        "gene_encoder_config": {
-            "conv_type": "GIN",
-            "layer_config": {
-                "train_eps": True,
-                "hidden_multiplier": 2.0,
-                "dropout": 0.1,
-                "add_self_loops": True,
-                "is_skip_connection": True,
-                "num_mlp_layers": 3,
-                "is_mlp_skip_connection": True,
-            },
-            "activation": "gelu",
-            "norm": "layer",
-            "head_num_layers": 2,
-            "head_hidden_channels": None,
-            "head_dropout": 0.1,
-            "head_activation": "gelu",
-            "head_residual": True,
-            "head_norm": "layer",
-        },
-        "metabolism_config": {
-            "max_metabolite_nodes": 2534,
-            "use_attention": True,
-            "use_skip": True,
-            "dropout": 0.1,
-        },
-        "combiner_config": {"num_layers": 2, "hidden_factor": 1.0, "dropout": 0.1},
-        "prediction_head_config": {
-            "hidden_layers": [64, 64],
-            "dropout": 0.1,
-            "activation": "gelu",
-            "use_layer_norm": True,
-            "residual": True,
-        },
-        "dropout": 0.1,
-        "edge_types": [
-            ("gene", "physical_interaction", "gene"),
-            ("gene", "regulatory_interaction", "gene"),
-        ],
-    }
-
-    # Merge provided model_config into defaults
-    for key, value in model_config.items():
-        if key in default_model_config and isinstance(value, dict):
-            default_model_config[key].update(value)
-        else:
-            default_model_config[key] = value
-
-    cfg = default_model_config
-    model = IsomorphicCell(
-        in_channels=cfg["in_channels"],
-        hidden_channels=cfg["hidden_channels"],
-        edge_types=cfg["edge_types"],
-        num_layers=cfg["num_layers"],
-        dropout=cfg["dropout"],
-        gene_encoder_config=cfg["gene_encoder_config"],
-        metabolism_config=cfg["metabolism_config"],
-        combiner_config=cfg["combiner_config"],
-        prediction_head_config=cfg["prediction_head_config"],
-    ).to(device)
-    print(model.num_parameters)
-    return model
-
-
 def load_sample_data_batch():
     import os
     import os.path as osp
@@ -1500,28 +1428,29 @@ def plot_correlations(
     plt.close()
 
 
-def main(device="cpu"):
-    from torchcell.timestamp import timestamp
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
+    config_name="isomorphic_cell_attentional",
+)
+def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
-    from dotenv import load_dotenv
-    import os.path as osp
     import os
-    import torch
+    from dotenv import load_dotenv
     from torchcell.losses.isomorphic_cell_loss import ICLoss
+    from torchcell.timestamp import timestamp
 
-    # Convert "gpu" to "cuda" if needed
-    if device.lower() == "gpu":
+    load_dotenv()
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    if cfg.trainer.accelerator.lower() == "gpu":
         device = "cuda"
+    else:
+        device = "cpu"
     if device == "cuda" and not torch.cuda.is_available():
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
     device = torch.device(device)
     print(f"\nUsing device: {device}")
-
-    load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
-    plt.style.use(MPLSTYLE_PATH)
 
     # Load sample data including metabolism
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch()
@@ -1530,10 +1459,25 @@ def main(device="cpu"):
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Model configuration
-    model = initialize_model(input_channels, device, {})
+    # Initialize model using hydra config
+    model = IsomorphicCell(
+        in_channels=input_channels,
+        hidden_channels=cfg.model.hidden_channels,
+        edge_types=[
+            ("gene", "physical_interaction", "gene"),
+            ("gene", "regulatory_interaction", "gene"),
+        ],
+        num_layers=cfg.model.num_layers,
+        dropout=cfg.model.dropout,
+        gene_encoder_config=cfg.model.gene_encoder_config,
+        metabolism_config=cfg.model.metabolism_config,
+        combiner_config=cfg.model.combiner_config,
+        prediction_head_config=cfg.model.prediction_head_config,
+    ).to(device)
+
     print("\nModel architecture:")
     print(model)
+    print("Parameter counts:", model.num_parameters)
 
     # Set lambda values and weight decay
     lambda_dist = 0.5
@@ -1683,4 +1627,4 @@ def main(device="cpu"):
 
 
 if __name__ == "__main__":
-    main(device="cuda")
+    main()

@@ -1,0 +1,133 @@
+# conf/isomorphic_cell_attentional.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_003-fit-int_isomorphic_cell_attentional_2.5e4
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings:
+    [learnable]
+    # [fudt_upstream, fudt_downstream, esm2_t33_650M_UR50D_all]
+    # [codon_frequency]
+    # [learnable_embedding]
+    # [one_hot_gene]
+    # [calm]
+    # [fudt_downstream]
+    # [fudt_upstream]
+    # [prot_T5_all]
+    # [prot_T5_no_dubious]
+    # [nt_window_5979]
+    # [nt_window_three_prime_300]
+    # [nt_window_five_prime_1003]
+    # [esm2_t33_650M_UR50D_all]
+    # [esm2_t33_650M_UR50D_no_dubious]
+    # [normalized_chrom_pathways]
+    # [random_1000]
+    # [random_100]
+    # [random_10]
+    # [random_1]
+
+  learnable_embedding_input_channels: 64
+  # graph_processor: unperturbed
+  incidence_graphs: [metabolism]
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 2.5e4
+  batch_size: 96
+  num_workers: 12
+  pin_memory: false #true
+  prefetch: false
+
+trainer:
+  max_epochs: 40
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0 # > 0 for overfitting, 0 off.
+
+model:
+  hidden_channels: 64
+  num_layers:
+    preprocessor: 2
+    gene_encoder: 3
+    metabolism: 2
+    combiner: 2
+  dropout: 0.1
+  gene_encoder_config:
+    conv_type: "GAT" # Options: "GCN", "GAT", "Transformer", "GIN"
+    # GIN
+    # layer_config:
+    #   train_eps: true
+    #   hidden_multiplier: 2.0
+    #   dropout: 0.1
+    #   add_self_loops: true
+    #   is_skip_connection: true
+    #   num_mlp_layers: 3
+    #   is_mlp_skip_connection: true
+
+    # GAT
+    layer_config:
+      heads: 10
+      concat: false
+      bias: true
+      add_self_loops: false
+      share_weights: false
+      is_skip_connection: true
+
+    # gene_encoder general
+    activation: "gelu"
+    norm: "layer"
+    head_num_layers: 2
+    head_hidden_channels: null
+    head_dropout: 0.1
+    head_activation: "gelu"
+    head_residual: true
+    head_norm: "layer"
+  metabolism_config:
+    max_metabolite_nodes: 2534
+    use_attention: true
+    heads: 5
+    dropout: 0.1
+  # preprocessor_config: {}
+  combiner_config:
+    num_layers: 2
+    hidden_factor: 1.0
+    dropout: 0.1
+  prediction_head_config:
+    hidden_layers: [16, 16, 16, 16]
+    dropout: 0.1
+    activation: "gelu"
+    use_layer_norm: true
+    residual: true
+
+regression_task:
+  is_weighted_phenotype_loss: true
+  lambda_dist: 1
+  lambda_supcr: 0.05 # [(0.05), 0.005]
+  lambda_cell: 0.0
+  optimizer:
+    type: "AdamW"
+    lr: 1e-3
+    weight_decay: 1e-4 #[(1e-4), 1e-6]
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 5000

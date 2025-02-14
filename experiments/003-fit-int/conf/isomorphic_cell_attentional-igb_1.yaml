@@ -41,8 +41,8 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 96
-  num_workers: 12
+  batch_size: 32
+  num_workers: 4
   pin_memory: false #true
   prefetch: false
 
@@ -75,7 +75,7 @@ model:
 
     # GAT
     layer_config:
-      heads: 10
+      heads: 4
       concat: false
       bias: true
       add_self_loops: false
@@ -94,7 +94,7 @@ model:
   metabolism_config:
     max_metabolite_nodes: 2534
     use_attention: true
-    heads: 5
+    heads: 1
     dropout: 0.1
   # preprocessor_config: {}
   combiner_config:

@@ -86,9 +86,10 @@ def main(cfg: DictConfig) -> None:
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
-    slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
+    slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", 
+                                    os.environ.get("SLURM_JOB_ID", str(uuid.uuid4())))
     hostname = socket.gethostname()
-    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
+    hostname_slurm_job_id = f"{hostname}-{slurm_array_job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_slurm_job_id}_{hashed_cfg}"

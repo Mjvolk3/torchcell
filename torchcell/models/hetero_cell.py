@@ -237,6 +237,29 @@ class PreProcessor(nn.Module):
 ###############################################################################
 # New Model: HeteroCell
 ###############################################################################
+class AttentionConvWrapper(nn.Module):
+    def __init__(self, conv: nn.Module, target_dim: int):
+        super().__init__()
+        self.conv = conv
+        # For GATv2Conv-like layers:
+        if hasattr(conv, "concat"):
+            expected_dim = (
+                conv.heads * conv.out_channels if conv.concat else conv.out_channels
+            )
+        else:
+            # For other layers, assume out_channels is the output dimension.
+            expected_dim = conv.out_channels
+        self.proj = (
+            nn.Identity()
+            if expected_dim == target_dim
+            else nn.Linear(expected_dim, target_dim)
+        )
+
+    def forward(self, x, edge_index, **kwargs):
+        out = self.conv(x, edge_index, **kwargs)
+        return self.proj(out)
+
+
 class HeteroCell(nn.Module):
     def __init__(
         self,
@@ -252,7 +275,7 @@ class HeteroCell(nn.Module):
         gene_encoder_config: Optional[Dict[str, Any]] = None,
         metabolism_config: Optional[Dict[str, Any]] = None,
         prediction_head_config: Optional[Dict[str, Any]] = None,
-        gpr_conv_config: Optional[Dict[str, Any]] = None,  # New separate config
+        gpr_conv_config: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -273,7 +296,8 @@ class HeteroCell(nn.Module):
 
         self.convs = nn.ModuleList()
         for _ in range(num_layers):
-            conv_dict = {}
+            conv_dict: Dict[Any, nn.Module] = {}
+
             gene_conv = GATv2Conv(
                 hidden_channels,
                 hidden_channels // gene_encoder_config.get("heads", 1),
@@ -284,7 +308,6 @@ class HeteroCell(nn.Module):
             conv_dict[("gene", "physical_interaction", "gene")] = gene_conv
             conv_dict[("gene", "regulatory_interaction", "gene")] = gene_conv
 
-            # Use separate gpr_conv_config for the bipartite "gpr" edge type.
             gpr_config = gpr_conv_config if gpr_conv_config is not None else {}
             conv_dict[("gene", "gpr", "reaction")] = GATv2Conv(
                 hidden_channels,
@@ -304,6 +327,11 @@ class HeteroCell(nn.Module):
                 dropout=dropout,
                 bias=True,
             )
+
+            # Wrap each conv so its output is projected to hidden_channels.
+            for key, conv in conv_dict.items():
+                conv_dict[key] = AttentionConvWrapper(conv, hidden_channels)
+
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
         # Global aggregator for intact graphs.

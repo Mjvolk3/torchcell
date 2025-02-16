@@ -44,6 +44,15 @@ from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
 
 
+def get_norm_layer(channels: int, norm: str):
+    if norm == "layer":
+        return nn.LayerNorm(channels)
+    elif norm == "batch":
+        return nn.BatchNorm1d(channels)
+    else:
+        raise ValueError(f"Unsupported norm type: {norm}")
+
+
 class AttentionalGraphAggregation(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
@@ -78,84 +87,71 @@ class PreProcessor(nn.Module):
         hidden_channels: int,
         num_layers: int = 2,
         dropout: float = 0.1,
-        is_residual: bool = True,
-        activation: str = "gelu",
+        norm: str = "layer",
+        activation: str = "relu",
     ):
         super().__init__()
-        layers = []
         act = act_register[activation]
-
-        # Initial projection if dimensions don't match
-        if in_channels != hidden_channels:
-            layers.extend(
-                [
-                    nn.Linear(in_channels, hidden_channels),
-                    nn.BatchNorm1d(hidden_channels),
-                    act,
-                    nn.Dropout(dropout),
-                ]
-            )
-        else:
-            layers.extend([nn.BatchNorm1d(in_channels), act, nn.Dropout(dropout)])
-
-        # Build layers
-        for _ in range(num_layers - 1):
-            if is_residual:
-                block = nn.Sequential(
-                    nn.Linear(hidden_channels, hidden_channels),
-                    nn.BatchNorm1d(hidden_channels),
-                    act,
-                    nn.Dropout(dropout),
-                    nn.Linear(hidden_channels, hidden_channels),
-                    nn.BatchNorm1d(hidden_channels),
-                )
-                layers.append(block)
-            else:
-                layers.extend(
-                    [
-                        nn.Linear(hidden_channels, hidden_channels),
-                        nn.BatchNorm1d(hidden_channels),
-                        act,
-                        nn.Dropout(dropout),
-                    ]
-                )
-
-        self.mlp = nn.Sequential(*layers)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if hasattr(self.mlp[-1], "forward"):
-            # Regular layer
-            return self.mlp(x)
-        else:
-            # Residual connection
-            return F.gelu(x + self.mlp[-1](x))
-
-
-class Combiner(nn.Module):
-    def __init__(self, hidden_channels: int, num_layers: int = 2, dropout: float = 0.1):
-        super().__init__()
+        norm_layer = (
+            nn.LayerNorm(hidden_channels)
+            if norm == "layer"
+            else nn.BatchNorm1d(hidden_channels)
+        )
         layers = []
-
-        # Input layer (concatenated features)
+        # initial layer
         layers.extend(
             [
-                nn.Linear(hidden_channels * 2, hidden_channels),
-                nn.LayerNorm(hidden_channels),
-                nn.ReLU(),
+                nn.Linear(in_channels, hidden_channels),
+                norm_layer,
+                act,
                 nn.Dropout(dropout),
             ]
         )
-
         for _ in range(num_layers - 1):
             layers.extend(
                 [
                     nn.Linear(hidden_channels, hidden_channels),
-                    nn.LayerNorm(hidden_channels),
-                    nn.ReLU(),
+                    norm_layer,
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
+        self.mlp = nn.Sequential(*layers)
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.mlp(x)
+
+
+class Combiner(nn.Module):
+    def __init__(
+        self,
+        hidden_channels: int,
+        num_layers: int = 2,
+        dropout: float = 0.1,
+        norm: str = "layer",
+        activation: str = "relu",
+    ):
+        super().__init__()
+        act = act_register[activation]
+        layers = []
+        # First (input) layer: concatenated features -> hidden_channels
+        layers.extend(
+            [
+                nn.Linear(hidden_channels * 2, hidden_channels),
+                get_norm_layer(hidden_channels, norm),
+                act,
+                nn.Dropout(dropout),
+            ]
+        )
+        for _ in range(num_layers - 1):
+            layers.extend(
+                [
+                    nn.Linear(hidden_channels, hidden_channels),
+                    get_norm_layer(hidden_channels, norm),
+                    act,
+                    nn.Dropout(dropout),
+                ]
+            )
         self.mlp = nn.Sequential(*layers)
 
     def forward(
@@ -505,44 +501,27 @@ class HeteroGnn(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str],
+        norm: Optional[str] = None,
     ) -> nn.Module:
-        if num_layers < 1:
-            raise ValueError("Prediction head must have at least one layer")
+        if num_layers == 0:
+            return nn.Identity()
 
-        activation_fn = act_register[activation]  # This gives us an instance
-        activation_class = type(activation_fn)  # Get the class from the instance
         layers = []
-        dims = []
+        dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
 
-        # Calculate dimensions for each layer
-        if num_layers == 1:
-            dims = [in_channels, out_channels]
-        else:
-            dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
+        # Get the activation class from the register - notice we don't call it
+        act_fn = type(act_register[activation])
 
-        # Build layers
         for i in range(num_layers):
-            # Add linear layer
             layers.append(nn.Linear(dims[i], dims[i + 1]))
-
-            # Add normalization, activation, and dropout (except for last layer)
-            if i < num_layers - 1:
+            if i < num_layers - 1:  # Don't apply norm/act/dropout after the last layer
                 if norm is not None:
-                    norm_layer = self._get_head_norm(dims[i + 1], norm)
-                    if norm_layer is not None:
-                        layers.append(norm_layer)
+                    layers.append(get_norm_layer(dims[i + 1], norm))
+                # Create a new instance of the activation function
+                layers.append(act_fn())
+                layers.append(nn.Dropout(dropout))
 
-                layers.append(activation_class())  # Create new instance using the class
-
-                if dropout > 0:
-                    layers.append(nn.Dropout(dropout))
-
-        return PredictionHead(
-            layers=nn.ModuleList(layers),
-            residual=residual and num_layers > 1,
-            dims=dims,
-        )
+        return nn.Sequential(*layers)
 
     def forward(self, batch, preprocessed_features=None):
         from torch_geometric.utils import add_self_loops
@@ -665,61 +644,57 @@ class GeneContextProcessor(nn.Module):
         hidden_channels: int,
         num_layers: int = 2,
         dropout: float = 0.1,
-        use_layer_norm: bool = True,
+        norm: str = "layer",
+        activation: str = "relu",
     ):
         super().__init__()
+        act = act_register[activation]
         self.hidden_channels = hidden_channels
-
         layers = []
         current_dim = in_channels
         for _ in range(num_layers):
             layers.extend(
                 [
                     nn.Linear(current_dim, hidden_channels),
-                    nn.LayerNorm(hidden_channels) if use_layer_norm else nn.Identity(),
-                    nn.ReLU(),
+                    get_norm_layer(hidden_channels, norm),
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
             current_dim = hidden_channels
         self.mlp = nn.Sequential(*layers)
-
-        # Replace SAB with AttentionalGraphAggregation
-        self.aggregator = AttentionalGraphAggregation(
-            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
+        # SAB remains as before (optionally you could parameterize its norm as well)
+        self.sab = SetTransformerAggregation(
+            channels=hidden_channels,
+            num_encoder_blocks=2,
+            heads=4,
+            layer_norm=True,
+            dropout=dropout,
+            use_isab=False,
         )
 
     def forward(
         self, gene_features: torch.Tensor, reaction_to_genes: dict[int, list[int]]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # Transform gene features
         H_g = self.mlp(gene_features)
-
-        # Build a set of gene features per reaction
         rxn_feats = []
         rxn_indices = []
         for rxn_idx, gene_list in reaction_to_genes.items():
             for gidx in gene_list:
                 rxn_feats.append(H_g[gidx])
                 rxn_indices.append(rxn_idx)
-
         if rxn_feats:
             rxn_feats = torch.stack(rxn_feats, dim=0)
             rxn_indices = torch.tensor(rxn_indices, device=gene_features.device)
-            # Sort by reaction index to feed into SAB
             sorted_idx = torch.argsort(rxn_indices)
             rxn_feats = rxn_feats[sorted_idx]
             rxn_indices = rxn_indices[sorted_idx]
-            H_r = self.aggregator(rxn_feats, rxn_indices)
+            H_r = self.sab(rxn_feats, rxn_indices)
         else:
-            # No genes => zero out
-            # (assuming reaction indices go up to some known maximum)
-            # For safety, just create a single vector:
             H_r = torch.zeros(
                 (max(reaction_to_genes.keys()) + 1, self.hidden_channels),
                 device=gene_features.device,
             )
-
         return H_g, H_r
 
 

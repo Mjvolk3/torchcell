@@ -3,7 +3,7 @@ defaults:
   - _self_
 
 wandb:
-  project: torchcell_003-fit-int_isomorphic_cell_attentional
+  project: torchcell_003-fit-int_hetero_cell
   tags: []
 
 cell_dataset:
@@ -32,49 +32,33 @@ trainer:
   overfit_batches: 0
 
 model:
-  hidden_channels: 16
-  norm: "layer" # Global normalization: "layer" or "batch"
-  activation: "relu" # Global activation
-  dropout: 0.1 # Global dropout
-  num_layers:
-    preprocessor: 2
-    gene_encoder: 3
-    metabolism: 2
-    combiner: 2
+  gene_num: 6607
+  reaction_num: 4881
+  metabolite_num: 2534
+  hidden_channels: 64
+  out_channels: 2
+  num_layers: 3 # Number of hetero conv layers
+  norm: "layer"
+  activation: "relu"
+  dropout: 0.1
   gene_encoder_config:
-    conv_type: "GAT"
-    layer_config:
-      heads: 10
-      concat: false
-      bias: true
-      add_self_loops: false
-      share_weights: false
-      is_skip_connection: false
-    # Instead of hardcoding, use the global values here:
-    norm: "layer"
-    activation: "relu"
-    head_num_layers: 0
-    head_hidden_channels: null
-    head_dropout: 0.1
-    head_activation: "relu"
-    head_residual: true
-    head_norm: "layer"
+    heads: 4
+    concat: true
+    bias: true
+    add_self_loops: true
+    share_weights: false
   metabolism_config:
-    max_metabolite_nodes: 2534
+    is_stoich_gated: false
     use_attention: true
     heads: 1
-    dropout: 0.1
-    is_skip_connection: false
-  combiner_config:
-    num_layers: 2
-    hidden_factor: 1.0
-    dropout: 0.1
+    concat: true
   prediction_head_config:
-    hidden_layers: [16, 16, 16, 16]
+    hidden_channels: 64
+    head_num_layers: 2
     dropout: 0.1
     activation: "relu"
-    use_layer_norm: true
     residual: true
+    head_norm: "layer"
 
 regression_task:
   is_weighted_phenotype_loss: true

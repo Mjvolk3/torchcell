@@ -58,3 +58,5 @@ export -f wandb_sync_agent_dirs
 # "/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1535042_dc5ed3baae554400cf6d7967184fd1c4db70ecd7388e0e2ce221769bc5b8cc5f" \
 # "/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1535041_41e4a1765b750b7d71e74e5d88db88d156b3225313296cd488cb076ecb571140" \
 # "/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1535040_9a673275ed83899c72946791093b79a20f398bfa86858597d0e087d13f854909"
+
+# Spaces necessary

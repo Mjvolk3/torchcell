@@ -18,16 +18,16 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e2
+  perturbation_subset_size: 1e2 # TODO 2.5e4
   batch_size: 8
   num_workers: 4
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 1
+  max_epochs: 1 # TODO 20
   strategy: auto
-  accelerator: cpu
+  accelerator: cpu #TODO gpu
   devices: 1
   overfit_batches: 0
 
@@ -40,22 +40,22 @@ model:
   num_layers: 3 # Number of hetero conv layers
   norm: "layer"
   activation: "relu"
-  dropout: 0.1
+  dropout: 0.0
   gene_encoder_config:
-    heads: 4
+    heads: 5
     concat: true
     bias: true
     add_self_loops: true
     share_weights: false
   metabolism_config:
-    is_stoich_gated: false
+    is_stoich_gated: true
     use_attention: true
     heads: 1
     concat: true
   prediction_head_config:
     hidden_channels: 64
     head_num_layers: 2
-    dropout: 0.1
+    dropout: 0.0
     activation: "relu"
     residual: true
     head_norm: "layer"

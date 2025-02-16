@@ -404,6 +404,7 @@ def main(cfg: DictConfig) -> None:
         gene_encoder_config=wandb.config["model"]["gene_encoder_config"],
         metabolism_config=wandb.config["model"]["metabolism_config"],
         prediction_head_config=wandb.config["model"]["prediction_head_config"],
+        gpr_conv_config=wandb.config["model"]["gpr_conv_config"],
     ).to(device)
 
     # Log parameter counts using the num_parameters property.

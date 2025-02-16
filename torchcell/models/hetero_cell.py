@@ -10,6 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 import os.path as osp
 import os
 import hydra
+from torch_geometric.nn import HeteroConv
 from torch_geometric.nn import (
     HeteroConv,
     GCNConv,
@@ -251,6 +252,7 @@ class HeteroCell(nn.Module):
         gene_encoder_config: Optional[Dict[str, Any]] = None,
         metabolism_config: Optional[Dict[str, Any]] = None,
         prediction_head_config: Optional[Dict[str, Any]] = None,
+        gpr_conv_config: Optional[Dict[str, Any]] = None,  # New separate config
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -260,7 +262,6 @@ class HeteroCell(nn.Module):
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
 
-        # Preprocessor for gene embeddings.
         self.preprocessor = PreProcessor(
             in_channels=hidden_channels,
             hidden_channels=hidden_channels,
@@ -270,7 +271,6 @@ class HeteroCell(nn.Module):
             activation=activation,
         )
 
-        # Build hetero convolution layers.
         self.convs = nn.ModuleList()
         for _ in range(num_layers):
             conv_dict = {}
@@ -283,13 +283,17 @@ class HeteroCell(nn.Module):
             )
             conv_dict[("gene", "physical_interaction", "gene")] = gene_conv
             conv_dict[("gene", "regulatory_interaction", "gene")] = gene_conv
+
+            # Use separate gpr_conv_config for the bipartite "gpr" edge type.
+            gpr_config = gpr_conv_config if gpr_conv_config is not None else {}
             conv_dict[("gene", "gpr", "reaction")] = GATv2Conv(
                 hidden_channels,
                 hidden_channels,
-                heads=1,
-                concat=False,
-                add_self_loops=False,
+                heads=gpr_config.get("heads", 1),
+                concat=gpr_config.get("concat", False),
+                add_self_loops=gpr_config.get("add_self_loops", False),
             )
+
             conv_dict[("metabolite", "reaction", "metabolite")] = StoichHypergraphConv(
                 in_channels=hidden_channels,
                 out_channels=hidden_channels,
@@ -300,8 +304,6 @@ class HeteroCell(nn.Module):
                 dropout=dropout,
                 bias=True,
             )
-            from torch_geometric.nn import HeteroConv
-
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
         # Global aggregator for intact graphs.
@@ -691,6 +693,7 @@ def main(cfg: DictConfig) -> None:
         gene_encoder_config=cfg.model.gene_encoder_config,
         metabolism_config=cfg.model.metabolism_config,
         prediction_head_config=cfg.model.prediction_head_config,
+        gpr_conv_config=cfg.model.gpr_conv_config,
     ).to(device)
 
     print("\nModel architecture:")

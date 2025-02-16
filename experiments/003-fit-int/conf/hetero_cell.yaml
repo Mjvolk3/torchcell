@@ -38,19 +38,23 @@ model:
   hidden_channels: 64
   out_channels: 2
   num_layers: 3 # Number of hetero conv layers
-  norm: "layer"
+  norm: "batch"
   activation: "relu"
   dropout: 0.1
   gene_encoder_config:
     heads: 4
     concat: true
     bias: true
-    add_self_loops: true
+    add_self_loops: false
     share_weights: false
+  gpr_conv_config:
+    heads: 2
+    concat: False
+    add_self_loops: false
   metabolism_config:
     is_stoich_gated: false
     use_attention: true
-    heads: 1
+    heads: 2
     concat: true
   prediction_head_config:
     hidden_channels: 64
@@ -58,7 +62,7 @@ model:
     dropout: 0.1
     activation: "relu"
     residual: true
-    head_norm: "layer"
+    head_norm: "batch"
 
 regression_task:
   is_weighted_phenotype_loss: true

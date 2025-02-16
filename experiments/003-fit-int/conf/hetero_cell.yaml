@@ -49,7 +49,7 @@ model:
     share_weights: false
   gpr_conv_config:
     heads: 2
-    concat: False
+    concat: true
     add_self_loops: false
   metabolism_config:
     is_stoich_gated: true

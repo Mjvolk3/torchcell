@@ -361,19 +361,20 @@ def main(cfg: DictConfig) -> None:
         )
         data_module.setup()
 
-    if not wandb.config.cell_dataset.get("learnable_embedding", False):
-        input_dim = dataset.num_features["gene"]
-    else:
-        input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
+    # TODO will need for when adding embeddings
+    # if not wandb.config.cell_dataset.get("learnable_embedding", False):
+    #     input_dim = dataset.num_features["gene"]
+    # else:
+    #     input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
     dataset.close_lmdb()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
     devices = get_num_devices()
-    edge_types = [
-        ("gene", f"{name}_interaction", "gene")
-        for name in wandb.config.cell_dataset["graphs"]
-    ]
+    # edge_types = [
+    #     ("gene", f"{name}_interaction", "gene")
+    #     for name in wandb.config.cell_dataset["graphs"]
+    # ]
 
     print(f"Instantiating model ({timestamp()})")
     # Instantiate new IsomorphicCell model

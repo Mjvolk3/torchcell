@@ -12,21 +12,17 @@ hydra:
     direction: ["minimize", "maximize"]
     study_name: "lr_sweep"
     n_trials: 4
-    n_jobs: 4  # Set back to 4 for parallel jobs
-    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna_${hydra.job.name}_${oc.env:SLURM_ARRAY_JOB_ID}.db
+    n_jobs: 4
+    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db
     params:
-      regression_task.optimizer.lr: choice(1e-7, 1e-6, 1e-5, 1e-4, 1e-3)
-      # model.num_layers: choice(1,2,3,4,5,6,7,8,9,10,11,12)
-      # model.norm: choice("layer", "batch")
-      # model.gene_encoder_config.heads: choice(1, 5, 10)
-      # model.preidctio
+      regression_task.optimizer.lr: choice(1e-6, 1e-5, 1e-4, 1e-3)
 
   launcher:
     _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
     submitit_folder: ${hydra.sweep.dir}/.submitit/%j
     partition: mmli
     nodes: 1
-    tasks_per_node: 1
+    tasks_per_node: 1 
     cpus_per_task: 16
     mem_gb: 120
     timeout_min: 10080
@@ -34,7 +30,7 @@ hydra:
     additional_parameters:
       mail-user: mjvolk3@illinois.edu
       mail-type: END
-      gres: gpu:1  # Explicitly request 1 GPU per job
+      gres: gpu:1
 
   sweep:
     dir: /home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}

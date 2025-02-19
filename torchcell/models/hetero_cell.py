@@ -392,42 +392,38 @@ class HeteroCell(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData) -> torch.Tensor:
-        # Obtain node embeddings.
+        # Use the model's device for consistency.
+        device = self.gene_embedding.weight.device
+
         gene_bs = data["gene"].num_nodes
-        device = (
-            data["gene"].batch.device
-            if hasattr(data["gene"], "batch")
-            else torch.device("cpu")
-        )
-        gene_idx = (
-            torch.arange(gene_bs, device=device) % self.gene_embedding.num_embeddings
-        )
+        gene_idx = torch.arange(gene_bs, device=device) % self.gene_embedding.num_embeddings
 
         reaction_bs = data["reaction"].num_nodes
-        reaction_idx = (
-            torch.arange(reaction_bs, device=device)
-            % self.reaction_embedding.num_embeddings
-        )
+        reaction_idx = torch.arange(reaction_bs, device=device) % self.reaction_embedding.num_embeddings
 
         metabolite_bs = data["metabolite"].num_nodes
-        metabolite_idx = (
-            torch.arange(metabolite_bs, device=device)
-            % self.metabolite_embedding.num_embeddings
-        )
+        metabolite_idx = torch.arange(metabolite_bs, device=device) % self.metabolite_embedding.num_embeddings
 
         x_dict = {
             "gene": self.preprocessor(self.gene_embedding(gene_idx)),
             "reaction": self.reaction_embedding(reaction_idx),
             "metabolite": self.metabolite_embedding(metabolite_idx),
         }
-        edge_index_dict = data.edge_index_dict
+        # Ensure edge_index_dict tensors are on device.
+        edge_index_dict = {}
+        for key, edge in data.edge_index_dict.items():
+            if isinstance(edge, torch.Tensor):
+                edge_index_dict[key] = edge.to(device)
+            else:
+                edge_index_dict[key] = edge
+
         extra_kwargs = {}
         met_edge = ("metabolite", "reaction", "metabolite")
-        if met_edge in edge_index_dict:
-            stoich = data[met_edge].stoichiometry
+        if met_edge in data.edge_index_dict:
+            stoich = data[met_edge].stoichiometry.to(device)
             extra_kwargs["stoich_dict"] = {met_edge: stoich}
             if hasattr(data[met_edge], "reaction_ids"):
-                reaction_ids = data[met_edge].reaction_ids
+                reaction_ids = data[met_edge].reaction_ids.to(device)
                 extra_kwargs["edge_attr_dict"] = {
                     met_edge: self.reaction_embedding(
                         reaction_ids % self.reaction_embedding.num_embeddings
@@ -437,6 +433,7 @@ class HeteroCell(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
         return x_dict["gene"]
+
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData

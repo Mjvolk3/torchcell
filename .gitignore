@@ -24,6 +24,7 @@ models/checkpoints/
 mechanistic_aware.csv
 data/yeast_gem
 data/QM9
+data/all_spell_readmes
 
 # Dendron
 .dendron.port
@@ -108,3 +109,5 @@ logs.sh
 
 # optuna
 multirun
+
+

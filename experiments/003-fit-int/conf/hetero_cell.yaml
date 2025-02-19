@@ -19,18 +19,22 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4
-  batch_size: 2 # TODO
-  num_workers: 2 # TODO
+  batch_size: 32
+  num_workers: 4 
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 1 # TODO 20.
+  max_epochs: 20
   strategy: auto
   accelerator: gpu
   devices: 1
   overfit_batches: 0
 
+# ------ Placeholders for hydra optuna
+heads: 2          # placeholder
+norms: "layer"    # placeholder
+# ------
 model:
   gene_num: 6607
   reaction_num: 4881
@@ -38,23 +42,27 @@ model:
   hidden_channels: 64
   out_channels: 2
   num_layers: 3 # Number of hetero conv layers
-  norm: "batch"
+  # norm: "batch"
+  norm: ${norms}
   activation: "relu"
   dropout: 0.0
   gene_encoder_config:
-    heads: 5
+    # heads: 5
+    heads: ${heads}
     concat: true
     bias: true
     add_self_loops: false
     share_weights: false
   gpr_conv_config:
-    heads: 2
+    # heads: 2
+    heads: ${heads}
     concat: true
     add_self_loops: false
   metabolism_config:
     is_stoich_gated: true
     use_attention: true
-    heads: 2
+    # heads: 2
+    heads: ${heads}
     concat: true
   prediction_head_config:
     hidden_channels: 64
@@ -62,7 +70,8 @@ model:
     dropout: 0.0
     activation: "relu"
     residual: true
-    head_norm: "batch"
+    # head_norm: "batch"
+    head_norm: ${norms}
 
 regression_task:
   is_weighted_phenotype_loss: true

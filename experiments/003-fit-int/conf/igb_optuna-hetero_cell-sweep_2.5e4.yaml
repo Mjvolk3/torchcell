@@ -11,11 +11,34 @@ hydra:
       seed: 42
     direction: ["minimize", "maximize"]
     study_name: "lr_sweep"
-    n_trials: 4
+    n_trials: 100
     n_jobs: 4
     storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db
     params:
-      regression_task.optimizer.lr: choice(1e-6, 1e-5, 1e-4, 1e-3)
+      # ---- Grouping ----
+      heads: int(interval(1, 10))
+      norms: choice("layer", "batch")
+      # ---- Grouping ----
+      cell_dataset.learnable_embedding_input_channels: choice(16, 32, 64)
+      model.num_layers: int(interval(1, 10))
+      model.hidden_channels: choice(16, 32, 64)
+      model.prediction_head_config.hidden_channels: choice(16, 32, 64)
+      model.prediction_head_config.head_num_layers: int(interval(2, 8))
+      model.prediction_head_config.residual: choice(true, false)
+      regression_task.lambda_dist: tag(log, interval(1e-6, 1)) 
+      regression_task.lambda_supcr: tag(log, interval(1e-6, 1))
+      regression_task.lambda_cell: tag(log, interval(1e-4, 100)) 
+      regression_task.optimizer.lr: tag(log, interval(1e-7, 1e-3))
+      # regression_task.optimizer.lr: choice(1e-6, 1e-5, 1e-4, 1e-3)
+
+      # --------- Grouped params ------- 
+      # model.gene_encoder_config.heads: int(inteurval(1, 10))
+      # model.gpr_conv_config.heads: int(interval(1, 10))
+      # model.metabolism_config.heads: int(interval(1, 10))
+
+      # model.norm: choice("layer", "batch")
+      # model.prediction_head_config.head_norm: choice("layer", "batch")
+      # --------- Grouped params ------- 
 
   launcher:
     _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
@@ -23,8 +46,8 @@ hydra:
     partition: mmli
     nodes: 1
     tasks_per_node: 1 
-    cpus_per_task: 16
-    mem_gb: 120
+    cpus_per_task: 12
+    mem_gb: 100
     timeout_min: 10080
     name: ${hydra.job.name}
     additional_parameters:

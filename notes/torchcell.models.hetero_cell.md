@@ -2,7 +2,7 @@
 id: kc0f661z51mm7gcsvmksxkp
 title: Hetero_cell
 desc: ''
-updated: 1739621742725
+updated: 1740006315062
 created: 1739611656728
 ---
 ## 2025.02.12 - Data Masking
@@ -352,3 +352,74 @@ The model uses separate MLPs to predict the two outputs:
    - Concatenate the two outputs to form the final prediction \( \hat{y} \).
 
 This detailed algorithm encapsulates the entire forward pass and prediction strategy of the HeteroCell model.
+
+## 2025.02.19 - Equations How Interacting Wildtype and Integrated
+
+We "interact" them with a simple difference.
+
+1) Commented (Two-Head) Version
+
+$$
+\begin{aligned}
+z_w & =\operatorname{Global\operatorname {Agg}(\operatorname {GNN}(G_{\mathrm {wt}})),} \\
+z_i & =\operatorname{GlobalAgg}\left(\operatorname{GNN}\left(G_{\text {batch }}\right)\right),
+\end{aligned}
+$$
+
+(for each sample, replicate $z_w$ over perturbed indices, then aggregate)
+
+$$
+z_p=\text { PerturbedAgg }(\{\underbrace{z_w[\text { pert. inds }]}_{\text {replicated }}\})
+$$
+
+Then we predict fitness from $z_i$ and gene interaction from $z_p$ :
+
+$$
+\hat{y}_{\text {fitness }}=\operatorname{MLP}_{\text {fit }}\left(z_i\right), \quad \hat{y}_{\mathrm{GI}}=\operatorname{MLP}_{\mathrm{gi}}\left(z_p\right) .
+$$
+
+Very long slow decent, doesn't fit gene interactions.
+
+![](./assets/images/hetero_cell_training_loss_2025-02-15-22-04-28.png)
+
+![](./assets/images/hetero_cell_correlation_plots_2025-02-15-06-33-56.png)
+
+Match parameters for comparison experiment. Doesn't fit gene interactions
+
+![](./assets/images/hetero_cell_training_loss_2025-02-19-14-43-55.png)
+
+![](./assets/images/hetero_cell_correlation_plots_2025-02-19-14-43-55.png)
+
+Repeat
+
+![](./assets/images/hetero_cell_correlation_plots_2025-02-19-15-14-58.png)
+
+![](./assets/images/hetero_cell_training_loss_2025-02-19-15-14-58.png)
+
+2) Current (Difference) Version
+
+$$
+\begin{aligned}
+z_w & =\operatorname{GlobalAgg}\left(\operatorname{GNN}\left(G_{\mathrm{wt}}\right)\right), \\
+z_i & =\operatorname{GlobalAgg}\left(\operatorname{GNN}\left(G_{\text {batch }}\right)\right), \\
+z_p & =z_w-z_i .
+\end{aligned}
+$$
+
+Here we feed $z_p$ into one unified prediction head:
+
+$$
+\left[\hat{y}_{\mathrm{fitness}}, \hat{y}_{\mathrm{GI}}\right]=\operatorname{MLP}_{\text {shared }}\left(z_p\right)
+$$
+
+First try
+
+![](./assets/images/hetero_cell_correlation_plots_2025-02-19-13-49-55.png)
+
+![](./assets/images/hetero_cell_training_loss_2025-02-19-13-49-55.png)
+
+Repeat
+
+![](./assets/images/hetero_cell_correlation_plots_2025-02-19-16-09-26.png)
+
+![](./assets/images/hetero_cell_training_loss_2025-02-19-16-09-26.png)

@@ -443,9 +443,9 @@ def main(cfg: DictConfig) -> None:
     loss_func = ICLoss(
         lambda_dist=wandb.config.regression_task["lambda_dist"],
         lambda_supcr=wandb.config.regression_task["lambda_supcr"],
-        lambda_cell=wandb.config.regression_task["lambda_cell"],
         weights=weights,
     )
+
 
     print(f"Creating regression task ({timestamp()})")
     task = RegressionTask(

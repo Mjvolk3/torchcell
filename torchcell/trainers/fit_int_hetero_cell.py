@@ -13,7 +13,6 @@ from torchcell.viz.visual_graph_degen import VisGraphDegen
 from torchcell.viz import genetic_interaction_score
 from torchcell.viz import fitness
 
-
 log = logging.getLogger(__name__)
 
 
@@ -89,14 +88,14 @@ class RegressionTask(L.LightningModule):
         fitness_vals = batch["gene"].fitness.view(-1, 1)
         gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
+        # Removed cell loss input (representations["z_w"]) from the loss function call.
         loss, loss_dict = self.loss_func(
             predictions,
             targets,
-            representations["z_w"],
             representations["z_p"],
             representations["z_i"],
         )
-        # Log loss components.
+        # Log loss components (removed cell loss entries).
         for key, value in [
             ("loss", loss),
             ("fitness_loss", loss_dict["mse_dim_losses"][0]),
@@ -104,7 +103,6 @@ class RegressionTask(L.LightningModule):
             ("mse_loss", loss_dict["mse_loss"]),
             ("dist_loss", loss_dict["dist_loss"]),
             ("supcr_loss", loss_dict["supcr_loss"]),
-            ("cell_loss", loss_dict["cell_loss"]),
             ("total_loss", loss_dict["total_loss"]),
         ]:
             self.log(f"{stage}/{key}", value, batch_size=batch_size, sync_dist=True)
@@ -112,16 +110,13 @@ class RegressionTask(L.LightningModule):
             "weighted_mse",
             "weighted_dist",
             "weighted_supcr",
-            "weighted_cell",
             "total_weighted",
             "norm_weighted_mse",
             "norm_weighted_dist",
             "norm_weighted_supcr",
-            "norm_weighted_cell",
             "norm_unweighted_mse",
             "norm_unweighted_dist",
             "norm_unweighted_supcr",
-            "norm_unweighted_cell",
         ]:
             if key in loss_dict:
                 self.log(
@@ -261,7 +256,7 @@ class RegressionTask(L.LightningModule):
             None,
             stage=stage,
         )
-        # Log oversmoothing metrics on latent spaces using compute_smoothness.
+        # Log oversmoothing metrics on latent spaces.
         if "z_p" in latents:
             smoothness_zp = VisGraphDegen.compute_smoothness(latents["z_p"])
             wandb.log({f"{stage}/oversmoothing_zp": smoothness_zp.item()})

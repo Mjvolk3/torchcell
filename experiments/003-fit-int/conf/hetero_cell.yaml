@@ -77,7 +77,6 @@ regression_task:
   is_weighted_phenotype_loss: true
   lambda_dist: 0.5
   lambda_supcr: 0.005
-  lambda_cell: 0.1
   optimizer:
     type: "AdamW"
     lr: 1e-3

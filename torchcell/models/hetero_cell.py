@@ -344,21 +344,33 @@ class HeteroCell(nn.Module):
         )
 
         # Build separate prediction heads:
+        # BUG - See buggy model
+        # pred_config = prediction_head_config or {}
+        # self.fitness_head = self._build_prediction_head(
+        #     in_channels=hidden_channels,
+        #     hidden_channels=pred_config.get("hidden_channels", hidden_channels),
+        #     out_channels=1,
+        #     num_layers=pred_config.get("head_num_layers", 1),
+        #     dropout=pred_config.get("dropout", dropout),
+        #     activation=pred_config.get("activation", activation),
+        #     residual=pred_config.get("residual", True),
+        #     norm=pred_config.get("head_norm", norm),
+        # )
+        # self.gene_interaction_head = self._build_prediction_head(
+        #     in_channels=hidden_channels,
+        #     hidden_channels=pred_config.get("hidden_channels", hidden_channels),
+        #     out_channels=1,
+        #     num_layers=pred_config.get("head_num_layers", 1),
+        #     dropout=pred_config.get("dropout", dropout),
+        #     activation=pred_config.get("activation", activation),
+        #     residual=pred_config.get("residual", True),
+        #     norm=pred_config.get("head_norm", norm),
+        # )
         pred_config = prediction_head_config or {}
-        self.fitness_head = self._build_prediction_head(
+        self.prediction_head = self._build_prediction_head(
             in_channels=hidden_channels,
             hidden_channels=pred_config.get("hidden_channels", hidden_channels),
-            out_channels=1,
-            num_layers=pred_config.get("head_num_layers", 1),
-            dropout=pred_config.get("dropout", dropout),
-            activation=pred_config.get("activation", activation),
-            residual=pred_config.get("residual", True),
-            norm=pred_config.get("head_norm", norm),
-        )
-        self.gene_interaction_head = self._build_prediction_head(
-            in_channels=hidden_channels,
-            hidden_channels=pred_config.get("hidden_channels", hidden_channels),
-            out_channels=1,
+            out_channels=2,  # two outputs: fitness and gene interaction
             num_layers=pred_config.get("head_num_layers", 1),
             dropout=pred_config.get("dropout", dropout),
             activation=pred_config.get("activation", activation),
@@ -438,6 +450,54 @@ class HeteroCell(nn.Module):
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
         return x_dict["gene"]
 
+    # BUG All mean or random prediction.
+    # def forward(
+    #     self, cell_graph: HeteroData, batch: HeteroData
+    # ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    #     # Process the reference (wildtype) graph.
+    #     z_w = self.forward_single(cell_graph)
+    #     z_w = self.global_aggregator(
+    #         z_w,
+    #         index=torch.zeros(z_w.size(0), device=z_w.device, dtype=torch.long),
+    #         dim_size=1,
+    #     )
+    #     # Process the intact (perturbed) batch.
+    #     z_i = self.forward_single(batch)
+    #     z_i = self.global_aggregator(z_i, index=batch["gene"].batch)
+
+    #     # Extract perturbed node indices from batch gene data.
+    #     batch_size = len(batch["gene"].ptr) - 1
+    #     pert_indices = []
+    #     for i in range(batch_size):
+    #         start = batch["gene"].x_pert_ptr[i]
+    #         end = batch["gene"].x_pert_ptr[i + 1]
+    #         pert_indices.append(batch["gene"].cell_graph_idx_pert[start:end])
+
+    #     # Expand reference representation to match batch size.
+    #     z_w_exp = z_w.expand(batch_size, -1)
+    #     z_p_list = []
+    #     batch_idx_list = []
+    #     for i, indices in enumerate(pert_indices):
+    #         z_p_list.append(z_w_exp[i : i + 1].expand(len(indices), -1))
+    #         batch_idx_list.append(torch.full((len(indices),), i, device=z_w.device))
+    #     z_p = torch.cat(z_p_list, dim=0)
+    #     batch_idx = torch.cat(batch_idx_list, dim=0)
+    #     z_p = self.perturbed_aggregator(z_p, index=batch_idx, dim_size=batch_size)
+
+    #     # Predict fitness from intact representation and gene interaction from perturbed nodes.
+    #     fitness = self.fitness_head(z_i)  # Shape: [batch_size, 1]
+    #     gene_interaction = self.gene_interaction_head(z_p)  # Shape: [batch_size, 1]
+
+    #     predictions = torch.cat([fitness, gene_interaction], dim=1)
+
+    #     return predictions, {
+    #         "z_w": z_w,
+    #         "z_i": z_i,
+    #         "z_p": z_p,
+    #         "fitness": fitness,
+    #         "gene_interaction": gene_interaction,
+    #     }
+
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
@@ -451,30 +511,14 @@ class HeteroCell(nn.Module):
         # Process the intact (perturbed) batch.
         z_i = self.forward_single(batch)
         z_i = self.global_aggregator(z_i, index=batch["gene"].batch)
-
-        # Extract perturbed node indices from batch gene data.
-        batch_size = len(batch["gene"].ptr) - 1
-        pert_indices = []
-        for i in range(batch_size):
-            start = batch["gene"].x_pert_ptr[i]
-            end = batch["gene"].x_pert_ptr[i + 1]
-            pert_indices.append(batch["gene"].cell_graph_idx_pert[start:end])
-
-        # Expand reference representation to match batch size.
-        z_w_exp = z_w.expand(batch_size, -1)
-        z_p_list = []
-        batch_idx_list = []
-        for i, indices in enumerate(pert_indices):
-            z_p_list.append(z_w_exp[i : i + 1].expand(len(indices), -1))
-            batch_idx_list.append(torch.full((len(indices),), i, device=z_w.device))
-        z_p = torch.cat(z_p_list, dim=0)
-        batch_idx = torch.cat(batch_idx_list, dim=0)
-        z_p = self.perturbed_aggregator(z_p, index=batch_idx, dim_size=batch_size)
-
-        # Predict fitness from intact representation and gene interaction from perturbed nodes.
-        fitness = self.fitness_head(z_i)  # Shape: [batch_size, 1]
-        gene_interaction = self.gene_interaction_head(z_p)  # Shape: [batch_size, 1]
-        predictions = torch.cat([fitness, gene_interaction], dim=1)
+        # Compute the difference: use broadcasting to match batch size.
+        batch_size: int = z_i.size(0)
+        z_w_exp: torch.Tensor = z_w.expand(batch_size, -1)
+        z_p: torch.Tensor = z_w_exp - z_i
+        # Single prediction head that outputs 2 dimensions (fitness and gene interaction)
+        predictions: torch.Tensor = self.prediction_head(z_p)  # shape: [batch_size, 2]
+        fitness: torch.Tensor = predictions[:, 0:1]
+        gene_interaction: torch.Tensor = predictions[:, 1:2]
 
         return predictions, {
             "z_w": z_w,

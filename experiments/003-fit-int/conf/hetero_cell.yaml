@@ -25,7 +25,7 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 1 # TODO 20
+  max_epochs: 100 # TODO 20
   strategy: auto
   accelerator: cpu #TODO gpu
   devices: 1

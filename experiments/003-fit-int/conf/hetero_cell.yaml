@@ -18,16 +18,16 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e2 # TODO 2.5e4
-  batch_size: 8
-  num_workers: 4
+  perturbation_subset_size: 2.5e4
+  batch_size: 2 # TODO
+  num_workers: 2 # TODO
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 100 # TODO 20
+  max_epochs: 1 # TODO 20.
   strategy: auto
-  accelerator: cpu #TODO gpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 

@@ -285,16 +285,6 @@ class Visualization:
                 timestamp_str,
                 stage=stage,
             )
-            # Plot UMAP for raw target space.
-            self.plot_umap(
-                true_values,
-                true_values[:, dim],
-                "TargetSpace",
-                dim,
-                num_epochs,
-                timestamp_str,
-                stage=stage,
-            )
         # Plot UMAP for each latent representation without appending loss info.
         for latent_key, latent in latents.items():
             for dim in [0, 1]:

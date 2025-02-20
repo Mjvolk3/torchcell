@@ -82,19 +82,38 @@ def get_num_devices() -> int:
     config_name="hetero_cell",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting IsomorphicCell Training 💡")
+    print("Starting HeteroCell Training 🐂")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
-    slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", 
-                                    os.environ.get("SLURM_JOB_ID", str(uuid.uuid4())))
-    hostname = socket.gethostname()
-    hostname_slurm_job_id = f"{hostname}-{slurm_array_job_id}"
-    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
-    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
-    group = f"{hostname_slurm_job_id}_{hashed_cfg}"
+
+    # Check if using optuna sweeper
+    is_optuna = cfg.get("hydra", {}).get("sweeper", {}).get("_target_", "").endswith("optuna.sweeper.OptunaSweeper")
+
+    if is_optuna:
+        slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", "")
+        slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "") 
+        slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
+
+        if slurm_array_job_id and slurm_array_task_id:
+            job_id = f"{slurm_array_job_id}_{slurm_array_task_id}"
+        elif slurm_job_id:
+            job_id = slurm_job_id
+        else:
+            job_id = str(uuid.uuid4())
+            
+        hostname = socket.gethostname()
+        hostname_job_id = f"{hostname}-{job_id}"
+        sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+        hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+        group = f"{hostname_job_id}_{hashed_cfg}"
+    else:
+        hostname = socket.gethostname()
+        group = f"{hostname}_{timestamp()}"
+
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
+    
     wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
@@ -102,8 +121,15 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
         dir=experiment_dir,
+        name=f"run_{group}"
     )
-    wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
+
+    wandb_logger = WandbLogger(
+        project=wandb_cfg["wandb"]["project"],
+        log_model=True,
+        save_dir=experiment_dir,
+        name=f"run_{group}"
+    )
 
     if torch.cuda.is_available() and dist.is_initialized():
         rank = dist.get_rank()

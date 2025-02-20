@@ -538,8 +538,7 @@ class HeteroCell(nn.Module):
             "convs": count_params(self.convs),
             "global_aggregator": count_params(self.global_aggregator),
             "perturbed_aggregator": count_params(self.perturbed_aggregator),
-            "fitness_head": count_params(self.fitness_head),
-            "interaction_head": count_params(self.gene_interaction_head),
+            "prediction_head": count_params(self.prediction_head),  # Changed this line
         }
         counts["total"] = sum(counts.values())
         return counts

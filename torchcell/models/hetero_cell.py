@@ -408,13 +408,21 @@ class HeteroCell(nn.Module):
         device = self.gene_embedding.weight.device
 
         gene_bs = data["gene"].num_nodes
-        gene_idx = torch.arange(gene_bs, device=device) % self.gene_embedding.num_embeddings
+        gene_idx = (
+            torch.arange(gene_bs, device=device) % self.gene_embedding.num_embeddings
+        )
 
         reaction_bs = data["reaction"].num_nodes
-        reaction_idx = torch.arange(reaction_bs, device=device) % self.reaction_embedding.num_embeddings
+        reaction_idx = (
+            torch.arange(reaction_bs, device=device)
+            % self.reaction_embedding.num_embeddings
+        )
 
         metabolite_bs = data["metabolite"].num_nodes
-        metabolite_idx = torch.arange(metabolite_bs, device=device) % self.metabolite_embedding.num_embeddings
+        metabolite_idx = (
+            torch.arange(metabolite_bs, device=device)
+            % self.metabolite_embedding.num_embeddings
+        )
 
         x_dict = {
             "gene": self.preprocessor(self.gene_embedding(gene_idx)),
@@ -445,7 +453,6 @@ class HeteroCell(nn.Module):
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
         return x_dict["gene"]
-
 
     # BUG All mean or random prediction.
     # def forward(
@@ -781,7 +788,6 @@ def main(cfg: DictConfig) -> None:
     criterion = ICLoss(
         lambda_dist=cfg.regression_task.lambda_dist,
         lambda_supcr=cfg.regression_task.lambda_supcr,
-        lambda_cell=cfg.regression_task.lambda_cell,
         weights=weights,
     )
 
@@ -808,7 +814,6 @@ def main(cfg: DictConfig) -> None:
             loss, loss_components = criterion(
                 predictions,
                 y,
-                representations["z_w"],
                 representations["z_p"],
                 representations["z_i"],
             )
@@ -850,7 +855,6 @@ def main(cfg: DictConfig) -> None:
     plt.title(
         f"Training Loss Over Time: λ_dist={cfg.regression_task.lambda_dist}, "
         f"λ_supcr={cfg.regression_task.lambda_supcr}, "
-        f"λ_cell={cfg.regression_task.lambda_cell}, "
         f"wd={cfg.regression_task.optimizer.weight_decay}"
     )
     plt.grid(True)
@@ -871,8 +875,7 @@ def main(cfg: DictConfig) -> None:
         y.cpu(),
         correlation_save_path,
         lambda_info=f"λ_dist={cfg.regression_task.lambda_dist}, "
-        f"λ_supcr={cfg.regression_task.lambda_supcr}, "
-        f"λ_cell={cfg.regression_task.lambda_cell}",
+        f"λ_supcr={cfg.regression_task.lambda_supcr}",
         weight_decay=cfg.regression_task.optimizer.weight_decay,
     )
 

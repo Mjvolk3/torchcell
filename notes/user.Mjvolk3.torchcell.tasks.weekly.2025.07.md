@@ -2,7 +2,7 @@
 id: r1orjyberqc5mathlsswg03
 title: '07'
 desc: ''
-updated: 1739422748872
+updated: 1739703553881
 created: 1739216011880
 ---
 
@@ -16,83 +16,29 @@ created: 1739216011880
 🏆 of the day - 4 hour sweeps - learning rate
 
 - [x] Collected key papers for sparse graph transformer
-- [ ] Reviewed data of IGB run. Model didn't fit... Bit troubling. We plan do changed the model a bit to get matching parameters in both sides of model. Maybe use `GAT` instead. Then run sweep over fitness and gene interactions. First sweep should be short fast, attempt to get quick smooth learning. I also want to use that as an opportunity to add plot logging and adjust the logged metrics.
-- [x] - Did new description of data [[2025.02.12 - Data Masking|dendron://torchcell/torchcell.models.isomorphic_cell_attentional#20250212---data-masking]]
+- [x] Reviewed data of IGB run. Model didn't fit... Bit troubling. We plan to changed the model a bit to get matching parameters in both sides of model. Maybe use `GAT` instead. Then run sweep over fitness and gene interactions. First sweep should be short fast, attempt to get quick smooth learning. I also want to use that as an opportunity to add plot logging and adjust the logged metrics.
+- [x] Did new description of data [[2025.02.12 - Data Masking|dendron://torchcell/torchcell.models.isomorphic_cell_attentional#20250212---data-masking]]
 - [x] Did residual connection on preprocessor
 - [x] Did read in model initialization from config.
 
-- [ ] Add learnable embedding.
-- [ ]
+## 2025.02.13
 
-- [ ] Fix pin memory not working due to some data being sent to device prior to the pinning.
-- [ ] Fix slow subgraph representation.
+- [x] Did add learnable embedding.
+- [x] Found out cannot run sweeps on `igb biocluster (IGBB)` easily as compute nodes don't connect to wandb server for controller. Will need alternate sweeping strategy.
 
-- [ ] Add after we get run going on GPU [[torchcell.viz.visual_regression]]
+## 2025.02.14
 
-- [ ] Edit to get most up to date formula of the problem. [[Isomorphic_cell|dendron://torchcell/torchcell.models.isomorphic_cell]]
+🏆 - Random grid 20 epochs each, small model, `lambda` loss search, `weight_decay`, norms, `num_layers`, 2 layer mlp
 
-## 2025.02.12
+- [x] Optuna working with multirun, now it is a question of wether or not it will work on slurm.
 
-🏆 of the day - 10 hour sweeps.
+## 2025.02.15
 
-***
-**Node Embeddings for Whole Genome**
-
-- [ ] Delay to feature transfer
-- [ ] Find and replace str for moving node embeddings.
-- [ ] Move all node embeddings `M1`.
-- [ ] Delete Node embeddings on `Delta`.
-- [ ] Transfer Node embeddings to `Delta`.
-- [ ] Remove node embeddings on `GH` so when we get machine on return things will break until we transfer node embeddings back.
-
-- [ ] Wait on this... plots for enrichment of all genes. Contains any of all graphs.
-- [ ] Make sure y distributions look like they y from other datasets.
-- [ ] Histogram of genes usage in subset... we have these plots somewhere.
-- [ ] Evaluate
-500,000 (5e5) - cannot do with current db we have
-500,000 (5e5)
-
-- [ ] Want small datasets with most possible perturbations. Check network overlap?
-
-***
-
-### Writing
-
-- [ ] [[Outline 02|dendron://torchcell/paper.outline.02]] - Move on to outline 3 too much has changed. [[Outline 03|dendron://torchcell/paper.outline.03]]
-
-- [ ] Start Draft pipeline. Bring in thesis latex template.
-
-***
-
-- [ ] Test edge attention on hypergraph conv
-- [ ] Update `cell_latent_perturbation`
-- [ ] `cell_latent_perturbation` remove stoichiometry for reaction aggregation
-- [ ] `cell_latent_perturbation` unify embeddings across graphs
-- [ ] `cell_latent_perturbation` use `ISAB` set transformer for `intact_whole`
-- [ ] unified model
-
-- [ ] Memory issue with regression to classification scripts. We still have issue of processing memory accumulation. Unsure where it is coming from. Will only need to be solved if we use these losses.
-- [ ] Implement intact and pert phenotype processor.
-- [ ] Synthesize Results in report. Discussion on consideration of use alternative methods like mse plus a divergence measure.
-- [ ] Run metabolism label split regression run
-- [ ] Information Diff., WL Kernel
-
-## Notes on Metabolism
-
-- Can get Gibbs Free Energy of reaction from [MetaCyc](https://biocyc.org/reaction?orgid=META&id=D-LACTATE-DEHYDROGENASE-CYTOCHROME-RXN)
-- To preserve sign information in [[Met_hypergraph_conv|dendron://torchcell/torchcell.nn.stoichiometric_hypergraph_conv]] we should use activations that can handle negative input like leaky relu, elu, or tanh.
-
-## Notes Related to Dango
-
-Breakout into specific notes on Dango.
-
-- [ ] Verify
-
-> Pearson correlation between the trigenic interaction scores of two individual replicates is around 0.59, which is much lower than the Pearson correlation between the digenic interaction score of two replicates from the same data source (0.88). ([Zhang et al., 2020, p. 3](zotero://select/library/items/PJFDVT8Y)) ([pdf](zotero://open-pdf/library/items/AFBC5E89?page=3&annotation=D8D949VF))
-
-- [ ] Plot P-Values of current dataset to compare to predicted interactions. Can do for both digenic and trigenic interactions. Do this over queried datasets.
-- [ ] What is purpose of the pretraining portion? Why not just take embeddings and put into this hypergraph embedding portion?
-
-***
-
-[[04|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2025.04]]
+- [x] `HeteroCell` - working model
+- [x] Quick over fit run
+![](./assets/images/hetero_cell_training_loss_2025-02-15-06-33-56.png)
+![](./assets/images/hetero_cell_correlation_plots_2025-02-15-06-33-56.png)
+- [x] Long over fit run
+![](./assets/images/hetero_cell_training_loss_2025-02-15-22-04-28.png)
+![](./assets/images/hetero_cell_correlation_plots_2025-02-15-22-04-29.png)
+- [x] #ramble We can easily overfit batch on fitness but we still aren't overfitting on interactions. Thinking we should consider a different decoder on `gene_interactions`

@@ -9,7 +9,7 @@ import seaborn as sns
 from PIL import Image
 from scipy import stats
 import torch
-from torchcell.timestamp import timestamp
+from typing import Optional
 
 
 class Visualization:
@@ -21,7 +21,7 @@ class Visualization:
         self.max_points = max_points
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: str
+        self, fig: plt.Figure, name: str, timestamp_str: Optional[str]
     ) -> None:
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
@@ -33,8 +33,13 @@ class Visualization:
     def init_wandb_artifact(self, name: str, artifact_type: str = "figures") -> None:
         self.artifact = wandb.Artifact(name, type=artifact_type)
 
-    def get_base_title(self, loss_name: str, num_epochs: int) -> str:
-        return f"Training Results\nLoss: {loss_name}\nEpochs: {num_epochs}"
+    def get_base_title(
+        self, name: str, num_epochs: int, title_type: str = "loss"
+    ) -> str:
+        if title_type == "latent":
+            return f"Training Results\nLatent: {name}\nEpochs: {num_epochs}"
+        else:
+            return f"Training Results\nLoss: {name}\nEpochs: {num_epochs}"
 
     def plot_correlations(
         self,
@@ -43,7 +48,7 @@ class Visualization:
         dim: int,
         loss_name: str,
         num_epochs: int,
-        timestamp_str: str,
+        timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
         predictions_np = predictions.detach().cpu().numpy()
@@ -97,7 +102,7 @@ class Visualization:
         loss_name: str,
         dim: int,
         num_epochs: int,
-        timestamp_str: str,
+        timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
         true_np = true_values.detach().cpu().numpy()
@@ -165,11 +170,12 @@ class Visualization:
         self,
         features: torch.Tensor,
         labels: torch.Tensor,
-        loss_name: str,
+        source: str,
         dim: int,
         num_epochs: int,
-        timestamp_str: str,
+        timestamp_str: Optional[str],  # still accepted, but not used for key
         stage: str = "",
+        title_type: str = "loss",
     ) -> None:
         features_np = features.detach().cpu().numpy()
         labels_np = labels.detach().cpu().numpy()
@@ -194,12 +200,17 @@ class Visualization:
             embedding[:, 0], embedding[:, 1], c=labels_np, cmap="coolwarm", alpha=0.6
         )
         plt.colorbar(scatter, label=f"Target {dim}")
-        base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nUMAP Projection Target {dim}")
+        base_title = self.get_base_title(source, num_epochs, title_type)
+        plt.title(f"{base_title}\nUMAP Projection ({source}) for Target {dim}")
         plt.grid(True, alpha=0.3)
         plt.tight_layout()
-        key = f"{stage}/umap_target_{dim}" if stage else f"umap_target_{dim}"
-        self.save_and_log_figure(fig, key, timestamp_str)
+        # Remove timestamp from key so that plots remain consistent across runs.
+        key = (
+            f"{stage}/umap_{source}_target_{dim}"
+            if stage
+            else f"umap_{source}_target_{dim}"
+        )
+        self.save_and_log_figure(fig, key, None)
         plt.close()
 
     def log_sample_metrics(
@@ -208,6 +219,7 @@ class Visualization:
         predictions_np = predictions.detach().cpu().numpy()
         true_values_np = true_values.detach().cpu().numpy()
         num_targets = true_values_np.shape[1]
+        prefix = stage  # use the provided stage directly as key prefix
         for dim in range(num_targets):
             mask = ~np.isnan(true_values_np[:, dim])
             if np.sum(mask) < 2:
@@ -234,12 +246,12 @@ class Visualization:
             js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
             wandb.log(
                 {
-                    f"{stage}/sample/MSE_target_{dim}": mse,
-                    f"{stage}/sample/MAE_target_{dim}": mae,
-                    f"{stage}/sample/Pearson_target_{dim}": pearson,
-                    f"{stage}/sample/Spearman_target_{dim}": spearman,
-                    f"{stage}/sample/Wasserstein_target_{dim}": wasserstein,
-                    f"{stage}/sample/JS_div_target_{dim}": js_div,
+                    f"{prefix}/MSE_target_{dim}": mse,
+                    f"{prefix}/MAE_target_{dim}": mae,
+                    f"{prefix}/Pearson_target_{dim}": pearson,
+                    f"{prefix}/Spearman_target_{dim}": spearman,
+                    f"{prefix}/Wasserstein_target_{dim}": wasserstein,
+                    f"{prefix}/JS_div_target_{dim}": js_div,
                 }
             )
 
@@ -250,10 +262,10 @@ class Visualization:
         latents: dict[str, torch.Tensor],
         loss_name: str,
         num_epochs: int,
-        timestamp_str: str,
+        timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
-        # Generate correlation, distribution, and UMAP plots per target dimension.
+        # Plot correlations and distributions for each target dimension.
         for dim in [0, 1]:
             self.plot_correlations(
                 predictions,
@@ -273,26 +285,18 @@ class Visualization:
                 timestamp_str,
                 stage=stage,
             )
-            self.plot_umap(
-                true_values,
-                true_values[:, dim],
-                loss_name,
-                dim,
-                num_epochs,
-                timestamp_str,
-                stage=stage,
-            )
-        # For each latent representation, plot UMAP with the true target overlay.
+        # Plot UMAP for each latent representation without appending loss info.
         for latent_key, latent in latents.items():
             for dim in [0, 1]:
                 self.plot_umap(
                     latent,
                     true_values[:, dim],
-                    f"{latent_key} - {loss_name}",
+                    latent_key,
                     dim,
                     num_epochs,
                     timestamp_str,
                     stage=stage,
+                    title_type="latent",
                 )
         # Log additional sample metrics.
         self.log_sample_metrics(predictions, true_values, stage=stage)

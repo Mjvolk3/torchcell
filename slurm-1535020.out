@@ -1,0 +1,119 @@
+/home/a-m/mjvolk3/.bashrc: line 35: bind: warning: line editing not enabled
+/home/a-m/mjvolk3/.bashrc: line 36: bind: warning: line editing not enabled
+/home/a-m/mjvolk3/.bashrc: line 37: bind: warning: line editing not enabled
+/home/a-m/mjvolk3/projects/torchcell
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              64
+On-line CPU(s) list: 0-63
+Thread(s) per core:  2
+Core(s) per socket:  16
+Socket(s):           2
+NUMA node(s):        2
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               106
+Model name:          Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz
+Stepping:            6
+CPU MHz:             3400.000
+CPU max MHz:         3400.0000
+CPU min MHz:         800.0000
+BogoMIPS:            4800.00
+Virtualization:      VT-x
+L1d cache:           48K
+L1i cache:           32K
+L2 cache:            1280K
+L3 cache:            24576K
+NUMA node0 CPU(s):   0-15,32-47
+NUMA node1 CPU(s):   16-31,48-63
+Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 invpcid_single ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust sgx bmi1 hle avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect wbnoinvd dtherm ida arat pln pts avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid sgx_lc fsrm md_clear pconfig flush_l1d arch_capabilities
+Thu Feb 13 04:33:02 2025       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.86.15              Driver Version: 570.86.15      CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100 80GB PCIe          Off |   00000000:31:00.0 Off |                    0 |
+| N/A   35C    P0             42W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A100 80GB PCIe          Off |   00000000:4B:00.0 Off |                    0 |
+| N/A   36C    P0             47W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   2  NVIDIA A100 80GB PCIe          Off |   00000000:B1:00.0 Off |                    0 |
+| N/A   35C    P0             43W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+|   3  NVIDIA A100 80GB PCIe          Off |   00000000:CA:00.0 Off |                    0 |
+| N/A   35C    P0             42W /  300W |       1MiB /  81920MiB |      0%      Default |
+|                                         |                        |             Disabled |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+MemTotal:       527964492 kB
+MemFree:        501434756 kB
+MemAvailable:   499310528 kB
+Buffers:               0 kB
+Cached:          8636156 kB
+SwapCached:            0 kB
+Active:            83396 kB
+Inactive:        9009464 kB
+Active(anon):      69792 kB
+Inactive(anon):  9009464 kB
+Active(file):      13604 kB
+Inactive(file):        0 kB
+Unevictable:    15728636 kB
+Mlocked:        15728640 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                 0 kB
+Writeback:             0 kB
+AnonPages:      16185656 kB
+Mapped:           381400 kB
+Shmem:           8622552 kB
+KReclaimable:     111992 kB
+Slab:             500056 kB
+SReclaimable:     111992 kB
+SUnreclaim:       388064 kB
+KernelStack:       19472 kB
+PageTables:        41528 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    263982244 kB
+Committed_AS:   24916420 kB
+VmallocTotal:   13743895347199 kB
+VmallocUsed:           0 kB
+VmallocChunk:          0 kB
+Percpu:            65280 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:  15386624 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:     3696640 kB
+DirectMap2M:    144803840 kB
+DirectMap1G:    390070272 kB
+Job starting on compute-5-7
+-----------------
+SLURM_GPUS_ON_NODE: 
+SLURM_JOB_NUM_NODES: 1
+-----------------
+slurmstepd: error: *** JOB 1535020 ON compute-5-7 CANCELLED AT 2025-02-13T04:33:14 ***

@@ -1,4 +1,3 @@
-# torchcell/losses/isomorphic_cell_loss.py
 from typing import Optional, Tuple
 import torch
 import torch.nn as nn
@@ -14,68 +13,60 @@ class ICLoss(nn.Module):
         self,
         lambda_dist: float,
         lambda_supcr: float,
-        lambda_cell: float,
         weights: Optional[torch.Tensor] = None,
     ) -> None:
         """
         Args:
             lambda_dist: Weight for the dist loss.
             lambda_supcr: Weight for the SupCR loss.
-            lambda_cell: Weight for the cell loss.
             weights: Optional weights applied uniformly to all losses.
         """
         super().__init__()
         self.lambda_dist = lambda_dist
         self.lambda_supcr = lambda_supcr
-        self.lambda_cell = lambda_cell
 
         self.mse_loss_fn = WeightedMSELoss(weights=weights)
         self.dist_loss_fn = WeightedDistLoss(weights=weights)
         self.supcr_fn = WeightedSupCRCell(weights=weights)
-        # Use a separate instance of WeightedMSELoss for the cell loss (unweighted)
-        self.cell_loss_fn = WeightedMSELoss(weights=None)
 
     def forward(
         self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        z_W: torch.Tensor,
         z_P: torch.Tensor,
         z_I: torch.Tensor,
     ) -> Tuple[torch.Tensor, dict]:
         mse_loss, mse_dim_losses = self.mse_loss_fn(predictions, targets)
         dist_loss, dist_dim_losses = self.dist_loss_fn(predictions, targets)
         supcr_loss, supcr_dim_losses = self.supcr_fn(z_P, z_I, targets)
-        cell_loss, cell_dim_losses = self.cell_loss_fn(z_I, z_W + z_P)
 
         # Weighted versions (using lambda multipliers)
         weighted_mse = mse_loss
         weighted_dist = self.lambda_dist * dist_loss
         weighted_supcr = self.lambda_supcr * supcr_loss
-        weighted_cell = self.lambda_cell * cell_loss
-        total_weighted = weighted_mse + weighted_dist + weighted_supcr + weighted_cell
+        total_weighted = weighted_mse + weighted_dist + weighted_supcr
 
         # Also compute the unweighted total (without lambda multipliers)
-        total_unweighted = mse_loss + dist_loss + supcr_loss + cell_loss
+        total_unweighted = mse_loss + dist_loss + supcr_loss
 
         # Normalized weighted losses
-        norm_weighted = {}
-        norm_unweighted = {}
         if total_weighted != 0:
-            norm_weighted["mse"] = weighted_mse / total_weighted
-            norm_weighted["dist"] = weighted_dist / total_weighted
-            norm_weighted["supcr"] = weighted_supcr / total_weighted
-            norm_weighted["cell"] = weighted_cell / total_weighted
+            norm_weighted = {
+                "mse": weighted_mse / total_weighted,
+                "dist": weighted_dist / total_weighted,
+                "supcr": weighted_supcr / total_weighted,
+            }
         else:
-            norm_weighted = {k: 0 for k in ["mse", "dist", "supcr", "cell"]}
+            norm_weighted = {k: 0 for k in ["mse", "dist", "supcr"]}
 
         if total_unweighted != 0:
-            norm_unweighted["mse"] = mse_loss / total_unweighted
-            norm_unweighted["dist"] = dist_loss / total_unweighted
-            norm_unweighted["supcr"] = supcr_loss / total_unweighted
-            norm_unweighted["cell"] = cell_loss / total_unweighted
+            norm_unweighted = {
+                "mse": mse_loss / total_unweighted,
+                "dist": dist_loss / total_unweighted,
+                "supcr": supcr_loss / total_unweighted,
+            }
         else:
-            norm_unweighted = {k: 0 for k in ["mse", "dist", "supcr", "cell"]}
+            norm_unweighted = {k: 0 for k in ["mse", "dist", "supcr"]}
 
         total_loss = total_weighted
 
@@ -86,22 +77,16 @@ class ICLoss(nn.Module):
             "dist_dim_losses": dist_dim_losses,
             "supcr_loss": supcr_loss,
             "supcr_dim_losses": supcr_dim_losses,
-            "cell_loss": cell_loss,
-            "cell_dim_losses": cell_dim_losses,
             "weighted_mse": weighted_mse,
             "weighted_dist": weighted_dist,
             "weighted_supcr": weighted_supcr,
-            "weighted_cell": weighted_cell,
             "total_weighted": total_weighted,
             "total_loss": total_loss,
             "norm_weighted_mse": norm_weighted["mse"],
             "norm_weighted_dist": norm_weighted["dist"],
             "norm_weighted_supcr": norm_weighted["supcr"],
-            "norm_weighted_cell": norm_weighted["cell"],
             "norm_unweighted_mse": norm_unweighted["mse"],
             "norm_unweighted_dist": norm_unweighted["dist"],
             "norm_unweighted_supcr": norm_unweighted["supcr"],
-            "norm_unweighted_cell": norm_unweighted["cell"],
         }
         return total_loss, loss_dict
-

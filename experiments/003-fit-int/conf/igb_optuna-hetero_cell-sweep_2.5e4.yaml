@@ -10,26 +10,29 @@ hydra:
       _target_: optuna.samplers.TPESampler
       seed: 42
     direction: ["minimize", "maximize"]
-    study_name: "lr_sweep"
-    n_trials: 100
+    study_name: "z_diff_0"
+    n_trials: 112
     n_jobs: 4
     storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db
     params:
       # ---- Grouping ----
-      heads: int(interval(1, 10))
+      heads: choice(1, 5, 10)
       norms: choice("layer", "batch")
       # ---- Grouping ----
       cell_dataset.learnable_embedding_input_channels: choice(16, 32, 64)
-      model.num_layers: int(interval(1, 10))
+      model.num_layers: choice (2, 3, 5, 6)
       model.hidden_channels: choice(16, 32, 64)
       model.prediction_head_config.hidden_channels: choice(16, 32, 64)
-      model.prediction_head_config.head_num_layers: int(interval(2, 8))
+      model.prediction_head_config.head_num_layers: choice(2, 4, 8)
       model.prediction_head_config.residual: choice(true, false)
-      regression_task.lambda_dist: tag(log, interval(1e-6, 1)) 
-      regression_task.lambda_supcr: tag(log, interval(1e-6, 1))
-      regression_task.lambda_cell: tag(log, interval(1e-4, 100)) 
-      regression_task.optimizer.lr: tag(log, interval(1e-7, 1e-3))
-      # regression_task.optimizer.lr: choice(1e-6, 1e-5, 1e-4, 1e-3)
+      regression_task.lambda_dist: choice(0, 1e-3, 1e-2, 1e-1, 1, 1.5, 2)
+      # regression_task.lambda_dist: tag(log, interval(1e-6, 1))
+      
+      regression_task.lambda_supcr: choice(0, 1e-4, 1e-3, 1e-2, 1e-1, 1)
+      # regression_task.lambda_supcr: tag(log, interval(1e-6, 1))
+
+      regression_task.optimizer.lr: choice(1e-5, 1e-4, 1e-3)
+      # regression_task.optimizer.lr: tag(log, interval(1e-7, 1e-3))
 
       # --------- Grouped params ------- 
       # model.gene_encoder_config.heads: int(inteurval(1, 10))
@@ -42,7 +45,7 @@ hydra:
 
   launcher:
     _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
-    submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+    submitit_folder: ${hydra.sweep.dir}/submitit/%j
     partition: mmli
     nodes: 1
     tasks_per_node: 1 

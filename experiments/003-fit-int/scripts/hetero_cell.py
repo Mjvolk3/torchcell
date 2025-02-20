@@ -1,7 +1,8 @@
-# experiments/003-fit-int/scripts/isomorphic_cell_attentional
-# [[experiments.003-fit-int.scripts.isomorphic_cell_attentional]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/isomorphic_cell_attentional
-# Test file: experiments/003-fit-int/scripts/test_isomorphic_cell_attentional.py
+# experiments/003-fit-int/scripts/hetero_cell
+# [[experiments.003-fit-int.scripts.hetero_cell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/hetero_cell
+# Test file: experiments/003-fit-int/scripts/test_hetero_cell.py
+
 
 import hashlib
 import json
@@ -14,7 +15,7 @@ import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.data.neo4j_cell import SubgraphRepresentation
-from torchcell.trainers.fit_int_isomorphic_cell_attentional import RegressionTask
+from torchcell.trainers.fit_int_hetero_cell import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -34,7 +35,7 @@ from torchcell.datasets import (
 )
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.isomorphic_cell_attentional import IsomorphicCell
+from torchcell.models.hetero_cell import HeteroCell
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
@@ -78,21 +79,41 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="isomorphic_cell_attentional",
+    config_name="hetero_cell",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting IsomorphicCell Training 💡")
+    print("Starting HeteroCell Training 🐂")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
-    slurm_job_id = os.environ.get("SLURM_JOB_ID", str(uuid.uuid4()))
-    hostname = socket.gethostname()
-    hostname_slurm_job_id = f"{hostname}-{slurm_job_id}"
-    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
-    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
-    group = f"{hostname_slurm_job_id}_{hashed_cfg}"
+
+    # Check if using optuna sweeper
+    is_optuna = cfg.get("hydra", {}).get("sweeper", {}).get("_target_", "").endswith("optuna.sweeper.OptunaSweeper")
+
+    if is_optuna:
+        slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", "")
+        slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "") 
+        slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
+
+        if slurm_array_job_id and slurm_array_task_id:
+            job_id = f"{slurm_array_job_id}_{slurm_array_task_id}"
+        elif slurm_job_id:
+            job_id = slurm_job_id
+        else:
+            job_id = str(uuid.uuid4())
+            
+        hostname = socket.gethostname()
+        hostname_job_id = f"{hostname}-{job_id}"
+        sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+        hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+        group = f"{hostname_job_id}_{hashed_cfg}"
+    else:
+        hostname = socket.gethostname()
+        group = f"{hostname}_{timestamp()}"
+
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
+    
     wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
@@ -100,8 +121,15 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
         dir=experiment_dir,
+        name=f"run_{group}"
     )
-    wandb_logger = WandbLogger(project=wandb_cfg["wandb"]["project"], log_model=True)
+
+    wandb_logger = WandbLogger(
+        project=wandb_cfg["wandb"]["project"],
+        log_model=True,
+        save_dir=experiment_dir,
+        name=f"run_{group}"
+    )
 
     if torch.cuda.is_available() and dist.is_initialized():
         rank = dist.get_rank()
@@ -359,19 +387,20 @@ def main(cfg: DictConfig) -> None:
         )
         data_module.setup()
 
-    if not wandb.config.cell_dataset.get("learnable_embedding", False):
-        input_dim = dataset.num_features["gene"]
-    else:
-        input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
+    # TODO will need for when adding embeddings
+    # if not wandb.config.cell_dataset.get("learnable_embedding", False):
+    #     input_dim = dataset.num_features["gene"]
+    # else:
+    #     input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
     dataset.close_lmdb()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     log.info(device)
     devices = get_num_devices()
-    edge_types = [
-        ("gene", f"{name}_interaction", "gene")
-        for name in wandb.config.cell_dataset["graphs"]
-    ]
+    # edge_types = [
+    #     ("gene", f"{name}_interaction", "gene")
+    #     for name in wandb.config.cell_dataset["graphs"]
+    # ]
 
     print(f"Instantiating model ({timestamp()})")
     # Instantiate new IsomorphicCell model
@@ -389,32 +418,36 @@ def main(cfg: DictConfig) -> None:
             }
         )
 
-    model = IsomorphicCell(
-        in_channels=input_dim,
+    # Instantiate new HeteroCell model using wandb configuration.
+    model = HeteroCell(
+        gene_num=wandb.config["model"]["gene_num"],
+        reaction_num=wandb.config["model"]["reaction_num"],
+        metabolite_num=wandb.config["model"]["metabolite_num"],
         hidden_channels=wandb.config["model"]["hidden_channels"],
-        edge_types=edge_types,
+        out_channels=wandb.config["model"]["out_channels"],
         num_layers=wandb.config["model"]["num_layers"],
         dropout=wandb.config["model"]["dropout"],
-        gene_encoder_config=gene_encoder_config,
+        norm=wandb.config["model"]["norm"],
+        activation=wandb.config["model"]["activation"],
+        gene_encoder_config=wandb.config["model"]["gene_encoder_config"],
         metabolism_config=wandb.config["model"]["metabolism_config"],
-        attention_config=wandb.config["model"].get("attention_config", None),
-        preprocessor_config=wandb.config["model"].get("preprocessor_config", {}),
-        combiner_config=wandb.config["model"]["combiner_config"],
         prediction_head_config=wandb.config["model"]["prediction_head_config"],
-    )
+        gpr_conv_config=wandb.config["model"]["gpr_conv_config"],
+    ).to(device)
 
+    # Log parameter counts using the num_parameters property.
     param_counts = model.num_parameters
     print("Parameter counts:", param_counts)
     wandb.log(
         {
+            "model/params_embeddings": param_counts.get("gene_embedding", 0)
+            + param_counts.get("reaction_embedding", 0)
+            + param_counts.get("metabolite_embedding", 0),
             "model/params_preprocessor": param_counts.get("preprocessor", 0),
-            "model/params_gene_encoder": param_counts.get("gene_encoder", 0),
-            "model/params_metabolism_processor": param_counts.get(
-                "metabolism_processor", 0
-            ),
-            "model/params_combiner": param_counts.get("combiner", 0),
-            "model/params_aggregators": param_counts.get("aggregators", 0),
-            "model/params_growth_head": param_counts.get("growth_head", 0),
+            "model/params_convs": param_counts.get("convs", 0),
+            "model/params_aggregators": param_counts.get("global_aggregator", 0)
+            + param_counts.get("perturbed_aggregator", 0),
+            "model/params_fitness_head": param_counts.get("fitness_head", 0),
             "model/params_interaction_head": param_counts.get("interaction_head", 0),
             "model/params_total": param_counts.get("total", 0),
         }
@@ -436,9 +469,9 @@ def main(cfg: DictConfig) -> None:
     loss_func = ICLoss(
         lambda_dist=wandb.config.regression_task["lambda_dist"],
         lambda_supcr=wandb.config.regression_task["lambda_supcr"],
-        lambda_cell=wandb.config.regression_task["lambda_cell"],
         weights=weights,
     )
+
 
     print(f"Creating regression task ({timestamp()})")
     task = RegressionTask(

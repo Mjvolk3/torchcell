@@ -24,6 +24,7 @@ models/checkpoints/
 mechanistic_aware.csv
 data/yeast_gem
 data/QM9
+data/all_spell_readmes
 
 # Dendron
 .dendron.port
@@ -105,3 +106,8 @@ experiments/embeddings/slurm/error/
 *.log
 logs.sh
 # duplicate_check.json
+
+# optuna
+multirun
+
+

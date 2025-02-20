@@ -2,7 +2,7 @@
 id: x9lt2zhuquois6k4051rj2f
 title: 08
 desc: ''
-updated: 1740007227713
+updated: 1740064351147
 created: 1739703537035
 ---
 ## 2025.02.16
@@ -18,10 +18,14 @@ created: 1739703537035
 
 - [x] Followed up on radiant resources
 - [x] Followed up on `GH` testing
-- [x] Fixed Overfit on batch. bone head error ☠. [[2025.02.19 - Equations How Interacting Wildtype and Integrated|dendron://torchcell/torchcell.models.hetero_cell#20250219---equations-how-interacting-wildtype-and-integrated]]
+- [x] Fixed Overfit on batch. bone head error ☠. [[2025.02.19 - Equations How Interacting Wildtype and Integrated|dendron://torchcell/torchcell.models.hetero_cell#20250219---equations-how-interacting-wildtype-and-integrated] ]
 - [x] Note [[Sync Agent Dirs|dendron://torchcell/wandb.igb.sync-agent-dirs]]
-- [ ] Try to relaunch sweep with new name to see if we can add study to db.
-- [ ] Fix logging with oputna so that scripts don't write over each other in sbatch launcher. I couldn't tell why the last run failed because of this we wanted
-- [ ] Fix `wandb-experiment` logging we sometimes log what it seems like is multiple runs in the same dir. We  
+- [x] Try to relaunch sweep with new name to see if we can add study to db. → This works! Wonderful🌈!
+- [x] Fix logging with optuna so that scripts don't write over each other in sbatch launcher. I couldn't tell why the last run failed because of this we wanted. → we have separte dirs according to job num.
+- [x] Fix `wandb-experiment` logging we sometimes log what it seems like is multiple runs in the same dir. We  
+- [x] Retry optuna sweep with narrower set of hyper parameters. Use `choice` to match `qm9` study.
 
-- [ ] Retry optuna sweep with narrower set of hyper parameters. Use `choice` to match `qm9` study.
+## 2025.02.20
+
+- [ ] Review `HeteroCell` training results and analyze performance
+- [ ] Update documentation for `HeteroCell` training process

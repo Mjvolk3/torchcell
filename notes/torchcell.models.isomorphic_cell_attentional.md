@@ -2,7 +2,7 @@
 id: fv03p7fr93q6yfck4hzfg9y
 title: Isomorphic_cell_attentional
 desc: ''
-updated: 1739422637980
+updated: 1740071120959
 created: 1738200326629
 ---
 ## 2025.02.12 - Data Masking
@@ -42,7 +42,8 @@ HeteroData(
     hyperedge_index=[2, 5450],
     num_edges=4881,
   }
-)```
+)
+```
 
 ```python
 dataset[0]

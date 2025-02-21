@@ -88,14 +88,12 @@ class RegressionTask(L.LightningModule):
         fitness_vals = batch["gene"].fitness.view(-1, 1)
         gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
-        # Removed cell loss input (representations["z_w"]) from the loss function call.
+
         loss, loss_dict = self.loss_func(
-            predictions,
-            targets,
-            representations["z_p"],
-            representations["z_i"],
+            predictions, targets, representations["z_p"], representations["z_i"]
         )
-        # Log loss components (removed cell loss entries).
+
+        # Log loss components.
         for key, value in [
             ("loss", loss),
             ("fitness_loss", loss_dict["mse_dim_losses"][0]),
@@ -125,15 +123,23 @@ class RegressionTask(L.LightningModule):
                     batch_size=batch_size,
                     sync_dist=True,
                 )
+
+        # Log the norm of z_p to track potential collapse.
+        if "z_p" in representations:
+            z_p_norm = representations["z_p"].norm(p=2, dim=-1).mean()
+            self.log(
+                f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
+            )
+
         # Update torchmetrics.
         for key, col in zip(["fitness", "gene_interaction"], [0, 1]):
             mask = ~torch.isnan(targets[:, col])
             if mask.sum() > 0:
                 metric_collection = getattr(self, f"{stage}_metrics")[key]
                 metric_collection.update(predictions[mask, col], targets[mask, col])
+
         # Sample collection.
         if stage == "train":
-            # Only collect training samples on the final epoch to avoid memory issues.
             if self.current_epoch + 1 == self.trainer.max_epochs:
                 current_count = sum(
                     t.size(0) for t in self.train_samples["true_values"]
@@ -166,7 +172,6 @@ class RegressionTask(L.LightningModule):
                                 representations["z_i"].detach()
                             )
         elif stage == "val":
-            # Collect all validation samples.
             self.val_samples["true_values"].append(targets.detach())
             self.val_samples["predictions"].append(predictions.detach())
             if "z_p" in representations:
@@ -177,6 +182,7 @@ class RegressionTask(L.LightningModule):
                 self.val_samples["latents"]["z_i"].append(
                     representations["z_i"].detach()
                 )
+
         return loss, predictions, targets
 
     def training_step(self, batch, batch_idx):

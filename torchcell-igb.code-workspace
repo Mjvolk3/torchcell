@@ -4,8 +4,8 @@
             "name": "torchcell",
             "path": "."
         },
-        {   "name": "/home/a-m/mjvolk3/scratch/torchcell",
-            "path": "/home/a-m/mjvolk3/scratch/torchcell"
+        {   "name": "~/scratch/torchcell",
+            "path": "~/scratch/torchcell"
         },
     ],
     "settings": {

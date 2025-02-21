@@ -25,17 +25,17 @@ parameters:
       perturbation_subset_size:
         values: [2.5e4]
       batch_size:
-        values: [100]
+        values: [16]
       num_workers:
-        values: [12]
+        values: [4]
       pin_memory:
-        values: [true]
+        values: [flase]
       prefetch:
-        values: [true]
+        values: [false]
   trainer:
     parameters:
       max_epochs:
-        values: [10]
+        values: [40]
       strategy:
         values: ["auto"]
       accelerator:

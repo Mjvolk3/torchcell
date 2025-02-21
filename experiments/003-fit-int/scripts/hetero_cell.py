@@ -420,6 +420,7 @@ def main(cfg: DictConfig) -> None:
 
     # Instantiate new HeteroCell model using wandb configuration.
     model = HeteroCell(
+        cell_graph=dataset.cell_graph,
         gene_num=wandb.config["model"]["gene_num"],
         reaction_num=wandb.config["model"]["reaction_num"],
         metabolite_num=wandb.config["model"]["metabolite_num"],

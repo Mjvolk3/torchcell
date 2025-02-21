@@ -186,6 +186,7 @@ class AttentionConvWrapper(nn.Module):
 class HeteroCell(nn.Module):
     def __init__(
         self,
+        cell_graph: HeteroData,  # Add cell_graph as initialization parameter
         gene_num: int,
         reaction_num: int,
         metabolite_num: int,
@@ -203,7 +204,10 @@ class HeteroCell(nn.Module):
         super().__init__()
         self.hidden_channels = hidden_channels
 
-        # Learnable embeddings.
+        # Store the reference cell graph
+        self.cell_graph = cell_graph
+
+        # Learnable embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
@@ -320,7 +324,7 @@ class HeteroCell(nn.Module):
     ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
-        act_fn = type(act_register[activation])
+        act = act_register[activation]
         layers = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
@@ -328,37 +332,69 @@ class HeteroCell(nn.Module):
             if i < num_layers - 1:
                 if norm is not None:
                     layers.append(get_norm_layer(dims[i + 1], norm))
-                layers.append(act_fn())
+                layers.append(act)
                 layers.append(nn.Dropout(dropout))
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData) -> torch.Tensor:
-        # Use the model's device for consistency.
         device = self.gene_embedding.weight.device
 
-        gene_bs = data["gene"].num_nodes
-        gene_idx = (
-            torch.arange(gene_bs, device=device) % self.gene_embedding.num_embeddings
-        )
+        # Handle node embeddings based on data structure
+        if hasattr(data["gene"], "pert_mask"):
+            # Get perturbation masks
+            gene_mask = data["gene"].pert_mask.to(device)
 
-        reaction_bs = data["reaction"].num_nodes
-        reaction_idx = (
-            torch.arange(reaction_bs, device=device)
-            % self.reaction_embedding.num_embeddings
-        )
+            # Check if the mask size matches the data
+            if len(gene_mask) != self.cell_graph["gene"].num_nodes:
+                # If batch contains multiple graphs, the mask might be concatenated
+                # Get the actual node count
+                gene_bs = data["gene"].num_nodes
 
-        metabolite_bs = data["metabolite"].num_nodes
-        metabolite_idx = (
-            torch.arange(metabolite_bs, device=device)
-            % self.metabolite_embedding.num_embeddings
-        )
+                # Just use sequential indices for the nodes present in the batch
+                gene_idx = torch.arange(gene_bs, device=device)
+                gene_idx = gene_idx % self.gene_embedding.num_embeddings
+            else:
+                # If mask matches reference graph size, apply it
+                full_gene_idx = torch.arange(len(gene_mask), device=device)
+                gene_idx = full_gene_idx[gene_mask.bool()]
+                gene_idx = gene_idx % self.gene_embedding.num_embeddings
 
+            # Similar approach for reactions and metabolites
+            reaction_bs = data["reaction"].num_nodes
+            reaction_idx = torch.arange(reaction_bs, device=device)
+            reaction_idx = reaction_idx % self.reaction_embedding.num_embeddings
+
+            metabolite_bs = data["metabolite"].num_nodes
+            metabolite_idx = torch.arange(metabolite_bs, device=device)
+            metabolite_idx = metabolite_idx % self.metabolite_embedding.num_embeddings
+        else:
+            # If no masks, use all nodes (for reference cell graph)
+            gene_bs = data["gene"].num_nodes
+            gene_idx = (
+                torch.arange(gene_bs, device=device)
+                % self.gene_embedding.num_embeddings
+            )
+
+            reaction_bs = data["reaction"].num_nodes
+            reaction_idx = (
+                torch.arange(reaction_bs, device=device)
+                % self.reaction_embedding.num_embeddings
+            )
+
+            metabolite_bs = data["metabolite"].num_nodes
+            metabolite_idx = (
+                torch.arange(metabolite_bs, device=device)
+                % self.metabolite_embedding.num_embeddings
+            )
+
+        # Apply embeddings
         x_dict = {
             "gene": self.preprocessor(self.gene_embedding(gene_idx)),
             "reaction": self.reaction_embedding(reaction_idx),
             "metabolite": self.metabolite_embedding(metabolite_idx),
         }
-        # Ensure edge_index_dict tensors are on device.
+
+        # Process edge indices
         edge_index_dict = {}
         for key, edge in data.edge_index_dict.items():
             if isinstance(edge, torch.Tensor):
@@ -366,11 +402,13 @@ class HeteroCell(nn.Module):
             else:
                 edge_index_dict[key] = edge
 
+        # Handle metabolite edge features
         extra_kwargs = {}
         met_edge = ("metabolite", "reaction", "metabolite")
         if met_edge in data.edge_index_dict:
             stoich = data[met_edge].stoichiometry.to(device)
             extra_kwargs["stoich_dict"] = {met_edge: stoich}
+
             if hasattr(data[met_edge], "reaction_ids"):
                 reaction_ids = data[met_edge].reaction_ids.to(device)
                 extra_kwargs["edge_attr_dict"] = {
@@ -378,9 +416,14 @@ class HeteroCell(nn.Module):
                         reaction_ids % self.reaction_embedding.num_embeddings
                     )
                 }
-            extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
+
+            if hasattr(data[met_edge], "num_edges"):
+                extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
+
+        # Apply graph convolutions
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
+
         return x_dict["gene"]
 
     # BUG All mean or random prediction.
@@ -517,7 +560,8 @@ def load_sample_data_batch():
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    selected_node_embeddings = ["codon_frequency"]
+    # selected_node_embeddings = ["codon_frequency"]
+    selected_node_embeddings = ["empty"]
     node_embeddings = {}
     # if "fudt_downstream" in selected_node_embeddings:
     #     node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
@@ -685,6 +729,7 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize model (parameters unchanged)
     model = HeteroCell(
+        cell_graph=dataset.cell_graph,  # Pass the cell graph
         gene_num=cfg.model.gene_num,
         reaction_num=cfg.model.reaction_num,
         metabolite_num=cfg.model.metabolite_num,
@@ -705,13 +750,11 @@ def main(cfg: DictConfig) -> None:
     print("Parameter count:", sum(p.numel() for p in model.parameters()))
 
     # Training setup
-    total_non_nan = (~batch["gene"].fitness.isnan()).sum() + (
-        ~batch["gene"].gene_interaction.isnan()
-    ).sum()
-    minus_fit_count = 1 - (~batch["gene"].fitness.isnan()).sum()
-    minus_gi_count = 1 - (~batch["gene"].gene_interaction.isnan()).sum()
+    fit_nan_count = batch["gene"].fitness.isnan().sum()
+    gi_nan_count = batch["gene"].gene_interaction.isnan().sum()
+    total_samples = len(batch["gene"].fitness) * 2
     weights = torch.tensor(
-        [minus_fit_count / total_non_nan, minus_gi_count / total_non_nan]
+        [1 - (gi_nan_count / total_samples), 1 - (fit_nan_count / total_samples)]
     ).to(device)
 
     criterion = ICLoss(

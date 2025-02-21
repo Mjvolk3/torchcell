@@ -124,7 +124,12 @@ class Visualization:
         pred_hist = (pred_hist + epsilon) / (pred_hist.sum() + epsilon * len(pred_hist))
         m = 0.5 * (true_hist + pred_hist)
         js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
+
+        # Create figure with explicit axes control
         fig = plt.figure(figsize=(10, 6))
+        ax = fig.add_subplot(111)
+
+        # Plot histograms
         sns.histplot(
             y_true,
             color="blue",
@@ -133,6 +138,7 @@ class Visualization:
             stat="density",
             alpha=0.6,
             bins=bins,
+            ax=ax,
         )
         sns.histplot(
             y_pred,
@@ -142,21 +148,29 @@ class Visualization:
             stat="density",
             alpha=0.6,
             bins=bins,
+            ax=ax,
         )
-        plt.text(
-            0.98,
+
+        # Position metrics text in top-left corner
+        ax.text(
+            0.02,
             0.98,
             f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_div:.4f}",
-            transform=plt.gca().transAxes,
-            verticalalignment="top",
-            horizontalalignment="right",
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
             bbox=dict(boxstyle="round", facecolor="white", alpha=0.9, edgecolor="gray"),
+            zorder=100,
         )
-        plt.legend()
-        plt.xlabel(f"Target {dim}")
-        plt.ylabel("Density")
+
+        # Position legend in top-right corner
+        ax.legend(loc="upper right", bbox_to_anchor=(0.98, 0.98))
+
+        ax.set_xlabel(f"Target {dim}")
+        ax.set_ylabel("Density")
         base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nDistribution Matching Target {dim}")
+        ax.set_title(f"{base_title}\nDistribution Matching Target {dim}")
+
         plt.tight_layout()
         key = (
             f"{stage}/distribution_target_{dim}"

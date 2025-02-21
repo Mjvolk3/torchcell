@@ -91,118 +91,6 @@ class AttentionalGraphAggregation(nn.Module):
 
 
 ###############################################################################
-# PreProcessor: applies a simple MLP with global norm, activation, dropout.
-###############################################################################
-class PreProcessor(nn.Module):
-    def __init__(
-        self,
-        in_channels: int,
-        hidden_channels: int,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        norm: str = "layer",
-        activation: str = "relu",
-    ):
-        super().__init__()
-        # Get the activation class type
-        act_fn = type(act_register[activation])
-        norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
-
-        layers.append(nn.Linear(in_channels, hidden_channels))
-        layers.append(norm_layer)
-        layers.append(act_fn())  # Create new instance
-        layers.append(nn.Dropout(dropout))
-
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_channels, hidden_channels))
-            layers.append(norm_layer)
-            layers.append(act_fn())  # Create new instance
-            layers.append(nn.Dropout(dropout))
-
-        self.mlp = nn.Sequential(*layers)
-
-
-###############################################################################
-# Combiner: MLP to combine two representations.
-###############################################################################
-class Combiner(nn.Module):
-    def __init__(
-        self,
-        hidden_channels: int,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        norm: str = "layer",
-        activation: str = "relu",
-    ):
-        super().__init__()
-        act = act_register[activation]
-        layers = []
-        layers.append(nn.Linear(hidden_channels * 2, hidden_channels))
-        layers.append(get_norm_layer(hidden_channels, norm))
-        layers.append(act)
-        layers.append(nn.Dropout(dropout))
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_channels, hidden_channels))
-            layers.append(get_norm_layer(hidden_channels, norm))
-            layers.append(act)
-            layers.append(nn.Dropout(dropout))
-        self.mlp = nn.Sequential(*layers)
-
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
-        return self.mlp(torch.cat([x1, x2], dim=-1))
-
-
-###############################################################################
-# New Model: HeteroCell
-###############################################################################
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv
-from torch_geometric.data import HeteroData
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from torchcell.models.act import act_register
-from torch_scatter import scatter, scatter_softmax
-from typing import Optional, Dict, Any, Tuple
-
-
-def get_norm_layer(channels: int, norm: str) -> nn.Module:
-    if norm == "layer":
-        return nn.LayerNorm(channels)
-    elif norm == "batch":
-        return nn.BatchNorm1d(channels)
-    else:
-        raise ValueError(f"Unsupported norm type: {norm}")
-
-
-###############################################################################
-# Attentional Aggregation Wrapper
-###############################################################################
-class AttentionalGraphAggregation(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
-        super().__init__()
-        self.gate_nn = nn.Sequential(
-            nn.Linear(in_channels, in_channels // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_channels // 2, 1),
-        )
-        self.transform_nn = nn.Sequential(
-            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
-        )
-        self.aggregator = AttentionalAggregation(
-            gate_nn=self.gate_nn, nn=self.transform_nn
-        )
-
-    def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
-    ) -> torch.Tensor:
-        return self.aggregator(x, index=index, dim_size=dim_size)
-
-
-###############################################################################
 # PreProcessor: an MLP to “preprocess” gene embeddings.
 ###############################################################################
 class PreProcessor(nn.Module):
@@ -238,7 +126,14 @@ class PreProcessor(nn.Module):
 # New Model: HeteroCell
 ###############################################################################
 class AttentionConvWrapper(nn.Module):
-    def __init__(self, conv: nn.Module, target_dim: int):
+    def __init__(
+        self,
+        conv: nn.Module,
+        target_dim: int,
+        norm: Optional[str] = None,
+        activation: Optional[str] = None,
+        dropout: float = 0.1,
+    ) -> None:
         super().__init__()
         self.conv = conv
         # For GATv2Conv-like layers:
@@ -247,7 +142,6 @@ class AttentionConvWrapper(nn.Module):
                 conv.heads * conv.out_channels if conv.concat else conv.out_channels
             )
         else:
-            # For other layers, assume out_channels is the output dimension.
             expected_dim = conv.out_channels
         self.proj = (
             nn.Identity()
@@ -255,9 +149,38 @@ class AttentionConvWrapper(nn.Module):
             else nn.Linear(expected_dim, target_dim)
         )
 
+        # Use PyTorch Geometric's graph normalization layers
+        if norm is not None:
+            if norm == "batch":
+                self.norm = BatchNorm(target_dim)
+            elif norm == "layer":
+                self.norm = LayerNorm(target_dim)
+            elif norm == "graph":
+                self.norm = GraphNorm(target_dim)
+            elif norm == "instance":
+                self.norm = InstanceNorm(target_dim)
+            elif norm == "pair":
+                self.norm = PairNorm(scale=1.0)
+            elif norm == "mean":
+                self.norm = MeanSubtractionNorm()
+            else:
+                self.norm = None
+        else:
+            self.norm = None
+
+        # Get the activation function from the register without instantiating again
+        self.act = act_register[activation] if activation is not None else None
+        self.dropout = nn.Dropout(dropout) if dropout > 0 else None
+
     def forward(self, x, edge_index, **kwargs):
         out = self.conv(x, edge_index, **kwargs)
-        return self.proj(out)
+        out = self.proj(out)
+        if self.norm is not None:
+            out = self.norm(out)
+        out = self.act(out)
+        if self.dropout is not None:
+            out = self.dropout(out)
+        return out
 
 
 class HeteroCell(nn.Module):
@@ -330,7 +253,13 @@ class HeteroCell(nn.Module):
 
             # Wrap each conv so its output is projected to hidden_channels.
             for key, conv in conv_dict.items():
-                conv_dict[key] = AttentionConvWrapper(conv, hidden_channels)
+                conv_dict[key] = AttentionConvWrapper(
+                    conv,
+                    hidden_channels,
+                    norm=norm,
+                    activation=activation,
+                    dropout=dropout,
+                )
 
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
@@ -812,10 +741,7 @@ def main(cfg: DictConfig) -> None:
             # Forward pass now expects cell_graph and batch
             predictions, representations = model(cell_graph, batch)
             loss, loss_components = criterion(
-                predictions,
-                y,
-                representations["z_p"],
-                representations["z_i"],
+                predictions, y, representations["z_p"], representations["z_i"]
             )
 
             # Logging remains the same

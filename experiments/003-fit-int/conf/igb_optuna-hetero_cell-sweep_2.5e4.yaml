@@ -10,7 +10,7 @@ hydra:
       _target_: optuna.samplers.TPESampler
       seed: 42
     direction: ["minimize", "maximize"]
-    study_name: "z_diff_4"
+    study_name: "z_diff_5"
     n_trials: 112
     n_jobs: 4
     storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db

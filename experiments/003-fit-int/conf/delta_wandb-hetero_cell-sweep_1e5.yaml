@@ -1,0 +1,170 @@
+# wandb_sweep.yaml
+program: experiments/003-fit-int/scripts/hetero_cell.py
+project: torchcell_003-fit-int_hetero_cell_1e5
+method: random
+
+parameters:
+  # Cell dataset parameters
+  cell_dataset:
+    parameters:
+      graphs:
+        value: [physical, regulatory]
+      node_embeddings:
+        value: [learnable]
+      learnable_embedding_input_channels:
+        value: 16
+      incidence_graphs:
+        value: [metabolism]
+
+  # Profiler parameters
+  profiler:
+    parameters:
+      is_pytorch:
+        value: true
+
+  # Data module parameters
+  data_module:
+    parameters:
+      is_perturbation_subset:
+        value: true
+      perturbation_subset_size:
+        value: 1e5
+      batch_size:
+        value: 32
+      num_workers:
+        value: 4
+      pin_memory:
+        value: false
+      prefetch:
+        value: false
+
+  # Trainer parameters
+  trainer:
+    parameters:
+      max_epochs:
+        value: 60
+      strategy:
+        value: auto
+      accelerator:
+        value: gpu
+      devices:
+        value: 1
+      overfit_batches:
+        value: 0
+
+  # Model parameters
+  model:
+    parameters:
+      gene_num:
+        value: 6607
+      reaction_num:
+        value: 4881
+      metabolite_num:
+        value: 2534
+      hidden_channels:
+        value: 16
+      out_channels:
+        value: 2
+      num_layers:
+        value: 2
+      norm:
+        value: "layer"
+      activation:
+        value: "relu"
+      dropout:
+        value: 0.0
+      gene_encoder_config:
+        parameters:
+          heads:
+            value: 10
+          concat:
+            value: true
+          bias:
+            value: true
+          add_self_loops:
+            value: false
+          share_weights:
+            value: false
+      gpr_conv_config:
+        parameters:
+          heads:
+            value: 10
+          concat:
+            value: true
+          add_self_loops:
+            value: false
+      metabolism_config:
+        parameters:
+          is_stoich_gated:
+            value: true
+          use_attention:
+            value: true
+          heads:
+            value: 10
+          concat:
+            value: true
+      prediction_head_config:
+        parameters:
+          hidden_channels:
+            value: 16
+          head_num_layers:
+            value: 2
+          dropout:
+            value: 0.0
+          activation:
+            value: "relu"
+          residual:
+            value: true
+          head_norm:
+            value: "layer"
+
+  # Regression task parameters that we're varying
+  regression_task:
+    parameters:
+      is_weighted_phenotype_loss:
+        value: true
+      lambda_dist:
+        values: [0.5, 1] #[0, 1e-3, 1e-2, 1e-1, 1, 1.5, 2]
+      lambda_supcr:
+        values: [0.005, 0.05] #[0, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+      optimizer:
+        parameters:
+          type:
+            value: "AdamW"
+          lr:
+            values: [1e-3] #[1e-5, 1e-4, 1e-3]
+          weight_decay:
+            value: 1e-9
+      lr_scheduler:
+        parameters:
+          type:
+            value: "ReduceLROnPlateau"
+          mode:
+            value: "min"
+          factor:
+            value: 0.2
+          patience:
+            value: 3
+          threshold:
+            value: 1e-4
+          threshold_mode:
+            value: "rel"
+          cooldown:
+            value: 2
+          min_lr:
+            value: 1e-9
+          eps:
+            value: 1e-10
+      clip_grad_norm:
+        value: true
+      clip_grad_norm_max_norm:
+        value: 10.0
+      grad_accumulation_schedule:
+        value: null
+      plot_sample_ceiling:
+        value: 5000
+
+command:
+  - ${env}
+  - python
+  - ${program}

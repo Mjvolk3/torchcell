@@ -54,6 +54,7 @@ from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from torchcell.models.act import act_register
 from typing import Optional, Dict, Any, Tuple
+from torch_geometric.data import Batch
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -186,7 +187,6 @@ class AttentionConvWrapper(nn.Module):
 class HeteroCell(nn.Module):
     def __init__(
         self,
-        cell_graph: HeteroData,  # Add cell_graph as initialization parameter
         gene_num: int,
         reaction_num: int,
         metabolite_num: int,
@@ -203,9 +203,6 @@ class HeteroCell(nn.Module):
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
-
-        # Store the reference cell graph
-        self.cell_graph = cell_graph
 
         # Learnable embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -314,101 +311,171 @@ class HeteroCell(nn.Module):
                 layers.append(nn.Dropout(dropout))
         return nn.Sequential(*layers)
 
-    def forward_single(self, data: HeteroData) -> torch.Tensor:
-        """Process a single graph through the model with proper batch handling."""
+    # def forward_single(self, data: HeteroData) -> torch.Tensor:
+    #     """Process a single graph through the model with proper batch handling."""
+    #     device = self.gene_embedding.weight.device
+
+    #     # Check if we're handling the reference cell graph or a batch
+    #     is_batch = hasattr(data["gene"], "batch")
+
+    #     if is_batch:
+    #         # Get batch size
+    #         batch_size = int(data["gene"].batch.max()) + 1
+
+    #         # For genes
+    #         gene_embeddings = self.gene_embedding.weight
+    #         gene_x = torch.zeros(
+    #             data["gene"].num_nodes, gene_embeddings.size(1), device=device
+    #         )
+
+    #         # Split by batch
+    #         for i in range(batch_size):
+    #             # Get indices for this batch item
+    #             batch_mask = data["gene"].batch == i
+    #             num_genes_in_batch = batch_mask.sum()
+
+    #             # Copy embeddings for this batch
+    #             gene_x[batch_mask] = gene_embeddings[:num_genes_in_batch]
+
+    #         # Similar for reactions
+    #         reaction_embeddings = self.reaction_embedding.weight
+    #         reaction_x = torch.zeros(
+    #             data["reaction"].num_nodes, reaction_embeddings.size(1), device=device
+    #         )
+
+    #         for i in range(batch_size):
+    #             batch_mask = data["reaction"].batch == i
+    #             num_reactions_in_batch = batch_mask.sum()
+    #             reaction_x[batch_mask] = reaction_embeddings[:num_reactions_in_batch]
+
+    #         # Similar for metabolites
+    #         metabolite_embeddings = self.metabolite_embedding.weight
+    #         metabolite_x = torch.zeros(
+    #             data["metabolite"].num_nodes,
+    #             metabolite_embeddings.size(1),
+    #             device=device,
+    #         )
+
+    #         for i in range(batch_size):
+    #             batch_mask = data["metabolite"].batch == i
+    #             num_metabolites_in_batch = batch_mask.sum()
+    #             metabolite_x[batch_mask] = metabolite_embeddings[
+    #                 :num_metabolites_in_batch
+    #             ]
+
+    #         # Apply preprocessor to gene features
+    #         gene_x = self.preprocessor(gene_x)
+
+    #         # Put features in dictionary
+    #         x_dict = {
+    #             "gene": gene_x,
+    #             "reaction": reaction_x,
+    #             "metabolite": metabolite_x,
+    #         }
+    #     else:
+    #         # For reference cell graph (no batch), just use the embeddings directly
+    #         x_dict = {
+    #             "gene": self.preprocessor(
+    #                 self.gene_embedding.weight[: data["gene"].num_nodes]
+    #             ),
+    #             "reaction": self.reaction_embedding.weight[
+    #                 : data["reaction"].num_nodes
+    #             ],
+    #             "metabolite": self.metabolite_embedding.weight[
+    #                 : data["metabolite"].num_nodes
+    #             ],
+    #         }
+
+    #     # Process edge indices
+    #     edge_index_dict = {}
+    #     for key, edge in data.edge_index_dict.items():
+    #         if isinstance(edge, torch.Tensor):
+    #             edge_index_dict[key] = edge.to(device)
+    #         else:
+    #             edge_index_dict[key] = edge
+
+    #     # Handle metabolite edge features
+    #     extra_kwargs = {}
+    #     met_edge = ("metabolite", "reaction", "metabolite")
+    #     if met_edge in data.edge_index_dict:
+    #         if hasattr(data[met_edge], "stoichiometry"):
+    #             stoich = data[met_edge].stoichiometry.to(device)
+    #             extra_kwargs["stoich_dict"] = {met_edge: stoich}
+
+    #         if hasattr(data[met_edge], "num_edges"):
+    #             extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
+
+    #     # Apply graph convolutions
+    #     for conv in self.convs:
+    #         x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
+
+    #     return x_dict["gene"]
+
+    def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         device = self.gene_embedding.weight.device
 
-        # Check if we're handling the reference cell graph or a batch
-        is_batch = hasattr(data["gene"], "batch")
-
+        is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
         if is_batch:
-            # Get batch size
-            batch_size = int(data["gene"].batch.max()) + 1
+            gene_data = data["gene"]
+            reaction_data = data["reaction"]
+            metabolite_data = data["metabolite"]
 
-            # For genes
-            gene_embeddings = self.gene_embedding.weight
-            gene_x = torch.zeros(
-                data["gene"].num_nodes, gene_embeddings.size(1), device=device
+            batch_size = len(data["gene"].ptr) - 1
+
+            x_gene_exp = self.gene_embedding.weight.expand(batch_size, -1, -1)
+            x_gene_comb = x_gene_exp.reshape(-1, x_gene_exp.size(-1))
+            x_gene = x_gene_comb[~gene_data.pert_mask]
+            x_gene = self.preprocessor(x_gene)
+
+            x_reaction_exp = self.reaction_embedding.weight.expand(batch_size, -1, -1)
+            x_reaction_comb = x_reaction_exp.reshape(-1, x_reaction_exp.size(-1))
+            x_reaction = x_reaction_comb[~reaction_data.pert_mask]
+
+            x_metabolite_exp = self.metabolite_embedding.weight.expand(
+                batch_size, -1, -1
             )
+            x_metabolite_comb = x_metabolite_exp.reshape(-1, x_metabolite_exp.size(-1))
+            x_metabolite = x_metabolite_comb[~metabolite_data.pert_mask]
 
-            # Split by batch
-            for i in range(batch_size):
-                # Get indices for this batch item
-                batch_mask = data["gene"].batch == i
-                num_genes_in_batch = batch_mask.sum()
-
-                # Copy embeddings for this batch
-                gene_x[batch_mask] = gene_embeddings[:num_genes_in_batch]
-
-            # Similar for reactions
-            reaction_embeddings = self.reaction_embedding.weight
-            reaction_x = torch.zeros(
-                data["reaction"].num_nodes, reaction_embeddings.size(1), device=device
-            )
-
-            for i in range(batch_size):
-                batch_mask = data["reaction"].batch == i
-                num_reactions_in_batch = batch_mask.sum()
-                reaction_x[batch_mask] = reaction_embeddings[:num_reactions_in_batch]
-
-            # Similar for metabolites
-            metabolite_embeddings = self.metabolite_embedding.weight
-            metabolite_x = torch.zeros(
-                data["metabolite"].num_nodes,
-                metabolite_embeddings.size(1),
-                device=device,
-            )
-
-            for i in range(batch_size):
-                batch_mask = data["metabolite"].batch == i
-                num_metabolites_in_batch = batch_mask.sum()
-                metabolite_x[batch_mask] = metabolite_embeddings[
-                    :num_metabolites_in_batch
-                ]
-
-            # Apply preprocessor to gene features
-            gene_x = self.preprocessor(gene_x)
-
-            # Put features in dictionary
             x_dict = {
-                "gene": gene_x,
-                "reaction": reaction_x,
-                "metabolite": metabolite_x,
+                "gene": x_gene,
+                "reaction": x_reaction,
+                "metabolite": x_metabolite,
             }
         else:
-            # For reference cell graph (no batch), just use the embeddings directly
+            # For a single (cell) graph, use all node embeddings directly.
+            x_gene = data["gene"]
+            reaction_data = data["reaction"]
+            metabolite_data = data["metabolite"]
+
+            gene_idx = torch.arange(x_gene.num_nodes, device=device)
+            reaction_idx = torch.arange(reaction_data.num_nodes, device=device)
+            metabolite_idx = torch.arange(metabolite_data.num_nodes, device=device)
+
             x_dict = {
-                "gene": self.preprocessor(
-                    self.gene_embedding.weight[: data["gene"].num_nodes]
-                ),
-                "reaction": self.reaction_embedding.weight[
-                    : data["reaction"].num_nodes
-                ],
-                "metabolite": self.metabolite_embedding.weight[
-                    : data["metabolite"].num_nodes
-                ],
+                "gene": self.preprocessor(self.gene_embedding(gene_idx)),
+                "reaction": self.reaction_embedding(reaction_idx),
+                "metabolite": self.metabolite_embedding(metabolite_idx),
             }
 
-        # Process edge indices
+        # Move all edge indices to the correct device.
         edge_index_dict = {}
         for key, edge in data.edge_index_dict.items():
-            if isinstance(edge, torch.Tensor):
-                edge_index_dict[key] = edge.to(device)
-            else:
-                edge_index_dict[key] = edge
+            edge_index_dict[key] = edge.to(device) if torch.is_tensor(edge) else edge
 
-        # Handle metabolite edge features
-        extra_kwargs = {}
+        # Prepare extra edge features for the metabolite hyperedge, if present.
+        extra_kwargs: dict[str, Any] = {}
         met_edge = ("metabolite", "reaction", "metabolite")
         if met_edge in data.edge_index_dict:
-            if hasattr(data[met_edge], "stoichiometry"):
-                stoich = data[met_edge].stoichiometry.to(device)
-                extra_kwargs["stoich_dict"] = {met_edge: stoich}
+            met_edge_data = data[met_edge]
+            if hasattr(met_edge_data, "stoichiometry"):
+                extra_kwargs["stoich_dict"] = {
+                    met_edge: met_edge_data.stoichiometry.to(device)
+                }
+            if hasattr(met_edge_data, "num_edges"):
+                extra_kwargs["num_edges_dict"] = {met_edge: met_edge_data.num_edges}
 
-            if hasattr(data[met_edge], "num_edges"):
-                extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
-
-        # Apply graph convolutions
+        # Apply each convolution layer sequentially.
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
 
@@ -556,9 +623,9 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=32,
+        batch_size=2,
         random_seed=seed,
-        num_workers=8,
+        num_workers=2,
         pin_memory=False,
     )
     cell_data_module.setup()
@@ -568,8 +635,8 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=32,
-        num_workers=8,
+        batch_size=2,
+        num_workers=2,
         pin_memory=True,
         prefetch=False,
         seed=seed,
@@ -685,7 +752,9 @@ def plot_embeddings(
     # Plot z_i and z_p first, then z_w on top to make it more visible
     plt.plot(z_i_np[0], "r-", label="Intact (z_i)", linewidth=2, alpha=0.7)
     plt.plot(z_p_np[0], "g-", label="Difference (z_p)", linewidth=2, alpha=0.7)
-    plt.plot(z_w_np[0], "b-", label="Reference (z_w)", linewidth=2)  # Plot last so it's on top
+    plt.plot(
+        z_w_np[0], "b-", label="Reference (z_w)", linewidth=2
+    )  # Plot last so it's on top
     plt.xlabel("Embedding Dimension")
     plt.ylabel("Value")
     plt.title(
@@ -723,7 +792,7 @@ def plot_embeddings(
             label=f"Difference (z_p) - Sample {i}" if i == 0 else None,
             linewidth=1,
         )
-    
+
     # Plot reference embedding last so it's on top
     plt.plot(z_w_np[0], "b-", label="Reference (z_w)", linewidth=3)
 
@@ -738,7 +807,6 @@ def plot_embeddings(
         f"{save_dir}/embedding_all_samples{epoch_str}_{current_timestamp}.png", dpi=300
     )
     plt.close()
-
 
     # Plot 3: Heatmap of all samples
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
@@ -827,7 +895,6 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize model (parameters unchanged)
     model = HeteroCell(
-        cell_graph=dataset.cell_graph,  # Pass the cell graph
         gene_num=cfg.model.gene_num,
         reaction_num=cfg.model.reaction_num,
         metabolite_num=cfg.model.metabolite_num,

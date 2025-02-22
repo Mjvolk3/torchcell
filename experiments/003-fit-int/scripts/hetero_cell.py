@@ -34,6 +34,7 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
 from torchcell.models.hetero_cell import HeteroCell
 from torchcell.losses.isomorphic_cell_loss import ICLoss
@@ -118,7 +119,7 @@ def main(cfg: DictConfig) -> None:
     
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
-    
+
     wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
@@ -126,14 +127,14 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
         dir=experiment_dir,
-        name=f"run_{group}"
+        name=f"run_{group}",
     )
     
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         log_model=True,
         save_dir=experiment_dir,
-        name=f"run_{group}"
+        name=f"run_{group}",
     )
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -150,10 +151,7 @@ def main(cfg: DictConfig) -> None:
     genome = SCerevisiaeGenome(
         genome_root=genome_root, go_root=go_root, overwrite=False
     )
-    genome.drop_chrmt()
     genome.drop_empty_go()
-
-    from torchcell.graph import SCerevisiaeGraph
 
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
@@ -425,7 +423,6 @@ def main(cfg: DictConfig) -> None:
 
     # Instantiate new HeteroCell model using wandb configuration.
     model = HeteroCell(
-        cell_graph=dataset.cell_graph,
         gene_num=wandb.config["model"]["gene_num"],
         reaction_num=wandb.config["model"]["reaction_num"],
         metabolite_num=wandb.config["model"]["metabolite_num"],
@@ -478,7 +475,6 @@ def main(cfg: DictConfig) -> None:
         weights=weights,
     )
 
-
     print(f"Creating regression task ({timestamp()})")
     task = RegressionTask(
         model=model,
@@ -523,6 +519,7 @@ def main(cfg: DictConfig) -> None:
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        limit_val_batches=0,  # FLAG
     )
 
     trainer.fit(model=task, datamodule=data_module)

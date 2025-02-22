@@ -34,6 +34,7 @@ from torchcell.datasets import (
     RandomEmbeddingDataset,
 )
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
 from torchcell.models.hetero_cell import HeteroCell
 from torchcell.losses.isomorphic_cell_loss import ICLoss
@@ -81,39 +82,44 @@ def get_num_devices() -> int:
     config_path=osp.join(osp.dirname(__file__), "../conf"),
     config_name="hetero_cell",
 )
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(osp.dirname(__file__), "../conf"),
+    config_name="hetero_cell",
+)
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroCell Training 🐂")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
-
+    
     # Check if using optuna sweeper
     is_optuna = cfg.get("hydra", {}).get("sweeper", {}).get("_target_", "").endswith("optuna.sweeper.OptunaSweeper")
-
-    if is_optuna:
-        slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", "")
-        slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "") 
-        slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
-
-        if slurm_array_job_id and slurm_array_task_id:
-            job_id = f"{slurm_array_job_id}_{slurm_array_task_id}"
-        elif slurm_job_id:
-            job_id = slurm_job_id
-        else:
-            job_id = str(uuid.uuid4())
-            
-        hostname = socket.gethostname()
-        hostname_job_id = f"{hostname}-{job_id}"
-        sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
-        hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
-        group = f"{hostname_job_id}_{hashed_cfg}"
+    
+    # Get SLURM job IDs
+    slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", "")
+    slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "") 
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
+    
+    # Determine job ID
+    if slurm_array_job_id and slurm_array_task_id and is_optuna:
+        job_id = f"{slurm_array_job_id}_{slurm_array_task_id}"
+    elif slurm_array_job_id:
+        job_id = slurm_array_job_id
+    elif slurm_job_id:
+        job_id = slurm_job_id
     else:
-        hostname = socket.gethostname()
-        group = f"{hostname}_{timestamp()}"
-
+        job_id = str(uuid.uuid4())
+    
+    hostname = socket.gethostname()
+    hostname_job_id = f"{hostname}-{job_id}"
+    sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
+    hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
+    group = f"{hostname_job_id}_{hashed_cfg}"
+    
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
-    
+
     wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
@@ -121,14 +127,14 @@ def main(cfg: DictConfig) -> None:
         group=group,
         tags=wandb_cfg["wandb"]["tags"],
         dir=experiment_dir,
-        name=f"run_{group}"
+        name=f"run_{group}",
     )
-
+    
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         log_model=True,
         save_dir=experiment_dir,
-        name=f"run_{group}"
+        name=f"run_{group}",
     )
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -145,10 +151,7 @@ def main(cfg: DictConfig) -> None:
     genome = SCerevisiaeGenome(
         genome_root=genome_root, go_root=go_root, overwrite=False
     )
-    genome.drop_chrmt()
     genome.drop_empty_go()
-
-    from torchcell.graph import SCerevisiaeGraph
 
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
@@ -472,7 +475,6 @@ def main(cfg: DictConfig) -> None:
         weights=weights,
     )
 
-
     print(f"Creating regression task ({timestamp()})")
     task = RegressionTask(
         model=model,
@@ -517,6 +519,7 @@ def main(cfg: DictConfig) -> None:
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        limit_val_batches=0,  # FLAG
     )
 
     trainer.fit(model=task, datamodule=data_module)

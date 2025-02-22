@@ -527,66 +527,6 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"][
             "removed"
         ]
-
-        # def validate_indices(graph: HeteroData):
-        #     """Validate indices for both regular edges and hyperedges in single or batched graphs."""
-
-        #     is_batched = any(hasattr(graph[node_type], 'batch')
-        #                     for node_type in graph.node_types)
-
-        #     for edge_type in graph.edge_types:
-        #         src_type, edge_name, dst_type = edge_type
-        #         edge_store = graph[edge_type]
-
-        #         src_size = graph[src_type].num_nodes
-        #         dst_size = graph[dst_type].num_nodes
-
-        #         # Handle regular edges (physical and regulatory interactions)
-        #         if edge_name in ['physical_interaction', 'regulatory_interaction']:
-        #             edge_index = edge_store.edge_index
-        #             assert (edge_index[0] < src_size).all(), \
-        #                 f"Source indices out of bounds in {edge_type}"
-        #             assert (edge_index[1] < src_size).all(), \
-        #                 f"Target indices out of bounds in {edge_type}"
-
-        #             # For regular edges, num_edges should match edge_index size
-        #             if hasattr(edge_store, 'num_edges'):
-        #                 if is_batched:
-        #                     assert isinstance(edge_store.num_edges, (list, torch.Tensor)), \
-        #                         f"num_edges should be list/tensor in batched {edge_type}"
-        #                 else:
-        #                     assert edge_store.num_edges == edge_index.size(1), \
-        #                         f"num_edges mismatch in {edge_type}"
-
-        #         # Handle hyperedges
-        #         elif edge_name in ['gpr', 'reaction'] or edge_type == ('metabolite', 'reaction', 'metabolite'):
-        #             edge_index = edge_store.hyperedge_index
-        #             assert (edge_index[0] < src_size).all(), \
-        #                 f"Source indices out of bounds in {edge_type}"
-        #             assert (edge_index[1] < dst_size).all(), \
-        #                 f"Target indices out of bounds in {edge_type}"
-
-        #             # For hyperedges, num_edges should match number of unique hyperedges
-        #             if hasattr(edge_store, 'num_edges'):
-        #                 if is_batched:
-        #                     assert isinstance(edge_store.num_edges, (list, torch.Tensor)), \
-        #                         f"num_edges should be list/tensor in batched {edge_type}"
-        #                 else:
-        #                     # For hypergraphs, num_edges is number of unique hyperedges (reactions)
-        #                     assert edge_store.num_edges == len(torch.unique(edge_index[1])), \
-        #                         f"num_edges mismatch in {edge_type}: {edge_store.num_edges}, {len(torch.unique(edge_index[1]))}"
-
-        #             # Validate stoichiometry if present
-        #             if hasattr(edge_store, 'stoichiometry'):
-        #                 assert len(edge_store.stoichiometry) == edge_index.size(1), \
-        #                     f"Stoichiometry size mismatch in {edge_type}"
-
-        # try:
-        #     validate_indices(integrated_subgraph)
-        # except AssertionError as e:
-        #     print(f"Index validation failed: {e}")
-        #     raise
-
         return integrated_subgraph
 
     def _process_gene_info(self, cell_graph: HeteroData, data) -> dict:

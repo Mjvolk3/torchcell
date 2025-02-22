@@ -18,22 +18,22 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 2.5e4
+  perturbation_subset_size: 1e2 #2.5e4
   batch_size: 32
-  num_workers: 4 
+  num_workers: 2 
   pin_memory: false
   prefetch: false
 
 trainer:
   max_epochs: 20
   strategy: auto
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
 heads: 2          # placeholder
-norms: "layer"    # placeholder
+norms: "batch"    # placeholder
 # ------
 model:
   gene_num: 6607

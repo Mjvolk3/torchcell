@@ -1933,17 +1933,23 @@ def main_transform_standardization():
     import torch
     import json
     from tqdm import tqdm
-    
+
     # Import necessary components
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
     from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
     from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
-    from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
     from torchcell.datasets import CodonFrequencyDataset
     from torchcell.metabolism.yeast_GEM import YeastGEM
-    from torchcell.transforms.regression_to_classification import LabelNormalizationTransform
+    from torchcell.transforms.regression_to_classification import (
+        LabelNormalizationTransform,
+    )
     from torchcell.datamodules import CellDataModule
 
     # Load environment variables
@@ -2046,12 +2052,14 @@ def main_transform_standardization():
         data = dataset[i]
         if "metabolite" in data.node_types and "reaction" in data.node_types:
             if hasattr(data["metabolite", "reaction", "metabolite"], "hyperedge_index"):
-                print(f"Sample {i} - hyperedge size: {data['metabolite', 'reaction', 'metabolite'].hyperedge_index.size()}")
-                
+                print(
+                    f"Sample {i} - hyperedge size: {data['metabolite', 'reaction', 'metabolite'].hyperedge_index.size()}"
+                )
+
                 # Check if perturbed genes affect the metabolic network
                 if hasattr(data["gene"], "cell_graph_idx_pert"):
                     perturbed_indices = data["gene"].cell_graph_idx_pert
-                    
+
                     # Count reactions affected by gene perturbations
                     reactions_with_perturbed = set()
                     for rxn_idx, genes in dataset.cell_graph[
@@ -2059,7 +2067,7 @@ def main_transform_standardization():
                     ].reaction_to_genes_indices.items():
                         if any(g in perturbed_indices for g in genes):
                             reactions_with_perturbed.add(rxn_idx)
-                    
+
                     print(f"  Perturbed genes: {len(perturbed_indices)}")
                     print(f"  Reactions affected: {len(reactions_with_perturbed)}")
 

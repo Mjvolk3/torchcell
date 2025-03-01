@@ -89,11 +89,6 @@ def get_num_devices() -> int:
     config_path=osp.join(osp.dirname(__file__), "../conf"),
     config_name="hetero_cell",
 )
-@hydra.main(
-    version_base=None,
-    config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell",
-)
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroCell Training 🐂")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
@@ -158,7 +153,7 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
-    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=True)
+    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=False)
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
@@ -562,16 +557,27 @@ def main(cfg: DictConfig) -> None:
     )
 
     trainer.fit(model=task, datamodule=data_module)
-    # trainer.test(model=task, datamodule=data_module)
+
+    # Store metrics in variables first
+    mse = trainer.callback_metrics["val/combined/MSE"].item()
+    pearson = trainer.callback_metrics["val/combined/Pearson"].item()
+
+    # Now finish wandb
     wandb.finish()
-    return (
-        trainer.callback_metrics["val/combined/MSE"].item(),
-        trainer.callback_metrics["val/combined/Pearson"].item(),
-    )
+
+    # Return the already-stored metrics
+    return (mse, pearson)
 
 
 if __name__ == "__main__":
     import multiprocessing as mp
+    import random
+    import time
+
+    # Random delay between 0-90 seconds
+    delay = random.uniform(0, 90)  
+    print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
+    time.sleep(delay)
 
     mp.set_start_method("spawn", force=True)
     main()

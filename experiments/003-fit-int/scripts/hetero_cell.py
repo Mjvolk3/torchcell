@@ -14,6 +14,13 @@ import hydra
 import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.transforms.regression_to_classification import (
+    LabelNormalizationTransform,
+    InverseCompose,
+)
+from torch_geometric.transforms import Compose
+
 from torchcell.data.neo4j_cell import SubgraphRepresentation
 from torchcell.trainers.fit_int_hetero_cell import RegressionTask
 from dotenv import load_dotenv
@@ -82,25 +89,25 @@ def get_num_devices() -> int:
     config_path=osp.join(osp.dirname(__file__), "../conf"),
     config_name="hetero_cell",
 )
-@hydra.main(
-    version_base=None,
-    config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell",
-)
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroCell Training 🐂")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
-    
+
     # Check if using optuna sweeper
-    is_optuna = cfg.get("hydra", {}).get("sweeper", {}).get("_target_", "").endswith("optuna.sweeper.OptunaSweeper")
-    
+    is_optuna = (
+        cfg.get("hydra", {})
+        .get("sweeper", {})
+        .get("_target_", "")
+        .endswith("optuna.sweeper.OptunaSweeper")
+    )
+
     # Get SLURM job IDs
     slurm_array_job_id = os.environ.get("SLURM_ARRAY_JOB_ID", "")
-    slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "") 
+    slurm_array_task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "")
     slurm_job_id = os.environ.get("SLURM_JOB_ID", "")
-    
+
     # Determine job ID
     if slurm_array_job_id and slurm_array_task_id and is_optuna:
         job_id = f"{slurm_array_job_id}_{slurm_array_task_id}"
@@ -110,13 +117,13 @@ def main(cfg: DictConfig) -> None:
         job_id = slurm_job_id
     else:
         job_id = str(uuid.uuid4())
-    
+
     hostname = socket.gethostname()
     hostname_job_id = f"{hostname}-{job_id}"
     sorted_cfg = json.dumps(wandb_cfg, sort_keys=True)
     hashed_cfg = hashlib.sha256(sorted_cfg.encode("utf-8")).hexdigest()
     group = f"{hostname_job_id}_{hashed_cfg}"
-    
+
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
 
@@ -129,7 +136,7 @@ def main(cfg: DictConfig) -> None:
         dir=experiment_dir,
         name=f"run_{group}",
     )
-    
+
     wandb_logger = WandbLogger(
         project=wandb_cfg["wandb"]["project"],
         log_model=True,
@@ -146,11 +153,7 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
-    genome = SCerevisiaeGenome(
-        genome_root=genome_root, go_root=go_root, overwrite=False
-    )
+    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=False)
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
@@ -362,8 +365,40 @@ def main(cfg: DictConfig) -> None:
         graph_processor=graph_processor,
     )
 
-    # Skip transforms by setting both to None.
-    forward_transform, inverse_transform = None, None
+    # TODO - Check norms work - Start
+    # After creating dataset and before creating data_module
+    # Configure label normalization
+    norm_configs = {
+        "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
+        "gene_interaction": {"strategy": "standard"},  # z-score: (x - mean) / std
+    }
+
+    # Create the transform
+    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
+    inverse_normalize_transform = InverseCompose([normalize_transform])
+
+    # Apply transform to dataset
+    dataset.transform = normalize_transform
+
+    # Pass transforms to the RegressionTask
+    forward_transform = normalize_transform
+    inverse_transform = inverse_normalize_transform
+
+    # Print normalization parameters
+    for label, stats in normalize_transform.stats.items():
+        print(f"Normalization parameters for {label}:")
+        for key, value in stats.items():
+            if isinstance(value, (int, float)) and key != "strategy":
+                print(f"  {key}: {value:.6f}")
+            else:
+                print(f"  {key}: {value}")
+
+    # Log standardization parameters to wandb
+    for label, stats in normalize_transform.stats.items():
+        for key, value in stats.items():
+            if isinstance(value, (int, float)) and key != "strategy":
+                wandb.log({f"standardization/{label}/{key}": value})
+    # TODO - Check norms work - End
 
     seed = 42
     data_module = CellDataModule(
@@ -523,16 +558,27 @@ def main(cfg: DictConfig) -> None:
     )
 
     trainer.fit(model=task, datamodule=data_module)
-    # trainer.test(model=task, datamodule=data_module)
+
+    # Store metrics in variables first
+    mse = trainer.callback_metrics["val/combined/MSE"].item()
+    pearson = trainer.callback_metrics["val/combined/Pearson"].item()
+
+    # Now finish wandb
     wandb.finish()
-    return (
-        trainer.callback_metrics["val/fitness/MSE"].item(),
-        trainer.callback_metrics["val/fitness/Pearson"].item(),
-    )
+
+    # Return the already-stored metrics
+    return (mse, pearson)
 
 
 if __name__ == "__main__":
     import multiprocessing as mp
+    import random
+    import time
+
+    # Random delay between 0-90 seconds
+    delay = random.uniform(0, 90)  
+    print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
+    time.sleep(delay)
 
     mp.set_start_method("spawn", force=True)
     main()

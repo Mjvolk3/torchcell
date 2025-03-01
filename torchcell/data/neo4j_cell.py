@@ -1923,7 +1923,227 @@ def main_incidence():
         break
 
 
-def main_transform():
+def main_transform_standardization():
+    """Test standardization of labels using LabelNormalizationTransform with metabolic network."""
+    import os.path as osp
+    from dotenv import load_dotenv
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import numpy as np
+    import torch
+    import json
+    from tqdm import tqdm
+
+    # Import necessary components
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.datamodels.fitness_composite_conversion import (
+        CompositeFitnessConverter,
+    )
+    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
+    from torchcell.datasets.fungal_up_down_transformer import (
+        FungalUpDownTransformerDataset,
+    )
+    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.transforms.regression_to_classification import (
+        LabelNormalizationTransform,
+    )
+    from torchcell.datamodules import CellDataModule
+
+    # Load environment variables
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    # Load query
+    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+        query = f.read()
+
+    # Set up genome and graph
+    print("Setting up genome and graph...")
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+
+    graph = SCerevisiaeGraph(
+        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+    )
+
+    # Set up node embeddings
+    print("Setting up embeddings...")
+    codon_frequency = CodonFrequencyDataset(
+        root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
+        genome=genome,
+    )
+    fudt_3prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+    fudt_5prime_dataset = FungalUpDownTransformerDataset(
+        root="data/scerevisiae/fudt_embedding",
+        genome=genome,
+        model_name="species_downstream",
+    )
+
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
+    )
+
+    # Create dataset with metabolism network
+    print("Creating dataset with metabolism network...")
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        incidence_graphs={"metabolism": YeastGEM().reaction_map},
+        node_embeddings={
+            "codon_frequency": codon_frequency,
+            "fudt_3prime": fudt_3prime_dataset,
+            "fudt_5prime": fudt_5prime_dataset,
+        },
+        converter=CompositeFitnessConverter,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=SubgraphRepresentation(),
+    )
+
+    print(f"Dataset size: {len(dataset)}")
+
+    # Define the labels we want to standardize
+    labels = ["fitness", "gene_interaction"]
+
+    # Print statistics of original data using dataset.label_df
+    for label in labels:
+        values = dataset.label_df[label].dropna().values
+        print(f"\n{label} statistics (original):")
+        print(f"  Count: {len(values)}")
+        print(f"  Min: {values.min():.4f}")
+        print(f"  Max: {values.max():.4f}")
+        print(f"  Mean: {values.mean():.4f}")
+        print(f"  Std: {values.std():.4f}")
+
+    # Configure normalization to use standard (z-score) normalization for both labels
+    norm_configs = {
+        "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
+        "gene_interaction": {"strategy": "standard"},  # z-score: (x - mean) / std
+    }
+
+    # Create the normalizer
+    print("\nCreating normalization transform...")
+    normalizer = LabelNormalizationTransform(dataset, norm_configs)
+
+    # Print the normalization parameters
+    for label, stats in normalizer.stats.items():
+        print(f"\nNormalization parameters for {label}:")
+        for key, value in stats.items():
+            if key not in ["bin_edges", "bin_counts", "strategy"]:
+                print(f"  {key}: {value:.6f}")
+        print(f"  strategy: {stats['strategy']}")
+
+    # Apply the transform to the dataset
+    dataset.transform = normalizer
+
+    # Check metabolic network connectivity changes
+    print("\nChecking metabolic network changes for a few examples...")
+    for i in range(5):
+        data = dataset[i]
+        if "metabolite" in data.node_types and "reaction" in data.node_types:
+            if hasattr(data["metabolite", "reaction", "metabolite"], "hyperedge_index"):
+                print(
+                    f"Sample {i} - hyperedge size: {data['metabolite', 'reaction', 'metabolite'].hyperedge_index.size()}"
+                )
+
+                # Check if perturbed genes affect the metabolic network
+                if hasattr(data["gene"], "cell_graph_idx_pert"):
+                    perturbed_indices = data["gene"].cell_graph_idx_pert
+
+                    # Count reactions affected by gene perturbations
+                    reactions_with_perturbed = set()
+                    for rxn_idx, genes in dataset.cell_graph[
+                        "metabolite", "reaction", "metabolite"
+                    ].reaction_to_genes_indices.items():
+                        if any(g in perturbed_indices for g in genes):
+                            reactions_with_perturbed.add(rxn_idx)
+
+                    print(f"  Perturbed genes: {len(perturbed_indices)}")
+                    print(f"  Reactions affected: {len(reactions_with_perturbed)}")
+
+    # Sample data points for visualization
+    print("\nSampling data for visualization...")
+    num_samples = 1000
+    sample_indices = np.random.choice(
+        len(dataset), min(num_samples, len(dataset)), replace=False
+    )
+
+    original_values = {label: [] for label in labels}
+    normalized_values = {label: [] for label in labels}
+
+    for idx in tqdm(sample_indices):
+        data = dataset[idx]
+        for label in labels:
+            if label in data["gene"] and not torch.isnan(data["gene"][label]).any():
+                # Get normalized value
+                normalized_values[label].append(data["gene"][label].item())
+                # Get original value
+                original_values[label].append(data["gene"][f"{label}_original"].item())
+
+    # Create visualization with plots
+    print("\nCreating visualization...")
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    fig.suptitle("Label Distributions: Before vs. After Standardization", fontsize=16)
+
+    for i, label in enumerate(labels):
+        # Original distribution
+        sns.histplot(original_values[label], bins=50, ax=axes[0, i], kde=True)
+        axes[0, i].set_title(f"Original {label}")
+
+        # Normalized distribution
+        sns.histplot(normalized_values[label], bins=50, ax=axes[1, i], kde=True)
+        axes[1, i].set_title(f"Standardized {label} (z-score)")
+
+        # Add mean and std lines to the normalized plot
+        axes[1, i].axvline(x=0, color="r", linestyle="--", label="Mean (0)")
+        axes[1, i].axvline(x=1, color="g", linestyle="--", label="+1 Std")
+        axes[1, i].axvline(x=-1, color="g", linestyle="--", label="-1 Std")
+        axes[1, i].legend()
+
+    plt.tight_layout()
+    plt.savefig("standardization_with_metabolism_comparison.png")
+
+    # Test with datamodule
+    print("\nTesting with CellDataModule...")
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
+        batch_size=2,
+        random_seed=42,
+        num_workers=2,
+        pin_memory=False,
+    )
+    cell_data_module.setup()
+
+    # Get a batch and check normalized values
+    for batch in cell_data_module.train_dataloader():
+        for label in labels:
+            if label in batch["gene"]:
+                print(f"\nBatch {label} statistics:")
+                print(f"  Shape: {batch['gene'][label].shape}")
+                print(f"  Mean: {batch['gene'][label].mean().item():.4f}")
+                print(f"  Std: {batch['gene'][label].std().item():.4f}")
+                print(f"  Original values present: {'_original' in batch['gene']}")
+        break
+
+    # Clean up
+    dataset.close_lmdb()
+    print("\nTest completed successfully.")
+
+
+def main_transform_categorical():
+    # Used this in hetero gnn pool when converting categorical to regression
     """Test the label binning transforms on the dataset with proper initialization."""
     import os.path as osp
     from dotenv import load_dotenv
@@ -2118,7 +2338,7 @@ def main_transform():
     dataset.close_lmdb()
 
 
-def main_transform_dense():
+def main_transform_categorical_dense():
     """Test label transforms and dense conversion with perturbation subset."""
     import os.path as osp
     from dotenv import load_dotenv
@@ -2340,6 +2560,7 @@ def main_transform_dense():
 
 
 if __name__ == "__main__":
-    # main_transform_dense()
+    # main_transform_categorical_dense()
     # main()
-    main_incidence()
+    # main_incidence()
+    main_transform_standardization()

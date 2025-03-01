@@ -522,8 +522,8 @@ class InverseCompose(BaseTransform):
 
     def forward(self, data: Union[HeteroData, Batch]) -> Union[HeteroData, Batch]:
         """Apply inverse transforms in reverse order."""
-        # TODO probably don't need to support batch, just did for quick testing.
-        data = copy.deepcopy(data)
+        # Use copy.copy instead of deepcopy to avoid tensor copy issues
+        data = copy.copy(data)
         for t in reversed(self.transforms):
             data = t.inverse(data)
         return data

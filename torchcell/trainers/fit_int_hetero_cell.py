@@ -12,6 +12,7 @@ from torchcell.timestamp import timestamp
 from torchcell.viz.visual_graph_degen import VisGraphDegen
 from torchcell.viz import genetic_interaction_score
 from torchcell.viz import fitness
+from torch_geometric.data import HeteroData
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class RegressionTask(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
         self.model = model
         self.cell_graph = cell_graph
+        self.forward_transform = forward_transform
         self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
@@ -48,6 +50,8 @@ class RegressionTask(L.LightningModule):
                 "Pearson": PearsonCorrCoef(),
             }
         )
+
+        # Create per-label metrics as you already have
         for stage in ["train", "val", "test"]:
             metrics_dict = nn.ModuleDict(
                 {
@@ -58,6 +62,20 @@ class RegressionTask(L.LightningModule):
                 }
             )
             setattr(self, f"{stage}_metrics", metrics_dict)
+
+            # Add new combined metrics with Pearson
+            combined_metrics = MetricCollection(
+                {
+                    "MSE": MeanSquaredError(squared=True),
+                    "RMSE": MeanSquaredError(squared=False),
+                    "Pearson": PearsonCorrCoef(),  # Add Pearson to combined metrics
+                }
+            )
+            setattr(
+                self,
+                f"{stage}_combined_metrics",
+                combined_metrics.clone(prefix=f"{stage}/combined/"),
+            )
 
         # Separate accumulators for train and validation samples.
         self.train_samples = {
@@ -85,15 +103,30 @@ class RegressionTask(L.LightningModule):
     def _shared_step(self, batch, batch_idx, stage="train"):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
+
+        # Use transformed values for loss computation
         fitness_vals = batch["gene"].fitness.view(-1, 1)
         gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
+
+        # Get original values for metrics and visualization
+        fitness_orig = (
+            batch["gene"].fitness_original.view(-1, 1)
+            if "fitness_original" in batch["gene"]
+            else fitness_vals
+        )
+        gene_interaction_orig = (
+            batch["gene"].gene_interaction_original.view(-1, 1)
+            if "gene_interaction_original" in batch["gene"]
+            else gene_interaction_vals
+        )
+        orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
         loss, loss_dict = self.loss_func(
             predictions, targets, representations["z_p"], representations["z_i"]
         )
 
-        # Log loss components.
+        # Log loss components
         for key, value in [
             ("loss", loss),
             ("fitness_loss", loss_dict["mse_dim_losses"][0]),
@@ -104,6 +137,8 @@ class RegressionTask(L.LightningModule):
             ("total_loss", loss_dict["total_loss"]),
         ]:
             self.log(f"{stage}/{key}", value, batch_size=batch_size, sync_dist=True)
+
+        # Additional loss component logging
         for key in [
             "weighted_mse",
             "weighted_dist",
@@ -124,21 +159,51 @@ class RegressionTask(L.LightningModule):
                     sync_dist=True,
                 )
 
-        # Log the norm of z_p to track potential collapse.
+        # Log z_p norm
         if "z_p" in representations:
             z_p_norm = representations["z_p"].norm(p=2, dim=-1).mean()
             self.log(
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
 
-        # Update torchmetrics.
+        inv_predictions = predictions.clone()
+        if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
+            # Create a temp HeteroData object with predictions
+            temp_data = HeteroData()
+            temp_data["gene"] = {
+                "fitness": predictions[:, 0].clone(), 
+                "gene_interaction": predictions[:, 1].clone()
+            }
+            
+            # Apply the proper inverse transform
+            inv_data = self.inverse_transform(temp_data)
+            
+            # Extract the inversed predictions
+            inv_predictions = torch.stack([
+                inv_data["gene"]["fitness"], 
+                inv_data["gene"]["gene_interaction"]
+            ], dim=1)
+
+        # Update metrics - important for val/fitness/MSE
         for key, col in zip(["fitness", "gene_interaction"], [0, 1]):
-            mask = ~torch.isnan(targets[:, col])
+            mask = ~torch.isnan(orig_targets[:, col])
             if mask.sum() > 0:
                 metric_collection = getattr(self, f"{stage}_metrics")[key]
-                metric_collection.update(predictions[mask, col], targets[mask, col])
+                metric_collection.update(
+                    inv_predictions[mask, col], orig_targets[mask, col]
+                )
 
-        # Sample collection.
+        # Update combined metrics (across all dimensions)
+        combined_mask = ~torch.isnan(orig_targets).any(dim=1)
+        if combined_mask.sum() > 0:
+            combined_metrics = getattr(self, f"{stage}_combined_metrics")
+            # Reshape to flatten all predictions and targets
+            combined_metrics.update(
+                inv_predictions[combined_mask].reshape(-1),
+                orig_targets[combined_mask].reshape(-1),
+            )
+
+        # Sample collection for visualization
         if stage == "train":
             if self.current_epoch + 1 == self.trainer.max_epochs:
                 current_count = sum(
@@ -148,10 +213,13 @@ class RegressionTask(L.LightningModule):
                     remaining = self.hparams.plot_sample_ceiling - current_count
                     if batch_size > remaining:
                         idx = torch.randperm(batch_size)[:remaining]
-                        self.train_samples["true_values"].append(targets[idx].detach())
-                        self.train_samples["predictions"].append(
-                            predictions[idx].detach()
+                        self.train_samples["true_values"].append(
+                            orig_targets[idx].detach()
                         )
+                        self.train_samples["predictions"].append(
+                            inv_predictions[idx].detach()
+                        )
+
                         if "z_p" in representations:
                             self.train_samples["latents"]["z_p"].append(
                                 representations["z_p"][idx].detach()
@@ -161,8 +229,11 @@ class RegressionTask(L.LightningModule):
                                 representations["z_i"][idx].detach()
                             )
                     else:
-                        self.train_samples["true_values"].append(targets.detach())
-                        self.train_samples["predictions"].append(predictions.detach())
+                        self.train_samples["true_values"].append(orig_targets.detach())
+                        self.train_samples["predictions"].append(
+                            inv_predictions.detach()
+                        )
+
                         if "z_p" in representations:
                             self.train_samples["latents"]["z_p"].append(
                                 representations["z_p"].detach()
@@ -172,8 +243,9 @@ class RegressionTask(L.LightningModule):
                                 representations["z_i"].detach()
                             )
         elif stage == "val":
-            self.val_samples["true_values"].append(targets.detach())
-            self.val_samples["predictions"].append(predictions.detach())
+            self.val_samples["true_values"].append(orig_targets.detach())
+            self.val_samples["predictions"].append(inv_predictions.detach())
+
             if "z_p" in representations:
                 self.val_samples["latents"]["z_p"].append(
                     representations["z_p"].detach()
@@ -183,7 +255,7 @@ class RegressionTask(L.LightningModule):
                     representations["z_i"].detach()
                 )
 
-        return loss, predictions, targets
+        return loss, predictions, orig_targets
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
@@ -283,13 +355,20 @@ class RegressionTask(L.LightningModule):
                 plt.close(fig_gi)
 
     def on_train_epoch_end(self):
-        # Log training metrics.
+        # Log training metrics for individual labels
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
-        # Plot training samples only on the final epoch.
+
+        # Compute and log combined metrics
+        combined_metrics = self._compute_metrics_safely(self.train_combined_metrics)
+        for name, value in combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.train_combined_metrics.reset()
+
+        # Plot training samples only on the final epoch
         if (
             self.current_epoch + 1 == self.trainer.max_epochs
             and self.train_samples["true_values"]
@@ -302,12 +381,20 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_end(self):
-        # Log validation metrics.
+        # Log validation metrics for individual labels
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
+
+        # Compute and log combined metrics
+        combined_metrics = self._compute_metrics_safely(self.val_combined_metrics)
+        for name, value in combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.val_combined_metrics.reset()
+
+        # Plot validation samples
         if not self.trainer.sanity_checking and self.val_samples["true_values"]:
             self._plot_samples(self.val_samples, "val_sample")
             self.val_samples = {

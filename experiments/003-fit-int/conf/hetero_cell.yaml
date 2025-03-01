@@ -3,7 +3,8 @@ defaults:
   - _self_
 
 wandb:
-  project: torchcell_003-fit-int_hetero_cell
+  # FLAG
+  project: torchcell_003-fit-int_hetero_cell_2.5e4
   tags: []
 
 cell_dataset:
@@ -25,15 +26,15 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 20
+  max_epochs: 20 # 20 # FLAG
   strategy: auto
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
 heads: 2          # placeholder
-norms: "batch"    # placeholder
+norms: "layer"    # placeholder
 # ------
 model:
   gene_num: 6607
@@ -66,10 +67,10 @@ model:
     concat: true
   prediction_head_config:
     hidden_channels: 64
-    head_num_layers: 2
+    head_num_layers: 4
     dropout: 0.0
     activation: "relu"
-    residual: true
+    # residual: true
     # head_norm: "batch"
     head_norm: ${norms}
 

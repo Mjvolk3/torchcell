@@ -282,7 +282,7 @@ class HeteroCell(nn.Module):
             num_layers=pred_config.get("head_num_layers", 1),
             dropout=pred_config.get("dropout", dropout),
             activation=pred_config.get("activation", activation),
-            residual=pred_config.get("residual", True),
+            # residual=pred_config.get("residual", True),
             norm=pred_config.get("head_norm", norm),
         )
 
@@ -294,7 +294,7 @@ class HeteroCell(nn.Module):
         num_layers: int,
         dropout: float,
         activation: str,
-        residual: bool,
+        # residual: bool,
         norm: Optional[str] = None,
     ) -> nn.Module:
         if num_layers == 0:

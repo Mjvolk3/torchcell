@@ -12,6 +12,7 @@ from torchcell.timestamp import timestamp
 from torchcell.viz.visual_graph_degen import VisGraphDegen
 from torchcell.viz import genetic_interaction_score
 from torchcell.viz import fitness
+from torch_geometric.data import HeteroData
 
 log = logging.getLogger(__name__)
 
@@ -165,36 +166,23 @@ class RegressionTask(L.LightningModule):
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
 
-        # Approximate inverse transform for metrics and visualization
         inv_predictions = predictions.clone()
-        try:
-            if (
-                hasattr(self, "forward_transform")
-                and self.forward_transform is not None
-            ):
-                # Get transform stats for approximate denormalization
-                if hasattr(self.forward_transform, "stats"):
-                    transform_stats = self.forward_transform.stats
-
-                    # Process each label
-                    for col, key in enumerate(["fitness", "gene_interaction"]):
-                        if key in transform_stats:
-                            stats = transform_stats[key]
-                            pred_col = predictions[:, col]
-
-                            # Apply inverse transform based on strategy
-                            if stats["strategy"] == "standard":
-                                inv_predictions[:, col] = (
-                                    pred_col * stats["std"] + stats["mean"]
-                                )
-                            elif stats["strategy"] == "minmax":
-                                inv_predictions[:, col] = (
-                                    pred_col * (stats["max"] - stats["min"])
-                                    + stats["min"]
-                                )
-        except Exception as e:
-            print(f"Warning: Error applying inverse transform: {e}")
-            # Continue with original predictions if there's an error
+        if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
+            # Create a temp HeteroData object with predictions
+            temp_data = HeteroData()
+            temp_data["gene"] = {
+                "fitness": predictions[:, 0].clone(), 
+                "gene_interaction": predictions[:, 1].clone()
+            }
+            
+            # Apply the proper inverse transform
+            inv_data = self.inverse_transform(temp_data)
+            
+            # Extract the inversed predictions
+            inv_predictions = torch.stack([
+                inv_data["gene"]["fitness"], 
+                inv_data["gene"]["gene_interaction"]
+            ], dim=1)
 
         # Update metrics - important for val/fitness/MSE
         for key, col in zip(["fitness", "gene_interaction"], [0, 1]):

@@ -519,7 +519,7 @@ def main(cfg: DictConfig) -> None:
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
-        limit_val_batches=0,  # FLAG
+        # limit_val_batches=0,  # FLAG
     )
 
     trainer.fit(model=task, datamodule=data_module)

@@ -565,8 +565,8 @@ def main(cfg: DictConfig) -> None:
     # trainer.test(model=task, datamodule=data_module)
     wandb.finish()
     return (
-        trainer.callback_metrics["val/fitness/MSE"].item(),
-        trainer.callback_metrics["val/fitness/Pearson"].item(),
+        trainer.callback_metrics["val/combined/MSE"].item(),
+        trainer.callback_metrics["val/combined/Pearson"].item(),
     )
 
 

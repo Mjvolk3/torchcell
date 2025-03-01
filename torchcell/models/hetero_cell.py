@@ -772,7 +772,7 @@ def plot_embeddings(
     batch_size,
     save_dir="./003-fit-int/hetero_cell/embedding_plots",
     epoch=None,
-    fixed_axes=None,
+    fixed_axes=None, 
 ):
     """
     Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.

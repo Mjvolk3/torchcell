@@ -49,6 +49,8 @@ class RegressionTask(L.LightningModule):
                 "Pearson": PearsonCorrCoef(),
             }
         )
+
+        # Create per-label metrics as you already have
         for stage in ["train", "val", "test"]:
             metrics_dict = nn.ModuleDict(
                 {
@@ -59,6 +61,20 @@ class RegressionTask(L.LightningModule):
                 }
             )
             setattr(self, f"{stage}_metrics", metrics_dict)
+
+            # Add new combined metrics with Pearson
+            combined_metrics = MetricCollection(
+                {
+                    "MSE": MeanSquaredError(squared=True),
+                    "RMSE": MeanSquaredError(squared=False),
+                    "Pearson": PearsonCorrCoef(),  # Add Pearson to combined metrics
+                }
+            )
+            setattr(
+                self,
+                f"{stage}_combined_metrics",
+                combined_metrics.clone(prefix=f"{stage}/combined/"),
+            )
 
         # Separate accumulators for train and validation samples.
         self.train_samples = {
@@ -188,6 +204,16 @@ class RegressionTask(L.LightningModule):
                 metric_collection.update(
                     inv_predictions[mask, col], orig_targets[mask, col]
                 )
+
+        # Update combined metrics (across all dimensions)
+        combined_mask = ~torch.isnan(orig_targets).any(dim=1)
+        if combined_mask.sum() > 0:
+            combined_metrics = getattr(self, f"{stage}_combined_metrics")
+            # Reshape to flatten all predictions and targets
+            combined_metrics.update(
+                inv_predictions[combined_mask].reshape(-1),
+                orig_targets[combined_mask].reshape(-1),
+            )
 
         # Sample collection for visualization
         if stage == "train":
@@ -341,13 +367,20 @@ class RegressionTask(L.LightningModule):
                 plt.close(fig_gi)
 
     def on_train_epoch_end(self):
-        # Log training metrics.
+        # Log training metrics for individual labels
         for metric_name, metric_dict in self.train_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
-        # Plot training samples only on the final epoch.
+
+        # Compute and log combined metrics
+        combined_metrics = self._compute_metrics_safely(self.train_combined_metrics)
+        for name, value in combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.train_combined_metrics.reset()
+
+        # Plot training samples only on the final epoch
         if (
             self.current_epoch + 1 == self.trainer.max_epochs
             and self.train_samples["true_values"]
@@ -360,12 +393,20 @@ class RegressionTask(L.LightningModule):
             }
 
     def on_validation_epoch_end(self):
-        # Log validation metrics.
+        # Log validation metrics for individual labels
         for metric_name, metric_dict in self.val_metrics.items():
             computed_metrics = self._compute_metrics_safely(metric_dict)
             for name, value in computed_metrics.items():
                 self.log(name, value, sync_dist=True)
             metric_dict.reset()
+
+        # Compute and log combined metrics
+        combined_metrics = self._compute_metrics_safely(self.val_combined_metrics)
+        for name, value in combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.val_combined_metrics.reset()
+
+        # Plot validation samples
         if not self.trainer.sanity_checking and self.val_samples["true_values"]:
             self._plot_samples(self.val_samples, "val_sample")
             self.val_samples = {

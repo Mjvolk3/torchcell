@@ -153,7 +153,9 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
-    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=False)
+    genome = SCerevisiaeGenome(
+        genome_root=genome_root, go_root=go_root, overwrite=False
+    )
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
@@ -534,7 +536,7 @@ def main(cfg: DictConfig) -> None:
     checkpoint_callback = ModelCheckpoint(
         dirpath=osp.join(model_base_path, group),
         save_top_k=1,
-        monitor="val/loss",
+        monitor="val/transformed/combined/MSE",
         mode="min",
     )
 
@@ -559,8 +561,8 @@ def main(cfg: DictConfig) -> None:
     trainer.fit(model=task, datamodule=data_module)
 
     # Store metrics in variables first
-    mse = trainer.callback_metrics["val/combined/MSE"].item()
-    pearson = trainer.callback_metrics["val/combined/Pearson"].item()
+    mse = trainer.callback_metrics["val/transformed/combined/MSE"].item()
+    pearson = trainer.callback_metrics["val/transformed/combined/Pearson"].item()
 
     # Now finish wandb
     wandb.finish()
@@ -575,7 +577,7 @@ if __name__ == "__main__":
     import time
 
     # Random delay between 0-90 seconds
-    delay = random.uniform(0, 90)  
+    delay = random.uniform(0, 90)
     print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
     time.sleep(delay)
 

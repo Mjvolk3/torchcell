@@ -76,17 +76,34 @@ class RegressionTask(L.LightningModule):
                 f"{stage}_combined_metrics",
                 combined_metrics.clone(prefix=f"{stage}/combined/"),
             )
+            # Add new metrics operating in transformed space
+            transformed_metrics = nn.ModuleDict(
+                {
+                    "fitness": reg_metrics.clone(
+                        prefix=f"{stage}/transformed/fitness/"
+                    ),
+                    "gene_interaction": reg_metrics.clone(
+                        prefix=f"{stage}/transformed/gene_interaction/"
+                    ),
+                }
+            )
+            setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
+
+            transformed_combined = reg_metrics.clone(
+                prefix=f"{stage}/transformed/combined/"
+            )
+            setattr(self, f"{stage}_transformed_combined", transformed_combined)
 
         # Separate accumulators for train and validation samples.
         self.train_samples = {
             "true_values": [],
             "predictions": [],
-            "latents": {"z_p": [], "z_i": []},
+            "latents": {"z_p": []},
         }
         self.val_samples = {
             "true_values": [],
             "predictions": [],
-            "latents": {"z_p": [], "z_i": []},
+            "latents": {"z_p": []},
         }
         self.automatic_optimization = False
 
@@ -166,23 +183,39 @@ class RegressionTask(L.LightningModule):
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
 
+        transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
+        for key, col in zip(["fitness", "gene_interaction"], [0, 1]):
+            mask = ~torch.isnan(targets[:, col])
+            if mask.sum() > 0:
+                metric_collection = transformed_metrics[key]
+                metric_collection.update(predictions[mask, col], targets[mask, col])
+
+        # Update combined transformed metrics
+        combined_mask = ~torch.isnan(targets).any(dim=1)
+        if combined_mask.sum() > 0:
+            transformed_combined = getattr(self, f"{stage}_transformed_combined")
+            transformed_combined.update(
+                predictions[combined_mask].reshape(-1),
+                targets[combined_mask].reshape(-1),
+            )
+
         inv_predictions = predictions.clone()
         if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
             # Create a temp HeteroData object with predictions
             temp_data = HeteroData()
             temp_data["gene"] = {
-                "fitness": predictions[:, 0].clone(), 
-                "gene_interaction": predictions[:, 1].clone()
+                "fitness": predictions[:, 0].clone(),
+                "gene_interaction": predictions[:, 1].clone(),
             }
-            
+
             # Apply the proper inverse transform
             inv_data = self.inverse_transform(temp_data)
-            
+
             # Extract the inversed predictions
-            inv_predictions = torch.stack([
-                inv_data["gene"]["fitness"], 
-                inv_data["gene"]["gene_interaction"]
-            ], dim=1)
+            inv_predictions = torch.stack(
+                [inv_data["gene"]["fitness"], inv_data["gene"]["gene_interaction"]],
+                dim=1,
+            )
 
         # Update metrics - important for val/fitness/MSE
         for key, col in zip(["fitness", "gene_interaction"], [0, 1]):
@@ -224,10 +257,6 @@ class RegressionTask(L.LightningModule):
                             self.train_samples["latents"]["z_p"].append(
                                 representations["z_p"][idx].detach()
                             )
-                        if "z_i" in representations:
-                            self.train_samples["latents"]["z_i"].append(
-                                representations["z_i"][idx].detach()
-                            )
                     else:
                         self.train_samples["true_values"].append(orig_targets.detach())
                         self.train_samples["predictions"].append(
@@ -238,10 +267,6 @@ class RegressionTask(L.LightningModule):
                             self.train_samples["latents"]["z_p"].append(
                                 representations["z_p"].detach()
                             )
-                        if "z_i" in representations:
-                            self.train_samples["latents"]["z_i"].append(
-                                representations["z_i"].detach()
-                            )
         elif stage == "val":
             self.val_samples["true_values"].append(orig_targets.detach())
             self.val_samples["predictions"].append(inv_predictions.detach())
@@ -249,10 +274,6 @@ class RegressionTask(L.LightningModule):
             if "z_p" in representations:
                 self.val_samples["latents"]["z_p"].append(
                     representations["z_p"].detach()
-                )
-            if "z_i" in representations:
-                self.val_samples["latents"]["z_i"].append(
-                    representations["z_i"].detach()
                 )
 
         return loss, predictions, orig_targets
@@ -338,9 +359,6 @@ class RegressionTask(L.LightningModule):
         if "z_p" in latents:
             smoothness_zp = VisGraphDegen.compute_smoothness(latents["z_p"])
             wandb.log({f"{stage}/oversmoothing_zp": smoothness_zp.item()})
-        if "z_i" in latents:
-            smoothness_zi = VisGraphDegen.compute_smoothness(latents["z_i"])
-            wandb.log({f"{stage}/oversmoothing_zi": smoothness_zi.item()})
         # Log additional box plots for fitness and gene interaction scores.
         if true_values.dim() > 1 and predictions.dim() > 1:
             if torch.any(~torch.isnan(true_values[:, 0])):
@@ -368,6 +386,21 @@ class RegressionTask(L.LightningModule):
             self.log(name, value, sync_dist=True)
         self.train_combined_metrics.reset()
 
+        # Compute and log transformed metrics for individual labels
+        for metric_name, metric_dict in self.train_transformed_metrics.items():
+            computed_metrics = self._compute_metrics_safely(metric_dict)
+            for name, value in computed_metrics.items():
+                self.log(name, value, sync_dist=True)
+            metric_dict.reset()
+
+        # Compute and log transformed combined metrics
+        transformed_combined_metrics = self._compute_metrics_safely(
+            self.train_transformed_combined
+        )
+        for name, value in transformed_combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.train_transformed_combined.reset()
+
         # Plot training samples only on the final epoch
         if (
             self.current_epoch + 1 == self.trainer.max_epochs
@@ -377,7 +410,7 @@ class RegressionTask(L.LightningModule):
             self.train_samples = {
                 "true_values": [],
                 "predictions": [],
-                "latents": {"z_p": [], "z_i": []},
+                "latents": {"z_p": []},
             }
 
     def on_validation_epoch_end(self):
@@ -394,13 +427,28 @@ class RegressionTask(L.LightningModule):
             self.log(name, value, sync_dist=True)
         self.val_combined_metrics.reset()
 
+        # Compute and log transformed metrics for individual labels
+        for metric_name, metric_dict in self.val_transformed_metrics.items():
+            computed_metrics = self._compute_metrics_safely(metric_dict)
+            for name, value in computed_metrics.items():
+                self.log(name, value, sync_dist=True)
+            metric_dict.reset()
+
+        # Compute and log transformed combined metrics
+        transformed_combined_metrics = self._compute_metrics_safely(
+            self.val_transformed_combined
+        )
+        for name, value in transformed_combined_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.val_transformed_combined.reset()
+
         # Plot validation samples
         if not self.trainer.sanity_checking and self.val_samples["true_values"]:
             self._plot_samples(self.val_samples, "val_sample")
             self.val_samples = {
                 "true_values": [],
                 "predictions": [],
-                "latents": {"z_p": [], "z_i": []},
+                "latents": {"z_p": []},
             }
 
     def configure_optimizers(self):

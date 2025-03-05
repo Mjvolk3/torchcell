@@ -4,14 +4,14 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_003-fit-int_hetero_cell
+  project: torchcell_003-fit-int_hetero_cell_isab
   tags: []
 
 cell_dataset:
   graphs: [physical, regulatory]
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 16
+  learnable_embedding_input_channels: 64
   incidence_graphs: [metabolism]
 
 profiler:
@@ -20,8 +20,8 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4 #2.5e4
-  batch_size: 32
-  num_workers: 4
+  batch_size: 2
+  num_workers: 2
   pin_memory: false
   prefetch: false
 
@@ -33,7 +33,7 @@ trainer:
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 2          # placeholder
+heads: 8          # placeholder
 norms: "layer"    # placeholder
 # ------
 model:
@@ -65,9 +65,17 @@ model:
     # heads: 2
     heads: ${heads}
     concat: true
+  global_aggregator_config:
+    num_induced_points: 100
+    layer_norm: false
+    num_encoder_blocks: 1
+    heads: ${heads}
+    num_decoder_blocks: 1
+    num_seed_points: 1
+    use_isab: false
   prediction_head_config:
     hidden_channels: 64
-    head_num_layers: 4
+    head_num_layers: 2
     dropout: 0.0
     activation: "relu"
     # residual: true
@@ -76,8 +84,8 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  lambda_dist: 0.5
-  lambda_supcr: 0.005
+  lambda_dist: 0 #0.1
+  lambda_supcr: 0 #0.01
   optimizer:
     type: "AdamW"
     lr: 1e-3

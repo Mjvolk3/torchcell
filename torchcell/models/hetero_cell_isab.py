@@ -1,7 +1,7 @@
-# torchcell/models/hetero_cell
-# [[torchcell.models.hetero_cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell
-# Test file: tests/torchcell/models/test_hetero_cell.py
+# torchcell/models/hetero_cell_isab
+# [[torchcell.models.hetero_cell_isab]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_isab
+# Test file: tests/torchcell/models/test_hetero_cell_isab.py
 
 import torch
 import torch.nn as nn
@@ -43,14 +43,14 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
 from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
-
+from torch_geometric.utils import sort_edge_index
+from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import HeteroConv, GATv2Conv
 from torch_geometric.data import HeteroData
 from torch_geometric.utils import sort_edge_index
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from torchcell.models.act import act_register
 from typing import Optional, Dict, Any, Tuple
@@ -69,26 +69,60 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 ###############################################################################
 # Attentional Aggregation Wrapper
 ###############################################################################
-class AttentionalGraphAggregation(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+
+
+class SortedSetTransformerAggregation(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        dropout: float = 0.1,
+        num_seed_points: int = 1,
+        num_encoder_blocks: int = 2,
+        num_decoder_blocks: int = 1,
+        heads: int = 4,
+        layer_norm: bool = True,
+        use_isab: bool = True,
+        num_induced_points: int = 32,
+    ):
         super().__init__()
-        self.gate_nn = nn.Sequential(
-            nn.Linear(in_channels, in_channels // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_channels // 2, 1),
+        self.aggregator = SetTransformerAggregation(
+            channels=in_channels,
+            num_seed_points=num_seed_points,
+            num_encoder_blocks=num_encoder_blocks,
+            num_decoder_blocks=num_decoder_blocks,
+            heads=heads,
+            concat=True,
+            layer_norm=layer_norm,
+            dropout=dropout,
+            use_isab=use_isab,
+            num_induced_points=num_induced_points,
         )
-        self.transform_nn = nn.Sequential(
-            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
+
+        # Calculate expected output size
+        expected_out_channels = (
+            in_channels * num_seed_points if num_seed_points > 1 else in_channels
         )
-        self.aggregator = AttentionalAggregation(
-            gate_nn=self.gate_nn, nn=self.transform_nn
+        self.proj = (
+            nn.Linear(expected_out_channels, out_channels)
+            if expected_out_channels != out_channels
+            else nn.Identity()
         )
 
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
     ) -> torch.Tensor:
-        return self.aggregator(x, index=index, dim_size=dim_size)
+        # Ensure indices are sorted (required by SetTransformerAggregation)
+        if not torch.all(index[:-1] <= index[1:]):
+            perm = torch.argsort(index)
+            x = x[perm]
+            index = index[perm]
+
+        # Run through set transformer
+        out = self.aggregator(x, index, dim_size=dim_size)
+
+        # Project if needed
+        return self.proj(out)
 
 
 ###############################################################################
@@ -200,6 +234,7 @@ class HeteroCell(nn.Module):
         metabolism_config: Optional[Dict[str, Any]] = None,
         prediction_head_config: Optional[Dict[str, Any]] = None,
         gpr_conv_config: Optional[Dict[str, Any]] = None,
+        global_aggregator_config: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -209,7 +244,26 @@ class HeteroCell(nn.Module):
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
 
-        self.preprocessor = PreProcessor(
+        # Preprocessors for all node types
+        self.gene_preprocessor = PreProcessor(
+            in_channels=hidden_channels,
+            hidden_channels=hidden_channels,
+            num_layers=2,
+            dropout=dropout,
+            norm=norm,
+            activation=activation,
+        )
+
+        self.reaction_preprocessor = PreProcessor(
+            in_channels=hidden_channels,
+            hidden_channels=hidden_channels,
+            num_layers=2,
+            dropout=dropout,
+            norm=norm,
+            activation=activation,
+        )
+
+        self.metabolite_preprocessor = PreProcessor(
             in_channels=hidden_channels,
             hidden_channels=hidden_channels,
             num_layers=2,
@@ -263,13 +317,23 @@ class HeteroCell(nn.Module):
                 )
 
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
-        # Global aggregator for intact graphs.
 
-        self.global_aggregator = AttentionalGraphAggregation(
-            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
+        # Configurable Set Transformer implementation:
+        agg_config = global_aggregator_config or {}
+        self.global_aggregator = SortedSetTransformerAggregation(
+            in_channels=hidden_channels,
+            out_channels=hidden_channels,
+            dropout=dropout,
+            num_seed_points=agg_config.get("num_seed_points", 1),
+            num_decoder_blocks=agg_config.get("num_decoder_blocks", 1),
+            num_encoder_blocks=agg_config.get("num_encoder_blocks", 4),
+            heads=agg_config.get("heads", 8),
+            layer_norm=agg_config.get("layer_norm", False),
+            use_isab=agg_config.get("use_isab", True),
+            num_induced_points=agg_config.get("num_induced_points", 128),
         )
 
-        # Build separate prediction heads:
+        # Build prediction head
         pred_config = prediction_head_config or {}
         self.prediction_head = self._build_prediction_head(
             in_channels=hidden_channels,
@@ -278,7 +342,6 @@ class HeteroCell(nn.Module):
             num_layers=pred_config.get("head_num_layers", 1),
             dropout=pred_config.get("dropout", dropout),
             activation=pred_config.get("activation", activation),
-            # residual=pred_config.get("residual", True),
             norm=pred_config.get("head_norm", norm),
         )
 
@@ -307,106 +370,6 @@ class HeteroCell(nn.Module):
                 layers.append(nn.Dropout(dropout))
         return nn.Sequential(*layers)
 
-    # def forward_single(self, data: HeteroData) -> torch.Tensor:
-    #     """Process a single graph through the model with proper batch handling."""
-    #     device = self.gene_embedding.weight.device
-
-    #     # Check if we're handling the reference cell graph or a batch
-    #     is_batch = hasattr(data["gene"], "batch")
-
-    #     if is_batch:
-    #         # Get batch size
-    #         batch_size = int(data["gene"].batch.max()) + 1
-
-    #         # For genes
-    #         gene_embeddings = self.gene_embedding.weight
-    #         gene_x = torch.zeros(
-    #             data["gene"].num_nodes, gene_embeddings.size(1), device=device
-    #         )
-
-    #         # Split by batch
-    #         for i in range(batch_size):
-    #             # Get indices for this batch item
-    #             batch_mask = data["gene"].batch == i
-    #             num_genes_in_batch = batch_mask.sum()
-
-    #             # Copy embeddings for this batch
-    #             gene_x[batch_mask] = gene_embeddings[:num_genes_in_batch]
-
-    #         # Similar for reactions
-    #         reaction_embeddings = self.reaction_embedding.weight
-    #         reaction_x = torch.zeros(
-    #             data["reaction"].num_nodes, reaction_embeddings.size(1), device=device
-    #         )
-
-    #         for i in range(batch_size):
-    #             batch_mask = data["reaction"].batch == i
-    #             num_reactions_in_batch = batch_mask.sum()
-    #             reaction_x[batch_mask] = reaction_embeddings[:num_reactions_in_batch]
-
-    #         # Similar for metabolites
-    #         metabolite_embeddings = self.metabolite_embedding.weight
-    #         metabolite_x = torch.zeros(
-    #             data["metabolite"].num_nodes,
-    #             metabolite_embeddings.size(1),
-    #             device=device,
-    #         )
-
-    #         for i in range(batch_size):
-    #             batch_mask = data["metabolite"].batch == i
-    #             num_metabolites_in_batch = batch_mask.sum()
-    #             metabolite_x[batch_mask] = metabolite_embeddings[
-    #                 :num_metabolites_in_batch
-    #             ]
-
-    #         # Apply preprocessor to gene features
-    #         gene_x = self.preprocessor(gene_x)
-
-    #         # Put features in dictionary
-    #         x_dict = {
-    #             "gene": gene_x,
-    #             "reaction": reaction_x,
-    #             "metabolite": metabolite_x,
-    #         }
-    #     else:
-    #         # For reference cell graph (no batch), just use the embeddings directly
-    #         x_dict = {
-    #             "gene": self.preprocessor(
-    #                 self.gene_embedding.weight[: data["gene"].num_nodes]
-    #             ),
-    #             "reaction": self.reaction_embedding.weight[
-    #                 : data["reaction"].num_nodes
-    #             ],
-    #             "metabolite": self.metabolite_embedding.weight[
-    #                 : data["metabolite"].num_nodes
-    #             ],
-    #         }
-
-    #     # Process edge indices
-    #     edge_index_dict = {}
-    #     for key, edge in data.edge_index_dict.items():
-    #         if isinstance(edge, torch.Tensor):
-    #             edge_index_dict[key] = edge.to(device)
-    #         else:
-    #             edge_index_dict[key] = edge
-
-    #     # Handle metabolite edge features
-    #     extra_kwargs = {}
-    #     met_edge = ("metabolite", "reaction", "metabolite")
-    #     if met_edge in data.edge_index_dict:
-    #         if hasattr(data[met_edge], "stoichiometry"):
-    #             stoich = data[met_edge].stoichiometry.to(device)
-    #             extra_kwargs["stoich_dict"] = {met_edge: stoich}
-
-    #         if hasattr(data[met_edge], "num_edges"):
-    #             extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
-
-    #     # Apply graph convolutions
-    #     for conv in self.convs:
-    #         x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
-
-    #     return x_dict["gene"]
-
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         device = self.gene_embedding.weight.device
 
@@ -418,20 +381,25 @@ class HeteroCell(nn.Module):
 
             batch_size = len(data["gene"].ptr) - 1
 
+            # Gene embeddings with preprocessing
             x_gene_exp = self.gene_embedding.weight.expand(batch_size, -1, -1)
             x_gene_comb = x_gene_exp.reshape(-1, x_gene_exp.size(-1))
             x_gene = x_gene_comb[~gene_data.pert_mask]
-            x_gene = self.preprocessor(x_gene)
+            x_gene = self.gene_preprocessor(x_gene)
 
+            # Reaction embeddings with preprocessing
             x_reaction_exp = self.reaction_embedding.weight.expand(batch_size, -1, -1)
             x_reaction_comb = x_reaction_exp.reshape(-1, x_reaction_exp.size(-1))
             x_reaction = x_reaction_comb[~reaction_data.pert_mask]
+            x_reaction = self.reaction_preprocessor(x_reaction)
 
+            # Metabolite embeddings with preprocessing
             x_metabolite_exp = self.metabolite_embedding.weight.expand(
                 batch_size, -1, -1
             )
             x_metabolite_comb = x_metabolite_exp.reshape(-1, x_metabolite_exp.size(-1))
             x_metabolite = x_metabolite_comb[~metabolite_data.pert_mask]
+            x_metabolite = self.metabolite_preprocessor(x_metabolite)
 
             x_dict = {
                 "gene": x_gene,
@@ -439,7 +407,7 @@ class HeteroCell(nn.Module):
                 "metabolite": x_metabolite,
             }
         else:
-            # For a single (cell) graph, use all node embeddings directly.
+            # For a single (cell) graph, use all node embeddings directly
             x_gene = data["gene"]
             reaction_data = data["reaction"]
             metabolite_data = data["metabolite"]
@@ -449,17 +417,21 @@ class HeteroCell(nn.Module):
             metabolite_idx = torch.arange(metabolite_data.num_nodes, device=device)
 
             x_dict = {
-                "gene": self.preprocessor(self.gene_embedding(gene_idx)),
-                "reaction": self.reaction_embedding(reaction_idx),
-                "metabolite": self.metabolite_embedding(metabolite_idx),
+                "gene": self.gene_preprocessor(self.gene_embedding(gene_idx)),
+                "reaction": self.reaction_preprocessor(
+                    self.reaction_embedding(reaction_idx)
+                ),
+                "metabolite": self.metabolite_preprocessor(
+                    self.metabolite_embedding(metabolite_idx)
+                ),
             }
 
-        # Move all edge indices to the correct device.
+        # Move all edge indices to the correct device
         edge_index_dict = {}
         for key, edge in data.edge_index_dict.items():
             edge_index_dict[key] = edge.to(device) if torch.is_tensor(edge) else edge
 
-        # Prepare extra edge features for the metabolite hyperedge, if present.
+        # Prepare extra edge features for the metabolite hyperedge, if present
         extra_kwargs: dict[str, Any] = {}
         met_edge = ("metabolite", "reaction", "metabolite")
         if met_edge in data.edge_index_dict:
@@ -471,7 +443,7 @@ class HeteroCell(nn.Module):
             if hasattr(met_edge_data, "num_edges"):
                 extra_kwargs["num_edges_dict"] = {met_edge: met_edge_data.num_edges}
 
-        # Apply each convolution layer sequentially.
+        # Apply each convolution layer sequentially
         for conv in self.convs:
             x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
 
@@ -499,14 +471,6 @@ class HeteroCell(nn.Module):
         fitness: torch.Tensor = predictions[:, 0:1]
         gene_interaction: torch.Tensor = predictions[:, 1:2]
 
-        # HACK
-        # try:
-        #     plot_embeddings(z_w_exp, z_i, z_p, batch_size, save_dir="./embedding_plots")
-        # except Exception as e:
-        #     print(f"Warning: Embedding plotting failed: {e}")
-        # END PLOTTING CODE
-        # HACK
-
         return predictions, {
             "z_w": z_w,
             "z_i": z_i,
@@ -524,11 +488,12 @@ class HeteroCell(nn.Module):
             "gene_embedding": count_params(self.gene_embedding),
             "reaction_embedding": count_params(self.reaction_embedding),
             "metabolite_embedding": count_params(self.metabolite_embedding),
-            "preprocessor": count_params(self.preprocessor),
+            "gene_preprocessor": count_params(self.gene_preprocessor),
+            "reaction_preprocessor": count_params(self.reaction_preprocessor),
+            "metabolite_preprocessor": count_params(self.metabolite_preprocessor),
             "convs": count_params(self.convs),
             "global_aggregator": count_params(self.global_aggregator),
-            "perturbed_aggregator": count_params(self.perturbed_aggregator),
-            "prediction_head": count_params(self.prediction_head),  # Changed this line
+            "prediction_head": count_params(self.prediction_head),
         }
         counts["total"] = sum(counts.values())
         return counts
@@ -665,7 +630,11 @@ def plot_correlations(
     # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     # Add a suptitle with lambda and weight decay information
-    suptitle = f"Epoch {epoch}: {lambda_info}, wd={weight_decay}" if epoch is not None else f"{lambda_info}, wd={weight_decay}"
+    suptitle = (
+        f"Epoch {epoch}: {lambda_info}, wd={weight_decay}"
+        if epoch is not None
+        else f"{lambda_info}, wd={weight_decay}"
+    )
     fig.suptitle(suptitle, fontsize=12)
 
     # Colors for plotting
@@ -766,9 +735,9 @@ def plot_embeddings(
     z_i,
     z_p,
     batch_size,
-    save_dir="./003-fit-int/hetero_cell/embedding_plots",
+    save_dir="./003-fit-int/hetero_cell_isab/embedding_plots",
     epoch=None,
-    fixed_axes=None, 
+    fixed_axes=None,
 ):
     """
     Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
@@ -960,13 +929,13 @@ def plot_embeddings(
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_isab",
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
     import os
     from dotenv import load_dotenv
-    from torchcell.losses.isomorphic_cell_loss import ICLoss
+    from torchcell.losses.isomorphic_cell_loss import ICLoss, ICLossStd
     from torchcell.timestamp import timestamp
     import numpy as np
 
@@ -999,6 +968,7 @@ def main(cfg: DictConfig) -> None:
         metabolism_config=cfg.model.metabolism_config,
         prediction_head_config=cfg.model.prediction_head_config,
         gpr_conv_config=cfg.model.gpr_conv_config,
+        global_aggregator_config=cfg.model.global_aggregator_config,
     ).to(device)
 
     print("\nModel architecture:")
@@ -1018,6 +988,13 @@ def main(cfg: DictConfig) -> None:
         lambda_supcr=cfg.regression_task.lambda_supcr,
         weights=weights,
     )
+
+    # criterion = ICLossStd(
+    #     lambda_dist=cfg.regression_task.lambda_dist,
+    #     lambda_supcr=cfg.regression_task.lambda_supcr,
+    #     lambda_reg=0.01,
+    #     task_weights=weights,
+    # )
 
     optimizer = torch.optim.Adam(
         model.parameters(),
@@ -1067,7 +1044,9 @@ def main(cfg: DictConfig) -> None:
 
         # Initialize correlation fixed axes with epoch 0
         init_epoch = 0  # Add this line
-        correlation_save_path = osp.join(correlation_dir, f"correlation_plots_epoch{init_epoch:03d}.png")
+        correlation_save_path = osp.join(
+            correlation_dir, f"correlation_plots_epoch{init_epoch:03d}.png"
+        )
         correlation_fixed_axes = plot_correlations(
             predictions.cpu(),
             y.cpu(),
@@ -1109,7 +1088,9 @@ def main(cfg: DictConfig) -> None:
                     )
 
                     # Create correlation plots
-                    correlation_save_path = osp.join(correlation_dir, f"correlation_plots_epoch{epoch:03d}.png")
+                    correlation_save_path = osp.join(
+                        correlation_dir, f"correlation_plots_epoch{epoch:03d}.png"
+                    )
                     plot_correlations(
                         predictions.cpu(),
                         y.cpu(),
@@ -1162,7 +1143,7 @@ def main(cfg: DictConfig) -> None:
     plt.legend()
     plt.tight_layout()
     plt.savefig(
-        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_training_loss_{timestamp()}.png")
+        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_isab_training_loss_{timestamp()}.png")
     )
     plt.close()
 

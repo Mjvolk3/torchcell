@@ -87,7 +87,7 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_pma",
 )
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroCell Training 🐂")

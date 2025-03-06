@@ -16,7 +16,7 @@ hydra:
     study_name: "0_first_try"
     n_trials: 100
     n_jobs: 4
-    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db
+    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna_hetero_cell_pma.db
     params:
       # ---- Grouping ----
       # heads: choice(10)

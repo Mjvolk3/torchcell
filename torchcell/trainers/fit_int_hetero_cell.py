@@ -139,9 +139,7 @@ class RegressionTask(L.LightningModule):
         )
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
-        loss, loss_dict = self.loss_func(
-            predictions, targets, representations["z_p"], representations["z_i"]
-        )
+        loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
 
         # Log loss components
         for key, value in [

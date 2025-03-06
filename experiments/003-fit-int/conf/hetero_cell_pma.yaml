@@ -66,13 +66,9 @@ model:
     heads: ${heads}
     concat: true
   global_aggregator_config:
-    num_induced_points: 100
-    layer_norm: false
-    num_encoder_blocks: 1
-    heads: ${heads}
-    num_decoder_blocks: 1
-    num_seed_points: 1
-    use_isab: false
+    heads: ${heads}        
+    layer_norm: true        
+    dropout: 0.0
   prediction_head_config:
     hidden_channels: 64
     head_num_layers: 2

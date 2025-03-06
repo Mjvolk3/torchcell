@@ -8,6 +8,7 @@ from torchcell.losses.multi_dim_nan_tolerant import (
 )
 import math
 
+
 class ICLoss(nn.Module):
     def __init__(
         self,
@@ -30,15 +31,13 @@ class ICLoss(nn.Module):
         self.supcr_fn = WeightedSupCRCell(weights=weights)
 
     def forward(
-        self,
-        predictions: torch.Tensor,
-        targets: torch.Tensor,
-        z_P: torch.Tensor,
-        z_I: torch.Tensor,
+        self, predictions: torch.Tensor, targets: torch.Tensor, z_P: torch.Tensor
     ) -> Tuple[torch.Tensor, dict]:
         mse_loss, mse_dim_losses = self.mse_loss_fn(predictions, targets)
         dist_loss, dist_dim_losses = self.dist_loss_fn(predictions, targets)
-        supcr_loss, supcr_dim_losses = self.supcr_fn(z_P, z_I, targets)
+
+        # Now only passing z_P
+        supcr_loss, supcr_dim_losses = self.supcr_fn(z_P, targets)
 
         # Weighted versions (using lambda multipliers)
         weighted_mse = mse_loss
@@ -130,7 +129,9 @@ class ICLossStd(nn.Module):
             self.task_weights = task_weights
 
         # Learnable log standard deviations (one for fitness, one for gene interaction)
-        self.log_sigma = nn.Parameter(torch.ones(2) * torch.log(torch.tensor(init_sigma)))
+        self.log_sigma = nn.Parameter(
+            torch.ones(2) * torch.log(torch.tensor(init_sigma))
+        )
 
         # Base loss functions
         self.mse_loss_fn = WeightedMSELoss(weights=None)  # We'll apply weights manually

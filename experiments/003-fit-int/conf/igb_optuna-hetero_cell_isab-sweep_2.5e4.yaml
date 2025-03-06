@@ -1,5 +1,5 @@
 defaults:
-  - hetero_cell
+  - hetero_cell_isab
   - override hydra/sweeper: optuna
   - override hydra/launcher: submitit_slurm
   # - override hydra/sweeper/sampler: tpe
@@ -16,7 +16,7 @@ hydra:
     study_name: "0_first_try"
     n_trials: 100
     n_jobs: 4
-    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna.db
+    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/optuna_hetero_cell_isab.db
     params:
       # ---- Grouping ----
       # heads: choice(10)
@@ -28,10 +28,11 @@ hydra:
       # model.prediction_head_config.hidden_channels: choice(16, 32, 64)
       # model.prediction_head_config.head_num_layers: choice(2, 4, 8)
       # model.prediction_head_config.residual: choice(true, false)
-      regression_task.lambda_dist: choice(1e-1)
+      # model.global_aggregator_config.use_isab: choice(false, true)
+      # regression_task.lambda_dist: choice(1e-1)
       # regression_task.lambda_dist: tag(log, interval(1e-6, 1))
-      regression_task.lambda_supcr: choice(1e-3)
-      
+      # regression_task.lambda_supcr: choice(1e-3)
+
       # regression_task.lambda_supcr: tag(log, interval(1e-6, 1))
 
       # regression_task.optimizer.lr: choice(1e-5, 1e-4, 1e-3)

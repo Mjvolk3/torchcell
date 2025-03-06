@@ -55,6 +55,12 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from torchcell.models.act import act_register
 from typing import Optional, Dict, Any, Tuple
 from torch_geometric.data import Batch
+from torch_geometric.nn.aggr.utils import (
+    PoolingByMultiheadAttention,
+    SetAttentionBlock,
+    InducedSetAttentionBlock,
+)
+from torch_geometric.utils import to_dense_batch
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -67,62 +73,62 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
 
 
 ###############################################################################
-# Attentional Aggregation Wrapper
+# Pool Nodes
 ###############################################################################
+class SimplePMA(nn.Module):
+    """
+    Pooling by Multihead Attention without index sorting.
+    Uses a single seed vector (k=1) for aggregation.
+    """
 
-
-class SortedSetTransformerAggregation(nn.Module):
     def __init__(
         self,
         in_channels: int,
         out_channels: int,
-        dropout: float = 0.1,
-        num_seed_points: int = 1,
-        num_encoder_blocks: int = 2,
-        num_decoder_blocks: int = 1,
-        heads: int = 4,
+        heads: int = 8,
         layer_norm: bool = True,
-        use_isab: bool = True,
-        num_induced_points: int = 32,
+        dropout: float = 0.0,
     ):
         super().__init__()
-        self.aggregator = SetTransformerAggregation(
+
+        # Use the existing PMA implementation with k=1
+        self.pma = PoolingByMultiheadAttention(
             channels=in_channels,
-            num_seed_points=num_seed_points,
-            num_encoder_blocks=num_encoder_blocks,
-            num_decoder_blocks=num_decoder_blocks,
+            num_seed_points=1,  # Using single seed point
             heads=heads,
-            concat=True,
             layer_norm=layer_norm,
             dropout=dropout,
-            use_isab=use_isab,
-            num_induced_points=num_induced_points,
         )
 
-        # Calculate expected output size
-        expected_out_channels = (
-            in_channels * num_seed_points if num_seed_points > 1 else in_channels
-        )
+        # Projection layer if needed
         self.proj = (
-            nn.Linear(expected_out_channels, out_channels)
-            if expected_out_channels != out_channels
+            nn.Linear(in_channels, out_channels)
+            if in_channels != out_channels
             else nn.Identity()
         )
+
+        # Final layer normalization
+        self.norm = nn.LayerNorm(out_channels) if layer_norm else nn.Identity()
 
     def forward(
         self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
     ) -> torch.Tensor:
-        # Ensure indices are sorted (required by SetTransformerAggregation)
-        if not torch.all(index[:-1] <= index[1:]):
-            perm = torch.argsort(index)
-            x = x[perm]
-            index = index[perm]
+        # Convert to dense batch
 
-        # Run through set transformer
-        out = self.aggregator(x, index, dim_size=dim_size)
+        x, mask = to_dense_batch(x, index)
 
-        # Project if needed
-        return self.proj(out)
+        # Apply PMA
+        out = self.pma(x, mask)
+
+        # Important: PMA returns [batch_size, num_seed_points, channels]
+        # Since num_seed_points=1, we need to squeeze that dimension
+        out = out.squeeze(1)  # Now shape is [batch_size, channels]
+
+        # Project and normalize
+        out = self.proj(out)
+        out = self.norm(out)
+
+        return out
 
 
 ###############################################################################
@@ -320,17 +326,12 @@ class HeteroCell(nn.Module):
 
         # Configurable Set Transformer implementation:
         agg_config = global_aggregator_config or {}
-        self.global_aggregator = SortedSetTransformerAggregation(
+        self.global_aggregator = SimplePMA(
             in_channels=hidden_channels,
             out_channels=hidden_channels,
-            dropout=dropout,
-            num_seed_points=agg_config.get("num_seed_points", 1),
-            num_decoder_blocks=agg_config.get("num_decoder_blocks", 1),
-            num_encoder_blocks=agg_config.get("num_encoder_blocks", 4),
             heads=agg_config.get("heads", 8),
-            layer_norm=agg_config.get("layer_norm", False),
-            use_isab=agg_config.get("use_isab", True),
-            num_induced_points=agg_config.get("num_induced_points", 128),
+            layer_norm=True,
+            dropout=dropout,
         )
 
         # Build prediction head
@@ -353,7 +354,6 @@ class HeteroCell(nn.Module):
         num_layers: int,
         dropout: float,
         activation: str,
-        # residual: bool,
         norm: Optional[str] = None,
     ) -> nn.Module:
         if num_layers == 0:
@@ -452,21 +452,26 @@ class HeteroCell(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # Process the reference (wildtype) graph.
+        # Process the reference (wildtype) graph
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
             z_w,
             index=torch.zeros(z_w.size(0), device=z_w.device, dtype=torch.long),
             dim_size=1,
         )
-        # Process the intact (perturbed) batch.
+
+        # Process the intact (perturbed) batch
         z_i = self.forward_single(batch)
         z_i = self.global_aggregator(z_i, index=batch["gene"].batch)
-        # Compute the difference: use broadcasting to match batch size.
+
+        # Compute the difference with broadcasting
         batch_size: int = z_i.size(0)
-        z_w_exp: torch.Tensor = z_w.expand(batch_size, -1)
+        z_w_exp: torch.Tensor = z_w.expand(
+            batch_size, -1
+        )  # Will now work correctly since z_w is 2D
         z_p: torch.Tensor = z_w_exp - z_i
-        # Single prediction head that outputs 2 dimensions (fitness and gene interaction)
+
+        # Prediction head processing
         predictions: torch.Tensor = self.prediction_head(z_p)  # shape: [batch_size, 2]
         fitness: torch.Tensor = predictions[:, 0:1]
         gene_interaction: torch.Tensor = predictions[:, 1:2]
@@ -929,7 +934,7 @@ def plot_embeddings(
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
-    config_name="hetero_cell_isab",
+    config_name="hetero_cell_pma",
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
@@ -1064,9 +1069,7 @@ def main(cfg: DictConfig) -> None:
 
             # Forward pass now expects cell_graph and batch
             predictions, representations = model(cell_graph, batch)
-            loss, loss_components = criterion(
-                predictions, y, representations["z_p"], representations["z_i"]
-            )
+            loss, loss_components = criterion(predictions, y, representations["z_p"])
 
             # Logging and visualization every 10 epochs (or whatever interval you prefer)
             if epoch % 10 == 0 or epoch == num_epochs - 1:  # Also plot on last epoch
@@ -1143,7 +1146,7 @@ def main(cfg: DictConfig) -> None:
     plt.legend()
     plt.tight_layout()
     plt.savefig(
-        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_isab_training_loss_{timestamp()}.png")
+        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_pma_training_loss_{timestamp()}.png")
     )
     plt.close()
 

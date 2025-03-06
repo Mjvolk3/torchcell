@@ -452,3 +452,12 @@ export -f wandb_sync_agent_dirs
 # /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1546042_80fb110fe04f1892273572ff5fe23b1e865e140df34dc45fcb921da9c3c649d4 \
 # /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1546042_cb107b7f051bbfecec8844a580fbb0381ecd9530c8fd8ffeccf55f9867678d6d \
 # /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1546042_cb107b7f051bbfecec8844a580fbb0381ecd9530c8fd8ffeccf55f9867678d6d
+
+# wandb_sync_agent_dirs \
+# /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1551629_0dc51b21e737cdde83a2460c92e69ebc7a25bff255bc42175535632bc44ae3da \
+# /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1551629_018eb692b46d3c0b72b1c2c19f1627343eee21520a5788321fd7e2c040e878c3 \
+# /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1551629_17011868dd0f69ac62e28a328fdd3ebe014f0029345893614c5b548d73678d15 \
+# /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1551629_ca1c3ef5766e2100c77350679060b345c52c1a18f1d9a5d943def7b94b6a7548 \
+# /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1551629_ca1c3ef5766e2100c77350679060b345c52c1a18f1d9a5d943def7b94b6a7548
+
+

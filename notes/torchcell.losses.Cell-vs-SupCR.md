@@ -2,7 +2,7 @@
 id: sl43ey3awk5x7rwd2x03g24
 title: Cell-vs-SupCR
 desc: ''
-updated: 1737574281940
+updated: 1741180571517
 created: 1737566076751
 ---
 
@@ -125,7 +125,7 @@ This image from the original [SupCR](https://openreview.net/pdf?id=_QZlje4dZPu) 
 
 ## 2025.01.22 - Dist Loss Encourages Distribution Matching
 
-This image is from the original [DistLoss](https://arxiv.org/abs/2411.15216) paper and shows how the loss function can help improve prediction in few-shot region long tails. This is important in our prediction task for finding genes with high interaction scores. This figure also shows how models without distribution matching will favor towards mean prediction.
+This image is from the original [DistLoss](https://arxiv.org/abs/2411.15216) paper and shows how the loss function can help improve prediction in few-shot region long tails. This is important in our prediction task for finding genes with high interaction scores (tail of distribution). This figure also shows how models without distribution matching will favor towards mean prediction.
 
 ![](./assets/images/torchcell.losses.Cell-vs-SupCR.md.Dist-Loss-distribution-matching.png)
 

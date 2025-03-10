@@ -43,7 +43,7 @@ from torchcell.datasets import (
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell_isab import HeteroCell
+from torchcell.models.hetero_cell_pma import HeteroCell
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM

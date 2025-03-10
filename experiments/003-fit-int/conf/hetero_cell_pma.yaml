@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_003-fit-int_hetero_cell_isab
+  project: torchcell_003-fit-int_hetero_cell_isab_2.5e4
   tags: []
 
 cell_dataset:
@@ -20,15 +20,15 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 2.5e4 #2.5e4
-  batch_size: 2
-  num_workers: 2
+  batch_size: 32
+  num_workers: 4
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 300 # 20 # FLAG
+  max_epochs: 120 # 20 # FLAG
   strategy: auto
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 
@@ -80,11 +80,11 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  lambda_dist: 0 #0.1
-  lambda_supcr: 0 #0.01
+  lambda_dist: 0.1 #0.1
+  lambda_supcr: 0.001 #0.01
   optimizer:
     type: "AdamW"
-    lr: 1e-3
+    lr: 1e-6
     weight_decay: 1e-9
   lr_scheduler:
     type: "ReduceLROnPlateau"

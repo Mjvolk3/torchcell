@@ -527,8 +527,7 @@ class HeteroCell(nn.Module):
             "preprocessor": count_params(self.preprocessor),
             "convs": count_params(self.convs),
             "global_aggregator": count_params(self.global_aggregator),
-            "perturbed_aggregator": count_params(self.perturbed_aggregator),
-            "prediction_head": count_params(self.prediction_head),  # Changed this line
+            "prediction_head": count_params(self.prediction_head),
         }
         counts["total"] = sum(counts.values())
         return counts
@@ -665,7 +664,11 @@ def plot_correlations(
     # Create figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     # Add a suptitle with lambda and weight decay information
-    suptitle = f"Epoch {epoch}: {lambda_info}, wd={weight_decay}" if epoch is not None else f"{lambda_info}, wd={weight_decay}"
+    suptitle = (
+        f"Epoch {epoch}: {lambda_info}, wd={weight_decay}"
+        if epoch is not None
+        else f"{lambda_info}, wd={weight_decay}"
+    )
     fig.suptitle(suptitle, fontsize=12)
 
     # Colors for plotting
@@ -768,7 +771,7 @@ def plot_embeddings(
     batch_size,
     save_dir="./003-fit-int/hetero_cell/embedding_plots",
     epoch=None,
-    fixed_axes=None, 
+    fixed_axes=None,
 ):
     """
     Plot embeddings for visualization and debugging with fixed axes for consistent GIF creation.
@@ -1067,7 +1070,9 @@ def main(cfg: DictConfig) -> None:
 
         # Initialize correlation fixed axes with epoch 0
         init_epoch = 0  # Add this line
-        correlation_save_path = osp.join(correlation_dir, f"correlation_plots_epoch{init_epoch:03d}.png")
+        correlation_save_path = osp.join(
+            correlation_dir, f"correlation_plots_epoch{init_epoch:03d}.png"
+        )
         correlation_fixed_axes = plot_correlations(
             predictions.cpu(),
             y.cpu(),
@@ -1085,9 +1090,7 @@ def main(cfg: DictConfig) -> None:
 
             # Forward pass now expects cell_graph and batch
             predictions, representations = model(cell_graph, batch)
-            loss, loss_components = criterion(
-                predictions, y, representations["z_p"], representations["z_i"]
-            )
+            loss, loss_components = criterion(predictions, y, representations["z_p"])
 
             # Logging and visualization every 10 epochs (or whatever interval you prefer)
             if epoch % 10 == 0 or epoch == num_epochs - 1:  # Also plot on last epoch
@@ -1109,7 +1112,9 @@ def main(cfg: DictConfig) -> None:
                     )
 
                     # Create correlation plots
-                    correlation_save_path = osp.join(correlation_dir, f"correlation_plots_epoch{epoch:03d}.png")
+                    correlation_save_path = osp.join(
+                        correlation_dir, f"correlation_plots_epoch{epoch:03d}.png"
+                    )
                     plot_correlations(
                         predictions.cpu(),
                         y.cpu(),

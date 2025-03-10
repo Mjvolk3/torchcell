@@ -211,7 +211,12 @@ class Visualization:
         embedding = reducer.fit_transform(features_np)
         fig = plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
-            embedding[:, 0], embedding[:, 1], c=labels_np, cmap="coolwarm", alpha=0.6
+            embedding[:, 0],
+            embedding[:, 1],
+            c=labels_np,
+            cmap="coolwarm",
+            alpha=0.6,
+            s=20,
         )
         plt.colorbar(scatter, label=f"Target {dim}")
         base_title = self.get_base_title(source, num_epochs, title_type)

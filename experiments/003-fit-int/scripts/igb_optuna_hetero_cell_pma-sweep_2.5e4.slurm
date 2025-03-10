@@ -15,7 +15,7 @@ conda activate torchcell
 
 cd /home/a-m/mjvolk3/projects/torchcell
 
-python experiments/003-fit-int/scripts/hetero_cell_isab.py \
+python experiments/003-fit-int/scripts/hetero_cell_pma.py \
   --config-dir experiments/003-fit-int/conf \
-  --config-name igb_optuna-hetero_cell_isab-sweep_2.5e4 \
+  --config-name igb_optuna-hetero_cell_pma-sweep_2.5e4 \
   --multirun

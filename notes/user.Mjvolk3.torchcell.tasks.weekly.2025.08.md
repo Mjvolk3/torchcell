@@ -2,7 +2,7 @@
 id: x9lt2zhuquois6k4051rj2f
 title: 08
 desc: ''
-updated: 1740086497822
+updated: 1740720718687
 created: 1739703537035
 ---
 ## 2025.02.16
@@ -31,4 +31,9 @@ created: 1739703537035
 Parameter count: 255,462
 ![](./assets/images/hetero_cell_correlation_plots_2025-02-20-15-11-51.png)
 ![](./assets/images/hetero_cell_training_loss_2025-02-20-15-11-51.png)
-- [ ] Delta random sweep launch
+- [x] Delta random sweep launch
+- [x] Add act and norm ☠ mistake.
+
+## 2025.02.21
+
+- [x] Did loopy self forward → getting somewhere ⛓️‍💥🚪

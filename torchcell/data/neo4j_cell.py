@@ -150,11 +150,11 @@ def create_embedding_graph(
 
 
 # @profile
-# TODO we could remove is_add_remaining_self_loops and put it in transforms
+# TODO we could remove add_remaining_gene_self_loops and put it in transforms
 def to_cell_data(
     graphs: dict[str, nx.Graph],
     incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
-    is_add_remaining_self_loops: bool = True,
+    add_remaining_gene_self_loops: bool = True,
 ) -> HeteroData:
     """Convert networkx graphs and incidence graphs to HeteroData format."""
     hetero_data = HeteroData()
@@ -185,8 +185,10 @@ def to_cell_data(
             # Add interaction edges
             if graph_type != "base":
                 edge_type = ("gene", f"{graph_type}_interaction", "gene")
-                if is_add_remaining_self_loops:
-                    edge_index, _ = add_remaining_self_loops(edge_index)
+                if add_remaining_gene_self_loops:
+                    edge_index, _ = add_remaining_self_loops(
+                        edge_index, num_nodes=num_nodes
+                    )
                 hetero_data[edge_type].edge_index = edge_index.cpu()
                 hetero_data[edge_type].num_edges = edge_index.size(1)
         else:
@@ -1055,6 +1057,7 @@ class Neo4jCellDataset(Dataset):
         incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
         node_embeddings: list[BaseEmbeddingDataset] = None,
         graph_processor: GraphProcessor = None,
+        add_remaining_gene_self_loops: bool = True,
         converter: Optional[Type[Converter]] = None,
         deduplicator: Type[Deduplicator] = None,
         aggregator: Type[Aggregator] = None,
@@ -1070,6 +1073,9 @@ class Neo4jCellDataset(Dataset):
         self.root = root
         # get item processor
         self.process_graph = graph_processor
+
+        # self loops, transform base graph
+        self.add_remaining_gene_self_loops = add_remaining_gene_self_loops
 
         # Needed in get item
         self._phenotype_info = None
@@ -1121,7 +1127,11 @@ class Neo4jCellDataset(Dataset):
                 # Integrate node embeddings into graphs
 
         # cell graph used in get item
-        self.cell_graph = to_cell_data(graphs, incidence_graphs)
+        self.cell_graph = to_cell_data(
+            graphs,
+            incidence_graphs,
+            add_remaining_gene_self_loops=self.add_remaining_gene_self_loops,
+        )
 
         # Clean up hanging env, for multiprocessing
         self.env = None

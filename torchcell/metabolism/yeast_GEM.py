@@ -101,37 +101,19 @@ class YeastGEM:
                 reaction.gene_reaction_rule
             )
 
-            # Create edge for each gene combination
-            for idx, genes in enumerate(gene_combinations):
-                if not genes:
-                    continue
+            # Use empty set for no-gene reactions instead of skipping them
+            if gene_combinations == [set()]:
+                # Create the no-gene edge
+                base_edge_id = f"{reaction.id}_noGene"
 
-                # Check against the induced_gene_set if provided
-                if self.induced_gene_set is not None:
-                    genes_not_in_set = genes - self.induced_gene_set
-
-                    if genes_not_in_set == genes:
-                        # All genes are outside the induced_gene_set, skip the edge
-                        continue
-                    elif genes_not_in_set:
-                        # Convert to a standard set for proper string formatting
-                        print(
-                            f"Warning: Partial gene set overlap for edge {reaction.id}_comb{idx}. "
-                            f"Genes not in set: {set(genes_not_in_set)}. "
-                            f"Full gene set for this reaction: {set(genes)}"
-                        )
-
-                # Create base edge ID for this gene combination
-                base_edge_id = f"{reaction.id}_comb{idx}"
-
-                # Always create forward edge
+                # Create forward edge
                 fwd_edge_id = f"{base_edge_id}_fwd"
                 edge_dict[fwd_edge_id] = list(metabolites.keys())
                 stoichiometry = {
                     f"stoich_coefficient-{k}": v for k, v in metabolites.items()
                 }
                 edge_props[fwd_edge_id] = {
-                    "genes": genes,
+                    "genes": set(),  # Empty set for no genes
                     "reaction_id": reaction.id,
                     "direction": "forward",
                     "reactants": reactants,
@@ -150,7 +132,7 @@ class YeastGEM:
                         f"stoich_coefficient-{k}": -v for k, v in metabolites.items()
                     }
                     edge_props[rev_edge_id] = {
-                        "genes": genes,
+                        "genes": set(),  # Empty set for no genes
                         "reaction_id": reaction.id,
                         "direction": "reverse",
                         "reactants": products,
@@ -160,38 +142,108 @@ class YeastGEM:
                         "stoichiometry": list(stoichiometry.values()),
                         **stoichiometry,
                     }
+            else:
+                # Regular case with gene associations
+                for idx, genes in enumerate(gene_combinations):
+                    if not genes:
+                        continue
+
+                    # Check against the induced_gene_set if provided
+                    if self.induced_gene_set is not None:
+                        genes_not_in_set = genes - self.induced_gene_set
+
+                        if genes_not_in_set == genes:
+                            # All genes are outside the induced_gene_set, skip the edge
+                            continue
+                        elif genes_not_in_set:
+                            # Convert to a standard set for proper string formatting
+                            print(
+                                f"Warning: Partial gene set overlap for edge {reaction.id}_comb{idx}. "
+                                f"Genes not in set: {set(genes_not_in_set)}. "
+                                f"Full gene set for this reaction: {set(genes)}"
+                            )
+
+                    # Create base edge ID for this gene combination
+                    base_edge_id = f"{reaction.id}_comb{idx}"
+
+                    # Always create forward edge
+                    fwd_edge_id = f"{base_edge_id}_fwd"
+                    edge_dict[fwd_edge_id] = list(metabolites.keys())
+                    stoichiometry = {
+                        f"stoich_coefficient-{k}": v for k, v in metabolites.items()
+                    }
+                    edge_props[fwd_edge_id] = {
+                        "genes": genes,
+                        "reaction_id": reaction.id,
+                        "direction": "forward",
+                        "reactants": reactants,
+                        "products": products,
+                        "equation": reaction.reaction,
+                        "reversibility": reaction.reversibility,
+                        "stoichiometry": list(stoichiometry.values()),
+                        **stoichiometry,
+                    }
+
+                    # Create reverse edge if reaction is reversible
+                    if reaction.reversibility:
+                        rev_edge_id = f"{base_edge_id}_rev"
+                        edge_dict[rev_edge_id] = list(metabolites.keys())
+                        stoichiometry = {
+                            f"stoich_coefficient-{k}": -v
+                            for k, v in metabolites.items()
+                        }
+                        edge_props[rev_edge_id] = {
+                            "genes": genes,
+                            "reaction_id": reaction.id,
+                            "direction": "reverse",
+                            "reactants": products,
+                            "products": reactants,
+                            "equation": reaction.reaction,
+                            "reversibility": reaction.reversibility,
+                            "stoichiometry": list(stoichiometry.values()),
+                            **stoichiometry,
+                        }
 
         # Create and return the hypergraph
         return hnx.Hypergraph(edge_dict, edge_properties=edge_props)
 
     @property
-    def bipartite_graph(self) -> nx.Graph:
-        """Returns a bipartite graph representation of the metabolic network.
+    def bipartite_graph(self) -> nx.DiGraph:
+        """Returns a directed bipartite graph representation of the metabolic network.
 
         The graph has two types of nodes:
-        - Reactions (bipartite=0, node_type="reaction")
-        - Metabolites (bipartite=1, node_type="metabolite")
+        - Reactions (node_type="reaction")
+        - Metabolites (node_type="metabolite")
 
-        Reaction nodes have gene information stored as node attributes.
-        Edges connect reactions to metabolites with appropriate attributes.
+        Edges connect reactions to metabolites with a directed structure:
+        - Reaction → Metabolite with edge_type="product" (metabolite is produced)
+        - Reaction → Metabolite with edge_type="reactant" (metabolite is consumed)
+        
+        The edge direction is always from reaction to metabolite, with the 
+        edge_type indicating whether the metabolite is a reactant or product.
 
         Returns:
-            nx.Graph: A NetworkX bipartite graph
+            nx.DiGraph: A directed bipartite graph
         """
         if getattr(self, "_bipartite_graph", None) is None:
-            # Create bipartite graph
-            B = nx.Graph()
+            # Create directed bipartite graph
+            B = nx.DiGraph()
 
             # Process all reactions in the model
-            reaction_nodes = set()
-            metabolite_nodes = set()
-
-            # First collect nodes and add them to the graph
             for reaction in self.model.reactions:
                 # Parse gene combinations
                 gene_combinations = self._parse_gene_combinations(
                     reaction.gene_reaction_rule
                 )
+
+                # Extract reactants and products
+                reactants = []
+                products = []
+                for metabolite, coefficient in reaction.metabolites.items():
+                    if coefficient < 0:
+                        reactants.append(metabolite.id)
+                    else:
+                        products.append(metabolite.id)
 
                 # For reactions with gene associations
                 if gene_combinations and gene_combinations != [set()]:
@@ -206,224 +258,134 @@ class YeastGEM:
 
                         # Create base node ID for this gene combination
                         base_node_id = f"{reaction.id}_comb{idx}"
-
-                        # Create forward reaction node
+                        
+                        # Add forward reaction node
                         fwd_node_id = f"{base_node_id}_fwd"
-                        # Add node with gene information as property
                         B.add_node(
                             fwd_node_id,
-                            bipartite=0,
                             node_type="reaction",
                             reaction_id=reaction.id,
                             direction="forward",
                             genes=genes,
                             equation=reaction.reaction,
                             reversibility=reaction.reversibility,
+                            reactants=reactants,
+                            products=products,
                         )
-                        reaction_nodes.add(fwd_node_id)
-
-                        # If reversible, also create reverse reaction node
+                        
+                        # Add metabolite nodes and connect in unified format
+                        self._add_metabolite_edges_unified(B, reaction, fwd_node_id, "forward")
+                        
+                        # If reversible, add reverse reaction and connect
                         if reaction.reversibility:
                             rev_node_id = f"{base_node_id}_rev"
                             B.add_node(
                                 rev_node_id,
-                                bipartite=0,
                                 node_type="reaction",
                                 reaction_id=reaction.id,
                                 direction="reverse",
                                 genes=genes,
                                 equation=reaction.reaction,
                                 reversibility=reaction.reversibility,
+                                reactants=products,  # Swapped for reverse direction
+                                products=reactants,  # Swapped for reverse direction
                             )
-                            reaction_nodes.add(rev_node_id)
+                            
+                            # Connect in unified format
+                            self._add_metabolite_edges_unified(B, reaction, rev_node_id, "reverse")
                 else:
-                    # For reactions without gene associations, create a single node
+                    # For reactions without gene associations
                     fwd_node_id = f"{reaction.id}_noGene_fwd"
                     B.add_node(
                         fwd_node_id,
-                        bipartite=0,
                         node_type="reaction",
                         reaction_id=reaction.id,
                         direction="forward",
                         genes=set(),  # Empty set for no genes
                         equation=reaction.reaction,
                         reversibility=reaction.reversibility,
+                        reactants=reactants,
+                        products=products,
                     )
-                    reaction_nodes.add(fwd_node_id)
-
-                    # If reversible, also create a reverse node
+                    
+                    # Connect in unified format
+                    self._add_metabolite_edges_unified(B, reaction, fwd_node_id, "forward")
+                    
+                    # If reversible, add reverse reaction
                     if reaction.reversibility:
                         rev_node_id = f"{reaction.id}_noGene_rev"
                         B.add_node(
                             rev_node_id,
-                            bipartite=0,
                             node_type="reaction",
                             reaction_id=reaction.id,
                             direction="reverse",
                             genes=set(),
                             equation=reaction.reaction,
                             reversibility=reaction.reversibility,
+                            reactants=products,  # Swapped for reverse direction
+                            products=reactants,  # Swapped for reverse direction
                         )
-                        reaction_nodes.add(rev_node_id)
-
-                # Add metabolite nodes
-                for metabolite in reaction.metabolites:
-                    metabolite_nodes.add(metabolite.id)
-
-            # Add metabolite nodes
-            for metabolite_id in metabolite_nodes:
-                B.add_node(metabolite_id, bipartite=1, node_type="metabolite")
-
-            # Now add edges between reaction nodes and metabolites
-            for reaction in self.model.reactions:
-                # Parse gene combinations again
-                gene_combinations = self._parse_gene_combinations(
-                    reaction.gene_reaction_rule
-                )
-
-                # Extract reactants and products
-                reactants = []
-                products = []
-                for metabolite, coefficient in reaction.metabolites.items():
-                    if coefficient < 0:
-                        reactants.append(metabolite.id)
-                    else:
-                        products.append(metabolite.id)
-
-                # Process reactions with gene associations
-                if gene_combinations and gene_combinations != [set()]:
-                    # Process each gene combination
-                    for idx, genes in enumerate(gene_combinations):
-                        # Check against induced_gene_set if provided
-                        if self.induced_gene_set is not None:
-                            genes_not_in_set = genes - self.induced_gene_set
-                            if genes_not_in_set == genes:
-                                # All genes outside the set, skip
-                                continue
-
-                        # Create base node ID for this gene combination
-                        base_node_id = f"{reaction.id}_comb{idx}"
-
-                        # Process forward direction
-                        fwd_node_id = f"{base_node_id}_fwd"
-
-                        # Add edges for each metabolite
-                        for metabolite, coefficient in reaction.metabolites.items():
-                            edge_type = "reactant" if coefficient < 0 else "product"
-
-                            # Add edge with attributes
-                            B.add_edge(
-                                fwd_node_id,
-                                metabolite.id,
-                                edge_type=edge_type,
-                                stoichiometry=coefficient,
-                            )
-
-                        # If reversible, add edges for reverse direction
-                        if reaction.reversibility:
-                            rev_node_id = f"{base_node_id}_rev"
-
-                            # For reverse direction, reactants and products are swapped
-                            for metabolite, coefficient in reaction.metabolites.items():
-                                # Reverse the edge type and coefficient
-                                edge_type = "product" if coefficient < 0 else "reactant"
-                                rev_coefficient = -coefficient
-
-                                # Add edge with attributes
-                                B.add_edge(
-                                    rev_node_id,
-                                    metabolite.id,
-                                    edge_type=edge_type,
-                                    stoichiometry=rev_coefficient,
-                                )
-                else:
-                    # For reactions without gene associations
-                    fwd_node_id = f"{reaction.id}_noGene_fwd"
-
-                    # Add edges for each metabolite
-                    for metabolite, coefficient in reaction.metabolites.items():
-                        edge_type = "reactant" if coefficient < 0 else "product"
-
-                        # Add edge with attributes
-                        B.add_edge(
-                            fwd_node_id,
-                            metabolite.id,
-                            edge_type=edge_type,
-                            stoichiometry=coefficient,
-                        )
-
-                    # If reversible, add edges for reverse direction
-                    if reaction.reversibility:
-                        rev_node_id = f"{reaction.id}_noGene_rev"
-
-                        # For reverse direction, reactants and products are swapped
-                        for metabolite, coefficient in reaction.metabolites.items():
-                            # Reverse the edge type and coefficient
-                            edge_type = "product" if coefficient < 0 else "reactant"
-                            rev_coefficient = -coefficient
-
-                            # Add edge with attributes
-                            B.add_edge(
-                                rev_node_id,
-                                metabolite.id,
-                                edge_type=edge_type,
-                                stoichiometry=rev_coefficient,
-                            )
-
+                        
+                        # Connect in unified format
+                        self._add_metabolite_edges_unified(B, reaction, rev_node_id, "reverse")
+            
             self._bipartite_graph = B
 
         return self._bipartite_graph
 
-    def _add_reaction_metabolite_edges(
-        B, reaction, base_node_id, genes, reactants, products
-    ):
-        """Helper function to add edges between a reaction node and its metabolites."""
-        # Process forward direction
-        fwd_node_id = f"{base_node_id}_fwd"
-
-        # Add edges for each metabolite
+    def _add_metabolite_edges_unified(self, graph, reaction, reaction_node_id, direction):
+        """Helper function to add unified directed edges between reaction and metabolites."""
+        # Add metabolite nodes if they don't exist
+        for metabolite in reaction.metabolites:
+            if not graph.has_node(metabolite.id):
+                graph.add_node(metabolite.id, node_type="metabolite")
+        
+        # Process based on direction (forward or reverse)
         for metabolite, coefficient in reaction.metabolites.items():
-            edge_type = "reactant" if coefficient < 0 else "product"
-
-            # Add edge with all attributes
-            B.add_edge(
-                fwd_node_id,
-                metabolite.id,
-                edge_type=edge_type,
-                direction="forward",
-                stoichiometry=coefficient,
-                reaction_id=reaction.id,
-                genes=genes,
-                equation=reaction.reaction,
-                reversibility=reaction.reversibility,
-                reactants=reactants,
-                products=products,
-            )
-
-        # If reaction is reversible, process reverse direction
-        if reaction.reversibility:
-            rev_node_id = f"{base_node_id}_rev"
-
-            # For reverse direction, reactants and products are swapped
-            for metabolite, coefficient in reaction.metabolites.items():
-                # Reverse the edge type and coefficient for reverse direction
-                edge_type = "product" if coefficient < 0 else "reactant"
-                rev_coefficient = -coefficient
-
-                # Add edge with all attributes
-                B.add_edge(
-                    rev_node_id,
-                    metabolite.id,
-                    edge_type=edge_type,
-                    direction="reverse",
-                    stoichiometry=rev_coefficient,
-                    reaction_id=reaction.id,
-                    genes=genes,
-                    equation=reaction.reaction,
-                    reversibility=reaction.reversibility,
-                    reactants=products,  # Swapped for reverse direction
-                    products=reactants,  # Swapped for reverse direction
-                )
+            if direction == "forward":
+                # Always add edge from reaction to metabolite
+                if coefficient < 0:
+                    # Reactant (reaction consumes this metabolite)
+                    graph.add_edge(
+                        reaction_node_id,
+                        metabolite.id,
+                        edge_type="reactant",
+                        direction="forward",
+                        stoichiometry=abs(coefficient),
+                        reaction_id=reaction.id,
+                    )
+                else:
+                    # Product (reaction produces this metabolite)
+                    graph.add_edge(
+                        reaction_node_id,
+                        metabolite.id,
+                        edge_type="product",
+                        direction="forward",
+                        stoichiometry=coefficient,
+                        reaction_id=reaction.id,
+                    )
+            else:
+                # Reverse direction: swap reactants and products
+                if coefficient < 0:
+                    # Original reactant becomes product in reverse direction
+                    graph.add_edge(
+                        reaction_node_id,
+                        metabolite.id,
+                        edge_type="product",
+                        direction="reverse",
+                        stoichiometry=abs(coefficient),
+                        reaction_id=reaction.id,
+                    )
+                else:
+                    # Original product becomes reactant in reverse direction
+                    graph.add_edge(
+                        reaction_node_id,
+                        metabolite.id,
+                        edge_type="reactant",
+                        direction="reverse",
+                        stoichiometry=coefficient,
+                        reaction_id=reaction.id,
+                    )
 
     @property
     def gene_set(self) -> GeneSet:
@@ -853,7 +815,9 @@ def main():
 
     # Plot random networks
     import random
-
+    plot_full_network(
+        yeast_gem, osp.join(ASSET_IMAGES_DIR, "yeast_metabolic_network.png")
+    )
     random.seed(42)  # For reproducibility
     layout = "spring"
     for n_edges in [5, 10, 20, 50, 100, 1000, 4881]:
@@ -1207,13 +1171,16 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
 
 
 if __name__ == "__main__":
-    # main_bipartite()
-    # main_with_gene_set()
-    from dotenv import load_dotenv
+    # # main_bipartite()
+    # # main_with_gene_set()
+    # from dotenv import load_dotenv
 
-    load_dotenv()
+    # load_dotenv()
 
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    yeast_gem = YeastGEM()
-    # sanity_check_metabolic_networks(yeast_gem)
-    analyze_reactions_without_genes(yeast_gem)
+    # ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    # yeast_gem = YeastGEM()
+    # yeast_gem.reaction_map
+    # # sanity_check_metabolic_networks(yeast_gem)
+    # # analyze_reactions_without_genes(yeast_gem)
+
+    main()

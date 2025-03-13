@@ -3,8 +3,7 @@ defaults:
   - _self_
 
 wandb:
-  # FLAG
-  project: torchcell_003-fit-int_hetero_cell_test
+  project: torchcell_003-fit-int_hetero_cell_nsa
   tags: []
 
 cell_dataset:
@@ -12,7 +11,7 @@ cell_dataset:
   node_embeddings:
     - learnable
   learnable_embedding_input_channels: 64
-  incidence_graphs: [metabolism]
+  incidence_graphs: [metabolism_hypergraph]
 
 profiler:
   is_pytorch: true
@@ -26,52 +25,38 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 10 # 20 # FLAG
+  max_epochs: 30 # 20 # FLAG
   strategy: auto
   accelerator: cpu
   devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 10 # placeholder
+heads: 8 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
   gene_num: 6607
-  reaction_num: 7122 #4881
-  metabolite_num: 2806 #2534
+  reaction_num: 7122
+  metabolite_num: 2806
   hidden_channels: 64
   out_channels: 2
-  num_layers: 2 # Number of hetero conv layers
-  # norm: "batch"
+  attention_pattern: ["S", "M", "M", "M", "S"] #, "M", "S"]
   norm: ${norms}
   activation: "relu"
   dropout: 0.0
   gene_encoder_config:
-    # heads: 5
     heads: ${heads}
     concat: true
-    bias: true
-    add_self_loops: false
-    share_weights: false
   gpr_conv_config:
-    # heads: 2
     heads: ${heads}
-    concat: true
-    add_self_loops: false
   metabolism_config:
-    is_stoich_gated: true
-    use_attention: true
-    # heads: 2
     heads: ${heads}
-    concat: true
   prediction_head_config:
     hidden_channels: 64
     head_num_layers: 4
     dropout: 0.0
     activation: "relu"
-    # residual: true
-    # head_norm: "batch"
     head_norm: ${norms}
 
 regression_task:

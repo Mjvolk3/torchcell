@@ -110,3 +110,4 @@ plt.imshow(attn_weights_masked.detach().numpy(), cmap="viridis")
 plt.colorbar()
 plt.title(f"Graph-Masked Attention Weights (Head {head_idx})")
 plt.show()
+

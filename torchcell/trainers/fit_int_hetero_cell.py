@@ -28,6 +28,7 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm: bool = False,
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
+        plot_every_n_epochs: int = 10,  # New parameter for plotting frequency
         loss_func: nn.Module = None,
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
@@ -139,9 +140,7 @@ class RegressionTask(L.LightningModule):
         )
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
-        loss, loss_dict = self.loss_func(
-            predictions, targets, representations["z_p"], representations["z_i"]
-        )
+        loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
 
         # Log loss components
         for key, value in [
@@ -236,41 +235,37 @@ class RegressionTask(L.LightningModule):
                 orig_targets[combined_mask].reshape(-1),
             )
 
-        # Sample collection for visualization
-        if stage == "train":
-            if self.current_epoch + 1 == self.trainer.max_epochs:
-                current_count = sum(
-                    t.size(0) for t in self.train_samples["true_values"]
-                )
-                if current_count < self.hparams.plot_sample_ceiling:
-                    remaining = self.hparams.plot_sample_ceiling - current_count
-                    if batch_size > remaining:
-                        idx = torch.randperm(batch_size)[:remaining]
-                        self.train_samples["true_values"].append(
-                            orig_targets[idx].detach()
+        if (
+            stage == "train"
+            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+        ):
+            current_count = sum(t.size(0) for t in self.train_samples["true_values"])
+            if current_count < self.hparams.plot_sample_ceiling:
+                remaining = self.hparams.plot_sample_ceiling - current_count
+                if batch_size > remaining:
+                    idx = torch.randperm(batch_size)[:remaining]
+                    self.train_samples["true_values"].append(orig_targets[idx].detach())
+                    self.train_samples["predictions"].append(
+                        inv_predictions[idx].detach()
+                    )
+                    if "z_p" in representations:
+                        self.train_samples["latents"]["z_p"].append(
+                            representations["z_p"][idx].detach()
                         )
-                        self.train_samples["predictions"].append(
-                            inv_predictions[idx].detach()
+                else:
+                    self.train_samples["true_values"].append(orig_targets.detach())
+                    self.train_samples["predictions"].append(inv_predictions.detach())
+                    if "z_p" in representations:
+                        self.train_samples["latents"]["z_p"].append(
+                            representations["z_p"].detach()
                         )
-
-                        if "z_p" in representations:
-                            self.train_samples["latents"]["z_p"].append(
-                                representations["z_p"][idx].detach()
-                            )
-                    else:
-                        self.train_samples["true_values"].append(orig_targets.detach())
-                        self.train_samples["predictions"].append(
-                            inv_predictions.detach()
-                        )
-
-                        if "z_p" in representations:
-                            self.train_samples["latents"]["z_p"].append(
-                                representations["z_p"].detach()
-                            )
-        elif stage == "val":
+        elif (
+            stage == "val"
+            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+        ):
+            # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(orig_targets.detach())
             self.val_samples["predictions"].append(inv_predictions.detach())
-
             if "z_p" in representations:
                 self.val_samples["latents"]["z_p"].append(
                     representations["z_p"].detach()
@@ -403,11 +398,29 @@ class RegressionTask(L.LightningModule):
 
         # Plot training samples only on the final epoch
         if (
-            self.current_epoch + 1 == self.trainer.max_epochs
-            and self.train_samples["true_values"]
-        ):
+            self.current_epoch + 1
+        ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
+            # Reset the sample containers
             self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"z_p": []},
+            }
+
+    def on_train_epoch_start(self):
+        # Clear sample containers at the start of epochs where we'll collect samples
+        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+            self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"z_p": []},
+            }
+
+    def on_validation_epoch_start(self):
+        # Clear sample containers at the start of epochs where we'll collect samples
+        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+            self.val_samples = {
                 "true_values": [],
                 "predictions": [],
                 "latents": {"z_p": []},
@@ -443,8 +456,13 @@ class RegressionTask(L.LightningModule):
         self.val_transformed_combined.reset()
 
         # Plot validation samples
-        if not self.trainer.sanity_checking and self.val_samples["true_values"]:
+        if (
+            not self.trainer.sanity_checking
+            and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
+            and self.val_samples["true_values"]
+        ):
             self._plot_samples(self.val_samples, "val_sample")
+            # Reset the sample containers
             self.val_samples = {
                 "true_values": [],
                 "predictions": [],

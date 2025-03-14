@@ -6,26 +6,22 @@
 import torch
 import torch.nn as nn
 from typing import Dict, List, Optional, Tuple, Union, Literal, Set
-import logging
 
 from torch import Tensor
 from torch_geometric.data import HeteroData
 from torch_geometric.typing import EdgeType, NodeType
-from torch_geometric.utils import to_dense_adj
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
-
 from torchcell.nn.self_attention_block import SelfAttentionBlock
 from torchcell.nn.masked_attention_block import NodeSetAttention
 
 
+# Revised HeteroNSA class
 class HeteroNSA(nn.Module):
     """
     Heterogeneous Node-Set Attention (HeteroNSA) for processing heterogeneous graphs.
 
-    This module processes different node types and their relationships, applying
-    masked and self-attention blocks in a pattern specified for each relationship.
-    After processing, embeddings from multiple relationships involving the same entity
-    are aggregated into a single representation.
+    This module applies a unified sequence of masked attention blocks (MAB) and
+    self-attention blocks (SAB) to all node and edge types in the graph.
     """
 
     def __init__(
@@ -33,77 +29,76 @@ class HeteroNSA(nn.Module):
         hidden_dim: int,
         node_types: Set[str],
         edge_types: Set[Tuple[str, str, str]],
-        patterns: Dict[Tuple[str, str, str], List[str]],
+        pattern: List[str],  # Single pattern for all types
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
         aggregation: Literal["sum", "mean", "max", "attention"] = "sum",
     ) -> None:
         """
-        Initialize the HeteroNSA module.
+        Initialize the HeteroNSA module with a unified attention pattern.
 
         Args:
             hidden_dim: Dimension of node embeddings for all types
             node_types: Set of node types in the heterogeneous graph
             edge_types: Set of edge types (source, relation, target)
-            patterns: Dictionary mapping edge types to their attention patterns
-                     Each pattern is a list of "M" (MAB) or "S" (SAB)
-            num_heads: Number of attention heads for NSA blocks
+            pattern: List of block types ("M" for MAB, "S" for SAB) to apply sequentially
+            num_heads: Number of attention heads for attention blocks
             dropout: Dropout probability
             activation: Activation function
             aggregation: Method to aggregate multiple embeddings of the same node type
-                        ("sum", "mean", "max", or "attention")
         """
         super().__init__()
+        
+        # Validate the pattern immediately
+        if not pattern:
+            raise ValueError("Pattern list cannot be empty")
+            
+        # Check each block type in the pattern
+        for block_type in pattern:
+            if block_type not in ["M", "S"]:
+                raise ValueError(
+                    f"Invalid block type '{block_type}'. Must be 'M' for MAB or 'S' for SAB."
+                )
+        
         self.hidden_dim = hidden_dim
         self.node_types = node_types
         self.edge_types = edge_types
-        self.patterns = patterns
+        self.pattern = pattern
         self.aggregation = aggregation
-
-        # Validate that all edge types have a pattern
-        for edge_type in edge_types:
-            if edge_type not in patterns:
-                raise ValueError(
-                    f"Edge type '{edge_type}' does not have a pattern defined"
+        # Store the pattern sequence
+        self.block_types = nn.ParameterList(
+            [
+                nn.Parameter(
+                    torch.tensor([0 if t == "M" else 1 for t in pattern]),
+                    requires_grad=False,
                 )
+            ]
+        )  # Just to register the pattern with the module
 
-        # Create attention layers for each edge type according to their patterns
-        self.attention_blocks = nn.ModuleDict()
+        # Create ModuleDicts for masked and self-attention blocks
+        self.masked_blocks = nn.ModuleDict()
+        self.self_blocks = nn.ModuleDict()
 
-        for edge_type, pattern in patterns.items():
+        # Create masked attention blocks for each edge type
+        for edge_type in edge_types:
             src, rel, dst = edge_type
-            key = f"{src}__{rel}__{dst}"  # Convert tuple to string for ModuleDict key
+            key = f"{src}__{rel}__{dst}"
+            self.masked_blocks[key] = NodeSetAttention(
+                hidden_dim=hidden_dim,
+                num_heads=num_heads,
+                dropout=dropout,
+                activation=activation,
+            )
 
-            # Create a list of attention blocks for this relation
-            blocks = nn.ModuleList()
-
-            for block_type in pattern:
-                if block_type == "M":
-                    blocks.append(
-                        NodeSetAttention(
-                            hidden_dim=hidden_dim,
-                            num_heads=num_heads,
-                            dropout=dropout,
-                            activation=activation,
-                        )
-                    )
-                elif block_type == "S":
-                    blocks.append(
-                        SelfAttentionBlock(
-                            hidden_dim=hidden_dim,
-                            num_heads=num_heads,
-                            dropout=dropout,
-                            activation=activation,
-                        )
-                    )
-                else:
-                    raise ValueError(
-                        f"Invalid block type '{block_type}' for {edge_type}. "
-                        f"Must be 'M' for MAB or 'S' for SAB."
-                    )
-
-            self.attention_blocks[key] = blocks
+        # Create self-attention blocks for each node type
+        for node_type in node_types:
+            self.self_blocks[node_type] = SelfAttentionBlock(
+                hidden_dim=hidden_dim,
+                num_heads=num_heads,
+                dropout=dropout,
+                activation=activation,
+            )
 
         # Create aggregation modules for nodes that participate in multiple relations
         if aggregation == "attention":
@@ -117,55 +112,55 @@ class HeteroNSA(nn.Module):
                 ]
                 if len(relations) > 1:
                     # Create an attentional aggregator
-                    # Gate network for attention scores
                     gate_nn = nn.Sequential(
                         nn.Linear(hidden_dim, hidden_dim // 2),
                         nn.ReLU(),
                         nn.Dropout(dropout),
                         nn.Linear(hidden_dim // 2, 1),
                     )
-
-                    # Transform network for value transformation
                     transform_nn = nn.Sequential(
                         nn.Linear(hidden_dim, hidden_dim),
                         nn.ReLU(),
                         nn.Dropout(dropout),
                     )
-
                     self.node_aggregators[node_type] = AttentionalAggregation(
                         gate_nn=gate_nn, nn=transform_nn
                     )
 
-    def _process_relation(
-        self, embeddings: Tensor, adj_matrix: Tensor, edge_type: Tuple[str, str, str]
+    def _process_with_mask(
+        self,
+        block: nn.Module,
+        embeddings: Tensor,
+        mask: Tensor,
+        edge_attr: Optional[Tensor] = None,
+        edge_index: Optional[Tensor] = None,
     ) -> Tensor:
-        """Process node embeddings for a specific relation using its attention pattern."""
-        src, rel, dst = edge_type
-        key = f"{src}__{rel}__{dst}"
-
-        # If the key doesn't exist, try to find a suitable alternative
-        if key not in self.attention_blocks:
-            # For bipartite processing of dst nodes, reuse the original edge type's blocks
-            for original_key in self.attention_blocks.keys():
-                if rel in original_key:
-                    # Found an edge type with the same relation name
-                    key = original_key
-                    break
-
-        # If still no block found, just return the input unchanged
-        if key not in self.attention_blocks:
-            return embeddings
-
+        """Process node embeddings with boolean mask and optional edge attributes."""
         x = embeddings
 
-        # Apply attention blocks according to the pattern
-        for i, block in enumerate(self.attention_blocks[key]):
-            if isinstance(block, NodeSetAttention):
-                # MAB needs adjacency matrix
-                x = block(x, adj_matrix)
-            else:  # SelfAttentionBlock
-                # SAB doesn't need adjacency
-                x = block(x)
+        # Handle dimensionality for mask and input
+        if mask.dim() == 2 and x.dim() == 2:
+            mask = mask.unsqueeze(0)
+            x = x.unsqueeze(0)
+        elif mask.dim() == 2 and x.dim() == 3:
+            mask = mask.unsqueeze(0).expand(x.size(0), -1, -1)
+        elif mask.dim() == 3 and x.dim() == 2:
+            x = x.unsqueeze(0)
+
+        # Apply the appropriate attention block
+        if isinstance(block, NodeSetAttention):
+            # MAB needs mask and possibly edge attributes
+            if edge_attr is not None and edge_index is not None:
+                x = block(x, mask, edge_attr, edge_index)
+            else:
+                x = block(x, mask)
+        else:  # SelfAttentionBlock
+            # SAB doesn't need adjacency
+            x = block(x)
+
+        # Remove batch dimension if it was added
+        if embeddings.dim() == 2 and x.dim() == 3 and x.size(0) == 1:
+            x = x.squeeze(0)
 
         return x
 
@@ -175,356 +170,258 @@ class HeteroNSA(nn.Module):
         data: HeteroData,
         batch_idx: Optional[Dict[str, Tensor]] = None,
     ) -> Dict[str, Tensor]:
-        """Forward pass of HeteroNSA."""
-        # Initialize output with input embeddings
-        final_embeddings = {k: v.clone() for k, v in node_embeddings.items()}
+        """Forward pass of HeteroNSA with sequential pattern processing."""
+        # Start with input embeddings
+        current_embeddings = {k: v.clone() for k, v in node_embeddings.items()}
 
-        # Track relationship outputs for each node type
-        relation_outputs = {node_type: [] for node_type in self.node_types}
+        # Process through each block in the pattern
+        for block_type in self.pattern:
+            if block_type == "M":  # Masked attention blocks
+                # Process masked attention blocks for each edge type
+                relation_outputs = {node_type: [] for node_type in self.node_types}
 
-        # Process each edge type with its attention sequence
-        for edge_type in self.edge_types:
-            src, rel, dst = edge_type
+                for edge_type in self.edge_types:
+                    src, rel, dst = edge_type
 
-            # Skip if source or destination embeddings don't exist
-            if src not in node_embeddings or dst not in node_embeddings:
-                continue
+                    # Skip if source or destination embeddings don't exist
+                    if src not in current_embeddings or dst not in current_embeddings:
+                        continue
 
-            key = f"{src}__{rel}__{dst}"
-            if key not in self.attention_blocks:
-                continue
+                    key = f"{src}__{rel}__{dst}"
+                    if key not in self.masked_blocks:
+                        continue
 
-            # Get embeddings
-            src_emb = node_embeddings[src]
-            dst_emb = node_embeddings[dst]
+                    block = self.masked_blocks[key]
+                    src_emb = current_embeddings[src]
+                    dst_emb = current_embeddings[dst]
 
-            # Check if this edge type exists in the data
-            if edge_type in data.edge_types:
-                # Handle different edge representations
-                if hasattr(data[edge_type], "edge_index"):
-                    edge_index = data[edge_type].edge_index
-                    # Prepare for processing
-                    if src == dst:  # homogeneous case
-                        # Create self-attention mask for same node type (square adjacency)
-                        adj = torch.eye(src_emb.size(0), device=src_emb.device).bool()
+                    # Check if this edge type exists in the data
+                    if edge_type in data.edge_types:
+                        edge_store = data[edge_type]
 
-                        # Process through blocks
-                        out_src = src_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                # Add batch dimension for adjacency if needed
-                                adj_3d = adj.unsqueeze(0) if adj.dim() == 2 else adj
-                                out_src = block(
-                                    (
-                                        out_src.unsqueeze(0)
-                                        if out_src.dim() == 2
-                                        else out_src
-                                    ),
-                                    adj_3d,
+                        # Check for boolean adjacency mask
+                        if (
+                            hasattr(edge_store, "adj_mask")
+                            and edge_store.adj_mask is not None
+                        ):
+                            adj_mask = edge_store.adj_mask
+
+                            # Get edge attributes if they exist
+                            edge_attr = None
+                            edge_index = None
+                            if (
+                                hasattr(edge_store, "edge_attr")
+                                and edge_store.edge_attr is not None
+                            ):
+                                edge_attr = edge_store.edge_attr
+                                edge_index = edge_store.edge_index
+
+                            # Special case for metabolic networks
+                            if rel == "rmr" and hasattr(edge_store, "stoichiometry"):
+                                edge_attr = edge_store.stoichiometry
+                                edge_index = edge_store.edge_index
+
+                            # Process homogeneous case
+                            if src == dst:
+                                out_src = self._process_with_mask(
+                                    block, src_emb, adj_mask, edge_attr, edge_index
                                 )
-                                # Remove batch dim if it was added
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
-                            else:  # SelfAttentionBlock
-                                out_src = block(
-                                    out_src.unsqueeze(0)
-                                    if out_src.dim() == 2
-                                    else out_src
-                                )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
-
-                        relation_outputs[src].append((out_src, edge_type))
-
-                    else:  # bipartite case
-                        # For bipartite relations, process each side separately
-                        # Source nodes
-                        src_adj = torch.eye(
-                            src_emb.size(0), device=src_emb.device
-                        ).bool()
-                        out_src = src_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                src_adj_3d = (
-                                    src_adj.unsqueeze(0)
-                                    if src_adj.dim() == 2
-                                    else src_adj
-                                )
-                                out_src = block(
-                                    (
-                                        out_src.unsqueeze(0)
-                                        if out_src.dim() == 2
-                                        else out_src
-                                    ),
-                                    src_adj_3d,
-                                )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
+                                relation_outputs[src].append(out_src)
                             else:
-                                out_src = block(
-                                    out_src.unsqueeze(0)
-                                    if out_src.dim() == 2
-                                    else out_src
+                                # Process bipartite relationships
+                                out_src = self._process_with_mask(
+                                    block, src_emb, adj_mask, edge_attr, edge_index
                                 )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
+                                relation_outputs[src].append(out_src)
+
+                                # Process destination with transposed mask
+                                adj_mask_t = adj_mask.transpose(-2, -1)
+                                out_dst = self._process_with_mask(
+                                    block, dst_emb, adj_mask_t, edge_attr, edge_index
+                                )
+                                relation_outputs[dst].append(out_dst)
+
+                        # Check for incidence mask (for hypergraphs)
+                        elif (
+                            hasattr(edge_store, "inc_mask")
+                            and edge_store.inc_mask is not None
+                        ):
+                            # Use boolean incidence matrix
+                            inc_mask = edge_store.inc_mask
+
+                            # Get edge attributes
+                            edge_attr = None
+                            edge_index = None
+
+                            # Handle RMR special case
+                            if rel == "rmr":
+                                if hasattr(edge_store, "stoichiometry"):
+                                    edge_attr = edge_store.stoichiometry
+                                    if hasattr(edge_store, "hyperedge_index"):
+                                        edge_index = edge_store.hyperedge_index
+                                    elif hasattr(edge_store, "edge_index"):
+                                        edge_index = edge_store.edge_index
+
+                            # Process with incidence matrix
+                            out_src = self._process_with_mask(
+                                block, src_emb, inc_mask, edge_attr, edge_index
+                            )
+                            relation_outputs[src].append(out_src)
+
+                            # For bipartite, also process destination with transposed matrix
+                            if src != dst:
+                                inc_mask_t = inc_mask.transpose(-2, -1)
+                                out_dst = self._process_with_mask(
+                                    block, dst_emb, inc_mask_t, edge_attr, edge_index
+                                )
+                                relation_outputs[dst].append(out_dst)
+
+                        # Fall back to edge_index processing
+                        elif hasattr(edge_store, "edge_index"):
+                            edge_index = edge_store.edge_index
+                            # Create identity masks for fallback
+                            if src == dst:  # homogeneous case
+                                adj = torch.eye(
+                                    src_emb.size(0), device=src_emb.device
+                                ).bool()
+                                edge_attr = None
+
+                                # Add edge attributes if available
+                                if (
+                                    hasattr(edge_store, "edge_attr")
+                                    and edge_store.edge_attr is not None
+                                ):
+                                    edge_attr = edge_store.edge_attr
+
+                                # Process with identity mask
+                                out_src = self._process_with_mask(
+                                    block, src_emb, adj, edge_attr, edge_index
+                                )
+                                relation_outputs[src].append(out_src)
+                            else:  # bipartite case
+                                # Use identity matrices for both sides
+                                src_adj = torch.eye(
+                                    src_emb.size(0), device=src_emb.device
+                                ).bool()
+                                dst_adj = torch.eye(
+                                    dst_emb.size(0), device=dst_emb.device
+                                ).bool()
+
+                                # Add edge attributes if available
+                                edge_attr = None
+                                if (
+                                    hasattr(edge_store, "edge_attr")
+                                    and edge_store.edge_attr is not None
+                                ):
+                                    edge_attr = edge_store.edge_attr
+
+                                # Process both sides
+                                out_src = self._process_with_mask(
+                                    block, src_emb, src_adj, edge_attr, edge_index
+                                )
+                                out_dst = self._process_with_mask(
+                                    block, dst_emb, dst_adj, edge_attr, edge_index
                                 )
 
-                        # Destination nodes
-                        dst_adj = torch.eye(
-                            dst_emb.size(0), device=dst_emb.device
-                        ).bool()
-                        out_dst = dst_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                dst_adj_3d = (
-                                    dst_adj.unsqueeze(0)
-                                    if dst_adj.dim() == 2
-                                    else dst_adj
-                                )
-                                out_dst = block(
-                                    (
-                                        out_dst.unsqueeze(0)
-                                        if out_dst.dim() == 2
-                                        else out_dst
-                                    ),
-                                    dst_adj_3d,
-                                )
-                                out_dst = (
-                                    out_dst.squeeze(0)
-                                    if out_dst.dim() == 3 and out_dst.size(0) == 1
-                                    else out_dst
-                                )
-                            else:
-                                out_dst = block(
-                                    out_dst.unsqueeze(0)
-                                    if out_dst.dim() == 2
-                                    else out_dst
-                                )
-                                out_dst = (
-                                    out_dst.squeeze(0)
-                                    if out_dst.dim() == 3 and out_dst.size(0) == 1
-                                    else out_dst
-                                )
+                                relation_outputs[src].append(out_src)
+                                relation_outputs[dst].append(out_dst)
 
-                        relation_outputs[src].append((out_src, edge_type))
-                        relation_outputs[dst].append((out_dst, (dst, rel, src)))
+                # Aggregate outputs for each node type
+                next_embeddings = {}
+                for node_type, outputs in relation_outputs.items():
+                    if not outputs:
+                        # Keep current embeddings if no processing done
+                        if node_type in current_embeddings:
+                            next_embeddings[node_type] = current_embeddings[node_type]
+                        continue
 
-                elif hasattr(data[edge_type], "hyperedge_index"):
-                    # Handle hyperedge similarly to edge_index
-                    # We'll use the identity matrix for simplicity
-                    if src == dst:
-                        # Use identity matrix for self-attention
-                        adj = torch.eye(src_emb.size(0), device=src_emb.device).bool()
-
-                        # Process through blocks
-                        out_src = src_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                adj_3d = adj.unsqueeze(0) if adj.dim() == 2 else adj
-                                out_src = block(
-                                    (
-                                        out_src.unsqueeze(0)
-                                        if out_src.dim() == 2
-                                        else out_src
-                                    ),
-                                    adj_3d,
-                                )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
-                            else:
-                                out_src = block(
-                                    out_src.unsqueeze(0)
-                                    if out_src.dim() == 2
-                                    else out_src
-                                )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
-
-                        relation_outputs[src].append((out_src, edge_type))
+                    # Aggregate results using specified method
+                    if len(outputs) == 1:
+                        next_embeddings[node_type] = outputs[0]
                     else:
-                        # For bipartite relations with hyperedges
-                        # Process source nodes
-                        src_adj = torch.eye(
-                            src_emb.size(0), device=src_emb.device
-                        ).bool()
-                        out_src = src_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                src_adj_3d = (
-                                    src_adj.unsqueeze(0)
-                                    if src_adj.dim() == 2
-                                    else src_adj
-                                )
-                                out_src = block(
-                                    (
-                                        out_src.unsqueeze(0)
-                                        if out_src.dim() == 2
-                                        else out_src
-                                    ),
-                                    src_adj_3d,
-                                )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
+                        # Apply aggregation method
+                        if self.aggregation == "sum":
+                            next_embeddings[node_type] = sum(outputs)
+                        elif self.aggregation == "mean":
+                            next_embeddings[node_type] = sum(outputs) / len(outputs)
+                        elif self.aggregation == "max":
+                            if all(e.dim() == outputs[0].dim() for e in outputs):
+                                stacked = torch.stack(outputs)
+                                next_embeddings[node_type] = torch.max(stacked, dim=0)[
+                                    0
+                                ]
                             else:
-                                out_src = block(
-                                    out_src.unsqueeze(0)
-                                    if out_src.dim() == 2
-                                    else out_src
+                                next_embeddings[node_type] = sum(outputs) / len(outputs)
+                        elif (
+                            self.aggregation == "attention"
+                            and node_type in self.node_aggregators
+                        ):
+                            # Use attention aggregation when possible
+                            try:
+                                if all(e.dim() == 2 for e in outputs):
+                                    flat_embs = torch.cat(outputs, dim=0)
+                                    node_indices = torch.arange(
+                                        len(outputs), device=outputs[0].device
+                                    ).repeat_interleave(outputs[0].size(0))
+                                    aggregated = self.node_aggregators[node_type](
+                                        flat_embs, index=node_indices
+                                    )
+                                    next_embeddings[node_type] = aggregated
+                                else:
+                                    next_embeddings[node_type] = sum(outputs) / len(
+                                        outputs
+                                    )
+                            except Exception as e:
+                                print(
+                                    f"Error in attention aggregation for {node_type}: {e}"
                                 )
-                                out_src = (
-                                    out_src.squeeze(0)
-                                    if out_src.dim() == 3 and out_src.size(0) == 1
-                                    else out_src
-                                )
-
-                        # Process destination nodes
-                        dst_adj = torch.eye(
-                            dst_emb.size(0), device=dst_emb.device
-                        ).bool()
-                        out_dst = dst_emb
-                        for block in self.attention_blocks[key]:
-                            if isinstance(block, NodeSetAttention):
-                                dst_adj_3d = (
-                                    dst_adj.unsqueeze(0)
-                                    if dst_adj.dim() == 2
-                                    else dst_adj
-                                )
-                                out_dst = block(
-                                    (
-                                        out_dst.unsqueeze(0)
-                                        if out_dst.dim() == 2
-                                        else out_dst
-                                    ),
-                                    dst_adj_3d,
-                                )
-                                out_dst = (
-                                    out_dst.squeeze(0)
-                                    if out_dst.dim() == 3 and out_dst.size(0) == 1
-                                    else out_dst
-                                )
-                            else:
-                                out_dst = block(
-                                    out_dst.unsqueeze(0)
-                                    if out_dst.dim() == 2
-                                    else out_dst
-                                )
-                                out_dst = (
-                                    out_dst.squeeze(0)
-                                    if out_dst.dim() == 3 and out_dst.size(0) == 1
-                                    else out_dst
-                                )
-
-                        relation_outputs[src].append((out_src, edge_type))
-                        relation_outputs[dst].append((out_dst, (dst, rel, src)))
-            else:
-                # Edge type not in data, use identity matrices
-                # Self-attention case
-                if src == dst:
-                    adj = torch.eye(src_emb.size(0), device=src_emb.device).bool()
-
-                    # Process
-                    out_src = src_emb
-                    for block in self.attention_blocks[key]:
-                        if isinstance(block, NodeSetAttention):
-                            adj_3d = adj.unsqueeze(0) if adj.dim() == 2 else adj
-                            out_src = block(
-                                out_src.unsqueeze(0) if out_src.dim() == 2 else out_src,
-                                adj_3d,
-                            )
-                            out_src = (
-                                out_src.squeeze(0)
-                                if out_src.dim() == 3 and out_src.size(0) == 1
-                                else out_src
-                            )
+                                next_embeddings[node_type] = sum(outputs) / len(outputs)
                         else:
-                            out_src = block(
-                                out_src.unsqueeze(0) if out_src.dim() == 2 else out_src
-                            )
-                            out_src = (
-                                out_src.squeeze(0)
-                                if out_src.dim() == 3 and out_src.size(0) == 1
-                                else out_src
-                            )
+                            next_embeddings[node_type] = sum(outputs) / len(outputs)
 
-                    relation_outputs[src].append((out_src, edge_type))
+                # Update embeddings with results from this MAB block
+                current_embeddings.update(next_embeddings)
 
-        # Aggregate outputs for each node type
-        for node_type, outputs in relation_outputs.items():
-            if not outputs:
-                continue  # Keep original embeddings if no relations processed
+            elif block_type == "S":  # Self-attention blocks
+                # Process self-attention blocks for each node type
+                next_embeddings = {}
 
-            # Aggregate
-            if len(outputs) == 1:
-                final_embeddings[node_type] = outputs[0][0]
-            else:
-                embs = [emb for emb, _ in outputs]
+                for node_type in self.node_types:
+                    if node_type not in current_embeddings:
+                        continue
 
-                # Perform aggregation
-                if self.aggregation == "sum":
-                    final_embeddings[node_type] = sum(embs)
-                elif self.aggregation == "mean":
-                    final_embeddings[node_type] = sum(embs) / len(embs)
-                elif self.aggregation == "max":
-                    # Make sure all tensors have the same dimension
-                    if all(e.dim() == embs[0].dim() for e in embs):
-                        stacked = torch.stack(embs)
-                        final_embeddings[node_type] = torch.max(stacked, dim=0)[0]
+                    if node_type not in self.self_blocks:
+                        next_embeddings[node_type] = current_embeddings[node_type]
+                        continue
+
+                    # Apply self-attention block
+                    block = self.self_blocks[node_type]
+                    emb = current_embeddings[node_type]
+
+                    # Handle dimensions for SAB
+                    if emb.dim() == 2:
+                        emb = emb.unsqueeze(0)  # Add batch dimension
+                        out = block(emb).squeeze(
+                            0
+                        )  # Remove batch dimension after processing
                     else:
-                        # Fall back to mean if dimensions don't match
-                        final_embeddings[node_type] = sum(embs) / len(embs)
-                elif (
-                    self.aggregation == "attention"
-                    and node_type in self.node_aggregators
-                ):
-                    try:
-                        # Try to use attention aggregation
-                        if all(e.dim() == 2 for e in embs):
-                            # Reshape for attention aggregation
-                            flat_embs = torch.cat(embs, dim=0)
-                            node_indices = torch.arange(
-                                len(embs), device=embs[0].device
-                            ).repeat_interleave(embs[0].size(0))
+                        out = block(emb)
 
-                            aggregated = self.node_aggregators[node_type](
-                                flat_embs, index=node_indices
-                            )
-                            final_embeddings[node_type] = aggregated
-                        else:
-                            # Fall back to mean
-                            final_embeddings[node_type] = sum(embs) / len(embs)
-                    except Exception as e:
-                        print(f"Error in attention aggregation for {node_type}: {e}")
-                        # Fall back to mean
-                        final_embeddings[node_type] = sum(embs) / len(embs)
-                else:
-                    # Default to mean
-                    final_embeddings[node_type] = sum(embs) / len(embs)
+                    next_embeddings[node_type] = out
 
-        return final_embeddings
+                # Update embeddings with results from this SAB block
+                current_embeddings = next_embeddings
+
+            else:
+                raise ValueError(
+                    f"Invalid block type '{block_type}'. Must be 'M' for MAB or 'S' for SAB."
+                )
+
+        # Return final embeddings after all blocks
+        return current_embeddings
 
 
-class NSAEncoder(nn.Module):
+class HeteroNSAEncoder(nn.Module):
     """
     Full encoder using HeteroNSA with input projections and multiple layers.
     """
@@ -535,7 +432,7 @@ class NSAEncoder(nn.Module):
         hidden_dim: int,
         node_types: Set[str],
         edge_types: Set[Tuple[str, str, str]],
-        patterns: Dict[Tuple[str, str, str], List[str]],
+        pattern: List[str],  # Single pattern list for all edge types
         num_layers: int = 3,
         num_heads: int = 8,
         dropout: float = 0.1,
@@ -563,7 +460,7 @@ class NSAEncoder(nn.Module):
                     hidden_dim=hidden_dim,
                     node_types=node_types,
                     edge_types=edge_types,
-                    patterns=patterns,
+                    pattern=pattern,  # Use single pattern for all edge types
                     num_heads=num_heads,
                     dropout=dropout,
                     activation=activation,
@@ -607,20 +504,15 @@ class NSAEncoder(nn.Module):
         x_dict = {}
         batch_idx = {}
 
-        # Debug info about available node types
-        print(f"Available node types in data: {data.node_types}")
-        print(f"Expected node types: {self.node_types}")
-
         # First, process all available node types
         for node_type in self.node_types:
-            if node_type in data.node_types:  # Use node_types attribute
+            if node_type in data.node_types:
                 # Get node features
                 node_data = data[node_type]
                 if hasattr(node_data, "x") and node_data.x is not None:
                     x = (
                         node_data.x.clone()
                     )  # Make a copy to avoid in-place modifications
-                    print(f"Found features for {node_type} with shape {x.shape}")
 
                     # Project input features
                     if node_type in self.input_projections:
@@ -640,8 +532,6 @@ class NSAEncoder(nn.Module):
 
         # Apply NSA layers with residual connections
         for i, nsa_layer in enumerate(self.nsa_layers):
-            print(f"Processing NSA layer {i+1}")
-
             # Process through the layer
             try:
                 new_x_dict = nsa_layer(x_dict, data, batch_idx)
@@ -672,8 +562,6 @@ class NSAEncoder(nn.Module):
             except Exception as e:
                 print(f"Error in layer {i+1}: {e}")
                 # Continue with existing embeddings
-
-        print(f"Final node types with embeddings: {list(final_embeddings.keys())}")
 
         # Generate graph-level representation by mean pooling
         graph_embeddings = {}

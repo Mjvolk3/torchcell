@@ -22,7 +22,7 @@ from torchcell.data.neo4j_cell import SubgraphRepresentation
 from tqdm import tqdm
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from typing import Literal
-from torchcell.transforms.hetero_to_dense import HeteroToDense
+from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
 from torchcell.transforms.regression_to_classification import (
     LabelBinningTransform,
     LabelNormalizationTransform,
@@ -117,7 +117,7 @@ def load_sample_data_batch(
     # Apply the transform to the dataset
     # HACK - start
     if is_dense:
-        dense_transform = HeteroToDense({"gene": len(genome.gene_set)})
+        dense_transform = HeteroToDenseMask({"gene": len(genome.gene_set)})
         dataset.transform = Compose([normalizer, dense_transform])
     else:
         dataset.transform = normalizer

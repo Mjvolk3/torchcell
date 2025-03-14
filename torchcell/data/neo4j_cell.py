@@ -2314,7 +2314,8 @@ def main_transform_standardization():
     )
     from torchcell.datamodules import CellDataModule
     from torch_geometric.transforms import Compose
-    from torchcell.transforms.hetero_to_dense import HeteroToDense
+    # from torchcell.transforms.hetero_to_dense import HeteroToDense
+    from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
 
     # Load environment variables
     load_dotenv()
@@ -2410,7 +2411,7 @@ def main_transform_standardization():
 
     # Apply the transform to the dataset
     # HACK - start
-    dense_transform = HeteroToDense({"gene": len(genome.gene_set)})
+    dense_transform = HeteroToDenseMask({"gene": len(genome.gene_set)})
     dataset.transform = Compose([normalizer, dense_transform])
     # HACK - end
     # dataset.transform = normalizer

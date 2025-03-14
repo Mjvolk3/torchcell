@@ -4,14 +4,14 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_003-fit-int_hetero_cell_2.5e4
+  project: torchcell_003-fit-int_hetero_cell_test
   tags: []
 
 cell_dataset:
   graphs: [physical, regulatory]
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 16
+  learnable_embedding_input_channels: 64
   incidence_graphs: [metabolism]
 
 profiler:
@@ -19,30 +19,30 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 2.5e4 #2.5e4
-  batch_size: 32
-  num_workers: 4 
+  perturbation_subset_size: 100 #2.5e4
+  batch_size: 2
+  num_workers: 2
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 20 # 20 # FLAG
+  max_epochs: 10 # 20 # FLAG
   strategy: auto
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 2          # placeholder
-norms: "layer"    # placeholder
+heads: 10 # placeholder
+norms: "layer" # placeholder
 # ------
 model:
   gene_num: 6607
-  reaction_num: 4881
-  metabolite_num: 2534
+  reaction_num: 7122 #4881
+  metabolite_num: 2806 #2534
   hidden_channels: 64
   out_channels: 2
-  num_layers: 3 # Number of hetero conv layers
+  num_layers: 2 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
   activation: "relu"
@@ -76,8 +76,8 @@ model:
 
 regression_task:
   is_weighted_phenotype_loss: true
-  lambda_dist: 0.5
-  lambda_supcr: 0.005
+  lambda_dist: 0.1
+  lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
     lr: 1e-3
@@ -96,3 +96,4 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
   plot_sample_ceiling: 5000
+  plot_every_n_epochs: 2

@@ -135,13 +135,11 @@ class WeightedSupCRCell(nn.Module):
         if weights is None:
             weights = torch.ones(2)
         self.register_buffer("weights", weights / weights.sum())
-        self.supcr_perturbed = SupCR(temperature=temperature, eps=eps)
-        self.supcr_intact = SupCR(temperature=temperature, eps=eps)
+        self.supcr = SupCR(temperature=temperature, eps=eps)
 
     def forward(
         self,
         perturbed_embeddings: torch.Tensor,
-        intact_embeddings: torch.Tensor,
         labels: torch.Tensor,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         device = labels.device
@@ -158,12 +156,8 @@ class WeightedSupCRCell(nn.Module):
                 valid_dims, dtype=torch.float
             )
 
-        # Compute per-dimension losses for both embedding types
-        perturbed_losses = self.supcr_perturbed(perturbed_embeddings, labels)
-        intact_losses = self.supcr_intact(intact_embeddings, labels)
-
-        # Average the losses from perturbed and intact
-        dim_losses = (perturbed_losses + intact_losses) / 2
+        # Compute per-dimension losses using only perturbed embeddings
+        dim_losses = self.supcr(perturbed_embeddings, labels)
 
         # Zero out weights for completely NaN dimensions
         weights = self.weights * valid_dims

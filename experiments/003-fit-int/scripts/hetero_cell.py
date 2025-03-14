@@ -523,12 +523,13 @@ def main(cfg: DictConfig) -> None:
         clip_grad_norm_max_norm=wandb_cfg["regression_task"]["clip_grad_norm_max_norm"],
         plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
         loss_func=loss_func,
-        grad_accumulation_schedule=wandb_cfg["regression_task"][
+        grad_accumulation_schedule=wandb.config["regression_task"][
             "grad_accumulation_schedule"
         ],
         device=device,
         inverse_transform=inverse_transform,
         forward_transform=forward_transform,
+        plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
     )
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")

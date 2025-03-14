@@ -1,25 +1,21 @@
-# torchcell/models/hetero_cell_nsa
-# [[torchcell.models.hetero_cell_nsa]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_nsa
-# Test file: tests/torchcell/models/test_hetero_cell_nsa.py
-
-from omegaconf import DictConfig, OmegaConf
-import os.path as osp
+from omegaconf import DictConfig
 import os
+import os.path as osp
 import hydra
 import torch
 import torch.nn as nn
-from typing import Dict, List, Optional, Tuple, Any, Set
 from torch_geometric.data import HeteroData, Batch
+from typing import Dict, Optional, Any, Tuple, List, Set
+
 from torchcell.nn.hetero_nsa import HeteroNSA
 from torchcell.models.act import act_register
-from torchcell.nn.self_attention_block import SelfAttentionBlock
-from torchcell.nn.masked_attention_block import NodeSetAttention
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
 
+# ----------------------------------------------------------------------
+# Utility: normalization layer factory.
+# ----------------------------------------------------------------------
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
-    """Returns the specified normalization layer."""
     if norm == "layer":
         return nn.LayerNorm(channels)
     elif norm == "batch":
@@ -28,9 +24,10 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
         raise ValueError(f"Unsupported norm type: {norm}")
 
 
+# ----------------------------------------------------------------------
+# Attentional Aggregation for graph-level representations.
+# ----------------------------------------------------------------------
 class AttentionalGraphAggregation(nn.Module):
-    """Attentional aggregation for graph-level representations."""
-
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
         self.gate_nn = nn.Sequential(
@@ -55,9 +52,10 @@ class AttentionalGraphAggregation(nn.Module):
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
+# ----------------------------------------------------------------------
+# PreProcessor: an MLP to preprocess gene embeddings.
+# ----------------------------------------------------------------------
 class PreProcessor(nn.Module):
-    """MLP to preprocess gene embeddings."""
-
     def __init__(
         self,
         in_channels: int,
@@ -86,9 +84,18 @@ class PreProcessor(nn.Module):
         return self.mlp(x)
 
 
+# ----------------------------------------------------------------------
+# HeteroCellNSA: Heterogeneous Cell Model using NSA blocks.
+#
+# This model replaces the traditional HeteroConv with interleaved
+# Self-Attention (SAB) and Masked-Attention (MAB) blocks.
+#
+# It expects the input HeteroData to have been transformed (e.g. via
+# HeteroToDenseMask) so that dense boolean masks (adj_mask, inc_mask)
+# are available for efficient attention, while retaining sparse edge
+# attributes (e.g. stoichiometry).
+# ----------------------------------------------------------------------
 class HeteroCellNSA(nn.Module):
-    """Heterogeneous Cell model using Node-Set Attention for biological networks."""
-
     def __init__(
         self,
         gene_num: int,
@@ -96,44 +103,40 @@ class HeteroCellNSA(nn.Module):
         metabolite_num: int,
         hidden_channels: int,
         out_channels: int,
-        attention_pattern: list[str] = ["M", "S", "M"],
+        attention_pattern: List[str] = ["S", "M", "S", "M"],
         num_heads: int = 8,
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        prediction_head_config: Optional[dict[str, Any]] = None,
+        prediction_head_config: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
 
-        # Validate num_heads is compatible with hidden_channels
         if hidden_channels % num_heads != 0:
             raise ValueError(
                 f"Hidden dimension ({hidden_channels}) must be divisible by "
                 f"number of attention heads ({num_heads})"
             )
 
-        # Define node and edge types based on the actual data structure
-        self.node_types = {"gene", "reaction", "metabolite"}
-
-        # Define the edge types based on the data structure
-        self.edge_types = {
+        # Define node and edge types as in the data.
+        self.node_types: Set[str] = {"gene", "reaction", "metabolite"}
+        self.edge_types: Set[Tuple[str, str, str]] = {
             ("gene", "physical_interaction", "gene"),
             ("gene", "regulatory_interaction", "gene"),
             ("gene", "gpr", "reaction"),
             ("reaction", "rmr", "metabolite"),
         }
+        # Use the attention pattern list directly.
+        self.pattern: List[str] = attention_pattern
 
-        # Define patterns for each edge type
-        self.patterns = {edge_type: attention_pattern for edge_type in self.edge_types}
-
-        # Learnable embeddings
+        # Learnable node embeddings.
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
 
-        # Preprocessor for embeddings
-        self.preprocessor = self._build_preprocessor(
+        # Preprocess gene features.
+        self.preprocessor = PreProcessor(
             in_channels=hidden_channels,
             hidden_channels=hidden_channels,
             num_layers=2,
@@ -142,17 +145,17 @@ class HeteroCellNSA(nn.Module):
             activation=activation,
         )
 
-        # Create NSA layers
+        # Create a stack of NSA layers.
+        # (If a deeper stack is desired, adjust num_layers accordingly.)
+        num_layers = 1
         self.nsa_layers = nn.ModuleList()
-        num_layers = max(1, len(attention_pattern) // len(self.patterns))
-
         for _ in range(num_layers):
             self.nsa_layers.append(
                 HeteroNSA(
                     hidden_dim=hidden_channels,
                     node_types=self.node_types,
                     edge_types=self.edge_types,
-                    patterns=self.patterns,
+                    pattern=self.pattern,
                     num_heads=num_heads,
                     dropout=dropout,
                     activation=self._get_activation(activation),
@@ -160,22 +163,22 @@ class HeteroCellNSA(nn.Module):
                 )
             )
 
-        # Layer norms for each node type and layer
+        # Layer norms for residual connections per node type and layer.
         self.layer_norms = nn.ModuleDict()
         for node_type in self.node_types:
             self.layer_norms[node_type] = nn.ModuleList(
                 [
-                    self._get_norm_layer(hidden_channels, norm)
+                    get_norm_layer(hidden_channels, norm)
                     for _ in range(len(self.nsa_layers))
                 ]
             )
 
-        # Global aggregator for graph-level representation
-        self.global_aggregator = self._build_attentional_aggregator(
+        # Global aggregator for graph-level embedding.
+        self.global_aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
-        # Build prediction head
+        # Build prediction head.
         pred_config = prediction_head_config or {}
         self.prediction_head = self._build_prediction_head(
             in_channels=hidden_channels,
@@ -188,7 +191,6 @@ class HeteroCellNSA(nn.Module):
         )
 
     def _get_activation(self, activation: str) -> nn.Module:
-        """Returns the specified activation module."""
         if activation == "relu":
             return nn.ReLU()
         elif activation == "gelu":
@@ -196,152 +198,92 @@ class HeteroCellNSA(nn.Module):
         elif activation == "silu":
             return nn.SiLU()
         else:
-            return nn.ReLU()  # Default
-
-    def _get_norm_layer(self, channels: int, norm: str) -> nn.Module:
-        """Returns the specified normalization layer."""
-        if norm == "layer":
-            return nn.LayerNorm(channels)
-        elif norm == "batch":
-            return nn.BatchNorm1d(channels)
-        else:
-            return nn.LayerNorm(channels)  # Default
-
-    def _build_preprocessor(
-        self, in_channels, hidden_channels, num_layers, dropout, norm, activation
-    ):
-        """Builds MLP for preprocessing embeddings."""
-        layers = []
-        act = self._get_activation(activation)
-
-        layers.append(nn.Linear(in_channels, hidden_channels))
-        layers.append(self._get_norm_layer(hidden_channels, norm))
-        layers.append(act)
-        layers.append(nn.Dropout(dropout))
-
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_channels, hidden_channels))
-            layers.append(self._get_norm_layer(hidden_channels, norm))
-            layers.append(act)
-            layers.append(nn.Dropout(dropout))
-
-        return nn.Sequential(*layers)
-
-    def _build_attentional_aggregator(self, in_channels, out_channels, dropout):
-        """Builds attentional aggregation for graph-level representations."""
-        gate_nn = nn.Sequential(
-            nn.Linear(in_channels, in_channels // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_channels // 2, 1),
-        )
-        transform_nn = nn.Sequential(
-            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
-        )
-        return AttentionalAggregation(gate_nn=gate_nn, nn=transform_nn)
+            return nn.ReLU()
 
     def _build_prediction_head(
         self,
-        in_channels,
-        hidden_channels,
-        out_channels,
-        num_layers,
-        dropout,
-        activation,
-        norm,
-    ):
-        """Builds multi-layer prediction head."""
+        in_channels: int,
+        hidden_channels: int,
+        out_channels: int,
+        num_layers: int,
+        dropout: float,
+        activation: str,
+        norm: Optional[str] = None,
+    ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
-
         act = self._get_activation(activation)
         layers = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
-
         for i in range(num_layers):
             layers.append(nn.Linear(dims[i], dims[i + 1]))
             if i < num_layers - 1:
                 if norm is not None:
-                    layers.append(self._get_norm_layer(dims[i + 1], norm))
+                    layers.append(get_norm_layer(dims[i + 1], norm))
                 layers.append(act)
                 layers.append(nn.Dropout(dropout))
-
         return nn.Sequential(*layers)
 
-    def forward_single(self, data: HeteroData | Batch) -> dict[str, torch.Tensor]:
-        """Process a single graph through the model."""
+    def forward_single(self, data: HeteroData | Batch) -> Dict[str, torch.Tensor]:
         device = self.gene_embedding.weight.device
 
-        # Get node counts
+        # Get number of nodes (assumes padded nodes if DenseMask has been applied)
         gene_size = data["gene"].num_nodes
         reaction_size = data["reaction"].num_nodes
         metabolite_size = data["metabolite"].num_nodes
 
-        # Get embedding sizes
-        gene_embedding_size = self.gene_embedding.num_embeddings
-        reaction_embedding_size = self.reaction_embedding.num_embeddings
-        metabolite_embedding_size = self.metabolite_embedding.num_embeddings
-
-        # Use modulo to handle indices that would exceed embedding table size
-        gene_idx = torch.arange(gene_size, device=device) % gene_embedding_size
+        # Use modulo in case indices exceed the embedding table size.
+        gene_idx = (
+            torch.arange(gene_size, device=device) % self.gene_embedding.num_embeddings
+        )
         reaction_idx = (
-            torch.arange(reaction_size, device=device) % reaction_embedding_size
+            torch.arange(reaction_size, device=device)
+            % self.reaction_embedding.num_embeddings
         )
         metabolite_idx = (
-            torch.arange(metabolite_size, device=device) % metabolite_embedding_size
+            torch.arange(metabolite_size, device=device)
+            % self.metabolite_embedding.num_embeddings
         )
 
-        # Generate embeddings
         x_gene = self.preprocessor(self.gene_embedding(gene_idx))
         x_reaction = self.reaction_embedding(reaction_idx)
         x_metabolite = self.metabolite_embedding(metabolite_idx)
 
-        # Store embeddings in dictionary
         x_dict = {"gene": x_gene, "reaction": x_reaction, "metabolite": x_metabolite}
 
-        # Create batch indices dictionary if needed
-        batch_idx = {}
+        # Collect batch indices if present.
+        batch_idx: Dict[str, torch.Tensor] = {}
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
         if is_batch:
             for node_type in self.node_types:
                 if node_type in data and hasattr(data[node_type], "batch"):
                     batch_idx[node_type] = data[node_type].batch
 
-        # Process through NSA layers with residual connections
+        # Process through NSA layers with residual connections.
         for i, nsa_layer in enumerate(self.nsa_layers):
             try:
-                # Forward pass through NSA layer
                 new_x_dict = nsa_layer(x_dict, data, batch_idx)
-
-                # Apply layer norm and residual connections
                 for node_type in new_x_dict:
                     if node_type in x_dict:
-                        # Apply residual connection with layer norm
                         new_x_dict[node_type] = self.layer_norms[node_type][i](
                             new_x_dict[node_type] + x_dict[node_type]
                         )
-
-                # Update for next layer
                 x_dict = new_x_dict
             except Exception as e:
                 print(f"Error in NSA layer {i}: {e}")
-                # Continue with current embeddings if there's an error
-
         return x_dict
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """Forward pass for the HeteroCellNSA model."""
-        # Process reference graph
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        # Process reference (wildtype) graph.
         z_w_dict = self.forward_single(cell_graph)
         z_w_genes = z_w_dict["gene"]
-
-        # Process perturbed graph(s)
+        # Process perturbed (or batch) graph.
         z_i_dict = self.forward_single(batch)
         z_i_genes = z_i_dict["gene"]
 
-        # Global pooling for reference graph
+        # Global pooling via attentional aggregation.
         z_w = self.global_aggregator(
             z_w_genes,
             index=torch.zeros(
@@ -349,13 +291,10 @@ class HeteroCellNSA(nn.Module):
             ),
             dim_size=1,
         )
-
-        # Global pooling for perturbed graph(s)
         if hasattr(batch["gene"], "batch"):
             batch_idx = batch["gene"].batch
             z_i = self.global_aggregator(z_i_genes, index=batch_idx)
         else:
-            # No batch information, assume single graph
             z_i = self.global_aggregator(
                 z_i_genes,
                 index=torch.zeros(
@@ -363,20 +302,13 @@ class HeteroCellNSA(nn.Module):
                 ),
             )
 
-        # Ensure proper dimensions and expand reference for batch size
+        # Compute perturbation embedding and generate predictions.
         batch_size = z_i.size(0)
         z_w_exp = z_w.expand(batch_size, -1)
-
-        # Compute perturbation embedding
         z_p = z_w_exp - z_i
-
-        # Generate predictions
         predictions = self.prediction_head(z_p)
-
-        # Split predictions
         fitness = predictions[:, 0:1]
         gene_interaction = predictions[:, 1:2]
-
         return predictions, {
             "z_w": z_w,
             "z_i": z_i,
@@ -386,9 +318,7 @@ class HeteroCellNSA(nn.Module):
         }
 
     @property
-    def num_parameters(self) -> dict[str, int]:
-        """Count parameters in different components of the model."""
-
+    def num_parameters(self) -> Dict[str, int]:
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -406,11 +336,13 @@ class HeteroCellNSA(nn.Module):
             "global_aggregator": count_params(self.global_aggregator),
             "prediction_head": count_params(self.prediction_head),
         }
-
         counts["total"] = sum(counts.values())
         return counts
 
 
+# ----------------------------------------------------------------------
+# Main: testing/training entry point.
+# ----------------------------------------------------------------------
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
@@ -418,11 +350,9 @@ class HeteroCellNSA(nn.Module):
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
-    import os
     from dotenv import load_dotenv
     from torchcell.losses.isomorphic_cell_loss import ICLoss
     from torchcell.timestamp import timestamp
-    import numpy as np
     from torchcell.scratch.load_batch import load_sample_data_batch
     from torchcell.scratch.cell_batch_overfit_visualization import (
         plot_embeddings,
@@ -438,17 +368,16 @@ def main(cfg: DictConfig) -> None:
     )
     print(f"\nUsing device: {device}")
 
-    # Load data
-    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
+    # Load data (assumes DenseMask has been applied upstream)
+    dataset, batch, _, _ = load_sample_data_batch(
         batch_size=cfg.data_module.batch_size,
         num_workers=cfg.data_module.num_workers,
-        metabolism_graph="metabolism_bipartite",
+        metabolism_graph="metabolism_hypergraph",
     )
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Initialize model (parameters unchanged)
-    # TODO implement
+    # Initialize the model.
     model = HeteroCellNSA(
         gene_num=cfg.model.gene_num,
         reaction_num=cfg.model.reaction_num,
@@ -456,7 +385,7 @@ def main(cfg: DictConfig) -> None:
         hidden_channels=cfg.model.hidden_channels,
         out_channels=cfg.model.out_channels,
         attention_pattern=cfg.model.attention_pattern,
-        num_heads=cfg.model.gene_encoder_config.heads,  # Use heads from config
+        num_heads=cfg.model.gene_encoder_config.heads,
         dropout=cfg.model.dropout,
         norm=cfg.model.norm,
         activation=cfg.model.activation,
@@ -467,7 +396,7 @@ def main(cfg: DictConfig) -> None:
     print(model)
     print("Parameter count:", sum(p.numel() for p in model.parameters()))
 
-    # Training setup
+    # Setup training.
     fit_nan_count = batch["gene"].fitness.isnan().sum()
     gi_nan_count = batch["gene"].gene_interaction.isnan().sum()
     total_samples = len(batch["gene"].fitness) * 2
@@ -487,48 +416,34 @@ def main(cfg: DictConfig) -> None:
         weight_decay=cfg.regression_task.optimizer.weight_decay,
     )
 
-    # Training targets
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
-    # Initialize fixed axes variables for consistent plots
-    embedding_fixed_axes = None
-    correlation_fixed_axes = None
-
-    # Setup directories for plots
+    # Prepare directories for plots.
     embeddings_dir = osp.join(ASSET_IMAGES_DIR, "embedding_plots")
-    os.makedirs(embeddings_dir, exist_ok=True)
-
     correlation_dir = osp.join(ASSET_IMAGES_DIR, "correlation_plots")
-    os.makedirs(correlation_dir, exist_ok=True)
+    for d in (embeddings_dir, correlation_dir):
+        os.makedirs(d, exist_ok=True)
 
-    # Training loop
     model.train()
-    print("\nStarting training:")
     losses = []
     num_epochs = cfg.trainer.max_epochs
 
-    # First, compute the fixed axes by doing a forward pass
+    # Compute fixed axes for visualization.
     with torch.no_grad():
         predictions, representations = model(cell_graph, batch)
-
-        # Extract separate embedding data for different plots
         z_w_np = representations["z_w"].detach().cpu().numpy()
         z_i_np = representations["z_i"].detach().cpu().numpy()
         z_p_np = representations["z_p"].detach().cpu().numpy()
-
-        # Initialize embedding fixed axes with separate color scales for z_i and z_p
         embedding_fixed_axes = {
-            "value_min": min(np.min(z_w_np), np.min(z_i_np), np.min(z_p_np)),
-            "value_max": max(np.max(z_w_np), np.max(z_i_np), np.max(z_p_np)),
+            "value_min": min(z_w_np.min(), z_i_np.min(), z_p_np.min()),
+            "value_max": max(z_w_np.max(), z_i_np.max(), z_p_np.max()),
             "dim_max": representations["z_w"].shape[1] - 1,
-            "z_i_min": np.min(z_i_np),
-            "z_i_max": np.max(z_i_np),
-            "z_p_min": np.min(z_p_np),
-            "z_p_max": np.max(z_p_np),
+            "z_i_min": z_i_np.min(),
+            "z_i_max": z_i_np.max(),
+            "z_p_min": z_p_np.min(),
+            "z_p_max": z_p_np.max(),
         }
-
-        # Initialize correlation fixed axes with epoch 0
-        init_epoch = 0  # Add this line
+        init_epoch = 0
         correlation_save_path = osp.join(
             correlation_dir, f"correlation_plots_epoch{init_epoch:03d}.png"
         )
@@ -539,38 +454,30 @@ def main(cfg: DictConfig) -> None:
             lambda_info=f"λ_dist={cfg.regression_task.lambda_dist}, "
             f"λ_supcr={cfg.regression_task.lambda_supcr}",
             weight_decay=cfg.regression_task.optimizer.weight_decay,
-            fixed_axes=None,  # This will compute and return the axes
-            epoch=init_epoch,  # Add this line
+            fixed_axes=None,
+            epoch=init_epoch,
         )
 
     try:
         for epoch in range(num_epochs):
             optimizer.zero_grad()
-
-            # Forward pass now expects cell_graph and batch
             predictions, representations = model(cell_graph, batch)
             loss, loss_components = criterion(predictions, y, representations["z_p"])
 
-            # Logging and visualization every 10 epochs (or whatever interval you prefer)
-            if epoch % 10 == 0 or epoch == num_epochs - 1:  # Also plot on last epoch
+            if epoch % 10 == 0 or epoch == num_epochs - 1:
                 print(f"\nEpoch {epoch + 1}/{num_epochs}")
                 print(f"Loss: {loss.item():.4f}")
                 print("Loss components:", loss_components)
-
-                # Plot embeddings at this epoch
                 try:
-                    # Use the fixed axes for embeddings
                     embedding_fixed_axes = plot_embeddings(
                         representations["z_w"].expand(predictions.size(0), -1),
                         representations["z_i"],
                         representations["z_p"],
                         batch_size=predictions.size(0),
-                        save_dir=embeddings_dir,  # Use the correct directory
+                        save_dir=embeddings_dir,
                         epoch=epoch,
                         fixed_axes=embedding_fixed_axes,
                     )
-
-                    # Create correlation plots
                     correlation_save_path = osp.join(
                         correlation_dir, f"correlation_plots_epoch{epoch:03d}.png"
                     )
@@ -584,11 +491,7 @@ def main(cfg: DictConfig) -> None:
                         fixed_axes=correlation_fixed_axes,
                     )
                 except Exception as e:
-                    print(f"Warning: Could not generate plots: {e}")
-                    import traceback
-
-                    traceback.print_exc()  # Print full traceback for debugging
-
+                    print(f"Warning: Plot generation failed: {e}")
                 if device.type == "cuda":
                     print(
                         f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
@@ -604,14 +507,11 @@ def main(cfg: DictConfig) -> None:
     except RuntimeError as e:
         print(f"\nError during training: {e}")
         if device.type == "cuda":
-            print("\nThis might be a GPU memory issue. Try:")
-            print("1. Reducing batch size")
-            print("2. Reducing model size")
-            print("3. Using gradient checkpointing")
-            print("4. Using mixed precision training")
+            print(
+                "GPU memory may be insufficient. Consider reducing batch or model size, or use gradient checkpointing/mixed precision."
+            )
         raise
 
-    # Final loss plot
     plt.figure(figsize=(12, 6))
     plt.plot(range(1, len(losses) + 1), losses, "b-", label="ICLoss Training Loss")
     plt.xlabel("Epoch")
@@ -626,7 +526,7 @@ def main(cfg: DictConfig) -> None:
     plt.legend()
     plt.tight_layout()
     plt.savefig(
-        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_training_loss_{timestamp()}.png")
+        osp.join(ASSET_IMAGES_DIR, f"hetero_cell_nsa_training_loss_{timestamp()}.png")
     )
     plt.close()
 

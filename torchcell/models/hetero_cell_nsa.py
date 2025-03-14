@@ -12,9 +12,6 @@ from torchcell.models.act import act_register
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
 
-# ----------------------------------------------------------------------
-# Utility: normalization layer factory.
-# ----------------------------------------------------------------------
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
     if norm == "layer":
         return nn.LayerNorm(channels)
@@ -24,9 +21,6 @@ def get_norm_layer(channels: int, norm: str) -> nn.Module:
         raise ValueError(f"Unsupported norm type: {norm}")
 
 
-# ----------------------------------------------------------------------
-# Attentional Aggregation for graph-level representations.
-# ----------------------------------------------------------------------
 class AttentionalGraphAggregation(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
@@ -52,9 +46,6 @@ class AttentionalGraphAggregation(nn.Module):
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
-# ----------------------------------------------------------------------
-# PreProcessor: an MLP to preprocess gene embeddings.
-# ----------------------------------------------------------------------
 class PreProcessor(nn.Module):
     def __init__(
         self,
@@ -68,34 +59,35 @@ class PreProcessor(nn.Module):
         super().__init__()
         act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
-        layers.append(nn.Linear(in_channels, hidden_channels))
-        layers.append(norm_layer)
-        layers.append(act)
-        layers.append(nn.Dropout(dropout))
+        layers = [
+            nn.Linear(in_channels, hidden_channels),
+            norm_layer,
+            act,
+            nn.Dropout(dropout),
+        ]
         for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_channels, hidden_channels))
-            layers.append(norm_layer)
-            layers.append(act)
-            layers.append(nn.Dropout(dropout))
+            layers.extend(
+                [
+                    nn.Linear(hidden_channels, hidden_channels),
+                    norm_layer,
+                    act,
+                    nn.Dropout(dropout),
+                ]
+            )
         self.mlp = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.mlp(x)
 
 
-# ----------------------------------------------------------------------
-# HeteroCellNSA: Heterogeneous Cell Model using NSA blocks.
-#
-# This model replaces the traditional HeteroConv with interleaved
-# Self-Attention (SAB) and Masked-Attention (MAB) blocks.
-#
-# It expects the input HeteroData to have been transformed (e.g. via
-# HeteroToDenseMask) so that dense boolean masks (adj_mask, inc_mask)
-# are available for efficient attention, while retaining sparse edge
-# attributes (e.g. stoichiometry).
-# ----------------------------------------------------------------------
 class HeteroCellNSA(nn.Module):
+    """
+    Heterogeneous Cell Model using Node-Set Attention (NSA) blocks.
+    It replaces HeteroConv with interleaved Self-Attention (SAB) and
+    Masked-Attention (MAB) blocks. Input HeteroData must be pre-transformed
+    with DenseMask so that boolean masks (e.g. adj_mask, inc_mask) are available.
+    """
+
     def __init__(
         self,
         gene_num: int,
@@ -127,15 +119,15 @@ class HeteroCellNSA(nn.Module):
             ("gene", "gpr", "reaction"),
             ("reaction", "rmr", "metabolite"),
         }
-        # Use the attention pattern list directly.
+        # Pass the attention pattern list directly
         self.pattern: List[str] = attention_pattern
 
-        # Learnable node embeddings.
+        # Learnable node embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
 
-        # Preprocess gene features.
+        # Preprocessing for gene features (you may extend this if needed)
         self.preprocessor = PreProcessor(
             in_channels=hidden_channels,
             hidden_channels=hidden_channels,
@@ -145,11 +137,9 @@ class HeteroCellNSA(nn.Module):
             activation=activation,
         )
 
-        # Create a stack of NSA layers.
-        # (If a deeper stack is desired, adjust num_layers accordingly.)
-        num_layers = 1
+        # Create a stack (here one layer; adjust num_layers as needed)
         self.nsa_layers = nn.ModuleList()
-        for _ in range(num_layers):
+        for _ in range(1):
             self.nsa_layers.append(
                 HeteroNSA(
                     hidden_dim=hidden_channels,
@@ -163,22 +153,25 @@ class HeteroCellNSA(nn.Module):
                 )
             )
 
-        # Layer norms for residual connections per node type and layer.
-        self.layer_norms = nn.ModuleDict()
-        for node_type in self.node_types:
-            self.layer_norms[node_type] = nn.ModuleList(
-                [
-                    get_norm_layer(hidden_channels, norm)
-                    for _ in range(len(self.nsa_layers))
-                ]
-            )
+        # Layer norms for residual connections
+        self.layer_norms = nn.ModuleDict(
+            {
+                node_type: nn.ModuleList(
+                    [
+                        get_norm_layer(hidden_channels, norm)
+                        for _ in range(len(self.nsa_layers))
+                    ]
+                )
+                for node_type in self.node_types
+            }
+        )
 
-        # Global aggregator for graph-level embedding.
+        # Global aggregator for graph-level embedding
         self.global_aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
-        # Build prediction head.
+        # Build prediction head
         pred_config = prediction_head_config or {}
         self.prediction_head = self._build_prediction_head(
             in_channels=hidden_channels,
@@ -226,43 +219,37 @@ class HeteroCellNSA(nn.Module):
 
     def forward_single(self, data: HeteroData | Batch) -> Dict[str, torch.Tensor]:
         device = self.gene_embedding.weight.device
-
-        # Get number of nodes (assumes padded nodes if DenseMask has been applied)
-        gene_size = data["gene"].num_nodes
-        reaction_size = data["reaction"].num_nodes
-        metabolite_size = data["metabolite"].num_nodes
-
-        # Use modulo in case indices exceed the embedding table size.
+        # Use all nodes from each type (assuming DenseMask has padded as needed)
         gene_idx = (
-            torch.arange(gene_size, device=device) % self.gene_embedding.num_embeddings
+            torch.arange(data["gene"].num_nodes, device=device)
+            % self.gene_embedding.num_embeddings
         )
         reaction_idx = (
-            torch.arange(reaction_size, device=device)
+            torch.arange(data["reaction"].num_nodes, device=device)
             % self.reaction_embedding.num_embeddings
         )
         metabolite_idx = (
-            torch.arange(metabolite_size, device=device)
+            torch.arange(data["metabolite"].num_nodes, device=device)
             % self.metabolite_embedding.num_embeddings
         )
 
-        x_gene = self.preprocessor(self.gene_embedding(gene_idx))
-        x_reaction = self.reaction_embedding(reaction_idx)
-        x_metabolite = self.metabolite_embedding(metabolite_idx)
+        x_dict = {
+            "gene": self.preprocessor(self.gene_embedding(gene_idx)),
+            "reaction": self.reaction_embedding(reaction_idx),
+            "metabolite": self.metabolite_embedding(metabolite_idx),
+        }
 
-        x_dict = {"gene": x_gene, "reaction": x_reaction, "metabolite": x_metabolite}
-
-        # Collect batch indices if present.
+        # Collect batch indices if available
         batch_idx: Dict[str, torch.Tensor] = {}
-        is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
-        if is_batch:
+        if isinstance(data, Batch) or hasattr(data["gene"], "batch"):
             for node_type in self.node_types:
                 if node_type in data and hasattr(data[node_type], "batch"):
                     batch_idx[node_type] = data[node_type].batch
 
-        # Process through NSA layers with residual connections.
-        for i, nsa_layer in enumerate(self.nsa_layers):
+        # Process NSA layers with residual connections
+        for i, layer in enumerate(self.nsa_layers):
             try:
-                new_x_dict = nsa_layer(x_dict, data, batch_idx)
+                new_x_dict = layer(x_dict, data, batch_idx)
                 for node_type in new_x_dict:
                     if node_type in x_dict:
                         new_x_dict[node_type] = self.layer_norms[node_type][i](
@@ -276,14 +263,21 @@ class HeteroCellNSA(nn.Module):
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # Process reference (wildtype) graph.
+        """Forward pass for the HeteroCellNSA model with explicit reshaping."""
+        # Process reference and perturbed graphs
         z_w_dict = self.forward_single(cell_graph)
         z_w_genes = z_w_dict["gene"]
-        # Process perturbed (or batch) graph.
         z_i_dict = self.forward_single(batch)
         z_i_genes = z_i_dict["gene"]
 
-        # Global pooling via attentional aggregation.
+        # Determine batch size from batch data
+        batch_size = (
+            batch["gene"].batch.max().item() + 1
+            if hasattr(batch["gene"], "batch")
+            else 1
+        )
+
+        # Global pooling for reference graph
         z_w = self.global_aggregator(
             z_w_genes,
             index=torch.zeros(
@@ -291,28 +285,52 @@ class HeteroCellNSA(nn.Module):
             ),
             dim_size=1,
         )
+
+        # Global pooling for perturbed graph(s)
         if hasattr(batch["gene"], "batch"):
             batch_idx = batch["gene"].batch
-            z_i = self.global_aggregator(z_i_genes, index=batch_idx)
+            z_i = self.global_aggregator(
+                z_i_genes, index=batch_idx, dim_size=batch_size
+            )
         else:
             z_i = self.global_aggregator(
                 z_i_genes,
                 index=torch.zeros(
                     z_i_genes.size(0), device=z_i_genes.device, dtype=torch.long
                 ),
+                dim_size=1,
             )
 
-        # Compute perturbation embedding and generate predictions.
-        batch_size = z_i.size(0)
+        # Reshape both tensors to ensure correct dimensions before operations
+        # Force z_w to be [1, hidden_dim]
+        if z_w.dim() > 2:
+            z_w = z_w.reshape(1, -1)
+
+        # Force z_i to be [batch_size, hidden_dim]
+        if z_i.dim() > 2:
+            z_i = z_i.reshape(batch_size, -1)
+
+        # Expand reference and compute perturbation
         z_w_exp = z_w.expand(batch_size, -1)
-        z_p = z_w_exp - z_i
+
+        # Critical fix: explicitly reshape z_p to be exactly [batch_size, hidden_dim]
+        z_p = (z_w_exp - z_i).reshape(batch_size, -1)
+
+        # Generate predictions and ensure correct shape
         predictions = self.prediction_head(z_p)
+
+        # Handle any remaining dimension issues in predictions
+        if predictions.dim() > 2:
+            predictions = predictions.reshape(batch_size, -1)
+
+        # Split predictions
         fitness = predictions[:, 0:1]
         gene_interaction = predictions[:, 1:2]
+
         return predictions, {
             "z_w": z_w,
             "z_i": z_i,
-            "z_p": z_p,
+            "z_p": z_p,  # This is now explicitly [batch_size, hidden_dim]
             "fitness": fitness,
             "gene_interaction": gene_interaction,
         }
@@ -340,9 +358,6 @@ class HeteroCellNSA(nn.Module):
         return counts
 
 
-# ----------------------------------------------------------------------
-# Main: testing/training entry point.
-# ----------------------------------------------------------------------
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
@@ -368,7 +383,7 @@ def main(cfg: DictConfig) -> None:
     )
     print(f"\nUsing device: {device}")
 
-    # Load data (assumes DenseMask has been applied upstream)
+    # Load data (assumes DenseMask has been applied)
     dataset, batch, _, _ = load_sample_data_batch(
         batch_size=cfg.data_module.batch_size,
         num_workers=cfg.data_module.num_workers,
@@ -377,7 +392,6 @@ def main(cfg: DictConfig) -> None:
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Initialize the model.
     model = HeteroCellNSA(
         gene_num=cfg.model.gene_num,
         reaction_num=cfg.model.reaction_num,
@@ -396,7 +410,6 @@ def main(cfg: DictConfig) -> None:
     print(model)
     print("Parameter count:", sum(p.numel() for p in model.parameters()))
 
-    # Setup training.
     fit_nan_count = batch["gene"].fitness.isnan().sum()
     gi_nan_count = batch["gene"].gene_interaction.isnan().sum()
     total_samples = len(batch["gene"].fitness) * 2
@@ -409,26 +422,22 @@ def main(cfg: DictConfig) -> None:
         lambda_supcr=cfg.regression_task.lambda_supcr,
         weights=weights,
     )
-
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=cfg.regression_task.optimizer.lr,
         weight_decay=cfg.regression_task.optimizer.weight_decay,
     )
-
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
 
-    # Prepare directories for plots.
     embeddings_dir = osp.join(ASSET_IMAGES_DIR, "embedding_plots")
+    os.makedirs(embeddings_dir, exist_ok=True)
     correlation_dir = osp.join(ASSET_IMAGES_DIR, "correlation_plots")
-    for d in (embeddings_dir, correlation_dir):
-        os.makedirs(d, exist_ok=True)
+    os.makedirs(correlation_dir, exist_ok=True)
 
     model.train()
     losses = []
     num_epochs = cfg.trainer.max_epochs
 
-    # Compute fixed axes for visualization.
     with torch.no_grad():
         predictions, representations = model(cell_graph, batch)
         z_w_np = representations["z_w"].detach().cpu().numpy()
@@ -508,7 +517,7 @@ def main(cfg: DictConfig) -> None:
         print(f"\nError during training: {e}")
         if device.type == "cuda":
             print(
-                "GPU memory may be insufficient. Consider reducing batch or model size, or use gradient checkpointing/mixed precision."
+                "GPU memory may be insufficient. Consider reducing batch size or model size."
             )
         raise
 

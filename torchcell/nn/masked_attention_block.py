@@ -14,10 +14,16 @@ import torch.nn.functional as F
 import math
 from torch import Tensor
 from typing import Optional
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import math
+from torch import Tensor
+from typing import Optional, Dict
 
 
 class MaskedAttentionBlock(nn.Module):
-    """Memory-efficient Masked Attention Block using FlexAttention"""
+    """Memory-efficient Masked Attention Block using FlexAttention."""
 
     def __init__(
         self,
@@ -25,7 +31,7 @@ class MaskedAttentionBlock(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
-        mode: Literal["node", "edge"] = "node",
+        mode: str = "node",
     ) -> None:
         super().__init__()
         self.hidden_dim = hidden_dim
@@ -33,19 +39,15 @@ class MaskedAttentionBlock(nn.Module):
         self.head_dim = hidden_dim // num_heads
         self.mode = mode
 
-        # Layer normalization
         self.norm1 = nn.LayerNorm(hidden_dim)
         self.norm2 = nn.LayerNorm(hidden_dim)
 
-        # Projection matrices
         self.q_proj = nn.Linear(hidden_dim, hidden_dim)
         self.k_proj = nn.Linear(hidden_dim, hidden_dim)
         self.v_proj = nn.Linear(hidden_dim, hidden_dim)
         self.out_proj = nn.Linear(hidden_dim, hidden_dim)
-
         self.dropout = nn.Dropout(dropout)
 
-        # Feed-forward network
         self.mlp = nn.Sequential(
             nn.Linear(hidden_dim, 4 * hidden_dim),
             activation,
@@ -54,117 +56,70 @@ class MaskedAttentionBlock(nn.Module):
             nn.Dropout(dropout),
         )
 
-        # Store edge attributes as module attributes for score_mod access
+        # Edge attributes buffers for score modification
         self.register_buffer("edge_attr_values", None, persistent=False)
         self.register_buffer("edge_attr_indices", None, persistent=False)
 
-    def _reshape_for_attention(self, x: torch.Tensor) -> torch.Tensor:
-        """Reshape tensor for multi-head attention"""
+    def _reshape_for_attention(self, x: Tensor) -> Tensor:
         batch_size, seq_len, _ = x.shape
         return x.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(
             1, 2
         )
 
     def forward(
-        self,
-        x: torch.Tensor,
-        adj_mask: torch.Tensor,
-        edge_attr_dict: Optional[Dict] = None,
-    ) -> torch.Tensor:
-        """
-        Forward pass using FlexAttention with proper mask handling.
-
-        Args:
-            x: Input tensor [batch_size, seq_len, hidden_dim]
-            adj_mask: Boolean adjacency matrix [batch_size, seq_len, seq_len]
-            edge_attr_dict: Optional dictionary with sparse edge attributes
-        """
+        self, x: Tensor, adj_mask: Tensor, edge_attr_dict: Optional[Dict] = None
+    ) -> Tensor:
         batch_size, seq_len, _ = x.shape
         residual = x
-
-        # Apply normalization
         normed_x = self.norm1(x)
-
-        # Project to queries, keys, values
         q = self.q_proj(normed_x)
         k = self.k_proj(normed_x)
         v = self.v_proj(normed_x)
 
-        # Reshape for multi-head attention
         q = self._reshape_for_attention(q)
         k = self._reshape_for_attention(k)
         v = self._reshape_for_attention(v)
 
-        # Define mask_mod for FlexAttention (following the article's pattern)
         if adj_mask.dtype != torch.bool:
             adj_mask = adj_mask.bool()
 
-        # The strategy depends on if we need to handle edge attributes
         if edge_attr_dict is not None:
-            # Prepare edge attributes for access in score_mod
-            if isinstance(edge_attr_dict, dict):
-                # Set up edge attributes as module buffers
-                self.prepare_edge_attributes(edge_attr_dict, seq_len)
+            # Prepare edge attributes for use in score modification.
+            self.prepare_edge_attributes(edge_attr_dict, seq_len)
 
-                # Define score_mod that applies both masking and edge attributes
-                def score_mod(score, b, h, q_idx, kv_idx):
-                    # First handle the mask - we need to access it differently
-                    # to avoid dynamic control flow issues
-                    mask_val = adj_mask[b, q_idx, kv_idx]
-                    score_masked = torch.where(
-                        mask_val,
-                        score,
-                        torch.tensor(
-                            float("-inf"), device=score.device, dtype=score.dtype
-                        ),
-                    )
-
-                    # Then add edge attribute influence if available
-                    # This avoids dynamic control flow by using arithmetic operations
-                    edge_key = q_idx * seq_len + kv_idx
-                    edge_exists = (self.edge_attr_indices == edge_key).any()
-                    edge_idx = torch.where(self.edge_attr_indices == edge_key)[0]
-                    edge_val = torch.zeros_like(score)
-                    if edge_exists:
-                        edge_val = (
-                            self.edge_attr_values[edge_idx[0]] * 0.1
-                        )  # Scale factor
-
-                    return score_masked + edge_val
-
-                # Use flex_attention with score_mod
-                attn_output = flex_attention(q, k, v, score_mod=score_mod)
-            else:
-                # If edge_attr_dict is not a dictionary, use simple masking
-                # Create mask_mod that just uses the adjacency matrix
-                def mask_mod(b, h, q_idx, kv_idx):
-                    return adj_mask[b, q_idx, kv_idx]
-
-                # Create block mask for efficient computation
-                block_mask = create_block_mask(
-                    mask_mod,
-                    B=batch_size,
-                    H=self.num_heads,
-                    Q_LEN=seq_len,
-                    KV_LEN=seq_len,
+            def score_mod(score, b, h, q_idx, kv_idx):
+                mask_val = adj_mask[b, q_idx, kv_idx]
+                score_masked = torch.where(
+                    mask_val,
+                    score,
+                    torch.tensor(float("-inf"), device=score.device, dtype=score.dtype),
                 )
+                edge_key = q_idx * seq_len + kv_idx
+                edge_exists = (self.edge_attr_indices == edge_key).any()
+                edge_idx = torch.where(self.edge_attr_indices == edge_key)[0]
+                edge_val = torch.zeros_like(score)
+                if edge_exists:
+                    edge_val = self.edge_attr_values[edge_idx[0]] * 0.1
+                return score_masked + edge_val
 
-                # Use flex_attention with block_mask
-                attn_output = flex_attention(q, k, v, block_mask=block_mask)
+            from torch.nn.attention.flex_attention import flex_attention
+
+            attn_output = flex_attention(q, k, v, score_mod=score_mod)
         else:
-            # Simple case - just use the adjacency mask
+
             def mask_mod(b, h, q_idx, kv_idx):
                 return adj_mask[b, q_idx, kv_idx]
 
-            # Create block mask for efficient computation
+            from torch.nn.attention.flex_attention import (
+                flex_attention,
+                create_block_mask,
+            )
+
             block_mask = create_block_mask(
                 mask_mod, B=batch_size, H=self.num_heads, Q_LEN=seq_len, KV_LEN=seq_len
             )
-
-            # Use flex_attention with block_mask
             attn_output = flex_attention(q, k, v, block_mask=block_mask)
 
-        # Reshape back
         attn_output = (
             attn_output.transpose(1, 2)
             .contiguous()
@@ -172,30 +127,20 @@ class MaskedAttentionBlock(nn.Module):
         )
         attn_output = self.out_proj(attn_output)
         attn_output = self.dropout(attn_output)
-
-        # First residual connection
         x = residual + attn_output
-
-        # Second residual connection
         residual = x
         normed_x = self.norm2(x)
         mlp_output = self.mlp(normed_x)
         output = residual + mlp_output
-
         return output
 
     def prepare_edge_attributes(self, edge_attr_dict, seq_len):
-        """Prepare edge attributes for efficient access in score_mod"""
-        # Convert dictionary to flat indices and values
         indices = []
         values = []
-
         for (i, j), val in edge_attr_dict.items():
-            # Convert (i,j) to a flattened index
             idx = i * seq_len + j
             indices.append(idx)
             values.append(val)
-
         if indices:
             self.edge_attr_indices = torch.tensor(
                 indices, device=self.q_proj.weight.device
@@ -204,7 +149,6 @@ class MaskedAttentionBlock(nn.Module):
                 values, device=self.q_proj.weight.device
             )
         else:
-            # Create empty tensors if no edge attributes
             self.edge_attr_indices = torch.tensor(
                 [], device=self.q_proj.weight.device, dtype=torch.long
             )

@@ -3,13 +3,11 @@
 import pytest
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch_geometric.data import Batch, Data
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj
 
-from torchcell.nn.masked_attention_block import MaskedAttentionBlock, NodeSetAttention
-from torchcell.nn.self_attention_block import SelfAttentionBlock
+from torchcell.nn.masked_attention_block import MaskedAttentionBlock, NodeSelfAttention
 
 
 @pytest.fixture
@@ -129,7 +127,7 @@ def test_masked_attention_block_initialization():
     assert node_mab.mode == "node"
 
     # Test NodeSetAttention initialization
-    nsa = NodeSetAttention(hidden_dim=hidden_dim, num_heads=num_heads)
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim, num_heads=num_heads)
     assert nsa.mode == "node"
     assert nsa.hidden_dim == hidden_dim
     assert nsa.num_heads == num_heads
@@ -153,7 +151,7 @@ def test_node_set_attention_forward():
     num_nodes = 32  # Reduced to speed up test
 
     # Create model and input tensor
-    nsa = NodeSetAttention(hidden_dim=hidden_dim)
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim)
     x = torch.randn(batch_size, num_nodes, hidden_dim)
 
     # Create a boolean adjacency matrix (all True for simplicity)
@@ -286,10 +284,6 @@ def test_memory_usage():
 
 def test_node_set_attention_with_bool_mask_and_edge_attr():
     """Test NodeSetAttention with boolean masks and sparse edge attributes"""
-    import torch
-
-    from torchcell.nn.masked_attention_block import NodeSetAttention
-
     # Setup test parameters
     hidden_dim = 64
     batch_size = 2
@@ -297,7 +291,7 @@ def test_node_set_attention_with_bool_mask_and_edge_attr():
     num_edges = 200  # Sparse connectivity
 
     # Create model and node features
-    nsa = NodeSetAttention(hidden_dim=hidden_dim)
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim)
     x = torch.randn(batch_size, num_nodes, hidden_dim)
 
     # Create a sparse boolean adjacency structure (all False initially)
@@ -354,10 +348,6 @@ def test_node_set_attention_with_bool_mask_and_edge_attr():
 
 def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
     """Test NodeSetAttention with metabolic network stoichiometry"""
-    import torch
-    from torch_geometric.utils import to_dense_adj
-
-    from torchcell.nn.masked_attention_block import NodeSetAttention
 
     # Setup
     hidden_dim = 32
@@ -373,7 +363,7 @@ def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
     x = torch.randn(1, metabolic_graph.num_nodes, hidden_dim)
 
     # Create NSA model
-    nsa = NodeSetAttention(hidden_dim=hidden_dim)
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim)
 
     # Forward pass with stoichiometry
     with torch.no_grad():
@@ -383,7 +373,7 @@ def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
     with torch.no_grad():
         output_no_stoich = nsa(x, adj_mask)
 
-    # Check shapes
+    # Check shapesf
     assert output_with_stoich.shape == x.shape
     assert output_no_stoich.shape == x.shape
 
@@ -415,3 +405,247 @@ def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
             assert not torch.allclose(
                 output_with_stoich[0, src], output_abs_stoich[0, src], atol=1e-4
             )
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_gpu_flex_attention_basic():
+    """Test that FlexAttention works correctly on GPU - basic functionality"""
+    hidden_dim = 64
+    batch_size = 2
+    seq_len = 32
+
+    # Create model and move to GPU
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
+
+    # Create inputs on GPU
+    x = torch.randn(batch_size, seq_len, hidden_dim, device="cuda")
+    adj_mask = torch.zeros(
+        batch_size, seq_len, seq_len, dtype=torch.bool, device="cuda"
+    )
+
+    # Create a block-diagonal mask pattern
+    for b in range(batch_size):
+        for i in range(seq_len):
+            # Each node connects to itself and neighbors within distance 2
+            for j in range(max(0, i - 2), min(seq_len, i + 3)):
+                adj_mask[b, i, j] = True
+
+    # Run forward pass
+    with torch.no_grad():
+        output = nsa(x, adj_mask)
+
+    # Check output shape and device
+    assert output.shape == x.shape
+    assert output.device.type == "cuda"
+    assert not torch.isnan(output).any()
+
+    # Make sure the output is different from the input (processing happened)
+    assert not torch.allclose(output, x)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_gpu_edge_attributes():
+    """Test edge attributes are properly handled with FlexAttention on GPU"""
+    hidden_dim = 64
+    batch_size = 2
+    seq_len = 32
+    num_edges = 100
+
+    # Create model and move to GPU
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
+
+    # Create inputs on GPU
+    x = torch.randn(batch_size, seq_len, hidden_dim, device="cuda")
+    adj_mask = torch.zeros(
+        batch_size, seq_len, seq_len, dtype=torch.bool, device="cuda"
+    )
+
+    # Create random edge indices and attributes
+    edge_index = torch.stack(
+        [
+            torch.randint(0, seq_len, (num_edges,), device="cuda"),
+            torch.randint(0, seq_len, (num_edges,), device="cuda"),
+        ]
+    )
+
+    # Create edge attributes with both positive and negative values (like stoichiometry)
+    edge_attr = torch.randn(num_edges, device="cuda")
+
+    # Fill in the boolean mask
+    for b in range(batch_size):
+        for i in range(num_edges):
+            src, dst = edge_index[0, i], edge_index[1, i]
+            adj_mask[b, src, dst] = True
+
+    # Run forward passes with and without edge attributes
+    with torch.no_grad():
+        output_with_attr = nsa(x, adj_mask, edge_attr, edge_index)
+        output_no_attr = nsa(x, adj_mask)
+
+    # Check output shapes
+    assert output_with_attr.shape == x.shape
+    assert output_no_attr.shape == x.shape
+
+    # Check that edge attributes made a difference
+    assert not torch.allclose(output_with_attr, output_no_attr, atol=1e-4)
+
+    # Also check with sign-flipped edge attributes
+    with torch.no_grad():
+        output_flipped = nsa(x, adj_mask, -edge_attr, edge_index)
+
+    # Sign flip should produce different results
+    assert not torch.allclose(output_with_attr, output_flipped, atol=1e-4)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_gpu_mask_memory_efficiency():
+    """Test memory efficiency of boolean masks on GPU"""
+    seq_len = 1000  # Large enough to see memory differences
+    batch_size = 2
+
+    # Create masks on GPU
+    adj_bool = torch.ones(batch_size, seq_len, seq_len, dtype=torch.bool, device="cuda")
+    adj_float = torch.ones(
+        batch_size, seq_len, seq_len, dtype=torch.float32, device="cuda"
+    )
+
+    # Get memory usage
+    bool_bytes = adj_bool.element_size() * adj_bool.numel()
+    float_bytes = adj_float.element_size() * adj_float.numel()
+
+    # Print memory usage
+    print(f"[GPU] Boolean mask: {bool_bytes/1024**2:.2f} MB")
+    print(f"[GPU] Float mask: {float_bytes/1024**2:.2f} MB")
+    print(f"[GPU] Memory ratio (float32/bool): {float_bytes/bool_bytes:.2f}x")
+
+    # Boolean should use much less memory than float32 on GPU too
+    assert float_bytes / bool_bytes >= 4.0
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_gpu_large_batch_processing():
+    """Test that FlexAttention can handle large batches on GPU"""
+    # Skip if GPU memory is insufficient
+    if torch.cuda.get_device_properties(0).total_memory < 4 * 1024**3:  # < 4GB
+        pytest.skip("GPU memory insufficient for large batch test")
+
+    hidden_dim = 64
+    batch_size = 8  # Larger batch
+    seq_len = 128  # More nodes
+
+    # Create model and move to GPU
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
+
+    # Create inputs on GPU
+    x = torch.randn(batch_size, seq_len, hidden_dim, device="cuda")
+
+    # Create different mask patterns for each batch
+    adj_mask = torch.zeros(
+        batch_size, seq_len, seq_len, dtype=torch.bool, device="cuda"
+    )
+    for b in range(batch_size):
+        # Different sparsity pattern per batch
+        sparsity = 0.05 + (b * 0.01)  # 5% to 12% density
+        random_mask = torch.rand(seq_len, seq_len, device="cuda") < sparsity
+        adj_mask[b] = random_mask
+
+    # Make sure diagonal is always True (self-connections)
+    for b in range(batch_size):
+        for i in range(seq_len):
+            adj_mask[b, i, i] = True
+
+    # Run forward pass
+    with torch.no_grad():
+        output = nsa(x, adj_mask)
+
+    # Check output shape and content
+    assert output.shape == x.shape
+    assert not torch.isnan(output).any()
+
+    # Check each batch element is different (due to different mask patterns)
+    for b1 in range(batch_size):
+        for b2 in range(b1 + 1, batch_size):
+            # Outputs for different batch elements should be different
+            assert not torch.allclose(output[b1], output[b2], atol=1e-4)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_flex_attention_fails_correctly(metabolic_graph):
+    """Test that FlexAttention raises appropriate errors instead of falling back"""
+    from unittest.mock import patch
+
+    # Setup
+    hidden_dim = 32
+
+    # Extract edge information
+    edge_index = metabolic_graph.edge_index.cuda()
+    stoichiometry = metabolic_graph.edge_attr.squeeze(
+        -1
+    ).cuda()  # Remove extra dimension
+
+    # Create boolean adjacency matrix
+    adj_mask = (
+        to_dense_adj(edge_index)[0].bool().unsqueeze(0).cuda()
+    )  # Add batch dimension
+
+    # Create node features (batch size 1)
+    x = torch.randn(1, metabolic_graph.num_nodes, hidden_dim, device="cuda")
+
+    # Create NSA model
+    nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
+
+    # Mock the flex_attention import to simulate an error
+    with patch("torch.nn.attention.flex_attention.flex_attention") as mock_flex:
+        # Make the mock raise an error
+        mock_flex.side_effect = RuntimeError("Simulated FlexAttention error")
+
+        # Forward pass should fail with RuntimeError, not fall back to CPU impl
+        with pytest.raises(RuntimeError) as excinfo:
+            output = nsa(x, adj_mask, stoichiometry, edge_index)
+
+        # Make sure the error message matches our simulation
+        assert "Simulated FlexAttention error" in str(excinfo.value)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
+def test_gpu_vs_cpu_outputs(metabolic_graph):
+    """Test that GPU and CPU implementations produce similar results."""
+    # Setup
+    hidden_dim = 32
+    torch.manual_seed(42)  # For reproducibility
+
+    # Extract edge information
+    edge_index = metabolic_graph.edge_index
+    stoichiometry = metabolic_graph.edge_attr.squeeze(-1)  # Remove extra dimension
+
+    # Create boolean adjacency matrix
+    adj_mask = to_dense_adj(edge_index)[0].bool().unsqueeze(0)  # Add batch dimension
+
+    # Create node features (batch size 1)
+    x = torch.randn(1, metabolic_graph.num_nodes, hidden_dim)
+
+    # Create CPU model and run
+    cpu_nsa = NodeSelfAttention(hidden_dim=hidden_dim)
+    with torch.no_grad():
+        cpu_output = cpu_nsa(x, adj_mask, stoichiometry, edge_index)
+
+    # Create GPU model with same weights
+    gpu_nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
+    gpu_nsa.load_state_dict(cpu_nsa.state_dict())
+
+    # Move inputs to GPU
+    gpu_x = x.cuda()
+    gpu_adj_mask = adj_mask.cuda()
+    gpu_stoichiometry = stoichiometry.cuda()
+    gpu_edge_index = edge_index.cuda()
+
+    # Run on GPU
+    with torch.no_grad():
+        gpu_output = gpu_nsa(gpu_x, gpu_adj_mask, gpu_stoichiometry, gpu_edge_index)
+
+    # Move GPU output back to CPU for comparison
+    gpu_output_cpu = gpu_output.cpu()
+
+    # Results won't be identical due to different implementations and float arithmetic,
+    # but should be reasonably close
+    assert torch.allclose(cpu_output, gpu_output_cpu, rtol=1e-2, atol=1e-2)

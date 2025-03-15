@@ -7,8 +7,9 @@ import torch
 import torch.nn as nn
 from torch.nn.attention.flex_attention import flex_attention, create_block_mask
 from typing import Optional, Union
-from torchcell.nn.masked_attention_block import NodeSetAttention
+from torchcell.nn.masked_attention_block import NodeSelfAttention
 from typing import Literal
+
 # Import SelfAttentionBlock from your project.
 from torchcell.nn.self_attention_block import SelfAttentionBlock
 
@@ -36,7 +37,7 @@ class NSAEncoder(nn.Module):
         for block_type in pattern:
             if block_type == "M":
                 self.layers.append(
-                    NodeSetAttention(
+                    NodeSelfAttention(
                         hidden_dim=hidden_dim,
                         num_heads=num_heads,
                         dropout=dropout,
@@ -126,7 +127,7 @@ class NSAEncoder(nn.Module):
                 padded_x[b, :num_nodes_in_batch] = x[nodes_in_batch]
         h = self.input_proj(padded_x)
         for layer in self.layers:
-            if isinstance(layer, NodeSetAttention):
+            if isinstance(layer, NodeSelfAttention):
                 h = layer(h, adj_mask, edge_attr_dict)
             else:
                 h = layer(h)

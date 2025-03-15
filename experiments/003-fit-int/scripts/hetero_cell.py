@@ -342,8 +342,10 @@ def main(cfg: DictConfig) -> None:
 
     incidence_graphs = {}
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
-    if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
-        incidence_graphs["metabolism"] = yeast_gem.reaction_map
+    if "metabolism_hypergraph" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_hypergraph"] = yeast_gem.reaction_map
+    elif "metabolism_bipartite" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
 
     print(EXPERIMENT_ROOT)
     with open(

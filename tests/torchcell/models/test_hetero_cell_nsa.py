@@ -7,7 +7,7 @@ import pytest
 import torch
 from torch_geometric.utils import to_dense_adj
 
-from torchcell.nn.masked_attention_block import NodeSetAttention
+from torchcell.nn.masked_attention_block import NodeSelfAttention
 from torchcell.nn.self_attention_block import SelfAttentionBlock
 from torchcell.scratch.load_batch import load_sample_data_batch
 
@@ -20,7 +20,10 @@ def sample_data():
     )
     try:
         dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-            batch_size=2, num_workers=0, metabolism_graph="metabolism_bipartite"
+            batch_size=2,
+            num_workers=0,
+            metabolism_graph="metabolism_bipartite",
+            is_dense=True,
         )
         return dataset, batch
     except Exception as e:
@@ -145,7 +148,7 @@ class TestEdgeProcessing:
         adj_matrix = adj_matrix.unsqueeze(0)
 
         # Initialize NSA
-        nsa = NodeSetAttention(hidden_dim=hidden_dim)
+        nsa = NodeSelfAttention(hidden_dim=hidden_dim)
 
         # Process through NSA
         output = nsa(gene_emb, adj_matrix)
@@ -181,7 +184,7 @@ class TestEdgeProcessing:
         adj_matrix = adj_matrix.unsqueeze(0)
 
         # Initialize NSA
-        nsa = NodeSetAttention(hidden_dim=hidden_dim)
+        nsa = NodeSelfAttention(hidden_dim=hidden_dim)
 
         # Process through NSA
         output = nsa(gene_emb, adj_matrix)
@@ -235,7 +238,7 @@ class TestEdgeProcessing:
         gene_adj = gene_adj.unsqueeze(0)
 
         # Initialize NSA
-        nsa = NodeSetAttention(hidden_dim=hidden_dim)
+        nsa = NodeSelfAttention(hidden_dim=hidden_dim)
 
         # Process genes through NSA
         gene_output = nsa(gene_emb, gene_adj)
@@ -314,7 +317,7 @@ class TestEdgeProcessing:
         reaction_edge_attr = reaction_edge_attr.unsqueeze(0)
 
         # Initialize NSA
-        nsa = NodeSetAttention(hidden_dim=hidden_dim)
+        nsa = NodeSelfAttention(hidden_dim=hidden_dim)
 
         # Process reactions through NSA with stoichiometry
         reaction_output = nsa(reaction_emb, reaction_adj, reaction_edge_attr)

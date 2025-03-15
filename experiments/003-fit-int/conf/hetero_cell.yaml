@@ -12,7 +12,7 @@ cell_dataset:
   node_embeddings:
     - learnable
   learnable_embedding_input_channels: 64
-  incidence_graphs: [metabolism]
+  incidence_graphs: [metabolism_hypergraph]
 
 profiler:
   is_pytorch: true

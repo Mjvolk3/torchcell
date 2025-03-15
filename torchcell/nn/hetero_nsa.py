@@ -11,7 +11,7 @@ from torch_geometric.data import HeteroData
 from torch_geometric.typing import EdgeType
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torchcell.nn.self_attention_block import SelfAttentionBlock
-from torchcell.nn.masked_attention_block import NodeSetAttention
+from torchcell.nn.masked_attention_block import NodeSelfAttention
 
 
 class HeteroNSA(nn.Module):
@@ -30,7 +30,7 @@ class HeteroNSA(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
-        aggregation: Literal["sum", "mean", "max", "attention"] = "sum",
+        aggregation: Literal["sum", "mean", "attention"] = "sum",
     ):
         super().__init__()
         if not pattern:
@@ -40,6 +40,11 @@ class HeteroNSA(nn.Module):
                 raise ValueError(
                     f"Invalid block type '{block_type}'. Must be 'M' for MAB or 'S' for SAB."
                 )
+        if aggregation not in ["sum", "mean", "attention"]:
+            raise ValueError(
+                f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'."
+            )
+
         self.hidden_dim = hidden_dim
         self.node_types = node_types
         self.edge_types = edge_types
@@ -51,7 +56,7 @@ class HeteroNSA(nn.Module):
         for edge_type in edge_types:
             src, rel, dst = edge_type
             key = f"{src}__{rel}__{dst}"
-            self.masked_blocks[key] = NodeSetAttention(
+            self.masked_blocks[key] = NodeSelfAttention(
                 hidden_dim=hidden_dim,
                 num_heads=num_heads,
                 dropout=dropout,
@@ -108,7 +113,7 @@ class HeteroNSA(nn.Module):
             mask = mask.unsqueeze(0).expand(embeddings.size(0), -1, -1)
         elif mask.dim() == 3 and embeddings.dim() == 2:
             embeddings = embeddings.unsqueeze(0)
-        if isinstance(block, NodeSetAttention):
+        if isinstance(block, NodeSelfAttention):
             if edge_attr is not None and edge_index is not None:
                 x = block(embeddings, mask, edge_attr, edge_index)
             else:
@@ -228,14 +233,6 @@ class HeteroNSA(nn.Module):
                             next_embeddings[node_type] = sum(outputs)
                         elif self.aggregation == "mean":
                             next_embeddings[node_type] = sum(outputs) / len(outputs)
-                        elif self.aggregation == "max":
-                            try:
-                                stacked = torch.stack(outputs)
-                                next_embeddings[node_type] = torch.max(stacked, dim=0)[
-                                    0
-                                ]
-                            except Exception:
-                                next_embeddings[node_type] = sum(outputs) / len(outputs)
                         elif self.aggregation == "attention" and node_type in getattr(
                             self, "node_aggregators", {}
                         ):
@@ -248,6 +245,7 @@ class HeteroNSA(nn.Module):
                             )
                             next_embeddings[node_type] = aggregated
                         else:
+                            # Default to mean if attention is requested but not available
                             next_embeddings[node_type] = sum(outputs) / len(outputs)
                 current_embeddings.update(next_embeddings)
             elif block_type == "S":
@@ -288,10 +286,15 @@ class HeteroNSAEncoder(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
-        aggregation: Literal["sum", "mean", "max", "attention"] = "sum",
+        aggregation: Literal["sum", "mean", "attention"] = "sum",
     ) -> None:
         """Initialize the NSA encoder."""
         super().__init__()
+        if aggregation not in ["sum", "mean", "attention"]:
+            raise ValueError(
+                f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'."
+            )
+
         self.hidden_dim = hidden_dim
         self.node_types = node_types
         self.edge_types = edge_types
@@ -384,35 +387,29 @@ class HeteroNSAEncoder(nn.Module):
         # Apply NSA layers with residual connections
         for i, nsa_layer in enumerate(self.nsa_layers):
             # Process through the layer
-            try:
-                new_x_dict = nsa_layer(x_dict, data, batch_idx)
+            new_x_dict = nsa_layer(x_dict, data, batch_idx)
 
-                # Apply normalization and residual connections
-                for node_type in new_x_dict:
-                    if node_type in x_dict:
-                        # Add residual connection and normalize
-                        residual = x_dict[node_type]
-                        # Ensure same dimensionality for broadcasting
-                        if residual.dim() != new_x_dict[node_type].dim():
-                            if residual.dim() == 2 and new_x_dict[node_type].dim() == 3:
-                                residual = residual.unsqueeze(0)
-                            elif (
-                                residual.dim() == 3 and new_x_dict[node_type].dim() == 2
-                            ):
-                                residual = residual.squeeze(0)
+            # Apply normalization and residual connections
+            for node_type in new_x_dict:
+                if node_type in x_dict:
+                    # Add residual connection and normalize
+                    residual = x_dict[node_type]
+                    # Ensure same dimensionality for broadcasting
+                    if residual.dim() != new_x_dict[node_type].dim():
+                        if residual.dim() == 2 and new_x_dict[node_type].dim() == 3:
+                            residual = residual.unsqueeze(0)
+                        elif residual.dim() == 3 and new_x_dict[node_type].dim() == 2:
+                            residual = residual.squeeze(0)
 
-                        new_x_dict[node_type] = self.layer_norms[node_type][i](
-                            new_x_dict[node_type] + residual
-                        )
+                    new_x_dict[node_type] = self.layer_norms[node_type][i](
+                        new_x_dict[node_type] + residual
+                    )
 
-                # Update for next layer
-                x_dict = new_x_dict
+            # Update for next layer
+            x_dict = new_x_dict
 
-                # Update final embeddings
-                final_embeddings.update(x_dict)
-            except Exception as e:
-                print(f"Error in layer {i+1}: {e}")
-                # Continue with existing embeddings
+            # Update final embeddings
+            final_embeddings.update(x_dict)
 
         # Generate graph-level representation by mean pooling
         graph_embeddings = {}

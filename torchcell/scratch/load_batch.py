@@ -117,7 +117,9 @@ def load_sample_data_batch(
     # Apply the transform to the dataset
     # HACK - start
     if is_dense:
-        dense_transform = HeteroToDenseMask({"gene": len(genome.gene_set)})
+        dense_transform = HeteroToDenseMask(
+            {"gene": len(genome.gene_set), "reaction": 7122, "metabolite": 2806}
+        )
         dataset.transform = Compose([normalizer, dense_transform])
     else:
         dataset.transform = normalizer
@@ -152,3 +154,13 @@ def load_sample_data_batch(
         break
     input_channels = dataset.cell_graph["gene"].x.size()[-1]
     return dataset, batch, input_channels, max_num_nodes
+
+
+if __name__ == "__main__":
+    # load_sample_data_batch()
+    load_sample_data_batch(
+        batch_size=2,
+        num_workers=2,
+        metabolism_graph="metabolism_bipartite",
+        is_dense=True,
+    )

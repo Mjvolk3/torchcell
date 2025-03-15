@@ -5,13 +5,15 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+import math
 from torch.nn.attention.flex_attention import flex_attention
-from typing import Optional
 
 
 class SelfAttentionBlock(nn.Module):
     """
-    Self-Attention Block (SAB) using flex_attention for efficient scaling.
+    Self-Attention Block (SAB) with device-adaptive implementation.
+    Uses flex_attention on GPU and standard attention on CPU.
     """
 
     def __init__(
@@ -89,8 +91,27 @@ class SelfAttentionBlock(nn.Module):
         k = self._reshape_for_attention(k)
         v = self._reshape_for_attention(v)
 
-        # Apply flex_attention
-        attn_output = flex_attention(q, k, v)
+        # Check if we're on GPU
+        if torch.cuda.is_available() and x.is_cuda:
+            # Use FlexAttention on GPU - let errors propagate if it fails
+            attn_output = flex_attention(q, k, v)
+        else:
+            # Standard attention implementation for CPU
+            # Compute attention scores
+            scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(self.head_dim)
+
+            # Apply softmax to get attention weights
+            attn_weights = F.softmax(scores, dim=-1)
+            attn_weights = self.dropout(attn_weights)
+
+            # Handle NaNs for numerical stability
+            if torch.isnan(attn_weights).any():
+                attn_weights = torch.nan_to_num(attn_weights, nan=0.0)
+                row_sums = attn_weights.sum(dim=-1, keepdim=True).clamp(min=1e-6)
+                attn_weights = attn_weights / row_sums
+
+            # Apply attention to values
+            attn_output = torch.matmul(attn_weights, v)
 
         # Reshape back
         attn_output = (
@@ -101,7 +122,7 @@ class SelfAttentionBlock(nn.Module):
         attn_output = self.out_proj(attn_output)
         attn_output = self.dropout(attn_output)
 
-        # First residual connection (using the stored residual)
+        # First residual connection
         x = residual + attn_output
 
         # Save for second residual connection
@@ -111,7 +132,7 @@ class SelfAttentionBlock(nn.Module):
         normed_x = self.norm2(x)
         mlp_output = self.mlp(normed_x)
 
-        # Second residual connection (using the stored residual)
+        # Second residual connection
         output = residual + mlp_output
 
         return output

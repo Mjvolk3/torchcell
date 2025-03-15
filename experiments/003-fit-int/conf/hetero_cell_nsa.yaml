@@ -11,7 +11,7 @@ cell_dataset:
   node_embeddings:
     - learnable
   learnable_embedding_input_channels: 64
-  incidence_graphs: [metabolism_hypergraph]
+  incidence_graphs: [metabolism_bipartite]
 
 profiler:
   is_pytorch: true
@@ -25,7 +25,11 @@ data_module:
   prefetch: false
 
 trainer:
+<<<<<<< HEAD
   max_epochs: 100 # 20 # FLAG
+=======
+  max_epochs: 80 # 20 # FLAG
+>>>>>>> refs/remotes/origin/main
   strategy: auto
   accelerator: gpu
   devices: 1

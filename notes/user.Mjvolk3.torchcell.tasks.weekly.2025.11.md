@@ -2,7 +2,7 @@
 id: 25cmv32yhofqeg6pm6a9n9l
 title: '11'
 desc: ''
-updated: 1741898907748
+updated: 1742082196954
 created: 1741634702492
 ---
 
@@ -38,7 +38,6 @@ created: 1741634702492
 - [x] Ran quick test to make sure node perturbations are propagating.
 - [ ] Check backwards compatibility with `metabolism_hypergraph`. → Works [[2025.03.11 - Metabolism Hypergraph and Metabolism Bipartite|dendron://torchcell/torchcell.data.neo4j_cell#20250311---metabolism-hypergraph-and-metabolism-bipartite]]
 
-
 - [ ] Refactor [[Neo4j_cell|dendron://torchcell/torchcell.data.neo4j_cell]] and split out `GraphProcessor.` Set up tests.
 
 - [ ] See if we can improve the convergence on `pma`. → On training we have the issue that it likes to predict just a few values, in other words the distribution is spiky.
@@ -57,8 +56,15 @@ created: 1741634702492
 
 ## 2025.03.13
 
-- [ ] We only can use `batch_size=2'. We could further optimize memory issue by making masks boolean and by making edge attrs not dense.
+- [x] We only can use `batch_size=2'. We could further optimize memory issue by making masks boolean and by making edge attrs not dense... → We need to make sure we are using flex attention.
 
+## 2025.03.15
+
+- [ ]
+
+## 2025.03.16
+
+- [ ] Prepare report. Topics: ISAB failure, long runs, Node-Self Attention Integration, Hetero Node Set Attention math, Hetero Node Set Attention math integration.
 
 ***
 

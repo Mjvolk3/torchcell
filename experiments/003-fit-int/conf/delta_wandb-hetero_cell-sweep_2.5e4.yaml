@@ -1,6 +1,6 @@
 # wandb_sweep.yaml
 program: experiments/003-fit-int/scripts/hetero_cell.py
-project: torchcell_003-fit-int_hetero_cell
+project: torchcell_003-fit-int_hetero_cell_2.5e4
 method: random
 
 parameters:
@@ -12,7 +12,7 @@ parameters:
       node_embeddings:
         value: [learnable]
       learnable_embedding_input_channels:
-        value: 16
+        value: 64
       incidence_graphs:
         value: [metabolism]
 
@@ -42,7 +42,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        value: 60
+        value: 120
       strategy:
         value: auto
       accelerator:
@@ -62,11 +62,11 @@ parameters:
       metabolite_num:
         value: 2534
       hidden_channels:
-        value: 16
+        value: 64
       out_channels:
         value: 2
       num_layers:
-        value: 2
+        values: [2, 3, 4, 5]
       norm:
         value: "layer"
       activation:
@@ -106,7 +106,7 @@ parameters:
       prediction_head_config:
         parameters:
           hidden_channels:
-            value: 16
+            value: 64
           head_num_layers:
             value: 2
           dropout:
@@ -124,15 +124,17 @@ parameters:
       is_weighted_phenotype_loss:
         value: true
       lambda_dist:
-        values: [0, 1e-3, 1e-2, 1e-1, 1, 1.5, 2]
+        value: 1e-1
+        # values: [0, 1e-1, 1, 2]
       lambda_supcr:
-        values: [0, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+        value: 1e-3
+        # values: [1e-3, 1e-2, 1e-1]
       optimizer:
         parameters:
           type:
             value: "AdamW"
           lr:
-            values: [1e-5, 1e-4, 1e-3]
+            value: 1e-3
           weight_decay:
             value: 1e-9
       lr_scheduler:

@@ -25,11 +25,7 @@ data_module:
   prefetch: false
 
 trainer:
-<<<<<<< HEAD
   max_epochs: 100 # 20 # FLAG
-=======
-  max_epochs: 80 # 20 # FLAG
->>>>>>> refs/remotes/origin/main
   strategy: auto
   accelerator: gpu
   devices: 1

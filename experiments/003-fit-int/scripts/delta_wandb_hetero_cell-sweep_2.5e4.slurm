@@ -21,7 +21,7 @@
 module reset # drop modules and explicitly loado the ones needed
              # (good job metadata and reproducibility)
              # $WORK and $SCRATCH are now set
-source ~/.bashrc
+source ~/.bashrc/projects/bbub/mjvolk3/torchcell/tests/slurm/output
 
 cd /work/hdd/bbub/mjvolk3/torchcell
 pwd

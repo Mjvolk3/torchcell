@@ -106,6 +106,9 @@ class HeteroNSA(nn.Module):
         edge_attr: Optional[Tensor] = None,
         edge_index: Optional[Tensor] = None,
     ) -> Tensor:
+        original_dim = embeddings.dim()
+        
+        # Add batch dimension if needed
         if mask.dim() == 2 and embeddings.dim() == 2:
             mask = mask.unsqueeze(0)
             embeddings = embeddings.unsqueeze(0)
@@ -113,6 +116,8 @@ class HeteroNSA(nn.Module):
             mask = mask.unsqueeze(0).expand(embeddings.size(0), -1, -1)
         elif mask.dim() == 3 and embeddings.dim() == 2:
             embeddings = embeddings.unsqueeze(0)
+            
+        # Process through block
         if isinstance(block, NodeSelfAttention):
             if edge_attr is not None and edge_index is not None:
                 x = block(embeddings, mask, edge_attr, edge_index)
@@ -120,8 +125,11 @@ class HeteroNSA(nn.Module):
                 x = block(embeddings, mask)
         else:
             x = block(embeddings)
-        if embeddings.dim() == 2 and x.dim() == 3 and x.size(0) == 1:
+        
+        # Always restore original dimensionality
+        if original_dim == 2 and x.dim() == 3:
             x = x.squeeze(0)
+            
         return x
 
     def forward(

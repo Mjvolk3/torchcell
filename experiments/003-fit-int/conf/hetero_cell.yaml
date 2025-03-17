@@ -33,8 +33,8 @@ trainer:
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 10          # placeholder
-norms: "layer"    # placeholder
+heads: 10 # placeholder
+norms: "layer" # placeholder
 # ------
 model:
   gene_num: 6607

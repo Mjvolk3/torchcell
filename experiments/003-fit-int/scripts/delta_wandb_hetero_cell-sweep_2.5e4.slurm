@@ -21,7 +21,7 @@
 module reset # drop modules and explicitly loado the ones needed
              # (good job metadata and reproducibility)
              # $WORK and $SCRATCH are now set
-source ~/.bashrc
+source ~/.bashrc/projects/bbub/mjvolk3/torchcell/tests/slurm/output
 
 cd /work/hdd/bbub/mjvolk3/torchcell
 pwd
@@ -38,8 +38,8 @@ export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python
 echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
-SWEEP_ID=cqxj6oks
-PROJECT_NAME=torchcell_003-fit-int_hetero_cell
+SWEEP_ID=o7xi86e0
+PROJECT_NAME=torchcell_003-fit-int_hetero_cell_2.5e4
 
 echo "-----------------"
 echo "SWEEP_ID: $SWEEP_ID"

@@ -110,4 +110,7 @@ logs.sh
 # optuna
 multirun
 
+.qodo
 
+# tests 
+tests/slurm/output/*

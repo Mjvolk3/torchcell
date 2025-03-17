@@ -2,7 +2,7 @@
 id: 25cmv32yhofqeg6pm6a9n9l
 title: '11'
 desc: ''
-updated: 1742082196954
+updated: 1742195552582
 created: 1741634702492
 ---
 
@@ -65,6 +65,7 @@ created: 1741634702492
 ## 2025.03.16
 
 - [ ] Prepare report. Topics: ISAB failure, long runs, Node-Self Attention Integration, Hetero Node Set Attention math, Hetero Node Set Attention math integration.
+- @Andrew-Dudzik - "GNN's are state of the art in algorithmic alignment. LLM's are not." [The Problems in Mathematics of Deep Learning](https://www.youtube.com/watch?v=btF19HOrWC4)
 
 ***
 

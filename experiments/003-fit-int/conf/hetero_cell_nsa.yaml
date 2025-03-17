@@ -1,84 +1,85 @@
-defaults:
-  - default
-  - _self_
+  defaults:
+    - default
+    - _self_
 
-wandb:
-  project: torchcell_003-fit-int_hetero_cell_nsa
-  tags: []
+  wandb:
+    project: torchcell_003-fit-int_hetero_cell_nsa
+    tags: []
 
-cell_dataset:
-  graphs: [physical, regulatory]
-  node_embeddings:
-    - learnable
-  learnable_embedding_input_channels: 64
-  incidence_graphs: [metabolism_bipartite]
+  cell_dataset:
+    graphs: [physical, regulatory]
+    node_embeddings:
+      - learnable
+    learnable_embedding_input_channels: 64
+    incidence_graphs: [metabolism_bipartite]
 
-profiler:
-  is_pytorch: true
+  profiler:
+    is_pytorch: true
 
-data_module:
-  is_perturbation_subset: true
-  perturbation_subset_size: 100 #2.5e4
-  batch_size: 2
-  num_workers: 2
-  pin_memory: false
-  prefetch: false
+  data_module:
+    is_perturbation_subset: true
+    perturbation_subset_size: 2.5e4 #2.5e4
+    batch_size: 2 # FLAG
+    num_workers: 2
+    pin_memory: false
+    prefetch: false
 
-trainer:
-  max_epochs: 100 # 20 # FLAG
-  strategy: auto
-  accelerator: gpu
-  devices: 1
-  overfit_batches: 0
+  trainer:
+    max_epochs: 100 # 20 # FLAG
+    strategy: auto
+    accelerator: cpu
+    devices: 1
+    overfit_batches: 0
 
-# ------ Placeholders for hydra optuna
-heads: 8 # placeholder
-norms: "layer" # placeholder
-# ------
-model:
-  gene_num: 6607
-  reaction_num: 7122
-  metabolite_num: 2806
-  hidden_channels: 64
-  out_channels: 2
-  attention_pattern: ["S", "M", "S", "M"] #, "M", "S"]
-  norm: ${norms}
-  activation: "relu"
-  dropout: 0.0
-  gene_encoder_config:
-    heads: ${heads}
-    concat: true
-  gpr_conv_config:
-    heads: ${heads}
-  metabolism_config:
-    heads: ${heads}
-  prediction_head_config:
+  # ------ Placeholders for hydra optuna
+  heads: 8 # placeholder
+  norms: "layer" # placeholder
+  dropout: 0.1
+  # ------
+  model:
+    gene_num: 6607
+    reaction_num: 7122
+    metabolite_num: 2806
     hidden_channels: 64
-    head_num_layers: 4
-    dropout: 0.0
+    out_channels: 2
+    attention_pattern: ["S", "M", "S", "M"] #, "M", "S"]
+    norm: ${norms}
     activation: "relu"
-    head_norm: ${norms}
+    dropout: ${dropout}
+    gene_encoder_config:
+      heads: ${heads}
+      concat: true
+    gpr_conv_config:
+      heads: ${heads}
+    metabolism_config:
+      heads: ${heads}
+    prediction_head_config:
+      hidden_channels: 64
+      head_num_layers: 4
+      dropout: ${dropout}
+      activation: "relu"
+      head_norm: ${norms}
 
-regression_task:
-  is_weighted_phenotype_loss: true
-  lambda_dist: 0.1
-  lambda_supcr: 0.001
-  optimizer:
-    type: "AdamW"
-    lr: 1e-3
-    weight_decay: 1e-9
-  lr_scheduler:
-    type: "ReduceLROnPlateau"
-    mode: "min"
-    factor: 0.2
-    patience: 3
-    threshold: 1e-4
-    threshold_mode: "rel"
-    cooldown: 2
-    min_lr: 1e-9
-    eps: 1e-10
-  clip_grad_norm: true
-  clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: null
-  plot_sample_ceiling: 5000
-  plot_every_n_epochs: 2
+  regression_task:
+    is_weighted_phenotype_loss: true
+    lambda_dist: 0.1
+    lambda_supcr: 0.001
+    optimizer:
+      type: "AdamW"
+      lr: 1e-3
+      weight_decay: 1e-9
+    lr_scheduler:
+      type: "ReduceLROnPlateau"
+      mode: "min"
+      factor: 0.2
+      patience: 3
+      threshold: 1e-4
+      threshold_mode: "rel"
+      cooldown: 2
+      min_lr: 1e-9
+      eps: 1e-10
+    clip_grad_norm: true
+    clip_grad_norm_max_norm: 10.0
+    grad_accumulation_schedule: null
+    plot_sample_ceiling: 5000
+    plot_every_n_epochs: 2

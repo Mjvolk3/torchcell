@@ -342,8 +342,10 @@ def main(cfg: DictConfig) -> None:
 
     incidence_graphs = {}
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
-    if "metabolism" in wandb.config.cell_dataset["incidence_graphs"]:
-        incidence_graphs["metabolism"] = yeast_gem.reaction_map
+    if "metabolism_hypergraph" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_hypergraph"] = yeast_gem.reaction_map
+    elif "metabolism_bipartite" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
 
     print(EXPERIMENT_ROOT)
     with open(
@@ -534,11 +536,15 @@ def main(cfg: DictConfig) -> None:
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
-    checkpoint_callback = ModelCheckpoint(
+    checkpoint_callback_best = ModelCheckpoint(
         dirpath=osp.join(model_base_path, group),
         save_top_k=1,
         monitor="val/transformed/combined/MSE",
         mode="min",
+        filename="best-{epoch:02d}-{val/transformed/combined/MSE:.4f}",
+    )
+    checkpoint_callback_last = ModelCheckpoint(
+        dirpath=osp.join(model_base_path, group), save_last=True, filename="last"
     )
 
     print(f"devices: {devices}")
@@ -553,10 +559,11 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback_best, checkpoint_callback_last],
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        # limit_val_batches=0,  # FLAG
     )
 
     trainer.fit(model=task, datamodule=data_module)

@@ -39,7 +39,6 @@ class RegressionTask(L.LightningModule):
         self.save_hyperparameters(ignore=["model"])
         self.model = model
         self.cell_graph = cell_graph
-        self.forward_transform = forward_transform
         self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func

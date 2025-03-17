@@ -1,0 +1,65 @@
+defaults:
+  - hetero_cell_nsa
+  - override hydra/sweeper: optuna
+  - override hydra/launcher: submitit_slurm
+  - _self_
+
+hydra:
+  sweeper:
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      seed: 42
+    direction: ["minimize", "maximize"]
+    study_name: "hetero_cell_nsa_sweep"
+    n_trials: 100
+    n_jobs: 4
+    storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/hetero_cell_nsa_optuna.db
+    params:
+      # Attention-related
+      # heads: choice(2, 4, 8, 16)
+      heads: choice(8)
+      # norms: choice("layer", "batch")
+      # model.attention_pattern: choice(["S", "M"], ["S", "M", "S"], ["S", "M", "S", "M"], ["S", "M", "S", "M", "S", "M"])
+      model.attention_pattern: choice(["S", "M", "M", "S"], ["S", "M", "S", "M", "S"])
+
+      # Model architecture
+      # cell_dataset.learnable_embedding_input_channels: choice(32, 64, 128)
+      # model.hidden_channels: choice(32, 64, 128, 256)
+      # model.dropout: choice(0.0, 0.1, 0.2)
+
+      # Prediction head
+      # model.prediction_head_config.hidden_channels: choice(32, 64, 128)
+      # model.prediction_head_config.head_num_layers: choice(2, 4, 6)
+
+      # Loss weights (crucial for this model)
+      # regression_task.lambda_dist: choice(0, 0.01, 0.1, 0.5, 1.0)
+      # regression_task.lambda_supcr: choice(0, 0.001, 0.01, 0.1)
+
+      # Optimization
+      # regression_task.optimizer.lr: choice(5e-5, 1e-4, 5e-4, 1e-3)
+      # regression_task.optimizer.weight_decay: choice(1e-9, 1e-6, 1e-4)
+
+      # Training
+      # data_module.batch_size: choice(2, 4, 8)
+      # data_module.perturbation_subset_size: choice(100, 1000, 5000, 10000)
+
+  launcher:
+    _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+    submitit_folder: ${hydra.sweep.dir}/submitit/%j
+    partition: mmli
+    nodes: 1
+    tasks_per_node: 1
+    cpus_per_task: 12
+    mem_gb: 120
+    timeout_min: 10080
+    name: ${hydra.job.name}
+    additional_parameters:
+      mail-user: mjvolk3@illinois.edu
+      mail-type: END
+      gres: gpu:1
+
+  sweep:
+    dir: /home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+job:
+  chdir: True

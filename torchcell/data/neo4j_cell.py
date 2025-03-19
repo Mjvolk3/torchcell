@@ -920,124 +920,159 @@ class SubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         reaction_info: dict,
     ):
-        """Process bipartite metabolic network for perturbations."""
+        """Process bipartite metabolic network for perturbations using PyG's bipartite_subgraph."""
         if not reaction_info or "reaction" not in cell_graph.node_types:
             return
 
-        # Add metabolite data initially
-        integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-        integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
-
         # Process valid reactions using reaction_info
         valid_reactions = reaction_info["valid_reactions"]
-        max_reaction_idx = cell_graph["reaction"].num_nodes
-
+        
         # Check for unified RMR edge type
         if ("reaction", "rmr", "metabolite") in cell_graph.edge_types:
             rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
-            hyperedge_index = rmr_edges.hyperedge_index.to(
-                self.device
-            )  # Use hyperedge_index
-            edge_types = rmr_edges.edge_type.to(self.device)
+            
+            # Get edge data
+            hyperedge_index = rmr_edges.hyperedge_index.to(self.device)
             stoichiometry = rmr_edges.stoichiometry.to(self.device)
-
-            # STEP 1: Identify all product relationships in the original graph
-            original_products = (
-                {}
-            )  # metabolite_idx -> list of reaction_idx that produce it
-            for i in range(hyperedge_index.size(1)):
-                if edge_types[i] == 1:  # This is a product edge
+            edge_types = rmr_edges.edge_type.to(self.device) if hasattr(rmr_edges, "edge_type") else None
+            
+            # STEP 1: Identify original products for tracking removal
+            original_products = {}  # metabolite_idx -> list of reaction_idx that produce it
+            if edge_types is not None:
+                for i in range(hyperedge_index.size(1)):
+                    if edge_types[i] == 1:  # This is a product edge
+                        rxn_idx = hyperedge_index[0, i].item()
+                        met_idx = hyperedge_index[1, i].item()
+                        if met_idx not in original_products:
+                            original_products[met_idx] = []
+                        original_products[met_idx].append(rxn_idx)
+            else:
+                # If edge_types not available, use stoichiometry to identify products
+                for i in range(hyperedge_index.size(1)):
                     rxn_idx = hyperedge_index[0, i].item()
                     met_idx = hyperedge_index[1, i].item()
-                    if met_idx not in original_products:
-                        original_products[met_idx] = []
-                    original_products[met_idx].append(rxn_idx)
-
-            # STEP 2: Filter edges connected to valid reactions
-            valid_mask = torch.isin(hyperedge_index[0], valid_reactions)
-
-            # STEP 3: Keep only valid edges
-            new_hyperedge_index = hyperedge_index[:, valid_mask].clone()
-            new_stoich = stoichiometry[valid_mask].to(self.device)
-            new_edge_types = edge_types[valid_mask].to(self.device)
-
-            # STEP 4: Identify remaining product relationships after perturbation
+                    stoich = stoichiometry[i].item()
+                    if stoich > 0:  # Positive stoich indicates product
+                        if met_idx not in original_products:
+                            original_products[met_idx] = []
+                        original_products[met_idx].append(rxn_idx)
+            
+            # STEP 2: Use bipartite_subgraph to filter reactions
+            # Prepare reaction subset and all metabolites initially
+            reaction_subset = valid_reactions
+            metabolite_subset = torch.arange(cell_graph["metabolite"].num_nodes, device=self.device)
+            
+            # Apply bipartite_subgraph with relabeling
+            new_hyperedge_index, new_edge_attr = bipartite_subgraph(
+                (reaction_subset, metabolite_subset),
+                hyperedge_index,
+                edge_attr=stoichiometry,
+                relabel_nodes=True,
+                size=(cell_graph["reaction"].num_nodes, cell_graph["metabolite"].num_nodes)
+            )
+            
+            # STEP 3: Identify remaining products after filtering
             remaining_products = {}
             for i in range(new_hyperedge_index.size(1)):
-                if new_edge_types[i] == 1:  # This is a product edge
-                    rxn_idx = new_hyperedge_index[0, i].item()
-                    met_idx = new_hyperedge_index[1, i].item()
+                rxn_idx = new_hyperedge_index[0, i].item()
+                met_idx = new_hyperedge_index[1, i].item()
+                
+                # Determine if this is a product edge
+                is_product = False
+                if edge_types is not None:
+                    edge_idx = i  # Need correct mapping if edge_types were filtered
+                    is_product = (edge_types[edge_idx] == 1)
+                else:
+                    stoich = new_edge_attr[i].item()
+                    is_product = (stoich > 0)
+                    
+                if is_product:
                     if met_idx not in remaining_products:
                         remaining_products[met_idx] = []
                     remaining_products[met_idx].append(rxn_idx)
-
-            # STEP 5: Find metabolites that lost ALL producing reactions
+            
+            # STEP 4: Find metabolites that lost ALL producing reactions
             isolated_products = []
             for met_idx in original_products:
                 if met_idx not in remaining_products:
                     isolated_products.append(met_idx)
-
-            # STEP 6: Relabel reaction indices for the filtered graph
-            reaction_map = torch.full(
-                (max_reaction_idx,), -1, dtype=torch.long, device=self.device
-            )
-            reaction_map[valid_reactions] = torch.arange(
-                len(valid_reactions), device=self.device
-            )
-            new_hyperedge_index[0] = reaction_map[new_hyperedge_index[0]]
-
-            # STEP 7: Store processed edges in output graph
-            edge_type = ("reaction", "rmr", "metabolite")
-            integrated_subgraph[edge_type].hyperedge_index = new_hyperedge_index
-            integrated_subgraph[edge_type].stoichiometry = new_stoich
-            integrated_subgraph[edge_type].edge_type = new_edge_types
-            integrated_subgraph[edge_type].num_edges = new_hyperedge_index.size(1)
-            integrated_subgraph[edge_type].pert_mask = ~valid_mask
-
-            # Copy over any other attributes
-            if hasattr(rmr_edges, "reaction_to_genes"):
-                integrated_subgraph[edge_type].reaction_to_genes = (
-                    rmr_edges.reaction_to_genes
-                )
-            if hasattr(rmr_edges, "reaction_to_genes_indices"):
-                integrated_subgraph[edge_type].reaction_to_genes_indices = (
-                    rmr_edges.reaction_to_genes_indices
-                )
-
-            # STEP 8: Create mask - only flag isolated product metabolites as removed
+            
+            # Create metabolite mask - only flag isolated product metabolites as removed
             metabolite_mask = torch.ones(
-                integrated_subgraph["metabolite"].num_nodes,
+                cell_graph["metabolite"].num_nodes,
                 dtype=torch.bool,
                 device=self.device,
             )
-            if isolated_products:  # Only mark isolated products as removed
+            if isolated_products:
                 metabolite_mask[isolated_products] = False
-
-            # STEP 9: Update masks
+            
+            # Update masks
             self.masks["metabolite"]["kept"] = metabolite_mask
             self.masks["metabolite"]["removed"] = ~metabolite_mask
+            
+            # Create a new bipartite subgraph with the final metabolite subset
+            final_metabolite_subset = torch.where(metabolite_mask)[0]
+            
+            # Store metabolite data with properly filtered nodes
+            metabolite_node_ids = [cell_graph["metabolite"].node_ids[i] for i in final_metabolite_subset]
+            integrated_subgraph["metabolite"].node_ids = metabolite_node_ids
+            integrated_subgraph["metabolite"].num_nodes = len(metabolite_node_ids)
             integrated_subgraph["metabolite"].pert_mask = ~metabolite_mask
-
-            # STEP 10: Update node_ids to exclude isolated product metabolites
-            integrated_subgraph["metabolite"].node_ids = [
-                integrated_subgraph["metabolite"].node_ids[i]
-                for i in range(len(metabolite_mask))
-                if metabolite_mask[i]
-            ]
-            integrated_subgraph["metabolite"].num_nodes = metabolite_mask.sum().item()
+            
+            # Apply final bipartite subgraph with both filtered reactions and metabolites
+            final_edge_index, final_edge_attr = bipartite_subgraph(
+                (reaction_subset, final_metabolite_subset),
+                hyperedge_index,
+                edge_attr=stoichiometry,
+                relabel_nodes=True,
+                size=(cell_graph["reaction"].num_nodes, cell_graph["metabolite"].num_nodes)
+            )
+            
+            # Store edge data with proper relabeling
+            edge_type = ("reaction", "rmr", "metabolite")
+            integrated_subgraph[edge_type].hyperedge_index = final_edge_index
+            integrated_subgraph[edge_type].stoichiometry = final_edge_attr
+            
+            # If edge_types exist, filter and store them too
+            if edge_types is not None:
+                # Create an edge mask that matches the final edge selection
+                edge_mask = torch.zeros(hyperedge_index.size(1), dtype=torch.bool, device=self.device)
+                for i in range(final_edge_index.size(1)):
+                    src = final_edge_index[0, i]
+                    dst = final_edge_index[1, i]
+                    # Find corresponding indices in original hyperedge_index
+                    # (This is approximate - you may need more robust matching)
+                    matches = (hyperedge_index[0] == valid_reactions[src]) & (hyperedge_index[1] == final_metabolite_subset[dst])
+                    if matches.any():
+                        edge_mask[matches] = True
+                
+                final_edge_types = edge_types[edge_mask]
+                integrated_subgraph[edge_type].edge_type = final_edge_types
+            
+            integrated_subgraph[edge_type].num_edges = final_edge_index.size(1)
+            
+            # Copy over any other attributes
+            if hasattr(rmr_edges, "reaction_to_genes"):
+                integrated_subgraph[edge_type].reaction_to_genes = rmr_edges.reaction_to_genes
+            if hasattr(rmr_edges, "reaction_to_genes_indices"):
+                integrated_subgraph[edge_type].reaction_to_genes_indices = rmr_edges.reaction_to_genes_indices
+                
         else:
-            # Handle legacy case - set default masks (no isolated products)
+            # Handle legacy case - set default masks
             self.masks["metabolite"]["kept"].fill_(True)
             self.masks["metabolite"]["removed"].fill_(False)
+            integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
+            integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
             integrated_subgraph["metabolite"].pert_mask = torch.zeros(
-                integrated_subgraph["metabolite"].num_nodes,
+                cell_graph["metabolite"].num_nodes,
                 dtype=torch.bool,
                 device=self.device,
             )
 
         # Update reaction node information
-        integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
-        integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
+        reaction_node_ids = valid_reactions.tolist()
+        integrated_subgraph["reaction"].num_nodes = len(reaction_node_ids)
+        integrated_subgraph["reaction"].node_ids = reaction_node_ids
 
     def _process_metabolic_network(
         self,

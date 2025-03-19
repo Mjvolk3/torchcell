@@ -10,17 +10,17 @@ hydra:
       _target_: optuna.samplers.TPESampler
       seed: 42
     direction: ["minimize", "maximize"]
-    study_name: "hetero_cell_nsa_sweep"
+    study_name: "0_first_try"
     n_trials: 100
     n_jobs: 4
     storage: sqlite:////home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/multirun/hetero_cell_nsa_optuna.db
     params:
       # Attention-related
       # heads: choice(2, 4, 8, 16)
-      heads: choice(8)
+      # heads: choice(8)
       # norms: choice("layer", "batch")
       # model.attention_pattern: choice(["S", "M"], ["S", "M", "S"], ["S", "M", "S", "M"], ["S", "M", "S", "M", "S", "M"])
-      model.attention_pattern: choice(["S", "M", "M", "S"], ["S", "M", "S", "M", "S"])
+      model.attention_pattern: choice(["S", "M", "M", "S"], ["S", "M", "M", "M", "S"], ["S", "M", "S", "M", "S"], ["S", "M", "M", "S", "S"])
 
       # Model architecture
       # cell_dataset.learnable_embedding_input_channels: choice(32, 64, 128)

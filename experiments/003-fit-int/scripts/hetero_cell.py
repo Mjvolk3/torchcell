@@ -515,24 +515,55 @@ def main(cfg: DictConfig) -> None:
     )
 
     print(f"Creating regression task ({timestamp()})")
-    task = RegressionTask(
-        model=model,
-        cell_graph=dataset.cell_graph,  # pass cell graph here
-        optimizer_config=wandb_cfg["regression_task"]["optimizer"],
-        lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
-        batch_size=wandb_cfg["data_module"]["batch_size"],
-        clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
-        clip_grad_norm_max_norm=wandb_cfg["regression_task"]["clip_grad_norm_max_norm"],
-        plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
-        loss_func=loss_func,
-        grad_accumulation_schedule=wandb.config["regression_task"][
-            "grad_accumulation_schedule"
-        ],
-        device=device,
-        inverse_transform=inverse_transform,
-        forward_transform=forward_transform,
-        plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
-    )
+    checkpoint_path = wandb.config["model"].get("checkpoint_path")
+
+    if checkpoint_path and os.path.exists(checkpoint_path):
+        # Load the checkpoint with all required arguments
+        task = RegressionTask.load_from_checkpoint(
+            checkpoint_path,
+            map_location=device,
+            model=model,  # Pass the already created model
+            cell_graph=dataset.cell_graph,
+            loss_func=loss_func,
+            device=device,
+            optimizer_config=wandb_cfg["regression_task"]["optimizer"],
+            lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
+            batch_size=wandb_cfg["data_module"]["batch_size"],
+            clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
+            clip_grad_norm_max_norm=wandb_cfg["regression_task"][
+                "clip_grad_norm_max_norm"
+            ],
+            inverse_transform=inverse_transform,
+            forward_transform=forward_transform,
+            plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+            plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
+            grad_accumulation_schedule=wandb.config["regression_task"][
+                "grad_accumulation_schedule"
+            ],
+        )
+        print("Successfully loaded model weights from checkpoint")
+    else:
+        # Create a fresh task with the model
+        task = RegressionTask(
+            model=model,
+            cell_graph=dataset.cell_graph,
+            optimizer_config=wandb_cfg["regression_task"]["optimizer"],
+            lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
+            batch_size=wandb_cfg["data_module"]["batch_size"],
+            clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
+            clip_grad_norm_max_norm=wandb_cfg["regression_task"][
+                "clip_grad_norm_max_norm"
+            ],
+            plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
+            loss_func=loss_func,
+            grad_accumulation_schedule=wandb.config["regression_task"][
+                "grad_accumulation_schedule"
+            ],
+            device=device,
+            inverse_transform=inverse_transform,
+            forward_transform=forward_transform,
+            plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+        )
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
@@ -554,6 +585,7 @@ def main(cfg: DictConfig) -> None:
     print(f"Starting training ({timestamp()})")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
+        num_nodes=wandb.config.trainer["num_nodes"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,
         num_nodes=num_nodes,

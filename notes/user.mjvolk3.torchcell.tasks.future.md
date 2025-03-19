@@ -2,10 +2,13 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1739517946031
+updated: 1742343933578
 created: 1675887826601
 ---
 ## Future
+
+- [ ] graph, bipartite, hypergraph is detectable by definition of node. We could just automatically detect this.
+- [ ] See if we can improve the convergence on `pma`. → On training we have the issue that it likes to predict just a few values, in other words the distribution is spiky.
 
 ***
 

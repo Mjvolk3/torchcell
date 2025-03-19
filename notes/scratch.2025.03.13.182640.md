@@ -2,7 +2,7 @@
 id: fw083qnozdssexbslniv384
 title: '182640'
 desc: ''
-updated: 1741908453057
+updated: 1742285310043
 created: 1741908404523
 ---
 Data
@@ -11,25 +11,30 @@ Data
 dataset.cell_graph
 HeteroData(
   gene={
-    num_nodes=6579,
-    node_ids=[6579],
-    x=[6579, 1600],
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    mask=[6607],
   },
   metabolite={
     num_nodes=2806,
     node_ids=[2806],
+    mask=[2806],
   },
   reaction={
     num_nodes=7122,
     node_ids=[7122],
+    mask=[7122],
   },
   (gene, physical_interaction, gene)={
-    edge_index=[2, 143824],
-    num_edges=143824,
+    edge_index=[2, 144211],
+    num_edges=144211,
+    adj_mask=[6607, 6607],
   },
   (gene, regulatory_interaction, gene)={
-    edge_index=[2, 16067],
-    num_edges=16067,
+    edge_index=[2, 16101],
+    num_edges=16101,
+    adj_mask=[6607, 6607],
   },
   (reaction, rmr, metabolite)={
     hyperedge_index=[2, 13580],
@@ -38,10 +43,12 @@ HeteroData(
     num_edges=13580,
     reaction_to_genes=dict(len=4881),
     reaction_to_genes_indices=dict(len=4881),
+    inc_mask=[7122, 2806],
   },
   (gene, gpr, reaction)={
-    hyperedge_index=[2, 5430],
+    hyperedge_index=[2, 5450],
     num_edges=4881,
+    inc_mask=[6607, 7122],
   }
 )
 ```

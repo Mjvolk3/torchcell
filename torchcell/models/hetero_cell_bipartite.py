@@ -364,7 +364,9 @@ class HeteroCellBipartite(nn.Module):
             }
 
         # Process edge indices directly - they should already be consistent with node selection
+        # Process edge indices directly - they should already be consistent with node selection
         edge_index_dict = {}
+        edge_attr_dict = {}
         edge_attr_dict = {}
 
         # Gene-gene interactions with debugging
@@ -435,10 +437,14 @@ class HeteroCellBipartite(nn.Module):
 
         # Process stoichiometry for metabolism edges
         stoich = data[rmr_edge_type].stoichiometry.to(device)
+        # Process stoichiometry for metabolism edges
+        stoich = data[rmr_edge_type].stoichiometry.to(device)
         if stoich.dim() == 1:
             stoich = stoich.unsqueeze(1)  # Make it [num_edges, 1]
         edge_attr_dict[rmr_edge_type] = stoich
+        edge_attr_dict[rmr_edge_type] = stoich
 
+        # Apply convolution layers
         # Apply convolution layers
         for conv in self.convs:
             try:

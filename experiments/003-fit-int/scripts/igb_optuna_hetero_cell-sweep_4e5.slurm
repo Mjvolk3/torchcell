@@ -5,7 +5,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --job-name=HC_launcher
-#SBATCH --time=7-00:00:00
+ #SBATCH --time=7-00:00:00
 #SBATCH --output=/home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 #SBATCH --error=/home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/slurm/output/%x_%j.out
 
@@ -15,7 +15,7 @@ conda activate torchcell
 
 cd /home/a-m/mjvolk3/projects/torchcell
 
-python experiments/003-fit-int/scripts/hetero_cell_pma.py \
+python experiments/003-fit-int/scripts/hetero_cell.py \
   --config-dir experiments/003-fit-int/conf \
-  --config-name igb_optuna-hetero_cell_pma-sweep_2.5e4 \
+  --config-name igb_optuna-hetero_cell-sweep_4e5 \
   --multirun

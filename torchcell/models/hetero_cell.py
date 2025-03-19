@@ -228,15 +228,15 @@ class HeteroCell(nn.Module):
                 hidden_channels // gene_encoder_config.get("heads", 1),
                 heads=gene_encoder_config.get("heads", 1),
                 concat=gene_encoder_config.get("concat", True),
-                add_self_loops=True,
+                add_self_loops=gene_encoder_config.get("add_self_loops", False),
             )
-            
+
             conv_dict[("gene", "regulatory_interaction", "gene")] = GATv2Conv(
                 hidden_channels,
                 hidden_channels // gene_encoder_config.get("heads", 1),
                 heads=gene_encoder_config.get("heads", 1),
                 concat=gene_encoder_config.get("concat", True),
-                add_self_loops=True,
+                add_self_loops=gene_encoder_config.get("add_self_loops", False),
             )
 
             gpr_config = gpr_conv_config if gpr_conv_config is not None else {}
@@ -314,106 +314,6 @@ class HeteroCell(nn.Module):
                 layers.append(nn.Dropout(dropout))
         return nn.Sequential(*layers)
 
-    # def forward_single(self, data: HeteroData) -> torch.Tensor:
-    #     """Process a single graph through the model with proper batch handling."""
-    #     device = self.gene_embedding.weight.device
-
-    #     # Check if we're handling the reference cell graph or a batch
-    #     is_batch = hasattr(data["gene"], "batch")
-
-    #     if is_batch:
-    #         # Get batch size
-    #         batch_size = int(data["gene"].batch.max()) + 1
-
-    #         # For genes
-    #         gene_embeddings = self.gene_embedding.weight
-    #         gene_x = torch.zeros(
-    #             data["gene"].num_nodes, gene_embeddings.size(1), device=device
-    #         )
-
-    #         # Split by batch
-    #         for i in range(batch_size):
-    #             # Get indices for this batch item
-    #             batch_mask = data["gene"].batch == i
-    #             num_genes_in_batch = batch_mask.sum()
-
-    #             # Copy embeddings for this batch
-    #             gene_x[batch_mask] = gene_embeddings[:num_genes_in_batch]
-
-    #         # Similar for reactions
-    #         reaction_embeddings = self.reaction_embedding.weight
-    #         reaction_x = torch.zeros(
-    #             data["reaction"].num_nodes, reaction_embeddings.size(1), device=device
-    #         )
-
-    #         for i in range(batch_size):
-    #             batch_mask = data["reaction"].batch == i
-    #             num_reactions_in_batch = batch_mask.sum()
-    #             reaction_x[batch_mask] = reaction_embeddings[:num_reactions_in_batch]
-
-    #         # Similar for metabolites
-    #         metabolite_embeddings = self.metabolite_embedding.weight
-    #         metabolite_x = torch.zeros(
-    #             data["metabolite"].num_nodes,
-    #             metabolite_embeddings.size(1),
-    #             device=device,
-    #         )
-
-    #         for i in range(batch_size):
-    #             batch_mask = data["metabolite"].batch == i
-    #             num_metabolites_in_batch = batch_mask.sum()
-    #             metabolite_x[batch_mask] = metabolite_embeddings[
-    #                 :num_metabolites_in_batch
-    #             ]
-
-    #         # Apply preprocessor to gene features
-    #         gene_x = self.preprocessor(gene_x)
-
-    #         # Put features in dictionary
-    #         x_dict = {
-    #             "gene": gene_x,
-    #             "reaction": reaction_x,
-    #             "metabolite": metabolite_x,
-    #         }
-    #     else:
-    #         # For reference cell graph (no batch), just use the embeddings directly
-    #         x_dict = {
-    #             "gene": self.preprocessor(
-    #                 self.gene_embedding.weight[: data["gene"].num_nodes]
-    #             ),
-    #             "reaction": self.reaction_embedding.weight[
-    #                 : data["reaction"].num_nodes
-    #             ],
-    #             "metabolite": self.metabolite_embedding.weight[
-    #                 : data["metabolite"].num_nodes
-    #             ],
-    #         }
-
-    #     # Process edge indices
-    #     edge_index_dict = {}
-    #     for key, edge in data.edge_index_dict.items():
-    #         if isinstance(edge, torch.Tensor):
-    #             edge_index_dict[key] = edge.to(device)
-    #         else:
-    #             edge_index_dict[key] = edge
-
-    #     # Handle metabolite edge features
-    #     extra_kwargs = {}
-    #     met_edge = ("metabolite", "reaction", "metabolite")
-    #     if met_edge in data.edge_index_dict:
-    #         if hasattr(data[met_edge], "stoichiometry"):
-    #             stoich = data[met_edge].stoichiometry.to(device)
-    #             extra_kwargs["stoich_dict"] = {met_edge: stoich}
-
-    #         if hasattr(data[met_edge], "num_edges"):
-    #             extra_kwargs["num_edges_dict"] = {met_edge: data[met_edge].num_edges}
-
-    #     # Apply graph convolutions
-    #     for conv in self.convs:
-    #         x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
-
-    #     return x_dict["gene"]
-
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         device = self.gene_embedding.weight.device
 
@@ -466,17 +366,24 @@ class HeteroCell(nn.Module):
         for key, edge in data.edge_index_dict.items():
             edge_index_dict[key] = edge.to(device) if torch.is_tensor(edge) else edge
 
+        # Add hyperedge indices for 'gpr' and 'rmr'
+        edge_index_dict[("gene", "gpr", "reaction")] = data[
+            ("gene", "gpr", "reaction")
+        ].hyperedge_index.to(device)
+        edge_index_dict[("metabolite", "reaction", "metabolite")] = data[
+            ("metabolite", "reaction", "metabolite")
+        ].hyperedge_index.to(device)
+
         # Prepare extra edge features for the metabolite hyperedge, if present.
         extra_kwargs: dict[str, Any] = {}
         met_edge = ("metabolite", "reaction", "metabolite")
-        if met_edge in data.edge_index_dict:
-            met_edge_data = data[met_edge]
-            if hasattr(met_edge_data, "stoichiometry"):
-                extra_kwargs["stoich_dict"] = {
-                    met_edge: met_edge_data.stoichiometry.to(device)
-                }
-            if hasattr(met_edge_data, "num_edges"):
-                extra_kwargs["num_edges_dict"] = {met_edge: met_edge_data.num_edges}
+        met_edge_data = data[met_edge]
+        extra_kwargs["stoich_dict"] = {met_edge: met_edge_data.stoichiometry.to(device)}
+        # BUG
+        extra_kwargs["hyperedge_attr_dict"] = {met_edge: x_dict["reaction"]}
+        extra_kwargs["num_edges_dict"] = {
+            met_edge: met_edge_data.hyperedge_index.size(1)
+        }
 
         # Apply each convolution layer sequentially.
         for conv in self.convs:
@@ -569,7 +476,7 @@ def main(cfg: DictConfig) -> None:
 
     # Load data
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=8, num_workers=4, metabolism_graph="metabolism_hypergraph"
+        batch_size=32, num_workers=8, metabolism_graph="metabolism_hypergraph"
     )
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)

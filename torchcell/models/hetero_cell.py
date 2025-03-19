@@ -238,8 +238,6 @@ class HeteroCell(nn.Module):
                 concat=gene_encoder_config.get("concat", True),
                 add_self_loops=True,
             )
-            conv_dict[("gene", "physical_interaction", "gene")] = gene_conv
-            conv_dict[("gene", "regulatory_interaction", "gene")] = gene_conv
 
             gpr_config = gpr_conv_config if gpr_conv_config is not None else {}
             conv_dict[("gene", "gpr", "reaction")] = GATv2Conv(

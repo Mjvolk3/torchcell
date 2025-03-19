@@ -2,7 +2,7 @@
 id: 50c2p7axdt22bp6alnafuqi
 title: '12'
 desc: ''
-updated: 1742344177231
+updated: 1742406430847
 created: 1742343814779
 ---
 ## 2025.03.16
@@ -12,9 +12,13 @@ created: 1742343814779
 
 ## 2025.03.18
 
-- [ ] Load model from file config.
+- [x] Load model from file config. → works on hetero_cell.
+
+- [ ] Try to fix no overfitting `batch_size=2`. → overfit on `["S"]` → overfit on `["M"]` →
+
 - [ ] Test `DDP` on IGB
-- [ ] Multi-node `DDP` on Delta  
+
+- [ ] Multi-node `DDP` on Delta  ?
 
 
 - [ ] Sweep `hetero_cell_nsa` DDP from checkpoint. 16 gpus.
@@ -26,6 +30,10 @@ created: 1742343814779
 
 - [ ] Is it possible to scale the database over `num_nodes` on slurm cluster. If we can pool memory across `cpu` nodes and use more `cpu` we will be able to not only build db faster but completer build on `Delta`. This allows for horizontal scaling of db builds.
 
+
+## 2025.03.19
+
+- [ ] implement bipartite fully `GatV2` model
 
 
 ***

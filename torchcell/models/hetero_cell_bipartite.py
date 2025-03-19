@@ -313,10 +313,25 @@ class HeteroCellBipartite(nn.Module):
 
             batch_size = len(data["gene"].ptr) - 1
 
+            # Print debugging information about masks and node counts
+            # print(f"Batch size: {batch_size}")
+            # print(
+            #     f"Gene pert_mask shape: {gene_data.pert_mask.shape}, sum: {gene_data.pert_mask.sum()}"
+            # )
+            # print(f"Total gene nodes before masking: {gene_data.pert_mask.shape[0]}")
+            # print(f"Total gene nodes after masking: {(~gene_data.pert_mask).sum()}")
+
+            # Apply pert_mask only when selecting embeddings
             x_gene_exp = self.gene_embedding.weight.expand(batch_size, -1, -1)
             x_gene_comb = x_gene_exp.reshape(-1, x_gene_exp.size(-1))
             x_gene = x_gene_comb[~gene_data.pert_mask]
             x_gene = self.preprocessor(x_gene)
+
+            # Similar debugging for reactions and metabolites
+            print(f"Reaction nodes after masking: {(~reaction_data.pert_mask).sum()}")
+            print(
+                f"Metabolite nodes after masking: {(~metabolite_data.pert_mask).sum()}"
+            )
 
             x_reaction_exp = self.reaction_embedding.weight.expand(batch_size, -1, -1)
             x_reaction_comb = x_reaction_exp.reshape(-1, x_reaction_exp.size(-1))
@@ -348,40 +363,90 @@ class HeteroCellBipartite(nn.Module):
                 "metabolite": self.metabolite_embedding(metabolite_idx),
             }
 
-        # Process edge indices and attributes
+        # Process edge indices directly - they should already be consistent with node selection
         edge_index_dict = {}
-        edge_attr_dict = {}  # This will be passed directly to HeteroConv
+        edge_attr_dict = {}
 
-        # Get edge indices for gene-gene interactions
-        edge_index_dict[("gene", "physical_interaction", "gene")] = data[
+        # Gene-gene interactions with debugging
+        gene_phys_edge_index = data[
             ("gene", "physical_interaction", "gene")
         ].edge_index.to(device)
+        edge_index_dict[("gene", "physical_interaction", "gene")] = gene_phys_edge_index
 
-        edge_index_dict[("gene", "regulatory_interaction", "gene")] = data[
+        # Add debugging for edge indices
+        if is_batch:
+            print(f"Physical edge index shape: {gene_phys_edge_index.shape}")
+            if gene_phys_edge_index.numel() > 0:
+                print(f"Max source index: {gene_phys_edge_index[0].max().item()}")
+                print(f"Max target index: {gene_phys_edge_index[1].max().item()}")
+
+        # Check if max index exceeds number of nodes
+        if is_batch and gene_phys_edge_index.numel() > 0:
+            max_idx = gene_phys_edge_index.max().item()
+            num_nodes = x_gene.size(0)
+            if max_idx >= num_nodes:
+                print(
+                    f"WARNING: Max edge index {max_idx} exceeds gene node count {num_nodes}"
+                )
+
+        # Repeat for other edge types
+        gene_reg_edge_index = data[
             ("gene", "regulatory_interaction", "gene")
         ].edge_index.to(device)
-
-        # Get hyperedge index for gene-reaction interactions
-        edge_index_dict[("gene", "gpr", "reaction")] = data[
-            ("gene", "gpr", "reaction")
-        ].hyperedge_index.to(device)
-
-        # Get hyperedge index and stoichiometry for metabolism
-        rmr_data = data[("reaction", "rmr", "metabolite")]
-        edge_index_dict[("reaction", "rmr", "metabolite")] = (
-            rmr_data.hyperedge_index.to(device)
+        edge_index_dict[("gene", "regulatory_interaction", "gene")] = (
+            gene_reg_edge_index
         )
 
-        # Prepare stoichiometry as edge attribute
-        stoich = rmr_data.stoichiometry.to(device)
+        if is_batch and gene_reg_edge_index.numel() > 0:
+            print(f"Regulatory edge max idx: {gene_reg_edge_index.max().item()}")
+
+        # Gene-reaction interactions
+        gpr_edge_index = data[("gene", "gpr", "reaction")].hyperedge_index.to(device)
+        edge_index_dict[("gene", "gpr", "reaction")] = gpr_edge_index
+
+        if is_batch and gpr_edge_index.numel() > 0:
+            print(f"GPR max gene idx: {gpr_edge_index[0].max().item()}")
+            print(f"GPR max reaction idx: {gpr_edge_index[1].max().item()}")
+            if gpr_edge_index[0].max().item() >= x_gene.size(0):
+                print(
+                    f"WARNING: GPR max gene idx {gpr_edge_index[0].max().item()} exceeds gene count {x_gene.size(0)}"
+                )
+            if gpr_edge_index[1].max().item() >= x_reaction.size(0):
+                print(
+                    f"WARNING: GPR max reaction idx {gpr_edge_index[1].max().item()} exceeds reaction count {x_reaction.size(0)}"
+                )
+
+        # Reaction-metabolite interactions
+        rmr_edge_type = ("reaction", "rmr", "metabolite")
+        rmr_edge_index = data[rmr_edge_type].hyperedge_index.to(device)
+        edge_index_dict[rmr_edge_type] = rmr_edge_index
+
+        if is_batch and rmr_edge_index.numel() > 0:
+            print(f"RMR max reaction idx: {rmr_edge_index[0].max().item()}")
+            print(f"RMR max metabolite idx: {rmr_edge_index[1].max().item()}")
+            if rmr_edge_index[0].max().item() >= x_reaction.size(0):
+                print(
+                    f"WARNING: RMR max reaction idx {rmr_edge_index[0].max().item()} exceeds reaction count {x_reaction.size(0)}"
+                )
+            if rmr_edge_index[1].max().item() >= x_metabolite.size(0):
+                print(
+                    f"WARNING: RMR max metabolite idx {rmr_edge_index[1].max().item()} exceeds metabolite count {x_metabolite.size(0)}"
+                )
+
+        # Process stoichiometry for metabolism edges
+        stoich = data[rmr_edge_type].stoichiometry.to(device)
         if stoich.dim() == 1:
             stoich = stoich.unsqueeze(1)  # Make it [num_edges, 1]
-        edge_attr_dict[("reaction", "rmr", "metabolite")] = stoich
+        edge_attr_dict[rmr_edge_type] = stoich
 
-        # Apply each convolution layer
+        # Apply convolution layers
         for conv in self.convs:
-            # Note the _dict suffix which HeteroConv expects
-            x_dict = conv(x_dict, edge_index_dict, edge_attr_dict=edge_attr_dict)
+            try:
+                x_dict = conv(x_dict, edge_index_dict, edge_attr_dict=edge_attr_dict)
+            except IndexError as e:
+                print(f"IndexError in conv: {e}")
+                # You can add more detailed debugging here
+                raise
 
         return x_dict["gene"]
 
@@ -439,7 +504,7 @@ class HeteroCellBipartite(nn.Module):
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_bipartite",
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt

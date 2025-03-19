@@ -21,12 +21,12 @@ data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 100 #2.5e4
   batch_size: 32
-  num_workers: 4
+  num_workers: 2
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 3 # 20 # FLAG
+  max_epochs: 100 # 20 # FLAG
   strategy: auto
   num_nodes: 1
   accelerator: cpu

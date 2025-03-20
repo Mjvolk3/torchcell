@@ -363,7 +363,9 @@ class HeteroCellBipartite(nn.Module):
         gene_reg_edge_index = data[
             ("gene", "regulatory_interaction", "gene")
         ].edge_index.to(device)
-        edge_index_dict[("gene", "regulatory_interaction", "gene")] = gene_reg_edge_index
+        edge_index_dict[("gene", "regulatory_interaction", "gene")] = (
+            gene_reg_edge_index
+        )
 
         # Gene-reaction interactions
         gpr_edge_index = data[("gene", "gpr", "reaction")].hyperedge_index.to(device)

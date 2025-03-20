@@ -1,7 +1,7 @@
-# experiments/003-fit-int/scripts/hetero_cell
-# [[experiments.003-fit-int.scripts.hetero_cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/hetero_cell
-# Test file: experiments/003-fit-int/scripts/test_hetero_cell.py
+# experiments/003-fit-int/scripts/hetero_cell_bipartite
+# [[experiments.003-fit-int.scripts.hetero_cell_bipartite]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/hetero_cell_bipartite
+# Test file: experiments/003-fit-int/scripts/test_hetero_cell_bipartite.py
 
 
 import hashlib
@@ -43,7 +43,7 @@ from torchcell.datasets import (
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell import HeteroCell
+from torchcell.models.hetero_cell_bipartite import HeteroCellBipartite
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
@@ -87,10 +87,10 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_bipartite",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting HeteroCell Training 🐂")
+    print("Starting HeteroCellBipartite Training 💪")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -153,8 +153,9 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
+    # BUG
     genome = SCerevisiaeGenome(
-        genome_root=genome_root, go_root=go_root, overwrite=False
+        genome_root=genome_root, go_root=go_root, overwrite=True
     )
     genome.drop_empty_go()
 
@@ -460,8 +461,8 @@ def main(cfg: DictConfig) -> None:
             }
         )
 
-    # Instantiate new HeteroCell model using wandb configuration.
-    model = HeteroCell(
+    # Instantiate new HeteroCellBipartite model using wandb configuration.
+    model = HeteroCellBipartite(
         gene_num=wandb.config["model"]["gene_num"],
         reaction_num=wandb.config["model"]["reaction_num"],
         metabolite_num=wandb.config["model"]["metabolite_num"],
@@ -585,7 +586,6 @@ def main(cfg: DictConfig) -> None:
     print(f"Starting training ({timestamp()})")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
-        num_nodes=wandb.config.trainer["num_nodes"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,
         num_nodes=num_nodes,

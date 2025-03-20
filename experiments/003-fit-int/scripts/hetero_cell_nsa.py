@@ -1,8 +1,7 @@
-# experiments/003-fit-int/scripts/hetero_cell
-# [[experiments.003-fit-int.scripts.hetero_cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/hetero_cell
-# Test file: experiments/003-fit-int/scripts/test_hetero_cell.py
-
+# experiments/003-fit-int/scripts/hetero_cell_nsa
+# [[experiments.003-fit-int.scripts.hetero_cell_nsa]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/003-fit-int/scripts/hetero_cell_nsa
+# Test file: experiments/003-fit-int/scripts/test_hetero_cell_nsa.py
 
 import hashlib
 import json
@@ -43,13 +42,15 @@ from torchcell.datasets import (
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell import HeteroCell
+from torchcell.models.hetero_cell_nsa import HeteroCellNSA
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
+from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
+from torch_geometric.transforms import Compose
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -87,7 +88,7 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_nsa",
 )
 def main(cfg: DictConfig) -> None:
     print("Starting HeteroCell Training 🐂")
@@ -382,11 +383,22 @@ def main(cfg: DictConfig) -> None:
     inverse_normalize_transform = InverseCompose([normalize_transform])
 
     # Apply transform to dataset
-    dataset.transform = normalize_transform
+
+    dense_transform = HeteroToDenseMask(
+        {
+            "gene": wandb.config.model["gene_num"],
+            "reaction": wandb.config.model["reaction_num"],
+            "metabolite": wandb.config.model["metabolite_num"],
+        }
+    )
 
     # Pass transforms to the RegressionTask
-    forward_transform = normalize_transform
+    forward_transform = Compose([normalize_transform, dense_transform])
     inverse_transform = inverse_normalize_transform
+
+    # Transform data objects
+    dataset.transform = forward_transform
+    cell_graph = dense_transform(dataset.cell_graph)
 
     # Print normalization parameters
     for label, stats in normalize_transform.stats.items():
@@ -461,20 +473,19 @@ def main(cfg: DictConfig) -> None:
         )
 
     # Instantiate new HeteroCell model using wandb configuration.
-    model = HeteroCell(
+    # TODO fix implementation
+    model = HeteroCellNSA(
         gene_num=wandb.config["model"]["gene_num"],
         reaction_num=wandb.config["model"]["reaction_num"],
         metabolite_num=wandb.config["model"]["metabolite_num"],
         hidden_channels=wandb.config["model"]["hidden_channels"],
         out_channels=wandb.config["model"]["out_channels"],
-        num_layers=wandb.config["model"]["num_layers"],
+        attention_pattern=wandb.config["model"]["attention_pattern"],
+        num_heads=wandb.config["model"]["gene_encoder_config"]["heads"],
         dropout=wandb.config["model"]["dropout"],
         norm=wandb.config["model"]["norm"],
         activation=wandb.config["model"]["activation"],
-        gene_encoder_config=wandb.config["model"]["gene_encoder_config"],
-        metabolism_config=wandb.config["model"]["metabolism_config"],
         prediction_head_config=wandb.config["model"]["prediction_head_config"],
-        gpr_conv_config=wandb.config["model"]["gpr_conv_config"],
     ).to(device)
 
     # Log parameter counts using the num_parameters property.
@@ -515,55 +526,23 @@ def main(cfg: DictConfig) -> None:
     )
 
     print(f"Creating regression task ({timestamp()})")
-    checkpoint_path = wandb.config["model"].get("checkpoint_path")
-
-    if checkpoint_path and os.path.exists(checkpoint_path):
-        # Load the checkpoint with all required arguments
-        task = RegressionTask.load_from_checkpoint(
-            checkpoint_path,
-            map_location=device,
-            model=model,  # Pass the already created model
-            cell_graph=dataset.cell_graph,
-            loss_func=loss_func,
-            device=device,
-            optimizer_config=wandb_cfg["regression_task"]["optimizer"],
-            lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
-            batch_size=wandb_cfg["data_module"]["batch_size"],
-            clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
-            clip_grad_norm_max_norm=wandb_cfg["regression_task"][
-                "clip_grad_norm_max_norm"
-            ],
-            inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
-            plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
-            plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
-            grad_accumulation_schedule=wandb.config["regression_task"][
-                "grad_accumulation_schedule"
-            ],
-        )
-        print("Successfully loaded model weights from checkpoint")
-    else:
-        # Create a fresh task with the model
-        task = RegressionTask(
-            model=model,
-            cell_graph=dataset.cell_graph,
-            optimizer_config=wandb_cfg["regression_task"]["optimizer"],
-            lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
-            batch_size=wandb_cfg["data_module"]["batch_size"],
-            clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
-            clip_grad_norm_max_norm=wandb_cfg["regression_task"][
-                "clip_grad_norm_max_norm"
-            ],
-            plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
-            loss_func=loss_func,
-            grad_accumulation_schedule=wandb.config["regression_task"][
-                "grad_accumulation_schedule"
-            ],
-            device=device,
-            inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
-            plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
-        )
+    task = RegressionTask(
+        model=model,
+        cell_graph=cell_graph,  # pass cell graph here
+        optimizer_config=wandb_cfg["regression_task"]["optimizer"],
+        lr_scheduler_config=wandb_cfg["regression_task"]["lr_scheduler"],
+        batch_size=wandb_cfg["data_module"]["batch_size"],
+        clip_grad_norm=wandb_cfg["regression_task"]["clip_grad_norm"],
+        clip_grad_norm_max_norm=wandb_cfg["regression_task"]["clip_grad_norm_max_norm"],
+        plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
+        loss_func=loss_func,
+        grad_accumulation_schedule=wandb.config["regression_task"][
+            "grad_accumulation_schedule"
+        ],
+        device=device,
+        inverse_transform=inverse_transform,
+        plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+    )
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
@@ -585,7 +564,6 @@ def main(cfg: DictConfig) -> None:
     print(f"Starting training ({timestamp()})")
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
-        num_nodes=wandb.config.trainer["num_nodes"],
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,
         num_nodes=num_nodes,

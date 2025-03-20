@@ -2,7 +2,7 @@
 id: 25cmv32yhofqeg6pm6a9n9l
 title: '11'
 desc: ''
-updated: 1742082196954
+updated: 1742343930038
 created: 1741634702492
 ---
 
@@ -36,15 +36,8 @@ created: 1741634702492
 - [x] Make `bipartite_graph` directed.
 - [x] Added incidence conditionals for both `hypergraph` and `bipartite`
 - [x] Ran quick test to make sure node perturbations are propagating.
-- [ ] Check backwards compatibility with `metabolism_hypergraph`. → Works [[2025.03.11 - Metabolism Hypergraph and Metabolism Bipartite|dendron://torchcell/torchcell.data.neo4j_cell#20250311---metabolism-hypergraph-and-metabolism-bipartite]]
-
-- [ ] Refactor [[Neo4j_cell|dendron://torchcell/torchcell.data.neo4j_cell]] and split out `GraphProcessor.` Set up tests.
-
-- [ ] See if we can improve the convergence on `pma`. → On training we have the issue that it likes to predict just a few values, in other words the distribution is spiky.
-- [ ] Is it possible to scale the database over `num_nodes` on slurm cluster. If we can pool memory across `cpu` nodes and use more `cpu` we will be able to not only build db faster but completer build on `Delta`. This allows for horizontal scaling of db builds.
-
-- [ ] Add concern about graph connectivity to [[Report 003-fit-int.2025.03.03|dendron://torchcell/experiments.003-fit-int.2025.03.03]]
-- [ ] Last experiments should be relatively simple.
+- [x] Check backwards compatibility with `metabolism_hypergraph`. → Works [[2025.03.11 - Metabolism Hypergraph and Metabolism Bipartite|dendron://torchcell/torchcell.data.neo4j_cell#20250311---metabolism-hypergraph-and-metabolism-bipartite]]
+- [x] Refactor [[Neo4j_cell|dendron://torchcell/torchcell.data.neo4j_cell]] and split out `GraphProcessor.` Set up tests.
 
 ## 2025.03.12
 
@@ -52,20 +45,8 @@ created: 1741634702492
 - [x] Use dense transformations. For this we need to choose a common naming scheme on edge_index.
 - [x] What should we call edge index on `bipartite` and `hypergraph`? We have been inconsistent using `hyperedge_index` for `gpr` and `edge_index` for `rmr`. → Any bipartite/hypergraph gets `hyperedge_index`
 - [x] Minimal model now run but it is extemely slow. It could overfit on batch size 2 in approximately 80 epochs
-- [ ] graph, bipartite, hypergraph is detectable by definition of node. We could just automatically detect this.
 
 ## 2025.03.13
 
 - [x] We only can use `batch_size=2'. We could further optimize memory issue by making masks boolean and by making edge attrs not dense... → We need to make sure we are using flex attention.
 
-## 2025.03.15
-
-- [ ]
-
-## 2025.03.16
-
-- [ ] Prepare report. Topics: ISAB failure, long runs, Node-Self Attention Integration, Hetero Node Set Attention math, Hetero Node Set Attention math integration.
-
-***
-
-- [ ] Should rename normalization to scaling

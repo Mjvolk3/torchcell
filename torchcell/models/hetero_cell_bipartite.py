@@ -1,7 +1,7 @@
-# torchcell/models/hetero_cell
-# [[torchcell.models.hetero_cell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell
-# Test file: tests/torchcell/models/test_hetero_cell.py
+# torchcell/models/hetero_cell_bipartite
+# [[torchcell.models.hetero_cell_bipartite]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_bipartite
+# Test file: tests/torchcell/models/test_hetero_cell_bipartite.py
 
 import torch
 import torch.nn as nn
@@ -55,20 +55,14 @@ from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from torchcell.models.act import act_register
 from typing import Optional, Dict, Any, Tuple
 from torch_geometric.data import Batch
+import torch
+import torch.nn as nn
+from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
+from torch_geometric.data import HeteroData, Batch
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
+from typing import Optional, Dict, Any, Tuple
 
 
-def get_norm_layer(channels: int, norm: str) -> nn.Module:
-    if norm == "layer":
-        return nn.LayerNorm(channels)
-    elif norm == "batch":
-        return nn.BatchNorm1d(channels)
-    else:
-        raise ValueError(f"Unsupported norm type: {norm}")
-
-
-###############################################################################
-# Attentional Aggregation Wrapper
-###############################################################################
 class AttentionalGraphAggregation(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
         super().__init__()
@@ -91,9 +85,15 @@ class AttentionalGraphAggregation(nn.Module):
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
-###############################################################################
-# PreProcessor: an MLP to “preprocess” gene embeddings.
-###############################################################################
+def get_norm_layer(channels: int, norm: str) -> nn.Module:
+    if norm == "layer":
+        return nn.LayerNorm(channels)
+    elif norm == "batch":
+        return nn.BatchNorm1d(channels)
+    else:
+        raise ValueError(f"Unsupported norm type: {norm}")
+
+
 class PreProcessor(nn.Module):
     def __init__(
         self,
@@ -105,17 +105,17 @@ class PreProcessor(nn.Module):
         activation: str = "relu",
     ):
         super().__init__()
-        act = act_register[activation]
+        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         norm_layer = get_norm_layer(hidden_channels, norm)
         layers = []
         layers.append(nn.Linear(in_channels, hidden_channels))
         layers.append(norm_layer)
-        layers.append(act)
+        layers.append(self.act)
         layers.append(nn.Dropout(dropout))
         for _ in range(num_layers - 1):
             layers.append(nn.Linear(hidden_channels, hidden_channels))
             layers.append(norm_layer)
-            layers.append(act)
+            layers.append(self.act)
             layers.append(nn.Dropout(dropout))
         self.mlp = nn.Sequential(*layers)
 
@@ -123,9 +123,6 @@ class PreProcessor(nn.Module):
         return self.mlp(x)
 
 
-###############################################################################
-# New Model: HeteroCell
-###############################################################################
 class AttentionConvWrapper(nn.Module):
     def __init__(
         self,
@@ -137,7 +134,6 @@ class AttentionConvWrapper(nn.Module):
     ) -> None:
         super().__init__()
         self.conv = conv
-        # For GATv2Conv-like layers:
         if hasattr(conv, "concat"):
             expected_dim = (
                 conv.heads * conv.out_channels if conv.concat else conv.out_channels
@@ -150,27 +146,17 @@ class AttentionConvWrapper(nn.Module):
             else nn.Linear(expected_dim, target_dim)
         )
 
-        # Use PyTorch Geometric's graph normalization layers
         if norm is not None:
             if norm == "batch":
                 self.norm = BatchNorm(target_dim)
             elif norm == "layer":
                 self.norm = LayerNorm(target_dim)
-            elif norm == "graph":
-                self.norm = GraphNorm(target_dim)
-            elif norm == "instance":
-                self.norm = InstanceNorm(target_dim)
-            elif norm == "pair":
-                self.norm = PairNorm(scale=1.0)
-            elif norm == "mean":
-                self.norm = MeanSubtractionNorm()
             else:
                 self.norm = None
         else:
             self.norm = None
 
-        # Get the activation function from the register without instantiating again
-        self.act = act_register[activation] if activation is not None else None
+        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, **kwargs):
@@ -184,7 +170,7 @@ class AttentionConvWrapper(nn.Module):
         return out
 
 
-class HeteroCell(nn.Module):
+class HeteroCellBipartite(nn.Module):
     def __init__(
         self,
         gene_num: int,
@@ -218,11 +204,16 @@ class HeteroCell(nn.Module):
             activation=activation,
         )
 
+        # Default configs if not provided
+        gene_encoder_config = gene_encoder_config or {}
+        metabolism_config = metabolism_config or {}
+        gpr_conv_config = gpr_conv_config or {}
+
         self.convs = nn.ModuleList()
         for _ in range(num_layers):
             conv_dict: Dict[Any, nn.Module] = {}
 
-            # Use SEPARATE GATv2Conv instances for each edge type
+            # Gene-gene interactions with GATv2Conv
             conv_dict[("gene", "physical_interaction", "gene")] = GATv2Conv(
                 hidden_channels,
                 hidden_channels // gene_encoder_config.get("heads", 1),
@@ -239,27 +230,26 @@ class HeteroCell(nn.Module):
                 add_self_loops=gene_encoder_config.get("add_self_loops", False),
             )
 
-            gpr_config = gpr_conv_config if gpr_conv_config is not None else {}
+            # Gene-reaction interactions with GATv2Conv
             conv_dict[("gene", "gpr", "reaction")] = GATv2Conv(
                 hidden_channels,
                 hidden_channels,
-                heads=gpr_config.get("heads", 1),
-                concat=gpr_config.get("concat", False),
-                add_self_loops=gpr_config.get("add_self_loops", False),
+                heads=gpr_conv_config.get("heads", 1),
+                concat=gpr_conv_config.get("concat", False),
+                add_self_loops=gpr_conv_config.get("add_self_loops", False),
             )
 
-            conv_dict[("metabolite", "reaction", "metabolite")] = StoichHypergraphConv(
-                in_channels=hidden_channels,
-                out_channels=hidden_channels,
-                is_stoich_gated=metabolism_config.get("is_stoich_gated", False),
-                use_attention=metabolism_config.get("use_attention", True),
+            # Reaction-metabolite bipartite interactions with GATv2Conv
+            conv_dict[("reaction", "rmr", "metabolite")] = GATv2Conv(
+                hidden_channels,
+                hidden_channels // metabolism_config.get("heads", 1),
                 heads=metabolism_config.get("heads", 1),
                 concat=metabolism_config.get("concat", True),
-                dropout=dropout,
-                bias=True,
+                add_self_loops=metabolism_config.get("add_self_loops", False),
+                edge_dim=1,
             )
 
-            # Wrap each conv so its output is projected to hidden_channels.
+            # Wrap each conv
             for key, conv in conv_dict.items():
                 conv_dict[key] = AttentionConvWrapper(
                     conv,
@@ -270,22 +260,21 @@ class HeteroCell(nn.Module):
                 )
 
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
-        # Global aggregator for intact graphs.
 
+        # Global aggregator
         self.global_aggregator = AttentionalGraphAggregation(
             in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
         )
 
-        # Build separate prediction heads:
+        # Prediction head
         pred_config = prediction_head_config or {}
         self.prediction_head = self._build_prediction_head(
             in_channels=hidden_channels,
             hidden_channels=pred_config.get("hidden_channels", hidden_channels),
-            out_channels=2,  # two outputs: fitness and gene interaction
+            out_channels=2,
             num_layers=pred_config.get("head_num_layers", 1),
             dropout=pred_config.get("dropout", dropout),
             activation=pred_config.get("activation", activation),
-            # residual=pred_config.get("residual", True),
             norm=pred_config.get("head_norm", norm),
         )
 
@@ -297,12 +286,11 @@ class HeteroCell(nn.Module):
         num_layers: int,
         dropout: float,
         activation: str,
-        # residual: bool,
         norm: Optional[str] = None,
     ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
-        act = act_register[activation]
+        act = nn.ReLU() if activation == "relu" else nn.SiLU()
         layers = []
         dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
         for i in range(num_layers):
@@ -325,6 +313,7 @@ class HeteroCell(nn.Module):
 
             batch_size = len(data["gene"].ptr) - 1
 
+            # Apply pert_mask only when selecting embeddings
             x_gene_exp = self.gene_embedding.weight.expand(batch_size, -1, -1)
             x_gene_comb = x_gene_exp.reshape(-1, x_gene_exp.size(-1))
             x_gene = x_gene_comb[~gene_data.pert_mask]
@@ -346,12 +335,11 @@ class HeteroCell(nn.Module):
                 "metabolite": x_metabolite,
             }
         else:
-            # For a single (cell) graph, use all node embeddings directly.
-            x_gene = data["gene"]
+            gene_data = data["gene"]
             reaction_data = data["reaction"]
             metabolite_data = data["metabolite"]
 
-            gene_idx = torch.arange(x_gene.num_nodes, device=device)
+            gene_idx = torch.arange(gene_data.num_nodes, device=device)
             reaction_idx = torch.arange(reaction_data.num_nodes, device=device)
             metabolite_idx = torch.arange(metabolite_data.num_nodes, device=device)
 
@@ -361,65 +349,69 @@ class HeteroCell(nn.Module):
                 "metabolite": self.metabolite_embedding(metabolite_idx),
             }
 
-        # Move all edge indices to the correct device.
+        # Process edge indices directly - they should already be consistent with node selection
         edge_index_dict = {}
-        for key, edge in data.edge_index_dict.items():
-            edge_index_dict[key] = edge.to(device) if torch.is_tensor(edge) else edge
+        edge_attr_dict = {}
 
-        # Add hyperedge indices for 'gpr' and 'rmr'
-        edge_index_dict[("gene", "gpr", "reaction")] = data[
-            ("gene", "gpr", "reaction")
-        ].hyperedge_index.to(device)
-        edge_index_dict[("metabolite", "reaction", "metabolite")] = data[
-            ("metabolite", "reaction", "metabolite")
-        ].hyperedge_index.to(device)
+        # Gene-gene interactions
+        gene_phys_edge_index = data[
+            ("gene", "physical_interaction", "gene")
+        ].edge_index.to(device)
+        edge_index_dict[("gene", "physical_interaction", "gene")] = gene_phys_edge_index
 
-        # Prepare extra edge features for the metabolite hyperedge, if present.
-        extra_kwargs: dict[str, Any] = {}
-        met_edge = ("metabolite", "reaction", "metabolite")
-        met_edge_data = data[met_edge]
-        extra_kwargs["stoich_dict"] = {met_edge: met_edge_data.stoichiometry.to(device)}
-        # BUG
-        extra_kwargs["hyperedge_attr_dict"] = {met_edge: x_dict["reaction"]}
-        extra_kwargs["num_edges_dict"] = {
-            met_edge: met_edge_data.hyperedge_index.size(1)
-        }
+        # Regulatory interactions
+        gene_reg_edge_index = data[
+            ("gene", "regulatory_interaction", "gene")
+        ].edge_index.to(device)
+        edge_index_dict[("gene", "regulatory_interaction", "gene")] = (
+            gene_reg_edge_index
+        )
 
-        # Apply each convolution layer sequentially.
+        # Gene-reaction interactions
+        gpr_edge_index = data[("gene", "gpr", "reaction")].hyperedge_index.to(device)
+        edge_index_dict[("gene", "gpr", "reaction")] = gpr_edge_index
+
+        # Reaction-metabolite interactions
+        rmr_edge_type = ("reaction", "rmr", "metabolite")
+        rmr_edge_index = data[rmr_edge_type].hyperedge_index.to(device)
+        edge_index_dict[rmr_edge_type] = rmr_edge_index
+
+        # Process stoichiometry for metabolism edges
+        stoich = data[rmr_edge_type].stoichiometry.to(device)
+        if stoich.dim() == 1:
+            stoich = stoich.unsqueeze(1)  # Make it [num_edges, 1]
+        edge_attr_dict[rmr_edge_type] = stoich
+
+        # Apply convolution layers
         for conv in self.convs:
-            x_dict = conv(x_dict, edge_index_dict, **extra_kwargs)
+            x_dict = conv(x_dict, edge_index_dict, edge_attr_dict=edge_attr_dict)
 
         return x_dict["gene"]
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        # Process the reference (wildtype) graph.
+        # Process reference graph
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
             z_w,
             index=torch.zeros(z_w.size(0), device=z_w.device, dtype=torch.long),
             dim_size=1,
         )
-        # Process the intact (perturbed) batch.
+
+        # Process perturbed batch
         z_i = self.forward_single(batch)
         z_i = self.global_aggregator(z_i, index=batch["gene"].batch)
-        # Compute the difference: use broadcasting to match batch size.
+
+        # Compute difference vector
         batch_size: int = z_i.size(0)
         z_w_exp: torch.Tensor = z_w.expand(batch_size, -1)
         z_p: torch.Tensor = z_w_exp - z_i
-        # Single prediction head that outputs 2 dimensions (fitness and gene interaction)
-        predictions: torch.Tensor = self.prediction_head(z_p)  # shape: [batch_size, 2]
+
+        # Generate predictions
+        predictions: torch.Tensor = self.prediction_head(z_p)
         fitness: torch.Tensor = predictions[:, 0:1]
         gene_interaction: torch.Tensor = predictions[:, 1:2]
-
-        # HACK
-        # try:
-        #     plot_embeddings(z_w_exp, z_i, z_p, batch_size, save_dir="./embedding_plots")
-        # except Exception as e:
-        #     print(f"Warning: Embedding plotting failed: {e}")
-        # END PLOTTING CODE
-        # HACK
 
         return predictions, {
             "z_w": z_w,
@@ -450,7 +442,7 @@ class HeteroCell(nn.Module):
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
-    config_name="hetero_cell",
+    config_name="hetero_cell_bipartite",
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
@@ -476,13 +468,13 @@ def main(cfg: DictConfig) -> None:
 
     # Load data
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=32, num_workers=8, metabolism_graph="metabolism_hypergraph"
+        batch_size=32, num_workers=4, metabolism_graph="metabolism_bipartite"
     )
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
     # Initialize model (parameters unchanged)
-    model = HeteroCell(
+    model = HeteroCellBipartite(
         gene_num=cfg.model.gene_num,
         reaction_num=cfg.model.reaction_num,
         metabolite_num=cfg.model.metabolite_num,

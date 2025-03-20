@@ -787,7 +787,7 @@ def test_gpu_flex_attention_error_propagation():
     edge_types = {("gene", "gpr", "reaction")}
     pattern = ["M"]  # Just use masked attention
     
-    # Create a model with a mock _process_with_mask method that raises an error
+    # Create model on GPU
     model = HeteroNSA(
         hidden_dim=hidden_dim,
         node_types=node_types,
@@ -796,15 +796,15 @@ def test_gpu_flex_attention_error_propagation():
         num_heads=4,
     ).cuda()
     
-    # Save the original method
-    original_process = model._process_with_mask
+    # Save the original _process_with_mask method from the first block
+    original_process = model.blocks[0]._process_with_mask
     
     # Replace with a method that raises an error
     def mock_process(*args, **kwargs):
         raise RuntimeError("Simulated attention error")
     
-    # Monkey patch the instance method
-    model._process_with_mask = mock_process
+    # Monkey-patch the first block's method
+    model.blocks[0]._process_with_mask = mock_process
     
     # Create input embeddings (on GPU)
     x_dict = {
@@ -812,12 +812,12 @@ def test_gpu_flex_attention_error_propagation():
         "reaction": data["reaction"].x.clone()
     }
     
-    # Should raise an error when processed
+    # Forward pass should now raise an error
     with pytest.raises(RuntimeError) as excinfo:
         model(x_dict, data)
     
     # Check the error message
     assert "Simulated attention error" in str(excinfo.value)
     
-    # Restore the original method (though not strictly needed as this object will be garbage collected)
-    model._process_with_mask = original_process
+    # Restore the original method
+    model.blocks[0]._process_with_mask = original_process

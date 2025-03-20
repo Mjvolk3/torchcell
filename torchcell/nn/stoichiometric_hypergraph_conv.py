@@ -95,6 +95,7 @@ class StoichHypergraphConv(MessagePassing):
         num_edges: Optional[int] = None,
     ) -> Tensor:
         num_nodes = x.size(0)
+        # HACK not sure we should be setting num edges - index issues.
         num_edges = int(edge_index[1].max()) + 1 if num_edges is None else num_edges
 
         # Transform node features before splitting for attention
@@ -107,6 +108,7 @@ class StoichHypergraphConv(MessagePassing):
             x_transformed = x_transformed.view(-1, self.heads, self.out_channels)
             hyperedge_attr = self.lin(hyperedge_attr)
             hyperedge_attr = hyperedge_attr.view(-1, self.heads, self.out_channels)
+            # BUG
             x_i = x_transformed[edge_index[0]]
             x_j = hyperedge_attr[edge_index[1]]
             alpha = (torch.cat([x_i, x_j], dim=-1) * self.att).sum(dim=-1)

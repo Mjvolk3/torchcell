@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_003-fit-int_hetero_cell_bipartite_4e5
+  project: torchcell_003-fit-int_hetero_cell_bipartite_2.4e4
   tags: []
 
 cell_dataset:
@@ -26,15 +26,15 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 3 # 20 # FLAG
+  max_epochs: 1000 # 20 # FLAG
   strategy: auto
   num_nodes: 1
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 10 # placeholder
+heads: 1 # placeholder
 norms: "layer" # placeholder
 # ------
 model:

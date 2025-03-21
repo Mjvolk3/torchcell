@@ -16,49 +16,42 @@
   profiler:
     is_pytorch: true
 
-  data_module:
-    is_perturbation_subset: true
-    perturbation_subset_size: 2.5e4 #2.5e4
-    batch_size: 2 # FLAG
-    num_workers: 2
-    pin_memory: false
-    prefetch: false
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 100 #2.5e4
+  batch_size: 4
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
 
-  trainer:
-    max_epochs: 120 # 20 # FLAG
-    strategy: auto
-    accelerator: gpu
-    devices: 1
-    overfit_batches: 0
+trainer:
+  max_epochs: 280
+   # 20 # FLAG
+  strategy: auto
+  accelerator: gpu
+  devices: 1
+  overfit_batches: 0
 
-  # ------ Placeholders for hydra optuna
-  heads: 8 # placeholder
-  norms: "layer" # placeholder
+# ------ Placeholders for hydra optuna
+norms: "layer" # placeholder
+# ------
+model:
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64
+  out_channels: 2
+  attention_pattern: ["M"] #["M", "M", "S"] #, "M", "S"]
+  norm: ${norms}
+  activation: "relu"
   dropout: 0.0
-  # ------
-  model:
-    gene_num: 6607
-    reaction_num: 7122
-    metabolite_num: 2806
+  heads: 1
+  prediction_head_config:
     hidden_channels: 64
-    out_channels: 2
-    attention_pattern: ["S", "M", "S", "M"] #, "M", "S"]
-    norm: ${norms}
+    head_num_layers: 4
+    dropout: 0.0
     activation: "relu"
-    dropout: ${dropout}
-    gene_encoder_config:
-      heads: ${heads}
-      concat: true
-    gpr_conv_config:
-      heads: ${heads}
-    metabolism_config:
-      heads: ${heads}
-    prediction_head_config:
-      hidden_channels: 64
-      head_num_layers: 4
-      dropout: ${dropout}
-      activation: "relu"
-      head_norm: ${norms}
+    head_norm: ${norms}
 
   regression_task:
     is_weighted_phenotype_loss: true

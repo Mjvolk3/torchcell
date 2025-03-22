@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_003-fit-int_hetero_cell_bipartite_2.4e4
+  project: torchcell_003-fit-int_hetero_cell_bipartite_4e5
   tags: []
 
 cell_dataset:
@@ -19,22 +19,22 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 2.5e4 #2.5e4
-  batch_size: 32
-  num_workers: 2
+  perturbation_subset_size: 4e5 #2.5e4
+  batch_size: 32 #32
+  num_workers: 4
   pin_memory: false
   prefetch: false
 
 trainer:
   max_epochs: 1000 # 20 # FLAG
-  strategy: auto
+  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 4
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 1 # placeholder
+heads: 10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:

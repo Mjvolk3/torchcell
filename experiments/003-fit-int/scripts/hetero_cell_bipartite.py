@@ -154,7 +154,9 @@ def main(cfg: DictConfig) -> None:
         rank = 0
 
     # BUG
-    genome = SCerevisiaeGenome(genome_root=genome_root, go_root=go_root, overwrite=True)
+    genome = SCerevisiaeGenome(
+        genome_root=genome_root, go_root=go_root, overwrite=False
+    )
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
@@ -617,9 +619,9 @@ if __name__ == "__main__":
     import time
 
     # Random delay between 0-90 seconds
-    delay = random.uniform(0, 90)
-    print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
-    time.sleep(delay)
+    # delay = random.uniform(0, 90)
+    # print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
+    # time.sleep(delay)
 
     mp.set_start_method("spawn", force=True)
     main()

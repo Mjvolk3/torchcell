@@ -1,7 +1,7 @@
 # wandb_sweep.yaml
-program: experiments/003-fit-int/scripts/hetero_cell.py
-project: torchcell_003-fit-int_hetero_cell_1e5
-method: random
+program: experiments/003-fit-int/scripts/hetero_cell_bipartite.py
+project: torchcell_003-fit-int_hetero_cell_bipartite_2.5e4
+method: grid
 
 parameters:
   # Cell dataset parameters
@@ -12,9 +12,9 @@ parameters:
       node_embeddings:
         value: [learnable]
       learnable_embedding_input_channels:
-        value: 16
+        value: 64
       incidence_graphs:
-        value: [metabolism]
+        value: [metabolism_bipartite]
 
   # Profiler parameters
   profiler:
@@ -28,7 +28,7 @@ parameters:
       is_perturbation_subset:
         value: true
       perturbation_subset_size:
-        value: 1e5
+        value: 2.5e4
       batch_size:
         value: 32
       num_workers:
@@ -42,7 +42,7 @@ parameters:
   trainer:
     parameters:
       max_epochs:
-        value: 60
+        value: 200
       strategy:
         value: auto
       accelerator:
@@ -51,22 +51,22 @@ parameters:
         value: 1
       overfit_batches:
         value: 0
-
+  
   # Model parameters
   model:
     parameters:
       gene_num:
         value: 6607
       reaction_num:
-        value: 4881
+        value: 7122
       metabolite_num:
-        value: 2534
+        value: 2806
       hidden_channels:
-        value: 16
+        value: 64
       out_channels:
         value: 2
       num_layers:
-        value: 2
+        values: [2, 3, 4, 5]
       norm:
         value: "layer"
       activation:
@@ -106,7 +106,7 @@ parameters:
       prediction_head_config:
         parameters:
           hidden_channels:
-            value: 16
+            value: 64
           head_num_layers:
             value: 2
           dropout:
@@ -124,15 +124,15 @@ parameters:
       is_weighted_phenotype_loss:
         value: true
       lambda_dist:
-        values: [0.1] #[0.01, 0.1] #[0, 1e-3, 1e-2, 1e-1, 1, 1.5, 2]
+        value: 0.1 #[0.01, 0.1] #[0, 1e-3, 1e-2, 1e-1, 1, 1.5, 2]
       lambda_supcr:
-        values: [0.001] #[0.001, 0.01] #[0, 1e-4, 1e-3, 1e-2, 1e-1, 1]
+        value: 0.001 #[0.001, 0.01] #[0, 1e-4, 1e-3, 1e-2, 1e-1, 1]
       optimizer:
         parameters:
           type:
             value: "AdamW"
           lr:
-            values: [1e-3] #[1e-5, 1e-4, 1e-3]
+            value: 1e-3 #[1e-5, 1e-4, 1e-3]
           weight_decay:
             value: 1e-9
       lr_scheduler:

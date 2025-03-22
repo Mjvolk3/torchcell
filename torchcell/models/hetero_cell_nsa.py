@@ -97,10 +97,7 @@ class HeteroCellNSA(nn.Module):
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        gene_encoder_config: Optional[Dict[str, Any]] = None,
-        metabolism_config: Optional[Dict[str, Any]] = None,
         prediction_head_config: Optional[Dict[str, Any]] = None,
-        gpr_conv_config: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -108,7 +105,7 @@ class HeteroCellNSA(nn.Module):
         self.reaction_num = reaction_num
         self.metabolite_num = metabolite_num
 
-        # Validate configuration
+        # Validate configurations
         if hidden_channels % num_heads != 0:
             raise ValueError(
                 f"Hidden dimension ({hidden_channels}) must be divisible by number of heads ({num_heads})"
@@ -118,6 +115,11 @@ class HeteroCellNSA(nn.Module):
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
+
+        # init embeddings TODO
+        nn.init.orthogonal_(self.gene_embedding.weight)
+        nn.init.orthogonal_(self.reaction_embedding.weight)
+        nn.init.orthogonal_(self.metabolite_embedding.weight)
 
         # Preprocessor for gene features
         self.preprocessor = PreProcessor(
@@ -205,151 +207,103 @@ class HeteroCellNSA(nn.Module):
         return nn.Sequential(*layers)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
-        """
-        Process a single graph or batch of graphs through the model.
-
-        Args:
-            data: HeteroData object or batched HeteroData
-
-        Returns:
-            torch.Tensor: Gene node embeddings after processing
-        """
+        """Process a single graph or batch of graphs through the model."""
         device = self.gene_embedding.weight.device
-
-        # Verify required mask attributes for attention
-        missing_masks = []
-        for edge_type in data.edge_types:
-            src, rel, dst = edge_type
-            if (
-                src != dst
-                and "adj_mask" not in data[edge_type]
-                and "inc_mask" not in data[edge_type]
-            ):
-                missing_masks.append(edge_type)
-
-        if missing_masks:
-            raise ValueError(
-                f"Missing mask attributes in data for edge types: {missing_masks}. "
-                f"HeteroNSA requires adj_mask or inc_mask attributes for attention. "
-                f"Ensure dense mask transform has been applied."
-            )
-
-        # Initialize embeddings based on whether we're processing a batch or single graph
+        
+        # Check if we're handling a batch
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
-
+        
+        # Initialize node features
         if is_batch:
-            gene_data = data["gene"]
-            reaction_data = data["reaction"]
-            metabolite_data = data["metabolite"]
-
-            # Determine batch size based on available batch information
+            # For batched data, we need to carefully handle the node indices
             batch_size = (
-                len(gene_data.ptr) - 1
-                if hasattr(gene_data, "ptr")
-                else int(gene_data.batch.max()) + 1
+                len(data["gene"].ptr) - 1 if hasattr(data["gene"], "ptr") 
+                else int(data["gene"].batch.max()) + 1
             )
-
-            # Process genes with perturbation mask if available
-            if hasattr(gene_data, "pert_mask") and hasattr(
-                gene_data.pert_mask, "shape"
-            ):
-                # Using perturbation mask to select non-perturbed nodes
-                x_gene_exp = self.gene_embedding.weight.expand(batch_size, -1, -1)
-                x_gene_comb = x_gene_exp.reshape(-1, x_gene_exp.size(-1))
-                x_gene = x_gene_comb[~gene_data.pert_mask]
+            
+            # Create consistent embeddings for all node types
+            x_dict = {}
+            
+            # Process gene nodes
+            gene_idx = torch.arange(self.gene_num, device=device)
+            gene_emb = self.gene_embedding(gene_idx)
+            # Expand gene embeddings for each batch item
+            gene_emb_exp = gene_emb.unsqueeze(0).expand(batch_size, -1, -1)
+            # Reshape to [batch_size * gene_num, hidden_dim]
+            gene_emb_flat = gene_emb_exp.reshape(-1, self.hidden_channels)
+            
+            # Handle gene perturbation mask if available
+            if hasattr(data["gene"], "pert_mask") and torch.is_tensor(data["gene"].pert_mask):
+                # Only keep non-perturbed gene nodes
+                x_dict["gene"] = gene_emb_flat[~data["gene"].pert_mask]
             else:
-                # Fallback to using batch assignment
-                gene_x = torch.zeros(
-                    gene_data.num_nodes, self.hidden_channels, device=device
-                )
-                for i in range(batch_size):
-                    batch_mask = gene_data.batch == i
-                    num_nodes = int(batch_mask.sum())
-                    gene_x[batch_mask] = self.gene_embedding.weight[:num_nodes]
-                x_gene = gene_x
-
+                # Use all gene embeddings
+                x_dict["gene"] = gene_emb_flat[:data["gene"].num_nodes]
+            
             # Apply preprocessor to gene features
-            x_gene = self.preprocessor(x_gene)
-
-            # Process reaction nodes with perturbation mask if available
-            if hasattr(reaction_data, "pert_mask") and hasattr(
-                reaction_data.pert_mask, "shape"
-            ):
-                x_reaction_exp = self.reaction_embedding.weight.expand(
-                    batch_size, -1, -1
-                )
-                x_reaction_comb = x_reaction_exp.reshape(-1, x_reaction_exp.size(-1))
-                x_reaction = x_reaction_comb[~reaction_data.pert_mask]
+            x_dict["gene"] = self.preprocessor(x_dict["gene"])
+            
+            # Similar approach for reaction nodes
+            reaction_idx = torch.arange(self.reaction_num, device=device)
+            reaction_emb = self.reaction_embedding(reaction_idx)
+            reaction_emb_exp = reaction_emb.unsqueeze(0).expand(batch_size, -1, -1)
+            reaction_emb_flat = reaction_emb_exp.reshape(-1, self.hidden_channels)
+            
+            if hasattr(data["reaction"], "pert_mask") and torch.is_tensor(data["reaction"].pert_mask):
+                x_dict["reaction"] = reaction_emb_flat[~data["reaction"].pert_mask]
             else:
-                # Fallback to using batch assignment
-                reaction_x = torch.zeros(
-                    reaction_data.num_nodes, self.hidden_channels, device=device
-                )
-                for i in range(batch_size):
-                    batch_mask = reaction_data.batch == i
-                    num_nodes = int(batch_mask.sum())
-                    # Ensure we don't exceed embedding dimensions
-                    num_nodes = min(num_nodes, self.reaction_num)
-                    reaction_x[batch_mask] = self.reaction_embedding.weight[:num_nodes]
-                x_reaction = reaction_x
-
-            # Process metabolite nodes with perturbation mask if available
-            if hasattr(metabolite_data, "pert_mask") and hasattr(
-                metabolite_data.pert_mask, "shape"
-            ):
-                x_metabolite_exp = self.metabolite_embedding.weight.expand(
-                    batch_size, -1, -1
-                )
-                x_metabolite_comb = x_metabolite_exp.reshape(
-                    -1, x_metabolite_exp.size(-1)
-                )
-                x_metabolite = x_metabolite_comb[~metabolite_data.pert_mask]
+                x_dict["reaction"] = reaction_emb_flat[:data["reaction"].num_nodes]
+            
+            # And for metabolite nodes
+            metabolite_idx = torch.arange(self.metabolite_num, device=device)
+            metabolite_emb = self.metabolite_embedding(metabolite_idx)
+            metabolite_emb_exp = metabolite_emb.unsqueeze(0).expand(batch_size, -1, -1)
+            metabolite_emb_flat = metabolite_emb_exp.reshape(-1, self.hidden_channels)
+            
+            if hasattr(data["metabolite"], "pert_mask") and torch.is_tensor(data["metabolite"].pert_mask):
+                x_dict["metabolite"] = metabolite_emb_flat[~data["metabolite"].pert_mask]
             else:
-                # Fallback to using batch assignment
-                metabolite_x = torch.zeros(
-                    metabolite_data.num_nodes, self.hidden_channels, device=device
-                )
-                for i in range(batch_size):
-                    batch_mask = metabolite_data.batch == i
-                    num_nodes = int(batch_mask.sum())
-                    # Ensure we don't exceed embedding dimensions
-                    num_nodes = min(num_nodes, self.metabolite_num)
-                    metabolite_x[batch_mask] = self.metabolite_embedding.weight[
-                        :num_nodes
-                    ]
-                x_metabolite = metabolite_x
+                x_dict["metabolite"] = metabolite_emb_flat[:data["metabolite"].num_nodes]
         else:
-            # For a single graph, use embeddings directly with proper slicing
+            # For a single graph, use direct indexing with the full embeddings
             gene_count = min(data["gene"].num_nodes, self.gene_num)
             reaction_count = min(data["reaction"].num_nodes, self.reaction_num)
             metabolite_count = min(data["metabolite"].num_nodes, self.metabolite_num)
-
-            x_gene = self.preprocessor(self.gene_embedding.weight[:gene_count])
-            x_reaction = self.reaction_embedding.weight[:reaction_count]
-            x_metabolite = self.metabolite_embedding.weight[:metabolite_count]
-
-        # Combine all node embeddings
-        x_dict = {"gene": x_gene, "reaction": x_reaction, "metabolite": x_metabolite}
-
-        # Prepare batch assignment information if available
+            
+            gene_idx = torch.arange(gene_count, device=device)
+            reaction_idx = torch.arange(reaction_count, device=device)
+            metabolite_idx = torch.arange(metabolite_count, device=device)
+            
+            x_dict = {
+                "gene": self.preprocessor(self.gene_embedding(gene_idx)),
+                "reaction": self.reaction_embedding(reaction_idx),
+                "metabolite": self.metabolite_embedding(metabolite_idx),
+            }
+        
+        # Prepare batch assignment information for NSA layer
         batch_idx = {}
         if is_batch:
             for node_type in ["gene", "reaction", "metabolite"]:
                 if hasattr(data[node_type], "batch"):
                     batch_idx[node_type] = data[node_type].batch
-
-        # Process through NSA layer with residual connection
-        new_x = self.nsa_layer(x_dict, data, batch_idx)
-
-        # Apply layer norm and residual connection
-        for node_type in new_x:
-            if node_type in x_dict:
-                new_x[node_type] = self.layer_norms[node_type](
-                    new_x[node_type] + x_dict[node_type]
-                )
-
-        # Return gene embeddings for downstream tasks
-        return new_x["gene"]
+        
+        # Process through NSA layer with proper error handling
+        try:
+            new_x = self.nsa_layer(x_dict, data, batch_idx)
+            
+            # Apply layer norm and residual connection
+            for node_type in new_x:
+                if node_type in x_dict:
+                    new_x[node_type] = self.layer_norms[node_type](
+                        new_x[node_type] + x_dict[node_type]
+                    )
+                    
+            return new_x["gene"]
+        except Exception as e:
+            print(f"Error in NSA layer: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData | Batch
@@ -453,7 +407,6 @@ def main(cfg: DictConfig) -> None:
         plot_correlations,
     )
     from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
-
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     device = torch.device(
@@ -472,8 +425,17 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Get the cell_graph from the dataset
-    cell_graph = dataset.cell_graph
-
+    
+    dense_transform = HeteroToDenseMask(
+        {
+            "gene": 6607,
+            "reaction": 7122,
+            "metabolite": 2806,
+        }
+    )
+    dataset.transform = dense_transform
+    cell_graph = dense_transform(dataset.cell_graph)
+    
     # Verify cell_graph has the necessary dense mask attributes
     for edge_type in cell_graph.edge_types:
         src, rel, dst = edge_type
@@ -538,7 +500,7 @@ def main(cfg: DictConfig) -> None:
         hidden_channels=cfg.model.hidden_channels,
         out_channels=cfg.model.out_channels,
         attention_pattern=cfg.model.attention_pattern,
-        num_heads=cfg.model.gene_encoder_config.heads,
+        num_heads=cfg.model.heads,
         dropout=cfg.model.dropout,
         norm=cfg.model.norm,
         activation=cfg.model.activation,

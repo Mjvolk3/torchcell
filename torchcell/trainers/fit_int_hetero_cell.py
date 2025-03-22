@@ -117,6 +117,14 @@ class RegressionTask(L.LightningModule):
             self._cell_graph_device = batch_device
         return self.model(self.cell_graph, batch)
 
+    def _ensure_no_unused_params_loss(self):
+        dummy_loss = 0
+        for param in self.model.parameters():
+            if param.requires_grad and param.grad is None:
+                dummy_loss = dummy_loss + 0.0 * param.sum()
+        return dummy_loss
+
+
     def _shared_step(self, batch, batch_idx, stage="train"):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
@@ -140,6 +148,11 @@ class RegressionTask(L.LightningModule):
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
         loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
+        
+        # HACK - start
+        dummy_loss = self._ensure_no_unused_params_loss()
+        loss = loss + dummy_loss
+        # HACK - end
 
         # Log loss components
         for key, value in [
@@ -467,6 +480,11 @@ class RegressionTask(L.LightningModule):
                 "predictions": [],
                 "latents": {"z_p": []},
             }
+    
+    # def on_after_backward(self):
+    #     for name, param in self.named_parameters():
+    #         if param.grad is None:
+    #             print(f"Unused parameter: {name}")
 
     def configure_optimizers(self):
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])

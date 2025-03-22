@@ -2,43 +2,38 @@
 # [[torchcell.data.neo4j_cell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_cell
 # Test file: tests/torchcell/data/test_neo4j_cell.py
-import torch
+
 import json
 import logging
 import os
 import os.path as osp
 from collections.abc import Callable
-import lmdb
-import pandas as pd
-import networkx as nx
-import hypernetx as hnx
-import numpy as np
-from typing import Any
-from pydantic import field_validator
-from tqdm import tqdm
-from torchcell.data.embedding import BaseEmbeddingDataset
-from torch_geometric.data import Dataset
-from torch_geometric.utils import add_remaining_self_loops
-from torch_geometric.transforms import NormalizeFeatures
-
-# from torch_geometric.data import HeteroData
-from torchcell.data.hetero_data import HeteroData
-from torchcell.datamodels import ModelStrictArbitrary
-from torchcell.datamodels import Converter
-from torchcell.data.deduplicate import Deduplicator
-from torchcell.sequence import GeneSet, Genome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.datamodels import (
-    ExperimentType,
-    ExperimentReferenceType,
-    PhenotypeType,
-    EXPERIMENT_TYPE_MAP,
-    EXPERIMENT_REFERENCE_TYPE_MAP,
-)
-from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
-from typing import Type, Optional
 from enum import Enum, auto
-from abc import ABC, abstractmethod
+from typing import Optional, Type
+
+import hypernetx as hnx
+import lmdb
+import networkx as nx
+import numpy as np
+import pandas as pd
+import torch
+from pydantic import field_validator
+from torch_geometric.data import Dataset
+from tqdm import tqdm
+from torchcell.data.graph_processor import GraphProcessor
+from torchcell.data.cell_data import to_cell_data
+from torchcell.data.deduplicate import Deduplicator
+from torchcell.data.embedding import BaseEmbeddingDataset
+from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+from torchcell.datamodels import (
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
+    Converter,
+    ModelStrictArbitrary,
+    PhenotypeType,
+)
+from torchcell.sequence import GeneSet
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 
@@ -73,35 +68,6 @@ def normalize_tensor_row(x: torch.Tensor | list[torch.Tensor]) -> list[torch.Ten
     x = x - x.min()
     x = x / x.sum(dim=-1, keepdim=True).clamp(min=1.0)
     return list(x.flatten(-1))
-
-
-# HACK - normalize embedding end
-
-
-# @profile
-# def create_embedding_graph(
-#     gene_set: GeneSet, embeddings: BaseEmbeddingDataset
-# ) -> nx.Graph:
-#     """
-#     Create a NetworkX graph from embeddings.
-#     """
-
-#     # Create an empty NetworkX graph
-#     G = nx.Graph()
-
-#     # Extract and concatenate embeddings for all items in embeddings
-#     for item in embeddings:
-#         keys = item["embeddings"].keys()
-#         if item.id in gene_set:
-#             item_embeddings = [item["embeddings"][k].squeeze(0) for k in keys]
-#             # HACK - normalize embedding - start
-#             item_embeddings = normalize_tensor_row(item_embeddings)
-#             # HACK - normalize embedding - end
-#             concatenated_embedding = torch.cat(item_embeddings)
-
-#             G.add_node(item.id, embedding=concatenated_embedding)
-
-#     return G
 
 
 def min_max_normalize_embedding(embedding: torch.Tensor) -> torch.Tensor:
@@ -149,274 +115,6 @@ def create_embedding_graph(
     return G
 
 
-# @profile
-# TODO we could remove add_remaining_gene_self_loops and put it in transforms
-def to_cell_data(
-    graphs: dict[str, nx.Graph],
-    incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
-    add_remaining_gene_self_loops: bool = True,
-) -> HeteroData:
-    """Convert networkx graphs and incidence graphs to HeteroData format."""
-    hetero_data = HeteroData()
-
-    # Base nodes setup
-    base_nodes_list = sorted(list(graphs["base"].nodes()))
-    node_idx_mapping = {node: idx for idx, node in enumerate(base_nodes_list)}
-    num_nodes = len(base_nodes_list)
-
-    # Initialize gene attributes
-    hetero_data["gene"].num_nodes = num_nodes
-    hetero_data["gene"].node_ids = base_nodes_list
-    hetero_data["gene"].x = torch.zeros((num_nodes, 0), dtype=torch.float)
-
-    # Process each graph for edges and embeddings
-    for graph_type, graph in graphs.items():
-        if graph.number_of_edges() > 0:
-            # Convert edges to tensor
-            edge_index = torch.tensor(
-                [
-                    (node_idx_mapping[src], node_idx_mapping[dst])
-                    for src, dst in graph.edges()
-                    if src in node_idx_mapping and dst in node_idx_mapping
-                ],
-                dtype=torch.long,
-            ).t()
-
-            # Add interaction edges
-            if graph_type != "base":
-                edge_type = ("gene", f"{graph_type}_interaction", "gene")
-                if add_remaining_gene_self_loops:
-                    edge_index, _ = add_remaining_self_loops(
-                        edge_index, num_nodes=num_nodes
-                    )
-                hetero_data[edge_type].edge_index = edge_index.cpu()
-                hetero_data[edge_type].num_edges = edge_index.size(1)
-        else:
-            # Process node embeddings
-            embeddings = torch.zeros((num_nodes, 0), dtype=torch.float)
-            for i, node in enumerate(base_nodes_list):
-                if node in graph.nodes and "embedding" in graph.nodes[node]:
-                    embedding = graph.nodes[node]["embedding"]
-                    if embeddings.shape[1] == 0:
-                        embeddings = torch.zeros(
-                            (num_nodes, embedding.shape[0]), dtype=torch.float
-                        )
-                    embeddings[i] = embedding.cpu()  # Ensure CPU tensor
-            hetero_data["gene"].x = torch.cat(
-                (hetero_data["gene"].x.cpu(), embeddings.cpu()), dim=1
-            )
-
-    # Process metabolism graphs if provided
-    if incidence_graphs is not None:
-        # Process hypergraph representation
-        if "metabolism_hypergraph" in incidence_graphs:
-            hypergraph = incidence_graphs["metabolism_hypergraph"]
-            _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping)
-
-        # Process bipartite representation
-        if "metabolism_bipartite" in incidence_graphs:
-            bipartite = incidence_graphs["metabolism_bipartite"]
-            _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping)
-
-    return hetero_data
-
-
-def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
-    """Process hypergraph representation of metabolism."""
-    # Get unique metabolites
-    metabolites = sorted(
-        list({m for edge_id in hypergraph.edges for m in hypergraph.edges[edge_id]})
-    )
-    metabolite_mapping = {m: idx for idx, m in enumerate(metabolites)}
-
-    hetero_data["metabolite"].num_nodes = len(metabolites)
-    hetero_data["metabolite"].node_ids = metabolites
-
-    # Add reaction nodes
-    num_reactions = len(hypergraph.edges)
-    hetero_data["reaction"].num_nodes = num_reactions
-    hetero_data["reaction"].node_ids = list(range(num_reactions))
-
-    # Build indices and coefficients
-    node_indices = []
-    edge_indices = []
-    stoich_coeffs = []
-    reaction_to_genes = {}
-    reaction_to_genes_indices = {}
-
-    for edge_idx, edge_id in enumerate(hypergraph.edges):
-        edge = hypergraph.edges[edge_id]
-
-        # Store gene associations
-        if "genes" in edge.properties:
-            genes = list(edge.properties["genes"])
-            reaction_to_genes[edge_idx] = genes
-
-            # Create gene indices list
-            gene_indices = []
-            for gene in genes:
-                gene_idx = node_idx_mapping.get(gene, -1)
-                gene_indices.append(gene_idx)
-            reaction_to_genes_indices[edge_idx] = gene_indices
-
-        # Process metabolites
-        for m in edge:
-            node_indices.append(metabolite_mapping[m])
-            edge_indices.append(edge_idx)
-            stoich_coeffs.append(edge.properties[f"stoich_coefficient-{m}"])
-
-    # Create hyperedge tensors
-    hyperedge_index = torch.stack(
-        [
-            torch.tensor(node_indices, dtype=torch.long),
-            torch.tensor(edge_indices, dtype=torch.long),
-        ]
-    ).cpu()
-    stoich_coeffs = torch.tensor(stoich_coeffs, dtype=torch.float).cpu()
-
-    # Store metabolic reaction data
-    edge_type = ("metabolite", "reaction", "metabolite")
-    hetero_data[edge_type].hyperedge_index = hyperedge_index
-    hetero_data[edge_type].stoichiometry = stoich_coeffs
-    hetero_data[edge_type].num_edges = len(hyperedge_index[1].unique()) + 1
-    hetero_data[edge_type].reaction_to_genes = reaction_to_genes
-    hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
-
-    # Create GPR hyperedge
-    gpr_gene_indices = []
-    gpr_reaction_indices = []
-    for reaction_idx, gene_indices in reaction_to_genes_indices.items():
-        for gene_idx in gene_indices:
-            if gene_idx != -1:  # Skip invalid gene indices
-                gpr_gene_indices.append(gene_idx)
-                gpr_reaction_indices.append(reaction_idx)
-
-    if gpr_gene_indices:  # Only create if we have valid associations
-        gpr_edge_index = torch.stack(
-            [
-                torch.tensor(gpr_gene_indices, dtype=torch.long),
-                torch.tensor(gpr_reaction_indices, dtype=torch.long),
-            ]
-        ).cpu()
-
-        # Store GPR edge
-        gpr_type = ("gene", "gpr", "reaction")
-        hetero_data[gpr_type].hyperedge_index = gpr_edge_index
-        hetero_data[gpr_type].num_edges = len(torch.unique(gpr_edge_index[1]))
-
-
-def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
-    """Process bipartite representation of metabolism with a single directed edge type."""
-    # Collect nodes by type efficiently
-    node_data = {n: d for n, d in bipartite.nodes(data=True)}
-    reaction_nodes = [n for n, d in node_data.items() if d["node_type"] == "reaction"]
-    metabolite_nodes = [
-        n for n, d in node_data.items() if d["node_type"] == "metabolite"
-    ]
-
-    # Create mappings
-    reaction_mapping = {r: i for i, r in enumerate(sorted(reaction_nodes))}
-    metabolite_mapping = {m: i for i, m in enumerate(sorted(metabolite_nodes))}
-
-    # Store nodes
-    hetero_data["metabolite"].num_nodes = len(metabolite_nodes)
-    hetero_data["metabolite"].node_ids = sorted(metabolite_nodes)
-    hetero_data["reaction"].num_nodes = len(reaction_nodes)
-    hetero_data["reaction"].node_ids = sorted(reaction_nodes)
-
-    # Create reaction-gene mapping in one pass
-    reaction_to_genes = {}
-    reaction_to_genes_indices = {}
-    for reaction_node in reaction_nodes:
-        reaction_idx = reaction_mapping[reaction_node]
-        genes = node_data[reaction_node].get("genes", set())
-        if genes:
-            genes_list = list(genes)
-            reaction_to_genes[reaction_idx] = genes_list
-            reaction_to_genes_indices[reaction_idx] = [
-                node_idx_mapping.get(gene, -1) for gene in genes_list
-            ]
-
-    # Batch process edges by type
-    src_indices = []
-    dst_indices = []
-    stoich_values = []
-    edge_types = []
-
-    # Process all edges in a single pass with minimal lookups
-    edge_data = [(u, v, d) for u, v, d in bipartite.edges(data=True)]
-    for u, v, data in edge_data:
-        u_type = node_data[u]["node_type"]
-        v_type = node_data[v]["node_type"]
-        edge_type = data["edge_type"]
-        stoich = data["stoichiometry"]
-
-        # Handle reactant edges (metabolite -> reaction)
-        if edge_type == "reactant" and u_type == "metabolite" and v_type == "reaction":
-            if v in reaction_mapping and u in metabolite_mapping:
-                src_indices.append(reaction_mapping[v])
-                dst_indices.append(metabolite_mapping[u])
-                edge_types.append(0)  # 0 = reactant
-                stoich_values.append(stoich)
-
-        # Handle product edges (reaction -> metabolite)
-        elif edge_type == "product" and u_type == "reaction" and v_type == "metabolite":
-            if u in reaction_mapping and v in metabolite_mapping:
-                src_indices.append(reaction_mapping[u])
-                dst_indices.append(metabolite_mapping[v])
-                edge_types.append(1)  # 1 = product
-                stoich_values.append(stoich)
-
-    if src_indices:  # Only create if we have edges
-        # Create tensors in one batch
-        hyperedge_index = torch.stack(
-            [
-                torch.tensor(src_indices, dtype=torch.long),
-                torch.tensor(dst_indices, dtype=torch.long),
-            ]
-        ).cpu()
-
-        stoich_tensor = torch.tensor(stoich_values, dtype=torch.float).cpu()
-        edge_type_tensor = torch.tensor(edge_types, dtype=torch.long).cpu()
-
-        # Store edge data
-        edge_type = ("reaction", "rmr", "metabolite")
-        hetero_data[edge_type].hyperedge_index = hyperedge_index
-        hetero_data[edge_type].stoichiometry = stoich_tensor
-        hetero_data[edge_type].edge_type = edge_type_tensor
-        hetero_data[edge_type].num_edges = len(src_indices)
-        hetero_data[edge_type].reaction_to_genes = reaction_to_genes
-        hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices
-
-    # Create gene-reaction relationships in one operation
-    if reaction_to_genes_indices:
-        gpr_gene_indices = []
-        gpr_reaction_indices = []
-
-        for reaction_idx, gene_indices in reaction_to_genes_indices.items():
-            for gene_idx in gene_indices:
-                if gene_idx != -1:  # Skip invalid gene indices
-                    gpr_gene_indices.append(gene_idx)
-                    gpr_reaction_indices.append(reaction_idx)
-
-        if gpr_gene_indices:
-            gpr_edge_index = torch.stack(
-                [
-                    torch.tensor(gpr_gene_indices, dtype=torch.long),
-                    torch.tensor(gpr_reaction_indices, dtype=torch.long),
-                ]
-            ).cpu()
-
-            hetero_data["gene", "gpr", "reaction"].hyperedge_index = gpr_edge_index
-            hetero_data["gene", "gpr", "reaction"].num_edges = len(
-                torch.unique(gpr_edge_index[1])
-            )
-
-
-##
-
-
-# @profile
 def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     """
     Create a graph where nodes are gene names from the GeneSet.
@@ -426,870 +124,6 @@ def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
     for gene_name in gene_set:
         G.add_node(gene_name)  # Nodes are gene names
     return G
-
-
-class GraphProcessor(ABC):
-    @abstractmethod
-    def process(
-        self,
-        cell_graph: HeteroData,
-        phenotype_info: list[PhenotypeType],
-        data: (
-            dict[str, ExperimentType | ExperimentReferenceType]
-            | list[dict[str, ExperimentType | ExperimentReferenceType]]
-        ),
-    ) -> HeteroData:
-        pass
-
-
-# class SubgraphRepresentation(GraphProcessor):
-#     """
-#     Processes gene knockout data by removing perturbed nodes from the graph, keeping
-#     track of their features, and updating edge connectivity.
-
-#     Node Transforms:
-#         X ∈ ℝ^(N×d) → X_remain ∈ ℝ^((N-p)×d), X_pert ∈ ℝ^(p×d)
-#         where N is total nodes, p is perturbed nodes, d is feature dimension
-
-#     Edge Transforms:
-#         E ∈ ℤ^(2×|E|) → E_filtered ∈ ℤ^(2×|E'|)
-#         where |E| is original edge count, |E'| is edges after removing perturbed nodes
-#     """
-
-#     def process(
-#         self,
-#         cell_graph: HeteroData,
-#         phenotype_info: list[PhenotypeType],
-#         data: list[dict[str, ExperimentType | ExperimentReferenceType]],
-#     ) -> HeteroData:
-#         if not data:
-#             raise ValueError("Data list is empty")
-
-#         processed_graph = HeteroData()
-
-#         # Collect all nodes to remove across all experiments
-#         nodes_to_remove = set()
-#         for item in data:
-#             if "experiment" not in item or "experiment_reference" not in item:
-#                 raise ValueError(
-#                     "Each item in data must contain both 'experiment' and "
-#                     "'experiment_reference' keys"
-#                 )
-#             nodes_to_remove.update(
-#                 pert.systematic_gene_name
-#                 for pert in item["experiment"].genotype.perturbations
-#             )
-
-#         # Process node information
-#         processed_graph["gene"].node_ids = [
-#             nid for nid in cell_graph["gene"].node_ids if nid not in nodes_to_remove
-#         ]
-#         processed_graph["gene"].num_nodes = len(processed_graph["gene"].node_ids)
-#         processed_graph["gene"].ids_pert = list(nodes_to_remove)
-#         processed_graph["gene"].cell_graph_idx_pert = torch.tensor(
-#             [cell_graph["gene"].node_ids.index(nid) for nid in nodes_to_remove],
-#             dtype=torch.long,
-#         )
-
-#         # Populate x and x_pert attributes
-#         node_mapping = {nid: i for i, nid in enumerate(cell_graph["gene"].node_ids)}
-#         x = cell_graph["gene"].x
-#         processed_graph["gene"].x = x[
-#             torch.tensor(
-#                 [node_mapping[nid] for nid in processed_graph["gene"].node_ids]
-#             )
-#         ]
-#         processed_graph["gene"].x_pert = x[processed_graph["gene"].cell_graph_idx_pert]
-
-#         # add all phenotype fields
-#         phenotype_fields = []
-#         for phenotype in phenotype_info:
-#             phenotype_fields.append(phenotype.model_fields["label_name"].default)
-#             phenotype_fields.append(
-#                 phenotype.model_fields["label_statistic_name"].default
-#             )
-#         for field in phenotype_fields:
-#             processed_graph["gene"][field] = []
-
-#         # add experiment data if it exists
-#         for field in phenotype_fields:
-#             field_values = []
-#             for item in data:
-#                 value = getattr(item["experiment"].phenotype, field, None)
-#                 if value is not None:
-#                     field_values.append(value)
-#             if field_values:
-#                 processed_graph["gene"][field] = torch.tensor(field_values)
-#             else:
-#                 processed_graph["gene"][field] = torch.tensor([float("nan")])
-
-#         # Process edges
-#         new_index_map = {
-#             nid: i for i, nid in enumerate(processed_graph["gene"].node_ids)
-#         }
-#         for edge_type in cell_graph.edge_types:
-#             src_type, _, dst_type = edge_type
-#             edge_index = cell_graph[src_type, _, dst_type].edge_index.numpy()
-#             filtered_edges = []
-
-#             for src, dst in edge_index.T:
-#                 src_id = cell_graph[src_type].node_ids[src]
-#                 dst_id = cell_graph[dst_type].node_ids[dst]
-
-#                 if src_id not in nodes_to_remove and dst_id not in nodes_to_remove:
-#                     new_src = new_index_map[src_id]
-#                     new_dst = new_index_map[dst_id]
-#                     filtered_edges.append([new_src, new_dst])
-
-#             if filtered_edges:
-#                 new_edge_index = torch.tensor(filtered_edges, dtype=torch.long).t()
-#                 processed_graph[src_type, _, dst_type].edge_index = new_edge_index
-#                 processed_graph[src_type, _, dst_type].num_edges = new_edge_index.shape[
-#                     1
-#                 ]
-#             else:
-#                 processed_graph[src_type, _, dst_type].edge_index = torch.empty(
-#                     (2, 0), dtype=torch.long
-#                 )
-#                 processed_graph[src_type, _, dst_type].num_edges = 0
-
-#         return processed_graph
-
-
-from typing import Optional, List, Dict, Union, Tuple
-import torch
-from torch import Tensor
-from torch_geometric.data import HeteroData
-from torch_geometric.utils._subgraph import (
-    subgraph,
-    bipartite_subgraph,
-    k_hop_subgraph,
-    hyper_subgraph,
-)
-from torch_geometric.utils.map import map_index
-from torch_geometric.utils.mask import index_to_mask
-from torch_geometric.utils.num_nodes import maybe_num_nodes
-from torch_scatter import scatter
-
-
-class SubgraphRepresentation(GraphProcessor):
-    def __init__(self):
-        super().__init__()
-        self.device = None
-        self.masks = None
-
-    def _initialize_masks(self, cell_graph: HeteroData):
-        """Initialize masks for all node types."""
-        self.masks = {
-            "gene": {
-                "kept": torch.zeros(
-                    cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
-                ),
-                "perturbed": torch.zeros(
-                    cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
-                ),
-            },
-            "reaction": {
-                "kept": torch.zeros(
-                    cell_graph["reaction"].num_nodes,
-                    dtype=torch.bool,
-                    device=self.device,
-                ),
-                "removed": torch.zeros(
-                    cell_graph["reaction"].num_nodes,
-                    dtype=torch.bool,
-                    device=self.device,
-                ),
-            },
-            "metabolite": {
-                "kept": torch.zeros(
-                    cell_graph["metabolite"].num_nodes,
-                    dtype=torch.bool,
-                    device=self.device,
-                ),
-                "removed": torch.zeros(
-                    cell_graph["metabolite"].num_nodes,
-                    dtype=torch.bool,
-                    device=self.device,
-                ),
-            },
-        }
-
-    def process(
-        self,
-        cell_graph: HeteroData,
-        phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
-    ) -> HeteroData:
-        """Process a cell graph by removing perturbed genes and their associated reactions."""
-        self.device = cell_graph["gene"].x.device
-        self._initialize_masks(cell_graph)
-
-        # Initialize output graph
-        integrated_subgraph = HeteroData()
-
-        # Process steps with mask tracking
-        gene_info = self._process_gene_info(cell_graph, data)
-        self._add_gene_data(integrated_subgraph, cell_graph, gene_info)
-        self._process_gene_interactions(integrated_subgraph, cell_graph, gene_info)
-        reaction_info = self._process_reaction_info(
-            cell_graph, gene_info, integrated_subgraph
-        )
-        self._add_reaction_data(integrated_subgraph, reaction_info)
-        self._process_metabolic_network(integrated_subgraph, cell_graph, reaction_info)
-        self._add_phenotype_data(integrated_subgraph, phenotype_info, data)
-
-        # Add masks to their respective nodes
-        integrated_subgraph["gene"].pert_mask = self.masks["gene"]["perturbed"]
-        integrated_subgraph["reaction"].pert_mask = self.masks["reaction"]["removed"]
-        integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"][
-            "removed"
-        ]
-        return integrated_subgraph
-
-    def _process_gene_info(self, cell_graph: HeteroData, data) -> dict:
-        """Process gene information and create masks."""
-        perturbed_names = {
-            p.systematic_gene_name
-            for item in data
-            for p in item["experiment"].genotype.perturbations
-        }
-
-        node_ids = cell_graph["gene"].node_ids
-        keep_idx = [i for i, name in enumerate(node_ids) if name not in perturbed_names]
-        remove_idx = [i for i, name in enumerate(node_ids) if name in perturbed_names]
-
-        # Update masks
-        self.masks["gene"]["kept"][keep_idx] = True
-        self.masks["gene"]["perturbed"][remove_idx] = True
-
-        return {
-            "perturbed_names": perturbed_names,
-            "keep_subset": torch.tensor(keep_idx, dtype=torch.long, device=self.device),
-            "remove_subset": torch.tensor(
-                remove_idx, dtype=torch.long, device=self.device
-            ),
-            "keep_node_ids": [node_ids[i] for i in keep_idx],
-        }
-
-    def _add_gene_data(
-        self, integrated_subgraph: HeteroData, cell_graph: HeteroData, gene_info: dict
-    ):
-        """Add gene data to integrated subgraph."""
-        integrated_subgraph["gene"].node_ids = gene_info["keep_node_ids"]
-        integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
-        integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
-        integrated_subgraph["gene"].cell_graph_idx_pert = gene_info["remove_subset"]
-
-        x_full = cell_graph["gene"].x
-        integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]
-        integrated_subgraph["gene"].x_pert = x_full[gene_info["remove_subset"]]
-
-    def _process_gene_interactions(
-        self, integrated_subgraph: HeteroData, cell_graph: HeteroData, gene_info: dict
-    ):
-        """Process gene-gene interaction edges."""
-        edge_types = [
-            ("gene", "physical_interaction", "gene"),
-            ("gene", "regulatory_interaction", "gene"),
-        ]
-
-        for edge_type in cell_graph.edge_types:
-            if edge_type in edge_types:
-                # Get edge information and create edge mask
-                orig_edge_index = cell_graph[edge_type].edge_index
-                edge_index, _, edge_mask = subgraph(
-                    subset=gene_info["keep_subset"],
-                    edge_index=orig_edge_index,
-                    relabel_nodes=True,
-                    num_nodes=cell_graph["gene"].num_nodes,
-                    return_edge_mask=True,
-                )
-
-                # Store edge data
-                integrated_subgraph[edge_type].edge_index = edge_index
-                integrated_subgraph[edge_type].num_edges = edge_index.size(1)
-                integrated_subgraph[edge_type].pert_mask = ~edge_mask
-
-    def _process_reaction_info(
-        self, cell_graph: HeteroData, gene_info: dict, integrated_subgraph: HeteroData
-    ) -> dict:
-        """Process reaction information and create masks, including reactions affected by gene perturbations."""
-        max_reaction_idx = cell_graph["reaction"].num_nodes
-
-        # Initialize all reactions as having no genes
-        has_genes = torch.zeros(max_reaction_idx, dtype=torch.bool, device=self.device)
-
-        # Handle case with no GPR relationships
-        if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
-            # If no GPR exists, all reactions are valid (no gene associations)
-            valid_reactions = torch.arange(max_reaction_idx, device=self.device)
-
-            # Update reaction masks
-            self.masks["reaction"]["kept"].fill_(True)
-            self.masks["reaction"]["removed"].fill_(False)
-
-            # Create mappings for relabeling
-            gene_map = torch.full(
-                (cell_graph["gene"].num_nodes,),
-                -1,
-                dtype=torch.long,
-                device=self.device,
-            )
-            gene_map[gene_info["keep_subset"]] = torch.arange(
-                len(gene_info["keep_subset"]), device=self.device
-            )
-
-            reaction_map = torch.arange(max_reaction_idx, device=self.device)
-
-            # No GPR edges to add to integrated_subgraph
-            return {
-                "valid_reactions": valid_reactions,
-                "gene_map": gene_map.tolist(),
-                "reaction_map": reaction_map.tolist(),
-            }
-
-        # Move edge index to correct device
-        gpr_edge_index = cell_graph["gene", "gpr", "reaction"].hyperedge_index.to(
-            self.device
-        )
-
-        # Create gene mask on correct device
-        gene_mask = torch.zeros(
-            cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
-        )
-        gene_mask[gene_info["keep_subset"]] = True
-
-        # Add bounds checking
-        max_gene_idx = cell_graph["gene"].num_nodes
-
-        gene_indices = gpr_edge_index[0]
-        reaction_indices = gpr_edge_index[1]
-
-        # Add bounds checking
-        valid_gene_mask = gene_indices < max_gene_idx
-        valid_reaction_mask = reaction_indices < max_reaction_idx
-        valid_mask = valid_gene_mask & valid_reaction_mask
-
-        gene_indices = gene_indices[valid_mask]
-        reaction_indices = reaction_indices[valid_mask]
-
-        # Mark reactions that have gene associations
-        has_genes[reaction_indices] = True
-
-        # Group genes by reaction using scatter operations
-        reaction_gene_mask = scatter(
-            gene_mask[gene_indices].float(),
-            reaction_indices,
-            dim=0,
-            dim_size=max_reaction_idx,
-            reduce="sum",
-        )
-
-        total_genes_per_reaction = scatter(
-            torch.ones_like(gene_indices, dtype=torch.float),
-            reaction_indices,
-            dim=0,
-            dim_size=max_reaction_idx,
-            reduce="sum",
-        )
-
-        # Reactions are valid if:
-        # 1. They have genes and all those genes are kept, OR
-        # 2. They have no genes (always kept)
-
-        # Valid reactions with genes: where all genes are kept
-        valid_with_genes_mask = (
-            reaction_gene_mask == total_genes_per_reaction
-        ) & has_genes
-
-        # Valid reactions without genes
-        valid_without_genes_mask = ~has_genes
-
-        # Combined valid reactions mask
-        valid_mask = valid_with_genes_mask | valid_without_genes_mask
-        valid_reactions = torch.where(valid_mask)[0]
-
-        # Update reaction masks
-        self.masks["reaction"]["kept"] = valid_mask
-        self.masks["reaction"]["removed"] = ~valid_mask
-
-        # Create edge mask using validated indices
-        edge_mask = torch.isin(
-            reaction_indices, torch.where(valid_with_genes_mask)[0]
-        ) & torch.isin(gene_indices, gene_info["keep_subset"])
-
-        # Filter and relabel edges
-        new_gpr_edge_index = gpr_edge_index[:, edge_mask].clone()
-
-        # Create mappings for relabeling
-        gene_map = torch.full(
-            (cell_graph["gene"].num_nodes,), -1, dtype=torch.long, device=self.device
-        )
-        gene_map[gene_info["keep_subset"]] = torch.arange(
-            len(gene_info["keep_subset"]), device=self.device
-        )
-
-        reaction_map = torch.full(
-            (max_reaction_idx,), -1, dtype=torch.long, device=self.device
-        )
-        reaction_map[valid_reactions] = torch.arange(
-            len(valid_reactions), device=self.device
-        )
-
-        # Relabel indices
-        new_gpr_edge_index[0] = gene_map[new_gpr_edge_index[0]]
-        new_gpr_edge_index[1] = reaction_map[new_gpr_edge_index[1]]
-
-        # Store edge data
-        integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = (
-            new_gpr_edge_index
-        )
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = (
-            new_gpr_edge_index.size(1)
-        )  # Use actual number of edges
-        integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
-
-        return {
-            "valid_reactions": valid_reactions,
-            "gene_map": gene_map.tolist(),
-            "reaction_map": reaction_map.tolist(),
-        }
-
-    def _add_reaction_data(self, integrated_subgraph: HeteroData, reaction_info: dict):
-        """Add reaction data and gene-reaction edges."""
-        if not reaction_info:
-            return
-
-        valid_reactions = reaction_info["valid_reactions"]
-        integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
-        integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
-
-    def _add_phenotype_data(
-        self, integrated_subgraph: HeteroData, phenotype_info: list[PhenotypeType], data
-    ):
-        """Add phenotype data to the integrated subgraph."""
-        phenotype_fields = []
-        for phenotype in phenotype_info:
-            phenotype_fields.extend(
-                [
-                    phenotype.model_fields["label_name"].default,
-                    phenotype.model_fields["label_statistic_name"].default,
-                ]
-            )
-
-        for field in phenotype_fields:
-            field_values = []
-            for item in data:
-                value = getattr(item["experiment"].phenotype, field, None)
-                if value is not None:
-                    field_values.append(value)
-
-            integrated_subgraph["gene"][field] = torch.tensor(
-                field_values if field_values else [float("nan")],
-                dtype=torch.float,
-                device=self.device,
-            )
-
-    def _process_metabolism_bipartite(
-        self,
-        integrated_subgraph: HeteroData,
-        cell_graph: HeteroData,
-        reaction_info: dict,
-    ):
-        """Process bipartite metabolic network for perturbations."""
-        if not reaction_info or "reaction" not in cell_graph.node_types:
-            return
-
-        # Process valid reactions using reaction_info
-        valid_reactions = reaction_info["valid_reactions"]
-
-        # Get edge data for RMR edges
-        rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
-        hyperedge_index = rmr_edges.hyperedge_index.to(self.device)
-        stoichiometry = rmr_edges.stoichiometry.to(self.device)
-        edge_types = (
-            rmr_edges.edge_type.to(self.device)
-            if hasattr(rmr_edges, "edge_type")
-            else None
-        )
-
-        # Keep all metabolites
-        metabolite_subset = torch.arange(
-            cell_graph["metabolite"].num_nodes, device=self.device
-        )
-
-        # Update metabolite masks - no removals
-        self.masks["metabolite"]["kept"].fill_(True)
-        self.masks["metabolite"]["removed"].fill_(False)
-
-        # Apply bipartite_subgraph with relabeling
-        final_edge_index, final_edge_attr = bipartite_subgraph(
-            (valid_reactions, metabolite_subset),
-            hyperedge_index,
-            edge_attr=stoichiometry,
-            relabel_nodes=True,
-            size=(cell_graph["reaction"].num_nodes, cell_graph["metabolite"].num_nodes),
-        )
-
-        # Store edge data with proper relabeling
-        edge_type = ("reaction", "rmr", "metabolite")
-        integrated_subgraph[edge_type].hyperedge_index = final_edge_index
-        integrated_subgraph[edge_type].stoichiometry = final_edge_attr
-        integrated_subgraph[edge_type].num_edges = final_edge_index.size(1)
-
-        # Handle edge types if they exist
-        if edge_types is not None:
-            valid_edge_mask = torch.isin(hyperedge_index[0], valid_reactions)
-            final_edge_types = edge_types[valid_edge_mask]
-            integrated_subgraph[edge_type].edge_type = final_edge_types
-
-        # Store metabolite data
-        integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-        integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
-        integrated_subgraph["metabolite"].pert_mask = torch.zeros(
-            cell_graph["metabolite"].num_nodes, dtype=torch.bool, device=self.device
-        )
-
-        # Copy over any other attributes
-        if hasattr(rmr_edges, "reaction_to_genes"):
-            integrated_subgraph[edge_type].reaction_to_genes = (
-                rmr_edges.reaction_to_genes
-            )
-        if hasattr(rmr_edges, "reaction_to_genes_indices"):
-            integrated_subgraph[edge_type].reaction_to_genes_indices = (
-                rmr_edges.reaction_to_genes_indices
-            )
-
-        # Update reaction node information
-        reaction_node_ids = valid_reactions.tolist()
-        integrated_subgraph["reaction"].num_nodes = len(reaction_node_ids)
-        integrated_subgraph["reaction"].node_ids = reaction_node_ids
-
-    def _process_metabolic_network(
-        self,
-        integrated_subgraph: HeteroData,
-        cell_graph: HeteroData,
-        reaction_info: dict,
-    ):
-        """Process metabolic network based on its representation type."""
-        # Skip if no valid reactions
-        if not reaction_info:
-            return
-
-        # Handle bipartite representation
-        if ("reaction", "rmr", "metabolite") in cell_graph.edge_types:
-            self._process_metabolism_bipartite(
-                integrated_subgraph, cell_graph, reaction_info
-            )
-        # Handle hypergraph representation
-        elif ("metabolite", "reaction", "metabolite") in cell_graph.edge_types:
-            self._process_metabolism_hypergraph(
-                integrated_subgraph, cell_graph, reaction_info
-            )
-
-    def _process_metabolism_hypergraph(
-        self,
-        integrated_subgraph: HeteroData,
-        cell_graph: HeteroData,
-        reaction_info: dict,
-    ):
-        """Process metabolic network as hypergraph."""
-        if ("metabolite", "reaction", "metabolite") not in cell_graph.edge_types:
-            return
-
-        # Add metabolite data
-        integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-        integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
-
-        met_edges = cell_graph["metabolite", "reaction", "metabolite"]
-        edge_index = met_edges.hyperedge_index.to(self.device)
-        stoichiometry = met_edges.stoichiometry.to(self.device)
-
-        # Original production relationships (positive stoichiometry)
-        original_products = {}  # metabolite_idx -> list of reaction_idx that produce it
-        for i in range(edge_index.size(1)):
-            met_idx = edge_index[0, i].item()
-            rxn_idx = edge_index[1, i].item()
-            stoich = stoichiometry[i].item()
-
-            if stoich > 0:  # Product relationship (positive stoichiometry)
-                if met_idx not in original_products:
-                    original_products[met_idx] = []
-                original_products[met_idx].append(rxn_idx)
-
-        # Filter valid edges
-        max_metabolite_idx = integrated_subgraph["metabolite"].num_nodes
-        valid_metabolite_mask = edge_index[0] < max_metabolite_idx
-        valid_reaction_mask = torch.isin(
-            edge_index[1], reaction_info["valid_reactions"]
-        )
-        valid_mask = valid_metabolite_mask & valid_reaction_mask
-
-        # Filter edges
-        new_edge_index = edge_index[:, valid_mask]
-        new_stoich = stoichiometry[valid_mask].to(self.device)
-
-        # Remaining production relationships after perturbation
-        remaining_products = (
-            {}
-        )  # metabolite_idx -> list of reaction_idx that produce it
-        for i in range(new_edge_index.size(1)):
-            met_idx = new_edge_index[0, i].item()
-            rxn_idx = new_edge_index[1, i].item()
-            stoich = new_stoich[i].item()
-
-            if stoich > 0:  # Product relationship (positive stoichiometry)
-                if met_idx not in remaining_products:
-                    remaining_products[met_idx] = []
-                remaining_products[met_idx].append(rxn_idx)
-
-        # Find isolated product metabolites
-        isolated_products = []
-        for met_idx in original_products:
-            if met_idx not in remaining_products:
-                isolated_products.append(met_idx)
-
-        # Create mask for metabolites (only remove isolated products)
-        metabolite_mask = torch.ones(
-            integrated_subgraph["metabolite"].num_nodes,
-            dtype=torch.bool,
-            device=self.device,
-        )
-        if isolated_products:
-            metabolite_mask[isolated_products] = False
-
-        # Update masks
-        self.masks["metabolite"]["kept"] = metabolite_mask
-        self.masks["metabolite"]["removed"] = ~metabolite_mask
-
-        # Update perturbation mask
-        integrated_subgraph["metabolite"].pert_mask = ~metabolite_mask
-
-        # Update node_ids to exclude isolated product metabolites
-        integrated_subgraph["metabolite"].node_ids = [
-            integrated_subgraph["metabolite"].node_ids[i]
-            for i in range(len(metabolite_mask))
-            if metabolite_mask[i]
-        ]
-        integrated_subgraph["metabolite"].num_nodes = metabolite_mask.sum().item()
-
-        # Relabel reaction indices
-        reaction_map = torch.full(
-            (cell_graph["reaction"].num_nodes,),
-            -1,
-            dtype=torch.long,
-            device=self.device,
-        )
-        reaction_map[reaction_info["valid_reactions"]] = torch.arange(
-            len(reaction_info["valid_reactions"]), device=self.device
-        )
-        new_edge_index = new_edge_index.clone()
-        new_edge_index[1] = reaction_map[new_edge_index[1]]
-
-        # Store edge data
-        edge_type = ("metabolite", "reaction", "metabolite")
-        integrated_subgraph[edge_type].hyperedge_index = new_edge_index
-        integrated_subgraph[edge_type].stoichiometry = new_stoich
-        integrated_subgraph[edge_type].num_edges = (
-            len(torch.unique(new_edge_index[1])) + 1
-        )
-        integrated_subgraph[edge_type].pert_mask = ~valid_mask
-
-        # Update reaction node information
-        integrated_subgraph["reaction"].num_nodes = len(
-            reaction_info["valid_reactions"]
-        )
-        integrated_subgraph["reaction"].node_ids = reaction_info[
-            "valid_reactions"
-        ].tolist()
-
-
-class Unperturbed(GraphProcessor):
-    """
-    Processes graph data by preserving the original graph structure and storing perturbation
-    and phenotype data alongside it for later processing.
-
-    This processor:
-    1. Keeps the original graph structure intact
-    2. Stores perturbation information separately
-    3. Records phenotype data without modifying the graph
-    4. Can be used as a base for applying perturbations later in the pipeline
-
-    Attributes remain unchanged:
-        - Node features: X ∈ ℝ^(N×d) stays as X ∈ ℝ^(N×d)
-        - Edge structure: E ∈ ℤ^(2×|E|) stays as E ∈ ℤ^(2×|E|)
-    """
-
-    def process(
-        self,
-        cell_graph: HeteroData,
-        phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
-    ) -> HeteroData:
-        if not data:
-            raise ValueError("Data list is empty")
-
-        processed_graph = HeteroData()
-
-        # Copy graph structure and features
-        processed_graph["gene"].x = cell_graph["gene"].x
-        processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
-        processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
-
-        # Store perturbation information
-        perturbed_genes = set()
-        for item in data:
-            if "experiment" not in item or "experiment_reference" not in item:
-                raise ValueError(
-                    "Each item in data must contain both 'experiment' and "
-                    "'experiment_reference' keys"
-                )
-            perturbed_genes.update(
-                pert.systematic_gene_name
-                for pert in item["experiment"].genotype.perturbations
-            )
-
-        processed_graph["gene"].perturbed_genes = list(perturbed_genes)
-        processed_graph["gene"].perturbation_indices = torch.tensor(
-            [cell_graph["gene"].node_ids.index(nid) for nid in perturbed_genes],
-            dtype=torch.long,
-        )
-
-        # Add phenotype fields
-        phenotype_fields = []
-        for phenotype in phenotype_info:
-            phenotype_fields.append(phenotype.model_fields["label_name"].default)
-            phenotype_fields.append(
-                phenotype.model_fields["label_statistic_name"].default
-            )
-
-        # Add experiment data
-        for field in phenotype_fields:
-            field_values = []
-            for item in data:
-                value = getattr(item["experiment"].phenotype, field, None)
-                if value is not None:
-                    field_values.append(value)
-            if field_values:
-                processed_graph["gene"][field] = torch.tensor(field_values)
-            else:
-                processed_graph["gene"][field] = torch.tensor([float("nan")])
-
-        # Copy edge information
-        for edge_type in cell_graph.edge_types:
-            if edge_type[1] in ["physical_interaction", "regulatory_interaction"]:
-                processed_graph[edge_type].edge_index = cell_graph[edge_type].edge_index
-                processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
-
-        # Handle metabolite data
-        if "metabolite" in cell_graph.node_types:
-            processed_graph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
-            processed_graph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-
-            edge_type = ("metabolite", "reactions", "metabolite")
-            if any(e_type == edge_type for e_type in cell_graph.edge_types):
-                # Copy hypergraph structure
-                processed_graph[edge_type].hyperedge_index = cell_graph[
-                    edge_type
-                ].hyperedge_index
-                processed_graph[edge_type].stoichiometry = cell_graph[
-                    edge_type
-                ].stoichiometry
-                processed_graph[edge_type].num_edges = cell_graph[edge_type].num_edges
-
-                # Only create reaction_to_genes_indices mapping
-                node_id_to_idx = {
-                    nid: idx for idx, nid in enumerate(cell_graph["gene"].node_ids)
-                }
-                reaction_to_genes_indices = {}
-
-                for reaction_idx, genes in cell_graph[
-                    edge_type
-                ].reaction_to_genes.items():
-                    gene_indices = []
-                    for gene in genes:
-                        gene_idx = node_id_to_idx.get(gene, -1)
-                        gene_indices.append(gene_idx)
-                    reaction_to_genes_indices[reaction_idx] = gene_indices
-
-                processed_graph[edge_type].reaction_to_genes_indices = (
-                    reaction_to_genes_indices
-                )
-
-        return processed_graph
-
-
-class Perturbation(GraphProcessor):
-    """
-    Processes graph data by storing only perturbation-specific information without duplicating
-    the base graph structure. This allows sharing a single base graph across instances while
-    only tracking what changes between instances (perturbations and associated measurements).
-
-    This processor:
-    1. Stores perturbation information and measurements
-    2. Does not duplicate the base graph structure
-    3. Intended to be used with a shared base graph stored at the dataset level
-
-    Key differences from Identity processor:
-    - Does not store complete graph structure
-    - Only tracks instance-specific perturbation data
-    - Reduces memory usage by avoiding graph duplication
-    """
-
-    def process(
-        self,
-        cell_graph: HeteroData,
-        phenotype_info: list[PhenotypeType],
-        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
-    ) -> HeteroData:
-        if not data:
-            raise ValueError("Data list is empty")
-
-        # Create a minimal HeteroData object to store perturbation data
-        processed_data = HeteroData()
-
-        # Store perturbation information
-        perturbed_genes = set()
-        for item in data:
-            if "experiment" not in item or "experiment_reference" not in item:
-                raise ValueError(
-                    "Each item in data must contain both 'experiment' and "
-                    "'experiment_reference' keys"
-                )
-            perturbed_genes.update(
-                pert.systematic_gene_name
-                for pert in item["experiment"].genotype.perturbations
-            )
-
-        # Store perturbation indices
-        processed_data["gene"].perturbed_genes = list(perturbed_genes)
-        processed_data["gene"].perturbation_indices = torch.tensor(
-            [cell_graph["gene"].node_ids.index(nid) for nid in perturbed_genes],
-            dtype=torch.long,
-        )
-
-        # Add phenotype fields
-        phenotype_fields = []
-        for phenotype in phenotype_info:
-            phenotype_fields.append(phenotype.model_fields["label_name"].default)
-            phenotype_fields.append(
-                phenotype.model_fields["label_statistic_name"].default
-            )
-
-        # Add experiment data
-        for field in phenotype_fields:
-            field_values = []
-            for item in data:
-                value = getattr(item["experiment"].phenotype, field, None)
-                if value is not None:
-                    field_values.append(value)
-            if field_values:
-                processed_data["gene"][field] = torch.tensor(field_values)
-            else:
-                processed_data["gene"][field] = torch.tensor([float("nan")])
-
-        return processed_data
 
 
 def parse_genome(genome) -> ParsedGenome:
@@ -1964,18 +798,19 @@ class Neo4jCellDataset(Dataset):
 def main():
     # genome
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+
+    from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+    from torchcell.datamodules import CellDataModule
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.data.graph_processor import SubgraphRepresentation
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -2082,19 +917,19 @@ def main():
 def main_incidence():
     # genome
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+
+    from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datasets import CodonFrequencyDataset
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
 
     load_dotenv()
@@ -2204,35 +1039,37 @@ def main_incidence():
 def main_transform_standardization():
     """Test standardization of labels using LabelNormalizationTransform with metabolic network."""
     import os.path as osp
-    from dotenv import load_dotenv
+
     import matplotlib.pyplot as plt
-    import seaborn as sns
     import numpy as np
+    import seaborn as sns
     import torch
-    import json
+    from dotenv import load_dotenv
+    from torch_geometric.transforms import Compose
     from tqdm import tqdm
 
-    # Import necessary components
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset
+    from torchcell.data.graph_processor import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datasets import CodonFrequencyDataset
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
-    from torchcell.datasets import CodonFrequencyDataset
+
+    # Import necessary components
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
-    from torchcell.transforms.regression_to_classification import (
-        LabelNormalizationTransform,
-    )
-    from torchcell.datamodules import CellDataModule
-    from torch_geometric.transforms import Compose
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     # from torchcell.transforms.hetero_to_dense import HeteroToDense
     from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
+    from torchcell.transforms.regression_to_classification import (
+        LabelNormalizationTransform,
+    )
 
     # Load environment variables
     load_dotenv()
@@ -2294,7 +1131,7 @@ def main_transform_standardization():
     )
 
     print(f"Dataset size: {len(dataset)}")
-
+    dataset
     # Define the labels we want to standardize
     labels = ["fitness", "gene_interaction"]
 
@@ -2433,28 +1270,28 @@ def main_transform_categorical():
     # Used this in hetero gnn pool when converting categorical to regression
     """Test the label binning transforms on the dataset with proper initialization."""
     import os.path as osp
-    from dotenv import load_dotenv
+
     import matplotlib.pyplot as plt
-    import seaborn as sns
     import numpy as np
-    import copy
+    import seaborn as sns
     import torch
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from dotenv import load_dotenv
+    from torch_geometric.transforms import Compose
+
+    from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.transforms.regression_to_classification import (
         LabelBinningTransform,
         LabelNormalizationTransform,
     )
-
-    from torch_geometric.transforms import Compose
 
     # Dataset setup code unchanged...
     load_dotenv()
@@ -2629,31 +1466,30 @@ def main_transform_categorical():
 def main_transform_categorical_dense():
     """Test label transforms and dense conversion with perturbation subset."""
     import os.path as osp
-    from dotenv import load_dotenv
+
     import matplotlib.pyplot as plt
-    import seaborn as sns
     import numpy as np
-    import copy
-    import torch
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    import seaborn as sns
+    from dotenv import load_dotenv
+    from torch_geometric.transforms import Compose
+
+    from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
+    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset, SubgraphRepresentation
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
     from torchcell.datasets.fungal_up_down_transformer import (
         FungalUpDownTransformerDataset,
     )
+    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.transforms.regression_to_classification import (
+        InverseCompose,
         LabelBinningTransform,
         LabelNormalizationTransform,
-        InverseCompose,
     )
-    from torchcell.transforms.hetero_to_dense import HeteroToDense
-    from torch_geometric.transforms import Compose
-    from torchcell.datamodules import CellDataModule
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
     # Setup dataset (unchanged)
     load_dotenv()

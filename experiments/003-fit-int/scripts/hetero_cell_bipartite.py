@@ -127,7 +127,7 @@ def main(cfg: DictConfig) -> None:
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
 
-    wandb.init(
+    run = wandb.init(
         mode=WANDB_MODE,
         project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
@@ -568,15 +568,17 @@ def main(cfg: DictConfig) -> None:
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
+    checkpoint_dir = osp.join(model_base_path, group)
+
     checkpoint_callback_best = ModelCheckpoint(
-        dirpath=osp.join(model_base_path, group),
+        dirpath=checkpoint_dir,
         save_top_k=1,
         monitor="val/transformed/combined/MSE",
         mode="min",
-        filename="best-{epoch:02d}-{val/transformed/combined/MSE:.4f}",
+        filename=f"{run.id}-best-{{epoch:02d}}-{{val/transformed/combined/MSE:.4f}}",
     )
     checkpoint_callback_last = ModelCheckpoint(
-        dirpath=osp.join(model_base_path, group), save_last=True, filename="last"
+        dirpath=checkpoint_dir, save_last=True, filename=f"{run.id}-last"
     )
 
     print(f"devices: {devices}")

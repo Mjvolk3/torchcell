@@ -20,8 +20,7 @@ from torchcell.transforms.regression_to_classification import (
     InverseCompose,
 )
 from torch_geometric.transforms import Compose
-
-from torchcell.data.neo4j_cell import SubgraphRepresentation
+from torchcell.data.graph_processor import SubgraphRepresentation
 from torchcell.trainers.fit_int_hetero_cell import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint

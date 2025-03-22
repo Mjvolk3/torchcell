@@ -114,3 +114,6 @@ multirun
 
 # tests 
 tests/slurm/output/*
+
+# apptainer/singularity
+rockylinux_9.sif

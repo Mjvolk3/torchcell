@@ -2,7 +2,7 @@
 id: eyyackaxzzmt385xdoyil6w
 title: Ddp
 desc: ''
-updated: 1742652360389
+updated: 1742672313901
 created: 1742649593727
 ---
 
@@ -117,7 +117,7 @@ trainer:
   devices: 4
 ```
 
-**Restuls**
+**Results**
 
 Epoch 0:   1%|▋...| 21/2501 [13:27<26:28:55,  0.03it/s, v_num=0hxc]
 
@@ -125,7 +125,33 @@ Why aren't we seeing any speed up? Maybe this is due to interactive nodes? Will 
 
 ![](./assets/images/experiments.003-fit-int.hetero_cell.ddp.md.delta-4-gpu-interactive-with-4-gpu-nvtop.png)
 
-## IGB Test
+## IGB 4 GPU - Sbatch with 4GPU
+
+```yaml
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 4e5
+  batch_size: 32
+  num_workers: 4
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 1000
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+```
+
+**Results**
+`Epoch 1:  99%|██| 2480/2501 [45:28<00:23,  0.91it/s, v_num=v1jg]`
+
+Great news! This is plenty fast 🏃🏼‍♂️💨.
+
+![](./assets/images/experiments.003-fit-int.hetero_cell.ddp.md.igb-4-gpu-sbatch-with-4-gpu-nvtop.png)
+
+## IGB Quick Test
 
 #FLAG  MOVE to own note
 

@@ -18,7 +18,7 @@ from torchcell.data import GenotypeAggregator
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
-from torchcell.data.neo4j_cell import SubgraphRepresentation
+from torchcell.data.graph_processor import SubgraphRepresentation
 from torchcell.data.graph_processor import SubgraphRepresentation
 from tqdm import tqdm
 from torchcell.metabolism.yeast_GEM import YeastGEM

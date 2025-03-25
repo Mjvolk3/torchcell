@@ -166,7 +166,7 @@ def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
 
 
 def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
-    """Process bipartite representation of metabolism with a single directed edge type."""
+    """Process bipartite representation of metabolism with signed stoichiometry values."""
     # Collect nodes by type efficiently
     node_data = {n: d for n, d in bipartite.nodes(data=True)}
     reaction_nodes = [n for n, d in node_data.items() if d["node_type"] == "reaction"]
@@ -197,11 +197,10 @@ def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
                 node_idx_mapping.get(gene, -1) for gene in genes_list
             ]
 
-    # Batch process edges by type
+    # Batch process edges
     src_indices = []
     dst_indices = []
-    stoich_values = []
-    edge_types = []
+    signed_stoich_values = []
 
     # Process all edges in a single pass with minimal lookups
     edge_data = [(u, v, d) for u, v, d in bipartite.edges(data=True)]
@@ -211,21 +210,17 @@ def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
         edge_type = data["edge_type"]
         stoich = data["stoichiometry"]
 
-        # Handle reactant edges (metabolite -> reaction)
-        if edge_type == "reactant" and u_type == "metabolite" and v_type == "reaction":
-            if v in reaction_mapping and u in metabolite_mapping:
-                src_indices.append(reaction_mapping[v])
-                dst_indices.append(metabolite_mapping[u])
-                edge_types.append(0)  # 0 = reactant
-                stoich_values.append(stoich)
-
-        # Handle product edges (reaction -> metabolite)
-        elif edge_type == "product" and u_type == "reaction" and v_type == "metabolite":
+        # Both cases expect u to be reaction and v to be metabolite
+        if u_type == "reaction" and v_type == "metabolite":
             if u in reaction_mapping and v in metabolite_mapping:
                 src_indices.append(reaction_mapping[u])
                 dst_indices.append(metabolite_mapping[v])
-                edge_types.append(1)  # 1 = product
-                stoich_values.append(stoich)
+
+                # Apply sign based on edge_type (reactant or product)
+                if edge_type == "reactant":
+                    signed_stoich_values.append(-stoich)  # Negative for reactants
+                else:  # product
+                    signed_stoich_values.append(stoich)  # Positive for products
 
     if src_indices:  # Only create if we have edges
         # Create tensors in one batch
@@ -236,14 +231,12 @@ def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
             ]
         ).cpu()
 
-        stoich_tensor = torch.tensor(stoich_values, dtype=torch.float).cpu()
-        edge_type_tensor = torch.tensor(edge_types, dtype=torch.long).cpu()
+        stoich_tensor = torch.tensor(signed_stoich_values, dtype=torch.float).cpu()
 
-        # Store edge data
+        # Store edge data - no longer storing edge_type separately
         edge_type = ("reaction", "rmr", "metabolite")
         hetero_data[edge_type].hyperedge_index = hyperedge_index
         hetero_data[edge_type].stoichiometry = stoich_tensor
-        hetero_data[edge_type].edge_type = edge_type_tensor
         hetero_data[edge_type].num_edges = len(src_indices)
         hetero_data[edge_type].reaction_to_genes = reaction_to_genes
         hetero_data[edge_type].reaction_to_genes_indices = reaction_to_genes_indices

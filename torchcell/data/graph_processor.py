@@ -317,6 +317,8 @@ class SubgraphRepresentation(GraphProcessor):
             cell_graph["metabolite"].num_nodes, device=self.device
         )
 
+        # The stoichiometry values already have sign information
+        # No need to check edge_type
         final_edge_index, final_edge_attr = bipartite_subgraph(
             (valid_reactions, metabolite_subset),
             hyperedge_index,

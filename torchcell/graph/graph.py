@@ -1155,11 +1155,15 @@ def old_main() -> None:
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=True,
     )
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
+    graph.read_raw()
+    print()
     #
     # dmf_dataset = DmfCostanzo2016Dataset(
     #     root=osp.join(DATA_ROOT, "data/scerevisiae/costanzo2016_1e5"),

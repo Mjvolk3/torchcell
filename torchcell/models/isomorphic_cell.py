@@ -451,36 +451,30 @@ class HeteroGnn(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str],
+        norm: Optional[Literal["batch", "layer", "instance"]] = None,
     ) -> nn.Module:
-        if num_layers < 1:
-            raise ValueError("Prediction head must have at least one layer")
+        if num_layers == 0:
+            return nn.Identity()
+        if num_layers < 0:
+            raise ValueError("Prediction head num_layers must be non-negative")
 
-        activation_fn = act_register[activation]  # This gives us an instance
-        activation_class = type(activation_fn)  # Get the class from the instance
+        activation_fn = act_register[activation]  # instance
+        activation_class = type(activation_fn)
         layers = []
         dims = []
-
-        # Calculate dimensions for each layer
         if num_layers == 1:
             dims = [in_channels, out_channels]
         else:
             dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
 
-        # Build layers
         for i in range(num_layers):
-            # Add linear layer
             layers.append(nn.Linear(dims[i], dims[i + 1]))
-
-            # Add normalization, activation, and dropout (except for last layer)
             if i < num_layers - 1:
                 if norm is not None:
                     norm_layer = self._get_head_norm(dims[i + 1], norm)
                     if norm_layer is not None:
                         layers.append(norm_layer)
-
-                layers.append(activation_class())  # Create new instance using the class
-
+                layers.append(activation_class())
                 if dropout > 0:
                     layers.append(nn.Dropout(dropout))
 

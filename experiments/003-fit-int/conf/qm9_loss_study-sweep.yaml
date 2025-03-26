@@ -11,7 +11,7 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [10]
+        values: [30]
         # values: [50]
       dataset_size:
         values: [50000]  # [1000] #[null] for all #TODO
@@ -23,15 +23,15 @@ parameters:
         values: [256]
       weight_decay:
         # values: [0.0, 1e-6, 1e-4]
-        values: [0.0]
+        values: [1e-8]
 
   loss_sweep:
     parameters:
       lambda_dist:
-        values: [1e-3, 1e-1]
+        values: [0, 1e-3, 1e-1, 1]
         # values: [0, 1e-3, 1e-1, 1e0]
       lambda_supcr:
-        values: [1e-3, 1e-1]
+        values: [0, 1e-3, 1e-1, 1]
         # values: [0, 1e-3, 1e-1, 1e0]
 
   plotting:

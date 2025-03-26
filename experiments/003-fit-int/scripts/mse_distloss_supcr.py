@@ -89,7 +89,7 @@ class CellLoss(nn.Module):
         weighted_con = self.lambda_supcr * con_loss
         total_weighted = weighted_mse + weighted_div + weighted_con
 
-        # Unweighted components (raw losses from each component)
+        # Unweighted components
         total_unweighted = mse_loss + div_loss + con_loss
 
         # Normalized (weighted) losses
@@ -97,7 +97,7 @@ class CellLoss(nn.Module):
         norm_div = weighted_div / total_weighted
         norm_con = weighted_con / total_weighted
 
-        # Normalized unweighted losses
+        # Normalized unweighted
         norm_unweighted_mse = mse_loss / total_unweighted
         norm_unweighted_div = div_loss / total_unweighted
         norm_unweighted_con = con_loss / total_unweighted
@@ -129,9 +129,7 @@ class MetricTracker:
         num_targets: int,
         phase: str,
     ):
-        """Log all metrics for each target dimension along with loss components."""
         metrics = {}
-
         # Log all loss components
         for key, value in loss_dict.items():
             metrics[f"{phase}_{key}"] = value.item()
@@ -160,13 +158,6 @@ class MetricTracker:
 
 class Visualization:
     def __init__(self, base_dir: str, max_points: int = 1000):
-        """
-        Initialize visualization directories for wandb artifacts.
-
-        Args:
-            base_dir: Base directory for wandb artifacts
-            max_points: Maximum number of points to plot (downsampling threshold)
-        """
         self.base_dir = base_dir
         self.artifact_dir = osp.join(base_dir, "figures")
         os.makedirs(self.artifact_dir, exist_ok=True)
@@ -175,7 +166,7 @@ class Visualization:
 
     def save_and_log_figure(
         self, fig: plt.Figure, name: str, timestamp_str: str
-    ) -> str:
+    ) -> None:
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
         buf.seek(0)
@@ -187,7 +178,7 @@ class Visualization:
         self.artifact = wandb.Artifact(name, type=artifact_type)
 
     def get_base_title(self, loss_name: str, num_epochs: int) -> str:
-        return f"Training Results\nLoss: {loss_name}\n Epochs: {num_epochs}"
+        return f"Training Results\nLoss: {loss_name}\nEpochs: {num_epochs}"
 
     def plot_correlations(
         self,
@@ -221,8 +212,8 @@ class Visualization:
 
         base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(
-            f"{base_title}\nTarget {dim}\nMSE={mse:.3e}, n={len(x)}\n"
-            f"Pearson={pearson:.3f}, Spearman={spearman:.3f}"
+            f"{base_title}\nTarget {dim}\n"
+            f"MSE={mse:.3e}, n={len(x)}\nPearson={pearson:.3f}, Spearman={spearman:.3f}"
         )
 
         min_val = min(plt.xlim()[0], plt.ylim()[0])
@@ -256,8 +247,13 @@ class Visualization:
             true_values_clean, predictions_clean
         )
 
-        # bins = min(100, int(np.sqrt(len(true_values_clean))))
-        bins = 128
+        # For better auto-binning, choose 'auto' or Freedman-Diaconis:
+        # e.g., bins = int(2 * (np.percentile(true_values_clean, 75) -
+        #                      np.percentile(true_values_clean, 25)) /
+        #                      (len(true_values_clean) ** (1/3)))
+        # Or let numpy do it automatically:
+        bins = "auto"
+
         true_hist, bin_edges = np.histogram(true_values_clean, bins=bins, density=True)
         pred_hist, _ = np.histogram(predictions_clean, bins=bin_edges, density=True)
 
@@ -282,6 +278,7 @@ class Visualization:
             alpha=0.6,
             stat="density",
             common_norm=False,
+            bins=bin_edges,
         )
         sns.histplot(
             predictions_clean,
@@ -291,6 +288,7 @@ class Visualization:
             alpha=0.6,
             stat="density",
             common_norm=False,
+            bins=bin_edges,
         )
 
         plt.text(
@@ -326,7 +324,9 @@ class Visualization:
         features_np = features.detach().cpu().numpy()
         labels_np = labels.detach().cpu().numpy()
         if features_np.shape[0] > self.max_points:
-            idx = np.random.choice(features_np.shape[0], size=self.max_points, replace=False)
+            idx = np.random.choice(
+                features_np.shape[0], size=self.max_points, replace=False
+            )
             features_np = features_np[idx]
             labels_np = labels_np[idx]
 
@@ -335,11 +335,7 @@ class Visualization:
 
         fig = plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
-            embedding[:, 0],
-            embedding[:, 1],
-            c=labels_np,
-            cmap="coolwarm",
-            alpha=0.6,
+            embedding[:, 0], embedding[:, 1], c=labels_np, cmap="coolwarm", alpha=0.6
         )
         plt.colorbar(scatter, label="Target Labels")
         base_title = self.get_base_title(loss_name, num_epochs)
@@ -351,48 +347,53 @@ class Visualization:
     def plot_loss_curves(
         self, losses: dict, loss_name: str, num_epochs: int, timestamp_str: str
     ):
-        fig = plt.figure(figsize=(12, 12))
-        steps_per_epoch = len(losses["train"]["total_loss"]) // num_epochs
-        epoch_steps = np.linspace(1, num_epochs, num_epochs * steps_per_epoch)
+        """
+        Now that we aggregate to exactly 1 data point per epoch for train/val,
+        we can simply plot them against range(1, num_epochs+1).
+        """
+        epochs = range(1, num_epochs + 1)
 
+        fig = plt.figure(figsize=(10, 8))
+
+        # Normalized Weighted
         plt.subplot(2, 1, 1)
         for phase in ["train", "val"]:
             for key in ["norm_mse", "norm_div", "norm_con"]:
-                if len(losses[phase][key]) > 0:
-                    plt.plot(
-                        epoch_steps[: len(losses[phase][key])],
-                        losses[phase][key],
-                        label=f"{phase}_{key}",
-                        linestyle="-" if phase == "train" else "--",
-                        linewidth=1.0,
-                        alpha=0.5,
-                    )
-        base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nNormalized Loss Components (Weighted)")
+                plt.plot(
+                    epochs,
+                    losses[phase][key],
+                    label=f"{phase}_{key}",
+                    linestyle="-" if phase == "train" else "--",
+                    linewidth=1.5,
+                    alpha=0.8,
+                )
+        plt.title(f"{loss_name}\nNormalized Loss Components (Weighted)")
         plt.xlabel("Epoch")
         plt.ylabel("Loss Proportion")
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.gca().xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
+        # Normalized Unweighted
         plt.subplot(2, 1, 2)
         for phase in ["train", "val"]:
-            for key in ["norm_unweighted_mse", "norm_unweighted_div", "norm_unweighted_con"]:
-                if len(losses[phase][key]) > 0:
-                    plt.plot(
-                        epoch_steps[: len(losses[phase][key])],
-                        losses[phase][key],
-                        label=f"{phase}_{key}",
-                        linestyle="-" if phase == "train" else "--",
-                        linewidth=1.0,
-                        alpha=0.5,
-                    )
-        plt.title(f"{base_title}\nNormalized Loss Components (Unweighted)")
+            for key in [
+                "norm_unweighted_mse",
+                "norm_unweighted_div",
+                "norm_unweighted_con",
+            ]:
+                plt.plot(
+                    epochs,
+                    losses[phase][key],
+                    label=f"{phase}_{key}",
+                    linestyle="-" if phase == "train" else "--",
+                    linewidth=1.5,
+                    alpha=0.8,
+                )
+        plt.title(f"{loss_name}\nNormalized Loss Components (Unweighted)")
         plt.xlabel("Epoch")
         plt.ylabel("Loss Proportion")
         plt.legend()
         plt.grid(True, alpha=0.3)
-        plt.gca().xaxis.set_major_locator(plt.MaxNLocator(integer=True))
 
         plt.tight_layout()
         self.save_and_log_figure(fig, "loss_curves", timestamp_str)
@@ -404,6 +405,12 @@ class Visualization:
 
 
 class LossTracker:
+    """
+    This tracker now stores only per-epoch losses.
+    Each epoch, you collect batch-wise losses in a temporary list,
+    compute their mean, then store one final number per epoch.
+    """
+
     def __init__(self):
         self.train_losses = {
             "total_loss": [],
@@ -436,13 +443,36 @@ class LossTracker:
             "norm_unweighted_con": [],
         }
 
-    def update_train(self, loss_dict: dict):
-        for key, value in loss_dict.items():
-            self.train_losses[key].append(value.item())
+        # Temporary storage for each batch’s losses in the current epoch
+        self._train_batch_losses = {key: [] for key in self.train_losses.keys()}
+        self._val_batch_losses = {key: [] for key in self.val_losses.keys()}
 
-    def update_val(self, loss_dict: dict):
+    def update_train_batch(self, loss_dict: dict):
         for key, value in loss_dict.items():
-            self.val_losses[key].append(value.item())
+            self._train_batch_losses[key].append(value.item())
+
+    def update_val_batch(self, loss_dict: dict):
+        for key, value in loss_dict.items():
+            self._val_batch_losses[key].append(value.item())
+
+    def finalize_epoch(self, phase: str):
+        """
+        Compute mean of batch losses collected for the epoch, append to the correct list.
+        Then reset the temporary storage for next epoch.
+        """
+        if phase == "train":
+            for key, values in self._train_batch_losses.items():
+                epoch_mean = np.mean(values) if len(values) > 0 else np.nan
+                self.train_losses[key].append(epoch_mean)
+            self._train_batch_losses = {
+                key: [] for key in self._train_batch_losses.keys()
+            }
+
+        elif phase == "val":
+            for key, values in self._val_batch_losses.items():
+                epoch_mean = np.mean(values) if len(values) > 0 else np.nan
+                self.val_losses[key].append(epoch_mean)
+            self._val_batch_losses = {key: [] for key in self._val_batch_losses.keys()}
 
     def get_losses(self):
         return {"train": self.train_losses, "val": self.val_losses}
@@ -455,6 +485,9 @@ def train_and_evaluate(
     metric_tracker = MetricTracker()
 
     for epoch in range(num_epochs):
+        # --------------------
+        #      TRAIN
+        # --------------------
         model.train()
         train_preds, train_labels = [], []
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Train)"):
@@ -464,12 +497,19 @@ def train_and_evaluate(
             loss_dict = loss_fn(pred, batch.y, u)
             loss_dict["total_loss"].backward()
             optimizer.step()
-            loss_tracker.update_train(loss_dict)
+
+            # Store for aggregator
+            loss_tracker.update_train_batch(loss_dict)
             train_preds.append(pred.detach())
             train_labels.append(batch.y)
 
+        # finalize epoch stats for training
+        loss_tracker.finalize_epoch("train")
+
         train_preds = torch.cat(train_preds, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
+
+        # Just log final batch's losses for the epoch:
         metric_tracker.log_epoch_metrics(
             epoch=epoch,
             predictions=train_preds,
@@ -479,6 +519,9 @@ def train_and_evaluate(
             phase="train",
         )
 
+        # --------------------
+        #      VAL
+        # --------------------
         model.eval()
         val_preds, val_labels = [], []
         with torch.no_grad():
@@ -486,12 +529,19 @@ def train_and_evaluate(
                 batch = batch.to(device)
                 pred, u = model(batch)
                 loss_dict = loss_fn(pred, batch.y, u)
-                loss_tracker.update_val(loss_dict)
+
+                # Store for aggregator
+                loss_tracker.update_val_batch(loss_dict)
+
                 val_preds.append(pred)
                 val_labels.append(batch.y)
 
+        # finalize epoch stats for val
+        loss_tracker.finalize_epoch("val")
+
         val_preds = torch.cat(val_preds, dim=0)
         val_labels = torch.cat(val_labels, dim=0)
+
         metric_tracker.log_epoch_metrics(
             epoch=epoch,
             predictions=val_preds,
@@ -501,8 +551,12 @@ def train_and_evaluate(
             phase="val",
         )
 
+        # Force wandb step
         wandb.log({}, commit=True)
 
+    # --------------------
+    # final evaluation
+    # --------------------
     model.eval()
     all_preds, all_labels, all_embeddings = [], [], []
     with torch.no_grad():
@@ -561,6 +615,7 @@ def main(cfg: DictConfig) -> None:
         dataset = QM9(root=data_root)[: wandb.config.training["dataset_size"]]
     else:
         dataset = QM9(root=data_root)
+
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
     train_dataset, val_dataset = random_split(
@@ -613,6 +668,7 @@ def main(cfg: DictConfig) -> None:
         f"SupCR+(wd={wandb.config['training']['weight_decay']:.0e})L2"
     )
 
+    # Now we have exactly num_epochs points for train/val
     vis.plot_loss_curves(losses, loss_name, num_epochs, timestamp_str)
 
     num_targets = val_labels.shape[1]

@@ -386,8 +386,11 @@ class CellDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=shuffle,
             num_workers=self.num_workers,
+            persistent_workers=True if self.num_workers > 0 else False,
             pin_memory=self.pin_memory,
             follow_batch=["x", "x_pert"],
+            timeout=180,
+            multiprocessing_context="spawn" if self.num_workers > 0 else None  # Add this
         )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

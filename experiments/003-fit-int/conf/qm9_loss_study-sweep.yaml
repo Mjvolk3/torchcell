@@ -11,7 +11,7 @@ parameters:
   training:
     parameters:
       num_epochs:
-        values: [2]
+        values: [10]
         # values: [50]
       dataset_size:
         values: [50000]  # [1000] #[null] for all #TODO
@@ -28,11 +28,11 @@ parameters:
   loss_sweep:
     parameters:
       lambda_dist:
-        values: [1e-3]
+        values: [1e-3, 1e-1]
         # values: [0, 1e-3, 1e-1, 1e0]
       lambda_supcr:
-        values: [0, 1e-3, 1e-1, 1e0]
-        # values: [1e-3]
+        values: [1e-3, 1e-1]
+        # values: [0, 1e-3, 1e-1, 1e0]
 
   plotting:
     parameters:

@@ -18,7 +18,9 @@ from torchmetrics import (
 from tqdm import tqdm
 import os.path as osp
 import wandb
-from torchcell.losses import DCellLoss, WeightedMSELoss
+# TODO will need to fix
+# from torchcell.losses import DCellLoss, WeightedMSELoss
+from torchcell.losses import DCellLoss
 from torchcell.viz import fitness, genetic_interaction_score
 import torchcell
 

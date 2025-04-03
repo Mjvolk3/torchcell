@@ -192,9 +192,9 @@ class Visualization:
         predictions_np = predictions.detach().cpu().numpy()
         true_values_np = true_values.detach().cpu().numpy()
 
-        mask = ~np.isnan(true_values_np)
-        y = true_values_np[mask]
-        x = predictions_np[mask]
+        mask = ~np.isnan(true_values_np[:, dim])
+        y = true_values_np[mask, dim]
+        x = predictions_np[mask, dim]
 
         if len(x) > self.max_points:
             idx = np.random.choice(len(x), size=self.max_points, replace=False)
@@ -239,76 +239,67 @@ class Visualization:
         true_values_np = true_values.detach().cpu().numpy()
         predictions_np = predictions.detach().cpu().numpy()
 
-        mask = ~np.isnan(true_values_np)
-        true_values_clean = true_values_np[mask]
-        predictions_clean = predictions_np[mask]
+        mask = ~np.isnan(true_values_np[:, dim])
+        y_true = true_values_np[mask, dim]
+        y_pred = predictions_np[mask, dim]
 
-        wasserstein_distance = stats.wasserstein_distance(
-            true_values_clean, predictions_clean
-        )
+        wasserstein_distance = stats.wasserstein_distance(y_true, y_pred)
 
-        # For better auto-binning, choose 'auto' or Freedman-Diaconis:
-        # e.g., bins = int(2 * (np.percentile(true_values_clean, 75) -
-        #                      np.percentile(true_values_clean, 25)) /
-        #                      (len(true_values_clean) ** (1/3)))
-        # Or let numpy do it automatically:
-        bins = "auto"
-
-        true_hist, bin_edges = np.histogram(true_values_clean, bins=bins, density=True)
-        pred_hist, _ = np.histogram(predictions_clean, bins=bin_edges, density=True)
+        bins = min(100, int(np.sqrt(len(y_true))))
+        true_hist, edges = np.histogram(y_true, bins=bins, density=True)
+        pred_hist, _ = np.histogram(y_pred, bins=edges, density=True)
 
         epsilon = 1e-10
-        true_hist = true_hist + epsilon
-        pred_hist = pred_hist + epsilon
-
-        true_hist = true_hist / true_hist.sum()
-        pred_hist = pred_hist / pred_hist.sum()
+        true_hist = (true_hist + epsilon) / (true_hist.sum() + epsilon * len(true_hist))
+        pred_hist = (pred_hist + epsilon) / (pred_hist.sum() + epsilon * len(pred_hist))
 
         m = 0.5 * (true_hist + pred_hist)
-        js_divergence = 0.5 * (
-            stats.entropy(true_hist, m) + stats.entropy(pred_hist, m)
-        )
+        js_div = 0.5 * (stats.entropy(true_hist, m) + stats.entropy(pred_hist, m))
 
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(12, 6))
+        ax = fig.add_axes([0.1, 0.1, 0.85, 0.8])
+
         sns.histplot(
-            true_values_clean,
+            y_true,
             color="blue",
             label="True",
             kde=True,
-            alpha=0.6,
             stat="density",
-            common_norm=False,
-            bins=bin_edges,
+            alpha=0.6,
+            bins=bins,
+            ax=ax,
         )
         sns.histplot(
-            predictions_clean,
+            y_pred,
             color="red",
             label="Predicted",
             kde=True,
-            alpha=0.6,
             stat="density",
-            common_norm=False,
-            bins=bin_edges,
+            alpha=0.6,
+            bins=bins,
+            ax=ax,
         )
 
-        plt.text(
+        ax.text(
+            0.02,
             0.98,
-            0.98,
-            f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_divergence:.4f}",
-            transform=plt.gca().transAxes,
-            verticalalignment="top",
-            horizontalalignment="right",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.9, edgecolor="gray"),
+            f"Wasserstein: {wasserstein_distance:.4f}\nJS Div: {js_div:.4f}",
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            bbox=dict(facecolor="white", alpha=0.9, edgecolor="gray"),
+            zorder=100,
         )
 
-        plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-        plt.xticks(rotation=45, ha="right")
+        ax.legend(bbox_to_anchor=(0.98, 0.98), loc="upper right")
+
+        ax.set_xlabel(f"Target {dim}")
+        ax.set_ylabel("Density")
 
         base_title = self.get_base_title(loss_name, num_epochs)
-        plt.title(f"{base_title}\nDistribution Matching Target {dim}")
+        ax.set_title(f"{base_title}\nDistribution Matching Target {dim}")
 
         plt.tight_layout()
-
         self.save_and_log_figure(fig, f"distribution_target_{dim}", timestamp_str)
         plt.close()
 
@@ -321,8 +312,10 @@ class Visualization:
         num_epochs: int,
         timestamp_str: str,
     ):
+        # Convert to numpy and subsample if needed
         features_np = features.detach().cpu().numpy()
-        labels_np = labels.detach().cpu().numpy()
+        labels_np = labels.detach().cpu().numpy()  # Remove the dim indexing here
+
         if features_np.shape[0] > self.max_points:
             idx = np.random.choice(
                 features_np.shape[0], size=self.max_points, replace=False
@@ -330,16 +323,27 @@ class Visualization:
             features_np = features_np[idx]
             labels_np = labels_np[idx]
 
+        # Add debug print to understand shapes
+        print(f"Features shape: {features_np.shape}")
+        print(f"Labels shape: {labels_np.shape}")
+
+        # Fit UMAP
         reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, metric="euclidean")
         embedding = reducer.fit_transform(features_np)
 
+        # Create plot
         fig = plt.figure(figsize=(8, 6))
         scatter = plt.scatter(
-            embedding[:, 0], embedding[:, 1], c=labels_np, cmap="coolwarm", alpha=0.6
+            embedding[:, 0],
+            embedding[:, 1],
+            c=labels_np,  # Use full labels tensor
+            cmap="coolwarm",
+            alpha=0.6,
         )
-        plt.colorbar(scatter, label="Target Labels")
+        plt.colorbar(scatter, label=f"Target {dim}")
         base_title = self.get_base_title(loss_name, num_epochs)
         plt.title(f"{base_title}\nUMAP Projection Target {dim}")
+        plt.grid(True, alpha=0.3)
 
         self.save_and_log_figure(fig, f"umap_target_{dim}", timestamp_str)
         plt.close()
@@ -347,51 +351,127 @@ class Visualization:
     def plot_loss_curves(
         self, losses: dict, loss_name: str, num_epochs: int, timestamp_str: str
     ):
-        """
-        Now that we aggregate to exactly 1 data point per epoch for train/val,
-        we can simply plot them against range(1, num_epochs+1).
-        """
-        epochs = range(1, num_epochs + 1)
+        """Plot training and validation losses in a 2x2 grid."""
+        fig = plt.figure(figsize=(20, 16))
+        epochs = np.arange(1, num_epochs + 1)
 
-        fig = plt.figure(figsize=(10, 8))
+        base_title = self.get_base_title(loss_name, num_epochs)
 
-        # Normalized Weighted
-        plt.subplot(2, 1, 1)
+        # 1. Raw (Weighted) Losses (top-left)
+        plt.subplot(2, 2, 1)
         for phase in ["train", "val"]:
-            for key in ["norm_mse", "norm_div", "norm_con"]:
+            # Plot total loss with thicker line
+            total_values = losses[phase]["total_loss"]
+            if total_values:
                 plt.plot(
-                    epochs,
-                    losses[phase][key],
-                    label=f"{phase}_{key}",
+                    epochs[: len(total_values)],
+                    total_values,
+                    label=f"{phase}_total",
                     linestyle="-" if phase == "train" else "--",
-                    linewidth=1.5,
-                    alpha=0.8,
+                    linewidth=2.0,
                 )
-        plt.title(f"{loss_name}\nNormalized Loss Components (Weighted)")
+
+            # Plot weighted component losses
+            for key in ["raw_mse", "raw_div", "raw_con"]:
+                values = losses[phase][key]
+                if values:
+                    plt.plot(
+                        epochs[: len(values)],
+                        values,
+                        label=f"{phase}_{key}",
+                        linestyle="-" if phase == "train" else "--",
+                        linewidth=1.5,
+                        alpha=0.7,
+                    )
+
+        plt.title(f"{base_title}\nRaw Weighted Losses")
         plt.xlabel("Epoch")
-        plt.ylabel("Loss Proportion")
+        plt.ylabel("Loss Value")
+        plt.yscale("log")
         plt.legend()
         plt.grid(True, alpha=0.3)
 
-        # Normalized Unweighted
-        plt.subplot(2, 1, 2)
+        # 2. Raw (Unweighted) Losses (top-right)
+        plt.subplot(2, 2, 2)
+        for phase in ["train", "val"]:
+            # Plot total unweighted loss
+            if losses[phase]["unweighted_mse"]:
+                total_unweighted = (
+                    np.array(losses[phase]["unweighted_mse"])
+                    + np.array(losses[phase]["unweighted_div"])
+                    + np.array(losses[phase]["unweighted_con"])
+                )
+                plt.plot(
+                    epochs[: len(total_unweighted)],
+                    total_unweighted,
+                    label=f"{phase}_total_unweighted",
+                    linestyle="-" if phase == "train" else "--",
+                    linewidth=2.0,
+                )
+
+            # Plot unweighted component losses
+            for key in ["unweighted_mse", "unweighted_div", "unweighted_con"]:
+                values = losses[phase][key]
+                if values:
+                    plt.plot(
+                        epochs[: len(values)],
+                        values,
+                        label=f"{phase}_{key}",
+                        linestyle="-" if phase == "train" else "--",
+                        linewidth=1.5,
+                        alpha=0.7,
+                    )
+
+        plt.title(f"{base_title}\nRaw Unweighted Losses")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss Value")
+        plt.yscale("log")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        # 3. Normalized Weighted Losses (bottom-left)
+        plt.subplot(2, 2, 3)
+        for phase in ["train", "val"]:
+            for key in ["norm_mse", "norm_div", "norm_con"]:
+                values = losses[phase][key]
+                if values:
+                    plt.plot(
+                        epochs[: len(values)],
+                        values,
+                        label=f"{phase}_{key}",
+                        linestyle="-" if phase == "train" else "--",
+                        linewidth=1.5,
+                        alpha=0.8,
+                    )
+
+        plt.title(f"{base_title}\nNormalized Weighted Loss Components")
+        plt.xlabel("Epoch")
+        plt.ylabel("Normalized Loss Proportion")
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+
+        # 4. Normalized Unweighted Losses (bottom-right)
+        plt.subplot(2, 2, 4)
         for phase in ["train", "val"]:
             for key in [
                 "norm_unweighted_mse",
                 "norm_unweighted_div",
                 "norm_unweighted_con",
             ]:
-                plt.plot(
-                    epochs,
-                    losses[phase][key],
-                    label=f"{phase}_{key}",
-                    linestyle="-" if phase == "train" else "--",
-                    linewidth=1.5,
-                    alpha=0.8,
-                )
-        plt.title(f"{loss_name}\nNormalized Loss Components (Unweighted)")
+                values = losses[phase][key]
+                if values:
+                    plt.plot(
+                        epochs[: len(values)],
+                        values,
+                        label=f"{phase}_{key}",
+                        linestyle="-" if phase == "train" else "--",
+                        linewidth=1.5,
+                        alpha=0.8,
+                    )
+
+        plt.title(f"{base_title}\nNormalized Unweighted Loss Components")
         plt.xlabel("Epoch")
-        plt.ylabel("Loss Proportion")
+        plt.ylabel("Normalized Loss Proportion")
         plt.legend()
         plt.grid(True, alpha=0.3)
 
@@ -412,6 +492,7 @@ class LossTracker:
     """
 
     def __init__(self):
+        """Initialize separate dicts for train and val losses with epoch-level tracking."""
         self.train_losses = {
             "total_loss": [],
             "norm_mse": [],
@@ -443,36 +524,35 @@ class LossTracker:
             "norm_unweighted_con": [],
         }
 
-        # Temporary storage for each batch’s losses in the current epoch
-        self._train_batch_losses = {key: [] for key in self.train_losses.keys()}
-        self._val_batch_losses = {key: [] for key in self.val_losses.keys()}
+        # Add batch-level buffers
+        self._train_batch_buffer = {key: [] for key in self.train_losses.keys()}
+        self._val_batch_buffer = {key: [] for key in self.val_losses.keys()}
 
-    def update_train_batch(self, loss_dict: dict):
+    def update_train(self, loss_dict: dict):
+        """Store batch-level losses in buffer."""
         for key, value in loss_dict.items():
-            self._train_batch_losses[key].append(value.item())
+            self._train_batch_buffer[key].append(value.item())
 
-    def update_val_batch(self, loss_dict: dict):
+    def update_val(self, loss_dict: dict):
+        """Store batch-level losses in buffer."""
         for key, value in loss_dict.items():
-            self._val_batch_losses[key].append(value.item())
+            self._val_batch_buffer[key].append(value.item())
 
-    def finalize_epoch(self, phase: str):
-        """
-        Compute mean of batch losses collected for the epoch, append to the correct list.
-        Then reset the temporary storage for next epoch.
-        """
-        if phase == "train":
-            for key, values in self._train_batch_losses.items():
-                epoch_mean = np.mean(values) if len(values) > 0 else np.nan
+    def epoch_end(self):
+        """Average batch losses and store epoch-level metrics."""
+        # Process train batches
+        for key in self.train_losses.keys():
+            if self._train_batch_buffer[key]:
+                epoch_mean = np.mean(self._train_batch_buffer[key])
                 self.train_losses[key].append(epoch_mean)
-            self._train_batch_losses = {
-                key: [] for key in self._train_batch_losses.keys()
-            }
+                self._train_batch_buffer[key] = []
 
-        elif phase == "val":
-            for key, values in self._val_batch_losses.items():
-                epoch_mean = np.mean(values) if len(values) > 0 else np.nan
+        # Process val batches
+        for key in self.val_losses.keys():
+            if self._val_batch_buffer[key]:
+                epoch_mean = np.mean(self._val_batch_buffer[key])
                 self.val_losses[key].append(epoch_mean)
-            self._val_batch_losses = {key: [] for key in self._val_batch_losses.keys()}
+                self._val_batch_buffer[key] = []
 
     def get_losses(self):
         return {"train": self.train_losses, "val": self.val_losses}
@@ -485,9 +565,7 @@ def train_and_evaluate(
     metric_tracker = MetricTracker()
 
     for epoch in range(num_epochs):
-        # --------------------
-        #      TRAIN
-        # --------------------
+        # Training phase
         model.train()
         train_preds, train_labels = [], []
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs} (Train)"):
@@ -503,9 +581,7 @@ def train_and_evaluate(
             train_preds.append(pred.detach())
             train_labels.append(batch.y)
 
-        # finalize epoch stats for training
-        loss_tracker.finalize_epoch("train")
-
+        # Log training metrics
         train_preds = torch.cat(train_preds, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
 
@@ -519,9 +595,7 @@ def train_and_evaluate(
             phase="train",
         )
 
-        # --------------------
-        #      VAL
-        # --------------------
+        # Validation phase
         model.eval()
         val_preds, val_labels = [], []
         with torch.no_grad():
@@ -536,8 +610,8 @@ def train_and_evaluate(
                 val_preds.append(pred)
                 val_labels.append(batch.y)
 
-        # finalize epoch stats for val
-        loss_tracker.finalize_epoch("val")
+        # Important: Average and store epoch-level metrics
+        loss_tracker.epoch_end()
 
         val_preds = torch.cat(val_preds, dim=0)
         val_labels = torch.cat(val_labels, dim=0)

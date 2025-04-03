@@ -203,12 +203,14 @@ class SystemMonitor:
 
         # Create figure with shared x-axis - increased figure size
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 12))
+
+        # Add more spacing at the right for legends
         plt.subplots_adjust(right=0.85)
 
         fig.suptitle(
             f"System Monitoring - {self.config.title}\n"
-            f"Benchmark Stats: Mean={np.mean(self.benchmark_times):.2f}s, "
-            f"Std={np.std(self.benchmark_times):.2f}s"
+            + f"Benchmark Stats: Mean={np.mean(self.benchmark_times):.2f}s, "
+            + f"Std={np.std(self.benchmark_times):.2f}s"
         )
 
         # Define markers to cycle through
@@ -219,15 +221,11 @@ class SystemMonitor:
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         color_idx = 0
 
-        # Process data first
-        temp_df = pd.DataFrame(self.temperatures)
-        rpm_df = pd.DataFrame(self.rpms)
-
         # Create mappings for each device
-        device_styles: Dict[str, Dict[str, Any]] = {}
+        device_styles = {}
 
-        # Assign a default style for any sensor in rpm_df not already mapped
-        for sensor in set(rpm_df.columns) - set(device_styles.keys()):
+        # Map colors and markers to temperature sensors
+        for sensor in ["CPU Temp.", "LAN Temp."]:
             device_styles[sensor] = {
                 "color": colors[color_idx],
                 "marker": markers[marker_idx],
@@ -235,7 +233,6 @@ class SystemMonitor:
             color_idx = (color_idx + 1) % len(colors)
             marker_idx = (marker_idx + 1) % len(markers)
 
-        # Map styles for temperature sensors from DIMMs
         for x in "ABCDEFGH":
             sensor = f"DIMM{x}1 Temp."
             device_styles[sensor] = {
@@ -245,7 +242,6 @@ class SystemMonitor:
             color_idx = (color_idx + 1) % len(colors)
             marker_idx = (marker_idx + 1) % len(markers)
 
-        # Map styles for PCIe temperature sensors
         for i in range(1, 8):
             sensor = f"PCIE0{i} Temp."
             device_styles[sensor] = {
@@ -255,7 +251,6 @@ class SystemMonitor:
             color_idx = (color_idx + 1) % len(colors)
             marker_idx = (marker_idx + 1) % len(markers)
 
-        # Map styles for selected fan sensors
         for fan in [
             "CPU_FAN",
             "CPU_OPT",
@@ -271,6 +266,10 @@ class SystemMonitor:
             }
             color_idx = (color_idx + 1) % len(colors)
             marker_idx = (marker_idx + 1) % len(markers)
+
+        # Process data
+        temp_df = pd.DataFrame(self.temperatures)
+        rpm_df = pd.DataFrame(self.rpms)
 
         # Calculate continuous timeline
         start_time = self.timestamps[0]
@@ -298,7 +297,8 @@ class SystemMonitor:
                         )
                     )
                 )
-                style = device_styles.get(sensor, {"color": "black", "marker": "o"})
+
+                style = device_styles[sensor]
                 line = ax1.plot(
                     x_values,
                     temp_df[sensor].values,
@@ -320,7 +320,8 @@ class SystemMonitor:
                     if "CPU" in fan
                     else "Chassis Fans" if "CHA" in fan else "Other"
                 )
-                style = device_styles.get(fan, {"color": "black", "marker": "o"})
+
+                style = device_styles[fan]
                 line = ax2.plot(
                     x_values,
                     rpm_df[fan].values,
@@ -351,6 +352,7 @@ class SystemMonitor:
                 )
 
         # Add legends with adjusted positioning
+        # Temperature sensors legend
         ax1.legend(
             temp_handles,
             temp_labels,
@@ -358,6 +360,8 @@ class SystemMonitor:
             loc="upper left",
             title="Temperature Sensors",
         )
+
+        # Fan speeds legend
         ax2.legend(
             rpm_handles,
             rpm_labels,
@@ -378,9 +382,14 @@ class SystemMonitor:
         ymin, ymax = ax1.get_ylim()
         ax1.yaxis.set_major_locator(plt.MultipleLocator(2))
         ax1.yaxis.set_minor_locator(plt.MultipleLocator(1))
+        # Adjust grid for readability
         ax1.grid(True, which="major", alpha=0.5)
         ax1.grid(True, which="minor", alpha=0.2)
+
+        # Adjust temperature axis label size and rotation
         ax1.tick_params(axis="y", labelsize=8, rotation=0)
+
+        # Adjust fan speed axis for better readability
         ax2.yaxis.set_major_locator(plt.MultipleLocator(50))
         ax2.tick_params(axis="y", labelsize=8)
 

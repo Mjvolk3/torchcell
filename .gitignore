@@ -22,7 +22,9 @@ torchcell/models/pretrained_LLM/*
 wandb/
 models/checkpoints/
 mechanistic_aware.csv
-
+data/yeast_gem
+data/QM9
+data/all_spell_readmes
 
 # Dendron
 .dendron.port
@@ -99,10 +101,19 @@ torchcell/knowledge_graphs/conf/kg.yaml
 experiments/embeddings/slurm/output/
 experiments/embeddings/slurm/error/
 
-
 # TEMPORARY
 # notes/assets/images/*
 *.log
 logs.sh
 # duplicate_check.json
+
+# optuna
+multirun
+
 .qodo
+
+# tests 
+tests/slurm/output/*
+
+# apptainer/singularity
+rockylinux_9.sif

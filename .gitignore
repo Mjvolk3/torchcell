@@ -105,3 +105,4 @@ experiments/embeddings/slurm/error/
 *.log
 logs.sh
 # duplicate_check.json
+.qodo

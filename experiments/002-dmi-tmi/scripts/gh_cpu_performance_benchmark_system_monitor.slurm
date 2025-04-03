@@ -34,4 +34,4 @@ cat /proc/meminfo
 #srun python /home/michaelvolk/Documents/projects/torchcell/torchcell/scratch/cpu_performance_benchmark.py
 # In your SLURM script, modify the srun line:
 
-srun --cpu-bind=cores python /home/michaelvolk/Documents/projects/torchcell/torchcell/cpu_benchmark_system_monitor.py --title "2-DIMMs" --repeats 14 --matrix-size 4000 --output-dir "./cpu_benchmark_results"
+srun --cpu-bind=cores python /home/michaelvolk/Documents/projects/torchcell/torchcell/cpu_benchmark_system_monitor.py --title "8-DIMMs-New-Case" --repeats 200 --matrix-size 6000 --output-dir "./cpu_benchmark_results"

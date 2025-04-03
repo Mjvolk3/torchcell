@@ -15,3 +15,15 @@
 % Default image settings
 \setkeys{Gin}{draft=false}
 \setkeys{Gin}{width=\linewidth} % Slightly reduced from full width for better appearance or 0.9\linewidth
+
+\usepackage{xcolor}
+\definecolor{linkred}{RGB}{205,92,92}      % Indian Red for citations and internal links
+\definecolor{urlblue}{RGB}{100,149,237}    % Cornflower Blue for URLs
+
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=linkred,   % applies to citations + internal links
+  urlcolor=urlblue,    % applies to external URLs
+  pdfborder={0 0 0}
+}

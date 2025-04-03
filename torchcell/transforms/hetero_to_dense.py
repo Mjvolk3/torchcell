@@ -37,34 +37,94 @@ class HeteroToDense(BaseTransform):
             src, rel, dst = edge_type
             store = data[edge_type]
 
-            # Check if edge_index exists before accessing
-            if not hasattr(store, "edge_index"):
-                continue
+            # Handle regular edge_index (for node-to-node relations)
+            if hasattr(store, "edge_index") and store.edge_index is not None:
+                src_num_nodes = num_nodes_dict[src]
+                dst_num_nodes = num_nodes_dict[dst]
 
-            if store.edge_index is None:
-                continue
+                # Handle edge attributes
+                if hasattr(store, "edge_attr") and store.edge_attr is not None:
+                    edge_attr = store.edge_attr
+                else:
+                    edge_attr = torch.ones(store.edge_index.size(1), dtype=torch.float)
 
-            src_num_nodes = num_nodes_dict[src]
-            dst_num_nodes = num_nodes_dict[dst]
+                # Create dense adjacency matrix
+                size = torch.Size(
+                    [src_num_nodes, dst_num_nodes] + list(edge_attr.size())[1:]
+                )
+                adj = torch.sparse_coo_tensor(store.edge_index, edge_attr, size)
+                store.adj = adj.to_dense()
 
-            # Handle edge attributes - safely check if edge_attr exists
-            if hasattr(store, "edge_attr") and store.edge_attr is not None:
-                edge_attr = store.edge_attr
-            else:
-                edge_attr = torch.ones(store.edge_index.size(1), dtype=torch.float)
-
-            # Create dense adjacency matrix
-            size = torch.Size(
-                [src_num_nodes, dst_num_nodes] + list(edge_attr.size())[1:]
-            )
-            adj = torch.sparse_coo_tensor(store.edge_index, edge_attr, size)
-            store.adj = adj.to_dense()
-
-            # Safely delete attributes if they exist
-            if hasattr(store, "edge_index"):
+                # Safely delete attributes
                 delattr(store, "edge_index")
-            if hasattr(store, "edge_attr"):
-                delattr(store, "edge_attr")
+                if hasattr(store, "edge_attr"):
+                    delattr(store, "edge_attr")
+
+            # Handle hyperedge_index (for hypergraph/bipartite relations)
+            elif (
+                hasattr(store, "hyperedge_index") and store.hyperedge_index is not None
+            ):
+                src_num_nodes = num_nodes_dict[src]
+                dst_num_nodes = num_nodes_dict[dst]
+                hyperedge_index = store.hyperedge_index
+
+                # For bipartite graphs, we want to create a proper incidence matrix
+                # of size [src_num_nodes, dst_num_nodes] instead of [src_num_nodes, num_edges]
+
+                # Create a bipartite incidence matrix (src_nodes x dst_nodes)
+                inc_matrix = torch.zeros(
+                    (src_num_nodes, dst_num_nodes), dtype=torch.float
+                )
+
+                # Fill in the incidence matrix from the hyperedge_index
+                for i in range(hyperedge_index.size(1)):
+                    src_idx = hyperedge_index[0, i].item()
+                    dst_idx = hyperedge_index[1, i].item()
+
+                    # Safety check for indices
+                    if src_idx < src_num_nodes and dst_idx < dst_num_nodes:
+                        inc_matrix[src_idx, dst_idx] = 1.0
+
+                # Store the proper bipartite incidence matrix
+                store.inc_matrix = inc_matrix
+
+                # If we have stoichiometry coefficients, create a weighted incidence matrix
+                if hasattr(store, "stoichiometry") and store.stoichiometry is not None:
+                    weighted_inc = torch.zeros(
+                        (src_num_nodes, dst_num_nodes), dtype=torch.float
+                    )
+
+                    for i in range(hyperedge_index.size(1)):
+                        src_idx = hyperedge_index[0, i].item()
+                        dst_idx = hyperedge_index[1, i].item()
+
+                        # Safety check for indices
+                        if src_idx < src_num_nodes and dst_idx < dst_num_nodes:
+                            weighted_inc[src_idx, dst_idx] = store.stoichiometry[
+                                i
+                            ].item()
+
+                    store.weighted_inc_matrix = weighted_inc
+
+                # For RMR edges with edge_type (reactant/product), store that too
+                if hasattr(store, "edge_type") and store.edge_type is not None:
+                    edge_type_inc = torch.zeros(
+                        (src_num_nodes, dst_num_nodes), dtype=torch.long
+                    )
+
+                    for i in range(hyperedge_index.size(1)):
+                        src_idx = hyperedge_index[0, i].item()
+                        dst_idx = hyperedge_index[1, i].item()
+
+                        # Safety check for indices
+                        if src_idx < src_num_nodes and dst_idx < dst_num_nodes:
+                            edge_type_inc[src_idx, dst_idx] = store.edge_type[i].item()
+
+                    store.edge_type_matrix = edge_type_inc
+
+                # Safely delete attributes
+                delattr(store, "hyperedge_index")
+                # Keep stoichiometry and edge_type for reference - they may be needed elsewhere
 
         # Handle node features for each node type
         for node_type in data.node_types:
@@ -86,15 +146,23 @@ class HeteroToDense(BaseTransform):
                 size = [num_nodes - store.pos.size(0)] + list(store.pos.size())[1:]
                 store.pos = torch.cat([store.pos, store.pos.new_zeros(size)], dim=0)
 
-            # Safely pad node labels if they exist
-            if (
-                hasattr(store, "y")
-                and store.y is not None
-                and isinstance(store.y, Tensor)
-                and store.y.size(0) == orig_num_nodes
-            ):
-                size = [num_nodes - store.y.size(0)] + list(store.y.size())[1:]
-                store.y = torch.cat([store.y, store.y.new_zeros(size)], dim=0)
+            # Safely pad all tensor attributes with proper dimensions
+            for attr in dir(store):
+                # Skip special attributes, non-tensor attributes, and already processed attributes
+                if attr.startswith("_") or attr in [
+                    "x",
+                    "pos",
+                    "mask",
+                    "num_nodes",
+                    "node_ids",
+                ]:
+                    continue
+
+                value = getattr(store, attr)
+                if isinstance(value, Tensor) and value.size(0) == orig_num_nodes:
+                    size = [num_nodes - value.size(0)] + list(value.size())[1:]
+                    padded_value = torch.cat([value, value.new_zeros(size)], dim=0)
+                    setattr(store, attr, padded_value)
 
         return data
 

@@ -24,7 +24,9 @@ from torchmetrics import (
 from tqdm import tqdm
 
 import wandb
-from torchcell.losses import DCellLoss, WeightedMSELoss
+# TODO name change
+# from torchcell.losses import DCellLoss, WeightedMSELoss
+from torchcell.losses import DCellLoss
 from torchcell.viz import fitness, genetic_interaction_score
 
 import torchcell

@@ -29,7 +29,6 @@ nproc
 free -h
 lscpu
 cat /proc/meminfo
-
 # Run Script
 #srun python /home/michaelvolk/Documents/projects/torchcell/torchcell/scratch/cpu_performance_benchmark.py
 # In your SLURM script, modify the srun line:

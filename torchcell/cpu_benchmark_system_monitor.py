@@ -379,11 +379,8 @@ class SystemMonitor:
         ax2.set_ylabel("Fan Speed (RPM)")
 
         # Set fine-grained temperature y-axis ticks
-        # Get the current y limits
         ymin, ymax = ax1.get_ylim()
-        # Create ticks every 2°C
         ax1.yaxis.set_major_locator(plt.MultipleLocator(2))
-        # Add minor ticks every 1°C
         ax1.yaxis.set_minor_locator(plt.MultipleLocator(1))
         # Adjust grid for readability
         ax1.grid(True, which="major", alpha=0.5)

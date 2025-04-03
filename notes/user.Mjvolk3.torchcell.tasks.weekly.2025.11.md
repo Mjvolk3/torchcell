@@ -2,7 +2,7 @@
 id: 25cmv32yhofqeg6pm6a9n9l
 title: '11'
 desc: ''
-updated: 1742343930038
+updated: 1743634396000
 created: 1741634702492
 ---
 
@@ -50,3 +50,7 @@ created: 1741634702492
 
 - [x] We only can use `batch_size=2'. We could further optimize memory issue by making masks boolean and by making edge attrs not dense... → We need to make sure we are using flex attention.
 
+## 2025.03.16
+
+- x Prepare report. Topics: ISAB failure, long runs, Node-Self Attention Integration, Hetero Node Set Attention math, Hetero Node Set Attention math integration. → Not sharing as it is really not complete.
+- @Andrew-Dudzik - "GNN's are state of the art in algorithmic alignment. LLM's are not." [The Problems in Mathematics of Deep Learning](https://www.youtube.com/watch?v=btF19HOrWC4)

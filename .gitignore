@@ -112,8 +112,9 @@ multirun
 
 .qodo
 
-# tests 
+# tests
 tests/slurm/output/*
 
 # apptainer/singularity
 rockylinux_9.sif
+/.luarc.json

@@ -485,6 +485,12 @@ class Visualization:
 
 
 class LossTracker:
+    """
+    This tracker now stores only per-epoch losses.
+    Each epoch, you collect batch-wise losses in a temporary list,
+    compute their mean, then store one final number per epoch.
+    """
+
     def __init__(self):
         """Initialize separate dicts for train and val losses with epoch-level tracking."""
         self.train_losses = {
@@ -569,13 +575,17 @@ def train_and_evaluate(
             loss_dict = loss_fn(pred, batch.y, u)
             loss_dict["total_loss"].backward()
             optimizer.step()
-            loss_tracker.update_train(loss_dict)
+
+            # Store for aggregator
+            loss_tracker.update_train_batch(loss_dict)
             train_preds.append(pred.detach())
             train_labels.append(batch.y)
 
         # Log training metrics
         train_preds = torch.cat(train_preds, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
+
+        # Just log final batch's losses for the epoch:
         metric_tracker.log_epoch_metrics(
             epoch=epoch,
             predictions=train_preds,
@@ -593,7 +603,10 @@ def train_and_evaluate(
                 batch = batch.to(device)
                 pred, u = model(batch)
                 loss_dict = loss_fn(pred, batch.y, u)
-                loss_tracker.update_val(loss_dict)
+
+                # Store for aggregator
+                loss_tracker.update_val_batch(loss_dict)
+
                 val_preds.append(pred)
                 val_labels.append(batch.y)
 

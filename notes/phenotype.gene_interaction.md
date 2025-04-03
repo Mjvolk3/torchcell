@@ -2,7 +2,7 @@
 id: vrhjq0r8uruk1isu16mack9
 title: Gene_interaction
 desc: ''
-updated: 1738551936531
+updated: 1743649163250
 created: 1738036266319
 ---
 A convenient way to see the general rule is via "inclusion-exclusion" on the lower-order terms. Concretely, label your fitness (or response) for a subset of genes $S \subseteq\{1, \ldots, n\}$ by $f_S$. Then define the interaction $\epsilon_S$ for that subset by recursively subtracting off all interactions belonging to strict sub-subsets of $S$. In symbols,
@@ -142,3 +142,145 @@ $$
 $$
 \tau_{ijk} = \mathcal{F}\left(f_i, f_j, f_k, f_{ij}, f_{ik}, f_{jk}, f_{ijk}\right)
 $$
+
+## 2025.04.02 - Gene Interaction in Terms of Fitness Only
+
+I'll derive the expression for interactions (epistasis) $\epsilon_S$ in terms of fitness values $f_S$ using the inclusion-exclusion principle.
+
+Starting with the recursive definition:
+$$\epsilon_S = f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T$$
+
+Let's solve this by induction to arrive at the inclusion-exclusion formula.
+
+For $|S| = 1$, say $S = \{i\}$:
+$$\epsilon_{\{i\}} = f_{\{i\}} - \sum_{\emptyset \neq T \subset \{i\}} \epsilon_T = f_{\{i\}}$$
+since there are no non-empty strict subsets of a singleton.
+
+For $|S| = 2$, say $S = \{i,j\}$:
+$$\epsilon_{\{i,j\}} = f_{\{i,j\}} - \epsilon_{\{i\}} - \epsilon_{\{j\}} = f_{\{i,j\}} - f_{\{i\}} - f_{\{j\}}$$
+
+For $|S| = 3$, say $S = \{i,j,k\}$:
+$$\begin{align}
+\epsilon_{\{i,j,k\}} &= f_{\{i,j,k\}} - \epsilon_{\{i\}} - \epsilon_{\{j\}} - \epsilon_{\{k\}} - \epsilon_{\{i,j\}} - \epsilon_{\{i,k\}} - \epsilon_{\{j,k\}} \\
+&= f_{\{i,j,k\}} - f_{\{i\}} - f_{\{j\}} - f_{\{k\}} - (f_{\{i,j\}} - f_{\{i\}} - f_{\{j\}}) - (f_{\{i,k\}} - f_{\{i\}} - f_{\{k\}}) - (f_{\{j,k\}} - f_{\{j\}} - f_{\{k\}}) \\
+&= f_{\{i,j,k\}} - f_{\{i\}} - f_{\{j\}} - f_{\{k\}} - f_{\{i,j\}} + f_{\{i\}} + f_{\{j\}} - f_{\{i,k\}} + f_{\{i\}} + f_{\{k\}} - f_{\{j,k\}} + f_{\{j\}} + f_{\{k\}} \\
+&= f_{\{i,j,k\}} - f_{\{i,j\}} - f_{\{i,k\}} - f_{\{j,k\}} + f_{\{i\}} + f_{\{j\}} + f_{\{k\}}
+\end{align}$$
+
+Looking at this pattern, we can derive the inclusion-exclusion formula:
+
+$$\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$$
+
+To prove this formula satisfies our recursive definition, let's substitute it back:
+
+$$\begin{align}
+f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T &= f_S - \sum_{\emptyset \neq T \subset S} \left(\sum_{U \subseteq T} (-1)^{|T|-|U|} f_U\right) \\
+&= f_S - \sum_{U \subseteq S, U \neq S} f_U \sum_{\{U \subseteq T \subset S\}} (-1)^{|T|-|U|}
+\end{align}$$
+
+For any fixed $U \subset S$, the inner sum $\sum_{\{U \subseteq T \subset S\}} (-1)^{|T|-|U|}$ equals 0 except when $U = S$, in which case it equals 1. This is a combinatorial identity that follows from the binomial theorem.
+
+Therefore, the right side reduces to $f_S - \sum_{U \subset S} f_U \cdot 0 + f_S \cdot 1 = f_S$, confirming that our inclusion-exclusion formula is correct.
+
+The formula $\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$ provides a direct way to compute interactions from fitness values without recursion.
+
+***
+
+I'll rewrite the derivation with simplified notation, removing set brackets for subscripts while clearly indicating these are set-based.
+
+## 2025.04.02 - Gene Interaction in Terms of Fitness Only
+
+I'll derive the expression for interactions (epistasis) $\epsilon_S$ in terms of fitness values $f_S$ using the inclusion-exclusion principle.
+
+Starting with the recursive definition:
+$$\epsilon_S = f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T$$
+
+Let's solve this by induction to arrive at the inclusion-exclusion formula.
+
+For $|S| = 1$, say $S = i$:
+$$\epsilon_i = f_i - \sum_{\emptyset \neq T \subset i} \epsilon_T = f_i$$
+since there are no non-empty strict subsets of a singleton.
+
+For $|S| = 2$, say $S = ij$:
+$$\epsilon_{ij} = f_{ij} - \epsilon_i - \epsilon_j = f_{ij} - f_i - f_j$$
+
+For $|S| = 3$, say $S = ijk$:
+$$\begin{align}
+\epsilon_{ijk} &= f_{ijk} - \epsilon_i - \epsilon_j - \epsilon_k - \epsilon_{ij} - \epsilon_{ik} - \epsilon_{jk} \\
+&= f_{ijk} - f_i - f_j - f_k - (f_{ij} - f_i - f_j) - (f_{ik} - f_i - f_k) - (f_{jk} - f_j - f_k) \\
+&= f_{ijk} - f_i - f_j - f_k - f_{ij} + f_i + f_j - f_{ik} + f_i + f_k - f_{jk} + f_j + f_k \\
+&= f_{ijk} - f_{ij} - f_{ik} - f_{jk} + f_i + f_j + f_k
+\end{align}$$
+
+Looking at this pattern, we can derive the inclusion-exclusion formula:
+
+$$\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$$
+
+To prove this formula satisfies our recursive definition, let's substitute it back:
+
+$$\begin{align}
+f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T &= f_S - \sum_{\emptyset \neq T \subset S} \left(\sum_{U \subseteq T} (-1)^{|T|-|U|} f_U\right) \\
+&= f_S - \sum_{U \subseteq S, U \neq S} f_U \sum_{U \subseteq T \subset S} (-1)^{|T|-|U|}
+\end{align}$$
+
+For any fixed $U \subset S$, the inner sum $\sum_{U \subseteq T \subset S} (-1)^{|T|-|U|}$ equals 0 except when $U = S$, in which case it equals 1. This is a combinatorial identity that follows from the binomial theorem.
+
+Therefore, the right side reduces to $f_S - \sum_{U \subset S} f_U \cdot 0 + f_S \cdot 1 = f_S$, confirming that our inclusion-exclusion formula is correct.
+
+The formula $\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$ provides a direct way to compute interactions from fitness values without recursion.
+
+***
+
+# Derivation of Gene Interactions in Terms of Fitness Values
+
+In epistasis analysis, we aim to quantify the interactions between genes by examining how combinations of genetic variants affect phenotypes beyond what would be expected from individual effects. Here, I present a formal derivation of gene interactions using the inclusion-exclusion principle.
+
+## Definition and Notation
+
+Let $f_S$ represent the fitness (or phenotypic response) for a subset of genes $S \subseteq \{1, \ldots, n\}$. The interaction term $\epsilon_S$ for that subset can be defined recursively by subtracting all interactions belonging to strict subsets of $S$:
+
+$$\epsilon_S = f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T$$
+
+## Examples for Small Sets
+
+### Single Gene ($|S| = 1$)
+For a single gene $i$:
+$$\epsilon_i = f_i$$
+since there are no non-empty strict subsets.
+
+### Gene Pairs ($|S| = 2$)
+For a pair of genes $i$ and $j$:
+$$\epsilon_{ij} = f_{ij} - \epsilon_i - \epsilon_j = f_{ij} - f_i - f_j$$
+
+### Gene Triples ($|S| = 3$)
+For three genes $i$, $j$, and $k$:
+$$\begin{align}
+\epsilon_{ijk} &= f_{ijk} - \epsilon_i - \epsilon_j - \epsilon_k - \epsilon_{ij} - \epsilon_{ik} - \epsilon_{jk} \\
+&= f_{ijk} - f_i - f_j - f_k - (f_{ij} - f_i - f_j) - (f_{ik} - f_i - f_k) - (f_{jk} - f_j - f_k) \\
+&= f_{ijk} - f_{ij} - f_{ik} - f_{jk} + f_i + f_j + f_k
+\end{align}$$
+
+## General Formula via Inclusion-Exclusion
+
+Examining the pattern in these examples suggests a general formula using inclusion-exclusion:
+
+$$\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$$
+
+This formula directly computes the interaction term $\epsilon_S$ from fitness values without requiring recursive calculation.
+
+## Proof of Equivalence
+
+To verify this formula satisfies our recursive definition, we substitute it back:
+
+$$\begin{align}
+f_S - \sum_{\emptyset \neq T \subset S} \epsilon_T &= f_S - \sum_{\emptyset \neq T \subset S} \left(\sum_{U \subseteq T} (-1)^{|T|-|U|} f_U\right) \\
+&= f_S - \sum_{U \subseteq S, U \neq S} f_U \sum_{U \subseteq T \subset S} (-1)^{|T|-|U|}
+\end{align}$$
+
+For any fixed $U \subset S$, the inner sum $\sum_{U \subseteq T \subset S} (-1)^{|T|-|U|}$ equals 0 except when $U = S$, which is excluded from the range. This follows from a combinatorial identity related to the binomial theorem.
+
+Therefore, the right side reduces to $f_S$, confirming that our inclusion-exclusion formula is correct.
+
+## Interpretation
+
+The formula $\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$ isolates genuine $|S|$-way interactions by systematically "peeling off" all interactions from subsets of the same genes. This allows researchers to determine whether genes interact synergistically or antagonistically beyond what would be expected from their individual and lower-order combined effects.

@@ -1,4 +1,4 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.2
 Name: torchcell
 Version: 0.2.8
 Summary: An example package
@@ -19,10 +19,11 @@ Requires-Dist: pyreadr>=0.4.9
 Requires-Dist: scipy>=1.11.4
 Requires-Dist: networkx>=3.2.1
 Requires-Dist: umap-learn>=0.5.3
+Requires-Dist: hypernetx>=2.3.10
 Requires-Dist: hydra-core>=1.3.2
 Requires-Dist: deepdiff>=7.0.1
-Requires-Dist: torch>=2.4.0
-Requires-Dist: torch_geometric>=2.4.0
+Requires-Dist: torch==2.4.1
+Requires-Dist: torch_geometric>=2.6.1
 Requires-Dist: torchmetrics>=1.2.1
 Requires-Dist: lightning>=2.4.0
 Requires-Dist: wandb>=0.17.5
@@ -61,6 +62,9 @@ Requires-Dist: twine>=4.0.2
 Requires-Dist: memory-profiler>=0.61.0
 Requires-Dist: neo4j<5.0,>=4.4.11
 Requires-Dist: cliff>=4.5.0
+Requires-Dist: cobra>=0.29.1
+Requires-Dist: hypernetx>=2.3.10
+Requires-Dist: fastjsonschema>=2.21.1
 Provides-Extra: dev
 Requires-Dist: black; extra == "dev"
 Requires-Dist: semantic-release; extra == "dev"

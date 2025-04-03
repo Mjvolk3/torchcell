@@ -6,6 +6,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from omegaconf import DictConfig, OmegaConf
+import os.path as osp
+import os
+import hydra
 from torch_geometric.nn import (
     HeteroConv,
     GCNConv,
@@ -38,6 +42,15 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
 from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
+
+
+def get_norm_layer(channels: int, norm: str):
+    if norm == "layer":
+        return nn.LayerNorm(channels)
+    elif norm == "batch":
+        return nn.BatchNorm1d(channels)
+    else:
+        raise ValueError(f"Unsupported norm type: {norm}")
 
 
 class AttentionalGraphAggregation(nn.Module):
@@ -74,17 +87,23 @@ class PreProcessor(nn.Module):
         hidden_channels: int,
         num_layers: int = 2,
         dropout: float = 0.1,
+        norm: str = "layer",
+        activation: str = "relu",
     ):
         super().__init__()
+        act = act_register[activation]
+        norm_layer = (
+            nn.LayerNorm(hidden_channels)
+            if norm == "layer"
+            else nn.BatchNorm1d(hidden_channels)
+        )
         layers = []
-        # Use BatchNorm1d instead of LayerNorm for input features
-        layers.append(nn.BatchNorm1d(in_channels))
-        # First linear transformation block
+        # initial layer
         layers.extend(
             [
                 nn.Linear(in_channels, hidden_channels),
-                nn.BatchNorm1d(hidden_channels),
-                nn.ReLU(),
+                norm_layer,
+                act,
                 nn.Dropout(dropout),
             ]
         )
@@ -92,8 +111,8 @@ class PreProcessor(nn.Module):
             layers.extend(
                 [
                     nn.Linear(hidden_channels, hidden_channels),
-                    nn.BatchNorm1d(hidden_channels),
-                    nn.ReLU(),
+                    norm_layer,
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
@@ -104,30 +123,35 @@ class PreProcessor(nn.Module):
 
 
 class Combiner(nn.Module):
-    def __init__(self, hidden_channels: int, num_layers: int = 2, dropout: float = 0.1):
+    def __init__(
+        self,
+        hidden_channels: int,
+        num_layers: int = 2,
+        dropout: float = 0.1,
+        norm: str = "layer",
+        activation: str = "relu",
+    ):
         super().__init__()
+        act = act_register[activation]
         layers = []
-
-        # Input layer (concatenated features)
+        # First (input) layer: concatenated features -> hidden_channels
         layers.extend(
             [
                 nn.Linear(hidden_channels * 2, hidden_channels),
-                nn.LayerNorm(hidden_channels),
-                nn.ReLU(),
+                get_norm_layer(hidden_channels, norm),
+                act,
                 nn.Dropout(dropout),
             ]
         )
-
         for _ in range(num_layers - 1):
             layers.extend(
                 [
                     nn.Linear(hidden_channels, hidden_channels),
-                    nn.LayerNorm(hidden_channels),
-                    nn.ReLU(),
+                    get_norm_layer(hidden_channels, norm),
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
-
         self.mlp = nn.Sequential(*layers)
 
     def forward(
@@ -477,44 +501,27 @@ class HeteroGnn(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str],
+        norm: Optional[str] = None,
     ) -> nn.Module:
-        if num_layers < 1:
-            raise ValueError("Prediction head must have at least one layer")
+        if num_layers == 0:
+            return nn.Identity()
 
-        activation_fn = act_register[activation]  # This gives us an instance
-        activation_class = type(activation_fn)  # Get the class from the instance
         layers = []
-        dims = []
+        dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
 
-        # Calculate dimensions for each layer
-        if num_layers == 1:
-            dims = [in_channels, out_channels]
-        else:
-            dims = [in_channels] + [hidden_channels] * (num_layers - 1) + [out_channels]
+        # Get the activation class from the register - notice we don't call it
+        act_fn = type(act_register[activation])
 
-        # Build layers
         for i in range(num_layers):
-            # Add linear layer
             layers.append(nn.Linear(dims[i], dims[i + 1]))
-
-            # Add normalization, activation, and dropout (except for last layer)
-            if i < num_layers - 1:
+            if i < num_layers - 1:  # Don't apply norm/act/dropout after the last layer
                 if norm is not None:
-                    norm_layer = self._get_head_norm(dims[i + 1], norm)
-                    if norm_layer is not None:
-                        layers.append(norm_layer)
+                    layers.append(get_norm_layer(dims[i + 1], norm))
+                # Create a new instance of the activation function
+                layers.append(act_fn())
+                layers.append(nn.Dropout(dropout))
 
-                layers.append(activation_class())  # Create new instance using the class
-
-                if dropout > 0:
-                    layers.append(nn.Dropout(dropout))
-
-        return PredictionHead(
-            layers=nn.ModuleList(layers),
-            residual=residual and num_layers > 1,
-            dims=dims,
-        )
+        return nn.Sequential(*layers)
 
     def forward(self, batch, preprocessed_features=None):
         from torch_geometric.utils import add_self_loops
@@ -637,123 +644,58 @@ class GeneContextProcessor(nn.Module):
         hidden_channels: int,
         num_layers: int = 2,
         dropout: float = 0.1,
-        use_layer_norm: bool = True,
+        norm: str = "layer",
+        activation: str = "relu",
     ):
         super().__init__()
+        act = act_register[activation]
         self.hidden_channels = hidden_channels
-
         layers = []
         current_dim = in_channels
         for _ in range(num_layers):
             layers.extend(
                 [
                     nn.Linear(current_dim, hidden_channels),
-                    nn.LayerNorm(hidden_channels) if use_layer_norm else nn.Identity(),
-                    nn.ReLU(),
+                    get_norm_layer(hidden_channels, norm),
+                    act,
                     nn.Dropout(dropout),
                 ]
             )
             current_dim = hidden_channels
         self.mlp = nn.Sequential(*layers)
-
-        # Replace SAB with AttentionalGraphAggregation
-        self.aggregator = AttentionalGraphAggregation(
-            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
+        # SAB remains as before (optionally you could parameterize its norm as well)
+        self.sab = SetTransformerAggregation(
+            channels=hidden_channels,
+            num_encoder_blocks=2,
+            heads=4,
+            layer_norm=True,
+            dropout=dropout,
+            use_isab=False,
         )
 
     def forward(
         self, gene_features: torch.Tensor, reaction_to_genes: dict[int, list[int]]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        # Transform gene features
         H_g = self.mlp(gene_features)
-
-        # Build a set of gene features per reaction
         rxn_feats = []
         rxn_indices = []
         for rxn_idx, gene_list in reaction_to_genes.items():
             for gidx in gene_list:
                 rxn_feats.append(H_g[gidx])
                 rxn_indices.append(rxn_idx)
-
         if rxn_feats:
             rxn_feats = torch.stack(rxn_feats, dim=0)
             rxn_indices = torch.tensor(rxn_indices, device=gene_features.device)
-            # Sort by reaction index to feed into SAB
             sorted_idx = torch.argsort(rxn_indices)
             rxn_feats = rxn_feats[sorted_idx]
             rxn_indices = rxn_indices[sorted_idx]
-            H_r = self.aggregator(rxn_feats, rxn_indices)
+            H_r = self.sab(rxn_feats, rxn_indices)
         else:
-            # No genes => zero out
-            # (assuming reaction indices go up to some known maximum)
-            # For safety, just create a single vector:
             H_r = torch.zeros(
                 (max(reaction_to_genes.keys()) + 1, self.hidden_channels),
                 device=gene_features.device,
             )
-
         return H_g, H_r
-
-
-class MetaboliteProcessor(nn.Module):
-    def __init__(
-        self,
-        hidden_channels: int,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        use_attention: bool = True,
-    ):
-        super().__init__()
-        self.conv_layers = nn.ModuleList(
-            [
-                StoichHypergraphConv(
-                    in_channels=hidden_channels,
-                    out_channels=hidden_channels,
-                    use_attention=use_attention,
-                    attention_mode="node",
-                    dropout=dropout,
-                    bias=True,
-                    use_skip=True,  # Enable skip connections
-                )
-                for _ in range(num_layers)
-            ]
-        )
-        self.layer_norms = nn.ModuleList(
-            [nn.LayerNorm(hidden_channels) for _ in range(num_layers)]
-        )
-
-    def forward(
-        self,
-        metabolite_embeddings: torch.Tensor,
-        hyperedge_index: torch.Tensor,
-        stoichiometry: torch.Tensor,
-        reaction_features: torch.Tensor,
-    ) -> torch.Tensor:
-
-        # Sort edge indices and convert perm to long tensor for indexing
-        edge_index, perm = sort_edge_index(
-            hyperedge_index, edge_attr=stoichiometry, sort_by_row=False
-        )
-        if isinstance(perm, tuple):
-            edge_index, stoich = edge_index, perm[0]
-        else:
-            # Convert perm to long tensor before indexing
-            perm = perm.long()  # or perm.to(torch.long)
-            stoich = stoichiometry[perm]
-
-        x = metabolite_embeddings
-        for conv, norm in zip(self.conv_layers, self.layer_norms):
-            out = conv(
-                x=x,
-                edge_index=edge_index,
-                stoich=stoich,
-                hyperedge_attr=reaction_features,
-            )
-            out = norm(out)
-            out = out + x
-            x = torch.tanh(out)
-
-        return x
 
 
 class ReactionMapper(nn.Module):
@@ -827,6 +769,7 @@ class MetabolismProcessor(nn.Module):
         num_layers: dict[str, int] = {"metabolite": 2},
         dropout: float = 0.1,
         use_attention: bool = True,
+        heads: int = 1,
     ):
         super().__init__()
         self.max_metabolite_nodes = max_metabolite_nodes
@@ -859,6 +802,7 @@ class MetabolismProcessor(nn.Module):
                     attention_mode="node",
                     dropout=dropout,
                     bias=True,
+                    heads=heads,
                 )
                 for _ in range(num_layers["metabolite"])
             ]
@@ -1055,6 +999,36 @@ class IsomorphicCell(nn.Module):
     ):
         super().__init__()
 
+        # Check if using learnable embeddings from config
+        if gene_encoder_config is not None:
+            self.use_learned_embedding = "learnable" in gene_encoder_config.get(
+                "embedding_type", ""
+            )
+            if self.use_learned_embedding:
+                self.node_embedding = nn.Embedding(
+                    num_embeddings=gene_encoder_config["max_num_nodes"],
+                    embedding_dim=gene_encoder_config[
+                        "learnable_embedding_input_channels"
+                    ],
+                    max_norm=1.0,
+                )
+                # Filter params for HeteroGnn
+                hetero_gnn_config = {
+                    k: v
+                    for k, v in gene_encoder_config.items()
+                    if k
+                    not in [
+                        "embedding_type",
+                        "max_num_nodes",
+                        "learnable_embedding_input_channels",
+                    ]
+                }
+            else:
+                hetero_gnn_config = gene_encoder_config
+        else:
+            self.use_learned_embedding = False
+            hetero_gnn_config = {}
+            self.node_embedding = None
         # Configurations
         self.preprocessor_config = {"dropout": dropout}
         if preprocessor_config:
@@ -1065,6 +1039,7 @@ class IsomorphicCell(nn.Module):
             "set_transformer_heads": 4,
             "use_skip": True,
             "dropout": dropout,
+            "heads": 1,
         }
         if metabolism_config:
             self.metabolism_config.update(metabolism_config)
@@ -1099,7 +1074,7 @@ class IsomorphicCell(nn.Module):
             out_channels=hidden_channels,
             num_layers=num_layers["gene_encoder"],
             edge_types=edge_types,
-            **(gene_encoder_config or {}),
+            **(hetero_gnn_config or {}),
         )
 
         # Metabolism processor uses the same preprocessed gene features
@@ -1111,6 +1086,7 @@ class IsomorphicCell(nn.Module):
             num_layers={"metabolite": num_layers["metabolism"]},
             dropout=self.metabolism_config["dropout"],
             use_attention=self.metabolism_config["use_attention"],
+            heads=self.metabolism_config["heads"],
         )
 
         # Combiner to merge gene and metabolism paths
@@ -1137,31 +1113,34 @@ class IsomorphicCell(nn.Module):
         )
 
     def _build_mlp(self, in_dim: int, out_dim: int, config: dict) -> nn.Sequential:
-        layers = []
+        layers: list[nn.Module] = []
         current_dim = in_dim
 
         for hidden_dim in config["hidden_layers"]:
-            # Create a residual block class for skip connections
-            if config["residual"] and current_dim == hidden_dim:
+            # Create a residual block with integrated dropout if applicable.
+            if config.get("residual", False) and current_dim == hidden_dim:
 
                 class ResidualBlock(nn.Module):
-                    def __init__(self, linear):
+                    def __init__(self, linear: nn.Linear, dropout: float) -> None:
                         super().__init__()
                         self.linear = linear
+                        self.dropout = nn.Dropout(dropout)
 
-                    def forward(self, x):
-                        return self.linear(x) + x
+                    def forward(self, x: torch.Tensor) -> torch.Tensor:
+                        return self.dropout(self.linear(x)) + x
 
-                layers.append(ResidualBlock(nn.Linear(current_dim, hidden_dim)))
+                layers.append(
+                    ResidualBlock(nn.Linear(current_dim, hidden_dim), config["dropout"])
+                )
             else:
                 layers.append(nn.Linear(current_dim, hidden_dim))
 
-            if config["use_layer_norm"]:
+            if config.get("use_layer_norm", False):
                 layers.append(nn.LayerNorm(hidden_dim))
 
             layers.append(act_register[config["activation"]])
+            # Add dropout after activation.
             layers.append(nn.Dropout(config["dropout"]))
-
             current_dim = hidden_dim
 
         layers.append(nn.Linear(current_dim, out_dim))
@@ -1182,10 +1161,48 @@ class IsomorphicCell(nn.Module):
 
         return pert_indices
 
-    def forward_single(self, batch):
-        x = self.preprocessor(batch["gene"].x)
-        z_g = self.gene_encoder(batch, preprocessed_features=x)
-        z_mg = self.metabolism_processor(batch, preprocessed_features=x)
+    def forward_single(self, data: HeteroData) -> torch.Tensor:
+        gene_data = data["gene"]
+        if self.use_learned_embedding:
+            # Check if we have a batched (perturbed) graph
+            if hasattr(gene_data, "ptr"):
+                # Batched perturbed graphs: ptr exists.
+                batch_size = gene_data.ptr.numel() - 1
+                device = (
+                    gene_data.x.device
+                    if hasattr(gene_data, "x")
+                    else gene_data.batch.device
+                )
+                base_embeddings = self.node_embedding.weight  # [num_nodes, emb_dim]
+                # Expand embeddings to match the batch size:
+                replicated = base_embeddings.unsqueeze(0).expand(batch_size, -1, -1)
+                all_embeddings = replicated.reshape(-1, replicated.size(-1))
+                # Expecting pert_mask to be of shape [batch_size * num_nodes]
+                mask = getattr(gene_data, "pert_mask", None)
+                if mask is None:
+                    mask = torch.zeros(
+                        all_embeddings.size(0), dtype=torch.bool, device=device
+                    )
+                x = all_embeddings[~mask]
+            else:
+                # Wildtype (cell_graph): single graph, no ptr.
+                device = (
+                    gene_data.x.device
+                    if hasattr(gene_data, "x")
+                    else self.node_embedding.weight.device
+                )
+                base_embeddings = self.node_embedding.weight  # [num_nodes, emb_dim]
+                mask = getattr(gene_data, "pert_mask", None)
+                if mask is None:
+                    mask = torch.zeros(
+                        base_embeddings.size(0), dtype=torch.bool, device=device
+                    )
+                x = base_embeddings[~mask]
+        else:
+            x = self.preprocessor(gene_data.x)
+
+        z_g = self.gene_encoder(data, preprocessed_features=x)
+        z_mg = self.metabolism_processor(data, preprocessed_features=x)
         z = self.combiner(z_g, z_mg)
         return z
 
@@ -1248,34 +1265,25 @@ class IsomorphicCell(nn.Module):
 
     @property
     def num_parameters(self) -> dict[str, int]:
-        # Gene encoder parameters
+        preprocessor_params = sum(p.numel() for p in self.preprocessor.parameters())
         gene_encoder_params = sum(p.numel() for p in self.gene_encoder.parameters())
-
-        # Metabolism processor parameters
         metabolism_params = sum(
             p.numel() for p in self.metabolism_processor.parameters()
         )
-
-        # Combiner parameters
         combiner_params = sum(p.numel() for p in self.combiner.parameters())
-
-        # Aggregator parameters
         aggregator_params = sum(
             p.numel()
             for aggregator in [self.whole_intact_aggregator, self.perturbed_aggregator]
             for p in aggregator.parameters()
         )
-
-        # Prediction head parameters
         growth_head_params = sum(p.numel() for p in self.growth_head.parameters())
         interaction_head_params = sum(
             p.numel() for p in self.gene_interaction_head.parameters()
         )
-
-        # Total trainable parameters
         total_trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
 
         return {
+            "preprocessor": preprocessor_params,
             "gene_encoder": gene_encoder_params,
             "metabolism_processor": metabolism_params,
             "combiner": combiner_params,
@@ -1284,80 +1292,6 @@ class IsomorphicCell(nn.Module):
             "interaction_head": interaction_head_params,
             "total": total_trainable,
         }
-
-
-def initialize_model(input_channels, device, config=None):
-    if config is None:
-        config = {}
-
-    default_config = {
-        # Model dimensions
-        "in_channels": input_channels,
-        "hidden_channels": 64,
-        # Layer counts
-        "num_layers": {
-            "preprocessor": 2,
-            "gene_encoder": 3,
-            "metabolism": 2,
-            "combiner": 2,
-        },
-        # Gene encoder settings
-        "gene_encoder_config": {
-            "conv_type": "GIN",
-            "layer_config": {
-                "train_eps": True,
-                "hidden_multiplier": 2.0,
-                "dropout": 0.1,
-                "add_self_loops": True,
-                "is_skip_connection": True,
-                "num_mlp_layers": 3,
-                "is_mlp_skip_connection": True,
-            },
-            "activation": "gelu",
-            "norm": "layer",
-            "head_num_layers": 2,
-            "head_hidden_channels": None,
-            "head_dropout": 0.1,
-            "head_activation": "gelu",
-            "head_residual": True,
-            "head_norm": "layer",
-        },
-        # Metabolism processor settings
-        "metabolism_config": {
-            "max_metabolite_nodes": 2534,
-            "use_attention": True,
-            "use_skip": True,
-            "dropout": 0.1,
-        },
-        # General settings
-        "dropout": 0.1,
-        "edge_types": [
-            ("gene", "physical_interaction", "gene"),
-            ("gene", "regulatory_interaction", "gene"),
-        ],
-    }
-
-    # Update config with user-provided values
-    for k, v in config.items():
-        if isinstance(v, dict):
-            default_config[k].update(v)
-        else:
-            default_config[k] = v
-
-    config = default_config
-
-    model = IsomorphicCell(
-        in_channels=config["in_channels"],
-        hidden_channels=config["hidden_channels"],
-        edge_types=config["edge_types"],
-        num_layers=config["num_layers"],
-        dropout=config["dropout"],
-        gene_encoder_config=config["gene_encoder_config"],
-        metabolism_config=config["metabolism_config"],
-    ).to(device)
-    print(model.num_parameters)
-
-    return model
 
 
 def load_sample_data_batch():
@@ -1369,9 +1303,10 @@ def load_sample_data_batch():
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
+
+    # from torchcell.datasets.fungal_up_down_transformer import (
+    #     FungalUpDownTransformerDataset,
+    # )
     from torchcell.datasets import CodonFrequencyDataset
     from torchcell.data import MeanExperimentDeduplicator
     from torchcell.data import GenotypeAggregator
@@ -1384,30 +1319,34 @@ def load_sample_data_batch():
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
+    print(f"DATA_ROOT: {DATA_ROOT}")
 
-    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+    )
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
         data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
     )
-    selected_node_embeddings = ["fudt_upstream"]
+    selected_node_embeddings = ["codon_frequency"]
     node_embeddings = {}
-    if "fudt_downstream" in selected_node_embeddings:
-        node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_downstream",
-        )
+    # if "fudt_downstream" in selected_node_embeddings:
+    #     node_embeddings["fudt_downstream"] = FungalUpDownTransformerDataset(
+    #         root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+    #         genome=genome,
+    #         model_name="species_downstream",
+    #     )
 
-    if "fudt_upstream" in selected_node_embeddings:
-        node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
-            root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
-            genome=genome,
-            model_name="species_upstream",
-        )
-    elif "fudt_downstream" in selected_node_embeddings:
+    # if "fudt_upstream" in selected_node_embeddings:
+    #     node_embeddings["fudt_upstream"] = FungalUpDownTransformerDataset(
+    #         root=osp.join(DATA_ROOT, "data/scerevisiae/fudt_embedding"),
+    #         genome=genome,
+    #         model_name="species_upstream",
+    #     )
+    if "codon_frequency" in selected_node_embeddings:
         node_embeddings["codon_frequency"] = CodonFrequencyDataset(
             root=osp.join(DATA_ROOT, "data/scerevisiae/codon_frequency_embedding"),
             genome=genome,
@@ -1418,7 +1357,7 @@ def load_sample_data_batch():
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
     )
-    gem = YeastGEM()
+    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
     reaction_map = gem.reaction_map
 
     dataset = Neo4jCellDataset(
@@ -1439,9 +1378,9 @@ def load_sample_data_batch():
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
         split_indices=["phenotype_label_index", "perturbation_count_index"],
-        batch_size=2,
+        batch_size=4,
         random_seed=seed,
-        num_workers=6,
+        num_workers=2,
         pin_memory=False,
     )
     cell_data_module.setup()
@@ -1451,8 +1390,8 @@ def load_sample_data_batch():
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=int(size),
-        batch_size=2,
-        num_workers=6,
+        batch_size=4,
+        num_workers=2,
         pin_memory=True,
         prefetch=False,
         seed=seed,
@@ -1532,28 +1471,29 @@ def plot_correlations(
     plt.close()
 
 
-def main(device="cuda"):
-    from torchcell.timestamp import timestamp
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
+    config_name="isomorphic_cell_attentional",
+)
+def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
-    from dotenv import load_dotenv
-    import os.path as osp
     import os
-    import torch
+    from dotenv import load_dotenv
     from torchcell.losses.isomorphic_cell_loss import ICLoss
+    from torchcell.timestamp import timestamp
 
-    # Convert "gpu" to "cuda" if needed
-    if device.lower() == "gpu":
+    load_dotenv()
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    if cfg.trainer.accelerator.lower() == "gpu":
         device = "cuda"
+    else:
+        device = "cpu"
     if device == "cuda" and not torch.cuda.is_available():
         print("CUDA is not available. Falling back to CPU.")
         device = "cpu"
     device = torch.device(device)
     print(f"\nUsing device: {device}")
-
-    load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    MPLSTYLE_PATH = os.getenv("MPLSTYLE_PATH")
-    plt.style.use(MPLSTYLE_PATH)
 
     # Load sample data including metabolism
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch()
@@ -1562,16 +1502,41 @@ def main(device="cuda"):
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Model configuration
-    model = initialize_model(input_channels, device)
+    gene_encoder_config = dict(cfg.model.gene_encoder_config)  # Convert to dict
+    # Add learnable embedding params if specified
+    if any("learnable" in emb for emb in cfg.cell_dataset.node_embeddings):
+        gene_encoder_config.update(
+            {
+                "embedding_type": "learnable",
+                "max_num_nodes": cell_graph["gene"].num_nodes,
+                "learnable_embedding_input_channels": cfg.cell_dataset.learnable_embedding_input_channels,
+            }
+        )
+
+    model = IsomorphicCell(
+        in_channels=input_channels,
+        hidden_channels=cfg.model.hidden_channels,
+        edge_types=[
+            ("gene", "physical_interaction", "gene"),
+            ("gene", "regulatory_interaction", "gene"),
+        ],
+        num_layers=cfg.model.num_layers,
+        dropout=cfg.model.dropout,
+        gene_encoder_config=gene_encoder_config,  # Use updated dict
+        metabolism_config=cfg.model.metabolism_config,
+        combiner_config=cfg.model.combiner_config,
+        prediction_head_config=cfg.model.prediction_head_config,
+    )
+
     print("\nModel architecture:")
     print(model)
+    print("Parameter counts:", model.num_parameters)
 
     # Set lambda values and weight decay
-    lambda_dist = 0.1
-    lambda_supcr = 0.01
-    lambda_cell = 100
-    weight_decay = 1e-6
+    lambda_dist = cfg.regression_task.lambda_dist
+    lambda_supcr = cfg.regression_task.lambda_supcr
+    lambda_cell = cfg.regression_task.lambda_cell
+    weight_decay = cfg.regression_task.optimizer.weight_decay
 
     # Compute weights (example calculation)
     total_non_nan = (~batch["gene"].fitness.isnan()).sum() + (
@@ -1591,9 +1556,8 @@ def main(device="cuda"):
         weights=weights,
     )
 
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=0.001, weight_decay=weight_decay
-    )
+    lr = cfg.regression_task.optimizer.lr
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     # Get targets and move to device
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)
@@ -1602,7 +1566,7 @@ def main(device="cuda"):
     model.train()
     print("\nStarting training:")
     losses = []
-    num_epochs = 10000
+    num_epochs = 100
 
     try:
         for epoch in range(num_epochs):
@@ -1715,4 +1679,4 @@ def main(device="cuda"):
 
 
 if __name__ == "__main__":
-    main(device="cuda")
+    main()

@@ -854,3 +854,54 @@ class TestModelOutputSimulation:
             assert (
                 bin_start <= recovered_values[i] <= bin_end
             ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+
+
+class TestInverseComposeWithGrads:
+    @pytest.fixture
+    def mock_dataset(self):
+        class MockDataset:
+            def __init__(self):
+                self.label_df = pd.DataFrame({"fitness": np.linspace(0, 1, 100)})
+
+        return MockDataset()
+
+    @pytest.fixture
+    def transforms(self, mock_dataset):
+        norm_config = {"fitness": {"strategy": "minmax"}}
+        norm_transform = LabelNormalizationTransform(mock_dataset, norm_config)
+        return [norm_transform]
+
+    def test_inverse_compose_with_grad_tensors(self, transforms):
+        """Test that InverseCompose works with tensors that have gradients."""
+        # Create a tensor with gradients
+        data = HeteroData()
+        x = torch.tensor([0.2, 0.5, 0.8], requires_grad=True)
+        data["gene"] = {"fitness": x}
+
+        # Create forward and inverse transforms
+        forward_transform = Compose(transforms)
+        inverse_transform = InverseCompose(transforms)
+
+        # Apply forward transform
+        transformed = forward_transform(data)
+
+        # Create a "model" output by doing a simple operation that preserves gradients
+        model_output = transformed["gene"]["fitness"] * 0.5 + 0.25
+
+        # Create a new data object with model output
+        pred_data = HeteroData()
+        pred_data["gene"] = {"fitness": model_output}
+
+        # This should not raise an error even though model_output has gradients
+        recovered = inverse_transform(pred_data)
+
+        # Verify the output is reasonable
+        assert recovered["gene"]["fitness"] is not None
+        assert recovered["gene"]["fitness"].shape == x.shape
+
+        # Verify we can backpropagate through this operation
+        loss = recovered["gene"]["fitness"].sum()
+        loss.backward()
+
+        # x should now have gradients
+        assert x.grad is not None

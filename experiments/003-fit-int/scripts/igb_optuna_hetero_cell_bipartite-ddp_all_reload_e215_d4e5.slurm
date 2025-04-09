@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p mmli
-#SBATCH --mem=360g
+#SBATCH --mem=480g
 #SBATCH -N 1
-#SBATCH --ntasks=3
+#SBATCH --ntasks=4
 #SBATCH --cpus-per-task=16
-#SBATCH --gres=gpu:3
+#SBATCH --gres=gpu:4
 #SBATCH --job-name=HCB_DDP
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -22,8 +22,9 @@ cd /home/a-m/mjvolk3/projects/torchcell
 export MASTER_ADDR=$(hostname)
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
+
 # Launch with srun to ensure proper process distribution
-srun --ntasks-per-node=3 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
+srun --ntasks-per-node=4 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
 source $HOME/miniconda3/bin/activate
 conda activate torchcell
 python /home/a-m/mjvolk3/scratch/torchcell/experiments/003-fit-int/scripts/hetero_cell_bipartite.py

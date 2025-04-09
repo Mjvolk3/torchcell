@@ -104,7 +104,7 @@ def main(cfg) -> str:
         # Concerned about this as it makes things much less general.
         if "scerevisiae_graph" in inspect.signature(dataset_class.__init__).parameters:
             genome = SCerevisiaeGenome(
-                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+                genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
             graph = SCerevisiaeGraph(
                 data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
@@ -112,7 +112,7 @@ def main(cfg) -> str:
             kwargs["scerevisiae_graph"] = graph
         if "genome" in inspect.signature(dataset_class.__init__).parameters:
             genome = SCerevisiaeGenome(
-                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+                genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
             kwargs["genome"] = genome
 
@@ -121,7 +121,7 @@ def main(cfg) -> str:
             "path": osp.join(DATA_ROOT, wandb.config.datasets[dataset]["path"]),
             "kwargs": kwargs,
         }
-        dataset_configs.append(dataset_config)  
+        dataset_configs.append(dataset_config)
 
     # Instantiate datasets
     datasets = []

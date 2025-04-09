@@ -2,7 +2,7 @@
 id: vrhjq0r8uruk1isu16mack9
 title: Gene_interaction
 desc: ''
-updated: 1743649163250
+updated: 1744095527616
 created: 1738036266319
 ---
 A convenient way to see the general rule is via "inclusion-exclusion" on the lower-order terms. Concretely, label your fitness (or response) for a subset of genes $S \subseteq\{1, \ldots, n\}$ by $f_S$. Then define the interaction $\epsilon_S$ for that subset by recursively subtracting off all interactions belonging to strict sub-subsets of $S$. In symbols,
@@ -284,3 +284,9 @@ Therefore, the right side reduces to $f_S$, confirming that our inclusion-exclus
 ## Interpretation
 
 The formula $\epsilon_S = \sum_{T \subseteq S} (-1)^{|S|-|T|} f_T$ isolates genuine $|S|$-way interactions by systematically "peeling off" all interactions from subsets of the same genes. This allows researchers to determine whether genes interact synergistically or antagonistically beyond what would be expected from their individual and lower-order combined effects.
+
+## 2025.04.08 - First Term Fitness Second Term Interaction
+
+$\hat{f}_{\text{fitness}} = \text{Prediction from global embedding difference}$
+
+$\hat{f}_{\text{gene interaction}} = \hat{f}_{\text{fitness}} + \text{Prediction from Dango predictor}$

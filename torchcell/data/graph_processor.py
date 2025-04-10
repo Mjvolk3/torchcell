@@ -91,7 +91,7 @@ class SubgraphRepresentation(GraphProcessor):
         reaction_info = self._process_reaction_info(
             cell_graph, gene_info, integrated_subgraph
         )
-        self._add_reaction_data(integrated_subgraph, reaction_info)
+        self._add_reaction_data(integrated_subgraph, reaction_info, cell_graph)
 
         # Process metabolic network via the bipartite representation only
         self._process_metabolic_network(integrated_subgraph, cell_graph, reaction_info)
@@ -179,6 +179,26 @@ class SubgraphRepresentation(GraphProcessor):
     ) -> Dict[str, Any]:
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
+        # Create Growth subsystem indicator first (before any conditional returns)
+        w_growth = torch.zeros(max_reaction_idx, dtype=torch.float, device=self.device)
+
+        # Check if subsystem attribute exists
+        if hasattr(cell_graph["reaction"], "subsystem"):
+            # Check data type and structure
+            subsystems = cell_graph["reaction"].subsystem
+
+            # Populate the w_growth tensor
+            for i in range(max_reaction_idx):
+                if isinstance(subsystems, list):
+                    if i < len(subsystems) and subsystems[i] == "Growth":
+                        w_growth[i] = 1.0
+                elif torch.is_tensor(subsystems):
+                    if subsystems[i] == "Growth":
+                        w_growth[i] = 1.0
+                elif hasattr(subsystems, "__getitem__"):
+                    if subsystems[i] == "Growth":
+                        w_growth[i] = 1.0
+
         # If no GPR relationship exists, assume all reactions are valid.
         if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
             valid_reactions = torch.arange(max_reaction_idx, device=self.device)
@@ -195,10 +215,13 @@ class SubgraphRepresentation(GraphProcessor):
                 len(gene_info["keep_subset"]), device=self.device
             )
             reaction_map = torch.arange(max_reaction_idx, device=self.device)
+
+            # Include w_growth in the return dictionary
             return {
                 "valid_reactions": valid_reactions,
                 "gene_map": gene_map.tolist(),
                 "reaction_map": reaction_map.tolist(),
+                "w_growth": w_growth,
             }
 
         # Process gene–reaction (GPR) edges
@@ -274,20 +297,30 @@ class SubgraphRepresentation(GraphProcessor):
         )
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
+        # Include w_growth in the return
         return {
             "valid_reactions": valid_reactions,
             "gene_map": gene_map.tolist(),
             "reaction_map": reaction_map.tolist(),
+            "w_growth": w_growth,
         }
 
     def _add_reaction_data(
-        self, integrated_subgraph: HeteroData, reaction_info: Dict[str, Any]
+        self,
+        integrated_subgraph: HeteroData,
+        reaction_info: Dict[str, Any],
+        cell_graph: HeteroData,
     ) -> None:
         if not reaction_info:
             return
         valid_reactions = reaction_info["valid_reactions"]
         integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
         integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
+
+        # Subset w_growth to valid reactions if it exists in cell_graph
+        if hasattr(cell_graph["reaction"], "w_growth"):
+            w_growth = cell_graph["reaction"].w_growth
+            integrated_subgraph["reaction"].w_growth = w_growth[valid_reactions]
 
     def _process_metabolic_network(
         self,

@@ -184,6 +184,19 @@ def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):
     hetero_data["reaction"].num_nodes = len(reaction_nodes)
     hetero_data["reaction"].node_ids = sorted(reaction_nodes)
 
+    # Create w_growth tensor for reactions (1 for Growth subsystem, 0 otherwise)
+    w_growth = torch.zeros(len(reaction_nodes), dtype=torch.float)
+    sorted_reaction_nodes = sorted(reaction_nodes)
+
+    # Populate w_growth based on subsystem information
+    for i, reaction_node in enumerate(sorted_reaction_nodes):
+        subsystem = node_data[reaction_node].get("subsystem", "")
+        if subsystem == "Growth":
+            w_growth[i] = 1.0
+
+    # Add w_growth tensor to reaction nodes
+    hetero_data["reaction"].w_growth = w_growth.cpu()
+
     # Create reaction-gene mapping in one pass
     reaction_to_genes = {}
     reaction_to_genes_indices = {}

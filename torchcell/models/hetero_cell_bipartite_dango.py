@@ -322,6 +322,7 @@ class HeteroCellBipartite(nn.Module):
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
         self.reaction_embedding = nn.Embedding(reaction_num, hidden_channels)
         self.metabolite_embedding = nn.Embedding(metabolite_num, hidden_channels)
+        self.current_epoch = 0
 
         self.preprocessor = PreProcessor(
             in_channels=hidden_channels,
@@ -570,11 +571,29 @@ class HeteroCellBipartite(nn.Module):
             pert_gene_embs, batch_assign
         )
 
-        # 4. Add fitness to get the final gene interaction prediction
-        gene_interaction = fitness + interaction_component
+        # HACK
+        # # 4. Add fitness to get the final gene interaction prediction
+        # transition_epochs = 100
+        # # Gradually increase from 0 to 1 - Set to 20 since takes about 20 to get fitness
+        # alpha = min(1.0, self.current_epoch / transition_epochs)
+        # self.current_epoch += 1
+        # gene_interaction = (
+        #     (1 - alpha) * fitness.detach() + alpha * fitness + interaction_component
+        # )
+        # HACK
+        gene_interaction = interaction_component
+        # HACK
 
+        # HACK
+        transition_epochs = 20
+        alpha = min(1.0, (self.current_epoch + 1) / transition_epochs)
+        predictions = torch.cat(
+            [(1 - alpha) * fitness, alpha * gene_interaction], dim=1
+        )
+        # HACK
         # Combine predictions
-        predictions = torch.cat([fitness, gene_interaction], dim=1)
+        # predictions = torch.cat([fitness, gene_interaction], dim=1)
+        # HACK
 
         return predictions, {
             "z_w": z_w_global,
@@ -670,7 +689,7 @@ class HeteroCellBipartite(nn.Module):
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/003-fit-int/conf"),
-    config_name="hetero_cell_bipartite",
+    config_name="hetero_cell_bipartite_dango",
 )
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt

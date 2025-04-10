@@ -218,8 +218,8 @@ class YeastGEM:
         Edges connect reactions to metabolites with a directed structure:
         - Reaction → Metabolite with edge_type="product" (metabolite is produced)
         - Reaction → Metabolite with edge_type="reactant" (metabolite is consumed)
-        
-        The edge direction is always from reaction to metabolite, with the 
+
+        The edge direction is always from reaction to metabolite, with the
         edge_type indicating whether the metabolite is a reactant or product.
 
         Returns:
@@ -258,7 +258,7 @@ class YeastGEM:
 
                         # Create base node ID for this gene combination
                         base_node_id = f"{reaction.id}_comb{idx}"
-                        
+
                         # Add forward reaction node
                         fwd_node_id = f"{base_node_id}_fwd"
                         B.add_node(
@@ -271,11 +271,14 @@ class YeastGEM:
                             reversibility=reaction.reversibility,
                             reactants=reactants,
                             products=products,
+                            subsystem=reaction.subsystem,
                         )
-                        
+
                         # Add metabolite nodes and connect in unified format
-                        self._add_metabolite_edges_unified(B, reaction, fwd_node_id, "forward")
-                        
+                        self._add_metabolite_edges_unified(
+                            B, reaction, fwd_node_id, "forward"
+                        )
+
                         # If reversible, add reverse reaction and connect
                         if reaction.reversibility:
                             rev_node_id = f"{base_node_id}_rev"
@@ -289,10 +292,13 @@ class YeastGEM:
                                 reversibility=reaction.reversibility,
                                 reactants=products,  # Swapped for reverse direction
                                 products=reactants,  # Swapped for reverse direction
+                                subsystem=reaction.subsystem,
                             )
-                            
+
                             # Connect in unified format
-                            self._add_metabolite_edges_unified(B, reaction, rev_node_id, "reverse")
+                            self._add_metabolite_edges_unified(
+                                B, reaction, rev_node_id, "reverse"
+                            )
                 else:
                     # For reactions without gene associations
                     fwd_node_id = f"{reaction.id}_noGene_fwd"
@@ -306,11 +312,14 @@ class YeastGEM:
                         reversibility=reaction.reversibility,
                         reactants=reactants,
                         products=products,
+                        subsystem=reaction.subsystem,
                     )
-                    
+
                     # Connect in unified format
-                    self._add_metabolite_edges_unified(B, reaction, fwd_node_id, "forward")
-                    
+                    self._add_metabolite_edges_unified(
+                        B, reaction, fwd_node_id, "forward"
+                    )
+
                     # If reversible, add reverse reaction
                     if reaction.reversibility:
                         rev_node_id = f"{reaction.id}_noGene_rev"
@@ -324,22 +333,39 @@ class YeastGEM:
                             reversibility=reaction.reversibility,
                             reactants=products,  # Swapped for reverse direction
                             products=reactants,  # Swapped for reverse direction
+                            subsystem=reaction.subsystem,
                         )
-                        
+
                         # Connect in unified format
-                        self._add_metabolite_edges_unified(B, reaction, rev_node_id, "reverse")
-            
+                        self._add_metabolite_edges_unified(
+                            B, reaction, rev_node_id, "reverse"
+                        )
+
             self._bipartite_graph = B
 
         return self._bipartite_graph
 
-    def _add_metabolite_edges_unified(self, graph, reaction, reaction_node_id, direction):
+    def _add_metabolite_edges_unified(
+        self, graph, reaction, reaction_node_id, direction
+    ):
         """Helper function to add unified directed edges between reaction and metabolites."""
         # Add metabolite nodes if they don't exist
         for metabolite in reaction.metabolites:
             if not graph.has_node(metabolite.id):
-                graph.add_node(metabolite.id, node_type="metabolite")
-        
+                # Add metabolite node with all requested attributes
+                graph.add_node(
+                    metabolite.id, 
+                    node_type="metabolite",
+                    name=metabolite.name,
+                    composition=metabolite.formula,
+                    compartment=metabolite.compartment,
+                    charge=metabolite.charge,
+                    # Add any other metabolite annotations if available
+                    miriam=metabolite.annotation.get("miriam", ""),
+                    inchi=metabolite.annotation.get("inchi", ""),
+                    replacement_id=metabolite.annotation.get("replacement_id", ""),
+                )
+
         # Process based on direction (forward or reverse)
         for metabolite, coefficient in reaction.metabolites.items():
             if direction == "forward":
@@ -815,6 +841,7 @@ def main():
 
     # Plot random networks
     import random
+
     plot_full_network(
         yeast_gem, osp.join(ASSET_IMAGES_DIR, "yeast_metabolic_network.png")
     )
@@ -1169,6 +1196,81 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
         "methods_consistent": methods_consistent,
     }
 
+def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
+    """
+    Test and display the new attributes added to the bipartite graph.
+    
+    Args:
+        yeast_gem: YeastGEM instance
+        num_reactions: Number of random reactions to sample
+    """
+    import random
+    
+    # Get the bipartite graph
+    B = yeast_gem.bipartite_graph
+    
+    # Get a few random reactions
+    all_reactions = list(yeast_gem.model.reactions)
+    sample_reactions = random.sample(all_reactions, min(num_reactions, len(all_reactions)))
+    
+    print("\n===== Bipartite Graph Attribute Test =====")
+    
+    for rxn in sample_reactions:
+        print(f"\n{'='*50}")
+        print(f"REACTION: {rxn.id} - {rxn.name}")
+        print(f"{'='*50}")
+        
+        # Find the reaction nodes in the bipartite graph
+        rxn_nodes = [
+            node for node in B.nodes()
+            if B.nodes[node].get("node_type") == "reaction" 
+            and B.nodes[node].get("reaction_id") == rxn.id
+        ]
+        
+        # Print reaction node attributes
+        for node_id in rxn_nodes:
+            node = B.nodes[node_id]
+            print(f"\nReaction Node: {node_id}")
+            print(f"  Subsystem: {node.get('subsystem', 'N/A')}")
+            print(f"  Direction: {node.get('direction', 'N/A')}")
+            print(f"  Reversibility: {node.get('reversibility', 'N/A')}")
+            
+            # Get connected metabolites
+            connected_mets = list(B.neighbors(node_id))
+            if connected_mets:
+                # Sample up to 3 metabolites
+                sample_mets = connected_mets[:min(3, len(connected_mets))]
+                
+                print("\n  Connected Metabolites:")
+                for i, met_id in enumerate(sample_mets):
+                    met_node = B.nodes[met_id]
+                    edge = B.edges[node_id, met_id]
+                    
+                    print(f"\n    Metabolite {i+1}: {met_id}")
+                    print(f"      Name: {met_node.get('name', 'N/A')}")
+                    print(f"      Composition: {met_node.get('composition', 'N/A')}")
+                    print(f"      Compartment: {met_node.get('compartment', 'N/A')}")
+                    print(f"      Charge: {met_node.get('charge', 'N/A')}")
+                    print(f"      Edge Type: {edge.get('edge_type', 'N/A')}")
+                    print(f"      Stoichiometry: {edge.get('stoichiometry', 'N/A')}")
+                
+                if len(connected_mets) > 3:
+                    print(f"\n    ... and {len(connected_mets) - 3} more metabolites")
+
+def main_test_bipartite_attributes():
+    from dotenv import load_dotenv
+    import random
+    
+    load_dotenv()
+    
+    print("Initializing YeastGEM...")
+    yeast_gem = YeastGEM()
+    
+    # Set random seed for reproducibility
+    random.seed(42)
+    
+    # Test the bipartite graph with newly added attributes
+    test_bipartite_attributes(yeast_gem, num_reactions=3)
 
 if __name__ == "__main__":
     # # main_bipartite()
@@ -1183,4 +1285,5 @@ if __name__ == "__main__":
     # # sanity_check_metabolic_networks(yeast_gem)
     # # analyze_reactions_without_genes(yeast_gem)
 
-    main()
+    # main()
+    main_test_bipartite_attributes()

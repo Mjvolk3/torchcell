@@ -483,6 +483,11 @@ def main(cfg: DictConfig) -> None:
             "model/params_gene_interaction_predictor": param_counts.get(
                 "gene_interaction_predictor", 0
             ),
+            "model/params_global_aggregator": param_counts.get("global_aggregator", 0),
+            "model/params_global_interaction_predictor": param_counts.get(
+                "global_interaction_predictor", 0
+            ),
+            "model/params_gate_mlp": param_counts.get("gate_mlp", 0),
             "model/params_total": param_counts.get("total", 0),
         }
     )

@@ -41,7 +41,7 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
 from torch_geometric.data import HeteroData
 from torch_scatter import scatter, scatter_softmax
-
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -66,6 +66,27 @@ import torch.nn.functional as F
 from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
 from torch_geometric.data import HeteroData, Batch
 from typing import Optional, Dict, Any, Tuple
+
+class AttentionalGraphAggregation(nn.Module):
+    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+        super().__init__()
+        self.gate_nn = nn.Sequential(
+            nn.Linear(in_channels, in_channels // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(in_channels // 2, 1),
+        )
+        self.transform_nn = nn.Sequential(
+            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
+        )
+        self.aggregator = AttentionalAggregation(
+            gate_nn=self.gate_nn, nn=self.transform_nn
+        )
+
+    def forward(
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+    ) -> torch.Tensor:
+        return self.aggregator(x, index=index, dim_size=dim_size)
 
 
 class GeneInteractionAttention(nn.Module):
@@ -343,9 +364,30 @@ class GeneInteractionDango(nn.Module):
 
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
-        # Gene interaction predictor
+        # Gene interaction predictor for perturbed genes
         self.gene_interaction_predictor = GeneInteractionPredictor(
             hidden_dim=hidden_channels, dropout=dropout
+        )
+
+        # Global aggregator for proper aggregation
+        self.global_aggregator = AttentionalGraphAggregation(
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
+        )
+
+        # Global predictor for z_p_global
+        self.global_interaction_predictor = nn.Sequential(
+            nn.Linear(hidden_channels, hidden_channels),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_channels, 1),
+        )
+        
+        # MLP for gating weights
+        self.gate_mlp = nn.Sequential(
+            nn.Linear(2, hidden_channels),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_channels, 2),
         )
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
@@ -402,23 +444,34 @@ class GeneInteractionDango(nn.Module):
 
         return x_dict["gene"]
 
-    def forward(self, cell_graph: HeteroData, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    def forward(
+        self, cell_graph: HeteroData, batch: HeteroData
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
-        
-        # Create a simple global representation of wildtype graph
-        z_w_global = z_w.mean(dim=0, keepdim=True)
-        
+
+        # Proper global aggregation for wildtype
+        z_w_global = self.global_aggregator(
+            z_w,
+            index=torch.zeros(z_w.size(0), device=z_w.device, dtype=torch.long),
+            dim_size=1,
+        )
+
+        # Process perturbed batch if needed
+        z_i = self.forward_single(batch)
+
+        # Proper global aggregation for perturbed genes
+        z_i_global = self.global_aggregator(z_i, index=batch["gene"].batch)
+
         # Get embeddings of perturbed genes from wildtype
         pert_indices = batch["gene"].cell_graph_idx_pert
         pert_gene_embs = z_w[pert_indices]
-        
-        # Create a simple global representation of the perturbed genes
-        z_i_global = pert_gene_embs.mean(dim=0, keepdim=True)
-        
-        # Calculate perturbation difference for z_p
-        z_p_global = z_w_global - z_i_global
-        
+
+        # Calculate perturbation difference for z_p_global
+        batch_size = z_i_global.size(0)
+        z_w_exp = z_w_global.expand(batch_size, -1)
+        z_p_global = z_w_exp - z_i_global
+
         # Determine batch assignment for perturbed genes
         if hasattr(batch["gene"], "x_pert_ptr"):
             # Create batch assignment using x_pert_ptr
@@ -435,19 +488,45 @@ class GeneInteractionDango(nn.Module):
                 if hasattr(batch["gene"], "x_pert_batch")
                 else None
             )
+
+        # Get gene interaction predictions using the local predictor
+        local_interaction = self.gene_interaction_predictor(
+            pert_gene_embs, batch_assign
+        )
+
+        # Get gene interaction predictions using the global predictor
+        global_interaction = self.global_interaction_predictor(z_p_global)
+
+        # Ensure dimensions match for gating
+        if local_interaction.size(0) != batch_size:
+            local_interaction_expanded = torch.zeros(batch_size, 1, device=z_w.device)
+            for i in range(local_interaction.size(0)):
+                batch_idx = batch_assign[i].item() if batch_assign is not None else 0
+                if batch_idx < batch_size:
+                    local_interaction_expanded[batch_idx] = local_interaction[i]
+            local_interaction = local_interaction_expanded
+
+        # Stack the predictions
+        pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
         
-        # Get gene interaction predictions using the predictor
-        gene_interaction = self.gene_interaction_predictor(pert_gene_embs, batch_assign)
+        # Use MLP to get logits for gating, then apply softmax
+        gate_logits = self.gate_mlp(pred_stack)
+        gate_weights = F.softmax(gate_logits, dim=1)
         
-        # We'll set predictions to the gene_interaction values
-        predictions = gene_interaction
-        
+        # Element-wise product of predictions and weights, then sum
+        weighted_preds = pred_stack * gate_weights
+        gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
+
         # Return both predictions and representations dictionary
-        return predictions, {
+        return gene_interaction, {
             "z_w": z_w_global,
-            "z_i": z_i_global, 
+            "z_i": z_i_global,
             "z_p": z_p_global,
+            "local_interaction": local_interaction,
+            "global_interaction": global_interaction,
+            "gate_weights": gate_weights,
             "gene_interaction": gene_interaction,
+            "pert_gene_embs": pert_gene_embs,
         }
 
     @property
@@ -460,6 +539,11 @@ class GeneInteractionDango(nn.Module):
             "preprocessor": count_params(self.preprocessor),
             "convs": count_params(self.convs),
             "gene_interaction_predictor": count_params(self.gene_interaction_predictor),
+            "global_aggregator": count_params(self.global_aggregator),
+            "global_interaction_predictor": count_params(
+                self.global_interaction_predictor
+            ),
+            "gate_mlp": count_params(self.gate_mlp),
         }
         counts["total"] = sum(counts.values())
         return counts

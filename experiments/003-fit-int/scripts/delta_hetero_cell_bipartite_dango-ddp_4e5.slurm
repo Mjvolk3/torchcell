@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH --mem=243g
+#SBATCH --mem=128g #243g
 #SBATCH --nodes=1
-#SBATCH --ntasks=4  # Changed from ntasks-per-node
+#SBATCH --ntasks=2 # Changed from ntasks-per-node
 #SBATCH --cpus-per-task=16
 #SBATCH --partition=gpuA40x4
 #SBATCH --account=bbub-delta-gpu
-#SBATCH --job-name=HCB_DDP
+#SBATCH --job-name=HCBD_DDP
 #SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --gpus-per-task=1  # Explicit GPU allocation
@@ -40,7 +40,7 @@ echo "-----------------"
 mkdir -p /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/agent_log/$SLURM_JOB_ID
 
 # Launch with srun to ensure proper process distribution
-srun apptainer exec \
+srun --ntasks-per-node=2 apptainer exec \
     --nv \
     --bind /projects/bbub:/projects/bbub \
     --bind /scratch/bbub/mjvolk3:/scratch/bbub/mjvolk3 \
@@ -48,4 +48,4 @@ srun apptainer exec \
     rockylinux_9.sif \
     bash -c "source /projects/bbub/miniconda3/bin/activate && \
     conda activate torchcell && \
-    python /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/hetero_cell_bipartite.py"
+    python /scratch/bbub/mjvolk3/torchcell/experiments/003-fit-int/scripts/hetero_cell_bipartite_dango.py"

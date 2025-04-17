@@ -167,37 +167,73 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             remaining_size = target_sizes[split]
             tqdm.write(f"Remaining size for {split}: {remaining_size}")
 
-            single_pert_indices = pert_count_index[1].indices
-            if valid_indices is not None:
-                single_pert_indices = [
-                    i for i in single_pert_indices if i in valid_indices
-                ]
-            num_single = len(single_pert_indices)
-            tqdm.write(f"Found {num_single} single-perturbation indices for {split}")
-            sampled_single = single_pert_indices[:remaining_size]
-            selected_indices[split].extend(sampled_single)
-            remaining_size -= len(sampled_single)
+            # Print available perturbation counts for debugging
             tqdm.write(
-                f"After sampling count=1, remaining size for {split}: {remaining_size}"
+                f"Available perturbation counts: {list(pert_count_index.keys())}"
             )
 
+            # Try to get single perturbations first if they exist
+            if 1 in pert_count_index:
+                tqdm.write("Processing single perturbations (count=1)")
+                single_pert_indices = pert_count_index[1].indices
+                if valid_indices is not None:
+                    single_pert_indices = [
+                        i for i in single_pert_indices if i in valid_indices
+                    ]
+                num_single = len(single_pert_indices)
+                tqdm.write(
+                    f"Found {num_single} single-perturbation indices for {split}"
+                )
+                sampled_single = single_pert_indices[:remaining_size]
+                selected_indices[split].extend(sampled_single)
+                remaining_size -= len(sampled_single)
+                tqdm.write(
+                    f"After sampling count=1, remaining size for {split}: {remaining_size}"
+                )
+            else:
+                tqdm.write(
+                    f"No single-perturbation indices (count=1) found for {split}"
+                )
+
             if remaining_size > 0:
-                other_levels = [
-                    level for level in pert_count_index.keys() if level != 1
-                ]
-                tqdm.write(f"Sampling from other levels for {split}: {other_levels}")
-                while remaining_size > 0 and other_levels:
-                    samples_per_level = max(1, remaining_size // len(other_levels))
+                # Use all available perturbation counts
+                available_levels = list(pert_count_index.keys())
+                if 1 in available_levels:
+                    available_levels.remove(
+                        1
+                    )  # Remove single perturbations if already processed
+
+                tqdm.write(
+                    f"Sampling from available levels for {split}: {available_levels}"
+                )
+
+                if not available_levels:
+                    tqdm.write(
+                        f"Warning: No other perturbation levels available for {split}"
+                    )
+                    continue
+
+                while remaining_size > 0 and available_levels:
+                    samples_per_level = max(1, remaining_size // len(available_levels))
                     tqdm.write(f"Samples per level for {split}: {samples_per_level}")
+
+                    # Keep track of levels that still have available samples
+                    levels_with_remaining_samples = []
+
                     for level in tqdm(
-                        other_levels, desc=f"Sampling levels for {split}"
+                        available_levels, desc=f"Sampling levels for {split}"
                     ):
+                        # Get available indices for this level that haven't been selected yet
                         available = set(pert_count_index[level].indices) - set(
                             selected_indices[split]
                         )
+
+                        # Apply gene subset filter if specified
                         if valid_indices is not None:
                             available = available.intersection(valid_indices)
+
                         if available:
+                            # Sample from available indices
                             sampled = random.sample(
                                 list(available), min(samples_per_level, len(available))
                             )
@@ -206,30 +242,42 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                             tqdm.write(
                                 f"Level {level}: sampled {len(sampled)} indices; remaining {remaining_size}"
                             )
+
+                            # Check if there are still available indices for this level
+                            if len(available) > len(sampled):
+                                levels_with_remaining_samples.append(level)
+
                             if remaining_size <= 0:
                                 break
-                    other_levels = [
-                        level
-                        for level in other_levels
-                        if len(
-                            set(pert_count_index[level].indices)
-                            - set(selected_indices[split])
+
+                    # Update available levels to only those that still have samples
+                    available_levels = levels_with_remaining_samples
+                    if not available_levels and remaining_size > 0:
+                        tqdm.write(
+                            f"Warning: Exhausted all available indices for {split}, but still need {remaining_size} more"
                         )
-                        > 0
-                    ]
-                    tqdm.write(f"Updated other levels for {split}: {other_levels}")
+                        break
 
         self._index = DataModuleIndex(
             train=sorted(selected_indices["train"]),
             val=sorted(selected_indices["val"]),
             test=sorted(selected_indices["test"]),
         )
-        self._create_index_details()  # Assumes this method is implemented as below.
+        self._create_index_details()
+
         total_selected = sum(len(indices) for indices in selected_indices.values())
         tqdm.write(f"Total selected indices: {total_selected}")
+
+        # Check if we got fewer samples than requested
+        if total_selected < self.size:
+            tqdm.write(
+                f"Warning: Could only select {total_selected} samples out of the requested {self.size}"
+            )
+            self.size = total_selected  # Update size to match actual selection
+
         assert (
-            total_selected == self.size
-        ), f"Expected {self.size} samples, but got {total_selected}"
+            total_selected <= self.size
+        ), f"Selected {total_selected} samples, which exceeds the requested {self.size}"
 
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
@@ -313,7 +361,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 follow_batch=["x", "x_pert"],
-                multiprocessing_context="spawn" if self.num_workers > 0 else None  # Add this
+                multiprocessing_context=(
+                    "spawn" if self.num_workers > 0 else None
+                ),  # Add this
             )
         else:
             loader = DataLoader(
@@ -323,7 +373,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 follow_batch=["x", "x_pert"],
-                multiprocessing_context="spawn" if self.num_workers > 0 else None  # Add this
+                multiprocessing_context=(
+                    "spawn" if self.num_workers > 0 else None
+                ),  # Add this
             )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

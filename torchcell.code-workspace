@@ -150,6 +150,12 @@
                 "problemMatcher": []
             },
             {
+                "label": "Pandoc: bib-tex-pdf-landscape",
+                "type": "shell",
+                "command": "./notes/assets/publish/scripts/bib_tex_pdf_landscape.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
+                "problemMatcher": []
+            },
+            {
                 "label": "Pandoc: bib-tex-docx",
                 "type": "shell",
                 "command": "./notes/assets/publish/scripts/bib_tex_docx.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",

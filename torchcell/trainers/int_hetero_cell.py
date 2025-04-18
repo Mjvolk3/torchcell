@@ -87,85 +87,125 @@ class RegressionTask(L.LightningModule):
         return dummy_loss
 
     def _shared_step(self, batch, batch_idx, stage="train"):
-        # Get model outputs - unpack immediately
+        # Get model outputs
         predictions, representations = self(batch)
-        
-        # Ensure predictions is 2D (batch_size, 1)
-        if predictions.dim() == 1:
-            predictions = predictions.unsqueeze(-1)
-        
+
+        # Ensure predictions has correct shape (batch_size, 1)
+        if predictions.dim() == 0:
+            predictions = predictions.unsqueeze(0).unsqueeze(0)  # Make it [1, 1]
+        elif predictions.dim() == 1:
+            predictions = predictions.unsqueeze(1)  # Make it [batch_size, 1]
+
         batch_size = predictions.size(0)
-        
+
         # Use transformed values for loss computation
         gene_interaction_vals = batch["gene"].gene_interaction
-        
-        # Ensure gene_interaction_vals is 2D (batch_size, 1)
-        if gene_interaction_vals.dim() == 1:
-            gene_interaction_vals = gene_interaction_vals.unsqueeze(-1)
-        
+
+        # Handle tensor shape
+        if gene_interaction_vals.dim() == 0:
+            gene_interaction_vals = gene_interaction_vals.unsqueeze(0).unsqueeze(0)
+        elif gene_interaction_vals.dim() == 1:
+            gene_interaction_vals = gene_interaction_vals.unsqueeze(1)
+
         # Get original values for metrics and visualization
         gene_interaction_orig = (
             batch["gene"].gene_interaction_original
             if "gene_interaction_original" in batch["gene"]
             else gene_interaction_vals
         )
-        
-        # Ensure gene_interaction_orig is 2D (batch_size, 1)
-        if gene_interaction_orig.dim() == 1:
-            gene_interaction_orig = gene_interaction_orig.unsqueeze(-1)
-        
+
+        # Handle tensor shape
+        if gene_interaction_orig.dim() == 0:
+            gene_interaction_orig = gene_interaction_orig.unsqueeze(0).unsqueeze(0)
+        elif gene_interaction_orig.dim() == 1:
+            gene_interaction_orig = gene_interaction_orig.unsqueeze(1)
+
         # Get z_p from representations
-        z_p = representations.get('z_p')
-        
-        # Expand z_p to match batch size if needed
-        if z_p is not None and z_p.size(0) == 1 and batch_size > 1:
-            z_p = z_p.expand(batch_size, -1)
-        
-        # Calculate MSE loss
-        mse_loss = nn.MSELoss()(predictions, gene_interaction_vals)
-        
+        z_p = representations.get("z_p")
+
+        # Calculate loss
+        if self.loss_func is not None:
+            if z_p is not None:
+                loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
+            else:
+                loss_output = self.loss_func(predictions, gene_interaction_vals)
+
+            # Handle if loss_func returns a tuple
+            if isinstance(loss_output, tuple):
+                loss = loss_output[0]  # First element is the loss
+                loss_dict = loss_output[1] if len(loss_output) > 1 else {}
+
+                # Log additional loss components if available
+                if isinstance(loss_dict, dict):
+                    for key, value in loss_dict.items():
+                        if isinstance(value, torch.Tensor):
+                            self.log(
+                                f"{stage}/{key}",
+                                value,
+                                batch_size=batch_size,
+                                sync_dist=True,
+                            )
+            else:
+                loss = loss_output
+        else:
+            # Default to MSE if no loss function is provided
+            loss = nn.MSELoss()(predictions, gene_interaction_vals)
+
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()
-        
-        # Total loss
-        loss = mse_loss + dummy_loss
-        
+        loss = loss + dummy_loss
+
         # Log the loss
         self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
-        
+
+        # Log z_p norm if available
+        if z_p is not None:
+            z_p_norm = z_p.norm(p=2, dim=-1).mean()
+            self.log(
+                f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
+            )
+
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
             transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
+            # Ensure 1D vectors for metrics update - reshape using view(-1)
+            # This is crucial for preventing IndexError
             transformed_metrics.update(
-                predictions[mask].squeeze(), gene_interaction_vals[mask].squeeze()
+                predictions[mask].view(-1), gene_interaction_vals[mask].view(-1)
             )
-        
+
         # Handle inverse transform if available
         inv_predictions = predictions.clone()
         if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
             # Create a temp HeteroData object with predictions
             temp_data = HeteroData()
             temp_data["gene"] = {"gene_interaction": predictions.clone().squeeze()}
-            
-            # Apply the proper inverse transform
+
+            # Apply the inverse transform
             inv_data = self.inverse_transform(temp_data)
-            
+
             # Extract the inversed predictions
             inv_gene_int = inv_data["gene"]["gene_interaction"]
-            if inv_gene_int.dim() == 1:
-                inv_predictions = inv_gene_int.unsqueeze(-1)
-            else:
-                inv_predictions = inv_gene_int
-        
+
+            # Handle tensor shape
+            if isinstance(inv_gene_int, torch.Tensor):
+                if inv_gene_int.dim() == 0:
+                    inv_predictions = inv_gene_int.unsqueeze(0).unsqueeze(0)
+                elif inv_gene_int.dim() == 1:
+                    inv_predictions = inv_gene_int.unsqueeze(1)
+                else:
+                    inv_predictions = inv_gene_int
+
         # Update metrics with original scale values
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
             metrics = getattr(self, f"{stage}_metrics")
+            # Ensure 1D vectors for metrics update - reshape using view(-1)
             metrics.update(
-                inv_predictions[mask].squeeze(), gene_interaction_orig[mask].squeeze()
+                inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
             )
-        
+
         # Collect samples for visualization
         if (
             stage == "train"
@@ -182,19 +222,15 @@ class RegressionTask(L.LightningModule):
                     self.train_samples["predictions"].append(
                         inv_predictions[idx].detach()
                     )
-                    if z_p is not None:
-                        self.train_samples["latents"]["z_p"].append(
-                            z_p[idx].detach()
-                        )
+                    if z_p is not None and "latents" in self.train_samples:
+                        self.train_samples["latents"]["z_p"].append(z_p[idx].detach())
                 else:
                     self.train_samples["true_values"].append(
                         gene_interaction_orig.detach()
                     )
                     self.train_samples["predictions"].append(inv_predictions.detach())
-                    if z_p is not None:
-                        self.train_samples["latents"]["z_p"].append(
-                            z_p.detach()
-                        )
+                    if z_p is not None and "latents" in self.train_samples:
+                        self.train_samples["latents"]["z_p"].append(z_p.detach())
         elif (
             stage == "val"
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
@@ -202,11 +238,9 @@ class RegressionTask(L.LightningModule):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(gene_interaction_orig.detach())
             self.val_samples["predictions"].append(inv_predictions.detach())
-            if z_p is not None:
-                self.val_samples["latents"]["z_p"].append(
-                    z_p.detach()
-                )
-        
+            if z_p is not None and "latents" in self.val_samples:
+                self.val_samples["latents"]["z_p"].append(z_p.detach())
+
         return loss, predictions, gene_interaction_orig
 
     def training_step(self, batch, batch_idx):

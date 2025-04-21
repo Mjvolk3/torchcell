@@ -29,8 +29,8 @@ trainer:
   max_epochs: 200 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 3
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna

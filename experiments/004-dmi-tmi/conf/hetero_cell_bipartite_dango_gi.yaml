@@ -20,7 +20,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 100 #2.5e4
-  batch_size: 8 #32
+  batch_size: 32 #32
   num_workers: 4
   pin_memory: false
   prefetch: false
@@ -76,13 +76,14 @@ model:
     head_norm: ${norms}
 
 regression_task:
+  loss: logcosh
   is_weighted_phenotype_loss: true
   lambda_dist: 0.1
   lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4
-    weight_decay: 1e-9
+    lr: 1e-5
+    weight_decay: 1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"
@@ -97,4 +98,4 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
   plot_sample_ceiling: 10000
-  plot_every_n_epochs: 2
+  plot_every_n_epochs: 1

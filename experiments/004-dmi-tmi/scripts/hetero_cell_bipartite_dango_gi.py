@@ -11,6 +11,7 @@ import os
 import os.path as osp
 import uuid
 import hydra
+import torch.nn as nn
 import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
@@ -50,6 +51,8 @@ from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
+from torchcell.losses.logcosh import LogCoshLoss
+
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -505,11 +508,14 @@ def main(cfg: DictConfig) -> None:
     else:
         weights = torch.ones(2).to(device)
 
-    loss_func = ICLoss(
-        lambda_dist=wandb.config.regression_task["lambda_dist"],
-        lambda_supcr=wandb.config.regression_task["lambda_supcr"],
-        weights=weights,
-    )
+    if wandb.config.regression_task["loss"] == "icloss":
+        loss_func = ICLoss(
+            lambda_dist=wandb.config.regression_task["lambda_dist"],
+            lambda_supcr=wandb.config.regression_task["lambda_supcr"],
+            weights=weights,
+        )
+    elif wandb.config.regression_task["loss"] == "logcosh":
+        loss_func = LogCoshLoss(reduction="mean")
 
     print(f"Creating GeneInteractionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")

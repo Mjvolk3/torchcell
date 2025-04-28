@@ -27,6 +27,8 @@ data/QM9
 data/all_spell_readmes
 data/string9.1
 data/string12.0
+data/string
+data/tflink
 
 # Dendron
 .dendron.port

@@ -1,7 +1,9 @@
-# torchcell/scratch/load_batch
-# [[torchcell.scratch.load_batch]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_batch
-# Test file: tests/torchcell/scratch/test_load_batch.py
+# torchcell/scratch/load_batch_005
+# [[torchcell.scratch.load_batch_005]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_batch_005
+# Test file: tests/torchcell/scratch/test_load_batch_005.py
+
+
 import os
 import os.path as osp
 from dotenv import load_dotenv
@@ -28,6 +30,7 @@ from torchcell.transforms.regression_to_classification import (
     LabelNormalizationTransform,
 )
 from torch_geometric.transforms import Compose
+from torchcell.graph import build_gene_multigraph
 
 
 def load_sample_data_batch(
@@ -90,12 +93,24 @@ def load_sample_data_batch(
     elif metabolism_graph == "metabolism_bipartite":
         incidence_graphs["metabolism_bipartite"] = gem.bipartite_graph
 
+    gene_multigraph = build_gene_multigraph(
+        graph=graph,
+        graph_names=[
+            "string9_1_neighborhood",
+            "string9_1_fusion",
+            "string9_1_cooccurence",
+            "string9_1_coexpression",
+            "string9_1_experimental",
+            "string9_1_database",
+        ],
+    )
+
     dataset = Neo4jCellDataset(
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
-        incidence_graphs=incidence_graphs,
+        graphs=gene_multigraph,
+        incidence_graphs=None,
         node_embeddings=node_embeddings,
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
@@ -172,4 +187,5 @@ if __name__ == "__main__":
         metabolism_graph="metabolism_bipartite",
         is_dense=True,
     )
+    dataset[0]
     print("")

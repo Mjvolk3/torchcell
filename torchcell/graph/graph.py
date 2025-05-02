@@ -40,6 +40,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import torchcell
 from pydantic import field_validator
 
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
@@ -335,7 +336,6 @@ class SCerevisiaeGraph:
     _G_string9_1_coexpression: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_experimental: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_database: GeneGraph = field(init=False, repr=False, default=None)
-    _G_string9_1_combined: GeneGraph = field(init=False, repr=False, default=None)
 
     # STRING v12.0 graph attributes
     _G_string12_0_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
@@ -344,7 +344,6 @@ class SCerevisiaeGraph:
     _G_string12_0_coexpression: GeneGraph = field(init=False, repr=False, default=None)
     _G_string12_0_experimental: GeneGraph = field(init=False, repr=False, default=None)
     _G_string12_0_database: GeneGraph = field(init=False, repr=False, default=None)
-    _G_string12_0_combined: GeneGraph = field(init=False, repr=False, default=None)
 
     _all_go_terms = field(init=False, repr=False, default=None)
     _go_to_genes = field(init=False, repr=False, default=None)
@@ -520,12 +519,6 @@ class SCerevisiaeGraph:
             self._initialize_string_graph("database", "9.1")
         return self._G_string9_1_database
 
-    @property
-    def G_string9_1_combined(self) -> GeneGraph:
-        if self._G_string9_1_combined is None:
-            self._initialize_string_graph("combined", "9.1")
-        return self._G_string9_1_combined
-
     # STRING v12.0 properties
     @property
     def G_string12_0_neighborhood(self) -> GeneGraph:
@@ -563,11 +556,6 @@ class SCerevisiaeGraph:
             self._initialize_string_graph("database", "12.0")
         return self._G_string12_0_database
 
-    @property
-    def G_string12_0_combined(self) -> GeneGraph:
-        if self._G_string12_0_combined is None:
-            self._initialize_string_graph("combined", "12.0")
-        return self._G_string12_0_combined
 
     def _initialize_string_graph(self, network_type: str, version: str) -> None:
         """Initialize a specific STRING graph if it's not already loaded"""
@@ -652,15 +640,11 @@ class SCerevisiaeGraph:
         Create GeneGraph objects from STRING data and save them to attributes.
         Strip the '4932.' prefix from protein IDs for consistency.
         Only include nodes that exist in genome.gene_set.
-
-        Args:
-            file_path: Path to the STRING data file
-            version: STRING database version ("9.1" or "12.0")
         """
         # Load the data
         df = pd.read_csv(file_path, sep=" ", compression="gzip")
 
-        # Network types we're interested in
+        # Network types we're interested in - combined is removed
         network_types = [
             "neighborhood",
             "fusion",
@@ -673,9 +657,7 @@ class SCerevisiaeGraph:
         # Format the version string for attribute names
         version_str = version.replace(".", "_")
 
-        # Create a combined nx.Graph to include ALL interactions
-        combined_nx_graph = nx.Graph()
-
+        # Process each individual network type
         for network_type in network_types:
             # Create a graph for each network type
             attr_name = f"_G_string{version_str}_{network_type}"
@@ -691,22 +673,11 @@ class SCerevisiaeGraph:
                 protein2 = self.strip_string_prefix(row["protein2"])
 
                 # Only add edges if both nodes exist in genome.gene_set
-                if (
-                    protein1 in self.genome.gene_set
-                    and protein2 in self.genome.gene_set
-                ):
+                if (protein1 in self.genome.gene_set and 
+                    protein2 in self.genome.gene_set):
                     nx_graph.add_edge(
                         protein1, protein2, weight=row[network_type], version=version
                     )
-
-                    # Also add to the combined graph
-                    if not combined_nx_graph.has_edge(protein1, protein2):
-                        combined_nx_graph.add_edge(protein1, protein2, version=version)
-
-                    # Add the network type as an attribute to the combined graph edge
-                    combined_nx_graph[protein1][protein2][network_type] = row[
-                        network_type
-                    ]
 
             # Create a GeneGraph and save it
             gene_graph = GeneGraph(
@@ -722,38 +693,6 @@ class SCerevisiaeGraph:
             log.info(
                 f"STRING v{version} {network_type} network: {gene_graph.graph.number_of_nodes()} nodes, {gene_graph.graph.number_of_edges()} edges"
             )
-
-        # Add the combined score to the combined graph
-        for _, row in df.iterrows():
-            protein1 = self.strip_string_prefix(row["protein1"])
-            protein2 = self.strip_string_prefix(row["protein2"])
-
-            # Only process if both proteins are in the gene set
-            if (
-                protein1 in self.genome.gene_set
-                and protein2 in self.genome.gene_set
-                and combined_nx_graph.has_edge(protein1, protein2)
-            ):
-                combined_nx_graph[protein1][protein2]["combined_score"] = row[
-                    "combined_score"
-                ]
-
-        # Create a GeneGraph for the combined network
-        combined_gene_graph = GeneGraph(
-            name=f"string{version_str}_combined",
-            graph=combined_nx_graph,
-            max_gene_set=self.genome.gene_set,
-        )
-        combined_attr = f"_G_string{version_str}_combined"
-        setattr(self, combined_attr, combined_gene_graph)
-
-        # Save the combined graph
-        combined_name = f"G_string{version_str}_combined"
-        self.save_graph(combined_gene_graph, combined_name, root_type="string")
-        log.info(
-            f"STRING v{version} combined network: {combined_gene_graph.graph.number_of_nodes()} nodes, {combined_gene_graph.graph.number_of_edges()} edges"
-        )
-
     def strip_string_prefix(self, protein_id: str) -> str:
         """Strip the '4932.' prefix from STRING protein IDs"""
         if protein_id.startswith("4932."):
@@ -1212,11 +1151,35 @@ class SCerevisiaeGraph:
         return G_gene
 
 
+SCEREVISIAE_GENE_GRAPH_MAP = {
+    "physical": lambda graph: graph.G_physical,
+    "regulatory": lambda graph: graph.G_regulatory,
+    "genetic": lambda graph: graph.G_genetic,
+    "tflink": lambda graph: graph.G_tflink,
+    "string9_1_neighborhood": lambda graph: graph.G_string9_1_neighborhood,
+    "string9_1_fusion": lambda graph: graph.G_string9_1_fusion,
+    "string9_1_cooccurence": lambda graph: graph.G_string9_1_cooccurence,
+    "string9_1_coexpression": lambda graph: graph.G_string9_1_coexpression,
+    "string9_1_experimental": lambda graph: graph.G_string9_1_experimental,
+    "string9_1_database": lambda graph: graph.G_string9_1_database,
+    "string12_0_neighborhood": lambda graph: graph.G_string12_0_neighborhood,
+    "string12_0_fusion": lambda graph: graph.G_string12_0_fusion,
+    "string12_0_cooccurence": lambda graph: graph.G_string12_0_cooccurence,
+    "string12_0_coexpression": lambda graph: graph.G_string12_0_coexpression,
+    "string12_0_experimental": lambda graph: graph.G_string12_0_experimental,
+    "string12_0_database": lambda graph: graph.G_string12_0_database,
+}
+
+# List of all valid graph types
+SCEREVISIAE_GENE_GRAPH_VALID_NAMES = list(SCEREVISIAE_GENE_GRAPH_MAP.keys())
+
+
 def build_gene_multigraph(
     graph: "SCerevisiaeGraph", graph_names: Optional[list[str]] = None
 ) -> Optional[GeneMultiGraph]:
     """
     Build a GeneMultiGraph containing GeneGraph objects based on the provided graph names.
+    Only loads the specific graphs requested, avoiding unnecessary computation.
 
     Args:
         graph: An SCerevisiaeGraph instance containing various graph types
@@ -1226,35 +1189,34 @@ def build_gene_multigraph(
     Returns:
         A GeneMultiGraph containing the specified graphs,
         or None if graph_names is None.
+
+    Raises:
+        ValueError: If any graph name in graph_names is not a valid graph type.
     """
     if graph_names is None:
         return None
 
-    graphs_dict = SortedDict()
-    valid_graphs = {
-        "physical": graph.G_physical,
-        "regulatory": graph.G_regulatory,
-        "genetic": graph.G_genetic,
-        "tflink": graph.G_tflink,
-        "string9_1_neighborhood": graph.G_string9_1_neighborhood,
-        "string9_1_fusion": graph.G_string9_1_fusion,
-        "string9_1_cooccurence": graph.G_string9_1_cooccurence,
-        "string9_1_coexpression": graph.G_string9_1_coexpression,
-        "string9_1_experimental": graph.G_string9_1_experimental,
-        "string9_1_database": graph.G_string9_1_database,
-        "string9_1_combined": graph.G_string9_1_combined,
-        "string12_0_neighborhood": graph.G_string12_0_neighborhood,
-        "string12_0_fusion": graph.G_string12_0_fusion,
-        "string12_0_cooccurence": graph.G_string12_0_cooccurence,
-        "string12_0_coexpression": graph.G_string12_0_coexpression,
-        "string12_0_experimental": graph.G_string12_0_experimental,
-        "string12_0_database": graph.G_string12_0_database,
-        "string12_0_combined": graph.G_string12_0_combined,
-    }
+    # Validate all graph names before proceeding
+    invalid_graph_names = [
+        name for name in graph_names if name not in SCEREVISIAE_GENE_GRAPH_MAP
+    ]
+    if invalid_graph_names:
+        
+        raise ValueError(
+            f"Invalid graph type(s): {', '.join(invalid_graph_names)}. "
+            f"Valid types are: {', '.join(SCEREVISIAE_GENE_GRAPH_VALID_NAMES)}"
+        )
 
+    graphs_dict = SortedDict()
+
+    # Only load the requested graphs
     for name in graph_names:
-        if name in valid_graphs and valid_graphs[name] is not None:
-            graphs_dict[name] = valid_graphs[name]
+        # Access the property (which loads the graph) if requested
+        graph_obj = SCEREVISIAE_GENE_GRAPH_MAP[name](graph)
+        if graph_obj is not None:
+            graphs_dict[name] = graph_obj
+        else:
+            log.warning(f"Graph '{name}' is None and will not be included")
 
     # Create and return the GeneMultiGraph
     return GeneMultiGraph(graphs=graphs_dict)

@@ -6,15 +6,12 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict
-
+from torchcell.datamodels import PhenotypeType, ExperimentReferenceType, ExperimentType
 import torch
 from torch_geometric.utils._subgraph import bipartite_subgraph, subgraph
 from torch_scatter import scatter
-
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
-
-
 
 
 class GraphProcessor(ABC):
@@ -38,6 +35,7 @@ class SubgraphRepresentation(GraphProcessor):
         self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
 
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
+        # Initialize masks dictionary
         self.masks = {
             "gene": {
                 "kept": torch.zeros(
@@ -46,8 +44,14 @@ class SubgraphRepresentation(GraphProcessor):
                 "perturbed": torch.zeros(
                     cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
                 ),
-            },
-            "reaction": {
+            }
+        }
+
+        # Only create masks for reaction and metabolite if they exist in the cell graph
+        if "reaction" in cell_graph.node_types and hasattr(
+            cell_graph["reaction"], "num_nodes"
+        ):
+            self.masks["reaction"] = {
                 "kept": torch.zeros(
                     cell_graph["reaction"].num_nodes,
                     dtype=torch.bool,
@@ -58,8 +62,12 @@ class SubgraphRepresentation(GraphProcessor):
                     dtype=torch.bool,
                     device=self.device,
                 ),
-            },
-            "metabolite": {
+            }
+
+        if "metabolite" in cell_graph.node_types and hasattr(
+            cell_graph["metabolite"], "num_nodes"
+        ):
+            self.masks["metabolite"] = {
                 "kept": torch.ones(
                     cell_graph["metabolite"].num_nodes,
                     dtype=torch.bool,
@@ -70,8 +78,7 @@ class SubgraphRepresentation(GraphProcessor):
                     dtype=torch.bool,
                     device=self.device,
                 ),
-            },
-        }
+            }
 
     def process(
         self,
@@ -89,24 +96,41 @@ class SubgraphRepresentation(GraphProcessor):
         self._add_gene_data(integrated_subgraph, cell_graph, gene_info)
         self._process_gene_interactions(integrated_subgraph, cell_graph, gene_info)
 
-        # Process reaction-level (GPR) information
-        reaction_info = self._process_reaction_info(
-            cell_graph, gene_info, integrated_subgraph
-        )
-        self._add_reaction_data(integrated_subgraph, reaction_info, cell_graph)
+        # Process reaction-level (GPR) information only if reaction nodes exist
+        if "reaction" in cell_graph.node_types and hasattr(
+            cell_graph["reaction"], "num_nodes"
+        ):
+            reaction_info = self._process_reaction_info(
+                cell_graph, gene_info, integrated_subgraph
+            )
+            self._add_reaction_data(integrated_subgraph, reaction_info, cell_graph)
 
-        # Process metabolic network via the bipartite representation only
-        self._process_metabolic_network(integrated_subgraph, cell_graph, reaction_info)
+            # Process metabolic network only if metabolite nodes also exist
+            if "metabolite" in cell_graph.node_types and hasattr(
+                cell_graph["metabolite"], "num_nodes"
+            ):
+                self._process_metabolic_network(
+                    integrated_subgraph, cell_graph, reaction_info
+                )
+        else:
+            reaction_info = None
 
         # Add phenotype data to the gene nodes
         self._add_phenotype_data(integrated_subgraph, phenotype_info, data)
 
         # Attach the masks to the output graph
         integrated_subgraph["gene"].pert_mask = self.masks["gene"]["perturbed"]
-        integrated_subgraph["reaction"].pert_mask = self.masks["reaction"]["removed"]
-        integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"][
-            "removed"
-        ]
+
+        # Only add reaction and metabolite masks if they exist
+        if "reaction" in self.masks:
+            integrated_subgraph["reaction"].pert_mask = self.masks["reaction"][
+                "removed"
+            ]
+
+        if "metabolite" in self.masks:
+            integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"][
+                "removed"
+            ]
 
         return integrated_subgraph
 
@@ -155,12 +179,9 @@ class SubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         gene_info: Dict[str, Any],
     ) -> None:
-        edge_types = [
-            ("gene", "physical_interaction", "gene"),
-            ("gene", "regulatory_interaction", "gene"),
-        ]
+        # Process all gene-to-gene edge types
         for et in cell_graph.edge_types:
-            if et in edge_types:
+            if et[0] == "gene" and et[2] == "gene":
                 orig_edge_index = cell_graph[et].edge_index
                 edge_index, _, edge_mask = subgraph(
                     subset=gene_info["keep_subset"],
@@ -374,8 +395,8 @@ class SubgraphRepresentation(GraphProcessor):
     def _add_phenotype_data(
         self,
         integrated_subgraph: HeteroData,
-        phenotype_info: list[Any],
-        data: list[Dict[str, Any]],
+        phenotype_info: list[PhenotypeType],
+        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         phenotype_fields = []
         for phenotype in phenotype_info:

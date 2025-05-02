@@ -2,7 +2,7 @@
 id: ql5qqwglqumgcpu5imec7bz
 title: '18'
 desc: ''
-updated: 1746147705272
+updated: 1746154769356
 created: 1745956797334
 ---
 
@@ -16,23 +16,23 @@ created: 1745956797334
 - [x] string9 graph to selective only load `String9` graphs → [[torchcell.graph.graph]]
 - [x] Update `torchell.graph` adding in types for `GeneGraph` and `MultiGeneGraph` this will save us headache in `graph_processor.`
 
-- [ ] Make sure that SubgraphRepresentation can handle the
+## 2025.04.30
 
-- [ ] Update loading s.t. it accounts for `String9` →
+- [x] Add Morphology datasets → figured out download..
+
+- [x] Make sure that `SubgraphRepresentation` can handle the updated data format → Just using `('gene', . ,'gene')` for gene perturbation.
+- [x] Update loading s.t. it accounts for `String9` → Things look good
+- [ ] Only include necessary graphs in [[Load_batch_005|dendron://torchcell/torchcell.scratch.load_batch_005]] → Think issue is handing no `incidence_graphs`.
 
 - [ ] Fix subgraph representation such that it can handle any graph from multigraph
 
 - [ ] Implement Dango model
 
-## 2025.04.30
-
-- [x] Add Morphology datasets → figured out download..
-
 ## 2025.05.01
 
 - [ ]
 - [ ] Add Gene Expression datasets
-- [ ] 
+- [ ]
 
 ***
 

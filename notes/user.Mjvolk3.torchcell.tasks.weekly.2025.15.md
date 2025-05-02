@@ -2,7 +2,7 @@
 id: vx8eola6h0i1z2u0eb49fpn
 title: '15'
 desc: ''
-updated: 1744758053721
+updated: 1745956926287
 created: 1744085237349
 ---
 
@@ -61,10 +61,10 @@ created: 1744085237349
 |:----------------|:----------------|:-----------------------------|:-------------------|
 | -               | -               | -                            | -                  |
 
-- [ ] Morphology animation ?
+- 🔲 Morphology animation ?
 
 ## 2025.04.11
 
-- [ ] Export and `rsync` this to linked delta drive
-- [ ] Mount drive and spin up database. Check if database is available on ports and over http.
-- [ ] Inquiry about web address for database.
+- 🔲 Export and `rsync` this to linked delta drive
+- 🔲 Mount drive and spin up database. Check if database is available on ports and over http.
+- 🔲 Inquiry about web address for database.

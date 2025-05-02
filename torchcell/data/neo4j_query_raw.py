@@ -195,6 +195,7 @@ class Neo4jQueryRaw:
         log_batch_size = int(1e10)
 
         log.info("Processing data...")
+        i = -1 
         for i, record in tqdm(enumerate(self.fetch_data())):
             # Extract the serialized data from the 'e' node
             e_node_data = json.loads(record["e"]["serialized_data"])
@@ -235,6 +236,7 @@ class Neo4jQueryRaw:
             # Log progress every log_batch_size records
             # if (i + 1) % log_batch_size == 0:
             #     log.info(f"Processed {i + 1} records")
+
 
         log.info(f"Total records processed: {i + 1}")
 

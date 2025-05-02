@@ -29,6 +29,7 @@ data/string9.1
 data/string12.0
 data/string
 data/tflink
+data/safe_keeping
 
 # Dendron
 .dendron.port

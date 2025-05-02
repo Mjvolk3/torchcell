@@ -18,7 +18,7 @@ from collections import defaultdict
 from datetime import datetime
 from itertools import product
 from typing import Set
-
+from typing import Optional
 import gffutils
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -34,15 +34,103 @@ from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 from torch_geometric.utils import from_networkx
 from tqdm import tqdm
-
+from torchcell.datamodels.pydant import ModelStrictArbitrary
 from torchcell.sequence import GeneSet, Genome, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import torchcell
+from pydantic import field_validator
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
+
+class GeneGraph(ModelStrictArbitrary):
+    """
+    A graph representation with genes as nodes, wrapping an nx.Graph.
+    """
+
+    name: str
+    graph: nx.Graph
+    max_gene_set: GeneSet
+
+    @field_validator("graph")
+    @classmethod
+    def validate_genes_in_graph(cls, graph, info):
+        """Validate that all nodes in the graph are in the max_gene_set"""
+        values = info.data
+        if "max_gene_set" not in values:
+            return graph
+
+        max_gene_set = values["max_gene_set"]
+        graph_nodes = set(graph.nodes())
+        invalid_nodes = graph_nodes - set(max_gene_set)
+
+        if invalid_nodes:
+            import logging
+
+            log = logging.getLogger(__name__)
+            log.warning(
+                f"Graph contains {len(invalid_nodes)} nodes not in max_gene_set"
+            )
+
+        return graph
+
+    def __getattr__(self, name):
+        """Forward attribute access to the underlying graph"""
+        return getattr(self.graph, name)
+
+    def __repr__(self):
+        """Informative representation showing graph name, nodes and edges"""
+        return f"GeneGraph(name='{self.name}', nodes={self.graph.number_of_nodes()}, edges={self.graph.number_of_edges()})"
+
+
+class GeneMultiGraph(ModelStrictArbitrary):
+    """
+    A collection of GeneGraph objects stored in a SortedDict.
+    """
+
+    graphs: SortedDict[str, GeneGraph]
+
+    def __getitem__(self, key):
+        """Allow dictionary-like access to graphs by name"""
+        return self.graphs[key]
+
+    def __iter__(self):
+        """Iterate over the graph names"""
+        return iter(self.graphs)
+
+    def __contains__(self, key):
+        """Check if a graph name exists"""
+        return key in self.graphs
+
+    def __len__(self):
+        """Get number of graphs"""
+        return len(self.graphs)
+
+    def items(self):
+        """Get the (name, graph) pairs"""
+        return self.graphs.items()
+
+    def keys(self):
+        """Get graph names"""
+        return self.graphs.keys()
+
+    def values(self):
+        """Get graph objects"""
+        return self.graphs.values()
+
+    def __repr__(self):
+        """Informative representation showing all contained graphs"""
+        graph_reprs = []
+        for name, graph in self.graphs.items():
+            graph_reprs.append(
+                f"  {name}: {graph.graph.number_of_nodes()} nodes, {graph.graph.number_of_edges()} edges"
+            )
+
+        graphs_str = "\n".join(graph_reprs)
+        return f"GeneMultiGraph(\n{graphs_str}\n)"
 
 
 def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiGraph:
@@ -231,32 +319,32 @@ class SCerevisiaeGraph:
 
     # Using private attributes for storage
     _G_raw: nx.Graph = field(init=False, repr=False, default=None)
-    _G_gene: nx.Graph = field(init=False, repr=False, default=None)
-    _G_physical: nx.Graph = field(init=False, repr=False, default=None)
-    _G_genetic: nx.Graph = field(init=False, repr=False, default=None)
-    _G_regulatory: nx.DiGraph = field(init=False, repr=False, default=None)
+    _G_gene: GeneGraph = field(init=False, repr=False, default=None)
+    _G_physical: GeneGraph = field(init=False, repr=False, default=None)
+    _G_genetic: GeneGraph = field(init=False, repr=False, default=None)
+    _G_regulatory: GeneGraph = field(init=False, repr=False, default=None)
     _G_go: nx.DiGraph = field(init=False, repr=False, default=None)
 
     # TFlink database
-    _G_tflink: nx.DiGraph = field(init=False, repr=False, default=None)
+    _G_tflink: GeneGraph = field(init=False, repr=False, default=None)
 
     # STRING v9.1 graph attributes
-    _G_string9_1_neighborhood: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_fusion: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_cooccurence: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_coexpression: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_experimental: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_database: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string9_1_combined: nx.Graph = field(init=False, repr=False, default=None)
+    _G_string9_1_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_fusion: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_cooccurence: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_coexpression: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_experimental: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_database: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string9_1_combined: GeneGraph = field(init=False, repr=False, default=None)
 
     # STRING v12.0 graph attributes
-    _G_string12_0_neighborhood: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_fusion: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_cooccurence: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_coexpression: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_experimental: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_database: nx.Graph = field(init=False, repr=False, default=None)
-    _G_string12_0_combined: nx.Graph = field(init=False, repr=False, default=None)
+    _G_string12_0_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_fusion: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_cooccurence: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_coexpression: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_experimental: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_database: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string12_0_combined: GeneGraph = field(init=False, repr=False, default=None)
 
     _all_go_terms = field(init=False, repr=False, default=None)
     _go_to_genes = field(init=False, repr=False, default=None)
@@ -305,58 +393,68 @@ class SCerevisiaeGraph:
         return self._G_raw
 
     @property
-    def G_gene(self) -> nx.Graph:
+    def G_gene(self) -> GeneGraph:
         if self._G_gene is None:
             gene_graph_path = osp.join(self.sgd_root, "graph", "G_gene.pkl")
             if osp.exists(gene_graph_path):
                 self._G_gene = self.load_graph("G_gene", root_type="sgd")
             else:
-                self._G_gene = self.add_gene_protein_overview(
+                nx_graph = self.add_gene_protein_overview(
                     G_raw=self.G_raw, G_gene=nx.Graph()
                 )
-                self._G_gene = self.add_loci_information(
-                    G_raw=self.G_raw, G_gene=self._G_gene
+                nx_graph = self.add_loci_information(G_raw=self.G_raw, G_gene=nx_graph)
+                nx_graph = self.add_pathway_annotation(
+                    G_raw=self.G_raw, G_gene=nx_graph
                 )
-                self._G_gene = self.add_pathway_annotation(
-                    G_raw=self.G_raw, G_gene=self._G_gene
+                self._G_gene = GeneGraph(
+                    name="gene", graph=nx_graph, max_gene_set=self.genome.gene_set
                 )
                 self.save_graph(self._G_gene, "G_gene", root_type="sgd")
         return self._G_gene
 
     @property
-    def G_physical(self) -> nx.Graph:
+    def G_physical(self) -> GeneGraph:
         if self._G_physical is None:
             physical_graph_path = osp.join(self.sgd_root, "graph", "G_physical.pkl")
             if osp.exists(physical_graph_path):
                 self._G_physical = self.load_graph("G_physical", root_type="sgd")
             else:
-                self._G_physical = self.add_physical_edges(
+                nx_graph = self.add_physical_edges(
                     G_raw=self.G_raw, G_physical=nx.Graph()
+                )
+                self._G_physical = GeneGraph(
+                    name="physical", graph=nx_graph, max_gene_set=self.genome.gene_set
                 )
                 self.save_graph(self._G_physical, "G_physical", root_type="sgd")
         return self._G_physical
 
     @property
-    def G_genetic(self) -> nx.Graph:
+    def G_genetic(self) -> GeneGraph:
         if self._G_genetic is None:
             genetic_graph_path = osp.join(self.sgd_root, "graph", "G_genetic.pkl")
             if osp.exists(genetic_graph_path):
                 self._G_genetic = self.load_graph("G_genetic", root_type="sgd")
             else:
-                self._G_genetic = self.add_genetic_edges(
+                nx_graph = self.add_genetic_edges(
                     G_raw=self.G_raw, G_genetic=nx.Graph()
+                )
+                self._G_genetic = GeneGraph(
+                    name="genetic", graph=nx_graph, max_gene_set=self.genome.gene_set
                 )
                 self.save_graph(self._G_genetic, "G_genetic", root_type="sgd")
         return self._G_genetic
 
     @property
-    def G_regulatory(self) -> nx.DiGraph:
+    def G_regulatory(self) -> GeneGraph:
         if self._G_regulatory is None:
             regulatory_graph_path = osp.join(self.sgd_root, "graph", "G_regulatory.pkl")
             if osp.exists(regulatory_graph_path):
                 self._G_regulatory = self.load_graph("G_regulatory", root_type="sgd")
             else:
-                self._G_regulatory = self.add_regulatory_edges(G_raw=self.G_raw)
+                nx_graph = self.add_regulatory_edges(G_raw=self.G_raw)
+                self._G_regulatory = GeneGraph(
+                    name="regulatory", graph=nx_graph, max_gene_set=self.genome.gene_set
+                )
                 self.save_graph(self._G_regulatory, "G_regulatory", root_type="sgd")
         return self._G_regulatory
 
@@ -372,98 +470,101 @@ class SCerevisiaeGraph:
         return self._G_go
 
     @property
-    def G_tflink(self) -> nx.DiGraph:
+    def G_tflink(self) -> GeneGraph:
         if self._G_tflink is None:
             tf_graph_path = osp.join(self.tflink_root, "graph", "G_tflink.pkl")
             if osp.exists(tf_graph_path):
                 self._G_tflink = self.load_graph("G_tflink", root_type="tflink")
             else:
-                self._G_tflink = self.create_G_tflink()
+                nx_graph = self.create_G_tflink()
+                self._G_tflink = GeneGraph(
+                    name="tflink", graph=nx_graph, max_gene_set=self.genome.gene_set
+                )
                 self.save_graph(self._G_tflink, "G_tflink", root_type="tflink")
         return self._G_tflink
 
     # STRING v9.1 properties
     @property
-    def G_string9_1_neighborhood(self) -> nx.Graph:
+    def G_string9_1_neighborhood(self) -> GeneGraph:
         if self._G_string9_1_neighborhood is None:
             self._initialize_string_graph("neighborhood", "9.1")
         return self._G_string9_1_neighborhood
 
     @property
-    def G_string9_1_fusion(self) -> nx.Graph:
+    def G_string9_1_fusion(self) -> GeneGraph:
         if self._G_string9_1_fusion is None:
             self._initialize_string_graph("fusion", "9.1")
         return self._G_string9_1_fusion
 
     @property
-    def G_string9_1_cooccurence(self) -> nx.Graph:
+    def G_string9_1_cooccurence(self) -> GeneGraph:
         if self._G_string9_1_cooccurence is None:
             self._initialize_string_graph("cooccurence", "9.1")
         return self._G_string9_1_cooccurence
 
     @property
-    def G_string9_1_coexpression(self) -> nx.Graph:
+    def G_string9_1_coexpression(self) -> GeneGraph:
         if self._G_string9_1_coexpression is None:
             self._initialize_string_graph("coexpression", "9.1")
         return self._G_string9_1_coexpression
 
     @property
-    def G_string9_1_experimental(self) -> nx.Graph:
+    def G_string9_1_experimental(self) -> GeneGraph:
         if self._G_string9_1_experimental is None:
             self._initialize_string_graph("experimental", "9.1")
         return self._G_string9_1_experimental
 
     @property
-    def G_string9_1_database(self) -> nx.Graph:
+    def G_string9_1_database(self) -> GeneGraph:
         if self._G_string9_1_database is None:
             self._initialize_string_graph("database", "9.1")
         return self._G_string9_1_database
 
     @property
-    def G_string9_1_combined(self) -> nx.Graph:
+    def G_string9_1_combined(self) -> GeneGraph:
         if self._G_string9_1_combined is None:
             self._initialize_string_graph("combined", "9.1")
         return self._G_string9_1_combined
 
     # STRING v12.0 properties
     @property
-    def G_string12_0_neighborhood(self) -> nx.Graph:
+    def G_string12_0_neighborhood(self) -> GeneGraph:
         if self._G_string12_0_neighborhood is None:
             self._initialize_string_graph("neighborhood", "12.0")
         return self._G_string12_0_neighborhood
 
     @property
-    def G_string12_0_fusion(self) -> nx.Graph:
+    def G_string12_0_fusion(self) -> GeneGraph:
         if self._G_string12_0_fusion is None:
             self._initialize_string_graph("fusion", "12.0")
         return self._G_string12_0_fusion
 
     @property
-    def G_string12_0_cooccurence(self) -> nx.Graph:
+    def G_string12_0_cooccurence(self) -> GeneGraph:
         if self._G_string12_0_cooccurence is None:
             self._initialize_string_graph("cooccurence", "12.0")
         return self._G_string12_0_cooccurence
 
     @property
-    def G_string12_0_coexpression(self) -> nx.Graph:
+    def G_string12_0_coexpression(self) -> GeneGraph:
         if self._G_string12_0_coexpression is None:
             self._initialize_string_graph("coexpression", "12.0")
         return self._G_string12_0_coexpression
 
     @property
-    def G_string12_0_experimental(self) -> nx.Graph:
+    def G_string12_0_experimental(self) -> GeneGraph:
         if self._G_string12_0_experimental is None:
             self._initialize_string_graph("experimental", "12.0")
         return self._G_string12_0_experimental
 
     @property
-    def G_string12_0_database(self) -> nx.Graph:
+    def G_string12_0_database(self) -> GeneGraph:
         if self._G_string12_0_database is None:
             self._initialize_string_graph("database", "12.0")
         return self._G_string12_0_database
 
     @property
-    def G_string12_0_combined(self) -> nx.Graph:
+    def G_string12_0_combined(self) -> GeneGraph:
         if self._G_string12_0_combined is None:
             self._initialize_string_graph("combined", "12.0")
         return self._G_string12_0_combined
@@ -548,7 +649,7 @@ class SCerevisiaeGraph:
 
     def create_string_graphs(self, file_path: str, version: str) -> None:
         """
-        Create NetworkX graphs from STRING data and save them to attributes.
+        Create GeneGraph objects from STRING data and save them to attributes.
         Strip the '4932.' prefix from protein IDs for consistency.
         Only include nodes that exist in genome.gene_set.
 
@@ -572,16 +673,13 @@ class SCerevisiaeGraph:
         # Format the version string for attribute names
         version_str = version.replace(".", "_")
 
-        # Create a combined graph to include ALL interactions
-        combined_attr = f"_G_string{version_str}_combined"
-        setattr(self, combined_attr, nx.Graph())
-        G_combined = getattr(self, combined_attr)
+        # Create a combined nx.Graph to include ALL interactions
+        combined_nx_graph = nx.Graph()
 
         for network_type in network_types:
             # Create a graph for each network type
             attr_name = f"_G_string{version_str}_{network_type}"
-            setattr(self, attr_name, nx.Graph())
-            G = getattr(self, attr_name)
+            nx_graph = nx.Graph()
 
             # Filter interactions where the network type score > 0
             type_df = df[df[network_type] > 0][["protein1", "protein2", network_type]]
@@ -597,22 +695,32 @@ class SCerevisiaeGraph:
                     protein1 in self.genome.gene_set
                     and protein2 in self.genome.gene_set
                 ):
-                    G.add_edge(
+                    nx_graph.add_edge(
                         protein1, protein2, weight=row[network_type], version=version
                     )
 
                     # Also add to the combined graph
-                    if not G_combined.has_edge(protein1, protein2):
-                        G_combined.add_edge(protein1, protein2, version=version)
+                    if not combined_nx_graph.has_edge(protein1, protein2):
+                        combined_nx_graph.add_edge(protein1, protein2, version=version)
 
                     # Add the network type as an attribute to the combined graph edge
-                    G_combined[protein1][protein2][network_type] = row[network_type]
+                    combined_nx_graph[protein1][protein2][network_type] = row[
+                        network_type
+                    ]
+
+            # Create a GeneGraph and save it
+            gene_graph = GeneGraph(
+                name=f"string{version_str}_{network_type}",
+                graph=nx_graph,
+                max_gene_set=self.genome.gene_set,
+            )
+            setattr(self, attr_name, gene_graph)
 
             # Save the graph
             graph_name = f"G_string{version_str}_{network_type}"
-            self.save_graph(G, graph_name, root_type="string")
+            self.save_graph(gene_graph, graph_name, root_type="string")
             log.info(
-                f"STRING v{version} {network_type} network: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges"
+                f"STRING v{version} {network_type} network: {gene_graph.graph.number_of_nodes()} nodes, {gene_graph.graph.number_of_edges()} edges"
             )
 
         # Add the combined score to the combined graph
@@ -624,15 +732,26 @@ class SCerevisiaeGraph:
             if (
                 protein1 in self.genome.gene_set
                 and protein2 in self.genome.gene_set
-                and G_combined.has_edge(protein1, protein2)
+                and combined_nx_graph.has_edge(protein1, protein2)
             ):
-                G_combined[protein1][protein2]["combined_score"] = row["combined_score"]
+                combined_nx_graph[protein1][protein2]["combined_score"] = row[
+                    "combined_score"
+                ]
+
+        # Create a GeneGraph for the combined network
+        combined_gene_graph = GeneGraph(
+            name=f"string{version_str}_combined",
+            graph=combined_nx_graph,
+            max_gene_set=self.genome.gene_set,
+        )
+        combined_attr = f"_G_string{version_str}_combined"
+        setattr(self, combined_attr, combined_gene_graph)
 
         # Save the combined graph
         combined_name = f"G_string{version_str}_combined"
-        self.save_graph(G_combined, combined_name, root_type="string")
+        self.save_graph(combined_gene_graph, combined_name, root_type="string")
         log.info(
-            f"STRING v{version} combined network: {G_combined.number_of_nodes()} nodes, {G_combined.number_of_edges()} edges"
+            f"STRING v{version} combined network: {combined_gene_graph.graph.number_of_nodes()} nodes, {combined_gene_graph.graph.number_of_edges()} edges"
         )
 
     def strip_string_prefix(self, protein_id: str) -> str:
@@ -757,10 +876,10 @@ class SCerevisiaeGraph:
 
     def save_graph(self, graph, graph_name, root_type="sgd"):
         """
-        Save NetworkX graph to a pickle file.
+        Save graph to a pickle file. Handles both NetworkX graphs and GeneGraph objects.
 
         Args:
-            graph: NetworkX graph to save
+            graph: NetworkX graph or GeneGraph to save
             graph_name: Name of the graph
             root_type: Type of root directory ('sgd', 'string', or 'tflink')
         """
@@ -779,14 +898,14 @@ class SCerevisiaeGraph:
 
     def load_graph(self, graph_name, root_type="sgd"):
         """
-        Load NetworkX graph from a pickle file.
+        Load graph from a pickle file. Could be a NetworkX graph or a GeneGraph.
 
         Args:
             graph_name: Name of the graph
             root_type: Type of root directory ('sgd', 'string', or 'tflink')
 
         Returns:
-            NetworkX graph
+            NetworkX graph or GeneGraph object
         """
         if root_type == "sgd":
             dir = osp.join(self.sgd_root, "graph")
@@ -1093,6 +1212,108 @@ class SCerevisiaeGraph:
         return G_gene
 
 
+def build_gene_multigraph(
+    graph: "SCerevisiaeGraph", graph_names: Optional[list[str]] = None
+) -> Optional[GeneMultiGraph]:
+    """
+    Build a GeneMultiGraph containing GeneGraph objects based on the provided graph names.
+
+    Args:
+        graph: An SCerevisiaeGraph instance containing various graph types
+        graph_names: List of graph names to include in the multigraph.
+                     If None, returns None.
+
+    Returns:
+        A GeneMultiGraph containing the specified graphs,
+        or None if graph_names is None.
+    """
+    if graph_names is None:
+        return None
+
+    graphs_dict = SortedDict()
+    valid_graphs = {
+        "physical": graph.G_physical,
+        "regulatory": graph.G_regulatory,
+        "genetic": graph.G_genetic,
+        "tflink": graph.G_tflink,
+        "string9_1_neighborhood": graph.G_string9_1_neighborhood,
+        "string9_1_fusion": graph.G_string9_1_fusion,
+        "string9_1_cooccurence": graph.G_string9_1_cooccurence,
+        "string9_1_coexpression": graph.G_string9_1_coexpression,
+        "string9_1_experimental": graph.G_string9_1_experimental,
+        "string9_1_database": graph.G_string9_1_database,
+        "string9_1_combined": graph.G_string9_1_combined,
+        "string12_0_neighborhood": graph.G_string12_0_neighborhood,
+        "string12_0_fusion": graph.G_string12_0_fusion,
+        "string12_0_cooccurence": graph.G_string12_0_cooccurence,
+        "string12_0_coexpression": graph.G_string12_0_coexpression,
+        "string12_0_experimental": graph.G_string12_0_experimental,
+        "string12_0_database": graph.G_string12_0_database,
+        "string12_0_combined": graph.G_string12_0_combined,
+    }
+
+    for name in graph_names:
+        if name in valid_graphs and valid_graphs[name] is not None:
+            graphs_dict[name] = valid_graphs[name]
+
+    # Create and return the GeneMultiGraph
+    return GeneMultiGraph(graphs=graphs_dict)
+
+
+def check_regulatory_nodes_have_edges() -> None:
+    """
+    Check if all nodes in the Regulatory graph have at least one edge that is not a self-edge.
+    Creates a new SCerevisiaeGraph instance using environment variables.
+    """
+    import os
+    import os.path as osp
+    from dotenv import load_dotenv
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    # Load environment variables
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    # Create genome and graph
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,  # Use existing data to avoid rebuilding
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
+
+    # Get the underlying NetworkX graph
+    G_regulatory = graph.G_regulatory.graph
+
+    nodes_without_proper_edges = []
+    for node in G_regulatory.nodes():
+        # Get all neighbors of the node
+        neighbors = set(G_regulatory.predecessors(node)).union(
+            set(G_regulatory.successors(node))
+        )
+
+        # Check if all edges are self-loops
+        if len(neighbors) == 0 or (len(neighbors) == 1 and node in neighbors):
+            nodes_without_proper_edges.append(node)
+
+    if nodes_without_proper_edges:
+        print(
+            f"Found {len(nodes_without_proper_edges)} nodes without non-self edges in the Regulatory graph:"
+        )
+        # Print a sample of problematic nodes (up to 10)
+        sample = nodes_without_proper_edges[:10]
+        print(f"Sample: {sample}")
+    else:
+        print(
+            "All nodes in the Regulatory graph have at least one connection to another node."
+        )
+
+
 def main() -> None:
     import os
     import random
@@ -1173,4 +1394,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    check_regulatory_nodes_have_edges()

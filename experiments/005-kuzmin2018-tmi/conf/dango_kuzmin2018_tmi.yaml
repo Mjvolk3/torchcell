@@ -1,0 +1,101 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # FLAG
+  project: torchcell_005-kuzmin2018-tmi_dango_
+  tags: []
+
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64
+  incidence_graphs: [metabolism_bipartite]
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 1e5 #2.5e4
+  batch_size: 32 #32
+  num_workers: 4
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 1000 # 20 # FLAG
+  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 2
+  overfit_batches: 0
+
+# ------ Placeholders for hydra optuna
+heads: 10 # placeholder
+norms: "layer" # placeholder
+# ------
+model:
+  checkpoint_path: null #*.ckpt
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64
+  num_layers: 2 # Number of hetero conv layers
+  # norm: "batch"
+  norm: ${norms}
+  activation: "relu"
+  dropout: 0.0
+  gene_encoder_config:
+    # heads: 5
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+  gpr_conv_config:
+    # heads: 2
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+  metabolism_config:
+    is_stoich_gated: true
+    use_attention: true
+    # heads: 2
+    heads: ${heads}
+    concat: true
+  prediction_head_config:
+    hidden_channels: 64
+    head_num_layers: 4
+    dropout: 0.0
+    activation: "relu"
+    # residual: true
+    # head_norm: "batch"
+    head_norm: ${norms}
+
+regression_task:
+  loss: logcosh
+  is_weighted_phenotype_loss: true
+  lambda_dist: 0.1
+  lambda_supcr: 0.001
+  optimizer:
+    type: "AdamW"
+    lr: 1e-5
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1

@@ -2,7 +2,7 @@
 id: g43sh9daeb5qx5zspege6dl
 title: String_vs_sgd_vs_tflink
 desc: ''
-updated: 1745621315973
+updated: 1745937914427
 created: 1745621271806
 ---
 ```bash
@@ -268,3 +268,19 @@ All visualizations saved to /Users/michaelvolk/Documents/projects/torchcell/note
 ![](./assets/images/shared_edges_matrix.png)
 ![](./assets/images/jaccard_similarity_heatmap.png)
 ![](./assets/images/network_sizes_comparison.png)
+
+
+***
+
+| Network               | Nodes     | Edges       |
+|-----------------------|-----------|-------------|
+| Regulatory            | 3632      | 9753        |
+| Physical              | 5721      | 139463      |
+| TFLink                | 5092      | 201898      |
+| STRING12_Neighborhood | 2204      | 147874      |
+| STRING12_Fusion       | 3095      | 11810       |
+| STRING12_Cooccurence  | 2615      | 11115       |
+| STRING12_Coexpression | 6503      | 1002538     |
+| STRING12_Experimental | 6036      | 825101      |
+| STRING12_Database     | 4044      | 73818       |
+| **Sum**               | **38942** | **2423370** |

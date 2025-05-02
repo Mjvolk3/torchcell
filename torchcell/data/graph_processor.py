@@ -15,6 +15,8 @@ from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
 
 
+
+
 class GraphProcessor(ABC):
     @abstractmethod
     def process(
@@ -34,7 +36,7 @@ class SubgraphRepresentation(GraphProcessor):
         super().__init__()
         self.device: torch.device = None
         self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
-    
+
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
         self.masks = {
             "gene": {

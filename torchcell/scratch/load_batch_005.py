@@ -78,10 +78,10 @@ def load_sample_data_batch(
             genome=genome,
         )
 
-    with open("experiments/004-dmi-tmi/queries/001_small_build.cql", "r") as f:
+    with open("experiments/005-kuzmin2018-tmi/queries/001_small_build.cql", "r") as f:
         query = f.read()
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/004-dmi-tmi/001-small-build"
+        DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build"
     )
     gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
     incidence_graphs = {}
@@ -166,9 +166,10 @@ def load_sample_data_batch(
 
 if __name__ == "__main__":
     # load_sample_data_batch()
-    load_sample_data_batch(
+    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
         batch_size=2,
         num_workers=2,
         metabolism_graph="metabolism_bipartite",
         is_dense=True,
     )
+    print("")

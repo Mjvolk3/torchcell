@@ -37,6 +37,8 @@ import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.dango import DangoLoss
 from torchcell.graph import build_gene_multigraph
+# Import lambda calculation function
+from .dango_lambda_determination import main as calculate_lambda_values
 
 
 log = logging.getLogger(__name__)
@@ -241,13 +243,15 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    # Create the DangoLoss with the model's edge types
-    lambda_values = {}
-    for edge_type in wandb.config.cell_dataset["graphs"]:
-        if edge_type in ["string9_1_coexpression"]:  # > 1% zeros decreased
-            lambda_values[edge_type] = 0.1
-        else:  # <= 1% zeros decreased
-            lambda_values[edge_type] = 1.0
+    # Calculate lambda values based on STRING v9.1 to v11.0 comparison
+    # Load lambda values dynamically based on STRING database comparisons
+    log.info("Calculating lambda values from STRING v9.1 to v11.0 comparison...")
+    lambda_values = calculate_lambda_values()
+    
+    # Log the lambda values being used
+    log.info("Using lambda values:")
+    for edge_type, lambda_val in lambda_values.items():
+        log.info(f"  {edge_type}: {lambda_val}")
             
     # Create DangoLoss with the model's edge types and lambda values
     loss_func = DangoLoss(

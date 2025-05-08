@@ -21,7 +21,7 @@ from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModu
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
 from torchcell.data.graph_processor import SubgraphRepresentation
-from torchcell.data.graph_processor import SubgraphRepresentation
+from torchcell.data.graph_processor import Perturbation
 from tqdm import tqdm
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from typing import Literal
@@ -111,11 +111,11 @@ def load_sample_data_batch(
         gene_set=genome.gene_set,
         graphs=gene_multigraph,
         incidence_graphs=None,
-        node_embeddings=node_embeddings,
+        node_embeddings=None,
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=SubgraphRepresentation(),
+        graph_processor=Perturbation(),
     )
     # Transforms
     norm_configs = {
@@ -170,6 +170,7 @@ def load_sample_data_batch(
         pin_memory=True,
         prefetch=False,
         seed=seed,
+        follow_batch=["perturbation_indices"],
     )
     perturbation_subset_data_module.setup()
     max_num_nodes = len(dataset.gene_set)
@@ -185,7 +186,7 @@ if __name__ == "__main__":
         batch_size=2,
         num_workers=2,
         metabolism_graph="metabolism_bipartite",
-        is_dense=True,
+        is_dense=False,
     )
     dataset[0]
     print("")

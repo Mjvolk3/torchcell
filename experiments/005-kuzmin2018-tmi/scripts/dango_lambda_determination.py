@@ -68,7 +68,7 @@ def calculate_zero_decrease_percentage(graph, network_type):
 
     The calculation is based on the formula in the DANGO paper:
     Percentage of decreased zeros = (Number of new edges in v11.0) / (Number of zeros in v9.1) * 100
-    
+
     From the DANGO paper: "The percentage of decreased zeroes from STRING database v9.1 to v11.0 for each network,
     ranging from 0.02% (co-occurrence) to 2.42% (co-expression)."
 
@@ -92,11 +92,15 @@ def calculate_zero_decrease_percentage(graph, network_type):
     nodes_v9 = set(graph_v9.graph.nodes())
     nodes_v11 = set(graph_v11.graph.nodes())
     common_nodes = nodes_v9.intersection(nodes_v11)
-    
+
     # Filter edges to only include those between common nodes
-    filtered_edges_v9 = {(u, v) for u, v in edges_v9 if u in common_nodes and v in common_nodes}
-    filtered_edges_v11 = {(u, v) for u, v in edges_v11 if u in common_nodes and v in common_nodes}
-    
+    filtered_edges_v9 = {
+        (u, v) for u, v in edges_v9 if u in common_nodes and v in common_nodes
+    }
+    filtered_edges_v11 = {
+        (u, v) for u, v in edges_v11 if u in common_nodes and v in common_nodes
+    }
+
     num_nodes = len(common_nodes)
 
     # Calculate the number of possible edges (excluding self-loops)
@@ -128,18 +132,26 @@ def calculate_zero_decrease_percentage(graph, network_type):
     log.info(f"New edges in v11.0: {num_new_edges}")
     log.info(f"Zero edges in v9.1: {num_zeros_v9}")
     log.info(f"Percentage of decreased zeros: {zero_decrease_pct:.4f}%")
-    
+
     # Check if value aligns with paper's range (for cooccurence and coexpression)
     if network_type == "cooccurence" and abs(zero_decrease_pct - 0.02) > 0.1:
-        log.warning(f"Calculation differs from paper: Got {zero_decrease_pct:.4f}% for co-occurrence but paper reports ~0.02%")
+        log.warning(
+            f"Calculation differs from paper: Got {zero_decrease_pct:.4f}% for co-occurrence but paper reports ~0.02%"
+        )
     elif network_type == "coexpression" and abs(zero_decrease_pct - 2.42) > 0.3:
-        log.warning(f"Calculation differs from paper: Got {zero_decrease_pct:.4f}% for co-expression but paper reports ~2.42%")
-    
+        log.warning(
+            f"Calculation differs from paper: Got {zero_decrease_pct:.4f}% for co-expression but paper reports ~2.42%"
+        )
+
     # Also check other networks mentioned in paper if values are very different
     elif network_type == "experimental" and zero_decrease_pct > 3.0:
-        log.warning(f"Calculation for {network_type} ({zero_decrease_pct:.4f}%) seems unusually high compared to paper ranges (0.02% to 2.42%)")
+        log.warning(
+            f"Calculation for {network_type} ({zero_decrease_pct:.4f}%) seems unusually high compared to paper ranges (0.02% to 2.42%)"
+        )
     elif network_type == "database" and zero_decrease_pct > 3.0:
-        log.warning(f"Calculation for {network_type} ({zero_decrease_pct:.4f}%) seems unusually high compared to paper ranges (0.02% to 2.42%)")
+        log.warning(
+            f"Calculation for {network_type} ({zero_decrease_pct:.4f}%) seems unusually high compared to paper ranges (0.02% to 2.42%)"
+        )
 
     # Return all metrics as a dictionary for later use
     return {
@@ -192,11 +204,11 @@ def plot_string_comparison(metrics_list):
     prop_cycle = plt.rcParams["axes.prop_cycle"]
     colors = prop_cycle.by_key()["color"]
 
-    # For more consistent colors, we'll use specific colors from our palette
-    v9_color = "#B73C39"  # dark red (colors[1])
-    v11_color = "#3978B5"  # blue (colors[2])
-    threshold_color = "#000000"  # black (colors[0])
-    bar_color = "#8D5694"  # purple (colors[4])
+    # Use colors from the torchcell color cycle
+    v9_color = colors[1]
+    v11_color = colors[2]
+    threshold_color = colors[0]
+    bar_color = colors[4]
 
     # Bar width
     width = 0.35
@@ -247,7 +259,7 @@ def plot_string_comparison(metrics_list):
     ax1.set_ylabel("Number of Edges", fontsize=14)
     ax1.set_title("Comparison of Edge Counts: STRING v9.1 vs v11.0", fontsize=16)
     ax1.set_xticks(x)
-    ax1.set_xticklabels(network_types, fontsize=12, rotation=30, ha='right')
+    ax1.set_xticklabels(network_types, fontsize=12, rotation=30, ha="right")
     ax1.legend(fontsize=12)
 
     # Format y-axis with commas for thousands
@@ -263,7 +275,7 @@ def plot_string_comparison(metrics_list):
     max_pct = max(decrease_pcts)
     y_max = max(10, max_pct * 1.3)  # At least 10%, or 30% more than max value
     ax2.set_ylim(0, y_max)
-    
+
     # Draw the 1% threshold line but make it less prominent
     threshold_line = ax2.axhline(
         y=1.0,
@@ -273,11 +285,11 @@ def plot_string_comparison(metrics_list):
         alpha=0.4,
         label="1% threshold for λ determination",
     )
-    
+
     # Add data labels with appropriate positioning to avoid threshold
     for bar in bars3:
         height = bar.get_height()
-        
+
         # Calculate vertical offset based on proximity to threshold
         if 0.8 < height < 1.3:
             # Value is close to the threshold - adjust position
@@ -287,7 +299,7 @@ def plot_string_comparison(metrics_list):
                 offset = -18  # Move down for values below threshold
         else:
             offset = 5  # Default offset for values not near threshold
-        
+
         # Add label with white background for better visibility
         ax2.annotate(
             f"{height:.2f}%",
@@ -297,16 +309,18 @@ def plot_string_comparison(metrics_list):
             ha="center",
             va="bottom" if offset > 0 else "top",
             fontsize=11,
-            fontweight='bold',
+            fontweight="bold",
             bbox=dict(facecolor="white", alpha=0.8, pad=2, boxstyle="round,pad=0.2"),
         )
 
     # Set labels and titles for percentage plot
     ax2.set_ylabel("Decreased Zeros (%)", fontsize=14)
     ax2.set_xlabel("Network Type", fontsize=14)
-    ax2.set_title("Percentage of Decreased Zeros from STRING v9.1 to v11.0", fontsize=16)
+    ax2.set_title(
+        "Percentage of Decreased Zeros from STRING v9.1 to v11.0", fontsize=16
+    )
     ax2.set_xticks(x)
-    ax2.set_xticklabels(network_types, fontsize=12, rotation=30, ha='right')
+    ax2.set_xticklabels(network_types, fontsize=12, rotation=30, ha="right")
     ax2.legend(fontsize=12)
 
     # Add a grid
@@ -314,7 +328,7 @@ def plot_string_comparison(metrics_list):
 
     # Add more space between subplots
     plt.subplots_adjust(hspace=0.3)
-    
+
     # Ensure tight layout
     plt.tight_layout()
 
@@ -329,9 +343,19 @@ def plot_string_comparison(metrics_list):
     return filepath
 
 
-def main():
-    """Main function to calculate lambda values for all network types."""
-    log.info("Loading gene graphs...")
+def determine_lambda_values(verbose=True):
+    """
+    Calculate lambda values for all network types based on STRING v9.1 to v11.0 comparison.
+
+    Args:
+        verbose: Whether to print detailed logs and generate plots
+
+    Returns:
+        dict: Dictionary mapping network types to lambda values
+    """
+    if verbose:
+        log.info("Loading gene graphs...")
+
     graph = load_gene_graphs()
 
     # Network types to analyze
@@ -348,9 +372,13 @@ def main():
     metrics_list = []
     lambda_values = {}
 
-    log.info("Calculating zero decrease percentages...")
+    if verbose:
+        log.info("Calculating zero decrease percentages...")
+
     for network_type in network_types:
-        log.info(f"\nAnalyzing {network_type} network...")
+        if verbose:
+            log.info(f"\nAnalyzing {network_type} network...")
+
         metrics = calculate_zero_decrease_percentage(graph, network_type)
         metrics_list.append(metrics)
 
@@ -362,44 +390,56 @@ def main():
         else:
             lambda_values[f"string9_1_{network_type}"] = 1.0
 
-    # Print summary
-    log.info("\n--- SUMMARY OF ZERO DECREASE PERCENTAGES ---")
-    for metrics in metrics_list:
-        network_type = metrics["network_type"]
-        percentage = metrics["zero_decrease_pct"]
-        log.info(f"{network_type}: {percentage:.4f}%")
+    if verbose:
+        # Print summary
+        log.info("\n--- SUMMARY OF ZERO DECREASE PERCENTAGES ---")
+        for metrics in metrics_list:
+            network_type = metrics["network_type"]
+            percentage = metrics["zero_decrease_pct"]
+            log.info(f"{network_type}: {percentage:.4f}%")
 
-    log.info("\n--- DETERMINED LAMBDA VALUES ---")
-    for network, lambda_val in lambda_values.items():
-        log.info(f"{network}: {lambda_val}")
-        
-    # Check for significant differences compared to paper values
-    paper_values = {
-        "cooccurence": 0.02,
-        "coexpression": 2.42
-    }
-    
-    differences = []
-    for metrics in metrics_list:
-        network_type = metrics["network_type"]
-        if network_type in paper_values:
-            paper_val = paper_values[network_type]
-            calculated_val = metrics["zero_decrease_pct"]
-            if abs(calculated_val - paper_val) > (0.1 if network_type == "cooccurence" else 0.3):
-                differences.append(f"{network_type}: calculated={calculated_val:.4f}%, paper={paper_val}%")
-    
-    if differences:
-        log.warning("\n--- DIFFERENCES FROM PAPER VALUES ---")
-        for diff in differences:
-            log.warning(diff)
-        log.warning("These differences might be due to different STRING database versions or filtering methods")
-        log.warning("The DANGO paper uses STRING v9.1 to v11.0 comparison, while we may have different node sets or network construction")
+        log.info("\n--- DETERMINED LAMBDA VALUES ---")
+        for network, lambda_val in lambda_values.items():
+            log.info(f"{network}: {lambda_val}")
 
-    # Generate and save the plot
-    plot_path = plot_string_comparison(metrics_list)
-    log.info(f"Generated plot at: {plot_path}")
+        # Check for significant differences compared to paper values
+        paper_values = {"cooccurence": 0.02, "coexpression": 2.42}
+
+        differences = []
+        for metrics in metrics_list:
+            network_type = metrics["network_type"]
+            if network_type in paper_values:
+                paper_val = paper_values[network_type]
+                calculated_val = metrics["zero_decrease_pct"]
+                if abs(calculated_val - paper_val) > (
+                    0.1 if network_type == "cooccurence" else 0.3
+                ):
+                    differences.append(
+                        f"{network_type}: calculated={calculated_val:.4f}%, paper={paper_val}%"
+                    )
+
+        if differences:
+            log.warning("\n--- DIFFERENCES FROM PAPER VALUES ---")
+            for diff in differences:
+                log.warning(diff)
+            log.warning(
+                "These differences might be due to different STRING database versions or filtering methods"
+            )
+            log.warning(
+                "The DANGO paper uses STRING v9.1 to v11.0 comparison, while we may have different node sets or network construction"
+            )
+
+        # Generate and save the plot
+        plot_path = plot_string_comparison(metrics_list)
+        log.info(f"Generated plot at: {plot_path}")
 
     # Return the lambda values to be used in the training script
+    return lambda_values
+
+
+def main():
+    """Main function to calculate lambda values and generate visualization."""
+    lambda_values = determine_lambda_values(verbose=True)
     return lambda_values
 
 

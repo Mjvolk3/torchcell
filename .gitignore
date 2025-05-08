@@ -124,3 +124,7 @@ tests/slurm/output/*
 # apptainer/singularity
 rockylinux_9.sif
 /.luarc.json
+
+
+# Other Users
+notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05.pdf

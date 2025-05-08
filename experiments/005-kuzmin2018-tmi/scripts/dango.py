@@ -37,8 +37,14 @@ import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.dango import DangoLoss
 from torchcell.graph import build_gene_multigraph
-# Import lambda calculation function
-from .dango_lambda_determination import main as calculate_lambda_values
+
+# Import lambda calculation function directly from sibling module
+import os.path as osp
+import sys
+
+# Add parent of current directory to sys.path
+sys.path.insert(0, osp.dirname(osp.dirname(osp.abspath(__file__))))
+from scripts.dango_lambda_determination import determine_lambda_values
 
 
 log = logging.getLogger(__name__)
@@ -246,19 +252,19 @@ def main(cfg: DictConfig) -> None:
     # Calculate lambda values based on STRING v9.1 to v11.0 comparison
     # Load lambda values dynamically based on STRING database comparisons
     log.info("Calculating lambda values from STRING v9.1 to v11.0 comparison...")
-    lambda_values = calculate_lambda_values()
-    
+    lambda_values = determine_lambda_values(verbose=False)
+
     # Log the lambda values being used
     log.info("Using lambda values:")
     for edge_type, lambda_val in lambda_values.items():
         log.info(f"  {edge_type}: {lambda_val}")
-            
+
     # Create DangoLoss with the model's edge types and lambda values
     loss_func = DangoLoss(
         edge_types=wandb.config.cell_dataset["graphs"],
         lambda_values=lambda_values,
         epochs_until_uniform=wandb.config.regression_task.get("epochs_until_uniform"),
-        reduction="mean"
+        reduction="mean",
     )
 
     print(f"Creating GeneInteractionTask ({timestamp()})")

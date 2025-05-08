@@ -16,30 +16,15 @@ import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.transforms.regression_to_classification import (
-    LabelNormalizationTransform,
-    InverseCompose,
-)
 from torch_geometric.transforms import Compose
 from torchcell.data.graph_processor import Perturbation
-from torchcell.trainers.int_hetero_cell import RegressionTask
+from torchcell.trainers.int_dango import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 import wandb
 import socket
-from torchcell.datasets import (
-    CodonFrequencyDataset,
-    FungalUpDownTransformerDataset,
-    OneHotGeneDataset,
-    NucleotideTransformerDataset,
-    ProtT5Dataset,
-    Esm2Dataset,
-    CalmDataset,
-    GraphEmbeddingDataset,
-    RandomEmbeddingDataset,
-)
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
@@ -50,7 +35,7 @@ from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
-from torchcell.losses.logcosh import LogCoshLoss
+from torchcell.losses.dango import DangoLoss
 from torchcell.graph import build_gene_multigraph
 
 
@@ -195,41 +180,6 @@ def main(cfg: DictConfig) -> None:
         graph_processor=graph_processor,
     )
 
-    # TODO - Check norms work - Start
-    # After creating dataset and before creating data_module
-    # Configure label normalization
-    norm_configs = {
-        # "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
-        "gene_interaction": {"strategy": "standard"}  # z-score: (x - mean) / std
-    }
-
-    # Create the transform
-    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
-    inverse_normalize_transform = InverseCompose([normalize_transform])
-
-    # Apply transform to dataset
-    dataset.transform = normalize_transform
-
-    # Pass transforms to the RegressionTask
-    forward_transform = normalize_transform
-    inverse_transform = inverse_normalize_transform
-
-    # Print normalization parameters
-    for label, stats in normalize_transform.stats.items():
-        print(f"Normalization parameters for {label}:")
-        for key, value in stats.items():
-            if isinstance(value, (int, float)) and key != "strategy":
-                print(f"  {key}: {value:.6f}")
-            else:
-                print(f"  {key}: {value}")
-
-    # Log standardization parameters to wandb
-    for label, stats in normalize_transform.stats.items():
-        for key, value in stats.items():
-            if isinstance(value, (int, float)) and key != "strategy":
-                wandb.log({f"standardization/{label}/{key}": value})
-    # TODO - Check norms work - End
-
     seed = 42
     data_module = CellDataModule(
         dataset=dataset,
@@ -239,6 +189,7 @@ def main(cfg: DictConfig) -> None:
         random_seed=seed,
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
+        follow_batch=["perturbation_indices"],
     )
     data_module.setup()
     if wandb.config.data_module["is_perturbation_subset"]:
@@ -251,6 +202,7 @@ def main(cfg: DictConfig) -> None:
             pin_memory=wandb.config.data_module["pin_memory"],
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
+            follow_batch=["perturbation_indices"],
         )
         data_module.setup()
 
@@ -289,27 +241,21 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
-        phenotype_counts = {}
-        for phase in ["train", "val", "test"]:
-            phenotypes = getattr(data_module.index_details, phase).phenotype_label_index
-            temp_counts = {k: v.count for k, v in phenotypes.items()}
-            for k, v in temp_counts.items():
-                phenotype_counts[k] = phenotype_counts.get(k, 0) + v
-        weights = torch.tensor(
-            [1 - v / sum(phenotype_counts.values()) for v in phenotype_counts.values()]
-        ).to(device)
-    else:
-        weights = torch.ones(2).to(device)
-
-    if wandb.config.regression_task["loss"] == "icloss":
-        loss_func = ICLoss(
-            lambda_dist=wandb.config.regression_task["lambda_dist"],
-            lambda_supcr=wandb.config.regression_task["lambda_supcr"],
-            weights=weights,
-        )
-    elif wandb.config.regression_task["loss"] == "logcosh":
-        loss_func = LogCoshLoss(reduction="mean")
+    # Create the DangoLoss with the model's edge types
+    lambda_values = {}
+    for edge_type in wandb.config.cell_dataset["graphs"]:
+        if edge_type in ["string9_1_coexpression"]:  # > 1% zeros decreased
+            lambda_values[edge_type] = 0.1
+        else:  # <= 1% zeros decreased
+            lambda_values[edge_type] = 1.0
+            
+    # Create DangoLoss with the model's edge types and lambda values
+    loss_func = DangoLoss(
+        edge_types=wandb.config.cell_dataset["graphs"],
+        lambda_values=lambda_values,
+        epochs_until_uniform=wandb.config.regression_task.get("epochs_until_uniform"),
+        reduction="mean"
+    )
 
     print(f"Creating GeneInteractionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
@@ -330,8 +276,8 @@ def main(cfg: DictConfig) -> None:
             clip_grad_norm_max_norm=wandb_cfg["regression_task"][
                 "clip_grad_norm_max_norm"
             ],
-            inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
+            inverse_transform=None,
+            forward_transform=None,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
             plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
             grad_accumulation_schedule=wandb.config["regression_task"][
@@ -357,8 +303,8 @@ def main(cfg: DictConfig) -> None:
                 "grad_accumulation_schedule"
             ],
             device=device,
-            inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
+            inverse_transform=None,
+            forward_transform=None,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
         )
 

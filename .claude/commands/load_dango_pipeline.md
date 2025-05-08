@@ -23,8 +23,8 @@ torchcell/trainers/int_dango.py
 
 ## Other Useful Files
 
-torchcell/trainers/fit_int_hetero_cell.py
 We want to use the plotting showing in
+torchcell/trainers/fit_int_hetero_cell.py
 
 torchcell/trainers/int_hetero_cell.py
 torchcell/trainers/fit_int_hetero_cell.py
@@ -43,3 +43,7 @@ The files we are working on are as follows:
 experiments/005-kuzmin2018-tmi/scripts/dango.py
 experiments/005-kuzmin2018-tmi/conf/dango_kuzmin2018_tmi.yaml
 torchcell/trainers/int_dango.py
+
+***
+
+Wait for my command

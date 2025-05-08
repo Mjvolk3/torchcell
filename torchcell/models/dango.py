@@ -158,67 +158,6 @@ class DangoPreTrain(nn.Module):
             "initial_embeddings": x_init,
         }
 
-    def compute_weighted_mse_loss(
-        self, predictions: torch.Tensor, targets: torch.Tensor, lambda_value: float
-    ) -> torch.Tensor:
-        """
-        Compute the weighted MSE loss as defined in the paper
-
-        Args:
-            predictions: Reconstructed adjacency matrix rows
-            targets: Ground truth adjacency matrix rows
-            lambda_value: Weight for zero entries
-
-        Returns:
-            Weighted MSE loss
-        """
-        # Create masks for zero and non-zero entries
-        non_zero_mask = (targets != 0).float()
-        zero_mask = (targets == 0).float()
-
-        # Calculate squared differences
-        squared_diff = (predictions - targets) ** 2
-
-        # Apply weighted MSE formula
-        non_zero_loss = (squared_diff * non_zero_mask).sum()
-        zero_loss = lambda_value * (squared_diff * zero_mask).sum()
-
-        # Total number of entries
-        N = targets.numel()
-
-        # Final loss
-        loss = (non_zero_loss + zero_loss) / N
-
-        return loss
-
-    def compute_total_loss(
-        self,
-        reconstructions: Dict[str, torch.Tensor],
-        adjacency_matrices: Dict[str, torch.Tensor],
-    ) -> torch.Tensor:
-        """
-        Compute the total loss across all networks
-
-        Args:
-            reconstructions: Dictionary of reconstructed adjacency matrix rows for each edge type
-            adjacency_matrices: Dictionary of ground truth adjacency matrices for each edge type
-
-        Returns:
-            Total loss
-        """
-        total_loss = 0.0
-
-        for edge_type in self.edge_types:
-            if edge_type in reconstructions and edge_type in adjacency_matrices:
-                lambda_value = self.lambda_values[edge_type]
-                loss = self.compute_weighted_mse_loss(
-                    reconstructions[edge_type],
-                    adjacency_matrices[edge_type],
-                    lambda_value,
-                )
-                total_loss += loss
-
-        return total_loss
 
 
 class MetaEmbedding(nn.Module):
@@ -571,20 +510,6 @@ class Dango(nn.Module):
         return counts
 
 
-def log_cosh_loss(predictions: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-    """
-    Compute the log-cosh loss as defined in the paper
-
-    Args:
-        predictions: Predicted trigenic interaction scores
-        targets: Ground truth trigenic interaction scores
-
-    Returns:
-        Log-cosh loss
-    """
-    return torch.mean(torch.log(torch.cosh(predictions - targets)))
-
-
 def main():
     """
     Main function to test the DANGO model with overfitting on a batch
@@ -595,6 +520,7 @@ def main():
     import torch.optim as optim
     import numpy as np
     from datetime import datetime
+    from torchcell.losses.dango import DangoLoss
 
     # Set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -617,7 +543,7 @@ def main():
     # Load sample data
     print("Loading sample data...")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=64,
+        batch_size=32,
         num_workers=4,
         metabolism_graph="metabolism_bipartite",
         is_dense=True,
@@ -641,6 +567,22 @@ def main():
     model = Dango(gene_num=max_num_nodes, hidden_channels=64).to(device)
     print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
     print(f"Num parameters:  {model.num_parameters}")
+    
+    # Create DangoLoss with the model's edge types and lambda values
+    lambda_values = {}
+    for edge_type in model.pretrain_model.edge_types:
+        if edge_type in ["string9_1_coexpression"]:
+            lambda_values[edge_type] = 0.1
+        else:
+            lambda_values[edge_type] = 1.0
+            
+    # Initialize the DangoLoss module with epochs_until_uniform=400 (half of total epochs)
+    loss_func = DangoLoss(
+        edge_types=model.pretrain_model.edge_types,
+        lambda_values=lambda_values,
+        epochs_until_uniform=400,  # Half of the total epochs
+        reduction="mean"
+    )
 
     # Create optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
@@ -651,7 +593,7 @@ def main():
     interaction_losses = []
 
     # Set up training parameters
-    epochs = 800
+    epochs = 200
     plot_interval = 20
 
     # Initialize validation metrics
@@ -664,7 +606,7 @@ def main():
         model.train()
         optimizer.zero_grad()
 
-        # Forward pass - now returns tuple of (interaction_scores, outputs)
+        # Forward pass - returns tuple of (interaction_scores, outputs)
         interaction_scores, outputs = model(cell_graph, batch)
 
         # Compute reconstruction loss for each edge type
@@ -679,28 +621,29 @@ def main():
                     torch.ones(cell_graph[edge_key].edge_index.shape[1], device=device),
                     (adj_size[0], adj_size[1]),
                 ).to_dense()
-
-        recon_loss = model.pretrain_model.compute_total_loss(
-            outputs["reconstructions"], adjacency_matrices
-        )
-
-        # Compute log-cosh loss for trigenic interactions
+        
+        # Use the DangoLoss to compute the combined loss
         if interaction_scores.numel() > 0:
-            interaction_loss = log_cosh_loss(
-                interaction_scores, batch["gene"].phenotype_values
+            total_loss, loss_dict = loss_func(
+                predictions=interaction_scores,
+                targets=batch["gene"].phenotype_values,
+                reconstructions=outputs["reconstructions"],
+                adjacency_matrices=adjacency_matrices,
+                current_epoch=epoch
             )
-
-            # Combine losses with dynamic weighting
-            if epoch < epochs // 2:
-                alpha = 0.9  # Weight for reconstruction loss
-            else:
-                alpha = max(0.1, 0.9 - 0.8 * (epoch - epochs // 2) / (epochs // 2))
-
-            total_loss = alpha * recon_loss + (1 - alpha) * interaction_loss
+            
+            # Extract individual losses from the loss dictionary
+            recon_loss = loss_dict["reconstruction_loss"]
+            interaction_loss = loss_dict["interaction_loss"]
+            alpha = loss_dict["alpha"]
         else:
             # If no interaction scores, just use reconstruction loss
+            recon_loss = loss_func.compute_reconstruction_loss(
+                outputs["reconstructions"], adjacency_matrices
+            )
             total_loss = recon_loss
             interaction_loss = torch.tensor(0.0, device=device)
+            alpha = torch.tensor(1.0, device=device)
 
         # Record losses
         all_losses.append(total_loss.item())

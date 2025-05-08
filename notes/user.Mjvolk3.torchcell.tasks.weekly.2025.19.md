@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746734212338
+updated: 1746738003388
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -28,7 +28,8 @@ created: 1746570667745
 
 ## 2025.05.08
 
-- [ ] Add `String11` to properly estimate `lambda`. Add script for lambda determination and put in config.
+- [x] Add `String11` to properly estimate `lambda`. Add script for lambda determination and put in config. → [[Dango_lambda_determination|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination]]
+- [ ]
 
 - [ ] Run benchmark training experiments.
 

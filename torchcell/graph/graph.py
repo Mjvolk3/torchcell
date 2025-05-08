@@ -336,6 +336,14 @@ class SCerevisiaeGraph:
     _G_string9_1_coexpression: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_experimental: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_database: GeneGraph = field(init=False, repr=False, default=None)
+    
+    # STRING v11.0 graph attributes
+    _G_string11_0_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string11_0_fusion: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string11_0_cooccurence: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string11_0_coexpression: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string11_0_experimental: GeneGraph = field(init=False, repr=False, default=None)
+    _G_string11_0_database: GeneGraph = field(init=False, repr=False, default=None)
 
     # STRING v12.0 graph attributes
     _G_string12_0_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
@@ -519,6 +527,43 @@ class SCerevisiaeGraph:
             self._initialize_string_graph("database", "9.1")
         return self._G_string9_1_database
 
+    # STRING v11.0 properties
+    @property
+    def G_string11_0_neighborhood(self) -> GeneGraph:
+        if self._G_string11_0_neighborhood is None:
+            self._initialize_string_graph("neighborhood", "11.0")
+        return self._G_string11_0_neighborhood
+
+    @property
+    def G_string11_0_fusion(self) -> GeneGraph:
+        if self._G_string11_0_fusion is None:
+            self._initialize_string_graph("fusion", "11.0")
+        return self._G_string11_0_fusion
+
+    @property
+    def G_string11_0_cooccurence(self) -> GeneGraph:
+        if self._G_string11_0_cooccurence is None:
+            self._initialize_string_graph("cooccurence", "11.0")
+        return self._G_string11_0_cooccurence
+
+    @property
+    def G_string11_0_coexpression(self) -> GeneGraph:
+        if self._G_string11_0_coexpression is None:
+            self._initialize_string_graph("coexpression", "11.0")
+        return self._G_string11_0_coexpression
+
+    @property
+    def G_string11_0_experimental(self) -> GeneGraph:
+        if self._G_string11_0_experimental is None:
+            self._initialize_string_graph("experimental", "11.0")
+        return self._G_string11_0_experimental
+
+    @property
+    def G_string11_0_database(self) -> GeneGraph:
+        if self._G_string11_0_database is None:
+            self._initialize_string_graph("database", "11.0")
+        return self._G_string11_0_database
+    
     # STRING v12.0 properties
     @property
     def G_string12_0_neighborhood(self) -> GeneGraph:
@@ -613,10 +658,12 @@ class SCerevisiaeGraph:
 
         Args:
             output_path: Path to save the downloaded file
-            version: STRING database version ("9.1" or "12.0")
+            version: STRING database version ("9.1", "11.0", or "12.0")
         """
         if version == "9.1":
             url = "http://string91.embl.de/newstring_download/protein.links.detailed.v9.1/4932.protein.links.detailed.v9.1.txt.gz"
+        elif version == "11.0":
+            url = "https://stringdb-static.org/download/protein.links.detailed.v11.0/4932.protein.links.detailed.v11.0.txt.gz"
         elif version == "12.0":
             url = "https://stringdb-downloads.org/download/protein.links.detailed.v12.0/4932.protein.links.detailed.v12.0.txt.gz"
         else:
@@ -1162,6 +1209,12 @@ SCEREVISIAE_GENE_GRAPH_MAP = {
     "string9_1_coexpression": lambda graph: graph.G_string9_1_coexpression,
     "string9_1_experimental": lambda graph: graph.G_string9_1_experimental,
     "string9_1_database": lambda graph: graph.G_string9_1_database,
+    "string11_0_neighborhood": lambda graph: graph.G_string11_0_neighborhood,
+    "string11_0_fusion": lambda graph: graph.G_string11_0_fusion,
+    "string11_0_cooccurence": lambda graph: graph.G_string11_0_cooccurence,
+    "string11_0_coexpression": lambda graph: graph.G_string11_0_coexpression,
+    "string11_0_experimental": lambda graph: graph.G_string11_0_experimental,
+    "string11_0_database": lambda graph: graph.G_string11_0_database,
     "string12_0_neighborhood": lambda graph: graph.G_string12_0_neighborhood,
     "string12_0_fusion": lambda graph: graph.G_string12_0_fusion,
     "string12_0_cooccurence": lambda graph: graph.G_string12_0_cooccurence,

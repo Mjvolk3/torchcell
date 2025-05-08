@@ -36,7 +36,7 @@ class DangoLoss(nn.Module):
             raise ValueError(f"Invalid reduction mode: {reduction}")
         
         self.edge_types = edge_types
-        self.lambda_values = lambda_valuesz
+        self.lambda_values = lambda_values
         self.epochs_until_uniform = epochs_until_uniform
         self.reduction = reduction
         

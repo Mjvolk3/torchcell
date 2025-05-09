@@ -26,7 +26,7 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 1000 # 20 # FLAG
+  max_epochs: 200 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu

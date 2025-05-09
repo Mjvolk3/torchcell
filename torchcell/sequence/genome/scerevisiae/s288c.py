@@ -22,7 +22,7 @@ from Bio.SeqRecord import SeqRecord
 from gffutils import FeatureDB
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
-from sortedcontainers import SortedDict, SortedSet
+from sortedcontainers import SortedDict, SortedSet, SortedDict
 from torch_geometric.data import download_url
 
 from torchcell.sequence import (
@@ -212,7 +212,20 @@ class SCerevisiaeGene(Gene):
         else:
             self.go = None
 
-    # use
+    @property
+    def alias_to_systematic(self) -> dict[str, str]:
+        alias_map = {}
+        for gene_id in self.gene_set:
+            gene = self[gene_id]
+            if gene and gene.alias:
+                for alias in gene.alias:
+                    if alias in alias_map:
+                        log.warning(
+                            f"Duplicate alias {alias} mapped to multiple genes."
+                        )
+                    alias_map[alias] = gene_id
+        return alias_map
+
     @property
     def codon_frequency(self) -> SortedDict[str, float]:
         codon_frequency = compute_codon_frequency(self.cds.seq)
@@ -397,6 +410,7 @@ class SCerevisiaeGenome(Genome):
     _go_genes: SortedDict[str, SortedSet[str]] = field(
         init=False, default=None, repr=False
     )
+    _alias_to_systematic: dict[str, str] = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
         reference_genome = "S288C_reference_genome"
@@ -551,6 +565,20 @@ class SCerevisiaeGenome(Genome):
 
         # Commit the changes to the database
         self.db.conn.commit()
+
+    @property
+    def alias_to_systematic(self) -> dict[str, list[str]]:
+        if self._alias_to_systematic is None:
+            alias_map: dict[str, list[str]] = {}
+            for gene_id in self.gene_set:
+                gene = self[gene_id]
+                if gene and gene.alias:
+                    for alias in gene.alias:
+                        if alias not in alias_map:
+                            alias_map[alias] = []
+                        alias_map[alias].append(gene_id)
+            self._alias_to_systematic = alias_map
+        return self._alias_to_systematic
 
     @property
     def go(self) -> SortedSet[str]:

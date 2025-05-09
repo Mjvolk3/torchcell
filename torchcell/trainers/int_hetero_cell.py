@@ -12,6 +12,7 @@ from torchcell.viz.visual_graph_degen import VisGraphDegen
 from torchcell.viz import genetic_interaction_score
 from torchcell.timestamp import timestamp
 from torch_geometric.data import HeteroData
+from torchcell.losses.logcosh import LogCoshLoss
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class RegressionTask(L.LightningModule):
         self.cell_graph = cell_graph
         self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
-        self.loss_func = loss_func if loss_func else nn.MSELoss()
+        self.loss_func = loss_func
 
         reg_metrics = MetricCollection(
             {
@@ -98,7 +99,7 @@ class RegressionTask(L.LightningModule):
 
         batch_size = predictions.size(0)
 
-        # Use transformed values for loss computation
+        # Get target values
         gene_interaction_vals = batch["gene"].gene_interaction
 
         # Handle tensor shape
@@ -123,14 +124,21 @@ class RegressionTask(L.LightningModule):
         # Get z_p from representations
         z_p = representations.get("z_p")
 
-        # Calculate loss
-        if self.loss_func is not None:
+        # Calculate loss based on loss function type
+        if self.loss_func is None:
+            raise ValueError("No loss function provided")
+
+        if isinstance(self.loss_func, LogCoshLoss):
+            # For LogCoshLoss, just pass predictions and targets
+            loss = self.loss_func(predictions, gene_interaction_vals)
+        else:
+            # For ICLoss or other custom losses that might use z_p
             if z_p is not None:
                 loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
             else:
                 loss_output = self.loss_func(predictions, gene_interaction_vals)
 
-            # Handle if loss_func returns a tuple
+            # Handle if loss_func returns a tuple (for ICLoss)
             if isinstance(loss_output, tuple):
                 loss = loss_output[0]  # First element is the loss
                 loss_dict = loss_output[1] if len(loss_output) > 1 else {}
@@ -147,9 +155,6 @@ class RegressionTask(L.LightningModule):
                             )
             else:
                 loss = loss_output
-        else:
-            # Default to MSE if no loss function is provided
-            loss = nn.MSELoss()(predictions, gene_interaction_vals)
 
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()
@@ -169,8 +174,6 @@ class RegressionTask(L.LightningModule):
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
             transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
-            # Ensure 1D vectors for metrics update - reshape using view(-1)
-            # This is crucial for preventing IndexError
             transformed_metrics.update(
                 predictions[mask].view(-1), gene_interaction_vals[mask].view(-1)
             )
@@ -201,7 +204,6 @@ class RegressionTask(L.LightningModule):
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
             metrics = getattr(self, f"{stage}_metrics")
-            # Ensure 1D vectors for metrics update - reshape using view(-1)
             metrics.update(
                 inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
             )
@@ -222,14 +224,18 @@ class RegressionTask(L.LightningModule):
                     self.train_samples["predictions"].append(
                         inv_predictions[idx].detach()
                     )
-                    if z_p is not None and "latents" in self.train_samples:
+                    if z_p is not None:
+                        if "latents" not in self.train_samples:
+                            self.train_samples["latents"] = {"z_p": []}
                         self.train_samples["latents"]["z_p"].append(z_p[idx].detach())
                 else:
                     self.train_samples["true_values"].append(
                         gene_interaction_orig.detach()
                     )
                     self.train_samples["predictions"].append(inv_predictions.detach())
-                    if z_p is not None and "latents" in self.train_samples:
+                    if z_p is not None:
+                        if "latents" not in self.train_samples:
+                            self.train_samples["latents"] = {"z_p": []}
                         self.train_samples["latents"]["z_p"].append(z_p.detach())
         elif (
             stage == "val"
@@ -238,7 +244,9 @@ class RegressionTask(L.LightningModule):
             # Only collect validation samples on epochs we'll plot
             self.val_samples["true_values"].append(gene_interaction_orig.detach())
             self.val_samples["predictions"].append(inv_predictions.detach())
-            if z_p is not None and "latents" in self.val_samples:
+            if z_p is not None:
+                if "latents" not in self.val_samples:
+                    self.val_samples["latents"] = {"z_p": []}
                 self.val_samples["latents"]["z_p"].append(z_p.detach())
 
         return loss, predictions, gene_interaction_orig
@@ -265,6 +273,7 @@ class RegressionTask(L.LightningModule):
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
+        # print(f"Loss: {loss}")
         return loss
 
     def validation_step(self, batch, batch_idx):

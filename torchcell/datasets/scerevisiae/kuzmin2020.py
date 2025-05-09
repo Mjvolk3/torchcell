@@ -1090,10 +1090,10 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
 def main():
     # Test the datasets
     datasets = [
-        SmfKuzmin2020Dataset(),
-        DmfKuzmin2020Dataset(),
-        TmfKuzmin2020Dataset(),
-        DmiKuzmin2020Dataset(),
+        # SmfKuzmin2020Dataset(),
+        # DmfKuzmin2020Dataset(),
+        # TmfKuzmin2020Dataset(),
+        # DmiKuzmin2020Dataset(),
         TmiKuzmin2020Dataset(),
     ]
 

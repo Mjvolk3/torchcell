@@ -5,6 +5,7 @@ defaults:
 wandb:
   # FLAG
   project: torchcell_004-dmi-tmi_hetero_cell_bipartite_dango_gi_1e5
+  project: torchcell_004-dmi-tmi_hetero_cell_bipartite_dango_gi_1e5
   tags: []
 
 cell_dataset:
@@ -22,6 +23,9 @@ data_module:
   perturbation_subset_size: 1e5 #2.5e4
   batch_size: 32 #32
   num_workers: 4
+  perturbation_subset_size: 1e5 #2.5e4
+  batch_size: 32 #32
+  num_workers: 4
   pin_memory: false
   prefetch: false
 
@@ -30,7 +34,7 @@ trainer:
   strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 4
+  devices: 2
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -76,13 +80,14 @@ model:
     head_norm: ${norms}
 
 regression_task:
+  loss: logcosh
   is_weighted_phenotype_loss: true
   lambda_dist: 0.1
   lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4
-    weight_decay: 1e-9
+    lr: 1e-5
+    weight_decay: 1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"

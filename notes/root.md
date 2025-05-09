@@ -24,6 +24,7 @@ $$
 $$
 
 where:
+
 - $\tilde{\mathbf{A}}_{ppi}, \tilde{\mathbf{A}}_{reg}$ are the normalized adjacency matrices
 - $\mathbf{W}_{ppi}^{(l)}, \mathbf{W}_{reg}^{(l)} \in \mathbb{R}^{D \times D}$ are learnable weight matrices
 - $\mathbf{b}^{(l)} \in \mathbb{R}^D$ is a learnable bias vector

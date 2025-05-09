@@ -55,6 +55,10 @@ docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_sc
 docker exec tc-neo4j python -m pip uninstall biocypher -y
 docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
 docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
+# Can move some to reqs.
+docker exec tc-neo4j python -m pip install --no-cache-dir hypernetx
+docker exec tc-neo4j python -m pip install --no-cache-dir fastjsonschema 
+
 
 echo "----------------NOW_BUILDING_GRAPHS---------------------"
 
@@ -65,7 +69,7 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 #Works
 #docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=gene_essentiality_sgd
 
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=scerevisiae_small_global_kg
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=smf_costanzo2016_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

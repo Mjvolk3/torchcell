@@ -1,4 +1,5 @@
 from math import log
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -66,6 +67,7 @@ import torch.nn.functional as F
 from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
 from torch_geometric.data import HeteroData, Batch
 from typing import Optional, Dict, Any, Tuple
+
 
 class AttentionalGraphAggregation(nn.Module):
     def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
@@ -216,7 +218,7 @@ class GeneInteractionPredictor(nn.Module):
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
     if norm == "layer":
-        return nn.LayerNorm(channels)
+        return nn.LayerNorm(channels, eps=1e-12)
     elif norm == "batch":
         return nn.BatchNorm1d(channels)
     else:
@@ -316,6 +318,9 @@ class GeneInteractionDango(nn.Module):
         # Learnable gene embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
 
+        # Initialize embedding with better bounds
+        nn.init.kaiming_uniform_(self.gene_embedding.weight, a=math.sqrt(5))
+
         # Preprocessor for input embeddings
         self.preprocessor = PreProcessor(
             in_channels=hidden_channels,
@@ -381,7 +386,7 @@ class GeneInteractionDango(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden_channels, 1),
         )
-        
+
         # MLP for gating weights
         self.gate_mlp = nn.Sequential(
             nn.Linear(2, hidden_channels),
@@ -389,6 +394,52 @@ class GeneInteractionDango(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(hidden_channels, 2),
         )
+
+        # Initialize all weights properly
+        self._init_weights()
+
+    def _init_weights(self):
+        """Initialize all weights in the model with appropriate initializations"""
+
+        def _init_module(module):
+            if isinstance(module, nn.Linear):
+                # Kaiming initialization for ReLU-based networks
+                nn.init.kaiming_normal_(
+                    module.weight, mode="fan_out", nonlinearity="relu"
+                )
+                if module.bias is not None:
+                    nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.LayerNorm):
+                nn.init.ones_(module.weight)
+                nn.init.zeros_(module.bias)
+            elif isinstance(module, nn.BatchNorm1d):
+                nn.init.ones_(module.weight)
+                nn.init.zeros_(module.bias)
+            elif isinstance(module, GATv2Conv):
+                if hasattr(module, "lin_src"):
+                    nn.init.kaiming_normal_(
+                        module.lin_src.weight, mode="fan_out", nonlinearity="relu"
+                    )
+                    if module.lin_src.bias is not None:
+                        nn.init.zeros_(module.lin_src.bias)
+                if hasattr(module, "lin_dst"):
+                    nn.init.kaiming_normal_(
+                        module.lin_dst.weight, mode="fan_out", nonlinearity="relu"
+                    )
+                    if module.lin_dst.bias is not None:
+                        nn.init.zeros_(module.lin_dst.bias)
+                if hasattr(module, "att_src"):
+                    nn.init.xavier_normal_(module.att_src)
+                if hasattr(module, "att_dst"):
+                    nn.init.xavier_normal_(module.att_dst)
+
+        # Apply to all modules
+        self.apply(_init_module)
+
+        # Specific initializations for key components
+        # Initialize ReZero parameter in attention module to a small value
+        if hasattr(self.gene_interaction_predictor.attention, "beta"):
+            nn.init.constant_(self.gene_interaction_predictor.attention.beta, 0.01)
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         device = self.gene_embedding.weight.device
@@ -450,6 +501,10 @@ class GeneInteractionDango(nn.Module):
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
 
+        # Check for NaNs after processing wildtype
+        if torch.isnan(z_w).any():
+            raise RuntimeError("NaN detected in wildtype embeddings (z_w)")
+
         # Proper global aggregation for wildtype
         z_w_global = self.global_aggregator(
             z_w,
@@ -457,20 +512,46 @@ class GeneInteractionDango(nn.Module):
             dim_size=1,
         )
 
+        # Check for NaNs in global wildtype embeddings
+        if torch.isnan(z_w_global).any():
+            raise RuntimeError(
+                "NaN detected in global wildtype embeddings (z_w_global)"
+            )
+
         # Process perturbed batch if needed
         z_i = self.forward_single(batch)
 
+        # Check for NaNs in perturbed embeddings
+        if torch.isnan(z_i).any():
+            raise RuntimeError("NaN detected in perturbed embeddings (z_i)")
+
         # Proper global aggregation for perturbed genes
         z_i_global = self.global_aggregator(z_i, index=batch["gene"].batch)
+
+        # Check for NaNs in global perturbed embeddings
+        if torch.isnan(z_i_global).any():
+            raise RuntimeError(
+                "NaN detected in global perturbed embeddings (z_i_global)"
+            )
 
         # Get embeddings of perturbed genes from wildtype
         pert_indices = batch["gene"].cell_graph_idx_pert
         pert_gene_embs = z_w[pert_indices]
 
+        # Check for NaNs in perturbed gene embeddings
+        if torch.isnan(pert_gene_embs).any():
+            raise RuntimeError(
+                "NaN detected in perturbed gene embeddings (pert_gene_embs)"
+            )
+
         # Calculate perturbation difference for z_p_global
         batch_size = z_i_global.size(0)
         z_w_exp = z_w_global.expand(batch_size, -1)
         z_p_global = z_w_exp - z_i_global
+
+        # Check for NaNs in perturbation difference
+        if torch.isnan(z_p_global).any():
+            raise RuntimeError("NaN detected in perturbation difference (z_p_global)")
 
         # Determine batch assignment for perturbed genes
         if hasattr(batch["gene"], "x_pert_ptr"):
@@ -494,8 +575,16 @@ class GeneInteractionDango(nn.Module):
             pert_gene_embs, batch_assign
         )
 
+        # Check for NaNs in local interaction predictions
+        if torch.isnan(local_interaction).any():
+            raise RuntimeError("NaN detected in local interaction predictions")
+
         # Get gene interaction predictions using the global predictor
         global_interaction = self.global_interaction_predictor(z_p_global)
+
+        # Check for NaNs in global interaction predictions
+        if torch.isnan(global_interaction).any():
+            raise RuntimeError("NaN detected in global interaction predictions")
 
         # Ensure dimensions match for gating
         if local_interaction.size(0) != batch_size:
@@ -506,16 +595,44 @@ class GeneInteractionDango(nn.Module):
                     local_interaction_expanded[batch_idx] = local_interaction[i]
             local_interaction = local_interaction_expanded
 
+            # Check for NaNs after dimension adjustment
+            if torch.isnan(local_interaction).any():
+                raise RuntimeError(
+                    "NaN detected after dimension adjustment of local interaction"
+                )
+
         # Stack the predictions
         pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
-        
+
+        # Check for NaNs in prediction stack
+        if torch.isnan(pred_stack).any():
+            raise RuntimeError("NaN detected in prediction stack")
+
         # Use MLP to get logits for gating, then apply softmax
         gate_logits = self.gate_mlp(pred_stack)
+
+        # Check for NaNs in gate logits
+        if torch.isnan(gate_logits).any():
+            raise RuntimeError("NaN detected in gate logits")
+
         gate_weights = F.softmax(gate_logits, dim=1)
-        
+
+        # Check for NaNs in gate weights
+        if torch.isnan(gate_weights).any():
+            raise RuntimeError("NaN detected in gate weights after softmax")
+
         # Element-wise product of predictions and weights, then sum
         weighted_preds = pred_stack * gate_weights
+
+        # Check for NaNs in weighted predictions
+        if torch.isnan(weighted_preds).any():
+            raise RuntimeError("NaN detected in weighted predictions")
+
         gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
+
+        # Final check for NaNs in gene interaction output
+        if torch.isnan(gene_interaction).any():
+            raise RuntimeError("NaN detected in final gene interaction output")
 
         # Return both predictions and representations dictionary
         return gene_interaction, {

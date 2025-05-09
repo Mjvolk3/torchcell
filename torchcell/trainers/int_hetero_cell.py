@@ -273,7 +273,7 @@ class RegressionTask(L.LightningModule):
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
-        print(f"Loss: {loss}")
+        # print(f"Loss: {loss}")
         return loss
 
     def validation_step(self, batch, batch_idx):

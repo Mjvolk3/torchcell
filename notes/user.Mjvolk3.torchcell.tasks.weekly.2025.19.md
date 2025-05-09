@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746739665294
+updated: 1746756336361
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -30,6 +30,9 @@ created: 1746570667745
 
 - [x] Add `String11` to properly estimate `lambda`. Add script for lambda determination and put in config. → [[Dango_lambda_determination|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination]]
 - [x] Dango with lambda computation.
+- [x] Pass `num_heads` into [[Dango|dendron://torchcell/torchcell.models.dango]]
+- [x] Check differences in overfitting for different loss variants. [[2025.05.08 - OverFitting With Different Losses|dendron://torchcell/torchcell.models.dango#20250508---overfitting-with-different-losses]]
+- [ ] Verify whole script works then write the sbatch.
 
 - [ ] Run benchmark training experiments.
 
@@ -39,8 +42,6 @@ created: 1746570667745
 - [ ] HeteroCell?
 
 - [ ] Contrastive DCell head on HeteroCell.
-
-
 
 ***
 

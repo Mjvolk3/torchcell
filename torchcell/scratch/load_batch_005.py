@@ -156,6 +156,7 @@ def load_sample_data_batch(
         random_seed=42,
         num_workers=4,
         pin_memory=False,
+        train_shuffle=False,  # Don't shuffle the training data
     )
 
     cell_data_module.setup()
@@ -171,6 +172,7 @@ def load_sample_data_batch(
         prefetch=False,
         seed=seed,
         follow_batch=["perturbation_indices"],
+        train_shuffle=False,  # Don't shuffle the training data
     )
     perturbation_subset_data_module.setup()
     max_num_nodes = len(dataset.gene_set)

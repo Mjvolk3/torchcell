@@ -35,7 +35,7 @@ from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
-from torchcell.losses.dango import DangoLoss
+from torchcell.losses.dango import DangoLoss, PreThenPost, LinearUntilUniform
 from torchcell.graph import build_gene_multigraph
 
 # Import lambda calculation function directly from sibling module
@@ -232,9 +232,11 @@ def main(cfg: DictConfig) -> None:
     print(f"Instantiating model ({timestamp()})")
 
     max_num_nodes = dataset.cell_graph["gene"].num_nodes
-    # Instantiate new HeteroCellBipartite model using wandb configuration.
+    # Instantiate new Dango model using wandb configuration.
     model = Dango(
-        gene_num=max_num_nodes, hidden_channels=wandb.config.model["hidden_channels"]
+        gene_num=max_num_nodes, 
+        hidden_channels=wandb.config.model["hidden_channels"],
+        num_heads=wandb.config.model["num_heads"]
     ).to(device)
 
     # Log parameter counts using the num_parameters property.
@@ -259,11 +261,29 @@ def main(cfg: DictConfig) -> None:
     for edge_type, lambda_val in lambda_values.items():
         log.info(f"  {edge_type}: {lambda_val}")
 
+    # Use schedulers map from the loss module
+    from torchcell.losses.dango import SCHEDULER_MAP
+    
+    # Get scheduler configuration using dictionary access
+    scheduler_config = wandb.config["regression_task"]["loss_scheduler"]
+    scheduler_type = scheduler_config["type"]
+    
+    if scheduler_type not in SCHEDULER_MAP:
+        raise ValueError(f"Unknown scheduler type: {scheduler_type}")
+    
+    # Get scheduler class from map
+    scheduler_class = SCHEDULER_MAP[scheduler_type]
+    
+    # Get scheduler instance using parameters directly from config
+    transition_epoch = scheduler_config["transition_epoch"]
+    scheduler = scheduler_class(transition_epoch=transition_epoch)
+    log.info(f"Using {scheduler_type} scheduler with transition_epoch={transition_epoch}")
+    
     # Create DangoLoss with the model's edge types and lambda values
     loss_func = DangoLoss(
-        edge_types=wandb.config.cell_dataset["graphs"],
+        edge_types=wandb.config["cell_dataset"]["graphs"],
         lambda_values=lambda_values,
-        epochs_until_uniform=wandb.config.regression_task.get("epochs_until_uniform"),
+        scheduler=scheduler,
         reduction="mean",
     )
 

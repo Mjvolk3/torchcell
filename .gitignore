@@ -45,6 +45,7 @@ slurm/error
 experiments/smf-dmf-tmf-001/slurm/*
 experiments/002-dmi-tmi/slurm/*
 experiments/003-fit-int/slurm/*
+experiments/004-dmi-tmi/slurm/*
 
 # docx
 CHBE-symposium.docx
@@ -118,3 +119,4 @@ tests/slurm/output/*
 # apptainer/singularity
 rockylinux_9.sif
 /.luarc.json
+

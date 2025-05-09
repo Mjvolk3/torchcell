@@ -199,6 +199,7 @@ class CellDataModule(L.LightningDataModule):
         prefetch: bool = False,
         split_indices: Union[str, List[str], None] = None,
         follow_batch: Optional[list] = None,
+        train_shuffle: bool = True,
     ):
         super().__init__()
         self.dataset = dataset
@@ -208,6 +209,7 @@ class CellDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
+        self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
         self.split_indices = (
@@ -405,7 +407,7 @@ class CellDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
-        return self._get_dataloader(self.train_dataset, shuffle=True)
+        return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
         return self._get_dataloader(self.val_dataset)

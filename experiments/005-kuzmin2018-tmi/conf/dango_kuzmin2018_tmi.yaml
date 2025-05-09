@@ -32,7 +32,7 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 2 #1000 # 20 # FLAG
+  max_epochs: 10 #1000 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: cpu
@@ -40,15 +40,18 @@ trainer:
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 1 # Not used...
 # ------
 model:
   checkpoint_path: null #*.ckpt
   hidden_channels: 64
+  num_heads: 4  # Number of attention heads in HyperSAGNN
 
 regression_task:
   loss: "dango" # Options: dango
-  epochs_until_uniform: 5
+  # Loss scheduler configuration
+  loss_scheduler:
+    type: "PreThenPost"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
+    transition_epoch: 5  # Common parameter for all schedulers: epoch at which transition completes
   is_weighted_phenotype_loss: false
 
   optimizer:
@@ -69,4 +72,4 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
   plot_sample_ceiling: 10000
-  plot_every_n_epochs: 1
+  plot_every_n_epochs: 20

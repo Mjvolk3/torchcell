@@ -198,6 +198,8 @@ class CellDataModule(L.LightningDataModule):
         pin_memory: bool = False,
         prefetch: bool = False,
         split_indices: Union[str, List[str], None] = None,
+        follow_batch: Optional[list] = None,
+        train_shuffle: bool = True,
     ):
         super().__init__()
         self.dataset = dataset
@@ -207,6 +209,7 @@ class CellDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
+        self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
         self.split_indices = (
@@ -216,6 +219,10 @@ class CellDataModule(L.LightningDataModule):
         )
         self._index = None
         self._index_details = None
+        if follow_batch is None:
+            self.follow_batch = ["x", "x_pert"]
+        else:
+            self.follow_batch = follow_batch
 
         # Compute index during initialization
         self.index
@@ -388,9 +395,11 @@ class CellDataModule(L.LightningDataModule):
             num_workers=self.num_workers,
             persistent_workers=True if self.num_workers > 0 else False,
             pin_memory=self.pin_memory,
-            follow_batch=["x", "x_pert"],
+            follow_batch=self.follow_batch,
             timeout=180,
-            multiprocessing_context="spawn" if self.num_workers > 0 else None  # Add this
+            multiprocessing_context=(
+                "spawn" if self.num_workers > 0 else None
+            ),  # Add this
         )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -398,7 +407,7 @@ class CellDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
-        return self._get_dataloader(self.train_dataset, shuffle=True)
+        return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
         return self._get_dataloader(self.val_dataset)

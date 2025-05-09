@@ -10,7 +10,7 @@ from itertools import product
 
 import pandas as pd
 from gffutils import FeatureDB
-from pydantic import field_validator, root_validator
+from pydantic import field_validator, model_validator
 from sortedcontainers import SortedDict, SortedSet
 
 from torchcell.datamodels import ModelStrict, ModelStrictArbitrary
@@ -40,7 +40,8 @@ class DnaSelectionResult(ModelStrict):
             return len(self.seq) <= len(other.seq)
         return NotImplemented
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def end_leq_start(cls, values):
         start, end = values.get("start"), values.get("end")
         if start > end:
@@ -307,7 +308,7 @@ def roman_to_int(s: str) -> int:
         "D": 500,
         "M": 1000,
     }
-    result = 0  
+    result = 0
     for i in range(len(s)):
         if i > 0 and roman_to_int_mapping[s[i]] > roman_to_int_mapping[s[i - 1]]:
             result += roman_to_int_mapping[s[i]] - 2 * roman_to_int_mapping[s[i - 1]]

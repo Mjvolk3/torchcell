@@ -284,8 +284,23 @@ class Visualization:
         timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
-        # Plot correlations and distributions for each target dimension.
-        for dim in [0, 1]:
+        # Determine target dimensions to plot
+        # For gene interactions model with one target, only use dim 0
+        if true_values.shape[1] == 1:
+            target_dims = [0]
+        else:
+            # Find non-zero dimensions (skip padding zeros)
+            non_zero_dims = []
+            for dim in range(true_values.shape[1]):
+                # Check if this dimension has any non-zero and non-nan values
+                if torch.any(~torch.isnan(true_values[:, dim]) & (true_values[:, dim] != 0)):
+                    non_zero_dims.append(dim)
+            
+            # If no non-zero dimensions found, just use the first one
+            target_dims = non_zero_dims if non_zero_dims else [0]
+        
+        # Plot correlations and distributions for each actual target dimension
+        for dim in target_dims:
             self.plot_correlations(
                 predictions,
                 true_values,
@@ -304,9 +319,10 @@ class Visualization:
                 timestamp_str,
                 stage=stage,
             )
-        # Plot UMAP for each latent representation without appending loss info.
+            
+        # Plot UMAP for each latent representation without appending loss info (if latents provided)
         for latent_key, latent in latents.items():
-            for dim in [0, 1]:
+            for dim in target_dims:
                 self.plot_umap(
                     latent,
                     true_values[:, dim],
@@ -317,5 +333,6 @@ class Visualization:
                     stage=stage,
                     title_type="latent",
                 )
-        # Log additional sample metrics.
+                
+        # Log additional sample metrics
         self.log_sample_metrics(predictions, true_values, stage=stage)

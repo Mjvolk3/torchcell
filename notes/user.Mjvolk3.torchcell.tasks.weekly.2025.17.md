@@ -2,7 +2,7 @@
 id: 1n3kxwub86pbf5c2x5psl0k
 title: '17'
 desc: ''
-updated: 1745804128043
+updated: 1745956934456
 created: 1745258792127
 ---
 ## 2025.04.21
@@ -27,23 +27,5 @@ created: 1745258792127
 
 ## 2025.04.27
 
+- [x] Query `005-kuzmin2018-tmi` - This dataset will allow full reproduction of Dango. → query issue resolved with more flexible query. [[Issue|dendron://torchcell/experiments.005-kuzmin2018-tmi.query.issue]] → It would be interesting to look to see if predictions differ on perturbations that are `deletion` vs `allele`.
 
-- [ ] Implement Dango model
-
-
-
-- [ ] Sync data on igb
-- [ ] Sync data on delta - make scripts so it is clear was last sync.
-
-***
-
-- [ ] Add Morphology Datasets
-- [ ] Add Gene Expression datasets
-
-- [ ] Morphology Random Forest Baseline
-- [ ] Morphology animation ?
-
-- [ ] Add concern about graph connectivity to [[Report 003-fit-int.2025.03.03|dendron://torchcell/experiments.003-fit-int.2025.03.03]]
-- [ ] Export and `rsync` this to linked delta drive
-- [ ] Mount drive and spin up database. Check if database is available on ports and over http.
-- [ ] Inquiry about web address for database.

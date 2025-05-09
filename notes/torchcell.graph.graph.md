@@ -2,7 +2,7 @@
 id: jejpj6sz9tibe9rmcrsw7z2
 title: Graph
 desc: ''
-updated: 1698969572871
+updated: 1745968856680
 created: 1697604307905
 ---
 ## Not using MultiDiGraph
@@ -44,3 +44,7 @@ A total of 306 new GO terms would be added to G_raw from G.
 ```
 
 306 accounts for 0.16% of 197,396 and it takes a bit of care to combine these two different annotations since their fields are slightly different and/or have different formats. I will leave this task for a future date.
+
+## 2025.04.29
+
+The reason for `GeneMultiGraph` is that `pyg` `from_networkx` only takes type `nx.Graph` and `nx.Digraph`, if we make multigraph just a list of these objects then we just loop over them and use function to get multigraph object.

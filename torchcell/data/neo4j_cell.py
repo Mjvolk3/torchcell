@@ -34,6 +34,8 @@ from torchcell.datamodels import (
 )
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.graph import GeneGraph, GeneMultiGraph
+from sortedcontainers import SortedDict
 
 log = logging.getLogger(__name__)
 
@@ -99,8 +101,8 @@ def min_max_normalize_dataset(dataset: BaseEmbeddingDataset) -> None:
 
 def create_embedding_graph(
     gene_set: GeneSet, embeddings: BaseEmbeddingDataset
-) -> nx.Graph:
-    """Create a NetworkX graph from embeddings."""
+) -> GeneGraph:
+    """Create a GeneGraph from embeddings."""
     # Normalize dataset first
     min_max_normalize_dataset(embeddings)
 
@@ -112,18 +114,19 @@ def create_embedding_graph(
             concatenated_embedding = torch.cat(item_embeddings)
             G.add_node(item.id, embedding=concatenated_embedding)
 
-    return G
+    # Create and return a GeneGraph
+    return GeneGraph(name=embeddings.__class__.__name__, graph=G, max_gene_set=gene_set)
 
 
-def create_graph_from_gene_set(gene_set: GeneSet) -> nx.Graph:
+def create_graph_from_gene_set(gene_set: GeneSet) -> GeneGraph:
     """
-    Create a graph where nodes are gene names from the GeneSet.
-    Initially, this graph will ha   ve no edges.
+    Create a GeneGraph where nodes are gene names from the GeneSet.
+    Initially, this graph will have no edges.
     """
     G = nx.Graph()
     for gene_name in gene_set:
         G.add_node(gene_name)  # Nodes are gene names
-    return G
+    return GeneGraph(name="base", graph=G, max_gene_set=gene_set)
 
 
 def parse_genome(genome) -> ParsedGenome:
@@ -155,9 +158,9 @@ class Neo4jCellDataset(Dataset):
         root: str,
         query: str = None,
         gene_set: GeneSet = None,
-        graphs: dict[str, nx.Graph] = None,
+        graphs: GeneMultiGraph = None,
         incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
-        node_embeddings: list[BaseEmbeddingDataset] = None,
+        node_embeddings: dict[str, BaseEmbeddingDataset] = None,
         graph_processor: GraphProcessor = None,
         add_remaining_gene_self_loops: bool = True,
         converter: Optional[Type[Converter]] = None,
@@ -207,30 +210,29 @@ class Neo4jCellDataset(Dataset):
 
         super().__init__(root, transform, pre_transform, pre_filter)
 
-        # init graph for building cell graph
-        base_graph = self.get_init_graphs(self.gene_set)
+        # Initialize a GeneMultiGraph with a base graph
+        base_graph = create_graph_from_gene_set(self.gene_set)
 
-        # graphs
-        if graphs is not None:
-            # remove edge data from graphs
-            for graph in graphs.values():
-                [graph.edges[edge].clear() for edge in graph.edges()]
-            # remove node data from graphs
-            for graph in graphs.values():
-                [graph.nodes[node].clear() for node in graph.nodes()]
-            graphs["base"] = base_graph
+        # Set up the GeneMultiGraph
+        if graphs is None:
+            # Create a new GeneMultiGraph with just the base graph
+            graphs_dict = SortedDict({"base": base_graph})
+            multigraph = GeneMultiGraph(graphs=graphs_dict)
         else:
-            graphs = {"base": base_graph}
+            # Ensure the provided GeneMultiGraph has a base graph
+            if "base" not in graphs.graphs:
+                graphs.graphs["base"] = base_graph
+            multigraph = graphs
 
-        # embeddings
+        # Add embeddings as GeneGraphs to the GeneMultiGraph
         if node_embeddings is not None:
             for name, embedding in node_embeddings.items():
-                graphs[name] = create_embedding_graph(self.gene_set, embedding)
-                # Integrate node embeddings into graphs
+                embedding_graph = create_embedding_graph(self.gene_set, embedding)
+                multigraph.graphs[name] = embedding_graph
 
         # cell graph used in get item
         self.cell_graph = to_cell_data(
-            graphs,
+            multigraph,
             incidence_graphs,
             add_remaining_gene_self_loops=self.add_remaining_gene_self_loops,
         )

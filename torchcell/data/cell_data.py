@@ -9,18 +9,26 @@ import networkx as nx
 import hypernetx as hnx
 from torchcell.data.hetero_data import HeteroData
 from torch_geometric.utils import add_remaining_self_loops
+from torchcell.graph import GeneMultiGraph
 
 
 def to_cell_data(
-    graphs: dict[str, nx.Graph],
+    multigraph: GeneMultiGraph,
     incidence_graphs: dict[str, nx.Graph | hnx.Hypergraph] = None,
     add_remaining_gene_self_loops: bool = True,
 ) -> HeteroData:
-    """Convert networkx graphs and incidence graphs to HeteroData format."""
+    """Convert GeneMultiGraph and incidence graphs to HeteroData format."""
     hetero_data = HeteroData()
 
+    # Extract NetworkX graphs from GeneMultiGraph
+    graph_dict = {name: gene_graph.graph for name, gene_graph in multigraph.items()}
+
+    # Ensure there's a "base" graph with all nodes
+    if "base" not in graph_dict:
+        raise ValueError("GeneMultiGraph must contain a 'base' graph")
+
     # Base nodes setup
-    base_nodes_list = sorted(list(graphs["base"].nodes()))
+    base_nodes_list = sorted(list(graph_dict["base"].nodes()))
     node_idx_mapping = {node: idx for idx, node in enumerate(base_nodes_list)}
     num_nodes = len(base_nodes_list)
 
@@ -30,7 +38,7 @@ def to_cell_data(
     hetero_data["gene"].x = torch.zeros((num_nodes, 0), dtype=torch.float)
 
     # Process each graph for edges and embeddings
-    for graph_type, graph in graphs.items():
+    for graph_type, graph in graph_dict.items():
         if graph.number_of_edges() > 0:
             # Convert edges to tensor
             edge_index = torch.tensor(
@@ -42,9 +50,9 @@ def to_cell_data(
                 dtype=torch.long,
             ).t()
 
-            # Add interaction edges
+            # Add edges with simplified type names (without "_interaction" suffix)
             if graph_type != "base":
-                edge_type = ("gene", f"{graph_type}_interaction", "gene")
+                edge_type = ("gene", f"{graph_type}", "gene")
                 if add_remaining_gene_self_loops:
                     edge_index, _ = add_remaining_self_loops(
                         edge_index, num_nodes=num_nodes
@@ -68,12 +76,7 @@ def to_cell_data(
 
     # Process metabolism graphs if provided
     if incidence_graphs is not None:
-        # Process hypergraph representation
-        if "metabolism_hypergraph" in incidence_graphs:
-            hypergraph = incidence_graphs["metabolism_hypergraph"]
-            _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping)
-
-        # Process bipartite representation
+        # Process bipartite representation only
         if "metabolism_bipartite" in incidence_graphs:
             bipartite = incidence_graphs["metabolism_bipartite"]
             _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping)

@@ -29,6 +29,7 @@ data/string9.1
 data/string12.0
 data/string
 data/tflink
+data/safe_keeping
 
 # Dendron
 .dendron.port
@@ -124,3 +125,7 @@ tests/slurm/output/*
 rockylinux_9.sif
 /.luarc.json
 
+
+
+# Other Users
+notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05.pdf

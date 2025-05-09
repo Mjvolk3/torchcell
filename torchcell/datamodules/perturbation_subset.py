@@ -38,10 +38,13 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         seed: int = 42,
         dense: bool = False,
         gene_subsets: Optional[dict[str, GeneSet]] = None,
+        follow_batch: Optional[list] = None,
+        train_shuffle: bool = True
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
         self.dataset = cell_data_module.dataset
+        self.train_shuffle = train_shuffle
 
         # Use the first key–value pair from the gene_subsets dict (if provided)
         if gene_subsets is not None and len(gene_subsets) > 0:
@@ -57,7 +60,10 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.prefetch = prefetch
         self.seed = seed
         self.dense = dense
-
+        if follow_batch is None:
+            self.follow_batch = ["x", "x_pert"]
+        else: 
+            self.follow_batch = follow_batch
         self.cache_dir = self.cell_data_module.cache_dir
         if self.subset_tag:
             self.subset_dir = osp.join(
@@ -360,7 +366,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 shuffle=shuffle,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                follow_batch=["x", "x_pert"],
+                follow_batch=self.follow_batch,
                 multiprocessing_context=(
                     "spawn" if self.num_workers > 0 else None
                 ),  # Add this
@@ -372,7 +378,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 shuffle=shuffle,
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
-                follow_batch=["x", "x_pert"],
+                follow_batch=self.follow_batch,
                 multiprocessing_context=(
                     "spawn" if self.num_workers > 0 else None
                 ),  # Add this
@@ -383,7 +389,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
-        return self._get_dataloader(self.train_dataset, shuffle=True)
+        return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
         return self._get_dataloader(self.val_dataset)

@@ -10,6 +10,10 @@ from typing import Dict, List, Tuple, Union
 from torch_geometric.nn import SAGEConv
 from torch_geometric.data import HeteroData
 from torch_scatter import scatter_mean
+import hydra
+import os
+import os.path as osp
+from omegaconf import DictConfig, OmegaConf
 
 
 class DangoPreTrain(nn.Module):
@@ -157,7 +161,6 @@ class DangoPreTrain(nn.Module):
             "reconstructions": reconstructions,
             "initial_embeddings": x_init,
         }
-
 
 
 class MetaEmbedding(nn.Module):
@@ -510,7 +513,12 @@ class Dango(nn.Module):
         return counts
 
 
-def main():
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
+    config_name="dango_kuzmin2018_tmi",
+)
+def main(cfg: DictConfig):
     """
     Main function to test the DANGO model with overfitting on a batch
     """
@@ -520,10 +528,23 @@ def main():
     import torch.optim as optim
     import numpy as np
     from datetime import datetime
-    from torchcell.losses.dango import DangoLoss
-
-    # Set device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    from dotenv import load_dotenv
+    # Import all scheduler types for easy toggling
+    from torchcell.losses.dango import (
+        DangoLoss, 
+        PreThenPost, 
+        LinearUntilUniform, 
+        LinearUntilFlipped
+    )
+    
+    load_dotenv()
+    
+    # Set device based on config
+    device = torch.device(
+        "cuda" 
+        if torch.cuda.is_available() and cfg.trainer.accelerator.lower() != "cpu" 
+        else "cpu"
+    )
     print(f"Using device: {device}")
 
     # Setup directories for plots
@@ -534,11 +555,9 @@ def main():
     # Create subdirectories for different plot types
     loss_dir = os.path.join(plot_dir, "loss_plots")
     correlation_dir = os.path.join(plot_dir, "correlation_plots")
-    embedding_dir = os.path.join(plot_dir, "embedding_plots")
 
     os.makedirs(loss_dir, exist_ok=True)
     os.makedirs(correlation_dir, exist_ok=True)
-    os.makedirs(embedding_dir, exist_ok=True)
 
     # Load sample data
     print("Loading sample data...")
@@ -564,10 +583,15 @@ def main():
 
     # Initialize model
     print("Initializing DANGO model...")
-    model = Dango(gene_num=max_num_nodes, hidden_channels=64).to(device)
+    model = Dango(
+        gene_num=max_num_nodes, 
+        hidden_channels=cfg.model.hidden_channels, 
+        num_heads=cfg.model.num_heads
+    ).to(device)
     print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
-    print(f"Num parameters:  {model.num_parameters}")
-    
+    print(f"Num parameters: {model.num_parameters}")
+    print(f"Using {model.hyper_sagnn.num_heads} attention heads in HyperSAGNN")
+
     # Create DangoLoss with the model's edge types and lambda values
     lambda_values = {}
     for edge_type in model.pretrain_model.edge_types:
@@ -575,13 +599,34 @@ def main():
             lambda_values[edge_type] = 0.1
         else:
             lambda_values[edge_type] = 1.0
-            
-    # Initialize the DangoLoss module with epochs_until_uniform=400 (half of total epochs)
+
+    # Set up training parameters from config
+    epochs = cfg.trainer.max_epochs
+    plot_interval = cfg.regression_task.plot_every_n_epochs
+    transition_epoch = cfg.regression_task.loss_scheduler.transition_epoch
+
+    # Get scheduler class from scheduler map
+    scheduler_type = cfg.regression_task.loss_scheduler.type
+    from torchcell.losses.dango import SCHEDULER_MAP
+    
+    if scheduler_type not in SCHEDULER_MAP:
+        raise ValueError(f"Unknown scheduler type: {scheduler_type}")
+    
+    # Create the scheduler instance with transition_epoch
+    scheduler_class = SCHEDULER_MAP[scheduler_type]
+    scheduler_kwargs = {"transition_epoch": transition_epoch}
+    
+    # No additional parameters needed for LinearUntilFlipped
+    
+    scheduler = scheduler_class(**scheduler_kwargs)
+    print(f"Using {scheduler_type} scheduler with transition_epoch={transition_epoch}")
+    
+    # Initialize the DangoLoss module with the selected scheduler
     loss_func = DangoLoss(
         edge_types=model.pretrain_model.edge_types,
         lambda_values=lambda_values,
-        epochs_until_uniform=400,  # Half of the total epochs
-        reduction="mean"
+        scheduler=scheduler,
+        reduction="mean",
     )
 
     # Create optimizer
@@ -591,10 +636,8 @@ def main():
     all_losses = []
     recon_losses = []
     interaction_losses = []
-
-    # Set up training parameters
-    epochs = 200
-    plot_interval = 20
+    weighted_recon_losses = []
+    weighted_interaction_losses = []
 
     # Initialize validation metrics
     best_mse = float("inf")
@@ -621,7 +664,7 @@ def main():
                     torch.ones(cell_graph[edge_key].edge_index.shape[1], device=device),
                     (adj_size[0], adj_size[1]),
                 ).to_dense()
-        
+
         # Use the DangoLoss to compute the combined loss
         if interaction_scores.numel() > 0:
             total_loss, loss_dict = loss_func(
@@ -629,12 +672,14 @@ def main():
                 targets=batch["gene"].phenotype_values,
                 reconstructions=outputs["reconstructions"],
                 adjacency_matrices=adjacency_matrices,
-                current_epoch=epoch
+                current_epoch=epoch,
             )
-            
+
             # Extract individual losses from the loss dictionary
             recon_loss = loss_dict["reconstruction_loss"]
             interaction_loss = loss_dict["interaction_loss"]
+            weighted_recon_loss = loss_dict["weighted_reconstruction_loss"]
+            weighted_interaction_loss = loss_dict["weighted_interaction_loss"]
             alpha = loss_dict["alpha"]
         else:
             # If no interaction scores, just use reconstruction loss
@@ -644,11 +689,17 @@ def main():
             total_loss = recon_loss
             interaction_loss = torch.tensor(0.0, device=device)
             alpha = torch.tensor(1.0, device=device)
+            weighted_recon_loss = recon_loss
+            weighted_interaction_loss = torch.tensor(0.0, device=device)
 
         # Record losses
         all_losses.append(total_loss.item())
         recon_losses.append(recon_loss.item())
         interaction_losses.append(interaction_loss.item())
+
+        # Record weighted losses
+        weighted_recon_losses.append(weighted_recon_loss.item())
+        weighted_interaction_losses.append(weighted_interaction_loss.item())
 
         # Backward pass and optimization
         total_loss.backward()
@@ -658,12 +709,14 @@ def main():
         if (epoch + 1) % plot_interval == 0 or epoch == epochs - 1:
             print(
                 f"Epoch {epoch+1}/{epochs}, Total Loss: {total_loss.item():.4f}, "
-                f"Recon Loss: {recon_loss.item():.4f}, Interaction Loss: {interaction_loss.item():.4f}"
+                f"Recon Loss: {recon_loss.item():.4f}, Interaction Loss: {interaction_loss.item():.4f}, "
+                f"Alpha: {alpha.item():.2f}, Weighted Recon: {weighted_recon_loss.item():.4f}, "
+                f"Weighted Interaction: {weighted_interaction_loss.item():.4f}"
             )
 
             # Plot loss curves
-            plt.figure(figsize=(12, 8))
-            plt.subplot(2, 1, 1)
+            plt.figure(figsize=(14, 12))  # Increase height slightly
+            plt.subplot(3, 2, 1)  # Change to 3x2 grid to match final plot
             plt.plot(range(1, epoch + 2), all_losses, "b-", label="Total Loss")
             plt.xlabel("Epoch")
             plt.ylabel("Loss Value")
@@ -671,7 +724,7 @@ def main():
             plt.grid(True)
             plt.legend()
 
-            plt.subplot(2, 1, 2)
+            plt.subplot(3, 2, 3)
             plt.plot(
                 range(1, epoch + 2), recon_losses, "r-", label="Reconstruction Loss"
             )
@@ -680,13 +733,30 @@ def main():
             )
             plt.xlabel("Epoch")
             plt.ylabel("Loss Value")
-            plt.title("Component Losses")
+            plt.title("Unweighted Component Losses")
             plt.grid(True)
             plt.legend()
 
-            plt.tight_layout()
-            plt.savefig(os.path.join(loss_dir, f"loss_epoch_{epoch+1}.png"))
-            plt.close()
+            plt.subplot(3, 2, 5)
+            plt.plot(
+                range(1, epoch + 2),
+                weighted_recon_losses,
+                "r-",
+                label="Weighted Reconstruction Loss",
+            )
+            plt.plot(
+                range(1, epoch + 2),
+                weighted_interaction_losses,
+                "g-",
+                label="Weighted Interaction Loss",
+            )
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Value")
+            plt.title("Weighted Component Losses (alpha={:.2f})".format(alpha.item()))
+            plt.grid(True)
+            plt.legend()
+
+            # The plot saving is now handled after adding the correlation plot
 
             # Evaluate on training data
             model.eval()
@@ -706,10 +776,12 @@ def main():
                         best_mse = mse
                         best_epoch = epoch + 1
 
-                    # Plot correlation
-                    plt.figure(figsize=(10, 8))
+                    # Add correlation plot to same figure in the right column
+                    plt.subplot(3, 2, 2)
                     plt.scatter(
-                        true_scores.cpu().numpy(), predicted_scores.cpu().numpy()
+                        true_scores.cpu().numpy(),
+                        predicted_scores.cpu().numpy(),
+                        alpha=0.7,
                     )
 
                     # Get min/max for plot limits
@@ -725,6 +797,33 @@ def main():
                     plt.ylabel("Predicted Interaction Scores")
                     plt.title(f"Epoch {epoch+1}: MSE={mse:.6f}, MAE={mae:.6f}")
                     plt.grid(True)
+
+                    # Add error distribution
+                    plt.subplot(3, 2, 4)
+                    errors = predicted_scores.cpu().numpy() - true_scores.cpu().numpy()
+                    plt.hist(errors, bins=20, alpha=0.7)
+                    plt.xlabel("Prediction Error")
+                    plt.ylabel("Frequency")
+                    plt.title(f"Error Distribution (MSE={mse:.6f})")
+                    plt.grid(True)
+
+                    # Save the combined figure
+                    plt.tight_layout()
+                    plt.savefig(os.path.join(loss_dir, f"loss_epoch_{epoch+1}.png"))
+                    plt.close()
+
+                    # Also save separate correlation plot for specific directory
+                    plt.figure(figsize=(10, 8))
+                    plt.scatter(
+                        true_scores.cpu().numpy(),
+                        predicted_scores.cpu().numpy(),
+                        alpha=0.7,
+                    )
+                    plt.plot([min_val, max_val], [min_val, max_val], "r--")
+                    plt.xlabel("True Interaction Scores")
+                    plt.ylabel("Predicted Interaction Scores")
+                    plt.title(f"Epoch {epoch+1}: MSE={mse:.6f}, MAE={mae:.6f}")
+                    plt.grid(True)
                     plt.savefig(
                         os.path.join(
                             correlation_dir, f"correlation_epoch_{epoch+1}.png"
@@ -732,47 +831,7 @@ def main():
                     )
                     plt.close()
 
-                    # Plot network embeddings
-                    # Get the perturbation indices and their batch assignments
-                    pert_indices = batch["gene"].perturbation_indices
-                    pert_batch = batch["gene"].perturbation_indices_batch
-
-                    # Get embeddings for perturbed genes only
-                    if "integrated_embeddings" in eval_outputs:
-                        pert_embeddings = eval_outputs["integrated_embeddings"][
-                            pert_indices
-                        ]
-
-                        # Use PCA to reduce dimensions for visualization
-                        from sklearn.decomposition import PCA
-
-                        pca = PCA(n_components=2)
-                        embeddings_2d = pca.fit_transform(pert_embeddings.cpu().numpy())
-
-                        # Create color map from true phenotype values
-                        # Map each perturbed gene to its corresponding batch
-                        batch_indices = pert_batch.cpu().numpy()
-                        phenotype_per_pert = true_scores.cpu().numpy()[batch_indices]
-
-                        plt.figure(figsize=(10, 8))
-                        scatter = plt.scatter(
-                            embeddings_2d[:, 0],
-                            embeddings_2d[:, 1],
-                            c=phenotype_per_pert,
-                            cmap="viridis",
-                            alpha=0.7,
-                        )
-                        plt.colorbar(scatter, label="Phenotype Value")
-                        plt.title(f"Epoch {epoch+1}: Perturbed Gene Embeddings")
-                        plt.xlabel("PCA Component 1")
-                        plt.ylabel("PCA Component 2")
-                        plt.grid(True)
-                        plt.savefig(
-                            os.path.join(
-                                embedding_dir, f"pert_embeddings_epoch_{epoch+1}.png"
-                            )
-                        )
-                        plt.close()
+                    # Network embedding visualization removed
 
     # Final evaluation
     model.eval()
@@ -802,10 +861,10 @@ def main():
             print(f"Best MSE: {best_mse:.6f} at epoch {best_epoch}")
 
             # Create a comprehensive final results plot
-            plt.figure(figsize=(12, 10))
+            plt.figure(figsize=(14, 14))
 
             # Plot loss curves
-            plt.subplot(2, 2, 1)
+            plt.subplot(3, 2, 1)
             plt.plot(range(1, epochs + 1), all_losses, "b-", label="Total Loss")
             plt.xlabel("Epoch")
             plt.ylabel("Loss Value")
@@ -813,7 +872,7 @@ def main():
             plt.grid(True)
             plt.legend()
 
-            plt.subplot(2, 2, 2)
+            plt.subplot(3, 2, 3)
             plt.plot(
                 range(1, epochs + 1), recon_losses, "r-", label="Reconstruction Loss"
             )
@@ -822,12 +881,31 @@ def main():
             )
             plt.xlabel("Epoch")
             plt.ylabel("Loss Value")
-            plt.title("Component Losses")
+            plt.title("Unweighted Component Losses")
+            plt.grid(True)
+            plt.legend()
+
+            plt.subplot(3, 2, 5)
+            plt.plot(
+                range(1, epochs + 1),
+                weighted_recon_losses,
+                "r-",
+                label="Weighted Reconstruction Loss",
+            )
+            plt.plot(
+                range(1, epochs + 1),
+                weighted_interaction_losses,
+                "g-",
+                label="Weighted Interaction Loss",
+            )
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Value")
+            plt.title("Weighted Component Losses")
             plt.grid(True)
             plt.legend()
 
             # Plot final correlation
-            plt.subplot(2, 2, 3)
+            plt.subplot(3, 2, 2)
             scatter = plt.scatter(true_np, pred_np, alpha=0.7)
             min_val = min(true_np.min(), pred_np.min())
             max_val = max(true_np.max(), pred_np.max())
@@ -838,7 +916,7 @@ def main():
             plt.grid(True)
 
             # Plot error distribution
-            plt.subplot(2, 2, 4)
+            plt.subplot(3, 2, 4)
             errors = pred_np - true_np
             plt.hist(errors, bins=20, alpha=0.7)
             plt.xlabel("Prediction Error")

@@ -38,11 +38,13 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         seed: int = 42,
         dense: bool = False,
         gene_subsets: Optional[dict[str, GeneSet]] = None,
-        follow_batch: Optional[list] = None
+        follow_batch: Optional[list] = None,
+        train_shuffle: bool = True
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
         self.dataset = cell_data_module.dataset
+        self.train_shuffle = train_shuffle
 
         # Use the first key–value pair from the gene_subsets dict (if provided)
         if gene_subsets is not None and len(gene_subsets) > 0:
@@ -387,7 +389,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return loader
 
     def train_dataloader(self):
-        return self._get_dataloader(self.train_dataset, shuffle=True)
+        return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
         return self._get_dataloader(self.val_dataset)

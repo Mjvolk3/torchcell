@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746756336361
+updated: 1746839976415
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -32,6 +32,9 @@ created: 1746570667745
 - [x] Dango with lambda computation.
 - [x] Pass `num_heads` into [[Dango|dendron://torchcell/torchcell.models.dango]]
 - [x] Check differences in overfitting for different loss variants. [[2025.05.08 - OverFitting With Different Losses|dendron://torchcell/torchcell.models.dango#20250508---overfitting-with-different-losses]]
+
+- [x] Sync works across Delta and Igb [[2025.05.09 - Testing After Change For Delta|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---testing-after-change-for-delta]]
+
 - [ ] Verify whole script works then write the sbatch.
 
 - [ ] Run benchmark training experiments.
@@ -42,6 +45,12 @@ created: 1746570667745
 - [ ] HeteroCell?
 
 - [ ] Contrastive DCell head on HeteroCell.
+
+## 2025.05.09
+
+- [x] [[Igb Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log]], [[Delta Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.delta-sync-log]], [[Gilahyper Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.gilahyper-sync-log]]
+- [x] Check all are synced from [[2025.05.09 - After long break|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---after-long-break]]
+- [ ] sync scripts for delta
 
 ***
 

@@ -35,7 +35,7 @@ trainer:
   max_epochs: 10 #1000 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 

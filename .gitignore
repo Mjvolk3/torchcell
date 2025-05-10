@@ -51,6 +51,7 @@ experiments/smf-dmf-tmf-001/slurm/*
 experiments/002-dmi-tmi/slurm/*
 experiments/003-fit-int/slurm/*
 experiments/004-dmi-tmi/slurm/*
+experiments/005-kuzmin2018-tmi/slurm/*
 
 # docx
 CHBE-symposium.docx

@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746839976415
+updated: 1746844664374
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -13,12 +13,7 @@ created: 1746570667745
 ## 2025.05.06
 
 - [x] [[2025.05.06 Meeting|dendron://torchcell/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05#20250506-meeting]]
-- [ ] `follow_batch` for following perturbations indices for indexing.
-
-- [ ] Add morphology. Only Safari browser works. Respond to maintainers about solved problem of downloading database. Might want to store a backup.
-- [ ] Morphology Random Forest Baseline
-
-- [ ] Morphology animation ? for fun...
+- [x] `follow_batch` for following perturbations indices for indexing.
 
 ## 2025.05.07
 
@@ -33,23 +28,26 @@ created: 1746570667745
 - [x] Pass `num_heads` into [[Dango|dendron://torchcell/torchcell.models.dango]]
 - [x] Check differences in overfitting for different loss variants. [[2025.05.08 - OverFitting With Different Losses|dendron://torchcell/torchcell.models.dango#20250508---overfitting-with-different-losses]]
 
-- [x] Sync works across Delta and Igb [[2025.05.09 - Testing After Change For Delta|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---testing-after-change-for-delta]]
-
-- [ ] Verify whole script works then write the sbatch.
-
-- [ ] Run benchmark training experiments.
-
-- [ ] Morphology?
-
-- [ ] DCell?
-- [ ] HeteroCell?
-
-- [ ] Contrastive DCell head on HeteroCell.
-
 ## 2025.05.09
 
 - [x] [[Igb Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log]], [[Delta Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.delta-sync-log]], [[Gilahyper Sync Log|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.gilahyper-sync-log]]
 - [x] Check all are synced from [[2025.05.09 - After long break|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---after-long-break]]
+- [x] Launch 2 runs → Since there are 3 different runs and I want to know how helpful it is to have pretraining we need last run. → Submitted last third run. It is training very fast so all will be finished by morning.
+- [x] Sync works across Delta and Igb [[2025.05.09 - Testing After Change For Delta|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---testing-after-change-for-delta]]
+- [x] Check that [[Int_dango|dendron://torchcell/torchcell.trainers.int_dango]] records weighted losses from [[Dango|dendron://torchcell/torchcell.losses.dango]]. → Great this is already done.
+
+- [ ] DCell?
+
+- [ ] Add morphology. Only Safari browser works. Respond to maintainers about solved problem of downloading database. Might want to store a backup.
+
+- [ ] Morphology Random Forest Baseline
+
+- [ ] Morphology animation ? for fun...
+
+- [ ] HeteroCell?
+
+- [ ] Contrastive DCell head on HeteroCell.
+
 - [ ] sync scripts for delta
 
 ***

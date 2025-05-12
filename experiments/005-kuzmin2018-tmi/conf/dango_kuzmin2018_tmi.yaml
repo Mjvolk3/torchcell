@@ -9,13 +9,21 @@ wandb:
 
 cell_dataset:
   graphs:
+    # [
+    #   string9_1_neighborhood,
+    #   string9_1_fusion,
+    #   string9_1_cooccurence,
+    #   string9_1_coexpression,
+    #   string9_1_experimental,
+    #   string9_1_database,
+    # ]
     [
-      string9_1_neighborhood,
-      string9_1_fusion,
-      string9_1_cooccurence,
-      string9_1_coexpression,
-      string9_1_experimental,
-      string9_1_database,
+      string11_0_neighborhood,
+      string11_0_fusion,
+      string11_0_cooccurence,
+      string11_0_coexpression,
+      string11_0_experimental,
+      string11_0_database,
     ]
   node_embeddings: null
   #learnable_embedding_input_channels: 64 # Could add...

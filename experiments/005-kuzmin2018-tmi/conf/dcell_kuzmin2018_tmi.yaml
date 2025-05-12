@@ -4,19 +4,13 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_005-kuzmin2018-tmi_dango
+  project: torchcell_005-kuzmin2018-tmi_dcell
   tags: []
 
 cell_dataset:
-  graphs:
-    [
-      string9_1_neighborhood,
-      string9_1_fusion,
-      string9_1_cooccurence,
-      string9_1_coexpression,
-      string9_1_experimental,
-      string9_1_database,
-    ]
+  # DCell uses gene ontology instead of STRING networks
+  graphs: []  # Empty list as DCell doesn't use STRING networks
+  use_gene_ontology: true  # Enable gene ontology for DCell
   node_embeddings: null
   #learnable_embedding_input_channels: 64 # Could add...
 
@@ -30,6 +24,7 @@ data_module:
   num_workers: 2
   pin_memory: false
   prefetch: false
+  follow_batch: ["perturbation_indices", "mutant_state"]  # Important for DCell batching
 
 trainer:
   max_epochs: 10 #1000 # 20 # FLAG
@@ -39,24 +34,27 @@ trainer:
   devices: 1
   overfit_batches: 0
 
-# ------ Placeholders for hydra optuna
+# ------ Model-specific parameters
 # ------
 model:
   checkpoint_path: null #*.ckpt
-  hidden_channels: 64
-  num_heads: 4  # Number of attention heads in HyperSAGNN
+  # DCell specific parameters
+  subsystem_output_min: 20  # Minimum output size for any subsystem
+  subsystem_output_max_mult: 0.3  # Multiplier for scaling subsystem output sizes
+  output_size: 1  # Size of final prediction (1 for growth/fitness)
 
 regression_task:
-  loss: "dango" # Options: dango
-  # Loss scheduler configuration
-  loss_scheduler:
-    type: "PreThenPost"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
-    transition_epoch: 5  # Common parameter for all schedulers: epoch at which transition completes
+  loss: "dcell_new"  # Use the DCellNewLoss
+  # DCellNewLoss configuration
+  dcell_loss:
+    alpha: 0.3  # Weight for auxiliary losses
+    use_auxiliary_losses: true  # Whether to use losses from non-root subsystems
+  
   is_weighted_phenotype_loss: false
 
   optimizer:
     type: "AdamW"
-    lr: 1e-5
+    lr: 1e-4  # Slightly higher LR for DCell
     weight_decay: 1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"

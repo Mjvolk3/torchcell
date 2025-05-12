@@ -2,7 +2,7 @@
 id: e8uffrrn84jl50rmw4yy6vf
 title: Dcell
 desc: ''
-updated: 1700278395667
+updated: 1746845684006
 created: 1694555579561
 ---
 
@@ -143,4 +143,36 @@ SubsystemModel(
   (tanh): Tanh()
   (batchnorm): BatchNorm1d(20, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
 )
+```
+
+## 2025.05.09 - Reviving Model
+
+Just Had to update the definitions of `SCerevisiae` and `SCerevisiaeGraph`
+
+```python
+(torchcell) michaelvolk@M1-MV torchcell % python /Users/michaelvolk/Documents/projects/torchcell/torchcell/models/dcell.py
+/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/torch_geometric/typing.py:68: UserWarning: An issue occurred while importing 'pyg-lib'. Disabling its usage. Stacktrace: dlopen(/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/libpyg.so, 0x0006): Library not loaded: /Library/Frameworks/Python.framework/Versions/3.11/Python
+  Referenced from: <B4DF21CE-3AD4-3ED1-8E22-0F66900D55D2> /Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/libpyg.so
+  Reason: tried: '/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file), '/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file)
+  warnings.warn(f"An issue occurred while importing 'pyg-lib'. "
+/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/torch_geometric/typing.py:124: UserWarning: An issue occurred while importing 'torch-sparse'. Disabling its usage. Stacktrace: dlopen(/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/libpyg.so, 0x0006): Library not loaded: /Library/Frameworks/Python.framework/Versions/3.11/Python
+  Referenced from: <B4DF21CE-3AD4-3ED1-8E22-0F66900D55D2> /Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/libpyg.so
+  Reason: tried: '/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file), '/System/Volumes/Preboot/Cryptexes/OS/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file), '/Library/Frameworks/Python.framework/Versions/3.11/Python' (no such file)
+  warnings.warn(f"An issue occurred while importing 'torch-sparse'. "
+/Users/michaelvolk/Documents/projects/torchcell/data/go/go.obo: fmt(1.2) rel(2024-11-03) 43,983 Terms
+5874
+INFO:torchcell.graph.graph:Nodes annotated after 2017-07-19 removed: 2435
+After date filter: 3439
+INFO:torchcell.graph.graph:IGI nodes removed: 160
+After IGI filter: 3279
+INFO:torchcell.graph.graph:Redundant nodes removed: 15
+After redundant filter: 3264
+INFO:torchcell.graph.graph:Nodes with < 2 contained genes removed: 1024
+After containment filter: 2240
+/Users/michaelvolk/opt/miniconda3/envs/torchcell/lib/python3.11/site-packages/torch/nn/modules/loss.py:608: UserWarning: Using a target size (torch.Size([2, 1])) that is different to the input size (torch.Size([2, 2])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  return F.mse_loss(input, target, reduction=self.reduction)
+Loss: 68.67665100097656
+params_dcell: 15950032
+params_dcell_linear: 100010
+total parameters: 16050042
 ```

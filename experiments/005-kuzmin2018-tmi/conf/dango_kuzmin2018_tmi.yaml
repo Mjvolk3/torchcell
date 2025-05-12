@@ -50,7 +50,7 @@ regression_task:
   loss: "dango" # Options: dango
   # Loss scheduler configuration
   loss_scheduler:
-    type: "LinearUntilUniform"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
+    type: "LinearUntilFlipped"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
     transition_epoch: 10  # Common parameter for all schedulers: epoch at which transition completes
   is_weighted_phenotype_loss: false
   optimizer:

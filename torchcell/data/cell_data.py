@@ -74,12 +74,17 @@ def to_cell_data(
                 (hetero_data["gene"].x.cpu(), embeddings.cpu()), dim=1
             )
 
-    # Process metabolism graphs if provided
+    # Process incidence graphs if provided
     if incidence_graphs is not None:
-        # Process bipartite representation only
+        # Process metabolism bipartite representation
         if "metabolism_bipartite" in incidence_graphs:
             bipartite = incidence_graphs["metabolism_bipartite"]
             _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping)
+
+        # Process gene ontology graph
+        if "gene_ontology" in incidence_graphs:
+            go_graph = incidence_graphs["gene_ontology"]
+            _process_gene_ontology(hetero_data, go_graph, node_idx_mapping)
 
     return hetero_data
 
@@ -166,6 +171,109 @@ def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
         gpr_type = ("gene", "gpr", "reaction")
         hetero_data[gpr_type].hyperedge_index = gpr_edge_index
         hetero_data[gpr_type].num_edges = len(torch.unique(gpr_edge_index[1]))
+
+
+def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
+    """Process gene ontology graph for DCell model."""
+    # Extract GO terms as nodes, preserving the hierarchical structure
+    go_nodes = list(sorted(go_graph.nodes()))
+    go_mapping = {term: idx for idx, term in enumerate(go_nodes)}
+
+    # Store gene ontology nodes
+    hetero_data["gene_ontology"].num_nodes = len(go_nodes)
+    hetero_data["gene_ontology"].node_ids = go_nodes
+
+    # Create a tensor for gene ontology term features
+    # Each node will have a feature indicating the number of genes annotated with it
+    x_features = torch.zeros((len(go_nodes), 1), dtype=torch.float)
+
+    # Process gene annotations and parent-child relationships
+    gene_to_go_src = []  # Gene indices
+    gene_to_go_dst = []  # GO term indices
+
+    go_to_go_src = []  # Child GO term indices
+    go_to_go_dst = []  # Parent GO term indices
+
+    # Store gene sets for each GO term for DCell perturbation in tensor format
+    term_to_genes_list = []  # Will store [term_idx, gene_idx] pairs
+    max_genes_per_term = 0  # Track maximum number of genes per term
+    term_gene_counts = torch.zeros(len(go_nodes), dtype=torch.int64)
+
+    # Track which terms have which genes for more efficient lookups
+    term_to_gene_dict = {}  # Maps term_idx to list of gene_idx values
+
+    # Process each GO term
+    for term, data in go_graph.nodes(data=True):
+        term_idx = go_mapping[term]
+        term_to_gene_dict[term_idx] = []
+
+        # Store gene set for each GO term
+        if 'gene_set' in data:
+            gene_set = data['gene_set']
+            x_features[term_idx, 0] = len(gene_set)
+            term_gene_count = 0
+
+            # Create gene-to-GO edges and track genes for each GO term
+            for gene in gene_set:
+                if gene in node_idx_mapping:
+                    gene_idx = node_idx_mapping[gene]
+                    gene_to_go_src.append(gene_idx)
+                    gene_to_go_dst.append(term_idx)
+
+                    # Add to term-gene pairs list
+                    term_to_genes_list.append([term_idx, gene_idx])
+                    term_to_gene_dict[term_idx].append(gene_idx)
+                    term_gene_count += 1
+
+            # Store the count of genes for this term
+            term_gene_counts[term_idx] = term_gene_count
+            max_genes_per_term = max(max_genes_per_term, term_gene_count)
+
+    # Process GO hierarchy (parent-child relationships)
+    for u, v in go_graph.edges():
+        if u in go_mapping and v in go_mapping:
+            # In NetworkX edge (u,v) means u is a child of v
+            child_idx = go_mapping[u]
+            parent_idx = go_mapping[v]
+            go_to_go_src.append(child_idx)
+            go_to_go_dst.append(parent_idx)
+
+    # Store GO term features
+    hetero_data["gene_ontology"].x = x_features.cpu()
+
+    # Store gene-term associations in tensor format for efficient DCell perturbations
+    if term_to_genes_list:
+        term_to_genes_tensor = torch.tensor(term_to_genes_list, dtype=torch.long).cpu()
+        hetero_data["gene_ontology"].term_gene_mapping = term_to_genes_tensor
+        hetero_data["gene_ontology"].term_gene_counts = term_gene_counts.cpu()
+        hetero_data["gene_ontology"].term_to_gene_dict = term_to_gene_dict
+
+    # Track maximum genes per term for tensor allocation
+    hetero_data["gene_ontology"].max_genes_per_term = max_genes_per_term
+
+    # Create a reverse mapping from indices to term IDs
+    term_id_list = list(go_mapping.keys())
+    hetero_data["gene_ontology"].term_ids = term_id_list
+
+    # Store gene-to-GO edges
+    if gene_to_go_src:
+        gene_to_go_edge_index = torch.stack([
+            torch.tensor(gene_to_go_src, dtype=torch.long),
+            torch.tensor(gene_to_go_dst, dtype=torch.long)
+        ]).cpu()
+
+        hetero_data["gene", "has_annotation", "gene_ontology"].edge_index = gene_to_go_edge_index
+        hetero_data["gene", "has_annotation", "gene_ontology"].num_edges = len(gene_to_go_src)
+
+    # Store GO-to-GO edges (hierarchy)
+    if go_to_go_src:
+        go_to_go_edge_index = torch.stack([
+            torch.tensor(go_to_go_src, dtype=torch.long),
+            torch.tensor(go_to_go_dst, dtype=torch.long)
+        ]).cpu()
+
+        hetero_data["gene_ontology", "is_child_of", "gene_ontology"].edge_index = go_to_go_edge_index
+        hetero_data["gene_ontology", "is_child_of", "gene_ontology"].num_edges = len(go_to_go_src)
 
 
 def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):

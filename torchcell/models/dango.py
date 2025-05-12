@@ -22,33 +22,21 @@ class DangoPreTrain(nn.Module):
     protein-protein interaction networks in S. cerevisiae.
 
     As described in the paper, this module:
-    1. Processes 6 PPI networks from the STRING database
+    1. Processes PPI networks from the STRING database
     2. Uses a 2-layer GNN for each network to reconstruct graph structure
     3. Shares an initial embedding layer across all networks
     4. Uses the output embeddings for downstream tasks
     """
 
     def __init__(
-        self, gene_num: int, hidden_channels: int = 64, edge_types: List[str] = None
+        self, gene_num: int, edge_types: List[str], hidden_channels: int = 64
     ):
         super().__init__()
 
         # Initialize model parameters
         self.gene_num = gene_num
         self.hidden_channels = hidden_channels
-
-        # Define edge types if not provided
-        if edge_types is None:
-            self.edge_types = [
-                "string9_1_neighborhood",
-                "string9_1_fusion",
-                "string9_1_cooccurence",
-                "string9_1_coexpression",
-                "string9_1_experimental",
-                "string9_1_database",
-            ]
-        else:
-            self.edge_types = edge_types
+        self.edge_types = edge_types
 
         # Shared embedding layer across all GNNs (H^(0))
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -78,13 +66,15 @@ class DangoPreTrain(nn.Module):
             # Reconstruction layer to predict adjacency matrix row
             self.recon_layers[edge_type] = nn.Linear(hidden_channels, gene_num)
 
-            # TODO adjust according to String 11
-            # Set lambda value for weighted MSE
-            # Hardcoded based on the paper's description
-            if edge_type in ["string9_1_coexpression"]:  # > 1% zeros decreased
-                self.lambda_values[edge_type] = 1.0
-                # self.lambda_values[edge_type] = 0.1
-            else:  # <= 1% zeros decreased
+            # Set lambda value for weighted MSE based on network type
+            # For STRING v9.1 networks (as in the paper)
+            if edge_type == "string9_1_neighborhood" or edge_type == "string11_0_neighborhood":
+                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
+            elif edge_type == "string9_1_coexpression" or edge_type == "string11_0_coexpression":
+                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
+            elif edge_type == "string9_1_experimental" or edge_type == "string11_0_experimental":
+                self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
+            else:  # fusion, cooccurence, database (≤ 1% zeros decreased)
                 self.lambda_values[edge_type] = 1.0
 
         # Initialize weights
@@ -409,13 +399,13 @@ class Dango(nn.Module):
     3. Hypergraph self-attention for prediction
     """
 
-    def __init__(self, gene_num: int, hidden_channels: int = 64, num_heads: int = 4):
+    def __init__(self, gene_num: int, edge_types: List[str], hidden_channels: int = 64, num_heads: int = 4):
         super().__init__()
         self.hidden_channels = hidden_channels
 
         # GNN pre-training component
         self.pretrain_model = DangoPreTrain(
-            gene_num=gene_num, hidden_channels=hidden_channels
+            gene_num=gene_num, edge_types=edge_types, hidden_channels=hidden_channels
         )
 
         # Meta-embedding integration module
@@ -529,20 +519,21 @@ def main(cfg: DictConfig):
     import numpy as np
     from datetime import datetime
     from dotenv import load_dotenv
+
     # Import all scheduler types for easy toggling
     from torchcell.losses.dango import (
-        DangoLoss, 
-        PreThenPost, 
-        LinearUntilUniform, 
-        LinearUntilFlipped
+        DangoLoss,
+        PreThenPost,
+        LinearUntilUniform,
+        LinearUntilFlipped,
     )
-    
+
     load_dotenv()
-    
+
     # Set device based on config
     device = torch.device(
-        "cuda" 
-        if torch.cuda.is_available() and cfg.trainer.accelerator.lower() != "cpu" 
+        "cuda"
+        if torch.cuda.is_available() and cfg.trainer.accelerator.lower() != "cpu"
         else "cpu"
     )
     print(f"Using device: {device}")
@@ -583,22 +574,27 @@ def main(cfg: DictConfig):
 
     # Initialize model
     print("Initializing DANGO model...")
+    # Define default STRING v9.1 edge types for demo
+    edge_types = [
+        "string9_1_neighborhood",
+        "string9_1_fusion",
+        "string9_1_cooccurence",
+        "string9_1_coexpression",
+        "string9_1_experimental",
+        "string9_1_database",
+    ]
     model = Dango(
-        gene_num=max_num_nodes, 
-        hidden_channels=cfg.model.hidden_channels, 
-        num_heads=cfg.model.num_heads
+        gene_num=max_num_nodes,
+        edge_types=edge_types,
+        hidden_channels=cfg.model.hidden_channels,
+        num_heads=cfg.model.num_heads,
     ).to(device)
     print(f"Total parameters: {sum(p.numel() for p in model.parameters())}")
     print(f"Num parameters: {model.num_parameters}")
     print(f"Using {model.hyper_sagnn.num_heads} attention heads in HyperSAGNN")
 
-    # Create DangoLoss with the model's edge types and lambda values
-    lambda_values = {}
-    for edge_type in model.pretrain_model.edge_types:
-        if edge_type in ["string9_1_coexpression"]:
-            lambda_values[edge_type] = 0.1
-        else:
-            lambda_values[edge_type] = 1.0
+    # Use lambda values directly from the model's pretrain component
+    lambda_values = model.pretrain_model.lambda_values.copy()
 
     # Set up training parameters from config
     epochs = cfg.trainer.max_epochs
@@ -608,19 +604,19 @@ def main(cfg: DictConfig):
     # Get scheduler class from scheduler map
     scheduler_type = cfg.regression_task.loss_scheduler.type
     from torchcell.losses.dango import SCHEDULER_MAP
-    
+
     if scheduler_type not in SCHEDULER_MAP:
         raise ValueError(f"Unknown scheduler type: {scheduler_type}")
-    
+
     # Create the scheduler instance with transition_epoch
     scheduler_class = SCHEDULER_MAP[scheduler_type]
     scheduler_kwargs = {"transition_epoch": transition_epoch}
-    
+
     # No additional parameters needed for LinearUntilFlipped
-    
+
     scheduler = scheduler_class(**scheduler_kwargs)
     print(f"Using {scheduler_type} scheduler with transition_epoch={transition_epoch}")
-    
+
     # Initialize the DangoLoss module with the selected scheduler
     loss_func = DangoLoss(
         edge_types=model.pretrain_model.edge_types,

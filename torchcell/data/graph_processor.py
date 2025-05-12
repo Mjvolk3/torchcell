@@ -807,3 +807,284 @@ class Perturbation(GraphProcessor):
                 all_stat_sample_indices, dtype=torch.long, device=self.device
             )
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
+
+
+class DCellGraphProcessor(GraphProcessor):
+    """
+    Graph processor for DCell model that applies perturbations directly to the gene ontology graph.
+    This processor updates the gene ontology node states based on perturbations rather than
+    deleting nodes from the graph before conversion.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.device = None
+
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
+        if not data:
+            raise ValueError("Data list is empty")
+
+        # Set device based on cell_graph
+        if hasattr(cell_graph["gene"], "x") and hasattr(cell_graph["gene"].x, "device"):
+            self.device = cell_graph["gene"].x.device
+        else:
+            self.device = torch.device("cpu")
+
+        # Create a new HeteroData object for processing
+        processed_graph = HeteroData()
+
+        # Add gene node information
+        processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
+        processed_graph["gene"].node_ids = cell_graph["gene"].node_ids
+
+        if hasattr(cell_graph["gene"], "x"):
+            processed_graph["gene"].x = cell_graph["gene"].x
+
+        # Process perturbed genes
+        perturbed_names = {
+            p.systematic_gene_name
+            for item in data
+            for p in item["experiment"].genotype.perturbations
+        }
+        node_ids = cell_graph["gene"].node_ids
+        perturbed_indices = [
+            i for i, name in enumerate(node_ids) if name in perturbed_names
+        ]
+
+        # Create perturbation mask: True for perturbed genes
+        pert_mask = torch.zeros(
+            cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
+        )
+        pert_mask[perturbed_indices] = True
+
+        # Store perturbation information
+        processed_graph["gene"].perturbed_genes = list(perturbed_names)
+        processed_graph["gene"].perturbation_indices = torch.tensor(
+            perturbed_indices, dtype=torch.long, device=self.device
+        )
+        processed_graph["gene"].pert_mask = pert_mask
+
+        # Group perturbation indices by experiment for batch processing
+        batch_indices = []
+        batch_mapping = {}  # Maps experiment index to list of perturbation indices
+
+        for i, item in enumerate(data):
+            perturbed_genes = [
+                p.systematic_gene_name
+                for p in item["experiment"].genotype.perturbations
+            ]
+            gene_indices = [
+                node_ids.index(gene) for gene in perturbed_genes if gene in node_ids
+            ]
+
+            batch_indices.extend([i] * len(gene_indices))
+            batch_mapping[i] = gene_indices
+
+        # Add batch indices for perturbations - needed for processing by experiment
+        if batch_indices:
+            processed_graph["gene"].perturbation_indices_batch = torch.tensor(
+                batch_indices, dtype=torch.long, device=self.device
+            )
+
+        # Process gene ontology if it exists in cell_graph
+        if "gene_ontology" in cell_graph.node_types:
+            # Copy gene ontology nodes and features
+            processed_graph["gene_ontology"].num_nodes = cell_graph[
+                "gene_ontology"
+            ].num_nodes
+            processed_graph["gene_ontology"].node_ids = cell_graph[
+                "gene_ontology"
+            ].node_ids
+
+            if hasattr(cell_graph["gene_ontology"], "x"):
+                processed_graph["gene_ontology"].x = cell_graph["gene_ontology"].x
+
+            # Copy GO hierarchy edges
+            if (
+                "gene_ontology",
+                "is_child_of",
+                "gene_ontology",
+            ) in cell_graph.edge_types:
+                edge_index = cell_graph[
+                    "gene_ontology", "is_child_of", "gene_ontology"
+                ].edge_index
+                processed_graph[
+                    "gene_ontology", "is_child_of", "gene_ontology"
+                ].edge_index = edge_index
+                processed_graph[
+                    "gene_ontology", "is_child_of", "gene_ontology"
+                ].num_edges = edge_index.size(1)
+
+            # Process gene-GO annotations
+            if ("gene", "has_annotation", "gene_ontology") in cell_graph.edge_types:
+                gene_go_edge_index = cell_graph[
+                    "gene", "has_annotation", "gene_ontology"
+                ].edge_index
+                processed_graph[
+                    "gene", "has_annotation", "gene_ontology"
+                ].edge_index = gene_go_edge_index
+                processed_graph["gene", "has_annotation", "gene_ontology"].num_edges = (
+                    gene_go_edge_index.size(1)
+                )
+
+                # Create mutant state tensors for gene ontology nodes based on perturbations
+                # This implements the DCell perturbation logic directly in the PyG graph
+                self._apply_go_perturbations(
+                    processed_graph, cell_graph, perturbed_indices, batch_mapping
+                )
+
+        # Add phenotype data in COO format
+        self._add_phenotype_data(processed_graph, phenotype_info, data)
+
+        return processed_graph
+
+    def _apply_go_perturbations(
+        self,
+        processed_graph: HeteroData,
+        cell_graph: HeteroData,
+        perturbed_indices: list,
+        batch_mapping: dict,
+    ) -> None:
+        """
+        Apply gene perturbations to gene ontology nodes by creating binary state vectors.
+        Each GO term gets a binary vector indicating which of its associated genes are perturbed.
+        Uses pre-computed term-gene mappings from cell_graph in tensor format.
+        """
+        # We require the term_to_gene_dict for efficient processing
+        if not hasattr(cell_graph["gene_ontology"], "term_to_gene_dict"):
+            raise ValueError("Gene ontology graph must have term_to_gene_dict for DCellGraphProcessor")
+
+        # Create a sparse representation of mutant states for batching
+        mutant_state_data = []
+
+        # Process each batch separately (but we'll remove batch_idx from the output)
+        for _, gene_indices in batch_mapping.items():
+            # Create a binary mask for perturbed genes (1 = perturbed)
+            perturbed_mask = torch.zeros(
+                cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
+            )
+            perturbed_mask[gene_indices] = True
+
+            # Process each term-gene pair using the dictionary for efficient access
+            for term_idx, gene_indices in cell_graph["gene_ontology"].term_to_gene_dict.items():
+                for gene_idx in gene_indices:
+                    # Determine gene state (1 = present, 0 = perturbed)
+                    gene_state = 0.0 if perturbed_mask[gene_idx] else 1.0
+
+                    # Format: [term_idx, gene_idx, state_value] - NO batch_idx
+                    mutant_state_data.append([term_idx, gene_idx, gene_state])
+
+        # Convert to tensor if we have data
+        if mutant_state_data:
+            mutant_state = torch.tensor(
+                mutant_state_data, dtype=torch.float, device=self.device
+            )
+            processed_graph["gene_ontology"].mutant_state = mutant_state
+
+        # Copy essential term attributes from cell_graph to processed_graph
+        for attr in ["term_ids", "max_genes_per_term", "term_gene_mapping", "term_gene_counts", "term_to_gene_dict"]:
+            if hasattr(cell_graph["gene_ontology"], attr):
+                setattr(processed_graph["gene_ontology"], attr, getattr(cell_graph["gene_ontology"], attr))
+
+    def _add_phenotype_data(
+        self,
+        integrated_subgraph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> None:
+        # Initialize storage for phenotype values and metadata
+        all_values = []
+        all_type_indices = []
+        all_sample_indices = []  # Which sample each value belongs to
+        phenotype_types = []
+
+        # Initialize storage for statistic values
+        all_stat_values = []
+        all_stat_type_indices = []
+        all_stat_sample_indices = []  # Which sample each stat value belongs to
+        stat_types = []
+
+        # Extract phenotype type information
+        for phenotype_class in phenotype_info:
+            label_name = phenotype_class.model_fields["label_name"].default
+            stat_name = phenotype_class.model_fields["label_statistic_name"].default
+
+            phenotype_types.append(label_name)
+            if stat_name:
+                stat_types.append(stat_name)
+
+        # Process each experimental data point
+        for item_idx, item in enumerate(data):
+            # Get phenotype object from experiment
+            phenotype = item["experiment"].phenotype
+
+            # Process each phenotype type
+            for type_idx, field_name in enumerate(phenotype_types):
+                value = getattr(phenotype, field_name, None)
+                if value is not None:
+                    # Convert single values to lists for consistent handling
+                    values = [value] if not isinstance(value, (list, tuple)) else value
+
+                    # Add all values with their type indices and sample indices
+                    all_values.extend(values)
+                    all_type_indices.extend([type_idx] * len(values))
+                    all_sample_indices.extend([item_idx] * len(values))
+
+            # Process statistics in the same way
+            for stat_type_idx, stat_field_name in enumerate(stat_types):
+                stat_value = getattr(phenotype, stat_field_name, None)
+                if stat_value is not None:
+                    # Convert single values to lists for consistent handling
+                    stat_values = (
+                        [stat_value]
+                        if not isinstance(stat_value, (list, tuple))
+                        else stat_value
+                    )
+
+                    # Add all statistic values with their type indices and sample indices
+                    all_stat_values.extend(stat_values)
+                    all_stat_type_indices.extend([stat_type_idx] * len(stat_values))
+                    all_stat_sample_indices.extend([item_idx] * len(stat_values))
+
+        # Store phenotype data in the graph
+        if all_values:
+            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
+                all_values, dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(
+                all_type_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
+                all_sample_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+        else:
+            # Handle empty case with placeholder values
+            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
+                [float("nan")], dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(
+                [0], dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
+                [0], dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+
+        # Store statistic data in the graph
+        if all_stat_values:
+            integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(
+                all_stat_values, dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_type_indices"] = torch.tensor(
+                all_stat_type_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(
+                all_stat_sample_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types

@@ -232,9 +232,10 @@ def main(cfg: DictConfig) -> None:
     print(f"Instantiating model ({timestamp()})")
 
     max_num_nodes = dataset.cell_graph["gene"].num_nodes
-    # Instantiate new Dango model using wandb configuration.
+    # Instantiate new Dango model using wandb configuration and edge types from config
     model = Dango(
-        gene_num=max_num_nodes, 
+        gene_num=max_num_nodes,
+        edge_types=wandb.config.cell_dataset["graphs"],  # Required parameter
         hidden_channels=wandb.config.model["hidden_channels"],
         num_heads=wandb.config.model["num_heads"]
     ).to(device)

@@ -2,7 +2,7 @@
 id: 8idydyfk79r59r2c1rualwy
 title: 'Sahand-Shafeei.preliminary-project-outline.2025.05.05'
 desc: ''
-updated: 1746549231779
+updated: 1746811155367
 created: 1746499667043
 ---
 
@@ -51,7 +51,7 @@ Slides (Not including title):
 - 13 : Outline Project aims
   *These need some work*
   - 1. Show how much context is needed for tryptophan production. None, generic, specific.
-  - 2. Generalize to author metabolic engineering projects. (see difficult with dodecanol production in original ART paper).
+  - 2. Generalize to other metabolic engineering projects. (see difficult with dodecanol production in original ART paper).
   - 3. Design a model that can make inferences across *S. cerevisiae* metabolism with low $n$.
 - 14 - 15 : Benchmark Models
 - 16 - 17 : TabPFN

@@ -22,6 +22,7 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.data import Neo4jCellDataset
 from torchcell.data.graph_processor import SubgraphRepresentation
 from torchcell.data.graph_processor import Perturbation
+from torchcell.data.graph_processor import DCellGraphProcessor
 from tqdm import tqdm
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from typing import Literal
@@ -36,9 +37,7 @@ from torchcell.graph import build_gene_multigraph
 def load_sample_data_batch(
     batch_size=2,
     num_workers=2,
-    metabolism_graph: Literal[
-        "metabolism_hypergraph", "metabolism_bipartite"
-    ] = "metabolism_bipartite",
+    config: Literal["dango_string9_1", "dcell"] = "dango_string9_1",
     is_dense: bool = False,
 ):
 
@@ -86,23 +85,69 @@ def load_sample_data_batch(
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build"
     )
-    gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    # Configuration for different models
+    config_options = {
+        "dango_string9_1": {
+            "graph_names": [
+                "string9_1_neighborhood",
+                "string9_1_fusion",
+                "string9_1_cooccurence",
+                "string9_1_coexpression",
+                "string9_1_experimental",
+                "string9_1_database",
+            ],
+            "use_metabolism": True,
+            "use_gene_ontology": False,
+            "graph_processor": Perturbation(),
+            "follow_batch": ["perturbation_indices"],
+        },
+        "dcell": {
+            "graph_names": [],  # DCell doesn't use string networks
+            "use_metabolism": False,
+            "use_gene_ontology": True,
+            "graph_processor": DCellGraphProcessor(),
+            "follow_batch": ["perturbation_indices", "mutant_state"],
+        },
+    }
+
+    # Apply configuration
+    selected_config = config_options[config]
+
+    # Prepare incidence graphs
     incidence_graphs = {}
-    if metabolism_graph == "metabolism_hypergraph":
-        incidence_graphs["metabolism_hypergraph"] = gem.reaction_map
-    elif metabolism_graph == "metabolism_bipartite":
+
+    # Add metabolism graph if requested
+    if selected_config["use_metabolism"]:
+        gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
         incidence_graphs["metabolism_bipartite"] = gem.bipartite_graph
 
+    # Add gene ontology graph if requested
+    if selected_config["use_gene_ontology"]:
+        # Filtering GO graph for DCell
+        G_go = graph.G_go.copy()
+
+        # Apply DCell-specific GO graph filters
+        from torchcell.graph import (
+            filter_by_date,
+            filter_go_IGI,
+            filter_redundant_terms,
+            filter_by_contained_genes,
+        )
+
+        G_go = filter_by_date(G_go, "2017-07-19")
+        print(f"After date filter: {G_go.number_of_nodes()}")
+        G_go = filter_go_IGI(G_go)
+        print(f"After IGI filter: {G_go.number_of_nodes()}")
+        G_go = filter_redundant_terms(G_go)
+        print(f"After redundant filter: {G_go.number_of_nodes()}")
+        G_go = filter_by_contained_genes(G_go, n=2, gene_set=genome.gene_set)
+        print(f"After containment filter: {G_go.number_of_nodes()}")
+
+        incidence_graphs["gene_ontology"] = G_go
+
+    # Build gene multigraph based on configuration
     gene_multigraph = build_gene_multigraph(
-        graph=graph,
-        graph_names=[
-            "string9_1_neighborhood",
-            "string9_1_fusion",
-            "string9_1_cooccurence",
-            "string9_1_coexpression",
-            "string9_1_experimental",
-            "string9_1_database",
-        ],
+        graph=graph, graph_names=selected_config["graph_names"]
     )
 
     dataset = Neo4jCellDataset(
@@ -110,12 +155,12 @@ def load_sample_data_batch(
         query=query,
         gene_set=genome.gene_set,
         graphs=gene_multigraph,
-        incidence_graphs=None,
+        incidence_graphs=incidence_graphs,
         node_embeddings=None,
         converter=None,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
-        graph_processor=Perturbation(),
+        graph_processor=selected_config["graph_processor"],
     )
     # Transforms
     norm_configs = {
@@ -171,7 +216,7 @@ def load_sample_data_batch(
         pin_memory=True,
         prefetch=False,
         seed=seed,
-        follow_batch=["perturbation_indices"],
+        follow_batch=selected_config["follow_batch"],
         train_shuffle=False,  # Don't shuffle the training data
     )
     perturbation_subset_data_module.setup()
@@ -183,12 +228,15 @@ def load_sample_data_batch(
 
 
 if __name__ == "__main__":
-    # load_sample_data_batch()
+    # Test Dango configuration
+    print("\n--- Testing Dango Configuration ---")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=2,
-        num_workers=2,
-        metabolism_graph="metabolism_bipartite",
-        is_dense=False,
+        batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
     )
     dataset[0]
-    print("")
+    print("\n--- Testing DCell Configuration ---")
+    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
+        batch_size=2, num_workers=2, config="dcell", is_dense=False
+    )
+    dataset[0]
+    print()

@@ -2,7 +2,7 @@
 id: e8uffrrn84jl50rmw4yy6vf
 title: Dcell
 desc: ''
-updated: 1746845684006
+updated: 1746917056285
 created: 1694555579561
 ---
 
@@ -14,7 +14,7 @@ created: 1694555579561
 
 $D=\left\{\left(X_1, y_1\right),\left(X_2\right.\right.$, $\left.\left.y_2\right), \ldots,\left(X_N, y_N\right)\right\}, (N - \text{sample number})$
 
-$\forall i, X_i \in \mathbb{R}^M, X_i \in \{0,1\}, (0 = \text{wild type}$; $1=\text{disrupted})$
+$\forall i, X_i \in \mathbb{R}^M, X_i \in \{0,1\}, (0 = \text{wild type}$; $1=\text{disrupted})$1
 
 $y_i \in \mathbb{R}, (\text{relative growth rate, genetic interaction value})$
 
@@ -35,7 +35,7 @@ W^{(0)} & \in \mathbb{R}^{20 \times 2}
 $$
 
 ![](./assets/images/src.torchcell.models.dcell.md.pytorch-tanh.png)
-
+1
 [torch.nn.Tanh](https://pytorch.org/docs/stable/generated/torch.nn.Tanh.html)
 
 [torch.nn.BatchNorm1d](https://pytorch.org/docs/stable/generated/torch.nn.BatchNorm1d.html)
@@ -175,4 +175,55 @@ Loss: 68.67665100097656
 params_dcell: 15950032
 params_dcell_linear: 100010
 total parameters: 16050042
+```
+
+## 2025.05.10 - Inspecting Data in GoGraph
+
+```python
+dcell.go_graph.nodes['GO:0007033']
+{'id': 'GO:0007033', 'item_id': 'GO:0007033', 'name': 'vacuole organization', 'namespace': 'biological_process', 'level': 5, 'depth': 5, 'is_obsolete': False, 'alt_ids': {'GO:0044086'}, 'gene_set': GeneSet(size=11, items=['YAL040C', 'YDL077C', 'YDR080W']...), 'genes': {'YAL040C': {...}, 'YDL077C': {...}, 'YDR080W': {...}, 'YEL027W': {...}, 'YGL095C': {...}, 'YGR071C': {...}, 'YIL041W': {...}, 'YIL048W': {...}, 'YLR396C': {...}, 'YOR246C': {...}, 'YPR173C': {...}}, 'mutant_state': tensor([1., 1., 1., 1., 1., 1., 1., 1., 1., 1., 1.])}
+```
+
+The `GO:ROOT` is for connectivity making the graph a fully connected DAG.
+
+```python
+dcell.go_graph.nodes['GO:ROOT']
+{'name': 'GO Super Node', 'namespace': 'super_root', 'level': -1, 'mutant_state': tensor([])}
+```
+
+We apply deletion directly to `nx.Graph`
+
+```python
+# Line :313
+G_mutant = delete_genes(
+    go_graph=dcell.go_graph, deletion_gene_set=GeneSet(("YDL029W", "YDR150W"))
+)
+```
+
+```python
+def delete_genes(go_graph: nx.Graph, deletion_gene_set: GeneSet):
+  G_mutant = go_graph.copy()
+  for node in G_mutant.nodes:
+      if node == "GO:ROOT":
+          G_mutant.nodes[node]["mutant_state"] = torch.tensor([], dtype=torch.int32)
+      else:
+          gene_set = G_mutant.nodes[node]["gene_set"]
+          # Replace the genes in the knockout set with 0
+          G_mutant.nodes[node]["mutant_state"] = torch.tensor(
+              [1 if gene not in deletion_gene_set else 0 for gene in gene_set],
+              dtype=torch.int32,
+          )
+  return G_mutant
+```
+
+We want to apply this perturbation in [[Graph_processor|dendron://torchcell/torchcell.data.graph_processor]] for DCell. That is we want to flip bits according to which gene was perturbed.
+
+## 2025.05.10 - DCell Not Compliant With Torch Norms
+
+We want the the models forward call to just take batch. `output_size=2` can be determined at model initialization.
+
+```python
+subsystem_outputs = dcell(batch)
+dcell_linear = DCellLinear(dcell.subsystems, output_size=2)
+output = dcell_linear(subsystem_outputs)
 ```

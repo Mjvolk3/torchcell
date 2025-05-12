@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746844664374
+updated: 1746935861560
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -36,7 +36,17 @@ created: 1746570667745
 - [x] Sync works across Delta and Igb [[2025.05.09 - Testing After Change For Delta|dendron://torchcell/wandb-experiments.wandb-sync-agent-dirs.igb-sync-log#20250509---testing-after-change-for-delta]]
 - [x] Check that [[Int_dango|dendron://torchcell/torchcell.trainers.int_dango]] records weighted losses from [[Dango|dendron://torchcell/torchcell.losses.dango]]. → Great this is already done.
 
-- [ ] DCell?
+## 2025.05.10
+
+- [x] [[2025.05.10 DCell Inclusion|dendron://torchcell/torchcell.scratch.load_batch_005#20250510-dcell-inclusion]]
+- [x] [[2025.05.10 - Inspecting Data in GoGraph|dendron://torchcell/torchcell.models.dcell#20250510---inspecting-data-in-gograph]]
+- [x] [[2025.05.10 - DCell Not Compliant With Torch Norms|dendron://torchcell/torchcell.models.dcell#20250510---dcell-not-compliant-with-torch-norms]]
+- [x] [[2025.05.10 - Gene Perturbations Without GO will Be Improperly Represented|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.batch_005_investigate_pert_size_2#20250510---gene-perturbations-without-go-will-be-improperly-represented]]
+- [x] Move data away from using `dicts` → [[2025.05.10 - DCell No Dicts|dendron://torchcell/torchcell.scratch.load_batch_005#20250510---dcell-no-dicts]]
+- [x] [[Dango_lambda_determination_string11_0_to_string12_0|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination_string11_0_to_string12_0]]
+- [x] [[2025.05.10 - Updated to Show Lambda|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination#20250510---updated-to-show-lambda]]
+
+- [ ] DCell - Working
 
 - [ ] Add morphology. Only Safari browser works. Respond to maintainers about solved problem of downloading database. Might want to store a backup.
 

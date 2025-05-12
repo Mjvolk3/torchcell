@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH -p cabbi
-#SBATCH --mem=200g
+#SBATCH --mem=100g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=10
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=DANGO
+#SBATCH --job-name=DANGO_LUU
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END

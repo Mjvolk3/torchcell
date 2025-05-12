@@ -32,18 +32,18 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
-  perturbation_subset_size: 100
-  batch_size: 4 #32
-  num_workers: 2
+  is_perturbation_subset: false
+  perturbation_subset_size: null # 100
+  batch_size: 32 #32
+  num_workers: 4
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 10 #1000 # 20 # FLAG
+  max_epochs: 1000 #1000 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 
@@ -58,10 +58,9 @@ regression_task:
   loss: "dango" # Options: dango
   # Loss scheduler configuration
   loss_scheduler:
-    type: "PreThenPost"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
-    transition_epoch: 5  # Common parameter for all schedulers: epoch at which transition completes
+    type: "LinearUntilUniform"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
+    transition_epoch: 10  # Common parameter for all schedulers: epoch at which transition completes
   is_weighted_phenotype_loss: false
-
   optimizer:
     type: "AdamW"
     lr: 1e-5
@@ -80,4 +79,4 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
   plot_sample_ceiling: 10000
-  plot_every_n_epochs: 20
+  plot_every_n_epochs: 2

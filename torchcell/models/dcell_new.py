@@ -28,6 +28,10 @@ class SubsystemModel(nn.Module):
     """
     Neural network model representing a subsystem in the GO hierarchy.
 
+    When num_layers=1, this module behaves like the original DCell subsystem.
+    When num_layers>1, this becomes a multi-layer perceptron (MLP) with the
+    specified number of layers, all with the same output size.
+
     This module processes the inputs for each GO term, which consists of:
     1. The mutant state for genes directly annotated to this term
     2. Outputs from child subsystems in the GO hierarchy
@@ -35,35 +39,86 @@ class SubsystemModel(nn.Module):
     Args:
         input_size: Total input size (mutant states + child outputs)
         output_size: Size of the output vector for this subsystem
-        norm_type: Type of normalization to use ('batch', 'layer', or 'none')
+        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
+        norm_before_act: Whether to apply normalization before activation
+        num_layers: Number of layers in this subsystem (default: 1 as in original DCell)
+                    When >1, creates an MLP with multiple linear+norm+activation blocks
+        activation: Activation function to use (default: nn.Tanh as in original DCell)
+                   The same activation function is used across all layers
+        init_range: Range for uniform weight initialization [-init_range, init_range]
     """
 
-    def __init__(self, input_size: int, output_size: int, norm_type: str = "batch"):
+    def __init__(
+        self,
+        input_size: int,
+        output_size: int,
+        norm_type: str = "batch",
+        norm_before_act: bool = False,
+        num_layers: int = 1,
+        activation: nn.Module = None,
+        init_range: float = 0.001
+    ):
         super().__init__()
         self.output_size = output_size  # Store output size as an attribute
-        self.linear = nn.Linear(input_size, output_size)
-        # Original DCell doesn't have special initialization - use PyTorch default
-        # which is uniform(-sqrt(k), sqrt(k)), where k = 1/in_features
-        self.tanh = nn.Tanh()
+        self.num_layers = num_layers
         self.norm_type = norm_type
+        self.norm_before_act = norm_before_act
 
-        # Create normalization layer based on specified type
+        # Set default activation to Tanh if none provided (as in original DCell)
+        self.activation = activation if activation is not None else nn.Tanh()
+
+        # Create layers - using ModuleList to track parameters properly
+        self.layers = nn.ModuleList()
+        self.norms = nn.ModuleList()
+
+        if num_layers == 1:
+            # Single layer case (original DCell architecture)
+            self.layers.append(nn.Linear(input_size, output_size))
+            self.norms.append(self._create_norm(output_size, norm_type))
+        else:
+            # Multi-layer MLP case
+
+            # First layer: input_size -> output_size
+            self.layers.append(nn.Linear(input_size, output_size))
+            self.norms.append(self._create_norm(output_size, norm_type))
+
+            # Additional hidden layers: output_size -> output_size
+            # Each layer forms a block in the MLP with the same activation
+            for _ in range(num_layers - 1):
+                self.layers.append(nn.Linear(output_size, output_size))
+                self.norms.append(self._create_norm(output_size, norm_type))
+
+        # Initialize weights according to the DCell paper - uniform random in small range
+        for layer in self.layers:
+            nn.init.uniform_(layer.weight, -init_range, init_range)
+            nn.init.uniform_(layer.bias, -init_range, init_range)
+
+    def _create_norm(self, size: int, norm_type: str):
+        """Helper function to create normalization layers"""
         if norm_type == "batch":
-            # Use standard BatchNorm with running stats to match original DCell
-            self.norm = nn.BatchNorm1d(output_size)
+            # Use standard BatchNorm with proper momentum
+            return nn.BatchNorm1d(size, momentum=0.1, track_running_stats=True)
+        elif norm_type == "instance":
+            # Instance normalization (normalizes each sample independently)
+            return nn.InstanceNorm1d(size, affine=True)
         elif norm_type == "layer":
             # Use LayerNorm as an alternative
-            self.norm = nn.LayerNorm(output_size)
+            return nn.LayerNorm(size)
         elif norm_type == "none":
-            self.norm = None
+            return None
         else:
             raise ValueError(
-                f"Unknown norm_type: {norm_type}. Expected 'batch', 'layer', or 'none'."
+                f"Unknown norm_type: {norm_type}. Expected 'batch', 'layer', 'instance', or 'none'."
             )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Forward pass for the subsystem.
+
+        When num_layers=1, this behaves like the original DCell subsystem.
+        When num_layers>1, this functions like an MLP with multiple blocks, where
+        each block consists of: Linear -> [Normalization] -> Activation
+        or Linear -> Activation -> [Normalization], depending on norm_before_act.
 
         Args:
             x: Input tensor containing mutant states and child outputs [batch_size, input_size]
@@ -71,21 +126,32 @@ class SubsystemModel(nn.Module):
         Returns:
             Processed subsystem output [batch_size, output_size]
         """
-        x = self.linear(x)
-        x = self.tanh(x)
+        # Apply each layer of the MLP in sequence
+        for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
+            # Apply linear transformation
+            x = layer(x)
 
-        # Apply normalization if specified
-        if self.norm_type == "batch":
-            # Handle single batch case safely
-            if x.size(0) == 1:
-                # Skip BatchNorm for single samples to avoid the error
-                pass
+            # Apply normalization and activation in the specified order
+            if self.norm_before_act:
+                # Norm -> Act order
+                if norm is not None:
+                    # Handle batch size safely for BatchNorm - this is a legitimate technical constraint
+                    if self.norm_type == "batch" and x.size(0) == 1:
+                        # Skip BatchNorm for single samples to avoid the error
+                        pass
+                    else:
+                        x = norm(x)
+                x = self.activation(x)
             else:
-                x = self.norm(x)
-        elif self.norm_type == "layer":
-            # LayerNorm works with any batch size, including 1
-            x = self.norm(x)
-        # No normalization for 'none' case
+                # Act -> Norm order (original DCell approach)
+                x = self.activation(x)
+                if norm is not None:
+                    # Handle batch size safely for BatchNorm - this is a legitimate technical constraint
+                    if self.norm_type == "batch" and x.size(0) == 1:
+                        # Skip BatchNorm for single samples to avoid the error
+                        pass
+                    else:
+                        x = norm(x)
 
         return x
 
@@ -98,13 +164,20 @@ class DCellNew(nn.Module):
     1. Uses the gene_ontology structure from cell_graph
     2. Processes mutant state tensors generated by DCellGraphProcessor
     3. Handles batches of multiple samples efficiently using vectorized operations
+    4. Supports multi-layer MLPs for each subsystem (when subsystem_num_layers > 1)
 
     Args:
         gene_num: Total number of genes (used for tensor allocations)
         subsystem_output_min: Minimum output size for any subsystem
         subsystem_output_max_mult: Multiplier for scaling subsystem output sizes
-        verbose_debug: Enable verbose debug output
-        norm_type: Type of normalization to use ('batch', 'layer', or 'none')
+        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
+        norm_before_act: Whether to apply normalization before activation
+        subsystem_num_layers: Number of layers per subsystem (default: 1 as in original DCell)
+                             When >1, each subsystem becomes an MLP with multiple
+                             Linear -> [Norm] -> Activation layers (or reverse order)
+        activation: Activation function to use (default: nn.Tanh as in original DCell)
+                    The same activation is used throughout all layers of each subsystem
+        init_range: Range for uniform weight initialization [-init_range, init_range]
     """
 
     def __init__(
@@ -112,8 +185,11 @@ class DCellNew(nn.Module):
         gene_num: int,
         subsystem_output_min: int = 20,
         subsystem_output_max_mult: float = 0.3,
-        verbose_debug: bool = False,
         norm_type: str = "batch",
+        norm_before_act: bool = False,
+        subsystem_num_layers: int = 1,
+        activation: nn.Module = None,
+        init_range: float = 0.001,
     ):
         super().__init__()
         self.gene_num = gene_num
@@ -121,14 +197,14 @@ class DCellNew(nn.Module):
         self.subsystem_output_max_mult = subsystem_output_max_mult
         self.subsystems = nn.ModuleDict()
         self.go_graph = None
-        self.verbose_debug = verbose_debug  # Control debug output
         self.norm_type = norm_type
+        self.norm_before_act = norm_before_act
+        self.subsystem_num_layers = subsystem_num_layers
+        self.activation = activation
+        self.init_range = init_range
 
-        # Initialize with a simple default subsystem to ensure the model has parameters
-        # This will be replaced when actual data is provided
-        self.subsystems["default"] = SubsystemModel(
-            input_size=1, output_size=subsystem_output_min, norm_type=norm_type
-        )
+        # We no longer initialize with a default subsystem
+        # The model will have no parameters until properly initialized with a cell graph
 
         # Flag to track if we've initialized from real data
         self.initialized = False
@@ -276,7 +352,13 @@ class DCellNew(nn.Module):
 
             # Create subsystem
             self.subsystems[node_id] = SubsystemModel(
-                input_size=input_size, output_size=output_size, norm_type=self.norm_type
+                input_size=input_size,
+                output_size=output_size,
+                norm_type=self.norm_type,
+                norm_before_act=self.norm_before_act,
+                num_layers=self.subsystem_num_layers,
+                activation=self.activation,
+                init_range=self.init_range
             )
 
         # Second pass: process non-leaf nodes in reverse topological order
@@ -301,6 +383,10 @@ class DCellNew(nn.Module):
                             input_size=max(1, len(genes_child)),
                             output_size=self.subsystem_output_min,
                             norm_type=self.norm_type,
+                            norm_before_act=self.norm_before_act,
+                            num_layers=self.subsystem_num_layers,
+                            activation=self.activation,
+                            init_range=self.init_range
                         )
                         self.input_sizes[child] = max(1, len(genes_child))
 
@@ -333,6 +419,10 @@ class DCellNew(nn.Module):
                 input_size=total_input_size,
                 output_size=output_size,
                 norm_type=self.norm_type,
+                norm_before_act=self.norm_before_act,
+                num_layers=self.subsystem_num_layers,
+                activation=self.activation,
+                init_range=self.init_range
             )
 
         # Add special handling for root node if present
@@ -346,8 +436,8 @@ class DCellNew(nn.Module):
                 if child in self.subsystems
             )
 
-            # Add 1 for the gene state - this is critical for the ROOT node
-            root_input_size += 1
+            # We don't add an extra input for the gene state for ROOT anymore
+            # The gene state will be created with the right size during forward pass
 
             # Ensure at least size 1
             root_input_size = max(1, root_input_size)
@@ -359,6 +449,10 @@ class DCellNew(nn.Module):
                 input_size=root_input_size,
                 output_size=self.subsystem_output_min,
                 norm_type=self.norm_type,
+                norm_before_act=self.norm_before_act,
+                num_layers=self.subsystem_num_layers,
+                activation=self.activation,
+                init_range=self.init_range
             )
 
         # Verify subsystem creation
@@ -372,14 +466,11 @@ class DCellNew(nn.Module):
         )
         print(f"Total parameters in subsystems: {param_count:,}")
 
-        # If we somehow ended up with no subsystems (very unlikely but possible),
-        # add a default one to ensure we have parameters
+        # If we somehow ended up with no subsystems, fail explicitly
         if len(self.subsystems) == 0:
-            print("Warning: No subsystems created, adding default subsystem")
-            self.subsystems["default"] = SubsystemModel(
-                input_size=1,
-                output_size=self.subsystem_output_min,
-                norm_type=self.norm_type,
+            raise ValueError(
+                "No subsystems were created from the GO hierarchy. "
+                "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
     def forward(
@@ -399,6 +490,13 @@ class DCellNew(nn.Module):
         # Initialize subsystems from cell_graph if not done yet
         if not self.initialized:
             self._initialize_from_cell_graph(cell_graph)
+
+        # Double-check that we're initialized properly
+        if len(self.subsystems) == 0:
+            raise ValueError(
+                "Model has no subsystems after initialization. "
+                "This indicates a problem with the GO hierarchy structure or filtering."
+            )
 
         # Set device
         device = batch["gene"].phenotype_values.device
@@ -431,15 +529,12 @@ class DCellNew(nn.Module):
         # Dictionary to store all subsystem outputs
         subsystem_outputs = {}
 
-        # Handle the special case of the default subsystem for empty GO graphs
-        if "default" in self.subsystems and len(self.subsystems) == 1:
-            # Create a dummy output for the default subsystem
-            default_output = torch.zeros(
-                (num_graphs, self.subsystems["default"].output_size), device=device
+        # We no longer support a default fallback subsystem
+        # If we're missing subsystems, the initialization should have failed earlier
+        if len(self.subsystems) == 0:
+            raise ValueError(
+                "Model has no subsystems. This should not happen as initialization should have failed earlier."
             )
-            subsystem_outputs["default"] = default_output
-            root_output = default_output
-            return root_output, {"subsystem_outputs": subsystem_outputs}
 
         # Create a dictionary to hold gene states for each term and batch item
         term_gene_states = {}
@@ -498,12 +593,8 @@ class DCellNew(nn.Module):
                                     batch_idx, gene_local_idx
                                 ] = 0.0
 
-        # Special case for root node
-        if "GO:ROOT" in self.subsystems:
-            # For ROOT, use a single gene state tensor (all 1s)
-            term_gene_states[-1] = torch.ones(
-                (num_graphs, 1), dtype=torch.float, device=device
-            )
+        # We no longer need special handling for root node here
+        # The root node will get only child outputs, no gene states during the forward pass
 
         # Now process nodes in reverse topological order (leaves to root)
         # using the cached sorted order for efficiency
@@ -546,75 +637,44 @@ class DCellNew(nn.Module):
             if child_outputs:
                 # Concatenate all child outputs along feature dimension
                 child_tensor = torch.cat(child_outputs, dim=1)
-                # For each batch sample, combine its gene states with child outputs
-                combined_input = torch.cat([gene_states, child_tensor], dim=1)
+
+                # Special handling for root node - don't add gene states for GO:ROOT
+                if subsystem_name == "GO:ROOT":
+                    # For root, we just use the child outputs directly
+                    combined_input = child_tensor
+                else:
+                    # For regular nodes, combine gene states with child outputs
+                    combined_input = torch.cat([gene_states, child_tensor], dim=1)
             else:
                 # Use only gene states if no children
                 combined_input = gene_states
 
-            # Check for size mismatch and fix if needed
-            expected_size = subsystem_model.linear.weight.size(1)
+            # Check for size mismatch and fail explicitly
+            # First layer of the subsystem (we're using the first layer's input size)
+            expected_size = subsystem_model.layers[0].weight.size(1)
             actual_size = combined_input.size(1)
 
             if actual_size != expected_size:
-                if self.verbose_debug and (
-                    not hasattr(self, "_reported_mismatch")
-                    or subsystem_name not in self._reported_mismatch
-                ):
-                    # Track reported mismatches
-                    if not hasattr(self, "_reported_mismatch"):
-                        self._reported_mismatch = set()
-                    self._reported_mismatch.add(subsystem_name)
-
-                    # Print mismatch info
-                    print(
-                        f"Size mismatch for {subsystem_name}: expected {expected_size}, got {actual_size}"
-                    )
-
-                # Fix by padding or truncating
-                if actual_size < expected_size:
-                    # Pad with zeros
-                    padding = torch.zeros(
-                        (num_graphs, expected_size - actual_size),
-                        dtype=combined_input.dtype,
-                        device=device,
-                    )
-                    combined_input = torch.cat([combined_input, padding], dim=1)
-                else:
-                    # Truncate to expected size
-                    combined_input = combined_input[:, :expected_size]
+                # Fail explicitly with clear error message
+                raise ValueError(
+                    f"Size mismatch for subsystem '{subsystem_name}': expected {expected_size}, got {actual_size}. "
+                    f"This indicates a mismatch between the graph structure used during model initialization "
+                    f"and the graph structure in the current batch."
+                )
 
             # Forward through subsystem model
             output = subsystem_model(combined_input)
             subsystem_outputs[subsystem_name] = output
 
-        # Find the root output
+        # Find the root output - fail explicitly if not found
         if "GO:ROOT" in subsystem_outputs:
             root_output = subsystem_outputs["GO:ROOT"]
         else:
-            # Find any node without predecessors
-            root_candidates = [
-                node_id
-                for node_id in self.sorted_subsystems
-                if node_id in subsystem_outputs
-                and not list(self.go_graph.predecessors(node_id))
-            ]
-
-            if root_candidates:
-                root_output = subsystem_outputs[root_candidates[0]]
-            elif subsystem_outputs:
-                # Use any output as a fallback
-                root_node_id = next(iter(subsystem_outputs))
-                root_output = subsystem_outputs[root_node_id]
-                print(
-                    f"Warning: Could not find root node, using {root_node_id} as root"
-                )
-            else:
-                # Create empty output as a last resort
-                root_output = torch.zeros(
-                    (num_graphs, self.subsystem_output_min), device=device
-                )
-                print("Warning: No subsystem outputs generated")
+            # No fallback - raise an error if root node is missing
+            raise ValueError(
+                "Root node 'GO:ROOT' not found in subsystem outputs. "
+                "This indicates a problem with the GO hierarchy structure."
+            )
 
         # Return root output and all subsystem outputs
         return root_output, {"subsystem_outputs": subsystem_outputs}
@@ -675,13 +735,21 @@ class DCellModel(nn.Module):
     This model:
     1. Processes gene perturbations through the GO hierarchy
     2. Makes phenotype predictions based on the subsystem outputs
+    3. Supports multi-layer MLPs for each subsystem (when subsystem_num_layers > 1)
 
     Args:
         gene_num: Total number of genes
         subsystem_output_min: Minimum output size for any subsystem
         subsystem_output_max_mult: Multiplier for scaling subsystem output sizes
         output_size: Size of the final output (usually 1 for fitness prediction)
-        norm_type: Type of normalization to use ('batch', 'layer', or 'none')
+        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
+        norm_before_act: Whether to apply normalization before activation
+        subsystem_num_layers: Number of layers per subsystem (default: 1 as in original DCell)
+                             When >1, each subsystem becomes an MLP with multiple
+                             Linear -> [Norm] -> Activation layers (or reverse order)
+        activation: Activation function to use (default: nn.Tanh as in original DCell)
+                    The same activation is used throughout all layers of each subsystem
+        init_range: Range for uniform weight initialization [-init_range, init_range]
     """
 
     def __init__(
@@ -691,6 +759,10 @@ class DCellModel(nn.Module):
         subsystem_output_max_mult: float = 0.3,
         output_size: int = 1,
         norm_type: str = "batch",
+        norm_before_act: bool = False,
+        subsystem_num_layers: int = 1,
+        activation: nn.Module = None,
+        init_range: float = 0.001,
     ):
         super().__init__()
 
@@ -700,6 +772,10 @@ class DCellModel(nn.Module):
             subsystem_output_min=subsystem_output_min,
             subsystem_output_max_mult=subsystem_output_max_mult,
             norm_type=norm_type,
+            norm_before_act=norm_before_act,
+            subsystem_num_layers=subsystem_num_layers,
+            activation=activation,
+            init_range=init_range,
         )
 
         # Defer initializing DCellLinear until we have the fully initialized DCell component
@@ -737,37 +813,16 @@ class DCellModel(nn.Module):
         linear_outputs = self.dcell_linear(subsystem_outputs)
         outputs["linear_outputs"] = linear_outputs
 
-        # Find the root prediction
-        predictions = None
-
+        # Find the root prediction - fail explicitly if not found
         # First try to get prediction for "GO:ROOT"
         if "GO:ROOT" in linear_outputs:
             predictions = linear_outputs["GO:ROOT"]
-        # Otherwise find any node without predecessors
         else:
-            root_candidates = []
-            for node_id in self.dcell.go_graph.nodes() if self.dcell.go_graph else []:
-                if (
-                    node_id in linear_outputs
-                    and self.dcell.go_graph is not None
-                    and not list(self.dcell.go_graph.predecessors(node_id))
-                ):
-                    root_candidates.append(node_id)
-
-            if root_candidates:
-                predictions = linear_outputs[root_candidates[0]]
-            # If we couldn't find a root, use the first available output
-            elif linear_outputs:
-                first_key = next(iter(linear_outputs))
-                predictions = linear_outputs[first_key]
-                print(f"Warning: Using {first_key} as root for predictions")
-            else:
-                # Return zeros if no outputs (shouldn't happen, but just in case)
-                predictions = torch.zeros(
-                    batch.num_graphs,
-                    self.output_size,
-                    device=batch["gene"].phenotype_values.device,
-                )
+            # No fallback - raise an error if root node prediction is missing
+            raise ValueError(
+                "Root node 'GO:ROOT' prediction not found in linear outputs. "
+                "This indicates a problem with the DCellLinear component or GO hierarchy."
+            )
 
         return predictions, outputs
 
@@ -819,35 +874,89 @@ def main(cfg: DictConfig):
     import time
     from tqdm.auto import tqdm
 
+    print("\n" + "="*80)
+    print("DATA LOADING")
+    print("="*80)
+
     print("Loading sample data with DCellGraphProcessor...")
-    # Load sample data with DCellGraphProcessor
+    # Load sample data with DCellGraphProcessor - respecting config
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=32, num_workers=4, config="dcell", is_dense=False
+        batch_size=32,  # Fixed for overfitting test
+        num_workers=cfg.data_module.num_workers,
+        config="dcell",
+        is_dense=False
     )
 
-    # Set device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Set device based on config
+    if cfg.trainer.accelerator == "gpu":
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    else:
+        device = torch.device("cpu")  # Default to CPU
     print(f"Using device: {device}")
 
-    # Print minimal dataset information
-    print(f"Dataset: {len(dataset)} samples, Batch: {batch.num_graphs} graphs")
+    # Print detailed dataset information
+    print(f"Dataset: {len(dataset)} samples")
+    print(f"Batch: {batch.num_graphs} graphs")
+    print(f"Max Number of Nodes: {max_num_nodes}")
+    print(f"Input Channels: {input_channels}")
 
     # Move data to device
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
+    # Parse activation function from config
+    def get_activation_from_config(activation_name: str) -> nn.Module:
+        """Get activation function from string name in config"""
+        activation_map = {
+            "tanh": nn.Tanh(),
+            "relu": nn.ReLU(),
+            "leaky_relu": nn.LeakyReLU(0.1),
+            "gelu": nn.GELU(),
+            "selu": nn.SELU(),
+            "elu": nn.ELU(),
+            "linear": nn.Identity(),  # No activation
+        }
+        return activation_map.get(activation_name.lower(), nn.Tanh())
+
+    # Get activation function from config
+    activation_name = cfg.model.get("activation", "tanh")
+    activation = get_activation_from_config(activation_name)
+
+    # Get other parameters from config with defaults
+    norm_type = cfg.model.get("norm_type", "batch")
+    norm_before_act = cfg.model.get("norm_before_act", False)
+    subsystem_num_layers = cfg.model.get("subsystem_num_layers", 1)
+    init_range = cfg.model.get("init_range", 0.001)
+
+    # Log model configuration
+    print(f"Model configuration:")
+    print(f"  - Normalization type: {norm_type}")
+    print(f"  - Normalization order: {'norm->act' if norm_before_act else 'act->norm'}")
+
+    # Provide more detailed information about the number of layers
+    if subsystem_num_layers == 1:
+        print(f"  - Subsystem architecture: Single layer (original DCell)")
+    else:
+        print(f"  - Subsystem architecture: {subsystem_num_layers}-layer MLP")
+        print(f"    Each subsystem uses multiple linear layers with {activation_name} activation")
+
+    print(f"  - Activation function: {activation_name}")
+    print(f"  - Weight initialization range: ±{init_range}")
+
     # Initialize model
-    print("Initializing model with LayerNorm...")
     model = DCellModel(
         gene_num=max_num_nodes,
-        subsystem_output_min=20,
-        subsystem_output_max_mult=0.3,
-        output_size=1,
-        norm_type="layer",  # Use LayerNorm instead of BatchNorm
+        subsystem_output_min=cfg.model.subsystem_output_min,
+        subsystem_output_max_mult=cfg.model.subsystem_output_max_mult,
+        output_size=cfg.model.output_size,
+        norm_type=norm_type,
+        norm_before_act=norm_before_act,
+        subsystem_num_layers=subsystem_num_layers,
+        activation=activation,
+        init_range=init_range,
     ).to(device)
 
-    # Disable verbose debug output for cleaner console
-    model.dcell.verbose_debug = False
+    # Model has no verbose_debug flag anymore - removed for stricter error handling
 
     # Run a forward pass to initialize the model
     with torch.no_grad():
@@ -868,9 +977,62 @@ def main(cfg: DictConfig):
     print(f"Model parameters: {total_params:,}")
     print(f"Subsystems: {param_info.get('num_subsystems', 0):,}")
 
-    # Create optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    criterion = DCellNewLoss(alpha=0.3)
+    # Create optimizer based on config
+    if hasattr(cfg.regression_task, "optimizer"):
+        optimizer_type = cfg.regression_task.optimizer.type
+        optimizer_lr = cfg.regression_task.optimizer.lr
+        optimizer_weight_decay = cfg.regression_task.optimizer.weight_decay
+
+        print(f"\nOptimizer Configuration:")
+        print(f"  Type: {optimizer_type}")
+        print(f"  Learning Rate: {optimizer_lr}")
+        print(f"  Weight Decay: {optimizer_weight_decay}")
+
+        if optimizer_type.lower() == "adam":
+            optimizer = optim.Adam(
+                model.parameters(),
+                lr=optimizer_lr,
+                weight_decay=optimizer_weight_decay
+            )
+            print(f"Using Adam optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+        elif optimizer_type.lower() == "adamw":
+            optimizer = optim.AdamW(
+                model.parameters(),
+                lr=optimizer_lr,
+                weight_decay=optimizer_weight_decay
+            )
+            print(f"Using AdamW optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+        elif optimizer_type.lower() == "sgd":
+            optimizer = optim.SGD(
+                model.parameters(),
+                lr=optimizer_lr,
+                weight_decay=optimizer_weight_decay
+            )
+            print(f"Using SGD optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+        else:
+            # Default to Adam
+            optimizer = optim.Adam(
+                model.parameters(),
+                lr=optimizer_lr
+            )
+            print(f"Unknown optimizer type '{optimizer_type}', defaulting to Adam with lr={optimizer_lr}")
+    else:
+        # Fallback to Adam with default parameters
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        print("No optimizer config found, using default Adam optimizer with lr=0.001")
+
+    # Create loss function
+    if hasattr(cfg.regression_task, "dcell_loss"):
+        alpha = cfg.regression_task.dcell_loss.alpha
+        use_auxiliary_losses = cfg.regression_task.dcell_loss.use_auxiliary_losses
+        criterion = DCellNewLoss(
+            alpha=alpha,
+            use_auxiliary_losses=use_auxiliary_losses
+        )
+        print(f"Using DCellNewLoss with alpha={alpha}, use_auxiliary_losses={use_auxiliary_losses}")
+    else:
+        criterion = DCellNewLoss(alpha=0.3)
+        print("Using default DCellNewLoss with alpha=0.3")
 
     # Get target
     target = batch["gene"].phenotype_values.view_as(
@@ -878,9 +1040,9 @@ def main(cfg: DictConfig):
     )
 
     # Overfit the model on a single batch
-    print("\nOverfitting model on a single batch...")
-    num_epochs = 3
-    plot_every = 1  # Plot the loss curve every 10 epochs
+    print("\nOverfitting model on a single batch for 500 epochs...")
+    num_epochs = 150
+    plot_every = 50  # Plot the loss curve every 50 epochs
 
     # Initialize history for loss tracking
     history = {
@@ -895,6 +1057,10 @@ def main(cfg: DictConfig):
     # Training loop with tqdm progress bar
     start_time = time.time()
     progress_bar = tqdm(range(num_epochs), desc="Training")
+
+    # Add correlation tracking to history
+    history["correlation"] = []
+
     for epoch in progress_bar:
         epoch_start = time.time()
 
@@ -917,6 +1083,20 @@ def main(cfg: DictConfig):
         )
         history["epochs"].append(epoch)
 
+        # Calculate and store correlation
+        correlation = None
+        if len(pred_values) > 1:  # Only if we have more than one sample
+            try:
+                correlation = np.corrcoef(pred_values, target_values)[0, 1]
+                history["correlation"].append(correlation)
+                corr_str = f", Corr: {correlation:.4f}"
+            except:
+                corr_str = ""
+                history["correlation"].append(float('nan'))
+        else:
+            corr_str = ""
+            history["correlation"].append(float('nan'))
+
         # Record time taken for this epoch
         epoch_time = time.time() - epoch_start
         history["time_per_epoch"].append(epoch_time)
@@ -924,40 +1104,32 @@ def main(cfg: DictConfig):
         # Backward pass and optimizer step
         optimizer.zero_grad()
         loss.backward()
-        optimizer.step()
 
-        # Update progress bar with current statistics
-        if len(pred_values) > 1:  # Only if we have more than one sample
-            try:
-                correlation = np.corrcoef(pred_values, target_values)[0, 1]
-                corr_str = f", Corr: {correlation:.4f}"
-            except:
-                corr_str = ""
-        else:
-            corr_str = ""
+        # Apply gradient clipping if enabled in config
+        if hasattr(cfg.regression_task, "clip_grad_norm") and cfg.regression_task.clip_grad_norm:
+            max_norm = cfg.regression_task.get("clip_grad_norm_max_norm", 10.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
+
+        optimizer.step()
 
         # Update progress bar description
         progress_bar.set_description(
             f"Loss: {loss.item():.6f}{corr_str}, Time: {epoch_time:.3f}s/epoch"
         )
 
-        # Plot loss curves at regular intervals
+        # Plot curves at regular intervals
         if (epoch + 1) % plot_every == 0:
             # Create output directory if needed
             os.makedirs("outputs", exist_ok=True)
 
-            # Plot loss components
+            # 1. Plot loss components
             plt.figure(figsize=(10, 6))
-            plt.plot(
-                history["epochs"], history["total_loss"], "b-", label="Total Loss"
+            # Use semilogy for logarithmic y-axis
+            plt.semilogy(history["epochs"], history["total_loss"], "b-", label="Total Loss")
+            plt.semilogy(
+                history["epochs"], history["primary_loss"], "r-", label="Primary Loss"
             )
-            plt.plot(
-                history["epochs"],
-                history["primary_loss"],
-                "r-",
-                label="Primary Loss",
-            )
-            plt.plot(
+            plt.semilogy(
                 history["epochs"],
                 history["weighted_auxiliary_loss"],
                 "g-",
@@ -965,13 +1137,23 @@ def main(cfg: DictConfig):
             )
 
             plt.xlabel("Epoch")
-            plt.ylabel("Loss")
-            plt.title(f"DCellNew Loss Components - Epoch {epoch+1} (LayerNorm)")
+            plt.ylabel("Loss (log scale)")
+
+            # Include number of layers in title if using multi-layer model
+            if subsystem_num_layers > 1:
+                plt.title(f"DCellNew Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)")
+            else:
+                plt.title(f"DCellNew Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name})")
+
             plt.legend()
             plt.grid(True)
 
             # Save figure properly using ASSET_IMAGES_DIR and timestamp
-            title = f"dcell_layernorm_loss_components_epoch_{epoch+1}"
+            if subsystem_num_layers > 1:
+                title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_epoch_{epoch+1}"
+            else:
+                title = f"dcell_{norm_type}_{activation_name}_loss_components_epoch_{epoch+1}"
+
             save_path = osp.join(
                 os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png"
             )
@@ -979,22 +1161,39 @@ def main(cfg: DictConfig):
             print(f"Saved loss components plot to {save_path}")
             plt.close()
 
-            # Plot time per epoch
-            plt.figure(figsize=(10, 4))
-            plt.plot(history["epochs"], history["time_per_epoch"], "k-")
-            plt.xlabel("Epoch")
-            plt.ylabel("Time (seconds)")
-            plt.title("Time per Epoch")
-            plt.grid(True)
+            # 2. Plot correlation progress
+            plt.figure(figsize=(10, 6))
+            valid_indices = ~np.isnan(history["correlation"])
+            if np.any(valid_indices):
+                valid_epochs = np.array(history["epochs"])[valid_indices]
+                valid_correlations = np.array(history["correlation"])[valid_indices]
+                plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2)
 
-            # Save figure properly using ASSET_IMAGES_DIR and timestamp
-            title = f"dcell_layernorm_time_per_epoch_{epoch+1}"
-            save_path = osp.join(
-                os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png"
-            )
-            plt.savefig(save_path)
-            print(f"Saved time per epoch plot to {save_path}")
-            plt.close()
+                # Add horizontal line at 0.45 for reference
+                plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
+
+                # Get the max correlation achieved
+                max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
+                plt.title(f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})")
+                plt.xlabel("Epoch")
+                plt.ylabel("Pearson Correlation")
+                plt.grid(True)
+                plt.legend()
+
+                # Save correlation plot
+                if subsystem_num_layers > 1:
+                    corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_epoch_{epoch+1}"
+                else:
+                    corr_title = f"dcell_{norm_type}_{activation_name}_correlation_epoch_{epoch+1}"
+
+                corr_save_path = osp.join(
+                    os.environ["ASSET_IMAGES_DIR"], f"{corr_title}_{timestamp()}.png"
+                )
+                plt.savefig(corr_save_path)
+                print(f"Saved correlation plot to {corr_save_path}")
+                plt.close()
+
+            # Skip time per epoch plot
 
     # Create output directory for plots
     os.makedirs("outputs", exist_ok=True)
@@ -1002,17 +1201,29 @@ def main(cfg: DictConfig):
     # Create a more detailed loss components plot
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
-    # Primary plot: Main loss components
-    ax1.plot(history["total_loss"], "b-", linewidth=2, label="Total Loss")
-    ax1.plot(history["primary_loss"], "r-", linewidth=2, label="Primary Loss")
-    ax1.plot(
+    # Primary plot: Main loss components - using log scale for y-axis
+    ax1.semilogy(history["total_loss"], "b-", linewidth=2, label="Total Loss")
+    ax1.semilogy(history["primary_loss"], "r-", linewidth=2, label="Primary Loss")
+    ax1.semilogy(
         history["weighted_auxiliary_loss"],
         "g-",
         linewidth=2,
         label="Weighted Auxiliary Loss",
     )
-    ax1.set_ylabel("Loss Value", fontsize=12)
-    ax1.set_title("DCell Loss Components During Training (LayerNorm)", fontsize=14)
+    ax1.set_ylabel("Loss Value (log scale)", fontsize=12)
+
+    # Include layers info in title if using multi-layer subsystems
+    if subsystem_num_layers > 1:
+        ax1.set_title(
+            f"DCell Loss Components During Training ({norm_type}, {activation_name}, {subsystem_num_layers}-layer MLP)",
+            fontsize=14
+        )
+    else:
+        ax1.set_title(
+            f"DCell Loss Components During Training ({norm_type}, {activation_name})",
+            fontsize=14
+        )
+
     ax1.legend(loc="upper right", fontsize=10)
     ax1.grid(True, linestyle="--", alpha=0.7)
 
@@ -1021,15 +1232,15 @@ def main(cfg: DictConfig):
         if epoch > 0:  # Skip the first epoch for clarity
             ax1.axvline(x=epoch, color="gray", linestyle="--", alpha=0.3)
 
-    # Secondary plot: Auxiliary loss (different scale)
-    ax2.plot(
+    # Secondary plot: Auxiliary loss (different scale) - with log scale
+    ax2.semilogy(
         history["auxiliary_loss"],
         "orange",
         linewidth=2,
         label="Auxiliary Loss (Unweighted)",
     )
     ax2.set_xlabel("Epoch", fontsize=12)
-    ax2.set_ylabel("Auxiliary Loss Value", fontsize=12)
+    ax2.set_ylabel("Auxiliary Loss Value (log scale)", fontsize=12)
     ax2.grid(True, linestyle="--", alpha=0.7)
     ax2.legend(loc="upper right", fontsize=10)
 
@@ -1057,55 +1268,45 @@ def main(cfg: DictConfig):
     plt.tight_layout()
 
     # Save figure properly using ASSET_IMAGES_DIR and timestamp
-    title = "dcell_layernorm_loss_components_final"
+    if subsystem_num_layers > 1:
+        title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_final"
+    else:
+        title = f"dcell_{norm_type}_{activation_name}_loss_components_final"
+
     save_path = osp.join(os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png")
     plt.savefig(save_path, dpi=300)
     print(f"\nDetailed loss components plot saved to '{save_path}'")
 
-    # Plot time per epoch
-    plt.figure(figsize=(10, 6))
-    plt.plot(history["epochs"], history["time_per_epoch"], "k-", linewidth=2)
-    plt.xlabel("Epoch")
-    plt.ylabel("Time per Epoch (seconds)")
-    plt.title("Training Time per Epoch")
-    plt.grid(True, linestyle="--", alpha=0.7)
-
-    # Add average line
-    avg_time = sum(history["time_per_epoch"]) / len(history["time_per_epoch"])
-    plt.axhline(
-        y=avg_time, color="r", linestyle="--", label=f"Average: {avg_time:.3f}s"
-    )
-    plt.legend()
-
-    # Save figure properly using ASSET_IMAGES_DIR and timestamp
-    title = "dcell_layernorm_time_per_epoch_final"
-    save_path = osp.join(os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png")
-    plt.savefig(save_path, dpi=300)
-    print(f"Time per epoch plot saved to '{save_path}'")
+    # Skip time per epoch plot - not needed
 
     # Check if predictions are converging to targets
     # If we have multiple samples, create a predictions vs targets plot
     if len(pred_values) > 1:
-        plt.figure(figsize=(10, 6))
+        # Create a larger figure to accommodate annotations
+        plt.figure(figsize=(12, 9))
 
-        # Create a colormap for samples based on their indices
-        cmap = plt.cm.viridis
-        normalize = plt.Normalize(vmin=0, vmax=len(target_values) - 1)
-        colors = [cmap(normalize(i)) for i in range(len(target_values))]
-
-        # Plot points with color indicating sample index
+        # Plot points with a single color for better contrast with labels
         scatter = plt.scatter(
             target_values,
             pred_values,
-            c=colors,
-            alpha=0.8,
-            s=80,  # Larger point size
+            c="blue",
+            alpha=0.7,
+            s=100,  # Larger point size for better visibility
             label="Predictions",
         )
 
-        # Add a colorbar to show sample indices
-        cbar = plt.colorbar(plt.cm.ScalarMappable(normalize=normalize, cmap=cmap))
-        cbar.set_label("Sample Index")
+        # Add sample indices as annotations directly on each point
+        for i, (x, y) in enumerate(zip(target_values, pred_values)):
+            plt.annotate(
+                f"{i}",  # Sample number
+                (x, y),
+                xytext=(3, 3),  # Small offset
+                textcoords="offset points",
+                fontsize=9,
+                fontweight="bold",
+                color="black",
+                bbox=dict(boxstyle="round,pad=0.1", fc="white", alpha=0.7, ec="none"),
+            )
 
         # Add perfect prediction line
         min_val = min(min(target_values), min(pred_values))
@@ -1116,31 +1317,104 @@ def main(cfg: DictConfig):
 
         # Calculate and display correlation
         correlation = np.corrcoef(pred_values, target_values)[0, 1]
-        plt.title(
-            f"DCell Predictions vs Targets - LayerNorm (Correlation: {correlation:.4f})",
-            fontsize=14,
-        )
-        plt.xlabel("Target Values", fontsize=12)
-        plt.ylabel("Predicted Values", fontsize=12)
-        plt.legend()
+
+        # Include layers info in title if using multi-layer subsystems
+        if subsystem_num_layers > 1:
+            plt.title(
+                f"DCell Predictions vs Targets - {norm_type}, {activation_name}, {subsystem_num_layers}-layer MLP (Correlation: {correlation:.4f})",
+                fontsize=16,
+            )
+        else:
+            plt.title(
+                f"DCell Predictions vs Targets - {norm_type}, {activation_name} (Correlation: {correlation:.4f})",
+                fontsize=16,
+            )
+        plt.xlabel("Target Values", fontsize=14)
+        plt.ylabel("Predicted Values", fontsize=14)
+        plt.legend(fontsize=12)
         plt.grid(True, linestyle="--", alpha=0.7)
+
+        # Add correlation information as text box
+        plt.text(
+            0.05,
+            0.95,
+            f"Pearson Correlation: {correlation:.4f}\n"
+            f"Number of samples: {len(target_values)}",
+            transform=plt.gca().transAxes,
+            fontsize=12,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
+        )
 
         plt.tight_layout()
 
         # Save figure properly using ASSET_IMAGES_DIR and timestamp
-        title = "dcell_layernorm_predictions_vs_targets"
+        if subsystem_num_layers > 1:
+            title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_predictions_vs_targets"
+        else:
+            title = f"dcell_{norm_type}_{activation_name}_predictions_vs_targets"
+
         save_path = osp.join(
             os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png"
         )
         plt.savefig(save_path, dpi=300)
         print(f"Predictions vs targets plot saved to '{save_path}'")
 
-    # Print final loss values
-    print("\nFinal loss values:")
+    # Create final correlation plot
+    plt.figure(figsize=(12, 8))
+    valid_indices = ~np.isnan(history["correlation"])
+    if np.any(valid_indices):
+        valid_epochs = np.array(history["epochs"])[valid_indices]
+        valid_correlations = np.array(history["correlation"])[valid_indices]
+        plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2, label='Correlation')
+
+        # Add horizontal line at 0.45 for reference
+        plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
+
+        # Get the max correlation achieved and its epoch
+        max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
+        max_corr_epoch = valid_epochs[np.argmax(valid_correlations)] if len(valid_correlations) > 0 else 0
+
+        # Add annotation for max correlation
+        plt.annotate(f'Max: {max_corr:.4f} (epoch {max_corr_epoch})',
+                    xy=(max_corr_epoch, max_corr),
+                    xytext=(max_corr_epoch+5, max_corr+0.02),
+                    arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8),
+                    fontsize=12)
+
+        plt.title(f"Correlation Progress Over Training ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)")
+        plt.xlabel("Epoch")
+        plt.ylabel("Pearson Correlation")
+        plt.grid(True)
+        plt.legend(loc='lower right')
+
+        # Save final correlation plot
+        if subsystem_num_layers > 1:
+            corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_final"
+        else:
+            corr_title = f"dcell_{norm_type}_{activation_name}_correlation_final"
+
+        corr_save_path = osp.join(
+            os.environ["ASSET_IMAGES_DIR"], f"{corr_title}_{timestamp()}.png"
+        )
+        plt.savefig(corr_save_path, dpi=300)
+        print(f"\nFinal correlation plot saved to '{corr_save_path}'")
+        plt.close()
+
+    # Print final loss and correlation values
+    print("\nFinal values:")
     print(f"  Total Loss: {history['total_loss'][-1]:.6f}")
     print(f"  Primary Loss: {history['primary_loss'][-1]:.6f}")
     print(f"  Auxiliary Loss: {history['auxiliary_loss'][-1]:.6f}")
     print(f"  Weighted Auxiliary Loss: {history['weighted_auxiliary_loss'][-1]:.6f}")
+
+    # Print correlation statistics
+    valid_correlations = [c for c in history["correlation"] if not np.isnan(c)]
+    if valid_correlations:
+        max_corr = max(valid_correlations)
+        max_corr_epoch = history["epochs"][history["correlation"].index(max_corr)]
+        print(f"  Final Correlation: {valid_correlations[-1]:.6f}")
+        print(f"  Max Correlation: {max_corr:.6f} (at epoch {max_corr_epoch})")
 
     # Print time statistics
     avg_time = sum(history["time_per_epoch"]) / len(history["time_per_epoch"])
@@ -1151,18 +1425,21 @@ def main(cfg: DictConfig):
     print(f"  Min epoch time: {min(history['time_per_epoch']):.3f}s")
     print(f"  Max epoch time: {max(history['time_per_epoch']):.3f}s")
 
-    # Verify BatchNorm behavior with small batch
-    print("\nVerifying BatchNorm with small batch...")
+    # Verify BatchNorm handling with batch size 1
+    print("\nVerifying BatchNorm handling with batch size 1...")
     if batch.num_graphs > 1:
+        # Extract single sample for testing
         single_batch = batch[0]
         single_batch.num_graphs = 1
         try:
             predictions_single, _ = model(cell_graph, single_batch)
             print(
-                f"Single batch forward pass succeeded, shape: {predictions_single.shape}"
+                f"✓ Single batch forward pass succeeded, shape: {predictions_single.shape}"
             )
+            print("  BatchNorm handling for single samples is working correctly")
         except Exception as e:
-            print(f"Single batch forward pass failed: {e}")
+            print(f"❌ Single batch forward pass failed: {e}")
+            print("  This suggests a problem with the BatchNorm safety handling")
 
     return model, history
 

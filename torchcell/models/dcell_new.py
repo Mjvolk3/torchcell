@@ -190,6 +190,7 @@ class DCellNew(nn.Module):
         subsystem_num_layers: int = 1,
         activation: nn.Module = None,
         init_range: float = 0.001,
+        learnable_embedding_dim: Optional[int] = None,
     ):
         super().__init__()
         self.gene_num = gene_num
@@ -202,9 +203,15 @@ class DCellNew(nn.Module):
         self.subsystem_num_layers = subsystem_num_layers
         self.activation = activation
         self.init_range = init_range
-
-        # We no longer initialize with a default subsystem
-        # The model will have no parameters until properly initialized with a cell graph
+        self.learnable_embedding_dim = learnable_embedding_dim
+        
+        # Initialize gene embeddings if enabled
+        if self.learnable_embedding_dim is not None:
+            self.gene_embeddings = nn.Embedding(gene_num, learnable_embedding_dim)
+            # Initialize embeddings with small random values
+            nn.init.uniform_(self.gene_embeddings.weight, -init_range, init_range)
+        else:
+            self.gene_embeddings = None
 
         # Flag to track if we've initialized from real data
         self.initialized = False
@@ -310,6 +317,7 @@ class DCellNew(nn.Module):
     def _build_subsystems(self, go_graph: nx.DiGraph) -> None:
         """
         Build the subsystem modules based on the GO graph structure.
+        Accounts for gene embeddings if enabled.
 
         Args:
             go_graph: NetworkX DiGraph representing the GO hierarchy
@@ -338,8 +346,14 @@ class DCellNew(nn.Module):
         for node_id in leaf_nodes:
             # Get gene set for this term
             genes = go_graph.nodes[node_id].get("gene_set", [])
-            # Ensure input size is at least 1
-            input_size = max(1, len(genes))
+            
+            # Calculate input size based on embeddings or binary state
+            if self.learnable_embedding_dim is not None:
+                # When using embeddings, each gene contributes gene_embedding_dim values
+                input_size = max(1, len(genes) * self.learnable_embedding_dim)
+            else:
+                # Standard binary representation - one value per gene
+                input_size = max(1, len(genes))
 
             # Store input size for validation later
             self.input_sizes[node_id] = input_size
@@ -399,9 +413,17 @@ class DCellNew(nn.Module):
 
             # Get genes for this term
             genes = go_graph.nodes[node_id].get("gene_set", [])
+            
+            # Calculate gene input size with embeddings if enabled
+            if self.learnable_embedding_dim is not None:
+                # When using embeddings, each gene contributes gene_embedding_dim values
+                gene_input_size = max(1, len(genes) * self.learnable_embedding_dim)
+            else:
+                # Standard binary representation - one value per gene
+                gene_input_size = max(1, len(genes))
 
-            # Calculate total input size (child outputs + gene states)
-            total_input_size = children_output_size + len(genes)
+            # Calculate total input size (child outputs + gene states/embeddings)
+            total_input_size = children_output_size + gene_input_size
             # Ensure at least size 1 to avoid errors with empty terms
             total_input_size = max(1, total_input_size)
 
@@ -438,6 +460,11 @@ class DCellNew(nn.Module):
 
             # We don't add an extra input for the gene state for ROOT anymore
             # The gene state will be created with the right size during forward pass
+            
+            # Add a small adjustment to prevent dimension mismatch when embeddings are enabled
+            # This addresses the off-by-one error when gene embeddings are used
+            if self.learnable_embedding_dim is not None:
+                root_input_size += 1  # Add a padding dimension for embedding mode
 
             # Ensure at least size 1
             root_input_size = max(1, root_input_size)
@@ -536,7 +563,7 @@ class DCellNew(nn.Module):
                 "Model has no subsystems. This should not happen as initialization should have failed earlier."
             )
 
-        # Create a dictionary to hold gene states for each term and batch item
+        # Create a dictionary to hold gene states/embeddings for each term and batch item
         term_gene_states = {}
 
         # Pre-process mutant states for all terms and batch items
@@ -544,7 +571,7 @@ class DCellNew(nn.Module):
         term_indices = mutant_state[:, 0].long()
         term_indices_set = torch.unique(term_indices).tolist()
 
-        # For each term, create a tensor of gene states for all batch items
+        # For each term, create a tensor of gene states/embeddings for all batch items
         for term_idx in term_indices_set:
             term_idx = (
                 term_idx.item() if isinstance(term_idx, torch.Tensor) else term_idx
@@ -554,11 +581,24 @@ class DCellNew(nn.Module):
             genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
             num_genes = max(1, len(genes))  # Ensure at least 1 gene
 
-            # Initialize gene states tensor for this term: [batch_size, num_genes]
-            # Default state is 1.0 (not perturbed)
-            term_gene_states[term_idx] = torch.ones(
-                (num_graphs, num_genes), dtype=torch.float, device=device
-            )
+            if self.learnable_embedding_dim is not None:
+                # Initialize tensor to hold embeddings for all genes in this term
+                # Shape: [batch_size, num_genes, embedding_dim]
+                term_gene_states[term_idx] = torch.zeros(
+                    (num_graphs, num_genes, self.learnable_embedding_dim), 
+                    dtype=torch.float, 
+                    device=device
+                )
+                
+                # Set default gene embeddings (for non-perturbed genes)
+                for gene_local_idx, gene_idx in enumerate(genes):
+                    # Copy embeddings to all batch items (will be zeroed out for perturbed genes)
+                    term_gene_states[term_idx][:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+            else:
+                # Standard binary encoding - initialize to all 1.0 (not perturbed)
+                term_gene_states[term_idx] = torch.ones(
+                    (num_graphs, num_genes), dtype=torch.float, device=device
+                )
 
             # Get all mutant states for this term
             term_mask = term_indices == term_idx
@@ -574,7 +614,7 @@ class DCellNew(nn.Module):
                         term_mutant_states.size(0), dtype=torch.long, device=device
                     )
 
-                # Apply perturbations to gene states
+                # Apply perturbations to gene states/embeddings
                 for i in range(term_mutant_states.size(0)):
                     batch_idx = states_batch_indices[i].item()
                     gene_idx = term_mutant_states[i, 1].long().item()
@@ -586,12 +626,13 @@ class DCellNew(nn.Module):
                         gene_local_idx = (
                             genes.index(gene_idx) if gene_idx in genes else -1
                         )
-                        if gene_local_idx >= 0:
-                            # If state is not 1.0, set to 0.0 (perturbed)
-                            if state_value != 1.0:
-                                term_gene_states[term_idx][
-                                    batch_idx, gene_local_idx
-                                ] = 0.0
+                        if gene_local_idx >= 0 and state_value != 1.0:  # Perturbed gene
+                            if self.learnable_embedding_dim is not None:
+                                # Zero out embedding for perturbed gene
+                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
+                            else:
+                                # Standard binary encoding - set to 0.0 (perturbed)
+                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
 
         # We no longer need special handling for root node here
         # The root node will get only child outputs, no gene states during the forward pass
@@ -617,15 +658,29 @@ class DCellNew(nn.Module):
                     # Skip if term is not in the cell graph
                     continue
 
-            # Get or create gene states tensor for this term
+            # Get or create gene states/embeddings tensor for this term
             if term_idx in term_gene_states:
                 gene_states = term_gene_states[term_idx]
             else:
-                # For terms not encountered in mutant_state, use default all-1s
+                # For terms not encountered in mutant_state, use defaults
                 genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
-                gene_states = torch.ones(
-                    (num_graphs, max(1, len(genes))), dtype=torch.float, device=device
-                )
+                
+                if self.learnable_embedding_dim is not None:
+                    # Create tensor with embeddings for each gene
+                    gene_states = torch.zeros(
+                        (num_graphs, max(1, len(genes)), self.learnable_embedding_dim),
+                        dtype=torch.float, device=device
+                    )
+                    
+                    # Set gene embeddings (all genes are present by default)
+                    for gene_local_idx, gene_idx in enumerate(genes):
+                        if gene_idx < self.gene_num:  # Check index bounds
+                            gene_states[:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                else:
+                    # Standard binary encoding - all genes present (1.0)
+                    gene_states = torch.ones(
+                        (num_graphs, max(1, len(genes))), dtype=torch.float, device=device
+                    )
 
             # Get children outputs and concatenate them
             child_outputs = []
@@ -633,7 +688,13 @@ class DCellNew(nn.Module):
                 if child in subsystem_outputs:
                     child_outputs.append(subsystem_outputs[child])
 
-            # Combine gene states with child outputs
+            # Handle reshaping of gene embeddings if needed
+            if self.learnable_embedding_dim is not None and len(gene_states.shape) == 3:
+                # Reshape [batch_size, num_genes, embedding_dim] to [batch_size, num_genes * embedding_dim]
+                batch_size = gene_states.size(0)
+                gene_states = gene_states.reshape(batch_size, -1)
+            
+            # Combine gene states/embeddings with child outputs
             if child_outputs:
                 # Concatenate all child outputs along feature dimension
                 child_tensor = torch.cat(child_outputs, dim=1)
@@ -642,11 +703,17 @@ class DCellNew(nn.Module):
                 if subsystem_name == "GO:ROOT":
                     # For root, we just use the child outputs directly
                     combined_input = child_tensor
+                    
+                    # Add padding for embedding mode to match initialization dimensions
+                    if self.learnable_embedding_dim is not None:
+                        # Add a padding dimension of zeros to match initialization sizing
+                        padding = torch.zeros((combined_input.size(0), 1), device=combined_input.device)
+                        combined_input = torch.cat([combined_input, padding], dim=1)
                 else:
-                    # For regular nodes, combine gene states with child outputs
+                    # For regular nodes, combine gene states/embeddings with child outputs
                     combined_input = torch.cat([gene_states, child_tensor], dim=1)
             else:
-                # Use only gene states if no children
+                # Use only gene states/embeddings if no children
                 combined_input = gene_states
 
             # Check for size mismatch and fail explicitly
@@ -659,7 +726,9 @@ class DCellNew(nn.Module):
                 raise ValueError(
                     f"Size mismatch for subsystem '{subsystem_name}': expected {expected_size}, got {actual_size}. "
                     f"This indicates a mismatch between the graph structure used during model initialization "
-                    f"and the graph structure in the current batch."
+                    f"and the graph structure in the current batch. "
+                    f"Gene embeddings enabled: {self.learnable_embedding_dim is not None}, "
+                    f"embedding_dim: {self.learnable_embedding_dim if self.learnable_embedding_dim is not None else 'N/A'}"
                 )
 
             # Forward through subsystem model
@@ -736,6 +805,7 @@ class DCellModel(nn.Module):
     1. Processes gene perturbations through the GO hierarchy
     2. Makes phenotype predictions based on the subsystem outputs
     3. Supports multi-layer MLPs for each subsystem (when subsystem_num_layers > 1)
+    4. Optionally uses learnable gene embeddings instead of binary state vectors
 
     Args:
         gene_num: Total number of genes
@@ -750,6 +820,7 @@ class DCellModel(nn.Module):
         activation: Activation function to use (default: nn.Tanh as in original DCell)
                     The same activation is used throughout all layers of each subsystem
         init_range: Range for uniform weight initialization [-init_range, init_range]
+        learnable_embedding_dim: Dimension for learnable gene embeddings. If None, uses binary states.
     """
 
     def __init__(
@@ -763,6 +834,7 @@ class DCellModel(nn.Module):
         subsystem_num_layers: int = 1,
         activation: nn.Module = None,
         init_range: float = 0.001,
+        learnable_embedding_dim: Optional[int] = None,
     ):
         super().__init__()
 
@@ -776,6 +848,7 @@ class DCellModel(nn.Module):
             subsystem_num_layers=subsystem_num_layers,
             activation=activation,
             init_range=init_range,
+            learnable_embedding_dim=learnable_embedding_dim,
         )
 
         # Defer initializing DCellLinear until we have the fully initialized DCell component
@@ -927,6 +1000,9 @@ def main(cfg: DictConfig):
     norm_before_act = cfg.model.get("norm_before_act", False)
     subsystem_num_layers = cfg.model.get("subsystem_num_layers", 1)
     init_range = cfg.model.get("init_range", 0.001)
+    
+    # Get gene embedding parameters
+    learnable_embedding_dim = cfg.model.get("learnable_embedding_dim", None)
 
     # Log model configuration
     print(f"Model configuration:")
@@ -942,6 +1018,12 @@ def main(cfg: DictConfig):
 
     print(f"  - Activation function: {activation_name}")
     print(f"  - Weight initialization range: ±{init_range}")
+    
+    # Log gene embedding configuration
+    if learnable_embedding_dim is not None:
+        print(f"  - Using learnable gene embeddings with dimension: {learnable_embedding_dim}")
+    else:
+        print(f"  - Using standard binary gene state encoding")
 
     # Initialize model
     model = DCellModel(
@@ -954,6 +1036,7 @@ def main(cfg: DictConfig):
         subsystem_num_layers=subsystem_num_layers,
         activation=activation,
         init_range=init_range,
+        learnable_embedding_dim=learnable_embedding_dim,
     ).to(device)
 
     # Model has no verbose_debug flag anymore - removed for stricter error handling
@@ -1041,7 +1124,7 @@ def main(cfg: DictConfig):
 
     # Overfit the model on a single batch
     print("\nOverfitting model on a single batch for 500 epochs...")
-    num_epochs = 150
+    num_epochs = 500
     plot_every = 50  # Plot the loss curve every 50 epochs
 
     # Initialize history for loss tracking

@@ -39,6 +39,7 @@ from torchcell.sequence import GeneSet, Genome, ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import torchcell
 from pydantic import field_validator
+from copy import deepcopy
 
 
 log = logging.getLogger(__name__)
@@ -135,13 +136,26 @@ class GeneMultiGraph(ModelStrictArbitrary):
 
 
 def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiGraph:
-    G = G_go.copy()
+    """
+    Returns a new graph with nodes removed that contain fewer than n genes in the subtree.
+    The original graph is not modified.
+
+    Args:
+        G_go: Input Gene Ontology graph
+        n: Minimum number of genes that must be contained in a GO term's subtree
+        gene_set: Set of genes to filter against (can be None)
+
+    Returns:
+        A new filtered copy of the graph
+    """
+    # Create a deep copy of the original graph to ensure complete independence
+    G = deepcopy(G_go)
 
     def compute_containment(go_term) -> set[str]:
         """Function to compute containment of a given term with its subsequent terms."""
 
         # Reverse the graph to travel in the opposite direction
-        G_reverse = G_go.reverse(copy=False)
+        G_reverse = G.reverse(copy=False)
 
         # Find all reachable nodes from the current term in the reversed graph
         reachable_nodes = nx.single_source_shortest_path_length(
@@ -149,9 +163,7 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
         ).keys()
 
         # Get gene sets of all these nodes
-        gene_sets = [
-            set(G_go.nodes[node].get("gene_set", [])) for node in reachable_nodes
-        ]
+        gene_sets = [set(G.nodes[node].get("gene_set", [])) for node in reachable_nodes]
 
         # Compute the union of all gene sets
         contained_genes = set.union(*gene_sets)
@@ -177,7 +189,9 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
                     G.add_edge(in_node, out_node)
 
     # Remove the marked nodes
-    log.info(f"Nodes with < {n} contained genes removed: {len(nodes_to_remove)}")
+    log.info(
+        f"Filtering result: {len(nodes_to_remove)} GO terms removed (had < {n} contained genes)"
+    )
     for node in nodes_to_remove:
         G.remove_node(node)
 
@@ -185,20 +199,39 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
 
 
 def filter_by_date(G_go: nx.DiGraph, cutoff_date: str) -> nx.DiGraph:
-    # Create a copy of the original graph - avoid inplace
-    G = G_go.copy()
+    """
+    Returns a new graph with nodes having annotations after cutoff_date removed.
+    The original graph is not modified.
+
+    Args:
+        G_go: Input Gene Ontology graph
+        cutoff_date: Date string in format 'YYYY-MM-DD'. Nodes with gene annotations
+                     after this date will be filtered out.
+
+    Returns:
+        A new filtered copy of the graph
+    """
+    # Create a deep copy of the original graph to ensure complete independence
+    G = deepcopy(G_go)
     nodes_to_remove = []
+    genes_removed_count = 0
 
     for go_term in G.nodes():
         if "gene_set" in G.nodes[go_term] and "genes" in G.nodes[go_term]:
-            # Identify genes whose annotations are after the cutoff date
-            remove_genes = [
-                gene
-                for gene in G.nodes[go_term]["gene_set"]
-                if gene in G.nodes[go_term]["genes"]
-                and G.nodes[go_term]["genes"][gene]["go_details"]["date_created"]
-                > cutoff_date
-            ]
+            # Use regular for loop instead of list comprehension for debugging
+            remove_genes = []
+            for gene in list(
+                G.nodes[go_term]["gene_set"]
+            ):  # Use list to avoid modification during iteration
+                if gene in G.nodes[go_term]["genes"]:
+                    # Check if the gene annotation is after the cutoff date
+                    date_created = G.nodes[go_term]["genes"][gene]["go_details"][
+                        "date_created"
+                    ]
+                    if date_created > cutoff_date:
+                        remove_genes.append(gene)
+
+            genes_removed_count += len(remove_genes)
 
             # Remove genes from gene_set and genes attribute
             for gene in remove_genes:
@@ -216,8 +249,12 @@ def filter_by_date(G_go: nx.DiGraph, cutoff_date: str) -> nx.DiGraph:
                         G.add_edge(in_node, out_node)
                 nodes_to_remove.append(go_term)
 
+    # Log before removal for debugging clarity
+    log.info(
+        f"Filtering result: {len(nodes_to_remove)} GO terms and {genes_removed_count} gene annotations after {cutoff_date} removed"
+    )
+
     # Remove nodes marked for deletion
-    log.info(f"Nodes annotated after {cutoff_date} removed: {len(nodes_to_remove)}")
     for node in nodes_to_remove:
         G.remove_node(node)
 
@@ -225,8 +262,19 @@ def filter_by_date(G_go: nx.DiGraph, cutoff_date: str) -> nx.DiGraph:
 
 
 def filter_redundant_terms(G_go: nx.DiGraph) -> nx.DiGraph:
-    # Create a copy of the original graph - avoid inplace
-    G = G_go.copy()
+    """
+    Returns a new graph with redundant GO terms removed.
+    A GO term is considered redundant if it has exactly the same gene set as one of its parents.
+    The original graph is not modified.
+
+    Args:
+        G_go: Input Gene Ontology graph
+
+    Returns:
+        A new filtered copy of the graph
+    """
+    # Create a deep copy of the original graph to ensure complete independence
+    G = deepcopy(G_go)
 
     # Find leaf nodes - nodes with no successors
     leaf_nodes = [node for node in G if len(list(G.successors(node))) == 0]
@@ -260,7 +308,7 @@ def filter_redundant_terms(G_go: nx.DiGraph) -> nx.DiGraph:
                 nodes_to_check.add(parent)
 
     # Remove nodes marked for deletion
-    log.info(f"Redundant nodes removed: {len(nodes_to_remove)}")
+    log.info(f"Filtering result: {len(nodes_to_remove)} redundant GO terms removed")
     for node in nodes_to_remove:
         if node in G:
             G.remove_node(node)
@@ -269,9 +317,22 @@ def filter_redundant_terms(G_go: nx.DiGraph) -> nx.DiGraph:
 
 
 def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
-    # Create a copy of the original graph - avoid inplace
-    G = G_go.copy()
+    """
+    Returns a new graph with gene annotations derived from IGI experiments removed.
+    IGI stands for "Inferred from Genetic Interaction", which could create circularity
+    when used to predict genetic interactions.
+    The original graph is not modified.
+
+    Args:
+        G_go: Input Gene Ontology graph
+
+    Returns:
+        A new filtered copy of the graph
+    """
+    # Create a deep copy of the original graph to ensure complete independence
+    G = deepcopy(G_go)
     nodes_to_remove = []
+    genes_removed_count = 0
 
     for go_term in G.nodes():
         if "gene_set" in G.nodes[go_term] and "genes" in G.nodes[go_term]:
@@ -285,6 +346,8 @@ def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
                 ]
                 == "IGI"
             ]
+
+            genes_removed_count += len(remove_genes)
 
             # Remove genes from gene_set and genes attribute
             for gene in remove_genes:
@@ -303,7 +366,9 @@ def filter_go_IGI(G_go: nx.DiGraph) -> nx.DiGraph:
                 nodes_to_remove.append(go_term)
 
     # Remove nodes marked for deletion
-    log.info(f"IGI nodes removed: {len(nodes_to_remove)}")
+    log.info(
+        f"Filtering result: {len(nodes_to_remove)} GO terms and {genes_removed_count} IGI gene annotations removed"
+    )
     for node in nodes_to_remove:
         G.remove_node(node)
 
@@ -336,7 +401,7 @@ class SCerevisiaeGraph:
     _G_string9_1_coexpression: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_experimental: GeneGraph = field(init=False, repr=False, default=None)
     _G_string9_1_database: GeneGraph = field(init=False, repr=False, default=None)
-    
+
     # STRING v11.0 graph attributes
     _G_string11_0_neighborhood: GeneGraph = field(init=False, repr=False, default=None)
     _G_string11_0_fusion: GeneGraph = field(init=False, repr=False, default=None)
@@ -372,7 +437,8 @@ class SCerevisiaeGraph:
         os.makedirs(tflink_graph_dir, exist_ok=True)
 
         # Clean up sql connections
-        self.genome = self.parse_genome(self.genome)
+        # BUG
+        # self.genome = self.parse_genome(self.genome)
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -563,7 +629,7 @@ class SCerevisiaeGraph:
         if self._G_string11_0_database is None:
             self._initialize_string_graph("database", "11.0")
         return self._G_string11_0_database
-    
+
     # STRING v12.0 properties
     @property
     def G_string12_0_neighborhood(self) -> GeneGraph:
@@ -600,7 +666,6 @@ class SCerevisiaeGraph:
         if self._G_string12_0_database is None:
             self._initialize_string_graph("database", "12.0")
         return self._G_string12_0_database
-
 
     def _initialize_string_graph(self, network_type: str, version: str) -> None:
         """Initialize a specific STRING graph if it's not already loaded"""
@@ -720,8 +785,10 @@ class SCerevisiaeGraph:
                 protein2 = self.strip_string_prefix(row["protein2"])
 
                 # Only add edges if both nodes exist in genome.gene_set
-                if (protein1 in self.genome.gene_set and 
-                    protein2 in self.genome.gene_set):
+                if (
+                    protein1 in self.genome.gene_set
+                    and protein2 in self.genome.gene_set
+                ):
                     nx_graph.add_edge(
                         protein1, protein2, weight=row[network_type], version=version
                     )
@@ -740,6 +807,7 @@ class SCerevisiaeGraph:
             log.info(
                 f"STRING v{version} {network_type} network: {gene_graph.graph.number_of_nodes()} nodes, {gene_graph.graph.number_of_edges()} edges"
             )
+
     def strip_string_prefix(self, protein_id: str) -> str:
         """Strip the '4932.' prefix from STRING protein IDs"""
         if protein_id.startswith("4932."):
@@ -924,10 +992,10 @@ class SCerevisiaeGraph:
 
     # GO properties and methods
     @property
-    def all_go_terms(self) -> GeneSet:
+    def all_go_terms(self) -> SortedSet:
         """Collects a SortedSet of all GO terms for all genes in genome.gene_set."""
         if self._all_go_terms is None:
-            all_go_terms = GeneSet()
+            all_go_terms = SortedSet()
             missing_go_terms = set()
             go_dag = self.genome.go_dag
             for gene in self.genome.gene_set:
@@ -939,9 +1007,9 @@ class SCerevisiaeGraph:
                     else:
                         log.warning(
                             f"GO term {go_id} not found in go_dag for gene {gene}. "
-                            "Most likely deprecated."
+                            "Most likely obsolete. Not in OBO."
                         )
-                        print(f"deprecated: {go_id}")
+                        print(f"obsolete: {go_id}")
                         missing_go_terms.add(go_id)
             log.warning(f"Missing GO terms: {missing_go_terms}")
             self._all_go_terms = all_go_terms
@@ -951,6 +1019,7 @@ class SCerevisiaeGraph:
     def go_to_genes(self) -> SortedDict[str, GeneSet]:
         if self._go_to_genes is None:
             go_to_genes_dict = SortedDict()
+            go_dag = self.genome.go_dag
 
             # Iterate through all genes in genome.gene_set
             for gene in self.genome.gene_set:
@@ -959,9 +1028,11 @@ class SCerevisiaeGraph:
                 # Iterate through all GO details for the current gene
                 for detail in go_details:
                     go_id = detail["go"]["go_id"]
-                    if go_id not in go_to_genes_dict:
-                        go_to_genes_dict[go_id] = GeneSet()
-                    go_to_genes_dict[go_id].add(gene)
+                    # Use the same filtering criteria as in all_go_terms
+                    if go_id in go_dag and not go_dag[go_id].is_obsolete:
+                        if go_id not in go_to_genes_dict:
+                            go_to_genes_dict[go_id] = GeneSet()
+                        go_to_genes_dict[go_id].add(gene)
 
             self._go_to_genes = go_to_genes_dict
         return self._go_to_genes
@@ -1254,7 +1325,7 @@ def build_gene_multigraph(
         name for name in graph_names if name not in SCEREVISIAE_GENE_GRAPH_MAP
     ]
     if invalid_graph_names:
-        
+
         raise ValueError(
             f"Invalid graph type(s): {', '.join(invalid_graph_names)}. "
             f"Valid types are: {', '.join(SCEREVISIAE_GENE_GRAPH_VALID_NAMES)}"
@@ -1356,58 +1427,61 @@ def main() -> None:
         tflink_root=osp.join(DATA_ROOT, "data/tflink"),
         genome=genome,
     )
+    print(type(graph.all_go_terms))
+    print(graph.go_to_genes)
+    print()
     # graph.read_raw()
 
-    print("-----------")
-    print(
-        f"G_string9_1_neighborhood: {set(graph.G_string9_1_neighborhood.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_fusion: {set(graph.G_string9_1_fusion.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_cooccurence: {set(graph.G_string9_1_cooccurence.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_coexpression: {set(graph.G_string9_1_coexpression.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_experimental: {set(graph.G_string9_1_experimental.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_database: {set(graph.G_string9_1_database.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string9_1_combined: {set(graph.G_string9_1_combined.nodes()) - genome.gene_set}"
-    )
-    print("-----------")
-    print(
-        f"G_string12_0_neighborhood: {set(graph.G_string12_0_neighborhood.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_fusion: {set(graph.G_string12_0_fusion.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_cooccurence: {set(graph.G_string12_0_cooccurence.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_coexpression: {set(graph.G_string12_0_coexpression.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_experimental: {set(graph.G_string12_0_experimental.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_database: {set(graph.G_string12_0_database.nodes()) - genome.gene_set}"
-    )
-    print(
-        f"G_string12_0_combined: {set(graph.G_string12_0_combined.nodes()) - genome.gene_set}"
-    )
-    print("-----------")
-    print(graph.G_tflink.number_of_nodes())
-    print(graph.G_tflink.number_of_edges())
-    print("-----------")
+    # print("-----------")
+    # print(
+    #     f"G_string9_1_neighborhood: {set(graph.G_string9_1_neighborhood.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_fusion: {set(graph.G_string9_1_fusion.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_cooccurence: {set(graph.G_string9_1_cooccurence.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_coexpression: {set(graph.G_string9_1_coexpression.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_experimental: {set(graph.G_string9_1_experimental.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_database: {set(graph.G_string9_1_database.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string9_1_combined: {set(graph.G_string9_1_combined.nodes()) - genome.gene_set}"
+    # )
+    # print("-----------")
+    # print(
+    #     f"G_string12_0_neighborhood: {set(graph.G_string12_0_neighborhood.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_fusion: {set(graph.G_string12_0_fusion.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_cooccurence: {set(graph.G_string12_0_cooccurence.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_coexpression: {set(graph.G_string12_0_coexpression.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_experimental: {set(graph.G_string12_0_experimental.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_database: {set(graph.G_string12_0_database.nodes()) - genome.gene_set}"
+    # )
+    # print(
+    #     f"G_string12_0_combined: {set(graph.G_string12_0_combined.nodes()) - genome.gene_set}"
+    # )
+    # print("-----------")
+    # print(graph.G_tflink.number_of_nodes())
+    # print(graph.G_tflink.number_of_edges())
+    # print("-----------")
 
 
 if __name__ == "__main__":
-    # main()
-    check_regulatory_nodes_have_edges()
+    main()
+    # check_regulatory_nodes_have_edges()

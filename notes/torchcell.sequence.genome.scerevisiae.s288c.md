@@ -2,7 +2,7 @@
 id: 9rijjyg8k6nasnucyb5g4s4
 title: S288C
 desc: ''
-updated: 1697572209673
+updated: 1747276493205
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -540,3 +540,78 @@ Dubious             684
 Uncharacterized     668
 Name: count, dtype: int64
 ```
+
+## 2025.05.14 - Adding GO from Gene Ontology Source
+
+```python
+    def remove_deprecated_go_terms(self):
+        # Create a list to hold updated features
+        updated_features = []
+
+        # Iterate over each feature in the database
+        invalid_go_terms = {"not_in_go_dag": [], "obsolete": []}
+        for feature in self.db.features_of_type("gene"):
+            # Check if the feature has the "Ontology_term" attribute
+            if "Ontology_term" in feature.attributes: # FLAG BREAKPOINT HERE
+                # Filter out deprecated GO terms
+                valid_onto_terms = []
+                valid_go_terms = []
+                for term in feature.attributes["Ontology_term"]:
+                    if term.startswith("GO:"):
+                        if term not in self.go_dag:
+                            invalid_go_terms["not_in_go_dag"].append(term)
+                        elif self.go_dag[term].is_obsolete:
+                            invalid_go_terms["obsolete"].append(term)
+                        else:
+                            valid_go_terms.append(term)
+                    else:
+                        valid_onto_terms.append(term)
+                # Update the "Ontology_term" attribute for the feature
+                if valid_go_terms:
+                    feature.attributes["Ontology_term"] = (
+                        valid_go_terms + valid_onto_terms
+                    )
+                else:
+                    del feature.attributes["Ontology_term"]
+
+                # Add the updated feature to the list
+                updated_features.append(feature)
+
+        # Update all features in the database at once
+        self.db.update(updated_features, merge_strategy="replace")
+
+        # Commit the changes to the database
+        self.db.conn.commit()
+```
+
+```python
+feature.attributes
+<gffutils.attributes.Attributes object at 0x17ef51010>
+special variables
+function variables
+_MutableMapping__marker =
+<object object at 0x104b34150>
+_abc_impl =
+<_abc._abc_data object at 0x108a0b940>
+_d =
+{'ID': ['YAL069W'], 'Name': ['YAL069W'], 'Ontology_term': ['GO:0003674', 'GO:0005575', 'GO:0008150', 'SO:0000704'], 'Note': ['Dubious open reading frame; unlikely to encode a functional protein, based on availab...experimental and comparative sequence data'], 'display': ['Dubious open reading frame'], 'dbxref': ['SGD:S000002143'], 'orf_classification': ['Dubious'], 'curie': ['SGD:S000002143']}
+special variables
+function variables
+'ID' =
+['YAL069W']
+'Name' =
+['YAL069W']
+'Ontology_term' =
+['GO:0003674', 'GO:0005575', 'GO:0008150', 'SO:0000704']
+'Note' =
+['Dubious open reading frame; unlikely to encode a functional protein, based on availab...experimental and comparative sequence data']
+'display' =
+['Dubious open reading frame']
+'dbxref' =
+['SGD:S000002143']
+'orf_classification' =
+['Dubious']
+'curie' =
+['SGD:S000002143']
+len() =
+8```

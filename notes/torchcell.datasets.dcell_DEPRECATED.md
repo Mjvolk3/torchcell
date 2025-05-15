@@ -2,7 +2,7 @@
 id: oky9d63481uy16a7qg042vb
 title: dcell_DEPRECATED
 desc: ''
-updated: 1746846032624
+updated: 1747351352264
 created: 1698174303118
 ---
 ## DCell Dataset GO Gene Annotations Time Cutoff
@@ -111,6 +111,4 @@ for term in feature.attributes["Ontology_term"]:
 ```
 
 After we switch from using Genome to SGD, we can look at how the number of nodes drops after filtering
-
-## 2025.05.09 - Reviving Model and Dataset
 

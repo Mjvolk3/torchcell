@@ -8,7 +8,7 @@ import torch.nn as nn
 from typing import Dict, List, Tuple, Any, Optional
 
 
-class DCellNewLoss(nn.Module):
+class DCellLoss(nn.Module):
     """
     Loss function for the DCellNew model implementation.
 

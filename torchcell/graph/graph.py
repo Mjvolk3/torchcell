@@ -438,7 +438,7 @@ class SCerevisiaeGraph:
 
         # Clean up sql connections
         # BUG
-        # self.genome = self.parse_genome(self.genome)
+        self.genome = self.parse_genome(self.genome)
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:

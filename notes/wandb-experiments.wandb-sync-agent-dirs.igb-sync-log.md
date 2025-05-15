@@ -2,7 +2,7 @@
 id: rgfn2j7w3chl5x7xbdqbr3o
 title: Igb Sync Log
 desc: ''
-updated: 1746839938294
+updated: 1747077842386
 created: 1746817428349
 ---
 oldest at top
@@ -551,5 +551,14 @@ Wanted to handle `online` and `offline` runs so that it forces sync.
 wandb_sync_agent_dirs \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1669133_dc7eec7de53517268544215fbb36a442718cdad082f57f19d51a31d4bb0161b9 \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1670097_dc7eec7de53517268544215fbb36a442718cdad082f57f19d51a31d4bb0161b9 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1765976_24093ac8b557d9538ba7dcae476e6acabcd312ff480bf5e16903065270f0cb9a
+```
+
+## 2025.05.12 - Dango Reproducibility Run
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1769441_126638dce9ca81110c2e9c8894af1f399e5606d2eaf333e415f0e7a259aa4040 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1769453_3a135e41b4948e5a332cd4dad053077c79416a21d569da8ab0fcaccc51b8f442 \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1765976_24093ac8b557d9538ba7dcae476e6acabcd312ff480bf5e16903065270f0cb9a
 ```

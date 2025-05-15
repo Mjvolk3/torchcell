@@ -9,7 +9,7 @@ created: 1725919115953
 
 ## 2024.09.09 - Thinking About Pooling GNNs
 
-We want to start by using a dense pooling method so we can look at gene ontology enrichment. This means we will have to be careful with total parameter size. The best thing to do would probably be to match [[Dcell|dendron://torchcell/torchcell.models.dcell]].
+We want to start by using a dense pooling method so we can look at gene ontology enrichment. This means we will have to be careful with total parameter size. The best thing to do would probably be to match [[dcell_DEPRECATED|dendron://torchcell/torchcell.models.dcell_DEPRECATED]].
 
 ### Parameters in DCell Model
 

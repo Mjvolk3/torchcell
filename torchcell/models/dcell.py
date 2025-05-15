@@ -1,7 +1,8 @@
-# torchcell/models/dcell_new
-# [[torchcell.models.dcell_new]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell_new
-# Test file: tests/torchcell/models/test_dcell_new.py
+# torchcell/models/dcell
+# [[torchcell.models.dcell]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell
+# Test file: tests/torchcell/models/test_dcell.py
+
 
 import torch
 import torch.nn as nn
@@ -18,10 +19,7 @@ import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from torchcell.timestamp import timestamp
-from torchcell.losses.dcell_new import DCellNewLoss
-
-# Load environment variables to get ASSET_IMAGES_DIR
-load_dotenv()
+from torchcell.losses.dcell import DCellLoss
 
 
 class SubsystemModel(nn.Module):
@@ -56,7 +54,7 @@ class SubsystemModel(nn.Module):
         norm_before_act: bool = False,
         num_layers: int = 1,
         activation: nn.Module = None,
-        init_range: float = 0.001
+        init_range: float = 0.001,
     ):
         super().__init__()
         self.output_size = output_size  # Store output size as an attribute
@@ -156,7 +154,7 @@ class SubsystemModel(nn.Module):
         return x
 
 
-class DCellNew(nn.Module):
+class DCell(nn.Module):
     """
     Reimplementation of DCell model that works directly with PyTorch Geometric HeteroData.
 
@@ -204,7 +202,7 @@ class DCellNew(nn.Module):
         self.activation = activation
         self.init_range = init_range
         self.learnable_embedding_dim = learnable_embedding_dim
-        
+
         # Initialize gene embeddings if enabled
         if self.learnable_embedding_dim is not None:
             self.gene_embeddings = nn.Embedding(gene_num, learnable_embedding_dim)
@@ -346,7 +344,7 @@ class DCellNew(nn.Module):
         for node_id in leaf_nodes:
             # Get gene set for this term
             genes = go_graph.nodes[node_id].get("gene_set", [])
-            
+
             # Calculate input size based on embeddings or binary state
             if self.learnable_embedding_dim is not None:
                 # When using embeddings, each gene contributes gene_embedding_dim values
@@ -372,7 +370,7 @@ class DCellNew(nn.Module):
                 norm_before_act=self.norm_before_act,
                 num_layers=self.subsystem_num_layers,
                 activation=self.activation,
-                init_range=self.init_range
+                init_range=self.init_range,
             )
 
         # Second pass: process non-leaf nodes in reverse topological order
@@ -400,7 +398,7 @@ class DCellNew(nn.Module):
                             norm_before_act=self.norm_before_act,
                             num_layers=self.subsystem_num_layers,
                             activation=self.activation,
-                            init_range=self.init_range
+                            init_range=self.init_range,
                         )
                         self.input_sizes[child] = max(1, len(genes_child))
 
@@ -413,7 +411,7 @@ class DCellNew(nn.Module):
 
             # Get genes for this term
             genes = go_graph.nodes[node_id].get("gene_set", [])
-            
+
             # Calculate gene input size with embeddings if enabled
             if self.learnable_embedding_dim is not None:
                 # When using embeddings, each gene contributes gene_embedding_dim values
@@ -444,7 +442,7 @@ class DCellNew(nn.Module):
                 norm_before_act=self.norm_before_act,
                 num_layers=self.subsystem_num_layers,
                 activation=self.activation,
-                init_range=self.init_range
+                init_range=self.init_range,
             )
 
         # Add special handling for root node if present
@@ -460,11 +458,13 @@ class DCellNew(nn.Module):
 
             # We don't add an extra input for the gene state for ROOT anymore
             # The gene state will be created with the right size during forward pass
-            
-            # Add a small adjustment to prevent dimension mismatch when embeddings are enabled
-            # This addresses the off-by-one error when gene embeddings are used
-            if self.learnable_embedding_dim is not None:
-                root_input_size += 1  # Add a padding dimension for embedding mode
+
+            # Add a small adjustment to prevent dimension mismatch for the root node
+            # This padding dimension (size 1) ensures consistent processing in forward pass
+            root_input_size += 1  # Always add a padding dimension for root node
+
+            # Log the resulting input size for debugging
+            print(f"GO:ROOT input size after padding: {root_input_size}")
 
             # Ensure at least size 1
             root_input_size = max(1, root_input_size)
@@ -479,7 +479,7 @@ class DCellNew(nn.Module):
                 norm_before_act=self.norm_before_act,
                 num_layers=self.subsystem_num_layers,
                 activation=self.activation,
-                init_range=self.init_range
+                init_range=self.init_range,
             )
 
         # Verify subsystem creation
@@ -504,7 +504,7 @@ class DCellNew(nn.Module):
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Vectorized forward pass for the DCellNew model.
+        Vectorized forward pass for the DCell model.
         This implementation avoids loops over individual samples in a batch.
 
         Args:
@@ -585,15 +585,17 @@ class DCellNew(nn.Module):
                 # Initialize tensor to hold embeddings for all genes in this term
                 # Shape: [batch_size, num_genes, embedding_dim]
                 term_gene_states[term_idx] = torch.zeros(
-                    (num_graphs, num_genes, self.learnable_embedding_dim), 
-                    dtype=torch.float, 
-                    device=device
+                    (num_graphs, num_genes, self.learnable_embedding_dim),
+                    dtype=torch.float,
+                    device=device,
                 )
-                
+
                 # Set default gene embeddings (for non-perturbed genes)
                 for gene_local_idx, gene_idx in enumerate(genes):
                     # Copy embeddings to all batch items (will be zeroed out for perturbed genes)
-                    term_gene_states[term_idx][:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                    term_gene_states[term_idx][:, gene_local_idx] = (
+                        self.gene_embeddings.weight[gene_idx]
+                    )
             else:
                 # Standard binary encoding - initialize to all 1.0 (not perturbed)
                 term_gene_states[term_idx] = torch.ones(
@@ -629,10 +631,14 @@ class DCellNew(nn.Module):
                         if gene_local_idx >= 0 and state_value != 1.0:  # Perturbed gene
                             if self.learnable_embedding_dim is not None:
                                 # Zero out embedding for perturbed gene
-                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
+                                term_gene_states[term_idx][
+                                    batch_idx, gene_local_idx
+                                ] = 0.0
                             else:
                                 # Standard binary encoding - set to 0.0 (perturbed)
-                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
+                                term_gene_states[term_idx][
+                                    batch_idx, gene_local_idx
+                                ] = 0.0
 
         # We no longer need special handling for root node here
         # The root node will get only child outputs, no gene states during the forward pass
@@ -664,22 +670,27 @@ class DCellNew(nn.Module):
             else:
                 # For terms not encountered in mutant_state, use defaults
                 genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
-                
+
                 if self.learnable_embedding_dim is not None:
                     # Create tensor with embeddings for each gene
                     gene_states = torch.zeros(
                         (num_graphs, max(1, len(genes)), self.learnable_embedding_dim),
-                        dtype=torch.float, device=device
+                        dtype=torch.float,
+                        device=device,
                     )
-                    
+
                     # Set gene embeddings (all genes are present by default)
                     for gene_local_idx, gene_idx in enumerate(genes):
                         if gene_idx < self.gene_num:  # Check index bounds
-                            gene_states[:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                            gene_states[:, gene_local_idx] = (
+                                self.gene_embeddings.weight[gene_idx]
+                            )
                 else:
                     # Standard binary encoding - all genes present (1.0)
                     gene_states = torch.ones(
-                        (num_graphs, max(1, len(genes))), dtype=torch.float, device=device
+                        (num_graphs, max(1, len(genes))),
+                        dtype=torch.float,
+                        device=device,
                     )
 
             # Get children outputs and concatenate them
@@ -693,7 +704,7 @@ class DCellNew(nn.Module):
                 # Reshape [batch_size, num_genes, embedding_dim] to [batch_size, num_genes * embedding_dim]
                 batch_size = gene_states.size(0)
                 gene_states = gene_states.reshape(batch_size, -1)
-            
+
             # Combine gene states/embeddings with child outputs
             if child_outputs:
                 # Concatenate all child outputs along feature dimension
@@ -703,12 +714,14 @@ class DCellNew(nn.Module):
                 if subsystem_name == "GO:ROOT":
                     # For root, we just use the child outputs directly
                     combined_input = child_tensor
-                    
-                    # Add padding for embedding mode to match initialization dimensions
-                    if self.learnable_embedding_dim is not None:
-                        # Add a padding dimension of zeros to match initialization sizing
-                        padding = torch.zeros((combined_input.size(0), 1), device=combined_input.device)
-                        combined_input = torch.cat([combined_input, padding], dim=1)
+
+                    # Always add padding dimension for root node to match initialization
+                    # During initialization, a +1 padding is always added to root_input_size
+                    # Add a padding dimension of zeros to match initialization sizing
+                    padding = torch.zeros(
+                        (combined_input.size(0), 1), device=combined_input.device
+                    )
+                    combined_input = torch.cat([combined_input, padding], dim=1)
                 else:
                     # For regular nodes, combine gene states/embeddings with child outputs
                     combined_input = torch.cat([gene_states, child_tensor], dim=1)
@@ -722,6 +735,30 @@ class DCellNew(nn.Module):
             actual_size = combined_input.size(1)
 
             if actual_size != expected_size:
+                # For ROOT node specifically, add detailed diagnostic information
+                if subsystem_name == "GO:ROOT":
+                    print(f"\nDiagnostic information for GO:ROOT node:")
+                    print(f"  Expected input size: {expected_size}")
+                    print(f"  Actual input size: {actual_size}")
+
+                    if hasattr(self, "input_sizes") and "GO:ROOT" in self.input_sizes:
+                        print(
+                            f"  Stored input size during initialization: {self.input_sizes['GO:ROOT']}"
+                        )
+
+                    # Check if children outputs match expectations
+                    child_output_sum = 0
+                    for child in self.go_graph.successors(subsystem_name):
+                        if child in subsystem_outputs:
+                            child_size = subsystem_outputs[child].size(1)
+                            child_output_sum += child_size
+                            print(f"  Child '{child}' output size: {child_size}")
+
+                    print(f"  Sum of child output sizes: {child_output_sum}")
+                    print(
+                        f"  Difference (expected - actual): {expected_size - actual_size}"
+                    )
+
                 # Fail explicitly with clear error message
                 raise ValueError(
                     f"Size mismatch for subsystem '{subsystem_name}': expected {expected_size}, got {actual_size}. "
@@ -799,7 +836,7 @@ class DCellLinear(nn.Module):
 
 class DCellModel(nn.Module):
     """
-    Complete DCell model that integrates DCellNew with prediction head.
+    Complete DCell model that integrates DCell with prediction head.
 
     This model:
     1. Processes gene perturbations through the GO hierarchy
@@ -839,7 +876,7 @@ class DCellModel(nn.Module):
         super().__init__()
 
         # DCell component for processing GO hierarchy
-        self.dcell = DCellNew(
+        self.dcell = DCell(
             gene_num=gene_num,
             subsystem_output_min=subsystem_output_min,
             subsystem_output_max_mult=subsystem_output_max_mult,
@@ -947,9 +984,11 @@ def main(cfg: DictConfig):
     import time
     from tqdm.auto import tqdm
 
-    print("\n" + "="*80)
+    # Load environment variables to get ASSET_IMAGES_DIR
+    load_dotenv()
+    print("\n" + "=" * 80)
     print("DATA LOADING")
-    print("="*80)
+    print("=" * 80)
 
     print("Loading sample data with DCellGraphProcessor...")
     # Load sample data with DCellGraphProcessor - respecting config
@@ -957,7 +996,7 @@ def main(cfg: DictConfig):
         batch_size=32,  # Fixed for overfitting test
         num_workers=cfg.data_module.num_workers,
         config="dcell",
-        is_dense=False
+        is_dense=False,
     )
 
     # Set device based on config
@@ -1000,7 +1039,7 @@ def main(cfg: DictConfig):
     norm_before_act = cfg.model.get("norm_before_act", False)
     subsystem_num_layers = cfg.model.get("subsystem_num_layers", 1)
     init_range = cfg.model.get("init_range", 0.001)
-    
+
     # Get gene embedding parameters
     learnable_embedding_dim = cfg.model.get("learnable_embedding_dim", None)
 
@@ -1014,14 +1053,18 @@ def main(cfg: DictConfig):
         print(f"  - Subsystem architecture: Single layer (original DCell)")
     else:
         print(f"  - Subsystem architecture: {subsystem_num_layers}-layer MLP")
-        print(f"    Each subsystem uses multiple linear layers with {activation_name} activation")
+        print(
+            f"    Each subsystem uses multiple linear layers with {activation_name} activation"
+        )
 
     print(f"  - Activation function: {activation_name}")
     print(f"  - Weight initialization range: ±{init_range}")
-    
+
     # Log gene embedding configuration
     if learnable_embedding_dim is not None:
-        print(f"  - Using learnable gene embeddings with dimension: {learnable_embedding_dim}")
+        print(
+            f"  - Using learnable gene embeddings with dimension: {learnable_embedding_dim}"
+        )
     else:
         print(f"  - Using standard binary gene state encoding")
 
@@ -1073,32 +1116,31 @@ def main(cfg: DictConfig):
 
         if optimizer_type.lower() == "adam":
             optimizer = optim.Adam(
-                model.parameters(),
-                lr=optimizer_lr,
-                weight_decay=optimizer_weight_decay
+                model.parameters(), lr=optimizer_lr, weight_decay=optimizer_weight_decay
             )
-            print(f"Using Adam optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+            print(
+                f"Using Adam optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}"
+            )
         elif optimizer_type.lower() == "adamw":
             optimizer = optim.AdamW(
-                model.parameters(),
-                lr=optimizer_lr,
-                weight_decay=optimizer_weight_decay
+                model.parameters(), lr=optimizer_lr, weight_decay=optimizer_weight_decay
             )
-            print(f"Using AdamW optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+            print(
+                f"Using AdamW optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}"
+            )
         elif optimizer_type.lower() == "sgd":
             optimizer = optim.SGD(
-                model.parameters(),
-                lr=optimizer_lr,
-                weight_decay=optimizer_weight_decay
+                model.parameters(), lr=optimizer_lr, weight_decay=optimizer_weight_decay
             )
-            print(f"Using SGD optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}")
+            print(
+                f"Using SGD optimizer with lr={optimizer_lr}, weight_decay={optimizer_weight_decay}"
+            )
         else:
             # Default to Adam
-            optimizer = optim.Adam(
-                model.parameters(),
-                lr=optimizer_lr
+            optimizer = optim.Adam(model.parameters(), lr=optimizer_lr)
+            print(
+                f"Unknown optimizer type '{optimizer_type}', defaulting to Adam with lr={optimizer_lr}"
             )
-            print(f"Unknown optimizer type '{optimizer_type}', defaulting to Adam with lr={optimizer_lr}")
     else:
         # Fallback to Adam with default parameters
         optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -1108,14 +1150,13 @@ def main(cfg: DictConfig):
     if hasattr(cfg.regression_task, "dcell_loss"):
         alpha = cfg.regression_task.dcell_loss.alpha
         use_auxiliary_losses = cfg.regression_task.dcell_loss.use_auxiliary_losses
-        criterion = DCellNewLoss(
-            alpha=alpha,
-            use_auxiliary_losses=use_auxiliary_losses
+        criterion = DCellLoss(alpha=alpha, use_auxiliary_losses=use_auxiliary_losses)
+        print(
+            f"Using DCellLoss with alpha={alpha}, use_auxiliary_losses={use_auxiliary_losses}"
         )
-        print(f"Using DCellNewLoss with alpha={alpha}, use_auxiliary_losses={use_auxiliary_losses}")
     else:
-        criterion = DCellNewLoss(alpha=0.3)
-        print("Using default DCellNewLoss with alpha=0.3")
+        criterion = DCellLoss(alpha=0.3)
+        print("Using default DCellLoss with alpha=0.3")
 
     # Get target
     target = batch["gene"].phenotype_values.view_as(
@@ -1175,10 +1216,10 @@ def main(cfg: DictConfig):
                 corr_str = f", Corr: {correlation:.4f}"
             except:
                 corr_str = ""
-                history["correlation"].append(float('nan'))
+                history["correlation"].append(float("nan"))
         else:
             corr_str = ""
-            history["correlation"].append(float('nan'))
+            history["correlation"].append(float("nan"))
 
         # Record time taken for this epoch
         epoch_time = time.time() - epoch_start
@@ -1189,7 +1230,10 @@ def main(cfg: DictConfig):
         loss.backward()
 
         # Apply gradient clipping if enabled in config
-        if hasattr(cfg.regression_task, "clip_grad_norm") and cfg.regression_task.clip_grad_norm:
+        if (
+            hasattr(cfg.regression_task, "clip_grad_norm")
+            and cfg.regression_task.clip_grad_norm
+        ):
             max_norm = cfg.regression_task.get("clip_grad_norm_max_norm", 10.0)
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
@@ -1208,7 +1252,9 @@ def main(cfg: DictConfig):
             # 1. Plot loss components
             plt.figure(figsize=(10, 6))
             # Use semilogy for logarithmic y-axis
-            plt.semilogy(history["epochs"], history["total_loss"], "b-", label="Total Loss")
+            plt.semilogy(
+                history["epochs"], history["total_loss"], "b-", label="Total Loss"
+            )
             plt.semilogy(
                 history["epochs"], history["primary_loss"], "r-", label="Primary Loss"
             )
@@ -1224,9 +1270,13 @@ def main(cfg: DictConfig):
 
             # Include number of layers in title if using multi-layer model
             if subsystem_num_layers > 1:
-                plt.title(f"DCellNew Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)")
+                plt.title(
+                    f"DCell Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)"
+                )
             else:
-                plt.title(f"DCellNew Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name})")
+                plt.title(
+                    f"DCell Loss Components - Epoch {epoch+1} ({norm_type}, {activation_name})"
+                )
 
             plt.legend()
             plt.grid(True)
@@ -1250,14 +1300,18 @@ def main(cfg: DictConfig):
             if np.any(valid_indices):
                 valid_epochs = np.array(history["epochs"])[valid_indices]
                 valid_correlations = np.array(history["correlation"])[valid_indices]
-                plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2)
+                plt.plot(valid_epochs, valid_correlations, "g-", linewidth=2)
 
                 # Add horizontal line at 0.45 for reference
-                plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
+                plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
 
                 # Get the max correlation achieved
-                max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
-                plt.title(f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})")
+                max_corr = (
+                    np.max(valid_correlations) if len(valid_correlations) > 0 else 0
+                )
+                plt.title(
+                    f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})"
+                )
                 plt.xlabel("Epoch")
                 plt.ylabel("Pearson Correlation")
                 plt.grid(True)
@@ -1299,12 +1353,12 @@ def main(cfg: DictConfig):
     if subsystem_num_layers > 1:
         ax1.set_title(
             f"DCell Loss Components During Training ({norm_type}, {activation_name}, {subsystem_num_layers}-layer MLP)",
-            fontsize=14
+            fontsize=14,
         )
     else:
         ax1.set_title(
             f"DCell Loss Components During Training ({norm_type}, {activation_name})",
-            fontsize=14
+            fontsize=14,
         )
 
     ax1.legend(loc="upper right", fontsize=10)
@@ -1449,27 +1503,37 @@ def main(cfg: DictConfig):
     if np.any(valid_indices):
         valid_epochs = np.array(history["epochs"])[valid_indices]
         valid_correlations = np.array(history["correlation"])[valid_indices]
-        plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2, label='Correlation')
+        plt.plot(
+            valid_epochs, valid_correlations, "g-", linewidth=2, label="Correlation"
+        )
 
         # Add horizontal line at 0.45 for reference
-        plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
+        plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
 
         # Get the max correlation achieved and its epoch
         max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
-        max_corr_epoch = valid_epochs[np.argmax(valid_correlations)] if len(valid_correlations) > 0 else 0
+        max_corr_epoch = (
+            valid_epochs[np.argmax(valid_correlations)]
+            if len(valid_correlations) > 0
+            else 0
+        )
 
         # Add annotation for max correlation
-        plt.annotate(f'Max: {max_corr:.4f} (epoch {max_corr_epoch})',
-                    xy=(max_corr_epoch, max_corr),
-                    xytext=(max_corr_epoch+5, max_corr+0.02),
-                    arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8),
-                    fontsize=12)
+        plt.annotate(
+            f"Max: {max_corr:.4f} (epoch {max_corr_epoch})",
+            xy=(max_corr_epoch, max_corr),
+            xytext=(max_corr_epoch + 5, max_corr + 0.02),
+            arrowprops=dict(facecolor="black", shrink=0.05, width=1.5, headwidth=8),
+            fontsize=12,
+        )
 
-        plt.title(f"Correlation Progress Over Training ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)")
+        plt.title(
+            f"Correlation Progress Over Training ({norm_type}, {activation_name}, {subsystem_num_layers}-layer)"
+        )
         plt.xlabel("Epoch")
         plt.ylabel("Pearson Correlation")
         plt.grid(True)
-        plt.legend(loc='lower right')
+        plt.legend(loc="lower right")
 
         # Save final correlation plot
         if subsystem_num_layers > 1:

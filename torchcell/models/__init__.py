@@ -1,6 +1,6 @@
 from .act import act_register
 from .constants import DNA_LLM_MAX_TOKEN_SIZE
-from .dcell import DCell, DCellLinear, dcell_from_networkx
+from .dcell import DCell
 from .deep_set import DeepSet
 from .self_attention_deep_set import SelfAttentionDeepSet
 from .fungal_up_down_transformer import FungalUpDownTransformer
@@ -26,8 +26,8 @@ models = [
     "GraphAttention",
 ]
 
-incidence_models = ["DCell", "DCellLinear"]
+benchmark_model = ["DCell"]
 
 __all__ = (
-    model_constants + simple_models + model_building_blocks + models + incidence_models
+    model_constants + simple_models + model_building_blocks + models + benchmark_model
 )

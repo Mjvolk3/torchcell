@@ -77,3 +77,54 @@ We are trying to investigate why the model cannot overfit on one batch.
   - Increase max epochs (500+)
   - Monitor loss curve for continued improvement
   - Implement learning rate reduction over time
+
+## 2025.05.13
+
+We have discovered that we can overfit a batch if we use a more up to date GO since it contains more subsystems. [[20|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2025.20]] What is strange is that we still cannot completely overfit a batch even with this update GO. We can only achieve a 0.45 correlation with 2017 GO and we can achieve 0.80 correlation with the most recent gene ontology. This suggest there is a fundamental limitation to the representation used by DCell.
+
+In torchcell/models/dcell_new.py we ones to represent all gene associations with a given subsystem and if a gene is perturbed we flip the bit to 0. This in itself could be a limitation. I want to make an update to the model. I want to give each gene a learnable embedding. Then I want to distribute the genes to their corresponding subsystem. For each gene this means distributing it's vector embedding to many gene ontology subsystems for each of the genes gene ontology annotations. Then I want to multiply the mutant state vector which is the last column of `mutant_state=[63649, 3]` by the gene embedding. This means that each subsystem will have a matrix representation instead of a binary state vector representation.
+
+```python
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_indices_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=4062,
+    node_ids=[4062],
+    x=[4062, 1],
+    mutant_state=[63649, 3],
+    term_ids=[4062],
+    max_genes_per_term=2444,
+    term_gene_mapping=[63649, 2],
+    term_gene_counts=[4062],
+    term_to_gene_dict=dict(len=4062),
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 4919],
+    num_edges=4919,
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 63649],
+    num_edges=63649,
+  }
+)
+```
+
+Don't write any code yet.
+
+First I want to know if this would make any difference in helping overcome the inability to overfit our model. It seems that we really aren't adding any information, meaning the binary state vector captures the change to the subsystem. What does the gene `nn.embedding` add if anything?

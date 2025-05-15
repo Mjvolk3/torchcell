@@ -2,7 +2,7 @@
 id: yorbzjso3ly821r3lbmf5h0
 title: '19'
 desc: ''
-updated: 1746935861560
+updated: 1747352207274
 created: 1746570667745
 ---
 ## 2025.05.05
@@ -39,39 +39,9 @@ created: 1746570667745
 ## 2025.05.10
 
 - [x] [[2025.05.10 DCell Inclusion|dendron://torchcell/torchcell.scratch.load_batch_005#20250510-dcell-inclusion]]
-- [x] [[2025.05.10 - Inspecting Data in GoGraph|dendron://torchcell/torchcell.models.dcell#20250510---inspecting-data-in-gograph]]
-- [x] [[2025.05.10 - DCell Not Compliant With Torch Norms|dendron://torchcell/torchcell.models.dcell#20250510---dcell-not-compliant-with-torch-norms]]
+- [x] [[2025.05.10 - Inspecting Data in GoGraph|dendron://torchcell/torchcell.models.dcell_DEPRECATED#20250510---inspecting-data-in-gograph]]
+- [x] [[2025.05.10 - DCell Not Compliant With Torch Norms|dendron://torchcell/torchcell.models.dcell_DEPRECATED#20250510---dcell-not-compliant-with-torch-norms]]
 - [x] [[2025.05.10 - Gene Perturbations Without GO will Be Improperly Represented|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.batch_005_investigate_pert_size_2#20250510---gene-perturbations-without-go-will-be-improperly-represented]]
 - [x] Move data away from using `dicts` → [[2025.05.10 - DCell No Dicts|dendron://torchcell/torchcell.scratch.load_batch_005#20250510---dcell-no-dicts]]
 - [x] [[Dango_lambda_determination_string11_0_to_string12_0|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination_string11_0_to_string12_0]]
 - [x] [[2025.05.10 - Updated to Show Lambda|dendron://torchcell/experiments.005-kuzmin2018-tmi.scripts.dango_lambda_determination#20250510---updated-to-show-lambda]]
-
-- [ ] DCell - Working
-
-- [ ] Add morphology. Only Safari browser works. Respond to maintainers about solved problem of downloading database. Might want to store a backup.
-
-- [ ] Morphology Random Forest Baseline
-
-- [ ] Morphology animation ? for fun...
-
-- [ ] HeteroCell?
-
-- [ ] Contrastive DCell head on HeteroCell.
-
-- [ ] sync scripts for delta
-
-***
-
-- [ ] Add Gene Expression datasets
-- [ ] For @Junyu-Chen consider reconstructing $S$? Separate the metabolic graph construction process into building both $S$ then casting to a graph... Does this change properties of S? You are changing the constrains but also changing the dimensionality of the matrix... → don't know about this... I think the the constrained based optimization won't be affected from the topological change much. It is mostly a useful abstraction for propagating genes deletions.
-
-- [ ] #ramble Need to start dumping important experimental results into the experiments folder under `/experiments` - Do this for `004-dmi-tmi` that does not work
-
-- [ ] Add concern about graph connectivity to [[Report 003-fit-int.2025.03.03|dendron://torchcell/experiments.003-fit-int.2025.03.03]]
-- [ ] Export and `rsync` this to linked delta drive
-- [ ] Mount drive and spin up database. Check if database is available on ports and over http.
-- [ ] Inquiry about web address for database.
-
-- [ ] Export and `rsync` this to linked delta drive
-- [ ] Mount drive and spin up database. Check if database is available on ports and over http.
--

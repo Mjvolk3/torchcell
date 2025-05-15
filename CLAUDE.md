@@ -1,6 +1,6 @@
 ## Programming Guide
 
-- Don't include fallbacks. This means minimize try except blocks, etc. unless specifically states.
+- Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, etc.
 
 ## Dendron Paths
 

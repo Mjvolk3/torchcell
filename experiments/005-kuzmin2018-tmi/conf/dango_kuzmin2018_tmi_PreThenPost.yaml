@@ -18,12 +18,12 @@ cell_dataset:
     #   string9_1_database,
     # ]
     [
-      string11_0_neighborhood,
-      string11_0_fusion,
-      string11_0_cooccurence,
-      string11_0_coexpression,
-      string11_0_experimental,
-      string11_0_database,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
     ]
   node_embeddings: null
   #learnable_embedding_input_channels: 64 # Could add...
@@ -40,7 +40,7 @@ data_module:
   prefetch: false
 
 trainer:
-  max_epochs: 1000 #1000 # 20 # FLAG
+  max_epochs: 500 #1000 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu

@@ -126,6 +126,10 @@ class SubsystemModel(nn.Module):
         Returns:
             Processed subsystem output [batch_size, output_size]
         """
+        # Ensure input tensor is on the same device as model parameters
+        device = self.layers[0].weight.device
+        x = x.to(device)
+        
         # Apply each layer of the MLP in sequence
         for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
             # Apply linear transformation
@@ -527,17 +531,17 @@ class DCell(nn.Module):
                 "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
-        # Set device - get device from any tensor in the batch
-        if hasattr(batch, "device"):
-            device = batch.device
-        elif hasattr(batch["gene"], "perturbation_indices"):
-            device = batch["gene"].perturbation_indices.device
-        elif hasattr(batch["gene_ontology"], "mutant_state"):
-            device = batch["gene_ontology"].mutant_state.device
-        else:
-            # Default to CPU if we can't determine the device
-            device = torch.device("cpu")
-            
+        # Get the device from the model parameters for consistency
+        model_device = next(self.parameters()).device
+        
+        # Ensure the cell_graph is on the same device as the model
+        cell_graph = cell_graph.to(model_device)
+        
+        # Ensure the batch is on the same device as the model
+        batch = batch.to(model_device)
+        
+        # Set device for computation
+        device = model_device
         num_graphs = batch.num_graphs
 
         # Get mutant state tensor - COO format containing [term_idx, gene_idx, state]

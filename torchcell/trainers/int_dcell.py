@@ -86,14 +86,15 @@ class RegressionTask(LightningModule):
         Returns:
             Tuple of (predictions, representations)
         """
-        batch_device = batch.device if hasattr(batch, 'device') else batch["gene"].perturbation_indices.device
+        # Get model device to ensure consistency
+        model_device = next(self.model.parameters()).device
         
-        if (
-            not hasattr(self, "_cell_graph_device")
-            or self._cell_graph_device != batch_device
-        ):
-            self.cell_graph = self.cell_graph.to(batch_device)
-            self._cell_graph_device = batch_device
+        # Move batch to model's device
+        batch = batch.to(model_device)
+        
+        # Always ensure cell_graph is on the model's device
+        self.cell_graph = self.cell_graph.to(model_device)
+        self._cell_graph_device = model_device
             
         # Return all outputs from the model
         # DCellModel returns (predictions, outputs_dict)

@@ -284,8 +284,13 @@ def main(cfg: DictConfig) -> None:
 
     dataset.close_lmdb()
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    log.info(device)
+    # Determine device based on accelerator config - be more explicit
+    if wandb.config.trainer["accelerator"] == "gpu" and torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    
+    log.info(f"Using device: {device}")
     devices = get_num_devices()
 
     print(f"Instantiating model ({timestamp()})")
@@ -306,38 +311,31 @@ def main(cfg: DictConfig) -> None:
         }
         return activation_map.get(activation_name.lower(), nn.Tanh())
 
-    # Get activation function from config
-    activation_name = wandb.config.model.get("activation", "tanh")
+    # Get activation function from config - use direct access for required params
+    activation_name = wandb.config.model["activation"]
     activation = get_activation_from_config(activation_name)
 
-    # Get norm type and other parameters
-    norm_type = wandb.config.model.get("norm_type", "batch")
-    norm_before_act = wandb.config.model.get("norm_before_act", False)
-    subsystem_num_layers = wandb.config.model.get("subsystem_num_layers", 1)
-    init_range = wandb.config.model.get("init_range", 0.001)
+    # Get norm type and other parameters - use direct access for required params
+    norm_type = wandb.config.model["norm_type"]
+    norm_before_act = wandb.config.model["norm_before_act"]
+    subsystem_num_layers = wandb.config.model["subsystem_num_layers"]
+    init_range = wandb.config.model["init_range"]
 
     # Get embedding parameters if applicable
     learnable_embedding_dim = wandb.config.model.get("learnable_embedding_dim", None)
 
     # Always instantiate DCellModel based on the updated config
     print("Instantiating DCellModel")
-    # Set default values if not in config
-    subsystem_output_min = wandb.config.model.get("subsystem_output_min", 20)
-    subsystem_output_max_mult = wandb.config.model.get("subsystem_output_max_mult", 0.3)
-    output_size = wandb.config.model.get("output_size", 1)
+    
+    # Get required parameters from config - use direct access for required params
+    subsystem_output_min = wandb.config.model["subsystem_output_min"]
+    subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
+    output_size = wandb.config.model["output_size"]
 
-    # Import DCellModel parameters that may not be in the config
-    norm_type = wandb.config.model.get("norm_type", "batch")
-    norm_before_act = wandb.config.model.get("norm_before_act", False)
-    subsystem_num_layers = wandb.config.model.get("subsystem_num_layers", 1)
-
-    # Parse activation function
-    activation_name = wandb.config.model.get("activation", "tanh")
-    activation = get_activation_from_config(activation_name)
-
-    init_range = wandb.config.model.get("init_range", 0.001)
-    learnable_embedding_dim = wandb.config.model.get("learnable_embedding_dim", None)
-
+    # Explicitly move dataset cell_graph to the correct device before model initialization
+    dataset.cell_graph = dataset.cell_graph.to(device)
+    
+    # Create model and explicitly move to device
     model = DCellModel(
         gene_num=max_num_nodes,
         subsystem_output_min=subsystem_output_min,
@@ -349,7 +347,10 @@ def main(cfg: DictConfig) -> None:
         activation=activation,
         init_range=init_range,
         learnable_embedding_dim=learnable_embedding_dim,
-    ).to(device)
+    )
+    
+    # Explicitly move model to device
+    model = model.to(device)
 
     # Log parameter counts using the num_parameters property.
     param_counts = model.num_parameters

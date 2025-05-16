@@ -52,8 +52,15 @@ class RegressionTask(LightningModule):
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
         
-        # Get device from model for consistency
-        self.device = next(model.parameters()).device
+        # Get device - use the one passed in if model parameters aren't initialized yet
+        try:
+            # Try to get device from model parameters
+            self.device = next(model.parameters()).device
+        except StopIteration:
+            # If model has no parameters yet, use the device passed in
+            self.device = torch.device(device)
+            log.warning(f"Model has no parameters yet, using specified device: {self.device}")
+        
         log.info(f"Initializing RegressionTask with device: {self.device}")
 
         # Create metrics on the correct device

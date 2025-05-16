@@ -1,5 +1,5 @@
 # experiments/005-kuzmin2018-tmi/scripts/dcell_batch_005_verify_mutant_state
-# [[experiments.005-kuzmin2018-tmi.scripts.dcell_batch_005_verify_mutant_state]]a
+# [[experiments.005-kuzmin2018-tmi.scripts.dcell_batch_005_verify_mutant_state]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/005-kuzmin2018-tmi/scripts/dcell_batch_005_verify_mutant_state
 # Test file: experiments/005-kuzmin2018-tmi/scripts/test_dcell_batch_005_verify_mutant_state.py
 
@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import numpy as np
+# import hypernetx as hnx (removed visualization dependency)
+import networkx as nx
+from collections import defaultdict
 from torchcell.scratch.load_batch_005 import load_sample_data_batch
 from torchcell.timestamp import timestamp
 
@@ -86,19 +89,25 @@ def verify_mutant_state_differences(batch_size=32):
     # Visualize perturbation distribution
     counts = list(zero_states_count.values())
     plt.figure(figsize=(10, 6))
-    plt.hist(counts, bins=20)
-    # Add sample indices as annotations on the bars
-    for i, count in enumerate(sorted(counts)):
-        plt.text(count, i/2, f"Sample {i}", fontsize=8, ha='left', va='center')
+    plt.hist(counts, bins=20, color='steelblue', edgecolor='black', alpha=0.8)
     plt.xlabel("Number of perturbed GO-gene mappings")
     plt.ylabel("Frequency")
     plt.title("Distribution of Perturbation Counts Across Samples")
     plt.grid(True, alpha=0.3)
 
+    # Add mean and median lines
+    mean_count = np.mean(counts)
+    median_count = np.median(counts)
+    plt.axvline(mean_count, color='red', linestyle='dashed', linewidth=1,
+                label=f'Mean: {mean_count:.1f}')
+    plt.axvline(median_count, color='green', linestyle='dashed', linewidth=1,
+                label=f'Median: {median_count:.1f}')
+    plt.legend()
+
     # Save figure properly using ASSET_IMAGES_DIR and timestamp
     title = "dcell_batch_005_perturbation_distribution"
     save_path = osp.join(os.environ["ASSET_IMAGES_DIR"], f"{title}_{timestamp()}.png")
-    plt.savefig(save_path)
+    plt.savefig(save_path, dpi=300)
     print(f"Saved perturbation distribution to {save_path}")
     plt.close()
 
@@ -146,6 +155,9 @@ def verify_mutant_state_differences(batch_size=32):
     return samples_perturbed_genes, similarity_matrix
 
 
+# Visualization functions removed to simplify script
+
+
 if __name__ == "__main__":
     perturbed_genes, similarity = verify_mutant_state_differences(batch_size=32)
 
@@ -168,3 +180,6 @@ if __name__ == "__main__":
     if len(sim_values) > 0:
         print(f"Max similarity between different samples: {sim_values.max():.4f}")
         print(f"Mean similarity between different samples: {sim_values.mean():.4f}")
+
+    print("\nAnalysis complete.")
+

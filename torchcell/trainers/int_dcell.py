@@ -64,15 +64,13 @@ class RegressionTask(LightningModule):
         for stage in ["train", "val", "test"]:
             # First create the metrics
             metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/")
-            setattr(self, f"{stage}_metrics", metrics_dict.to(device))
-
-            # Add metrics operating in transformed space
             transformed_metrics = reg_metrics.clone(
                 prefix=f"{stage}/transformed/gene_interaction/"
             )
-            setattr(
-                self, f"{stage}_transformed_metrics", transformed_metrics.to(device)
-            )
+
+            # Store the metrics (will move to device in _shared_step when needed)
+            setattr(self, f"{stage}_metrics", metrics_dict)
+            setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train and validation samples
         self.train_samples = {
@@ -88,30 +86,35 @@ class RegressionTask(LightningModule):
         self.automatic_optimization = False
 
     def forward(self, batch):
-        """
-        Forward pass through the model
-
-        Args:
-            batch: HeteroData batch containing perturbation information
-
-        Returns:
-            Tuple of (predictions, representations)
-        """
+        """Forward pass through the model"""
         # Get model device to ensure consistency
         model_device = next(self.model.parameters()).device
 
-        # Move batch to model's device
-        batch = batch.to(model_device)
+        # Move batch to model's device if it isn't already
+        batch_device = batch.device if hasattr(batch, "device") else None
+
+        if batch_device is None or batch_device != model_device:
+            # Handle PyG batches where device isn't a direct attribute
+            if hasattr(batch, "gene") and hasattr(
+                batch["gene"], "perturbation_indices"
+            ):
+                batch_device = batch["gene"].perturbation_indices.device
+
+            # Move the batch if needed
+            if batch_device != model_device:
+                batch = batch.to(model_device)
 
         # Always ensure cell_graph is on the model's device
-        self.cell_graph = self.cell_graph.to(model_device)
-        self._cell_graph_device = model_device
+        if (
+            not hasattr(self, "_cell_graph_device")
+            or self._cell_graph_device != model_device
+        ):
+            self.cell_graph = self.cell_graph.to(model_device)
+            self._cell_graph_device = model_device
 
         # Return all outputs from the model
-        # DCellModel returns (predictions, outputs_dict)
         predictions, outputs_dict = self.model(self.cell_graph, batch)
 
-        # Return the model outputs in a standardized format
         return predictions, {
             "subsystem_outputs": outputs_dict.get("subsystem_outputs", {})
         }
@@ -210,13 +213,17 @@ class RegressionTask(LightningModule):
         # Log the loss
         self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)
 
+        # Get metrics and make sure they're on the correct device
+        transformed_metrics = getattr(self, f"{stage}_transformed_metrics").to(device)
+        metrics = getattr(self, f"{stage}_metrics").to(device)
+
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
-            transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
-            transformed_metrics.update(
-                predictions[mask].view(-1), gene_interaction_vals[mask].view(-1)
-            )
+            # Ensure all inputs to metrics are on the same device
+            pred_transformed = predictions[mask].view(-1).to(device)
+            target_transformed = gene_interaction_vals[mask].view(-1).to(device)
+            transformed_metrics.update(pred_transformed, target_transformed)
 
         # Handle inverse transform if available
         inv_predictions = predictions.clone()
@@ -224,6 +231,7 @@ class RegressionTask(LightningModule):
             # Create a temp HeteroData object with predictions
             temp_data = HeteroData()
             temp_data["gene"] = {"gene_interaction": predictions.clone().squeeze()}
+            temp_data = temp_data.to(device)  # Ensure it's on the right device
 
             # Apply the inverse transform
             inv_data = self.inverse_transform(temp_data)
@@ -243,10 +251,10 @@ class RegressionTask(LightningModule):
         # Update metrics with original scale values
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
-            metrics = getattr(self, f"{stage}_metrics")
-            metrics.update(
-                inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
-            )
+            # Ensure all inputs to metrics are on the same device
+            pred_orig = inv_predictions[mask].view(-1).to(device)
+            target_orig = gene_interaction_orig[mask].view(-1).to(device)
+            metrics.update(pred_orig, target_orig)
 
         # Collect samples for visualization
         if (

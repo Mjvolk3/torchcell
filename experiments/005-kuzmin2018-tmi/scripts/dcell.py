@@ -351,6 +351,17 @@ def main(cfg: DictConfig) -> None:
     
     # Explicitly move model to device
     model = model.to(device)
+    
+    # Verify the model has parameters and is on the correct device
+    try:
+        param_device = next(model.parameters()).device
+        print(f"Model parameters are on device: {param_device}")
+        if param_device != device:
+            print(f"WARNING: Model parameters on {param_device}, but expected {device}")
+            # Force move to correct device again
+            model = model.to(device)
+    except StopIteration:
+        print("WARNING: Model has no parameters yet, device verification skipped")
 
     # Log parameter counts using the num_parameters property.
     param_counts = model.num_parameters

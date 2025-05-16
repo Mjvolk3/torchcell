@@ -531,17 +531,20 @@ class DCell(nn.Module):
                 "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
-        # Get the device from the model parameters for consistency
-        model_device = next(self.parameters()).device
+        # Get device from model parameters or registration if none exist yet
+        try:
+            device = next(self.parameters()).device
+        except StopIteration:
+            # If there are no parameters yet, use the dummy parameter device
+            if hasattr(self, "_dummy"):
+                device = self._dummy.device
+            else:
+                # Fallback to CUDA if available, otherwise CPU
+                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        # Ensure the cell_graph is on the same device as the model
-        cell_graph = cell_graph.to(model_device)
-        
-        # Ensure the batch is on the same device as the model
-        batch = batch.to(model_device)
-        
-        # Set device for computation
-        device = model_device
+        # Ensure inputs are on the correct device
+        cell_graph = cell_graph.to(device)
+        batch = batch.to(device)
         num_graphs = batch.num_graphs
 
         # Get mutant state tensor - COO format containing [term_idx, gene_idx, state]
@@ -907,6 +910,10 @@ class DCellModel(nn.Module):
         self.dcell_linear = None
         self.output_size = output_size
         self._initialized = False
+        
+        # Add a dummy parameter to ensure the model has at least one parameter
+        # This helps with device detection and parameter counting before forward pass
+        self.register_parameter("_dummy", nn.Parameter(torch.zeros(1), requires_grad=False))
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
@@ -921,6 +928,13 @@ class DCellModel(nn.Module):
         Returns:
             Tuple of (predictions, outputs dictionary)
         """
+        # Determine device from model parameters
+        device = self._dummy.device
+        
+        # Make sure inputs are on the correct device
+        cell_graph = cell_graph.to(device)
+        batch = batch.to(device)
+        
         # Process through DCell
         root_output, outputs = self.dcell(cell_graph, batch)
         subsystem_outputs = outputs["subsystem_outputs"]
@@ -930,7 +944,7 @@ class DCellModel(nn.Module):
             # Replace the dummy DCellLinear with one that uses the actual subsystems
             self.dcell_linear = DCellLinear(
                 subsystems=self.dcell.subsystems, output_size=self.output_size
-            ).to(root_output.device)
+            ).to(device)
             self._initialized = True
 
         # Apply linear transformation to all subsystem outputs

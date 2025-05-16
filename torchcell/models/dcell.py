@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from torchcell.timestamp import timestamp
+# Previously commented out to avoid circular import issue
+# Now we need this for the demo script
 from torchcell.losses.dcell import DCellLoss
 
 
@@ -525,8 +527,17 @@ class DCell(nn.Module):
                 "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
-        # Set device
-        device = batch["gene"].phenotype_values.device
+        # Set device - get device from any tensor in the batch
+        if hasattr(batch, "device"):
+            device = batch.device
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            device = batch["gene"].perturbation_indices.device
+        elif hasattr(batch["gene_ontology"], "mutant_state"):
+            device = batch["gene_ontology"].mutant_state.device
+        else:
+            # Default to CPU if we can't determine the device
+            device = torch.device("cpu")
+            
         num_graphs = batch.num_graphs
 
         # Get mutant state tensor - COO format containing [term_idx, gene_idx, state]
@@ -888,10 +899,8 @@ class DCellModel(nn.Module):
             learnable_embedding_dim=learnable_embedding_dim,
         )
 
-        # Defer initializing DCellLinear until we have the fully initialized DCell component
-        # This avoids initializing twice (once with default subsystem, once with actual subsystems)
+        # We'll initialize dcell_linear in the forward pass after DCell is properly initialized
         self.dcell_linear = None
-
         self.output_size = output_size
         self._initialized = False
 
@@ -912,11 +921,12 @@ class DCellModel(nn.Module):
         root_output, outputs = self.dcell(cell_graph, batch)
         subsystem_outputs = outputs["subsystem_outputs"]
 
-        # Initialize DCellLinear if we haven't yet or if the DCell component's subsystems have changed
-        if self.dcell_linear is None or not self._initialized:
+        # Initialize or update DCellLinear using the DCell component's actual subsystems
+        if not self._initialized:
+            # Replace the dummy DCellLinear with one that uses the actual subsystems
             self.dcell_linear = DCellLinear(
                 subsystems=self.dcell.subsystems, output_size=self.output_size
-            )
+            ).to(root_output.device)
             self._initialized = True
 
         # Apply linear transformation to all subsystem outputs
@@ -1158,10 +1168,14 @@ def main(cfg: DictConfig):
         criterion = DCellLoss(alpha=0.3)
         print("Using default DCellLoss with alpha=0.3")
 
-    # Get target
-    target = batch["gene"].phenotype_values.view_as(
-        torch.zeros(batch.num_graphs, 1, device=device)
-    )
+    # Get target if phenotype_values exists
+    if hasattr(batch["gene"], "phenotype_values"):
+        target = batch["gene"].phenotype_values.view_as(
+            torch.zeros(batch.num_graphs, 1, device=device)
+        )
+    else:
+        # Use a placeholder target for demo or initialization
+        target = torch.zeros(batch.num_graphs, 1, device=device)
 
     # Overfit the model on a single batch
     print("\nOverfitting model on a single batch for 500 epochs...")

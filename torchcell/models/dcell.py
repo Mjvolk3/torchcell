@@ -126,9 +126,12 @@ class SubsystemModel(nn.Module):
         Returns:
             Processed subsystem output [batch_size, output_size]
         """
-        # Ensure input tensor is on the same device as model parameters
+        # Get device from the first layer's weight - this should be consistent across the model
         device = self.layers[0].weight.device
-        x = x.to(device)
+        
+        # Check if input is on the correct device and move it if needed
+        if x.device != device:
+            x = x.to(device)
         
         # Apply each layer of the MLP in sequence
         for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
@@ -531,16 +534,26 @@ class DCell(nn.Module):
                 "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
-        # Get device from model parameters or registration if none exist yet
+        # Get device from model parameters - be more robust about it
         try:
+            # Try to get from model parameters first
             device = next(self.parameters()).device
         except StopIteration:
-            # If there are no parameters yet, use the dummy parameter device
-            if hasattr(self, "_dummy"):
-                device = self._dummy.device
+            # Try each subsystem for a potential device
+            for subsystem_name, subsystem in self.subsystems.items():
+                try:
+                    # Get device from the first subsystem that has parameters
+                    device = next(subsystem.parameters()).device
+                    break
+                except StopIteration:
+                    continue
             else:
-                # Fallback to CUDA if available, otherwise CPU
-                device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                # If no parameters found in any subsystem
+                if hasattr(self, "_dummy"):
+                    device = self._dummy.device
+                else:
+                    # Fallback to CUDA if available, otherwise CPU
+                    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         # Ensure inputs are on the correct device
         cell_graph = cell_graph.to(device)
@@ -788,6 +801,11 @@ class DCell(nn.Module):
 
             # Forward through subsystem model
             output = subsystem_model(combined_input)
+            
+            # Ensure output is on the correct device
+            if output.device != device:
+                output = output.to(device)
+                
             subsystem_outputs[subsystem_name] = output
 
         # Find the root output - fail explicitly if not found
@@ -841,12 +859,26 @@ class DCellLinear(nn.Module):
             Dictionary mapping subsystem names to transformed outputs
         """
         linear_outputs = {}
+        
+        # Get device from first linear layer's parameters
+        try:
+            device = next(iter(self.subsystem_linears.values())).weight.device
+        except (StopIteration, AttributeError):
+            # Fallback to CUDA if available
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         for subsystem_name, subsystem_output in subsystem_outputs.items():
             if subsystem_name in self.subsystem_linears:
-                transformed_output = self.subsystem_linears[subsystem_name](
-                    subsystem_output
-                )
+                # Ensure the subsystem output is on the same device as the linear layer
+                linear = self.subsystem_linears[subsystem_name]
+                linear_device = linear.weight.device
+                
+                # Move output to linear layer's device if needed
+                if subsystem_output.device != linear_device:
+                    subsystem_output = subsystem_output.to(linear_device)
+                
+                # Apply transformation
+                transformed_output = linear(subsystem_output)
                 linear_outputs[subsystem_name] = transformed_output
 
         return linear_outputs
@@ -938,14 +970,24 @@ class DCellModel(nn.Module):
         # Process through DCell
         root_output, outputs = self.dcell(cell_graph, batch)
         subsystem_outputs = outputs["subsystem_outputs"]
+        
+        # Ensure all subsystem outputs are on the correct device
+        for key, val in subsystem_outputs.items():
+            if val.device != device:
+                subsystem_outputs[key] = val.to(device)
 
         # Initialize or update DCellLinear using the DCell component's actual subsystems
         if not self._initialized:
             # Replace the dummy DCellLinear with one that uses the actual subsystems
+            # Create and move to device in one step to ensure all parameters start on correct device
             self.dcell_linear = DCellLinear(
                 subsystems=self.dcell.subsystems, output_size=self.output_size
             ).to(device)
             self._initialized = True
+        
+        # Double check linear modules are on correct device
+        if next(self.dcell_linear.parameters()).device != device:
+            self.dcell_linear = self.dcell_linear.to(device)
 
         # Apply linear transformation to all subsystem outputs
         linear_outputs = self.dcell_linear(subsystem_outputs)

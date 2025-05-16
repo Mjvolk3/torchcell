@@ -37,10 +37,24 @@ from torchcell.graph import build_gene_multigraph
 def load_sample_data_batch(
     batch_size=2,
     num_workers=2,
-    config: Literal["dango_string9_1", "dcell"] = "dango_string9_1",
+    config: Literal["dango_string9_1", "dcell", "dcell_2017-07-19"] = "dango_string9_1",
     is_dense: bool = False,
 ):
+    """
+    Load a sample data batch for Dango or DCell models.
 
+    Args:
+        batch_size: Batch size for dataloader
+        num_workers: Number of workers for dataloader
+        config: Model configuration:
+                "dango_string9_1" - Dango model with STRING v9.1 networks
+                "dcell" - DCell model with unfiltered GO graph
+                "dcell_2017-07-19" - DCell model with GO graph filtered to 2017-07-19 date
+        is_dense: Whether to use dense representation
+
+    Returns:
+        Tuple of (dataset, batch, input_channels, max_num_nodes)
+    """
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     print(f"DATA_ROOT: {DATA_ROOT}")
@@ -48,6 +62,7 @@ def load_sample_data_batch(
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=True,
     )
     # IDEA we are trying to use all gene reprs
     # genome.drop_chrmt()
@@ -100,6 +115,7 @@ def load_sample_data_batch(
             "use_gene_ontology": False,
             "graph_processor": Perturbation(),
             "follow_batch": ["perturbation_indices"],
+            "date_filter": None,
         },
         "dcell": {
             "graph_names": [],  # DCell doesn't use string networks
@@ -107,6 +123,15 @@ def load_sample_data_batch(
             "use_gene_ontology": True,
             "graph_processor": DCellGraphProcessor(),
             "follow_batch": ["perturbation_indices", "mutant_state"],
+            "date_filter": None,
+        },
+        "dcell_2017-07-19": {
+            "graph_names": [],  # DCell doesn't use string networks
+            "use_metabolism": False,
+            "use_gene_ontology": True,
+            "graph_processor": DCellGraphProcessor(),
+            "follow_batch": ["perturbation_indices", "mutant_state"],
+            "date_filter": "2017-07-19",
         },
     }
 
@@ -134,13 +159,17 @@ def load_sample_data_batch(
             filter_by_contained_genes,
         )
 
-        G_go = filter_by_date(G_go, "2017-07-19")
-        print(f"After date filter: {G_go.number_of_nodes()}")
+        # Apply date filter if specified in the configuration
+        date_filter = selected_config["date_filter"]
+        if date_filter is not None:
+            G_go = filter_by_date(G_go, date_filter)
+            print(f"After date filter ({date_filter}): {G_go.number_of_nodes()}")
+
         G_go = filter_go_IGI(G_go)
         print(f"After IGI filter: {G_go.number_of_nodes()}")
         G_go = filter_redundant_terms(G_go)
         print(f"After redundant filter: {G_go.number_of_nodes()}")
-        G_go = filter_by_contained_genes(G_go, n=2, gene_set=genome.gene_set)
+        G_go = filter_by_contained_genes(G_go, n=4, gene_set=genome.gene_set)
         print(f"After containment filter: {G_go.number_of_nodes()}")
 
         incidence_graphs["gene_ontology"] = G_go
@@ -234,9 +263,20 @@ if __name__ == "__main__":
         batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
     )
     dataset[0]
-    print("\n--- Testing DCell Configuration ---")
-    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=2, num_workers=2, config="dcell", is_dense=False
+
+    print("\n--- Testing DCell Configuration (Date Filtered 2017-07-19) ---")
+    dataset_filtered, batch_filtered, input_channels, max_num_nodes = (
+        load_sample_data_batch(
+            batch_size=2, num_workers=2, config="dcell_2017-07-19", is_dense=False
+        )
     )
-    dataset[0]
+    dataset_filtered[0]
+
+    print("\n--- Testing DCell Configuration (Unfiltered) ---")
+    dataset_unfiltered, batch_unfiltered, input_channels, max_num_nodes = (
+        load_sample_data_batch(
+            batch_size=2, num_workers=2, config="dcell", is_dense=False
+        )
+    )
+    dataset_unfiltered[0]
     print()

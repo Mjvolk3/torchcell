@@ -463,22 +463,23 @@ class RegressionTask(LightningModule):
         # Initialize the model parameters by doing a forward pass
         # This must happen BEFORE creating the optimizer
         with torch.no_grad():
+            # Get current device from model or property
+            device = self.device
+            
             # Get the cell graph and move it to the right device
-            cell_graph_device = self.cell_graph.to(self.device)
+            cell_graph_device = self.cell_graph.to(device)
             
             # Create a minimal dummy batch for initialization
             from torch_geometric.data import HeteroData, Data
             dummy_batch = HeteroData()
-            dummy_batch["gene"] = Data()
-            dummy_batch["gene_ontology"] = Data()
-            
-            # Need to set term_ids and other critical fields that the model will check for
-            # Use .x to set node features (this is standard in PyG)
-            dummy_batch["gene"].x = torch.zeros(1, 1, device=self.device)
-            dummy_batch["gene_ontology"].x = torch.zeros(1, 1, device=self.device)
+            dummy_batch["gene"] = {}
+            dummy_batch["gene"]["x"] = torch.zeros(1, 1, device=device)
+            dummy_batch["gene"]["phenotype_values"] = torch.zeros(1, 1, device=device)
+            dummy_batch["gene_ontology"] = {}
+            dummy_batch["gene_ontology"]["x"] = torch.zeros(1, 1, device=device)
             
             # Add critical fields that are checked in the forward pass
-            dummy_batch["gene_ontology"].mutant_state = torch.zeros(1, 3, device=self.device)
+            dummy_batch["gene_ontology"]["mutant_state"] = torch.zeros(1, 3, device=device)
             
             # Add basic batch info
             dummy_batch.num_graphs = 1
@@ -486,12 +487,13 @@ class RegressionTask(LightningModule):
             # Initialize all model parameters with a forward pass
             # This is necessary because DCellModel creates parameters dynamically
             try:
-                self.model(cell_graph_device, dummy_batch)
+                with torch.no_grad():
+                    self.model(cell_graph_device, dummy_batch)
                 log.info("Model parameters initialized successfully")
             except Exception as e:
                 log.warning(f"Error during model initialization: {e}")
                 # Add fallback dummy parameters to allow optimizer creation
-                self.model.register_parameter("dummy", torch.nn.Parameter(torch.zeros(1, device=self.device)))
+                self.model.register_parameter("dummy", torch.nn.Parameter(torch.zeros(1, device=device)))
                 log.info("Added dummy parameter to allow optimizer creation")
         
         # Check if we have parameters after initialization

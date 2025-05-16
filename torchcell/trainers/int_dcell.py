@@ -51,42 +51,42 @@ class RegressionTask(LightningModule):
         self.forward_transform = forward_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
+        self._device = torch.device(device)  # Store as private attribute
         
-        # Get device - use the one passed in if model parameters aren't initialized yet
-        try:
-            # Try to get device from model parameters
-            self.device = next(model.parameters()).device
-        except StopIteration:
-            # If model has no parameters yet, use the device passed in
-            self.device = torch.device(device)
-            log.warning(f"Model has no parameters yet, using specified device: {self.device}")
-        
-        log.info(f"Initializing RegressionTask with device: {self.device}")
+        log.info(f"Initializing RegressionTask with device: {self._device}")
 
         # Create metrics on the correct device
         reg_metrics = MetricCollection(
             {
-                "MSE": MeanSquaredError(squared=True).to(self.device),
-                "RMSE": MeanSquaredError(squared=False).to(self.device),
-                "Pearson": PearsonCorrCoef().to(self.device),
+                "MSE": MeanSquaredError(squared=True),
+                "RMSE": MeanSquaredError(squared=False),
+                "Pearson": PearsonCorrCoef(),
             }
         )
 
         # Create metrics for each stage - ensuring they're on the right device
         for stage in ["train", "val", "test"]:
-            metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/").to(self.device)
+            metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/")
             setattr(self, f"{stage}_metrics", metrics_dict)
 
             # Add metrics operating in transformed space
             transformed_metrics = reg_metrics.clone(
                 prefix=f"{stage}/transformed/gene_interaction/"
-            ).to(self.device)
+            )
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
-
+        
         # Separate accumulators for train and validation samples
         self.train_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
         self.val_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
         self.automatic_optimization = False
+        
+    @property
+    def device(self):
+        """Get the device of the model or fall back to stored device."""
+        try:
+            return next(self.model.parameters()).device
+        except StopIteration:
+            return self._device
 
     def forward(self, batch):
         """
@@ -98,15 +98,16 @@ class RegressionTask(LightningModule):
         Returns:
             Tuple of (predictions, representations)
         """
-        # Get model device to ensure consistency
-        model_device = next(self.model.parameters()).device
+        # Get the batch device directly from the batch
+        batch_device = batch.device if hasattr(batch, 'device') else batch["gene"].perturbation_indices.device
         
-        # Move batch to model's device
-        batch = batch.to(model_device)
-        
-        # Always ensure cell_graph is on the model's device
-        self.cell_graph = self.cell_graph.to(model_device)
-        self._cell_graph_device = model_device
+        # Only move cell_graph if needed - improve efficiency
+        if (
+            not hasattr(self, "_cell_graph_device")
+            or self._cell_graph_device != batch_device
+        ):
+            self.cell_graph = self.cell_graph.to(batch_device)
+            self._cell_graph_device = batch_device
             
         # Return all outputs from the model
         # DCellModel returns (predictions, outputs_dict)
@@ -214,9 +215,12 @@ class RegressionTask(LightningModule):
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
             transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
+            # Get current metrics device
+            metrics_device = next(transformed_metrics.parameters()).device
+            
             # Ensure tensors are on the same device as metrics
-            preds_device = predictions[mask].view(-1).to(self.device)
-            target_device = gene_interaction_vals[mask].view(-1).to(self.device)
+            preds_device = predictions[mask].view(-1).to(metrics_device)
+            target_device = gene_interaction_vals[mask].view(-1).to(metrics_device)
             transformed_metrics.update(preds_device, target_device)
 
         # Handle inverse transform if available
@@ -245,9 +249,12 @@ class RegressionTask(LightningModule):
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
             metrics = getattr(self, f"{stage}_metrics")
+            # Get current metrics device
+            metrics_device = next(metrics.parameters()).device
+            
             # Ensure tensors are on the same device as metrics
-            inv_preds_device = inv_predictions[mask].view(-1).to(self.device)
-            orig_target_device = gene_interaction_orig[mask].view(-1).to(self.device)
+            inv_preds_device = inv_predictions[mask].view(-1).to(metrics_device)
+            orig_target_device = gene_interaction_orig[mask].view(-1).to(metrics_device)
             metrics.update(inv_preds_device, orig_target_device)
 
         # Collect samples for visualization

@@ -9,8 +9,8 @@ wandb:
 
 cell_dataset:
   # DCell uses gene ontology instead of STRING networks
-  graphs: [] # Empty list as DCell doesn't use STRING networks
-  use_gene_ontology: true # Enable gene ontology for DCell
+  graphs: null # Null value for DCell as it doesn't use STRING networks
+  incidence_graphs: "go" # Use gene ontology hierarchy for DCell
   node_embeddings: null
   #learnable_embedding_input_channels: 64 # Could add...
 
@@ -54,8 +54,8 @@ model:
   learnable_embedding_dim: null # null for binary encoding, int for learnable embeddings
 
 regression_task:
-  loss: "dcell_new" # Use the DCellNewLoss
-  # DCellNewLoss configuration
+  loss: "dcell" # Use the DCellLoss
+  # DCellLoss configuration
   dcell_loss:
     alpha: 0.3 # Weight for auxiliary losses
     use_auxiliary_losses: true # default true  # Whether to use losses from non-root subsystems

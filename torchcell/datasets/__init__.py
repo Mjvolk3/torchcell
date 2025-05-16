@@ -49,7 +49,6 @@ from .random_embedding import RandomEmbeddingDataset
 
 from .dataset_registry import dataset_registry
 
-core_datasets = ["DCellDataset"]
 
 embedding_datasets = [
     "NucleotideTransformerDataset",
@@ -99,5 +98,5 @@ organism_datasets = (
 )
 
 # + experiment_datasets
-__all__ = core_datasets + embedding_datasets + organism_datasets
+__all__ = embedding_datasets + organism_datasets
 # __all__ = core_datasets + embedding_datasets + registries

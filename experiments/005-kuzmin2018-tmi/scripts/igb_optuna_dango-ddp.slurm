@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH -p cabbi
-#SBATCH --mem=100g
+#SBATCH --mem=60g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=10
+#SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=DANGO_LUU
 #SBATCH --time=300-00:00:00
@@ -22,10 +22,13 @@ cd /home/a-m/mjvolk3/projects/torchcell
 export MASTER_ADDR=$(hostname)
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
-
 # Launch with srun to ensure proper process distribution
 srun --ntasks-per-node=1 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
 source $HOME/miniconda3/bin/activate
 conda activate torchcell
-python /home/a-m/mjvolk3/scratch/torchcell/experiments/005-kuzmin2018-tmi/scripts/dango.py
+python /home/a-m/mjvolk3/scratch/torchcell/experiments/005-kuzmin2018-tmi/scripts/dango.py --config-name dango_kuzmin2018_tmi_LinearUntilFlipped
 "
+
+# dango_kuzmin2018_tmi_PreThenPost
+# dango_kuzmin2018_tmi_LinearUntilUniform
+# dango_kuzmin2018_tmi_LinearUntilFlipped

@@ -51,24 +51,29 @@ class RegressionTask(LightningModule):
         self.forward_transform = forward_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
+        
+        # Get device from model for consistency
+        self.device = next(model.parameters()).device
+        log.info(f"Initializing RegressionTask with device: {self.device}")
 
+        # Create metrics on the correct device
         reg_metrics = MetricCollection(
             {
-                "MSE": MeanSquaredError(squared=True),
-                "RMSE": MeanSquaredError(squared=False),
-                "Pearson": PearsonCorrCoef(),
+                "MSE": MeanSquaredError(squared=True).to(self.device),
+                "RMSE": MeanSquaredError(squared=False).to(self.device),
+                "Pearson": PearsonCorrCoef().to(self.device),
             }
         )
 
-        # Create metrics for each stage
+        # Create metrics for each stage - ensuring they're on the right device
         for stage in ["train", "val", "test"]:
-            metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/")
+            metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/").to(self.device)
             setattr(self, f"{stage}_metrics", metrics_dict)
 
             # Add metrics operating in transformed space
             transformed_metrics = reg_metrics.clone(
                 prefix=f"{stage}/transformed/gene_interaction/"
-            )
+            ).to(self.device)
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train and validation samples
@@ -202,9 +207,10 @@ class RegressionTask(LightningModule):
         mask = ~torch.isnan(gene_interaction_vals)
         if mask.sum() > 0:
             transformed_metrics = getattr(self, f"{stage}_transformed_metrics")
-            transformed_metrics.update(
-                predictions[mask].view(-1), gene_interaction_vals[mask].view(-1)
-            )
+            # Ensure tensors are on the same device as metrics
+            preds_device = predictions[mask].view(-1).to(self.device)
+            target_device = gene_interaction_vals[mask].view(-1).to(self.device)
+            transformed_metrics.update(preds_device, target_device)
 
         # Handle inverse transform if available
         inv_predictions = predictions.clone()
@@ -232,9 +238,10 @@ class RegressionTask(LightningModule):
         mask = ~torch.isnan(gene_interaction_orig)
         if mask.sum() > 0:
             metrics = getattr(self, f"{stage}_metrics")
-            metrics.update(
-                inv_predictions[mask].view(-1), gene_interaction_orig[mask].view(-1)
-            )
+            # Ensure tensors are on the same device as metrics
+            inv_preds_device = inv_predictions[mask].view(-1).to(self.device)
+            orig_target_device = gene_interaction_orig[mask].view(-1).to(self.device)
+            metrics.update(inv_preds_device, orig_target_device)
 
         # Collect samples for visualization
         if (

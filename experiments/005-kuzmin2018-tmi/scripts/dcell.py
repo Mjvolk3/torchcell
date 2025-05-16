@@ -379,7 +379,14 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Creating RegressionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
+    
+    # Ensure dataset cell_graph is on the correct device
+    dataset.cell_graph = dataset.cell_graph.to(device)
+    print(f"Moved dataset.cell_graph to device: {device}")
 
+    # Make sure data module's dataloaders will produce batches on the correct device
+    data_module.device = device
+    
     if checkpoint_path and os.path.exists(checkpoint_path):
         # Load the checkpoint with all required arguments
         task = RegressionTask.load_from_checkpoint(

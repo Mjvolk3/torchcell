@@ -332,10 +332,7 @@ def main(cfg: DictConfig) -> None:
     subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
     output_size = wandb.config.model["output_size"]
 
-    # Explicitly move dataset cell_graph to the correct device before model initialization
-    dataset.cell_graph = dataset.cell_graph.to(device)
-    
-    # Create model and explicitly move to device
+    # Create model first and then move all parts to device together
     model = DCellModel(
         gene_num=max_num_nodes,
         subsystem_output_min=subsystem_output_min,
@@ -349,19 +346,17 @@ def main(cfg: DictConfig) -> None:
         learnable_embedding_dim=learnable_embedding_dim,
     )
     
-    # Explicitly move model to device
+    # Ensure dataset cell_graph and model are on the same device
     model = model.to(device)
+    dataset.cell_graph = dataset.cell_graph.to(device)
     
-    # Verify the model has parameters and is on the correct device
+    # Verify model device
     try:
         param_device = next(model.parameters()).device
         print(f"Model parameters are on device: {param_device}")
-        if param_device != device:
-            print(f"WARNING: Model parameters on {param_device}, but expected {device}")
-            # Force move to correct device again
-            model = model.to(device)
+        # No need to check if param_device != device since we just moved it
     except StopIteration:
-        print("WARNING: Model has no parameters yet, device verification skipped")
+        print("WARNING: Model has no parameters yet, will be initialized during forward pass")
 
     # Log parameter counts using the num_parameters property.
     param_counts = model.num_parameters
@@ -391,12 +386,12 @@ def main(cfg: DictConfig) -> None:
     print(f"Creating RegressionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
     
-    # Ensure dataset cell_graph is on the correct device
-    dataset.cell_graph = dataset.cell_graph.to(device)
-    print(f"Moved dataset.cell_graph to device: {device}")
+    # No need to move dataset.cell_graph again - already moved above
+    print(f"Using dataset.cell_graph on device: {dataset.cell_graph['gene'].x.device}")
 
-    # Make sure data module's dataloaders will produce batches on the correct device
-    data_module.device = device
+    # Configure data module to use the same device
+    if hasattr(data_module, 'device'):
+        data_module.device = device
     
     if checkpoint_path and os.path.exists(checkpoint_path):
         # Load the checkpoint with all required arguments

@@ -332,7 +332,7 @@ def main(cfg: DictConfig) -> None:
     subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
     output_size = wandb.config.model["output_size"]
 
-    # Create model first and then move all parts to device together
+    # Create model first 
     model = DCellModel(
         gene_num=max_num_nodes,
         subsystem_output_min=subsystem_output_min,
@@ -346,8 +346,31 @@ def main(cfg: DictConfig) -> None:
         learnable_embedding_dim=learnable_embedding_dim,
     )
     
-    # Ensure dataset cell_graph and model are on the same device
+    # Make a dummy forward pass to initialize parameters before moving to device
+    # This ensures all dynamically created parameters will be moved to the right device
+    with torch.no_grad():
+        # Create minimal dummy data
+        dummy_batch = HeteroData()
+        dummy_batch["gene"] = {}
+        dummy_batch["gene"]["x"] = torch.ones(1, 1)
+        dummy_batch["gene_ontology"] = {}
+        dummy_batch["gene_ontology"]["x"] = torch.ones(1, 1)
+        dummy_batch["gene_ontology"]["mutant_state"] = torch.zeros(1, 3)
+        dummy_batch["gene"]["phenotype_values"] = torch.zeros(1, 1)
+        dummy_batch.num_graphs = 1
+        
+        try:
+            # Try to initialize with a dummy forward pass
+            # This will trigger parameter creation for all dynamic modules
+            model(dataset.cell_graph.to('cpu'), dummy_batch)
+            print("Successfully pre-initialized model with dummy forward pass")
+        except Exception as e:
+            print(f"Pre-initialization failed (this is expected): {str(e)}")
+    
+    # Now move to device AFTER all parameters are created
     model = model.to(device)
+    
+    # Ensure dataset cell_graph is also on the same device
     dataset.cell_graph = dataset.cell_graph.to(device)
     
     # Verify model device

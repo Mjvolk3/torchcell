@@ -60,48 +60,61 @@ class RegressionTask(LightningModule):
             }
         )
 
-        # Create metrics for each stage
+        # Create metrics for each stage - fixed to create metrics first then move them
         for stage in ["train", "val", "test"]:
+            # First create the metrics
             metrics_dict = reg_metrics.clone(prefix=f"{stage}/gene_interaction/")
-            setattr(self, f"{stage}_metrics", metrics_dict)
+            setattr(self, f"{stage}_metrics", metrics_dict.to(device))
 
             # Add metrics operating in transformed space
             transformed_metrics = reg_metrics.clone(
                 prefix=f"{stage}/transformed/gene_interaction/"
             )
-            setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
+            setattr(
+                self, f"{stage}_transformed_metrics", transformed_metrics.to(device)
+            )
 
         # Separate accumulators for train and validation samples
-        self.train_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
-        self.val_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
+        self.train_samples = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {"subsystem_outputs": []},
+        }
+        self.val_samples = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {"subsystem_outputs": []},
+        }
         self.automatic_optimization = False
 
     def forward(self, batch):
         """
         Forward pass through the model
-        
+
         Args:
             batch: HeteroData batch containing perturbation information
-            
+
         Returns:
             Tuple of (predictions, representations)
         """
         # Get model device to ensure consistency
         model_device = next(self.model.parameters()).device
-        
+
         # Move batch to model's device
         batch = batch.to(model_device)
-        
+
         # Always ensure cell_graph is on the model's device
         self.cell_graph = self.cell_graph.to(model_device)
         self._cell_graph_device = model_device
-            
+
         # Return all outputs from the model
         # DCellModel returns (predictions, outputs_dict)
         predictions, outputs_dict = self.model(self.cell_graph, batch)
-        
+
         # Return the model outputs in a standardized format
-        return predictions, {"subsystem_outputs": outputs_dict.get("subsystem_outputs", {})}
+        return predictions, {
+            "subsystem_outputs": outputs_dict.get("subsystem_outputs", {})
+        }
 
     def _ensure_no_unused_params_loss(self):
         """Add a dummy loss to ensure all parameters are used in backward pass."""
@@ -114,7 +127,7 @@ class RegressionTask(LightningModule):
     def _shared_step(self, batch, batch_idx, stage="train"):
         # Get model outputs
         predictions, representations = self(batch)
-        
+
         # Ensure predictions has correct shape (batch_size, 1) for gene interactions
         if predictions.dim() == 0:
             predictions = predictions.unsqueeze(0).unsqueeze(0)  # Make it [1, 1]
@@ -123,9 +136,10 @@ class RegressionTask(LightningModule):
 
         batch_size = predictions.size(0)
 
-        # Get target values
-        gene_interaction_vals = batch["gene"].phenotype_values
-        
+        # Get target values and ensure they are on same device as predictions
+        device = predictions.device
+        gene_interaction_vals = batch["gene"].phenotype_values.to(device)
+
         # Handle tensor shape - ensure it's [batch_size, 1] for consistency
         if gene_interaction_vals.dim() == 0:
             gene_interaction_vals = gene_interaction_vals.unsqueeze(0).unsqueeze(0)
@@ -137,7 +151,7 @@ class RegressionTask(LightningModule):
 
         # Get original values for metrics and visualization
         gene_interaction_orig = (
-            batch["gene"].phenotype_values_original
+            batch["gene"].phenotype_values_original.to(device)
             if hasattr(batch["gene"], "phenotype_values_original")
             else gene_interaction_vals
         )
@@ -163,18 +177,16 @@ class RegressionTask(LightningModule):
             # Extract reconstructions and prepare adjacency matrices
             # Call the loss function with current epoch for dynamic weighting
             _, outputs_dict = self.model(self.cell_graph, batch)
-            
+
             # Pass to the loss function
             loss_output = self.loss_func(
-                predictions, 
-                outputs_dict,
-                gene_interaction_vals
+                predictions, outputs_dict, gene_interaction_vals
             )
-            
+
             # Handle the tuple return format (loss, loss_dict)
             loss = loss_output[0]  # First element is the loss
             loss_dict = loss_output[1] if len(loss_output) > 1 else {}
-            
+
             # Log additional loss components
             if isinstance(loss_dict, dict):
                 for key, value in loss_dict.items():
@@ -324,37 +336,35 @@ class RegressionTask(LightningModule):
     def _plot_samples(self, samples, stage: str) -> None:
         if not samples["true_values"]:
             return
-            
+
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
-        
+
         max_samples = self.hparams.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
             predictions = predictions[idx]
-        
+
         # Use Visualization for enhanced plotting
         vis = Visualization(
             base_dir=self.trainer.default_root_dir, max_points=max_samples
         )
-        
+
         loss_name = (
-            self.loss_func.__class__.__name__
-            if self.loss_func is not None
-            else "Loss"
+            self.loss_func.__class__.__name__ if self.loss_func is not None else "Loss"
         )
-        
+
         # Ensure data is in the correct format for visualization
         # For gene interactions, we only need a single dimension
         if true_values.dim() == 1:
             true_values = true_values.unsqueeze(1)
         if predictions.dim() == 1:
             predictions = predictions.unsqueeze(1)
-        
+
         # Skip UMAP visualization by passing empty latents dictionary
         z_p_latents = {}  # Empty dictionary to skip UMAP visualization
-        
+
         # Use our updated visualize_model_outputs method which now properly handles single target case
         vis.visualize_model_outputs(
             predictions,
@@ -365,7 +375,7 @@ class RegressionTask(LightningModule):
             None,
             stage=stage,
         )
-        
+
         # Log genetic interaction box plot - for gene interactions, always use the first column
         if torch.any(~torch.isnan(true_values)):
             # For DCell model, genetic interaction values are in the first dimension (index 0)
@@ -396,17 +406,29 @@ class RegressionTask(LightningModule):
         ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
-            self.train_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
+            self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"subsystem_outputs": []},
+            }
 
     def on_train_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.train_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
+            self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"subsystem_outputs": []},
+            }
 
     def on_validation_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.val_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
+            self.val_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"subsystem_outputs": []},
+            }
 
     def on_validation_epoch_end(self):
         # Log validation metrics
@@ -429,39 +451,46 @@ class RegressionTask(LightningModule):
         ):
             self._plot_samples(self.val_samples, "val_sample")
             # Reset the sample containers
-            self.val_samples = {"true_values": [], "predictions": [], "latents": {"subsystem_outputs": []}}
+            self.val_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"subsystem_outputs": []},
+            }
 
     def configure_optimizers(self):
         """
         Set up optimizers for training.
-        
+
         For DCellModel, we need to pre-register parameters by running a forward pass.
         """
         log.info("Setting up optimizer and initializing DCellModel parameters")
-        
+
         # Initialize the model parameters by doing a forward pass
         # This must happen BEFORE creating the optimizer
         with torch.no_grad():
             # Get the cell graph and move it to the right device
             cell_graph_device = self.cell_graph.to(self.device)
-            
+
             # Create a minimal dummy batch for initialization
             from torch_geometric.data import HeteroData, Data
+
             dummy_batch = HeteroData()
             dummy_batch["gene"] = Data()
             dummy_batch["gene_ontology"] = Data()
-            
+
             # Need to set term_ids and other critical fields that the model will check for
             # Use .x to set node features (this is standard in PyG)
             dummy_batch["gene"].x = torch.zeros(1, 1, device=self.device)
             dummy_batch["gene_ontology"].x = torch.zeros(1, 1, device=self.device)
-            
+
             # Add critical fields that are checked in the forward pass
-            dummy_batch["gene_ontology"].mutant_state = torch.zeros(1, 3, device=self.device)
-            
+            dummy_batch["gene_ontology"].mutant_state = torch.zeros(
+                1, 3, device=self.device
+            )
+
             # Add basic batch info
             dummy_batch.num_graphs = 1
-            
+
             # Initialize all model parameters with a forward pass
             # This is necessary because DCellModel creates parameters dynamically
             try:
@@ -470,30 +499,40 @@ class RegressionTask(LightningModule):
             except Exception as e:
                 log.warning(f"Error during model initialization: {e}")
                 # Add fallback dummy parameters to allow optimizer creation
-                self.model.register_parameter("dummy", torch.nn.Parameter(torch.zeros(1, device=self.device)))
+                self.model.register_parameter(
+                    "dummy", torch.nn.Parameter(torch.zeros(1, device=self.device))
+                )
                 log.info("Added dummy parameter to allow optimizer creation")
-        
+
         # Check if we have parameters after initialization
         param_count = sum(p.numel() for p in self.parameters() if p.requires_grad)
         log.info(f"Total trainable parameters: {param_count:,}")
-        
+
         if param_count == 0:
-            log.warning("No parameters found after initialization, adding dummy parameter")
+            log.warning(
+                "No parameters found after initialization, adding dummy parameter"
+            )
             # Add a dummy parameter as fallback
-            self.register_parameter("dummy", torch.nn.Parameter(torch.zeros(1, device=self.device)))
-        
+            self.register_parameter(
+                "dummy", torch.nn.Parameter(torch.zeros(1, device=self.device))
+            )
+
         # Now create the optimizer with the initialized parameters
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])
-        optimizer_params = {k: v for k, v in self.hparams.optimizer_config.items() if k != "type"}
+        optimizer_params = {
+            k: v for k, v in self.hparams.optimizer_config.items() if k != "type"
+        }
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
-        
+
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
-        
+
         # Set up scheduler
-        scheduler_params = {k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"}
+        scheduler_params = {
+            k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
+        }
         scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
-        
+
         # Return configuration
         return {
             "optimizer": optimizer,

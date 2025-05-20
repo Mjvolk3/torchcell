@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from torchcell.timestamp import timestamp
+
 # Previously commented out to avoid circular import issue
 # Now we need this for the demo script
 from torchcell.losses.dcell import DCellLoss
@@ -129,7 +130,7 @@ class SubsystemModel(nn.Module):
         # Ensure input tensor is on the same device as model parameters
         device = self.layers[0].weight.device
         x = x.to(device)
-        
+
         # Apply each layer of the MLP in sequence
         for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
             # Apply linear transformation
@@ -240,9 +241,13 @@ class DCell(nn.Module):
 
         # Verify we have stratum information for optimization
         if not hasattr(cell_graph["gene_ontology"], "strata"):
-            raise ValueError("Gene ontology must have strata information for stratum-based optimization")
+            raise ValueError(
+                "Gene ontology must have strata information for stratum-based optimization"
+            )
         else:
-            print(f"Using stratum-based processing with {len(torch.unique(cell_graph['gene_ontology'].strata))} strata")
+            print(
+                f"Using stratum-based processing with {len(torch.unique(cell_graph['gene_ontology'].strata))} strata"
+            )
 
         # Build the NetworkX graph from the HeteroData structure for traversal
         go_graph = nx.DiGraph()
@@ -262,7 +267,7 @@ class DCell(nn.Module):
                     for idx in gene_indices
                     if idx < len(cell_graph["gene"].node_ids)
                 ]
-            
+
             # Add stratum information if available
             node_attrs = {
                 "id": i,
@@ -271,12 +276,14 @@ class DCell(nn.Module):
                 # Initialize empty mutant state
                 "mutant_state": torch.ones(len(gene_indices), dtype=torch.float32),
             }
-            
+
             # Add stratum information if available
-            if hasattr(cell_graph["gene_ontology"], "strata") and i < len(cell_graph["gene_ontology"].strata):
+            if hasattr(cell_graph["gene_ontology"], "strata") and i < len(
+                cell_graph["gene_ontology"].strata
+            ):
                 stratum = cell_graph["gene_ontology"].strata[i].item()
                 node_attrs["stratum"] = stratum
-            
+
             # Add node with all required attributes
             go_graph.add_node(term_id, **node_attrs)
 
@@ -334,13 +341,14 @@ class DCell(nn.Module):
         self.sorted_subsystems = list(
             reversed(list(nx.topological_sort(self.go_graph)))
         )
-        
+
         # Group subsystems by stratum for parallel processing
         from collections import defaultdict
+
         self.stratum_to_systems = None
         if hasattr(cell_graph["gene_ontology"], "strata"):
             self.stratum_to_systems = defaultdict(list)
-            
+
             # Map each subsystem to its stratum
             for term_id, subsystem in self.subsystems.items():
                 if term_id == "GO:ROOT":
@@ -349,18 +357,22 @@ class DCell(nn.Module):
                 else:
                     # Get the stratum from the graph node
                     stratum = go_graph.nodes[term_id].get("stratum", 0)
-                    
+
                 # Store subsystem with its stratum
                 self.stratum_to_systems[stratum].append((term_id, subsystem))
-            
+
             # Sort strata in reverse order to process from leaves to root
             # Higher strata numbers (leaves) should be processed before lower strata (root)
             self.sorted_strata = sorted(self.stratum_to_systems.keys(), reverse=True)
-            
+
             # Print statistics about stratum grouping
-            print(f"Grouped subsystems into {len(self.stratum_to_systems)} strata for parallel processing")
+            print(
+                f"Grouped subsystems into {len(self.stratum_to_systems)} strata for parallel processing"
+            )
             for stratum in sorted(self.stratum_to_systems.keys())[:5]:
-                print(f"  Stratum {stratum}: {len(self.stratum_to_systems[stratum])} subsystems")
+                print(
+                    f"  Stratum {stratum}: {len(self.stratum_to_systems[stratum])} subsystems"
+                )
             if len(self.stratum_to_systems) > 5:
                 print(f"  ... and {len(self.stratum_to_systems)-5} more strata")
 
@@ -585,7 +597,7 @@ class DCell(nn.Module):
 
         # Get the device from the model parameters for consistency
         device = next(self.parameters()).device
-        
+
         # Ensure data is on the correct device
         cell_graph = cell_graph.to(device)
         batch = batch.to(device)
@@ -593,33 +605,38 @@ class DCell(nn.Module):
 
         # Verify mutant state exists and has the right format
         if not hasattr(batch["gene_ontology"], "mutant_state"):
-            raise ValueError("Batch must contain gene_ontology.mutant_state for DCell model")
+            raise ValueError(
+                "Batch must contain gene_ontology.mutant_state for DCell model"
+            )
 
         mutant_state = batch["gene_ontology"].mutant_state
-        
-        # Verify mutant state has the right number of columns 
-        # (either 4 columns [term_idx, gene_idx, stratum, gene_state] or 
+
+        # Verify mutant state has the right number of columns
+        # (either 4 columns [term_idx, gene_idx, stratum, gene_state] or
         #  5 columns [term_idx, gene_idx, stratum, level, gene_state])
         if mutant_state.shape[1] != 4 and mutant_state.shape[1] != 5:
-            raise ValueError(f"Mutant state must have 4 or 5 columns, got {mutant_state.shape[1]}")
-        
+            raise ValueError(
+                f"Mutant state must have 4 or 5 columns, got {mutant_state.shape[1]}"
+            )
+
         # Verify strata groups are available
         if self.stratum_to_systems is None:
             raise ValueError("Stratum to systems mapping is not initialized")
-            
+
         # Map from term IDs to indices in the cell_graph
         term_id_to_idx = {
-            term_id: idx for idx, term_id in enumerate(cell_graph["gene_ontology"].node_ids)
+            term_id: idx
+            for idx, term_id in enumerate(cell_graph["gene_ontology"].node_ids)
         }
-        
+
         # Dictionary to store all subsystem outputs
         subsystem_outputs = {}
-        
+
         # Extract information from mutant state
         term_indices = mutant_state[:, 0].long()
         gene_indices = mutant_state[:, 1].long()
         strata_indices = mutant_state[:, 2].long()
-        
+
         # Handle either 4-column or 5-column format
         if mutant_state.shape[1] == 4:
             # 4-column format: [term_idx, gene_idx, stratum, gene_state]
@@ -627,79 +644,92 @@ class DCell(nn.Module):
         else:
             # 5-column format: [term_idx, gene_idx, stratum, level, gene_state]
             gene_states = mutant_state[:, 4]
-        
+
         # Extract batch information if available
         if hasattr(batch["gene_ontology"], "mutant_state_batch"):
             batch_indices = batch["gene_ontology"].mutant_state_batch
         else:
-            batch_indices = torch.zeros(mutant_state.size(0), dtype=torch.long, device=device)
-        
+            batch_indices = torch.zeros(
+                mutant_state.size(0), dtype=torch.long, device=device
+            )
+
         # Pre-process gene states for all terms
         term_gene_states = {}
         term_indices_set = torch.unique(term_indices).tolist()
-        
+
         # Efficiently process gene states for each term
         for term_idx in term_indices_set:
             term_idx = term_idx if isinstance(term_idx, int) else term_idx.item()
-            
+
             # Get genes for this term
             genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
             num_genes = max(1, len(genes))
-            
+
             # Create gene state tensor based on embedding mode
             if self.learnable_embedding_dim is not None:
                 # Initialize tensor with embeddings - [batch_size, num_genes, embedding_dim]
                 term_gene_states[term_idx] = torch.zeros(
                     (num_graphs, num_genes, self.learnable_embedding_dim),
-                    dtype=torch.float, device=device
+                    dtype=torch.float,
+                    device=device,
                 )
-                
+
                 # Set default embeddings
                 for gene_local_idx, gene_idx in enumerate(genes):
                     if gene_idx < self.gene_embeddings.weight.size(0):
-                        term_gene_states[term_idx][:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                        term_gene_states[term_idx][:, gene_local_idx] = (
+                            self.gene_embeddings.weight[gene_idx]
+                        )
             else:
                 # Binary encoding - all genes present (1.0) by default
                 term_gene_states[term_idx] = torch.ones(
                     (num_graphs, num_genes), dtype=torch.float, device=device
                 )
-            
+
             # Apply perturbations from mutant state
             term_mask = term_indices == term_idx
             term_data = mutant_state[term_mask]
-            
+
             if term_data.size(0) > 0:
                 # Get batch indices for this term
-                term_batch_indices = batch_indices[term_mask] if batch_indices is not None else torch.zeros(
-                    term_data.size(0), dtype=torch.long, device=device
+                term_batch_indices = (
+                    batch_indices[term_mask]
+                    if batch_indices is not None
+                    else torch.zeros(term_data.size(0), dtype=torch.long, device=device)
                 )
-                
+
                 # Apply perturbations
                 for i in range(term_data.size(0)):
                     batch_idx = term_batch_indices[i].item()
                     gene_idx = term_data[i, 1].long().item()
-                    
+
                     # Get state value based on mutant_state format
                     if mutant_state.shape[1] == 4:
                         state_value = term_data[i, 3].item()
                     else:
                         state_value = term_data[i, 4].item()
-                    
+
                     # Find gene in the term's gene list
                     if gene_idx < len(genes):
-                        gene_local_idx = genes.index(gene_idx) if gene_idx in genes else -1
+                        gene_local_idx = (
+                            genes.index(gene_idx) if gene_idx in genes else -1
+                        )
                         if gene_local_idx >= 0 and state_value != 1.0:
                             # Zero out gene or embedding for perturbed genes
                             if self.learnable_embedding_dim is not None:
-                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
+                                term_gene_states[term_idx][
+                                    batch_idx, gene_local_idx
+                                ] = 0.0
                             else:
-                                term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
-        
+                                term_gene_states[term_idx][
+                                    batch_idx, gene_local_idx
+                                ] = 0.0
+
         # Process strata in order (from lowest to highest)
         for stratum in self.sorted_strata:
             # Get all systems at this stratum
             stratum_systems = self.stratum_to_systems[stratum]
-            
+
             # Prepare for batch processing of subsystems in this stratum
             # Group subsystems by input and output sizes for efficient batch processing
             term_ids = []
@@ -707,7 +737,7 @@ class DCell(nn.Module):
             input_sizes = []
             output_sizes = []
             combined_inputs = []
-            
+
             # First, collect data for all subsystems in this stratum
             for term_id, subsystem_model in stratum_systems:
                 # Get the term index
@@ -717,105 +747,126 @@ class DCell(nn.Module):
                     term_idx = term_id_to_idx.get(term_id, -1)
                     if term_idx == -1:
                         continue
-                
+
                 # Get gene states for this term
                 if term_idx in term_gene_states:
                     gene_states = term_gene_states[term_idx]
                 else:
                     # Create default state tensor for terms not in mutant_state
-                    genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
-                    
+                    genes = cell_graph["gene_ontology"].term_to_gene_dict.get(
+                        term_idx, []
+                    )
+
                     if self.learnable_embedding_dim is not None:
                         gene_states = torch.zeros(
-                            (num_graphs, max(1, len(genes)), self.learnable_embedding_dim),
-                            dtype=torch.float, device=device
+                            (
+                                num_graphs,
+                                max(1, len(genes)),
+                                self.learnable_embedding_dim,
+                            ),
+                            dtype=torch.float,
+                            device=device,
                         )
-                        
+
                         for gene_local_idx, gene_idx in enumerate(genes):
                             if gene_idx < self.gene_num:
-                                gene_states[:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                                gene_states[:, gene_local_idx] = (
+                                    self.gene_embeddings.weight[gene_idx]
+                                )
                     else:
                         gene_states = torch.ones(
                             (num_graphs, max(1, len(genes))),
-                            dtype=torch.float, device=device
+                            dtype=torch.float,
+                            device=device,
                         )
-                
+
                 # Reshape embeddings if needed
-                if self.learnable_embedding_dim is not None and len(gene_states.shape) == 3:
+                if (
+                    self.learnable_embedding_dim is not None
+                    and len(gene_states.shape) == 3
+                ):
                     batch_size = gene_states.size(0)
                     gene_states = gene_states.reshape(batch_size, -1)
-                
+
                 # Get outputs from child nodes
                 child_outputs = []
                 for child in self.go_graph.successors(term_id):
                     if child in subsystem_outputs:
                         child_outputs.append(subsystem_outputs[child])
-                
+
                 # Combine inputs
                 if child_outputs:
                     child_tensor = torch.cat(child_outputs, dim=1)
-                    
+
                     if term_id == "GO:ROOT":
                         # Special handling for root node
                         combined_input = child_tensor
-                        padding = torch.zeros((combined_input.size(0), 1), device=device)
+                        padding = torch.zeros(
+                            (combined_input.size(0), 1), device=device
+                        )
                         combined_input = torch.cat([combined_input, padding], dim=1)
                     else:
                         combined_input = torch.cat([gene_states, child_tensor], dim=1)
                 else:
                     combined_input = gene_states
-                
+
                 # Validate input size
                 expected_size = subsystem_model.layers[0].weight.size(1)
                 actual_size = combined_input.size(1)
-                
+
                 if actual_size != expected_size:
                     # Provide helpful diagnostics for size mismatch
                     if term_id == "GO:ROOT":
                         print(f"\nDiagnostic information for GO:ROOT node:")
                         print(f"  Expected input size: {expected_size}")
                         print(f"  Actual input size: {actual_size}")
-                        
+
                         child_output_sum = 0
                         for child in self.go_graph.successors(term_id):
                             if child in subsystem_outputs:
                                 child_size = subsystem_outputs[child].size(1)
                                 child_output_sum += child_size
                                 print(f"  Child '{child}' output size: {child_size}")
-                        
+
                         print(f"  Sum of child output sizes: {child_output_sum}")
-                    
+
                     # Fail with clear error message
                     raise ValueError(
                         f"Size mismatch for subsystem '{term_id}' in stratum {stratum}: "
                         f"expected {expected_size}, got {actual_size}."
                     )
-                
+
                 # Save all data for batch processing
                 term_ids.append(term_id)
                 subsystem_models.append(subsystem_model)
                 combined_inputs.append(combined_input)
                 input_sizes.append(expected_size)
                 output_sizes.append(subsystem_model.output_size)
-                
+
             # Now group by input size and output size for parallel processing
             # This way we can batch process subsystems with the same input/output dimensions
             groups = {}
             for i, (term_id, model, inp_size, out_size, combined_input) in enumerate(
-                zip(term_ids, subsystem_models, input_sizes, output_sizes, combined_inputs)
+                zip(
+                    term_ids,
+                    subsystem_models,
+                    input_sizes,
+                    output_sizes,
+                    combined_inputs,
+                )
             ):
                 key = (inp_size, out_size)
                 if key not in groups:
                     groups[key] = []
                 groups[key].append((i, term_id, model, combined_input))
-            
+
             # Process each group in batches
             for (inp_size, out_size), group in groups.items():
                 indices = [g[0] for g in group]
                 batch_term_ids = [g[1] for g in group]
                 batch_models = [g[2] for g in group]
                 batch_inputs = [g[3] for g in group]
-                
+
                 # Skip batch processing for single subsystems
                 if len(batch_inputs) == 1:
                     term_id = batch_term_ids[0]
@@ -824,46 +875,52 @@ class DCell(nn.Module):
                     output = model(combined_input)
                     subsystem_outputs[term_id] = output
                     continue
-                
+
                 # Process in batches when we have multiple subsystems with the same dimensions
                 # This will use GPU parallelism to speed up computation
                 try:
                     # Stack inputs (these all have the same shape)
                     batch_size = batch_inputs[0].size(0)
                     num_subsystems = len(batch_inputs)
-                    
+
                     # Stack inputs into a single tensor
                     stacked_inputs = torch.cat(batch_inputs, dim=0)
-                    
+
                     # For simple models (1 layer), we can optimize with a batched matrix multiply
                     if all(model.num_layers == 1 for model in batch_models):
                         # Stack all model weights and biases for the first layer
-                        weights = torch.stack([model.layers[0].weight for model in batch_models])
-                        biases = torch.stack([model.layers[0].bias for model in batch_models])
-                        
+                        weights = torch.stack(
+                            [model.layers[0].weight for model in batch_models]
+                        )
+                        biases = torch.stack(
+                            [model.layers[0].bias for model in batch_models]
+                        )
+
                         # Create a big batch multiplication
                         # Reshape inputs to (num_subsystems, batch_size, input_size)
-                        reshaped_inputs = stacked_inputs.view(num_subsystems, batch_size, inp_size)
-                        
+                        reshaped_inputs = stacked_inputs.view(
+                            num_subsystems, batch_size, inp_size
+                        )
+
                         # Perform batch matrix multiplication
                         # weights: (num_subsystems, out_size, inp_size)
                         # reshaped_inputs: (num_subsystems, batch_size, inp_size)
                         # Result: (num_subsystems, batch_size, out_size)
                         outputs = torch.bmm(reshaped_inputs, weights.transpose(1, 2))
-                        
+
                         # Add biases: biases is (num_subsystems, out_size)
                         # Need to reshape to (num_subsystems, 1, out_size) for broadcasting
                         outputs = outputs + biases.unsqueeze(1)
-                        
+
                         # Apply activation and normalization
                         normalized_outputs = []
                         for i, model in enumerate(batch_models):
                             # Extract this model's output
                             output = outputs[i]  # Shape: (batch_size, out_size)
-                            
+
                             # Apply activation
                             output = model.activation(output)
-                            
+
                             # Apply normalization if needed
                             if model.norms[0] is not None and model.norm_type != "none":
                                 # Skip BatchNorm for single samples
@@ -871,32 +928,38 @@ class DCell(nn.Module):
                                     pass
                                 else:
                                     output = model.norms[0](output)
-                            
+
                             normalized_outputs.append(output)
-                        
+
                         # Store the results
                         for i, term_id in enumerate(batch_term_ids):
                             subsystem_outputs[term_id] = normalized_outputs[i]
-                    
+
                     # For multi-layer models, process each subsystem individually
                     else:
-                        for i, (term_id, model, combined_input) in enumerate(zip(batch_term_ids, batch_models, batch_inputs)):
+                        for i, (term_id, model, combined_input) in enumerate(
+                            zip(batch_term_ids, batch_models, batch_inputs)
+                        ):
                             output = model(combined_input)
                             subsystem_outputs[term_id] = output
-                            
+
                 except Exception as e:
                     # Fallback to sequential processing if batched processing fails
-                    print(f"Batch processing failed with error: {e}. Falling back to sequential processing.")
-                    for i, (term_id, model, combined_input) in enumerate(zip(batch_term_ids, batch_models, batch_inputs)):
+                    print(
+                        f"Batch processing failed with error: {e}. Falling back to sequential processing."
+                    )
+                    for i, (term_id, model, combined_input) in enumerate(
+                        zip(batch_term_ids, batch_models, batch_inputs)
+                    ):
                         output = model(combined_input)
                         subsystem_outputs[term_id] = output
-        
+
         # Get the root output
         if "GO:ROOT" in subsystem_outputs:
             root_output = subsystem_outputs["GO:ROOT"]
         else:
             raise ValueError("Root node 'GO:ROOT' not found in outputs")
-        
+
         return root_output, {"subsystem_outputs": subsystem_outputs}
 
 
@@ -938,7 +1001,7 @@ class DCellLinear(nn.Module):
             Dictionary mapping subsystem names to transformed outputs
         """
         linear_outputs = {}
-        
+
         # Group subsystems by output size for batch processing
         subsystems_by_size = {}
         for subsystem_name, subsystem_output in subsystem_outputs.items():
@@ -946,36 +1009,42 @@ class DCellLinear(nn.Module):
                 output_size = subsystem_output.shape[1]
                 if output_size not in subsystems_by_size:
                     subsystems_by_size[output_size] = []
-                subsystems_by_size[output_size].append((subsystem_name, subsystem_output))
-        
+                subsystems_by_size[output_size].append(
+                    (subsystem_name, subsystem_output)
+                )
+
         # Process each group in batches
         for output_size, subsystem_group in subsystems_by_size.items():
             # Get all subsystem names and outputs for this size
             names = [item[0] for item in subsystem_group]
             outputs = [item[1] for item in subsystem_group]
-            
+
             # Skip batch processing for small groups to avoid overhead
             if len(names) <= 1:
                 for name, output in subsystem_group:
                     linear_outputs[name] = self.subsystem_linears[name](output)
                 continue
-                
+
             # Create a batch of outputs for parallel processing
             stacked_outputs = torch.cat(outputs, dim=0)
             batch_sizes = [output.shape[0] for output in outputs]
-            
+
             # Process in a single batch using the first linear layer's weights
             # This is possible because all matrices in this group have the same output size
             reference_linear = self.subsystem_linears[names[0]]
-            all_weights = torch.stack([self.subsystem_linears[name].weight for name in names])
-            all_biases = torch.stack([self.subsystem_linears[name].bias for name in names])
-            
+            all_weights = torch.stack(
+                [self.subsystem_linears[name].weight for name in names]
+            )
+            all_biases = torch.stack(
+                [self.subsystem_linears[name].bias for name in names]
+            )
+
             # Create batch-specific weights using index selection
             batch_indices = []
             for i, size in enumerate(batch_sizes):
                 batch_indices.extend([i] * size)
             batch_indices = torch.tensor(batch_indices, device=stacked_outputs.device)
-            
+
             # Perform the grouped linear transformation
             # For each sample, select the appropriate weight matrix and bias
             results = []
@@ -983,7 +1052,11 @@ class DCellLinear(nn.Module):
             for i, (name, output) in enumerate(subsystem_group):
                 end_idx = start_idx + output.shape[0]
                 # Use the correct weight and bias for this subsystem
-                result = F.linear(output, self.subsystem_linears[name].weight, self.subsystem_linears[name].bias)
+                result = F.linear(
+                    output,
+                    self.subsystem_linears[name].weight,
+                    self.subsystem_linears[name].bias,
+                )
                 linear_outputs[name] = result
                 start_idx = end_idx
 
@@ -1135,20 +1208,20 @@ def main():
     import os.path as osp
     import numpy as np
     from torchcell.scratch.load_batch_005 import load_sample_data_batch
-    from torchcell.losses.dcell import DCellLoss  
+    from torchcell.losses.dcell import DCellLoss
     from torchcell.timestamp import timestamp
     from collections import defaultdict
     from tqdm.auto import tqdm
     from dotenv import load_dotenv
-    
+
     # Load environment variables for asset paths
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", "assets/images")
-    
+
     print("\n" + "=" * 80)
     print("DCELL TRAINING TEST")
     print("=" * 80)
-    
+
     # Configure default parameters for the test
     batch_size = 32
     norm_type = "batch"
@@ -1160,60 +1233,59 @@ def main():
     num_workers = 0
     num_epochs = 500
     plot_every = 50
-    
+
     # Load test data
     print("\nLoading test data...")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=batch_size,
-        num_workers=num_workers,
-        config="dcell",
-        is_dense=False,
+        batch_size=batch_size, num_workers=num_workers, config="dcell", is_dense=False
     )
-    
+
     # Set device (default to CPU for testing)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
-    
+
     # Print dataset information
     print(f"Dataset: {len(dataset)} samples")
     print(f"Batch: {batch.num_graphs} graphs")
     print(f"Max Number of Nodes: {max_num_nodes}")
-    
+
     # Move data to device
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
-    
+
     # Print GO hierarchy information
     if hasattr(cell_graph["gene_ontology"], "strata"):
         strata = cell_graph["gene_ontology"].strata
         num_strata = len(torch.unique(strata))
         print(f"\nGO hierarchy has {num_strata} strata for parallel processing")
-        
+
         # Count terms per stratum
         stratum_counts = defaultdict(int)
         for s in strata:
             stratum_counts[s.item()] += 1
-        
+
         print("Distribution of GO terms by stratum:")
         for stratum in sorted(stratum_counts.keys())[:5]:
             print(f"  Stratum {stratum}: {stratum_counts[stratum]} terms")
         if len(stratum_counts) > 5:
             print(f"  ... and {len(stratum_counts)-5} more strata")
-    
+
     # Print model configuration
     print(f"\nModel configuration:")
     print(f"  - Normalization type: {norm_type}")
     print(f"  - Normalization order: {'norm->act' if norm_before_act else 'act->norm'}")
-    
+
     if subsystem_num_layers == 1:
         print(f"  - Subsystem architecture: Single layer (original DCell)")
     else:
         print(f"  - Subsystem architecture: {subsystem_num_layers}-layer MLP")
-        print(f"    Each subsystem uses multiple linear layers with {activation_name} activation")
-        
+        print(
+            f"    Each subsystem uses multiple linear layers with {activation_name} activation"
+        )
+
     print(f"  - Activation function: {activation_name}")
     print(f"  - Weight initialization range: ±{init_range}")
-    
+
     # Initialize model with default parameters
     print("\nCreating DCellModel with stratum-based optimization...")
     model_params = {
@@ -1227,46 +1299,46 @@ def main():
         "activation": activation,
         "init_range": init_range,
     }
-    
+
     # Time model initialization and initial forward pass
     start_time = time.time()
     model = DCellModel(**model_params).to(device)
     init_time = time.time() - start_time
     print(f"Model initialization time: {init_time:.3f}s")
-    
+
     # Run a forward pass to initialize the model
     print("\nRunning initial forward pass to initialize model...")
     with torch.no_grad():
         predictions, _ = model(cell_graph, batch)
-        
+
         # Check prediction diversity
         diversity = predictions.std().item()
         print(f"Initial predictions diversity: {diversity:.6f}")
-        
+
         if diversity < 1e-6:
             print("WARNING: Predictions lack diversity!")
         else:
             print("✓ Predictions are diverse")
-    
+
     # Print parameter count
     param_info = model.num_parameters
     total_params = param_info.get("total", 0)
     print(f"Model parameters: {total_params:,}")
     print(f"Subsystems: {param_info.get('num_subsystems', 0):,}")
-    
+
     # Create optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
     print(f"Using Adam optimizer with lr=0.001, weight_decay=1e-5")
-    
+
     # Create loss function
     criterion = DCellLoss(alpha=0.3, use_auxiliary_losses=True)
     print(f"Using DCellLoss with alpha=0.3, use_auxiliary_losses=True")
-    
+
     # Get target
     target = batch["gene"].phenotype_values.view_as(
         torch.zeros(batch.num_graphs, 1, device=device)
     )
-    
+
     # Initialize history for loss tracking
     history = {
         "total_loss": [],
@@ -1277,31 +1349,33 @@ def main():
         "time_per_epoch": [],
         "correlation": [],
     }
-    
+
     # Training loop with tqdm progress bar
     print(f"\nOverfitting model on a single batch for {num_epochs} epochs...")
     progress_bar = tqdm(range(num_epochs), desc="Training")
-    
+
     for epoch in progress_bar:
         epoch_start = time.time()
-        
+
         # Forward pass
         predictions, outputs = model(cell_graph, batch)
-        
+
         # Extract prediction and target values for correlation tracking
         pred_values = predictions.detach().cpu().numpy().flatten()
         target_values = target.detach().cpu().numpy().flatten()
-        
+
         # Compute loss
         loss, loss_components = criterion(predictions, outputs, target)
-        
+
         # Store loss components
         history["total_loss"].append(loss.item())
         history["primary_loss"].append(loss_components["primary_loss"].item())
         history["auxiliary_loss"].append(loss_components["auxiliary_loss"].item())
-        history["weighted_auxiliary_loss"].append(loss_components["weighted_auxiliary_loss"].item())
+        history["weighted_auxiliary_loss"].append(
+            loss_components["weighted_auxiliary_loss"].item()
+        )
         history["epochs"].append(epoch)
-        
+
         # Calculate and store correlation
         correlation = None
         if len(pred_values) > 1:  # Only if more than one sample
@@ -1311,98 +1385,108 @@ def main():
                 corr_str = f", Corr: {correlation:.4f}"
             except:
                 corr_str = ""
-                history["correlation"].append(float('nan'))
+                history["correlation"].append(float("nan"))
         else:
             corr_str = ""
-            history["correlation"].append(float('nan'))
-        
+            history["correlation"].append(float("nan"))
+
         # Record time for this epoch
         epoch_time = time.time() - epoch_start
         history["time_per_epoch"].append(epoch_time)
-        
+
         # Backward pass and optimizer step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        
-        # Update progress bar 
+
+        # Update progress bar
         progress_bar.set_description(
             f"Loss: {loss.item():.6f}{corr_str}, Time: {epoch_time:.3f}s/epoch"
         )
-        
+
         # Plot curves at regular intervals
         if (epoch + 1) % plot_every == 0:
             # Create output directory if needed
             os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
-            
+
             # Plot loss components
             plt.figure(figsize=(10, 6))
-            plt.semilogy(history["epochs"], history["total_loss"], "b-", label="Total Loss")
-            plt.semilogy(history["epochs"], history["primary_loss"], "r-", label="Primary Loss")
+            plt.semilogy(
+                history["epochs"], history["total_loss"], "b-", label="Total Loss"
+            )
+            plt.semilogy(
+                history["epochs"], history["primary_loss"], "r-", label="Primary Loss"
+            )
             plt.semilogy(
                 history["epochs"],
                 history["weighted_auxiliary_loss"],
                 "g-",
                 label="Weighted Aux Loss",
             )
-            
+
             plt.xlabel("Epoch")
             plt.ylabel("Loss (log scale)")
-            
+
             title_suffix = f" ({norm_type}, {activation_name}"
             if subsystem_num_layers > 1:
                 title_suffix += f", {subsystem_num_layers}-layer)"
             else:
                 title_suffix += ")"
-                
+
             plt.title(f"DCellNew Loss Components - Epoch {epoch+1}{title_suffix}")
             plt.legend()
             plt.grid(True)
-            
+
             # Save figure
             if subsystem_num_layers > 1:
                 title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_epoch_{epoch+1}"
             else:
                 title = f"dcell_{norm_type}_{activation_name}_loss_components_epoch_{epoch+1}"
-                
+
             save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
             plt.savefig(save_path)
             print(f"Saved loss components plot to {save_path}")
             plt.close()
-            
+
             # Plot correlation progress
             plt.figure(figsize=(10, 6))
             valid_indices = ~np.isnan(np.array(history["correlation"]))
             if np.any(valid_indices):
                 valid_epochs = np.array(history["epochs"])[valid_indices]
                 valid_correlations = np.array(history["correlation"])[valid_indices]
-                plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2)
-                
+                plt.plot(valid_epochs, valid_correlations, "g-", linewidth=2)
+
                 # Add reference line at 0.45
-                plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
-                
+                plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
+
                 # Get max correlation
-                max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
-                plt.title(f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})")
+                max_corr = (
+                    np.max(valid_correlations) if len(valid_correlations) > 0 else 0
+                )
+                plt.title(
+                    f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})"
+                )
                 plt.xlabel("Epoch")
                 plt.ylabel("Pearson Correlation")
                 plt.grid(True)
                 plt.legend()
-                
+
                 # Save correlation plot
                 if subsystem_num_layers > 1:
                     corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_epoch_{epoch+1}"
                 else:
                     corr_title = f"dcell_{norm_type}_{activation_name}_correlation_epoch_{epoch+1}"
-                    
-                corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{timestamp()}.png")
+
+                corr_save_path = osp.join(
+                    ASSET_IMAGES_DIR, f"{corr_title}_{timestamp()}.png"
+                )
                 plt.savefig(corr_save_path)
                 print(f"Saved correlation plot to {corr_save_path}")
                 plt.close()
-    
+
     # Create final detailed loss components plot
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-    
+
     # Main loss components (log scale)
     ax1.semilogy(history["total_loss"], "b-", linewidth=2, label="Total Loss")
     ax1.semilogy(history["primary_loss"], "r-", linewidth=2, label="Primary Loss")
@@ -1413,21 +1497,21 @@ def main():
         label="Weighted Auxiliary Loss",
     )
     ax1.set_ylabel("Loss Value (log scale)", fontsize=12)
-    
+
     title_suffix = f" ({norm_type}, {activation_name}"
     if subsystem_num_layers > 1:
         title_suffix += f", {subsystem_num_layers}-layer MLP)"
     else:
         title_suffix += ")"
-        
+
     ax1.set_title(f"DCell Loss Components During Training{title_suffix}", fontsize=14)
     ax1.grid(True, linestyle="--", alpha=0.7)
-    
+
     # Add epoch markers
     for e in range(0, num_epochs, 50):
         if e > 0:
             ax1.axvline(x=e, color="gray", linestyle="--", alpha=0.3)
-    
+
     # Auxiliary loss plot
     ax2.semilogy(
         history["auxiliary_loss"],
@@ -1438,7 +1522,7 @@ def main():
     ax2.set_xlabel("Epoch", fontsize=12)
     ax2.set_ylabel("Auxiliary Loss Value (log scale)", fontsize=12)
     ax2.grid(True, linestyle="--", alpha=0.7)
-    
+
     # Add final values to the legend
     ax1.legend(
         [
@@ -1449,40 +1533,35 @@ def main():
         loc="upper right",
         fontsize=10,
     )
-    
+
     ax2.legend(
         [f"Auxiliary Loss: {history['auxiliary_loss'][-1]:.6f}"],
         loc="upper right",
         fontsize=10,
     )
-    
+
     plt.tight_layout()
-    
+
     # Save final loss plot
     if subsystem_num_layers > 1:
         title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_final"
     else:
         title = f"dcell_{norm_type}_{activation_name}_loss_components_final"
-        
+
     save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
     plt.savefig(save_path, dpi=300)
     print(f"\nDetailed loss components plot saved to '{save_path}'")
     plt.close()
-    
+
     # Create predictions vs targets plot
     if len(pred_values) > 1:
         plt.figure(figsize=(12, 9))
-        
+
         # Scatter plot
         scatter = plt.scatter(
-            target_values,
-            pred_values,
-            c="blue",
-            alpha=0.7,
-            s=100,
-            label="Predictions",
+            target_values, pred_values, c="blue", alpha=0.7, s=100, label="Predictions"
         )
-        
+
         # Add sample indices as annotations
         for i, (x, y) in enumerate(zip(target_values, pred_values)):
             plt.annotate(
@@ -1495,17 +1574,17 @@ def main():
                 color="black",
                 bbox=dict(boxstyle="round,pad=0.1", fc="white", alpha=0.7, ec="none"),
             )
-        
+
         # Add perfect prediction line
         min_val = min(min(target_values), min(pred_values))
         max_val = max(max(target_values), max(pred_values))
         plt.plot(
             [min_val, max_val], [min_val, max_val], "r--", label="Perfect Prediction"
         )
-        
+
         # Calculate correlation
         correlation = np.corrcoef(pred_values, target_values)[0, 1]
-        
+
         # Title
         if subsystem_num_layers > 1:
             plt.title(
@@ -1517,12 +1596,12 @@ def main():
                 f"DCell Predictions vs Targets - {norm_type}, {activation_name} (Correlation: {correlation:.4f})",
                 fontsize=16,
             )
-            
+
         plt.xlabel("Target Values", fontsize=14)
         plt.ylabel("Predicted Values", fontsize=14)
         plt.legend(fontsize=12)
         plt.grid(True, linestyle="--", alpha=0.7)
-        
+
         # Add correlation text box
         plt.text(
             0.05,
@@ -1534,65 +1613,73 @@ def main():
             verticalalignment="top",
             bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
         )
-        
+
         plt.tight_layout()
-        
+
         # Save predictions plot
         if subsystem_num_layers > 1:
             title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_predictions_vs_targets"
         else:
             title = f"dcell_{norm_type}_{activation_name}_predictions_vs_targets"
-            
+
         save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
         plt.savefig(save_path, dpi=300)
         print(f"Predictions vs targets plot saved to '{save_path}'")
         plt.close()
-    
+
     # Create final correlation plot
     plt.figure(figsize=(12, 8))
     valid_indices = ~np.isnan(np.array(history["correlation"]))
     if np.any(valid_indices):
         valid_epochs = np.array(history["epochs"])[valid_indices]
         valid_correlations = np.array(history["correlation"])[valid_indices]
-        plt.plot(valid_epochs, valid_correlations, 'g-', linewidth=2, label='Correlation')
-        
+        plt.plot(
+            valid_epochs, valid_correlations, "g-", linewidth=2, label="Correlation"
+        )
+
         # Add reference line
-        plt.axhline(y=0.45, color='r', linestyle='--', label='0.45 threshold')
-        
+        plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
+
         # Annotate max correlation
         max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
-        max_corr_epoch = valid_epochs[np.argmax(valid_correlations)] if len(valid_correlations) > 0 else 0
-        
-        plt.annotate(f'Max: {max_corr:.4f} (epoch {max_corr_epoch})',
-                    xy=(max_corr_epoch, max_corr),
-                    xytext=(max_corr_epoch+5, max_corr+0.02),
-                    arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8),
-                    fontsize=12)
-        
+        max_corr_epoch = (
+            valid_epochs[np.argmax(valid_correlations)]
+            if len(valid_correlations) > 0
+            else 0
+        )
+
+        plt.annotate(
+            f"Max: {max_corr:.4f} (epoch {max_corr_epoch})",
+            xy=(max_corr_epoch, max_corr),
+            xytext=(max_corr_epoch + 5, max_corr + 0.02),
+            arrowprops=dict(facecolor="black", shrink=0.05, width=1.5, headwidth=8),
+            fontsize=12,
+        )
+
         plt.title(f"Correlation Progress Over Training{title_suffix}")
         plt.xlabel("Epoch")
         plt.ylabel("Pearson Correlation")
         plt.grid(True)
-        plt.legend(loc='lower right')
-        
+        plt.legend(loc="lower right")
+
         # Save final correlation plot
         if subsystem_num_layers > 1:
             corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_final"
         else:
             corr_title = f"dcell_{norm_type}_{activation_name}_correlation_final"
-            
+
         corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{timestamp()}.png")
         plt.savefig(corr_save_path, dpi=300)
         print(f"\nFinal correlation plot saved to '{corr_save_path}'")
         plt.close()
-    
+
     # Print final values
     print("\nFinal values:")
     print(f"  Total Loss: {history['total_loss'][-1]:.6f}")
     print(f"  Primary Loss: {history['primary_loss'][-1]:.6f}")
     print(f"  Auxiliary Loss: {history['auxiliary_loss'][-1]:.6f}")
     print(f"  Weighted Auxiliary Loss: {history['weighted_auxiliary_loss'][-1]:.6f}")
-    
+
     # Print correlation statistics
     valid_correlations = [c for c in history["correlation"] if not np.isnan(c)]
     if valid_correlations:
@@ -1600,7 +1687,7 @@ def main():
         max_corr_epoch = history["epochs"][history["correlation"].index(max_corr)]
         print(f"  Final Correlation: {valid_correlations[-1]:.6f}")
         print(f"  Max Correlation: {max_corr:.6f} (at epoch {max_corr_epoch})")
-        
+
     # Print time statistics
     avg_time = sum(history["time_per_epoch"]) / len(history["time_per_epoch"])
     print(f"\nTime statistics:")
@@ -1608,7 +1695,7 @@ def main():
     print(f"  Total training time: {sum(history['time_per_epoch']):.3f}s")
     print(f"  Samples per epoch: {batch_size}")
     print(f"  Samples per second: {batch_size / avg_time:.1f}")
-    
+
     return model, history
 
 

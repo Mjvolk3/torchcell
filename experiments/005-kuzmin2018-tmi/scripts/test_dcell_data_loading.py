@@ -232,9 +232,10 @@ def main(cfg: DictConfig) -> None:
             graph_processor=graph_processor,
         )
         
-        # Move the cell graph to the correct device
-        if hasattr(dataset, "cell_graph"):
-            dataset.cell_graph = dataset.cell_graph.to(device)
+        # We'll skip moving data to GPU during initialization phase
+        # This ensures we only move data to GPU when absolutely needed for the model
+        # Keep cell_graph on CPU during dataset preparation
+        print(f"Keeping dataset.cell_graph on CPU for better initialization performance")
 
         print(f"Dataset size: {len(dataset)} samples")
 
@@ -336,10 +337,16 @@ def main(cfg: DictConfig) -> None:
         train_loader = subset_dm.train_dataloader()
         print(f"Train loader length: {len(train_loader)} batches")
 
-        # Process first batch
+        # Process first batch - keep on CPU to avoid GPU memory issues during loading
         print("\nProcessing first batch...")
         first_batch_start = time.time()
+        # Use simpler approach to keep data on CPU
+        # PyTorch dataloaders run on CPU by default
         first_batch = next(iter(train_loader))
+        
+        # Explicitly print that we're keeping batch on CPU
+        print(f"Batch tensors are on {first_batch['gene'].x.device} by default")
+                
         first_batch_end = time.time()
         print(f"First batch retrieval time: {first_batch_end - first_batch_start:.2f}s")
 
@@ -422,21 +429,35 @@ def main(cfg: DictConfig) -> None:
 
         batch_times = []
 
-        # Start timer before loading first batch
-        start_time = time.time()
+        print(f"\nProcessing all {len(train_loader)} batches with {device.type} configuration...")
         
-        for batch_idx, batch in enumerate(train_loader):
-            # Record the time it took to load this batch
-            end_time = time.time()
-            batch_time = end_time - start_time
-            batch_times.append(batch_time)
-
-            print(
-                f"Batch {batch_idx+1}/{len(train_loader)}, Batch loading time: {batch_time:.4f}s"
-            )
+        # Reset dataloader iterator
+        train_loader_iter = iter(train_loader)
         
-            # Reset timer for next batch
+        for batch_idx in range(len(train_loader)):
+            # Explicitly time batch loading with CPU enforcement
             start_time = time.time()
+            
+            try:
+                # Get next batch - keep on CPU
+                # We're not doing try/with context management because 
+                # torch.device("cpu") context doesn't affect dataloader
+                batch = next(train_loader_iter)
+                
+                # Just accessing key attributes to ensure batch is processed
+                if hasattr(batch, "num_graphs"):
+                    _ = batch.num_graphs
+                
+                end_time = time.time()
+                batch_time = end_time - start_time
+                batch_times.append(batch_time)
+
+                print(
+                    f"Batch {batch_idx+1}/{len(train_loader)}, Batch loading time: {batch_time:.4f}s"
+                )
+            except StopIteration:
+                print(f"Reached end of dataloader at batch {batch_idx+1}")
+                break
 
         # Calculate statistics
         avg_batch_time = np.mean(batch_times)

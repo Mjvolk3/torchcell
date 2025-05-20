@@ -18,20 +18,20 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
+  is_perturbation_subset: false
   perturbation_subset_size: 100
-  batch_size: 2 #32
-  num_workers: 2
+  batch_size: 32 #32
+  num_workers: 4
   pin_memory: false
   prefetch: false
   follow_batch: ["perturbation_indices", "mutant_state"] # Important for DCell batching
 
 trainer:
   max_epochs: 500 #1000 # 20 # FLAG
-  strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
+  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 2
   overfit_batches: 0
 
 # ------ Model-specific parameters

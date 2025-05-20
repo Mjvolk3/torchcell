@@ -3,15 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/005-kuzmin2018-tmi/scripts/test_go_topological_batching
 # Test file: experiments/005-kuzmin2018-tmi/scripts/test_test_go_topological_batching.py
 
-
 import os
 import os.path as osp
 import networkx as nx
 import matplotlib.pyplot as plt
-from collections import defaultdict, deque
-from dotenv import load_dotenv
 import torch
 import numpy as np
+from collections import defaultdict, deque
+from dotenv import load_dotenv
+
+# Torchcell imports
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.graph.graph import (
     SCerevisiaeGraph, 
@@ -26,6 +27,7 @@ from torchcell.scratch.load_batch_005 import load_sample_data_batch
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", "assets/images")
+
 
 def topological_batch_assignment(graph):
     """
@@ -79,6 +81,7 @@ def topological_batch_assignment(graph):
         print(f"This means the graph has cycles that prevent complete topological sorting.")
     
     return batch_assignments, batches
+
 
 def analyze_batch_efficiency(graph, batches):
     """Analyze the efficiency of the batch assignment"""
@@ -143,6 +146,7 @@ def analyze_batch_efficiency(graph, batches):
         'batch_sizes': batch_sizes,
     }
 
+
 def validate_batch_assignments(graph, batches):
     """Validates that nodes in the same batch don't depend on each other"""
     for batch_idx, batch in enumerate(batches):
@@ -162,6 +166,7 @@ def validate_batch_assignments(graph, batches):
     print("\nAll batches validated: Nodes within each batch have no dependencies on each other.")
     return True
 
+
 def apply_dcell_filters(go_graph, min_genes=5):
     """Apply the filters used by DCellGraphProcessor to the GO graph"""
     print("\nApplying DCellGraphProcessor filters...")
@@ -177,6 +182,7 @@ def apply_dcell_filters(go_graph, min_genes=5):
     print(f"  Filtered graph: {filtered_graph.number_of_nodes()} nodes, {filtered_graph.number_of_edges()} edges")
     
     return filtered_graph
+
 
 def analyze_level_batch_comparison(level_grouped, batch_grouped):
     """Compare level-based vs batch-based grouping"""
@@ -231,6 +237,7 @@ def analyze_level_batch_comparison(level_grouped, batch_grouped):
     print(f"\nComparison plot saved to: {plot_path}")
     
     return level_vs_batch
+
 
 def main():
     # Load genome and graph
@@ -338,6 +345,7 @@ def main():
         'efficiency_metrics': efficiency_metrics,
         'nodes_by_level': nodes_by_level,
     }
+
 
 if __name__ == "__main__":
     main()

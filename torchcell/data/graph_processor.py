@@ -951,43 +951,73 @@ class DCellGraphProcessor(GraphProcessor):
         batch_mapping: dict,
     ) -> None:
         """
-        Apply gene perturbations to gene ontology nodes by creating binary state vectors.
+        Apply gene perturbations to gene ontology nodes using strata-based processing.
         Each GO term gets a binary vector indicating which of its associated genes are perturbed.
-        Uses pre-computed term-gene mappings from cell_graph in tensor format.
+        Includes stratum information for parallelized processing.
         """
-        # We require the term_to_gene_dict for efficient processing
+        # We require the term_to_gene_dict and strata for processing
         if not hasattr(cell_graph["gene_ontology"], "term_to_gene_dict"):
             raise ValueError("Gene ontology graph must have term_to_gene_dict for DCellGraphProcessor")
+        if not hasattr(cell_graph["gene_ontology"], "strata"):
+            raise ValueError("Gene ontology graph must have strata for efficient processing")
 
-        # Create a sparse representation of mutant states for batching
-        mutant_state_data = []
+        # Get strata tensor
+        strata_tensor = cell_graph["gene_ontology"].strata.to(self.device)
+        print(f"Using stratum-optimized processing with {len(torch.unique(strata_tensor))} strata")
 
-        # Process each batch separately (but we'll remove batch_idx from the output)
-        for _, gene_indices in batch_mapping.items():
-            # Create a binary mask for perturbed genes (1 = perturbed)
-            perturbed_mask = torch.zeros(
-                cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
-            )
+        # Get term-gene mappings
+        term_gene_mapping = cell_graph["gene_ontology"].term_gene_mapping
+        term_indices = term_gene_mapping[:, 0]
+        gene_indices_in_mapping = term_gene_mapping[:, 1]
+        
+        # Get stratum for each term-gene pair
+        pair_strata = strata_tensor[term_indices.long()]
+        
+        # Create a binary mask for perturbed genes
+        perturbed_mask = torch.zeros(cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device)
+        for batch_idx, gene_indices in batch_mapping.items():
             perturbed_mask[gene_indices] = True
 
-            # Process each term-gene pair using the dictionary for efficient access
-            for term_idx, gene_indices in cell_graph["gene_ontology"].term_to_gene_dict.items():
-                for gene_idx in gene_indices:
-                    # Determine gene state (1 = present, 0 = perturbed)
-                    gene_state = 0.0 if perturbed_mask[gene_idx] else 1.0
+        # Vectorized creation of mutant state tensor [term_idx, gene_idx, stratum, level, gene_state]
+        # Get levels for each term to support level-based optimization
+        levels = []
+        unique_terms = torch.unique(term_indices).long()
+        term_to_level = {}
+        
+        # First, gather term to level mapping
+        for term_idx in unique_terms:
+            term_id = cell_graph["gene_ontology"].node_ids[term_idx]
+            # Need to get level from graph attributes - if not found, default to stratum
+            level = strata_tensor[term_idx].item()  # Default to stratum
+            # If go_graph is available in the cell graph's attributes, get the level
+            if hasattr(cell_graph, "go_graph") and cell_graph.go_graph is not None:
+                if term_id in cell_graph.go_graph.nodes and "level" in cell_graph.go_graph.nodes[term_id]:
+                    level = cell_graph.go_graph.nodes[term_id]["level"]
+            term_to_level[term_idx.item()] = level
+        
+        # Create level tensor for each term-gene pair
+        level_tensor = torch.zeros_like(term_indices, dtype=torch.float, device=self.device)
+        for i, term_idx in enumerate(term_indices):
+            level_tensor[i] = term_to_level.get(term_idx.item(), pair_strata[i].item())
+            
+        # Create mutant state tensor with 5 columns: [term_idx, gene_idx, stratum, level, gene_state]
+        mutant_state = torch.zeros((term_gene_mapping.size(0), 5), dtype=torch.float, device=self.device)
+        mutant_state[:, 0] = term_indices.float()
+        mutant_state[:, 1] = gene_indices_in_mapping.float()
+        mutant_state[:, 2] = pair_strata.float()
+        mutant_state[:, 3] = level_tensor.float()
+        mutant_state[:, 4] = 1.0  # Default gene state (not perturbed)
+        
+        # Set perturbation state - if gene is perturbed, set state to 0.0
+        is_perturbed = perturbed_mask[gene_indices_in_mapping.long()]
+        mutant_state[is_perturbed, 4] = 0.0  # Now column 4 is the gene state, since we added level at column 3
 
-                    # Format: [term_idx, gene_idx, state_value] - NO batch_idx
-                    mutant_state_data.append([term_idx, gene_idx, gene_state])
+        # Assign mutant state tensor to the graph
+        processed_graph["gene_ontology"].mutant_state = mutant_state
 
-        # Convert to tensor if we have data
-        if mutant_state_data:
-            mutant_state = torch.tensor(
-                mutant_state_data, dtype=torch.float, device=self.device
-            )
-            processed_graph["gene_ontology"].mutant_state = mutant_state
-
-        # Copy essential term attributes from cell_graph to processed_graph
-        for attr in ["term_ids", "max_genes_per_term", "term_gene_mapping", "term_gene_counts", "term_to_gene_dict"]:
+        # Copy all essential attributes from cell_graph to processed_graph
+        for attr in ["term_ids", "max_genes_per_term", "term_gene_mapping", "term_gene_counts", 
+                    "term_to_gene_dict", "strata", "stratum_to_terms"]:
             if hasattr(cell_graph["gene_ontology"], attr):
                 setattr(processed_graph["gene_ontology"], attr, getattr(cell_graph["gene_ontology"], attr))
 

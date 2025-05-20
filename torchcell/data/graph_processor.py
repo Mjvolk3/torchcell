@@ -963,7 +963,6 @@ class DCellGraphProcessor(GraphProcessor):
 
         # Get strata tensor
         strata_tensor = cell_graph["gene_ontology"].strata.to(self.device)
-        print(f"Using stratum-optimized processing with {len(torch.unique(strata_tensor))} strata")
 
         # Get term-gene mappings
         term_gene_mapping = cell_graph["gene_ontology"].term_gene_mapping

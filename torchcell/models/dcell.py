@@ -607,8 +607,6 @@ class DCell(nn.Module):
         if self.stratum_to_systems is None:
             raise ValueError("Stratum to systems mapping is not initialized")
             
-        print(f"Processing with {len(self.stratum_to_systems)} strata")
-            
         # Map from term IDs to indices in the cell_graph
         term_id_to_idx = {
             term_id: idx for idx, term_id in enumerate(cell_graph["gene_ontology"].node_ids)

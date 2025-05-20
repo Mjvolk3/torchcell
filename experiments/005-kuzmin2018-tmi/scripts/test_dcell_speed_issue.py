@@ -52,7 +52,9 @@ def profile_forward_pass(
         device = next(model.parameters()).device
     except StopIteration:
         # If model has no parameters yet, get device from inputs
-        device = cell_graph.device if hasattr(cell_graph, "device") else torch.device("cpu")
+        device = (
+            cell_graph.device if hasattr(cell_graph, "device") else torch.device("cpu")
+        )
 
     # Basic profiling with CUDA event timing
     if use_cuda and torch.cuda.is_available():
@@ -387,20 +389,21 @@ def analyze_model_configuration(batch_size=32, num_repeats=3):
 
 def add_dcell_profiling_hooks(model):
     """Add profiling hooks to key methods in the DCell model."""
-    
+
     # Store original methods to call them from the wrapped methods
     original_dcell_forward = model.dcell.forward
-    
+
     # Create a logger for profiling info
     from collections import defaultdict
     import time
+
     profile_logger = defaultdict(list)
-    
+
     # Wrap the DCell forward method to time each step
     def profiled_dcell_forward(self, cell_graph, batch):
         # Time the overall forward pass
         full_start = time.time()
-        
+
         # Time initialization if needed
         if not self.initialized:
             init_start = time.time()
@@ -408,54 +411,56 @@ def add_dcell_profiling_hooks(model):
             init_time = time.time() - init_start
             profile_logger["init_time"].append(init_time)
             print(f"DCell initialization time: {init_time:.4f}s")
-        
+
         # Time strata processing
         strata_times = {}
         output_time = 0
-        
+
         # Get term_gene_states preparation time
         prep_start = time.time()
-        term_indices_set = torch.unique(batch["gene_ontology"].mutant_state[:, 0]).tolist()
+        term_indices_set = torch.unique(
+            batch["gene_ontology"].mutant_state[:, 0]
+        ).tolist()
         term_gene_states = {}
-        
+
         for term_idx in term_indices_set:
             term_idx = term_idx if isinstance(term_idx, int) else term_idx.item()
-            
+
             # Get genes for this term
             genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
             num_genes = max(1, len(genes))
-            
+
             # Create gene state tensor
             term_gene_states[term_idx] = torch.ones(
-                (batch.num_graphs, num_genes), 
-                dtype=torch.float, 
-                device=cell_graph.device
+                (batch.num_graphs, num_genes),
+                dtype=torch.float,
+                device=cell_graph.device,
             )
-        
+
         term_prep_time = time.time() - prep_start
         profile_logger["term_prep_time"].append(term_prep_time)
-        
+
         # Process strata with timing
         strata_start = time.time()
         for stratum in self.sorted_strata:
             stratum_start = time.time()
-            
+
             # Code here that would process just this stratum
             # We're not actually doing the computation here, just for profiling estimation
-            
+
             stratum_time = time.time() - stratum_start
             strata_times[stratum] = stratum_time
-        
+
         total_strata_time = time.time() - strata_start
         profile_logger["total_strata_time"].append(total_strata_time)
-        
+
         # Now actually call the original method
         root_output, outputs = original_dcell_forward(self, cell_graph, batch)
-        
+
         # Record full forward time
         full_time = time.time() - full_start
         profile_logger["full_forward_time"].append(full_time)
-        
+
         # Print detailed timing info
         print(f"\nDCell Forward Pass Profile:")
         print(f"  Full forward time: {full_time:.6f}s")
@@ -463,16 +468,18 @@ def add_dcell_profiling_hooks(model):
             print(f"  Initialization time: {profile_logger['init_time'][-1]:.6f}s")
         print(f"  Term prep time: {term_prep_time:.6f}s")
         print(f"  Strata processing time (estimate): {total_strata_time:.6f}s")
-        
+
         if stratum in profile_logger["strata_times"]:
             for s, t in sorted(profile_logger["strata_times"][-1].items()):
                 print(f"    Stratum {s}: {t:.6f}s")
-        
+
         return root_output, outputs
-    
+
     # Replace the methods with our profiled versions
-    model.dcell.forward = profiled_dcell_forward.__get__(model.dcell, model.dcell.__class__)
-    
+    model.dcell.forward = profiled_dcell_forward.__get__(
+        model.dcell, model.dcell.__class__
+    )
+
     # Return the logger for external access
     return profile_logger
 
@@ -555,7 +562,7 @@ def main():
         "init_range": 0.001,
     }
     model = DCellModel(**model_params).to(device)
-    
+
     # Run a first forward pass to initialize the model structure
     print("Running initial forward pass to initialize model structure...")
     with torch.no_grad():
@@ -565,19 +572,19 @@ def main():
         except Exception as e:
             print(f"Error during model initialization: {e}")
             initialized = False
-    
+
     if initialized:
         # Print model statistics
         param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
         print(f"Model has {param_count:,} parameters")
-        
+
         # Add profiling hooks if requested
         if args.profile_dcell_internal:
             print("Adding internal profiling hooks to DCell model...")
             profile_logger = add_dcell_profiling_hooks(model)
-        
+
         # Add custom optimizations for testing
-        if hasattr(torch, 'compile') and args.use_compile:
+        if hasattr(torch, "compile") and args.use_compile:
             try:
                 print("Using torch.compile() for acceleration")
                 model = torch.compile(model, mode="reduce-overhead")
@@ -592,7 +599,9 @@ def main():
     if args.analyze_batch:
         # Analyze impact of batch size
         batch_results = analyze_batch_size_impact(
-            model, cell_graph, [8, 16, 32, 64, 128, 256, 512] if not args.fast_debug else [32, 128]
+            model,
+            cell_graph,
+            [8, 16, 32, 64, 128, 256, 512] if not args.fast_debug else [32, 128],
         )
 
     if args.analyze_config:
@@ -601,13 +610,13 @@ def main():
 
     # Run detailed profiling
     num_repeats = 3 if args.fast_debug else args.num_repeats
-    
+
     # If we're using PyTorch 2.0+ and on CUDA, let's also create an optimized version for comparison
-    if hasattr(torch, 'compile') and use_cuda and not args.use_compile:
+    if hasattr(torch, "compile") and use_cuda and not args.use_compile:
         try:
             print("\nCreating compiled model for comparison...")
             compiled_model = torch.compile(model, mode="reduce-overhead")
-            
+
             print("Testing uncompiled model first:")
             prof_results = profile_forward_pass(
                 model,
@@ -618,7 +627,7 @@ def main():
                 detailed=args.detailed,
                 save_trace=args.save_trace,
             )
-            
+
             print("\nTesting compiled model:")
             compiled_prof_results = profile_forward_pass(
                 compiled_model,
@@ -629,10 +638,15 @@ def main():
                 detailed=False,  # Avoid detailed profiling with compiled model
                 save_trace=False,
             )
-            
+
             print("\nCompiled vs Uncompiled model speedup comparison:")
-            if "elapsed_time" in prof_results and "elapsed_time" in compiled_prof_results:
-                speedup = prof_results["elapsed_time"] / compiled_prof_results["elapsed_time"]
+            if (
+                "elapsed_time" in prof_results
+                and "elapsed_time" in compiled_prof_results
+            ):
+                speedup = (
+                    prof_results["elapsed_time"] / compiled_prof_results["elapsed_time"]
+                )
                 print(f"  Speedup from torch.compile(): {speedup:.2f}x")
         except Exception as e:
             print(f"Error testing compiled model: {e}")

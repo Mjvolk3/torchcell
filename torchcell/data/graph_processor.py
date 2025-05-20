@@ -964,7 +964,7 @@ class DCellGraphProcessor(GraphProcessor):
         Each GO term gets a binary vector indicating which of its associated genes are perturbed.
         Includes stratum information for parallelized processing.
         
-        Optimized version that guarantees all tensors are on the same device.
+        Simplified version with cleaner device handling.
         """
         # We require the term_to_gene_dict and strata for processing
         if not hasattr(cell_graph["gene_ontology"], "term_to_gene_dict"):
@@ -972,14 +972,14 @@ class DCellGraphProcessor(GraphProcessor):
         if not hasattr(cell_graph["gene_ontology"], "strata"):
             raise ValueError("Gene ontology graph must have strata for efficient processing")
 
-        # Ensure device is set
+        # Get device - ensure a device is set
         if self.device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             
-        # Get strata tensor - ensure on correct device
+        # Get strata tensor
         strata_tensor = cell_graph["gene_ontology"].strata.to(self.device)
 
-        # Get term-gene mappings - ensure on correct device
+        # Get term-gene mappings
         term_gene_mapping = cell_graph["gene_ontology"].term_gene_mapping.to(self.device)
         term_indices = term_gene_mapping[:, 0]
         gene_indices_in_mapping = term_gene_mapping[:, 1]
@@ -993,30 +993,26 @@ class DCellGraphProcessor(GraphProcessor):
             indices_tensor = torch.tensor(gene_indices, dtype=torch.long, device=self.device)
             perturbed_mask.index_fill_(0, indices_tensor, True)
 
-        # Get unique terms for level mapping - ensure on device
+        # Get term to level mapping
         unique_terms = torch.unique(term_indices).long()
         term_to_level = {}
         
-        # First, gather term to level mapping
         for term_idx in unique_terms:
             term_id = cell_graph["gene_ontology"].node_ids[term_idx.item()]
             # Default to stratum
             level = strata_tensor[term_idx].item()
-            # If go_graph is available in the cell graph's attributes, get the level
+            # If go_graph is available, get the level
             if hasattr(cell_graph, "go_graph") and cell_graph.go_graph is not None:
                 if term_id in cell_graph.go_graph.nodes and "level" in cell_graph.go_graph.nodes[term_id]:
                     level = cell_graph.go_graph.nodes[term_id]["level"]
             term_to_level[term_idx.item()] = level
         
-        # Create level tensor for each term-gene pair efficiently
+        # Create level tensor for each term-gene pair
         level_tensor = torch.zeros_like(term_indices, dtype=torch.float, device=self.device)
-        
-        # Vectorized operation to assign levels where possible
         for term_idx_val, level_val in term_to_level.items():
             level_tensor[term_indices == term_idx_val] = level_val
             
         # Create mutant state tensor with 5 columns: [term_idx, gene_idx, stratum, level, gene_state]
-        # Directly create on the correct device
         mutant_state = torch.zeros((term_gene_mapping.size(0), 5), dtype=torch.float, device=self.device)
         mutant_state[:, 0] = term_indices.float()  # term_idx
         mutant_state[:, 1] = gene_indices_in_mapping.float()  # gene_idx
@@ -1024,15 +1020,14 @@ class DCellGraphProcessor(GraphProcessor):
         mutant_state[:, 3] = level_tensor.float()  # level
         mutant_state[:, 4] = 1.0  # Default gene state (not perturbed)
         
-        # Set perturbation state efficiently - if gene is perturbed, set state to 0.0
+        # Set perturbation state - if gene is perturbed, set state to 0.0
         is_perturbed = perturbed_mask[gene_indices_in_mapping.long()]
-        mutant_state[is_perturbed, 4] = 0.0  # Now column 4 is the gene state, since we added level at column 3
+        mutant_state[is_perturbed, 4] = 0.0
 
         # Assign mutant state tensor to the graph
         processed_graph["gene_ontology"].mutant_state = mutant_state
 
-        # Copy all essential attributes from cell_graph to processed_graph
-        # Ensure all tensors are moved to the correct device
+        # Copy essential attributes from cell_graph to processed_graph
         for attr in ["term_ids", "max_genes_per_term", "term_gene_mapping", "term_gene_counts", 
                     "term_to_gene_dict", "strata", "stratum_to_terms"]:
             if hasattr(cell_graph["gene_ontology"], attr):
@@ -1041,8 +1036,8 @@ class DCellGraphProcessor(GraphProcessor):
                 # Move tensors to device if applicable
                 if torch.is_tensor(attr_value):
                     attr_value = attr_value.to(self.device)
-                # Handle dictionary of tensors
                 elif isinstance(attr_value, dict):
+                    # Handle dictionary of tensors
                     for k, v in attr_value.items():
                         if torch.is_tensor(v):
                             attr_value[k] = v.to(self.device)

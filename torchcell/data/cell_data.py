@@ -7,6 +7,7 @@
 import torch
 import networkx as nx
 import hypernetx as hnx
+from collections import defaultdict, deque
 from torchcell.data.hetero_data import HeteroData
 from torch_geometric.utils import add_remaining_self_loops
 from torchcell.graph import GeneMultiGraph
@@ -173,8 +174,88 @@ def _process_metabolism_hypergraph(hetero_data, hypergraph, node_idx_mapping):
         hetero_data[gpr_type].num_edges = len(torch.unique(gpr_edge_index[1]))
 
 
+def compute_strata(go_graph):
+    """
+    Compute strata (topological levels) for GO graph from leaves to root.
+    A stratum contains nodes that can be processed in parallel.
+    
+    Args:
+        go_graph: NetworkX DiGraph with GO terms as nodes
+        
+    Returns:
+        Dictionary mapping node -> stratum number
+    """
+    # Build a reversed graph where edges point from child to parent
+    # This matches the natural flow of information from specific to general terms
+    reversed_graph = go_graph.reverse(copy=True)
+    
+    # Initialize tracking variables
+    in_degree = {}
+    for node in reversed_graph.nodes():
+        in_degree[node] = reversed_graph.in_degree(node)
+    
+    # Start with nodes that have no incoming edges (in_degree = 0)
+    # These are the leaf nodes in the original graph
+    queue = deque([node for node, degree in in_degree.items() if degree == 0])
+    
+    # Initialize strata assignments
+    strata = {}
+    current_stratum = 0
+    
+    # Process nodes in batches (breadth-first)
+    while queue:
+        # All nodes in the current queue get the same stratum
+        current_nodes = list(queue)  # Make a copy
+        queue.clear()
+        
+        # Assign current stratum to all nodes in this batch
+        for node in current_nodes:
+            strata[node] = current_stratum
+            
+            # Update in-degrees of parent nodes
+            for parent in reversed_graph.successors(node):
+                in_degree[parent] -= 1
+                # If all children of this parent have been processed (in_degree = 0),
+                # add it to the queue for the next stratum
+                if in_degree[parent] == 0:
+                    queue.append(parent)
+        
+        # Move to next stratum
+        current_stratum += 1
+    
+    # Check if all nodes have been assigned to strata
+    if len(strata) != go_graph.number_of_nodes():
+        unassigned = set(go_graph.nodes()) - set(strata.keys())
+        print(f"Warning: {len(unassigned)} nodes not assigned to strata due to cycles in the GO graph.")
+        
+        # Handle cycles by assigning remaining nodes to strata higher than any existing one
+        if unassigned:
+            # Use a simple topological sort algorithm to handle the remaining nodes
+            remaining_graph = go_graph.subgraph(unassigned).copy()
+            
+            # Iteratively find nodes with no outgoing edges and assign them to strata
+            while remaining_graph.nodes():
+                # Find nodes with no outgoing edges in the remaining graph
+                sinks = [n for n in remaining_graph.nodes() if remaining_graph.out_degree(n) == 0]
+                
+                if not sinks:  # If there are no sinks, there must be a cycle
+                    # Just assign all remaining nodes to the next stratum and break
+                    for node in remaining_graph.nodes():
+                        strata[node] = current_stratum
+                    break
+                
+                # Assign current stratum to these sink nodes
+                for node in sinks:
+                    strata[node] = current_stratum
+                    remaining_graph.remove_node(node)
+                
+                # Move to next stratum
+                current_stratum += 1
+    
+    return strata
+
 def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
-    """Process gene ontology graph for DCell model."""
+    """Process gene ontology graph for DCell model and compute strata for parallel processing."""
     # Extract GO terms as nodes, preserving the hierarchical structure
     go_nodes = list(sorted(go_graph.nodes()))
     go_mapping = {term: idx for idx, term in enumerate(go_nodes)}
@@ -274,6 +355,36 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
 
         hetero_data["gene_ontology", "is_child_of", "gene_ontology"].edge_index = go_to_go_edge_index
         hetero_data["gene_ontology", "is_child_of", "gene_ontology"].num_edges = len(go_to_go_src)
+        
+    # Compute strata for parallel processing
+    strata_dict = compute_strata(go_graph)
+    
+    # Create tensor of strata (one per GO term)
+    strata_tensor = torch.zeros(len(go_nodes), dtype=torch.int64)
+    for term, idx in go_mapping.items():
+        strata_tensor[idx] = strata_dict.get(term, 0)
+    
+    # Store strata information in the graph
+    hetero_data["gene_ontology"].strata = strata_tensor.cpu()
+    
+    # Also store mapping from stratum -> terms for efficient lookup
+    stratum_to_terms = defaultdict(list)
+    for term, stratum in strata_dict.items():
+        term_idx = go_mapping.get(term)
+        if term_idx is not None:
+            stratum_to_terms[stratum].append(term_idx)
+    
+    hetero_data["gene_ontology"].stratum_to_terms = {
+        stratum: torch.tensor(terms, dtype=torch.long).cpu() 
+        for stratum, terms in stratum_to_terms.items()
+    }
+    
+    # Print strata statistics
+    print(f"Computed {len(stratum_to_terms)} strata for {len(go_nodes)} GO terms")
+    for stratum, terms in sorted(stratum_to_terms.items())[:5]:
+        print(f"  Stratum {stratum}: {len(terms)} terms")
+    if len(stratum_to_terms) > 5:
+        print(f"  ... and {len(stratum_to_terms)-5} more strata")
 
 
 def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):

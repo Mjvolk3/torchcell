@@ -127,30 +127,38 @@ class SubsystemModel(nn.Module):
         Returns:
             Processed subsystem output [batch_size, output_size]
         """
-        # Ensure input tensor is on the same device as model parameters
-        device = self.layers[0].weight.device
+        # Set device (use CUDA if available, otherwise CPU)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Ensure input tensor is on the same device
         x = x.to(device)
 
         # Apply each layer of the MLP in sequence
         for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
-            # Apply linear transformation
+            # Apply linear transformation - ensure on correct device
+            layer = layer.to(device)
             x = layer(x)
 
             # Apply normalization and activation in the specified order
             if self.norm_before_act:
                 # Norm -> Act order
                 if norm is not None:
+                    # Move normalization to correct device
+                    norm = norm.to(device)
                     # Handle batch size safely for BatchNorm - this is a legitimate technical constraint
                     if self.norm_type == "batch" and x.size(0) == 1:
                         # Skip BatchNorm for single samples to avoid the error
                         pass
                     else:
                         x = norm(x)
+                # Apply activation (activation functions don't have device-specific parameters)
                 x = self.activation(x)
             else:
                 # Act -> Norm order (original DCell approach)
                 x = self.activation(x)
                 if norm is not None:
+                    # Move normalization to correct device
+                    norm = norm.to(device)
                     # Handle batch size safely for BatchNorm - this is a legitimate technical constraint
                     if self.norm_type == "batch" and x.size(0) == 1:
                         # Skip BatchNorm for single samples to avoid the error
@@ -158,7 +166,8 @@ class SubsystemModel(nn.Module):
                     else:
                         x = norm(x)
 
-        return x
+        # Make sure output is on the correct device before returning
+        return x.to(device)
 
 
 class DCell(nn.Module):
@@ -576,6 +585,8 @@ class DCell(nn.Module):
         Vectorized forward pass for the DCell model using stratum-based parallelization.
         Processes GO terms in parallel by stratum, processing each stratum sequentially.
         This optimized version groups subsystems by input/output dimensions for batch processing.
+        
+        Optimized version with strict device management to ensure GPU compatibility.
 
         Args:
             cell_graph: The cell graph containing gene ontology structure
@@ -595,10 +606,28 @@ class DCell(nn.Module):
                 "This indicates a problem with the GO hierarchy structure or filtering."
             )
 
-        # Get the device from the model parameters for consistency
-        device = next(self.parameters()).device
+        # Set device (use CUDA if available, otherwise CPU)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Log the device we're using
+        if not hasattr(self, '_device_logged') or not self._device_logged:
+            print(f"DCell model running on device: {device}")
+            self._device_logged = True
 
-        # Ensure data is on the correct device
+        # Ensure data is on the correct device - create a recursive function to handle all nested tensors
+        def ensure_tensor_on_device(data_obj, target_device):
+            """Recursively ensure all tensors in a nested structure are on the target device."""
+            if torch.is_tensor(data_obj):
+                return data_obj.to(target_device)
+            elif isinstance(data_obj, dict):
+                return {k: ensure_tensor_on_device(v, target_device) for k, v in data_obj.items()}
+            elif isinstance(data_obj, (list, tuple)):
+                return type(data_obj)(ensure_tensor_on_device(x, target_device) for x in data_obj)
+            elif hasattr(data_obj, 'to'):  # For HeteroData and other PyG objects
+                return data_obj.to(target_device)
+            return data_obj
+            
+        # Move all data to device
         cell_graph = cell_graph.to(device)
         batch = batch.to(device)
         num_graphs = batch.num_graphs
@@ -609,7 +638,8 @@ class DCell(nn.Module):
                 "Batch must contain gene_ontology.mutant_state for DCell model"
             )
 
-        mutant_state = batch["gene_ontology"].mutant_state
+        # Make sure mutant_state is on the correct device
+        mutant_state = batch["gene_ontology"].mutant_state.to(device)
 
         # Verify mutant state has the right number of columns
         # (either 4 columns [term_idx, gene_idx, stratum, gene_state] or
@@ -632,40 +662,43 @@ class DCell(nn.Module):
         # Dictionary to store all subsystem outputs
         subsystem_outputs = {}
 
-        # Extract information from mutant state
-        term_indices = mutant_state[:, 0].long()
-        gene_indices = mutant_state[:, 1].long()
-        strata_indices = mutant_state[:, 2].long()
+        # Extract information from mutant state - ensure on correct device
+        term_indices = mutant_state[:, 0].long().to(device)
+        gene_indices = mutant_state[:, 1].long().to(device)
+        strata_indices = mutant_state[:, 2].long().to(device)
 
         # Handle either 4-column or 5-column format
         if mutant_state.shape[1] == 4:
             # 4-column format: [term_idx, gene_idx, stratum, gene_state]
-            gene_states = mutant_state[:, 3]
+            gene_states = mutant_state[:, 3].to(device)
         else:
             # 5-column format: [term_idx, gene_idx, stratum, level, gene_state]
-            gene_states = mutant_state[:, 4]
+            gene_states = mutant_state[:, 4].to(device)
 
         # Extract batch information if available
         if hasattr(batch["gene_ontology"], "mutant_state_batch"):
-            batch_indices = batch["gene_ontology"].mutant_state_batch
+            batch_indices = batch["gene_ontology"].mutant_state_batch.to(device)
         else:
             batch_indices = torch.zeros(
                 mutant_state.size(0), dtype=torch.long, device=device
             )
 
-        # Pre-process gene states for all terms
+        # Pre-process gene states for all terms - make sure everything is on device
         term_gene_states = {}
-        term_indices_set = torch.unique(term_indices).tolist()
+        term_indices_set = torch.unique(term_indices).to(device).tolist()
 
         # Efficiently process gene states for each term
         for term_idx in term_indices_set:
             term_idx = term_idx if isinstance(term_idx, int) else term_idx.item()
 
-            # Get genes for this term
-            genes = cell_graph["gene_ontology"].term_to_gene_dict.get(term_idx, [])
+            # Get genes for this term - ensure all data structure on the right device
+            term_to_gene_dict = ensure_tensor_on_device(
+                cell_graph["gene_ontology"].term_to_gene_dict, device
+            )
+            genes = term_to_gene_dict.get(term_idx, [])
             num_genes = max(1, len(genes))
 
-            # Create gene state tensor based on embedding mode
+            # Create gene state tensor based on embedding mode - directly on device
             if self.learnable_embedding_dim is not None:
                 # Initialize tensor with embeddings - [batch_size, num_genes, embedding_dim]
                 term_gene_states[term_idx] = torch.zeros(
@@ -753,9 +786,10 @@ class DCell(nn.Module):
                     gene_states = term_gene_states[term_idx]
                 else:
                     # Create default state tensor for terms not in mutant_state
-                    genes = cell_graph["gene_ontology"].term_to_gene_dict.get(
-                        term_idx, []
+                    term_to_gene_dict = ensure_tensor_on_device(
+                        cell_graph["gene_ontology"].term_to_gene_dict, device
                     )
+                    genes = term_to_gene_dict.get(term_idx, [])
 
                     if self.learnable_embedding_dim is not None:
                         gene_states = torch.zeros(
@@ -836,6 +870,9 @@ class DCell(nn.Module):
                         f"expected {expected_size}, got {actual_size}."
                     )
 
+                # Ensure the combined input is on the correct device
+                combined_input = combined_input.to(device)
+                
                 # Save all data for batch processing
                 term_ids.append(term_id)
                 subsystem_models.append(subsystem_model)
@@ -872,6 +909,8 @@ class DCell(nn.Module):
                     term_id = batch_term_ids[0]
                     model = batch_models[0]
                     combined_input = batch_inputs[0]
+                    # Ensure input is on the right device
+                    combined_input = combined_input.to(device)
                     output = model(combined_input)
                     subsystem_outputs[term_id] = output
                     continue
@@ -882,18 +921,21 @@ class DCell(nn.Module):
                     # Stack inputs (these all have the same shape)
                     batch_size = batch_inputs[0].size(0)
                     num_subsystems = len(batch_inputs)
+                    
+                    # Ensure all inputs are on the correct device
+                    batch_inputs = [input_tensor.to(device) for input_tensor in batch_inputs]
 
                     # Stack inputs into a single tensor
-                    stacked_inputs = torch.cat(batch_inputs, dim=0)
+                    stacked_inputs = torch.cat(batch_inputs, dim=0).to(device)
 
                     # For simple models (1 layer), we can optimize with a batched matrix multiply
                     if all(model.num_layers == 1 for model in batch_models):
                         # Stack all model weights and biases for the first layer
                         weights = torch.stack(
-                            [model.layers[0].weight for model in batch_models]
+                            [model.layers[0].weight.to(device) for model in batch_models]
                         )
                         biases = torch.stack(
-                            [model.layers[0].bias for model in batch_models]
+                            [model.layers[0].bias.to(device) for model in batch_models]
                         )
 
                         # Create a big batch multiplication
@@ -916,7 +958,7 @@ class DCell(nn.Module):
                         normalized_outputs = []
                         for i, model in enumerate(batch_models):
                             # Extract this model's output
-                            output = outputs[i]  # Shape: (batch_size, out_size)
+                            output = outputs[i].to(device)  # Shape: (batch_size, out_size)
 
                             # Apply activation
                             output = model.activation(output)
@@ -940,6 +982,8 @@ class DCell(nn.Module):
                         for i, (term_id, model, combined_input) in enumerate(
                             zip(batch_term_ids, batch_models, batch_inputs)
                         ):
+                            # Ensure input is on the right device
+                            combined_input = combined_input.to(device)
                             output = model(combined_input)
                             subsystem_outputs[term_id] = output
 
@@ -951,15 +995,23 @@ class DCell(nn.Module):
                     for i, (term_id, model, combined_input) in enumerate(
                         zip(batch_term_ids, batch_models, batch_inputs)
                     ):
+                        # Ensure input is on the right device
+                        combined_input = combined_input.to(device)
                         output = model(combined_input)
                         subsystem_outputs[term_id] = output
 
         # Get the root output
         if "GO:ROOT" in subsystem_outputs:
-            root_output = subsystem_outputs["GO:ROOT"]
+            root_output = subsystem_outputs["GO:ROOT"].to(device)
         else:
             raise ValueError("Root node 'GO:ROOT' not found in outputs")
 
+        # Add flag to track first device logging
+        if not hasattr(self, '_device_logged'):
+            self._device_logged = True
+
+        # Return both the root output and all subsystem outputs for auxiliary loss calculation
+        # Ensure everything is on the right device
         return root_output, {"subsystem_outputs": subsystem_outputs}
 
 
@@ -993,6 +1045,8 @@ class DCellLinear(nn.Module):
         """
         Forward pass applying linear transformation to each subsystem output.
         Uses batch processing for improved performance.
+        
+        Optimized version with strict device management to ensure GPU compatibility.
 
         Args:
             subsystem_outputs: Dictionary mapping subsystem names to their outputs
@@ -1000,12 +1054,18 @@ class DCellLinear(nn.Module):
         Returns:
             Dictionary mapping subsystem names to transformed outputs
         """
+        # Set device (use CUDA if available, otherwise CPU)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Dictionary to store outputs
         linear_outputs = {}
 
         # Group subsystems by output size for batch processing
         subsystems_by_size = {}
         for subsystem_name, subsystem_output in subsystem_outputs.items():
             if subsystem_name in self.subsystem_linears:
+                # Ensure output is on correct device before measuring shape
+                subsystem_output = subsystem_output.to(device)
                 output_size = subsystem_output.shape[1]
                 if output_size not in subsystems_by_size:
                     subsystems_by_size[output_size] = []
@@ -1017,49 +1077,35 @@ class DCellLinear(nn.Module):
         for output_size, subsystem_group in subsystems_by_size.items():
             # Get all subsystem names and outputs for this size
             names = [item[0] for item in subsystem_group]
-            outputs = [item[1] for item in subsystem_group]
+            outputs = [item[1].to(device) for item in subsystem_group]  # Ensure all outputs on same device
 
             # Skip batch processing for small groups to avoid overhead
             if len(names) <= 1:
                 for name, output in subsystem_group:
-                    linear_outputs[name] = self.subsystem_linears[name](output)
+                    # Ensure both the linear layer and input are on the same device
+                    linear = self.subsystem_linears[name].to(device)
+                    output = output.to(device)
+                    linear_outputs[name] = linear(output)
                 continue
 
             # Create a batch of outputs for parallel processing
-            stacked_outputs = torch.cat(outputs, dim=0)
+            stacked_outputs = torch.cat(outputs, dim=0).to(device)
             batch_sizes = [output.shape[0] for output in outputs]
 
-            # Process in a single batch using the first linear layer's weights
-            # This is possible because all matrices in this group have the same output size
-            reference_linear = self.subsystem_linears[names[0]]
-            all_weights = torch.stack(
-                [self.subsystem_linears[name].weight for name in names]
-            )
-            all_biases = torch.stack(
-                [self.subsystem_linears[name].bias for name in names]
-            )
-
-            # Create batch-specific weights using index selection
-            batch_indices = []
-            for i, size in enumerate(batch_sizes):
-                batch_indices.extend([i] * size)
-            batch_indices = torch.tensor(batch_indices, device=stacked_outputs.device)
-
-            # Perform the grouped linear transformation
-            # For each sample, select the appropriate weight matrix and bias
-            results = []
+            # Perform the transformation for each subsystem separately (more robust approach)
             start_idx = 0
             for i, (name, output) in enumerate(subsystem_group):
-                end_idx = start_idx + output.shape[0]
-                # Use the correct weight and bias for this subsystem
-                result = F.linear(
-                    output,
-                    self.subsystem_linears[name].weight,
-                    self.subsystem_linears[name].bias,
-                )
-                linear_outputs[name] = result
-                start_idx = end_idx
+                # Ensure the linear layer is on the device
+                linear = self.subsystem_linears[name].to(device)
+                # Ensure output is on the device and apply transformation
+                output = output.to(device)
+                result = linear(output)
+                linear_outputs[name] = result.to(device)
 
+        # Ensure all outputs are on the correct device
+        for name in linear_outputs:
+            linear_outputs[name] = linear_outputs[name].to(device)
+            
         return linear_outputs
 
 
@@ -1127,6 +1173,8 @@ class DCellModel(nn.Module):
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Forward pass for the complete DCellModel.
+        
+        Optimized version with strict device management to ensure GPU compatibility.
 
         Args:
             cell_graph: The cell graph containing gene ontology structure
@@ -1135,7 +1183,17 @@ class DCellModel(nn.Module):
         Returns:
             Tuple of (predictions, outputs dictionary)
         """
-        # Process through DCell
+        # Select target device - use CUDA if available, otherwise CPU
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+        # Ensure input data is on the correct device
+        cell_graph = cell_graph.to(device)
+        batch = batch.to(device)
+        
+        # Make sure DCell is on the right device
+        self.dcell = self.dcell.to(device)
+        
+        # Process through DCell - this will initialize all parameters
         root_output, outputs = self.dcell(cell_graph, batch)
         subsystem_outputs = outputs["subsystem_outputs"]
 
@@ -1144,8 +1202,11 @@ class DCellModel(nn.Module):
             # Replace the dummy DCellLinear with one that uses the actual subsystems
             self.dcell_linear = DCellLinear(
                 subsystems=self.dcell.subsystems, output_size=self.output_size
-            ).to(root_output.device)
+            ).to(device)
             self._initialized = True
+        else:
+            # Ensure DCellLinear is on the right device
+            self.dcell_linear = self.dcell_linear.to(device)
 
         # Apply linear transformation to all subsystem outputs
         linear_outputs = self.dcell_linear(subsystem_outputs)
@@ -1154,13 +1215,23 @@ class DCellModel(nn.Module):
         # Find the root prediction - fail explicitly if not found
         # First try to get prediction for "GO:ROOT"
         if "GO:ROOT" in linear_outputs:
-            predictions = linear_outputs["GO:ROOT"]
+            predictions = linear_outputs["GO:ROOT"].to(device)
         else:
             # No fallback - raise an error if root node prediction is missing
             raise ValueError(
                 "Root node 'GO:ROOT' prediction not found in linear outputs. "
                 "This indicates a problem with the DCellLinear component or GO hierarchy."
             )
+
+        # Make sure everything in the outputs dictionary is on the correct device
+        # This is a shallow check that ensures at least the top-level tensors are on the right device
+        for key, value in outputs.items():
+            if isinstance(value, torch.Tensor):
+                outputs[key] = value.to(device)
+            elif isinstance(value, dict):
+                for subkey, subvalue in value.items():
+                    if isinstance(subvalue, torch.Tensor):
+                        outputs[key][subkey] = subvalue.to(device)
 
         return predictions, outputs
 

@@ -2,11 +2,14 @@
 id: byqxlgenke415eplp31l2fk
 title: '21'
 desc: ''
-updated: 1747592224852
+updated: 1747783992300
 created: 1747592127726
 ---
 
-## 2025.05.18 
+## 2025.05.19
+
+- [ ] Dcell with strata.
+- [ ]
 
 ***
 
@@ -17,6 +20,11 @@ created: 1747592127726
 - [ ] Morphology Random Forest Baseline
 - [ ] Morphology animation ? for fun...
 
+## 2025.05.20
+
+- [x] [[2025.05.20 - Investigatin DCell Absurdly Slow Iteration|dendron://torchcell/torchcell.models.dcell#20250520---investigatin-dcell-absurdly-slow-iteration]]
+- [x] [[2025.05.20 - DCell with Strata|dendron://torchcell/torchcell.scratch.load_batch_005#20250520---dcell-with-strata]]
+- [ ] Get `DCell` to work on device.
 
 ***
 

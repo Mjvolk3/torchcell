@@ -2,7 +2,7 @@
 id: luypd6agnx9m9k59xm50sis
 title: Load_batch_005
 desc: ''
-updated: 1747181050519
+updated: 1747782914059
 created: 1746153964493
 ---
 We changed to coo formatting on phenotypes.
@@ -473,4 +473,105 @@ Total mutant_state entries: 24890
 Entries corresponding to perturbed genes: 11
 Entries corresponding to non-perturbed genes: 24879
 All non-perturbed entries have state 1: True
+```
+
+## 2025.05.20 - DCell with Strata
+
+Indices of `mutant_state`:
+
+1. GO
+2. gene
+3. strata
+4. state `[0,1]`
+
+```python
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_indices_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    mutant_state=[59986, 5],
+    term_ids=[2655],
+    max_genes_per_term=2444,
+    term_gene_mapping=[59986, 2],
+    term_gene_counts=[2655],
+    term_to_gene_dict=dict(len=2655),
+    strata=[2655],
+    stratum_to_terms=dict(len=13),
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    x=[5310, 1],
+    mutant_state=[119972, 5],
+    mutant_state_batch=[119972],
+    mutant_state_ptr=[3],
+    term_ids=[2],
+    max_genes_per_term=[2],
+    term_gene_mapping=[119972, 2],
+    term_gene_counts=[5310],
+    term_to_gene_dict=dict(len=2655),
+    strata=[5310],
+    stratum_to_terms=dict(len=13),
+    batch=[5310],
+    ptr=[3],
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 6416],
+    num_edges=[2],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 119972],
+    num_edges=[2],
+  }
+)
 ```

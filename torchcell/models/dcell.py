@@ -565,7 +565,7 @@ class DCell(nn.Module):
         """
         Simplified forward pass for the DCell model using stratum-based parallelization.
         Processes GO terms in parallel by stratum, processing each stratum sequentially.
-        
+
         This version has simplified device handling and prioritizes clarity over fallbacks.
 
         Args:
@@ -588,9 +588,9 @@ class DCell(nn.Module):
 
         # Get the device from the model's parameters
         device = next(self.parameters()).device
-        
+
         # Log the device we're using (first time only)
-        if not hasattr(self, '_device_logged') or not self._device_logged:
+        if not hasattr(self, "_device_logged") or not self._device_logged:
             print(f"DCell model running on device: {device}")
             self._device_logged = True
 
@@ -643,7 +643,11 @@ class DCell(nn.Module):
             gene_states = mutant_state[:, 4].to(device)
 
         # Extract batch information
-        batch_indices = batch["gene_ontology"].mutant_state_batch.to(device) if hasattr(batch["gene_ontology"], "mutant_state_batch") else torch.zeros(mutant_state.size(0), dtype=torch.long, device=device)
+        batch_indices = (
+            batch["gene_ontology"].mutant_state_batch.to(device)
+            if hasattr(batch["gene_ontology"], "mutant_state_batch")
+            else torch.zeros(mutant_state.size(0), dtype=torch.long, device=device)
+        )
 
         # Pre-process gene states for all terms
         term_gene_states = {}
@@ -700,7 +704,9 @@ class DCell(nn.Module):
 
                     # Find gene in the term's gene list
                     if gene_idx < len(genes):
-                        gene_local_idx = genes.index(gene_idx) if gene_idx in genes else -1
+                        gene_local_idx = (
+                            genes.index(gene_idx) if gene_idx in genes else -1
+                        )
                         if gene_local_idx >= 0 and state_value != 1.0:
                             # Zero out gene or embedding for perturbed genes
                             term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
@@ -709,7 +715,7 @@ class DCell(nn.Module):
         for stratum in self.sorted_strata:
             # Get all systems at this stratum
             stratum_systems = self.stratum_to_systems[stratum]
-            
+
             # Process each subsystem in this stratum
             for term_id, subsystem_model in stratum_systems:
                 # Get the term index
@@ -730,13 +736,19 @@ class DCell(nn.Module):
 
                     if self.learnable_embedding_dim is not None:
                         gene_states = torch.zeros(
-                            (num_graphs, max(1, len(genes)), self.learnable_embedding_dim),
+                            (
+                                num_graphs,
+                                max(1, len(genes)),
+                                self.learnable_embedding_dim,
+                            ),
                             dtype=torch.float,
                             device=device,
                         )
                         for gene_local_idx, gene_idx in enumerate(genes):
                             if gene_idx < self.gene_num:
-                                gene_states[:, gene_local_idx] = self.gene_embeddings.weight[gene_idx]
+                                gene_states[:, gene_local_idx] = (
+                                    self.gene_embeddings.weight[gene_idx]
+                                )
                     else:
                         gene_states = torch.ones(
                             (num_graphs, max(1, len(genes))),
@@ -745,7 +757,10 @@ class DCell(nn.Module):
                         )
 
                 # Reshape embeddings if needed
-                if self.learnable_embedding_dim is not None and len(gene_states.shape) == 3:
+                if (
+                    self.learnable_embedding_dim is not None
+                    and len(gene_states.shape) == 3
+                ):
                     batch_size = gene_states.size(0)
                     gene_states = gene_states.reshape(batch_size, -1)
 
@@ -758,12 +773,14 @@ class DCell(nn.Module):
                 # Combine inputs
                 if child_outputs:
                     child_tensor = torch.cat(child_outputs, dim=1)
-                    
+
                     if term_id == "GO:ROOT":
                         # Special handling for root node
                         combined_input = child_tensor
                         # Add padding dimension for root node
-                        padding = torch.zeros((combined_input.size(0), 1), device=device)
+                        padding = torch.zeros(
+                            (combined_input.size(0), 1), device=device
+                        )
                         combined_input = torch.cat([combined_input, padding], dim=1)
                     else:
                         combined_input = torch.cat([gene_states, child_tensor], dim=1)
@@ -820,7 +837,7 @@ class DCellLinear(nn.Module):
     ) -> Dict[str, torch.Tensor]:
         """
         Forward pass applying linear transformation to each subsystem output.
-        
+
         Simplified version without complex device handling.
 
         Args:
@@ -831,7 +848,7 @@ class DCellLinear(nn.Module):
         """
         # Get device from parameters
         device = next(self.parameters()).device
-        
+
         # Dictionary to store outputs
         linear_outputs = {}
 
@@ -841,7 +858,7 @@ class DCellLinear(nn.Module):
                 # Apply linear transformation
                 linear = self.subsystem_linears[subsystem_name]
                 linear_outputs[subsystem_name] = linear(subsystem_output)
-            
+
         return linear_outputs
 
 
@@ -857,23 +874,22 @@ class DCellModel(nn.Module):
 
     Args:
         gene_num: Total number of genes
+        cell_graph: The cell graph containing gene ontology structure (required for initialization)
         subsystem_output_min: Minimum output size for any subsystem
         subsystem_output_max_mult: Multiplier for scaling subsystem output sizes
         output_size: Size of the final output (usually 1 for fitness prediction)
         norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
         norm_before_act: Whether to apply normalization before activation
-        subsystem_num_layers: Number of layers per subsystem (default: 1 as in original DCell)
-                             When >1, each subsystem becomes an MLP with multiple
-                             Linear -> [Norm] -> Activation layers (or reverse order)
-        activation: Activation function to use (default: nn.Tanh as in original DCell)
-                    The same activation is used throughout all layers of each subsystem
-        init_range: Range for uniform weight initialization [-init_range, init_range]
+        subsystem_num_layers: Number of layers per subsystem
+        activation: Activation function to use (default: nn.Tanh)
+        init_range: Range for uniform weight initialization
         learnable_embedding_dim: Dimension for learnable gene embeddings. If None, uses binary states.
     """
 
     def __init__(
         self,
         gene_num: int,
+        cell_graph: HeteroData,  # Require cell_graph during initialization
         subsystem_output_min: int = 20,
         subsystem_output_max_mult: float = 0.3,
         output_size: int = 1,
@@ -886,7 +902,11 @@ class DCellModel(nn.Module):
     ):
         super().__init__()
 
-        # DCell component for processing GO hierarchy
+        # Get device (auto-detect)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Initializing DCellModel on device: {device}")
+
+        # Create the DCell component first
         self.dcell = DCell(
             gene_num=gene_num,
             subsystem_output_min=subsystem_output_min,
@@ -897,20 +917,32 @@ class DCellModel(nn.Module):
             activation=activation,
             init_range=init_range,
             learnable_embedding_dim=learnable_embedding_dim,
-        )
+        ).to(device)
 
-        # We'll initialize dcell_linear in the forward pass after DCell is properly initialized
-        self.dcell_linear = None
+        # Initialize DCell with the cell graph
+        cell_graph = cell_graph.to(device)
+        self.dcell._initialize_from_cell_graph(cell_graph)
+
+        # Now that DCell is initialized, we can create the DCellLinear component
+        self.dcell_linear = DCellLinear(
+            subsystems=self.dcell.subsystems, output_size=output_size
+        ).to(device)
+
         self.output_size = output_size
-        self._initialized = False
+
+        # Move entire model to device
+        self.to(device)
+
+        # Print parameter count for information
+        param_info = self.num_parameters
+        print(f"Model initialized with {param_info.get('total', 0):,} total parameters")
+        print(f"Number of subsystems: {param_info.get('num_subsystems', 0):,}")
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Forward pass for the complete DCellModel.
-        
-        Simplified version without complex device handling.
 
         Args:
             cell_graph: The cell graph containing gene ontology structure
@@ -919,17 +951,16 @@ class DCellModel(nn.Module):
         Returns:
             Tuple of (predictions, outputs dictionary)
         """
-        # Process through DCell - this will initialize all parameters
+        # Get device from model parameters
+        device = next(self.parameters()).device
+
+        # Ensure input data is on the correct device
+        cell_graph = cell_graph.to(device)
+        batch = batch.to(device)
+
+        # Process through DCell
         root_output, outputs = self.dcell(cell_graph, batch)
         subsystem_outputs = outputs["subsystem_outputs"]
-
-        # Initialize or reuse DCellLinear using the DCell component's actual subsystems
-        if not self._initialized:
-            # Create DCellLinear with subsystems from DCell
-            self.dcell_linear = DCellLinear(
-                subsystems=self.dcell.subsystems, output_size=self.output_size
-            )
-            self._initialized = True
 
         # Apply linear transformation to all subsystem outputs
         linear_outputs = self.dcell_linear(subsystem_outputs)
@@ -939,9 +970,30 @@ class DCellModel(nn.Module):
         if "GO:ROOT" in linear_outputs:
             predictions = linear_outputs["GO:ROOT"]
         else:
-            raise ValueError("Root node 'GO:ROOT' prediction not found in linear outputs")
+            raise ValueError(
+                "Root node 'GO:ROOT' prediction not found in linear outputs"
+            )
 
         return predictions, outputs
+
+    def check_device_consistency(self):
+        """
+        Utility function to check if all model parameters are on the same device.
+
+        Returns:
+            True if all parameters are on the same device, False otherwise
+        """
+        devices = set()
+        for name, param in self.named_parameters():
+            devices.add(param.device)
+
+        if len(devices) > 1:
+            print(f"WARNING: Model has parameters on multiple devices: {devices}")
+            return False
+        else:
+            device = next(iter(devices))
+            print(f"All model parameters are on device: {device}")
+            return True
 
     @property
     def num_parameters(self) -> Dict[str, int]:
@@ -960,9 +1012,7 @@ class DCellModel(nn.Module):
             subsystem_counts[name] = count_params(subsystem)
 
         counts["subsystems"] = sum(subsystem_counts.values())
-
-        if self.dcell_linear is not None:
-            counts["dcell_linear"] = count_params(self.dcell_linear)
+        counts["dcell_linear"] = count_params(self.dcell_linear)
 
         # Calculate overall total
         counts["total"] = sum(v for k, v in counts.items() if k not in ["subsystems"])
@@ -975,16 +1025,21 @@ class DCellModel(nn.Module):
         return counts
 
 
-def main():
-    """
-    Main function to test the DCellModel on a batch of data.
-    Overfits the model on a single batch and produces loss component plots.
-    """
+@hydra.main(
+    version_base=None,
+    config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
+    config_name="dcell_kuzmin2018_tmi",
+)
+def main(cfg: DictConfig):
+    import os
     import torch.optim as optim
+    import os.path as osp
+    import hydra
+    from omegaconf import DictConfig, OmegaConf
+    import torch
+    import torch.nn as nn
     import matplotlib.pyplot as plt
     import time
-    import os
-    import os.path as osp
     import numpy as np
     from torchcell.scratch.load_batch_005 import load_sample_data_batch
     from torchcell.losses.dcell import DCellLoss
@@ -993,6 +1048,10 @@ def main():
     from tqdm.auto import tqdm
     from dotenv import load_dotenv
 
+    """
+    Main function to test the DCellModel on a batch of data.
+    Overfits the model on a single batch and produces loss component plots.
+    """
     # Load environment variables for asset paths
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", "assets/images")
@@ -1001,17 +1060,54 @@ def main():
     print("DCELL TRAINING TEST")
     print("=" * 80)
 
-    # Configure default parameters for the test
-    batch_size = 32
-    norm_type = "batch"
-    norm_before_act = False
-    subsystem_num_layers = 1
-    activation = nn.Tanh()
-    activation_name = "tanh"
-    init_range = 0.001
-    num_workers = 0
-    num_epochs = 500
-    plot_every = 50
+    # Print configuration
+    print("Using Hydra configuration")
+    print(OmegaConf.to_yaml(cfg))
+
+    # Set device based on config
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available() and cfg.trainer.accelerator.lower() != "cpu"
+        else "cpu"
+    )
+    print(f"Using device: {device}")
+
+    # Extract model configuration
+    batch_size = cfg.data_module.batch_size
+    norm_type = cfg.model.norm_type
+    norm_before_act = cfg.model.norm_before_act
+    subsystem_num_layers = cfg.model.subsystem_num_layers
+    subsystem_output_min = cfg.model.subsystem_output_min
+    subsystem_output_max_mult = cfg.model.subsystem_output_max_mult
+    output_size = cfg.model.output_size
+    init_range = cfg.model.init_range
+    learnable_embedding_dim = cfg.model.learnable_embedding_dim
+
+    # Handle activation
+    activation_name = cfg.model.activation
+    if activation_name == "tanh":
+        activation = nn.Tanh()
+    elif activation_name == "relu":
+        activation = nn.ReLU()
+    elif activation_name == "leaky_relu":
+        activation = nn.LeakyReLU(0.2)
+    elif activation_name == "gelu":
+        activation = nn.GELU()
+    elif activation_name == "selu":
+        activation = nn.SELU()
+    else:
+        print(f"Unknown activation '{activation_name}', using tanh instead")
+        activation = nn.Tanh()
+        activation_name = "tanh"
+
+    # Training parameters
+    num_workers = cfg.data_module.num_workers
+    num_epochs = cfg.trainer.max_epochs
+    plot_every = cfg.regression_task.plot_every_n_epochs
+    alpha = cfg.regression_task.dcell_loss.alpha
+    use_auxiliary_losses = cfg.regression_task.dcell_loss.use_auxiliary_losses
+    lr = cfg.regression_task.optimizer.lr
+    weight_decay = cfg.regression_task.optimizer.weight_decay
 
     # Load test data
     print("\nLoading test data...")
@@ -1019,22 +1115,14 @@ def main():
         batch_size=batch_size, num_workers=num_workers, config="dcell", is_dense=False
     )
 
-    # Set device (default to CPU for testing)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
     # Print dataset information
     print(f"Dataset: {len(dataset)} samples")
     print(f"Batch: {batch.num_graphs} graphs")
     print(f"Max Number of Nodes: {max_num_nodes}")
 
-    # Move data to device
-    cell_graph = dataset.cell_graph.to(device)
-    batch = batch.to(device)
-
     # Print GO hierarchy information
-    if hasattr(cell_graph["gene_ontology"], "strata"):
-        strata = cell_graph["gene_ontology"].strata
+    if hasattr(dataset.cell_graph["gene_ontology"], "strata"):
+        strata = dataset.cell_graph["gene_ontology"].strata
         num_strata = len(torch.unique(strata))
         print(f"\nGO hierarchy has {num_strata} strata for parallel processing")
 
@@ -1064,33 +1152,62 @@ def main():
 
     print(f"  - Activation function: {activation_name}")
     print(f"  - Weight initialization range: ±{init_range}")
+    if learnable_embedding_dim is not None:
+        print(
+            f"  - Using learnable gene embeddings: {learnable_embedding_dim} dimensions"
+        )
+    else:
+        print(f"  - Using binary gene encoding (original DCell approach)")
 
-    # Initialize model with default parameters
+    # Initialize model with parameters from config
     print("\nCreating DCellModel with stratum-based optimization...")
-    model_params = {
-        "gene_num": max_num_nodes,
-        "subsystem_output_min": 20,  # Default value
-        "subsystem_output_max_mult": 0.3,  # Default value
-        "output_size": 1,  # Single output for fitness prediction
-        "norm_type": norm_type,
-        "norm_before_act": norm_before_act,
-        "subsystem_num_layers": subsystem_num_layers,
-        "activation": activation,
-        "init_range": init_range,
-    }
 
-    # Time model initialization and initial forward pass
+    # Time model initialization
     start_time = time.time()
-    model = DCellModel(**model_params).to(device)
+
+    # Create model with cell_graph provided during initialization
+    model = DCellModel(
+        gene_num=max_num_nodes,
+        cell_graph=dataset.cell_graph,
+        subsystem_output_min=subsystem_output_min,
+        subsystem_output_max_mult=subsystem_output_max_mult,
+        output_size=output_size,
+        norm_type=norm_type,
+        norm_before_act=norm_before_act,
+        subsystem_num_layers=subsystem_num_layers,
+        activation=activation,
+        init_range=init_range,
+        learnable_embedding_dim=learnable_embedding_dim,
+    )
+
     init_time = time.time() - start_time
     print(f"Model initialization time: {init_time:.3f}s")
 
-    # Run a forward pass to initialize the model
-    print("\nRunning initial forward pass to initialize model...")
-    with torch.no_grad():
-        predictions, _ = model(cell_graph, batch)
+    # Verify device consistency
+    model.check_device_consistency()
 
-        # Check prediction diversity
+    # Move data to model's device
+    device = next(model.parameters()).device
+    batch = batch.to(device)
+
+    # Get target
+    target = batch["gene"].phenotype_values.view_as(
+        torch.zeros(batch.num_graphs, 1, device=device)
+    )
+
+    # Create optimizer from config
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    print(f"Using AdamW optimizer with lr={lr}, weight_decay={weight_decay}")
+
+    # Create loss function
+    criterion = DCellLoss(alpha=alpha, use_auxiliary_losses=use_auxiliary_losses)
+    print(
+        f"Using DCellLoss with alpha={alpha}, use_auxiliary_losses={use_auxiliary_losses}"
+    )
+
+    # Run a single forward pass to check prediction diversity
+    with torch.no_grad():
+        predictions, _ = model(dataset.cell_graph, batch)
         diversity = predictions.std().item()
         print(f"Initial predictions diversity: {diversity:.6f}")
 
@@ -1098,25 +1215,6 @@ def main():
             print("WARNING: Predictions lack diversity!")
         else:
             print("✓ Predictions are diverse")
-
-    # Print parameter count
-    param_info = model.num_parameters
-    total_params = param_info.get("total", 0)
-    print(f"Model parameters: {total_params:,}")
-    print(f"Subsystems: {param_info.get('num_subsystems', 0):,}")
-
-    # Create optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-5)
-    print(f"Using Adam optimizer with lr=0.001, weight_decay=1e-5")
-
-    # Create loss function
-    criterion = DCellLoss(alpha=0.3, use_auxiliary_losses=True)
-    print(f"Using DCellLoss with alpha=0.3, use_auxiliary_losses=True")
-
-    # Get target
-    target = batch["gene"].phenotype_values.view_as(
-        torch.zeros(batch.num_graphs, 1, device=device)
-    )
 
     # Initialize history for loss tracking
     history = {
@@ -1137,7 +1235,7 @@ def main():
         epoch_start = time.time()
 
         # Forward pass
-        predictions, outputs = model(cell_graph, batch)
+        predictions, outputs = model(dataset.cell_graph, batch)
 
         # Extract prediction and target values for correlation tracking
         pred_values = predictions.detach().cpu().numpy().flatten()
@@ -1216,13 +1314,14 @@ def main():
             plt.legend()
             plt.grid(True)
 
-            # Save figure
+            # Save figure with timestamp
+            ts = timestamp()
             if subsystem_num_layers > 1:
                 title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_epoch_{epoch+1}"
             else:
                 title = f"dcell_{norm_type}_{activation_name}_loss_components_epoch_{epoch+1}"
 
-            save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
+            save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
             plt.savefig(save_path)
             print(f"Saved loss components plot to {save_path}")
             plt.close()
@@ -1256,12 +1355,10 @@ def main():
                 else:
                     corr_title = f"dcell_{norm_type}_{activation_name}_correlation_epoch_{epoch+1}"
 
-                corr_save_path = osp.join(
-                    ASSET_IMAGES_DIR, f"{corr_title}_{timestamp()}.png"
-                )
+                corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{ts}.png")
                 plt.savefig(corr_save_path)
                 print(f"Saved correlation plot to {corr_save_path}")
-                plt.close()
+            plt.close()
 
     # Create final detailed loss components plot
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
@@ -1322,12 +1419,13 @@ def main():
     plt.tight_layout()
 
     # Save final loss plot
+    ts = timestamp()
     if subsystem_num_layers > 1:
         title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_final"
     else:
         title = f"dcell_{norm_type}_{activation_name}_loss_components_final"
 
-    save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
+    save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
     plt.savefig(save_path, dpi=300)
     print(f"\nDetailed loss components plot saved to '{save_path}'")
     plt.close()
@@ -1401,7 +1499,7 @@ def main():
         else:
             title = f"dcell_{norm_type}_{activation_name}_predictions_vs_targets"
 
-        save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png")
+        save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
         plt.savefig(save_path, dpi=300)
         print(f"Predictions vs targets plot saved to '{save_path}'")
         plt.close()
@@ -1447,7 +1545,7 @@ def main():
         else:
             corr_title = f"dcell_{norm_type}_{activation_name}_correlation_final"
 
-        corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{timestamp()}.png")
+        corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{ts}.png")
         plt.savefig(corr_save_path, dpi=300)
         print(f"\nFinal correlation plot saved to '{corr_save_path}'")
         plt.close()

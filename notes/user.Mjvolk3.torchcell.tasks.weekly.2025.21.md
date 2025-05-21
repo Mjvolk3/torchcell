@@ -2,7 +2,7 @@
 id: byqxlgenke415eplp31l2fk
 title: '21'
 desc: ''
-updated: 1747783992300
+updated: 1747862635886
 created: 1747592127726
 ---
 
@@ -25,6 +25,23 @@ created: 1747592127726
 - [x] [[2025.05.20 - Investigatin DCell Absurdly Slow Iteration|dendron://torchcell/torchcell.models.dcell#20250520---investigatin-dcell-absurdly-slow-iteration]]
 - [x] [[2025.05.20 - DCell with Strata|dendron://torchcell/torchcell.scratch.load_batch_005#20250520---dcell-with-strata]]
 - [ ] Get `DCell` to work on device.
+
+**BATCH SIZE = 32**
+
+On Delta GPU:
+
+`Loss: 0.001867, Corr: 0.4769, Time: 100.151s/epoch:  62%|███  62/100 [1:44:31<1:04:03, 101.15s/it]`
+
+On M1 CPU:
+
+Much faster. This is when we realized we need some other solution.
+
+`20s/it`
+
+## 2025.05.21
+
+- [x] [[2025.05.21 - Data Structure for Pyg Message Passing|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-for-pyg-message-passing]]
+- [x] [[2025.05.21 - Data Structure Don't Propagate Edge Info|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-dont-propagate-edge-info]]
 
 ***
 

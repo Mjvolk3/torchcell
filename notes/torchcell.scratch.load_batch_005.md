@@ -2,7 +2,7 @@
 id: luypd6agnx9m9k59xm50sis
 title: Load_batch_005
 desc: ''
-updated: 1747782914059
+updated: 1747862893250
 created: 1746153964493
 ---
 We changed to coo formatting on phenotypes.
@@ -475,7 +475,7 @@ Entries corresponding to non-perturbed genes: 24879
 All non-perturbed entries have state 1: True
 ```
 
-## 2025.05.20 - DCell with Strata
+## 2025.05.20 - DCell Mutant State with Strata
 
 Indices of `mutant_state`:
 
@@ -574,4 +574,352 @@ HeteroDataBatch(
     num_edges=[2],
   }
 )
+```
+
+## 2025.05.20 - DCell with Message Passing Data
+
+```python
+dataset_unfiltered.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    term_gene_mapping=[59986, 2],
+    term_gene_counts=[2655],
+    term_to_gene_dict=dict(len=2655),
+    term_ids=[2655],
+    strata=[2655],
+    stratum_to_terms=dict(len=13),
+    term_gene_edges=[2, 59986],
+    term_gene_attrs=[59986, 2],
+    output_dimensions=dict(len=2655),
+    topo_order=[2655],
+    children_dict=dict(len=1128),
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    strata=[2655],
+    topo_order=[2655],
+    term_gene_counts=[2655],
+    term_gene_mapping=[59986, 2],
+    term_gene_edges=[2, 59986],
+    term_gene_attrs=[59986, 2],
+    strata_idx=[2655],
+    terms_by_strata=[2655],
+    child_parent_idx=[2, 3208],
+    output_dims=[2655],
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    perturbation_batch=[6],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    x=[5310, 1],
+    strata=[5310],
+    topo_order=[5310],
+    term_gene_counts=[5310],
+    term_gene_mapping=[119972, 2],
+    term_gene_edges=[4, 59986],
+    term_gene_attrs=[119972, 2],
+    strata_idx=[5310],
+    terms_by_strata=[5310],
+    child_parent_idx=[4, 3208],
+    output_dims=[5310],
+    batch=[5310],
+    ptr=[3],
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 6416],
+    num_edges=[2],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 119972],
+    num_edges=[2],
+  }
+)
+```
+
+how perturbations are applied.
+
+```python
+dataset_unfiltered.cell_graph['gene_ontology']['term_gene_attrs'].sum(0)
+tensor([225014.,  59986.])
+dataset_unfiltered[0]['gene_ontology']['term_gene_attrs'].sum(0)
+tensor([225014.,  59950.])
+```
+
+## 2025.05.21 - Data Structure for Pyg Message Passing
+
+```python
+dataset_unfiltered.cell_graph
+dataset_unfiltered[0]
+batch_unfiltered
+batch_unfiltered['gene_ontology'].go_gene_state_ptr
+```
+
+```python
+dataset_unfiltered.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    go_gene_state=[59986, 3],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    go_gene_state=[59986, 3],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    perturbation_batch=[6],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    x=[5310, 1],
+    go_gene_state=[119972, 3],
+    go_gene_state_batch=[119972],
+    go_gene_state_ptr=[3],
+    batch=[5310],
+    ptr=[3],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 119972],
+    num_edges=[2],
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 6416],
+    num_edges=[2],
+  }
+)
+batch_unfiltered['gene_ontology'].go_gene_state_ptr
+tensor([     0,  59986, 119972])
+```
+
+## 2025.05.21 - Data Structure Don't Propagate Edge Info
+
+`go_gene_state` is a matrix with first column being `go:int`, second column is `gene:int` and last column is `state:int`. State is 1 if not perturbed.
+
+```python
+dataset_unfiltered.cell_graph
+dataset_unfiltered[0]
+batch_unfiltered
+batch_unfiltered['gene_ontology'].go_gene_state_ptr
+```
+
+```python
+dataset_unfiltered.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    go_gene_state=[59986, 3],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    go_gene_state=[59986, 3],
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    perturbation_batch=[6],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    x=[5310, 1],
+    go_gene_state=[119972, 3],
+    go_gene_state_batch=[119972],
+    go_gene_state_ptr=[3],
+    batch=[5310],
+    ptr=[3],
+  }
+)
+batch_unfiltered['gene_ontology'].go_gene_state_ptr
+tensor([     0,  59986, 119972])
 ```

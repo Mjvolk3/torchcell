@@ -28,9 +28,7 @@ class DangoPreTrain(nn.Module):
     4. Uses the output embeddings for downstream tasks
     """
 
-    def __init__(
-        self, gene_num: int, edge_types: List[str], hidden_channels: int = 64
-    ):
+    def __init__(self, gene_num: int, edge_types: List[str], hidden_channels: int = 64):
         super().__init__()
 
         # Initialize model parameters
@@ -68,11 +66,20 @@ class DangoPreTrain(nn.Module):
 
             # Set lambda value for weighted MSE based on network type
             # For STRING v9.1 networks (as in the paper)
-            if edge_type == "string9_1_neighborhood" or edge_type == "string11_0_neighborhood":
+            if (
+                edge_type == "string9_1_neighborhood"
+                or edge_type == "string11_0_neighborhood"
+            ):
                 self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
-            elif edge_type == "string9_1_coexpression" or edge_type == "string11_0_coexpression":
+            elif (
+                edge_type == "string9_1_coexpression"
+                or edge_type == "string11_0_coexpression"
+            ):
                 self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
-            elif edge_type == "string9_1_experimental" or edge_type == "string11_0_experimental":
+            elif (
+                edge_type == "string9_1_experimental"
+                or edge_type == "string11_0_experimental"
+            ):
                 self.lambda_values[edge_type] = 0.1  # > 1% zeros decreased
             else:  # fusion, cooccurence, database (≤ 1% zeros decreased)
                 self.lambda_values[edge_type] = 1.0
@@ -399,7 +406,13 @@ class Dango(nn.Module):
     3. Hypergraph self-attention for prediction
     """
 
-    def __init__(self, gene_num: int, edge_types: List[str], hidden_channels: int = 64, num_heads: int = 4):
+    def __init__(
+        self,
+        gene_num: int,
+        edge_types: List[str],
+        hidden_channels: int = 64,
+        num_heads: int = 4,
+    ):
         super().__init__()
         self.hidden_channels = hidden_channels
 
@@ -553,10 +566,7 @@ def main(cfg: DictConfig):
     # Load sample data
     print("Loading sample data...")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=32,
-        num_workers=4,
-        metabolism_graph="metabolism_bipartite",
-        is_dense=True,
+        batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
     )
 
     # Move data to device

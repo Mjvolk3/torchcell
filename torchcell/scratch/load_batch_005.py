@@ -122,7 +122,7 @@ def load_sample_data_batch(
             "use_metabolism": False,
             "use_gene_ontology": True,
             "graph_processor": DCellGraphProcessor(),
-            "follow_batch": ["perturbation_indices", "mutant_state"],
+            "follow_batch": ["perturbation_indices", "go_gene_strata_state"],
             "date_filter": None,
         },
         "dcell_2017-07-19": {
@@ -130,7 +130,7 @@ def load_sample_data_batch(
             "use_metabolism": False,
             "use_gene_ontology": True,
             "graph_processor": DCellGraphProcessor(),
-            "follow_batch": ["perturbation_indices", "mutant_state"],
+            "follow_batch": ["perturbation_indices", "go_gene_strata_state"],
             "date_filter": "2017-07-19",
         },
     }

@@ -24,7 +24,7 @@ This configuration file should probably be okay. We might need to make some twea
 
 ## Update
 
-The pipeline now runs.
+The pipeline runs 
 
 ## Task
 

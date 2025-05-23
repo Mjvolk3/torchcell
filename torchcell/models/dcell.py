@@ -7,7 +7,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional, Any
 from torch_geometric.data import HeteroData, Batch
 import networkx as nx
 import hydra
@@ -19,1010 +19,351 @@ import matplotlib.pyplot as plt
 from omegaconf import DictConfig
 from dotenv import load_dotenv
 from torchcell.timestamp import timestamp
-
-# Previously commented out to avoid circular import issue
-# Now we need this for the demo script
-from torchcell.losses.dcell import DCellLoss
-
-
-class SubsystemModel(nn.Module):
-    """
-    Neural network model representing a subsystem in the GO hierarchy.
-
-    When num_layers=1, this module behaves like the original DCell subsystem.
-    When num_layers>1, this becomes a multi-layer perceptron (MLP) with the
-    specified number of layers, all with the same output size.
-
-    This module processes the inputs for each GO term, which consists of:
-    1. The mutant state for genes directly annotated to this term
-    2. Outputs from child subsystems in the GO hierarchy
-
-    Args:
-        input_size: Total input size (mutant states + child outputs)
-        output_size: Size of the output vector for this subsystem
-        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
-        norm_before_act: Whether to apply normalization before activation
-        num_layers: Number of layers in this subsystem (default: 1 as in original DCell)
-                    When >1, creates an MLP with multiple linear+norm+activation blocks
-        activation: Activation function to use (default: nn.Tanh as in original DCell)
-                   The same activation function is used across all layers
-        init_range: Range for uniform weight initialization [-init_range, init_range]
-    """
-
-    def __init__(
-        self,
-        input_size: int,
-        output_size: int,
-        norm_type: str = "batch",
-        norm_before_act: bool = False,
-        num_layers: int = 1,
-        activation: nn.Module = None,
-        init_range: float = 0.001,
-    ):
-        super().__init__()
-        self.output_size = output_size  # Store output size as an attribute
-        self.num_layers = num_layers
-        self.norm_type = norm_type
-        self.norm_before_act = norm_before_act
-
-        # Set default activation to Tanh if none provided (as in original DCell)
-        self.activation = activation if activation is not None else nn.Tanh()
-
-        # Create layers - using ModuleList to track parameters properly
-        self.layers = nn.ModuleList()
-        self.norms = nn.ModuleList()
-
-        if num_layers == 1:
-            # Single layer case (original DCell architecture)
-            self.layers.append(nn.Linear(input_size, output_size))
-            self.norms.append(self._create_norm(output_size, norm_type))
-        else:
-            # Multi-layer MLP case
-
-            # First layer: input_size -> output_size
-            self.layers.append(nn.Linear(input_size, output_size))
-            self.norms.append(self._create_norm(output_size, norm_type))
-
-            # Additional hidden layers: output_size -> output_size
-            # Each layer forms a block in the MLP with the same activation
-            for _ in range(num_layers - 1):
-                self.layers.append(nn.Linear(output_size, output_size))
-                self.norms.append(self._create_norm(output_size, norm_type))
-
-        # Initialize weights according to the DCell paper - uniform random in small range
-        for layer in self.layers:
-            nn.init.uniform_(layer.weight, -init_range, init_range)
-            nn.init.uniform_(layer.bias, -init_range, init_range)
-
-    def _create_norm(self, size: int, norm_type: str):
-        """Helper function to create normalization layers"""
-        if norm_type == "batch":
-            # Use standard BatchNorm with proper momentum
-            return nn.BatchNorm1d(size, momentum=0.1, track_running_stats=True)
-        elif norm_type == "instance":
-            # Instance normalization (normalizes each sample independently)
-            return nn.InstanceNorm1d(size, affine=True)
-        elif norm_type == "layer":
-            # Use LayerNorm as an alternative
-            return nn.LayerNorm(size)
-        elif norm_type == "none":
-            return None
-        else:
-            raise ValueError(
-                f"Unknown norm_type: {norm_type}. Expected 'batch', 'layer', 'instance', or 'none'."
-            )
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass for the subsystem.
-
-        When num_layers=1, this behaves like the original DCell subsystem.
-        When num_layers>1, this functions like an MLP with multiple blocks, where
-        each block consists of: Linear -> [Normalization] -> Activation
-        or Linear -> Activation -> [Normalization], depending on norm_before_act.
-
-        Args:
-            x: Input tensor containing mutant states and child outputs [batch_size, input_size]
-
-        Returns:
-            Processed subsystem output [batch_size, output_size]
-        """
-        # Apply each layer of the MLP in sequence
-        for i, (layer, norm) in enumerate(zip(self.layers, self.norms)):
-            # Apply linear transformation
-            x = layer(x)
-
-            # Apply normalization and activation in the specified order
-            if self.norm_before_act:
-                # Norm -> Act order
-                if norm is not None:
-                    # Skip BatchNorm for single samples to avoid BatchNorm error
-                    if self.norm_type == "batch" and x.size(0) == 1:
-                        pass
-                    else:
-                        x = norm(x)
-                # Apply activation
-                x = self.activation(x)
-            else:
-                # Act -> Norm order (original DCell approach)
-                x = self.activation(x)
-                if norm is not None:
-                    # Skip BatchNorm for single samples to avoid BatchNorm error
-                    if self.norm_type == "batch" and x.size(0) == 1:
-                        pass
-                    else:
-                        x = norm(x)
-
-        return x
+import math
 
 
 class DCell(nn.Module):
-    """
-    Reimplementation of DCell model that works directly with PyTorch Geometric HeteroData.
-
-    This implementation:
-    1. Uses the gene_ontology structure from cell_graph
-    2. Processes mutant state tensors generated by DCellGraphProcessor
-    3. Handles batches of multiple samples efficiently using vectorized operations
-    4. Supports multi-layer MLPs for each subsystem (when subsystem_num_layers > 1)
-    5. Uses stratum-based parallel processing to optimize performance
-
-    Args:
-        gene_num: Total number of genes (used for tensor allocations)
-        subsystem_output_min: Minimum output size for any subsystem
-        subsystem_output_max_mult: Multiplier for scaling subsystem output sizes
-        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
-        norm_before_act: Whether to apply normalization before activation
-        subsystem_num_layers: Number of layers per subsystem (default: 1 as in original DCell)
-                             When >1, each subsystem becomes an MLP with multiple
-                             Linear -> [Norm] -> Activation layers (or reverse order)
-        activation: Activation function to use (default: nn.Tanh as in original DCell)
-                    The same activation is used throughout all layers of each subsystem
-        init_range: Range for uniform weight initialization [-init_range, init_range]
-        learnable_embedding_dim: Dimension for learnable gene embeddings (None = use binary states)
-    """
-
     def __init__(
         self,
-        gene_num: int,
-        subsystem_output_min: int = 20,
-        subsystem_output_max_mult: float = 0.3,
-        norm_type: str = "batch",
-        norm_before_act: bool = False,
-        subsystem_num_layers: int = 1,
-        activation: nn.Module = None,
-        init_range: float = 0.001,
-        learnable_embedding_dim: Optional[int] = None,
+        hetero_data: HeteroData,
+        min_subsystem_size: int = 20,
+        subsystem_ratio: float = 0.3,
+        output_size: int = 1,
     ):
         super().__init__()
-        self.gene_num = gene_num
-        self.subsystem_output_min = subsystem_output_min
-        self.subsystem_output_max_mult = subsystem_output_max_mult
+
+        # Store parameters
+        self.min_subsystem_size = min_subsystem_size
+        self.subsystem_ratio = subsystem_ratio
+        self.output_size = output_size
+        self.hetero_data = hetero_data  # Store reference for dimension calculations
+
+        # Extract GO ontology information
+        self.num_genes = hetero_data["gene"].num_nodes
+        self.num_go_terms = hetero_data["gene_ontology"].num_nodes
+        self.strata = hetero_data["gene_ontology"].strata
+        self.stratum_to_terms = hetero_data["gene_ontology"].stratum_to_terms
+        self.term_gene_counts = hetero_data["gene_ontology"].term_gene_counts
+
+        # Build hierarchy and gene mappings
+        self.child_to_parents = self._build_hierarchy(hetero_data)
+        self.parent_to_children = self._build_parent_to_children()
+        self.term_to_genes = self._build_term_gene_mapping(hetero_data)
+
+        # Pre-compute input/output dimensions and create modules
+        self.term_input_dims = {}
+        self.term_output_dims = {}
         self.subsystems = nn.ModuleDict()
-        self.go_graph = None
-        self.norm_type = norm_type
-        self.norm_before_act = norm_before_act
-        self.subsystem_num_layers = subsystem_num_layers
-        self.activation = activation
-        self.init_range = init_range
-        self.learnable_embedding_dim = learnable_embedding_dim
+        self.linear_heads = nn.ModuleDict()
 
-        # Initialize gene embeddings if enabled
-        if self.learnable_embedding_dim is not None:
-            self.gene_embeddings = nn.Embedding(gene_num, learnable_embedding_dim)
-            # Initialize embeddings with small random values
-            nn.init.uniform_(self.gene_embeddings.weight, -init_range, init_range)
-        else:
-            self.gene_embeddings = None
+        # Get strata in descending order (leaves to root: high strata to low strata)
+        # Strata 0 = root, higher numbers = more specific/leaf terms
+        self.max_stratum = max(self.stratum_to_terms.keys())
+        self.strata_order = sorted(self.stratum_to_terms.keys(), reverse=True)
 
-        # Flag to track if we've initialized from real data
-        self.initialized = False
+        # Build modules for each GO term
+        for term_idx in range(self.num_go_terms):
+            self._build_term_module(term_idx)
 
-        # Cache for strata organization
-        self.stratum_to_systems = None
-        self.sorted_strata = None
+        # Pre-compute gene state extraction indices
+        self._precompute_gene_indices(hetero_data)
 
-    def _initialize_from_cell_graph(self, cell_graph: HeteroData) -> None:
-        """
-        Initialize subsystems from the cell_graph structure.
-        Must be called before the first forward pass.
+        print(f"DCell model initialized:")
+        print(f"  GO terms: {self.num_go_terms}")
+        print(f"  Genes: {self.num_genes}")
+        print(f"  Strata: {len(self.strata_order)} (max: {self.max_stratum})")
+        print(f"  Total subsystems: {len(self.subsystems)}")
 
-        Args:
-            cell_graph: The cell graph containing gene ontology structure
-        """
-        # Verify we have gene ontology data
-        if "gene_ontology" not in cell_graph.node_types:
-            raise ValueError("Cell graph must contain gene_ontology nodes")
+    def _build_hierarchy(self, hetero_data: HeteroData) -> Dict[int, List[int]]:
+        """Build child -> parents mapping from edge_index."""
+        child_to_parents = {}
 
-        # Verify we have stratum information for optimization
-        if not hasattr(cell_graph["gene_ontology"], "strata"):
-            raise ValueError(
-                "Gene ontology must have strata information for stratum-based optimization"
-            )
-        else:
-            print(
-                f"Using stratum-based processing with {len(torch.unique(cell_graph['gene_ontology'].strata))} strata"
-            )
-
-        # Build the NetworkX graph from the HeteroData structure for traversal
-        go_graph = nx.DiGraph()
-
-        # Add GO terms as nodes with full data
-        for i, term_id in enumerate(cell_graph["gene_ontology"].node_ids):
-            # Extract gene indices for this term
-            gene_indices = []
-            if hasattr(cell_graph["gene_ontology"], "term_to_gene_dict"):
-                gene_indices = cell_graph["gene_ontology"].term_to_gene_dict.get(i, [])
-
-            # Add gene names if available
-            gene_names = []
-            if hasattr(cell_graph["gene"], "node_ids"):
-                gene_names = [
-                    cell_graph["gene"].node_ids[idx]
-                    for idx in gene_indices
-                    if idx < len(cell_graph["gene"].node_ids)
-                ]
-
-            # Add stratum information if available
-            node_attrs = {
-                "id": i,
-                "gene_set": gene_names if gene_names else gene_indices,
-                "namespace": "biological_process",  # Default, might be updated later if info is available
-                # Initialize empty mutant state
-                "mutant_state": torch.ones(len(gene_indices), dtype=torch.float32),
-            }
-
-            # Add stratum information if available
-            if hasattr(cell_graph["gene_ontology"], "strata") and i < len(
-                cell_graph["gene_ontology"].strata
-            ):
-                stratum = cell_graph["gene_ontology"].strata[i].item()
-                node_attrs["stratum"] = stratum
-
-            # Add node with all required attributes
-            go_graph.add_node(term_id, **node_attrs)
-
-        # Add hierarchical edges (child -> parent)
-        if ("gene_ontology", "is_child_of", "gene_ontology") in cell_graph.edge_types:
-            edge_index = cell_graph[
+        if ("gene_ontology", "is_child_of", "gene_ontology") in hetero_data.edge_types:
+            edge_index = hetero_data[
                 "gene_ontology", "is_child_of", "gene_ontology"
             ].edge_index
-            for i in range(edge_index.size(1)):
-                child_idx = edge_index[0, i].item()
-                parent_idx = edge_index[1, i].item()
-                child_id = cell_graph["gene_ontology"].node_ids[child_idx]
-                parent_id = cell_graph["gene_ontology"].node_ids[parent_idx]
-                go_graph.add_edge(child_id, parent_id)
 
-        # Add root node if not already present
-        if "GO:ROOT" not in go_graph.nodes:
-            # Find all nodes without parents (current roots)
-            root_nodes = [
-                node for node in go_graph.nodes if go_graph.in_degree(node) == 0
-            ]
+            for child, parent in edge_index.t():
+                child_idx = child.item()
+                parent_idx = parent.item()
 
-            # Find max stratum if available for assigning to ROOT
-            max_stratum = -1
-            if hasattr(cell_graph["gene_ontology"], "strata"):
-                max_stratum = cell_graph["gene_ontology"].strata.max().item()
+                if child_idx not in child_to_parents:
+                    child_to_parents[child_idx] = []
+                child_to_parents[child_idx].append(parent_idx)
 
-            # Add super-root node
-            go_graph.add_node(
-                "GO:ROOT",
-                name="GO Super Node",
-                namespace="super_root",
-                level=-1,
-                stratum=max_stratum + 1,  # Place ROOT in the highest stratum
-                gene_set=[],
-                mutant_state=torch.tensor([], dtype=torch.float32),
-            )
+        return child_to_parents
 
-            # Connect all current roots to the super-root
-            for node in root_nodes:
-                go_graph.add_edge("GO:ROOT", node)
+    def _build_parent_to_children(self) -> Dict[int, List[int]]:
+        """Build parent -> children mapping from child_to_parents."""
+        parent_to_children = {}
 
-        # Reverse the graph to make traversal easier (parent -> child)
-        go_graph = nx.reverse(go_graph, copy=True)
-        self.go_graph = go_graph
+        for child, parents in self.child_to_parents.items():
+            for parent in parents:
+                if parent not in parent_to_children:
+                    parent_to_children[parent] = []
+                parent_to_children[parent].append(child)
 
-        # Clear default subsystem
-        self.subsystems.clear()
+        return parent_to_children
 
-        # Build the subsystems in topological order
-        self._build_subsystems(go_graph)
-        self.initialized = True
+    def _build_term_gene_mapping(self, hetero_data: HeteroData) -> Dict[int, List[int]]:
+        """Build term -> genes mapping from go_gene_strata_state."""
+        term_to_genes = {}
 
-        # Cache sorted subsystems for faster forward pass
-        self.sorted_subsystems = list(
-            reversed(list(nx.topological_sort(self.go_graph)))
-        )
+        go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
+        # Columns: [go_idx, gene_idx, stratum, state]
 
-        # Group subsystems by stratum for parallel processing
-        from collections import defaultdict
+        for row in go_gene_state:
+            go_idx = int(row[0].item())
+            gene_idx = int(row[1].item())
 
-        self.stratum_to_systems = defaultdict(list)
+            if go_idx not in term_to_genes:
+                term_to_genes[go_idx] = []
+            term_to_genes[go_idx].append(gene_idx)
 
-        # Map each subsystem to its stratum
-        for term_id, subsystem in self.subsystems.items():
-            if term_id == "GO:ROOT":
-                # ROOT is always in the highest stratum
-                stratum = go_graph.nodes[term_id].get("stratum", 0)
+        return term_to_genes
+
+    def _calculate_input_dim(self, term_idx: int) -> int:
+        """Calculate input dimension for a GO term."""
+        input_dim = 0
+
+        # Add dimensions from child subsystems
+        children = self.parent_to_children.get(term_idx, [])
+        for child_idx in children:
+            input_dim += self._calculate_output_dim(child_idx)
+
+        # Add dimension for gene perturbation states - must match _extract_gene_states_for_term
+        # Count genes associated with this GO term from template go_gene_strata_state
+        go_gene_state = self.hetero_data["gene_ontology"].go_gene_strata_state
+        term_mask = go_gene_state[:, 0] == term_idx
+        num_genes_for_term = term_mask.sum().item()
+
+        # _extract_gene_states_for_term always returns at least dimension 1 (even for terms with no genes)
+        # So we must match this behavior during initialization
+        gene_dim = max(num_genes_for_term, 1)
+        input_dim += gene_dim
+
+        return max(input_dim, 1)  # Ensure at least 1 input
+
+    def _calculate_output_dim(self, term_idx: int) -> int:
+        """Calculate output dimension for a GO term based on DCell paper formula."""
+        num_genes = self.term_gene_counts[term_idx].item()
+        return max(self.min_subsystem_size, math.ceil(self.subsystem_ratio * num_genes))
+
+    def _build_term_module(self, term_idx: int):
+        """Build subsystem and linear head for a specific GO term."""
+        input_dim = self._calculate_input_dim(term_idx)
+        output_dim = self._calculate_output_dim(term_idx)
+
+        self.term_input_dims[term_idx] = input_dim
+        self.term_output_dims[term_idx] = output_dim
+
+        # Create subsystem module
+        subsystem = DCellSubsystem(input_dim, output_dim)
+        self.subsystems[str(term_idx)] = subsystem
+
+        # Create linear head for auxiliary supervision
+        linear_head = nn.Linear(output_dim, self.output_size)
+        self.linear_heads[str(term_idx)] = linear_head
+
+    def _precompute_gene_indices(self, hetero_data: HeteroData):
+        """Pre-compute indices for efficient gene state extraction."""
+        go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
+
+        # Create a mapping from GO term to gene indices
+        self.term_gene_indices = {}
+        for term_idx in range(self.num_go_terms):
+            mask = go_gene_state[:, 0] == term_idx
+            self.term_gene_indices[term_idx] = torch.where(mask)[0]
+
+    def _extract_gene_states_for_term(
+        self, term_idx: int, batch: HeteroData
+    ) -> torch.Tensor:
+        """Extract gene states for a specific GO term across all batches using batch pointers."""
+        batch_size = batch["gene"].batch.max().item() + 1
+        device = batch["gene"].x.device
+
+        go_gene_state = batch["gene_ontology"].go_gene_strata_state
+        ptr = batch["gene_ontology"].go_gene_strata_state_ptr
+
+        # Reshape concatenated tensor to [batch_size, samples_per_batch, 4] format
+        # ptr tells us the boundaries: each sample has the same number of rows
+        rows_per_sample = ptr[1].item() - ptr[0].item()  # Should be 59986
+
+        # Reshape: [total_rows, 4] -> [batch_size, rows_per_sample, 4]
+        go_gene_state_batched = go_gene_state.view(batch_size, rows_per_sample, 4)
+
+        # Extract for each sample in the batch
+        term_gene_states_list = []
+
+        for i in range(batch_size):
+            # Get this sample's go_gene_strata_state: [rows_per_sample, 4]
+            sample_go_gene_state = go_gene_state_batched[i]
+
+            # Find rows for this term in this sample
+            term_mask = sample_go_gene_state[:, 0] == term_idx
+            term_rows = sample_go_gene_state[term_mask]
+
+            if term_rows.size(0) > 0:
+                gene_states = term_rows[:, 3]  # Extract states (column 3)
+                term_gene_states_list.append(gene_states)
             else:
-                # Get the stratum from the graph node
-                stratum = go_graph.nodes[term_id].get("stratum", 0)
+                # No genes for this term in this sample - create empty tensor
+                term_gene_states_list.append(torch.tensor([], device=device))
 
-            # Store subsystem with its stratum
-            self.stratum_to_systems[stratum].append((term_id, subsystem))
+        # Handle case where no samples have genes for this term
+        if all(len(states) == 0 for states in term_gene_states_list):
+            return torch.zeros(batch_size, 1, device=device)
 
-        # Sort strata in reverse order to process from leaves to root
-        # Higher strata numbers (leaves) should be processed before lower strata (root)
-        self.sorted_strata = sorted(self.stratum_to_systems.keys(), reverse=True)
-
-        # Print statistics about stratum grouping
-        print(
-            f"Grouped subsystems into {len(self.stratum_to_systems)} strata for parallel processing"
+        # Pad to same length and stack
+        max_genes = max(
+            len(states) for states in term_gene_states_list if len(states) > 0
         )
-        for stratum in sorted(self.stratum_to_systems.keys())[:5]:
-            print(
-                f"  Stratum {stratum}: {len(self.stratum_to_systems[stratum])} subsystems"
-            )
-        if len(self.stratum_to_systems) > 5:
-            print(f"  ... and {len(self.stratum_to_systems)-5} more strata")
+        if max_genes == 0:
+            return torch.zeros(batch_size, 1, device=device)
 
-        # Log the number of subsystems created
-        print(
-            f"Created {len(self.subsystems)} subsystems from GO graph with {len(go_graph.nodes)} nodes"
-        )
-
-    def _build_subsystems(self, go_graph: nx.DiGraph) -> None:
-        """
-        Build the subsystem modules based on the GO graph structure.
-        Accounts for gene embeddings if enabled.
-
-        Args:
-            go_graph: NetworkX DiGraph representing the GO hierarchy
-        """
-        # Sort nodes topologically to ensure we process all nodes systematically
-        nodes_sorted = list(nx.topological_sort(go_graph))
-
-        # Create a mapping to track input and output sizes for validation
-        self.input_sizes = {}
-
-        # First pass: count children and identify leaf nodes
-        node_children = {}
-        leaf_nodes = []
-        for node_id in nodes_sorted:
-            successors = list(go_graph.successors(node_id))
-            node_children[node_id] = successors
-            if not successors:  # No children = leaf node
-                leaf_nodes.append(node_id)
-
-        # Debug information
-        print(
-            f"Found {len(leaf_nodes)} leaf nodes out of {len(nodes_sorted)} total nodes"
-        )
-
-        # First process leaf nodes (no children)
-        for node_id in leaf_nodes:
-            # Get gene set for this term
-            genes = go_graph.nodes[node_id].get("gene_set", [])
-
-            # Calculate input size based on embeddings or binary state
-            if self.learnable_embedding_dim is not None:
-                # When using embeddings, each gene contributes gene_embedding_dim values
-                input_size = max(1, len(genes) * self.learnable_embedding_dim)
+        padded_states = []
+        for states in term_gene_states_list:
+            if len(states) == 0:
+                # No genes for this term in this sample
+                padded_states.append(torch.zeros(max_genes, device=device))
+            elif len(states) < max_genes:
+                # Pad with zeros to match max length
+                padding = torch.zeros(max_genes - len(states), device=device)
+                padded_states.append(torch.cat([states, padding]))
             else:
-                # Standard binary representation - one value per gene
-                input_size = max(1, len(genes))
+                # Already at max length
+                padded_states.append(states)
 
-            # Store input size for validation later
-            self.input_sizes[node_id] = input_size
+        return torch.stack(padded_states)  # [batch_size, max_genes_for_term]
 
-            # Calculate output size with minimum threshold
-            output_size = max(
-                self.subsystem_output_min,
-                int(self.subsystem_output_max_mult * len(genes)),
-            )
+    def forward(self, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        """Forward pass through DCell hierarchy."""
+        batch_size = batch["gene"].batch.max().item() + 1
+        device = batch["gene"].x.device
 
-            # Create subsystem
-            self.subsystems[node_id] = SubsystemModel(
-                input_size=input_size,
-                output_size=output_size,
-                norm_type=self.norm_type,
-                norm_before_act=self.norm_before_act,
-                num_layers=self.subsystem_num_layers,
-                activation=self.activation,
-                init_range=self.init_range,
-            )
-
-        # Second pass: process non-leaf nodes in reverse topological order
-        # Process nodes from leaves toward the root
-        for node_id in reversed(nodes_sorted):
-            # Skip if already processed
-            if node_id in self.subsystems:
-                continue
-
-            # Get children of this node
-            children = node_children.get(node_id, [])
-
-            # Make sure all children have been processed
-            all_children_processed = all(child in self.subsystems for child in children)
-            if not all_children_processed:
-                print(f"Warning: Not all children processed for {node_id}")
-                # Add any missing children as simple pass-through
-                for child in children:
-                    if child not in self.subsystems:
-                        genes_child = go_graph.nodes[child].get("gene_set", [])
-                        self.subsystems[child] = SubsystemModel(
-                            input_size=max(1, len(genes_child)),
-                            output_size=self.subsystem_output_min,
-                            norm_type=self.norm_type,
-                            norm_before_act=self.norm_before_act,
-                            num_layers=self.subsystem_num_layers,
-                            activation=self.activation,
-                            init_range=self.init_range,
-                        )
-                        self.input_sizes[child] = max(1, len(genes_child))
-
-            # Calculate total input size: sum of child outputs + genes for this term
-            children_output_size = sum(
-                self.subsystems[child].output_size
-                for child in children
-                if child in self.subsystems
-            )
-
-            # Get genes for this term
-            genes = go_graph.nodes[node_id].get("gene_set", [])
-
-            # Calculate gene input size with embeddings if enabled
-            if self.learnable_embedding_dim is not None:
-                # When using embeddings, each gene contributes gene_embedding_dim values
-                gene_input_size = max(1, len(genes) * self.learnable_embedding_dim)
-            else:
-                # Standard binary representation - one value per gene
-                gene_input_size = max(1, len(genes))
-
-            # Calculate total input size (child outputs + gene states/embeddings)
-            total_input_size = children_output_size + gene_input_size
-            # Ensure at least size 1 to avoid errors with empty terms
-            total_input_size = max(1, total_input_size)
-
-            # Store for validation
-            self.input_sizes[node_id] = total_input_size
-
-            # Calculate output size with minimum threshold
-            output_size = max(
-                self.subsystem_output_min,
-                int(self.subsystem_output_max_mult * len(genes)),
-            )
-
-            # Initialize subsystem with proper sizes
-            self.subsystems[node_id] = SubsystemModel(
-                input_size=total_input_size,
-                output_size=output_size,
-                norm_type=self.norm_type,
-                norm_before_act=self.norm_before_act,
-                num_layers=self.subsystem_num_layers,
-                activation=self.activation,
-                init_range=self.init_range,
-            )
-
-        # Add special handling for root node if present
-        if "GO:ROOT" in go_graph.nodes and "GO:ROOT" not in self.subsystems:
-            # Get children of root
-            root_children = list(go_graph.successors("GO:ROOT"))
-            # Sum output sizes of all root's children
-            root_input_size = sum(
-                self.subsystems[child].output_size
-                for child in root_children
-                if child in self.subsystems
-            )
-
-            # Add a small adjustment to prevent dimension mismatch for the root node
-            # This padding dimension (size 1) ensures consistent processing in forward pass
-            root_input_size += 1  # Always add a padding dimension for root node
-
-            # Log the resulting input size for debugging
-            print(f"GO:ROOT input size after padding: {root_input_size}")
-
-            # Ensure at least size 1
-            root_input_size = max(1, root_input_size)
-            # Store for validation
-            self.input_sizes["GO:ROOT"] = root_input_size
-
-            # Create root subsystem
-            self.subsystems["GO:ROOT"] = SubsystemModel(
-                input_size=root_input_size,
-                output_size=self.subsystem_output_min,
-                norm_type=self.norm_type,
-                norm_before_act=self.norm_before_act,
-                num_layers=self.subsystem_num_layers,
-                activation=self.activation,
-                init_range=self.init_range,
-            )
-
-        # Verify subsystem creation
-        num_created = len(self.subsystems)
-        print(f"Created {num_created} subsystems out of {len(nodes_sorted)} nodes")
-
-        # Print parameter count
-        param_count = sum(
-            sum(p.numel() for p in s.parameters() if p.requires_grad)
-            for s in self.subsystems.values()
-        )
-        print(f"Total parameters in subsystems: {param_count:,}")
-
-        # If we somehow ended up with no subsystems, fail explicitly
-        if len(self.subsystems) == 0:
-            raise ValueError(
-                "No subsystems were created from the GO hierarchy. "
-                "This indicates a problem with the GO hierarchy structure or filtering."
-            )
-
-    def forward(
-        self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        """
-        Simplified forward pass for the DCell model using stratum-based parallelization.
-        Processes GO terms in parallel by stratum, processing each stratum sequentially.
-
-        This version has simplified device handling and prioritizes clarity over fallbacks.
-
-        Args:
-            cell_graph: The cell graph containing gene ontology structure
-            batch: HeteroDataBatch containing perturbation information and mutant states
-
-        Returns:
-            Tuple of (root_output, outputs_dictionary)
-        """
-        # Initialize subsystems from cell_graph if not done yet
-        if not self.initialized:
-            self._initialize_from_cell_graph(cell_graph)
-
-        # Double-check that we're initialized properly
-        if len(self.subsystems) == 0:
-            raise ValueError(
-                "Model has no subsystems after initialization. "
-                "This indicates a problem with the GO hierarchy structure or filtering."
-            )
-
-        # Get the device from the model's parameters
-        device = next(self.parameters()).device
-
-        # Log the device we're using (first time only)
-        if not hasattr(self, "_device_logged") or not self._device_logged:
-            print(f"DCell model running on device: {device}")
-            self._device_logged = True
-
-        # Move input data to the model's device
-        cell_graph = cell_graph.to(device)
-        batch = batch.to(device)
-        num_graphs = batch.num_graphs
-
-        # Verify mutant state exists
-        if not hasattr(batch["gene_ontology"], "mutant_state"):
-            raise ValueError(
-                "Batch must contain gene_ontology.mutant_state for DCell model"
-            )
-
-        # Extract mutant state and move to device
-        mutant_state = batch["gene_ontology"].mutant_state.to(device)
-
-        # Verify mutant state has the right number of columns
-        # (either 4 columns [term_idx, gene_idx, stratum, gene_state] or
-        #  5 columns [term_idx, gene_idx, stratum, level, gene_state])
-        if mutant_state.shape[1] != 4 and mutant_state.shape[1] != 5:
-            raise ValueError(
-                f"Mutant state must have 4 or 5 columns, got {mutant_state.shape[1]}"
-            )
-
-        # Verify strata groups are available
-        if self.stratum_to_systems is None:
-            raise ValueError("Stratum to systems mapping is not initialized")
-
-        # Map from term IDs to indices in the cell_graph
-        term_id_to_idx = {
-            term_id: idx
-            for idx, term_id in enumerate(cell_graph["gene_ontology"].node_ids)
-        }
-
-        # Dictionary to store all subsystem outputs
-        subsystem_outputs = {}
-
-        # Extract information from mutant state
-        term_indices = mutant_state[:, 0].long().to(device)
-        gene_indices = mutant_state[:, 1].long().to(device)
-        strata_indices = mutant_state[:, 2].long().to(device)
-
-        # Handle either 4-column or 5-column format
-        if mutant_state.shape[1] == 4:
-            # 4-column format: [term_idx, gene_idx, stratum, gene_state]
-            gene_states = mutant_state[:, 3].to(device)
-        else:
-            # 5-column format: [term_idx, gene_idx, stratum, level, gene_state]
-            gene_states = mutant_state[:, 4].to(device)
-
-        # Extract batch information
-        batch_indices = (
-            batch["gene_ontology"].mutant_state_batch.to(device)
-            if hasattr(batch["gene_ontology"], "mutant_state_batch")
-            else torch.zeros(mutant_state.size(0), dtype=torch.long, device=device)
-        )
-
-        # Pre-process gene states for all terms
-        term_gene_states = {}
-        term_indices_set = torch.unique(term_indices).tolist()
-
-        # Efficiently process gene states for each term
-        for term_idx in term_indices_set:
-            term_idx = term_idx if isinstance(term_idx, int) else term_idx.item()
-
-            # Get genes for this term
-            term_to_gene_dict = cell_graph["gene_ontology"].term_to_gene_dict
-            genes = term_to_gene_dict.get(term_idx, [])
-            num_genes = max(1, len(genes))
-
-            # Create gene state tensor based on embedding mode
-            if self.learnable_embedding_dim is not None:
-                # Initialize tensor with embeddings - [batch_size, num_genes, embedding_dim]
-                term_gene_states[term_idx] = torch.zeros(
-                    (num_graphs, num_genes, self.learnable_embedding_dim),
-                    dtype=torch.float,
-                    device=device,
-                )
-
-                # Set default embeddings
-                for gene_local_idx, gene_idx in enumerate(genes):
-                    if gene_idx < self.gene_embeddings.weight.size(0):
-                        term_gene_states[term_idx][:, gene_local_idx] = (
-                            self.gene_embeddings.weight[gene_idx]
-                        )
-            else:
-                # Binary encoding - all genes present (1.0) by default
-                term_gene_states[term_idx] = torch.ones(
-                    (num_graphs, num_genes), dtype=torch.float, device=device
-                )
-
-            # Apply perturbations from mutant state
-            term_mask = term_indices == term_idx
-            term_data = mutant_state[term_mask]
-
-            if term_data.size(0) > 0:
-                # Get batch indices for this term
-                term_batch_indices = batch_indices[term_mask]
-
-                # Apply perturbations
-                for i in range(term_data.size(0)):
-                    batch_idx = term_batch_indices[i].item()
-                    gene_idx = term_data[i, 1].long().item()
-
-                    # Get state value based on mutant_state format
-                    if mutant_state.shape[1] == 4:
-                        state_value = term_data[i, 3].item()
-                    else:
-                        state_value = term_data[i, 4].item()
-
-                    # Find gene in the term's gene list
-                    if gene_idx < len(genes):
-                        gene_local_idx = (
-                            genes.index(gene_idx) if gene_idx in genes else -1
-                        )
-                        if gene_local_idx >= 0 and state_value != 1.0:
-                            # Zero out gene or embedding for perturbed genes
-                            term_gene_states[term_idx][batch_idx, gene_local_idx] = 0.0
-
-        # Process strata in order (from leaves to root)
-        for stratum in self.sorted_strata:
-            # Get all systems at this stratum
-            stratum_systems = self.stratum_to_systems[stratum]
-
-            # Process each subsystem in this stratum
-            for term_id, subsystem_model in stratum_systems:
-                # Get the term index
-                if term_id == "GO:ROOT":
-                    term_idx = -1
-                else:
-                    term_idx = term_id_to_idx.get(term_id, -1)
-                    if term_idx == -1:
-                        continue
-
-                # Get gene states for this term
-                if term_idx in term_gene_states:
-                    gene_states = term_gene_states[term_idx]
-                else:
-                    # Create default state tensor for terms not in mutant_state
-                    term_to_gene_dict = cell_graph["gene_ontology"].term_to_gene_dict
-                    genes = term_to_gene_dict.get(term_idx, [])
-
-                    if self.learnable_embedding_dim is not None:
-                        gene_states = torch.zeros(
-                            (
-                                num_graphs,
-                                max(1, len(genes)),
-                                self.learnable_embedding_dim,
-                            ),
-                            dtype=torch.float,
-                            device=device,
-                        )
-                        for gene_local_idx, gene_idx in enumerate(genes):
-                            if gene_idx < self.gene_num:
-                                gene_states[:, gene_local_idx] = (
-                                    self.gene_embeddings.weight[gene_idx]
-                                )
-                    else:
-                        gene_states = torch.ones(
-                            (num_graphs, max(1, len(genes))),
-                            dtype=torch.float,
-                            device=device,
-                        )
-
-                # Reshape embeddings if needed
-                if (
-                    self.learnable_embedding_dim is not None
-                    and len(gene_states.shape) == 3
-                ):
-                    batch_size = gene_states.size(0)
-                    gene_states = gene_states.reshape(batch_size, -1)
-
-                # Get outputs from child nodes
-                child_outputs = []
-                for child in self.go_graph.successors(term_id):
-                    if child in subsystem_outputs:
-                        child_outputs.append(subsystem_outputs[child])
-
-                # Combine inputs
-                if child_outputs:
-                    child_tensor = torch.cat(child_outputs, dim=1)
-
-                    if term_id == "GO:ROOT":
-                        # Special handling for root node
-                        combined_input = child_tensor
-                        # Add padding dimension for root node
-                        padding = torch.zeros(
-                            (combined_input.size(0), 1), device=device
-                        )
-                        combined_input = torch.cat([combined_input, padding], dim=1)
-                    else:
-                        combined_input = torch.cat([gene_states, child_tensor], dim=1)
-                else:
-                    combined_input = gene_states
-
-                # Validate input size
-                expected_size = subsystem_model.layers[0].weight.size(1)
-                actual_size = combined_input.size(1)
-
-                if actual_size != expected_size:
-                    raise ValueError(
-                        f"Size mismatch for subsystem '{term_id}' in stratum {stratum}: "
-                        f"expected {expected_size}, got {actual_size}."
-                    )
-
-                # Process through the subsystem model
-                subsystem_model = subsystem_model.to(device)
-                output = subsystem_model(combined_input)
-                subsystem_outputs[term_id] = output
-
-        # Get the root output
-        if "GO:ROOT" in subsystem_outputs:
-            root_output = subsystem_outputs["GO:ROOT"]
-        else:
-            raise ValueError("Root node 'GO:ROOT' not found in outputs")
-
-        # Return both the root output and all subsystem outputs
-        return root_output, {"subsystem_outputs": subsystem_outputs}
-
-
-class DCellLinear(nn.Module):
-    """
-    Linear prediction head for DCell that takes subsystem outputs and makes final predictions.
-
-    Args:
-        subsystems: ModuleDict of subsystems from DCell model
-        output_size: Size of the final output (usually 1 for fitness prediction)
-    """
-
-    def __init__(self, subsystems: nn.ModuleDict, output_size: int = 1):
-        super().__init__()
-        self.output_size = output_size
-        self.subsystem_linears = nn.ModuleDict()
-
-        # Create a linear layer for each subsystem
-        for subsystem_name, subsystem in subsystems.items():
-            in_features = subsystem.output_size
-            linear = nn.Linear(in_features, self.output_size)
-            self.subsystem_linears[subsystem_name] = linear
-
-    def forward(
-        self, subsystem_outputs: Dict[str, torch.Tensor]
-    ) -> Dict[str, torch.Tensor]:
-        """
-        Forward pass applying linear transformation to each subsystem output.
-
-        Simplified version without complex device handling.
-
-        Args:
-            subsystem_outputs: Dictionary mapping subsystem names to their outputs
-
-        Returns:
-            Dictionary mapping subsystem names to transformed outputs
-        """
-        # Get device from parameters
-        device = next(self.parameters()).device
-
-        # Dictionary to store outputs
+        # Store term activations and linear outputs
+        term_activations = {}
         linear_outputs = {}
 
-        # Process each subsystem individually
-        for subsystem_name, subsystem_output in subsystem_outputs.items():
-            if subsystem_name in self.subsystem_linears:
-                # Apply linear transformation
-                linear = self.subsystem_linears[subsystem_name]
-                linear_outputs[subsystem_name] = linear(subsystem_output)
+        # Process each stratum in descending order (leaves to root: high strata → low strata)
+        # This processes leaf terms first, then their parents, up to root (stratum 0)
+        for stratum in self.strata_order:
+            # All strata should exist in stratum_to_terms - if not, it's a bug
+            if stratum not in self.stratum_to_terms:
+                raise ValueError(
+                    f"Stratum {stratum} not found in stratum_to_terms. This indicates a bug in GO graph processing."
+                )
 
-        return linear_outputs
+            stratum_terms = self.stratum_to_terms[stratum]
 
+            # Process all terms in this stratum
+            for term_idx in stratum_terms:
+                # Convert to int if it's a tensor, otherwise assume it's already an int
+                if torch.is_tensor(term_idx):
+                    term_idx_int = term_idx.item()
+                else:
+                    term_idx_int = int(
+                        term_idx
+                    )  # Ensure it's an int, not numpy scalar or other type
 
-class DCellModel(nn.Module):
-    """
-    Complete DCell model that integrates DCell with prediction head.
+                # Prepare input for this term
+                term_input = self._prepare_term_input(
+                    term_idx_int, batch, term_activations
+                )
 
-    This model:
-    1. Processes gene perturbations through the GO hierarchy
-    2. Makes phenotype predictions based on the subsystem outputs
-    3. Supports multi-layer MLPs for each subsystem (when subsystem_num_layers > 1)
-    4. Optionally uses learnable gene embeddings instead of binary state vectors
+                subsystem = self.subsystems[str(term_idx_int)]
 
-    Args:
-        gene_num: Total number of genes
-        cell_graph: The cell graph containing gene ontology structure (required for initialization)
-        subsystem_output_min: Minimum output size for any subsystem
-        subsystem_output_max_mult: Multiplier for scaling subsystem output sizes
-        output_size: Size of the final output (usually 1 for fitness prediction)
-        norm_type: Type of normalization to use ('batch', 'layer', 'instance', or 'none')
-        norm_before_act: Whether to apply normalization before activation
-        subsystem_num_layers: Number of layers per subsystem
-        activation: Activation function to use (default: nn.Tanh)
-        init_range: Range for uniform weight initialization
-        learnable_embedding_dim: Dimension for learnable gene embeddings. If None, uses binary states.
-    """
+                # Forward through subsystem
+                term_output = subsystem(term_input)
+                term_activations[term_idx_int] = term_output
 
-    def __init__(
-        self,
-        gene_num: int,
-        cell_graph: HeteroData,  # Require cell_graph during initialization
-        subsystem_output_min: int = 20,
-        subsystem_output_max_mult: float = 0.3,
-        output_size: int = 1,
-        norm_type: str = "batch",
-        norm_before_act: bool = False,
-        subsystem_num_layers: int = 1,
-        activation: nn.Module = None,
-        init_range: float = 0.001,
-        learnable_embedding_dim: Optional[int] = None,
-    ):
-        super().__init__()
+                # Get linear output for auxiliary supervision
+                linear_head = self.linear_heads[str(term_idx_int)]
+                linear_output = linear_head(term_output)
+                linear_outputs[f"GO:{term_idx_int}"] = linear_output.squeeze(-1)
 
-        # Get device (auto-detect)
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Initializing DCellModel on device: {device}")
-
-        # Create the DCell component first
-        self.dcell = DCell(
-            gene_num=gene_num,
-            subsystem_output_min=subsystem_output_min,
-            subsystem_output_max_mult=subsystem_output_max_mult,
-            norm_type=norm_type,
-            norm_before_act=norm_before_act,
-            subsystem_num_layers=subsystem_num_layers,
-            activation=activation,
-            init_range=init_range,
-            learnable_embedding_dim=learnable_embedding_dim,
-        ).to(device)
-
-        # Initialize DCell with the cell graph
-        cell_graph = cell_graph.to(device)
-        self.dcell._initialize_from_cell_graph(cell_graph)
-
-        # Now that DCell is initialized, we can create the DCellLinear component
-        self.dcell_linear = DCellLinear(
-            subsystems=self.dcell.subsystems, output_size=output_size
-        ).to(device)
-
-        self.output_size = output_size
-
-        # Move entire model to device
-        self.to(device)
-
-        # Print parameter count for information
-        param_info = self.num_parameters
-        print(f"Model initialized with {param_info.get('total', 0):,} total parameters")
-        print(f"Number of subsystems: {param_info.get('num_subsystems', 0):,}")
-
-    def forward(
-        self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
-        """
-        Forward pass for the complete DCellModel.
-
-        Args:
-            cell_graph: The cell graph containing gene ontology structure
-            batch: HeteroDataBatch containing perturbation information
-
-        Returns:
-            Tuple of (predictions, outputs dictionary)
-        """
-        # Get device from model parameters
-        device = next(self.parameters()).device
-
-        # Ensure input data is on the correct device
-        cell_graph = cell_graph.to(device)
-        batch = batch.to(device)
-
-        # Process through DCell
-        root_output, outputs = self.dcell(cell_graph, batch)
-        subsystem_outputs = outputs["subsystem_outputs"]
-
-        # Apply linear transformation to all subsystem outputs
-        linear_outputs = self.dcell_linear(subsystem_outputs)
-        outputs["linear_outputs"] = linear_outputs
-
-        # Get root prediction
-        if "GO:ROOT" in linear_outputs:
-            predictions = linear_outputs["GO:ROOT"]
-        else:
+        # Main prediction from root terms (stratum 0)
+        if 0 not in self.stratum_to_terms:
             raise ValueError(
-                "Root node 'GO:ROOT' prediction not found in linear outputs"
+                "No root terms found in stratum 0. Check GO hierarchy processing."
             )
+
+        root_terms = self.stratum_to_terms[0]
+        if len(root_terms) == 0:
+            raise ValueError(
+                "Root terms tensor is empty. Check GO term filtering - root terms may have been filtered out."
+            )
+
+        root_term_idx = root_terms[0].item()
+        if f"GO:{root_term_idx}" not in linear_outputs:
+            raise ValueError(
+                f"Root term {root_term_idx} was not processed. Check strata processing order."
+            )
+
+        predictions = linear_outputs[f"GO:{root_term_idx}"]
+
+        # Mark root output for DCellLoss
+        linear_outputs["GO:ROOT"] = predictions
+
+        # Prepare outputs dictionary
+        outputs = {
+            "linear_outputs": linear_outputs,
+            "term_activations": term_activations,
+            "stratum_outputs": {},
+        }
 
         return predictions, outputs
 
-    def check_device_consistency(self):
-        """
-        Utility function to check if all model parameters are on the same device.
+    def _prepare_term_input(
+        self,
+        term_idx: int,
+        batch: HeteroData,
+        term_activations: Dict[int, torch.Tensor],
+    ) -> torch.Tensor:
+        """Prepare input for a specific GO term."""
+        batch_size = batch["gene"].batch.max().item() + 1
+        device = batch["gene"].x.device
+        inputs = []
 
-        Returns:
-            True if all parameters are on the same device, False otherwise
-        """
-        devices = set()
-        for name, param in self.named_parameters():
-            devices.add(param.device)
+        # Add inputs from child subsystems (children are processed first due to leaves->root order)
+        children = self.parent_to_children.get(term_idx, [])
+        for child_idx in children:
+            if child_idx in term_activations:
+                inputs.append(term_activations[child_idx])
 
-        if len(devices) > 1:
-            print(f"WARNING: Model has parameters on multiple devices: {devices}")
-            return False
+        # Add gene perturbation states for this GO term
+        gene_states = self._extract_gene_states_for_term(term_idx, batch)
+        if gene_states.numel() > 0 and gene_states.size(1) > 0:
+            inputs.append(gene_states)
+
+        # Concatenate all inputs along feature dimension
+        if inputs:
+            return torch.cat(inputs, dim=1)
         else:
-            device = next(iter(devices))
-            print(f"All model parameters are on device: {device}")
-            return True
+            # If no inputs, this indicates a bug - every GO term should have either children or genes
+            raise ValueError(
+                f"GO term {term_idx} has no children and no genes. This should not happen in a well-formed GO hierarchy."
+            )
 
-    @property
-    def num_parameters(self) -> Dict[str, int]:
-        """
-        Count the number of trainable parameters in the model
-        """
 
-        def count_params(module: nn.Module) -> int:
-            return sum(p.numel() for p in module.parameters() if p.requires_grad)
+class DCellSubsystem(nn.Module):
+    """Individual subsystem module as described in DCell paper."""
 
-        counts = {"dcell": count_params(self.dcell)}
+    def __init__(self, input_dim: int, output_dim: int):
+        super().__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
+        self.batch_norm = nn.BatchNorm1d(output_dim)
+        self.activation = nn.Tanh()
 
-        # Count parameters in each subsystem
-        subsystem_counts = {}
-        for name, subsystem in self.dcell.subsystems.items():
-            subsystem_counts[name] = count_params(subsystem)
+        # DCell paper weight initialization: uniform random between -0.001 and 0.001
+        nn.init.uniform_(self.linear.weight, -0.001, 0.001)
+        nn.init.uniform_(self.linear.bias, -0.001, 0.001)
 
-        counts["subsystems"] = sum(subsystem_counts.values())
-        counts["dcell_linear"] = count_params(self.dcell_linear)
-
-        # Calculate overall total
-        counts["total"] = sum(v for k, v in counts.items() if k not in ["subsystems"])
-
-        # Additional useful information
-        if hasattr(self.dcell, "go_graph") and self.dcell.go_graph is not None:
-            counts["num_go_terms"] = len(self.dcell.go_graph.nodes())
-            counts["num_subsystems"] = len(self.dcell.subsystems)
-
-        return counts
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.linear(x)
+        x = self.batch_norm(x)
+        x = self.activation(x)
+        return x
 
 
 @hydra.main(
@@ -1031,38 +372,15 @@ class DCellModel(nn.Module):
     config_name="dcell_kuzmin2018_tmi",
 )
 def main(cfg: DictConfig):
-    import os
-    import torch.optim as optim
-    import os.path as osp
-    import hydra
-    from omegaconf import DictConfig, OmegaConf
-    import torch
-    import torch.nn as nn
-    import matplotlib.pyplot as plt
-    import time
-    import numpy as np
+    """
+    Main function to test the DCell model with overfitting on a batch
+    """
     from torchcell.scratch.load_batch_005 import load_sample_data_batch
     from torchcell.losses.dcell import DCellLoss
-    from torchcell.timestamp import timestamp
-    from collections import defaultdict
-    from tqdm.auto import tqdm
-    from dotenv import load_dotenv
+    import torch.optim as optim
+    from datetime import datetime
 
-    """
-    Main function to test the DCellModel on a batch of data.
-    Overfits the model on a single batch and produces loss component plots.
-    """
-    # Load environment variables for asset paths
     load_dotenv()
-    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", "assets/images")
-
-    print("\n" + "=" * 80)
-    print("DCELL TRAINING TEST")
-    print("=" * 80)
-
-    # Print configuration
-    print("Using Hydra configuration")
-    print(OmegaConf.to_yaml(cfg))
 
     # Set device based on config
     device = torch.device(
@@ -1072,508 +390,363 @@ def main(cfg: DictConfig):
     )
     print(f"Using device: {device}")
 
-    # Extract model configuration
-    batch_size = cfg.data_module.batch_size
-    norm_type = cfg.model.norm_type
-    norm_before_act = cfg.model.norm_before_act
-    subsystem_num_layers = cfg.model.subsystem_num_layers
-    subsystem_output_min = cfg.model.subsystem_output_min
-    subsystem_output_max_mult = cfg.model.subsystem_output_max_mult
-    output_size = cfg.model.output_size
-    init_range = cfg.model.init_range
-    learnable_embedding_dim = cfg.model.learnable_embedding_dim
+    # Setup directories for plots
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    if ASSET_IMAGES_DIR is None:
+        ASSET_IMAGES_DIR = "assets/images"
 
-    # Handle activation
-    activation_name = cfg.model.activation
-    if activation_name == "tanh":
-        activation = nn.Tanh()
-    elif activation_name == "relu":
-        activation = nn.ReLU()
-    elif activation_name == "leaky_relu":
-        activation = nn.LeakyReLU(0.2)
-    elif activation_name == "gelu":
-        activation = nn.GELU()
-    elif activation_name == "selu":
-        activation = nn.SELU()
-    else:
-        print(f"Unknown activation '{activation_name}', using tanh instead")
-        activation = nn.Tanh()
-        activation_name = "tanh"
+    plot_dir = osp.join(ASSET_IMAGES_DIR, f"dcell_training_{timestamp()}")
+    os.makedirs(plot_dir, exist_ok=True)
+    
+    def save_intermediate_plot(epoch, all_losses, primary_losses, auxiliary_losses, weighted_auxiliary_losses, learning_rates, model, batch):
+        """Save intermediate training plot every print interval."""
+        plt.figure(figsize=(12, 8))
+        
+        # Loss curves
+        plt.subplot(2, 3, 1)
+        plt.plot(range(1, epoch + 2), all_losses, "b-", label="Total Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss Value")
+        plt.title("Training Loss Curve")
+        plt.grid(True)
+        plt.legend()
+        plt.yscale("log")
+        
+        # Loss components
+        plt.subplot(2, 3, 2)
+        plt.plot(range(1, epoch + 2), primary_losses, "r-", label="Primary Loss")
+        plt.plot(range(1, epoch + 2), auxiliary_losses, "g-", label="Auxiliary Loss")
+        plt.plot(range(1, epoch + 2), weighted_auxiliary_losses, "orange", label="Weighted Auxiliary Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss Value")
+        plt.title("Loss Components")
+        plt.grid(True)
+        plt.legend()
+        plt.yscale("log")
+        
+        # Get current model predictions for correlation plot
+        model.eval()
+        with torch.no_grad():
+            current_predictions, current_outputs = model(batch)
+            true_scores = batch["gene"].phenotype_values
+            
+            # Convert to numpy for plotting
+            true_np = true_scores.cpu().numpy()
+            pred_np = current_predictions.cpu().numpy()
+            
+            # Calculate correlation
+            correlation = np.corrcoef(true_np, pred_np)[0, 1] if len(true_np) > 1 else 0.0
+            mse = np.mean((pred_np - true_np) ** 2)
+        model.train()  # Back to training mode
+        
+        # Correlation
+        plt.subplot(2, 3, 3)
+        plt.scatter(true_np, pred_np, alpha=0.7)
+        min_val = min(true_np.min(), pred_np.min())
+        max_val = max(true_np.max(), pred_np.max())
+        plt.plot([min_val, max_val], [min_val, max_val], "r--")
+        plt.xlabel("True Phenotype Values")
+        plt.ylabel("Predicted Values")
+        plt.title(f"Correlation (r={correlation:.4f})")
+        plt.grid(True)
+        
+        # Error distribution
+        plt.subplot(2, 3, 4)
+        errors = pred_np - true_np
+        plt.hist(errors, bins=10, alpha=0.7)
+        plt.xlabel("Prediction Error")
+        plt.ylabel("Frequency")
+        plt.title(f"Error Distribution (MSE={mse:.6f})")
+        plt.grid(True)
+        
+        # Learning rate evolution
+        plt.subplot(2, 3, 5)
+        plt.plot(range(1, epoch + 2), learning_rates, "purple")
+        plt.xlabel("Epoch")
+        plt.ylabel("Learning Rate")
+        plt.title("Learning Rate Schedule")
+        plt.grid(True)
+        plt.yscale("log")
+        
+        # Subsystem analysis
+        plt.subplot(2, 3, 6)
+        linear_outputs = current_outputs.get("linear_outputs", {})
+        subsystem_activities = {}
+        for k, v in linear_outputs.items():
+            if k != "GO:ROOT":
+                subsystem_activities[k] = v.abs().mean().item()
+        
+        if subsystem_activities:
+            subsystem_activations = list(subsystem_activities.values())
+            plt.hist(
+                subsystem_activations,
+                bins=min(20, len(subsystem_activations)),
+                alpha=0.7,
+            )
+            plt.xlabel("Mean Absolute Activation")
+            plt.ylabel("Number of Subsystems")
+            plt.title("Subsystem Activation Distribution")
+            plt.grid(True)
+        
+        plt.tight_layout()
+        plt.savefig(osp.join(plot_dir, f"dcell_epoch_{epoch+1:04d}_{timestamp()}.png"), dpi=150, bbox_inches='tight')
+        plt.close()  # Close to free memory
 
-    # Training parameters
-    num_workers = cfg.data_module.num_workers
-    num_epochs = cfg.trainer.max_epochs
-    plot_every = cfg.regression_task.plot_every_n_epochs
-    alpha = cfg.regression_task.dcell_loss.alpha
-    use_auxiliary_losses = cfg.regression_task.dcell_loss.use_auxiliary_losses
-    lr = cfg.regression_task.optimizer.lr
-    weight_decay = cfg.regression_task.optimizer.weight_decay
+    # Load sample data - modified for DCell with GO ontology
+    print("Loading sample data with GO ontology...")
 
-    # Load test data
-    print("\nLoading test data...")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=batch_size, num_workers=num_workers, config="dcell", is_dense=False
+        batch_size=32, num_workers=4, config="dcell", is_dense=False
     )
 
-    # Print dataset information
-    print(f"Dataset: {len(dataset)} samples")
-    print(f"Batch: {batch.num_graphs} graphs")
-    print(f"Max Number of Nodes: {max_num_nodes}")
-
-    # Print GO hierarchy information
-    if hasattr(dataset.cell_graph["gene_ontology"], "strata"):
-        strata = dataset.cell_graph["gene_ontology"].strata
-        num_strata = len(torch.unique(strata))
-        print(f"\nGO hierarchy has {num_strata} strata for parallel processing")
-
-        # Count terms per stratum
-        stratum_counts = defaultdict(int)
-        for s in strata:
-            stratum_counts[s.item()] += 1
-
-        print("Distribution of GO terms by stratum:")
-        for stratum in sorted(stratum_counts.keys())[:5]:
-            print(f"  Stratum {stratum}: {stratum_counts[stratum]} terms")
-        if len(stratum_counts) > 5:
-            print(f"  ... and {len(stratum_counts)-5} more strata")
-
-    # Print model configuration
-    print(f"\nModel configuration:")
-    print(f"  - Normalization type: {norm_type}")
-    print(f"  - Normalization order: {'norm->act' if norm_before_act else 'act->norm'}")
-
-    if subsystem_num_layers == 1:
-        print(f"  - Subsystem architecture: Single layer (original DCell)")
-    else:
-        print(f"  - Subsystem architecture: {subsystem_num_layers}-layer MLP")
-        print(
-            f"    Each subsystem uses multiple linear layers with {activation_name} activation"
-        )
-
-    print(f"  - Activation function: {activation_name}")
-    print(f"  - Weight initialization range: ±{init_range}")
-    if learnable_embedding_dim is not None:
-        print(
-            f"  - Using learnable gene embeddings: {learnable_embedding_dim} dimensions"
-        )
-    else:
-        print(f"  - Using binary gene encoding (original DCell approach)")
-
-    # Initialize model with parameters from config
-    print("\nCreating DCellModel with stratum-based optimization...")
-
-    # Time model initialization
-    start_time = time.time()
-
-    # Create model with cell_graph provided during initialization
-    model = DCellModel(
-        gene_num=max_num_nodes,
-        cell_graph=dataset.cell_graph,
-        subsystem_output_min=subsystem_output_min,
-        subsystem_output_max_mult=subsystem_output_max_mult,
-        output_size=output_size,
-        norm_type=norm_type,
-        norm_before_act=norm_before_act,
-        subsystem_num_layers=subsystem_num_layers,
-        activation=activation,
-        init_range=init_range,
-        learnable_embedding_dim=learnable_embedding_dim,
-    )
-
-    init_time = time.time() - start_time
-    print(f"Model initialization time: {init_time:.3f}s")
-
-    # Verify device consistency
-    model.check_device_consistency()
-
-    # Move data to model's device
-    device = next(model.parameters()).device
+    # Move data to device
+    cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
 
-    # Get target
-    target = batch["gene"].phenotype_values.view_as(
-        torch.zeros(batch.num_graphs, 1, device=device)
-    )
-
-    # Create optimizer from config
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    print(f"Using AdamW optimizer with lr={lr}, weight_decay={weight_decay}")
-
-    # Create loss function
-    criterion = DCellLoss(alpha=alpha, use_auxiliary_losses=use_auxiliary_losses)
+    # Print batch information
+    print(f"Batch size: {batch.num_graphs}")
+    print(f"Gene nodes: {batch['gene'].num_nodes}")
+    print(f"GO nodes: {batch['gene_ontology'].num_nodes}")
+    print(f"Perturbation indices shape: {batch['gene'].perturbation_indices.shape}")
     print(
-        f"Using DCellLoss with alpha={alpha}, use_auxiliary_losses={use_auxiliary_losses}"
+        f"GO gene strata state shape: {batch['gene_ontology'].go_gene_strata_state.shape}"
+    )
+    print(f"Phenotype values shape: {batch['gene'].phenotype_values.shape}")
+
+    # Initialize DCell model
+    print("Initializing DCell model...")
+    model = DCell(
+        cell_graph,
+        min_subsystem_size=cfg.model.subsystem_output_min,
+        subsystem_ratio=cfg.model.subsystem_output_max_mult,
+        output_size=cfg.model.output_size,
+    ).to(device)
+
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total parameters: {total_params}")
+
+    # Initialize DCellLoss
+    loss_func = DCellLoss(
+        alpha=cfg.regression_task.dcell_loss.alpha,
+        use_auxiliary_losses=cfg.regression_task.dcell_loss.use_auxiliary_losses,
     )
 
-    # Run a single forward pass to check prediction diversity
-    with torch.no_grad():
-        predictions, _ = model(dataset.cell_graph, batch)
-        diversity = predictions.std().item()
-        print(f"Initial predictions diversity: {diversity:.6f}")
+    # Create optimizer
+    if cfg.regression_task.optimizer.type == "AdamW":
+        optimizer = optim.AdamW(
+            model.parameters(),
+            lr=cfg.regression_task.optimizer.lr,
+            weight_decay=cfg.regression_task.optimizer.weight_decay,
+        )
+    else:
+        optimizer = optim.Adam(
+            model.parameters(),
+            lr=cfg.regression_task.optimizer.lr,
+            weight_decay=cfg.regression_task.optimizer.weight_decay,
+        )
 
-        if diversity < 1e-6:
-            print("WARNING: Predictions lack diversity!")
-        else:
-            print("✓ Predictions are diverse")
+    # Setup learning rate scheduler if specified
+    scheduler = None
+    if cfg.regression_task.lr_scheduler.type == "ReduceLROnPlateau":
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            mode=cfg.regression_task.lr_scheduler.mode,
+            factor=cfg.regression_task.lr_scheduler.factor,
+            patience=cfg.regression_task.lr_scheduler.patience,
+            threshold=cfg.regression_task.lr_scheduler.threshold,
+            min_lr=cfg.regression_task.lr_scheduler.min_lr,
+        )
 
-    # Initialize history for loss tracking
-    history = {
-        "total_loss": [],
-        "primary_loss": [],
-        "auxiliary_loss": [],
-        "weighted_auxiliary_loss": [],
-        "epochs": [],
-        "time_per_epoch": [],
-        "correlation": [],
-    }
+    # Training parameters
+    epochs = cfg.trainer.max_epochs
+    plot_interval = cfg.regression_task.plot_every_n_epochs
 
-    # Training loop with tqdm progress bar
-    print(f"\nOverfitting model on a single batch for {num_epochs} epochs...")
-    progress_bar = tqdm(range(num_epochs), desc="Training")
+    # Lists to track metrics
+    all_losses = []
+    primary_losses = []
+    auxiliary_losses = []
+    weighted_auxiliary_losses = []
+    learning_rates = []
 
-    for epoch in progress_bar:
-        epoch_start = time.time()
+    # Training loop
+    print("Training DCell to overfit on batch...")
+    for epoch in range(epochs):
+        epoch_start_time = time.time()
+        
+        model.train()
+        optimizer.zero_grad()
 
         # Forward pass
-        predictions, outputs = model(dataset.cell_graph, batch)
+        predictions, outputs = model(batch)
 
-        # Extract prediction and target values for correlation tracking
-        pred_values = predictions.detach().cpu().numpy().flatten()
-        target_values = target.detach().cpu().numpy().flatten()
+        # Get targets
+        targets = batch["gene"].phenotype_values
 
-        # Compute loss
-        loss, loss_components = criterion(predictions, outputs, target)
+        # Compute loss using DCellLoss
+        total_loss, loss_components = loss_func(predictions, outputs, targets)
 
-        # Store loss components
-        history["total_loss"].append(loss.item())
-        history["primary_loss"].append(loss_components["primary_loss"].item())
-        history["auxiliary_loss"].append(loss_components["auxiliary_loss"].item())
-        history["weighted_auxiliary_loss"].append(
-            loss_components["weighted_auxiliary_loss"].item()
-        )
-        history["epochs"].append(epoch)
+        # Extract individual loss components
+        primary_loss = loss_components["primary_loss"]
+        auxiliary_loss = loss_components["auxiliary_loss"]
+        weighted_auxiliary_loss = loss_components["weighted_auxiliary_loss"]
 
-        # Calculate and store correlation
-        correlation = None
-        if len(pred_values) > 1:  # Only if more than one sample
-            try:
-                correlation = np.corrcoef(pred_values, target_values)[0, 1]
-                history["correlation"].append(correlation)
-                corr_str = f", Corr: {correlation:.4f}"
-            except:
-                corr_str = ""
-                history["correlation"].append(float("nan"))
-        else:
-            corr_str = ""
-            history["correlation"].append(float("nan"))
+        # Record losses
+        all_losses.append(total_loss.item())
+        primary_losses.append(primary_loss.item())
+        auxiliary_losses.append(auxiliary_loss.item())
+        weighted_auxiliary_losses.append(weighted_auxiliary_loss.item())
+        learning_rates.append(optimizer.param_groups[0]["lr"])
 
-        # Record time for this epoch
-        epoch_time = time.time() - epoch_start
-        history["time_per_epoch"].append(epoch_time)
+        # Backward pass and optimization
+        total_loss.backward()
 
-        # Backward pass and optimizer step
-        optimizer.zero_grad()
-        loss.backward()
+        # Gradient clipping if specified
+        if cfg.regression_task.clip_grad_norm:
+            torch.nn.utils.clip_grad_norm_(
+                model.parameters(), cfg.regression_task.clip_grad_norm_max_norm
+            )
+
         optimizer.step()
 
-        # Update progress bar
-        progress_bar.set_description(
-            f"Loss: {loss.item():.6f}{corr_str}, Time: {epoch_time:.3f}s/epoch"
-        )
+        # Update learning rate scheduler
+        if scheduler is not None:
+            scheduler.step(total_loss)
 
-        # Plot curves at regular intervals
-        if (epoch + 1) % plot_every == 0:
-            # Create output directory if needed
-            os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
+        # Calculate epoch time
+        epoch_time = time.time() - epoch_start_time
 
-            # Plot loss components
-            plt.figure(figsize=(10, 6))
-            plt.semilogy(
-                history["epochs"], history["total_loss"], "b-", label="Total Loss"
+        # Print progress at intervals
+        if (epoch + 1) % plot_interval == 0 or epoch == epochs - 1:
+            print(
+                f"Epoch {epoch+1}/{epochs}, "
+                f"Total Loss: {total_loss.item():.6f}, "
+                f"Primary Loss: {primary_loss.item():.6f}, "
+                f"Aux Loss: {auxiliary_loss.item():.6f}, "
+                f"Weighted Aux Loss: {weighted_auxiliary_loss.item():.6f}, "
+                f"LR: {optimizer.param_groups[0]['lr']:.2e}, "
+                f"Time: {epoch_time:.2f}s"
             )
-            plt.semilogy(
-                history["epochs"], history["primary_loss"], "r-", label="Primary Loss"
-            )
-            plt.semilogy(
-                history["epochs"],
-                history["weighted_auxiliary_loss"],
-                "g-",
-                label="Weighted Aux Loss",
-            )
+            
+            # Save intermediate plot
+            save_intermediate_plot(epoch, all_losses, primary_losses, auxiliary_losses, weighted_auxiliary_losses, learning_rates, model, batch)
 
+    # Final evaluation
+    model.eval()
+    with torch.no_grad():
+        final_predictions, final_outputs = model(batch)
+
+        print("\nFinal DCell training results:")
+        if final_predictions.numel() > 0:
+            true_scores = batch["gene"].phenotype_values
+
+            print("True Phenotype Values:", true_scores.cpu().numpy()[:5])
+            print("Predicted Values:", final_predictions.cpu().numpy()[:5])
+
+            # Calculate final metrics
+            mse = F.mse_loss(final_predictions, true_scores).item()
+            mae = F.l1_loss(final_predictions, true_scores).item()
+
+            # Calculate correlation coefficient
+            true_np = true_scores.cpu().numpy()
+            pred_np = final_predictions.cpu().numpy()
+            correlation = np.corrcoef(true_np, pred_np)[0, 1] if len(true_np) > 1 else 0
+
+            print(f"Final Mean Squared Error: {mse:.6f}")
+            print(f"Final Mean Absolute Error: {mae:.6f}")
+            print(f"Correlation Coefficient: {correlation:.6f}")
+
+            # Create final plot
+            plt.figure(figsize=(12, 8))
+
+            # Loss curves
+            plt.subplot(2, 3, 1)
+            plt.plot(range(1, epochs + 1), all_losses, "b-", label="Total Loss")
             plt.xlabel("Epoch")
-            plt.ylabel("Loss (log scale)")
-
-            title_suffix = f" ({norm_type}, {activation_name}"
-            if subsystem_num_layers > 1:
-                title_suffix += f", {subsystem_num_layers}-layer)"
-            else:
-                title_suffix += ")"
-
-            plt.title(f"DCellNew Loss Components - Epoch {epoch+1}{title_suffix}")
+            plt.ylabel("Loss Value")
+            plt.title("Training Loss Curve")
+            plt.grid(True)
             plt.legend()
+            plt.yscale("log")
+
+            # Loss components
+            plt.subplot(2, 3, 2)
+            plt.plot(range(1, epochs + 1), primary_losses, "r-", label="Primary Loss")
+            plt.plot(
+                range(1, epochs + 1), auxiliary_losses, "g-", label="Auxiliary Loss"
+            )
+            plt.plot(
+                range(1, epochs + 1),
+                weighted_auxiliary_losses,
+                "orange",
+                label="Weighted Auxiliary Loss",
+            )
+            plt.xlabel("Epoch")
+            plt.ylabel("Loss Value")
+            plt.title("Loss Components")
+            plt.grid(True)
+            plt.legend()
+            plt.yscale("log")
+
+            # Correlation
+            plt.subplot(2, 3, 3)
+            plt.scatter(true_np, pred_np, alpha=0.7)
+            min_val = min(true_np.min(), pred_np.min())
+            max_val = max(true_np.max(), pred_np.max())
+            plt.plot([min_val, max_val], [min_val, max_val], "r--")
+            plt.xlabel("True Phenotype Values")
+            plt.ylabel("Predicted Values")
+            plt.title(f"Final Correlation (r={correlation:.4f})")
             plt.grid(True)
 
-            # Save figure with timestamp
-            ts = timestamp()
-            if subsystem_num_layers > 1:
-                title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_epoch_{epoch+1}"
-            else:
-                title = f"dcell_{norm_type}_{activation_name}_loss_components_epoch_{epoch+1}"
+            # Error distribution
+            plt.subplot(2, 3, 4)
+            errors = pred_np - true_np
+            plt.hist(errors, bins=10, alpha=0.7)
+            plt.xlabel("Prediction Error")
+            plt.ylabel("Frequency")
+            plt.title(f"Error Distribution (MSE={mse:.6f})")
+            plt.grid(True)
 
-            save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
-            plt.savefig(save_path)
-            print(f"Saved loss components plot to {save_path}")
-            plt.close()
+            # Learning rate evolution
+            plt.subplot(2, 3, 5)
+            plt.plot(range(1, epochs + 1), learning_rates, "purple")
+            plt.xlabel("Epoch")
+            plt.ylabel("Learning Rate")
+            plt.title("Learning Rate Schedule")
+            plt.grid(True)
+            plt.yscale("log")
 
-            # Plot correlation progress
-            plt.figure(figsize=(10, 6))
-            valid_indices = ~np.isnan(np.array(history["correlation"]))
-            if np.any(valid_indices):
-                valid_epochs = np.array(history["epochs"])[valid_indices]
-                valid_correlations = np.array(history["correlation"])[valid_indices]
-                plt.plot(valid_epochs, valid_correlations, "g-", linewidth=2)
+            # Subsystem analysis
+            plt.subplot(2, 3, 6)
+            linear_outputs = final_outputs.get("linear_outputs", {})
+            subsystem_activities = {}
+            for k, v in linear_outputs.items():
+                if k != "GO:ROOT":
+                    subsystem_activities[k] = v.abs().mean().item()
 
-                # Add reference line at 0.45
-                plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
-
-                # Get max correlation
-                max_corr = (
-                    np.max(valid_correlations) if len(valid_correlations) > 0 else 0
+            if subsystem_activities:
+                subsystem_activations = list(subsystem_activities.values())
+                plt.hist(
+                    subsystem_activations,
+                    bins=min(20, len(subsystem_activations)),
+                    alpha=0.7,
                 )
-                plt.title(
-                    f"Correlation Progress - Epoch {epoch+1} (Max: {max_corr:.4f})"
-                )
-                plt.xlabel("Epoch")
-                plt.ylabel("Pearson Correlation")
+                plt.xlabel("Mean Absolute Activation")
+                plt.ylabel("Number of Subsystems")
+                plt.title("Subsystem Activation Distribution")
                 plt.grid(True)
-                plt.legend()
 
-                # Save correlation plot
-                if subsystem_num_layers > 1:
-                    corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_epoch_{epoch+1}"
-                else:
-                    corr_title = f"dcell_{norm_type}_{activation_name}_correlation_epoch_{epoch+1}"
-
-                corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{ts}.png")
-                plt.savefig(corr_save_path)
-                print(f"Saved correlation plot to {corr_save_path}")
+            plt.tight_layout()
+            plt.savefig(osp.join(plot_dir, f"dcell_results_{timestamp()}.png"), dpi=150)
             plt.close()
 
-    # Create final detailed loss components plot
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-
-    # Main loss components (log scale)
-    ax1.semilogy(history["total_loss"], "b-", linewidth=2, label="Total Loss")
-    ax1.semilogy(history["primary_loss"], "r-", linewidth=2, label="Primary Loss")
-    ax1.semilogy(
-        history["weighted_auxiliary_loss"],
-        "g-",
-        linewidth=2,
-        label="Weighted Auxiliary Loss",
-    )
-    ax1.set_ylabel("Loss Value (log scale)", fontsize=12)
-
-    title_suffix = f" ({norm_type}, {activation_name}"
-    if subsystem_num_layers > 1:
-        title_suffix += f", {subsystem_num_layers}-layer MLP)"
-    else:
-        title_suffix += ")"
-
-    ax1.set_title(f"DCell Loss Components During Training{title_suffix}", fontsize=14)
-    ax1.grid(True, linestyle="--", alpha=0.7)
-
-    # Add epoch markers
-    for e in range(0, num_epochs, 50):
-        if e > 0:
-            ax1.axvline(x=e, color="gray", linestyle="--", alpha=0.3)
-
-    # Auxiliary loss plot
-    ax2.semilogy(
-        history["auxiliary_loss"],
-        "orange",
-        linewidth=2,
-        label="Auxiliary Loss (Unweighted)",
-    )
-    ax2.set_xlabel("Epoch", fontsize=12)
-    ax2.set_ylabel("Auxiliary Loss Value (log scale)", fontsize=12)
-    ax2.grid(True, linestyle="--", alpha=0.7)
-
-    # Add final values to the legend
-    ax1.legend(
-        [
-            f"Total Loss: {history['total_loss'][-1]:.6f}",
-            f"Primary Loss: {history['primary_loss'][-1]:.6f}",
-            f"Weighted Aux Loss: {history['weighted_auxiliary_loss'][-1]:.6f}",
-        ],
-        loc="upper right",
-        fontsize=10,
-    )
-
-    ax2.legend(
-        [f"Auxiliary Loss: {history['auxiliary_loss'][-1]:.6f}"],
-        loc="upper right",
-        fontsize=10,
-    )
-
-    plt.tight_layout()
-
-    # Save final loss plot
-    ts = timestamp()
-    if subsystem_num_layers > 1:
-        title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_loss_components_final"
-    else:
-        title = f"dcell_{norm_type}_{activation_name}_loss_components_final"
-
-    save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
-    plt.savefig(save_path, dpi=300)
-    print(f"\nDetailed loss components plot saved to '{save_path}'")
-    plt.close()
-
-    # Create predictions vs targets plot
-    if len(pred_values) > 1:
-        plt.figure(figsize=(12, 9))
-
-        # Scatter plot
-        scatter = plt.scatter(
-            target_values, pred_values, c="blue", alpha=0.7, s=100, label="Predictions"
-        )
-
-        # Add sample indices as annotations
-        for i, (x, y) in enumerate(zip(target_values, pred_values)):
-            plt.annotate(
-                f"{i}",
-                (x, y),
-                xytext=(3, 3),
-                textcoords="offset points",
-                fontsize=9,
-                fontweight="bold",
-                color="black",
-                bbox=dict(boxstyle="round,pad=0.1", fc="white", alpha=0.7, ec="none"),
-            )
-
-        # Add perfect prediction line
-        min_val = min(min(target_values), min(pred_values))
-        max_val = max(max(target_values), max(pred_values))
-        plt.plot(
-            [min_val, max_val], [min_val, max_val], "r--", label="Perfect Prediction"
-        )
-
-        # Calculate correlation
-        correlation = np.corrcoef(pred_values, target_values)[0, 1]
-
-        # Title
-        if subsystem_num_layers > 1:
-            plt.title(
-                f"DCell Predictions vs Targets - {norm_type}, {activation_name}, {subsystem_num_layers}-layer MLP (Correlation: {correlation:.4f})",
-                fontsize=16,
-            )
+            print(f"\nResults plot saved to '{plot_dir}'")
         else:
-            plt.title(
-                f"DCell Predictions vs Targets - {norm_type}, {activation_name} (Correlation: {correlation:.4f})",
-                fontsize=16,
-            )
+            print("No predictions were generated. Check model and data setup.")
 
-        plt.xlabel("Target Values", fontsize=14)
-        plt.ylabel("Predicted Values", fontsize=14)
-        plt.legend(fontsize=12)
-        plt.grid(True, linestyle="--", alpha=0.7)
+    print("\nDCell training demonstration complete!")
 
-        # Add correlation text box
-        plt.text(
-            0.05,
-            0.95,
-            f"Pearson Correlation: {correlation:.4f}\n"
-            f"Number of samples: {len(target_values)}",
-            transform=plt.gca().transAxes,
-            fontsize=12,
-            verticalalignment="top",
-            bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
-        )
-
-        plt.tight_layout()
-
-        # Save predictions plot
-        if subsystem_num_layers > 1:
-            title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_predictions_vs_targets"
-        else:
-            title = f"dcell_{norm_type}_{activation_name}_predictions_vs_targets"
-
-        save_path = osp.join(ASSET_IMAGES_DIR, f"{title}_{ts}.png")
-        plt.savefig(save_path, dpi=300)
-        print(f"Predictions vs targets plot saved to '{save_path}'")
-        plt.close()
-
-    # Create final correlation plot
-    plt.figure(figsize=(12, 8))
-    valid_indices = ~np.isnan(np.array(history["correlation"]))
-    if np.any(valid_indices):
-        valid_epochs = np.array(history["epochs"])[valid_indices]
-        valid_correlations = np.array(history["correlation"])[valid_indices]
-        plt.plot(
-            valid_epochs, valid_correlations, "g-", linewidth=2, label="Correlation"
-        )
-
-        # Add reference line
-        plt.axhline(y=0.45, color="r", linestyle="--", label="0.45 threshold")
-
-        # Annotate max correlation
-        max_corr = np.max(valid_correlations) if len(valid_correlations) > 0 else 0
-        max_corr_epoch = (
-            valid_epochs[np.argmax(valid_correlations)]
-            if len(valid_correlations) > 0
-            else 0
-        )
-
-        plt.annotate(
-            f"Max: {max_corr:.4f} (epoch {max_corr_epoch})",
-            xy=(max_corr_epoch, max_corr),
-            xytext=(max_corr_epoch + 5, max_corr + 0.02),
-            arrowprops=dict(facecolor="black", shrink=0.05, width=1.5, headwidth=8),
-            fontsize=12,
-        )
-
-        plt.title(f"Correlation Progress Over Training{title_suffix}")
-        plt.xlabel("Epoch")
-        plt.ylabel("Pearson Correlation")
-        plt.grid(True)
-        plt.legend(loc="lower right")
-
-        # Save final correlation plot
-        if subsystem_num_layers > 1:
-            corr_title = f"dcell_{norm_type}_{activation_name}_{subsystem_num_layers}layer_correlation_final"
-        else:
-            corr_title = f"dcell_{norm_type}_{activation_name}_correlation_final"
-
-        corr_save_path = osp.join(ASSET_IMAGES_DIR, f"{corr_title}_{ts}.png")
-        plt.savefig(corr_save_path, dpi=300)
-        print(f"\nFinal correlation plot saved to '{corr_save_path}'")
-        plt.close()
-
-    # Print final values
-    print("\nFinal values:")
-    print(f"  Total Loss: {history['total_loss'][-1]:.6f}")
-    print(f"  Primary Loss: {history['primary_loss'][-1]:.6f}")
-    print(f"  Auxiliary Loss: {history['auxiliary_loss'][-1]:.6f}")
-    print(f"  Weighted Auxiliary Loss: {history['weighted_auxiliary_loss'][-1]:.6f}")
-
-    # Print correlation statistics
-    valid_correlations = [c for c in history["correlation"] if not np.isnan(c)]
-    if valid_correlations:
-        max_corr = max(valid_correlations)
-        max_corr_epoch = history["epochs"][history["correlation"].index(max_corr)]
-        print(f"  Final Correlation: {valid_correlations[-1]:.6f}")
-        print(f"  Max Correlation: {max_corr:.6f} (at epoch {max_corr_epoch})")
-
-    # Print time statistics
-    avg_time = sum(history["time_per_epoch"]) / len(history["time_per_epoch"])
-    print(f"\nTime statistics:")
-    print(f"  Average time per epoch: {avg_time:.3f}s")
-    print(f"  Total training time: {sum(history['time_per_epoch']):.3f}s")
-    print(f"  Samples per epoch: {batch_size}")
-    print(f"  Samples per second: {batch_size / avg_time:.1f}")
-
-    return model, history
+    return model, (final_predictions, final_outputs)
 
 
 if __name__ == "__main__":

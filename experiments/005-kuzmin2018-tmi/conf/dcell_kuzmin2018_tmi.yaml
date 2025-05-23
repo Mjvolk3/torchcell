@@ -19,15 +19,15 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1000  # Increased from 100 to 1000
+  perturbation_subset_size: 1000 # Increased from 100 to 1000
   batch_size: 32 #32
   num_workers: 4
   pin_memory: false
   prefetch: false
-  follow_batch: ["perturbation_indices", "mutant_state"] # Important for DCell batching
+  follow_batch: ["perturbation_indices", "go_gene_strata_state"] # Important for DCell batching
 
 trainer:
-  max_epochs: 100 #1000 # 20 # FLAG
+  max_epochs: 1600 #1000 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu  # Changed from 'cpu' to 'gpu' to allow GPU usage when available
@@ -43,22 +43,22 @@ model:
   subsystem_output_max_mult: 0.3 # Multiplier for scaling subsystem output sizes
   output_size: 1 # Size of final prediction (1 for growth/fitness)
   # New DCell parameters
-  norm_type: "batch" # Type of normalization: 'batch', 'layer', 'instance', or 'none'
-  norm_before_act: false # Whether to apply normalization before activation (default: false)
-  subsystem_num_layers: 1 # Number of layers per subsystem (1 is original DCell)
-  activation: "tanh" # Activation function: 'tanh', 'relu', 'leaky_relu', 'gelu', 'selu'
-  init_range: 0.001 # Range for uniform weight initialization
+  # norm_type: "batch" # Type of normalization: 'batch', 'layer', 'instance', or 'none'
+  # norm_before_act: false # Whether to apply normalization before activation (default: false)
+  # subsystem_num_layers: 1 # Number of layers per subsystem (1 is original DCell)
+  # activation: "tanh" # Activation function: 'tanh', 'relu', 'leaky_relu', 'gelu', 'selu'
+  # init_range: 0.001 # Range for uniform weight initialization
   # Gene embedding parameters
   # Setting learnable_embedding_dim to null uses original binary encoding
   # Setting it to an integer value (e.g., 32, 64, 128) uses learnable gene embeddings
-  learnable_embedding_dim: null # null for binary encoding, int for learnable embeddings
+  # learnable_embedding_dim: null # null for binary encoding, int for learnable embeddings
 
 regression_task:
   loss: "dcell" # Use the DCellLoss
   # DCellLoss configuration
   dcell_loss:
     alpha: 0.3 # Weight for auxiliary losses
-    use_auxiliary_losses: true # default true  # Whether to use losses from non-root subsystems
+    use_auxiliary_losses: false # default true  # Whether to use losses from non-root subsystems
 
   is_weighted_phenotype_loss: false
 
@@ -71,10 +71,10 @@ regression_task:
     mode: "min"
     factor: 0.2
     patience: 3
-    threshold: 1e -4
+    threshold: 1e-4
     threshold_mode: "rel"
     cooldown: 2
-    min_lr: 1e-9
+    min_lr: 1e-3
     eps: 1e-10
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0

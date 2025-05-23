@@ -168,7 +168,7 @@ Traceback (most recent call last):
   File "/home/a-m/mjvolk3/projects/torchcell/torchcell/trainers/int_dcell.py", line 205, in _shared_step
     transformed_metrics.update(
   File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.11/site-packages/torchmetrics/collections.py", line 256, in update
-    m.update(*args, **m_kwargs)
+    m.update(*args, **m_kwargs)X
   File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.11/site-packages/torchmetrics/metric.py", line 553, in wrapped_func
     raise RuntimeError(
 RuntimeError: Encountered different devices in metric calculation (see stacktrace for details). This could be due to the metric class not being on the same device as input. Instead of `metric=PearsonCorrCoef(...)` try to do `metric=PearsonCorrCoef(...).to(device)` where device corresponds to the device of the input.

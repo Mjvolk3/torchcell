@@ -2,7 +2,7 @@
 id: cshdbmlwu123va68dg6pr16
 title: Dcell
 desc: ''
-updated: 1747760841851
+updated: 1748034112517
 created: 1747191393026
 ---
 ## 2025.05.13 - Date Filter Dcell
@@ -482,3 +482,134 @@ Our testing confirms that nodes within a stratum have no dependencies on each ot
 ## 2025.05.20 - Investigatin DCell Absurdly Slow Iteration
 
 `Loss: 0.000829, Corr: 0.7916, Time: 19.240s/epoch: 100%|██| 499/500 [2:46:08<00:20, 20.66s/it]`
+
+## 2025.05.22 - Algorithm for Implementing DCell With Example
+
+![](./assets/drawio/DCell_example_only.drawio.png)
+
+DCell is structured according to a predefined hierarchical ontology of subsystems, where each subsystem $t$ has a state represented by neurons.
+
+### Inputs:
+
+- **Genotype**: $X \in \mathbb{R}^{M}$, a binary vector indicating gene disruptions (1 = disrupted, 0 = wild-type).
+- **Ontology hierarchy**: Defines subsystems and their child-parent relationships.
+
+### Output:
+
+- **Phenotype prediction**: Cell growth or genetic interaction score.
+
+### Notation:
+
+- $O_i^{(t)}$: output (state) vector of subsystem $t$ for input $i$.
+- $I_i^{(t)}$: input vector to subsystem $t$, formed by concatenation of child subsystems’ outputs and associated gene states.
+- $L_O^{(t)}$: dimensionality of output vector for subsystem $t$.
+- $W^{(t)}$, $b^{(t)}$: learnable weight matrix and bias vector for subsystem $t$.
+
+### Steps:
+
+For each subsystem $t$:
+
+1. **Define dimensionality** of subsystem states:
+
+$$
+L_O^{(t)} = \max(20, \lceil 0.3 \times \text{number of genes contained by } t \rceil)
+$$
+
+2. **Calculate input vector** $I_i^{(t)}$ by concatenating states from child subsystems and genes.
+
+3. **Compute subsystem output** $O_i^{(t)}$:
+
+$$
+O_i^{(t)} = \text{BatchNorm}\left(\tanh\left(W^{(t)} I_i^{(t)} + b^{(t)}\right)\right)
+$$
+
+4. **At root node**, predict phenotype $y_i$ by linearly combining root output:
+
+$$
+y_i = \text{Linear}(O_i^{(\text{root})})
+$$
+
+5. **Optimize** the weights and biases ($W^{(t)}, b^{(t)}$) using stochastic gradient descent to minimize the loss:
+
+$$
+\text{Loss} = \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2 + \lambda \sum_t \|W^{(t)}\|^2
+$$
+
+Where:
+
+- $N$ is the number of training samples,
+- $\hat{y}_i$ is the actual phenotype.
+
+---
+
+## Example (Verification)
+
+The provided figure demonstrates a hierarchical calculation of states and dimensions in DCell. Let's verify:
+
+### Bottom layer (Genes):
+
+- $I_i^0 \in \mathbb{B}^{7}$, $I_i^1 \in \mathbb{B}^{3}$, $I_i^2 \in [-1, 1]^{50}$.
+
+### Subsystem computations:
+
+**Subsystem 0:**
+
+$$
+L_O^{(0)} = \max(20, \lceil 0.3 \times 7 \rceil) = 20
+$$
+
+$$
+O_i^{(0)} = \text{BatchNorm}\left(\tanh(W^{(0)}(20\times7)I_i^{(0)}(7\times1) + b^{(0)}(20\times1))\right)
+$$
+
+**Subsystem 1:**
+
+$$
+L_O^{(1)} = \max(20, \lceil 0.3 \times 3 \rceil) = 20
+$$
+
+$$
+O_i^{(1)} = \text{BatchNorm}\left(\tanh(W^{(1)}(20\times3)I_i^{(1)}(3\times1) + b^{(1)}(20\times1))\right)
+$$
+
+**Subsystem 2 (special continuous input):**
+
+- $I_i^2 \in [-1, 1]^{50}$
+
+$$
+O_i^{(2)} = \text{BatchNorm}\left(\tanh(\text{Linear}(I_i^{(2)}))\right)
+$$
+
+**Combining Subsystems (level above subsystems 0, 1, 2):**
+
+- $I_i^4 = [I_i^0 || I_i^1 || I_i^2]$
+- $L_O^{(2)} = \max(20, \lceil 0.3\times10 \rceil) = 20$, because this subsystem combines subsystems containing total 10 genes.
+- Compute $O_i^{(2)}$ from combined input.
+
+This matches the provided figure accurately.
+
+---
+
+**Conclusion**: The provided figure accurately represents the calculation steps in the DCell algorithm, with correct dimensionality and functional form.
+
+The algorithm and its example are consistent with the original DCell description.
+
+## 2025.05.22 - DCell overfit on M1
+
+Overfits but from [[Dcell|dendron://torchcell/torchcell.models.dcell]] looks like the losses might be in conflict. Going to keep this for sake of comparison and if there is issue we can always try to remove alpha.
+
+![](./assets/images/dcell_training_2025-05-22-13-33-48/dcell_epoch_1240_2025-05-22-21-12-15.png)
+![](./assets/images/dcell_training_2025-05-22-13-33-48/dcell_results_2025-05-22-22-35-19.png)
+
+## 2025.05.23 - DCell overfit on M1 without alpha
+
+Overfits faster and loss continues to drop.
+
+![](./assets/images/dcell_alpha=0_training_2025-05-22-23-24-23/dcell_epoch_0160_2025-05-22-23-59-38.png)
+![](./assets/images/dcell_alpha=0_training_2025-05-22-23-24-23/dcell_results_2025-05-23-04-55-40.png)
+
+## 2025.05.23 - One DCell Module Processing
+
+Cut from larger png.
+
+![](./assets/drawio/DCell_example_only.drawio.png)

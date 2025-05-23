@@ -432,7 +432,7 @@ class SubgraphRepresentation(GraphProcessor):
         # Ensure device is set
         if self.device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            
+
         # Initialize storage for phenotype values and metadata
         all_values = []
         all_type_indices = []
@@ -509,7 +509,7 @@ class SubgraphRepresentation(GraphProcessor):
             integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
                 [0], dtype=torch.long, device=self.device
             )
-            
+
         # Store phenotype type names (non-tensor data)
         integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
 
@@ -902,7 +902,7 @@ class DCellGraphProcessor(GraphProcessor):
 
         # Process gene ontology if it exists in cell_graph
         if "gene_ontology" in cell_graph.node_types:
-            # Copy gene ontology nodes and features
+            # Copy ALL gene ontology information from cell_graph
             processed_graph["gene_ontology"].num_nodes = cell_graph[
                 "gene_ontology"
             ].num_nodes
@@ -910,41 +910,10 @@ class DCellGraphProcessor(GraphProcessor):
                 "gene_ontology"
             ].node_ids
 
-            if hasattr(cell_graph["gene_ontology"], "x"):
-                processed_graph["gene_ontology"].x = cell_graph["gene_ontology"].x
-
-            # Copy GO hierarchy edges
-            if (
-                "gene_ontology",
-                "is_child_of",
-                "gene_ontology",
-            ) in cell_graph.edge_types:
-                edge_index = cell_graph[
-                    "gene_ontology", "is_child_of", "gene_ontology"
-                ].edge_index
-                processed_graph[
-                    "gene_ontology", "is_child_of", "gene_ontology"
-                ].edge_index = edge_index
-                processed_graph[
-                    "gene_ontology", "is_child_of", "gene_ontology"
-                ].num_edges = edge_index.size(1)
-
-            # Process gene-GO annotations
-            if ("gene", "has_annotation", "gene_ontology") in cell_graph.edge_types:
-                gene_go_edge_index = cell_graph[
-                    "gene", "has_annotation", "gene_ontology"
-                ].edge_index
-                processed_graph[
-                    "gene", "has_annotation", "gene_ontology"
-                ].edge_index = gene_go_edge_index
-                processed_graph["gene", "has_annotation", "gene_ontology"].num_edges = (
-                    gene_go_edge_index.size(1)
-                )
-
-                # Create mutant state tensors for gene ontology nodes based on perturbations
-                # This implements the DCell perturbation logic directly in the PyG graph
-                self._apply_go_perturbations(
-                    processed_graph, cell_graph, perturbed_indices, batch_mapping
+            # Copy the go_gene_strata_state and apply perturbations
+            if hasattr(cell_graph["gene_ontology"], "go_gene_strata_state"):
+                self._apply_go_gene_perturbations(
+                    processed_graph, cell_graph, perturbed_indices
                 )
 
         # Add phenotype data in COO format
@@ -952,97 +921,35 @@ class DCellGraphProcessor(GraphProcessor):
 
         return processed_graph
 
-    def _apply_go_perturbations(
+    def _apply_go_gene_perturbations(
         self,
         processed_graph: HeteroData,
         cell_graph: HeteroData,
         perturbed_indices: list,
-        batch_mapping: dict,
     ) -> None:
         """
-        Apply gene perturbations to gene ontology nodes using strata-based processing.
-        Each GO term gets a binary vector indicating which of its associated genes are perturbed.
-        Includes stratum information for parallelized processing.
-        
-        Simplified version with cleaner device handling.
+        Copy go_gene_strata_state from cell_graph and flip perturbation bits.
         """
-        # We require the term_to_gene_dict and strata for processing
-        if not hasattr(cell_graph["gene_ontology"], "term_to_gene_dict"):
-            raise ValueError("Gene ontology graph must have term_to_gene_dict for DCellGraphProcessor")
-        if not hasattr(cell_graph["gene_ontology"], "strata"):
-            raise ValueError("Gene ontology graph must have strata for efficient processing")
+        # Copy the base state tensor from cell_graph
+        base_state = (
+            cell_graph["gene_ontology"].go_gene_strata_state.clone().to(self.device)
+        )
 
-        # Get device - ensure a device is set
-        if self.device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            
-        # Get strata tensor
-        strata_tensor = cell_graph["gene_ontology"].strata.to(self.device)
+        # Convert perturbed indices to set for O(1) lookup
+        perturbed_set = set(perturbed_indices)
 
-        # Get term-gene mappings
-        term_gene_mapping = cell_graph["gene_ontology"].term_gene_mapping.to(self.device)
-        term_indices = term_gene_mapping[:, 0]
-        gene_indices_in_mapping = term_gene_mapping[:, 1]
-        
-        # Get stratum for each term-gene pair
-        pair_strata = strata_tensor[term_indices.long()]
-        
-        # Create a binary mask for perturbed genes
-        perturbed_mask = torch.zeros(cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device)
-        for batch_idx, gene_indices in batch_mapping.items():
-            indices_tensor = torch.tensor(gene_indices, dtype=torch.long, device=self.device)
-            perturbed_mask.index_fill_(0, indices_tensor, True)
+        # Flip state bits for perturbed genes
+        # Column 1 contains gene_idx, column 3 contains state
+        gene_indices = base_state[:, 1].long()
+        mask = torch.tensor(
+            [idx.item() in perturbed_set for idx in gene_indices],
+            dtype=torch.bool,
+            device=self.device,
+        )
+        base_state[mask, 3] = 0.0
 
-        # Get term to level mapping
-        unique_terms = torch.unique(term_indices).long()
-        term_to_level = {}
-        
-        for term_idx in unique_terms:
-            term_id = cell_graph["gene_ontology"].node_ids[term_idx.item()]
-            # Default to stratum
-            level = strata_tensor[term_idx].item()
-            # If go_graph is available, get the level
-            if hasattr(cell_graph, "go_graph") and cell_graph.go_graph is not None:
-                if term_id in cell_graph.go_graph.nodes and "level" in cell_graph.go_graph.nodes[term_id]:
-                    level = cell_graph.go_graph.nodes[term_id]["level"]
-            term_to_level[term_idx.item()] = level
-        
-        # Create level tensor for each term-gene pair
-        level_tensor = torch.zeros_like(term_indices, dtype=torch.float, device=self.device)
-        for term_idx_val, level_val in term_to_level.items():
-            level_tensor[term_indices == term_idx_val] = level_val
-            
-        # Create mutant state tensor with 5 columns: [term_idx, gene_idx, stratum, level, gene_state]
-        mutant_state = torch.zeros((term_gene_mapping.size(0), 5), dtype=torch.float, device=self.device)
-        mutant_state[:, 0] = term_indices.float()  # term_idx
-        mutant_state[:, 1] = gene_indices_in_mapping.float()  # gene_idx
-        mutant_state[:, 2] = pair_strata.float()  # stratum
-        mutant_state[:, 3] = level_tensor.float()  # level
-        mutant_state[:, 4] = 1.0  # Default gene state (not perturbed)
-        
-        # Set perturbation state - if gene is perturbed, set state to 0.0
-        is_perturbed = perturbed_mask[gene_indices_in_mapping.long()]
-        mutant_state[is_perturbed, 4] = 0.0
-
-        # Assign mutant state tensor to the graph
-        processed_graph["gene_ontology"].mutant_state = mutant_state
-
-        # Copy essential attributes from cell_graph to processed_graph
-        for attr in ["term_ids", "max_genes_per_term", "term_gene_mapping", "term_gene_counts", 
-                    "term_to_gene_dict", "strata", "stratum_to_terms"]:
-            if hasattr(cell_graph["gene_ontology"], attr):
-                attr_value = getattr(cell_graph["gene_ontology"], attr)
-                
-                # Move tensors to device if applicable
-                if torch.is_tensor(attr_value):
-                    attr_value = attr_value.to(self.device)
-                elif isinstance(attr_value, dict):
-                    # Handle dictionary of tensors
-                    for k, v in attr_value.items():
-                        if torch.is_tensor(v):
-                            attr_value[k] = v.to(self.device)
-                            
-                setattr(processed_graph["gene_ontology"], attr, attr_value)
+        # Store the modified state tensor
+        processed_graph["gene_ontology"].go_gene_strata_state = base_state
 
     def _add_phenotype_data(
         self,
@@ -1057,7 +964,7 @@ class DCellGraphProcessor(GraphProcessor):
         # Ensure device is set
         if self.device is None:
             self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            
+
         # Initialize storage for phenotype values and metadata
         all_values = []
         all_type_indices = []
@@ -1134,7 +1041,7 @@ class DCellGraphProcessor(GraphProcessor):
             integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
                 [0], dtype=torch.long, device=self.device
             )
-            
+
         # Store phenotype type names (non-tensor data)
         integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
 

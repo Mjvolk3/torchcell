@@ -2,11 +2,14 @@
 id: byqxlgenke415eplp31l2fk
 title: '21'
 desc: ''
-updated: 1747592224852
+updated: 1748034154361
 created: 1747592127726
 ---
 
-## 2025.05.18 
+## 2025.05.19
+
+- [ ] Dcell with strata.
+- [ ]
 
 ***
 
@@ -17,6 +20,41 @@ created: 1747592127726
 - [ ] Morphology Random Forest Baseline
 - [ ] Morphology animation ? for fun...
 
+## 2025.05.20
+
+- [x] [[2025.05.20 - Investigatin DCell Absurdly Slow Iteration|dendron://torchcell/torchcell.models.dcell#20250520---investigatin-dcell-absurdly-slow-iteration]]
+- [x] [[2025.05.20 - DCell with Strata|dendron://torchcell/torchcell.scratch.load_batch_005#20250520---dcell-with-strata]]
+- [ ] Get `DCell` to work on device.
+
+**BATCH SIZE = 32**
+
+On Delta GPU:
+
+`Loss: 0.001867, Corr: 0.4769, Time: 100.151s/epoch:  62%|███  62/100 [1:44:31<1:04:03, 101.15s/it]`
+
+On M1 CPU:
+
+Much faster. This is when we realized we need some other solution.
+
+`20s/it`
+
+## 2025.05.21
+
+- [x] [[2025.05.21 - Data Structure for Pyg Message Passing|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-for-pyg-message-passing]]
+- [x] [[2025.05.21 - Data Structure Don't Propagate Edge Info|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-dont-propagate-edge-info]]
+- [x] Revert `DCell` I think we can make this better with mutant state matrix. Get mutant state right.
+- [x] Model initialization.
+
+## 2025.05.22
+
+- [x][[2025.05.23 - One DCell Module Processing|dendron://torchcell/torchcell.models.dcell#20250523---one-dcell-module-processing]]
+- [x] Get `Dcell` working. [[2025.05.22 - DCell overfit on M1|dendron://torchcell/torchcell.models.dcell#20250522---dcell-overfit-on-m1]]
+
+## 2025.05.23
+
+- [x] Experiment without alpha. [[2025.05.23 - DCell overfit on M1 without alpha|dendron://torchcell/torchcell.models.dcell#20250523---dcell-overfit-on-m1-without-alpha]]
+- [ ] Consolidate and commit.
+- [ ] Test speed on GPU.
 
 ***
 

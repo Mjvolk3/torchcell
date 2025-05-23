@@ -2,7 +2,7 @@
 id: luypd6agnx9m9k59xm50sis
 title: Load_batch_005
 desc: ''
-updated: 1747862893250
+updated: 1747901281295
 created: 1746153964493
 ---
 We changed to coo formatting on phenotypes.
@@ -922,4 +922,248 @@ HeteroDataBatch(
 )
 batch_unfiltered['gene_ontology'].go_gene_state_ptr
 tensor([     0,  59986, 119972])
+```
+
+## 2025.05.21 - DCell Data Reversion
+
+```python
+dataset_unfiltered.cell_graph
+dataset_unfiltered[0]
+batch_unfiltered
+batch_unfiltered['gene_ontology'].mutant_state_ptr
+```
+
+```python
+dataset_unfiltered.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    term_gene_mapping=[59986, 2],
+    term_gene_counts=[2655],
+    term_to_gene_dict=dict(len=2655),
+    max_genes_per_term=2444,
+    term_ids=[2655],
+    strata=[2655],
+    stratum_to_terms=dict(len=13),
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_indices_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    mutant_state=[59986, 5],
+    term_ids=[2655],
+    max_genes_per_term=2444,
+    term_gene_mapping=[59986, 2],
+    term_gene_counts=[2655],
+    term_to_gene_dict=dict(len=2655),
+    strata=[2655],
+    stratum_to_terms=dict(len=13),
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    x=[5310, 1],
+    mutant_state=[119972, 5],
+    mutant_state_batch=[119972],
+    mutant_state_ptr=[3],
+    term_ids=[2],
+    max_genes_per_term=[2],
+    term_gene_mapping=[119972, 2],
+    term_gene_counts=[5310],
+    term_to_gene_dict=dict(len=2655),
+    strata=[5310],
+    stratum_to_terms=dict(len=13),
+    batch=[5310],
+    ptr=[3],
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 6416],
+    num_edges=[2],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 119972],
+    num_edges=[2],
+  }
+)
+batch_unfiltered['gene_ontology'].mutant_state_ptr
+tensor([     0,  59986, 119972])
+```
+
+## 2025.05.21 - The Return of go_gene_strata_state
+
+```python
+dataset_unfiltered.cell_graph
+dataset_unfiltered[0]
+batch_unfiltered
+batch_unfiltered['gene_ontology'].go_gene_strata_state_ptr
+```
+
+```python
+dataset_unfiltered.cell_graph
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    x=[2655, 1],
+    term_gene_mapping=[59986, 2],
+    term_gene_counts=[2655],
+    term_to_gene_dict=dict(len=2655),
+    max_genes_per_term=2444,
+    term_ids=[2655],
+    strata=[2655],
+    stratum_to_terms=dict(len=13),
+    go_gene_strata_state=[59986, 4],
+  },
+  (gene, has_annotation, gene_ontology)={
+    edge_index=[2, 59986],
+    num_edges=59986,
+  },
+  (gene_ontology, is_child_of, gene_ontology)={
+    edge_index=[2, 3208],
+    num_edges=3208,
+  }
+)
+dataset_unfiltered[0]
+HeteroData(
+  gene={
+    num_nodes=6607,
+    node_ids=[6607],
+    x=[6607, 0],
+    perturbed_genes=[3],
+    perturbation_indices=[3],
+    pert_mask=[6607],
+    perturbation_indices_batch=[3],
+    phenotype_values=[1],
+    phenotype_type_indices=[1],
+    phenotype_sample_indices=[1],
+    phenotype_types=[1],
+    phenotype_stat_values=[1],
+    phenotype_stat_type_indices=[1],
+    phenotype_stat_sample_indices=[1],
+    phenotype_stat_types=[1],
+  },
+  gene_ontology={
+    num_nodes=2655,
+    node_ids=[2655],
+    go_gene_strata_state=[59986, 4],
+  }
+)
+batch_unfiltered
+HeteroDataBatch(
+  gene={
+    num_nodes=13214,
+    node_ids=[2],
+    x=[13214, 0],
+    perturbed_genes=[2],
+    perturbation_indices=[6],
+    perturbation_indices_batch=[6],
+    perturbation_indices_ptr=[3],
+    pert_mask=[13214],
+    phenotype_values=[2],
+    phenotype_type_indices=[2],
+    phenotype_sample_indices=[2],
+    phenotype_types=[2],
+    phenotype_stat_values=[2],
+    phenotype_stat_type_indices=[2],
+    phenotype_stat_sample_indices=[2],
+    phenotype_stat_types=[2],
+    batch=[13214],
+    ptr=[3],
+  },
+  gene_ontology={
+    num_nodes=5310,
+    node_ids=[2],
+    go_gene_strata_state=[119972, 4],
+    go_gene_strata_state_batch=[119972],
+    go_gene_strata_state_ptr=[3],
+    batch=[5310],
+    ptr=[3],
+  }
+)
+batch_unfiltered['gene_ontology'].go_gene_strata_state_ptr
+tensor([     0,  59986, 119972])
+```
+
+## 2025.05.22 - Size Mismatch Across Batch Issue
+
+We show there should be no issue.
+
+```python
+dataset_unfiltered.cell_graph['gene_ontology'].go_gene_strata_state[:,:3].flatten().size()
+torch.Size([179958])
+(dataset_unfiltered.cell_graph['gene_ontology'].go_gene_strata_state[:,:3].flatten()== dataset_unfiltered[0]['gene_ontology'].go_gene_strata_state[:,:3].flatten()).sum()
+tensor(179958)
+[(dataset_unfiltered.cell_graph['gene_ontology'].go_gene_strata_state[:,:3].flatten()== dataset_unfiltered[i]['gene_ontology'].go_gene_strata_state[:,:3].flatten()).sum() for i in range(32)]
+[tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958), tensor(179958)]
 ```

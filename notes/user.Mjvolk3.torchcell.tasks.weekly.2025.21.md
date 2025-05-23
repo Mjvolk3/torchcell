@@ -2,7 +2,7 @@
 id: byqxlgenke415eplp31l2fk
 title: '21'
 desc: ''
-updated: 1747862635886
+updated: 1748034154361
 created: 1747592127726
 ---
 
@@ -42,6 +42,19 @@ Much faster. This is when we realized we need some other solution.
 
 - [x] [[2025.05.21 - Data Structure for Pyg Message Passing|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-for-pyg-message-passing]]
 - [x] [[2025.05.21 - Data Structure Don't Propagate Edge Info|dendron://torchcell/torchcell.scratch.load_batch_005#20250521---data-structure-dont-propagate-edge-info]]
+- [x] Revert `DCell` I think we can make this better with mutant state matrix. Get mutant state right.
+- [x] Model initialization.
+
+## 2025.05.22
+
+- [x][[2025.05.23 - One DCell Module Processing|dendron://torchcell/torchcell.models.dcell#20250523---one-dcell-module-processing]]
+- [x] Get `Dcell` working. [[2025.05.22 - DCell overfit on M1|dendron://torchcell/torchcell.models.dcell#20250522---dcell-overfit-on-m1]]
+
+## 2025.05.23
+
+- [x] Experiment without alpha. [[2025.05.23 - DCell overfit on M1 without alpha|dendron://torchcell/torchcell.models.dcell#20250523---dcell-overfit-on-m1-without-alpha]]
+- [ ] Consolidate and commit.
+- [ ] Test speed on GPU.
 
 ***
 

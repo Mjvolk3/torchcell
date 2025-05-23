@@ -496,7 +496,10 @@ def main(cfg: DictConfig):
     print("Loading sample data with GO ontology...")
 
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=32, num_workers=4, config="dcell", is_dense=False
+        batch_size=cfg.data_module.batch_size, 
+        num_workers=cfg.data_module.num_workers, 
+        config="dcell", 
+        is_dense=False
     )
 
     # Move data to device

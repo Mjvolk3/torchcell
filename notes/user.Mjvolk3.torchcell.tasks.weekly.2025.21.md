@@ -2,7 +2,7 @@
 id: byqxlgenke415eplp31l2fk
 title: '21'
 desc: ''
-updated: 1748034154361
+updated: 1748061702716
 created: 1747592127726
 ---
 
@@ -55,6 +55,19 @@ Much faster. This is when we realized we need some other solution.
 - [x] Experiment without alpha. [[2025.05.23 - DCell overfit on M1 without alpha|dendron://torchcell/torchcell.models.dcell#20250523---dcell-overfit-on-m1-without-alpha]]
 - [ ] Consolidate and commit.
 - [ ] Test speed on GPU.
+
+| device        | batch_size | workers | time/epoch (s) | time/instance (s) | notes        |
+|:--------------|:-----------|:--------|:---------------|:------------------|--------------|
+| M1            | 32         | 4       | 11.0           | 0.344             |              |
+| A100 80g mmli | 32         | 4       | 7.0            | 0.219             |              |
+| A100 80g mmli | 256        | 8       | 49.33          | 0.193             | more gpu use |
+| A100 80g mmli | 1,500      | 16      | 292.14         | 0.195             | uses 5b vRAM |
+| A100 80g mmli | 3,000      | 8       | 582.93         | 0.194             | gpu 35% 20 gb |
+
+
+Things aren't looking that good.
+
+**Target is time/instance = 0.05 s**
 
 ***
 

@@ -74,6 +74,22 @@ class DCell(nn.Module):
         print(f"  Strata: {len(self.strata_order)} (max: {self.max_stratum})")
         print(f"  Total subsystems: {len(self.subsystems)}")
 
+    @property
+    def num_parameters(self) -> Dict[str, int]:
+        """Count parameters in different parts of the model."""
+        subsystem_params = sum(p.numel() for p in self.subsystems.parameters())
+        linear_head_params = sum(p.numel() for p in self.linear_heads.parameters())
+        total_params = sum(p.numel() for p in self.parameters())
+        
+        return {
+            "subsystems": subsystem_params,
+            "dcell_linear": linear_head_params,
+            "dcell": subsystem_params + linear_head_params,
+            "total": total_params,
+            "num_go_terms": self.num_go_terms,
+            "num_subsystems": len(self.subsystems),
+        }
+
     def _build_hierarchy(self, hetero_data: HeteroData) -> Dict[int, List[int]]:
         """Build child -> parents mapping from edge_index."""
         child_to_parents = {}
@@ -236,8 +252,16 @@ class DCell(nn.Module):
 
         return torch.stack(padded_states)  # [batch_size, max_genes_for_term]
 
-    def forward(self, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, Any]]:
-        """Forward pass through DCell hierarchy."""
+    def forward(self, cell_graph: HeteroData, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        """Forward pass through DCell hierarchy.
+        
+        Args:
+            cell_graph: Cell graph (not used by DCell, included for compatibility with trainer)
+            batch: The batch data containing gene states and GO information
+        """
+        # DCell doesn't use cell_graph in forward pass, it was used during initialization
+        # The trainer expects this signature for consistency across models
+        
         batch_size = batch["gene"].batch.max().item() + 1
         device = batch["gene"].x.device
 
@@ -580,7 +604,7 @@ def main(cfg: DictConfig):
         optimizer.zero_grad()
 
         # Forward pass
-        predictions, outputs = model(batch)
+        predictions, outputs = model(cell_graph, batch)
 
         # Get targets
         targets = batch["gene"].phenotype_values
@@ -646,7 +670,7 @@ def main(cfg: DictConfig):
     # Final evaluation
     model.eval()
     with torch.no_grad():
-        final_predictions, final_outputs = model(batch)
+        final_predictions, final_outputs = model(cell_graph, batch)
 
         print("\nFinal DCell training results:")
         if final_predictions.numel() > 0:

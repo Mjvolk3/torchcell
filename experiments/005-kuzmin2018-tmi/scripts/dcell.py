@@ -36,7 +36,7 @@ from torchcell.trainers.int_dango import RegressionTask as DangoRegressionTask
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.dcell import DCellModel
+from torchcell.models.dcell import DCell
 from torchcell.losses.dcell import DCellLoss
 from torchcell.models.dango import Dango
 from torchcell.losses.dango import (
@@ -255,7 +255,7 @@ def main(cfg: DictConfig) -> None:
     # Define follow_batch based on whether we're using DCellGraphProcessor
     follow_batch = ["perturbation_indices"]
     if isinstance(graph_processor, DCellGraphProcessor):
-        follow_batch.append("mutant_state")  # Include mutant_state for DCell
+        follow_batch.append("go_gene_strata_state")  # Include go_gene_strata_state for DCell
 
     data_module = CellDataModule(
         dataset=dataset,
@@ -284,11 +284,14 @@ def main(cfg: DictConfig) -> None:
 
     dataset.close_lmdb()
 
-    # Determine device based on accelerator config - be more explicit
+    # Determine device based on accelerator config - only support CPU and CUDA
     if wandb.config.trainer["accelerator"] == "gpu" and torch.cuda.is_available():
         device = torch.device("cuda")
     else:
         device = torch.device("cpu")
+        # Force CPU if MPS would be selected
+        if wandb.config.trainer["accelerator"] == "gpu" and torch.backends.mps.is_available():
+            print("MPS detected but not supported. Using CPU instead.")
     
     log.info(f"Using device: {device}")
     devices = get_num_devices()
@@ -297,35 +300,8 @@ def main(cfg: DictConfig) -> None:
 
     max_num_nodes = dataset.cell_graph["gene"].num_nodes
 
-    # Parse activation function from config
-    def get_activation_from_config(activation_name: str) -> nn.Module:
-        """Get activation function from string name in config"""
-        activation_map = {
-            "tanh": nn.Tanh(),
-            "relu": nn.ReLU(),
-            "leaky_relu": nn.LeakyReLU(0.1),
-            "gelu": nn.GELU(),
-            "selu": nn.SELU(),
-            "elu": nn.ELU(),
-            "linear": nn.Identity(),  # No activation
-        }
-        return activation_map.get(activation_name.lower(), nn.Tanh())
-
-    # Get activation function from config - use direct access for required params
-    activation_name = wandb.config.model["activation"]
-    activation = get_activation_from_config(activation_name)
-
-    # Get norm type and other parameters - use direct access for required params
-    norm_type = wandb.config.model["norm_type"]
-    norm_before_act = wandb.config.model["norm_before_act"]
-    subsystem_num_layers = wandb.config.model["subsystem_num_layers"]
-    init_range = wandb.config.model["init_range"]
-
-    # Get embedding parameters if applicable
-    learnable_embedding_dim = wandb.config.model.get("learnable_embedding_dim", None)
-
-    # Always instantiate DCellModel based on the updated config
-    print("Instantiating DCellModel")
+    # Always instantiate DCell based on the updated config
+    print("Instantiating DCell")
     
     # Get required parameters from config - use direct access for required params
     subsystem_output_min = wandb.config.model["subsystem_output_min"]
@@ -336,17 +312,11 @@ def main(cfg: DictConfig) -> None:
     dataset.cell_graph = dataset.cell_graph.to(device)
     
     # Create model and explicitly move to device
-    model = DCellModel(
-        gene_num=max_num_nodes,
-        subsystem_output_min=subsystem_output_min,
-        subsystem_output_max_mult=subsystem_output_max_mult,
+    model = DCell(
+        hetero_data=dataset.cell_graph,
+        min_subsystem_size=subsystem_output_min,
+        subsystem_ratio=subsystem_output_max_mult,
         output_size=output_size,
-        norm_type=norm_type,
-        norm_before_act=norm_before_act,
-        subsystem_num_layers=subsystem_num_layers,
-        activation=activation,
-        init_range=init_range,
-        learnable_embedding_dim=learnable_embedding_dim,
     )
     
     # Explicitly move model to device

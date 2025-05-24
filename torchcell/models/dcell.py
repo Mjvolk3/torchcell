@@ -618,19 +618,29 @@ def main(cfg: DictConfig):
         # Calculate epoch time
         epoch_time = time.time() - epoch_start_time
 
-        # Print progress at intervals
+        # Get GPU memory stats if using CUDA
+        gpu_memory_str = ""
+        if device.type == "cuda":
+            allocated_gb = torch.cuda.memory_allocated(device) / 1024**3
+            reserved_gb = torch.cuda.memory_reserved(device) / 1024**3
+            gpu_memory_str = f", GPU: {allocated_gb:.2f}/{reserved_gb:.2f}GB"
+
+        # Print stats every epoch
+        current_batch_size = batch["gene"].batch.max().item() + 1
+        print(
+            f"Epoch {epoch+1}/{epochs}, "
+            f"Total Loss: {total_loss.item():.6f}, "
+            f"Primary Loss: {primary_loss.item():.6f}, "
+            f"Aux Loss: {auxiliary_loss.item():.6f}, "
+            f"Weighted Aux Loss: {weighted_auxiliary_loss.item():.6f}, "
+            f"LR: {optimizer.param_groups[0]['lr']:.2e}, "
+            f"Time: {epoch_time:.2f}s, "
+            f"Time/instance: {epoch_time/current_batch_size:.4f}s"
+            f"{gpu_memory_str}"
+        )
+        
+        # Save intermediate plot at intervals
         if (epoch + 1) % plot_interval == 0 or epoch == epochs - 1:
-            print(
-                f"Epoch {epoch+1}/{epochs}, "
-                f"Total Loss: {total_loss.item():.6f}, "
-                f"Primary Loss: {primary_loss.item():.6f}, "
-                f"Aux Loss: {auxiliary_loss.item():.6f}, "
-                f"Weighted Aux Loss: {weighted_auxiliary_loss.item():.6f}, "
-                f"LR: {optimizer.param_groups[0]['lr']:.2e}, "
-                f"Time: {epoch_time:.2f}s"
-            )
-            
-            # Save intermediate plot
             save_intermediate_plot(epoch, all_losses, primary_losses, auxiliary_losses, weighted_auxiliary_losses, learning_rates, model, batch)
 
     # Final evaluation

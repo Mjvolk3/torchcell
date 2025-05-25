@@ -396,7 +396,7 @@ class CellDataModule(L.LightningDataModule):
             persistent_workers=True if self.num_workers > 0 else False,
             pin_memory=self.pin_memory,
             follow_batch=self.follow_batch,
-            timeout=180,
+            timeout=10800,
             multiprocessing_context=(
                 "spawn" if self.num_workers > 0 else None
             ),  # Add this

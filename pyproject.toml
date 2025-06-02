@@ -39,6 +39,10 @@ Homepage = "https://github.com/Mjvolk3/Dendron-Template"
 torchcell = "torchcell.__main__:main"
 tcdb = "torchcell.database.tcdb:main"
 
+[tool.pyright]
+include = ["torchcell", "experiments"]
+venvPath = "/Users/michaelvolk/miniconda3/envs"
+venv = "torchcell"
 
 [tool.isort]
 profile = "black"
@@ -52,11 +56,11 @@ color = true
 skip_magic_trailing_comma = true # true in torchgeo
 
 [tool.mypy]
+files = ["torchcell/**/*.py", "tests/**/*.py"]
+
 python_version = "3.11"
 ignore_missing_imports = true
 show_error_codes = true
-files = ["torchcell/**/*.py", "tests/**/*.py"]
-
 # Strict
 warn_unused_configs = true
 disallow_any_generics = true

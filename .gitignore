@@ -136,3 +136,6 @@ dango.md
 dango.pdf
 dcell.md
 dcell.pdf
+
+# torchcell egg info
+torchcell.egg-info/*

@@ -46,7 +46,6 @@ from torchcell.losses.dango import (
     SCHEDULER_MAP,
 )
 from torchcell.datamodules import CellDataModule
-from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 from torchcell.timestamp import timestamp
 from torchcell.graph import build_gene_multigraph
@@ -213,7 +212,7 @@ def main(cfg: DictConfig) -> None:
 
         # Use DCellGraphProcessor when using GO hierarchy
         graph_processor = DCellGraphProcessor()
-        
+
         # Set gene_multigraph to None when using GO hierarchy
         gene_multigraph = None
 
@@ -255,7 +254,9 @@ def main(cfg: DictConfig) -> None:
     # Define follow_batch based on whether we're using DCellGraphProcessor
     follow_batch = ["perturbation_indices"]
     if isinstance(graph_processor, DCellGraphProcessor):
-        follow_batch.append("go_gene_strata_state")  # Include go_gene_strata_state for DCell
+        follow_batch.append(
+            "go_gene_strata_state"
+        )  # Include go_gene_strata_state for DCell
 
     data_module = CellDataModule(
         dataset=dataset,
@@ -290,9 +291,12 @@ def main(cfg: DictConfig) -> None:
     else:
         device = torch.device("cpu")
         # Force CPU if MPS would be selected
-        if wandb.config.trainer["accelerator"] == "gpu" and torch.backends.mps.is_available():
+        if (
+            wandb.config.trainer["accelerator"] == "gpu"
+            and torch.backends.mps.is_available()
+        ):
             print("MPS detected but not supported. Using CPU instead.")
-    
+
     log.info(f"Using device: {device}")
     devices = get_num_devices()
 
@@ -302,7 +306,7 @@ def main(cfg: DictConfig) -> None:
 
     # Always instantiate DCell based on the updated config
     print("Instantiating DCell")
-    
+
     # Get required parameters from config - use direct access for required params
     subsystem_output_min = wandb.config.model["subsystem_output_min"]
     subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
@@ -310,7 +314,7 @@ def main(cfg: DictConfig) -> None:
 
     # Explicitly move dataset cell_graph to the correct device before model initialization
     dataset.cell_graph = dataset.cell_graph.to(device)
-    
+
     # Create model and explicitly move to device
     model = DCell(
         hetero_data=dataset.cell_graph,
@@ -318,7 +322,7 @@ def main(cfg: DictConfig) -> None:
         subsystem_ratio=subsystem_output_max_mult,
         output_size=output_size,
     )
-    
+
     # Explicitly move model to device
     model = model.to(device)
 

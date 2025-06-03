@@ -51,7 +51,10 @@ def load_sample_data_batch(
     # genome.drop_chrmt()
     genome.drop_empty_go()
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
     )
     # selected_node_embeddings = ["codon_frequency"]
     selected_node_embeddings = ["empty"]

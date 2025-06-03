@@ -2,15 +2,20 @@
 id: tujklzpdde0fdscufqli94n
 title: '23'
 desc: ''
-updated: 1748899705075
+updated: 1748977297472
 created: 1748899404988
 ---
 ## 2025.06.02
 
-- [ ] 
+- [x] Clean up [[tasks.weekly.2025.21|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2025.21]]
+- [x] Simplify embedding config embedding
+- [x] `hetero_cell` all graphs with String 12, naive pred head → Had to update batch loading → [[2025.06.02 - Data Updated|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango#20250602---data-updated]]
+
+## 2025.06.03
+
 - [ ]
-- [ ] Clean up [[tasks.weekly.2025.21|dendron://torchcell/user.Mjvolk3.torchcell.tasks.weekly.2025.21]]
-- [ ] `TC` direct prediction
+
+
 
 ***
 

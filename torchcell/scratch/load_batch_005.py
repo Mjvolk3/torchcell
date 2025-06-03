@@ -37,17 +37,20 @@ from torchcell.graph import build_gene_multigraph
 def load_sample_data_batch(
     batch_size=2,
     num_workers=2,
-    config: Literal["dango_string9_1", "dcell", "dcell_2017-07-19"] = "dango_string9_1",
+    config: Literal[
+        "dango_string9_1", "hetero_cell_bipartite", "dcell", "dcell_2017-07-19"
+    ] = "dango_string9_1",
     is_dense: bool = False,
 ):
     """
-    Load a sample data batch for Dango or DCell models.
+    Load a sample data batch for Dango, HeteroCellBipartite, or DCell models.
 
     Args:
         batch_size: Batch size for dataloader
         num_workers: Number of workers for dataloader
         config: Model configuration:
                 "dango_string9_1" - Dango model with STRING v9.1 networks
+                "hetero_cell_bipartite" - HeteroCellBipartite model with physical/regulatory networks and metabolism
                 "dcell" - DCell model with unfiltered GO graph
                 "dcell_2017-07-19" - DCell model with GO graph filtered to 2017-07-19 date
         is_dense: Whether to use dense representation
@@ -114,6 +117,17 @@ def load_sample_data_batch(
             "use_metabolism": True,
             "use_gene_ontology": False,
             "graph_processor": Perturbation(),
+            "follow_batch": ["perturbation_indices"],
+            "date_filter": None,
+        },
+        "hetero_cell_bipartite": {
+            "graph_names": [
+                "physical",
+                "regulatory",
+            ],  # HeteroCellBipartite uses physical and regulatory networks
+            "use_metabolism": True,
+            "use_gene_ontology": False,
+            "graph_processor": SubgraphRepresentation(),
             "follow_batch": ["perturbation_indices"],
             "date_filter": None,
         },
@@ -263,6 +277,14 @@ if __name__ == "__main__":
         batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
     )
     dataset[0]
+
+    print("\n--- Testing HeteroCellBipartite Configuration ---")
+    dataset_hetero, batch_hetero, input_channels, max_num_nodes = (
+        load_sample_data_batch(
+            batch_size=2, num_workers=2, config="hetero_cell_bipartite", is_dense=False
+        )
+    )
+    dataset_hetero[0]
 
     print("\n--- Testing DCell Configuration (Date Filtered 2017-07-19) ---")
     dataset_filtered, batch_filtered, input_channels, max_num_nodes = (

@@ -4,10 +4,14 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_004-dmi-tmi_hetero_cell_bipartite_dango_gi_1e5
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_4e5
   tags: []
 
 cell_dataset:
+  # Can use different graph combinations:
+  # graphs: [physical, regulatory]  # Default physical and regulatory networks
+  # graphs: [string11_0_neighborhood, string11_0_fusion, string11_0_cooccurence, string11_0_coexpression, string11_0_experimental, string11_0_database]  # STRING v11.0 networks
+  # graphs: [string9_1_neighborhood, string9_1_fusion, string9_1_cooccurence, string9_1_coexpression, string9_1_experimental, string9_1_database]  # STRING v9.1 networks
   graphs: [physical, regulatory]
   node_embeddings:
     - learnable
@@ -19,18 +23,18 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e5 #2.5e4
+  perturbation_subset_size: 1000 #2.5e4
   batch_size: 32 #32
-  num_workers: 4
+  num_workers: 2
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 200 # 20 # FLAG
-  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 2 # 20 # FLAG
+  strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: gpu
-  devices: 2
+  accelerator: cpu
+  devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -43,7 +47,9 @@ model:
   reaction_num: 7122
   metabolite_num: 2806
   hidden_channels: 64
+  out_channels: 2
   num_layers: 2 # Number of hetero conv layers
+  num_attention_layers: 2 # Number of self-attention layers for dynamic embeddings
   # norm: "batch"
   norm: ${norms}
   activation: "relu"
@@ -55,6 +61,7 @@ model:
     bias: true
     add_self_loops: false
     share_weights: false
+    num_attention_layers: 2 # Number of self-attention layers in GeneInteractionAttention
   gpr_conv_config:
     # heads: 2
     heads: ${heads}
@@ -76,14 +83,13 @@ model:
     head_norm: ${norms}
 
 regression_task:
-  loss: logcosh
   is_weighted_phenotype_loss: true
   lambda_dist: 0.1
   lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-5
-    weight_decay: 1e-6
+    lr: 1e-3
+    weight_decay: 1e-9
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"

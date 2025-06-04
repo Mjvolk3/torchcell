@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_004-dmi-tmi_hetero_cell_bipartite_dango_gi_1e5
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test
   tags: []
 
 cell_dataset:
@@ -19,18 +19,18 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1e5 #2.5e4
-  batch_size: 32 #32
-  num_workers: 4
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 4 #32
+  num_workers: 2
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 200 # 20 # FLAG
-  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 3 # 20 # FLAG
+  strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: gpu
-  devices: 2
+  accelerator: cpu
+  devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna

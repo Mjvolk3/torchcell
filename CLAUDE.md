@@ -31,3 +31,7 @@ The common patters is `(osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp}.png"))`
 ## Running Python Files
 
 Don't recommend to run python files. After editing files I will either run them from the terminal or debugger.
+
+## Code Execution
+
+- I will run all python code

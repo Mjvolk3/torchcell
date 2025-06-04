@@ -129,22 +129,45 @@ class RegressionTask(L.LightningModule):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
 
-        # Use transformed values for loss computation
-        fitness_vals = batch["gene"].fitness.view(-1, 1)
-        gene_interaction_vals = batch["gene"].gene_interaction.view(-1, 1)
+        # Get phenotype values from the batch (COO format)
+        phenotype_values = batch["gene"].phenotype_values
+        
+        # Handle phenotype shape based on the model output
+        # The model outputs 2 values: fitness and gene_interaction
+        if phenotype_values.dim() == 1:
+            # If we have a 1D tensor, we need to separate fitness and gene_interaction
+            # For now, assume the data contains both values interleaved or just gene_interaction
+            if predictions.size(1) == 2:
+                # If predictions has 2 outputs but phenotype is 1D, 
+                # we might need to reshape or extract the correct values
+                # This depends on how the data is structured
+                fitness_vals = phenotype_values.view(-1, 1)
+                gene_interaction_vals = phenotype_values.view(-1, 1)
+            else:
+                # Single value case
+                fitness_vals = phenotype_values.view(-1, 1)
+                gene_interaction_vals = phenotype_values.view(-1, 1)
+        else:
+            # Multi-dimensional case - extract fitness and gene_interaction
+            fitness_vals = phenotype_values[:, 0].view(-1, 1)
+            gene_interaction_vals = phenotype_values[:, 1].view(-1, 1) if phenotype_values.size(1) > 1 else phenotype_values[:, 0].view(-1, 1)
+        
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
 
         # Get original values for metrics and visualization
-        fitness_orig = (
-            batch["gene"].fitness_original.view(-1, 1)
-            if "fitness_original" in batch["gene"]
-            else fitness_vals
+        phenotype_orig = (
+            batch["gene"].phenotype_values_original
+            if hasattr(batch["gene"], "phenotype_values_original")
+            else phenotype_values
         )
-        gene_interaction_orig = (
-            batch["gene"].gene_interaction_original.view(-1, 1)
-            if "gene_interaction_original" in batch["gene"]
-            else gene_interaction_vals
-        )
+        
+        if phenotype_orig.dim() == 1:
+            fitness_orig = phenotype_orig.view(-1, 1)
+            gene_interaction_orig = phenotype_orig.view(-1, 1)
+        else:
+            fitness_orig = phenotype_orig[:, 0].view(-1, 1)
+            gene_interaction_orig = phenotype_orig[:, 1].view(-1, 1) if phenotype_orig.size(1) > 1 else phenotype_orig[:, 0].view(-1, 1)
+        
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
         loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
@@ -304,7 +327,7 @@ class RegressionTask(L.LightningModule):
         self.log(
             "learning_rate",
             self.optimizers().param_groups[0]["lr"],
-            batch_size=batch["gene"].x.size(0),
+            batch_size=batch["gene"].phenotype_values.size(0),
             sync_dist=True,
         )
         return loss

@@ -28,7 +28,6 @@ source $HOME/miniconda3/bin/activate
 conda activate torchcell
 python /home/a-m/mjvolk3/scratch/torchcell/experiments/005-kuzmin2018-tmi/scripts/dango.py --config-name dango_kuzmin2018_tmi_LinearUntilFlipped
 "
-
-# dango_kuzmin2018_tmi_PreThenPost
-# dango_kuzmin2018_tmi_LinearUntilUniform
-# dango_kuzmin2018_tmi_LinearUntilFlipped
+# dango_kuzmin2018_tmi_PreThenPost [x]
+# dango_kuzmin2018_tmi_LinearUntilUniform [x]
+# dango_kuzmin2018_tmi_LinearUntilFlipped [x]

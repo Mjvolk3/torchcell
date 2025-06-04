@@ -628,21 +628,8 @@ def main(cfg: DictConfig) -> None:
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from sortedcontainers import SortedDict
     from torchcell.graph.graph import GeneMultiGraph, GeneGraph
-
-    class LogCoshLoss(nn.Module):
-        def __init__(self, reduction: str = "mean") -> None:
-            super().__init__()
-            if reduction not in ("none", "mean", "sum"):
-                raise ValueError(f"Invalid reduction mode: {reduction}")
-            self.reduction = reduction
-
-        def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-            loss = torch.log(torch.cosh(input - target))
-            if self.reduction == "mean":
-                return loss.mean()
-            elif self.reduction == "sum":
-                return loss.sum()
-            return loss
+    from torchcell.losses.logcosh import LogCoshLoss
+    from torchcell.losses.isomorphic_cell_loss import ICLoss
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -689,8 +676,27 @@ def main(cfg: DictConfig) -> None:
     print(model)
     print("Parameter count:", sum(p.numel() for p in model.parameters()))
 
-    # Simple MSE loss for gene interaction prediction
-    criterion = LogCoshLoss(reduction="mean")
+    # Configure loss function based on config
+    loss_type = cfg.regression_task.get("loss", "logcosh")
+    if loss_type == "logcosh":
+        criterion = LogCoshLoss(reduction="mean")
+        print("Using LogCosh loss")
+    elif loss_type == "icloss":
+        # For ICLoss, we need phenotype weights if weighted loss is enabled
+        if cfg.regression_task.get("is_weighted_phenotype_loss", False):
+            # For gene interaction only dataset, we have just one phenotype
+            weights = torch.ones(1).to(device)
+        else:
+            weights = None
+        
+        criterion = ICLoss(
+            lambda_dist=cfg.regression_task.get("lambda_dist", 0.1),
+            lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
+            weights=weights
+        )
+        print(f"Using ICLoss with lambda_dist={cfg.regression_task.lambda_dist}, lambda_supcr={cfg.regression_task.lambda_supcr}")
+    else:
+        raise ValueError(f"Unknown loss type: {loss_type}")
 
     # Optimizer
     optimizer = torch.optim.AdamW(
@@ -877,7 +883,36 @@ def main(cfg: DictConfig) -> None:
 
             # Forward pass
             predictions, representations = model(cell_graph, batch)
-            loss = criterion(predictions.squeeze(), y)
+            
+            # Handle different loss functions
+            if isinstance(criterion, LogCoshLoss):
+                loss = criterion(predictions.squeeze(), y)
+            elif isinstance(criterion, ICLoss):
+                # ICLoss expects z_p as third argument
+                z_p = representations.get("z_p")
+                if z_p is None:
+                    raise ValueError("ICLoss requires z_p from model representations")
+                
+                # ICLoss expects inputs with shape [batch_size, num_phenotypes]
+                # For gene interaction only, we need to add a dummy dimension
+                pred_reshaped = predictions.squeeze()
+                if pred_reshaped.dim() == 0:
+                    pred_reshaped = pred_reshaped.unsqueeze(0)
+                pred_reshaped = pred_reshaped.unsqueeze(1)  # [batch_size, 1]
+                
+                y_reshaped = y
+                if y_reshaped.dim() == 0:
+                    y_reshaped = y_reshaped.unsqueeze(0)
+                y_reshaped = y_reshaped.unsqueeze(1)  # [batch_size, 1]
+                
+                loss_output = criterion(pred_reshaped, y_reshaped, z_p)
+                # ICLoss returns tuple (loss, loss_dict)
+                loss = loss_output[0]
+                loss_dict = loss_output[1]
+                # You can log additional loss components if needed
+                print(f"  ICLoss components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}")
+            else:
+                loss = criterion(predictions.squeeze(), y)
 
             # Calculate metrics
             with torch.no_grad():

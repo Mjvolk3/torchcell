@@ -1,72 +1,26 @@
-from math import log
+# torchcell/models/hetero_cell_bipartite_dango_gi
+# [[torchcell.models.hetero_cell_bipartite_dango_gi]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/hetero_cell_bipartite_dango_gi
+# Test file: tests/torchcell/models/test_hetero_cell_bipartite_dango_gi.py
+
+
 import math
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from omegaconf import DictConfig, OmegaConf
-import os.path as osp
 import os
+import os.path as osp
+import time
+from typing import Any, Dict, Optional, Tuple
+
 import hydra
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv
-from torch_geometric.nn import (
-    HeteroConv,
-    GCNConv,
-    GATv2Conv,
-    TransformerConv,
-    GINConv,
-    BatchNorm,
-    LayerNorm,
-    GraphNorm,
-    InstanceNorm,
-    PairNorm,
-    MeanSubtractionNorm,
-    global_add_pool,
-    global_mean_pool,
-    global_max_pool,
-    HypergraphConv,
-)
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from typing import Optional, Literal
-from torch_geometric.typing import EdgeType
-from torchcell.models.act import act_register
-from collections import defaultdict
+from omegaconf import DictConfig
+from torch_geometric.data import Batch, HeteroData
+from torch_geometric.nn import BatchNorm, GATv2Conv, HeteroConv, LayerNorm
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
-from typing import Any, Union, Optional
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-import torch
-from torch import Tensor
-import torch.nn as nn
-from torch_geometric.typing import EdgeType
-from torch_geometric.utils import sort_edge_index
-from torch_geometric.data import HeteroData
-from torch_scatter import scatter, scatter_softmax
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv
-from torch_geometric.data import HeteroData
-from torch_geometric.utils import sort_edge_index
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
+from torchcell.graph.graph import GeneMultiGraph
 from torchcell.models.act import act_register
-from typing import Optional, Dict, Any, Tuple
-from torch_geometric.data import Batch
-import torch
-import torch.nn as nn
-from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
-from torch_geometric.data import HeteroData, Batch
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from typing import Optional, Dict, Any, Tuple
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
-from torch_geometric.data import HeteroData, Batch
-from typing import Optional, Dict, Any, Tuple
 
 
 class AttentionalGraphAggregation(nn.Module):
@@ -307,6 +261,7 @@ class GeneInteractionDango(nn.Module):
         gene_num: int,
         hidden_channels: int,
         num_layers: int,
+        gene_multigraph: GeneMultiGraph,
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
@@ -314,6 +269,10 @@ class GeneInteractionDango(nn.Module):
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
+        self.gene_multigraph = gene_multigraph
+
+        # Extract graph names from the multigraph
+        self.graph_names = list(gene_multigraph.keys())
 
         # Learnable gene embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
@@ -339,23 +298,16 @@ class GeneInteractionDango(nn.Module):
         for _ in range(num_layers):
             conv_dict = {}
 
-            # Gene-gene physical interactions
-            conv_dict[("gene", "physical_interaction", "gene")] = GATv2Conv(
-                hidden_channels,
-                hidden_channels // gene_encoder_config.get("heads", 1),
-                heads=gene_encoder_config.get("heads", 1),
-                concat=gene_encoder_config.get("concat", True),
-                add_self_loops=gene_encoder_config.get("add_self_loops", False),
-            )
-
-            # Gene-gene regulatory interactions
-            conv_dict[("gene", "regulatory_interaction", "gene")] = GATv2Conv(
-                hidden_channels,
-                hidden_channels // gene_encoder_config.get("heads", 1),
-                heads=gene_encoder_config.get("heads", 1),
-                concat=gene_encoder_config.get("concat", True),
-                add_self_loops=gene_encoder_config.get("add_self_loops", False),
-            )
+            # Create a GATv2Conv for each graph in the multigraph
+            for graph_name in self.graph_names:
+                edge_type = ("gene", graph_name, "gene")
+                conv_dict[edge_type] = GATv2Conv(
+                    hidden_channels,
+                    hidden_channels // gene_encoder_config.get("heads", 1),
+                    heads=gene_encoder_config.get("heads", 1),
+                    concat=gene_encoder_config.get("concat", True),
+                    add_self_loops=gene_encoder_config.get("add_self_loops", False),
+                )
 
             # Wrap each conv with attention wrapper
             for key, conv in conv_dict.items():
@@ -468,26 +420,13 @@ class GeneInteractionDango(nn.Module):
 
         x_dict = {"gene": x_gene}
 
-        # Process edge indices
+        # Process edge indices dynamically based on graph names
         edge_index_dict = {}
 
-        # Gene-gene physical interactions
-        if ("gene", "physical_interaction", "gene") in data.edge_types:
-            gene_phys_edge_index = data[
-                ("gene", "physical_interaction", "gene")
-            ].edge_index.to(device)
-            edge_index_dict[("gene", "physical_interaction", "gene")] = (
-                gene_phys_edge_index
-            )
-
-        # Gene-gene regulatory interactions
-        if ("gene", "regulatory_interaction", "gene") in data.edge_types:
-            gene_reg_edge_index = data[
-                ("gene", "regulatory_interaction", "gene")
-            ].edge_index.to(device)
-            edge_index_dict[("gene", "regulatory_interaction", "gene")] = (
-                gene_reg_edge_index
-            )
+        for graph_name in self.graph_names:
+            edge_type = ("gene", graph_name, "gene")
+            edge_index = data[edge_type].edge_index.to(device)
+            edge_index_dict[edge_type] = edge_index
 
         # Apply convolution layers
         for conv in self.convs:
@@ -535,7 +474,7 @@ class GeneInteractionDango(nn.Module):
             )
 
         # Get embeddings of perturbed genes from wildtype
-        pert_indices = batch["gene"].cell_graph_idx_pert
+        pert_indices = batch["gene"].perturbation_indices
         pert_gene_embs = z_w[pert_indices]
 
         # Check for NaNs in perturbed gene embeddings
@@ -554,19 +493,19 @@ class GeneInteractionDango(nn.Module):
             raise RuntimeError("NaN detected in perturbation difference (z_p_global)")
 
         # Determine batch assignment for perturbed genes
-        if hasattr(batch["gene"], "x_pert_ptr"):
-            # Create batch assignment using x_pert_ptr
-            ptr = batch["gene"].x_pert_ptr
+        if hasattr(batch["gene"], "perturbation_indices_ptr"):
+            # Create batch assignment using perturbation_indices_ptr
+            ptr = batch["gene"].perturbation_indices_ptr
             batch_assign = torch.zeros(
                 pert_indices.size(0), dtype=torch.long, device=z_w.device
             )
             for i in range(len(ptr) - 1):
                 batch_assign[ptr[i] : ptr[i + 1]] = i
         else:
-            # Alternative if x_pert_ptr is not available
+            # Alternative if perturbation_indices_ptr is not available
             batch_assign = (
-                batch["gene"].x_pert_batch
-                if hasattr(batch["gene"], "x_pert_batch")
+                batch["gene"].perturbation_indices_batch
+                if hasattr(batch["gene"], "perturbation_indices_batch")
                 else None
             )
 
@@ -600,6 +539,12 @@ class GeneInteractionDango(nn.Module):
                 raise RuntimeError(
                     "NaN detected after dimension adjustment of local interaction"
                 )
+
+        # Ensure both tensors have the same number of dimensions before concatenation
+        if global_interaction.dim() == 1:
+            global_interaction = global_interaction.unsqueeze(1)
+        if local_interaction.dim() == 1:
+            local_interaction = local_interaction.unsqueeze(1)
 
         # Stack the predictions
         pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
@@ -668,7 +613,7 @@ class GeneInteractionDango(nn.Module):
 
 @hydra.main(
     version_base=None,
-    config_path=osp.join(os.getcwd(), "experiments/004-dmi-tmi/conf"),
+    config_path=osp.join(os.getcwd(), "experiments/005-kuzmin2018-tmi/conf"),
     config_name="hetero_cell_bipartite_dango_gi",
 )
 def main(cfg: DictConfig) -> None:
@@ -678,7 +623,11 @@ def main(cfg: DictConfig) -> None:
     import torch.nn as nn
     from torchcell.timestamp import timestamp
     import numpy as np
-    from torchcell.scratch.load_batch_004 import load_sample_data_batch
+    from torchcell.scratch.load_batch_005 import load_sample_data_batch
+    from torchcell.graph.graph import build_gene_multigraph, SCerevisiaeGraph
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from sortedcontainers import SortedDict
+    from torchcell.graph.graph import GeneMultiGraph, GeneGraph
 
     class LogCoshLoss(nn.Module):
         def __init__(self, reduction: str = "mean") -> None:
@@ -708,16 +657,28 @@ def main(cfg: DictConfig) -> None:
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
         batch_size=cfg.data_module.batch_size,
         num_workers=cfg.data_module.num_workers,
-        metabolism_graph="metabolism_bipartite",
+        config="hetero_cell_bipartite",
+        is_dense=False,
     )
     cell_graph = dataset.cell_graph.to(device)
     batch = batch.to(device)
+
+    # Build gene multigraph using the proper function
+    # Initialize genome and graph for building the multigraph
+    genome = SCerevisiaeGenome()
+    sc_graph = SCerevisiaeGraph(genome=genome)
+
+    # Build the multigraph with graph names from config
+    gene_multigraph = build_gene_multigraph(
+        graph=sc_graph, graph_names=cfg.cell_dataset.graphs
+    )
 
     # Initialize the gene interaction model
     model = GeneInteractionDango(
         gene_num=cfg.model.gene_num,
         hidden_channels=cfg.model.hidden_channels,
         num_layers=cfg.model.num_layers,
+        gene_multigraph=gene_multigraph,
         dropout=cfg.model.dropout,
         norm=cfg.model.norm,
         activation=cfg.model.activation,
@@ -738,52 +699,250 @@ def main(cfg: DictConfig) -> None:
         weight_decay=cfg.regression_task.optimizer.weight_decay,
     )
 
-    # Training target - only gene interaction
-    y = batch["gene"].gene_interaction
+    # Training target - gene interaction in COO format
+    # The phenotype_values contains the gene interaction scores
+    y = batch["gene"].phenotype_values
 
     # Setup directory for plots
-    os.makedirs(ASSET_IMAGES_DIR, exist_ok=True)
+    plot_dir = osp.join(
+        ASSET_IMAGES_DIR, f"hetero_cell_bipartite_dango_gi_training_{timestamp()}"
+    )
+    os.makedirs(plot_dir, exist_ok=True)
+
+    def save_intermediate_plot(
+        epoch,
+        losses,
+        correlations,
+        mses,
+        maes,
+        learning_rates,
+        gate_weights_history,
+        model,
+        cell_graph,
+        batch,
+        y,
+    ):
+        """Save intermediate training plot every print interval."""
+        plt.figure(figsize=(15, 10))
+
+        # Loss curve
+        plt.subplot(3, 3, 1)
+        plt.plot(range(1, epoch + 2), losses, "b-", label="LogCosh Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss Value")
+        plt.title("Training Loss Curve")
+        plt.grid(True)
+        plt.legend()
+        plt.yscale("log")
+
+        # Correlation evolution
+        plt.subplot(3, 3, 2)
+        plt.plot(range(1, epoch + 2), correlations, "g-", label="Correlation")
+        plt.xlabel("Epoch")
+        plt.ylabel("Correlation (r)")
+        plt.title("Correlation Evolution")
+        plt.grid(True)
+        plt.legend()
+
+        # Get current predictions for scatter plot
+        model.eval()
+        with torch.no_grad():
+            current_predictions, current_representations = model(cell_graph, batch)
+            true_np = y.cpu().numpy()
+            pred_np = current_predictions.squeeze().cpu().numpy()
+
+            # Current correlation
+            valid_mask = ~np.isnan(true_np)
+            if np.sum(valid_mask) > 0:
+                current_corr = np.corrcoef(pred_np[valid_mask], true_np[valid_mask])[
+                    0, 1
+                ]
+            else:
+                current_corr = 0.0
+        model.train()
+
+        # Correlation scatter plot
+        plt.subplot(3, 3, 3)
+        plt.scatter(true_np[valid_mask], pred_np[valid_mask], alpha=0.7)
+        min_val = min(true_np[valid_mask].min(), pred_np[valid_mask].min())
+        max_val = max(true_np[valid_mask].max(), pred_np[valid_mask].max())
+        plt.plot(
+            [min_val, max_val], [min_val, max_val], "r--", label="Perfect correlation"
+        )
+        plt.xlabel("True Gene Interaction")
+        plt.ylabel("Predicted Gene Interaction")
+        plt.title(f"Predictions vs Truth (r={current_corr:.4f})")
+        plt.grid(True)
+        plt.legend()
+
+        # MSE and MAE evolution
+        plt.subplot(3, 3, 4)
+        plt.plot(range(1, epoch + 2), mses, "r-", label="MSE")
+        plt.xlabel("Epoch")
+        plt.ylabel("MSE")
+        plt.title("Mean Squared Error")
+        plt.grid(True)
+        plt.legend()
+        plt.yscale("log")
+
+        plt.subplot(3, 3, 5)
+        plt.plot(range(1, epoch + 2), maes, "orange", label="MAE")
+        plt.xlabel("Epoch")
+        plt.ylabel("MAE")
+        plt.title("Mean Absolute Error")
+        plt.grid(True)
+        plt.legend()
+        plt.yscale("log")
+
+        # Error distribution
+        plt.subplot(3, 3, 6)
+        errors = pred_np[valid_mask] - true_np[valid_mask]
+        plt.hist(errors, bins=20, alpha=0.7, edgecolor="black")
+        plt.xlabel("Prediction Error")
+        plt.ylabel("Frequency")
+        plt.title(f"Error Distribution (std={np.std(errors):.4f})")
+        plt.grid(True)
+
+        # Learning rate evolution
+        plt.subplot(3, 3, 7)
+        plt.plot(range(1, epoch + 2), learning_rates, "purple")
+        plt.xlabel("Epoch")
+        plt.ylabel("Learning Rate")
+        plt.title("Learning Rate Schedule")
+        plt.grid(True)
+        plt.yscale("log")
+
+        # Gate weights evolution (local vs global)
+        if gate_weights_history:
+            plt.subplot(3, 3, 8)
+            global_weights = [gw[0] for gw in gate_weights_history]
+            local_weights = [gw[1] for gw in gate_weights_history]
+            plt.plot(
+                range(1, len(global_weights) + 1),
+                global_weights,
+                "b-",
+                label="Global weight",
+            )
+            plt.plot(
+                range(1, len(local_weights) + 1),
+                local_weights,
+                "r-",
+                label="Local weight",
+            )
+            plt.xlabel("Epoch")
+            plt.ylabel("Gate Weight")
+            plt.title("Gate Weights Evolution")
+            plt.grid(True)
+            plt.legend()
+            plt.ylim(0, 1)
+
+        # Embeddings analysis
+        plt.subplot(3, 3, 9)
+        if "z_w" in current_representations and "z_i" in current_representations:
+            z_w_norm = current_representations["z_w"].norm(dim=1).mean().item()
+            z_i_norm = current_representations["z_i"].norm(dim=1).mean().item()
+            z_p_norm = current_representations["z_p"].norm(dim=1).mean().item()
+
+            categories = ["Wildtype", "Perturbed", "Difference"]
+            norms = [z_w_norm, z_i_norm, z_p_norm]
+            plt.bar(categories, norms)
+            plt.ylabel("Mean L2 Norm")
+            plt.title("Embedding Norms")
+            plt.grid(True, axis="y")
+
+        plt.tight_layout()
+        plt.savefig(
+            osp.join(plot_dir, f"training_epoch_{epoch+1:04d}.png"),
+            dpi=150,
+            bbox_inches="tight",
+        )
+        plt.close()
 
     # Training loop
     model.train()
     print("\nStarting training:")
     losses = []
+    correlations = []
+    mses = []
+    maes = []
+    learning_rates = []
+    gate_weights_history = []
     num_epochs = cfg.trainer.max_epochs
+    plot_interval = cfg.regression_task.plot_every_n_epochs
 
     try:
         for epoch in range(num_epochs):
+            epoch_start_time = time.time()
             optimizer.zero_grad()
 
             # Forward pass
             predictions, representations = model(cell_graph, batch)
             loss = criterion(predictions.squeeze(), y)
 
-            # Logging every 10 epochs
-            if epoch % 10 == 0 or epoch == num_epochs - 1:
-                print(f"\nEpoch {epoch + 1}/{num_epochs}")
-                print(f"Loss: {loss.item():.4f}")
+            # Calculate metrics
+            with torch.no_grad():
+                pred_np = predictions.squeeze().cpu().numpy()
+                target_np = y.cpu().numpy()
+                valid_mask = ~np.isnan(target_np)
 
-                # Calculate correlation for visualization
-                with torch.no_grad():
-                    pred_np = predictions.squeeze().cpu().numpy()
-                    target_np = y.cpu().numpy()
-                    valid_mask = ~np.isnan(target_np)
-                    if np.sum(valid_mask) > 0:
-                        correlation = np.corrcoef(
-                            pred_np[valid_mask], target_np[valid_mask]
-                        )[0, 1]
-                        print(f"Correlation: {correlation:.4f}")
+                if np.sum(valid_mask) > 0:
+                    correlation = np.corrcoef(
+                        pred_np[valid_mask], target_np[valid_mask]
+                    )[0, 1]
+                    mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
+                    mae = np.mean(np.abs(pred_np[valid_mask] - target_np[valid_mask]))
+                else:
+                    correlation = 0.0
+                    mse = float("inf")
+                    mae = float("inf")
 
-                # Report GPU usage
-                if device.type == "cuda":
-                    print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                # Extract gate weights
+                if "gate_weights" in representations:
+                    gate_weights = (
+                        representations["gate_weights"].mean(dim=0).cpu().numpy()
                     )
-                    print(
-                        f"GPU memory reserved: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
-                    )
+                    gate_weights_history.append(gate_weights)
 
             losses.append(loss.item())
+            correlations.append(correlation)
+            mses.append(mse)
+            maes.append(mae)
+            learning_rates.append(optimizer.param_groups[0]["lr"])
+
+            # Calculate epoch time
+            epoch_time = time.time() - epoch_start_time
+
+            # Get GPU memory stats if using CUDA
+            gpu_memory_str = ""
+            if device.type == "cuda":
+                allocated_gb = torch.cuda.memory_allocated(device) / 1024**3
+                reserved_gb = torch.cuda.memory_reserved(device) / 1024**3
+                gpu_memory_str = f", GPU: {allocated_gb:.2f}/{reserved_gb:.2f}GB"
+
+            # Logging every plot_interval epochs
+            if epoch % plot_interval == 0 or epoch == num_epochs - 1:
+                print(f"\nEpoch {epoch + 1}/{num_epochs}")
+                print(f"Loss: {loss.item():.6f}")
+                print(f"Correlation: {correlation:.4f}")
+                print(f"MSE: {mse:.6f}, MAE: {mae:.6f}")
+                print(f"LR: {optimizer.param_groups[0]['lr']:.2e}")
+                print(f"Time: {epoch_time:.2f}s{gpu_memory_str}")
+
+                # Save intermediate plot
+                save_intermediate_plot(
+                    epoch,
+                    losses,
+                    correlations,
+                    mses,
+                    maes,
+                    learning_rates,
+                    gate_weights_history,
+                    model,
+                    cell_graph,
+                    batch,
+                    y,
+                )
+
             loss.backward()
 
             # Optional gradient clipping
@@ -804,23 +963,206 @@ def main(cfg: DictConfig) -> None:
             print("4. Using mixed precision training")
         raise
 
-    # Final loss plot
-    plt.figure(figsize=(12, 6))
-    plt.plot(range(1, len(losses) + 1), losses, "b-", label="MSE Training Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss (log scale)")
-    plt.title(
-        f"Gene Interaction Training Loss Over Time: "
-        f"wd={cfg.regression_task.optimizer.weight_decay}"
-    )
-    plt.grid(True)
-    plt.yscale("log")
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(
-        osp.join(ASSET_IMAGES_DIR, f"gene_interaction_training_loss_{timestamp()}.png")
-    )
-    plt.close()
+    # Final evaluation and comprehensive plot
+    print("\n\nFinal evaluation:")
+    model.eval()
+    with torch.no_grad():
+        final_predictions, final_representations = model(cell_graph, batch)
+
+        # Final metrics
+        pred_np = final_predictions.squeeze().cpu().numpy()
+        target_np = y.cpu().numpy()
+        valid_mask = ~np.isnan(target_np)
+
+        if np.sum(valid_mask) > 0:
+            final_correlation = np.corrcoef(pred_np[valid_mask], target_np[valid_mask])[
+                0, 1
+            ]
+            final_mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
+            final_mae = np.mean(np.abs(pred_np[valid_mask] - target_np[valid_mask]))
+
+            print(f"Final Correlation: {final_correlation:.6f}")
+            print(f"Final MSE: {final_mse:.6f}")
+            print(f"Final MAE: {final_mae:.6f}")
+            print(f"Final Loss: {losses[-1]:.6f}")
+
+            # Create comprehensive final plot
+            plt.figure(figsize=(20, 12))
+
+            # Loss curve
+            plt.subplot(3, 4, 1)
+            plt.plot(range(1, len(losses) + 1), losses, "b-", linewidth=2)
+            plt.xlabel("Epoch")
+            plt.ylabel("LogCosh Loss")
+            plt.title("Training Loss Evolution")
+            plt.grid(True)
+            plt.yscale("log")
+
+            # Correlation evolution
+            plt.subplot(3, 4, 2)
+            plt.plot(range(1, len(correlations) + 1), correlations, "g-", linewidth=2)
+            plt.xlabel("Epoch")
+            plt.ylabel("Correlation (r)")
+            plt.title(f"Correlation Evolution (Final: {final_correlation:.4f})")
+            plt.grid(True)
+            plt.ylim(-1, 1)
+
+            # Final predictions scatter
+            plt.subplot(3, 4, 3)
+            plt.scatter(target_np[valid_mask], pred_np[valid_mask], alpha=0.6)
+            min_val = min(target_np[valid_mask].min(), pred_np[valid_mask].min())
+            max_val = max(target_np[valid_mask].max(), pred_np[valid_mask].max())
+            plt.plot([min_val, max_val], [min_val, max_val], "r--", linewidth=2)
+            plt.xlabel("True Gene Interaction")
+            plt.ylabel("Predicted Gene Interaction")
+            plt.title(f"Final Predictions (r={final_correlation:.4f})")
+            plt.grid(True)
+
+            # Error histogram
+            plt.subplot(3, 4, 4)
+            errors = pred_np[valid_mask] - target_np[valid_mask]
+            plt.hist(errors, bins=30, alpha=0.7, edgecolor="black")
+            plt.axvline(x=0, color="r", linestyle="--", linewidth=2)
+            plt.xlabel("Prediction Error")
+            plt.ylabel("Frequency")
+            plt.title(
+                f"Error Distribution (μ={np.mean(errors):.4f}, σ={np.std(errors):.4f})"
+            )
+            plt.grid(True)
+
+            # MSE evolution
+            plt.subplot(3, 4, 5)
+            plt.plot(range(1, len(mses) + 1), mses, "r-", linewidth=2)
+            plt.xlabel("Epoch")
+            plt.ylabel("MSE")
+            plt.title(f"MSE Evolution (Final: {final_mse:.6f})")
+            plt.grid(True)
+            plt.yscale("log")
+
+            # MAE evolution
+            plt.subplot(3, 4, 6)
+            plt.plot(range(1, len(maes) + 1), maes, "orange", linewidth=2)
+            plt.xlabel("Epoch")
+            plt.ylabel("MAE")
+            plt.title(f"MAE Evolution (Final: {final_mae:.6f})")
+            plt.grid(True)
+            plt.yscale("log")
+
+            # Gate weights final distribution
+            plt.subplot(3, 4, 7)
+            if gate_weights_history:
+                final_gate_weights = gate_weights_history[-1]
+                plt.bar(["Global", "Local"], final_gate_weights, color=["blue", "red"])
+                plt.ylabel("Gate Weight")
+                plt.title("Final Gate Weights")
+                plt.ylim(0, 1)
+                plt.grid(True, axis="y")
+
+            # Gate weights evolution
+            plt.subplot(3, 4, 8)
+            if gate_weights_history:
+                global_weights = [gw[0] for gw in gate_weights_history]
+                local_weights = [gw[1] for gw in gate_weights_history]
+                plt.plot(
+                    range(1, len(global_weights) + 1),
+                    global_weights,
+                    "b-",
+                    label="Global",
+                    linewidth=2,
+                )
+                plt.plot(
+                    range(1, len(local_weights) + 1),
+                    local_weights,
+                    "r-",
+                    label="Local",
+                    linewidth=2,
+                )
+                plt.xlabel("Epoch")
+                plt.ylabel("Gate Weight")
+                plt.title("Gate Weights Evolution")
+                plt.grid(True)
+                plt.legend()
+                plt.ylim(0, 1)
+
+            # Learning rate schedule
+            plt.subplot(3, 4, 9)
+            plt.plot(
+                range(1, len(learning_rates) + 1), learning_rates, "purple", linewidth=2
+            )
+            plt.xlabel("Epoch")
+            plt.ylabel("Learning Rate")
+            plt.title("Learning Rate Schedule")
+            plt.grid(True)
+            plt.yscale("log")
+
+            # Embeddings analysis
+            plt.subplot(3, 4, 10)
+            if "z_w" in final_representations and "z_i" in final_representations:
+                z_w_norm = final_representations["z_w"].norm(dim=1).mean().item()
+                z_i_norm = final_representations["z_i"].norm(dim=1).mean().item()
+                z_p_norm = final_representations["z_p"].norm(dim=1).mean().item()
+
+                categories = [
+                    "Wildtype\n(z_w)",
+                    "Perturbed\n(z_i)",
+                    "Difference\n(z_p)",
+                ]
+                norms = [z_w_norm, z_i_norm, z_p_norm]
+                bars = plt.bar(categories, norms, color=["green", "orange", "red"])
+                plt.ylabel("Mean L2 Norm")
+                plt.title("Final Embedding Norms")
+                plt.grid(True, axis="y")
+
+                # Add value labels on bars
+                for bar, norm in zip(bars, norms):
+                    plt.text(
+                        bar.get_x() + bar.get_width() / 2,
+                        bar.get_height() + 0.01,
+                        f"{norm:.3f}",
+                        ha="center",
+                        va="bottom",
+                    )
+
+            # Prediction statistics
+            plt.subplot(3, 4, 11)
+            plt.boxplot(
+                [target_np[valid_mask], pred_np[valid_mask]],
+                labels=["True", "Predicted"],
+            )
+            plt.ylabel("Gene Interaction Score")
+            plt.title("Value Distribution Comparison")
+            plt.grid(True, axis="y")
+
+            # Model parameters summary
+            plt.subplot(3, 4, 12)
+            param_counts = model.num_parameters
+            categories = list(param_counts.keys())
+            counts = list(param_counts.values())
+            plt.bar(categories, counts)
+            plt.xticks(rotation=45, ha="right")
+            plt.ylabel("Number of Parameters")
+            plt.title(f"Model Parameters (Total: {param_counts['total']:,})")
+            plt.grid(True, axis="y")
+            plt.tight_layout()
+
+            # Add overall title
+            plt.suptitle(
+                f"HeteroCellBipartiteDangoGI Training Results - {num_epochs} Epochs",
+                fontsize=16,
+                y=0.998,
+            )
+
+            plt.tight_layout()
+            plt.savefig(
+                osp.join(plot_dir, f"final_results_{timestamp()}.png"),
+                dpi=300,
+                bbox_inches="tight",
+            )
+            plt.close()
+
+            print(f"\nResults saved to: {plot_dir}")
+            print(f"- Training plots: training_epoch_*.png")
+            print(f"- Final results: final_results_{timestamp()}.png")
 
     # Save the model
     if device.type == "cuda":

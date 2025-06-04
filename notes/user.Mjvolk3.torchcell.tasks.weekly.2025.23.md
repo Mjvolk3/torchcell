@@ -2,7 +2,7 @@
 id: tujklzpdde0fdscufqli94n
 title: '23'
 desc: ''
-updated: 1748977297472
+updated: 1748996659839
 created: 1748899404988
 ---
 ## 2025.06.02
@@ -13,9 +13,14 @@ created: 1748899404988
 
 ## 2025.06.03
 
+- [x] `hetero_cell_bipartite_dango_gi`  → [[2025.06.03 - Data Updated|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_gi#20250603---data-updated]] → model working
+- [x] [[2025.06.03 - Detailed View of Data For Indexing Based on Phenotype Type|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_gi#20250603---detailed-view-of-data-for-indexing-based-on-phenotype-type]]
+- [ ] Launch model with all graphs on igb biocluster.
+- [ ] Query 006 - All trigenic interaction data.
 - [ ]
+- [ ] Add
 
-
+- [ ] `hetero_cell_bipartite_dango` - fitness pred
 
 ***
 

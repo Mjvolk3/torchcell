@@ -1300,7 +1300,7 @@ SCEREVISIAE_GENE_GRAPH_VALID_NAMES = list(SCEREVISIAE_GENE_GRAPH_MAP.keys())
 
 def build_gene_multigraph(
     graph: "SCerevisiaeGraph", graph_names: Optional[list[str]] = None
-) -> Optional[GeneMultiGraph]:
+) -> GeneMultiGraph:
     """
     Build a GeneMultiGraph containing GeneGraph objects based on the provided graph names.
     Only loads the specific graphs requested, avoiding unnecessary computation.

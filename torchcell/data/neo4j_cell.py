@@ -219,10 +219,12 @@ class Neo4jCellDataset(Dataset):
             graphs_dict = SortedDict({"base": base_graph})
             multigraph = GeneMultiGraph(graphs=graphs_dict)
         else:
-            # Ensure the provided GeneMultiGraph has a base graph
-            if "base" not in graphs.graphs:
-                graphs.graphs["base"] = base_graph
-            multigraph = graphs
+            # Create a copy of the provided GeneMultiGraph to avoid modifying the original
+            graphs_dict = SortedDict(graphs.graphs.copy())
+            # Ensure the copy has a base graph
+            if "base" not in graphs_dict:
+                graphs_dict["base"] = base_graph
+            multigraph = GeneMultiGraph(graphs=graphs_dict)
 
         # Add embeddings as GeneGraphs to the GeneMultiGraph
         if node_embeddings is not None:

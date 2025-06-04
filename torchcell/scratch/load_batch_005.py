@@ -272,11 +272,11 @@ def load_sample_data_batch(
 
 if __name__ == "__main__":
     # Test Dango configuration
-    print("\n--- Testing Dango Configuration ---")
-    dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
-    )
-    dataset[0]
+    # print("\n--- Testing Dango Configuration ---")
+    # dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
+    #     batch_size=2, num_workers=2, config="dango_string9_1", is_dense=False
+    # )
+    # dataset[0]
 
     print("\n--- Testing HeteroCellBipartite Configuration ---")
     dataset_hetero, batch_hetero, input_channels, max_num_nodes = (

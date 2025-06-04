@@ -10,6 +10,7 @@ from typing import Optional
 import logging
 from torchcell.viz.visual_graph_degen import VisGraphDegen
 from torchcell.viz import genetic_interaction_score
+from torchcell.viz.visual_regression import Visualization
 from torchcell.timestamp import timestamp
 from torch_geometric.data import HeteroData
 from torchcell.losses.logcosh import LogCoshLoss
@@ -63,8 +64,8 @@ class RegressionTask(L.LightningModule):
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train and validation samples
-        self.train_samples = {"true_values": [], "predictions": []}
-        self.val_samples = {"true_values": [], "predictions": []}
+        self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
+        self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.automatic_optimization = False
 
     def forward(self, batch):
@@ -99,8 +100,9 @@ class RegressionTask(L.LightningModule):
 
         batch_size = predictions.size(0)
 
-        # Get target values
-        gene_interaction_vals = batch["gene"].gene_interaction
+        # Get target values - now in COO format
+        # For gene interaction dataset, phenotype_values directly contains the values
+        gene_interaction_vals = batch["gene"].phenotype_values
 
         # Handle tensor shape
         if gene_interaction_vals.dim() == 0:
@@ -108,12 +110,11 @@ class RegressionTask(L.LightningModule):
         elif gene_interaction_vals.dim() == 1:
             gene_interaction_vals = gene_interaction_vals.unsqueeze(1)
 
-        # Get original values for metrics and visualization
-        gene_interaction_orig = (
-            batch["gene"].gene_interaction_original
-            if "gene_interaction_original" in batch["gene"]
-            else gene_interaction_vals
-        )
+        # For original values, check if there's a phenotype_values_original
+        if hasattr(batch["gene"], "phenotype_values_original"):
+            gene_interaction_orig = batch["gene"].phenotype_values_original
+        else:
+            gene_interaction_orig = gene_interaction_vals
 
         # Handle tensor shape
         if gene_interaction_orig.dim() == 0:
@@ -226,7 +227,9 @@ class RegressionTask(L.LightningModule):
                     )
                     if z_p is not None:
                         if "latents" not in self.train_samples:
-                            self.train_samples["latents"] = {"z_p": []}
+                            self.train_samples["latents"] = {}
+                        if "z_p" not in self.train_samples["latents"]:
+                            self.train_samples["latents"]["z_p"] = []
                         self.train_samples["latents"]["z_p"].append(z_p[idx].detach())
                 else:
                     self.train_samples["true_values"].append(
@@ -235,7 +238,9 @@ class RegressionTask(L.LightningModule):
                     self.train_samples["predictions"].append(inv_predictions.detach())
                     if z_p is not None:
                         if "latents" not in self.train_samples:
-                            self.train_samples["latents"] = {"z_p": []}
+                            self.train_samples["latents"] = {}
+                        if "z_p" not in self.train_samples["latents"]:
+                            self.train_samples["latents"]["z_p"] = []
                         self.train_samples["latents"]["z_p"].append(z_p.detach())
         elif (
             stage == "val"
@@ -246,7 +251,9 @@ class RegressionTask(L.LightningModule):
             self.val_samples["predictions"].append(inv_predictions.detach())
             if z_p is not None:
                 if "latents" not in self.val_samples:
-                    self.val_samples["latents"] = {"z_p": []}
+                    self.val_samples["latents"] = {}
+                if "z_p" not in self.val_samples["latents"]:
+                    self.val_samples["latents"]["z_p"] = []
                 self.val_samples["latents"]["z_p"].append(z_p.detach())
 
         return loss, predictions, gene_interaction_orig
@@ -302,52 +309,71 @@ class RegressionTask(L.LightningModule):
         return results
 
     def _plot_samples(self, samples, stage: str) -> None:
+        if not samples["true_values"]:
+            return
+            
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
+        
+        # Process latents if they exist
+        latents = {}
+        if "latents" in samples and samples["latents"]:
+            for k, v in samples["latents"].items():
+                if v:  # Check if the list is not empty
+                    latents[k] = torch.cat(v, dim=0)
 
         max_samples = self.hparams.plot_sample_ceiling
         if true_values.size(0) > max_samples:
             idx = torch.randperm(true_values.size(0))[:max_samples]
             true_values = true_values[idx]
             predictions = predictions[idx]
-
-        # Log scatter plot
-        mask = ~torch.isnan(true_values)
-        true_vals_clean = true_values[mask].squeeze().cpu().numpy()
-        pred_vals_clean = predictions[mask].squeeze().cpu().numpy()
-
-        if len(true_vals_clean) > 0:
-            fig, ax = plt.subplots(figsize=(8, 8))
-            ax.scatter(true_vals_clean, pred_vals_clean, alpha=0.5)
-            ax.set_xlabel("True Gene Interaction")
-            ax.set_ylabel("Predicted Gene Interaction")
-            ax.set_title(
-                f"Gene Interaction Predictions ({stage}, Epoch {self.current_epoch})"
-            )
-
-            # Add identity line
-            min_val = min(true_vals_clean.min(), pred_vals_clean.min())
-            max_val = max(true_vals_clean.max(), pred_vals_clean.max())
-            ax.plot([min_val, max_val], [min_val, max_val], "r--")
-
-            # Calculate and display correlation
-            if len(true_vals_clean) > 1:
-                correlation = np.corrcoef(true_vals_clean, pred_vals_clean)[0, 1]
-                ax.text(
-                    0.05,
-                    0.95,
-                    f"Correlation: {correlation:.4f}",
-                    transform=ax.transAxes,
-                    verticalalignment="top",
-                )
-
-            wandb.log({f"{stage}_scatter_plot": wandb.Image(fig)})
-            plt.close(fig)
-
+            for key in latents:
+                latents[key] = latents[key][idx]
+        
+        # Use Visualization for enhanced plotting
+        vis = Visualization(
+            base_dir=self.trainer.default_root_dir, max_points=max_samples
+        )
+        
+        loss_name = (
+            self.loss_func.__class__.__name__
+            if self.loss_func is not None
+            else "Loss"
+        )
+        
+        # Ensure data is in the correct format for visualization
+        # For gene interactions, we only need a single dimension
+        if true_values.dim() == 1:
+            true_values = true_values.unsqueeze(1)
+        if predictions.dim() == 1:
+            predictions = predictions.unsqueeze(1)
+        
+        # For hetero_cell_bipartite_dango_gi, we use z_p latents
+        z_p_latents = {}
+        if "z_p" in latents:
+            z_p_latents["z_p"] = latents["z_p"]
+        
+        # Use our updated visualize_model_outputs method
+        vis.visualize_model_outputs(
+            predictions,
+            true_values,
+            z_p_latents,
+            loss_name,
+            self.current_epoch,
+            None,
+            stage=stage,
+        )
+        
+        # Log oversmoothing metrics on latent spaces if available
+        if "z_p" in latents:
+            smoothness = VisGraphDegen.compute_smoothness(latents["z_p"])
+            wandb.log({f"{stage}/oversmoothing_z_p": smoothness.item()})
+        
         # Log genetic interaction box plot
         if torch.any(~torch.isnan(true_values)):
+            # For gene interactions, values are in the first dimension
             fig_gi = genetic_interaction_score.box_plot(
-                true_values.squeeze().cpu(), predictions.squeeze().cpu()
+                true_values[:, 0].cpu(), predictions[:, 0].cpu()
             )
             wandb.log({f"{stage}/gene_interaction_box_plot": wandb.Image(fig_gi)})
             plt.close(fig_gi)
@@ -373,17 +399,17 @@ class RegressionTask(L.LightningModule):
         ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
-            self.train_samples = {"true_values": [], "predictions": []}
+            self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_train_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.train_samples = {"true_values": [], "predictions": []}
+            self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.val_samples = {"true_values": [], "predictions": []}
+            self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
         # Log validation metrics
@@ -406,7 +432,7 @@ class RegressionTask(L.LightningModule):
         ):
             self._plot_samples(self.val_samples, "val_sample")
             # Reset the sample containers
-            self.val_samples = {"true_values": [], "predictions": []}
+            self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])

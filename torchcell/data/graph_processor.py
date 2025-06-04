@@ -167,7 +167,7 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].node_ids = gene_info["keep_node_ids"]
         integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
-        integrated_subgraph["gene"].cell_graph_idx_pert = gene_info["remove_subset"]
+        integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
 
         x_full = cell_graph["gene"].x
         integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]

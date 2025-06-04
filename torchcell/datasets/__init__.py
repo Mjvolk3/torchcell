@@ -48,6 +48,7 @@ from .codon_language_model import CalmDataset
 from .random_embedding import RandomEmbeddingDataset
 
 from .dataset_registry import dataset_registry
+from .node_embedding_builder import NodeEmbeddingBuilder
 
 
 embedding_datasets = [
@@ -60,6 +61,7 @@ embedding_datasets = [
     "Esm2Dataset",
     "CalmDataset",
     "RandomEmbeddingDataset",
+    "NodeEmbeddingBuilder",
 ]
 
 

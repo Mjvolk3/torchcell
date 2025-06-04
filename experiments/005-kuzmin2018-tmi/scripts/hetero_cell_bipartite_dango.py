@@ -1,7 +1,7 @@
-# experiments/005-kuzmin2018-tmi/scripts/dcell
-# [[experiments.005-kuzmin2018-tmi.scripts.dcell]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/005-kuzmin2018-tmi/scripts/dcell
-# Test file: experiments/005-kuzmin2018-tmi/scripts/test_dcell.py
+# experiments/005-kuzmin2018-tmi/scripts/hetero_cell_bipartite_dango
+# [[experiments.005-kuzmin2018-tmi.scripts.hetero_cell_bipartite_dango]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/005-kuzmin2018-tmi/scripts/hetero_cell_bipartite_dango
+# Test file: experiments/005-kuzmin2018-tmi/scripts/test_hetero_cell_bipartite_dango.py
 
 
 import hashlib
@@ -11,56 +11,50 @@ import os
 import os.path as osp
 import uuid
 import hydra
-import torch.nn as nn
 import lightning as L
 import torch
-import torch.distributed as dist
-import socket
-import sys
-import random
-import time
-import multiprocessing as mp
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torch_geometric.transforms import Compose
+from torchcell.data.graph_processor import SubgraphRepresentation
+from torchcell.trainers.fit_int_hetero_cell import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 import wandb
-from torch_geometric.transforms import Compose
-
-# Torchcell imports
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data.graph_processor import Perturbation, DCellGraphProcessor
-from torchcell.trainers.int_dcell import RegressionTask as DCellRegressionTask
+import socket
+from torchcell.datasets import NodeEmbeddingBuilder
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
-from torchcell.graph import SCerevisiaeGraph
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.dcell import DCell
-from torchcell.losses.dcell import DCellLoss
-from torchcell.models.dango import Dango
-from torchcell.losses.dango import (
-    DangoLoss,
-    PreThenPost,
-    LinearUntilUniform,
-    SCHEDULER_MAP,
-)
+from torchcell.models.hetero_cell_bipartite_dango import HeteroCellBipartite
+from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.datamodules import CellDataModule
+from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
+import torch.distributed as dist
 from torchcell.timestamp import timestamp
-from torchcell.graph import build_gene_multigraph
-from torchcell.graph import (
-    filter_by_date,
-    filter_go_IGI,
-    filter_redundant_terms,
-    filter_by_contained_genes,
-)
-
 
 log = logging.getLogger(__name__)
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 WANDB_MODE = os.getenv("WANDB_MODE")
 EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+
+# Ensure all required environment variables are set
+if DATA_ROOT is None:
+    raise ValueError(
+        "DATA_ROOT environment variable is not set. Please set it in your .env file or environment."
+    )
+if WANDB_MODE is None:
+    raise ValueError(
+        "WANDB_MODE environment variable is not set. Please set it in your .env file or environment."
+    )
+if EXPERIMENT_ROOT is None:
+    raise ValueError(
+        "EXPERIMENT_ROOT environment variable is not set. Please set it in your .env file or environment."
+    )
 
 
 def get_slurm_nodes() -> int:
@@ -92,10 +86,10 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="dcell_kuzmin2018_tmi",
+    config_name="hetero_cell_bipartite_dango",
 )
-def main(cfg: DictConfig) -> None:
-    print("Starting DCell Training 🧬")
+def main(cfg: DictConfig) -> tuple:
+    print("Starting HeteroCellBipartite Training 💪")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -158,8 +152,11 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
+    # BUG
     genome = SCerevisiaeGenome(
-        genome_root=genome_root, go_root=go_root, overwrite=False
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
     )
     genome.drop_empty_go()
 
@@ -170,62 +167,32 @@ def main(cfg: DictConfig) -> None:
         genome=genome,
     )
 
-    # Check which type of graph to use based on config
-    # The new format uses incidence_graphs="go" to indicate GO hierarchy
-    # and graphs=null to indicate no STRING networks
-    incidence_type = wandb.config.cell_dataset.get("incidence_graphs", None)
-    graph_names = wandb.config.cell_dataset.get("graphs", [])
+    # Build the GeneMultiGraph using the helper function
+    graphs = build_gene_multigraph(
+        graph=graph, graph_names=wandb.config.cell_dataset["graphs"]
+    )
 
-    if isinstance(graph_names, list) and not graph_names:
-        graph_names = []
+    # Build node embeddings using the NodeEmbeddingBuilder
+    node_embeddings = NodeEmbeddingBuilder.build(
+        embedding_names=wandb.config.cell_dataset["node_embeddings"],
+        data_root=DATA_ROOT,
+        genome=genome,
+        graph=graph,
+    )
 
-    # Initialize variables
-    gene_multigraph = None
+    # Check if learnable embedding is requested
+    learnable_embedding = NodeEmbeddingBuilder.check_learnable_embedding(
+        wandb.config.cell_dataset["node_embeddings"]
+    )
+
+    graph_processor = SubgraphRepresentation()
+
     incidence_graphs = {}
-
-    # Check if we need to use GO graph
-    if incidence_type == "go":
-        print("Using Gene Ontology hierarchy")
-        G_go = graph.G_go.copy()
-
-        # Apply DCell-specific GO graph filters
-        date_filter = wandb.config.model.get("go_date_filter", None)
-        if date_filter:
-            G_go = filter_by_date(G_go, date_filter)
-            print(f"After date filter ({date_filter}): {G_go.number_of_nodes()}")
-
-        G_go = filter_go_IGI(G_go)
-        print(f"After IGI filter: {G_go.number_of_nodes()}")
-
-        G_go = filter_redundant_terms(G_go)
-        print(f"After redundant filter: {G_go.number_of_nodes()}")
-
-        min_genes = wandb.config.model.get("go_min_genes", 4)
-        G_go = filter_by_contained_genes(G_go, n=min_genes, gene_set=genome.gene_set)
-        print(
-            f"After containment filter (min_genes={min_genes}): {G_go.number_of_nodes()}"
-        )
-
-        # Add GO graph to incidence graphs
-        incidence_graphs["gene_ontology"] = G_go
-
-        # Use DCellGraphProcessor when using GO hierarchy
-        graph_processor = DCellGraphProcessor()
-
-        # Set gene_multigraph to None when using GO hierarchy
-        gene_multigraph = None
-
-    # Build gene multigraph if using STRING networks
-    elif graph_names:
-        print(f"Using STRING networks: {graph_names}")
-        gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
-        # Use standard Perturbation graph processor for STRING networks
-        graph_processor = Perturbation()
-    else:
-        # If neither GO nor STRING networks are specified
-        raise ValueError(
-            "Either incidence_graphs='go' or valid graphs list must be specified"
-        )
+    yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+    if "metabolism_hypergraph" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_hypergraph"] = yeast_gem.reaction_map
+    elif "metabolism_bipartite" in wandb.config.cell_dataset["incidence_graphs"]:
+        incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
 
     print(EXPERIMENT_ROOT)
     with open(
@@ -240,23 +207,16 @@ def main(cfg: DictConfig) -> None:
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs=gene_multigraph,
+        graphs=graphs,
         incidence_graphs=incidence_graphs,
-        node_embeddings=wandb.config.cell_dataset["node_embeddings"],
-        converter=None,
+        node_embeddings=node_embeddings,
+        converter=CompositeFitnessConverter,
         deduplicator=MeanExperimentDeduplicator,
         aggregator=GenotypeAggregator,
         graph_processor=graph_processor,
     )
 
     seed = 42
-    # Define follow_batch based on whether we're using DCellGraphProcessor
-    follow_batch = ["perturbation_indices"]
-    if isinstance(graph_processor, DCellGraphProcessor):
-        follow_batch.append(
-            "go_gene_strata_state"
-        )  # Include go_gene_strata_state for DCell
-
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -265,11 +225,10 @@ def main(cfg: DictConfig) -> None:
         random_seed=seed,
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
-        follow_batch=follow_batch,
     )
     data_module.setup()
-
     if wandb.config.data_module["is_perturbation_subset"]:
+
         data_module = PerturbationSubsetDataModule(
             cell_data_module=data_module,
             size=int(wandb.config.data_module["perturbation_subset_size"]),
@@ -278,79 +237,96 @@ def main(cfg: DictConfig) -> None:
             pin_memory=wandb.config.data_module["pin_memory"],
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
-            follow_batch=follow_batch,
+            gene_subsets={"metabolism": yeast_gem.gene_set},
         )
         data_module.setup()
 
+    # TODO will need for when adding embeddings
+    # if not wandb.config.cell_dataset.get("learnable_embedding", False):
+    #     input_dim = dataset.num_features["gene"]
+    # else:
+    #     input_dim = wandb.config.cell_dataset["learnable_embedding_input_channels"]
     dataset.close_lmdb()
 
-    # Determine device based on accelerator config - only support CPU and CUDA
-    if wandb.config.trainer["accelerator"] == "gpu" and torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-        # Force CPU if MPS would be selected
-        if (
-            wandb.config.trainer["accelerator"] == "gpu"
-            and torch.backends.mps.is_available()
-        ):
-            print("MPS detected but not supported. Using CPU instead.")
-
-    log.info(f"Using device: {device}")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    log.info(device)
     devices = get_num_devices()
+    # edge_types = [
+    #     ("gene", f"{name}_interaction", "gene")
+    #     for name in wandb.config.cell_dataset["graphs"]
+    # ]
 
     print(f"Instantiating model ({timestamp()})")
+    # Instantiate new IsomorphicCell model
+    gene_encoder_config = dict(wandb.config["model"]["gene_encoder_config"])
+    if any(
+        "learnable" in emb for emb in wandb.config["cell_dataset"]["node_embeddings"]
+    ):
+        gene_encoder_config.update(
+            {
+                "embedding_type": "learnable",
+                "max_num_nodes": dataset.cell_graph["gene"].num_nodes,
+                "learnable_embedding_input_channels": wandb.config["cell_dataset"][
+                    "learnable_embedding_input_channels"
+                ],
+            }
+        )
 
-    max_num_nodes = dataset.cell_graph["gene"].num_nodes
-
-    # Always instantiate DCell based on the updated config
-    print("Instantiating DCell")
-
-    # Get required parameters from config - use direct access for required params
-    subsystem_output_min = wandb.config.model["subsystem_output_min"]
-    subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
-    output_size = wandb.config.model["output_size"]
-
-    # Explicitly move dataset cell_graph to the correct device before model initialization
-    dataset.cell_graph = dataset.cell_graph.to(device)
-
-    # Create model and explicitly move to device
-    model = DCell(
-        hetero_data=dataset.cell_graph,
-        min_subsystem_size=subsystem_output_min,
-        subsystem_ratio=subsystem_output_max_mult,
-        output_size=output_size,
-    )
-
-    # Explicitly move model to device
-    model = model.to(device)
+    # Instantiate new HeteroCellBipartite model using wandb configuration.
+    model = HeteroCellBipartite(
+        gene_num=wandb.config["model"]["gene_num"],
+        reaction_num=wandb.config["model"]["reaction_num"],
+        metabolite_num=wandb.config["model"]["metabolite_num"],
+        hidden_channels=wandb.config["model"]["hidden_channels"],
+        out_channels=wandb.config["model"]["out_channels"],
+        num_layers=wandb.config["model"]["num_layers"],
+        dropout=wandb.config["model"]["dropout"],
+        norm=wandb.config["model"]["norm"],
+        activation=wandb.config["model"]["activation"],
+        gene_encoder_config=wandb.config["model"]["gene_encoder_config"],
+        metabolism_config=wandb.config["model"]["metabolism_config"],
+        prediction_head_config=wandb.config["model"]["prediction_head_config"],
+        gpr_conv_config=wandb.config["model"]["gpr_conv_config"],
+    ).to(device)
 
     # Log parameter counts using the num_parameters property.
     param_counts = model.num_parameters
     print("Parameter counts:", param_counts)
     wandb.log(
         {
-            "model/params_dcell": param_counts.get("dcell", 0),
-            "model/params_dcell_linear": param_counts.get("dcell_linear", 0),
-            "model/params_subsystems": param_counts.get("subsystems", 0),
+            "model/params_embeddings": param_counts.get("gene_embedding", 0)
+            + param_counts.get("reaction_embedding", 0)
+            + param_counts.get("metabolite_embedding", 0),
+            "model/params_preprocessor": param_counts.get("preprocessor", 0),
+            "model/params_convs": param_counts.get("convs", 0),
+            "model/params_aggregators": param_counts.get("global_aggregator", 0)
+            + param_counts.get("perturbed_aggregator", 0),
+            "model/params_fitness_head": param_counts.get("fitness_head", 0),
+            "model/params_interaction_head": param_counts.get("interaction_head", 0),
             "model/params_total": param_counts.get("total", 0),
-            "model/num_go_terms": param_counts.get("num_go_terms", 0),
-            "model/num_subsystems": param_counts.get("num_subsystems", 0),
         }
     )
 
-    # Configure DCellLoss
-    alpha = wandb.config.regression_task.get("dcell_loss", {}).get("alpha", 0.3)
-    use_auxiliary_losses = wandb.config.regression_task.get("dcell_loss", {}).get(
-        "use_auxiliary_losses", True
+    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
+        phenotype_counts = {}
+        for phase in ["train", "val", "test"]:
+            phenotypes = getattr(data_module.index_details, phase).phenotype_label_index
+            temp_counts = {k: v.count for k, v in phenotypes.items()}
+            for k, v in temp_counts.items():
+                phenotype_counts[k] = phenotype_counts.get(k, 0) + v
+        weights = torch.tensor(
+            [1 - v / sum(phenotype_counts.values()) for v in phenotype_counts.values()]
+        ).to(device)
+    else:
+        weights = torch.ones(2).to(device)
+
+    loss_func = ICLoss(
+        lambda_dist=wandb.config.regression_task["lambda_dist"],
+        lambda_supcr=wandb.config.regression_task["lambda_supcr"],
+        weights=weights,
     )
 
-    loss_func = DCellLoss(alpha=alpha, use_auxiliary_losses=use_auxiliary_losses)
-
-    # Always use DCellRegressionTask based on the updated config
-    RegressionTask = DCellRegressionTask
-
-    print(f"Creating RegressionTask ({timestamp()})")
+    print(f"Creating regression task ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
@@ -358,7 +334,7 @@ def main(cfg: DictConfig) -> None:
         task = RegressionTask.load_from_checkpoint(
             checkpoint_path,
             map_location=device,
-            model=model,
+            model=model,  # Pass the already created model
             cell_graph=dataset.cell_graph,
             loss_func=loss_func,
             device=device,
@@ -377,7 +353,7 @@ def main(cfg: DictConfig) -> None:
                 "grad_accumulation_schedule"
             ],
         )
-        print(f"Successfully loaded model weights from checkpoint")
+        print("Successfully loaded model weights from checkpoint")
     else:
         # Create a fresh task with the model
         task = RegressionTask(
@@ -405,13 +381,12 @@ def main(cfg: DictConfig) -> None:
     os.makedirs(model_base_path, exist_ok=True)
     checkpoint_dir = osp.join(model_base_path, group)
 
-    # Update checkpoint configuration to monitor gene interaction metrics
     checkpoint_callback_best = ModelCheckpoint(
         dirpath=checkpoint_dir,
         save_top_k=1,
-        monitor="val/gene_interaction/MSE",  # Monitor MSE for gene interactions
+        monitor="val/transformed/combined/MSE",
         mode="min",
-        filename=f"{run.id}-best-{{epoch:02d}}-{{val/gene_interaction/MSE:.4f}}",
+        filename=f"{run.id}-best-{{epoch:02d}}-{{val/transformed/combined/MSE:.4f}}",
     )
     checkpoint_callback_last = ModelCheckpoint(
         dirpath=checkpoint_dir, save_last=True, filename=f"{run.id}-last"
@@ -433,13 +408,14 @@ def main(cfg: DictConfig) -> None:
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        # limit_val_batches=0,  # FLAG
     )
 
     trainer.fit(model=task, datamodule=data_module)
 
     # Store metrics in variables first
-    mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
-    pearson = trainer.callback_metrics["val/gene_interaction/Pearson"].item()
+    mse = trainer.callback_metrics["val/transformed/combined/MSE"].item()
+    pearson = trainer.callback_metrics["val/transformed/combined/Pearson"].item()
 
     # Now finish wandb
     wandb.finish()
@@ -450,8 +426,6 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     import multiprocessing as mp
-    import random
-    import time
 
     mp.set_start_method("spawn", force=True)
     main()

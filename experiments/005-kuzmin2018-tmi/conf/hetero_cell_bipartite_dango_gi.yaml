@@ -86,15 +86,19 @@ model:
     # residual: true
     # head_norm: "batch"
     head_norm: ${norms}
+  # Dango-like local predictor config
+  local_predictor_config:
+    num_attention_layers: 2  # Number of self-attention layers (like Dango HyperSAGNN)
+    num_heads: 4  # Number of attention heads (matching Dango)
 
 regression_task:
-  loss: logcosh
+  loss: logcosh  # Options: logcosh, icloss
   is_weighted_phenotype_loss: true
   lambda_dist: 0.1
   lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-5
+    lr: 1e-3 #1e-5
     weight_decay: 1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"

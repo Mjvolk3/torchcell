@@ -14,10 +14,11 @@ import hydra
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.nn import BatchNorm, GATv2Conv, HeteroConv, LayerNorm
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
+from torch_scatter import scatter_mean
 
 from torchcell.graph.graph import GeneMultiGraph
 from torchcell.models.act import act_register
@@ -45,24 +46,44 @@ class AttentionalGraphAggregation(nn.Module):
         return self.aggregator(x, index=index, dim_size=dim_size)
 
 
-class GeneInteractionAttention(nn.Module):
-    """Self-attention module for gene interaction prediction"""
+class DangoLikeHyperSAGNN(nn.Module):
+    """
+    Dango-like HyperSAGNN for local gene interaction prediction.
+    Implements multi-layer self-attention with multi-head attention and ReZero connections.
+    """
 
-    def __init__(self, hidden_dim, num_heads=8, dropout=0.1):
+    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
+        self.num_layers = num_layers
         self.head_dim = hidden_dim // num_heads
-
-        # Projection matrices for Q, K, V
-        self.q_proj = nn.Linear(hidden_dim, hidden_dim)
-        self.k_proj = nn.Linear(hidden_dim, hidden_dim)
-        self.v_proj = nn.Linear(hidden_dim, hidden_dim)
-        self.out_proj = nn.Linear(hidden_dim, hidden_dim)
-
-        # ReZero parameter (initialized to small value)
-        self.beta = nn.Parameter(torch.ones(1) * 0.1)
-
+        
+        assert hidden_dim % num_heads == 0, f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        
+        # Static embedding layer (like Dango)
+        self.static_embedding = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU()
+        )
+        
+        # Create multiple attention layers
+        self.attention_layers = nn.ModuleList()
+        self.beta_params = nn.ParameterList()  # Store ReZero parameters separately
+        
+        for i in range(num_layers):
+            layer = nn.ModuleDict({
+                'q_proj': nn.Linear(hidden_dim, hidden_dim),
+                'k_proj': nn.Linear(hidden_dim, hidden_dim),
+                'v_proj': nn.Linear(hidden_dim, hidden_dim),
+                'out_proj': nn.Linear(hidden_dim, hidden_dim),
+            })
+            self.attention_layers.append(layer)
+            # Create ReZero parameter for this layer
+            beta = nn.Parameter(torch.zeros(1))
+            nn.init.constant_(beta, 0.01)  # Initialize to small value like Dango
+            self.beta_params.append(beta)
+        
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, gene_embeddings, batch=None):
@@ -71,64 +92,99 @@ class GeneInteractionAttention(nn.Module):
             gene_embeddings: Tensor of shape [total_genes, hidden_dim]
             batch: Optional tensor [total_genes] indicating batch assignment
         Returns:
+            static_embeddings: Tensor of shape [total_genes, hidden_dim]
             dynamic_embeddings: Tensor of shape [total_genes, hidden_dim]
         """
-        # Process each batch separately if batch information is provided
-        if batch is not None:
-            unique_batches = batch.unique()
-            output_embeddings = torch.zeros_like(gene_embeddings)
+        # Compute static embeddings
+        static_embeddings = self.static_embedding(gene_embeddings)
+        
+        # Initialize dynamic embeddings
+        dynamic_embeddings = gene_embeddings
+        
+        # Apply attention layers
+        for i, layer in enumerate(self.attention_layers):
+            if batch is not None:
+                # Process each batch separately
+                unique_batches = batch.unique()
+                output_embeddings = torch.zeros_like(dynamic_embeddings)
+                
+                for b in unique_batches:
+                    mask = batch == b
+                    batch_embeddings = dynamic_embeddings[mask]
+                    batch_output = self._apply_attention_layer(batch_embeddings, layer, self.beta_params[i])
+                    output_embeddings[mask] = batch_output
+                
+                dynamic_embeddings = output_embeddings
+            else:
+                # Single batch processing
+                dynamic_embeddings = self._apply_attention_layer(dynamic_embeddings, layer, self.beta_params[i])
+        
+        return static_embeddings, dynamic_embeddings
 
-            for b in unique_batches:
-                mask = batch == b
-                batch_embeddings = gene_embeddings[mask]
-                batch_output = self._process_batch(batch_embeddings)
-                output_embeddings[mask] = batch_output
-
-            return output_embeddings
-        else:
-            # Single batch processing
-            return self._process_batch(gene_embeddings)
-
-    def _process_batch(self, embeddings):
-        """Process a single batch of embeddings"""
-        num_genes = embeddings.size(0)
-        residual = embeddings
-
+    def _apply_attention_layer(self, x, layer, beta):
+        """Apply a single attention layer with multi-head attention"""
+        batch_size = x.size(0)
+        
         # Handle special case of single gene (no attention possible)
-        if num_genes <= 1:
-            return embeddings
-
-        # Project to queries, keys, values
-        q = self.q_proj(embeddings)
-        k = self.k_proj(embeddings)
-        v = self.v_proj(embeddings)
-
-        # Calculate attention scores (excluding self-attention)
-        attention_scores = torch.matmul(q, k.transpose(0, 1)) / torch.sqrt(
-            torch.tensor(self.hidden_dim, dtype=torch.float, device=embeddings.device)
-        )
-
-        # Mask out self-attention
-        mask = torch.eye(num_genes, device=embeddings.device)
-        attention_scores = attention_scores.masked_fill(mask.bool(), -1e9)
-
+        if batch_size <= 1:
+            return x
+        
+        # Linear projections
+        q = layer['q_proj'](x)  # [batch_size, hidden_dim]
+        k = layer['k_proj'](x)  # [batch_size, hidden_dim]
+        v = layer['v_proj'](x)  # [batch_size, hidden_dim]
+        
+        # Reshape for multi-head attention
+        q = q.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)  # [num_heads, batch_size, head_dim]
+        k = k.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)
+        v = v.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)
+        
+        # Calculate attention scores
+        attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        # Shape: [num_heads, batch_size, batch_size]
+        
+        # Create mask for self-attention (exclude self)
+        self_mask = torch.eye(batch_size, dtype=torch.bool, device=x.device)
+        self_mask = self_mask.unsqueeze(0).expand(self.num_heads, -1, -1)
+        
+        # Apply mask
+        attention_scores.masked_fill_(self_mask, -float('inf'))
+        
         # Apply softmax
         attention_weights = F.softmax(attention_scores, dim=-1)
+        
+        # Handle potential NaNs from empty rows (single gene case)
+        attention_weights = torch.nan_to_num(attention_weights, nan=0.0)
+        
+        # Apply dropout
         attention_weights = self.dropout(attention_weights)
-
-        # Apply attention to get dynamic embeddings
-        dynamic_embeddings = torch.matmul(attention_weights, v)
-        dynamic_embeddings = self.out_proj(dynamic_embeddings)
-        dynamic_embeddings = self.dropout(dynamic_embeddings)
-
-        # Apply ReZero
-        return residual + self.beta * dynamic_embeddings
+        
+        # Apply attention to values
+        out = torch.matmul(attention_weights, v)
+        # Shape: [num_heads, batch_size, head_dim]
+        
+        # Reshape back to [batch_size, hidden_dim]
+        out = out.transpose(0, 1).contiguous().view(batch_size, self.hidden_dim)
+        
+        # Apply output projection
+        out = layer['out_proj'](out)
+        out = self.dropout(out)
+        
+        # Apply ReZero connection
+        return x + beta * out
 
 
 class GeneInteractionPredictor(nn.Module):
-    def __init__(self, hidden_dim, dropout=0.1):
+    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1):
         super().__init__()
-        self.attention = GeneInteractionAttention(hidden_dim, dropout=dropout)
+        # Use the new Dango-like HyperSAGNN
+        self.hyper_sagnn = DangoLikeHyperSAGNN(
+            hidden_dim=hidden_dim,
+            num_heads=num_heads,
+            num_layers=num_layers,
+            dropout=dropout
+        )
+        # Prediction layer to compute scores from squared differences
         self.prediction_layer = nn.Linear(hidden_dim, 1)
         nn.init.xavier_uniform_(self.prediction_layer.weight)
 
@@ -140,34 +196,25 @@ class GeneInteractionPredictor(nn.Module):
         Returns:
             interaction_scores: Tensor of shape [num_batches]
         """
-        # Static embeddings (original)
-        static_embeddings = gene_embeddings
+        # Get static and dynamic embeddings from HyperSAGNN
+        static_embeddings, dynamic_embeddings = self.hyper_sagnn(gene_embeddings, batch)
 
-        # Dynamic embeddings through self-attention
-        dynamic_embeddings = self.attention(gene_embeddings, batch)
-
-        # Calculate the difference and square it
+        # Calculate the difference and square it (like Dango)
         diff = dynamic_embeddings - static_embeddings
         diff_squared = diff**2
 
         # Get gene-level scores
-        gene_scores = self.prediction_layer(diff_squared)
+        gene_scores = self.prediction_layer(diff_squared).squeeze(-1)  # [total_genes]
 
-        # If batch information is provided, average scores per batch
+        # If batch information is provided, average scores per batch using scatter_mean
         if batch is not None:
+            # Use scatter_mean for efficient batched averaging
             num_batches = batch.max().item() + 1
-            batch_scores = torch.zeros(num_batches, 1, device=gene_embeddings.device)
-
-            # For each batch, average the gene scores
-            for b in range(num_batches):
-                mask = batch == b
-                if mask.sum() > 0:  # Ensure there are genes in this batch
-                    batch_scores[b] = gene_scores[mask].mean()
-
-            return batch_scores
+            interaction_scores = scatter_mean(gene_scores, batch, dim=0, dim_size=num_batches)
+            return interaction_scores.unsqueeze(-1)  # [num_batches, 1]
         else:
             # Single batch case
-            return gene_scores.mean().unsqueeze(0)
+            return gene_scores.mean().unsqueeze(0).unsqueeze(-1)  # [1, 1]
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -266,6 +313,7 @@ class GeneInteractionDango(nn.Module):
         norm: str = "layer",
         activation: str = "relu",
         gene_encoder_config: Optional[Dict[str, Any]] = None,
+        local_predictor_config: Optional[Dict[str, Any]] = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -321,9 +369,15 @@ class GeneInteractionDango(nn.Module):
 
             self.convs.append(HeteroConv(conv_dict, aggr="sum"))
 
-        # Gene interaction predictor for perturbed genes
+        # Get local predictor config - now as a separate parameter
+        local_predictor_config = local_predictor_config or {}
+        
+        # Gene interaction predictor for perturbed genes with Dango-like architecture
         self.gene_interaction_predictor = GeneInteractionPredictor(
-            hidden_dim=hidden_channels, dropout=dropout
+            hidden_dim=hidden_channels,
+            num_heads=local_predictor_config.get('num_heads', 4),
+            num_layers=local_predictor_config.get('num_attention_layers', 2),
+            dropout=dropout
         )
 
         # Global aggregator for proper aggregation
@@ -389,9 +443,7 @@ class GeneInteractionDango(nn.Module):
         self.apply(_init_module)
 
         # Specific initializations for key components
-        # Initialize ReZero parameter in attention module to a small value
-        if hasattr(self.gene_interaction_predictor.attention, "beta"):
-            nn.init.constant_(self.gene_interaction_predictor.attention.beta, 0.01)
+        # ReZero parameters are already initialized in DangoLikeHyperSAGNN.__init__
 
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         device = self.gene_embedding.weight.device
@@ -628,21 +680,8 @@ def main(cfg: DictConfig) -> None:
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from sortedcontainers import SortedDict
     from torchcell.graph.graph import GeneMultiGraph, GeneGraph
-
-    class LogCoshLoss(nn.Module):
-        def __init__(self, reduction: str = "mean") -> None:
-            super().__init__()
-            if reduction not in ("none", "mean", "sum"):
-                raise ValueError(f"Invalid reduction mode: {reduction}")
-            self.reduction = reduction
-
-        def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-            loss = torch.log(torch.cosh(input - target))
-            if self.reduction == "mean":
-                return loss.mean()
-            elif self.reduction == "sum":
-                return loss.sum()
-            return loss
+    from torchcell.losses.logcosh import LogCoshLoss
+    from torchcell.losses.isomorphic_cell_loss import ICLoss
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -674,6 +713,10 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Initialize the gene interaction model
+    # Ensure configs are properly converted
+    gene_encoder_config_dict = OmegaConf.to_container(cfg.model.gene_encoder_config, resolve=True) if cfg.model.gene_encoder_config else {}
+    local_predictor_config_dict = OmegaConf.to_container(cfg.model.local_predictor_config, resolve=True) if hasattr(cfg.model, 'local_predictor_config') and cfg.model.local_predictor_config else {}
+    
     model = GeneInteractionDango(
         gene_num=cfg.model.gene_num,
         hidden_channels=cfg.model.hidden_channels,
@@ -682,15 +725,35 @@ def main(cfg: DictConfig) -> None:
         dropout=cfg.model.dropout,
         norm=cfg.model.norm,
         activation=cfg.model.activation,
-        gene_encoder_config=cfg.model.gene_encoder_config,
+        gene_encoder_config=gene_encoder_config_dict,
+        local_predictor_config=local_predictor_config_dict,
     ).to(device)
 
     print("\nModel architecture:")
     print(model)
     print("Parameter count:", sum(p.numel() for p in model.parameters()))
 
-    # Simple MSE loss for gene interaction prediction
-    criterion = LogCoshLoss(reduction="mean")
+    # Configure loss function based on config
+    loss_type = cfg.regression_task.get("loss", "logcosh")
+    if loss_type == "logcosh":
+        criterion = LogCoshLoss(reduction="mean")
+        print("Using LogCosh loss")
+    elif loss_type == "icloss":
+        # For ICLoss, we need phenotype weights if weighted loss is enabled
+        if cfg.regression_task.get("is_weighted_phenotype_loss", False):
+            # For gene interaction only dataset, we have just one phenotype
+            weights = torch.ones(1).to(device)
+        else:
+            weights = None
+        
+        criterion = ICLoss(
+            lambda_dist=cfg.regression_task.get("lambda_dist", 0.1),
+            lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
+            weights=weights
+        )
+        print(f"Using ICLoss with lambda_dist={cfg.regression_task.lambda_dist}, lambda_supcr={cfg.regression_task.lambda_supcr}")
+    else:
+        raise ValueError(f"Unknown loss type: {loss_type}")
 
     # Optimizer
     optimizer = torch.optim.AdamW(
@@ -721,13 +784,17 @@ def main(cfg: DictConfig) -> None:
         cell_graph,
         batch,
         y,
+        loss_type="logcosh",
     ):
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(15, 10))
 
+        # Determine loss label
+        loss_label = "LogCosh Loss" if loss_type == "logcosh" else "ICLoss"
+
         # Loss curve
         plt.subplot(3, 3, 1)
-        plt.plot(range(1, epoch + 2), losses, "b-", label="LogCosh Loss")
+        plt.plot(range(1, epoch + 2), losses, "b-", label=loss_label)
         plt.xlabel("Epoch")
         plt.ylabel("Loss Value")
         plt.title("Training Loss Curve")
@@ -877,7 +944,36 @@ def main(cfg: DictConfig) -> None:
 
             # Forward pass
             predictions, representations = model(cell_graph, batch)
-            loss = criterion(predictions.squeeze(), y)
+            
+            # Handle different loss functions
+            if isinstance(criterion, LogCoshLoss):
+                loss = criterion(predictions.squeeze(), y)
+            elif isinstance(criterion, ICLoss):
+                # ICLoss expects z_p as third argument
+                z_p = representations.get("z_p")
+                if z_p is None:
+                    raise ValueError("ICLoss requires z_p from model representations")
+                
+                # ICLoss expects inputs with shape [batch_size, num_phenotypes]
+                # For gene interaction only, we need to add a dummy dimension
+                pred_reshaped = predictions.squeeze()
+                if pred_reshaped.dim() == 0:
+                    pred_reshaped = pred_reshaped.unsqueeze(0)
+                pred_reshaped = pred_reshaped.unsqueeze(1)  # [batch_size, 1]
+                
+                y_reshaped = y
+                if y_reshaped.dim() == 0:
+                    y_reshaped = y_reshaped.unsqueeze(0)
+                y_reshaped = y_reshaped.unsqueeze(1)  # [batch_size, 1]
+                
+                loss_output = criterion(pred_reshaped, y_reshaped, z_p)
+                # ICLoss returns tuple (loss, loss_dict)
+                loss = loss_output[0]
+                loss_dict = loss_output[1]
+                # You can log additional loss components if needed
+                print(f"  ICLoss components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}")
+            else:
+                loss = criterion(predictions.squeeze(), y)
 
             # Calculate metrics
             with torch.no_grad():
@@ -922,7 +1018,7 @@ def main(cfg: DictConfig) -> None:
             # Logging every plot_interval epochs
             if epoch % plot_interval == 0 or epoch == num_epochs - 1:
                 print(f"\nEpoch {epoch + 1}/{num_epochs}")
-                print(f"Loss: {loss.item():.6f}")
+                print(f"{loss_type.upper()} Loss: {loss.item():.6f}")
                 print(f"Correlation: {correlation:.4f}")
                 print(f"MSE: {mse:.6f}, MAE: {mae:.6f}")
                 print(f"LR: {optimizer.param_groups[0]['lr']:.2e}")
@@ -941,6 +1037,7 @@ def main(cfg: DictConfig) -> None:
                     cell_graph,
                     batch,
                     y,
+                    loss_type=loss_type,
                 )
 
             loss.backward()
@@ -984,16 +1081,19 @@ def main(cfg: DictConfig) -> None:
             print(f"Final Correlation: {final_correlation:.6f}")
             print(f"Final MSE: {final_mse:.6f}")
             print(f"Final MAE: {final_mae:.6f}")
-            print(f"Final Loss: {losses[-1]:.6f}")
+            print(f"Final {loss_type.upper()} Loss: {losses[-1]:.6f}")
 
             # Create comprehensive final plot
             plt.figure(figsize=(20, 12))
+
+            # Determine loss label for final plots
+            loss_label = "LogCosh Loss" if loss_type == "logcosh" else "ICLoss"
 
             # Loss curve
             plt.subplot(3, 4, 1)
             plt.plot(range(1, len(losses) + 1), losses, "b-", linewidth=2)
             plt.xlabel("Epoch")
-            plt.ylabel("LogCosh Loss")
+            plt.ylabel(loss_label)
             plt.title("Training Loss Evolution")
             plt.grid(True)
             plt.yscale("log")
@@ -1147,7 +1247,7 @@ def main(cfg: DictConfig) -> None:
 
             # Add overall title
             plt.suptitle(
-                f"HeteroCellBipartiteDangoGI Training Results - {num_epochs} Epochs",
+                f"HeteroCellBipartiteDangoGI Training Results - {num_epochs} Epochs ({loss_type.upper()} Loss)",
                 fontsize=16,
                 y=0.998,
             )

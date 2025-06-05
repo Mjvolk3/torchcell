@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi
   tags: []
 
 cell_dataset:
@@ -13,12 +13,12 @@ cell_dataset:
       physical,
       regulatory,
       tflink,
-      string12_0_neighborhood,
-      string12_0_fusion,
-      string12_0_cooccurence,
-      string12_0_coexpression,
-      string12_0_experimental,
-      string12_0_database,
+      # string12_0_neighborhood,
+      # string12_0_fusion,
+      # string12_0_cooccurence,
+      # string12_0_coexpression,
+      # string12_0_experimental,
+      # string12_0_database,
     ]
 
   node_embeddings:
@@ -30,18 +30,18 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
-  perturbation_subset_size: 1000 #2.5e4
-  batch_size: 4 #32
-  num_workers: 2
+  is_perturbation_subset: false
+  perturbation_subset_size: null #1000 #2.5e4
+  batch_size: 6 #32 # 4
+  num_workers: 2 # 2 
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 3 # 20 # FLAG
+  max_epochs: 500 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   overfit_batches: 0
 

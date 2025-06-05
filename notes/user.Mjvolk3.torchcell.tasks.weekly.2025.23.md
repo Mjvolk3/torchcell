@@ -2,7 +2,7 @@
 id: tujklzpdde0fdscufqli94n
 title: '23'
 desc: ''
-updated: 1748996659839
+updated: 1749087275616
 created: 1748899404988
 ---
 ## 2025.06.02
@@ -15,11 +15,16 @@ created: 1748899404988
 
 - [x] `hetero_cell_bipartite_dango_gi`  → [[2025.06.03 - Data Updated|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_gi#20250603---data-updated]] → model working
 - [x] [[2025.06.03 - Detailed View of Data For Indexing Based on Phenotype Type|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_gi#20250603---detailed-view-of-data-for-indexing-based-on-phenotype-type]]
-- [ ] Launch model with all graphs on igb biocluster.
-- [ ] Query 006 - All trigenic interaction data.
-- [ ]
-- [ ] Add
+- [x] Launch model with all graphs on igb biocluster. [[2025.06.03 - Launched Experiments|dendron://torchcell/experiments.005-kuzmin2018-tmi.results.hetero_cell_bipartite_dango_gi#20250603---launched-experiments]]
 
+## 2025.06.04
+
+- [x] Icloss support in [[torchcell.models.hetero_cell_bipartite_dango_gi]]
+- [x] Made local prediction more dango like. →  We are seeing global dominate. ![](./assets/images/hetero_cell_bipartite_dango_gi_training_2025-06-04-19-49-43/training_epoch_0221.png) overfitting looking good.
+
+- [ ]
+
+- [ ] Query 006 - All trigenic interaction data.
 - [ ] `hetero_cell_bipartite_dango` - fitness pred
 
 ***

@@ -32,7 +32,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 32 #32
+  batch_size: 6 #32
   num_workers: 4
   pin_memory: false
   prefetch: false
@@ -98,7 +98,7 @@ regression_task:
   lambda_supcr: 0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-3 #1e-5
+    lr: 1e-4 #1e-5
     weight_decay: 1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"

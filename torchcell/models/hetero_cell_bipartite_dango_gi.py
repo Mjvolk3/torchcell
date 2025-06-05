@@ -219,9 +219,9 @@ class GeneInteractionPredictor(nn.Module):
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
     if norm == "layer":
-        return nn.LayerNorm(channels, eps=1e-12)
+        return nn.LayerNorm(channels, eps=1e-5)  # Increased epsilon for better stability
     elif norm == "batch":
-        return nn.BatchNorm1d(channels)
+        return nn.BatchNorm1d(channels, eps=1e-5)  # Also increase batch norm epsilon
     else:
         raise ValueError(f"Unsupported norm type: {norm}")
 
@@ -325,8 +325,9 @@ class GeneInteractionDango(nn.Module):
         # Learnable gene embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
 
-        # Initialize embedding with better bounds
-        nn.init.kaiming_uniform_(self.gene_embedding.weight, a=math.sqrt(5))
+        # Initialize embedding with better bounds and smaller scale for stability
+        # Use smaller initialization to prevent early NaNs
+        nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
 
         # Preprocessor for input embeddings
         self.preprocessor = PreProcessor(

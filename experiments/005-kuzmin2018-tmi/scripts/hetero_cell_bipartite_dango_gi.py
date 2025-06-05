@@ -305,6 +305,9 @@ def main(cfg: DictConfig) -> None:
 
     # Use the gene_multigraph that was already built for the dataset
 
+    # Get local predictor config
+    local_predictor_config = dict(wandb.config["model"].get("local_predictor_config", {}))
+    
     # Instantiate new GeneInteractionDango model using wandb configuration.
     model = GeneInteractionDango(
         gene_num=wandb.config["model"]["gene_num"],
@@ -315,6 +318,7 @@ def main(cfg: DictConfig) -> None:
         norm=wandb.config["model"]["norm"],
         activation=wandb.config["model"]["activation"],
         gene_encoder_config=gene_encoder_config,
+        local_predictor_config=local_predictor_config,
     ).to(device)
 
     # Log parameter counts using the num_parameters property.

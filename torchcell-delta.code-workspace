@@ -11,6 +11,9 @@
         {   "name": "/work/hdd/bbub/mjvolk3/torchcell/",
             "path": "/work/hdd/bbub/mjvolk3/torchcell/"
         },
+        {   "name": "/home/labs/zhao5_lab",
+            "path": "/home/labs/zhao5_lab"
+        },
     ],
     "settings": {
         "dendron.rootDir": ".",

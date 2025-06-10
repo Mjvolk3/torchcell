@@ -2,7 +2,7 @@
 id: x7ehkofwy8zc9ukfyixfjwh
 title: Hetero_cell_bipartite_dango_gi
 desc: ''
-updated: 1749077069898
+updated: 1749521063072
 created: 1749076425856
 ---
 ## 2025.06.03 - Launched Experiments
@@ -54,5 +54,3 @@ slurm id: 1820177
   # string12_0_database,
 ]
 ```
-
-## 2025.06.04 - Experiments

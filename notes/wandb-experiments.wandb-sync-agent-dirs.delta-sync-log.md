@@ -2,7 +2,7 @@
 id: vklq29el6xp7sha974bc2xg
 title: Delta Sync Log
 desc: ''
-updated: 1746819957022
+updated: 1749521020437
 created: 1746817435762
 ---
 `/projects/bbub/mjvolk3/torchcell/torchcell/ /wandb_sync_agent_dirs.sh`
@@ -74,6 +74,3 @@ wandb_sync_agent_dirs \
 /work/hdd/bbub/mjvolk3/torchcell/wandb-experiments/gpub091.delta.ncsa.illinois.edu-6899057_03aaf7a55f7df2f0a8abd13c710ebd3fa81664fdc6f7ba781f36b6fb03ff6d7f \
 /work/hdd/bbub/mjvolk3/torchcell/wandb-experiments/gpub048.delta.ncsa.illinois.edu-6893333_03aaf7a55f7df2f0a8abd13c710ebd3fa81664fdc6f7ba781f36b6fb03ff6d7f
 ```
-
-
-***

@@ -170,6 +170,24 @@ class RegressionTask(L.LightningModule):
             self.log(
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
+        
+        # Log gate weights if available
+        if "gate_weights" in representations:
+            gate_weights = representations["gate_weights"]
+            # Average gate weights across batch
+            avg_gate_weights = gate_weights.mean(dim=0)
+            self.log(
+                f"{stage}/gate_weight_global", 
+                avg_gate_weights[0], 
+                batch_size=batch_size, 
+                sync_dist=True
+            )
+            self.log(
+                f"{stage}/gate_weight_local", 
+                avg_gate_weights[1], 
+                batch_size=batch_size, 
+                sync_dist=True
+            )
 
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)

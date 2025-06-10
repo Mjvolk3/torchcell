@@ -9,7 +9,10 @@ import os
 import os.path as osp
 from collections.abc import Callable
 from enum import Enum, auto
-from typing import Optional, Type
+from typing import Optional, Type, Any
+import fcntl
+import time
+import random
 
 import hypernetx as hnx
 import lmdb
@@ -152,6 +155,91 @@ class Aggregator:
 
 
 class Neo4jCellDataset(Dataset):
+    """Dataset for loading cell data from Neo4j with file locking for DDP support."""
+    
+    @staticmethod
+    def _read_json_with_lock(filepath: str, max_retries: int = 10) -> Any:
+        """Read JSON file with file locking and retry logic."""
+        retry_delay = 0.1  # Start with 100ms
+        
+        for attempt in range(max_retries):
+            try:
+                with open(filepath, 'r') as f:
+                    # Try to acquire shared lock (non-blocking first)
+                    try:
+                        fcntl.flock(f.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    except IOError:
+                        # If non-blocking fails, wait with exponential backoff
+                        if attempt < max_retries - 1:
+                            sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                            time.sleep(sleep_time)
+                            continue
+                        else:
+                            # Last attempt: block until we get the lock
+                            fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+                    
+                    try:
+                        # Read the file content
+                        content = f.read()
+                        if not content.strip():
+                            # Empty file, retry
+                            raise json.JSONDecodeError("Empty file", "", 0)
+                        
+                        return json.loads(content)
+                    finally:
+                        # Always release the lock
+                        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                        
+            except json.JSONDecodeError as e:
+                if attempt < max_retries - 1:
+                    # File might be in the process of being written, retry
+                    sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    raise ValueError(f"Invalid or empty JSON file after {max_retries} attempts: {e}")
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    raise
+        
+        raise ValueError(f"Failed to read {filepath} after {max_retries} attempts")
+    
+    @staticmethod
+    def _write_json_with_lock(filepath: str, data: Any) -> None:
+        """Write JSON file with exclusive lock and atomic rename."""
+        # Ensure directory exists
+        os.makedirs(osp.dirname(filepath), exist_ok=True)
+        
+        temp_path = filepath + f".tmp.{os.getpid()}.{time.time()}"
+        
+        # Write to temporary file first
+        try:
+            with open(temp_path, 'w') as f:
+                # Acquire exclusive lock for writing
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                try:
+                    json.dump(data, f, indent=0)
+                    f.flush()  # Ensure data is written
+                    os.fsync(f.fileno())  # Force write to disk
+                finally:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            
+            # Atomic rename - this is atomic on POSIX systems
+            os.rename(temp_path, filepath)
+            
+        except Exception:
+            # Clean up temp file if something went wrong
+            if osp.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+            raise
+    
     # @profile
     def __init__(
         self,
@@ -307,8 +395,7 @@ class Neo4jCellDataset(Dataset):
     def _load_phenotype_info(self) -> list[PhenotypeType]:
         experiment_types_path = osp.join(self.processed_dir, "experiment_types.json")
         if osp.exists(experiment_types_path):
-            with open(experiment_types_path, "r") as f:
-                experiment_types = json.load(f)
+            experiment_types = self._read_json_with_lock(experiment_types_path)
 
             phenotype_classes = set()
             for exp_type in experiment_types:
@@ -333,9 +420,11 @@ class Neo4jCellDataset(Dataset):
                 for item in data_list:
                     experiment_types.add(item["experiment"]["experiment_type"])
 
-        # Save experiment types to a JSON file
-        with open(osp.join(self.processed_dir, "experiment_types.json"), "w") as f:
-            json.dump(list(experiment_types), f)
+        # Save experiment types to a JSON file with file locking
+        self._write_json_with_lock(
+            osp.join(self.processed_dir, "experiment_types.json"), 
+            list(experiment_types)
+        )
 
         self.close_lmdb()
 
@@ -398,18 +487,67 @@ class Neo4jCellDataset(Dataset):
     # TODO change to query_gene_set
     @property
     def gene_set(self):
-        try:
-            if osp.exists(osp.join(self.processed_dir, "gene_set.json")):
-                with open(osp.join(self.processed_dir, "gene_set.json")) as f:
-                    self._gene_set = set(json.load(f))
-            elif self._gene_set is None:
+        gene_set_path = osp.join(self.processed_dir, "gene_set.json")
+        
+        # Check if file exists
+        if not osp.exists(gene_set_path):
+            if self._gene_set is None:
                 raise ValueError(
                     "gene_set not written during process. "
                     "Please call compute_gene_set in process."
                 )
             return GeneSet(self._gene_set)
-        except json.JSONDecodeError:
-            raise ValueError("Invalid or empty JSON file found.")
+        
+        # Read with file locking and retry logic
+        max_retries = 10
+        retry_delay = 0.1  # Start with 100ms
+        
+        for attempt in range(max_retries):
+            try:
+                with open(gene_set_path, 'r') as f:
+                    # Try to acquire shared lock (non-blocking first)
+                    try:
+                        fcntl.flock(f.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+                    except IOError:
+                        # If non-blocking fails, wait with exponential backoff
+                        if attempt < max_retries - 1:
+                            sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                            time.sleep(sleep_time)
+                            continue
+                        else:
+                            # Last attempt: block until we get the lock
+                            fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+                    
+                    try:
+                        # Read the file content
+                        content = f.read()
+                        if not content.strip():
+                            # Empty file, retry
+                            raise json.JSONDecodeError("Empty file", "", 0)
+                        
+                        self._gene_set = set(json.loads(content))
+                        return GeneSet(self._gene_set)
+                    finally:
+                        # Always release the lock
+                        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                        
+            except json.JSONDecodeError as e:
+                if attempt < max_retries - 1:
+                    # File might be in the process of being written, retry
+                    sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    raise ValueError(f"Invalid or empty JSON file found after {max_retries} attempts: {e}")
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    sleep_time = retry_delay * (2 ** attempt) + random.uniform(0, 0.1)
+                    time.sleep(sleep_time)
+                    continue
+                else:
+                    raise
+        
+        raise ValueError(f"Failed to read gene_set.json after {max_retries} attempts")
 
     @gene_set.setter
     def gene_set(self, value):
@@ -417,9 +555,34 @@ class Neo4jCellDataset(Dataset):
             raise ValueError("Cannot set an empty or None value for gene_set")
         if not osp.exists(self.processed_dir):
             os.makedirs(self.processed_dir)
-        with open(osp.join(self.processed_dir, "gene_set.json"), "w") as f:
-            json.dump(list(sorted(value)), f, indent=0)
-        self._gene_set = value
+        
+        gene_set_path = osp.join(self.processed_dir, "gene_set.json")
+        temp_path = gene_set_path + f".tmp.{os.getpid()}.{time.time()}"
+        
+        # Write to temporary file first
+        try:
+            with open(temp_path, 'w') as f:
+                # Acquire exclusive lock for writing
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                try:
+                    json.dump(list(sorted(value)), f, indent=0)
+                    f.flush()  # Ensure data is written
+                    os.fsync(f.fileno())  # Force write to disk
+                finally:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            
+            # Atomic rename - this is atomic on POSIX systems
+            os.rename(temp_path, gene_set_path)
+            self._gene_set = value
+            
+        except Exception:
+            # Clean up temp file if something went wrong
+            if osp.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except:
+                    pass
+            raise
 
     def get(self, idx):
         if self.env is None:
@@ -593,17 +756,14 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def phenotype_label_index(self) -> dict[str, list[int]]:
-        if osp.exists(osp.join(self.processed_dir, "phenotype_label_index.json")):
-            with open(
-                osp.join(self.processed_dir, "phenotype_label_index.json"), "r"
-            ) as file:
-                self._phenotype_label_index = json.load(file)
+        filepath = osp.join(self.processed_dir, "phenotype_label_index.json")
+        
+        if osp.exists(filepath):
+            self._phenotype_label_index = self._read_json_with_lock(filepath)
         else:
             self._phenotype_label_index = self.compute_phenotype_label_index()
-            with open(
-                osp.join(self.processed_dir, "phenotype_label_index.json"), "w"
-            ) as file:
-                json.dump(self._phenotype_label_index, file)
+            self._write_json_with_lock(filepath, self._phenotype_label_index)
+        
         return self._phenotype_label_index
 
     def compute_dataset_name_index(self) -> dict[str, list[int]]:
@@ -649,17 +809,14 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def dataset_name_index(self) -> dict[str, list[int]]:
-        if osp.exists(osp.join(self.processed_dir, "dataset_name_index.json")):
-            with open(
-                osp.join(self.processed_dir, "dataset_name_index.json"), "r"
-            ) as file:
-                self._dataset_name_index = json.load(file)
+        filepath = osp.join(self.processed_dir, "dataset_name_index.json")
+        
+        if osp.exists(filepath):
+            self._dataset_name_index = self._read_json_with_lock(filepath)
         else:
             self._dataset_name_index = self.compute_dataset_name_index()
-            with open(
-                osp.join(self.processed_dir, "dataset_name_index.json"), "w"
-            ) as file:
-                json.dump(self._dataset_name_index, file)
+            self._write_json_with_lock(filepath, self._dataset_name_index)
+        
         return self._dataset_name_index
 
     def compute_perturbation_count_index(self) -> dict[int, list[int]]:
@@ -707,24 +864,20 @@ class Neo4jCellDataset(Dataset):
 
     @property
     def perturbation_count_index(self) -> dict[int, list[int]]:
-        if osp.exists(osp.join(self.processed_dir, "perturbation_count_index.json")):
-            with open(
-                osp.join(self.processed_dir, "perturbation_count_index.json"), "r"
-            ) as file:
-                self._perturbation_count_index = json.load(file)
-                # Convert string keys back to integers
-                self._perturbation_count_index = {
-                    int(k): v for k, v in self._perturbation_count_index.items()
-                }
+        filepath = osp.join(self.processed_dir, "perturbation_count_index.json")
+        
+        if osp.exists(filepath):
+            self._perturbation_count_index = self._read_json_with_lock(filepath)
+            # Convert string keys back to integers
+            self._perturbation_count_index = {
+                int(k): v for k, v in self._perturbation_count_index.items()
+            }
         else:
             self._perturbation_count_index = self.compute_perturbation_count_index()
-            with open(
-                osp.join(self.processed_dir, "perturbation_count_index.json"), "w"
-            ) as file:
-                # Convert integer keys to strings for JSON serialization
-                json.dump(
-                    {str(k): v for k, v in self._perturbation_count_index.items()}, file
-                )
+            # Convert integer keys to strings for JSON serialization
+            data_to_write = {str(k): v for k, v in self._perturbation_count_index.items()}
+            self._write_json_with_lock(filepath, data_to_write)
+        
         return self._perturbation_count_index
 
     def compute_is_any_perturbed_gene_index(self) -> dict[str, list[int]]:
@@ -774,17 +927,15 @@ class Neo4jCellDataset(Dataset):
 
         # Try to load from disk cache
         if osp.exists(cache_path):
-            with open(cache_path, "r") as file:
-                self._is_any_perturbed_gene_index_cache = json.load(file)
-                return self._is_any_perturbed_gene_index_cache
+            self._is_any_perturbed_gene_index_cache = self._read_json_with_lock(cache_path)
+            return self._is_any_perturbed_gene_index_cache
 
         # Compute if no cache exists
         result = self.compute_is_any_perturbed_gene_index()
 
         # Save to both memory and disk cache
         self._is_any_perturbed_gene_index_cache = result
-        with open(cache_path, "w") as file:
-            json.dump(result, file)
+        self._write_json_with_lock(cache_path, result)
 
         return result
 

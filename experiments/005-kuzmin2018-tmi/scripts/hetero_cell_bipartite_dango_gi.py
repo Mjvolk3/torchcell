@@ -245,6 +245,8 @@ def main(cfg: DictConfig) -> None:
     #         if isinstance(value, (int, float)) and key != "strategy":
     #             wandb.log({f"standardization/{label}/{key}": value})
     # TODO - Check norms work - End
+    forward_transform = None
+    inverse_transform = None
 
     seed = 42
     data_module = CellDataModule(
@@ -306,8 +308,10 @@ def main(cfg: DictConfig) -> None:
     # Use the gene_multigraph that was already built for the dataset
 
     # Get local predictor config
-    local_predictor_config = dict(wandb.config["model"].get("local_predictor_config", {}))
-    
+    local_predictor_config = dict(
+        wandb.config["model"].get("local_predictor_config", {})
+    )
+
     # Instantiate new GeneInteractionDango model using wandb configuration.
     model = GeneInteractionDango(
         gene_num=wandb.config["model"]["gene_num"],
@@ -341,7 +345,8 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
+    if wandb.config.regression_task ["is_weighted_phenotype_loss"]:
+        # BUG
         phenotype_counts = {}
         for phase in ["train", "val", "test"]:
             phenotypes = getattr(data_module.index_details, phase).phenotype_label_index
@@ -352,7 +357,7 @@ def main(cfg: DictConfig) -> None:
             [1 - v / sum(phenotype_counts.values()) for v in phenotype_counts.values()]
         ).to(device)
     else:
-        weights = torch.ones(2).to(device)
+        weights = torch.ones(1).to(device)
 
     if wandb.config.regression_task["loss"] == "icloss":
         loss_func = ICLoss(

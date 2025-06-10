@@ -4,12 +4,11 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test
   tags: []
 
 cell_dataset:
-  graphs:
-    [
+  graphs: [
       physical,
       regulatory,
       tflink,
@@ -41,7 +40,7 @@ trainer:
   max_epochs: 500 # 20 # FLAG
   strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0
 
@@ -88,8 +87,9 @@ model:
     head_norm: ${norms}
   # Dango-like local predictor config
   local_predictor_config:
-    num_attention_layers: 2  # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 4  # Number of attention heads (matching Dango)
+    num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
+    num_heads: 4 # Number of attention heads (matching Dango)
+    combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
   loss: icloss  # Options: logcosh, icloss

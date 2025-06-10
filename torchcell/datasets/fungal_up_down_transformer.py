@@ -51,7 +51,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             if not os.path.exists(self.processed_paths[0]):
                 self.transformer = self.initialize_model()
                 self.process()
-            self.data, self.slices = torch.load(self.processed_paths[0])
+            self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:

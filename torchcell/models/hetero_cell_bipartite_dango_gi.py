@@ -58,32 +58,35 @@ class DangoLikeHyperSAGNN(nn.Module):
         self.num_heads = num_heads
         self.num_layers = num_layers
         self.head_dim = hidden_dim // num_heads
-        
-        assert hidden_dim % num_heads == 0, f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
-        
+
+        assert (
+            hidden_dim % num_heads == 0
+        ), f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+
         # Static embedding layer (like Dango)
         self.static_embedding = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU()
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU()
         )
-        
+
         # Create multiple attention layers
         self.attention_layers = nn.ModuleList()
         self.beta_params = nn.ParameterList()  # Store ReZero parameters separately
-        
+
         for i in range(num_layers):
-            layer = nn.ModuleDict({
-                'q_proj': nn.Linear(hidden_dim, hidden_dim),
-                'k_proj': nn.Linear(hidden_dim, hidden_dim),
-                'v_proj': nn.Linear(hidden_dim, hidden_dim),
-                'out_proj': nn.Linear(hidden_dim, hidden_dim),
-            })
+            layer = nn.ModuleDict(
+                {
+                    "q_proj": nn.Linear(hidden_dim, hidden_dim),
+                    "k_proj": nn.Linear(hidden_dim, hidden_dim),
+                    "v_proj": nn.Linear(hidden_dim, hidden_dim),
+                    "out_proj": nn.Linear(hidden_dim, hidden_dim),
+                }
+            )
             self.attention_layers.append(layer)
             # Create ReZero parameter for this layer
             beta = nn.Parameter(torch.zeros(1))
             nn.init.constant_(beta, 0.01)  # Initialize to small value like Dango
             self.beta_params.append(beta)
-        
+
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, gene_embeddings, batch=None):
@@ -97,79 +100,85 @@ class DangoLikeHyperSAGNN(nn.Module):
         """
         # Compute static embeddings
         static_embeddings = self.static_embedding(gene_embeddings)
-        
+
         # Initialize dynamic embeddings
         dynamic_embeddings = gene_embeddings
-        
+
         # Apply attention layers
         for i, layer in enumerate(self.attention_layers):
             if batch is not None:
                 # Process each batch separately
                 unique_batches = batch.unique()
                 output_embeddings = torch.zeros_like(dynamic_embeddings)
-                
+
                 for b in unique_batches:
                     mask = batch == b
                     batch_embeddings = dynamic_embeddings[mask]
-                    batch_output = self._apply_attention_layer(batch_embeddings, layer, self.beta_params[i])
+                    batch_output = self._apply_attention_layer(
+                        batch_embeddings, layer, self.beta_params[i]
+                    )
                     output_embeddings[mask] = batch_output
-                
+
                 dynamic_embeddings = output_embeddings
             else:
                 # Single batch processing
-                dynamic_embeddings = self._apply_attention_layer(dynamic_embeddings, layer, self.beta_params[i])
-        
+                dynamic_embeddings = self._apply_attention_layer(
+                    dynamic_embeddings, layer, self.beta_params[i]
+                )
+
         return static_embeddings, dynamic_embeddings
 
     def _apply_attention_layer(self, x, layer, beta):
         """Apply a single attention layer with multi-head attention"""
         batch_size = x.size(0)
-        
+
         # Handle special case of single gene (no attention possible)
         if batch_size <= 1:
             return x
-        
+
         # Linear projections
-        q = layer['q_proj'](x)  # [batch_size, hidden_dim]
-        k = layer['k_proj'](x)  # [batch_size, hidden_dim]
-        v = layer['v_proj'](x)  # [batch_size, hidden_dim]
-        
+        q = layer["q_proj"](x)  # [batch_size, hidden_dim]
+        k = layer["k_proj"](x)  # [batch_size, hidden_dim]
+        v = layer["v_proj"](x)  # [batch_size, hidden_dim]
+
         # Reshape for multi-head attention
-        q = q.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)  # [num_heads, batch_size, head_dim]
+        q = q.view(batch_size, self.num_heads, self.head_dim).transpose(
+            0, 1
+        )  # [num_heads, batch_size, head_dim]
         k = k.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)
         v = v.view(batch_size, self.num_heads, self.head_dim).transpose(0, 1)
-        
+
         # Calculate attention scores
-        attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        attention_scores = torch.matmul(q, k.transpose(-2, -1)) / (self.head_dim**0.5)
         # Shape: [num_heads, batch_size, batch_size]
-        
+
         # Create mask for self-attention (exclude self)
         self_mask = torch.eye(batch_size, dtype=torch.bool, device=x.device)
         self_mask = self_mask.unsqueeze(0).expand(self.num_heads, -1, -1)
-        
+
         # Apply mask
-        attention_scores.masked_fill_(self_mask, -float('inf'))
-        
+        attention_scores.masked_fill_(self_mask, -float("inf"))
+
         # Apply softmax
         attention_weights = F.softmax(attention_scores, dim=-1)
-        
+
         # Handle potential NaNs from empty rows (single gene case)
         attention_weights = torch.nan_to_num(attention_weights, nan=0.0)
-        
+
         # Apply dropout
         attention_weights = self.dropout(attention_weights)
-        
+
         # Apply attention to values
         out = torch.matmul(attention_weights, v)
         # Shape: [num_heads, batch_size, head_dim]
-        
+
         # Reshape back to [batch_size, hidden_dim]
         out = out.transpose(0, 1).contiguous().view(batch_size, self.hidden_dim)
-        
+
         # Apply output projection
-        out = layer['out_proj'](out)
+        out = layer["out_proj"](out)
         out = self.dropout(out)
-        
+
         # Apply ReZero connection
         return x + beta * out
 
@@ -182,7 +191,7 @@ class GeneInteractionPredictor(nn.Module):
             hidden_dim=hidden_dim,
             num_heads=num_heads,
             num_layers=num_layers,
-            dropout=dropout
+            dropout=dropout,
         )
         # Prediction layer to compute scores from squared differences
         self.prediction_layer = nn.Linear(hidden_dim, 1)
@@ -210,7 +219,9 @@ class GeneInteractionPredictor(nn.Module):
         if batch is not None:
             # Use scatter_mean for efficient batched averaging
             num_batches = batch.max().item() + 1
-            interaction_scores = scatter_mean(gene_scores, batch, dim=0, dim_size=num_batches)
+            interaction_scores = scatter_mean(
+                gene_scores, batch, dim=0, dim_size=num_batches
+            )
             return interaction_scores.unsqueeze(-1)  # [num_batches, 1]
         else:
             # Single batch case
@@ -219,7 +230,9 @@ class GeneInteractionPredictor(nn.Module):
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
     if norm == "layer":
-        return nn.LayerNorm(channels, eps=1e-5)  # Increased epsilon for better stability
+        return nn.LayerNorm(
+            channels, eps=1e-5
+        )  # Increased epsilon for better stability
     elif norm == "batch":
         return nn.BatchNorm1d(channels, eps=1e-5)  # Also increase batch norm epsilon
     else:
@@ -322,6 +335,12 @@ class GeneInteractionDango(nn.Module):
         # Extract graph names from the multigraph
         self.graph_names = list(gene_multigraph.keys())
 
+        # Get combination method from config
+        local_predictor_config = local_predictor_config or {}
+        self.combination_method = local_predictor_config.get(
+            "combination_method", "gating"
+        )
+
         # Learnable gene embeddings
         self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
 
@@ -372,13 +391,13 @@ class GeneInteractionDango(nn.Module):
 
         # Get local predictor config - now as a separate parameter
         local_predictor_config = local_predictor_config or {}
-        
+
         # Gene interaction predictor for perturbed genes with Dango-like architecture
         self.gene_interaction_predictor = GeneInteractionPredictor(
             hidden_dim=hidden_channels,
-            num_heads=local_predictor_config.get('num_heads', 4),
-            num_layers=local_predictor_config.get('num_attention_layers', 2),
-            dropout=dropout
+            num_heads=local_predictor_config.get("num_heads", 4),
+            num_layers=local_predictor_config.get("num_attention_layers", 2),
+            dropout=dropout,
         )
 
         # Global aggregator for proper aggregation
@@ -394,13 +413,16 @@ class GeneInteractionDango(nn.Module):
             nn.Linear(hidden_channels, 1),
         )
 
-        # MLP for gating weights
-        self.gate_mlp = nn.Sequential(
-            nn.Linear(2, hidden_channels),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_channels, 2),
-        )
+        # MLP for gating weights (only if using gating combination method)
+        if self.combination_method == "gating":
+            self.gate_mlp = nn.Sequential(
+                nn.Linear(2, hidden_channels),
+                nn.ReLU(),
+                nn.Dropout(dropout),
+                nn.Linear(hidden_channels, 2),
+            )
+        else:
+            self.gate_mlp = None
 
         # Initialize all weights properly
         self._init_weights()
@@ -599,34 +621,53 @@ class GeneInteractionDango(nn.Module):
         if local_interaction.dim() == 1:
             local_interaction = local_interaction.unsqueeze(1)
 
-        # Stack the predictions
-        pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
+        # Combine predictions based on combination method
+        if self.combination_method == "gating":
+            # Stack the predictions
+            pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
 
-        # Check for NaNs in prediction stack
-        if torch.isnan(pred_stack).any():
-            raise RuntimeError("NaN detected in prediction stack")
+            # Check for NaNs in prediction stack
+            if torch.isnan(pred_stack).any():
+                raise RuntimeError("NaN detected in prediction stack")
 
-        # Use MLP to get logits for gating, then apply softmax
-        gate_logits = self.gate_mlp(pred_stack)
+            # Use MLP to get logits for gating, then apply softmax
+            gate_logits = self.gate_mlp(pred_stack)
 
-        # Check for NaNs in gate logits
-        if torch.isnan(gate_logits).any():
-            raise RuntimeError("NaN detected in gate logits")
+            # Check for NaNs in gate logits
+            if torch.isnan(gate_logits).any():
+                raise RuntimeError("NaN detected in gate logits")
 
-        gate_weights = F.softmax(gate_logits, dim=1)
+            gate_weights = F.softmax(gate_logits, dim=1)
 
-        # Check for NaNs in gate weights
-        if torch.isnan(gate_weights).any():
-            raise RuntimeError("NaN detected in gate weights after softmax")
+            # Check for NaNs in gate weights
+            if torch.isnan(gate_weights).any():
+                raise RuntimeError("NaN detected in gate weights after softmax")
 
-        # Element-wise product of predictions and weights, then sum
-        weighted_preds = pred_stack * gate_weights
+            # Element-wise product of predictions and weights, then sum
+            weighted_preds = pred_stack * gate_weights
 
-        # Check for NaNs in weighted predictions
-        if torch.isnan(weighted_preds).any():
-            raise RuntimeError("NaN detected in weighted predictions")
+            # Check for NaNs in weighted predictions
+            if torch.isnan(weighted_preds).any():
+                raise RuntimeError("NaN detected in weighted predictions")
 
-        gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
+            gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
+
+        elif self.combination_method == "concat":
+            # Fixed equal weighting (0.5 each)
+            gene_interaction = 0.5 * global_interaction + 0.5 * local_interaction
+
+            # Create fixed gate weights for consistency in logging
+            batch_size = global_interaction.size(0)
+            gate_weights = (
+                torch.ones(batch_size, 2, device=global_interaction.device) * 0.5
+            )
+
+            # Check for NaNs
+            if torch.isnan(gene_interaction).any():
+                raise RuntimeError("NaN detected in concatenated gene interaction")
+
+        else:
+            raise ValueError(f"Unknown combination method: {self.combination_method}")
 
         # Final check for NaNs in gene interaction output
         if torch.isnan(gene_interaction).any():
@@ -658,8 +699,12 @@ class GeneInteractionDango(nn.Module):
             "global_interaction_predictor": count_params(
                 self.global_interaction_predictor
             ),
-            "gate_mlp": count_params(self.gate_mlp),
         }
+
+        # Only count gate_mlp if it exists
+        if self.gate_mlp is not None:
+            counts["gate_mlp"] = count_params(self.gate_mlp)
+
         counts["total"] = sum(counts.values())
         return counts
 
@@ -715,9 +760,18 @@ def main(cfg: DictConfig) -> None:
 
     # Initialize the gene interaction model
     # Ensure configs are properly converted
-    gene_encoder_config_dict = OmegaConf.to_container(cfg.model.gene_encoder_config, resolve=True) if cfg.model.gene_encoder_config else {}
-    local_predictor_config_dict = OmegaConf.to_container(cfg.model.local_predictor_config, resolve=True) if hasattr(cfg.model, 'local_predictor_config') and cfg.model.local_predictor_config else {}
-    
+    gene_encoder_config_dict = (
+        OmegaConf.to_container(cfg.model.gene_encoder_config, resolve=True)
+        if cfg.model.gene_encoder_config
+        else {}
+    )
+    local_predictor_config_dict = (
+        OmegaConf.to_container(cfg.model.local_predictor_config, resolve=True)
+        if hasattr(cfg.model, "local_predictor_config")
+        and cfg.model.local_predictor_config
+        else {}
+    )
+
     model = GeneInteractionDango(
         gene_num=cfg.model.gene_num,
         hidden_channels=cfg.model.hidden_channels,
@@ -746,13 +800,15 @@ def main(cfg: DictConfig) -> None:
             weights = torch.ones(1).to(device)
         else:
             weights = None
-        
+
         criterion = ICLoss(
             lambda_dist=cfg.regression_task.get("lambda_dist", 0.1),
             lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
-            weights=weights
+            weights=weights,
         )
-        print(f"Using ICLoss with lambda_dist={cfg.regression_task.lambda_dist}, lambda_supcr={cfg.regression_task.lambda_supcr}")
+        print(
+            f"Using ICLoss with lambda_dist={cfg.regression_task.lambda_dist}, lambda_supcr={cfg.regression_task.lambda_supcr}"
+        )
     else:
         raise ValueError(f"Unknown loss type: {loss_type}")
 
@@ -945,7 +1001,7 @@ def main(cfg: DictConfig) -> None:
 
             # Forward pass
             predictions, representations = model(cell_graph, batch)
-            
+
             # Handle different loss functions
             if isinstance(criterion, LogCoshLoss):
                 loss = criterion(predictions.squeeze(), y)
@@ -954,25 +1010,27 @@ def main(cfg: DictConfig) -> None:
                 z_p = representations.get("z_p")
                 if z_p is None:
                     raise ValueError("ICLoss requires z_p from model representations")
-                
+
                 # ICLoss expects inputs with shape [batch_size, num_phenotypes]
                 # For gene interaction only, we need to add a dummy dimension
                 pred_reshaped = predictions.squeeze()
                 if pred_reshaped.dim() == 0:
                     pred_reshaped = pred_reshaped.unsqueeze(0)
                 pred_reshaped = pred_reshaped.unsqueeze(1)  # [batch_size, 1]
-                
+
                 y_reshaped = y
                 if y_reshaped.dim() == 0:
                     y_reshaped = y_reshaped.unsqueeze(0)
                 y_reshaped = y_reshaped.unsqueeze(1)  # [batch_size, 1]
-                
+
                 loss_output = criterion(pred_reshaped, y_reshaped, z_p)
                 # ICLoss returns tuple (loss, loss_dict)
                 loss = loss_output[0]
                 loss_dict = loss_output[1]
                 # You can log additional loss components if needed
-                print(f"  ICLoss components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}")
+                print(
+                    f"  ICLoss components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
+                )
             else:
                 loss = criterion(predictions.squeeze(), y)
 

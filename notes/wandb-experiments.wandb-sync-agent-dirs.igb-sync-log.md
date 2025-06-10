@@ -2,7 +2,7 @@
 id: rgfn2j7w3chl5x7xbdqbr3o
 title: Igb Sync Log
 desc: ''
-updated: 1747420110841
+updated: 1749521392403
 created: 1746817428349
 ---
 oldest at top
@@ -573,4 +573,15 @@ wandb_sync_agent_dirs \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794844_b54f5305d210aa837031cacb095243c23cbd5eaec7d7c7f7654134776046e7db \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794847_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794848_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c
+```
+
+## 2025.06.09 - HeteroCell Bipartite Dango GI
+
+[[2025.06.03 - Launched Experiments|dendron://torchcell/experiments.005-kuzmin2018-tmi.results.hetero_cell_bipartite_dango_gi#20250603---launched-experiments]]
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820165_ad761e75b14ddcb26bd5aab313e0d5691405b1ba3a6fbd05222ed13d5a5f2fa6 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820176_89d0a4eb84b1aedd9eb45b9132c919b7724d25cc7ba9e2d08256ee779731ea4a \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820177_cd5891068c7fae5e4e25310459bdb87b34c505b875d03bacddd2208472b05c88
 ```

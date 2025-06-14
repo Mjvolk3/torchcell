@@ -8,8 +8,7 @@ wandb:
   tags: []
 
 cell_dataset:
-  graphs:
-    [
+  graphs: [
       physical,
       regulatory,
       # tflink,
@@ -32,7 +31,7 @@ transforms:
   forward_transform:
     normalization:
       gene_interaction:
-        strategy: "standard"  # Options: standard, minmax, robust
+        strategy: "standard" # Options: standard, minmax, robust
 
 profiler:
   is_pytorch: true

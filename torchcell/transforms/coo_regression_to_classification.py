@@ -109,6 +109,13 @@ class COOLabelNormalizationTransform(BaseTransform):
         # Clone the phenotype values to ensure we can modify them
         new_phenotype_values = data["gene"].phenotype_values.clone()
         
+        # Handle scalar tensors by ensuring at least 1D
+        if new_phenotype_values.dim() == 0:
+            new_phenotype_values = new_phenotype_values.unsqueeze(0)
+            is_scalar = True
+        else:
+            is_scalar = False
+        
         # Store original values if not already stored
         if not hasattr(data["gene"], "phenotype_values_original"):
             data["gene"].phenotype_values_original = data["gene"].phenotype_values.clone()
@@ -133,6 +140,9 @@ class COOLabelNormalizationTransform(BaseTransform):
             new_phenotype_values[mask] = normalized_values
 
         # Update the data with normalized values
+        # Convert back to scalar if it was originally scalar
+        if is_scalar:
+            new_phenotype_values = new_phenotype_values.squeeze(0)
         data["gene"].phenotype_values = new_phenotype_values
 
         return data
@@ -151,6 +161,13 @@ class COOLabelNormalizationTransform(BaseTransform):
 
         # Clone the phenotype values to ensure we can modify them
         new_phenotype_values = data["gene"].phenotype_values.clone()
+        
+        # Handle scalar tensors by ensuring at least 1D
+        if new_phenotype_values.dim() == 0:
+            new_phenotype_values = new_phenotype_values.unsqueeze(0)
+            is_scalar = True
+        else:
+            is_scalar = False
 
         # Process each configured label
         for label in self.label_configs:
@@ -172,6 +189,9 @@ class COOLabelNormalizationTransform(BaseTransform):
             new_phenotype_values[mask] = denormalized_values
 
         # Update the data with denormalized values
+        # Convert back to scalar if it was originally scalar
+        if is_scalar:
+            new_phenotype_values = new_phenotype_values.squeeze(0)
         data["gene"].phenotype_values = new_phenotype_values
 
         return data
@@ -392,6 +412,14 @@ class COOLabelBinningTransform(BaseTransform):
             # In batch mode, all items should have the same phenotype types
             phenotype_types = phenotype_types[0]
 
+        # Handle scalar tensors by ensuring at least 1D
+        phenotype_values = data["gene"].phenotype_values
+        if phenotype_values.dim() == 0:
+            phenotype_values = phenotype_values.unsqueeze(0)
+            is_scalar = True
+        else:
+            is_scalar = False
+
         # We need to handle the binning differently for COO format
         # Since binning changes the dimensionality, we'll need to reorganize the data
         
@@ -412,7 +440,7 @@ class COOLabelBinningTransform(BaseTransform):
                 continue
 
             # Get values and indices for this phenotype
-            values = data["gene"].phenotype_values[mask]
+            values = phenotype_values[mask]
             sample_indices = data["gene"].phenotype_sample_indices[mask]
             
             # Get binning parameters
@@ -478,6 +506,14 @@ class COOLabelBinningTransform(BaseTransform):
             # In batch mode, all items should have the same phenotype types
             phenotype_types = phenotype_types[0]
         
+        # Handle scalar tensors by ensuring at least 1D
+        phenotype_values = data["gene"].phenotype_values
+        if phenotype_values.dim() == 0:
+            phenotype_values = phenotype_values.unsqueeze(0)
+            is_scalar = True
+        else:
+            is_scalar = False
+        
         # Group by original phenotype (before binning)
         phenotype_groups = {}
         for i, ptype in enumerate(phenotype_types):
@@ -521,7 +557,7 @@ class COOLabelBinningTransform(BaseTransform):
                     mask = (data["gene"].phenotype_type_indices == bin_idx) & \
                            (data["gene"].phenotype_sample_indices == sample_idx)
                     if mask.sum() > 0:
-                        bin_values.append(data["gene"].phenotype_values[mask][0])
+                        bin_values.append(phenotype_values[mask][0])
                     else:
                         bin_values.append(torch.tensor(0.0))
                 

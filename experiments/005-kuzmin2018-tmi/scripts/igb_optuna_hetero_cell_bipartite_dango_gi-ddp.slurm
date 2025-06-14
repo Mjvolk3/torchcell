@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -p cabbi
-#SBATCH --mem=120g
+#SBATCH --mem=400g #120g
 #SBATCH -N 1
-#SBATCH --ntasks=1
+#SBATCH --ntasks=4
 #SBATCH --cpus-per-task=2
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH --job-name=HCPD
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
@@ -23,7 +23,7 @@ export MASTER_ADDR=$(hostname)
 export MASTER_PORT=$(shuf -i 10000-65500 -n 1)
 
 # Launch with srun to ensure proper process distribution
-srun --ntasks-per-node=1 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
+srun --ntasks-per-node=4 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
 source $HOME/miniconda3/bin/activate
 conda activate torchcell
 python /home/a-m/mjvolk3/projects/torchcell/experiments/005-kuzmin2018-tmi/scripts/hetero_cell_bipartite_dango_gi.py

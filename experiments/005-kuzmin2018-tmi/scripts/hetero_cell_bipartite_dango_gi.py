@@ -4,6 +4,7 @@
 # Test file: experiments/005-kuzmin2018-tmi/scripts/test_hetero_cell_bipartite_dango_gi.py
 
 
+
 import hashlib
 import json
 import logging
@@ -16,9 +17,10 @@ import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.transforms.regression_to_classification import (
-    LabelNormalizationTransform,
-    InverseCompose,
+from torchcell.transforms.coo_regression_to_classification import (
+    COOLabelNormalizationTransform,
+    COOLabelBinningTransform,
+    COOInverseCompose,
 )
 from torch_geometric.transforms import Compose
 from torchcell.data.graph_processor import SubgraphRepresentation
@@ -198,56 +200,92 @@ def main(cfg: DictConfig) -> None:
         DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build"
     )
 
-    dataset = Neo4jCellDataset(
-        root=dataset_root,
-        query=query,
-        gene_set=genome.gene_set,
-        graphs=gene_multigraph,
-        incidence_graphs=incidence_graphs,
-        node_embeddings=node_embeddings,
-        converter=None,
-        deduplicator=MeanExperimentDeduplicator,
-        aggregator=GenotypeAggregator,
-        graph_processor=graph_processor,
-    )
-
-    # TODO - Check norms work - Start
-    # After creating dataset and before creating data_module
-    # Configure label normalization
-    norm_configs = {
-        # "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
-        "gene_interaction": {"strategy": "standard"}  # z-score: (x - mean) / std
-    }
-
-    # Create the transform
-    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
-    inverse_normalize_transform = InverseCompose([normalize_transform])
-
-    # Apply transform to dataset
-    dataset.transform = normalize_transform
-
-    # Pass transforms to the RegressionTask
-    forward_transform = normalize_transform
-    inverse_transform = inverse_normalize_transform
-
-    # Print normalization parameters
-    for label, stats in normalize_transform.stats.items():
-        print(f"Normalization parameters for {label}:")
-        for key, value in stats.items():
-            if isinstance(value, (int, float)) and key != "strategy":
-                print(f"  {key}: {value:.6f}")
-            else:
-                print(f"  {key}: {value}")
-
-    # Log standardization parameters to wandb
-    for label, stats in normalize_transform.stats.items():
-        for key, value in stats.items():
-            if isinstance(value, (int, float)) and key != "strategy":
-                wandb.log({f"standardization/{label}/{key}": value})
-    # TODO - Check norms work - End
+    # Initialize transforms based on configuration
     forward_transform = None
     inverse_transform = None
-
+    
+    if wandb.config.transforms.get("use_transforms", False):
+        print("\nInitializing transforms from configuration...")
+        transform_config = wandb.config.transforms.get("forward_transform", {})
+        
+        transforms_list = []
+        norm_transform = None
+        
+        # First create the dataset without transforms to get label statistics
+        dataset = Neo4jCellDataset(
+            root=dataset_root,
+            query=query,
+            gene_set=genome.gene_set,
+            graphs=gene_multigraph,
+            incidence_graphs=incidence_graphs,
+            node_embeddings=node_embeddings,
+            converter=None,
+            deduplicator=MeanExperimentDeduplicator,
+            aggregator=GenotypeAggregator,
+            graph_processor=graph_processor,
+            transform=None,  # No transform initially
+        )
+        
+        # Normalization transform
+        if "normalization" in transform_config:
+            norm_config = transform_config["normalization"]
+            norm_transform = COOLabelNormalizationTransform(dataset, norm_config)
+            transforms_list.append(norm_transform)
+            print(f"Added normalization transform for: {list(norm_config.keys())}")
+            
+            # Print normalization parameters
+            for label, stats in norm_transform.stats.items():
+                print(f"Normalization parameters for {label}:")
+                for key, value in stats.items():
+                    if isinstance(value, (int, float)) and key != "strategy":
+                        print(f"  {key}: {value:.6f}")
+                    else:
+                        print(f"  {key}: {value}")
+        
+        # Binning transform
+        if "binning" in transform_config:
+            bin_config = transform_config["binning"]
+            bin_transform = COOLabelBinningTransform(dataset, bin_config, norm_transform)
+            transforms_list.append(bin_transform)
+            print(f"Added binning transform for: {list(bin_config.keys())}")
+            
+            # Print binning info
+            for label in bin_config:
+                bin_info = bin_transform.get_bin_info(label)
+                print(f"Binning parameters for {label}:")
+                print(f"  strategy: {bin_info['strategy']}")
+                print(f"  num_bins: {len(bin_info['bin_edges']) - 1}")
+                print(f"  bin_edges: {bin_info['bin_edges']}")
+        
+        if transforms_list:
+            forward_transform = Compose(transforms_list)
+            inverse_transform = COOInverseCompose(transforms_list)
+            print("Transforms initialized successfully")
+            
+            # Log transform parameters to wandb
+            if "normalization" in transform_config:
+                for label, stats in norm_transform.stats.items():
+                    for key, value in stats.items():
+                        if isinstance(value, (int, float)) and key != "strategy":
+                            wandb.log({f"normalization/{label}/{key}": value})
+            
+            # Set the forward transform on the dataset
+            dataset.transform = forward_transform
+    else:
+        # Create dataset without transforms if not using transforms
+        dataset = Neo4jCellDataset(
+            root=dataset_root,
+            query=query,
+            gene_set=genome.gene_set,
+            graphs=gene_multigraph,
+            incidence_graphs=incidence_graphs,
+            node_embeddings=node_embeddings,
+            converter=None,
+            deduplicator=MeanExperimentDeduplicator,
+            aggregator=GenotypeAggregator,
+            graph_processor=graph_processor,
+            transform=None,
+        )
     seed = 42
     data_module = CellDataModule(
         dataset=dataset,
@@ -388,7 +426,6 @@ def main(cfg: DictConfig) -> None:
                 "clip_grad_norm_max_norm"
             ],
             inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
             plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
             grad_accumulation_schedule=wandb.config["regression_task"][
@@ -415,7 +452,6 @@ def main(cfg: DictConfig) -> None:
             ],
             device=device,
             inverse_transform=inverse_transform,
-            forward_transform=forward_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
         )
 
@@ -469,13 +505,6 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     import multiprocessing as mp
-    import random
-    import time
-
-    # Random delay between 0-90 seconds
-    # delay = random.uniform(0, 90)
-    # print(f"Delaying job start by {delay:.2f} seconds to avoid GPU contention")
-    # time.sleep(delay)
 
     mp.set_start_method("spawn", force=True)
     main()

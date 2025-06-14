@@ -33,7 +33,6 @@ class RegressionTask(L.LightningModule):
         loss_func: nn.Module = None,
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
         inverse_transform: Optional[nn.Module] = None,
     ):
         super().__init__()
@@ -200,15 +199,22 @@ class RegressionTask(L.LightningModule):
         # Handle inverse transform if available
         inv_predictions = predictions.clone()
         if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
-            # Create a temp HeteroData object with predictions
+            # Create a temp HeteroData object with predictions in COO format
             temp_data = HeteroData()
-            temp_data["gene"] = {"gene_interaction": predictions.clone().squeeze()}
+            
+            # Create COO format data for predictions
+            batch_size = predictions.size(0)
+            device = predictions.device
+            temp_data["gene"].phenotype_values = predictions.squeeze()
+            temp_data["gene"].phenotype_type_indices = torch.zeros(batch_size, dtype=torch.long, device=device)
+            temp_data["gene"].phenotype_sample_indices = torch.arange(batch_size, device=device)
+            temp_data["gene"].phenotype_types = ["gene_interaction"]
 
             # Apply the inverse transform
             inv_data = self.inverse_transform(temp_data)
 
             # Extract the inversed predictions
-            inv_gene_int = inv_data["gene"]["gene_interaction"]
+            inv_gene_int = inv_data["gene"]["phenotype_values"]
 
             # Handle tensor shape
             if isinstance(inv_gene_int, torch.Tensor):

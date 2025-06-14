@@ -30,7 +30,7 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
+  is_perturbation_subset: true
   perturbation_subset_size: 1000 #2.5e4
   batch_size: 6 #32
   num_workers: 2

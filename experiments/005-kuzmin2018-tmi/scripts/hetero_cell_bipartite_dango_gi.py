@@ -214,36 +214,36 @@ def main(cfg: DictConfig) -> None:
     # TODO - Check norms work - Start
     # After creating dataset and before creating data_module
     # Configure label normalization
-    # norm_configs = {
-    #     # "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
-    #     "gene_interaction": {"strategy": "standard"}  # z-score: (x - mean) / std
-    # }
+    norm_configs = {
+        # "fitness": {"strategy": "standard"},  # z-score: (x - mean) / std
+        "gene_interaction": {"strategy": "standard"}  # z-score: (x - mean) / std
+    }
 
-    # # Create the transform
-    # normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
-    # inverse_normalize_transform = InverseCompose([normalize_transform])
+    # Create the transform
+    normalize_transform = LabelNormalizationTransform(dataset, norm_configs)
+    inverse_normalize_transform = InverseCompose([normalize_transform])
 
-    # # Apply transform to dataset
-    # dataset.transform = normalize_transform
+    # Apply transform to dataset
+    dataset.transform = normalize_transform
 
-    # # Pass transforms to the RegressionTask
-    # forward_transform = normalize_transform
-    # inverse_transform = inverse_normalize_transform
+    # Pass transforms to the RegressionTask
+    forward_transform = normalize_transform
+    inverse_transform = inverse_normalize_transform
 
-    # # Print normalization parameters
-    # for label, stats in normalize_transform.stats.items():
-    #     print(f"Normalization parameters for {label}:")
-    #     for key, value in stats.items():
-    #         if isinstance(value, (int, float)) and key != "strategy":
-    #             print(f"  {key}: {value:.6f}")
-    #         else:
-    #             print(f"  {key}: {value}")
+    # Print normalization parameters
+    for label, stats in normalize_transform.stats.items():
+        print(f"Normalization parameters for {label}:")
+        for key, value in stats.items():
+            if isinstance(value, (int, float)) and key != "strategy":
+                print(f"  {key}: {value:.6f}")
+            else:
+                print(f"  {key}: {value}")
 
-    # # Log standardization parameters to wandb
-    # for label, stats in normalize_transform.stats.items():
-    #     for key, value in stats.items():
-    #         if isinstance(value, (int, float)) and key != "strategy":
-    #             wandb.log({f"standardization/{label}/{key}": value})
+    # Log standardization parameters to wandb
+    for label, stats in normalize_transform.stats.items():
+        for key, value in stats.items():
+            if isinstance(value, (int, float)) and key != "strategy":
+                wandb.log({f"standardization/{label}/{key}": value})
     # TODO - Check norms work - End
     forward_transform = None
     inverse_transform = None
@@ -345,7 +345,7 @@ def main(cfg: DictConfig) -> None:
         }
     )
 
-    if wandb.config.regression_task ["is_weighted_phenotype_loss"]:
+    if wandb.config.regression_task["is_weighted_phenotype_loss"]:
         # BUG
         phenotype_counts = {}
         for phase in ["train", "val", "test"]:

@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test_test
   tags: []
 
 cell_dataset:

@@ -2,7 +2,7 @@
 id: w8rypmcerm9cotkmoux04hd
 title: Results
 desc: ''
-updated: 1749135160933
+updated: 1750221551909
 created: 1747352284597
 ---
 
@@ -45,3 +45,11 @@ There are seems to be no benefit of updating to String 12.0
 | TC_all_graphs           | embed_diff + dango_head | Str12.0 + Phys + Reg + TFlink + Met | 0.542         | 0.431       | training     |
 | TC_all_graphs + fitness | embed_diff              | Str12.0 + Phys + Reg + TFlink + Met |               |             |              |
 | TC_all_graphs + fitness | embed_diff + dango_head | Str12.0 + Phys + Reg + TFlink + Met |               |             |              |
+
+Temp fill in from looking at charts. Not to be taken for use in publication table. Need to programmatically extract values.
+
+## 2025.06.17 - I Cannot Find Pattern Of Jumping Correlation
+
+Unsure if the change in correlation is due the lambdas on loss or the transforms. It doesn't seem related to transforms. Gating 
+
+![](./assets/images/experiments.005-kuzmin2018-tmi.results.md.2025-06-17-i-cannot-find-pattern-of-jumping-correlation.png)

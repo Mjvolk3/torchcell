@@ -4,7 +4,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi
+  project: torchcell_005-kuzmin2018-tmi_hetero_cell_bipartite_dango_gi_test
   tags: []
 
 cell_dataset:
@@ -46,7 +46,7 @@ data_module:
 
 trainer:
   max_epochs: 3 # 20 # FLAG
-  strategy: auto #ddp #ddp_find_unused_parameters_true #auto # ddp
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
   devices: 4

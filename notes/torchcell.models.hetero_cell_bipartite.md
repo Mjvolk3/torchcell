@@ -2,7 +2,7 @@
 id: qu9llyiiuunnb1pppn0q5uu
 title: Hetero_cell_bipartite
 desc: ''
-updated: 1743646490175
+updated: 1749764445218
 created: 1743187589917
 ---
 ## 2025.03.28 - Bipartite Data
@@ -93,7 +93,7 @@ HeteroData(
 )
 ```
 
-## 2025.04.02
+## 2025.04.02 - Named Phenotype Labelling
 
 ```python
 dataset[0]

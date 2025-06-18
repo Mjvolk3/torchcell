@@ -11,13 +11,13 @@ cell_dataset:
   graphs: [
       physical,
       regulatory,
-      # tflink,
-      # string12_0_neighborhood,
-      # string12_0_fusion,
-      # string12_0_cooccurence,
-      # string12_0_coexpression,
-      # string12_0_experimental,
-      # string12_0_database,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
     ]
 
   node_embeddings:
@@ -27,7 +27,7 @@ cell_dataset:
 
 # Transform configuration moved out of regression_task
 transforms:
-  use_transforms: true
+  use_transforms: false
   forward_transform:
     normalization:
       gene_interaction:
@@ -37,9 +37,9 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
+  is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 6 #32
+  batch_size: 5 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
@@ -97,12 +97,12 @@ model:
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
     num_heads: 4 # Number of attention heads (matching Dango)
-    combination_method: "gating" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
+    combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
   loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 0.1 #0.1
+  lambda_dist: 0.5 #0.1 #0.1
   lambda_supcr: 0.001 #0.001
   optimizer:
     type: "AdamW"

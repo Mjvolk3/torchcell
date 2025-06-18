@@ -2,7 +2,7 @@
 id: rgfn2j7w3chl5x7xbdqbr3o
 title: Igb Sync Log
 desc: ''
-updated: 1749521392403
+updated: 1750054220128
 created: 1746817428349
 ---
 oldest at top
@@ -584,4 +584,40 @@ wandb_sync_agent_dirs \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820165_ad761e75b14ddcb26bd5aab313e0d5691405b1ba3a6fbd05222ed13d5a5f2fa6 \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820176_89d0a4eb84b1aedd9eb45b9132c919b7724d25cc7ba9e2d08256ee779731ea4a \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820177_cd5891068c7fae5e4e25310459bdb87b34c505b875d03bacddd2208472b05c88
+```
+
+## 2025.06.10 - HeteroCell Bipartite Dango GI Single GPU DDP Not Working Yet
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1824013_6ef24a36a5b308ed77eaeb6bba2a68087354d50364f6370917e78003c228d25a \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1824014_4902973447561e03610c0e296cfcd3d7f9f564ba505bb9b728ebceaf40d4cfaa
+```
+
+## 2025.06.12 - HeteroCell Bipartite Dango ICLoss DDP
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1824101_470edc27f026b42631f5494b356310c70a48d037f7406e6192fa3b69ab8d8542/wandb
+```
+
+## 2025.06.12 - DCell 005-Kuzmin2018-tmi
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1811673_c1b27d525b9101d708ed35ae2cfe427571316818bc6eb6671d1dc8df1b48c570
+```
+
+## 2025.06.13 - DCell 005-Kuzmin2018-tmi Gating
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1825509_739ae586365445d662289eb56264739ddc3baa5c82b0d0f25da8f3d747b12fb6
+```
+
+## 2025.06.16 - With Use Transform No Other Change
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1826088_703e6de879fa3860ae3520ea2969263764b3718ec268eae55f81a1ee286a1909
 ```

@@ -46,7 +46,7 @@ def main():
 
     ### Add Embeddings
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    genome.drop_chrmt()
+    # genome.drop_chrmt()
     genome.drop_empty_go()
     
     print(f"length of gene_set: {len(genome.gene_set)}")
@@ -84,7 +84,7 @@ def main():
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
-        graphs={"physical": graph.G_physical, "regulatory": graph.G_regulatory},
+        graphs=None,
         incidence_graphs={"metabolism_bipartite": YeastGEM().bipartite_graph},
         node_embeddings={
             "codon_frequency": codon_frequency,

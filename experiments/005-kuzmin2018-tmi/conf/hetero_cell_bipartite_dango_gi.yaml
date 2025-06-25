@@ -11,13 +11,13 @@ cell_dataset:
   graphs: [
       physical,
       regulatory,
-      tflink,
-      string12_0_neighborhood,
-      string12_0_fusion,
-      string12_0_cooccurence,
-      string12_0_coexpression,
-      string12_0_experimental,
-      string12_0_database,
+      # tflink,
+      # string12_0_neighborhood,
+      # string12_0_fusion,
+      # string12_0_cooccurence,
+      # string12_0_coexpression,
+      # string12_0_experimental,
+      # string12_0_database,
     ]
 
   node_embeddings:
@@ -37,7 +37,7 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
+  is_perturbation_subset: true
   perturbation_subset_size: 1000 #2.5e4
   batch_size: 5 #32
   num_workers: 2
@@ -48,8 +48,8 @@ trainer:
   max_epochs: 500 # 20 # FLAG
   strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: gpu
-  devices: 4
+  accelerator: cpu
+  devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna

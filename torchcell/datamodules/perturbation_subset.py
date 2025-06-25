@@ -35,11 +35,12 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         num_workers: int = 0,
         pin_memory: bool = False,
         prefetch: bool = False,
+        prefetch_factor: int = 2,
         seed: int = 42,
         dense: bool = False,
         gene_subsets: Optional[dict[str, GeneSet]] = None,
         follow_batch: Optional[list] = None,
-        train_shuffle: bool = True
+        train_shuffle: bool = True,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -58,11 +59,12 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
+        self.prefetch_factor = prefetch_factor
         self.seed = seed
         self.dense = dense
         if follow_batch is None:
             self.follow_batch = ["x", "x_pert"]
-        else: 
+        else:
             self.follow_batch = follow_batch
         self.cache_dir = self.cell_data_module.cache_dir
         if self.subset_tag:
@@ -367,9 +369,8 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 follow_batch=self.follow_batch,
-                multiprocessing_context=(
-                    "spawn" if self.num_workers > 0 else None
-                ),  # Add this
+                multiprocessing_context=("spawn" if self.num_workers > 0 else None),
+                prefetch_factor=self.prefetch_factor,
             )
         else:
             loader = DataLoader(
@@ -379,9 +380,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 num_workers=self.num_workers,
                 pin_memory=self.pin_memory,
                 follow_batch=self.follow_batch,
-                multiprocessing_context=(
-                    "spawn" if self.num_workers > 0 else None
-                ),  # Add this
+                multiprocessing_context=("spawn" if self.num_workers > 0 else None),
             )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

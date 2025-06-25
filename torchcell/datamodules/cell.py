@@ -197,6 +197,7 @@ class CellDataModule(L.LightningDataModule):
         num_workers: int = 0,
         pin_memory: bool = False,
         prefetch: bool = False,
+        prefetch_factor: int = 2,
         split_indices: Union[str, List[str], None] = None,
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
@@ -209,6 +210,7 @@ class CellDataModule(L.LightningDataModule):
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
+        self.prefetch_factor = prefetch_factor
         self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
@@ -397,9 +399,8 @@ class CellDataModule(L.LightningDataModule):
             pin_memory=self.pin_memory,
             follow_batch=self.follow_batch,
             timeout=10800,
-            multiprocessing_context=(
-                "spawn" if self.num_workers > 0 else None
-            ),  # Add this
+            multiprocessing_context=("spawn" if self.num_workers > 0 else None),
+            prefetch_factor=self.prefetch_factor,
         )
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

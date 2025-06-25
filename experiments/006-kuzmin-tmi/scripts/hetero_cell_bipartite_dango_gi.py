@@ -147,7 +147,7 @@ def main(cfg: DictConfig) -> None:
         go_root = osp.join(DATA_ROOT, "data/go")
         rank = 0
 
-    # BUG
+    # BUG if genome is is overwritten we get issue. Might be able to remove with locking
     genome = SCerevisiaeGenome(
         genome_root=genome_root, go_root=go_root, overwrite=False
     )
@@ -295,6 +295,8 @@ def main(cfg: DictConfig) -> None:
         random_seed=seed,
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
+        prefetch=wandb.config.data_module["prefetch"],
+        prefetch_factor=wandb.config.data_module["prefetch_factor"]
     )
     data_module.setup()
     if wandb.config.data_module["is_perturbation_subset"]:
@@ -307,6 +309,7 @@ def main(cfg: DictConfig) -> None:
             pin_memory=wandb.config.data_module["pin_memory"],
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
+            prefetch_factor=wandb.config.data_module["prefetch_factor"],
             gene_subsets={"metabolism": yeast_gem.gene_set},
         )
         data_module.setup()

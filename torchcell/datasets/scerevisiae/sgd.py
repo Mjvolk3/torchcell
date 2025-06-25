@@ -248,10 +248,15 @@ def main():
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     genome = SCerevisiaeGenome(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=True,
     )
     graph = SCerevisiaeGraph(
-        data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
     )
 
     dataset = GeneEssentialitySgdDataset(scerevisiae_graph=graph)

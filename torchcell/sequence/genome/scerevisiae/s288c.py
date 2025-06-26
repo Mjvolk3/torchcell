@@ -38,6 +38,7 @@ from torchcell.sequence import (
     mismatch_positions,
     roman_to_int,
 )
+from torchcell.sequence.db_connection import GffutilsConnectionManager
 
 log = logging.getLogger(__name__)
 
@@ -391,12 +392,11 @@ class SCerevisiaeGene(Gene):
         return f"DnaSelectionResult(id={self.id}, chromosome={self.chromosome}, strand={self.strand}, start={self.start}, end={self.end},  seq={self.seq})"
 
 
-@define
+@define(eq=False)
 class SCerevisiaeGenome(Genome):
     genome_root: str = field(init=True, repr=False, default="data/sgd/genome")
     go_root: str = field(init=True, repr=False, default="data/go")
     overwrite: bool = field(init=True, repr=True, default=True)
-    db: dict[str, SeqRecord] = field(init=False, repr=False)
     fasta_dna = field(init=False, default=None, repr=False)
     chr_to_nc: dict[str, str] = field(init=False, default=None, repr=False)
     nc_to_chr: dict[str, str] = field(init=False, default=None, repr=False)
@@ -411,8 +411,13 @@ class SCerevisiaeGenome(Genome):
         init=False, default=None, repr=False
     )
     _alias_to_systematic: dict[str, str] = field(init=False, default=None, repr=False)
+    # Use factory to ensure GO DAG is not pickled
+    _go_dag: GODag | None = field(init=False, factory=lambda: None, repr=False)
+    _obo_path: str | None = field(init=False, default=None, repr=False)
 
     def __attrs_post_init__(self) -> None:
+        # Call parent class init to ensure all base attributes are set
+        super().__init__(data_root=self.genome_root)
         reference_genome = "S288C_reference_genome"
         self.genome_version = "R64-4-1_20230830"
         self.sgd_base_url = "http://sgd-archive.yeastgenome.org"
@@ -445,12 +450,10 @@ class SCerevisiaeGenome(Genome):
 
         db_path = osp.join(self.genome_root, "data.db")
 
-        # CHECK if this works with ddp
-        if osp.exists(db_path) and not self.overwrite:
-            self.db = gffutils.FeatureDB(db_path)
-        elif self.overwrite:
+        # Create database only if overwrite is True
+        if self.overwrite:
             # TODO remove sort_attribute_values since this can be time consuming.
-            self.db = gffutils.create_db(
+            gffutils.create_db(
                 self._gff_path,
                 dbfn=db_path,
                 force=True,
@@ -458,6 +461,9 @@ class SCerevisiaeGenome(Genome):
                 merge_strategy="merge",
                 sort_attribute_values=True,
             )
+
+        # Set up connection manager for thread/process-safe database access
+        self._db_connection_manager = GffutilsConnectionManager(db_path)
 
         self.fasta_dna = SeqIO.to_dict(SeqIO.parse(self._dna_fasta_path, "fasta"))
         self.fasta_protein = SeqIO.to_dict(
@@ -477,17 +483,49 @@ class SCerevisiaeGenome(Genome):
 
         # TODO Not sure if this is now to tightly coupled to GO
         # We do want to remove inaccurate info as early as possible
-        # Initialize the GO ontology DAG (Directed Acyclic Graph)
-        obo_path = osp.join(self.go_root, "go.obo")
-        if not osp.exists(obo_path):
+        # Store GO path for lazy loading
+        self._obo_path = osp.join(self.go_root, "go.obo")
+        if not osp.exists(self._obo_path):
             os.makedirs(self.go_root, exist_ok=True)
             download_url(
                 "http://current.geneontology.org/ontology/go.obo", self.go_root
             )
-        self.go_dag = GODag(obo_path)
+        # GO DAG will be loaded lazily via property
         # Call the method to remove deprecated GO terms
         # BUG this line doesn't work with ddp, I think the issue is merge=replace
         # self.remove_deprecated_go_terms()
+
+    @property
+    def go_dag(self) -> GODag:
+        """Lazy-load GO DAG - one per process"""
+        if self._go_dag is None:
+            if self._obo_path and osp.exists(self._obo_path):
+                self._go_dag = GODag(self._obo_path)
+            else:
+                raise FileNotFoundError(f"GO OBO file not found at {self._obo_path}")
+        return self._go_dag
+
+    def __reduce_ex__(self, protocol):
+        """Custom pickling that handles non-pickleable objects."""
+        # Get the attrs-generated __getstate__ if it exists
+        state = (
+            self.__getstate__()
+            if hasattr(self, "__getstate__")
+            else self.__dict__.copy()
+        )
+
+        # Clear non-pickleable objects
+        if "_go_dag" in state:
+            state["_go_dag"] = None
+
+        # Use attrs' __reduce_ex__ but with our cleaned state
+        return (
+            self.__class__,
+            (self.genome_root, self.go_root, self.overwrite),
+            state,
+            None,
+            iter([]),
+        )
 
     def download_and_extract_genome_files(self):
         """

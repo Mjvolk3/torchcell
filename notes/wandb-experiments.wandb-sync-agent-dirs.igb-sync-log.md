@@ -2,12 +2,18 @@
 id: rgfn2j7w3chl5x7xbdqbr3o
 title: Igb Sync Log
 desc: ''
-updated: 1750054220128
+updated: 1750976000239
 created: 1746817428349
 ---
 oldest at top
 
 ## Early Usage wandb_sync_agent_dirs
+
+```bash
+wandb_sync_agent_dirs \
+"/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1536312_d64fbe010531564be53897fea8b11fa49508a0fab254371889eb2205c720e1b4" \
+"/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-5-7-1536312_66faf8a5ebd6c9e4e4f05255332b7555b14a134a6aa196c829f9e5fed023d253"
+```
 
 ```bash
 wandb_sync_agent_dirs \
@@ -620,4 +626,29 @@ wandb_sync_agent_dirs \
 ```bash
 wandb_sync_agent_dirs \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1826088_703e6de879fa3860ae3520ea2969263764b3718ec268eae55f81a1ee286a1909
+```
+
+## 2025.06.26 - Checking Dango Repeat Runs Sync
+
+```bash
+wandb_sync_agent_dirs \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1769441_126638dce9ca81110c2e9c8894af1f399e5606d2eaf333e415f0e7a259aa4040 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1769453_3a135e41b4948e5a332cd4dad053077c79416a21d569da8ab0fcaccc51b8f442 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1779392_523c6586fef1a63fb9e27a4c7afe481af945ce297d4001b6f370a83c6d519b85 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1779393_118af956480d7aadbf2e82a7129698706bf6e428a1a8efea05f9448ff6470c82 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1779394_118af956480d7aadbf2e82a7129698706bf6e428a1a8efea05f9448ff6470c82 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794844_b54f5305d210aa837031cacb095243c23cbd5eaec7d7c7f7654134776046e7db \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794847_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1794848_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1811660_469cac35e47ba5a0aa406a514e962c7a3855a437e69b8a4749ab67826252844e \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1815364_b54f5305d210aa837031cacb095243c23cbd5eaec7d7c7f7654134776046e7db \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1815487_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1815717_8d40998717064fc0b64cc8bbd27d184a3f629dbee148c8a489b46e0a8b3cfcd4 \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1817834_b54f5305d210aa837031cacb095243c23cbd5eaec7d7c7f7654134776046e7db \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1817855_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818299_469cac35e47ba5a0aa406a514e962c7a3855a437e69b8a4749ab67826252844e \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818371_b54f5305d210aa837031cacb095243c23cbd5eaec7d7c7f7654134776046e7db \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818458_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818460_705e609140f4db6b63d3fdd12914b2d9f7ae5614a82efb4db958764d0ab70e5a \
+/home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820163_705e609140f4db6b63d3fdd12914b2d9f7ae5614a82efb4db958764d0ab70e5a
 ```

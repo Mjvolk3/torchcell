@@ -44,7 +44,7 @@ log = logging.getLogger(__name__)
 # Fitness
 @register_dataset
 class SmfKuzmin2018Dataset(ExperimentDataset):
-    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
         self,
@@ -294,7 +294,7 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class DmfKuzmin2018Dataset(ExperimentDataset):
-    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
         self,
@@ -507,7 +507,7 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class TmfKuzmin2018Dataset(ExperimentDataset):
-    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
         self,
@@ -732,7 +732,7 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
 # Interactions
 @register_dataset
 class DmiKuzmin2018Dataset(ExperimentDataset):
-    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
         self,
@@ -933,7 +933,7 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
 
 @register_dataset
 class TmiKuzmin2018Dataset(ExperimentDataset):
-    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/aao1729_data_s1.zip"
+    url = "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/data/host/kuzmin2018/aao1729_data_s1.zip"
 
     def __init__(
         self,

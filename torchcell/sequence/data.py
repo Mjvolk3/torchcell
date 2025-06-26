@@ -7,13 +7,13 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from itertools import product
-
 import pandas as pd
 from gffutils import FeatureDB
 from pydantic import field_validator, model_validator
 from sortedcontainers import SortedDict, SortedSet
 
 from torchcell.datamodels import ModelStrict, ModelStrictArbitrary
+from torchcell.sequence.db_connection import DatabaseConnectionManager
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -147,16 +147,27 @@ class Genome(ABC):
     # model_config = ConfigDict(frozen=True, extra="forbid")
     # TODO not sure if we need to specify all vars in the __init__
     # TODO do we need to set data_root like this?
-    def __init__(self, data_root: str = None):
+    def __init__(self, data_root: str | None = None):
         self.data_root: str = data_root
-        self.db: FeatureDB = None
-        self.fasta_sequences: dict = None
-        self.chr_to_nc: dict = None
-        self.nc_to_chr: dict = None
-        self.chr_to_len: dict = None
-        self._gene_set: set[str] = None
-        self._fasta_path: str = None
-        self._gff_path: str = None
+        self._db_connection_manager: DatabaseConnectionManager | None = None
+        self.fasta_sequences: dict | None = None
+        self.chr_to_nc: dict | None = None
+        self.nc_to_chr: dict | None = None
+        self.chr_to_len: dict | None = None
+        self._gene_set: set[str] | None = None
+        self._fasta_path: str | None = None
+        self._gff_path: str | None = None
+        
+    @property
+    def db(self) -> FeatureDB | None:
+        """
+        Get database connection - lazy loaded per process/thread.
+        
+        Subclasses should set self._db_connection_manager to enable database access.
+        """
+        if self._db_connection_manager is None:
+            return None
+        return self._db_connection_manager.get_connection()
 
     @property
     def gene_set(self) -> GeneSet:

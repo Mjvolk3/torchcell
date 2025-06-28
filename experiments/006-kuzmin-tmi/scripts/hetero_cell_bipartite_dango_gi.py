@@ -43,6 +43,7 @@ from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
+from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
 
 
 log = logging.getLogger(__name__)

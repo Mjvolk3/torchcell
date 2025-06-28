@@ -38,7 +38,7 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1000 #2.5e4
+  perturbation_subset_size: 100 #2.5e4
   batch_size: 5 #32
   num_workers: 2
   pin_memory: false
@@ -46,7 +46,7 @@ data_module:
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 3 # 20 # FLAG
+  max_epochs: 100 # 20 # FLAG
   strategy: auto #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: cpu
@@ -103,22 +103,20 @@ model:
 regression_task:
   loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 0.1 #0.1 #0.1
-  lambda_supcr: 0.001 #0.001
+  lambda_dist: 1 #0.1 #0.1
+  lambda_supcr: 0.01 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #1e-5
+    lr: 1e-4  # Increased from 1e-4
     weight_decay: 1e-6
   lr_scheduler:
-    type: "ReduceLROnPlateau"
-    mode: "min"
-    factor: 0.2
-    patience: 3
-    threshold: 1e-4
-    threshold_mode: "rel"
-    cooldown: 2
-    min_lr: 1e-9
-    eps: 1e-10
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 30  # Minima every 30 epochs
+    cycle_mult: 1.0  # Keep cycles the same length
+    max_lr: 1e-3  # Starting peak
+    min_lr: 1e-8  # Minimum value
+    warmup_steps: 5  # Warmup for 5 steps to reach max_lr
+    gamma: 0.6  # Decay from 1e-3 to ~1e-5 over 10 cycles
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null

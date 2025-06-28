@@ -437,8 +437,8 @@ class SCerevisiaeGraph:
         os.makedirs(tflink_graph_dir, exist_ok=True)
 
         # Clean up sql connections
-        # BUG
-        self.genome = self.parse_genome(self.genome)
+        # BUG - Should be able to remove with new connection manager, keep until works on cluster.
+        # self.genome = self.parse_genome(self.genome)
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:

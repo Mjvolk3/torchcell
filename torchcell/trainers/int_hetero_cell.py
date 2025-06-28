@@ -425,6 +425,15 @@ class RegressionTask(L.LightningModule):
             # Reset the sample containers
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
+        # Step the scheduler when using manual optimization
+        sch = self.lr_schedulers()
+        if sch is not None:
+            # Lightning returns a list of schedulers even if there's only one
+            if isinstance(sch, list) and len(sch) > 0:
+                sch[0].step()
+            else:
+                sch.step()
+
     def on_train_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
@@ -466,12 +475,40 @@ class RegressionTask(L.LightningModule):
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
+        
+        # Handle different scheduler types
+        scheduler_type = self.hparams.lr_scheduler_config.get("type", "ReduceLROnPlateau")
         scheduler_params = {
             k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
         }
-        scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
-        return {
-            "optimizer": optimizer,
+        
+        if scheduler_type == "CosineAnnealingWarmupRestarts":
+            # Import the custom scheduler
+            from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+            scheduler = CosineAnnealingWarmupRestarts(optimizer, **scheduler_params)
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "interval": "epoch",
+                    "frequency": 1,
+                },
+            }
+        elif scheduler_type == "CosineAnnealingLR":
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_params)
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "interval": "epoch",
+                    "frequency": 1,
+                },
+            }
+        else:
+            # Default to ReduceLROnPlateau
+            scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
+            return {
+                "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
                 "monitor": "val/gene_interaction/MSE",

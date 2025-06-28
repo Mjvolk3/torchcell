@@ -22,7 +22,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 96 #64
+  learnable_embedding_input_channels: 64 #64
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -37,8 +37,8 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: 1000 #2.5e4
+  is_perturbation_subset: true
+  perturbation_subset_size: 5e4 #2.5e4
   batch_size: 4 #32
   num_workers: 2
   pin_memory: false
@@ -50,11 +50,11 @@ trainer:
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 4
+  devices: 7
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 12 #10 # placeholder
+heads: 10 #10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
@@ -62,11 +62,11 @@ model:
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 96 #64
+  hidden_channels: 64 #64
   num_layers: 2 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
-  activation: "relu"
+  activation: "gelu"
   dropout: 0.0
   gene_encoder_config:
     # heads: 5
@@ -87,17 +87,17 @@ model:
     heads: ${heads}
     concat: true
   prediction_head_config:
-    hidden_channels: 96 #64
+    hidden_channels: 64 #64
     head_num_layers: 4
     dropout: 0.0
-    activation: "relu"
+    activation: "gelu"
     # residual: true
     # head_norm: "batch"
     head_norm: ${norms}
   # Dango-like local predictor config
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 4 # Number of attention heads (matching Dango)
+    num_heads: 16 # Number of attention heads (matching Dango)
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
@@ -107,8 +107,8 @@ regression_task:
   lambda_supcr: 0.01 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #1e-5
-    weight_decay: 1e-6
+    lr: 1e-3 #1e-5
+    weight_decay: 1e-2 #1e-6
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"

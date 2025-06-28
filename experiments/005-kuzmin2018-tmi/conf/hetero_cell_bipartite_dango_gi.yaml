@@ -43,6 +43,7 @@ data_module:
   num_workers: 2
   pin_memory: false
   prefetch: false
+  prefetch_factor: 4
 
 trainer:
   max_epochs: 500 # 20 # FLAG

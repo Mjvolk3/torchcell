@@ -476,6 +476,10 @@ class RegressionTask(L.LightningModule):
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
         
+        # If no lr_scheduler_config is provided, return just the optimizer
+        if self.hparams.lr_scheduler_config is None:
+            return optimizer
+        
         # Handle different scheduler types
         scheduler_type = self.hparams.lr_scheduler_config.get("type", "ReduceLROnPlateau")
         scheduler_params = {

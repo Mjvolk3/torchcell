@@ -38,8 +38,8 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: 5e4 #2.5e4
+  is_perturbation_subset: true
+  perturbation_subset_size: 1e5 #2.5e4
   batch_size: 4 #32
   num_workers: 2
   pin_memory: false
@@ -51,7 +51,7 @@ trainer:
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 6
+  devices: 2
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -104,11 +104,11 @@ model:
 regression_task:
   loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 1 #0.1 #0.1
-  lambda_supcr: 0.01 #0.001
+  lambda_dist: 100 #0.1 #0.1
+  lambda_supcr: 0 #0.01 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #ovrode by type
+    lr: 1e-3 #ovrode by type
     weight_decay: 1e-8
   lr_scheduler:
     type: "Constant" # "CosineAnnealingWarmupRestarts"

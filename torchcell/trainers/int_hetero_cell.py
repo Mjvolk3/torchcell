@@ -62,9 +62,10 @@ class RegressionTask(L.LightningModule):
             )
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
-        # Separate accumulators for train and validation samples
+        # Separate accumulators for train, validation, and test samples
         self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
+        self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.automatic_optimization = False
 
     def forward(self, batch):
@@ -279,6 +280,16 @@ class RegressionTask(L.LightningModule):
                 if "z_p" not in self.val_samples["latents"]:
                     self.val_samples["latents"]["z_p"] = []
                 self.val_samples["latents"]["z_p"].append(z_p.detach())
+        elif stage == "test":
+            # For test, always collect samples (no epoch check since test runs once)
+            self.test_samples["true_values"].append(gene_interaction_orig.detach())
+            self.test_samples["predictions"].append(inv_predictions.detach())
+            if z_p is not None:
+                if "latents" not in self.test_samples:
+                    self.test_samples["latents"] = {}
+                if "z_p" not in self.test_samples["latents"]:
+                    self.test_samples["latents"]["z_p"] = []
+                self.test_samples["latents"]["z_p"].append(z_p.detach())
 
         return loss, predictions, gene_interaction_orig
 
@@ -444,6 +455,10 @@ class RegressionTask(L.LightningModule):
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
 
+    def on_test_epoch_start(self):
+        # Always clear sample containers for test (test runs only once)
+        self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
+
     def on_validation_epoch_end(self):
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
@@ -466,6 +481,25 @@ class RegressionTask(L.LightningModule):
             self._plot_samples(self.val_samples, "val_sample")
             # Reset the sample containers
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
+
+    def on_test_epoch_end(self):
+        # Log test metrics
+        computed_metrics = self._compute_metrics_safely(self.test_metrics)
+        for name, value in computed_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.test_metrics.reset()
+
+        # Compute and log transformed metrics
+        transformed_metrics = self._compute_metrics_safely(self.test_transformed_metrics)
+        for name, value in transformed_metrics.items():
+            self.log(name, value, sync_dist=True)
+        self.test_transformed_metrics.reset()
+
+        # Plot test samples
+        if self.test_samples["true_values"]:
+            self._plot_samples(self.test_samples, "test")
+            # Reset the sample containers
+            self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def configure_optimizers(self):
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])

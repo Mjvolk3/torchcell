@@ -426,7 +426,6 @@ def main(cfg: DictConfig):
     print("\nTest Results:")
     for key, value in test_results[0].items():
         print(f"{key}: {value:.6f}")
-        wandb.log({f"final_test/{key}": value})
 
     # Now finish wandb
     wandb.finish()

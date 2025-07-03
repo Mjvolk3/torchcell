@@ -1,0 +1,12 @@
+Triple Combination Generation Summary
+Timestamp: 2025-07-03-11-39-38
+Fitness threshold: 0.5
+Selected genes: 220
+Total triples generated: 1750540
+After DMF filtering: 1717060
+After TMI filtering: 1716763
+
+DMF lookups summary:
+  dmf_kuzmin2018: 4 low fitness pairs
+  dmf_costanzo2016: 145 low fitness pairs
+  dmf_kuzmin2020: 14 low fitness pairs

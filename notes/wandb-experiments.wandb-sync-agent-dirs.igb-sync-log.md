@@ -2,7 +2,7 @@
 id: rgfn2j7w3chl5x7xbdqbr3o
 title: Igb Sync Log
 desc: ''
-updated: 1750976000239
+updated: 1751059047722
 created: 1746817428349
 ---
 oldest at top
@@ -651,4 +651,10 @@ wandb_sync_agent_dirs \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818458_3521b01668aab651705963d78b134cbacd47b31225774e7bcbec529b7d295d9c \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1818460_705e609140f4db6b63d3fdd12914b2d9f7ae5614a82efb4db958764d0ab70e5a \
 /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-1820163_705e609140f4db6b63d3fdd12914b2d9f7ae5614a82efb4db958764d0ab70e5a
+```
+
+## 2025.06.27 - First Long Run Dango_GI on Large Trigenic Dataset
+
+```bash
+/home/a-m/mjvolk3/scratch/torchcell/experiments/006-kuzmin-tmi/scripts/igb_optuna_hetero_cell_bipartite_dango_gi-ddp.slurm
 ```

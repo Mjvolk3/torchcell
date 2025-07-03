@@ -497,7 +497,7 @@ class RegressionTask(L.LightningModule):
 
         # Plot test samples
         if self.test_samples["true_values"]:
-            self._plot_samples(self.test_samples, "test")
+            self._plot_samples(self.test_samples, "test_sample")
             # Reset the sample containers
             self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
 

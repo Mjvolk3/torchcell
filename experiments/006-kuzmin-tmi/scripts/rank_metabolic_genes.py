@@ -21,7 +21,6 @@ from torchcell.timestamp import timestamp
 import matplotlib.pyplot as plt
 import seaborn as sns
 from torchcell.sequence import GeneSet
-import pickle
 from tqdm import tqdm
 # Load environment
 load_dotenv()
@@ -467,7 +466,7 @@ def main():
     df_filtered, df_top = filter_and_rank_genes(df, target_count=220)
     
     # Save results
-    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results"
+    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results/inference_preprocessing"
     os.makedirs(results_dir, exist_ok=True)
     
     # Save full analysis
@@ -480,23 +479,6 @@ def main():
         for gene in df_top['gene']:
             f.write(f"{gene}\n")
     
-    # Save as pickle for easy loading
-    with open(osp.join(results_dir, f"gene_selection_data_{ts}.pkl"), 'wb') as f:
-        pickle.dump({
-            'selected_genes': list(df_top['gene']),
-            'df_all': df,
-            'df_filtered': df_filtered,
-            'df_top': df_top,
-            'essential_genes': essential_genes,
-            'metabolic_go_genes': metabolic_go_genes,
-            'kinase_genes': kinase_genes,
-            'low_fitness_genes_kuzmin': low_fitness_genes_kuzmin,
-            'low_fitness_genes_costanzo': low_fitness_genes_costanzo,
-            'low_fitness_genes_kuzmin2020': low_fitness_genes_kuzmin2020,
-            'fitness_map_kuzmin': fitness_map_kuzmin,
-            'fitness_map_costanzo': fitness_map_costanzo,
-            'fitness_map_kuzmin2020': fitness_map_kuzmin2020
-        }, f)
     
     # Create visualizations
     create_visualizations(df, df_filtered, df_top, ts)

@@ -47,10 +47,10 @@ data_module:
 
 trainer:
   max_epochs: 1000 # 20 # FLAG
-  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
+  strategy: auto # Changed from ddp for M1 compatibility
   num_nodes: 1
-  accelerator: gpu
-  devices: 7
+  accelerator: cpu # Changed from gpu for M1 compatibility
+  devices: 1 # Changed from 7 for local testing
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -105,20 +105,18 @@ regression_task:
   is_weighted_phenotype_loss: false
   lambda_dist: 1 #0.1 #0.1
   lambda_supcr: 0.01 #0.001
-  lambda_dist: 1 #0.1 #0.1
-  lambda_supcr: 0.01 #0.001
   optimizer:
     type: "AdamW"
     lr: 1e-3 #1e-5
     weight_decay: 1e-2 #1e-6
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 30  # Minima every 30 epochs
-    cycle_mult: 1.0  # Keep cycles the same length
-    max_lr: 1e-3  # Starting peak
+    first_cycle_steps: 20  # Minima every 30 epochs
+    cycle_mult: 1.15 #1.0  # Keep cycles the same length
+    max_lr: 1e-4  # Starting peak
     min_lr: 1e-8  # Minimum value
-    warmup_steps: 5  # Warmup for 5 steps to reach max_lr
-    gamma: 0.6  # Decay from 1e-3 to ~1e-5 over 10 cycles
+    warmup_steps: 1  # Warmup for 5 steps to reach max_lr
+    gamma: 0.5  
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null

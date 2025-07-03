@@ -2,11 +2,11 @@
 """
 Generate triple gene combinations from selected genes.
 Filters out triples where any pair has fitness < 0.5 in DMF datasets.
+Also filters out triples that already exist in TMI datasets.
 """
 
 import os
 import os.path as osp
-import pickle
 from itertools import combinations
 from collections import defaultdict
 import pandas as pd
@@ -19,6 +19,11 @@ from torchcell.datasets.scerevisiae.kuzmin2020 import DmfKuzmin2020Dataset
 import matplotlib.pyplot as plt
 import numpy as np
 
+# Import for TMI filtering
+from torchcell.data import Neo4jCellDataset, MeanExperimentDeduplicator, GenotypeAggregator
+from torchcell.data.graph_processor import SubgraphRepresentation
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
 # Load environment
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
@@ -27,15 +32,14 @@ ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", "notes/assets/images")
 FITNESS_THRESHOLD = 0.5  # Pairs with fitness below this are excluded
 
 
-def load_selected_genes(gene_selection_file):
-    """Load the selected genes from the previous analysis."""
-    print(f"Loading selected genes from {gene_selection_file}")
-    with open(gene_selection_file, 'rb') as f:
-        data = pickle.load(f)
+def load_selected_genes(gene_list_file):
+    """Load the selected genes from the text file."""
+    print(f"Loading selected genes from {gene_list_file}")
+    with open(gene_list_file, 'r') as f:
+        selected_genes = [line.strip() for line in f if line.strip()]
     
-    selected_genes = data['selected_genes']
     print(f"Loaded {len(selected_genes)} selected genes")
-    return selected_genes, data
+    return selected_genes
 
 
 def build_dmf_lookup_dataframe(dataset_name, dataset_class, selected_genes):
@@ -129,6 +133,51 @@ def generate_triples(selected_genes):
     return triples
 
 
+def check_triple_exists_in_tmi(triple, is_any_perturbed_gene_index):
+    """
+    Check if a triple exists in TMI datasets by looking for common indices.
+    
+    Args:
+        triple: Tuple of three gene names
+        is_any_perturbed_gene_index: Dict mapping gene names to lists of dataset indices
+        
+    Returns:
+        bool: True if all three genes share at least one common index (triple exists)
+    """
+    # Get indices for each gene
+    indices_gene1 = set(is_any_perturbed_gene_index.get(triple[0], []))
+    indices_gene2 = set(is_any_perturbed_gene_index.get(triple[1], []))
+    indices_gene3 = set(is_any_perturbed_gene_index.get(triple[2], []))
+    
+    # Check if there's a common index where all three genes are perturbed
+    common_indices = indices_gene1 & indices_gene2 & indices_gene3
+    
+    return len(common_indices) > 0
+
+
+def filter_existing_tmi_triples(triples, is_any_perturbed_gene_index):
+    """Filter out triples that already exist in TMI datasets."""
+    print("\nFiltering triples to remove those that exist in TMI datasets...")
+    
+    filtered_triples = []
+    tmi_removed_triples = []
+    rejected_count = 0
+    
+    for triple in tqdm(triples, desc="Checking TMI existence"):
+        if not check_triple_exists_in_tmi(triple, is_any_perturbed_gene_index):
+            filtered_triples.append(triple)
+        else:
+            tmi_removed_triples.append(triple)
+            rejected_count += 1
+    
+    print(f"\nTMI filtering complete:")
+    print(f"  - Kept {len(filtered_triples):,} triples (not in TMI datasets)")
+    print(f"  - Rejected {rejected_count:,} triples (already exist in TMI datasets)")
+    print(f"  - Rejection rate: {rejected_count/len(triples)*100:.2f}%")
+    
+    return filtered_triples, tmi_removed_triples
+
+
 def filter_triples(triples, dmf_lookups):
     """Filter out triples where any pair has fitness < threshold."""
     print("\nFiltering triples to remove those with low fitness pairs...")
@@ -181,26 +230,62 @@ def filter_triples(triples, dmf_lookups):
     return filtered_triples
 
 
-def create_visualizations(selected_genes, triples, filtered_triples, dmf_lookups, ts):
+def create_visualizations(selected_genes, triples, dmf_filtered_triples, final_filtered_triples, dmf_lookups, ts):
     """Create visualizations of the filtering process."""
     
-    # 1. Triple filtering summary
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    # 1. Triple filtering summary - now with two stages
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14, 12))
     
-    # Pie chart of kept vs rejected
-    sizes = [len(filtered_triples), len(triples) - len(filtered_triples)]
+    # Overall filtering flow
+    filtering_stages = [
+        ('Total\nGenerated', len(triples)),
+        ('After DMF\nFilter', len(dmf_filtered_triples)),
+        ('After TMI\nFilter', len(final_filtered_triples))
+    ]
+    stages, counts = zip(*filtering_stages)
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+    bars = ax1.bar(stages, counts, color=colors)
+    
+    # Add count labels on bars
+    for bar, count in zip(bars, counts):
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height,
+                f'{count:,}',
+                ha='center', va='bottom')
+    
+    ax1.set_ylabel('Number of Triples')
+    ax1.set_title('Triple Filtering Pipeline')
+    
+    # Pie chart of final results
+    sizes = [len(final_filtered_triples), len(triples) - len(final_filtered_triples)]
     labels = ['Kept', 'Rejected']
     colors = ['#2ca02c', '#d62728']
-    ax1.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
-    ax1.set_title('Triple Filtering Results')
+    ax2.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+    ax2.set_title('Final Triple Filtering Results')
     
     # Bar chart of low fitness pairs by dataset
     datasets = list(dmf_lookups.keys())
     pair_counts = [len(lookup) for lookup in dmf_lookups.values()]
-    ax2.bar(datasets, pair_counts)
-    ax2.set_ylabel(f'Number of Pairs with Fitness < {FITNESS_THRESHOLD}')
-    ax2.set_title(f'Low Fitness Pairs (< {FITNESS_THRESHOLD}) by Dataset')
-    ax2.tick_params(axis='x', rotation=45)
+    ax3.bar(datasets, pair_counts)
+    ax3.set_ylabel(f'Number of Pairs with Fitness < {FITNESS_THRESHOLD}')
+    ax3.set_title(f'Low Fitness Pairs (< {FITNESS_THRESHOLD}) by Dataset')
+    ax3.tick_params(axis='x', rotation=45)
+    
+    # Rejection breakdown
+    dmf_rejected = len(triples) - len(dmf_filtered_triples)
+    tmi_rejected = len(dmf_filtered_triples) - len(final_filtered_triples)
+    rejection_data = [dmf_rejected, tmi_rejected]
+    rejection_labels = ['DMF Rejection', 'TMI Rejection']
+    ax4.bar(rejection_labels, rejection_data, color=['#ff7f0e', '#d62728'])
+    ax4.set_ylabel('Number of Triples Rejected')
+    ax4.set_title('Rejection Breakdown by Filter Type')
+    
+    # Add percentage labels
+    for i, (label, count) in enumerate(zip(rejection_labels, rejection_data)):
+        if len(triples) > 0:
+            percentage = count / len(triples) * 100
+            ax4.text(i, count, f'{count:,}\n({percentage:.1f}%)', 
+                    ha='center', va='bottom')
     
     plt.tight_layout()
     plt.savefig(osp.join(ASSET_IMAGES_DIR, f"triple_filtering_summary_{ts}.png"), dpi=300)
@@ -232,16 +317,16 @@ def main():
     print(f"Starting triple combination generation at {ts}")
     
     # Find the most recent gene selection file
-    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results"
-    gene_selection_files = [f for f in os.listdir(results_dir) if f.startswith("gene_selection_data_") and f.endswith(".pkl")]
-    if not gene_selection_files:
+    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results/inference_preprocessing"
+    gene_list_files = [f for f in os.listdir(results_dir) if f.startswith("selected_genes_list_") and f.endswith(".txt")]
+    if not gene_list_files:
         raise FileNotFoundError("No gene selection data found. Run rank_metabolic_genes.py first.")
     
-    latest_file = sorted(gene_selection_files)[-1]
-    gene_selection_path = osp.join(results_dir, latest_file)
+    latest_file = sorted(gene_list_files)[-1]
+    gene_list_path = osp.join(results_dir, latest_file)
     
     # Load selected genes
-    selected_genes, selection_data = load_selected_genes(gene_selection_path)
+    selected_genes = load_selected_genes(gene_list_path)
     
     # Build DMF lookups
     dmf_lookups = {}
@@ -264,33 +349,78 @@ def main():
     # Generate triples
     triples = generate_triples(selected_genes)
     
-    # Filter triples
-    filtered_triples = filter_triples(triples, dmf_lookups)
+    # Filter triples based on DMF data
+    dmf_filtered_triples = filter_triples(triples, dmf_lookups)
     
-    # Save results
-    output_data = {
-        'selected_genes': selected_genes,
-        'all_triples': triples,
-        'filtered_triples': filtered_triples,
-        'dmf_lookups': dmf_lookups,
-        'fitness_threshold': FITNESS_THRESHOLD,
-        'timestamp': ts
-    }
+    # Load Neo4j dataset to check for existing TMI triples
+    print("\nLoading Neo4j dataset to check for existing TMI triples...")
     
-    output_file = osp.join(results_dir, f"triple_combinations_{ts}.pkl")
-    with open(output_file, 'wb') as f:
-        pickle.dump(output_data, f)
-    print(f"\nSaved results to {output_file}")
+    # Load query
+    with open("experiments/006-kuzmin-tmi/queries/001_small_build.cql", "r") as f:
+        query = f.read()
+    
+    # Initialize genome
+    genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
+    genome.drop_chrmt()
+    genome.drop_empty_go()
+    
+    # Create dataset
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/001-small-build"
+    )
+    
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs=None,
+        node_embeddings=None,
+        converter=None,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=SubgraphRepresentation(),
+    )
+    
+    # Get the is_any_perturbed_gene_index
+    is_any_perturbed_gene_index = dataset.is_any_perturbed_gene_index
+    
+    # Filter out existing TMI triples
+    final_filtered_triples, tmi_removed_triples = filter_existing_tmi_triples(dmf_filtered_triples, is_any_perturbed_gene_index)
+    
+    # Clean up dataset
+    dataset.close_lmdb()
+    
+    # Save results information to a summary file
+    summary_file = osp.join(results_dir, f"triple_combinations_summary_{ts}.txt")
+    with open(summary_file, 'w') as f:
+        f.write(f"Triple Combination Generation Summary\n")
+        f.write(f"Timestamp: {ts}\n")
+        f.write(f"Fitness threshold: {FITNESS_THRESHOLD}\n")
+        f.write(f"Selected genes: {len(selected_genes)}\n")
+        f.write(f"Total triples generated: {len(triples)}\n")
+        f.write(f"After DMF filtering: {len(dmf_filtered_triples)}\n")
+        f.write(f"After TMI filtering: {len(final_filtered_triples)}\n")
+        f.write(f"\nDMF lookups summary:\n")
+        for dataset_name, lookup in dmf_lookups.items():
+            f.write(f"  {dataset_name}: {len(lookup)} low fitness pairs\n")
+    print(f"\nSaved summary to {summary_file}")
     
     # Save just the triple list as text
     triple_list_file = osp.join(results_dir, f"triple_combinations_list_{ts}.txt")
     with open(triple_list_file, 'w') as f:
-        for triple in filtered_triples:
+        for triple in final_filtered_triples:
             f.write(f"{triple[0]},{triple[1]},{triple[2]}\n")
     print(f"Saved triple list to {triple_list_file}")
     
+    # Save TMI-removed triples as text
+    tmi_removed_file = osp.join(results_dir, f"tmi_removed_triples_{ts}.txt")
+    with open(tmi_removed_file, 'w') as f:
+        for triple in tmi_removed_triples:
+            f.write(f"{triple[0]},{triple[1]},{triple[2]}\n")
+    print(f"Saved TMI-removed triples to {tmi_removed_file}")
+    
     # Create visualizations
-    create_visualizations(selected_genes, triples, filtered_triples, dmf_lookups, ts)
+    create_visualizations(selected_genes, triples, dmf_filtered_triples, final_filtered_triples, dmf_lookups, ts)
     
     # Print summary statistics
     print("\n" + "="*80)
@@ -298,15 +428,31 @@ def main():
     print("="*80)
     print(f"Input genes: {len(selected_genes)}")
     print(f"Total possible triples: {len(triples):,}")
-    print(f"Filtered triples: {len(filtered_triples):,}")
-    print(f"Reduction: {(1 - len(filtered_triples)/len(triples))*100:.2f}%")
+    print(f"After DMF filtering: {len(dmf_filtered_triples):,}")
+    print(f"After TMI filtering: {len(final_filtered_triples):,}")
+    print(f"Total reduction: {(1 - len(final_filtered_triples)/len(triples))*100:.2f}%")
+    
+    # Breakdown of filtering
+    print("\nFiltering breakdown:")
+    dmf_removed = len(triples) - len(dmf_filtered_triples)
+    tmi_removed = len(dmf_filtered_triples) - len(final_filtered_triples)
+    print(f"  - DMF filtering removed: {dmf_removed:,} ({dmf_removed/len(triples)*100:.2f}%)")
+    print(f"  - TMI filtering removed: {tmi_removed:,} ({tmi_removed/len(triples)*100:.2f}%)")
     
     # Sample some triples
-    print("\nSample of filtered triples:")
-    for i, triple in enumerate(filtered_triples[:5]):
+    print("\nSample of final filtered triples:")
+    for i, triple in enumerate(final_filtered_triples[:5]):
         print(f"  {i+1}. {triple[0]}, {triple[1]}, {triple[2]}")
-    if len(filtered_triples) > 5:
-        print(f"  ... and {len(filtered_triples)-5:,} more")
+    if len(final_filtered_triples) > 5:
+        print(f"  ... and {len(final_filtered_triples)-5:,} more")
+    
+    # Show sample of TMI-removed triples
+    if tmi_removed_triples:
+        print(f"\nSample of TMI-removed triples (already exist in datasets):")
+        for i, triple in enumerate(tmi_removed_triples[:5]):
+            print(f"  {i+1}. {triple[0]}, {triple[1]}, {triple[2]}")
+        if len(tmi_removed_triples) > 5:
+            print(f"  ... and {len(tmi_removed_triples)-5:,} more")
 
 
 if __name__ == "__main__":

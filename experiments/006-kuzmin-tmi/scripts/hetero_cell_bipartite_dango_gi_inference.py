@@ -314,26 +314,74 @@ def main(cfg: DictConfig) -> None:
     # Get total batches for progress tracking
     total_batches = len(dataloader)
     
-    # Pre-cache all gene names for faster lookup
-    print("\nCaching gene names from LMDB...")
+    # Option to skip gene name caching for faster inference
+    cache_gene_names = cfg.get("cache_gene_names", True)
     gene_names_cache = {}
-    dataset._init_lmdb_read()
     
-    try:
-        with dataset.env.begin() as txn:
-            cursor = txn.cursor()
-            for key, value in tqdm(cursor, desc="Loading gene names", total=len(dataset)):
-                idx = int(key.decode())
-                data_list = json.loads(value.decode())
-                exp = data_list[0]["experiment"]
-                perturbations = exp["genotype"]["perturbations"]
-                gene_names_cache[idx] = [
-                    pert["systematic_gene_name"] for pert in perturbations
-                ]
-    finally:
-        dataset.close_lmdb()
-    
-    print(f"Cached {len(gene_names_cache)} gene name entries")
+    if cache_gene_names:
+        # Pre-cache all gene names for faster lookup
+        print("\nCaching gene names from LMDB...")
+        print("Note: This may take a few minutes for large datasets. Set cache_gene_names=False in config to skip.")
+        
+        dataset._init_lmdb_read()
+        
+        try:
+            with dataset.env.begin() as txn:
+                # Get total count first
+                stat = txn.stat()
+                total_entries = stat['entries']
+                
+                cursor = txn.cursor()
+                
+                # Process in chunks without loading all into memory
+                chunk_size = 50000
+                processed = 0
+                
+                with tqdm(total=total_entries, desc="Loading gene names") as pbar:
+                    chunk_data = []
+                    
+                    for key, value in cursor:
+                        chunk_data.append((key, value))
+                        
+                        if len(chunk_data) >= chunk_size:
+                            # Process chunk
+                            for k, v in chunk_data:
+                                try:
+                                    idx = int(k.decode())
+                                    data_list = json.loads(v.decode())
+                                    exp = data_list[0]["experiment"]
+                                    perturbations = exp["genotype"]["perturbations"]
+                                    gene_names_cache[idx] = [
+                                        pert["systematic_gene_name"] for pert in perturbations
+                                    ]
+                                except Exception as e:
+                                    continue
+                            
+                            pbar.update(len(chunk_data))
+                            processed += len(chunk_data)
+                            chunk_data = []
+                    
+                    # Process remaining data
+                    if chunk_data:
+                        for k, v in chunk_data:
+                            try:
+                                idx = int(k.decode())
+                                data_list = json.loads(v.decode())
+                                exp = data_list[0]["experiment"]
+                                perturbations = exp["genotype"]["perturbations"]
+                                gene_names_cache[idx] = [
+                                    pert["systematic_gene_name"] for pert in perturbations
+                                ]
+                            except Exception:
+                                continue
+                        pbar.update(len(chunk_data))
+                        
+        finally:
+            dataset.close_lmdb()
+        
+        print(f"Cached {len(gene_names_cache)} gene name entries")
+    else:
+        print("\nSkipping gene name caching. Output will use indices instead of gene names.")
     
     # Open CSV file and start inference
     with open(output_file, 'w', newline='') as csvfile:
@@ -409,18 +457,27 @@ def main(cfg: DictConfig) -> None:
                     if exp_idx >= len(dataset):
                         continue
                     
-                    # Get cached gene names
+                    # Get gene names or use indices
                     try:
-                        genes = gene_names_cache.get(exp_idx, [])
-                        
-                        # Extract the gene names (handle variable number of genes)
-                        row = {
-                            'index': exp_idx,
-                            'gene1': genes[0] if len(genes) > 0 else '',
-                            'gene2': genes[1] if len(genes) > 1 else '',
-                            'gene3': genes[2] if len(genes) > 2 else '',
-                            'prediction': float(predictions[i].cpu().numpy())
-                        }
+                        if cache_gene_names:
+                            genes = gene_names_cache.get(exp_idx, [])
+                            # Extract the gene names (handle variable number of genes)
+                            row = {
+                                'index': exp_idx,
+                                'gene1': genes[0] if len(genes) > 0 else '',
+                                'gene2': genes[1] if len(genes) > 1 else '',
+                                'gene3': genes[2] if len(genes) > 2 else '',
+                                'prediction': float(predictions[i].cpu().numpy())
+                            }
+                        else:
+                            # Use indices when gene names are not cached
+                            row = {
+                                'index': exp_idx,
+                                'gene1': f'idx_{exp_idx}_gene1',
+                                'gene2': f'idx_{exp_idx}_gene2', 
+                                'gene3': f'idx_{exp_idx}_gene3',
+                                'prediction': float(predictions[i].cpu().numpy())
+                            }
                         writer.writerow(row)
                     except Exception as e:
                         print(f"\nError processing experiment {exp_idx}: {e}")

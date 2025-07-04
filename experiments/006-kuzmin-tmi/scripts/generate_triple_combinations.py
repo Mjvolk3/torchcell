@@ -325,6 +325,10 @@ def main():
     latest_file = sorted(gene_list_files)[-1]
     gene_list_path = osp.join(results_dir, latest_file)
     
+    # Setup inference directory
+    inference_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/inference_0")
+    os.makedirs(inference_dir, exist_ok=True)
+    
     # Load selected genes
     selected_genes = load_selected_genes(gene_list_path)
     
@@ -405,12 +409,22 @@ def main():
             f.write(f"  {dataset_name}: {len(lookup)} low fitness pairs\n")
     print(f"\nSaved summary to {summary_file}")
     
-    # Save just the triple list as text
+    # Save just the triple list as text in BOTH locations
+    # Save in results directory for reference
     triple_list_file = osp.join(results_dir, f"triple_combinations_list_{ts}.txt")
     with open(triple_list_file, 'w') as f:
         for triple in final_filtered_triples:
             f.write(f"{triple[0]},{triple[1]},{triple[2]}\n")
     print(f"Saved triple list to {triple_list_file}")
+    
+    # Also save to inference_0/raw directory for easy transfer to supercomputer
+    inference_raw_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/inference_0/raw")
+    os.makedirs(inference_raw_dir, exist_ok=True)
+    inference_triple_file = osp.join(inference_raw_dir, f"triple_combinations_list_{ts}.txt")
+    with open(inference_triple_file, 'w') as f:
+        for triple in final_filtered_triples:
+            f.write(f"{triple[0]},{triple[1]},{triple[2]}\n")
+    print(f"Also saved triple list to inference raw directory: {inference_triple_file}")
     
     # Save TMI-removed triples as text
     tmi_removed_file = osp.join(results_dir, f"tmi_removed_triples_{ts}.txt")

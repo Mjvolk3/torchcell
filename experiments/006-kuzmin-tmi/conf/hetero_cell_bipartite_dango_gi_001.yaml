@@ -110,8 +110,8 @@ regression_task:
     type: "AdamW"
     lr: 1e-3 #ovrode by type
     weight_decay: 1e-8
-  lr_scheduler:
-    type: "Constant" # "CosineAnnealingWarmupRestarts"
+  lr_scheduler: null
+    # type: "CosineAnnealingWarmupRestarts"
     # Configs for "CosineAnnealingWarmupRestarts":
     # first_cycle_steps: 30  # Minima every 30 epochs
     # cycle_mult: 1.0  # Keep cycles the same length

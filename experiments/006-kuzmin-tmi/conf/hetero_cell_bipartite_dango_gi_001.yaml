@@ -38,8 +38,8 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: 5e4 #2.5e4
+  is_perturbation_subset: true
+  perturbation_subset_size: 1e5 #2.5e4
   batch_size: 4 #32
   num_workers: 2
   pin_memory: false
@@ -51,7 +51,7 @@ trainer:
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 6
+  devices: 2
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -104,20 +104,21 @@ model:
 regression_task:
   loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 1 #0.1 #0.1
-  lambda_supcr: 0.01 #0.001
+  lambda_dist: 100 #0.1 #0.1
+  lambda_supcr: 0 #0.01 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #ovrode by type
+    lr: 1e-3 #ovrode by type
     weight_decay: 1e-8
-  lr_scheduler:
-    type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 20  # Minima every 30 epochs
-    cycle_mult: 1.15 #1.0  # Keep cycles the same length
-    max_lr: 1e-4  # Starting peak
-    min_lr: 1e-8  # Minimum value
-    warmup_steps: 1  # Warmup for 5 steps to reach max_lr
-    gamma: 0.5  
+  lr_scheduler: null
+    # type: "CosineAnnealingWarmupRestarts"
+    # Configs for "CosineAnnealingWarmupRestarts":
+    # first_cycle_steps: 30  # Minima every 30 epochs
+    # cycle_mult: 1.0  # Keep cycles the same length
+    # max_lr: 1e-3  # Starting peak
+    # min_lr: 1e-8  # Minimum value
+    # warmup_steps: 5  # Warmup for 5 steps to reach max_lr
+    # gamma: 0.6  # Decay from 1e-3 to ~1e-5 over 10 cycles
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null

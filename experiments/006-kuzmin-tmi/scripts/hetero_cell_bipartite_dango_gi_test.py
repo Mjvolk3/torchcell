@@ -124,16 +124,16 @@ def main(cfg: DictConfig):
 
     run = wandb.init(
         mode=WANDB_MODE,
-        project=wandb_cfg["wandb"]["project"] + "_test",
+        project=wandb_cfg["wandb"]["project"],
         config=wandb_cfg,
         group=group,
-        tags=wandb_cfg["wandb"]["tags"] + ["test"],
+        tags=wandb_cfg["wandb"]["tags"],
         dir=experiment_dir,
         name=f"test_{group}",
     )
 
     wandb_logger = WandbLogger(
-        project=wandb_cfg["wandb"]["project"] + "_test",
+        project=wandb_cfg["wandb"]["project"],
         log_model=False,
         save_dir=experiment_dir,
         name=f"test_{group}",

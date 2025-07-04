@@ -1,4 +1,3 @@
-#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi.yaml
 defaults:
   - default
   - _self_
@@ -23,7 +22,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 64 #64
+  learnable_embedding_input_channels: 256
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -39,23 +38,23 @@ profiler:
 
 data_module:
   is_perturbation_subset: false
-  perturbation_subset_size: 5e4 #2.5e4
+  perturbation_subset_size: 1000 #2.5e4
   batch_size: 4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
-  prefetch_factor: 2
+  prefetch_factor: 4
 
 trainer:
-  max_epochs: 300 # 20 # FLAG
+  max_epochs: 1000 # 20 # FLAG
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 6
+  devices: 4
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 16 #10 # placeholder
+heads: 4 #10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
@@ -63,7 +62,7 @@ model:
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 64 #64
+  hidden_channels: 192
   num_layers: 2 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
@@ -88,9 +87,9 @@ model:
     heads: ${heads}
     concat: true
   prediction_head_config:
-    hidden_channels: 64 #64
+    hidden_channels: 64
     head_num_layers: 4
-    dropout: 0.1
+    dropout: 0.2
     activation: "gelu"
     # residual: true
     # head_norm: "batch"
@@ -98,7 +97,7 @@ model:
   # Dango-like local predictor config
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 16 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    num_heads: 4 # Number of attention heads (matching Dango)
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
@@ -108,8 +107,8 @@ regression_task:
   lambda_supcr: 0.01 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #ovrode by type
-    weight_decay: 1e-8
+    lr: 1e-4 #1e-5
+    weight_decay: 1e-3
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
     first_cycle_steps: 20  # Minima every 30 epochs

@@ -97,8 +97,14 @@ def get_gene_names_from_lmdb(dataset, idx):
 def main(cfg: DictConfig) -> None:
     print("Starting GeneInteractionDango Inference 🔬")
     
-    # Get memory optimization config
-    mem_config = cfg.memory_optimization
+    # Hardcoded memory optimization config
+    mem_config = {
+        "stream_gene_names": True,
+        "monitor_memory": True,
+        "cache_clear_frequency": 10,
+        "adaptive_batch_size": True,
+        "min_batch_size": 1
+    }
 
     # Setup genome
     genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
@@ -350,9 +356,6 @@ def main(cfg: DictConfig) -> None:
     # Create output file
     output_file = osp.join(dataset_root, f"inference_predictions_{timestamp()}.csv")
     print(f"\nWriting predictions to: {output_file}")
-
-    # Get total batches for progress tracking
-    total_batches = len(dataloader)
 
     # Pre-cache gene names if not streaming
     gene_names_cache = {}

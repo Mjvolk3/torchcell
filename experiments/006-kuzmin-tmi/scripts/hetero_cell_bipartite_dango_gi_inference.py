@@ -19,6 +19,7 @@ from omegaconf import DictConfig, OmegaConf
 from torch_geometric.loader import DataLoader, PrefetchLoader
 from dotenv import load_dotenv
 import gc
+import wandb
 
 # Add the current script's directory to Python path for local imports
 sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
@@ -97,6 +98,9 @@ def get_gene_names_from_lmdb(dataset, idx):
 def main(cfg: DictConfig) -> None:
     print("Starting GeneInteractionDango Inference 🔬")
     
+    # Initialize wandb with the Hydra config
+    wandb.init(config=OmegaConf.to_container(cfg, resolve=True))
+    
     # Hardcoded memory optimization config
     mem_config = {
         "stream_gene_names": True,
@@ -122,7 +126,7 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Build gene multigraph using graph names from config
-    graph_names = cfg.cell_dataset["graphs"]
+    graph_names = wandb.config.cell_dataset["graphs"]
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # Extract the graphs as a dict if gene_multigraph exists
@@ -131,7 +135,7 @@ def main(cfg: DictConfig) -> None:
 
     # Build node embeddings
     node_embeddings = NodeEmbeddingBuilder.build(
-        embedding_names=cfg.cell_dataset["node_embeddings"],
+        embedding_names=wandb.config.cell_dataset["node_embeddings"],
         data_root=DATA_ROOT,
         genome=genome,
         graph=graph,
@@ -140,7 +144,7 @@ def main(cfg: DictConfig) -> None:
     # Setup incidence graphs
     incidence_graphs = {}
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
-    if "metabolism_bipartite" in cfg.cell_dataset["incidence_graphs"]:
+    if "metabolism_bipartite" in wandb.config.cell_dataset["incidence_graphs"]:
         incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
 
     # Setup graph processor
@@ -155,9 +159,9 @@ def main(cfg: DictConfig) -> None:
     forward_transform = None
     inverse_transform = None
 
-    if cfg.transforms.get("use_transforms", False):
+    if wandb.config.transforms.get("use_transforms", False):
         print("\nInitializing transforms from original dataset...")
-        transform_config = cfg.transforms.get("forward_transform", {})
+        transform_config = wandb.config.transforms.get("forward_transform", {})
 
         # Load the original dataset to get the normalization statistics
         original_dataset_root = osp.join(
@@ -239,14 +243,14 @@ def main(cfg: DictConfig) -> None:
     print(f"Dataset size: {len(dataset)}")
 
     # Create dataloader helper function
-    def create_inference_dataloader(dataset, cfg, batch_size=None):
+    def create_inference_dataloader(dataset, batch_size=None):
         """Create a DataLoader for inference that preserves important settings."""
         if batch_size is None:
-            batch_size = cfg.data_module["batch_size"]
-        num_workers = cfg.data_module.get("num_workers", 0)
-        pin_memory = cfg.data_module.get("pin_memory", False)
-        prefetch = cfg.data_module.get("prefetch", False)
-        prefetch_factor = cfg.data_module.get("prefetch_factor", None)
+            batch_size = wandb.config.data_module["batch_size"]
+        num_workers = wandb.config.data_module.get("num_workers", 0)
+        pin_memory = wandb.config.data_module.get("pin_memory", False)
+        prefetch = wandb.config.data_module.get("prefetch", False)
+        prefetch_factor = wandb.config.data_module.get("prefetch_factor", None)
 
         # Use reduced settings for memory optimization
         loader = DataLoader(
@@ -257,7 +261,6 @@ def main(cfg: DictConfig) -> None:
             persistent_workers=False,
             pin_memory=False,  # Disable pin memory to save RAM
             follow_batch=["x", "x_pert"],  # Important for node features
-            timeout=10800,
         )
 
         return loader
@@ -277,52 +280,52 @@ def main(cfg: DictConfig) -> None:
         print("   Consider running on a machine with GPU support.")
 
     # Initial batch size with adaptive sizing support
-    current_batch_size = cfg.data_module.get(
-        "inference_batch_size", cfg.data_module["batch_size"]
+    current_batch_size = wandb.config.data_module.get(
+        "inference_batch_size", wandb.config.data_module["batch_size"]
     )
     print(f"   Using initial batch size: {current_batch_size}")
 
     # Initialize model architecture
-    gene_encoder_config = dict(cfg.model["gene_encoder_config"])
-    if any("learnable" in emb for emb in cfg.cell_dataset["node_embeddings"]):
+    gene_encoder_config = dict(wandb.config.model["gene_encoder_config"])
+    if any("learnable" in emb for emb in wandb.config.cell_dataset["node_embeddings"]):
         gene_encoder_config.update(
             {
                 "embedding_type": "learnable",
                 "max_num_nodes": dataset.cell_graph["gene"].num_nodes,
-                "learnable_embedding_input_channels": cfg.cell_dataset[
+                "learnable_embedding_input_channels": wandb.config.cell_dataset[
                     "learnable_embedding_input_channels"
                 ],
             }
         )
 
-    local_predictor_config = dict(cfg.model.get("local_predictor_config", {}))
+    local_predictor_config = dict(wandb.config.model.get("local_predictor_config", {}))
 
     # Create model
     model = GeneInteractionDango(
-        gene_num=cfg.model["gene_num"],
-        hidden_channels=cfg.model["hidden_channels"],
-        num_layers=cfg.model["num_layers"],
+        gene_num=wandb.config.model["gene_num"],
+        hidden_channels=wandb.config.model["hidden_channels"],
+        num_layers=wandb.config.model["num_layers"],
         gene_multigraph=gene_multigraph,
-        dropout=cfg.model["dropout"],
-        norm=cfg.model["norm"],
-        activation=cfg.model["activation"],
+        dropout=wandb.config.model["dropout"],
+        norm=wandb.config.model["norm"],
+        activation=wandb.config.model["activation"],
         gene_encoder_config=gene_encoder_config,
         local_predictor_config=local_predictor_config,
     ).to(device)
 
     # Setup loss function
     weights = torch.ones(1).to(device)
-    if cfg.regression_task["loss"] == "icloss":
+    if wandb.config.regression_task["loss"] == "icloss":
         loss_func = ICLoss(
-            lambda_dist=cfg.regression_task["lambda_dist"],
-            lambda_supcr=cfg.regression_task["lambda_supcr"],
+            lambda_dist=wandb.config.regression_task["lambda_dist"],
+            lambda_supcr=wandb.config.regression_task["lambda_supcr"],
             weights=weights,
         )
-    elif cfg.regression_task["loss"] == "logcosh":
+    elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
 
     # Load checkpoint
-    checkpoint_path = cfg.model["checkpoint_path"]
+    checkpoint_path = wandb.config.model["checkpoint_path"]
     print(f"\nLoading checkpoint from: {checkpoint_path}")
 
     if not os.path.exists(checkpoint_path):
@@ -336,15 +339,15 @@ def main(cfg: DictConfig) -> None:
         cell_graph=dataset.cell_graph,
         loss_func=loss_func,
         device=device,
-        optimizer_config=OmegaConf.to_container(cfg.regression_task["optimizer"]),
-        lr_scheduler_config=OmegaConf.to_container(cfg.regression_task["lr_scheduler"]),
-        batch_size=cfg.data_module["batch_size"],
-        clip_grad_norm=cfg.regression_task["clip_grad_norm"],
-        clip_grad_norm_max_norm=cfg.regression_task["clip_grad_norm_max_norm"],
+        optimizer_config=OmegaConf.to_container(wandb.config.regression_task["optimizer"]),
+        lr_scheduler_config=OmegaConf.to_container(wandb.config.regression_task["lr_scheduler"]),
+        batch_size=wandb.config.data_module["batch_size"],
+        clip_grad_norm=wandb.config.regression_task["clip_grad_norm"],
+        clip_grad_norm_max_norm=wandb.config.regression_task["clip_grad_norm_max_norm"],
         inverse_transform=inverse_transform,
-        plot_every_n_epochs=cfg.regression_task["plot_every_n_epochs"],
-        plot_sample_ceiling=cfg.regression_task["plot_sample_ceiling"],
-        grad_accumulation_schedule=cfg.regression_task["grad_accumulation_schedule"],
+        plot_every_n_epochs=wandb.config.regression_task["plot_every_n_epochs"],
+        plot_sample_ceiling=wandb.config.regression_task["plot_sample_ceiling"],
+        grad_accumulation_schedule=wandb.config.regression_task["grad_accumulation_schedule"],
     )
 
     print("Successfully loaded model checkpoint")
@@ -446,7 +449,7 @@ def main(cfg: DictConfig) -> None:
         while current_idx < len(dataset):
             try:
                 # Create dataloader with current batch size
-                dataloader = create_inference_dataloader(dataset, cfg, current_batch_size)
+                dataloader = create_inference_dataloader(dataset, current_batch_size)
                 
                 # Skip to current position
                 skip_batches = current_idx // current_batch_size

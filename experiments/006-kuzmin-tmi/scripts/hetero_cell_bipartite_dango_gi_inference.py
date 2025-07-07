@@ -72,6 +72,63 @@ def aggressive_cleanup():
         torch.cuda.synchronize()
 
 
+def extract_global_stats_from_dataset(dataset, norm_transform, buffer_percent=0.1):
+    """
+    Extract global min/max statistics from dataset after normalization.
+    
+    Args:
+        dataset: Neo4jCellDataset instance
+        norm_transform: COOLabelNormalizationTransform instance
+        buffer_percent: Percentage to add as buffer (default 10%)
+    
+    Returns:
+        tuple: (global_min, global_max) tensors
+    """
+    # Get all label values from dataset
+    label_df = dataset.label_df
+    
+    # Create a HeteroData object with all phenotype values
+    data = HeteroData()
+    
+    # For each phenotype type in the dataset
+    phenotype_types = list(label_df.columns[1:])  # Skip 'index' column
+    all_values = []
+    all_type_indices = []
+    
+    for idx, phenotype_type in enumerate(phenotype_types):
+        values = label_df[phenotype_type].dropna().values
+        all_values.extend(values)
+        all_type_indices.extend([idx] * len(values))
+    
+    # Set up the HeteroData object as expected by the transform
+    data['gene'].phenotype_values = torch.tensor(all_values, dtype=torch.float32)
+    data['gene'].phenotype_type_indices = torch.tensor(all_type_indices, dtype=torch.long)
+    data['gene'].phenotype_types = phenotype_types
+    
+    # Apply the forward transform
+    transformed_data = norm_transform(data)
+    
+    # Extract normalized values
+    normalized_values = transformed_data['gene'].phenotype_values
+    
+    # Calculate min/max with buffer
+    global_min = normalized_values.min()
+    global_max = normalized_values.max()
+    
+    # Add buffer (±10%)
+    range_val = global_max - global_min
+    global_min = global_min - buffer_percent * range_val
+    global_max = global_max + buffer_percent * range_val
+    
+    # Convert to appropriate tensor format
+    # WeightedDistLoss expects 1D tensors with size matching the number of dimensions
+    # For single phenotype (gene_interaction), this will be a tensor of size 1
+    global_min_tensor = torch.tensor([global_min.item()])
+    global_max_tensor = torch.tensor([global_max.item()])
+    
+    return global_min_tensor, global_max_tensor
+
+
 def get_gene_names_from_lmdb(dataset, idx):
     """Stream gene names from LMDB for a single index."""
     dataset._init_lmdb_read()
@@ -158,6 +215,8 @@ def main(cfg: DictConfig) -> None:
     # Initialize transforms if configured
     forward_transform = None
     inverse_transform = None
+    global_min = None
+    global_max = None
 
     if wandb.config.transforms.get("use_transforms", False):
         print("\nInitializing transforms from original dataset...")
@@ -223,6 +282,17 @@ def main(cfg: DictConfig) -> None:
             forward_transform = Compose(transforms_list)
             inverse_transform = COOInverseCompose(transforms_list)
             print("Transforms initialized successfully")
+
+        # Extract global statistics if using WeightedDistLoss
+        global_min = None
+        global_max = None
+        if wandb.config.regression_task["loss"] in ["icloss", "weighted_dist"] and norm_transform is not None:
+            print("\nExtracting global statistics for WeightedDistLoss...")
+            global_min, global_max = extract_global_stats_from_dataset(
+                original_dataset, norm_transform, buffer_percent=0.1
+            )
+            print(f"Global min (normalized + 10% buffer): {global_min[0].item()}")
+            print(f"Global max (normalized + 10% buffer): {global_max[0].item()}")
 
         # Close the original dataset's LMDB
         original_dataset.close_lmdb()
@@ -316,16 +386,29 @@ def main(cfg: DictConfig) -> None:
     # Setup loss function
     weights = torch.ones(1).to(device)
     if wandb.config.regression_task["loss"] == "icloss":
+        # Move global statistics to device if they exist
+        if global_min is not None and global_max is not None:
+            global_min = global_min.to(device)
+            global_max = global_max.to(device)
+        
         loss_func = ICLoss(
             lambda_dist=wandb.config.regression_task["lambda_dist"],
             lambda_supcr=wandb.config.regression_task["lambda_supcr"],
             weights=weights,
+            global_min=global_min,
+            global_max=global_max,
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
 
     # Load checkpoint
     checkpoint_path = wandb.config.model["checkpoint_path"]
+    
+    # Make checkpoint path environment-oriented
+    if not os.path.isabs(checkpoint_path):
+        # If relative path, join with DATA_ROOT
+        checkpoint_path = osp.join(DATA_ROOT, checkpoint_path)
+    
     print(f"\nLoading checkpoint from: {checkpoint_path}")
 
     if not os.path.exists(checkpoint_path):
@@ -348,6 +431,7 @@ def main(cfg: DictConfig) -> None:
         plot_every_n_epochs=wandb.config.regression_task["plot_every_n_epochs"],
         plot_sample_ceiling=wandb.config.regression_task["plot_sample_ceiling"],
         grad_accumulation_schedule=wandb.config.regression_task["grad_accumulation_schedule"],
+        strict=False,  # Allow missing keys for backward compatibility with old checkpoints
     )
 
     print("Successfully loaded model checkpoint")

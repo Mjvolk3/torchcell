@@ -138,9 +138,7 @@ class WeightedSupCRCell(nn.Module):
         self.supcr = SupCR(temperature=temperature, eps=eps)
 
     def forward(
-        self,
-        perturbed_embeddings: torch.Tensor,
-        labels: torch.Tensor,
+        self, perturbed_embeddings: torch.Tensor, labels: torch.Tensor
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         device = labels.device
 
@@ -457,7 +455,15 @@ class NaNTolerantQuantileLoss(nn.Module):
 
 
 class WeightedDistLoss(nn.Module):
-    def __init__(self, num_bins=64, bandwidth=0.5, weights=None, eps=1e-7):
+    def __init__(
+        self,
+        num_bins=64,
+        bandwidth=0.5,
+        weights=None,
+        eps=1e-7,
+        global_min=None,
+        global_max=None,
+    ):
         """
         Weighted NaN-tolerant implementation of Dist Loss that inherently combines
         distribution alignment and prediction errors through MSE between pseudo-labels
@@ -468,6 +474,8 @@ class WeightedDistLoss(nn.Module):
             bandwidth: Kernel bandwidth for KDE
             weights: Optional tensor of weights for each dimension
             eps: Small value for numerical stability
+            global_min: Optional tensor of minimum values per dimension from training
+            global_max: Optional tensor of maximum values per dimension from training
         """
         super().__init__()
         self.num_bins = num_bins
@@ -478,6 +486,24 @@ class WeightedDistLoss(nn.Module):
         if weights is None:
             weights = torch.ones(2)  # Default to 2 dimensions with equal weights
         self.register_buffer("weights", weights / weights.sum())
+
+        # Register buffers for global statistics
+        num_dims = len(weights)
+
+        if global_min is not None and global_max is not None:
+            # Use provided statistics
+            self.register_buffer("global_min", global_min)
+            self.register_buffer("global_max", global_max)
+            self.register_buffer(
+                "stats_initialized", torch.ones(num_dims, dtype=torch.bool)
+            )
+        else:
+            # Initialize with defaults
+            self.register_buffer("global_min", torch.full((num_dims,), float("inf")))
+            self.register_buffer("global_max", torch.full((num_dims,), float("-inf")))
+            self.register_buffer(
+                "stats_initialized", torch.zeros(num_dims, dtype=torch.bool)
+            )
 
     def kde(self, x: torch.Tensor, eval_points: torch.Tensor) -> torch.Tensor:
         """
@@ -500,14 +526,15 @@ class WeightedDistLoss(nn.Module):
         return kernel / (kernel.sum() + self.eps)  # Normalize
 
     def generate_pseudo_labels(
-        self, y_true: torch.Tensor, batch_size: int
+        self, y_true: torch.Tensor, batch_size: int, dim_idx: int
     ) -> torch.Tensor:
         """
-        Generate pseudo-labels using KDE for current batch.
+        Generate pseudo-labels using KDE with global or batch statistics.
 
         Args:
             y_true: Ground truth values with possible NaN entries
             batch_size: Number of pseudo-labels to generate
+            dim_idx: Dimension index for accessing global statistics
 
         Returns:
             Pseudo-labels sampled from estimated distribution
@@ -517,8 +544,24 @@ class WeightedDistLoss(nn.Module):
         if valid_vals.size(0) == 0:
             return torch.zeros(batch_size, device=y_true.device)
 
-        min_val = valid_vals.min()
-        max_val = valid_vals.max()
+        # Get batch min/max
+        batch_min = valid_vals.min()
+        batch_max = valid_vals.max()
+
+        # Update global statistics if in training mode
+        if self.training:
+            self.global_min[dim_idx] = torch.min(self.global_min[dim_idx], batch_min)
+            self.global_max[dim_idx] = torch.max(self.global_max[dim_idx], batch_max)
+            self.stats_initialized[dim_idx] = True
+
+        # Use global stats if initialized, otherwise use batch stats
+        if self.stats_initialized[dim_idx]:
+            min_val = self.global_min[dim_idx]
+            max_val = self.global_max[dim_idx]
+        else:
+            min_val = batch_min
+            max_val = batch_max
+
         eval_points = torch.linspace(
             min_val, max_val, self.num_bins, device=y_true.device
         )
@@ -577,7 +620,7 @@ class WeightedDistLoss(nn.Module):
             pred_dim = y_pred[:, dim]
 
             # Generate pseudo-labels and sort predictions
-            pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size)
+            pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size, dim)
             pseudo_preds = torch.sort(pred_dim[~torch.isnan(pred_dim)])[0]
 
             # Pad predictions if needed

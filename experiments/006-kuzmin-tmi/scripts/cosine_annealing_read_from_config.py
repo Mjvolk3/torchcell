@@ -29,8 +29,9 @@ optimizer_lr = float(optimizer_config.get('lr', 1e-4))
 model = torch.nn.Linear(10, 1)
 optimizer = AdamW(model.parameters(), lr=optimizer_lr)
 
-# Set number of epochs for visualization
-epochs = 300
+# Get max_epochs from trainer configuration
+max_epochs = config.get('trainer', {}).get('max_epochs', 300)
+epochs = max_epochs
 
 # Check if lr_scheduler configuration exists
 if lr_scheduler_config is None:
@@ -166,7 +167,7 @@ fig, axes = plt.subplots(2, 2, figsize=(14, 10))
 axes[0, 0].plot(lrs, linewidth=2.5, color="blue")
 axes[0, 0].set_xlabel("Epoch")
 axes[0, 0].set_ylabel("Learning Rate")
-axes[0, 0].set_title("Full Schedule (300 epochs)")
+axes[0, 0].set_title(f"Full Schedule ({epochs} epochs)")
 axes[0, 0].set_yscale("log")
 axes[0, 0].grid(True, alpha=0.3, which="both")
 

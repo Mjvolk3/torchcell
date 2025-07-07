@@ -107,7 +107,7 @@ def test_pseudo_label_generation(loss_fn):
     y_true = torch.tensor([1.0, 2.0, 3.0, 4.0])
     batch_size = 5
 
-    pseudo_labels = loss_fn.generate_pseudo_labels(y_true, batch_size)
+    pseudo_labels = loss_fn.generate_pseudo_labels(y_true, batch_size, dim_idx=0)
     assert len(pseudo_labels) == batch_size
     assert torch.all(pseudo_labels >= y_true.min())
     assert torch.all(pseudo_labels <= y_true.max())
@@ -210,3 +210,56 @@ def test_weight_initialization():
     loss_fn2 = WeightedDistLoss(weights=custom_weights)
     assert torch.allclose(loss_fn2.weights.sum(), torch.tensor(1.0))
     assert torch.allclose(loss_fn2.weights, custom_weights / custom_weights.sum())
+
+
+def test_global_statistics_tracking():
+    """Test that global min/max are properly tracked across batches."""
+    loss_fn = WeightedDistLoss(num_bins=50, bandwidth=0.5)
+
+    # First batch - should establish initial range
+    loss_fn.train()
+    y_pred1 = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+    y_true1 = torch.tensor([[0.5, 1.5], [2.5, 3.5]])
+    loss_fn(y_pred1, y_true1)
+
+    # Check stats updated
+    assert loss_fn.global_min[0].item() == 0.5
+    assert loss_fn.global_max[0].item() == 2.5
+    assert loss_fn.global_min[1].item() == 1.5
+    assert loss_fn.global_max[1].item() == 3.5
+    assert loss_fn.stats_initialized[0] == True
+    assert loss_fn.stats_initialized[1] == True
+
+    # Second batch with wider range - should expand global range
+    y_pred2 = torch.tensor([[0.0, 5.0], [4.0, 6.0]])
+    y_true2 = torch.tensor([[-1.0, 0.5], [4.0, 7.0]])
+    loss_fn(y_pred2, y_true2)
+
+    # Stats should expand
+    assert loss_fn.global_min[0].item() == -1.0
+    assert loss_fn.global_max[0].item() == 4.0
+    assert loss_fn.global_min[1].item() == 0.5
+    assert loss_fn.global_max[1].item() == 7.0
+
+
+def test_eval_mode_uses_global_stats():
+    """Test that eval mode uses fixed global statistics."""
+    loss_fn = WeightedDistLoss(num_bins=50, bandwidth=0.5)
+
+    # Train mode - establish stats
+    loss_fn.train()
+    y_true1 = torch.tensor([[1.0, 2.0], [3.0, 4.0]])
+    y_pred1 = torch.tensor([[1.1, 2.1], [2.9, 3.9]])
+    loss_fn(y_pred1, y_true1)
+
+    initial_min = loss_fn.global_min.clone()
+    initial_max = loss_fn.global_max.clone()
+
+    # Eval mode - stats shouldn't change
+    loss_fn.eval()
+    y_true2 = torch.tensor([[0.0, 10.0], [-5.0, 20.0]])
+    y_pred2 = torch.tensor([[0.1, 9.9], [-4.9, 19.9]])
+    loss_fn(y_pred2, y_true2)
+
+    assert torch.equal(loss_fn.global_min, initial_min)
+    assert torch.equal(loss_fn.global_max, initial_max)

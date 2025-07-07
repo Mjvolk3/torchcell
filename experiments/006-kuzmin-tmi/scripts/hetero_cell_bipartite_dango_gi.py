@@ -79,6 +79,65 @@ def get_num_devices() -> int:
     return num_devices if num_devices > 0 else 1
 
 
+def extract_global_stats_from_dataset(dataset, norm_transform, buffer_percent=0.1):
+    """
+    Extract global min/max statistics from dataset after normalization.
+    
+    Args:
+        dataset: Neo4jCellDataset instance
+        norm_transform: COOLabelNormalizationTransform instance
+        buffer_percent: Percentage to add as buffer (default 10%)
+    
+    Returns:
+        tuple: (global_min, global_max) tensors
+    """
+    from torch_geometric.data import HeteroData
+    
+    # Get all label values from dataset
+    label_df = dataset.label_df
+    
+    # Create a HeteroData object with all phenotype values
+    data = HeteroData()
+    
+    # For each phenotype type in the dataset
+    phenotype_types = list(label_df.columns[1:])  # Skip 'index' column
+    all_values = []
+    all_type_indices = []
+    
+    for idx, phenotype_type in enumerate(phenotype_types):
+        values = label_df[phenotype_type].dropna().values
+        all_values.extend(values)
+        all_type_indices.extend([idx] * len(values))
+    
+    # Set up the HeteroData object as expected by the transform
+    data['gene'].phenotype_values = torch.tensor(all_values, dtype=torch.float32)
+    data['gene'].phenotype_type_indices = torch.tensor(all_type_indices, dtype=torch.long)
+    data['gene'].phenotype_types = phenotype_types
+    
+    # Apply the forward transform
+    transformed_data = norm_transform(data)
+    
+    # Extract normalized values
+    normalized_values = transformed_data['gene'].phenotype_values
+    
+    # Calculate min/max with buffer
+    global_min = normalized_values.min()
+    global_max = normalized_values.max()
+    
+    # Add buffer (±10%)
+    range_val = global_max - global_min
+    global_min = global_min - buffer_percent * range_val
+    global_max = global_max + buffer_percent * range_val
+    
+    # Convert to appropriate tensor format
+    # WeightedDistLoss expects 1D tensors with size matching the number of dimensions
+    # For single phenotype (gene_interaction), this will be a tensor of size 1
+    global_min_tensor = torch.tensor([global_min.item()])
+    global_max_tensor = torch.tensor([global_max.item()])
+    
+    return global_min_tensor, global_max_tensor
+
+
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
@@ -287,6 +346,24 @@ def main(cfg: DictConfig) -> None:
             transform=None,
         )
     print(f"Dataset Length: {len(dataset)}")
+    
+    # Extract global statistics if using WeightedDistLoss
+    global_min = None
+    global_max = None
+    if wandb.config.regression_task["loss"] in ["icloss", "weighted_dist"] and norm_transform is not None:
+        print("\nExtracting global statistics for WeightedDistLoss...")
+        global_min, global_max = extract_global_stats_from_dataset(
+            dataset, norm_transform, buffer_percent=0.1
+        )
+        print(f"Global min (normalized + 10% buffer): {global_min[0].item()}")
+        print(f"Global max (normalized + 10% buffer): {global_max[0].item()}")
+        
+        # Log to wandb
+        wandb.log({
+            "dist_loss/global_min": global_min[0].item(),
+            "dist_loss/global_max": global_max[0].item(),
+        })
+    
     seed = 42
     data_module = CellDataModule(
         dataset=dataset,
@@ -402,10 +479,17 @@ def main(cfg: DictConfig) -> None:
         weights = torch.ones(1).to(device)
 
     if wandb.config.regression_task["loss"] == "icloss":
+        # Move global statistics to device if they exist
+        if global_min is not None and global_max is not None:
+            global_min = global_min.to(device)
+            global_max = global_max.to(device)
+        
         loss_func = ICLoss(
             lambda_dist=wandb.config.regression_task["lambda_dist"],
             lambda_supcr=wandb.config.regression_task["lambda_supcr"],
             weights=weights,
+            global_min=global_min,
+            global_max=global_max,
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")

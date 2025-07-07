@@ -1,4 +1,8 @@
-#!/usr/bin/env python
+# experiments/006-kuzmin-tmi/scripts/generate_triple_combinations
+# [[experiments.006-kuzmin-tmi.scripts.generate_triple_combinations]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/generate_triple_combinations
+# Test file: experiments/006-kuzmin-tmi/scripts/test_generate_triple_combinations.py
+
 """
 Generate triple gene combinations from selected genes.
 Filters out triples where any pair has fitness < 0.5 in DMF datasets.

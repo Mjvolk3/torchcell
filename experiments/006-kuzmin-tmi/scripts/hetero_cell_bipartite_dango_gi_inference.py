@@ -97,16 +97,7 @@ def get_gene_names_from_lmdb(dataset, idx):
 def main(cfg: DictConfig) -> None:
     print("Starting GeneInteractionDango Inference 🔬")
     
-    # Add memory optimization configs if not present
-    if "memory_optimization" not in cfg:
-        cfg.memory_optimization = {
-            "cache_clear_frequency": 10,  # Clear GPU cache every N batches
-            "stream_gene_names": True,     # Stream gene names instead of pre-caching
-            "monitor_memory": True,        # Monitor GPU memory usage
-            "adaptive_batch_size": True,   # Reduce batch size on OOM
-            "min_batch_size": 1,          # Minimum batch size to fallback to
-        }
-    
+    # Get memory optimization config
     mem_config = cfg.memory_optimization
 
     # Setup genome

@@ -393,7 +393,6 @@ def main(cfg: DictConfig) -> None:
         
         # Enable mixed precision for GPU inference
         use_amp = device.type == "cuda"
-        scaler = torch.cuda.amp.GradScaler() if use_amp else None
         
         with torch.no_grad():
             for batch_idx, batch in enumerate(tqdm(dataloader, desc="Running inference")):

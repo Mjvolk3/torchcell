@@ -40,8 +40,13 @@ class RegressionTask(L.LightningModule):
         self.model = model
         self.cell_graph = cell_graph
         self.inverse_transform = inverse_transform
-        self.current_accumulation_steps = 1
         self.loss_func = loss_func
+        
+        # Initialize gradient accumulation
+        self.current_accumulation_steps = 1
+        if self.hparams.grad_accumulation_schedule is not None:
+            # Get the accumulation steps for epoch 0
+            self.current_accumulation_steps = self.hparams.grad_accumulation_schedule.get(0, 1)
 
         reg_metrics = MetricCollection(
             {
@@ -315,6 +320,15 @@ class RegressionTask(L.LightningModule):
             batch_size=batch["gene"].x.size(0),
             sync_dist=True,
         )
+        # Log effective batch size when using gradient accumulation
+        if self.hparams.grad_accumulation_schedule is not None:
+            effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps
+            self.log(
+                "effective_batch_size",
+                effective_batch_size,
+                batch_size=batch["gene"].x.size(0),
+                sync_dist=True,
+            )
         # print(f"Loss: {loss}")
         return loss
 
@@ -446,6 +460,13 @@ class RegressionTask(L.LightningModule):
                 sch.step()
 
     def on_train_epoch_start(self):
+        # Update gradient accumulation steps based on current epoch
+        if self.hparams.grad_accumulation_schedule is not None:
+            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+                if self.current_epoch >= epoch_threshold:
+                    self.current_accumulation_steps = self.hparams.grad_accumulation_schedule[epoch_threshold]
+            print(f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}")
+        
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}

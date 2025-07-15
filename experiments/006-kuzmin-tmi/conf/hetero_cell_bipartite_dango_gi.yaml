@@ -12,13 +12,13 @@ cell_dataset:
   graphs: [
       physical,
       regulatory,
-      tflink,
-      string12_0_neighborhood,
-      string12_0_fusion,
-      string12_0_cooccurence,
-      string12_0_coexpression,
-      string12_0_experimental,
-      string12_0_database,
+      # tflink,
+      # string12_0_neighborhood,
+      # string12_0_fusion,
+      # string12_0_cooccurence,
+      # string12_0_coexpression,
+      # string12_0_experimental,
+      # string12_0_database,
     ]
 
   node_embeddings:
@@ -40,14 +40,14 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 5e4 #2.5e4
-  batch_size: 4 #32
+  batch_size: 16 #32 #4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 300 # 20 # FLAG
+  max_epochs: 5000 # 20 # FLAG
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
@@ -55,7 +55,7 @@ trainer:
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 16 #10 # placeholder
+heads: 8 #10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
@@ -68,7 +68,7 @@ model:
   # norm: "batch"
   norm: ${norms}
   activation: "gelu"
-  dropout: 0.1
+  dropout: 0.0 # 0.1
   gene_encoder_config:
     # heads: 5
     heads: ${heads}
@@ -90,7 +90,7 @@ model:
   prediction_head_config:
     hidden_channels: 64 #64
     head_num_layers: 4
-    dropout: 0.1
+    dropout: 0.0 #0.1
     activation: "gelu"
     # residual: true
     # head_norm: "batch"
@@ -98,28 +98,61 @@ model:
   # Dango-like local predictor config
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 16 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
-  loss: icloss # Options: logcosh, icloss
+  loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr
   is_weighted_phenotype_loss: false
-  lambda_dist: 1 #0.1 #0.1
-  lambda_supcr: 0.01 #0.001
+  # Lambda weights for loss components
+  lambda_mse: 1.0
+  lambda_dist: 0.1 # 0.1 #0.1 #0.1
+  lambda_supcr: 0.001 #0.001 #0.001 #0.001
+  
+  # MleDistSupCR specific configuration
+  loss_config:
+    # Component-specific parameters
+    dist_bandwidth: 2.0
+    supcr_temperature: 0.1
+    embedding_dim: 128  # Should match model's z_p dimension
+    
+    # Buffer configuration
+    use_buffer: true
+    buffer_size: 256
+    min_samples_for_dist: 64
+    min_samples_for_supcr: 64
+    
+    # DDP configuration
+    use_ddp_gather: true
+    gather_interval: 1  # Gather every forward pass
+    
+    # Adaptive weighting
+    use_adaptive_weighting: true
+    warmup_epochs: 100
+    stable_epoch: 500
+    
+    # Temperature scheduling
+    use_temp_scheduling: true
+    init_temperature: 1.0
+    final_temperature: 0.1
+    temp_schedule: "exponential"
+    
+    # Training duration (for temperature scheduling)
+    max_epochs: 5000
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #ovrode by type
-    weight_decay: 1e-8
+    lr: 5e-4 #overrode by type
+    weight_decay: 1e-12
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 20  # Minima every 30 epochs
-    cycle_mult: 1.15 #1.0  # Keep cycles the same length
-    max_lr: 1e-4  # Starting peak
-    min_lr: 1e-8  # Minimum value
-    warmup_steps: 1  # Warmup for 5 steps to reach max_lr
-    gamma: 0.5  
+    first_cycle_steps: 500 # Minima every 50 epochs
+    cycle_mult: 1.0 # Keep cycles the same length
+    max_lr: 1e-4 # Starting peak
+    min_lr: 1e-8 # Minimum value
+    warmup_steps: 1 # Warmup for 5 steps to reach max_lr
+    gamma: 0.5
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: null
+  grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

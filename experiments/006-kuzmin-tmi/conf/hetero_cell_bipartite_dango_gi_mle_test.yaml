@@ -1,0 +1,30 @@
+#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_mle_test.yaml
+defaults:
+  - hetero_cell_bipartite_dango_gi
+  - _self_
+
+# Override for testing MleDistSupCR
+wandb:
+  project: torchcell_006-kuzmin-tmi_mle_test
+  tags: ["mle_dist_supcr", "test"]
+
+trainer:
+  max_epochs: 100  # Shorter for testing
+  overfit_batches: 1  # Test overfitting first
+
+regression_task:
+  loss: mle_dist_supcr
+  # Start with MSE only
+  lambda_mse: 1.0
+  lambda_dist: 0.0  # Disabled initially
+  lambda_supcr: 0.0  # Disabled initially
+  
+  loss_config:
+    # Keep buffer disabled for initial test
+    use_buffer: false
+    use_ddp_gather: false
+    use_adaptive_weighting: false
+    use_temp_scheduling: false
+    
+  # Use smaller gradient accumulation for testing
+  grad_accumulation_schedule: {0: 4}

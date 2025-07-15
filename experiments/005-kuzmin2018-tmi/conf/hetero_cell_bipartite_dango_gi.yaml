@@ -39,7 +39,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 5 #32
+  batch_size: 32 #5 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
@@ -103,12 +103,12 @@ model:
 regression_task:
   loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 1 #0.1 #0.1
+  lambda_dist: 0.1 #0.1 #0.1
   lambda_supcr: 0.001 #0.001
   optimizer:
     type: "AdamW"
-    lr: 1e-4 #1e-5
-    weight_decay: 1e-6
+    lr: 1e-5 #1e-4
+    weight_decay: 1e-2
   lr_scheduler:
     type: "ReduceLROnPlateau"
     mode: "min"

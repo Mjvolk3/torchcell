@@ -50,7 +50,7 @@ trainer:
   max_epochs: 1000
   strategy: "auto"
   num_nodes: 1
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0
 
@@ -59,7 +59,7 @@ heads: 12
 norms: "layer"
 # ------
 model:
-  checkpoint_path: "/home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-5-7-1844414_e2095633aaa70752868739b24bbbd79e5ff805eccf8b90b66062f0e088a1ef7a/1ulxj500-best-epoch=23-val/gene_interaction/MSE=0.0034.ckpt"
+  checkpoint_path: "models/checkpoints/compute-5-7-1844414_e2095633aaa70752868739b24bbbd79e5ff805eccf8b90b66062f0e088a1ef7a/1ulxj500-best-epoch=23-val/gene_interaction/MSE=0.0034.ckpt"
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806

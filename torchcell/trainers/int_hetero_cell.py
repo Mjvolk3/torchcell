@@ -139,8 +139,14 @@ class RegressionTask(L.LightningModule):
             loss = self.loss_func(predictions, gene_interaction_vals)
         else:
             # For ICLoss or other custom losses that might use z_p
+            # Check if loss function accepts epoch parameter (for MleDistSupCR)
+            from torchcell.losses.mle_dist_supcr import MleDistSupCR
+            
             if z_p is not None:
-                loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
+                if isinstance(self.loss_func, MleDistSupCR):
+                    loss_output = self.loss_func(predictions, gene_interaction_vals, z_p, epoch=self.current_epoch)
+                else:
+                    loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
             else:
                 loss_output = self.loss_func(predictions, gene_interaction_vals)
 
@@ -153,6 +159,27 @@ class RegressionTask(L.LightningModule):
                 if isinstance(loss_dict, dict):
                     for key, value in loss_dict.items():
                         if isinstance(value, torch.Tensor):
+                            # Handle multi-dimensional tensors
+                            if value.numel() == 1:
+                                # Single element tensor - log as scalar
+                                self.log(
+                                    f"{stage}/{key}",
+                                    value.item(),
+                                    batch_size=batch_size,
+                                    sync_dist=True,
+                                )
+                            elif value.numel() > 1:
+                                # Multi-element tensor - log each element separately
+                                for i in range(value.numel()):
+                                    self.log(
+                                        f"{stage}/{key}_{i}",
+                                        value[i].item(),
+                                        batch_size=batch_size,
+                                        sync_dist=True,
+                                    )
+                            # Skip empty tensors
+                        elif isinstance(value, (int, float)):
+                            # Handle scalar values
                             self.log(
                                 f"{stage}/{key}",
                                 value,

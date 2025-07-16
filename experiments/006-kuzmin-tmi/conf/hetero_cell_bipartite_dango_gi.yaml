@@ -5,7 +5,7 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi_test
   tags: []
 
 cell_dataset:
@@ -38,20 +38,20 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: 5e4 #2.5e4
-  batch_size: 16 #32 #4 #32
+  is_perturbation_subset: true
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 8 #32 #4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 5000 # 20 # FLAG
-  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 300 # Updated for shorter training
+  strategy: auto #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: gpu
-  devices: 6
+  accelerator: cpu
+  devices: 1
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -114,7 +114,7 @@ regression_task:
     # Component-specific parameters
     dist_bandwidth: 2.0
     supcr_temperature: 0.1
-    embedding_dim: 128  # Should match model's z_p dimension
+    # embedding_dim is dynamically set from model.hidden_channels
     
     # Buffer configuration
     use_buffer: true
@@ -128,8 +128,9 @@ regression_task:
     
     # Adaptive weighting
     use_adaptive_weighting: true
-    warmup_epochs: 100
-    stable_epoch: 500
+    # warmup_epochs and stable_epoch now dynamically set based on max_epochs
+    # warmup_epochs: None -> will be 10% of max_epochs (30 epochs)
+    # stable_epoch: None -> will be 50% of max_epochs (150 epochs)
     
     # Temperature scheduling
     use_temp_scheduling: true
@@ -138,19 +139,19 @@ regression_task:
     temp_schedule: "exponential"
     
     # Training duration (for temperature scheduling)
-    max_epochs: 5000
+    max_epochs: 300
   optimizer:
     type: "AdamW"
     lr: 5e-4 #overrode by type
     weight_decay: 1e-12
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 500 # Minima every 50 epochs
+    first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
     cycle_mult: 1.0 # Keep cycles the same length
     max_lr: 1e-4 # Starting peak
     min_lr: 1e-8 # Minimum value
-    warmup_steps: 1 # Warmup for 5 steps to reach max_lr
-    gamma: 0.5
+    warmup_steps: 1 # Warmup for 1 step to reach max_lr
+    gamma: 0.8 # Less aggressive decay for shorter training
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256

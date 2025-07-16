@@ -761,6 +761,7 @@ def main(cfg: DictConfig) -> None:
     from torchcell.graph.graph import GeneMultiGraph, GeneGraph
     from torchcell.losses.logcosh import LogCoshLoss
     from torchcell.losses.isomorphic_cell_loss import ICLoss
+    from torchcell.losses.mle_dist_supcr import MleDistSupCR
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -842,6 +843,56 @@ def main(cfg: DictConfig) -> None:
         print(
             f"Using ICLoss with lambda_dist={cfg.regression_task.lambda_dist}, lambda_supcr={cfg.regression_task.lambda_supcr}"
         )
+    elif loss_type == "mle_dist_supcr":
+        # For MleDistSupCR, we need phenotype weights if weighted loss is enabled
+        if cfg.regression_task.get("is_weighted_phenotype_loss", False):
+            # For gene interaction only dataset, we have just one phenotype
+            weights = torch.ones(1).to(device)
+        else:
+            weights = None
+        
+        # Get loss configuration
+        loss_config = cfg.regression_task.get("loss_config", {})
+        
+        criterion = MleDistSupCR(
+            # Lambda weights
+            lambda_mse=cfg.regression_task.get("lambda_mse", 1.0),
+            lambda_dist=cfg.regression_task.get("lambda_dist", 0.1),
+            lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
+            
+            # Component-specific parameters
+            dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
+            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
+            embedding_dim=cfg.model.hidden_channels,  # Use model's hidden_channels
+            
+            # Buffer configuration
+            use_buffer=loss_config.get("use_buffer", True),
+            buffer_size=loss_config.get("buffer_size", 256),
+            min_samples_for_dist=loss_config.get("min_samples_for_dist", 64),
+            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 64),
+            
+            # DDP configuration
+            use_ddp_gather=loss_config.get("use_ddp_gather", True),
+            gather_interval=loss_config.get("gather_interval", 1),
+            
+            # Adaptive weighting - let it default to dynamic based on max_epochs
+            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
+            
+            # Temperature scheduling
+            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
+            init_temperature=loss_config.get("init_temperature", 1.0),
+            final_temperature=loss_config.get("final_temperature", 0.1),
+            temp_schedule=loss_config.get("temp_schedule", "exponential"),
+            
+            # Other parameters
+            weights=weights,
+            max_epochs=cfg.trainer.max_epochs,
+        )
+        print(
+            f"Using MleDistSupCR with lambda_mse={cfg.regression_task.get('lambda_mse', 1.0)}, "
+            f"lambda_dist={cfg.regression_task.get('lambda_dist', 0.1)}, "
+            f"lambda_supcr={cfg.regression_task.get('lambda_supcr', 0.001)}"
+        )
     else:
         raise ValueError(f"Unknown loss type: {loss_type}")
 
@@ -916,7 +967,12 @@ def main(cfg: DictConfig) -> None:
         plt.figure(figsize=(25, 20))
 
         # Determine loss label
-        loss_label = "LogCosh Loss" if loss_type == "logcosh" else "ICLoss"
+        if loss_type == "logcosh":
+            loss_label = "LogCosh Loss"
+        elif loss_type == "icloss":
+            loss_label = "ICLoss"
+        else:
+            loss_label = "MleDistSupCR"
 
         # ROW 1: Loss curve, Correlations, and Scatter plot
         # Loss curve
@@ -1137,7 +1193,7 @@ def main(cfg: DictConfig) -> None:
                 global_weights,
                 "b-",
                 label="Global weight",
-            )
+        )
             plt.plot(
                 range(1, len(local_weights) + 1),
                 local_weights,
@@ -1179,9 +1235,9 @@ def main(cfg: DictConfig) -> None:
             plt.ylim(0, 1)
 
         # ROW 4: ICLoss components with L2, Unweighted losses with L2, Dist-MSE diff
-        # Weighted Loss components evolution with L2 norm (for ICLoss)
+        # Weighted Loss components evolution with L2 norm (for ICLoss/MleDistSupCR)
         plt.subplot(5, 3, 10)
-        if loss_components_history and loss_type == "icloss":
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract components
@@ -1225,7 +1281,7 @@ def main(cfg: DictConfig) -> None:
 
         # Unweighted loss components with L2 norm
         plt.subplot(5, 3, 11)
-        if loss_components_history and loss_type == "icloss":
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract unweighted components
@@ -1259,7 +1315,7 @@ def main(cfg: DictConfig) -> None:
 
         # Dist Loss vs MSE Loss difference
         plt.subplot(5, 3, 12)
-        if loss_components_history and loss_type == "icloss":
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Calculate difference between unweighted dist and mse losses
@@ -1674,11 +1730,11 @@ def main(cfg: DictConfig) -> None:
             # Handle different loss functions
             if isinstance(criterion, LogCoshLoss):
                 loss = criterion(predictions.squeeze(), y)
-            elif isinstance(criterion, ICLoss):
-                # ICLoss expects z_p as third argument
+            elif isinstance(criterion, (ICLoss, MleDistSupCR)):
+                # ICLoss and MleDistSupCR expect z_p as third argument
                 z_p = representations.get("z_p")
                 if z_p is None:
-                    raise ValueError("ICLoss requires z_p from model representations")
+                    raise ValueError("ICLoss/MleDistSupCR requires z_p from model representations")
 
                 # ICLoss expects inputs with shape [batch_size, num_phenotypes]
                 # For gene interaction only, we need to add a dummy dimension
@@ -1693,12 +1749,13 @@ def main(cfg: DictConfig) -> None:
                 y_reshaped = y_reshaped.unsqueeze(1)  # [batch_size, 1]
 
                 loss_output = criterion(pred_reshaped, y_reshaped, z_p)
-                # ICLoss returns tuple (loss, loss_dict)
+                # ICLoss and MleDistSupCR return tuple (loss, loss_dict)
                 loss = loss_output[0]
                 loss_dict = loss_output[1]
                 # You can log additional loss components if needed
+                loss_name = "ICLoss" if isinstance(criterion, ICLoss) else "MleDistSupCR"
                 print(
-                    f"  ICLoss components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
+                    f"  {loss_name} components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
                 )
                 # Track loss components
                 # Ensure values are Python scalars, not tensors

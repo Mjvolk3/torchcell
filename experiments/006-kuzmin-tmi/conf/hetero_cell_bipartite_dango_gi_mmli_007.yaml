@@ -5,11 +5,10 @@ defaults:
 wandb:
   # FLAG
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: ["1844414_test"]
+  tags: []
 
 cell_dataset:
-  graphs:
-    [
+  graphs: [
       physical,
       regulatory,
       tflink,
@@ -23,7 +22,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 96
+  learnable_embedding_input_channels: 64
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -39,81 +38,87 @@ profiler:
 
 data_module:
   is_perturbation_subset: false
-  perturbation_subset_size: 1000
-  batch_size: 32
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
   prefetch_factor: 4
 
 trainer:
-  max_epochs: 1000
-  strategy: "auto"
+  max_epochs: 1000 # 20 # FLAG
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 1
+  devices: 4
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 12
-norms: "layer"
+heads: 8 #10 # placeholder
+norms: "layer" # placeholder
 # ------
 model:
-  checkpoint_path: "models/checkpoints/compute-5-7-1844414_e2095633aaa70752868739b24bbbd79e5ff805eccf8b90b66062f0e088a1ef7a/1ulxj500-best-epoch=23-val/gene_interaction/MSE=0.0034.ckpt"
+  checkpoint_path: null #*.ckpt
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 96
-  num_layers: 2
+  hidden_channels: 64
+  num_layers: 2 # Number of hetero conv layers
+  # norm: "batch"
   norm: ${norms}
-  activation: "relu"
-  dropout: 0.0
+  activation: "gelu"
+  dropout: 0.1
   gene_encoder_config:
+    # heads: 5
     heads: ${heads}
     concat: true
     bias: true
     add_self_loops: false
     share_weights: false
   gpr_conv_config:
-    heads: ${heads} 
+    # heads: 2
+    heads: ${heads}
     concat: true
     add_self_loops: false
   metabolism_config:
     is_stoich_gated: true
     use_attention: true
+    # heads: 2
     heads: ${heads}
     concat: true
   prediction_head_config:
-    hidden_channels: 96
+    hidden_channels: 64
     head_num_layers: 4
-    dropout: 0.0
-    activation: "relu"
+    dropout: 0.2
+    activation: "gelu"
+    # residual: true
+    # head_norm: "batch"
     head_norm: ${norms}
+  # Dango-like local predictor config
   local_predictor_config:
-    num_attention_layers: 2
-    num_heads: 4
-    combination_method: "concat"
+    num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
+    num_heads: 8 # Number of attention heads (matching Dango)
+    combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
+
 regression_task:
-  loss: icloss
+  loss: icloss # Options: logcosh, icloss
   is_weighted_phenotype_loss: false
-  lambda_dist: 1
-  lambda_supcr: 0.01
+  lambda_dist: 0.1 #0.1 #0.1
+  lambda_supcr: 0.001 #0.001
   optimizer:
     type: "AdamW"
-    lr: 0.0001
-    weight_decay: 0.000001
+    lr: 1e-5 #1e-5
+    weight_decay: 1e-2
   lr_scheduler:
-    type: "ReduceLROnPlateau"
-    mode: "min"
-    factor: 0.2
-    patience: 3
-    cooldown: 4
-    min_lr: 1e-9
-    eps: 1e-10
-    threshold: 0.0001
-    threshold_mode: "rel"
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 50  # Minima every 30 epochs
+    cycle_mult: 1.0 #1.0  # Keep cycles the same length
+    max_lr: 1e-4  # Starting peak
+    min_lr: 1e-8  # Minimum value
+    warmup_steps: 1  # Warmup for 5 steps to reach max_lr
+    gamma: 0.5  
   clip_grad_norm: true
-  clip_grad_norm_max_norm: 10
+  clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
-  plot_sample_ceiling: 100000
+  plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

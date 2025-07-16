@@ -50,7 +50,7 @@ trainer:
   max_epochs: 1000
   strategy: "auto"
   num_nodes: 1
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   overfit_batches: 0
 

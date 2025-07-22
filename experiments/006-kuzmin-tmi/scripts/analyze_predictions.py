@@ -42,3 +42,22 @@ plt.close()
 
 print(f"\nSaved top 200 predictions to: {top_200_path}")
 print(f"Saved histogram to: {histogram_path}")
+
+# Extract unique genes from top 200 predictions
+top_200_df = pd.read_csv(top_200_path)
+# Collect all genes from the three columns
+all_genes = []
+all_genes.extend(top_200_df['gene1'].tolist())
+all_genes.extend(top_200_df['gene2'].tolist())
+all_genes.extend(top_200_df['gene3'].tolist())
+
+# Get unique genes
+unique_genes = sorted(list(set(all_genes)))
+
+# Save unique genes to CSV
+unique_genes_path = os.path.join(output_dir, f"top_200_predictions_unique_genes_{timestamp}.csv")
+unique_genes_df = pd.DataFrame({'gene': unique_genes})
+unique_genes_df.to_csv(unique_genes_path, index=False)
+
+print(f"\nNumber of unique genes in top 200 predictions: {len(unique_genes)}")
+print(f"Saved unique genes to: {unique_genes_path}")

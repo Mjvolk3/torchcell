@@ -349,7 +349,14 @@ class RegressionTask(L.LightningModule):
         )
         # Log effective batch size when using gradient accumulation
         if self.hparams.grad_accumulation_schedule is not None:
-            effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps
+            # Get world size for DDP
+            world_size = 1
+            if self.trainer.strategy.strategy_name == "ddp":
+                import torch.distributed as dist
+                if dist.is_initialized():
+                    world_size = dist.get_world_size()
+            
+            effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
             self.log(
                 "effective_batch_size",
                 effective_batch_size,

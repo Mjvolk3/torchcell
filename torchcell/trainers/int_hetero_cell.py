@@ -351,10 +351,11 @@ class RegressionTask(L.LightningModule):
         if self.hparams.grad_accumulation_schedule is not None:
             # Get world size for DDP
             world_size = 1
-            if self.trainer.strategy.strategy_name == "ddp":
-                import torch.distributed as dist
-                if dist.is_initialized():
-                    world_size = dist.get_world_size()
+            if hasattr(self.trainer, "strategy") and hasattr(self.trainer.strategy, "_strategy_name"):
+                if self.trainer.strategy._strategy_name == "ddp":
+                    import torch.distributed as dist
+                    if dist.is_initialized():
+                        world_size = dist.get_world_size()
             
             effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
             self.log(

@@ -9,7 +9,7 @@ defaults:
 
 wandb:
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: ["improved_distloss", "cabbi_017", "buffer_4096", "bandwidth_2.0"]
+  tags: ["improved_distloss", "cabbi_020", "buffer_4096", "bandwidth_2.0"]
 
 cell_dataset:
   graphs: [
@@ -102,9 +102,9 @@ regression_task:
   is_weighted_phenotype_loss: false
   
   # Lambda weights - emphasize distribution matching
-  lambda_mse: 1.0      # MSE for basic fit
-  lambda_dist: 0.5     # Strong distribution matching for tails
-  lambda_supcr: 0.01   # Meaningful contrastive signal
+  lambda_mse: 0.0      # MSE for basic fit
+  lambda_dist: 1.0     # Strong distribution matching for tails
+  lambda_supcr: 0.0   # Meaningful contrastive signal
   
   # MleDistSupCR specific configuration
   loss_config:

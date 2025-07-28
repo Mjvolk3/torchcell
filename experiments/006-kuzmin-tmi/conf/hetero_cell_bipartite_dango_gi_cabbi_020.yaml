@@ -1,6 +1,6 @@
-# experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_017.yaml
-# [[experiments.006-kuzmin-tmi.conf.hetero_cell_bipartite_dango_gi_cabbi_017.yaml]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_017.yaml
+# experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_020.yaml
+# [[experiments.006-kuzmin-tmi.conf.hetero_cell_bipartite_dango_gi_cabbi_020.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_020.yaml
 
 
 defaults:
@@ -9,7 +9,7 @@ defaults:
 
 wandb:
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: ["improved_distloss", "cabbi_020", "buffer_4096", "bandwidth_2.0"]
+  tags: ["refactored_distloss", "cabbi_020", "mse_dist_only", "original_paper_impl"]
 
 cell_dataset:
   graphs: [
@@ -101,22 +101,22 @@ regression_task:
   loss: mle_dist_supcr
   is_weighted_phenotype_loss: false
   
-  # Lambda weights - emphasize distribution matching
-  lambda_mse: 0.0      # MSE for basic fit
-  lambda_dist: 1.0     # Strong distribution matching for tails
-  lambda_supcr: 0.0   # Meaningful contrastive signal
+  # Lambda weights - equal MSE and DistLoss, no contrastive
+  lambda_mse: 1.0      # MSE for basic fit
+  lambda_dist: 1.0     # Distribution matching following original paper
+  lambda_supcr: 0.0    # No contrastive learning
   
   # MleDistSupCR specific configuration
   loss_config:
     # Component-specific parameters
-    dist_bandwidth: 2.0  # Wide kernel for standardized data (covers ±6 std)
-    supcr_temperature: 0.1
+    dist_bandwidth: 0.5  # Default from original DistLoss paper
+    supcr_temperature: 0.1  # Not used since lambda_supcr=0
     
-    # Buffer configuration - larger for better distribution estimation
+    # Buffer configuration - for better distribution estimation
     use_buffer: true
-    buffer_size: 4096  # ~1.1% of training data (365K samples)
-    min_samples_for_dist: 128  # Increased minimum for stability
-    min_samples_for_supcr: 128
+    buffer_size: 256   # Default buffer size
+    min_samples_for_dist: 64   # Default minimum for DistLoss
+    min_samples_for_supcr: 64  # Not used since lambda_supcr=0
     
     # DDP configuration
     use_ddp_gather: true

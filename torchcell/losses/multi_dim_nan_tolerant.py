@@ -454,186 +454,383 @@ class NaNTolerantQuantileLoss(nn.Module):
         return torch.stack(losses).sum()
 
 
+# class WeightedDistLoss(nn.Module):
+#     def __init__(
+#         self,
+#         num_bins=64,
+#         bandwidth=0.5,
+#         weights=None,
+#         eps=1e-7,
+#         global_min=None,
+#         global_max=None,
+#     ):
+#         """
+#         Weighted NaN-tolerant implementation of Dist Loss that inherently combines
+#         distribution alignment and prediction errors through MSE between pseudo-labels
+#         and pseudo-predictions.
+
+#         Args:
+#             num_bins: Number of bins for KDE
+#             bandwidth: Kernel bandwidth for KDE
+#             weights: Optional tensor of weights for each dimension
+#             eps: Small value for numerical stability
+#             global_min: Optional tensor of minimum values per dimension from training
+#             global_max: Optional tensor of maximum values per dimension from training
+#         """
+#         super().__init__()
+#         self.num_bins = num_bins
+#         self.bandwidth = bandwidth
+#         self.eps = eps
+
+#         # Register weights as a buffer
+#         if weights is None:
+#             weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+#         self.register_buffer("weights", weights / weights.sum())
+
+#         # Register buffers for global statistics
+#         num_dims = len(weights)
+
+#         if global_min is not None and global_max is not None:
+#             # Use provided statistics
+#             self.register_buffer("global_min", global_min)
+#             self.register_buffer("global_max", global_max)
+#             self.register_buffer(
+#                 "stats_initialized", torch.ones(num_dims, dtype=torch.bool)
+#             )
+#         else:
+#             # Initialize with defaults
+#             self.register_buffer("global_min", torch.full((num_dims,), float("inf")))
+#             self.register_buffer("global_max", torch.full((num_dims,), float("-inf")))
+#             self.register_buffer(
+#                 "stats_initialized", torch.zeros(num_dims, dtype=torch.bool)
+#             )
+
+#     def kde(self, x: torch.Tensor, eval_points: torch.Tensor) -> torch.Tensor:
+#         """
+#         Kernel Density Estimation with Gaussian kernel.
+#         Handles NaN values by excluding them from density estimation.
+#         """
+#         # Remove NaN values
+#         x = x[~torch.isnan(x)]
+#         if x.size(0) == 0:
+#             return torch.zeros_like(eval_points)
+
+#         # Reshape for broadcasting
+#         x = x.view(-1, 1)
+#         eval_points = eval_points.view(1, -1)
+
+#         # Compute Gaussian kernel
+#         kernel = torch.exp(-0.5 * ((x - eval_points) / self.bandwidth) ** 2)
+#         kernel = kernel.mean(dim=0)  # Average across samples
+
+#         return kernel / (kernel.sum() + self.eps)  # Normalize
+
+#     def generate_pseudo_labels(
+#         self, y_true: torch.Tensor, batch_size: int, dim_idx: int
+#     ) -> torch.Tensor:
+#         """
+#         Generate pseudo-labels using KDE with global or batch statistics.
+
+#         Args:
+#             y_true: Ground truth values with possible NaN entries
+#             batch_size: Number of pseudo-labels to generate
+#             dim_idx: Dimension index for accessing global statistics
+
+#         Returns:
+#             Pseudo-labels sampled from estimated distribution
+#         """
+#         # Define evaluation points based on batch statistics
+#         valid_vals = y_true[~torch.isnan(y_true)]
+#         if valid_vals.size(0) == 0:
+#             return torch.zeros(batch_size, device=y_true.device)
+
+#         # Get batch min/max
+#         batch_min = valid_vals.min()
+#         batch_max = valid_vals.max()
+
+#         # Update global statistics if in training mode
+#         if self.training:
+#             self.global_min[dim_idx] = torch.min(self.global_min[dim_idx], batch_min)
+#             self.global_max[dim_idx] = torch.max(self.global_max[dim_idx], batch_max)
+#             self.stats_initialized[dim_idx] = True
+
+#         # Use global stats if initialized, otherwise use batch stats
+#         if self.stats_initialized[dim_idx]:
+#             min_val = self.global_min[dim_idx]
+#             max_val = self.global_max[dim_idx]
+#         else:
+#             min_val = batch_min
+#             max_val = batch_max
+
+#         eval_points = torch.linspace(
+#             min_val, max_val, self.num_bins, device=y_true.device
+#         )
+
+#         # Estimate density using batch data
+#         density = self.kde(y_true, eval_points)
+
+#         # Generate cumulative distribution
+#         cdf = torch.cumsum(density, 0)
+#         cdf = cdf / (cdf[-1] + self.eps)
+
+#         # Generate uniform samples for current batch
+#         u = torch.linspace(0, 1, batch_size, device=y_true.device)
+
+#         # Find bins using binary search
+#         inds = torch.searchsorted(cdf, u)
+#         inds = torch.clamp(inds, 0, self.num_bins - 1)
+
+#         # Linear interpolation between bin edges
+#         pseudo_labels = eval_points[inds]
+
+#         return pseudo_labels
+
+#     def forward(
+#         self, y_pred: torch.Tensor, y_true: torch.Tensor
+#     ) -> tuple[torch.Tensor, torch.Tensor]:
+#         device = y_pred.device
+#         y_true = y_true.to(device)
+
+#         # Create mask for non-NaN values
+#         mask = ~torch.isnan(y_true)
+
+#         # Check which dimensions have ANY valid samples
+#         valid_dims = mask.any(dim=0)  # [num_dims]
+
+#         # If no dimensions are valid, return zero loss
+#         if not valid_dims.any():
+#             return torch.tensor(0.0, device=device), torch.zeros_like(
+#                 valid_dims, dtype=torch.float
+#             )
+
+#         batch_size, num_dims = y_true.shape
+#         dim_losses = torch.zeros(num_dims, device=device)
+
+#         # Zero out weights for completely NaN dimensions
+#         weights = self.weights * valid_dims
+#         weight_sum = weights.sum().clamp(min=1e-8)
+
+#         # Process each dimension separately
+#         for dim in range(num_dims):
+#             if not valid_dims[dim]:
+#                 continue
+
+#             # Get values for current dimension
+#             true_dim = y_true[:, dim]
+#             pred_dim = y_pred[:, dim]
+
+#             # Generate pseudo-labels and sort predictions
+#             pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size, dim)
+#             pseudo_preds = torch.sort(pred_dim[~torch.isnan(pred_dim)])[0]
+
+#             # Pad predictions if needed
+#             if pseudo_preds.size(0) < batch_size:
+#                 padding = torch.zeros(batch_size - pseudo_preds.size(0), device=device)
+#                 pseudo_preds = torch.cat([pseudo_preds, padding])
+
+#             # Compute MSE between distributions (inherently combines alignment and prediction errors)
+#             dim_losses[dim] = F.mse_loss(pseudo_preds, pseudo_labels)
+
+#         # Compute weighted average loss
+#         weighted_loss = (dim_losses * weights).sum() / weight_sum
+
+#         return weighted_loss, dim_losses
+
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torchsort
+import numpy as np
+from scipy.stats import gaussian_kde
+
+
 class WeightedDistLoss(nn.Module):
     def __init__(
         self,
-        num_bins=64,
-        bandwidth=0.5,
-        weights=None,
-        eps=1e-7,
-        global_min=None,
-        global_max=None,
+        bandwidth: float = 0.5,
+        weights: torch.Tensor | None = None,
+        regularization_strength: float = 0.1,
+        loss_fn: str = "L2",
+        eps: float = 1e-7,
     ):
         """
-        Weighted NaN-tolerant implementation of Dist Loss that inherently combines
-        distribution alignment and prediction errors through MSE between pseudo-labels
-        and pseudo-predictions.
-
+        Distribution matching loss following the original DistLoss paper implementation.
+        
         Args:
-            num_bins: Number of bins for KDE
-            bandwidth: Kernel bandwidth for KDE
-            weights: Optional tensor of weights for each dimension
-            eps: Small value for numerical stability
-            global_min: Optional tensor of minimum values per dimension from training
-            global_max: Optional tensor of maximum values per dimension from training
+            bandwidth: Bandwidth for KDE (default: 0.5)
+            weights: Per-dimension weights for multi-dimensional outputs
+            regularization_strength: Regularization for differentiable sorting
+            loss_fn: Loss function type ("L1" or "L2")
+            eps: Small epsilon for numerical stability
         """
         super().__init__()
-        self.num_bins = num_bins
         self.bandwidth = bandwidth
+        self.regularization_strength = regularization_strength
         self.eps = eps
-
-        # Register weights as a buffer
+        
         if weights is None:
-            weights = torch.ones(2)  # Default to 2 dimensions with equal weights
+            weights = torch.ones(1)
         self.register_buffer("weights", weights / weights.sum())
-
-        # Register buffers for global statistics
-        num_dims = len(weights)
-
-        if global_min is not None and global_max is not None:
-            # Use provided statistics
-            self.register_buffer("global_min", global_min)
-            self.register_buffer("global_max", global_max)
-            self.register_buffer(
-                "stats_initialized", torch.ones(num_dims, dtype=torch.bool)
-            )
+        
+        # Loss function selection
+        if loss_fn == "L1":
+            self.loss_fn = nn.L1Loss(reduction='none')
+        elif loss_fn == "L2":
+            self.loss_fn = nn.MSELoss(reduction='none')
         else:
-            # Initialize with defaults
-            self.register_buffer("global_min", torch.full((num_dims,), float("inf")))
-            self.register_buffer("global_max", torch.full((num_dims,), float("-inf")))
-            self.register_buffer(
-                "stats_initialized", torch.zeros(num_dims, dtype=torch.bool)
-            )
-
-    def kde(self, x: torch.Tensor, eval_points: torch.Tensor) -> torch.Tensor:
+            raise ValueError("loss_fn must be 'L1' or 'L2'")
+    
+    def _get_label_distribution(self, labels: torch.Tensor, min_label: float, max_label: float, step: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
         """
-        Kernel Density Estimation with Gaussian kernel.
-        Handles NaN values by excluding them from density estimation.
+        Get the label distribution using kernel density estimation.
+        Follows the original implementation from utils.py
         """
-        # Remove NaN values
-        x = x[~torch.isnan(x)]
-        if x.size(0) == 0:
-            return torch.zeros_like(eval_points)
-
-        # Reshape for broadcasting
-        x = x.view(-1, 1)
-        eval_points = eval_points.view(1, -1)
-
-        # Compute Gaussian kernel
-        kernel = torch.exp(-0.5 * ((x - eval_points) / self.bandwidth) ** 2)
-        kernel = kernel.mean(dim=0)  # Average across samples
-
-        return kernel / (kernel.sum() + self.eps)  # Normalize
-
-    def generate_pseudo_labels(
-        self, y_true: torch.Tensor, batch_size: int, dim_idx: int
-    ) -> torch.Tensor:
+        # Convert to numpy and filter valid values
+        labels_np = labels.cpu().numpy()
+        labels_np = labels_np[~np.isnan(labels_np)]
+        labels_np = labels_np[(labels_np >= min_label) & (labels_np <= max_label)]
+        
+        if len(labels_np) == 0:
+            # Return uniform distribution if no valid labels
+            x = np.arange(min_label, max_label + step, step)
+            density = np.ones_like(x) / len(x)
+            return density, x
+        
+        # Perform kernel density estimation
+        kde = gaussian_kde(labels_np, bw_method=self.bandwidth)
+        
+        # Create evaluation points
+        x = np.arange(min_label, max_label + step, step)
+        
+        # Estimate density
+        density = kde(x)
+        density /= density.sum()
+        
+        return density, x
+    
+    def _get_batch_label_distribution(self, density: np.ndarray, batch_size: int, region_adjustment: float = 0.5) -> np.ndarray:
         """
-        Generate pseudo-labels using KDE with global or batch statistics.
-
+        Get batch label distribution following the exact algorithm from the original implementation.
+        """
+        num_density = density * batch_size
+        range_res = int(region_adjustment * len(density))
+        batch_label_distribution = np.zeros_like(num_density)
+        
+        forward_cumsum = num_density.cumsum()
+        backward_cumsum = num_density[::-1].cumsum()[::-1]
+        forward_index = np.searchsorted(forward_cumsum, 1)
+        backward_index = len(backward_cumsum) - np.searchsorted(backward_cumsum[::-1], 1) - 1
+        
+        forward_index_cumsum = round(forward_cumsum[forward_index])
+        backward_index_cumsum = round(backward_cumsum[backward_index])
+        
+        batch_label_distribution[forward_index] = forward_index_cumsum
+        batch_label_distribution[forward_index + 1:backward_index] = np.round(num_density[forward_index + 1:backward_index])
+        batch_label_distribution[backward_index] = backward_index_cumsum
+        
+        res_sum = batch_size - int(batch_label_distribution.sum())
+        maximum_index = batch_label_distribution.argmax()
+        
+        if abs(res_sum) <= range_res:
+            left_index = maximum_index - abs(res_sum) // 2
+            right_index = left_index + abs(res_sum)
+            batch_label_distribution[left_index:right_index] += np.sign(res_sum)
+        else:
+            iters = res_sum // range_res
+            remainder = res_sum % range_res
+            left_index = maximum_index - range_res // 2
+            right_index = left_index + range_res
+            batch_label_distribution[left_index:right_index] += iters * np.sign(res_sum)
+            batch_label_distribution[maximum_index] += remainder
+        
+        return batch_label_distribution
+    
+    def _get_batch_theoretical_labels(self, density: np.ndarray, batch_size: int, min_label: float, step: float = 1.0) -> np.ndarray:
+        """
+        Generate theoretical labels for a batch based on the distribution.
+        Follows the exact algorithm from the original implementation.
+        """
+        batch_label_distribution = self._get_batch_label_distribution(density, batch_size)
+        cumulative_distribution = np.cumsum(batch_label_distribution).astype(int)
+        
+        batch_theoretical_labels = np.zeros(batch_size)
+        current_label = min_label
+        num_labels = len(density)
+        
+        for i in range(num_labels):
+            start_index = 0 if i == 0 else cumulative_distribution[i - 1]
+            end_index = cumulative_distribution[i]
+            batch_theoretical_labels[start_index:end_index] = current_label
+            current_label += step
+        
+        return batch_theoretical_labels
+    
+    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute distribution loss for multi-dimensional outputs.
+        
         Args:
-            y_true: Ground truth values with possible NaN entries
-            batch_size: Number of pseudo-labels to generate
-            dim_idx: Dimension index for accessing global statistics
-
+            y_pred: Predictions [batch_size, num_dims]
+            y_true: True labels [batch_size, num_dims]
+            
         Returns:
-            Pseudo-labels sampled from estimated distribution
+            weighted_loss: Weighted sum of dimension losses
+            dim_losses: Individual losses per dimension
         """
-        # Define evaluation points based on batch statistics
-        valid_vals = y_true[~torch.isnan(y_true)]
-        if valid_vals.size(0) == 0:
-            return torch.zeros(batch_size, device=y_true.device)
-
-        # Get batch min/max
-        batch_min = valid_vals.min()
-        batch_max = valid_vals.max()
-
-        # Update global statistics if in training mode
-        if self.training:
-            self.global_min[dim_idx] = torch.min(self.global_min[dim_idx], batch_min)
-            self.global_max[dim_idx] = torch.max(self.global_max[dim_idx], batch_max)
-            self.stats_initialized[dim_idx] = True
-
-        # Use global stats if initialized, otherwise use batch stats
-        if self.stats_initialized[dim_idx]:
-            min_val = self.global_min[dim_idx]
-            max_val = self.global_max[dim_idx]
-        else:
-            min_val = batch_min
-            max_val = batch_max
-
-        eval_points = torch.linspace(
-            min_val, max_val, self.num_bins, device=y_true.device
-        )
-
-        # Estimate density using batch data
-        density = self.kde(y_true, eval_points)
-
-        # Generate cumulative distribution
-        cdf = torch.cumsum(density, 0)
-        cdf = cdf / (cdf[-1] + self.eps)
-
-        # Generate uniform samples for current batch
-        u = torch.linspace(0, 1, batch_size, device=y_true.device)
-
-        # Find bins using binary search
-        inds = torch.searchsorted(cdf, u)
-        inds = torch.clamp(inds, 0, self.num_bins - 1)
-
-        # Linear interpolation between bin edges
-        pseudo_labels = eval_points[inds]
-
-        return pseudo_labels
-
-    def forward(
-        self, y_pred: torch.Tensor, y_true: torch.Tensor
-    ) -> tuple[torch.Tensor, torch.Tensor]:
         device = y_pred.device
-        y_true = y_true.to(device)
-
-        # Create mask for non-NaN values
-        mask = ~torch.isnan(y_true)
-
-        # Check which dimensions have ANY valid samples
-        valid_dims = mask.any(dim=0)  # [num_dims]
-
-        # If no dimensions are valid, return zero loss
-        if not valid_dims.any():
-            return torch.tensor(0.0, device=device), torch.zeros_like(
-                valid_dims, dtype=torch.float
-            )
-
-        batch_size, num_dims = y_true.shape
+        batch_size, num_dims = y_pred.shape
         dim_losses = torch.zeros(num_dims, device=device)
-
-        # Zero out weights for completely NaN dimensions
-        weights = self.weights * valid_dims
-        weight_sum = weights.sum().clamp(min=1e-8)
-
-        # Process each dimension separately
+        
+        # Ensure weights match dimensions
+        if self.weights.shape[0] != num_dims:
+            # Resize weights if needed
+            if self.weights.shape[0] == 1:
+                self.weights = self.weights.repeat(num_dims)
+            else:
+                raise ValueError(f"Weight dimensions {self.weights.shape[0]} don't match output dimensions {num_dims}")
+        
         for dim in range(num_dims):
-            if not valid_dims[dim]:
-                continue
-
-            # Get values for current dimension
             true_dim = y_true[:, dim]
             pred_dim = y_pred[:, dim]
-
-            # Generate pseudo-labels and sort predictions
-            pseudo_labels = self.generate_pseudo_labels(true_dim, batch_size, dim)
-            pseudo_preds = torch.sort(pred_dim[~torch.isnan(pred_dim)])[0]
-
-            # Pad predictions if needed
-            if pseudo_preds.size(0) < batch_size:
-                padding = torch.zeros(batch_size - pseudo_preds.size(0), device=device)
-                pseudo_preds = torch.cat([pseudo_preds, padding])
-
-            # Compute MSE between distributions (inherently combines alignment and prediction errors)
-            dim_losses[dim] = F.mse_loss(pseudo_preds, pseudo_labels)
-
-        # Compute weighted average loss
-        weighted_loss = (dim_losses * weights).sum() / weight_sum
-
+            
+            # Skip if all values are NaN
+            valid_mask = ~torch.isnan(true_dim)
+            if not valid_mask.any():
+                continue
+            
+            # Get valid values
+            valid_true = true_dim[valid_mask]
+            
+            # Determine range
+            min_label = valid_true.min().item()
+            max_label = valid_true.max().item()
+            
+            # Add small buffer to avoid single-point distributions
+            if min_label == max_label:
+                min_label -= 0.5
+                max_label += 0.5
+            
+            # Generate theoretical labels using KDE
+            density, x_values = self._get_label_distribution(true_dim, min_label, max_label, step=1.0)
+            theoretical_labels_np = self._get_batch_theoretical_labels(density, batch_size, min_label, step=1.0)
+            
+            # Convert to tensor
+            theoretical_labels = torch.tensor(theoretical_labels_np, dtype=torch.float32, device=device)
+            
+            # Sort predictions using torchsort
+            sorted_pred = torchsort.soft_sort(
+                pred_dim.unsqueeze(0),
+                regularization_strength=self.regularization_strength
+            ).squeeze(0)
+            
+            # Compute distribution loss only (no plain loss here)
+            dist_loss = self.loss_fn(sorted_pred, theoretical_labels).mean()
+            dim_losses[dim] = dist_loss
+        
+        # Apply dimension weights
+        weighted_loss = (dim_losses * self.weights).sum()
+        
         return weighted_loss, dim_losses
 
 

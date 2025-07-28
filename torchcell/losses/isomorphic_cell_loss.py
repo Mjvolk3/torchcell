@@ -21,23 +21,19 @@ class ICLoss(nn.Module):
         lambda_dist: float,
         lambda_supcr: float,
         weights: Optional[torch.Tensor] = None,
-        global_min: Optional[torch.Tensor] = None,
-        global_max: Optional[torch.Tensor] = None,
     ) -> None:
         """
         Args:
             lambda_dist: Weight for the dist loss.
             lambda_supcr: Weight for the SupCR loss.
             weights: Optional weights applied uniformly to all losses.
-            global_min: Optional global minimum values for WeightedDistLoss
-            global_max: Optional global maximum values for WeightedDistLoss
         """
         super().__init__()
         self.lambda_dist = lambda_dist
         self.lambda_supcr = lambda_supcr
 
         self.mse_loss_fn = WeightedMSELoss(weights=weights)
-        self.dist_loss_fn = WeightedDistLoss(weights=weights, global_min=global_min, global_max=global_max)
+        self.dist_loss_fn = WeightedDistLoss(weights=weights)
         self.supcr_fn = WeightedSupCRCell(weights=weights)
 
     def forward(

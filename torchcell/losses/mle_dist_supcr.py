@@ -74,11 +74,8 @@ class BufferedWeightedDistLoss(nn.Module):
     def __init__(
         self,
         buffer_size: int = 256,
-        num_bins: int = 64,
         bandwidth: float = 2.0,
         weights: Optional[torch.Tensor] = None,
-        global_min: Optional[torch.Tensor] = None,
-        global_max: Optional[torch.Tensor] = None,
         min_samples: int = 64,
     ):
         super().__init__()
@@ -87,11 +84,8 @@ class BufferedWeightedDistLoss(nn.Module):
 
         # Initialize base dist loss
         self.base_dist_loss = WeightedDistLoss(
-            num_bins=num_bins,
             bandwidth=bandwidth,
             weights=weights,
-            global_min=global_min,
-            global_max=global_max,
         )
 
         # Circular buffer for predictions and targets
@@ -370,8 +364,6 @@ class MleDistSupCR(nn.Module):
         temp_schedule: str = "exponential",
         # Other parameters
         weights: Optional[torch.Tensor] = None,
-        global_min: Optional[torch.Tensor] = None,
-        global_max: Optional[torch.Tensor] = None,
         max_epochs: int = 1000,
     ):
         super().__init__()
@@ -397,8 +389,6 @@ class MleDistSupCR(nn.Module):
                 buffer_size=buffer_size,
                 bandwidth=dist_bandwidth,
                 weights=weights,
-                global_min=global_min,
-                global_max=global_max,
                 min_samples=min_samples_for_dist,
             )
             self.supcr_loss = BufferedWeightedSupCRCell(
@@ -412,8 +402,6 @@ class MleDistSupCR(nn.Module):
             self.dist_loss = WeightedDistLoss(
                 bandwidth=dist_bandwidth,
                 weights=weights,
-                global_min=global_min,
-                global_max=global_max,
             )
             self.supcr_loss = WeightedSupCRCell(
                 temperature=supcr_temperature, weights=weights

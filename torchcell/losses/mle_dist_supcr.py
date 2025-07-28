@@ -495,53 +495,89 @@ class MleDistSupCR(nn.Module):
             all_targets = self.gather_across_gpus(targets)
             all_embeddings = self.gather_across_gpus(z_P)
 
-        # Compute MSE loss (always on local batch only)
-        mse_val, mse_dims = self.mse_loss(predictions, targets)
-        weighted_mse = self.lambda_mse * mse_val
-        total_loss = total_loss + weighted_mse
-        loss_dict.update(
-            {
-                "mse_loss": mse_val.item(),
-                "mse_dim_losses": mse_dims,
-                "weighted_mse": weighted_mse.item(),
-            }
-        )
-
-        # Compute distribution loss
-        if self.use_buffer:
-            dist_val, dist_dims = self.dist_loss(
-                predictions, targets, all_predictions, all_targets, buffer_weight
+        # Compute MSE loss (always on local batch only) if lambda > 0
+        if self.lambda_mse > 0:
+            mse_val, mse_dims = self.mse_loss(predictions, targets)
+            weighted_mse = self.lambda_mse * mse_val
+            total_loss = total_loss + weighted_mse
+            loss_dict.update(
+                {
+                    "mse_loss": mse_val.item(),
+                    "mse_dim_losses": mse_dims,
+                    "weighted_mse": weighted_mse.item(),
+                }
             )
         else:
-            dist_val, dist_dims = self.dist_loss(predictions, targets)
+            # Set to zero for consistency in logging
+            mse_val = torch.tensor(0.0, device=device)
+            mse_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            loss_dict.update(
+                {
+                    "mse_loss": 0.0,
+                    "mse_dim_losses": mse_dims,
+                    "weighted_mse": 0.0,
+                }
+            )
 
-        weighted_dist = self.lambda_dist * dist_val
-        total_loss = total_loss + weighted_dist
-        loss_dict.update(
-            {
-                "dist_loss": dist_val.item(),
-                "dist_dim_losses": dist_dims,
-                "weighted_dist": weighted_dist.item(),
-            }
-        )
+        # Compute distribution loss if lambda > 0
+        if self.lambda_dist > 0:
+            if self.use_buffer:
+                dist_val, dist_dims = self.dist_loss(
+                    predictions, targets, all_predictions, all_targets, buffer_weight
+                )
+            else:
+                dist_val, dist_dims = self.dist_loss(predictions, targets)
 
-        # Compute SupCR loss
-        if self.use_buffer:
-            supcr_val, supcr_dims = self.supcr_loss(
-                z_P, targets, all_embeddings, all_targets, buffer_weight, temperature
+            weighted_dist = self.lambda_dist * dist_val
+            total_loss = total_loss + weighted_dist
+            loss_dict.update(
+                {
+                    "dist_loss": dist_val.item(),
+                    "dist_dim_losses": dist_dims,
+                    "weighted_dist": weighted_dist.item(),
+                }
             )
         else:
-            supcr_val, supcr_dims = self.supcr_loss(z_P, targets)
+            # Set to zero for consistency in logging
+            dist_val = torch.tensor(0.0, device=device)
+            dist_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            loss_dict.update(
+                {
+                    "dist_loss": 0.0,
+                    "dist_dim_losses": dist_dims,
+                    "weighted_dist": 0.0,
+                }
+            )
 
-        weighted_supcr = self.lambda_supcr * supcr_val
-        total_loss = total_loss + weighted_supcr
-        loss_dict.update(
-            {
-                "supcr_loss": supcr_val.item(),
-                "supcr_dim_losses": supcr_dims,
-                "weighted_supcr": weighted_supcr.item(),
-            }
-        )
+        # Compute SupCR loss if lambda > 0
+        if self.lambda_supcr > 0:
+            if self.use_buffer:
+                supcr_val, supcr_dims = self.supcr_loss(
+                    z_P, targets, all_embeddings, all_targets, buffer_weight, temperature
+                )
+            else:
+                supcr_val, supcr_dims = self.supcr_loss(z_P, targets)
+
+            weighted_supcr = self.lambda_supcr * supcr_val
+            total_loss = total_loss + weighted_supcr
+            loss_dict.update(
+                {
+                    "supcr_loss": supcr_val.item(),
+                    "supcr_dim_losses": supcr_dims,
+                    "weighted_supcr": weighted_supcr.item(),
+                }
+            )
+        else:
+            # Set to zero for consistency in logging
+            supcr_val = torch.tensor(0.0, device=device)
+            supcr_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
+            loss_dict.update(
+                {
+                    "supcr_loss": 0.0,
+                    "supcr_dim_losses": supcr_dims,
+                    "weighted_supcr": 0.0,
+                }
+            )
 
         # Compute normalized contributions
         if total_loss > 0:

@@ -640,9 +640,152 @@ class NaNTolerantQuantileLoss(nn.Module):
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torchsort
 import numpy as np
 from scipy.stats import gaussian_kde
+
+
+def isotonic_l2_pav(y, weights=None):
+    """
+    Solves isotonic regression using PAV (Pool Adjacent Violators) algorithm.
+    Finds argmin_{v_1 >= v_2 >= ... >= v_n} 0.5 * ||v - y||^2_2
+    
+    Args:
+        y: Input values (1D tensor)
+        weights: Optional weights (1D tensor)
+    
+    Returns:
+        Solution to isotonic regression
+    """
+    device = y.device
+    n = len(y)
+    
+    if weights is None:
+        weights = torch.ones(n, device=device)
+    
+    # Convert to lists for the PAV algorithm
+    y_list = y.cpu().numpy().tolist()
+    w_list = weights.cpu().numpy().tolist()
+    
+    # PAV algorithm
+    blocks = [[i, i+1, y_list[i], w_list[i]] for i in range(n)]  # [start, end, value, weight]
+    
+    i = 0
+    while i < len(blocks) - 1:
+        # If current block value < next block value (violates isotonic constraint)
+        if blocks[i][2] < blocks[i + 1][2]:
+            # Merge blocks
+            start1, end1, val1, w1 = blocks[i]
+            start2, end2, val2, w2 = blocks[i + 1]
+            
+            # Weighted average
+            new_val = (val1 * w1 + val2 * w2) / (w1 + w2)
+            new_block = [start1, end2, new_val, w1 + w2]
+            
+            # Replace the two blocks with merged block
+            blocks[i:i+2] = [new_block]
+            
+            # Check if we need to merge with previous blocks
+            if i > 0:
+                i -= 1
+        else:
+            i += 1
+    
+    # Reconstruct the solution
+    solution = torch.zeros_like(y)
+    for start, end, val, _ in blocks:
+        solution[start:end] = val
+    
+    return solution
+
+
+class FastSoftSort(torch.autograd.Function):
+    """
+    Fast differentiable sorting following the original paper implementation.
+    Uses isotonic regression for the forward pass and custom gradients.
+    """
+    
+    @staticmethod
+    def forward(ctx, values, regularization_strength=1.0):
+        """
+        Soft sort using isotonic regression.
+        
+        Args:
+            values: 1D tensor to sort
+            regularization_strength: Controls smoothness
+        """
+        device = values.device
+        n = len(values)
+        
+        # Sort in descending order and get permutation
+        sorted_values, permutation = torch.sort(values, descending=True)
+        
+        # Prepare weights for isotonic regression
+        w = torch.arange(n, 0, -1, dtype=values.dtype, device=device) / regularization_strength
+        
+        # Solve isotonic regression to get v
+        # We want to find v such that sorted_values ≈ w - v with v isotonic
+        v = isotonic_l2_pav(w - sorted_values.detach())
+        
+        # The soft sorted values are w - v
+        soft_sorted = w - v
+        
+        # Save for backward
+        ctx.save_for_backward(values, permutation, v, w, sorted_values)
+        ctx.regularization_strength = regularization_strength
+        
+        return soft_sorted
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        """
+        Compute gradients using the Jacobian of isotonic regression.
+        """
+        values, permutation, v, w, sorted_values = ctx.saved_tensors
+        n = len(values)
+        device = values.device
+        
+        # Compute partition sizes based on the isotonic solution
+        # Elements with same v values belong to same partition
+        eps = 1e-9
+        partition_ids = torch.zeros(n, dtype=torch.long, device=device)
+        current_id = 0
+        
+        for i in range(1, n):
+            if torch.abs(v[i] - v[i-1]) > eps:
+                current_id += 1
+            partition_ids[i] = current_id
+        
+        # Compute gradient through isotonic regression
+        grad_v = torch.zeros_like(grad_output)
+        
+        # For each partition, gradient is averaged
+        for pid in range(current_id + 1):
+            mask = partition_ids == pid
+            if mask.any():
+                grad_v[mask] = grad_output[mask].mean()
+        
+        # Since soft_sorted = w - v, gradient w.r.t sorted values is -grad_v
+        grad_sorted = -grad_v
+        
+        # Unsort the gradient
+        inverse_permutation = torch.argsort(permutation)
+        grad_values = grad_sorted[inverse_permutation]
+        
+        return grad_values, None
+
+
+def fast_soft_sort(values, regularization_strength=1.0):
+    """
+    Fast differentiable sorting that follows the original paper's implementation.
+    
+    Args:
+        values: 1D tensor to sort
+        regularization_strength: Controls how close to hard sorting (lower = closer)
+    
+    Returns:
+        Soft-sorted tensor
+    """
+    return FastSoftSort.apply(values, regularization_strength)
 
 
 class WeightedDistLoss(nn.Module):
@@ -818,11 +961,11 @@ class WeightedDistLoss(nn.Module):
             # Convert to tensor
             theoretical_labels = torch.tensor(theoretical_labels_np, dtype=torch.float32, device=device)
             
-            # Sort predictions using torchsort
-            sorted_pred = torchsort.soft_sort(
-                pred_dim.unsqueeze(0),
+            # Sort predictions using fast differentiable sorting (following original paper)
+            sorted_pred = fast_soft_sort(
+                pred_dim,
                 regularization_strength=self.regularization_strength
-            ).squeeze(0)
+            )
             
             # Compute distribution loss only (no plain loss here)
             dist_loss = self.loss_fn(sorted_pred, theoretical_labels).mean()

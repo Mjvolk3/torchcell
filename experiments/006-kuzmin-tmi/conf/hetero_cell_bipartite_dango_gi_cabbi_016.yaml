@@ -41,7 +41,7 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 4 #32 #4 #32
+  batch_size: 32 #32 #4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false

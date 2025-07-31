@@ -16,7 +16,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Batch, HeteroData
-from torch_geometric.nn import BatchNorm, GATv2Conv, HeteroConv, LayerNorm
+from torch_geometric.nn import BatchNorm, GATv2Conv, GINConv, HeteroConv, LayerNorm
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torch_scatter import scatter_mean
 
@@ -284,12 +284,28 @@ class AttentionConvWrapper(nn.Module):
     ) -> None:
         super().__init__()
         self.conv = conv
-        if hasattr(conv, "concat"):
+        
+        # Determine expected output dimension based on conv type
+        if isinstance(conv, GINConv):
+            # For GINConv, get output dim from the last layer of the MLP
+            mlp = conv.nn
+            if isinstance(mlp, nn.Sequential):
+                # Find the last Linear layer in the MLP
+                for module in reversed(list(mlp.modules())):
+                    if isinstance(module, nn.Linear):
+                        expected_dim = module.out_features
+                        break
+            else:
+                expected_dim = target_dim  # fallback
+        elif hasattr(conv, "concat"):
+            # For GATv2Conv
             expected_dim = (
                 conv.heads * conv.out_channels if conv.concat else conv.out_channels
             )
         else:
+            # For other conv types that have out_channels
             expected_dim = conv.out_channels
+            
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -318,6 +334,65 @@ class AttentionConvWrapper(nn.Module):
         if self.dropout is not None:
             out = self.dropout(out)
         return out
+
+
+def create_conv_layer(
+    encoder_type: str,
+    in_channels: int,
+    out_channels: int,
+    config: Dict[str, Any],
+    edge_dim: Optional[int] = None,
+    dropout: float = 0.1
+) -> nn.Module:
+    """Create appropriate conv layer based on encoder type.
+    
+    Args:
+        encoder_type: Type of encoder - "gatv2" or "gin"
+        in_channels: Input channel dimension
+        out_channels: Output channel dimension
+        config: Configuration dict for the encoder
+        edge_dim: Edge feature dimension (for GATv2)
+        dropout: Dropout rate for GIN MLP
+        
+    Returns:
+        Conv layer (GATv2Conv or GINConv)
+    """
+    if encoder_type == "gatv2":
+        return GATv2Conv(
+            in_channels,
+            out_channels // config.get("heads", 1),
+            heads=config.get("heads", 1),
+            concat=config.get("concat", True),
+            add_self_loops=config.get("add_self_loops", False),
+            edge_dim=edge_dim
+        )
+    elif encoder_type == "gin":
+        # GIN uses MLP for transformation
+        gin_hidden = config.get("gin_hidden_dim") or out_channels
+        gin_layers = config.get("gin_num_layers", 2)
+        
+        # Build MLP
+        mlp_layers = []
+        for i in range(gin_layers):
+            if i == 0:
+                mlp_layers.extend([
+                    nn.Linear(in_channels, gin_hidden),
+                    nn.ReLU(),
+                    nn.Dropout(dropout)
+                ])
+            elif i == gin_layers - 1:
+                mlp_layers.append(nn.Linear(gin_hidden, out_channels))
+            else:
+                mlp_layers.extend([
+                    nn.Linear(gin_hidden, gin_hidden),
+                    nn.ReLU(),
+                    nn.Dropout(dropout)
+                ])
+        
+        mlp = nn.Sequential(*mlp_layers)
+        return GINConv(mlp, train_eps=True)
+    else:
+        raise ValueError(f"Unknown encoder type: {encoder_type}")
 
 
 class GeneInteractionDango(nn.Module):
@@ -371,15 +446,17 @@ class GeneInteractionDango(nn.Module):
         for _ in range(num_layers):
             conv_dict = {}
 
-            # Create a GATv2Conv for each graph in the multigraph
+            # Create a conv layer for each graph in the multigraph
             for graph_name in self.graph_names:
                 edge_type = ("gene", graph_name, "gene")
-                conv_dict[edge_type] = GATv2Conv(
-                    hidden_channels,
-                    hidden_channels // gene_encoder_config.get("heads", 1),
-                    heads=gene_encoder_config.get("heads", 1),
-                    concat=gene_encoder_config.get("concat", True),
-                    add_self_loops=gene_encoder_config.get("add_self_loops", False),
+                encoder_type = gene_encoder_config.get("encoder_type", "gatv2")
+                
+                conv_dict[edge_type] = create_conv_layer(
+                    encoder_type=encoder_type,
+                    in_channels=hidden_channels,
+                    out_channels=hidden_channels,
+                    config=gene_encoder_config,
+                    dropout=dropout
                 )
 
             # Wrap each conv with attention wrapper

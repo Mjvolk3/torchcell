@@ -70,23 +70,38 @@ model:
   activation: "gelu"
   dropout: 0.0 # 0.1
   gene_encoder_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    # GAT-specific parameters (used when encoder_type="gatv2")
     # heads: 5
     heads: ${heads}
     concat: true
     bias: true
     add_self_loops: false
     share_weights: false
+    # GIN-specific parameters (used when encoder_type="gin")
+    gin_num_layers: 2      # Number of MLP layers in GIN
+    gin_hidden_dim: null   # If null, defaults to hidden_channels
   gpr_conv_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    # GAT-specific parameters
     # heads: 2
     heads: ${heads}
     concat: true
     add_self_loops: false
+    # GIN-specific parameters
+    gin_num_layers: 2
+    gin_hidden_dim: null
   metabolism_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
     is_stoich_gated: true
     use_attention: true
+    # GAT-specific parameters
     # heads: 2
     heads: ${heads}
     concat: true
+    # GIN-specific parameters
+    gin_num_layers: 2
+    gin_hidden_dim: null
   prediction_head_config:
     hidden_channels: 64 #64
     head_num_layers: 4

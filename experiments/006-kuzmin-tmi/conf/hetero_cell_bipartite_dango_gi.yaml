@@ -40,7 +40,7 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 8 #32 #4 #32
+  batch_size: 32 #32 #4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
@@ -106,8 +106,8 @@ regression_task:
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  lambda_dist: 0.1 # 0.1 #0.1 #0.1
-  lambda_supcr: 0.001 #0.001 #0.001 #0.001
+  lambda_dist: 0.01 # 0.1 # 0.1 #0.1 #0.1
+  lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
   
   # MleDistSupCR specific configuration
   loss_config:
@@ -144,14 +144,14 @@ regression_task:
     type: "AdamW"
     lr: 5e-4 #overrode by type
     weight_decay: 1e-12
-  lr_scheduler:
-    type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
-    cycle_mult: 1.0 # Keep cycles the same length
-    max_lr: 1e-4 # Starting peak
-    min_lr: 1e-8 # Minimum value
-    warmup_steps: 1 # Warmup for 1 step to reach max_lr
-    gamma: 0.8 # Less aggressive decay for shorter training
+  lr_scheduler: null
+    # type: "CosineAnnealingWarmupRestarts"
+    # first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
+    # cycle_mult: 1.0 # Keep cycles the same length
+    # max_lr: 1e-4 # Starting peak
+    # min_lr: 1e-8 # Minimum value
+    # warmup_steps: 1 # Warmup for 1 step to reach max_lr
+    # gamma: 0.8 # Less aggressive decay for shorter training
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256

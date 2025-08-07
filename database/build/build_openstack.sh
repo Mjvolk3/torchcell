@@ -5,7 +5,7 @@ PROJECT_DIR="/home/rocky/projects/torchcell"
 cd "$PROJECT_DIR" || exit 1
 
 # Docker login (if needed)
-docker login
+docker login -u michaelvolk
 
 # Clean up existing container
 docker stop tc-neo4j || true
@@ -45,14 +45,29 @@ if ! docker ps | grep -q tc-neo4j; then
 fi
 
 # Update packages inside container
-docker exec tc-neo4j python -m pip install --upgrade pip
-docker exec tc-neo4j python -m pip uninstall torchcell -y
-docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
-docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
-docker exec tc-neo4j python -m pip uninstall biocypher -y
-docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
-docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
-docker exec tc-neo4j python -m pip install --no-cache-dir hypernetx fastjsonschema
+# docker exec tc-neo4j python -m pip install --upgrade pip
+# docker exec tc-neo4j python -m pip uninstall torchcell -y
+# docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main
+# docker exec tc-neo4j python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html
+# docker exec tc-neo4j python -m pip uninstall biocypher -y
+# docker exec tc-neo4j python -m pip install git+https://github.com/Mjvolk3/biocypher@main
+# docker exec tc-neo4j python -m pip install git+https://github.com/oxpig/CaLM@main
+# docker exec tc-neo4j python -m pip install --no-cache-dir hypernetx fastjsonschema
+###########
+docker exec tc-neo4j bash -c "\
+source ~/.bashrc && \
+conda activate myenv && \
+python -m pip install --upgrade pip && \
+python -m pip uninstall torchcell -y && \
+python -m pip install git+https://github.com/Mjvolk3/torchcell.git@main && \
+python -m pip install --force-reinstall --no-cache torch_scatter -f https://data.pyg.org/whl/torch-2.4.0+cpu.html && \
+python -m pip uninstall biocypher -y && \
+python -m pip install git+https://github.com/Mjvolk3/biocypher@main && \
+python -m pip install git+https://github.com/oxpig/CaLM@main && \
+python -m pip install --no-cache-dir hypernetx fastjsonschema"
+
+
+
 
 # WandB login
 echo "Logging into WandB..."

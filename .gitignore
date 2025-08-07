@@ -95,6 +95,7 @@ database/data/*
 database/logs
 database/slurm/output
 database/slurm/error
+database/database.env
 
 notes/assets/SEED_abstract_2024.docx
 

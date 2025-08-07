@@ -1,3 +1,4 @@
+# experiments/006-kuzmin-tmi/conf/dango_kuzmin2018_tmi_string12_0.yaml
 defaults:
   - default
   - _self_
@@ -42,8 +43,8 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: null # 100
-  batch_size: 32 #32
-  num_workers: 4
+  batch_size: 64 #32 #64*4 gives 25% usage
+  num_workers: 8
   pin_memory: false
   prefetch: false
 
@@ -52,7 +53,7 @@ trainer:
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 2  # For interactive testing with 2 GPUs
+  devices: 4  # For interactive testing with 2 GPUs
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna

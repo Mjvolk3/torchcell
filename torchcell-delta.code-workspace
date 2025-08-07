@@ -133,19 +133,13 @@
             {
                 "label": "Delta: Interactive gpuA40x",
                 "type": "shell",
-                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=${input:delta_num_tasks} --cpus-per-task=${input:delta_num_cpus} --mem=${input:A40x4_mem} --pty bash",
                 "problemMatcher": []
             },
             {
                 "label": "Delta: Interactive gpuA100x",
                 "type": "shell",
                 "command": "srun --account=bbub-delta-gpu --partition=gpuA100x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=63g --pty bash",
-                "problemMatcher": []
-            },
-            {
-                "label": "Delta: Interactive gpuA40x",
-                "type": "shell",
-                "command": "srun --account=bbub-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=${input:A40x4_num_gpus} --tasks=1 --tasks-per-node=1 --cpus-per-task=1 --mem=${input:A40x4_mem} --pty bash",
                 "problemMatcher": []
             },
             {
@@ -344,6 +338,20 @@
                     "243g",
                 ],
                 "default": "62.5"
+            },
+            {
+                "id": "delta_num_cpus",
+                "description": "Number of CPUs",
+                "type": "pickString",
+                "options": ["1", "2", "4", "8", "16"],
+                "default": "1"
+            },
+            {
+                "id": "delta_num_tasks",
+                "description": "Number of tasks",
+                "type": "pickString",
+                "options": ["1", "2", "3", "4"],
+                "default": "1"
             },
             {
                 "id": "numProcessors",

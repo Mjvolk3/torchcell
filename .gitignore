@@ -95,6 +95,7 @@ database/data/*
 database/logs
 database/slurm/output
 database/slurm/error
+database/database.env
 
 notes/assets/SEED_abstract_2024.docx
 
@@ -137,6 +138,7 @@ dango.md
 dango.pdf
 dcell.md
 dcell.pdf
+distloss.md
 
 # torchcell egg info
 torchcell.egg-info/*

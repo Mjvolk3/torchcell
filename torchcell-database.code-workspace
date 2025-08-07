@@ -4,51 +4,6 @@
             "name": "torchcell",
             "path": "."
         },
-        {
-            "name": "______________",
-            "path": "../______________"
-        },
-        {
-            "name": "yeast-GEM",
-            "path": "../yeast-GEM"
-        },
-        {
-            "name": "Gene_Graph",
-            "path": "../Gene_Graph"
-        },
-        {
-            "name": "multi_knockout",
-            "path": "../multi_knockout"
-        },
-        {
-            "name": "torchgeo",
-            "path": "../torchgeo"
-        },
-        {
-            "name": "GraphGym",
-            "path": "../GraphGym"
-        },
-        {
-            "name": "pytorch_geometric",
-            "path": "../pytorch_geometric"
-        },
-        {
-            "name": "intermine-ws-python",
-            "path": "../intermine-ws-python"
-        },
-        {
-            "name": "SpeciesLM",
-            "path": "../SpeciesLM"
-        },
-        {   "name": "biocypher",
-            "path": "../biocypher"
-        }
-        {   "name": "collectri",
-            "path": "../collectri"
-        },
-        {   "name": "Dist-Loss",
-            "path": "../Dist-Loss"
-        }
     ],
     "settings": {
         "dendron.rootDir": ".",
@@ -64,7 +19,7 @@
         "dendron.enableSelfContainedVaultWorkspace": true,
         "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
         "workbench.colorCustomizations": {
-            "titleBar.activeBackground": "#be240182"
+            "titleBar.activeBackground": "#941b00e8"
         },
         "markdownlint.config":{
             "MD007": { "indent": 2 },
@@ -76,9 +31,7 @@
             "MD026": false,
             "MD033": false,
             "MD045": false,
-            "MD050": false,
-            "MD029": false
-            "MD036": false
+            "MD050": false
         },
         "[markdown]": {
             "editor.codeActionsOnSave": {
@@ -152,49 +105,59 @@
                 "command": "./notes/assets/publish/scripts/bib_tex_pdf.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
                 "problemMatcher": []
             },
-            {
-                "label": "Pandoc: bib-tex-pdf-landscape",
-                "type": "shell",
-                "command": "./notes/assets/publish/scripts/bib_tex_pdf_landscape.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
-                "problemMatcher": []
-            },
-            {
-                "label": "Pandoc: bib-tex-docx",
-                "type": "shell",
-                "command": "./notes/assets/publish/scripts/bib_tex_docx.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
-                "problemMatcher": []
-            },
             // Cluster
             {
-                "label": "nano: Interactive",
+                "label": "gilahyper: sacct",
                 "type": "shell",
-                "command": "qsub -I -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=3600",
+                "command": "sacct --starttime=$(date -d '${input:days} days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End,Nodelist",
+                "problemMatcher": [],
+                "inputs": [
+                    {
+                        "id": "days",
+                        "description": "number of days",
+                        "type": "promptString",
+                        "default": "7"
+                    }
+                ]
+            },
+            {
+                "label": "gilahyper: Available memory for active jobs",
+                "type": "shell",
+                "command": "squeue -h -o \"%i %N %C %m\" | while read job node cpus mem; do avail_mem=$(sinfo -n $node -o \"%m %a\" -h | awk '{print $1 - $2}'); echo \"Job $job on $node: Using ${cpus}C / ${mem}M, Available: ${avail_mem}M\"; done",
                 "problemMatcher": []
             },
             {
-                "label": "nano: qsub main",
+                "label": "gilahyper: CPU and memory usage per user",
                 "type": "shell",
-                "command": "qsub main.script -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=96:00:00 -N ${input:jobName}",
+                "command": "squeue -o \"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %C %m\" -h | awk '{cpu[$4]+=$8; mem[$4]+=$9} END {for (user in cpu) print user, cpu[user], mem[user]\"M\"}' | sort -k2 -rn",
                 "problemMatcher": []
             },
             {
-                "label": "Delta: Interactive GPU",
+                "label": "gilahyper: Pending jobs with requested resources",
                 "type": "shell",
-                "command": "srun --account=bbtp-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=20g --pty bash",
+                "command": "squeue -t PD -o \"%.18i %.9P %.8j %.8u %.8T %.10M %.6D %C %m\" -h",
                 "problemMatcher": []
             },
             {
-                "label": "Delta: Interactive CPU",
+                "label": "gilahyper: Estimated start time for pending jobs",
                 "type": "shell",
-                "command": "srun --account=bbtp-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=16g --pty bash",
+                "command": "squeue -t PD -o \"%.18i %.9P %.8j %.8u %.8T %.10M %.6D %C %m %S\" -h",
                 "problemMatcher": []
             },
             {
-                "label": "genPE: M1 sweep",
+                "label": "gilahyper: Jobs close to time limit",
                 "type": "shell",
-                "command": "bash src/genPE/sweep_m1.sh",
+                "command": "squeue -o \"%.18i %.9P %.8j %.8u %.2t %.10M %.6D %C %m %L %l\" -h | awk '$11 != \"UNLIMITED\" && $10 != \"UNLIMITED\" && $10 >= 0.9*$11 {print}'",
                 "problemMatcher": []
             },
+            {
+                "label": "gilahyper: Job resource usage",
+                "type": "shell",
+                "command": "echo 'JobID Node CPUs GPUs MemReq AvailMem' && squeue -h -o '%i %N %C %m' | while read job node cpus mem; do avail_mem=$(sinfo -n $node -o '%m %a' -h | awk '{print $1 - $2}'); gpus=$(scontrol show job $job | awk -F= '/AllocTRES/ && match($2, /gpu:[[:digit:]]+/) {print substr($2, RSTART+4, RLENGTH-4)}'); echo \"$job $node ${cpus}C ${gpus:-0} ${mem} ${avail_mem}M\"; done",
+                "problemMatcher": []
+            },
+            // TCDB
+            
             // Notability
             {
                 "label": "notability: sync",
@@ -375,12 +338,6 @@
                     "panel": "shared"
                 }
             },
-            // sphinx sphinx-apidoc -o docs/source/generated torchcell
-            {"label": "sphinx: apidoc",
-            "type": "shell",
-            "command": "sphinx-apidoc -f -o docs/source/generated torchcell",
-            "problemMatcher": []
-            },
             // pytest code coverage
             {
                 "label": "pytest: coverage",
@@ -449,6 +406,21 @@
             "command": "python notes/assets/scripts/open_random_notes.py -n ${input:openRandomNotes} -d ${workspaceFolder}/notes",
             "problemMatcher": [],
             },
+            // gila
+            {
+                "label": "gila: sacct",
+                "type": "shell",
+                "command": "sacct --starttime=$(date -d '${input:days} days ago' '+%Y-%m-%d') --format=JobID,JobName%50,State,Elapsed,Start,End,Nodelist",
+                "problemMatcher": [],
+                "inputs": [
+                    {
+                        "id": "days",
+                        "description": "number of days",
+                        "type": "promptString",
+                        "default": "7"
+                    }
+                ]
+            },
         ],
         "inputs" : [
             {
@@ -462,6 +434,12 @@
                     "8"
                     "16",
                 ]
+            },
+            {
+                "id" : "days",
+                "description": "number of days",
+                "type": "promptString",
+                "default": "7"
             },
             {
                 "id": "newFilePath",
@@ -506,7 +484,7 @@
                 "description": "Choose the database directory:",
                 "options": ["database1", "database2", "database3"],
                 "default": "database1"
-            }
+            },
         ]
     },
     "launch": {
@@ -514,51 +492,19 @@
         "configurations": [
             {
                 "name": "Python: Workspace Folder",
-                "type": "debugpy",
+                "type": "python",
                 "request": "launch",
                 "program": "${file}",
-                "console": "internalConsole",
+                "console": "integratedTerminal",
                 "justMyCode": false,
                 "cwd": "${workspaceFolder:torchcell}",
                 "subProcess": true,
                 "pythonArgs": ["-Xfrozen_modules=off"],
                 "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"},
-                "internalConsoleOptions": "openOnSessionStart"
-            },
-            {
-                "name": "Debug Hydra Config",
-                "type": "debugpy",
-                "request": "launch",
-                "program": "${workspaceFolder:torchcell}/experiments/003-fit-int/scripts/isomorphic_cell_attentional.py",
-                "args": [
-                  "--config-dir",
-                  "${workspaceFolder:torchcell}/experiments/003-fit-int/conf",
-                  "--config-name",
-                  "optuna-isomorphic_cell_attentional-sweep_2.5e4",
-                  "--multirun"
-                ],
-                "console": "integratedTerminal",
-                "cwd": "${workspaceFolder:torchcell}",
-                "subProcess": true,
-                "justMyCode": false,
-                "pythonArgs": ["-Xfrozen_modules=off"],
-                "env": {
-                  "PYDEVD_DISABLE_FILE_VALIDATION": "1"
-                },
-                "internalConsoleOptions": "openOnSessionStart"
-              },
-            {
-                "name": "Pytest Current Line",
-                "type": "debugpy",
-                "request": "launch",
-                "module": "pytest",
-                "args": ["${relativeFile}::${selectedText}"],
-                "justMyCode": true,
-                "console": "integratedTerminal"
             },
             {
                 "name": "Python: yeast8",
-                "type": "debugpy",
+                "type": "python",
                 "request": "launch",
                 "program": "${file}",
                 "console": "integratedTerminal",
@@ -569,7 +515,7 @@
             },
             {
                 "name": "Python: torchgeo",
-                "type": "debugpy",
+                "type": "python",
                 "request": "launch",
                 "program": "${file}",
                 "console": "integratedTerminal",

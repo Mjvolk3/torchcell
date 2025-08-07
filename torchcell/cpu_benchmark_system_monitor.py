@@ -16,7 +16,6 @@ from typing import List, Tuple, Dict, Optional, Set, Any
 from dataclasses import dataclass
 from pathlib import Path
 
-
 @dataclass
 class BenchmarkConfig:
     """Configuration for benchmark runs"""
@@ -122,6 +121,57 @@ class SystemMonitor:
         self.ipmi_collector = IPMICollector()
         self.stop_event = threading.Event()
 
+
+    @staticmethod
+    def discover_sensors() -> Tuple[List[str], List[str]]:
+        """Discover available temperature and fan sensors"""
+        try:
+            result = subprocess.run(
+                "ipmitool sensor list | grep -E 'Temp\\.|RPM'",
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            
+            temp_sensors = []
+            fan_sensors = []
+            
+            if result.returncode == 0:
+                for line in result.stdout.split("\n"):
+                    if not line:
+                        continue
+                    parts = [p.strip() for p in line.split("|")]
+                    if len(parts) >= 3:
+                        name = parts[0].strip()
+                        value = parts[1].strip()
+                        unit = parts[2].strip()
+                        
+                        # Only include sensors that have valid readings
+                        if value != "na":
+                            if "Temp." in name:
+                                temp_sensors.append(name)
+                            elif "RPM" in unit:
+                                # Handle CHIPSET_FAN special case
+                                if name == "CHIPSET_FAN":
+                                    try:
+                                        if float(value) > 0:
+                                            fan_sensors.append(name)
+                                    except ValueError:
+                                        pass  # Skip if can't convert
+                                else:
+                                    fan_sensors.append(name)
+            
+            print(f"Discovered {len(temp_sensors)} temperature sensors: {', '.join(temp_sensors)}")
+            print(f"Discovered {len(fan_sensors)} fan sensors: {', '.join(fan_sensors)}")
+            
+            return temp_sensors, fan_sensors
+        
+        except Exception as e:
+            print(f"Error discovering sensors: {e}")
+            return [], []
+
+
     def _validate_data(self) -> bool:
         """Validate collected data"""
         if not self.timestamps:
@@ -215,61 +265,40 @@ class SystemMonitor:
 
         # Define markers to cycle through
         markers = ["o", "s", "^", "D", "v", "<", ">", "p", "*", "h", "8", "H"]
-        marker_idx = 0
-
+        
         # Get colors from style
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-        color_idx = 0
-
-        # Create mappings for each device
-        device_styles = {}
-
-        # Map colors and markers to temperature sensors
-        for sensor in ["CPU Temp.", "LAN Temp."]:
-            device_styles[sensor] = {
-                "color": colors[color_idx],
-                "marker": markers[marker_idx],
-            }
-            color_idx = (color_idx + 1) % len(colors)
-            marker_idx = (marker_idx + 1) % len(markers)
-
-        for x in "ABCDEFGH":
-            sensor = f"DIMM{x}1 Temp."
-            device_styles[sensor] = {
-                "color": colors[color_idx],
-                "marker": markers[marker_idx],
-            }
-            color_idx = (color_idx + 1) % len(colors)
-            marker_idx = (marker_idx + 1) % len(markers)
-
-        for i in range(1, 8):
-            sensor = f"PCIE0{i} Temp."
-            device_styles[sensor] = {
-                "color": colors[color_idx],
-                "marker": markers[marker_idx],
-            }
-            color_idx = (color_idx + 1) % len(colors)
-            marker_idx = (marker_idx + 1) % len(markers)
-
-        for fan in [
-            "CPU_FAN",
-            "CPU_OPT",
-            "CHA_FAN2",
-            "CHA_FAN3",
-            "CHA_FAN4",
-            "CHA_FAN6",
-            "SOC_FAN",
-        ]:
-            device_styles[fan] = {
-                "color": colors[color_idx],
-                "marker": markers[marker_idx],
-            }
-            color_idx = (color_idx + 1) % len(colors)
-            marker_idx = (marker_idx + 1) % len(markers)
 
         # Process data
         temp_df = pd.DataFrame(self.temperatures)
         rpm_df = pd.DataFrame(self.rpms)
+        
+        # Dynamically create device styles for all sensors found
+        device_styles = {}
+        color_idx = 0
+        marker_idx = 0
+        
+        # Assign styles to all temperature sensors
+        for sensor in sorted(temp_df.columns):
+            device_styles[sensor] = {
+                "color": colors[color_idx % len(colors)],
+                "marker": markers[marker_idx % len(markers)],
+            }
+            color_idx += 1
+            marker_idx = (marker_idx + 1) % len(markers)
+        
+        # Reset for fan sensors to have distinct colors
+        color_idx = 0
+        marker_idx = 0
+        
+        # Assign styles to all fan sensors
+        for fan in sorted(rpm_df.columns):
+            device_styles[fan] = {
+                "color": colors[color_idx % len(colors)],
+                "marker": markers[marker_idx % len(markers)],
+            }
+            color_idx += 1
+            marker_idx = (marker_idx + 1) % len(markers)
 
         # Calculate continuous timeline
         start_time = self.timestamps[0]
@@ -282,8 +311,10 @@ class SystemMonitor:
         rpm_labels = []
 
         # Plot temperatures
-        for sensor in temp_df.columns:
-            if any(not np.isnan(y) for y in temp_df[sensor].values):
+        for sensor in sorted(temp_df.columns):
+            sensor_values = temp_df[sensor].values
+            # Skip if all values are NaN
+            if any(not np.isnan(y) for y in sensor_values):
                 group_name = (
                     "CPU"
                     if "CPU" in sensor
@@ -293,7 +324,9 @@ class SystemMonitor:
                         else (
                             "PCIe"
                             if "PCIE" in sensor
-                            else "Network" if "LAN" in sensor else "Other"
+                            else "Network" if "LAN" in sensor 
+                            else "System" if "T_Sensor" in sensor
+                            else "Other"
                         )
                     )
                 )
@@ -301,35 +334,42 @@ class SystemMonitor:
                 style = device_styles[sensor]
                 line = ax1.plot(
                     x_values,
-                    temp_df[sensor].values,
+                    sensor_values,
                     color=style["color"],
                     marker=style["marker"],
                     markersize=4,
                     markevery=5,  # Show marker every 5 points to avoid crowding
                     alpha=0.8,
+                    linewidth=1.5,
                     label=f"{group_name}: {sensor}",
                 )
                 temp_handles.append(line[0])
                 temp_labels.append(f"{group_name}: {sensor}")
 
         # Plot fan speeds
-        for fan in rpm_df.columns:
-            if any(not np.isnan(y) for y in rpm_df[fan].values):
+        for fan in sorted(rpm_df.columns):
+            fan_values = rpm_df[fan].values
+            # Skip if all values are NaN or if it's CHIPSET_FAN with all zeros
+            if any(not np.isnan(y) and y > 0 for y in fan_values):
                 group_name = (
                     "CPU Fans"
                     if "CPU" in fan
-                    else "Chassis Fans" if "CHA" in fan else "Other"
+                    else "Chassis Fans" if "CHA" in fan 
+                    else "SOC Fan" if "SOC" in fan
+                    else "Chipset Fan" if "CHIPSET" in fan
+                    else "Other"
                 )
 
                 style = device_styles[fan]
                 line = ax2.plot(
                     x_values,
-                    rpm_df[fan].values,
+                    fan_values,
                     color=style["color"],
                     marker=style["marker"],
                     markersize=4,
                     markevery=5,  # Show marker every 5 points to avoid crowding
                     alpha=0.8,
+                    linewidth=1.5,
                     label=f"{group_name}: {fan}",
                 )
                 rpm_handles.append(line[0])
@@ -341,34 +381,42 @@ class SystemMonitor:
             cumulative_time += completion_time
             for ax in [ax1, ax2]:
                 ax.axvline(x=cumulative_time, color="r", linestyle="--", alpha=0.3)
-                ax.text(
-                    cumulative_time,
-                    ax.get_ylim()[1],
-                    f"Run {i}: {completion_time:.1f}s",
-                    rotation=90,
-                    verticalalignment="top",
-                    fontsize=8,
-                    alpha=0.7,
-                )
+                # Only add text labels for first few runs to avoid clutter
+                if i <= 10 or i % 10 == 0:
+                    ax.text(
+                        cumulative_time,
+                        ax.get_ylim()[1] * 0.95,
+                        f"Run {i}",
+                        rotation=90,
+                        verticalalignment="top",
+                        fontsize=7,
+                        alpha=0.6,
+                    )
 
         # Add legends with adjusted positioning
         # Temperature sensors legend
-        ax1.legend(
-            temp_handles,
-            temp_labels,
-            bbox_to_anchor=(1.02, 1),
-            loc="upper left",
-            title="Temperature Sensors",
-        )
+        if temp_handles:
+            ax1.legend(
+                temp_handles,
+                temp_labels,
+                bbox_to_anchor=(1.02, 1),
+                loc="upper left",
+                title="Temperature Sensors",
+                fontsize=8,
+                title_fontsize=9,
+            )
 
         # Fan speeds legend
-        ax2.legend(
-            rpm_handles,
-            rpm_labels,
-            bbox_to_anchor=(1.02, 1),
-            loc="upper left",
-            title="Fan Speeds",
-        )
+        if rpm_handles:
+            ax2.legend(
+                rpm_handles,
+                rpm_labels,
+                bbox_to_anchor=(1.02, 1),
+                loc="upper left",
+                title="Fan Speeds",
+                fontsize=8,
+                title_fontsize=9,
+            )
 
         # Customize plots
         ax1.set_title(
@@ -379,18 +427,31 @@ class SystemMonitor:
         ax2.set_ylabel("Fan Speed (RPM)")
 
         # Set fine-grained temperature y-axis ticks
-        ymin, ymax = ax1.get_ylim()
-        ax1.yaxis.set_major_locator(plt.MultipleLocator(2))
-        ax1.yaxis.set_minor_locator(plt.MultipleLocator(1))
-        # Adjust grid for readability
-        ax1.grid(True, which="major", alpha=0.5)
-        ax1.grid(True, which="minor", alpha=0.2)
+        if len(temp_handles) > 0:
+            ymin, ymax = ax1.get_ylim()
+            # Dynamic tick spacing based on temperature range
+            temp_range = ymax - ymin
+            if temp_range < 20:
+                major_tick = 2
+                minor_tick = 1
+            else:
+                major_tick = 5
+                minor_tick = 1
+            
+            ax1.yaxis.set_major_locator(plt.MultipleLocator(major_tick))
+            ax1.yaxis.set_minor_locator(plt.MultipleLocator(minor_tick))
+            ax1.grid(True, which="major", alpha=0.5)
+            ax1.grid(True, which="minor", alpha=0.2)
 
-        # Adjust temperature axis label size and rotation
         ax1.tick_params(axis="y", labelsize=8, rotation=0)
 
         # Adjust fan speed axis for better readability
-        ax2.yaxis.set_major_locator(plt.MultipleLocator(50))
+        if len(rpm_handles) > 0:
+            ax2.yaxis.set_major_locator(plt.MultipleLocator(100))
+            ax2.yaxis.set_minor_locator(plt.MultipleLocator(50))
+            ax2.grid(True, which="major", alpha=0.5)
+            ax2.grid(True, which="minor", alpha=0.2)
+        
         ax2.tick_params(axis="y", labelsize=8)
 
         plt.tight_layout()
@@ -597,6 +658,8 @@ def main() -> None:
         output_dir=Path(args.output_dir),
     )
 
+    print("\nDiscovering available sensors...")
+    SystemMonitor.discover_sensors()
     # Initialize benchmark
     benchmark = Benchmark(config)
 

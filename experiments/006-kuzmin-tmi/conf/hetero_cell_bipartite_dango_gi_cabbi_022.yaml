@@ -1,0 +1,157 @@
+# experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_022.yaml
+# [[experiments.006-kuzmin-tmi.conf.hetero_cell_bipartite_dango_gi_cabbi_022.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_cabbi_022.yaml
+
+
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  tags: ["refactored_distloss", "cabbi_022", "mse_dist_only", "original_paper_impl", "large_buffer"]
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 96
+  incidence_graphs: [metabolism_bipartite]
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard"  # Standardizes to mean=0, std=1
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000
+  batch_size: 4  # Limited by 44GB VRAM
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
+  prefetch_factor: 2
+
+trainer:
+  max_epochs: 150  # Realistic training duration (4-6 days)
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 6
+  overfit_batches: 0
+
+# Placeholders for hydra optuna
+heads: 8
+norms: "layer"
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 96
+  num_layers: 2
+  norm: ${norms}
+  activation: "gelu"
+  dropout: 0.0
+  gene_encoder_config:
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+  gpr_conv_config:
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+  metabolism_config:
+    is_stoich_gated: true
+    use_attention: true
+    heads: ${heads}
+    concat: true
+  prediction_head_config:
+    hidden_channels: 96
+    head_num_layers: 4
+    dropout: 0.0
+    activation: "gelu"
+    head_norm: ${norms}
+  local_predictor_config:
+    num_attention_layers: 2
+    num_heads: 8
+    combination_method: "concat"
+
+regression_task:
+  loss: mle_dist_supcr
+  is_weighted_phenotype_loss: false
+  
+  # Lambda weights - equal MSE and DistLoss, no contrastive
+  lambda_mse: 1.0      # MSE for basic fit
+  lambda_dist: 1.0     # Distribution matching following original paper
+  lambda_supcr: 0.0    # No contrastive learning
+  
+  # MleDistSupCR specific configuration
+  loss_config:
+    # Component-specific parameters
+    dist_bandwidth: 0.5  # Default from original DistLoss paper
+    supcr_temperature: 0.1  # Not used since lambda_supcr=0
+    
+    # Buffer configuration - for better distribution estimation
+    use_buffer: true
+    buffer_size: 4096   # Default buffer size
+    min_samples_for_dist: 64   # Default minimum for DistLoss
+    min_samples_for_supcr: 64  # Not used since lambda_supcr=0
+    
+    # DDP configuration
+    use_ddp_gather: true
+    gather_interval: 1
+    
+    # Adaptive weighting - aggressive ramp up
+    use_adaptive_weighting: true
+    warmup_epochs: 10      # Quick initial warmup
+    stable_epoch: 40       # Reach full buffer weight early
+    
+    # Temperature scheduling
+    use_temp_scheduling: true
+    init_temperature: 0.2    # Start low for immediate contrastive learning
+    final_temperature: 0.05  # Even tighter clusters at convergence
+    temp_schedule: "cosine"  # Smooth transition
+    
+    # Match actual training duration
+    max_epochs: 150
+    
+  optimizer:
+    type: "AdamW"
+    lr: 5e-4  # Start high - will be overridden by scheduler
+    weight_decay: 1e-12  # Minimal regularization since no overfitting
+    
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 50  # 3 cycles over 150 epochs
+    cycle_mult: 1.0
+    max_lr: 5e-4  # Higher peak LR since no overfitting
+    min_lr: 1e-7  # Higher floor for faster convergence
+    warmup_steps: 0  # Quick warmup to peak
+    gamma: 0.85  # Moderate decay across cycles
+    
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: {0: 8}  # Effective batch = 192 (4*8*6)
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2  # Less frequent plotting to save time

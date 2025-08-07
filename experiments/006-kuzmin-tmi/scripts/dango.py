@@ -187,6 +187,7 @@ def main(cfg: DictConfig) -> None:
         aggregator=GenotypeAggregator,
         graph_processor=graph_processor,
     )
+    print(f"Dataset Length: {len(dataset)}")
 
     seed = 42
     data_module = CellDataModule(

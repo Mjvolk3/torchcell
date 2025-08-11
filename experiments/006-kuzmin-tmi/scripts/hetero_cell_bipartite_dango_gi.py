@@ -507,13 +507,24 @@ def main(cfg: DictConfig) -> None:
     checkpoint_dir = osp.join(model_base_path, group)
 
     # Update checkpoint configuration to monitor gene interaction metrics
-    checkpoint_callback_best = ModelCheckpoint(
+    # Checkpoint for best MSE
+    checkpoint_callback_best_mse = ModelCheckpoint(
         dirpath=checkpoint_dir,
         save_top_k=1,
-        monitor="val/gene_interaction/MSE",  # Changed from combined metrics
+        monitor="val/gene_interaction/MSE",
         mode="min",
-        filename=f"{run.id}-best-{{epoch:02d}}-{{val/gene_interaction/MSE:.4f}}",
+        filename=f"{run.id}-best-mse-{{epoch:02d}}-{{val/gene_interaction/MSE:.4f}}",
     )
+    
+    # Checkpoint for best Pearson correlation
+    checkpoint_callback_best_pearson = ModelCheckpoint(
+        dirpath=checkpoint_dir,
+        save_top_k=1,
+        monitor="val/gene_interaction/Pearson",
+        mode="max",  # Pearson correlation should be maximized
+        filename=f"{run.id}-best-pearson-{{epoch:02d}}-{{val/gene_interaction/Pearson:.4f}}",
+    )
+    
     checkpoint_callback_last = ModelCheckpoint(
         dirpath=checkpoint_dir, save_last=True, filename=f"{run.id}-last"
     )
@@ -530,7 +541,7 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback_best, checkpoint_callback_last],
+        callbacks=[checkpoint_callback_best_mse, checkpoint_callback_best_pearson, checkpoint_callback_last],
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],

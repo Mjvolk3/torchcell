@@ -1,0 +1,168 @@
+#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # FLAG
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_diff_gi_test
+  tags: []
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink, #
+      string12_0_neighborhood, #
+      string12_0_fusion, #
+      string12_0_cooccurence, #
+      string12_0_coexpression, #
+      string12_0_experimental, #
+      string12_0_database, #
+    ]
+
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64 #64
+  incidence_graphs: [metabolism_bipartite]
+
+# Transform configuration moved out of regression_task
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true
+  perturbation_subset_size: 5000 #2.5e4
+  batch_size: 8 # Small batch size for overfitting
+  num_workers: 2
+  pin_memory: false
+  prefetch: false
+  prefetch_factor: 2
+
+trainer:
+  max_epochs: 300 # Updated for shorter training
+  strategy: auto #ddp_find_unused_parameters_true #auto # ddp
+  num_nodes: 1
+  accelerator: cpu
+  devices: 1
+  overfit_batches: 0
+
+# ------ Placeholders for hydra optuna
+heads: 8 #10 # placeholder
+norms: "layer" # placeholder
+# ------
+model:
+  checkpoint_path: null #*.ckpt
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64 #64
+  num_layers: 2 # Number of hetero conv layers
+  # norm: "batch"
+  norm: ${norms}
+  activation: "gelu"
+  dropout: 0.0 # 0.1
+  gene_encoder_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    # GAT-specific parameters (used when encoder_type="gatv2")
+    # heads: 5
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+    # GIN-specific parameters (used when encoder_type="gin")
+    gin_num_layers: 2      # Number of MLP layers in GIN
+    gin_hidden_dim: null   # If null, defaults to hidden_channels
+  gpr_conv_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    # GAT-specific parameters
+    # heads: 2
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+    # GIN-specific parameters
+    gin_num_layers: 2
+    gin_hidden_dim: null
+  metabolism_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    is_stoich_gated: true
+    use_attention: true
+    # GAT-specific parameters
+    # heads: 2
+    heads: ${heads}
+    concat: true
+    # GIN-specific parameters
+    gin_num_layers: 2
+    gin_hidden_dim: null
+  prediction_head_config:
+    hidden_channels: 64 #64
+    head_num_layers: 4
+    dropout: 0.0 #0.1
+    activation: "gelu"
+    # residual: true
+    # head_norm: "batch"
+    head_norm: ${norms}
+  # Dango-like local predictor config
+  local_predictor_config:
+    num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
+    num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
+  
+  # Diffusion decoder config - Full parameterization
+  diffusion_config:
+    hidden_dim: 64  # Hidden dimension for diffusion model
+    num_layers: 2   # Number of denoising blocks
+    num_heads: 4    # Attention heads per block
+    num_timesteps: 1000  # Total diffusion steps (T)
+    
+    # Denoising block parameters
+    dropout: 0.0 #0.1    # Dropout rate in denoising blocks
+    mlp_ratio: 4.0  # MLP expansion ratio in denoising blocks
+    
+    # Beta schedule configuration
+    beta_schedule: "cosine"  # Options: "cosine", "linear"
+    beta_start: 0.0001  # For linear schedule
+    beta_end: 0.02      # For linear schedule
+    cosine_s: 0.008     # Offset for cosine schedule
+    
+    # Sampling configuration
+    sampling_steps: 50   # Number of steps for DDIM sampling
+    sampling_method: "ddim"  # Options: "ddim", "ddpm"
+    
+    # Prediction parameterization
+    parameterization: "x0"  # Options: "x0", "eps" (noise)
+    
+    # Conditioning strength
+    conditioning_type: "cross_attention"  # Options: "cross_attention", "film", "concat"
+
+regression_task:
+  decoder_type: "diffusion"  # Options: "diffusion", "linear"
+  loss: diffusion # Options: diffusion, logcosh, icloss, mle_dist_supcr
+  lambda_diffusion: 1.0  # Weight for diffusion loss
+  is_weighted_phenotype_loss: false
+  t_mode: "full"  # Options: "zero" (t=0, no noise), "partial" (t<10%), "full" (standard)
+  optimizer:
+    type: "AdamW"
+    lr: 5e-4 # Much higher LR for aggressive overfitting
+    weight_decay: 1e-8
+  lr_scheduler: null
+    # type: "CosineAnnealingWarmupRestarts"
+    # first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
+    # cycle_mult: 1.0 # Keep cycles the same length
+    # max_lr: 1e-4 # Starting peak
+    # min_lr: 1e-8 # Minimum value
+    # warmup_steps: 1 # Warmup for 1 step to reach max_lr
+    # gamma: 0.8 # Less aggressive decay for shorter training
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: {0: 1}  # No accumulation for overfitting
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

@@ -12,13 +12,13 @@ cell_dataset:
   graphs: [
       physical,
       regulatory,
-      tflink, #
-      string12_0_neighborhood, #
-      string12_0_fusion, #
-      string12_0_cooccurence, #
-      string12_0_coexpression, #
-      string12_0_experimental, #
-      string12_0_database, #
+      # tflink, #
+      # string12_0_neighborhood, #
+      # string12_0_fusion, #
+      # string12_0_cooccurence, #
+      # string12_0_coexpression, #
+      # string12_0_experimental, #
+      # string12_0_database, #
     ]
 
   node_embeddings:

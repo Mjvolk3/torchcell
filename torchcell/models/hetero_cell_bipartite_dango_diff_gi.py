@@ -347,7 +347,7 @@ class GeneInteractionDiff(GeneInteractionDango):
         param_counts["total"] = sum(param_counts.values())
         return param_counts
 
-
+# TODO Load from sample batch 005 will work. Refer to @/Users/michaelvolk/Documents/projects/torchcell/torchcell/models/hetero_cell_bipartite_dango_gi.py 
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/006-kuzmin-tmi/conf"),

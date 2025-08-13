@@ -93,4 +93,3 @@ class DiffusionLoss(nn.Module):
 
         loss_dict["total_loss"] = total
         return total, loss_dict
-s

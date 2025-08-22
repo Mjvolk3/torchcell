@@ -7,6 +7,11 @@
       "Write(*.py)",
       "Bash(mkdir:*)",
       "Bash(ls:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(sudo:*)"
+      // "Write(production/**)"
     ]
   },
   "enableAllProjectMcpServers": false

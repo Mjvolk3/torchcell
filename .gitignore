@@ -97,6 +97,9 @@ database/slurm/output
 database/slurm/error
 database/database.env
 
+# Contain production password - Roll when necessary
+biocypher/config/PRODUCTION_linux-amd_biocypher_config.yaml
+
 notes/assets/SEED_abstract_2024.docx
 
 # files

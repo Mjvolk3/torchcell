@@ -184,3 +184,10 @@ echo ""
 echo "Access credentials:"
 echo "  Admin: neo4j / ***************"
 echo "  Read-only: reader / ReadOnly"
+
+# Fix permissions so rocky can still access the files
+echo ""
+echo "Fixing file permissions for continued development..."
+sudo chown -R rocky:neo4j "$PROJECT_DIR/biocypher/" 2>/dev/null || true
+sudo chown -R rocky:neo4j "$PROJECT_DIR/database/conf/" 2>/dev/null || true
+echo "Permissions fixed - rocky can now access configuration files"

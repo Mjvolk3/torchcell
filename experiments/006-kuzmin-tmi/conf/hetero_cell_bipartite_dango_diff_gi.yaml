@@ -5,20 +5,20 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_diff_gi_test
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_diff_gi
   tags: []
 
 cell_dataset:
   graphs: [
       physical,
       regulatory,
-      # tflink, #
-      # string12_0_neighborhood, #
-      # string12_0_fusion, #
-      # string12_0_cooccurence, #
-      # string12_0_coexpression, #
-      # string12_0_experimental, #
-      # string12_0_database, #
+      tflink, #
+      string12_0_neighborhood, #
+      string12_0_fusion, #
+      string12_0_cooccurence, #
+      string12_0_coexpression, #
+      string12_0_experimental, #
+      string12_0_database, #
     ]
 
   node_embeddings:
@@ -38,7 +38,7 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
+  is_perturbation_subset: false
   perturbation_subset_size: 5000 #2.5e4
   batch_size: 8 # Small batch size for overfitting
   num_workers: 2
@@ -47,11 +47,11 @@ data_module:
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 300 # Updated for shorter training
-  strategy: auto #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 100 # Updated for shorter training
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 4
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -151,7 +151,7 @@ regression_task:
   t_mode: "full"  # Options: "zero" (t=0, no noise), "partial" (t<10%), "full" (standard)
   optimizer:
     type: "AdamW"
-    lr: 5e-4 # Much higher LR for aggressive overfitting
+    lr: 1e-4 # Much higher LR for aggressive overfitting
     weight_decay: 1e-8
   lr_scheduler: null
     # type: "CosineAnnealingWarmupRestarts"

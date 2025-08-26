@@ -7,6 +7,12 @@
       "Write(*.py)",
       "Bash(mkdir:*)",
       "Bash(ls:*)"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(sudo:*)",
+      "Read(.env)",
+      "Read(*.env)"
     ]
   },
   "enableAllProjectMcpServers": false

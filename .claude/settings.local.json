@@ -10,8 +10,9 @@
     ],
     "deny": [
       "Bash(rm:*)",
-      "Bash(sudo:*)"
-      // "Write(production/**)"
+      "Bash(sudo:*)",
+      "Read(.env)",
+      "Read(*.env)"
     ]
   },
   "enableAllProjectMcpServers": false

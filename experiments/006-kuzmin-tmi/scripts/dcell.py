@@ -417,6 +417,11 @@ def main(cfg: DictConfig) -> None:
     num_nodes = get_slurm_nodes()
     profiler = None
     print(f"Starting training ({timestamp()})")
+    
+    # Add progress bar callback for better visibility
+    from lightning.pytorch.callbacks import TQDMProgressBar
+    progress_bar = TQDMProgressBar(refresh_rate=1)  # Update every iteration
+    
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -424,10 +429,12 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback_best, checkpoint_callback_last],
+        callbacks=[checkpoint_callback_best, checkpoint_callback_last, progress_bar],
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        enable_progress_bar=True,  # Explicitly enable progress bar
+        enable_model_summary=True,  # Keep model summary
     )
 
     trainer.fit(model=task, datamodule=data_module)

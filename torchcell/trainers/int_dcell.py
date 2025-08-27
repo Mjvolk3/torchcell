@@ -115,9 +115,8 @@ class RegressionTask(LightningModule):
         # Return all outputs from the model
         predictions, outputs_dict = self.model(self.cell_graph, batch)
 
-        return predictions, {
-            "subsystem_outputs": outputs_dict.get("subsystem_outputs", {})
-        }
+        # Return the full outputs_dict to avoid redundant forward passes
+        return predictions, outputs_dict
 
     def _ensure_no_unused_params_loss(self):
         """Add a dummy loss to ensure all parameters are used in backward pass."""
@@ -177,9 +176,9 @@ class RegressionTask(LightningModule):
 
         # For DCellLoss, we need to pass the outputs dictionary for auxiliary losses
         if isinstance(self.loss_func, DCellLoss):
-            # Extract reconstructions and prepare adjacency matrices
-            # Call the loss function with current epoch for dynamic weighting
-            _, outputs_dict = self.model(self.cell_graph, batch)
+            # Use the outputs_dict from representations (already computed in line 132)
+            # This avoids redundant forward pass
+            outputs_dict = representations
 
             # Pass to the loss function
             loss_output = self.loss_func(

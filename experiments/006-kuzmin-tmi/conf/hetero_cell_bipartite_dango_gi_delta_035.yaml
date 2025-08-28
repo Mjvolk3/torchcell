@@ -5,20 +5,20 @@ defaults:
 
 wandb:
   # FLAG
-  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi_test
-  tags: []
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  tags: ["quick-exps", "lambda-dist-100", "weight_decay_1e-6"]
 
 cell_dataset:
   graphs: [
       physical,
       regulatory,
-      # tflink,
-      # string12_0_neighborhood,
-      # string12_0_fusion,
-      # string12_0_cooccurence,
-      # string12_0_coexpression,
-      # string12_0_experimental,
-      # string12_0_database,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
     ]
 
   node_embeddings:
@@ -38,20 +38,20 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: true
-  perturbation_subset_size: 10000 #2.5e4
-  batch_size: 32 #32 #4 #32
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 8 #32 #4 #32
   num_workers: 2
   pin_memory: false
   prefetch: false
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 300 # Updated for shorter training
-  strategy: auto #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 1000 # Updated for shorter training
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 4
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
@@ -64,24 +64,13 @@ model:
   reaction_num: 7122
   metabolite_num: 2806
   hidden_channels: 64 #64
-  num_layers: 2 # Number of hetero conv layers
+  num_layers: 3 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
   activation: "gelu"
   dropout: 0.0 # 0.1
   gene_encoder_config:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
-    
-    # Graph aggregation configuration (NEW)
-    graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
-    # graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
-    # graph_aggregation_method: "sum"  # Alternative: simple sum (original behavior)
-    # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
-    
-    graph_aggregation_config:
-      num_heads: 4  # Number of attention heads for cross_attention
-      dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
-    
     # GAT-specific parameters (used when encoder_type="gatv2")
     # heads: 5
     heads: ${heads}
@@ -90,7 +79,7 @@ model:
     add_self_loops: false
     share_weights: false
     # GIN-specific parameters (used when encoder_type="gin")
-    gin_num_layers: 2      # Number of MLP layers in GIN
+    gin_num_layers: 4      # Number of MLP layers in GIN
     gin_hidden_dim: null   # If null, defaults to hidden_channels
   gpr_conv_config:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
@@ -100,7 +89,7 @@ model:
     concat: true
     add_self_loops: false
     # GIN-specific parameters
-    gin_num_layers: 2
+    gin_num_layers: 4
     gin_hidden_dim: null
   metabolism_config:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
@@ -111,7 +100,7 @@ model:
     heads: ${heads}
     concat: true
     # GIN-specific parameters
-    gin_num_layers: 2
+    gin_num_layers: 4
     gin_hidden_dim: null
   prediction_head_config:
     hidden_channels: 64 #64
@@ -132,21 +121,21 @@ regression_task:
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  lambda_dist: 0.01 # 0.1 # 0.1 #0.1 #0.1
+  lambda_dist: 100.0 # 0.1 # 0.1 #0.1 #0.1
   lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
   
   # MleDistSupCR specific configuration
   loss_config:
     # Component-specific parameters
-    dist_bandwidth: 2.0
+    dist_bandwidth: 0.5
     supcr_temperature: 0.1
     # embedding_dim is dynamically set from model.hidden_channels
     
     # Buffer configuration
     use_buffer: true
-    buffer_size: 256
-    min_samples_for_dist: 64
-    min_samples_for_supcr: 64
+    buffer_size: 8192
+    min_samples_for_dist: 512
+    min_samples_for_supcr: 512
     
     # DDP configuration
     use_ddp_gather: true
@@ -165,19 +154,19 @@ regression_task:
     temp_schedule: "exponential"
     
     # Training duration (for temperature scheduling)
-    max_epochs: 300
+    max_epochs: 150
   optimizer:
     type: "AdamW"
     lr: 5e-4 #overrode by type
-    weight_decay: 1e-12
-  lr_scheduler: null
-    # type: "CosineAnnealingWarmupRestarts"
-    # first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
-    # cycle_mult: 1.0 # Keep cycles the same length
-    # max_lr: 1e-4 # Starting peak
-    # min_lr: 1e-8 # Minimum value
-    # warmup_steps: 1 # Warmup for 1 step to reach max_lr
-    # gamma: 0.8 # Less aggressive decay for shorter training
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 50  # 3 cycles over 150 epochs
+    cycle_mult: 1.0
+    max_lr: 5e-4  # Higher peak LR since no overfitting
+    min_lr: 1e-7  # Higher floor for faster convergence
+    warmup_steps: 0  # Quick warmup to peak
+    gamma: 0.85  # Moderate decay across cycles
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256

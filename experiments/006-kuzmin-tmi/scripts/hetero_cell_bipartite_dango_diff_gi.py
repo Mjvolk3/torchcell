@@ -1,7 +1,8 @@
-# experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_bipartite_dango_gi.py
+# experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_diff_gi
+# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_diff_gi]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_diff_gi
+# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_bipartite_dango_diff_gi.py
+# This script trains the GeneInteractionDiff model with diffusion-based prediction
 
 
 import hashlib
@@ -23,7 +24,7 @@ from torchcell.transforms.coo_regression_to_classification import (
 )
 from torch_geometric.transforms import Compose
 from torchcell.data.graph_processor import SubgraphRepresentation
-from torchcell.trainers.int_hetero_cell import RegressionTask
+from torchcell.trainers.int_hetero_cell import DiffusionRegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -34,10 +35,10 @@ from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
+from torchcell.models.hetero_cell_bipartite_dango_diff_gi import GeneInteractionDiff
+from torchcell.losses.diffusion_loss import DiffusionLoss
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.isomorphic_cell_loss import ICLoss
-from torchcell.losses.mle_dist_supcr import MleDistSupCR
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
@@ -84,10 +85,10 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell_bipartite_dango_gi",
+    config_name="hetero_cell_bipartite_dango_diff_gi",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting GeneInteractionDango Training 🔫")
+    print("Starting GeneInteractionDiff Training with Diffusion 🔫")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
@@ -356,9 +357,14 @@ def main(cfg: DictConfig) -> None:
     local_predictor_config = dict(
         wandb.config["model"].get("local_predictor_config", {})
     )
+    
+    # Get diffusion config
+    diffusion_config = dict(
+        wandb.config["model"].get("diffusion_config", {})
+    )
 
-    # Instantiate new GeneInteractionDango model using wandb configuration.
-    model = GeneInteractionDango(
+    # Instantiate new GeneInteractionDiff model using wandb configuration.
+    model = GeneInteractionDiff(
         gene_num=wandb.config["model"]["gene_num"],
         hidden_channels=wandb.config["model"]["hidden_channels"],
         num_layers=wandb.config["model"]["num_layers"],
@@ -368,6 +374,7 @@ def main(cfg: DictConfig) -> None:
         activation=wandb.config["model"]["activation"],
         gene_encoder_config=gene_encoder_config,
         local_predictor_config=local_predictor_config,
+        diffusion_config=diffusion_config,
     ).to(device)
 
     # Log parameter counts using the num_parameters property.
@@ -404,61 +411,35 @@ def main(cfg: DictConfig) -> None:
     else:
         weights = torch.ones(1).to(device)
 
-    if wandb.config.regression_task["loss"] == "icloss":
+    if wandb.config.regression_task["loss"] == "diffusion":
+        # For diffusion model, wrap any auxiliary loss with DiffusionLoss
+        base_loss = None
+        if wandb.config.regression_task.get("auxiliary_loss"):
+            aux_loss_type = wandb.config.regression_task["auxiliary_loss"]
+            if aux_loss_type == "mse":
+                base_loss = nn.MSELoss()
+            elif aux_loss_type == "logcosh":
+                base_loss = LogCoshLoss(reduction="mean")
+        
+        loss_func = DiffusionLoss(
+            model=model,
+            lambda_diffusion=wandb.config.regression_task.get("lambda_diffusion", 1.0),
+        )
+    elif wandb.config.regression_task["loss"] == "icloss":
         loss_func = ICLoss(
             lambda_dist=wandb.config.regression_task["lambda_dist"],
             lambda_supcr=wandb.config.regression_task["lambda_supcr"],
             weights=weights,
         )
-    elif wandb.config.regression_task["loss"] == "mle_dist_supcr":
-        # Get loss configuration
-        loss_config = wandb.config.regression_task.get("loss_config", {})
-        
-        loss_func = MleDistSupCR(
-            # Lambda weights
-            lambda_mse=wandb.config.regression_task.get("lambda_mse", 1.0),
-            lambda_dist=wandb.config.regression_task.get("lambda_dist", 0.1),
-            lambda_supcr=wandb.config.regression_task.get("lambda_supcr", 0.001),
-            
-            # Component-specific parameters
-            dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
-            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model["hidden_channels"],  # Use model's hidden_channels
-            
-            # Buffer configuration
-            use_buffer=loss_config.get("use_buffer", True),
-            buffer_size=loss_config.get("buffer_size", 256),
-            min_samples_for_dist=loss_config.get("min_samples_for_dist", 64),
-            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 32),
-            
-            # DDP configuration
-            use_ddp_gather=loss_config.get("use_ddp_gather", True),
-            gather_interval=loss_config.get("gather_interval", 1),
-            
-            # Adaptive weighting
-            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
-            warmup_epochs=loss_config.get("warmup_epochs", 100),
-            stable_epoch=loss_config.get("stable_epoch", 500),
-            
-            # Temperature scheduling
-            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
-            init_temperature=loss_config.get("init_temperature", 1.0),
-            final_temperature=loss_config.get("final_temperature", 0.1),
-            temp_schedule=loss_config.get("temp_schedule", "exponential"),
-            
-            # Other parameters
-            weights=weights,
-            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
-        )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
 
-    print(f"Creating GeneInteractionTask ({timestamp()})")
+    print(f"Creating DiffusionRegressionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
-        # Load the checkpoint with all required arguments
-        task = RegressionTask.load_from_checkpoint(
+        # Load the checkpoint with all required arguments  
+        task = DiffusionRegressionTask.load_from_checkpoint(
             checkpoint_path,
             map_location=device,
             model=model,
@@ -481,8 +462,8 @@ def main(cfg: DictConfig) -> None:
         )
         print("Successfully loaded model weights from checkpoint")
     else:
-        # Create a fresh task with the model
-        task = RegressionTask(
+        # Create a fresh task with the model using DiffusionRegressionTask
+        task = DiffusionRegressionTask(
             model=model,
             cell_graph=dataset.cell_graph,
             optimizer_config=wandb_cfg["regression_task"]["optimizer"],

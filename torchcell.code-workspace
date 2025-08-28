@@ -48,6 +48,9 @@
         },
         {   "name": "Dist-Loss",
             "path": "../Dist-Loss"
+        },
+        {   "name": "CausCell",
+            "path": "../CausCell"
         }
     ],
     "settings": {

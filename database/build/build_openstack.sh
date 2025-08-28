@@ -5,8 +5,20 @@ cd "$PROJECT_DIR" || exit 1
 
 # Initial password for container startup
 INITIAL_PASSWORD="torchcell"
-# Final password from YAML config (will be set later)
-YAML_PASSWORD="fb04396f-9917-4572-baee-e00b4eb261a7"
+# Read final password from YAML config (not committed to git)
+CONFIG_FILE="$PROJECT_DIR/biocypher/config/PRODUCTION_linux-amd_biocypher_config.yaml"
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Error: Config file not found at $CONFIG_FILE"
+    exit 1
+fi
+YAML_PASSWORD=$(grep "password:" "$CONFIG_FILE" | tail -1 | awk '{print $2}')
+
+# Validate password was extracted
+if [ -z "$YAML_PASSWORD" ]; then
+    echo "Error: Could not extract password from $CONFIG_FILE"
+    exit 1
+fi
+echo "Password successfully read from config file"
 
 # Use home directory for data (need to manage disk space carefully)
 DATA_DIR="$HOME/neo4j-data"
@@ -16,6 +28,19 @@ echo "Using local storage at: $DATA_DIR"
 # Create directories locally
 mkdir -p $DATA_DIR/{biocypher-out,torchcell,sgd,neo4j-data,logs}
 chmod -R 777 $DATA_DIR
+
+# Check for SSL certificates
+CERT_DIR="$PROJECT_DIR/database/certificates/https"
+if [ ! -f "$CERT_DIR/private.key" ] || [ ! -f "$CERT_DIR/public.crt" ]; then
+    echo "No SSL certificates found."
+    echo "For production, run: sudo bash $PROJECT_DIR/database/scripts/setup_letsencrypt.sh"
+    echo "For development, generating self-signed certificates..."
+    bash "$PROJECT_DIR/database/scripts/generate_ssl_certificates.sh"
+elif [ -L "$CERT_DIR/private.key" ]; then
+    echo "Using Let's Encrypt certificates"
+else
+    echo "Using existing SSL certificates"
+fi
 
 # Clean up existing container
 docker stop tc-neo4j 2>/dev/null || true
@@ -29,7 +54,7 @@ docker run \
     --tmpfs /tmp:size=10G \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
-    -p 7474:7474 -p 7687:7687 \
+    -p 7474:7474 -p 7473:7473 -p 7687:7687 \
     -v "$DATA_DIR/biocypher-out:/var/lib/neo4j/biocypher-out" \
     -v "$DATA_DIR/torchcell:/var/lib/neo4j/data/torchcell" \
     -v "$DATA_DIR/sgd:/var/lib/neo4j/data/sgd" \
@@ -37,6 +62,7 @@ docker run \
     -v "$(pwd)/database/.env:/.env:ro" \
     -v "$(pwd)/biocypher:/var/lib/neo4j/biocypher" \
     -v "$(pwd)/database/conf:/var/lib/neo4j/conf" \
+    -v "$(pwd)/database/certificates:/var/lib/neo4j/certificates" \
     --tmpfs /logs:size=1G \
     -v "$(pwd)/database/plugins:/plugins" \
     -e NEO4J_AUTH=neo4j/torchcell \
@@ -181,6 +207,11 @@ fi
 
 echo "Database build complete and set to read-only."
 echo ""
+echo "Access URLs:"
+echo "  HTTP:  http://localhost:7474"
+echo "  HTTPS: https://torchcell-database.ncsa.illinois.edu:7473"
+echo "  Bolt:  bolt+s://torchcell-database.ncsa.illinois.edu:7687"
+echo ""
 echo "Access credentials:"
 echo "  Admin: neo4j / ***************"
 echo "  Read-only: reader / ReadOnly"
@@ -190,4 +221,5 @@ echo ""
 echo "Fixing file permissions for continued development..."
 sudo chown -R rocky:neo4j "$PROJECT_DIR/biocypher/" 2>/dev/null || true
 sudo chown -R rocky:neo4j "$PROJECT_DIR/database/conf/" 2>/dev/null || true
-echo "Permissions fixed - rocky can now access configuration files"
+sudo chown -R rocky:neo4j "$PROJECT_DIR/database/certificates/" 2>/dev/null || true
+echo "Permissions fixed - rocky can now access configuration and certificate files"

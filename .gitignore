@@ -96,6 +96,7 @@ database/logs
 database/slurm/output
 database/slurm/error
 database/database.env
+database/certificates/*
 
 # Contain production password - Roll when necessary
 biocypher/config/PRODUCTION_linux-amd_biocypher_config.yaml

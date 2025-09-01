@@ -140,7 +140,6 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
     @post_process
     def process(self):
-        self.scerevisiae_graph.read_raw()
         log.info("Processing SGD Gene Essentiality Data...")
 
         os.makedirs(self.processed_dir, exist_ok=True)

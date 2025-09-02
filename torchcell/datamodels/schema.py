@@ -7,6 +7,11 @@ import re
 from typing import List, Union, Dict, Type, Optional, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 from torchcell.datamodels.pydant import ModelStrict
+from torchcell.datamodels.calmorph_labels import (
+    CALMORPH_PARAMETERS,
+    CALMORPH_LABELS,
+    CALMORPH_STATISTICS,
+)
 import math
 
 # causes circular import
@@ -466,6 +471,69 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
         return values
 
 
+class CalMorphPhenotype(Phenotype, ModelStrict):
+    graph_level: str = "global"
+    label_name: str = "calmorph"
+    label_statistic_name: str = "calmorph_coefficient_of_variation"
+    calmorph: Dict[str, float] = Field(
+        description="Dictionary of CalMorph base morphological measurements (281 parameters)"
+    )
+    calmorph_coefficient_of_variation: Dict[str, float] | None = Field(
+        default=None,
+        description="Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)"
+    )
+
+    # CALMORPH_PARAMETERS: All 501 parameters from Ohya et al. 2005
+    # CALMORPH_LABELS: 281 base morphological measurements
+    # CALMORPH_STATISTICS: 220 coefficient of variation parameters
+
+    @field_validator("calmorph")
+    def validate_morphology(cls, v):
+        if not v:
+            raise ValueError("calmorph measurements cannot be empty")
+        for key, value in v.items():
+            if key not in CALMORPH_LABELS:
+                raise ValueError(
+                    f"Invalid CalMorph base parameter: {key}. "
+                    f"Must be one of the 281 base parameters in CALMORPH_LABELS."
+                )
+            if math.isnan(value):
+                raise ValueError(f"calmorph measurement {key} cannot be NaN")
+        return v
+
+    @field_validator("calmorph_coefficient_of_variation")
+    def validate_cv(cls, v):
+        if v is None:
+            return v
+        for key, value in v.items():
+            if key not in CALMORPH_STATISTICS:
+                raise ValueError(
+                    f"Invalid CalMorph CV parameter: {key}. "
+                    f"Must be one of the 220 CV parameters in CALMORPH_STATISTICS."
+                )
+            if math.isnan(value):
+                raise ValueError(f"CV measurement {key} cannot be NaN")
+        return v
+
+    @model_validator(mode="after")
+    def validate_label_fields(cls, values):
+        if values.label_name not in cls.__annotations__:
+            raise ValueError(
+                f"label_name '{values.label_name}' must be a class attribute"
+            )
+
+        if (
+            values.label_statistic_name is not None
+            and values.label_statistic_name not in cls.__annotations__
+        ):
+            raise ValueError(
+                f"""label_statistic_name '{values.label_statistic_name}'
+                must be a class attribute"""
+            )
+
+        return values
+
+
 class Publication(ModelStrict):
     pubmed_id: str | None = None
     pubmed_url: str | None = None
@@ -553,6 +621,17 @@ class SyntheticRescueExperiment(Experiment, ModelStrict):
     phenotype: SyntheticRescuePhenotype
 
 
+class CalMorphExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "calmorph"
+    phenotype_reference: CalMorphPhenotype
+
+
+class CalMorphExperiment(Experiment, ModelStrict):
+    experiment_type: str = "calmorph"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: CalMorphPhenotype
+
+
 PhenotypeType = Union[
     Phenotype,
     FitnessPhenotype,
@@ -560,6 +639,7 @@ PhenotypeType = Union[
     GeneEssentialityPhenotype,
     SyntheticLethalityPhenotype,
     SyntheticRescuePhenotype,
+    CalMorphPhenotype,
 ]
 
 ExperimentType = Union[
@@ -569,6 +649,7 @@ ExperimentType = Union[
     GeneEssentialityExperiment,
     SyntheticLethalityExperiment,
     SyntheticRescueExperiment,
+    CalMorphExperiment,
 ]
 
 ExperimentReferenceType = Union[
@@ -578,6 +659,7 @@ ExperimentReferenceType = Union[
     GeneEssentialityExperimentReference,
     SyntheticLethalityExperimentReference,
     SyntheticRescueExperimentReference,
+    CalMorphExperimentReference,
 ]
 
 
@@ -587,6 +669,7 @@ EXPERIMENT_TYPE_MAP = {
     "gene essentiality": GeneEssentialityExperiment,
     "synthetic lethality": SyntheticLethalityExperiment,
     "synthetic rescue": SyntheticRescueExperiment,
+    "calmorph": CalMorphExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -595,6 +678,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "gene essentiality": GeneEssentialityExperimentReference,
     "synthetic lethality": SyntheticLethalityExperimentReference,
     "synthetic rescue": SyntheticRescueExperimentReference,
+    "calmorph": CalMorphExperimentReference,
 }
 
 

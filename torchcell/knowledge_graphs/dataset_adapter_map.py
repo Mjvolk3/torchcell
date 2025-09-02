@@ -22,6 +22,7 @@ from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
+from torchcell.datasets.scerevisiae.Ohya2005 import ScmdOhya2005Dataset
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
@@ -40,6 +41,7 @@ from torchcell.adapters import (
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
 )
+from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 
 
 dataset_adapter_map = {
@@ -59,4 +61,5 @@ dataset_adapter_map = {
     GeneEssentialitySgdDataset: GeneEssentialitySgdAdapter,
     SynthLethalityYeastSynthLethDbDataset: SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbDataset: SynthRescueYeastSynthLethDbAdapter,
+    ScmdOhya2005Dataset: ScmdOhya2005Adapter,
 }

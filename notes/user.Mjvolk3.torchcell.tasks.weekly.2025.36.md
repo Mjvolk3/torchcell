@@ -2,7 +2,7 @@
 id: bl30fblz5fcmphms63ynk3z
 title: '36'
 desc: ''
-updated: 1756769151538
+updated: 1756849173430
 created: 1756765946293
 ---
 
@@ -10,15 +10,13 @@ created: 1756765946293
 
 -[x] [[Dcell Speed Up|dendron://torchcell/experiments.006-kuzmin-tmi.dcell-speed-up]]
 
-
-
+## 2025.09.02
 
 - [ ] Add morphology. Respond to maintainers about solved problem of downloading database. Might want to store a backup...
-- [ ] 
-
+- [ ]
+- [ ]
 
 ## 2025.09.01
-
 
 - [ ] Add gene expression.
 

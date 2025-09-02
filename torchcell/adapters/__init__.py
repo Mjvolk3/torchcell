@@ -26,6 +26,8 @@ from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter,
 )
 
+from .ohya2005_adapter import ScmdOhya2005Adapter
+
 cell_adapters = ["CellAdapter"]
 
 costanzo2016_adapters = [
@@ -57,6 +59,8 @@ synth_leth_db_adapters = [
     "SynthRescueYeastSynthLethDbAdapter",
 ]
 
+ohya2005_adapters = ["ScmdOhya2005Adapter"]
+
 
 __all__ = (
     cell_adapters
@@ -65,4 +69,5 @@ __all__ = (
     + kuzmin2020_adapters
     + gene_essentiality_adapters
     + synth_leth_db_adapters
+    + ohya2005_adapters
 )

@@ -1,12 +1,12 @@
 #!/bin/bash
 #SBATCH --job-name=opt_DCell
 #SBATCH --output=/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/slurm/output/opt_DCell_%j.out
-#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/slurm/error/opt_DCell_%j.err
+#SBATCH --error=/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/slurm/output/opt_DCell_%j.out
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=64
 #SBATCH --gres=gpu:4
 #SBATCH --time=48:00:00
-#SBATCH --mem=200G
+#SBATCH --mem=400G
 
 # Change to the experiments directory
 cd /home/michaelvolk/Documents/projects/torchcell/experiments || exit 1

@@ -8,7 +8,7 @@ wandb:
   tags: []
 
 cell_dataset:
-  # DCell uses gene ontology instead of STRING networks
+  # DCell uses gene ontology instead of STRING networksal
   graphs: null # Null value for DCell as it doesn't use STRING networks
   incidence_graphs: "go" # Use gene ontology hierarchy for DCell
   node_embeddings: null
@@ -20,24 +20,34 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000
-  batch_size: 256 #32 in top
-  num_workers: 8 #4
+  batch_size: 300 #256 #256 default # probably could do 600
+  num_workers: 10 # Reduced to prevent GPU OOM (4 workers per GPU)
   pin_memory: false
   prefetch: false
   follow_batch: ["perturbation_indices", "go_gene_strata_state"] # Important for DCell batching
 
 trainer:
-  max_epochs: 500 #1000 # 20 # FLAG
-  strategy: ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 1000 #1000 # 20 # FLAG
+  strategy: ddp #ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
   devices: 4
   overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed",  "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+# Note: "reduce-overhead" is optimized for training with better handling of dynamic shapes
+# Recompile limits to handle dynamic shapes in DCell
+recompile_limit: 64  # Default is 8, increased for DCell's dynamic GO structure
+accumulated_recompile_limit: 8000  # Default is 256, scaled for 2655 GO subsystems
 
 # ------ Model-specific parameters
 # ------
 model:
   checkpoint_path: null #*.ckpt
+  # Model version selection
+  model_version: "dcell"  # "dcell" for original, "dcell_opt" for optimized version - WARNING dcell_opt is WIP speed is actually worse for now.
   # DCell specific parameters
   subsystem_output_min: 20 # Minimum output size for any subsystem
   subsystem_output_max_mult: 0.3 # Multiplier for scaling subsystem output sizes
@@ -80,4 +90,4 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null
   plot_sample_ceiling: 10000
-  plot_every_n_epochs: 20
+  plot_every_n_epochs: 1

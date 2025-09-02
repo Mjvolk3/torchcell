@@ -1,4 +1,3 @@
-
 import hashlib
 import json
 import logging
@@ -10,6 +9,8 @@ import torch.nn as nn
 import lightning as L
 import torch
 import torch.distributed as dist
+import torch._inductor.config as inductor_config
+import torch._dynamo
 import socket
 import sys
 import random
@@ -126,36 +127,64 @@ def main(cfg: DictConfig) -> None:
 
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
+    
+    print(f"DEBUG: About to init wandb - experiment_dir: {experiment_dir}")
+    print(f"DEBUG: WANDB_MODE = {WANDB_MODE}")
+    
+    try:
+        run = wandb.init(
+            mode=WANDB_MODE,
+            project=wandb_cfg["wandb"]["project"],
+            config=wandb_cfg,
+            group=group,
+            tags=wandb_cfg["wandb"]["tags"],
+            dir=experiment_dir,
+            name=f"run_{group}",
+        )
+        print("DEBUG: wandb.init successful")
 
-    run = wandb.init(
-        mode=WANDB_MODE,
-        project=wandb_cfg["wandb"]["project"],
-        config=wandb_cfg,
-        group=group,
-        tags=wandb_cfg["wandb"]["tags"],
-        dir=experiment_dir,
-        name=f"run_{group}",
-    )
+        wandb_logger = WandbLogger(
+            project=wandb_cfg["wandb"]["project"],
+            log_model=True,
+            save_dir=experiment_dir,
+            name=f"run_{group}",
+        )
+        print("DEBUG: WandbLogger created")
+        
+        print(f"Process initialized - PID: {os.getpid()}")
+    except Exception as e:
+        print(f"ERROR during wandb initialization: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+    
+    print("DEBUG: After wandb initialization block", flush=True)
+    
+    try:
+        print(f"DEBUG: Checking CUDA availability: {torch.cuda.is_available()}", flush=True)
+        print(f"DEBUG: Checking dist.is_initialized: {dist.is_initialized()}", flush=True)
+        
+        if torch.cuda.is_available() and dist.is_initialized():
+            rank = dist.get_rank()
+            genome_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
+            go_root = osp.join(DATA_ROOT, f"data/go/go_{rank}")
+            print(f"DEBUG: Using distributed paths - rank {rank}")
+        else:
+            genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
+            go_root = osp.join(DATA_ROOT, "data/go")
+            rank = 0
+            print(f"DEBUG: Using non-distributed paths")
 
-    wandb_logger = WandbLogger(
-        project=wandb_cfg["wandb"]["project"],
-        log_model=True,
-        save_dir=experiment_dir,
-        name=f"run_{group}",
-    )
-
-    if torch.cuda.is_available() and dist.is_initialized():
-        rank = dist.get_rank()
-        genome_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
-        go_root = osp.join(DATA_ROOT, f"data/go/go_{rank}")
-    else:
-        genome_root = osp.join(DATA_ROOT, "data/sgd/genome")
-        go_root = osp.join(DATA_ROOT, "data/go")
-        rank = 0
-
+        print(f"DEBUG: About to create genome - genome_root: {genome_root}, go_root: {go_root}")
+    except Exception as e:
+        print(f"ERROR in path setup: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
     genome = SCerevisiaeGenome(
         genome_root=genome_root, go_root=go_root, overwrite=False
     )
+    print("DEBUG: Genome created successfully")
     genome.drop_empty_go()
 
     graph = SCerevisiaeGraph(
@@ -309,13 +338,27 @@ def main(cfg: DictConfig) -> None:
     # Explicitly move dataset cell_graph to the correct device before model initialization
     dataset.cell_graph = dataset.cell_graph.to(device)
 
-    # Create model and explicitly move to device
-    model = DCell(
-        hetero_data=dataset.cell_graph,
-        min_subsystem_size=subsystem_output_min,
-        subsystem_ratio=subsystem_output_max_mult,
-        output_size=output_size,
-    )
+    # Select model version based on config
+    model_version = wandb.config.model.get("model_version", "dcell")
+
+    if model_version == "dcell_opt":
+        print("Using optimized DCell (DCellOpt) for better torch.compile compatibility")
+        from torchcell.models.dcell_opt import DCellOpt
+
+        model = DCellOpt(
+            hetero_data=dataset.cell_graph,
+            min_subsystem_size=subsystem_output_min,
+            subsystem_ratio=subsystem_output_max_mult,
+            output_size=output_size,
+        )
+    else:
+        print("Using original DCell model")
+        model = DCell(
+            hetero_data=dataset.cell_graph,
+            min_subsystem_size=subsystem_output_min,
+            subsystem_ratio=subsystem_output_max_mult,
+            output_size=output_size,
+        )
 
     # Explicitly move model to device
     model = model.to(device)
@@ -396,6 +439,64 @@ def main(cfg: DictConfig) -> None:
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
         )
 
+    # Try to compile the model for better performance (PyTorch 2.0+)
+    if hasattr(torch, "compile"):
+        compile_mode = wandb.config.get(
+            "compile_mode", "default"
+        )  # Can be null, "default", "reduce-overhead", "max-autotune"
+        if compile_mode is not None:
+            try:
+                print(
+                    f"Attempting torch.compile optimization (PyTorch {torch.__version__})..."
+                )
+                print(f"  Mode: {compile_mode}, Dynamic: True")
+
+                # For PyTorch 2.8.0, inductor config is now available
+                # Increase the overall precompilation budget to 2 hours (default is 3600s = 1 hour)
+                inductor_config.precompilation_timeout_seconds = 2 * 60 * 60  # 2 hours
+                print(f"  Set precompilation timeout to 2 hours")
+
+                # Enable capture of scalar outputs to handle .item() operations better
+                torch._dynamo.config.capture_scalar_outputs = True
+                print("  Enabled capture_scalar_outputs for better .item() handling")
+                
+                # Set recompile limits from config or use defaults
+                recompile_limit = cfg.get("recompile_limit", 32)
+                accumulated_limit = cfg.get("accumulated_recompile_limit", 64)
+                
+                # Increase recompile limit to handle shape variations better
+                torch._dynamo.config.recompile_limit = recompile_limit
+                print(f"  Set recompile limit to {recompile_limit} (default is 8)")
+                
+                # Also increase accumulated limit for overall recompilations
+                torch._dynamo.config.accumulated_recompile_limit = accumulated_limit
+                print(f"  Set accumulated recompile limit to {accumulated_limit}")
+
+                # If using max-autotune mode, also increase autotune subprocess timeouts
+                if compile_mode == "max-autotune":
+                    inductor_config.max_autotune_subproc_result_timeout_seconds = (
+                        300.0  # 5 min (was 60s)
+                    )
+                    inductor_config.max_autotune_subproc_graceful_timeout_seconds = 10.0
+                    inductor_config.max_autotune_subproc_terminate_timeout_seconds = (
+                        20.0
+                    )
+                    print(f"  Set autotune subprocess timeout to 5 minutes")
+
+                # Compile the model within the task
+                # Use dynamic=True since batch sizes and gene counts vary
+                # Try with fullgraph=True to detect graph breaks
+                task.model = torch.compile(
+                    task.model, mode=compile_mode, dynamic=True, fullgraph=False
+                )
+                print(
+                    f"✓ Successfully compiled model with torch.compile (mode={compile_mode}, dynamic=True)"
+                )
+                print("  Expected speedup: 2-3x for forward/backward passes")
+            except Exception as e:
+                print(f"⚠️ torch.compile not compatible with this model: {e}")
+                print("Continuing without compilation optimization")
+
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
     checkpoint_dir = osp.join(model_base_path, group)
@@ -417,13 +518,18 @@ def main(cfg: DictConfig) -> None:
     num_nodes = get_slurm_nodes()
     profiler = None
     print(f"Starting training ({timestamp()})")
-    
+
     # Add progress bar callback for better visibility
     from lightning.pytorch.callbacks import TQDMProgressBar
+
     progress_bar = TQDMProgressBar(refresh_rate=1)  # Update every iteration
-    
+
+    # Use the strategy from config
+    strategy = wandb.config.trainer["strategy"]
+    print(f"Using strategy: {strategy}")
+
     trainer = L.Trainer(
-        strategy=wandb.config.trainer["strategy"],
+        strategy=strategy,
         accelerator=wandb.config.trainer["accelerator"],
         devices=devices,
         num_nodes=num_nodes,
@@ -435,8 +541,12 @@ def main(cfg: DictConfig) -> None:
         overfit_batches=wandb.config.trainer["overfit_batches"],
         enable_progress_bar=True,  # Explicitly enable progress bar
         enable_model_summary=True,  # Keep model summary
+        precision=wandb.config.trainer.get(
+            "precision", "32-true"
+        ),  # Use precision from config
     )
 
+    print(f"Starting trainer.fit - PID: {os.getpid()}")
     trainer.fit(model=task, datamodule=data_module)
 
     # Store metrics in variables first
@@ -451,9 +561,5 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    import multiprocessing as mp
-    import random
-    import time
-
     mp.set_start_method("spawn", force=True)
     main()

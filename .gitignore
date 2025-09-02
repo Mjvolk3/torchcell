@@ -132,6 +132,7 @@ rockylinux_9.sif
 # Other Users
 notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05.pdf
 **/CLAUDE.local.md
+.claude/config.json
 
 # papers
 dango.md

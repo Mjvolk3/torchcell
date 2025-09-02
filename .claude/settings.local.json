@@ -6,7 +6,8 @@
       "Read(*.txt)",
       "Write(*.py)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(python:*)"
     ],
     "deny": [
       "Bash(rm:*)",

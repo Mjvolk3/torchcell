@@ -79,3 +79,8 @@ datasets:
   GeneEssentialitySgdDataset:
     path: data/torchcell/gene_essentiality_sgd
     kwargs: null
+
+  # CalMorph Morphology
+  ScmdOhya2005Dataset:
+    path: data/torchcell/scmd_ohya2005
+    kwargs: null

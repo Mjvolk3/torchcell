@@ -488,7 +488,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
     # CALMORPH_STATISTICS: 220 coefficient of variation parameters
 
     @field_validator("calmorph")
-    def validate_morphology(cls, v):
+    def validate_calmorph(cls, v):
         if not v:
             raise ValueError("calmorph measurements cannot be empty")
         for key, value in v.items():

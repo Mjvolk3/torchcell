@@ -85,10 +85,7 @@ class CellAdapter:
                 "synthetic rescue phenotype (chunked)",
                 self._synthetic_rescue_phenotype_node,
             ),
-            (
-                "calmorph phenotype (chunked)",
-                self._calmorph_phenotype_node,
-            ),
+            ("calmorph phenotype (chunked)", self._calmorph_phenotype_node),
             (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
@@ -842,13 +839,15 @@ class CellAdapter:
         graph_level = phenotype.graph_level
         label_name = phenotype.label_name
         label_statistic_name = phenotype.label_statistic_name
-        morphology = phenotype.morphology
+        calmorph = phenotype.calmorph
+        calmorph_coefficient_of_variation = phenotype.calmorph_coefficient_of_variation
 
         properties = {
             "graph_level": graph_level,
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
-            "morphology": json.dumps(morphology),  # Store as JSON string
+            "calmorph": json.dumps(calmorph),  # Store as JSON string
+            "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -871,13 +870,15 @@ class CellAdapter:
             graph_level = phenotype.graph_level
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
-            morphology = phenotype.morphology
+            calmorph = phenotype.calmorph
+            calmorph_coefficient_of_variation = phenotype.calmorph_coefficient_of_variation
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
-                "morphology": json.dumps(morphology),  # Store as JSON string
+                "calmorph": json.dumps(calmorph),  # Store as JSON string
+                "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 

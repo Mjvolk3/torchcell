@@ -143,7 +143,8 @@ calmorph phenotype:
         graph_level: str
         label_name: str
         label_statistic_name: str
-        morphology: str
+        calmorph: str
+        calmorph_coefficient_of_variation: str
         serialized_data: str
 # PHENOTYPES END
 

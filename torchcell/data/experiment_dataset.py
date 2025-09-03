@@ -186,11 +186,11 @@ class ExperimentDataset(Dataset, ABC):
 
     @property
     @abstractmethod
-    def experiment_class(self) -> Experiment: ...
+    def experiment_class(self) -> type[Experiment]: ...
 
     @property
     @abstractmethod
-    def reference_class(self) -> ExperimentReference: ...
+    def reference_class(self) -> type[ExperimentReference]: ...
 
     @property
     @abstractmethod

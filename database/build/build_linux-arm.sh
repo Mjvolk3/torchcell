@@ -24,7 +24,7 @@ docker run --cpus=10 \
     -v "$(pwd)/database/data:/var/lib/neo4j/data" \
     -v "$(pwd)/database/.env:/.env" \
     -v "$(pwd)/biocypher:/var/lib/neo4j/biocypher" \
-    -v "$(pwd)/database/conf:/var/lib/neo4j/conf" \
+    -v "$(pwd)/database/conf-m1:/var/lib/neo4j/conf" \
     -v "$(pwd)/database/logs:/logs" \
     -v "$(pwd)/database/plugins:/plugins" \
     -e NEO4J_AUTH=neo4j/torchcell \
@@ -68,8 +68,9 @@ docker exec tc-neo4j bash -c 'source /.env && wandb login $WANDB_API_KEY'
 # Execute the Python script inside the Docker container and capture the output
 #Works
 #docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=gene_essentiality_sgd
+docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=calmorph_ohya2005_kg
 
-docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=smf_costanzo2016_kg
+# docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=smf_costanzo2016_kg
 
 # Capture the path from the script output
 bash_script_path_cleaned=$(docker exec tc-neo4j cat biocypher_file_name.txt)

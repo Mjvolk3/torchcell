@@ -32,6 +32,7 @@ from torchcell.datamodels.schema import (
     Publication,
 )
 from torchcell.graph import SCerevisiaeGraph
+from torchcell.graph.sgd import main_get_all_genes
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -144,6 +145,22 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
         os.makedirs(self.processed_dir, exist_ok=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+
+        # Check if SGD gene data exists
+        sgd_genes_dir = osp.join(os.environ.get("DATA_ROOT", "data"), "sgd/genome/genes")
+        if osp.exists(sgd_genes_dir):
+            gene_files = [f for f in os.listdir(sgd_genes_dir) if f.endswith('.json')]
+            gene_count = len(gene_files)
+        else:
+            gene_count = 0
+        
+        if gene_count < 100:  # Arbitrary threshold to check if genes are downloaded
+            log.info(f"SGD gene data incomplete or missing (found {gene_count} files).")
+            log.info("Downloading SGD gene data. This may take 15-30 minutes...")
+            main_get_all_genes()
+            log.info("SGD gene download complete!")
+        else:
+            log.info(f"SGD gene data already exists ({gene_count} gene files found)")
 
         env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
 

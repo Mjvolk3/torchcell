@@ -2,7 +2,7 @@
 id: bl30fblz5fcmphms63ynk3z
 title: '36'
 desc: ''
-updated: 1756849173430
+updated: 1757003028302
 created: 1756765946293
 ---
 
@@ -12,11 +12,16 @@ created: 1756765946293
 
 ## 2025.09.02
 
-- [ ] Add morphology. Respond to maintainers about solved problem of downloading database. Might want to store a backup...
-- [ ]
-- [ ]
+- [x] Add morphology. Respond to maintainers about solved problem of downloading database. Might want to store a backup...
 
-## 2025.09.01
+## 2025.09.03
+
+- [ ] [[Tmi_tmf_heteroscedastic|dendron://torchcell/experiments.007-kuzmin-tm.scripts.tmi_tmf_heteroscedastic]]
+
+## 2025.09.04
+
+- [ ] @Junyu-Chen graphs.
+- [ ] Check morphology backups
 
 - [ ] Add gene expression.
 

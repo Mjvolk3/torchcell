@@ -42,6 +42,7 @@ from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
+from datetime import timedelta
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
@@ -80,7 +81,6 @@ def get_num_devices() -> int:
     return num_devices if num_devices > 0 else 1
 
 
-
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
@@ -89,6 +89,14 @@ def get_num_devices() -> int:
 def main(cfg: DictConfig) -> None:
     print("Starting GeneInteractionDango Training 🔫")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
+
+    # Set distributed timeout to 2 hours if using DDP
+    if dist.is_available() and dist.is_initialized():
+        # This is already initialized by Lightning, we can't change it
+        pass
+    else:
+        # Set environment variable for when dist is initialized later
+        os.environ["TORCH_DISTRIBUTED_DEFAULT_TIMEOUT"] = "7200"  # 2 hours in seconds
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     print("wandb_cfg", wandb_cfg)
 
@@ -205,14 +213,14 @@ def main(cfg: DictConfig) -> None:
     # Initialize transforms based on configuration
     forward_transform = None
     inverse_transform = None
-    
+
     if wandb.config.transforms.get("use_transforms", False):
         print("\nInitializing transforms from configuration...")
         transform_config = wandb.config.transforms.get("forward_transform", {})
-        
+
         transforms_list = []
         norm_transform = None
-        
+
         # First create the dataset without transforms to get label statistics
         dataset = Neo4jCellDataset(
             root=dataset_root,
@@ -227,14 +235,14 @@ def main(cfg: DictConfig) -> None:
             graph_processor=graph_processor,
             transform=None,  # No transform initially
         )
-        
+
         # Normalization transform
         if "normalization" in transform_config:
             norm_config = transform_config["normalization"]
             norm_transform = COOLabelNormalizationTransform(dataset, norm_config)
             transforms_list.append(norm_transform)
             print(f"Added normalization transform for: {list(norm_config.keys())}")
-            
+
             # Print normalization parameters
             for label, stats in norm_transform.stats.items():
                 print(f"Normalization parameters for {label}:")
@@ -243,14 +251,16 @@ def main(cfg: DictConfig) -> None:
                         print(f"  {key}: {value:.6f}")
                     else:
                         print(f"  {key}: {value}")
-        
+
         # Binning transform
         if "binning" in transform_config:
             bin_config = transform_config["binning"]
-            bin_transform = COOLabelBinningTransform(dataset, bin_config, norm_transform)
+            bin_transform = COOLabelBinningTransform(
+                dataset, bin_config, norm_transform
+            )
             transforms_list.append(bin_transform)
             print(f"Added binning transform for: {list(bin_config.keys())}")
-            
+
             # Print binning info
             for label in bin_config:
                 bin_info = bin_transform.get_bin_info(label)
@@ -258,19 +268,19 @@ def main(cfg: DictConfig) -> None:
                 print(f"  strategy: {bin_info['strategy']}")
                 print(f"  num_bins: {len(bin_info['bin_edges']) - 1}")
                 print(f"  bin_edges: {bin_info['bin_edges']}")
-        
+
         if transforms_list:
             forward_transform = Compose(transforms_list)
             inverse_transform = COOInverseCompose(transforms_list)
             print("Transforms initialized successfully")
-            
+
             # Log transform parameters to wandb
             if "normalization" in transform_config:
                 for label, stats in norm_transform.stats.items():
                     for key, value in stats.items():
                         if isinstance(value, (int, float)) and key != "strategy":
                             wandb.log({f"normalization/{label}/{key}": value})
-            
+
             # Set the forward transform on the dataset
             dataset.transform = forward_transform
     else:
@@ -289,7 +299,7 @@ def main(cfg: DictConfig) -> None:
             transform=None,
         )
     print(f"Dataset Length: {len(dataset)}")
-    
+
     seed = 42
     data_module = CellDataModule(
         dataset=dataset,
@@ -300,7 +310,7 @@ def main(cfg: DictConfig) -> None:
         num_workers=wandb.config.data_module["num_workers"],
         pin_memory=wandb.config.data_module["pin_memory"],
         prefetch=wandb.config.data_module["prefetch"],
-        prefetch_factor=wandb.config.data_module["prefetch_factor"]
+        prefetch_factor=wandb.config.data_module["prefetch_factor"],
     )
     data_module.setup()
     if wandb.config.data_module["is_perturbation_subset"]:
@@ -413,42 +423,40 @@ def main(cfg: DictConfig) -> None:
     elif wandb.config.regression_task["loss"] == "mle_dist_supcr":
         # Get loss configuration
         loss_config = wandb.config.regression_task.get("loss_config", {})
-        
+
         loss_func = MleDistSupCR(
             # Lambda weights
             lambda_mse=wandb.config.regression_task.get("lambda_mse", 1.0),
             lambda_dist=wandb.config.regression_task.get("lambda_dist", 0.1),
             lambda_supcr=wandb.config.regression_task.get("lambda_supcr", 0.001),
-            
             # Component-specific parameters
             dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
             supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model["hidden_channels"],  # Use model's hidden_channels
-            
+            embedding_dim=wandb.config.model[
+                "hidden_channels"
+            ],  # Use model's hidden_channels
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
             min_samples_for_dist=loss_config.get("min_samples_for_dist", 64),
             min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 32),
-            
             # DDP configuration
             use_ddp_gather=loss_config.get("use_ddp_gather", True),
             gather_interval=loss_config.get("gather_interval", 1),
-            
             # Adaptive weighting
             use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
             warmup_epochs=loss_config.get("warmup_epochs", 100),
             stable_epoch=loss_config.get("stable_epoch", 500),
-            
             # Temperature scheduling
             use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
             init_temperature=loss_config.get("init_temperature", 1.0),
             final_temperature=loss_config.get("final_temperature", 0.1),
             temp_schedule=loss_config.get("temp_schedule", "exponential"),
-            
             # Other parameters
             weights=weights,
-            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
+            max_epochs=loss_config.get(
+                "max_epochs", wandb.config.trainer["max_epochs"]
+            ),
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
@@ -502,6 +510,47 @@ def main(cfg: DictConfig) -> None:
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
         )
 
+    # Try to compile the model for better performance (PyTorch 2.0+)
+    if hasattr(torch, "compile"):
+        compile_mode = wandb.config.get(
+            "compile_mode", "default"
+        )  # Can be null, "default", "reduce-overhead", "max-autotune"
+        if compile_mode is not None:
+            try:
+                print(
+                    f"Attempting torch.compile optimization (PyTorch {torch.__version__})..."
+                )
+                print(f"  Mode: {compile_mode}, Dynamic: True")
+
+                # For PyTorch 2.8.0, inductor config is now available
+                import torch._inductor.config as inductor_config
+
+                # Increase the overall precompilation budget to 2 hours (default is 3600s = 1 hour)
+                inductor_config.precompilation_timeout_seconds = 2 * 60 * 60  # 2 hours
+                print(f"  Set precompilation timeout to 2 hours")
+
+                # If using max-autotune mode, also increase autotune subprocess timeouts
+                if compile_mode == "max-autotune":
+                    inductor_config.max_autotune_subproc_result_timeout_seconds = (
+                        300.0  # 5 min (was 60s)
+                    )
+                    inductor_config.max_autotune_subproc_graceful_timeout_seconds = 10.0
+                    inductor_config.max_autotune_subproc_terminate_timeout_seconds = (
+                        20.0
+                    )
+                    print(f"  Set autotune subprocess timeout to 5 minutes")
+
+                # Compile the model within the task
+                # Use dynamic=True since batch sizes and gene counts vary
+                task.model = torch.compile(task.model, mode=compile_mode, dynamic=True)
+                print(
+                    f"✓ Successfully compiled model with torch.compile (mode={compile_mode}, dynamic=True)"
+                )
+                print("  Expected speedup: 2-3x for forward/backward passes")
+            except Exception as e:
+                print(f"⚠️ torch.compile not compatible with this model: {e}")
+                print("Continuing without compilation optimization")
+
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
     os.makedirs(model_base_path, exist_ok=True)
     checkpoint_dir = osp.join(model_base_path, group)
@@ -515,7 +564,7 @@ def main(cfg: DictConfig) -> None:
         mode="min",
         filename=f"{run.id}-best-mse-{{epoch:02d}}-{{val/gene_interaction/MSE:.4f}}",
     )
-    
+
     # Checkpoint for best Pearson correlation
     checkpoint_callback_best_pearson = ModelCheckpoint(
         dirpath=checkpoint_dir,
@@ -524,7 +573,7 @@ def main(cfg: DictConfig) -> None:
         mode="max",  # Pearson correlation should be maximized
         filename=f"{run.id}-best-pearson-{{epoch:02d}}-{{val/gene_interaction/Pearson:.4f}}",
     )
-    
+
     checkpoint_callback_last = ModelCheckpoint(
         dirpath=checkpoint_dir, save_last=True, filename=f"{run.id}-last"
     )
@@ -541,10 +590,17 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback_best_mse, checkpoint_callback_best_pearson, checkpoint_callback_last],
+        callbacks=[
+            checkpoint_callback_best_mse,
+            checkpoint_callback_best_pearson,
+            checkpoint_callback_last,
+        ],
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        precision=wandb.config.trainer.get(
+            "precision", "32-true"
+        ),  # Use precision from config
         # limit_val_batches=0,  # FLAG
     )
 

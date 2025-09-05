@@ -31,7 +31,8 @@ class GraphProcessor(ABC):
 class SubgraphRepresentation(GraphProcessor):
     def __init__(self) -> None:
         super().__init__()
-        self.device: torch.device = None
+        # Always use CPU for pin_memory compatibility
+        self.device: torch.device = torch.device("cpu")
         self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
 
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
@@ -86,8 +87,9 @@ class SubgraphRepresentation(GraphProcessor):
         phenotype_info: list[Any],
         data: list[Dict[str, Any]],
     ) -> HeteroData:
-        # Set the device based on gene features
-        self.device = cell_graph["gene"].x.device
+        # Always use CPU for pin_memory compatibility
+        # The model will handle moving tensors to GPU after DataLoader
+        self.device = torch.device("cpu")
         self._initialize_masks(cell_graph)
         integrated_subgraph = HeteroData()
 
@@ -429,9 +431,9 @@ class SubgraphRepresentation(GraphProcessor):
         Add phenotype data to the graph in COO format.
         Optimized version that ensures all tensors are on the same device.
         """
-        # Ensure device is set
+        # Always use CPU for pin_memory compatibility
         if self.device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("cpu")
 
         # Initialize storage for phenotype values and metadata
         all_values = []
@@ -650,7 +652,8 @@ class Perturbation(GraphProcessor):
 
     def __init__(self) -> None:
         super().__init__()
-        self.device = None
+        # Always use CPU for pin_memory compatibility
+        self.device = torch.device("cpu")
 
     def process(
         self,
@@ -661,11 +664,9 @@ class Perturbation(GraphProcessor):
         if not data:
             raise ValueError("Data list is empty")
 
-        # Set device based on cell_graph
-        if hasattr(cell_graph["gene"], "x") and hasattr(cell_graph["gene"].x, "device"):
-            self.device = cell_graph["gene"].x.device
-        else:
-            self.device = torch.device("cpu")
+        # Always use CPU for pin_memory compatibility
+        # The model will handle moving tensors to GPU after DataLoader
+        self.device = torch.device("cpu")
 
         # Create a minimal HeteroData object to store perturbation data
         processed_graph = HeteroData()
@@ -827,7 +828,8 @@ class DCellGraphProcessor(GraphProcessor):
 
     def __init__(self) -> None:
         super().__init__()
-        self.device = None
+        # Always use CPU for pin_memory compatibility
+        self.device = torch.device("cpu")
 
     def process(
         self,
@@ -838,11 +840,9 @@ class DCellGraphProcessor(GraphProcessor):
         if not data:
             raise ValueError("Data list is empty")
 
-        # Set device based on cell_graph
-        if hasattr(cell_graph["gene"], "x") and hasattr(cell_graph["gene"].x, "device"):
-            self.device = cell_graph["gene"].x.device
-        else:
-            self.device = torch.device("cpu")
+        # Always use CPU for pin_memory compatibility
+        # The model will handle moving tensors to GPU after DataLoader
+        self.device = torch.device("cpu")
 
         # Create a new HeteroData object for processing
         processed_graph = HeteroData()
@@ -930,9 +930,10 @@ class DCellGraphProcessor(GraphProcessor):
         """
         Copy go_gene_strata_state from cell_graph and flip perturbation bits.
         """
-        # Copy the base state tensor from cell_graph
+        # Copy the base state tensor from cell_graph and keep on CPU
+        # This ensures compatibility with pin_memory in DataLoader
         base_state = (
-            cell_graph["gene_ontology"].go_gene_strata_state.clone().to(self.device)
+            cell_graph["gene_ontology"].go_gene_strata_state.clone().cpu()
         )
 
         # Convert perturbed indices to set for O(1) lookup
@@ -961,9 +962,9 @@ class DCellGraphProcessor(GraphProcessor):
         Add phenotype data to the graph in COO format.
         Optimized version that ensures all tensors are on the same device.
         """
-        # Ensure device is set
+        # Always use CPU for pin_memory compatibility
         if self.device is None:
-            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            self.device = torch.device("cpu")
 
         # Initialize storage for phenotype values and metadata
         all_values = []

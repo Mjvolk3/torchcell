@@ -46,7 +46,9 @@ class RegressionTask(LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["model", "loss_func"])
         self.model = model
-        self.cell_graph = cell_graph
+        # Clone cell_graph to avoid modifying the dataset's original cell_graph
+        # This is necessary for pin_memory compatibility in DataLoader
+        self.cell_graph = cell_graph.clone()
         self.inverse_transform = inverse_transform
         self.forward_transform = forward_transform
         self.current_accumulation_steps = 1

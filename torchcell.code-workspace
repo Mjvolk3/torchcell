@@ -5,6 +5,10 @@
             "path": "."
         },
         {
+            "name":"torchcell_hosted_data",
+            "path": "/Users/michaelvolk/Library/CloudStorage/Box-Box/torchcell"
+        },
+        {
             "name": "______________",
             "path": "../______________"
         },

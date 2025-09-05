@@ -135,6 +135,17 @@ synthetic rescue phenotype:
         is_synthetic_rescue: bool
         synthetic_rescue_statistic_score: float
         serialized_data: str
+
+calmorph phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        calmorph: str
+        calmorph_coefficient_of_variation: str
+        serialized_data: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -167,6 +178,8 @@ phenotype member of:
             gene essentiality phenotype,
             synthetic lethality phenotype,
             synthetic rescue phenotype,
+            gene interaction phenotype,
+            calmorph phenotype,
         ]
     target: [experiment, experiment reference]
 

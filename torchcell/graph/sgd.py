@@ -19,6 +19,12 @@ import aiohttp
 from aiohttp import ClientError, ContentTypeError
 from attrs import define, field
 from tqdm import tqdm
+from dotenv import load_dotenv
+
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+if not DATA_ROOT:
+    raise ValueError("DATA_ROOT environment variable is not set. Please set it in your .env file.")
 
 from torchcell.graph.validation.locus_related.locus import (
     Alias,
@@ -40,7 +46,7 @@ class Gene:
     is_validated: bool = field(default=True, init=True, repr=False)
     sgd_url: str = "https://www.yeastgenome.org/backend/locus"
     headers: dict[str, str] = field(default={"accept": "application/json"})
-    base_data_dir: str = "data/sgd/genome/genes"
+    base_data_dir: str = field(default=osp.join(DATA_ROOT, "data/sgd/genome/genes"))
     save_path: str = field(default=None, init=False, repr=True)
     _data: dict[str, dict[Any, Any] | list[Any]] = field(factory=dict, init=False)
     _data_task: Task[Any] | None = field(default=None, init=False, repr=False)
@@ -225,7 +231,7 @@ async def download_genes(
         tasks = []
         for id_ in locus_ids:
             # Check if the file for the gene already exists
-            file_path = f"data/sgd/genes/{id_}.json"
+            file_path = osp.join(DATA_ROOT, f"data/sgd/genome/genes/{id_}.json")
 
             if os.path.exists(file_path):
                 logging.info(f"Data for gene {id_} already exists. Skipping...")

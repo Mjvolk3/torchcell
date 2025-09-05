@@ -42,7 +42,7 @@ data_module:
   perturbation_subset_size: 1000 #2.5e4
   batch_size: 32 #32 #4 #16
   num_workers: 4 #2
-  pin_memory: false
+  pin_memory: true
   prefetch: false
   prefetch_factor: 2
 

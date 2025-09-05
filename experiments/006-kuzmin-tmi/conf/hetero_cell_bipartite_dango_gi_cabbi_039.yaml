@@ -43,7 +43,7 @@ data_module:
   batch_size: 32 #32 #4 #32
   num_workers: 4 # batch_size:32, num_workers:3 failed.
   pin_memory: true
-  prefetch: false
+  prefetch: true
   prefetch_factor: 2
 
 trainer:

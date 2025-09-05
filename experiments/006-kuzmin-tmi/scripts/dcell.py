@@ -17,7 +17,7 @@ import random
 import time
 import multiprocessing as mp
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.callbacks import ModelCheckpoint, Callback
 from lightning.pytorch.loggers import WandbLogger
 from omegaconf import DictConfig, OmegaConf
 import wandb
@@ -127,10 +127,10 @@ def main(cfg: DictConfig) -> None:
 
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", group)
     os.makedirs(experiment_dir, exist_ok=True)
-    
+
     print(f"DEBUG: About to init wandb - experiment_dir: {experiment_dir}")
     print(f"DEBUG: WANDB_MODE = {WANDB_MODE}")
-    
+
     try:
         run = wandb.init(
             mode=WANDB_MODE,
@@ -150,20 +150,26 @@ def main(cfg: DictConfig) -> None:
             name=f"run_{group}",
         )
         print("DEBUG: WandbLogger created")
-        
+
         print(f"Process initialized - PID: {os.getpid()}")
     except Exception as e:
         print(f"ERROR during wandb initialization: {e}")
         import traceback
+
         traceback.print_exc()
         raise
-    
+
     print("DEBUG: After wandb initialization block", flush=True)
-    
+
     try:
-        print(f"DEBUG: Checking CUDA availability: {torch.cuda.is_available()}", flush=True)
-        print(f"DEBUG: Checking dist.is_initialized: {dist.is_initialized()}", flush=True)
-        
+        print(
+            f"DEBUG: Checking CUDA availability: {torch.cuda.is_available()}",
+            flush=True,
+        )
+        print(
+            f"DEBUG: Checking dist.is_initialized: {dist.is_initialized()}", flush=True
+        )
+
         if torch.cuda.is_available() and dist.is_initialized():
             rank = dist.get_rank()
             genome_root = osp.join(DATA_ROOT, f"data/sgd/genome_{rank}")
@@ -175,10 +181,13 @@ def main(cfg: DictConfig) -> None:
             rank = 0
             print(f"DEBUG: Using non-distributed paths")
 
-        print(f"DEBUG: About to create genome - genome_root: {genome_root}, go_root: {go_root}")
+        print(
+            f"DEBUG: About to create genome - genome_root: {genome_root}, go_root: {go_root}"
+        )
     except Exception as e:
         print(f"ERROR in path setup: {e}")
         import traceback
+
         traceback.print_exc()
         raise
     genome = SCerevisiaeGenome(
@@ -335,8 +344,8 @@ def main(cfg: DictConfig) -> None:
     subsystem_output_max_mult = wandb.config.model["subsystem_output_max_mult"]
     output_size = wandb.config.model["output_size"]
 
-    # Explicitly move dataset cell_graph to the correct device before model initialization
-    dataset.cell_graph = dataset.cell_graph.to(device)
+    # Keep dataset.cell_graph on CPU for pin_memory compatibility
+    # The model will receive CPU tensors and handle device placement internally
 
     # Select model version based on config
     model_version = wandb.config.model.get("model_version", "dcell")
@@ -346,7 +355,7 @@ def main(cfg: DictConfig) -> None:
         from torchcell.models.dcell_opt import DCellOpt
 
         model = DCellOpt(
-            hetero_data=dataset.cell_graph,
+            hetero_data=dataset.cell_graph,  # Keep on CPU for pin_memory
             min_subsystem_size=subsystem_output_min,
             subsystem_ratio=subsystem_output_max_mult,
             output_size=output_size,
@@ -354,7 +363,7 @@ def main(cfg: DictConfig) -> None:
     else:
         print("Using original DCell model")
         model = DCell(
-            hetero_data=dataset.cell_graph,
+            hetero_data=dataset.cell_graph,  # Keep on CPU for pin_memory
             min_subsystem_size=subsystem_output_min,
             subsystem_ratio=subsystem_output_max_mult,
             output_size=output_size,
@@ -459,15 +468,15 @@ def main(cfg: DictConfig) -> None:
                 # Enable capture of scalar outputs to handle .item() operations better
                 torch._dynamo.config.capture_scalar_outputs = True
                 print("  Enabled capture_scalar_outputs for better .item() handling")
-                
+
                 # Set recompile limits from config or use defaults
                 recompile_limit = cfg.get("recompile_limit", 32)
                 accumulated_limit = cfg.get("accumulated_recompile_limit", 64)
-                
+
                 # Increase recompile limit to handle shape variations better
                 torch._dynamo.config.recompile_limit = recompile_limit
                 print(f"  Set recompile limit to {recompile_limit} (default is 8)")
-                
+
                 # Also increase accumulated limit for overall recompilations
                 torch._dynamo.config.accumulated_recompile_limit = accumulated_limit
                 print(f"  Set accumulated recompile limit to {accumulated_limit}")
@@ -523,6 +532,24 @@ def main(cfg: DictConfig) -> None:
     from lightning.pytorch.callbacks import TQDMProgressBar
 
     progress_bar = TQDMProgressBar(refresh_rate=1)  # Update every iteration
+    
+    # Create a callback for handling SIGTERM gracefully
+    class GracefulStopCallback(Callback):
+        """Callback to handle SIGTERM and enable graceful shutdown"""
+        
+        def on_train_start(self, trainer, pl_module):
+            """Register signal handler after training starts"""
+            import signal
+            
+            def handle_sigterm(signum, frame):
+                print(f"\n[PID {os.getpid()}] Received SIGTERM, requesting graceful stop...")
+                trainer.should_stop = True
+                # Lightning will finish the current training step and save checkpoint
+            
+            signal.signal(signal.SIGTERM, handle_sigterm)
+            print(f"[PID {os.getpid()}] Registered SIGTERM handler for graceful shutdown")
+    
+    graceful_stop = GracefulStopCallback()
 
     # Use the strategy from config
     strategy = wandb.config.trainer["strategy"]
@@ -535,7 +562,7 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback_best, checkpoint_callback_last, progress_bar],
+        callbacks=[checkpoint_callback_best, checkpoint_callback_last, progress_bar, graceful_stop],
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
@@ -548,10 +575,21 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Starting trainer.fit - PID: {os.getpid()}")
     trainer.fit(model=task, datamodule=data_module)
+    
+    # Check if training was interrupted
+    if trainer.interrupted:
+        print("\nTraining was interrupted by signal")
+        # Lightning already handles cleanup for distributed training
+        wandb.finish()
+        return (float('inf'), 0.0)  # Return sentinel values for interrupted training
 
-    # Store metrics in variables first
-    mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
-    pearson = trainer.callback_metrics["val/gene_interaction/Pearson"].item()
+    # Store metrics in variables first (only if we completed training)
+    if "val/gene_interaction/MSE" in trainer.callback_metrics:
+        mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()
+        pearson = trainer.callback_metrics["val/gene_interaction/Pearson"].item()
+    else:
+        mse = float('inf')
+        pearson = 0.0
 
     # Now finish wandb
     wandb.finish()

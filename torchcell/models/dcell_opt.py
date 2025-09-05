@@ -97,12 +97,33 @@ class DCellOpt(nn.Module):
         for term_idx, output_dim in self.term_output_dims.items():
             self.term_output_dims_tensor[term_idx] = output_dim
 
-        print(f"DCellOpt model initialized:")
+        # Analyze stratum sizes for parallel processing
+        stratum_sizes = {}
+        for stratum, terms in self.stratum_to_terms.items():
+            active_terms = sum(1 for t in terms if self.has_subsystem[t])
+            stratum_sizes[stratum] = (len(terms), active_terms)
+        
+        max_parallel_terms = max(s[1] for s in stratum_sizes.values()) if stratum_sizes else 0
+        
+        print(f"DCellOpt model initialized with PARALLEL processing:")
         print(f"  GO terms: {self.num_go_terms}")
         print(f"  Genes: {self.num_genes}")
         print(f"  Strata: {len(self.strata_order)} (max: {self.max_stratum})")
         print(f"  Active subsystems: {self.has_subsystem.sum().item()}")
         print(f"  Max output dim: {self.max_output_dim}")
+        print(f"  Max parallel terms in single stratum: {max_parallel_terms}")
+        print(f"  CUDA streams available: {torch.cuda.is_available()}")
+        
+        # Initialize profiling mode (disabled by default)
+        self._profile_mode = False
+
+    def enable_profiling(self, enable: bool = True):
+        """Enable or disable performance profiling during forward pass."""
+        self._profile_mode = enable
+        if enable:
+            print("DCellOpt profiling enabled - will log stratum processing times")
+        else:
+            print("DCellOpt profiling disabled")
 
     def _build_tensorized_hierarchy(self):
         """Convert parent-child relationships to tensor representations."""
@@ -359,11 +380,205 @@ class DCellOpt(nn.Module):
             gene_states_batch.append(gene_states)
 
         return torch.stack(gene_states_batch)
+    
+    def _extract_gene_states_parallel(
+        self, term_indices: torch.Tensor, batch: HeteroData
+    ) -> torch.Tensor:
+        """Extract gene states for multiple GO terms in parallel.
+        
+        Args:
+            term_indices: Tensor of shape (num_terms,) with GO term indices
+            batch: HeteroData batch
+            
+        Returns:
+            Tensor of shape (batch_size, num_terms, max_genes) with gene states
+        """
+        batch_size = batch["gene"].batch.max() + 1
+        device = batch["gene"].x.device
+        num_terms = len(term_indices)
+        
+        # Ensure term_indices is on the right device
+        term_indices = term_indices.to(self.term_num_genes_tensor.device)
+        
+        # Get number of genes for each term
+        num_genes_per_term = self.term_num_genes_tensor[term_indices]
+        max_genes = num_genes_per_term.max().item() if num_genes_per_term.numel() > 0 else 1
+        
+        # Pre-allocate output tensor
+        gene_states_all = torch.zeros(
+            batch_size, num_terms, max_genes, device=device
+        )
+        
+        # Extract row indices for all terms at once
+        row_indices_all = self.term_row_indices_tensor[term_indices].to(device)
+        
+        # Process batch
+        go_gene_state = batch["gene_ontology"].go_gene_strata_state
+        go_gene_state_batched = go_gene_state.reshape(batch_size, -1, 4)
+        
+        # Extract states for each term
+        for term_idx, (global_term_idx, num_genes) in enumerate(zip(term_indices, num_genes_per_term)):
+            if num_genes > 0:
+                row_indices = row_indices_all[term_idx, :num_genes]
+                
+                # Extract for all samples in batch
+                for batch_idx in range(batch_size):
+                    sample_data = go_gene_state_batched[batch_idx]
+                    term_rows = sample_data[row_indices]
+                    gene_states = term_rows[:, 3].float()
+                    gene_states_all[batch_idx, term_idx, :num_genes] = gene_states
+        
+        return gene_states_all
 
+    def _group_terms_by_dimensions(
+        self, term_indices: torch.Tensor
+    ) -> List[torch.Tensor]:
+        """Group GO terms by their input/output dimensions for efficient batching.
+        
+        Args:
+            term_indices: Tensor of GO term indices to group
+            
+        Returns:
+            List of tensors, each containing indices with same dimensions
+        """
+        dim_groups = {}
+        
+        for term_idx in term_indices:
+            term_idx_int = term_idx.item()
+            
+            # Skip if no subsystem
+            if not self.has_subsystem[term_idx_int]:
+                continue
+                
+            # Get dimensions for this term
+            input_dim = self.term_input_dims.get(term_idx_int, 0)
+            output_dim = self.term_output_dims.get(term_idx_int, 0)
+            
+            # Create dimension key
+            dim_key = (input_dim, output_dim)
+            
+            if dim_key not in dim_groups:
+                dim_groups[dim_key] = []
+            dim_groups[dim_key].append(term_idx_int)
+        
+        # Convert to list of tensors
+        grouped_indices = []
+        for dim_key, indices in dim_groups.items():
+            if indices:  # Only add non-empty groups
+                grouped_indices.append(torch.tensor(indices, dtype=torch.long))
+        
+        return grouped_indices
+    
+    def _process_stratum_parallel(
+        self,
+        stratum_terms: torch.Tensor,
+        batch: HeteroData,
+        all_activations: torch.Tensor,
+        activation_mask: torch.Tensor,
+        linear_outputs_tensor: torch.Tensor
+    ):
+        """Process all terms in a stratum in parallel.
+        
+        This method processes multiple GO terms simultaneously while respecting
+        their hierarchical dependencies. Terms within the same stratum are independent
+        and can be processed in parallel.
+        
+        Args:
+            stratum_terms: Tensor of GO term indices in this stratum
+            batch: HeteroData batch
+            all_activations: Pre-allocated tensor for all term activations
+            activation_mask: Mask indicating which terms have been processed
+            linear_outputs_tensor: Pre-allocated tensor for linear outputs
+        """
+        if len(stratum_terms) == 0:
+            return
+            
+        batch_size = all_activations.size(0)
+        device = all_activations.device
+        
+        # Prepare all inputs first (memory coalescing)
+        term_inputs = {}
+        valid_terms = []
+        
+        # First pass: Prepare all inputs
+        for term_idx in stratum_terms:
+            term_idx_scalar = term_idx.item() if hasattr(term_idx, 'item') else term_idx
+            
+            # Skip if no subsystem
+            if not self.has_subsystem[term_idx_scalar]:
+                continue
+                
+            # Prepare input for this term
+            term_input = self._prepare_term_input_optimized(
+                term_idx, batch, all_activations, activation_mask
+            )
+            
+            if term_input is not None and term_input.numel() > 0:
+                term_inputs[term_idx_scalar] = term_input
+                valid_terms.append(term_idx_scalar)
+        
+        if not valid_terms:
+            return
+        
+        # Second pass: Process all terms
+        # This allows CUDA to better schedule operations
+        outputs = {}
+        
+        # Process in batches to improve GPU utilization
+        # Use torch.cuda.Stream for true parallel execution if available
+        if device.type == 'cuda' and torch.cuda.is_available():
+            # Create streams for parallel processing
+            num_streams = min(4, len(valid_terms))  # Use up to 4 CUDA streams
+            streams = [torch.cuda.Stream() for _ in range(num_streams)]
+            
+            # Distribute terms across streams
+            for idx, term_idx in enumerate(valid_terms):
+                stream_idx = idx % num_streams
+                
+                with torch.cuda.stream(streams[stream_idx]):
+                    # Get this term's specific subsystem and linear head
+                    subsystem = self.subsystems[term_idx]
+                    linear_head = self.linear_heads[term_idx]
+                    
+                    # Forward through subsystem
+                    term_output = subsystem(term_inputs[term_idx])
+                    
+                    # Store results temporarily
+                    outputs[term_idx] = {
+                        'activation': term_output,
+                        'linear': linear_head(term_output)
+                    }
+            
+            # Synchronize all streams
+            for stream in streams:
+                stream.synchronize()
+        else:
+            # CPU or fallback: Process sequentially but with prepared inputs
+            for term_idx in valid_terms:
+                subsystem = self.subsystems[term_idx]
+                linear_head = self.linear_heads[term_idx]
+                
+                term_output = subsystem(term_inputs[term_idx])
+                outputs[term_idx] = {
+                    'activation': term_output,
+                    'linear': linear_head(term_output)
+                }
+        
+        # Third pass: Store all results (memory coalescing)
+        for term_idx in valid_terms:
+            output_dim = self.term_output_dims[term_idx]
+            
+            # Store activation
+            all_activations[:, term_idx, :output_dim] = outputs[term_idx]['activation']
+            activation_mask[:, term_idx] = True
+            
+            # Store linear output
+            linear_outputs_tensor[:, term_idx, :] = outputs[term_idx]['linear']
+    
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, Any]]:
-        """Forward pass through DCell hierarchy with optimized tensor operations."""
+        """Forward pass through DCell hierarchy with parallel stratum processing."""
         batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
 
@@ -380,6 +595,9 @@ class DCellOpt(nn.Module):
             batch_size, self.num_go_terms, self.output_size, device=device
         )
 
+        # Track timing for performance monitoring (optional)
+        stratum_times = []
+        
         # Process each stratum in descending order (leaves to root)
         for stratum_idx in range(self.max_stratum, -1, -1):
             # Get all terms in this stratum using pre-computed tensor
@@ -388,35 +606,33 @@ class DCellOpt(nn.Module):
             if len(stratum_terms) == 0:
                 continue
 
-            # OPTIMIZATION: Process terms in batches to reduce loop overhead
-            # Process all terms in this stratum
-            for term_idx in stratum_terms:
-                # term_idx is already a tensor from stratum_term_lists
-                
-                # Skip if no subsystem - use tensor indexing
-                if not self.has_subsystem[term_idx]:
-                    continue
-
-                # Prepare input using optimized method - pass tensor directly
-                term_input = self._prepare_term_input_optimized(
-                    term_idx, batch, all_activations, activation_mask
-                )
-
-                # Direct indexing with tensor
-                subsystem = self.subsystems[term_idx]
-                linear_head = self.linear_heads[term_idx]
-
-                # Forward through subsystem
-                term_output = subsystem(term_input)
-
-                # Store in pre-allocated tensor - use tensor indexing
-                output_dim = term_output.size(1)
-                all_activations[:, term_idx, :output_dim] = term_output
-                activation_mask[:, term_idx] = True
-
-                # Linear output
-                linear_output = linear_head(term_output)
-                linear_outputs_tensor[:, term_idx, :] = linear_output
+            # Time stratum processing (only in debug/profile mode)
+            if hasattr(self, '_profile_mode') and self._profile_mode:
+                start_time = time.time()
+            
+            # PARALLEL PROCESSING: Process all terms in stratum simultaneously
+            # This maintains hierarchical dependencies while maximizing parallelism
+            self._process_stratum_parallel(
+                stratum_terms,
+                batch,
+                all_activations,
+                activation_mask,
+                linear_outputs_tensor
+            )
+            
+            if hasattr(self, '_profile_mode') and self._profile_mode:
+                elapsed = time.time() - start_time
+                num_terms = len([t for t in stratum_terms if self.has_subsystem[t.item() if hasattr(t, 'item') else t]])
+                stratum_times.append((stratum_idx, num_terms, elapsed))
+        
+        # Log profiling info if enabled
+        if hasattr(self, '_profile_mode') and self._profile_mode and stratum_times:
+            total_time = sum(t[2] for t in stratum_times)
+            print(f"\nStratum processing times (PARALLEL):")
+            for stratum_idx, num_terms, elapsed in stratum_times:
+                if num_terms > 0:
+                    print(f"  Stratum {stratum_idx}: {num_terms} terms in {elapsed:.4f}s ({elapsed/num_terms:.6f}s per term)")
+            print(f"  Total: {total_time:.4f}s")
 
         # Extract root prediction (stratum 0)
         root_terms = self.stratum_term_lists[0]

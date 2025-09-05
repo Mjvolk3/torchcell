@@ -107,7 +107,10 @@ def main(cfg) -> str:
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
             graph = SCerevisiaeGraph(
-                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+                sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+                string_root=osp.join(DATA_ROOT, "data/string"),
+                tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+                genome=genome,
             )
             kwargs["scerevisiae_graph"] = graph
         if "genome" in inspect.signature(dataset_class.__init__).parameters:

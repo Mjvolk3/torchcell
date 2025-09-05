@@ -37,9 +37,7 @@ Bold average data is the only data that we need to download.
 
 ## Shared Data Storage
 
-Since there is some instability of data download I am worried that it won't work if the user does not have mac with safari. For this reason we want to put the data onto a shared location and only try to download from source scmdb if the download from our shared location fails
-
-#TODO
+Since there is some instability of data download I am worried that it won't work if the user does not have mac with safari. For this reason we want to put the data onto a shared location and only try to download from source scmdb if the download from our shared location fails. For now just leave comments where we should put this if the first download attempt fails and then we will deal with it.
 
 ## WildType Data Download
 
@@ -50,4 +48,3 @@ This will serve as the reference for the individual mutant data. This case is a 
 ## Tasks
 
 The main task task is to create the `create_experiment` method of the dataset. This details how we represent data with `experiment`, `reference`, `publication` information. To do this we need to update @torchcell/torchcell/datamodels/schema.py to add for CALMORPH (name of software) experiment type, we Should Stick to typing so call it CalMorph. We also need associated CalMorph phenotype. This phenotype will be vector with the associated with the different labels from the CalMorph data. We also need to include the str labels... I think it is probably best to have a dictionary of the label, with float value. We can also put the strings for the or the abbreviated name to full string description map in the Phenotype class. the `schema.py` is the most sensitive file in the entire code base because it connects data import to database to downstream machine learning pipelines so we need to be very careful when adding or changing it. The next thing to do after that is to create an adapter so we can add the morphology dataset to the database. Prior to this we will need to add the necessary methods to the @/Users/michaelvolk/Documents/projects/torchcell/torchcell/adapters/cell_adapter.py to account for the data types. We will also have to add new phenotype to @/Users/michaelvolk/Documents/projects/torchcell/biocypher/config/torchcell_schema_config.yaml . After this is done then we should be able to edit @/Users/michaelvolk/Documents/projects/torchcell/biocypher/config/torchcell_schema_config.yaml and run this config @/Users/michaelvolk/Documents/projects/torchcell/torchcell/knowledge_graphs/create_kg.py to create the database with the new data added.
-

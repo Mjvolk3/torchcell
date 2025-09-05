@@ -22,11 +22,258 @@ from torch_scatter import scatter_mean
 
 from torchcell.graph.graph import GeneMultiGraph
 from torchcell.models.act import act_register
+from typing import List
+from torch_geometric.typing import EdgeType
 
 # Additional imports for enhanced plotting
 from scipy.stats import gaussian_kde
 from sklearn.manifold import MDS
 from sklearn.decomposition import PCA
+
+
+class SelfAttentionGraphAggregation(nn.Module):
+    """Self-attention mechanism for aggregating multiple graph representations of the same nodes"""
+    def __init__(self, hidden_dim: int, num_graphs: int, num_heads: int = 4, dropout: float = 0.0):
+        super().__init__()
+        self.num_graphs = num_graphs
+        self.hidden_dim = hidden_dim
+        self.num_heads = num_heads
+        
+        # Multi-head self-attention
+        self.multihead_attn = nn.MultiheadAttention(
+            hidden_dim, 
+            num_heads, 
+            dropout=dropout,
+            batch_first=True
+        )
+        
+        # Learnable graph positional encodings
+        self.graph_embeddings = nn.Parameter(torch.randn(num_graphs, hidden_dim) * 0.02)
+        
+    def forward(self, graph_outputs: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            graph_outputs: Dict mapping graph names to node features [num_nodes, hidden_dim]
+        Returns:
+            aggregated: Aggregated node features [num_nodes, hidden_dim]
+            attention_weights: Attention weights [num_nodes, num_graphs, num_graphs]
+        """
+        # Sort graph names for consistent ordering
+        graph_names = sorted(graph_outputs.keys())
+        if not graph_names:
+            return None, None
+            
+        # Stack graph outputs: [num_nodes, num_graphs, hidden_dim]
+        stacked = torch.stack([graph_outputs[name] for name in graph_names], dim=1)
+        
+        # Add learnable graph positional encodings
+        num_nodes = stacked.size(0)
+        num_actual_graphs = len(graph_names)
+        graph_emb_expanded = self.graph_embeddings[:num_actual_graphs].unsqueeze(0).expand(num_nodes, -1, -1)
+        stacked = stacked + graph_emb_expanded
+        
+        # Apply self-attention
+        attended, attn_weights = self.multihead_attn(
+            query=stacked,
+            key=stacked, 
+            value=stacked,
+            need_weights=True,
+            average_attn_weights=True  # Average over heads for visualization
+        )
+        
+        # Mean pooling across graphs dimension
+        aggregated = attended.mean(dim=1)  # [num_nodes, hidden_dim]
+        
+        return aggregated, attn_weights
+
+
+class PairwiseGraphAggregation(nn.Module):
+    """Pairwise interaction mechanism for aggregating multiple graph representations"""
+    def __init__(self, hidden_dim: int, graph_names: List[str], dropout: float = 0.0):
+        super().__init__()
+        self.graph_names = sorted(graph_names)
+        self.hidden_dim = hidden_dim
+        
+        # Pairwise interaction networks
+        self.interaction_mlps = nn.ModuleDict()
+        for i, g1 in enumerate(self.graph_names):
+            for j, g2 in enumerate(self.graph_names[i:], i):
+                key = f"{g1}_{g2}"
+                self.interaction_mlps[key] = nn.Sequential(
+                    nn.Linear(hidden_dim * 2, hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(dropout),
+                    nn.Linear(hidden_dim, hidden_dim),
+                    nn.ReLU(),
+                    nn.Dropout(dropout)
+                )
+        
+        # Attention mechanism for aggregating interactions
+        self.attention = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim // 4),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 4, 1)
+        )
+        
+    def forward(self, graph_outputs: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Compute pairwise graph interactions and aggregate them.
+        Returns:
+            aggregated: Aggregated features [num_nodes, hidden_dim]
+            attention_weights: Attention weights for interactions [num_nodes, num_interactions]
+        """
+        if not graph_outputs:
+            return None, None
+            
+        interactions = []
+        interaction_pairs = []
+        
+        for i, g1 in enumerate(self.graph_names):
+            if g1 not in graph_outputs:
+                continue
+            g1_feat = graph_outputs[g1]
+            
+            for j, g2 in enumerate(self.graph_names[i:], i):
+                if g2 not in graph_outputs:
+                    continue
+                g2_feat = graph_outputs[g2]
+                
+                # Concatenate features
+                if i == j:  # Self-interaction
+                    combined = torch.cat([g1_feat, g1_feat], dim=-1)
+                else:
+                    combined = torch.cat([g1_feat, g2_feat], dim=-1)
+                
+                # Compute interaction
+                key = f"{g1}_{g2}"
+                if key in self.interaction_mlps:
+                    interaction = self.interaction_mlps[key](combined)
+                    interactions.append(interaction)
+                    interaction_pairs.append((g1, g2))
+        
+        if not interactions:
+            # Fallback to mean if no interactions
+            return torch.stack(list(graph_outputs.values())).mean(dim=0), None
+        
+        # Stack interactions: [num_nodes, num_interactions, hidden_dim]
+        stacked = torch.stack(interactions, dim=1)
+        
+        # Compute attention weights
+        attn_logits = self.attention(stacked).squeeze(-1)  # [num_nodes, num_interactions]
+        attn_weights = F.softmax(attn_logits, dim=-1)
+        
+        # Weighted aggregation
+        aggregated = (stacked * attn_weights.unsqueeze(-1)).sum(dim=1)
+        
+        return aggregated, attn_weights
+
+
+class HeteroConvAggregator(nn.Module):
+    """
+    HeteroConv wrapper with configurable aggregation strategies.
+    Supports: sum, mean, cross_attention, pairwise_interaction
+    """
+    def __init__(
+        self,
+        convs: Dict[EdgeType, nn.Module],
+        hidden_channels: int,
+        aggregation_method: str = "cross_attention",
+        aggregation_config: Optional[Dict] = None,
+    ):
+        super().__init__()
+        self.convs = nn.ModuleDict({str(k): v for k, v in convs.items()})
+        self.hidden_channels = hidden_channels
+        self.aggregation_method = aggregation_method
+        
+        # Extract unique graph names from edge types
+        self.graph_names = sorted(list(set([edge_type[1] for edge_type in convs.keys()])))
+        
+        # Initialize aggregation module based on method
+        config = aggregation_config or {}
+        
+        if aggregation_method == "cross_attention":
+            self.aggregator = SelfAttentionGraphAggregation(
+                hidden_dim=hidden_channels,
+                num_graphs=len(self.graph_names),
+                num_heads=config.get("num_heads", 4),
+                dropout=config.get("dropout", 0.0)
+            )
+        elif aggregation_method == "pairwise_interaction":
+            self.aggregator = PairwiseGraphAggregation(
+                hidden_dim=hidden_channels,
+                graph_names=self.graph_names,
+                dropout=config.get("dropout", 0.0)
+            )
+        elif aggregation_method in ["sum", "mean"]:
+            self.aggregator = None  # Will use simple aggregation
+        else:
+            raise ValueError(f"Unknown aggregation method: {aggregation_method}")
+    
+    def forward(
+        self,
+        x_dict: Dict[str, torch.Tensor],
+        edge_index_dict: Dict[EdgeType, torch.Tensor]
+    ) -> Tuple[Dict[str, torch.Tensor], Optional[torch.Tensor]]:
+        """
+        Apply graph convolutions and aggregate using specified method.
+        
+        Returns:
+            out_dict: Updated node features
+            attention_weights: Graph aggregation weights (if applicable)
+        """
+        # Store outputs by destination node type and graph name
+        out_dict = {}
+        graph_outputs_by_dst = {}  # {dst_type: {graph_name: tensor}}
+        
+        # Apply convolutions for each edge type
+        for edge_type_str, conv in self.convs.items():
+            # Parse the edge type string back to tuple
+            edge_type = eval(edge_type_str) if isinstance(edge_type_str, str) else edge_type_str
+            src, rel, dst = edge_type
+            
+            # Get the edge index for this edge type
+            if edge_type in edge_index_dict:
+                edge_index = edge_index_dict[edge_type]
+            else:
+                continue
+            
+            # Apply convolution
+            out = conv(x_dict[src], edge_index)
+            
+            # Organize outputs by destination and graph
+            if dst not in graph_outputs_by_dst:
+                graph_outputs_by_dst[dst] = {}
+            graph_outputs_by_dst[dst][rel] = out
+        
+        # Aggregate for each destination node type
+        all_attention_weights = {}
+        
+        for dst, graph_outputs in graph_outputs_by_dst.items():
+            if not graph_outputs:
+                continue
+                
+            if self.aggregation_method == "sum":
+                # Simple sum aggregation
+                out_dict[dst] = sum(graph_outputs.values())
+                all_attention_weights[dst] = None
+                
+            elif self.aggregation_method == "mean":
+                # Simple mean aggregation
+                stacked = torch.stack(list(graph_outputs.values()))
+                out_dict[dst] = stacked.mean(dim=0)
+                all_attention_weights[dst] = None
+                
+            elif self.aggregator is not None:
+                # Use learned aggregation (cross_attention or pairwise_interaction)
+                out_dict[dst], attn_weights = self.aggregator(graph_outputs)
+                all_attention_weights[dst] = attn_weights
+            else:
+                # Fallback to sum
+                out_dict[dst] = sum(graph_outputs.values())
+                all_attention_weights[dst] = None
+        
+        # Return aggregated features and attention weights
+        return out_dict, all_attention_weights if any(v is not None for v in all_attention_weights.values()) else None
 
 
 class AttentionalGraphAggregation(nn.Module):
@@ -440,36 +687,57 @@ class GeneInteractionDango(nn.Module):
 
         # Default config if not provided
         gene_encoder_config = gene_encoder_config or {}
+        
+        # Get graph aggregation configuration
+        self.graph_aggregation_method = gene_encoder_config.get(
+            "graph_aggregation_method", "cross_attention"  # Default to cross_attention
+        )
+        self.graph_aggregation_config = gene_encoder_config.get(
+            "graph_aggregation_config", {}
+        )
+        
+        # Store attention weights for visualization
+        self.last_layer_attention_weights = []
 
-        # Graph convolution layers
+        # Graph convolution layers with interaction-based aggregation
         self.convs = nn.ModuleList()
-        for _ in range(num_layers):
+        for layer_idx in range(num_layers):
             conv_dict = {}
-
+            
             # Create a conv layer for each graph in the multigraph
             for graph_name in self.graph_names:
                 edge_type = ("gene", graph_name, "gene")
                 encoder_type = gene_encoder_config.get("encoder_type", "gatv2")
                 
-                conv_dict[edge_type] = create_conv_layer(
+                conv_layer = create_conv_layer(
                     encoder_type=encoder_type,
                     in_channels=hidden_channels,
                     out_channels=hidden_channels,
                     config=gene_encoder_config,
                     dropout=dropout
                 )
-
-            # Wrap each conv with attention wrapper
-            for key, conv in conv_dict.items():
-                conv_dict[key] = AttentionConvWrapper(
-                    conv,
+                
+                # Wrap with AttentionConvWrapper
+                conv_dict[edge_type] = AttentionConvWrapper(
+                    conv_layer,
                     hidden_channels,
                     norm=norm,
                     activation=activation,
                     dropout=dropout,
                 )
-
-            self.convs.append(HeteroConv(conv_dict, aggr="sum"))
+            
+            # Use our custom HeteroConvAggregator with configurable aggregation
+            self.convs.append(
+                HeteroConvAggregator(
+                    convs=conv_dict,
+                    hidden_channels=hidden_channels,
+                    aggregation_method=self.graph_aggregation_method,
+                    aggregation_config={
+                        **self.graph_aggregation_config,
+                        "dropout": dropout  # Pass model dropout to aggregation
+                    }
+                )
+            )
 
         # Get local predictor config - now as a separate parameter
         local_predictor_config = local_predictor_config or {}
@@ -585,10 +853,16 @@ class GeneInteractionDango(nn.Module):
             edge_index = data[edge_type].edge_index.to(device)
             edge_index_dict[edge_type] = edge_index
 
-        # Apply convolution layers
+        # Apply convolution layers with interaction-based aggregation
+        layer_attention_weights = []
         for conv in self.convs:
-            x_dict = conv(x_dict, edge_index_dict)
-
+            x_dict, attn_weights = conv(x_dict, edge_index_dict)
+            if attn_weights is not None:
+                layer_attention_weights.append(attn_weights)
+        
+        # Store for visualization/analysis
+        self.last_layer_attention_weights = layer_attention_weights
+        
         return x_dict["gene"]
 
     def forward(
@@ -765,6 +1039,7 @@ class GeneInteractionDango(nn.Module):
             "gate_weights": gate_weights,
             "gene_interaction": gene_interaction,
             "pert_gene_embs": pert_gene_embs,
+            "graph_attention_weights": self.last_layer_attention_weights,  # Add graph aggregation weights
         }
 
     @property

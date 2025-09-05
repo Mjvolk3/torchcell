@@ -6,14 +6,15 @@
       "Read(*.txt)",
       "Write(*.py)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)",
-      "Bash(python:*)"
+      "Bash(ls:*)"
     ],
     "deny": [
       "Bash(rm:*)",
       "Bash(sudo:*)",
       "Read(.env)",
-      "Read(*.env)"
+      "Read(*.env)",
+      "Read(*.pem)",
+      "Read(biocypher/config/PRODUCTION_*.yaml)"
     ]
   },
   "enableAllProjectMcpServers": false

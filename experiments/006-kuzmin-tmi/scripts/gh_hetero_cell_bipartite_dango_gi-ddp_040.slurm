@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p main
-#SBATCH --mem=200g
+#SBATCH --mem=300g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32

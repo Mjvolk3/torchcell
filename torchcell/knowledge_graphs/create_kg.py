@@ -138,8 +138,10 @@ def main(cfg) -> str:
         start_time = time.time()
         dataset = dataset_class(root=dataset_path, **dataset_kwargs)
         end_time = time.time()
+        log.info(f"Dataset len: {len(dataset)}")
         instantiation_time = end_time - start_time
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
+        wandb.log({f"{dataset_name}_len": len(dataset)})
         datasets.append(dataset)
 
     # Instantiate adapters based on the dataset-adapter mapping

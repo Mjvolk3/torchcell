@@ -47,6 +47,13 @@
         ],
         "python.testing.unittestEnabled": false,
         "python.testing.pytestEnabled": true,
+        "python-envs.pythonProjects": [
+            {
+                "path": "",
+                "envManager": "ms-python.python:conda",
+                "packageManager": "ms-python.python:conda"
+            }
+        ],
         "git.autoRepositoryDetection": false,
         "liveServer.settings.multiRootWorkspaceName": "TorchCell",
         "mypy.dmypyExecutable": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/dmypy",
@@ -435,7 +442,7 @@
                     "1",
                     "2",
                     "4",
-                    "8"
+                    "8",
                     "16",
                 ]
             },
@@ -496,7 +503,7 @@
         "configurations": [
             {
                 "name": "Python: Workspace Folder",
-                "type": "python",
+                "type": "debugpy",
                 "request": "launch",
                 "program": "${file}",
                 "console": "integratedTerminal",
@@ -505,10 +512,11 @@
                 "subProcess": true,
                 "pythonArgs": ["-Xfrozen_modules=off"],
                 "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"},
+                "python": "/home/michaelvolk/miniconda3/envs/torchcell/bin/python",
             },
             {
                 "name": "Python: yeast8",
-                "type": "python",
+                "type": "debugpy",
                 "request": "launch",
                 "program": "${file}",
                 "console": "integratedTerminal",
@@ -519,7 +527,7 @@
             },
             {
                 "name": "Python: torchgeo",
-                "type": "python",
+                "type": "debugpy",
                 "request": "launch",
                 "program": "${file}",
                 "console": "integratedTerminal",

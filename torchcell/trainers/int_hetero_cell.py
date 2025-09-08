@@ -39,7 +39,9 @@ class RegressionTask(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
-        self.cell_graph = cell_graph
+        # Clone cell_graph to avoid modifying the dataset's original cell_graph
+        # This is necessary for pin_memory compatibility in DataLoader
+        self.cell_graph = cell_graph.clone()
         self.inverse_transform = inverse_transform
         self.loss_func = loss_func
         
@@ -640,7 +642,9 @@ class DiffusionRegressionTask(L.LightningModule):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
-        self.cell_graph = cell_graph
+        # Clone cell_graph to avoid modifying the dataset's original cell_graph
+        # This is necessary for pin_memory compatibility in DataLoader
+        self.cell_graph = cell_graph.clone()
         self.inverse_transform = inverse_transform
         self.loss_func = loss_func
         

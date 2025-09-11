@@ -2,7 +2,7 @@
 id: 9rijjyg8k6nasnucyb5g4s4
 title: S288C
 desc: ''
-updated: 1747276493205
+updated: 1757544347657
 created: 1694979540546
 ---
 ## S288C DB Feature Types
@@ -614,4 +614,78 @@ function variables
 'curie' =
 ['SGD:S000002143']
 len() =
-8```
+```
+
+## 2025.09.10 - alias_to_systematic vs gene_attribute_table
+
+### Key Differences
+
+#### 1. **alias_to_systematic** (property method, lines 216-228)
+
+- **Source**: Built from gene objects' `alias` field which contains multiple aliases per gene
+- **Structure**: Dict mapping alias → List[systematic_names]
+- **Problem**: One-to-many mappings occur when multiple genes share the same alias
+  - Example: `GAT2` → `['YBL011W', 'YMR136W']`
+  - The current implementation logs warnings but keeps both mappings
+- **Construction**: Iterates through all genes and their aliases, building reverse mapping
+- **Trust level**: Lower - can have ambiguous mappings
+
+#### 2. **gene_attribute_table** (DataFrame)
+
+- **Source**: Direct from GFF3 file annotations (SGD official)
+- **Structure**: DataFrame with columns:
+  - `ID`: Systematic name (e.g., YAL068C)
+  - `gene`: Primary common name (e.g., PAU8)
+  - `Alias`: Additional alias (often NaN)
+- **Advantage**: One-to-one mapping between systematic ID and gene name
+- **Trust level**: Higher - official SGD annotation, no ambiguity
+- **Example**:
+
+  ```
+  ID: YAL068C, gene: PAU8, Alias: NaN
+  ID: YFL039C, gene: ACT1, Alias: NaN
+  ```
+
+### Why One-to-Many Happens in alias_to_systematic
+
+The issue arises because:
+
+1. Some gene names historically referred to multiple loci
+2. Gene duplications/paralogs may share common names
+3. The alias field in gene objects aggregates ALL known aliases
+
+Example with GAT2:
+
+- YBL011W has GAT2 as an alias (one paralog)
+- YMR136W also has GAT2 as an alias (another paralog)
+- Both are valid, but context determines which is meant
+
+### Recommended Usage
+
+1. **For Kemmeren2014 dataset**:
+   - Primary: Use Excel's gene → orf name mapping (experiment-specific, authoritative)
+   - Secondary: Use gene_attribute_table for genes not in Excel (one-to-one, reliable)
+   - Avoid: alias_to_systematic due to ambiguity
+
+2. **For general conversions**:
+   - Prefer gene_attribute_table when one-to-one mapping needed
+   - Use alias_to_systematic only when you need to find ALL possible systematic names
+   - Always log/handle one-to-many cases explicitly
+
+### Implementation Strategy
+
+```python
+# Order of preference for gene name conversion:
+# 1. Excel mapping (for Kemmeren2014)
+if gene_name in excel_common_to_systematic:
+    return excel_common_to_systematic[gene_name]
+
+# 2. Gene attribute table (one-to-one)
+if gene_name in genome.gene_attribute_table['gene'].values:
+    return genome.gene_attribute_table[
+        genome.gene_attribute_table['gene'] == gene_name
+    ].iloc[0]['ID']
+
+# 3. Keep as-is if no conversion found
+return gene_name
+```

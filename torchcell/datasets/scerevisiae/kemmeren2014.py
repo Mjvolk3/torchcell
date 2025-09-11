@@ -49,6 +49,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     geo_accession_responsive = "GSE42527"  # Responsive mutants
     geo_accession_nonresponsive = "GSE42526"  # Non-responsive mutants
     
+    # GEO accessions for wildtype reference datasets
+    geo_accession_wt_mata_tecan = "GSE42241"  # MATa, Tecan plate, 20 replicates
+    geo_accession_wt_mata_flask = "GSE42240"  # MATa, Erlenmeyer flask, 8 replicates
+    geo_accession_wt_matalpha_tecan = "GSE42217"  # MATalpha, Tecan plate, 200 replicates
+    geo_accession_wt_matalpha_flask = "GSE42215"  # MATalpha, Erlenmeyer flask, 200 replicates
+    
     # Special gene name mappings that are not in standard databases
     # HSN1: The name was reserved for YHR127W but subsequently withdrawn (SGD note 2003-02-07)
     # See: https://www.yeastgenome.org/locus/YHR127W
@@ -88,6 +94,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return [
             f"{self.geo_accession_responsive}_family.soft.gz",
             f"{self.geo_accession_nonresponsive}_family.soft.gz",
+            f"{self.geo_accession_wt_mata_tecan}_family.soft.gz",
+            f"{self.geo_accession_wt_mata_flask}_family.soft.gz",
+            f"{self.geo_accession_wt_matalpha_tecan}_family.soft.gz",
+            f"{self.geo_accession_wt_matalpha_flask}_family.soft.gz",
         ]
 
     def download(self):
@@ -146,6 +156,31 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
             except Exception as e:
                 log.error(f"Failed to download GEO data: {e}")
+                raise RuntimeError(f"Failed to download {geo_accession} from GEO")
+        
+        # Download wildtype reference datasets
+        log.info("Downloading wildtype reference datasets...")
+        for geo_accession in [
+            self.geo_accession_wt_mata_tecan,
+            self.geo_accession_wt_mata_flask,
+            self.geo_accession_wt_matalpha_tecan,
+            self.geo_accession_wt_matalpha_flask,
+        ]:
+            log.info(f"Downloading WT dataset {geo_accession}...")
+            
+            try:
+                gse = GEOparse.get_GEO(
+                    geo=geo_accession, destdir=self.raw_dir, silent=False
+                )
+                log.info(f"Successfully downloaded {geo_accession}")
+                
+                # Save the parsed GEO object
+                geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
+                with open(geo_pkl_path, "wb") as f:
+                    pickle.dump(gse, f)
+                    
+            except Exception as e:
+                log.error(f"Failed to download WT data: {e}")
                 raise RuntimeError(f"Failed to download {geo_accession} from GEO")
 
     @post_process
@@ -315,10 +350,18 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
-        # Calculate wildtype reference expression
-        self.wt_reference_expression = self._calculate_wt_reference_from_gsm(
-            wt_samples, probe_to_gene_map
-        )
+        # Process wildtype reference datasets to get strain-specific references
+        (
+            self.wt_expression_BY4741,
+            self.wt_std_BY4741,
+            self.wt_cv_BY4741,
+            self.wt_expression_BY4742,
+            self.wt_std_BY4742,
+            self.wt_cv_BY4742,
+        ) = self._process_wt_references(probe_to_gene_map)
+        
+        log.info(f"WT reference for BY4741 (MATa): {len(self.wt_expression_BY4741)} genes")
+        log.info(f"WT reference for BY4742 (MATalpha): {len(self.wt_expression_BY4742)} genes")
 
         log.info(f"Found {len(deletion_samples_by_gene)} unique gene deletions")
         log.info(f"Found {len(wt_samples)} wildtype reference samples")
@@ -405,6 +448,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 f"Found {len(missing_genes)} genes in GEO that are not in Excel systematic_to_strain map:"
             )
             log.warning(f"First 10 missing genes: {missing_genes[:10]}")
+        
+        # Validate log2 ratios against original GEO data
+        self._validate_log2_ratios(deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain)
 
         # Initialize LMDB environment
         env = lmdb.open(
@@ -444,12 +490,42 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     "strain": strain,
                 }
 
+                # Select appropriate WT reference and CV based on strain
+                if strain == "BY4741":
+                    refpool_expression = self.wt_expression_BY4741
+                    refpool_std = self.wt_std_BY4741
+                    refpool_cv = self.wt_cv_BY4741
+                elif strain == "BY4742":
+                    refpool_expression = self.wt_expression_BY4742
+                    refpool_std = self.wt_std_BY4742
+                    refpool_cv = self.wt_cv_BY4742
+                else:
+                    log.error(f"Unknown strain {strain} for {gene_name}")
+                    continue
+                    
+                # Extract refpool from deletion samples' Cy3 channel for CV-scaled std
+                # This is the actual refpool at the scale of the deletion experiment
+                deletion_refpool = self._extract_refpool_from_deletion_samples(
+                    gsm_list, probe_to_gene_map
+                )
+                
+                # Calculate CV-scaled std for each gene
+                cv_scaled_std = SortedDict()
+                for gene in averaged_expression:
+                    if gene in deletion_refpool and gene in refpool_cv:
+                        # Apply CV to the actual refpool value from deletion sample
+                        cv_scaled_std[gene] = refpool_cv[gene] * deletion_refpool[gene]
+                    else:
+                        # Use original std if we can't scale
+                        cv_scaled_std[gene] = technical_std.get(gene, 0.0) if technical_std else 0.0
+                    
                 experiment, reference, publication = self.create_expression_experiment(
                     self.name,
                     sample_info,
                     averaged_expression,
                     technical_std,
-                    self.wt_reference_expression,
+                    deletion_refpool,  # Use actual refpool from deletion samples
+                    cv_scaled_std,     # Use CV-scaled std instead of original
                 )
 
                 # Serialize the Pydantic objects
@@ -484,10 +560,166 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
         log.info(f"Unique gene deletions: {len(deletion_samples_by_gene)}")
 
+    def _process_wt_references(self, probe_to_gene_map) -> tuple[SortedDict, SortedDict, SortedDict, SortedDict, SortedDict, SortedDict]:
+        """Process wildtype reference datasets to extract refpool references and CV.
+        
+        The WT datasets contain hybridizations of wt vs. refpool and refpool vs. wt.
+        The refpool is pooled RNA from wildtype strains used as common reference.
+        
+        Returns:
+            tuple: (refpool_expression_BY4741, refpool_std_BY4741, refpool_cv_BY4741,
+                   refpool_expression_BY4742, refpool_std_BY4742, refpool_cv_BY4742)
+        """
+        log.info("Processing wildtype reference datasets to extract refpool and calculate CV...")
+        
+        # Process MATa (BY4741) wildtype samples
+        mata_samples = []
+        for geo_accession in [self.geo_accession_wt_mata_tecan, self.geo_accession_wt_mata_flask]:
+            geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
+            if osp.exists(geo_pkl_path):
+                with open(geo_pkl_path, "rb") as f:
+                    gse = pickle.load(f)
+                    mata_samples.extend(list(gse.gsms.values()))
+        
+        # Process MATalpha (BY4742) wildtype samples  
+        matalpha_samples = []
+        for geo_accession in [self.geo_accession_wt_matalpha_tecan, self.geo_accession_wt_matalpha_flask]:
+            geo_pkl_path = osp.join(self.raw_dir, f"{geo_accession}.pkl")
+            if osp.exists(geo_pkl_path):
+                with open(geo_pkl_path, "rb") as f:
+                    gse = pickle.load(f)
+                    matalpha_samples.extend(list(gse.gsms.values()))
+        
+        log.info(f"Found {len(mata_samples)} MATa WT samples")
+        log.info(f"Found {len(matalpha_samples)} MATalpha WT samples")
+        
+        # Extract refpool references and CV for each strain
+        refpool_expression_BY4741, refpool_cv_BY4741, refpool_std_BY4741 = self._calculate_refpool_reference(
+            mata_samples, probe_to_gene_map
+        )
+        refpool_expression_BY4742, refpool_cv_BY4742, refpool_std_BY4742 = self._calculate_refpool_reference(
+            matalpha_samples, probe_to_gene_map
+        )
+        
+        # Store CV for later use
+        self.refpool_cv_BY4741 = refpool_cv_BY4741
+        self.refpool_cv_BY4742 = refpool_cv_BY4742
+        
+        return refpool_expression_BY4741, refpool_std_BY4741, refpool_cv_BY4741, refpool_expression_BY4742, refpool_std_BY4742, refpool_cv_BY4742
+    
+    def _calculate_refpool_reference(
+        self, wt_gsm_list, probe_to_gene_map
+    ) -> tuple[SortedDict, SortedDict, SortedDict]:
+        """Extract refpool expression values from WT GSM objects and calculate CV.
+        
+        The refpool is the same pooled RNA across samples but measured multiple times.
+        We extract it to calculate coefficient of variation (CV) for noise estimation.
+        
+        Returns:
+            tuple: (mean_refpool_expression, cv_refpool, std_refpool_expression)
+                - mean_refpool_expression: average refpool value per gene
+                - cv_refpool: coefficient of variation (std/mean) per gene
+                - std_refpool_expression: standard deviation per gene
+        """
+        if len(wt_gsm_list) == 0:
+            log.warning("No wildtype samples found, returning empty reference")
+            return SortedDict(), SortedDict(), SortedDict()
+
+        log.info(f"Extracting refpool from {len(wt_gsm_list)} wildtype samples")
+
+        # Collect all refpool values per gene
+        all_refpool_values = {}
+        sample_count = 0
+        
+        for gsm in wt_gsm_list:
+            refpool_data = self._extract_refpool_from_wt_gsm(gsm, probe_to_gene_map)
+            if refpool_data:
+                sample_count += 1
+                for gene, value in refpool_data.items():
+                    if gene not in all_refpool_values:
+                        all_refpool_values[gene] = []
+                    all_refpool_values[gene].append(value)
+
+        log.info(f"Successfully extracted refpool from {sample_count} samples")
+
+        # Calculate mean, std, and CV of refpool
+        refpool_mean_expression = SortedDict()
+        refpool_std_expression = SortedDict()
+        refpool_cv = SortedDict()
+        
+        for gene, values in all_refpool_values.items():
+            if len(values) >= 2:  # Need at least 2 values for std
+                mean_val = np.mean(values)
+                std_val = np.std(values, ddof=1)
+                
+                refpool_mean_expression[gene] = mean_val
+                refpool_std_expression[gene] = std_val
+                
+                # Calculate CV (coefficient of variation)
+                # CV is scale-independent measure of relative variability
+                if mean_val > 1.0:  # Avoid division by very small numbers
+                    refpool_cv[gene] = std_val / mean_val
+                else:
+                    refpool_cv[gene] = 0.0  # Set CV to 0 for low-expressed genes
+            
+        # Log statistics
+        if refpool_cv:
+            cv_values = list(refpool_cv.values())
+            log.info(f"Extracted refpool reference for {len(refpool_mean_expression)} genes")
+            log.info(f"Median CV: {np.median(cv_values):.3f}")
+            log.info(f"Mean CV: {np.mean(cv_values):.3f}")
+            log.info(f"CV range: [{np.min(cv_values):.3f}, {np.max(cv_values):.3f}]")
+            
+            # Warn about high CV genes
+            high_cv_genes = [gene for gene, cv in refpool_cv.items() if cv > 0.5]
+            if high_cv_genes:
+                log.info(f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100*len(high_cv_genes)/len(refpool_cv):.1f}%)")
+                log.debug(f"Example high CV genes: {high_cv_genes[:5]}")
+        
+        return refpool_mean_expression, refpool_cv, refpool_std_expression
+    
+    def _calculate_wt_reference_with_std(
+        self, wt_gsm_list, probe_to_gene_map
+    ) -> tuple[SortedDict, SortedDict]:
+        """Calculate average wildtype expression values and std from GSM objects.
+        
+        Returns:
+            tuple: (mean_expression, std_expression)
+        """
+        if len(wt_gsm_list) == 0:
+            log.warning("No wildtype samples found, returning empty reference")
+            return SortedDict(), SortedDict()
+
+        log.info(f"Calculating reference from {len(wt_gsm_list)} wildtype samples")
+
+        # Collect all expression values per gene
+        all_expressions = {}
+        
+        for gsm in wt_gsm_list:
+            expr_data = self._extract_expression_from_gsm(gsm, probe_to_gene_map)
+            for gene, value in expr_data.items():
+                if gene not in all_expressions:
+                    all_expressions[gene] = []
+                all_expressions[gene].append(value)
+
+        # Calculate mean and std
+        wt_mean_expression = SortedDict()
+        wt_std_expression = SortedDict()
+        
+        for gene, values in all_expressions.items():
+            wt_mean_expression[gene] = np.mean(values)
+            wt_std_expression[gene] = np.std(values, ddof=1) if len(values) > 1 else 0.0
+
+        log.info(f"Calculated reference for {len(wt_mean_expression)} genes")
+        
+        return wt_mean_expression, wt_std_expression
+
     def _calculate_wt_reference_from_gsm(
         self, wt_gsm_list, probe_to_gene_map
     ) -> SortedDict:
-        """Calculate average wildtype expression values from GSM objects."""
+        """Calculate average wildtype expression values from GSM objects.
+        DEPRECATED: Use _calculate_wt_reference_with_std instead.
+        """
         if len(wt_gsm_list) == 0:
             log.warning("No wildtype samples found, returning empty reference")
             return SortedDict()
@@ -649,6 +881,139 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     f"No expression data extracted. Probe map size: {len(probe_to_gene_map)}"
                 )
 
+        return expression_data
+    
+    def _extract_refpool_from_deletion_samples(self, gsm_list, probe_to_gene_map) -> SortedDict:
+        """Extract refpool values from deletion samples' Cy3 or Cy5 channel.
+        
+        In deletion samples, dye-swap design means:
+        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
+        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
+        
+        Returns:
+            SortedDict: Average refpool expression values at deletion experiment scale
+        """
+        refpool_values = {}
+        
+        for gsm in gsm_list:
+            if not hasattr(gsm, "table") or gsm.table is None:
+                continue
+                
+            table = gsm.table
+            if "ID_REF" not in table.columns:
+                continue
+                
+            # Determine which channel has refpool based on sample name
+            title = gsm.metadata.get('title', [''])[0] if hasattr(gsm, 'metadata') else ''
+            
+            # Check for dye-swap pattern
+            if '-a' in title or '_a' in title or title.endswith('a'):
+                refpool_column = "Signal Norm_Cy3"  # Standard: deletion in Cy5, refpool in Cy3
+            elif '-b' in title or '_b' in title or title.endswith('b'):
+                refpool_column = "Signal Norm_Cy5"  # Dye swap: deletion in Cy3, refpool in Cy5
+            else:
+                # Default to Cy3 as refpool
+                refpool_column = "Signal Norm_Cy3"
+            
+            # Extract refpool values
+            if refpool_column in table.columns:
+                for _, row in table.iterrows():
+                    probe_id = str(int(row["ID_REF"]))
+                    if probe_id in probe_to_gene_map:
+                        gene = probe_to_gene_map[probe_id]
+                        try:
+                            value = float(row[refpool_column])
+                            if value > 0:
+                                if gene not in refpool_values:
+                                    refpool_values[gene] = []
+                                refpool_values[gene].append(value)
+                        except (ValueError, TypeError):
+                            continue
+        
+        # Average refpool values across samples
+        averaged_refpool = SortedDict()
+        for gene, values in refpool_values.items():
+            averaged_refpool[gene] = np.mean(values)
+        
+        return averaged_refpool
+    
+    def _extract_refpool_from_wt_gsm(self, gsm, probe_to_gene_map=None) -> SortedDict:
+        """Extract refpool expression values from a WT GSM object.
+        
+        In WT samples (GSE42215, GSE42217, GSE42240, GSE42241):
+        - Some samples: wt vs. refpool (wt in Cy5, refpool in Cy3)
+        - Other samples: refpool vs. wt (refpool in Cy5, wt in Cy3)
+        
+        We need to determine which channel contains refpool and extract it.
+        """
+        expression_data = SortedDict()
+        
+        if not hasattr(gsm, "table") or gsm.table is None:
+            return expression_data
+            
+        table = gsm.table
+        
+        # Check for expected columns
+        if "ID_REF" not in table.columns:
+            log.warning(f"ID_REF column not found")
+            return expression_data
+        
+        # We need both Cy5 and Cy3 to extract refpool
+        if "Signal Norm_Cy5" not in table.columns or "Signal Norm_Cy3" not in table.columns:
+            log.warning("Missing Cy5 or Cy3 columns, cannot extract refpool")
+            return expression_data
+        
+        # Determine hybridization direction from sample metadata
+        title = gsm.metadata.get('title', [''])[0] if hasattr(gsm, 'metadata') else ''
+        geo_accession = gsm.metadata.get('geo_accession', [''])[0] if hasattr(gsm, 'metadata') else ''
+        
+        # Debug logging
+        log.debug(f"Processing WT sample {geo_accession}: {title}")
+        
+        # Determine which channel has refpool based on title or metadata
+        # The VALUE column represents log2(Cy5/Cy3)
+        # If VALUE is positive when wt > refpool, then wt is in Cy5
+        # If VALUE is negative when wt < refpool, then wt is in Cy5
+        
+        # For WT samples, we need to look at the VALUE to infer direction
+        # If most VALUEs are near 0, it's wt vs refpool (both similar)
+        # We can also check the title pattern
+        
+        refpool_column = "Signal Norm_Cy3"  # Default assumption
+        
+        # Try to parse from title
+        title_lower = title.lower()
+        if 'refpool' in title_lower:
+            # Look for patterns like "refpool vs wt" or "wt vs refpool"
+            if 'refpool vs' in title_lower or 'refpool-' in title_lower:
+                # refpool is first, so it's in Cy5
+                refpool_column = "Signal Norm_Cy5"
+            elif 'vs refpool' in title_lower or '-refpool' in title_lower:
+                # refpool is second, so it's in Cy3
+                refpool_column = "Signal Norm_Cy3"
+        
+        # Alternative: check sample name patterns
+        # GSE42215 samples often have patterns in their names
+        if '-a' in title or '_a' in title:
+            refpool_column = "Signal Norm_Cy3"  # Standard orientation
+        elif '-b' in title or '_b' in title:
+            refpool_column = "Signal Norm_Cy5"  # Dye swap
+        
+        log.debug(f"  Using {refpool_column} as refpool channel")
+        
+        # Extract refpool values
+        for _, row in table.iterrows():
+            probe_id = str(int(row["ID_REF"]))
+            
+            if probe_to_gene_map and probe_id in probe_to_gene_map:
+                gene = probe_to_gene_map[probe_id]
+                try:
+                    value = float(row[refpool_column])
+                    if value > 0:  # Only keep positive values
+                        expression_data[gene] = value
+                except (ValueError, TypeError):
+                    continue
+        
         return expression_data
 
     def _load_mating_type_map(self) -> tuple[dict, dict]:
@@ -957,6 +1322,137 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         """Required by base class but not used - see create_expression_experiment."""
         pass
 
+    def _validate_log2_ratios(
+        self, deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
+    ):
+        """Validate that our calculated log2 ratios match the original GEO data.
+        
+        IMPORTANT: The VALUE column in GEO follows standard microarray convention:
+        VALUE = log2(Cy3/Cy5) = log2(refpool/deletion) = log2(reference/test)
+        
+        This means:
+        - Negative VALUE: deletion has HIGHER expression than refpool
+        - Positive VALUE: deletion has LOWER expression than refpool
+        
+        For biological interpretation, log2(deletion/refpool) would be more intuitive
+        (positive = upregulated), but we validate against GEO's convention here.
+        """
+        log.info("\n=== Validating Log2 Ratios ===")
+        
+        # Debug: First check what the refpool looks like
+        log.info("\n=== Refpool Reference Debug ===")
+        if hasattr(self, 'wt_expression_BY4742') and self.wt_expression_BY4742:
+            sample_genes = list(self.wt_expression_BY4742.keys())[:5]
+            for gene in sample_genes:
+                log.info(f"Refpool BY4742 {gene}: {self.wt_expression_BY4742[gene]:.4f}")
+        
+        # Sample a subset of genes for validation
+        genes_to_validate = list(deletion_samples_by_gene.keys())[:min(20, len(deletion_samples_by_gene))]
+        
+        original_ratios = []
+        calculated_ratios = []
+        
+        for gene_idx, gene_name in enumerate(genes_to_validate):
+            gsm_list = deletion_samples_by_gene[gene_name]
+            if not gsm_list:
+                continue
+                
+            # Get strain to select appropriate refpool reference
+            strain = systematic_to_strain.get(gene_name)
+            if strain == "BY4741":
+                refpool_ref = self.wt_expression_BY4741
+            elif strain == "BY4742":
+                refpool_ref = self.wt_expression_BY4742
+            else:
+                continue
+            
+            # Get first GSM for this gene
+            gsm = gsm_list[0]
+            
+            # Debug: Show first few probes for first gene
+            if gene_idx == 0:
+                log.info(f"\n=== Debug for gene {gene_name} ===")
+                log.info(f"GSM: {gsm.metadata.get('geo_accession', [''])[0]}")
+            
+            # Extract original log2 ratios from VALUE column
+            if hasattr(gsm, "table") and gsm.table is not None:
+                table = gsm.table
+                
+                # Debug: Show available columns for first gene
+                if gene_idx == 0:
+                    log.info(f"Available columns: {list(table.columns)[:10]}")
+                    # Show first few rows
+                    log.info("\nFirst 3 rows of data:")
+                    for i, row in enumerate(table.head(3).iterrows()):
+                        _, row_data = row
+                        if "VALUE" in table.columns:
+                            value_str = f"{row_data['VALUE']:.4f}" if pd.notna(row_data['VALUE']) else "NaN"
+                            log.info(f"Row {i}: VALUE={value_str}")
+                        if "Signal Norm_Cy5" in table.columns and "Signal Norm_Cy3" in table.columns:
+                            cy5_str = f"{row_data['Signal Norm_Cy5']:.4f}" if pd.notna(row_data['Signal Norm_Cy5']) else "NaN"
+                            cy3_str = f"{row_data['Signal Norm_Cy3']:.4f}" if pd.notna(row_data['Signal Norm_Cy3']) else "NaN"
+                            log.info(f"       Cy5={cy5_str}, Cy3={cy3_str}")
+                
+                if "VALUE" in table.columns and "ID_REF" in table.columns:
+                    probe_count = 0
+                    for _, row in table.iterrows():
+                        probe_id = str(int(row["ID_REF"]))
+                        if probe_id in probe_to_gene_map:
+                            probe_gene = probe_to_gene_map[probe_id]
+                            # We don't need refpool_ref anymore - just validate Cy5/Cy3 directly
+                            try:
+                                # Original log2 ratio from GEO (VALUE column = log2(Cy3/Cy5))
+                                original = float(row["VALUE"])
+                                
+                                # VALUE = log2(Cy3/Cy5) = log2(refpool/deletion)
+                                # This is standard microarray convention: log2(reference/test)
+                                
+                                if "Signal Norm_Cy5" in table.columns and "Signal Norm_Cy3" in table.columns:
+                                    cy5 = float(row["Signal Norm_Cy5"])  # Deletion mutant
+                                    cy3 = float(row["Signal Norm_Cy3"])  # Refpool
+                                    
+                                    # Calculate log2(Cy3/Cy5) to match VALUE convention
+                                    if cy5 > 0:
+                                        calculated = np.log2(cy3 / cy5)  # Note: Cy3/Cy5, not Cy5/Cy3
+                                    else:
+                                        continue
+                                    
+                                    # Debug first few probes of first gene
+                                    if gene_idx == 0 and probe_count < 3:
+                                        log.info(f"\nProbe {probe_id} -> Gene {probe_gene}:")
+                                        log.info(f"  Original VALUE: {original:.4f}")
+                                        log.info(f"  Cy5 (deletion): {cy5:.4f}")
+                                        log.info(f"  Cy3 (refpool): {cy3:.4f}")
+                                        log.info(f"  Calculated log2(Cy3/Cy5): {calculated:.4f}")
+                                        log.info(f"  Difference: {abs(original - calculated):.4f}")
+                                        probe_count += 1
+                                    
+                                    original_ratios.append(original)
+                                    calculated_ratios.append(calculated)
+                            except (ValueError, TypeError) as e:
+                                continue
+        
+        if len(original_ratios) > 10:
+            # Calculate correlation
+            correlation = np.corrcoef(original_ratios, calculated_ratios)[0, 1]
+            
+            # Calculate RMSE
+            rmse = np.sqrt(np.mean((np.array(original_ratios) - np.array(calculated_ratios))**2))
+            
+            log.info(f"Validation samples: {len(original_ratios)}")
+            log.info(f"Correlation between original and calculated log2 ratios: {correlation:.3f}")
+            log.info(f"RMSE: {rmse:.3f}")
+            
+            if correlation < 0.8:
+                log.warning(f"WARNING: Low correlation ({correlation:.3f}) between original and calculated ratios!")
+                log.warning("This may indicate issues with refpool extraction or processing.")
+            else:
+                log.info("✓ Good correlation - refpool references appear correct")
+        else:
+            log.warning("Not enough data points for validation")
+        
+        log.info("===")
+    
     def _average_dye_swaps(
         self, gsm_list, probe_to_gene_map=None
     ) -> tuple[SortedDict, SortedDict]:
@@ -995,7 +1491,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         sample_info,
         expression_data,
         technical_std,
-        wt_reference_expression,
+        refpool_expression,
+        refpool_std,
     ):
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
@@ -1025,16 +1522,16 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        # Calculate log2 ratios if we have reference
+        # Calculate log2 ratios if we have refpool reference
         log2_ratios = SortedDict()
-        if wt_reference_expression:
+        if refpool_expression:
             for gene, value in expression_data.items():
                 if (
-                    gene in wt_reference_expression
-                    and wt_reference_expression[gene] > 0
+                    gene in refpool_expression
+                    and refpool_expression[gene] > 0
                 ):
-                    # Calculate log2 fold change
-                    log2_ratios[gene] = np.log2(value / wt_reference_expression[gene])
+                    # Calculate log2 fold change vs refpool
+                    log2_ratios[gene] = np.log2(value / refpool_expression[gene])
 
         # Create phenotype with actual expression data
         phenotype = MicroarrayExpressionPhenotype(
@@ -1043,19 +1540,19 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             expression_technical_std=technical_std if technical_std else None,
         )
 
-        # Create reference phenotype (wildtype expression)
-        if wt_reference_expression:
+        # Create reference phenotype (refpool expression)
+        if refpool_expression:
             phenotype_reference = MicroarrayExpressionPhenotype(
-                expression=wt_reference_expression,
+                expression=refpool_expression,
                 expression_log2_ratio=None,  # No ratio for reference
-                expression_technical_std=None,
+                expression_technical_std=refpool_std,  # Include refpool technical std
             )
         else:
-            # Use the expression data itself as reference if no WT available
+            # Use the expression data itself as reference if no refpool available
             phenotype_reference = MicroarrayExpressionPhenotype(
                 expression=expression_data,
                 expression_log2_ratio=None,
-                expression_technical_std=None,
+                expression_technical_std=technical_std,
             )
 
         # Create reference

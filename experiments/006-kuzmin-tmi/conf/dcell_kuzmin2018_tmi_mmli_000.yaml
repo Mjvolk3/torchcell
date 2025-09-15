@@ -1,0 +1,93 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # FLAG
+  project: torchcell_006-kuzmin-tmi_dcell
+  tags: []
+
+cell_dataset:
+  # DCell uses gene ontology instead of STRING networksal
+  graphs: null # Null value for DCell as it doesn't use STRING networks
+  incidence_graphs: "go" # Use gene ontology hierarchy for DCell
+  node_embeddings: null
+  #learnable_embedding_input_channels: 64 # Could add...
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000
+  batch_size: 600 #256 #256 default # probably could do 600
+  num_workers: 10 # Reduced to prevent GPU OOM (4 workers per GPU)
+  pin_memory: true
+  prefetch: false
+  follow_batch: ["perturbation_indices", "go_gene_strata_state"] # Important for DCell batching
+
+trainer:
+  max_epochs: 1000 #1000 # 20 # FLAG
+  strategy: ddp #ddp #ddp #ddp_find_unused_parameters_true #auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed",  "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+# Note: "reduce-overhead" is optimized for training with better handling of dynamic shapes
+# Recompile limits to handle dynamic shapes in DCell
+recompile_limit: 64  # Default is 8, increased for DCell's dynamic GO structure
+accumulated_recompile_limit: 8000  # Default is 256, scaled for 2655 GO subsystems
+
+# ------ Model-specific parameters
+# ------
+model:
+  checkpoint_path: null #*.ckpt
+  # Model version selection
+  model_version: "dcell"  # "dcell" for original, "dcell_opt" for optimized version - WARNING dcell_opt is WIP speed is actually worse for now.
+  # DCell specific parameters
+  subsystem_output_min: 20 # Minimum output size for any subsystem
+  subsystem_output_max_mult: 0.3 # Multiplier for scaling subsystem output sizes
+  output_size: 1 # Size of final prediction (1 for growth/fitness)
+  # New DCell parameters
+  # norm_type: "batch" # Type of normalization: 'batch', 'layer', 'instance', or 'none'
+  # norm_before_act: false # Whether to apply normalization before activation (default: false)
+  # subsystem_num_layers: 1 # Number of layers per subsystem (1 is original DCell)
+  # activation: "tanh" # Activation function: 'tanh', 'relu', 'leaky_relu', 'gelu', 'selu'
+  # init_range: 0.001 # Range for uniform weight initialization
+  # Gene embedding parameters
+  # Setting learnable_embedding_dim to null uses original binary encoding
+  # Setting it to an integer value (e.g., 32, 64, 128) uses learnable gene embeddings
+  # learnable_embedding_dim: null # null for binary encoding, int for learnable embeddings
+
+regression_task:
+  loss: "dcell" # Use the DCellLoss
+  # DCellLoss configuration
+  dcell_loss:
+    alpha: 0.3 # Weight for auxiliary losses
+    use_auxiliary_losses: false # default true  # Whether to use losses from non-root subsystems
+
+  is_weighted_phenotype_loss: false
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-3
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-3
+    eps: 1e-10
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 1

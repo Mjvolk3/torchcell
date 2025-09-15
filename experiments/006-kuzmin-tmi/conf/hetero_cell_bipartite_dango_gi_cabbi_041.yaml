@@ -160,7 +160,7 @@ regression_task:
     use_adaptive_weighting: true
     # warmup_epochs and stable_epoch now dynamically set based on max_epochs
     # warmup_epochs: None -> will be 10% of max_epochs (30 epochs)
-    # stable_epoch: None -> wil l be 50% of max_epochs (150 epochs)
+    # stable_epoch: None -> will be 50% of max_epochs (150 epochs)
     
     # Temperature scheduling
     use_temp_scheduling: true
@@ -172,13 +172,13 @@ regression_task:
     max_epochs: 500
   optimizer:
     type: "AdamW"
-    lr: 1e-5 #overrode by type
+    lr: 1e-4 #overrode by type
     weight_decay: 1e-5
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
     first_cycle_steps: 300 
     cycle_mult: 1.0
-    max_lr: 1e-5 #5e-4  # Higher peak LR since no overfitting
+    max_lr: 1e-4 #5e-4  # Higher peak LR since no overfitting
     min_lr: 1e-7  # Higher floor for faster convergence
     warmup_steps: 0  # Quick warmup to peak
     gamma: 0.50  #0.85 Moderate decay across cycles

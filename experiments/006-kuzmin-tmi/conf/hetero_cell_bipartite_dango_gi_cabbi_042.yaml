@@ -6,7 +6,7 @@ defaults:
 wandb:
   # FLAG
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: ["cross_attention_aggregation", "weight_decay_1e-5"]
+  tags: ["cross_attention_aggregation", "weight_decay_1e-5", "041_continuation"]
 
 cell_dataset:
   graphs: [
@@ -51,7 +51,7 @@ trainer:
   strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 8
+  devices: 6
   overfit_batches: 0
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
@@ -63,7 +63,7 @@ heads: 8 #10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
-  checkpoint_path: null #*.ckpt
+  checkpoint_path: /home/a-m/mjvolk3/scratch/torchcell/models/checkpoints/compute-3-3-1922127_137d3904263082ac93df3ed6a81ea30147195f50b154441b45780b2f72dd6ed6/last.ckpt #*.ckpt 
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
@@ -160,7 +160,7 @@ regression_task:
     use_adaptive_weighting: true
     # warmup_epochs and stable_epoch now dynamically set based on max_epochs
     # warmup_epochs: None -> will be 10% of max_epochs (30 epochs)
-    # stable_epoch: None -> wil l be 50% of max_epochs (150 epochs)
+    # stable_epoch: None -> will be 50% of max_epochs (150 epochs)
     
     # Temperature scheduling
     use_temp_scheduling: true
@@ -172,13 +172,13 @@ regression_task:
     max_epochs: 500
   optimizer:
     type: "AdamW"
-    lr: 1e-5 #overrode by type
+    lr: 1e-4 #overrode by type
     weight_decay: 1e-5
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
     first_cycle_steps: 300 
     cycle_mult: 1.0
-    max_lr: 1e-5 #5e-4  # Higher peak LR since no overfitting
+    max_lr: 5e-4 #5e-4  # Higher peak LR since no overfitting
     min_lr: 1e-7  # Higher floor for faster convergence
     warmup_steps: 0  # Quick warmup to peak
     gamma: 0.50  #0.85 Moderate decay across cycles

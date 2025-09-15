@@ -412,3 +412,186 @@ model:
 - Training Script: `/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/scripts/dcell.py`
 - torch.compile docs: <https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html>
 - PyTorch ModuleList: <https://pytorch.org/docs/stable/generated/torch.nn.ModuleList.html>
+
+## 2025.09.02 - Plan Revision
+
+### Problem Analysis
+
+Current DCellOpt processes 2,655 GO terms **sequentially**, resulting in:
+
+- GPU Utilization: Only 13%
+- Power Usage: ~80-100W out of 300W
+- Memory Bandwidth: Not the actual bottleneck - it's the sequential processing
+- Epoch Time: 1hr 40min despite minimal GPU usage
+
+The issue: Each GO term is processed one-by-one in a Python loop, causing massive overhead from kernel launches and preventing GPU parallelization.
+
+### Solution: Parallel Stratum Processing
+
+#### Core Principle
+
+- Keep DCell's hierarchical architecture intact
+- Process all GO terms within the same stratum simultaneously (they have no dependencies)
+- Maintain sequential processing between strata (children before parents)
+
+#### Key Observations
+
+1. **Stratum Independence**: Terms in the same stratum can be processed in parallel
+2. **Hierarchical Dependencies**: Only inter-stratum dependencies matter
+3. **GPU Underutilization**: Current approach uses ~100 operations per term when GPU can do trillions
+
+### Implementation Plan
+
+#### Phase 1: Parallel Input Preparation
+
+```python
+def _extract_gene_states_parallel(self, term_indices, batch):
+    """Extract gene states for multiple terms in parallel."""
+    batch_size = batch["gene"].batch.max() + 1
+    device = batch["gene"].x.device
+    
+    go_gene_state = batch["gene_ontology"].go_gene_strata_state
+    go_gene_state_batched = go_gene_state.reshape(batch_size, -1, 4)
+    
+    # Extract states for all terms at once
+    all_gene_states = []
+    for term_idx in term_indices:
+        num_genes = self.term_num_genes_tensor[term_idx]
+        if num_genes == 0:
+            all_gene_states.append(torch.zeros(batch_size, 1, device=device))
+        else:
+            row_indices = self.term_row_indices_tensor[term_idx, :num_genes].to(device)
+            term_gene_states = go_gene_state_batched[:, row_indices, 3]
+            all_gene_states.append(term_gene_states.float())
+    
+    return all_gene_states
+```
+
+#### Phase 2: Batched Stratum Processing
+
+```python
+def _process_stratum_parallel(self, stratum_terms, batch, all_activations, 
+                              activation_mask, linear_outputs_tensor):
+    """Process all terms in a stratum in parallel."""
+    active_terms = [t for t in stratum_terms if self.has_subsystem[t]]
+    if not active_terms:
+        return
+    
+    # Step 1: Prepare all inputs in parallel
+    all_term_inputs = self._prepare_all_term_inputs_parallel(
+        active_terms, batch, all_activations, activation_mask
+    )
+    
+    # Step 2: Group by dimension for efficiency
+    dim_groups = self._group_terms_by_dimension(active_terms)
+    
+    # Step 3: Process each dimension group
+    for (input_dim, output_dim), term_indices in dim_groups.items():
+        # Process all terms with same dimensions together
+        self._process_dimension_group(
+            term_indices, all_term_inputs, all_activations, 
+            activation_mask, linear_outputs_tensor, output_dim
+        )
+```
+
+#### Phase 3: Modified Forward Pass
+
+```python
+def forward(self, cell_graph: HeteroData, batch: HeteroData):
+    # ... initialization ...
+    
+    # Process each stratum - sequential between strata, parallel within
+    for stratum_idx in range(self.max_stratum, -1, -1):
+        stratum_terms = self.stratum_term_lists[stratum_idx]
+        if len(stratum_terms) == 0:
+            continue
+        
+        # PARALLEL: Process ALL terms in this stratum at once
+        self._process_stratum_parallel(
+            stratum_terms, batch, all_activations,
+            activation_mask, linear_outputs_tensor
+        )
+    
+    # Extract root prediction
+    root_term_idx = self.stratum_term_lists[0][0]
+    predictions = linear_outputs_tensor[:, root_term_idx, :].squeeze(-1)
+    
+    return predictions, outputs
+```
+
+### Performance Optimizations
+
+#### 1. Dimension Grouping
+
+Group terms by input/output dimensions to enable true batch processing:
+
+```python
+def _group_terms_by_dimension(self, term_indices):
+    dim_groups = {}
+    for term_idx in term_indices:
+        dim_key = (self.term_input_dims[term_idx], self.term_output_dims[term_idx])
+        if dim_key not in dim_groups:
+            dim_groups[dim_key] = []
+        dim_groups[dim_key].append(term_idx)
+    return dim_groups
+```
+
+#### 2. Batched Module Execution
+
+For terms with identical dimensions, we can potentially stack operations:
+
+```python
+def _process_dimension_group(self, term_indices, inputs, ...):
+    # Stack inputs for terms with same dimensions
+    stacked_inputs = torch.stack([inputs[t] for t in term_indices], dim=0)
+    
+    # Process through subsystems (still individual modules)
+    for i, term_idx in enumerate(term_indices):
+        output = self.subsystems[term_idx](stacked_inputs[i])
+        # Store results...
+```
+
+### Expected Improvements
+
+#### Performance Metrics
+
+- **GPU Utilization**: 13% → 60-80%
+- **Power Usage**: 80W → 200-250W
+- **Epoch Time**: 1hr 40min → 20-30min (3-5x speedup)
+- **Kernel Launches**: 2,655 per forward → ~50 per forward
+
+#### Stratum Parallelism
+
+- **Stratum 20** (leaves): ~1000 terms in parallel
+- **Stratum 10** (middle): ~500 terms in parallel
+- **Stratum 0** (root): 1-10 terms
+
+### What Remains Unchanged
+
+1. **Model Architecture**: Each GO term keeps its own subsystem module
+2. **Hierarchical Order**: Still process leaves → root
+3. **Biological Interpretability**: Same DCell structure
+4. **Loss Computation**: Auxiliary losses unchanged
+
+### Implementation Steps
+
+1. ✅ Add `_extract_gene_states_parallel` for batched gene state extraction
+2. ✅ Create `_prepare_all_term_inputs_parallel` for parallel input prep
+3. ✅ Implement `_process_stratum_parallel` for stratum-level parallelization
+4. ✅ Add `_group_terms_by_dimension` helper
+5. ✅ Modify main `forward` method to use parallel processing
+6. ⏳ Test and benchmark performance
+7. ⏳ Optimize memory usage if needed
+
+### Risk Mitigation
+
+- **Memory Usage**: May increase by ~2-3x due to batched operations
+- **Debugging**: Harder to trace individual term processing
+- **Solution**: Add debug mode flag to switch between sequential/parallel
+
+### Alternative Approaches Considered
+
+1. **Full Tensorization**: Rejected - loses biological interpretability
+2. **Graph Neural Network**: Rejected - changes model fundamentally  
+3. **torch.compile**: Tried - minimal improvement due to dynamic ops
+4. **This Approach**: Selected - best balance of performance and model preservation

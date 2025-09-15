@@ -40,9 +40,9 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 24 #32 #4 #32
+  batch_size: 48 #32 #4 #32
   num_workers: 4 # batch_size:32, num_workers:3 failed.
-  pin_memory: false
+  pin_memory: true
   prefetch: false
   prefetch_factor: 2
 
@@ -77,14 +77,14 @@ model:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
     
     # Graph aggregation configuration (NEW)
-    # graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
-    graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
+    graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
+    # graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
     # graph_aggregation_method: "sum"  # Alternative: simple sum (original behavior)
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
     
-    # graph_aggregation_config:
-    #   num_heads: 4  # Number of attention heads for cross_attention
-    #   dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
+    graph_aggregation_config:
+      num_heads: 4  # Number of attention heads for cross_attention
+      dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
     
     # GAT-specific parameters (used when encoder_type="gatv2")
     # heads: 5

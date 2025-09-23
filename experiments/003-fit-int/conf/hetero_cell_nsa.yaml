@@ -1,20 +1,20 @@
-  defaults:
-    - default
-    - _self_
+defaults:
+  - default
+  - _self_
 
-  wandb:
-    project: torchcell_003-fit-int_hetero_cell_nsa
-    tags: []
+wandb:
+  project: torchcell_003-fit-int_hetero_cell_nsa
+  tags: []
 
-  cell_dataset:
-    graphs: [physical, regulatory]
-    node_embeddings:
-      - learnable
-    learnable_embedding_input_channels: 64
-    incidence_graphs: [metabolism_bipartite]
+cell_dataset:
+  graphs: [physical, regulatory]
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64
+  incidence_graphs: [metabolism_bipartite]
 
-  profiler:
-    is_pytorch: true
+profiler:
+  is_pytorch: true
 
 data_module:
   is_perturbation_subset: true

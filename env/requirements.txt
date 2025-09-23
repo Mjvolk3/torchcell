@@ -34,7 +34,7 @@
     # torch-scatter>=2.1.2
 
     # visualization stack and logging
-    wandb>=0.17.5
+    wandb>=0.22.0
     wandb_osh>=1.2.2
     matplotlib>=3.7.2
     # adjustTest used with with matplotlib

@@ -96,8 +96,15 @@ database/logs
 database/slurm/output
 database/slurm/error
 database/database.env
+<<<<<<< HEAD
 # for delta transfer to radiant.
 database/import 
+=======
+database/certificates/*
+
+# Contain production password - Roll when necessary
+biocypher/config/PRODUCTION_linux-amd_biocypher_config.yaml
+>>>>>>> refs/remotes/origin/main
 
 notes/assets/SEED_abstract_2024.docx
 
@@ -134,6 +141,7 @@ rockylinux_9.sif
 # Other Users
 notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05.pdf
 **/CLAUDE.local.md
+.claude/config.json
 
 # papers
 dango.md

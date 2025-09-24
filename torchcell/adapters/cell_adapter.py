@@ -85,6 +85,7 @@ class CellAdapter:
                 "synthetic rescue phenotype (chunked)",
                 self._synthetic_rescue_phenotype_node,
             ),
+            ("calmorph phenotype (chunked)", self._calmorph_phenotype_node),
             (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
@@ -104,6 +105,10 @@ class CellAdapter:
             (
                 "synthetic rescue phenotype reference",
                 self._get_synthetic_rescue_phenotype_reference_nodes,
+            ),
+            (
+                "calmorph phenotype reference",
+                self._get_calmorph_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -819,6 +824,68 @@ class CellAdapter:
                 node_id=phenotype_id,
                 preferred_id="synthetic rescue phenotype",
                 node_label="synthetic rescue phenotype",
+                properties=properties,
+            )
+            nodes.append(node)
+        return nodes
+
+    @data_chunker
+    def _calmorph_phenotype_node(self, data: dict, method_name: str) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+
+        graph_level = phenotype.graph_level
+        label_name = phenotype.label_name
+        label_statistic_name = phenotype.label_statistic_name
+        calmorph = phenotype.calmorph
+        calmorph_coefficient_of_variation = phenotype.calmorph_coefficient_of_variation
+
+        properties = {
+            "graph_level": graph_level,
+            "label_name": label_name,
+            "label_statistic_name": label_statistic_name,
+            "calmorph": json.dumps(calmorph),  # Store as JSON string
+            "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
+            "serialized_data": json.dumps(phenotype.model_dump()),
+        }
+
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="calmorph phenotype",
+            properties=properties,
+        )
+
+    def _get_calmorph_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+
+            graph_level = phenotype.graph_level
+            label_name = phenotype.label_name
+            label_statistic_name = phenotype.label_statistic_name
+            calmorph = phenotype.calmorph
+            calmorph_coefficient_of_variation = phenotype.calmorph_coefficient_of_variation
+
+            properties = {
+                "graph_level": graph_level,
+                "label_name": label_name,
+                "label_statistic_name": label_statistic_name,
+                "calmorph": json.dumps(calmorph),  # Store as JSON string
+                "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
+                "serialized_data": json.dumps(phenotype.model_dump()),
+            }
+
+            node = BioCypherNode(
+                node_id=phenotype_id,
+                preferred_id="calmorph phenotype",
+                node_label="calmorph phenotype",
                 properties=properties,
             )
             nodes.append(node)

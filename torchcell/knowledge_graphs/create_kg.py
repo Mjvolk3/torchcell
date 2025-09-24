@@ -107,7 +107,10 @@ def main(cfg) -> str:
                 genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
             )
             graph = SCerevisiaeGraph(
-                data_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
+                sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+                string_root=osp.join(DATA_ROOT, "data/string"),
+                tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+                genome=genome,
             )
             kwargs["scerevisiae_graph"] = graph
         if "genome" in inspect.signature(dataset_class.__init__).parameters:
@@ -135,8 +138,10 @@ def main(cfg) -> str:
         start_time = time.time()
         dataset = dataset_class(root=dataset_path, **dataset_kwargs)
         end_time = time.time()
+        log.info(f"Dataset len: {len(dataset)}")
         instantiation_time = end_time - start_time
         wandb.log({f"{dataset_name}_time(s)": instantiation_time})
+        wandb.log({f"{dataset_name}_len": len(dataset)})
         datasets.append(dataset)
 
     # Instantiate adapters based on the dataset-adapter mapping

@@ -39,10 +39,10 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 10000 #2.5e4
-  batch_size: 32 #32 #4 #32
-  num_workers: 2
-  pin_memory: false
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 32 #32 #4 #16
+  num_workers: 4 #2
+  pin_memory: true
   prefetch: false
   prefetch_factor: 2
 
@@ -53,6 +53,10 @@ trainer:
   accelerator: cpu
   devices: 1
   overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
 
 # ------ Placeholders for hydra optuna
 heads: 8 #10 # placeholder

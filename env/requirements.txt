@@ -1,7 +1,10 @@
     # env/requirements.txt
     # scientific computing stack
     # We pin numpy because transformers lib cannot yet use 2.0
-    numpy==1.26.0
+    # numpy>=1.26.0
+    # numpy>=2.2.6
+    # numpy<2.3
+
     pandas>=2.1.1
     pyarrow>=15.0.0
 
@@ -48,7 +51,7 @@
     scikit-learn>=1.2.2
 
     # Transformer / Huggingface Stack
-    transformers>=4.31.0
+    transformers>=4.55.4
     ## used with protT5 model
     sentencepiece>=0.1.99
 

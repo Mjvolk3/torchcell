@@ -361,7 +361,8 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
 
 if __name__ == "__main__":
-    dataset = ScmdOhya2005Dataset()
-    print(f"Dataset size: {len(dataset)}")
-    if len(dataset) > 0:
-        print(dataset[0])
+    # dataset = ScmdOhya2005Dataset()
+    # print(f"Dataset size: {len(dataset)}")
+    # if len(dataset) > 0:
+    #     print(dataset[0])
+    pass

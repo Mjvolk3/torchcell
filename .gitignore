@@ -96,6 +96,8 @@ database/logs
 database/slurm/output
 database/slurm/error
 database/database.env
+# for delta transfer to radiant.
+database/import 
 database/certificates/*
 
 # Contain production password - Roll when necessary
@@ -139,6 +141,12 @@ notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.
 .claude/config.json
 
 # papers
+Culley.mmd
+Giaever.mmd
+Kemmeren.mmd
+ohya.mmd
+Sameith.mmd
+Zhang.mmd
 dango.md
 dango.pdf
 dcell.md

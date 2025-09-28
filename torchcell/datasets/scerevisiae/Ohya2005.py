@@ -1,5 +1,5 @@
-# torchcell/datasets/scerevisiae/Ohya2005
-# [[torchcell.datasets.scerevisiae.Ohya2005]]
+# torchcell/datasets/scerevisiae/ohya2005
+# [[torchcell.datasets.scerevisiae.ohya2005]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/Ohya2005
 # Test file: tests/torchcell/datasets/scerevisiae/test_Ohya2005.py
 
@@ -27,7 +27,7 @@ from torchcell.datamodels.schema import (
     CalMorphPhenotype,
     Media,
     ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
+    KanMxDeletionPerturbation,
     Temperature,
     Experiment,
     ExperimentReference,
@@ -270,10 +270,9 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         # Create genotype for deletion mutant
         genotype = Genotype(
             perturbations=[
-                SgaKanMxDeletionPerturbation(
+                KanMxDeletionPerturbation(
                     systematic_gene_name=row["systematic_gene_name"],
                     perturbed_gene_name=row["perturbed_gene_name"],
-                    strain_id=f"{row['systematic_gene_name']}",
                 )
             ]
         )

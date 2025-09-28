@@ -5,7 +5,7 @@
 
 from .costanzo2016 import DmfCostanzo2016Dataset, SmfCostanzo2016Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset, DmfKuzmin2018Dataset, TmfKuzmin2018Dataset
-from .Ohya2005 import ScmdOhya2005Dataset
+from .ohya2005 import ScmdOhya2005Dataset
 
 # from .baryshnikovna2010 import Baryshnikovna2010Dataset
 

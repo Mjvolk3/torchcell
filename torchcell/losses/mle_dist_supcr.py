@@ -153,8 +153,19 @@ class BufferedWeightedDistLoss(nn.Module):
         """
         device = predictions.device
 
-        # Update buffer with current batch
-        self.update_buffer(predictions, targets)
+        # CRITICAL FIX: Update buffer with gathered data when available
+        # This ensures all GPUs have consistent buffer contents in DDP
+        if all_predictions is not None and all_targets is not None:
+            # In DDP mode with gathering, update buffer with full gathered batch
+            # This prevents distribution mismatch between buffer and current batch
+            self.update_buffer(all_predictions, all_targets)
+            current_preds = all_predictions
+            current_targets = all_targets
+        else:
+            # Single GPU or no gathering, use local batch
+            self.update_buffer(predictions, targets)
+            current_preds = predictions
+            current_targets = targets
 
         # Check if we have enough samples
         if self.total_samples < self.min_samples:
@@ -165,10 +176,6 @@ class BufferedWeightedDistLoss(nn.Module):
         buffer_preds, buffer_targets = self.get_buffer_samples()
         buffer_preds = buffer_preds.to(device)
         buffer_targets = buffer_targets.to(device)
-
-        # Use gathered samples if available, otherwise use local
-        current_preds = all_predictions if all_predictions is not None else predictions
-        current_targets = all_targets if all_targets is not None else targets
 
         # Combine current batch with buffer based on buffer_weight
         if buffer_weight < 1.0:
@@ -289,8 +296,18 @@ class BufferedWeightedSupCRCell(nn.Module):
         """
         device = embeddings.device
 
-        # Update buffer with current batch
-        self.update_buffer(embeddings, labels)
+        # CRITICAL FIX: Update buffer with gathered data when available
+        # This ensures all GPUs have consistent buffer contents in DDP
+        if all_embeddings is not None and all_labels is not None:
+            # In DDP mode with gathering, update buffer with full gathered batch
+            self.update_buffer(all_embeddings, all_labels)
+            current_embeddings = all_embeddings
+            current_labels = all_labels
+        else:
+            # Single GPU or no gathering, use local batch
+            self.update_buffer(embeddings, labels)
+            current_embeddings = embeddings
+            current_labels = labels
 
         # Check if we have enough samples
         if self.total_samples < self.min_samples:
@@ -305,12 +322,6 @@ class BufferedWeightedSupCRCell(nn.Module):
         buffer_embeddings, buffer_labels = self.get_buffer_samples()
         buffer_embeddings = buffer_embeddings.to(device)
         buffer_labels = buffer_labels.to(device)
-
-        # Use gathered samples if available, otherwise use local
-        current_embeddings = (
-            all_embeddings if all_embeddings is not None else embeddings
-        )
-        current_labels = all_labels if all_labels is not None else labels
 
         # For SupCR, we always want to use buffer as negative samples
         # But only compute gradients for current batch as anchors

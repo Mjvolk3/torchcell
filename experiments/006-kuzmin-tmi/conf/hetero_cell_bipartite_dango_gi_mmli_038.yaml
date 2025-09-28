@@ -132,21 +132,23 @@ regression_task:
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  lambda_dist: 100.0 # 0.1 # 0.1 #0.1 #0.1
+  lambda_dist: 1.0 # FIXED: Reduced from 100.0 to match paper (0.1-1.0 range)
   lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
   
   # MleDistSupCR specific configuration
   loss_config:
     # Component-specific parameters
-    dist_bandwidth: 0.5
+    dist_bandwidth: 1.0  # FIXED: Increased from 0.5 to match normalized data std=1
     supcr_temperature: 0.1
     # embedding_dim is dynamically set from model.hidden_channels
     
     # Buffer configuration
     use_buffer: true
-    buffer_size: 8192
-    min_samples_for_dist: 512
-    min_samples_for_supcr: 512
+    # FIXED: Buffer size now matches gradient accumulation effective batch
+    # 32 batch * 16 accumulation * 4 devices = 2048 total samples per optimizer step
+    buffer_size: 2048  # Reduced from 8192 to prevent staleness
+    min_samples_for_dist: 256  # Reduced to allow faster warmup
+    min_samples_for_supcr: 256  # Reduced to allow faster warmup
     
     # DDP configuration
     use_ddp_gather: true

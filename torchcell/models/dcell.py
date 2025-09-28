@@ -182,75 +182,80 @@ class DCell(nn.Module):
         self.linear_heads[str(term_idx)] = linear_head
 
     def _precompute_gene_indices(self, hetero_data: HeteroData):
-        """Pre-compute indices for efficient gene state extraction."""
+        """Pre-compute indices for efficient gene state extraction.
+        
+        This runs once at model initialization and stores indices in RAM.
+        When GO versions change, a new model instance will recompute these.
+        """
         go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
-
-        # Create a mapping from GO term to gene indices
-        self.term_gene_indices = {}
+        
+        # Store the template structure info
+        self.rows_per_sample = len(go_gene_state)
+        
+        # Create a mapping from GO term to row indices in go_gene_strata_state
+        # This avoids the expensive linear search through 59986 rows for each term
+        self.term_row_indices = {}
+        self.term_num_genes = {}
+        
+        print(f"Pre-computing gene indices for {self.num_go_terms} GO terms...")
+        start_time = time.time()
+        
         for term_idx in range(self.num_go_terms):
+            # Find all rows for this GO term (column 0 contains term indices)
             mask = go_gene_state[:, 0] == term_idx
-            self.term_gene_indices[term_idx] = torch.where(mask)[0]
+            row_indices = torch.where(mask)[0]
+            
+            # Store the indices for fast lookup during forward pass
+            self.term_row_indices[term_idx] = row_indices.cpu()  # Store on CPU to save GPU memory
+            self.term_num_genes[term_idx] = len(row_indices)
+        
+        elapsed = time.time() - start_time
+        print(f"Pre-computed indices in {elapsed:.2f} seconds")
+        print(f"  Total rows per sample: {self.rows_per_sample}")
+        print(f"  Average genes per GO term: {np.mean(list(self.term_num_genes.values())):.1f}")
 
     def _extract_gene_states_for_term(
         self, term_idx: int, batch: HeteroData
     ) -> torch.Tensor:
-        """Extract gene states for a specific GO term across all batches using batch pointers."""
-        batch_size = batch["gene"].batch.max().item() + 1
+        """Extract gene states for a specific GO term using pre-computed indices.
+        
+        This optimized version uses pre-computed row indices to avoid expensive
+        linear searches through the entire go_gene_strata_state tensor.
+        """
+        batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
-
+        
+        # Early exit for terms with no genes
+        if self.term_num_genes[term_idx] == 0:
+            return torch.zeros(batch_size, 1, device=device)
+        
+        # Get pre-computed indices for this term (move to device if needed)
+        row_indices = self.term_row_indices[term_idx].to(device)
+        num_genes = self.term_num_genes[term_idx]
+        
         go_gene_state = batch["gene_ontology"].go_gene_strata_state
         ptr = batch["gene_ontology"].go_gene_strata_state_ptr
-
-        # Reshape concatenated tensor to [batch_size, samples_per_batch, 4] format
-        # ptr tells us the boundaries: each sample has the same number of rows
-        rows_per_sample = ptr[1].item() - ptr[0].item()  # Should be 59986
-
+        
+        # Use ptr to determine rows per sample (should match self.rows_per_sample)
+        rows_per_sample = int(ptr[1] - ptr[0])
+        
         # Reshape: [total_rows, 4] -> [batch_size, rows_per_sample, 4]
         go_gene_state_batched = go_gene_state.view(batch_size, rows_per_sample, 4)
-
-        # Extract for each sample in the batch
-        term_gene_states_list = []
-
+        
+        # Use pre-computed indices to extract gene states directly
+        # Since the structure is the same for each batch sample, we can use the same indices
+        gene_states_batch = []
+        
         for i in range(batch_size):
-            # Get this sample's go_gene_strata_state: [rows_per_sample, 4]
-            sample_go_gene_state = go_gene_state_batched[i]
-
-            # Find rows for this term in this sample
-            term_mask = sample_go_gene_state[:, 0] == term_idx
-            term_rows = sample_go_gene_state[term_mask]
-
-            if term_rows.size(0) > 0:
-                gene_states = term_rows[:, 3]  # Extract states (column 3)
-                term_gene_states_list.append(gene_states)
-            else:
-                # No genes for this term in this sample - create empty tensor
-                term_gene_states_list.append(torch.tensor([], device=device))
-
-        # Handle case where no samples have genes for this term
-        if all(len(states) == 0 for states in term_gene_states_list):
-            return torch.zeros(batch_size, 1, device=device)
-
-        # Pad to same length and stack
-        max_genes = max(
-            len(states) for states in term_gene_states_list if len(states) > 0
-        )
-        if max_genes == 0:
-            return torch.zeros(batch_size, 1, device=device)
-
-        padded_states = []
-        for states in term_gene_states_list:
-            if len(states) == 0:
-                # No genes for this term in this sample
-                padded_states.append(torch.zeros(max_genes, device=device))
-            elif len(states) < max_genes:
-                # Pad with zeros to match max length
-                padding = torch.zeros(max_genes - len(states), device=device)
-                padded_states.append(torch.cat([states, padding]))
-            else:
-                # Already at max length
-                padded_states.append(states)
-
-        return torch.stack(padded_states)  # [batch_size, max_genes_for_term]
+            # Use pre-computed indices to extract rows for this term directly
+            # No need for mask comparison - just index directly!
+            sample_data = go_gene_state_batched[i]  # [rows_per_sample, 4]
+            term_rows = sample_data[row_indices]  # [num_genes_for_term, 4]
+            gene_states = term_rows[:, 3].float()  # Extract states (column 3) and convert to float
+            gene_states_batch.append(gene_states)
+        
+        # Stack into batch tensor - no need for padding since all have same number of genes
+        return torch.stack(gene_states_batch)  # [batch_size, num_genes_for_term]
 
     def forward(self, cell_graph: HeteroData, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, Any]]:
         """Forward pass through DCell hierarchy.
@@ -262,7 +267,7 @@ class DCell(nn.Module):
         # DCell doesn't use cell_graph in forward pass, it was used during initialization
         # The trainer expects this signature for consistency across models
         
-        batch_size = batch["gene"].batch.max().item() + 1
+        batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
 
         # Store term activations and linear outputs
@@ -284,7 +289,7 @@ class DCell(nn.Module):
             for term_idx in stratum_terms:
                 # Convert to int if it's a tensor, otherwise assume it's already an int
                 if torch.is_tensor(term_idx):
-                    term_idx_int = term_idx.item()
+                    term_idx_int = int(term_idx)
                 else:
                     term_idx_int = int(
                         term_idx
@@ -318,7 +323,7 @@ class DCell(nn.Module):
                 "Root terms tensor is empty. Check GO term filtering - root terms may have been filtered out."
             )
 
-        root_term_idx = root_terms[0].item()
+        root_term_idx = int(root_terms[0])
         if f"GO:{root_term_idx}" not in linear_outputs:
             raise ValueError(
                 f"Root term {root_term_idx} was not processed. Check strata processing order."
@@ -345,7 +350,7 @@ class DCell(nn.Module):
         term_activations: Dict[int, torch.Tensor],
     ) -> torch.Tensor:
         """Prepare input for a specific GO term."""
-        batch_size = batch["gene"].batch.max().item() + 1
+        batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
         inputs = []
 

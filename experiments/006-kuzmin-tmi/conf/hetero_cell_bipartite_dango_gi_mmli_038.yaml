@@ -6,7 +6,7 @@ defaults:
 wandb:
   # FLAG
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: ["maxing_out_small_model"]
+  tags: ["cross_attention_aggregation"]
 
 cell_dataset:
   graphs: [

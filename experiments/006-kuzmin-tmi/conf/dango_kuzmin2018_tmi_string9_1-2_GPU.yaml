@@ -1,0 +1,90 @@
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # FLAG
+  project: torchcell_006-kuzmin2018-tmi_dango
+  tags: []
+
+cell_dataset:
+  graphs:
+    [
+      string9_1_neighborhood,
+      string9_1_fusion,
+      string9_1_cooccurence,
+      string9_1_coexpression,
+      string9_1_experimental,
+      string9_1_database,
+    ]
+    # [
+    #   string11_0_neighborhood,
+    #   string11_0_fusion,
+    #   string11_0_cooccurence,
+    #   string11_0_coexpression,
+    #   string11_0_experimental,
+    #   string11_0_database,
+    # ]
+    # [
+    #   string12_0_neighborhood,
+    #   string12_0_fusion,
+    #   string12_0_cooccurence,
+    #   string12_0_coexpression,
+    #   string12_0_experimental,
+    #   string12_0_database,
+    # ]
+  node_embeddings: null
+  #learnable_embedding_input_channels: 64 # Could add...
+
+profiler:
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: null # 100
+  batch_size: 64 #32 #64*4 gives 25% usage
+  num_workers: 8
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_epochs: 1000 #1000 # 20 # FLAG
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 2  # For interactive testing with 2 GPUs
+  overfit_batches: 0
+
+# ------ Placeholders for hydra optuna
+# ------
+model:
+  checkpoint_path: null #*.ckpt
+  hidden_channels: 64
+  num_heads: 4  # Number of attention heads in HyperSAGNN
+
+regression_task:
+  loss: "dango" # Options: dango
+  # Loss scheduler configuration
+  loss_scheduler:
+    type: "LinearUntilUniform"  # Options: PreThenPost, LinearUntilUniform, LinearUntilFlipped
+    transition_epoch: 10  # Common parameter for all schedulers: epoch at which transition completes
+  is_weighted_phenotype_loss: false
+  optimizer:
+    type: "AdamW"
+    lr: 1e-5
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "ReduceLROnPlateau"
+    mode: "min"
+    factor: 0.2
+    patience: 3
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 2
+    min_lr: 1e-9
+    eps: 1e-10
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

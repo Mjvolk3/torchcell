@@ -38,6 +38,7 @@ from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
+from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
@@ -432,9 +433,7 @@ def main(cfg: DictConfig) -> None:
             # Component-specific parameters
             dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
             supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model[
-                "hidden_channels"
-            ],  # Use model's hidden_channels
+            embedding_dim=wandb.config.model["hidden_channels"],
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
@@ -454,9 +453,42 @@ def main(cfg: DictConfig) -> None:
             temp_schedule=loss_config.get("temp_schedule", "exponential"),
             # Other parameters
             weights=weights,
-            max_epochs=loss_config.get(
-                "max_epochs", wandb.config.trainer["max_epochs"]
-            ),
+            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
+        )
+    elif wandb.config.regression_task["loss"] == "mle_wass_supcr":
+        loss_config = wandb.config.regression_task.get("loss_config", {})
+
+        loss_func = MleWassSupCR(
+            # Lambda weights (passed individually, not as dict)
+            lambda_mse=wandb.config.regression_task.get("lambda_mse", 1.0),
+            lambda_wasserstein=wandb.config.regression_task.get("lambda_wasserstein", 0.1),
+            lambda_supcr=wandb.config.regression_task.get("lambda_supcr", 0.001),
+            # Wasserstein-specific parameters
+            wasserstein_blur=loss_config.get("wasserstein_blur", 0.05),
+            wasserstein_p=loss_config.get("wasserstein_p", 2),
+            wasserstein_scaling=loss_config.get("wasserstein_scaling", 0.9),
+            min_samples_for_wasserstein=loss_config.get("min_samples_for_wasserstein", 512),
+            # SupCR-specific parameters
+            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
+            embedding_dim=wandb.config.model["hidden_channels"],
+            # Buffer configuration
+            use_buffer=loss_config.get("use_buffer", True),
+            buffer_size=loss_config.get("buffer_size", 256),
+            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 32),
+            # DDP configuration
+            use_ddp_gather=loss_config.get("use_ddp_gather", True),
+            gather_interval=loss_config.get("gather_interval", 1),
+            # Adaptive weighting
+            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
+            warmup_epochs=loss_config.get("warmup_epochs", 100),
+            stable_epoch=loss_config.get("stable_epoch", 500),
+            # Temperature scheduling
+            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
+            init_temperature=loss_config.get("init_temperature", 1.0),
+            final_temperature=loss_config.get("final_temperature", 0.1),
+            temp_schedule=loss_config.get("temp_schedule", "exponential"),
+            # Training duration for loss scheduling
+            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")

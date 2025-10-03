@@ -15,6 +15,8 @@ from torchcell.timestamp import timestamp
 from torch_geometric.data import HeteroData
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.diffusion_loss import DiffusionLoss
+from torchcell.losses.mle_dist_supcr import MleDistSupCR
+from torchcell.losses.mle_wasserstein import MleWassSupCR
 
 log = logging.getLogger(__name__)
 
@@ -142,11 +144,9 @@ class RegressionTask(L.LightningModule):
             loss = self.loss_func(predictions, gene_interaction_vals)
         else:
             # For ICLoss or other custom losses that might use z_p
-            # Check if loss function accepts epoch parameter (for MleDistSupCR)
-            from torchcell.losses.mle_dist_supcr import MleDistSupCR
-            
+            # Check if loss function accepts epoch parameter (for MleDistSupCR and MleWassSupCR)
             if z_p is not None:
-                if isinstance(self.loss_func, MleDistSupCR):
+                if isinstance(self.loss_func, (MleDistSupCR, MleWassSupCR)):
                     loss_output = self.loss_func(predictions, gene_interaction_vals, z_p, epoch=self.current_epoch)
                 else:
                     loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
@@ -501,7 +501,9 @@ class RegressionTask(L.LightningModule):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
-                if self.current_epoch >= epoch_threshold:
+                # Convert epoch_threshold to int if it's a string
+                epoch_threshold_int = int(epoch_threshold) if isinstance(epoch_threshold, str) else epoch_threshold
+                if self.current_epoch >= epoch_threshold_int:
                     self.current_accumulation_steps = self.hparams.grad_accumulation_schedule[epoch_threshold]
             print(f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}")
         
@@ -1056,7 +1058,9 @@ class DiffusionRegressionTask(L.LightningModule):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
             for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
-                if self.current_epoch >= epoch_threshold:
+                # Convert epoch_threshold to int if it's a string
+                epoch_threshold_int = int(epoch_threshold) if isinstance(epoch_threshold, str) else epoch_threshold
+                if self.current_epoch >= epoch_threshold_int:
                     self.current_accumulation_steps = self.hparams.grad_accumulation_schedule[epoch_threshold]
             print(f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}")
         

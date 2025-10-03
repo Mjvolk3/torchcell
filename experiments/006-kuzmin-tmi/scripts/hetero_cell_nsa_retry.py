@@ -11,7 +11,6 @@ import os
 import os.path as osp
 import uuid
 import hydra
-import torch.nn as nn
 import lightning as L
 import torch
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
@@ -31,22 +30,19 @@ from omegaconf import DictConfig, OmegaConf
 import wandb
 import socket
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
-from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
+from torchcell.models.hetero_cell_nsa_retry import HeteroCellNSA
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
-from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
 import torch.distributed as dist
-from datetime import timedelta
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
-from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+from torch_geometric.transforms import Compose
 
 
 log = logging.getLogger(__name__)
@@ -85,10 +81,10 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="hetero_cell_bipartite_dango_gi",
+    config_name="hetero_cell_nsa_retry",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting GeneInteractionDango Training 🔫")
+    print("Starting HeteroCellNSA Training 🔫")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
 
     # Set distributed timeout to 2 hours if using DDP
@@ -172,7 +168,7 @@ def main(cfg: DictConfig) -> None:
         genome=genome,
     )
 
-    # Build gene multigraph for dataset using graph names from config
+    # Build gene multigraph for dataset using graph names from config (still needed for dataset)
     graph_names = wandb.config.cell_dataset["graphs"]
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
@@ -187,10 +183,6 @@ def main(cfg: DictConfig) -> None:
         graph=graph,
     )
 
-    # Check if learnable embedding is requested
-    learnable_embedding = NodeEmbeddingBuilder.check_learnable_embedding(
-        wandb.config.cell_dataset["node_embeddings"]
-    )
     # HACK
 
     graph_processor = SubgraphRepresentation()
@@ -299,6 +291,28 @@ def main(cfg: DictConfig) -> None:
             graph_processor=graph_processor,
             transform=None,
         )
+
+    # Apply mandatory dense transform for NSA M blocks to respect graph connectivity
+    from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
+
+    # Dense transform is required for proper M block attention patterns
+    dense_transform = HeteroToDenseMask({
+        "gene": wandb.config.model["gene_num"],
+        "reaction": wandb.config.model["reaction_num"],
+        "metabolite": wandb.config.model["metabolite_num"],
+    })
+
+    # Add dense transform to existing transforms or use it alone
+    if dataset.transform:
+        dataset.transform = Compose([dataset.transform, dense_transform])
+    else:
+        dataset.transform = dense_transform
+
+    print("Applied mandatory dense mask transformation for NSA M blocks")
+    print(f"  Dense config: genes={wandb.config.model['gene_num']}, "
+          f"reactions={wandb.config.model['reaction_num']}, "
+          f"metabolites={wandb.config.model['metabolite_num']}")
+
     print(f"Dataset Length: {len(dataset)}")
 
     seed = 42
@@ -346,39 +360,26 @@ def main(cfg: DictConfig) -> None:
     # ]
 
     print(f"Instantiating model ({timestamp()})")
-    # Instantiate new IsomorphicCell model
-    gene_encoder_config = dict(wandb.config["model"]["gene_encoder_config"])
-    if any(
-        "learnable" in emb for emb in wandb.config["cell_dataset"]["node_embeddings"]
-    ):
-        gene_encoder_config.update(
-            {
-                "embedding_type": "learnable",
-                "max_num_nodes": dataset.cell_graph["gene"].num_nodes,
-                "learnable_embedding_input_channels": wandb.config["cell_dataset"][
-                    "learnable_embedding_input_channels"
-                ],
-            }
-        )
 
-    # Use the gene_multigraph that was already built for the dataset
-
-    # Get local predictor config
-    local_predictor_config = dict(
-        wandb.config["model"].get("local_predictor_config", {})
+    # Get prediction head config
+    prediction_head_config = dict(
+        wandb.config["model"].get("prediction_head_config", {})
     )
 
-    # Instantiate new GeneInteractionDango model using wandb configuration.
-    model = GeneInteractionDango(
+    # Instantiate HeteroCellNSA model using wandb configuration.
+    model = HeteroCellNSA(
         gene_num=wandb.config["model"]["gene_num"],
+        reaction_num=wandb.config["model"]["reaction_num"],
+        metabolite_num=wandb.config["model"]["metabolite_num"],
         hidden_channels=wandb.config["model"]["hidden_channels"],
-        num_layers=wandb.config["model"]["num_layers"],
-        gene_multigraph=gene_multigraph,
+        out_channels=wandb.config["model"]["out_channels"],
+        attention_pattern=wandb.config["model"]["attention_pattern"],
+        num_heads=wandb.config["model"]["heads"],
         dropout=wandb.config["model"]["dropout"],
         norm=wandb.config["model"]["norm"],
         activation=wandb.config["model"]["activation"],
-        gene_encoder_config=gene_encoder_config,
-        local_predictor_config=local_predictor_config,
+        prediction_head_config=prediction_head_config,
+        graph_names=wandb.config["cell_dataset"]["graphs"],  # Pass graph names from config
     ).to(device)
 
     # Log parameter counts using the num_parameters property.
@@ -389,14 +390,14 @@ def main(cfg: DictConfig) -> None:
             "model/params_gene_embedding": param_counts.get("gene_embedding", 0),
             "model/params_preprocessor": param_counts.get("preprocessor", 0),
             "model/params_convs": param_counts.get("convs", 0),
-            "model/params_gene_interaction_predictor": param_counts.get(
-                "gene_interaction_predictor", 0
+            "model/params_nsa_layer": param_counts.get(
+                "nsa_layer", 0
             ),
             "model/params_global_aggregator": param_counts.get("global_aggregator", 0),
-            "model/params_global_interaction_predictor": param_counts.get(
-                "global_interaction_predictor", 0
+            "model/params_layer_norms": param_counts.get(
+                "layer_norms", 0
             ),
-            "model/params_gate_mlp": param_counts.get("gate_mlp", 0),
+            "model/params_prediction_head": param_counts.get("prediction_head", 0),
             "model/params_total": param_counts.get("total", 0),
         }
     )
@@ -433,7 +434,9 @@ def main(cfg: DictConfig) -> None:
             # Component-specific parameters
             dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
             supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model["hidden_channels"],
+            embedding_dim=wandb.config.model[
+                "hidden_channels"
+            ],  # Use model's hidden_channels
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
@@ -453,47 +456,14 @@ def main(cfg: DictConfig) -> None:
             temp_schedule=loss_config.get("temp_schedule", "exponential"),
             # Other parameters
             weights=weights,
-            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
-        )
-    elif wandb.config.regression_task["loss"] == "mle_wass_supcr":
-        loss_config = wandb.config.regression_task.get("loss_config", {})
-
-        loss_func = MleWassSupCR(
-            # Lambda weights (passed individually, not as dict)
-            lambda_mse=wandb.config.regression_task.get("lambda_mse", 1.0),
-            lambda_wasserstein=wandb.config.regression_task.get("lambda_wasserstein", 0.1),
-            lambda_supcr=wandb.config.regression_task.get("lambda_supcr", 0.001),
-            # Wasserstein-specific parameters
-            wasserstein_blur=loss_config.get("wasserstein_blur", 0.05),
-            wasserstein_p=loss_config.get("wasserstein_p", 2),
-            wasserstein_scaling=loss_config.get("wasserstein_scaling", 0.9),
-            min_samples_for_wasserstein=loss_config.get("min_samples_for_wasserstein", 512),
-            # SupCR-specific parameters
-            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model["hidden_channels"],
-            # Buffer configuration
-            use_buffer=loss_config.get("use_buffer", True),
-            buffer_size=loss_config.get("buffer_size", 256),
-            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 32),
-            # DDP configuration
-            use_ddp_gather=loss_config.get("use_ddp_gather", True),
-            gather_interval=loss_config.get("gather_interval", 1),
-            # Adaptive weighting
-            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
-            warmup_epochs=loss_config.get("warmup_epochs", 100),
-            stable_epoch=loss_config.get("stable_epoch", 500),
-            # Temperature scheduling
-            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
-            init_temperature=loss_config.get("init_temperature", 1.0),
-            final_temperature=loss_config.get("final_temperature", 0.1),
-            temp_schedule=loss_config.get("temp_schedule", "exponential"),
-            # Training duration for loss scheduling
-            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
+            max_epochs=loss_config.get(
+                "max_epochs", wandb.config.trainer["max_epochs"]
+            ),
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
 
-    print(f"Creating GeneInteractionTask ({timestamp()})")
+    print(f"Creating RegressionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
@@ -559,7 +529,7 @@ def main(cfg: DictConfig) -> None:
 
                 # Increase the overall precompilation budget to 2 hours (default is 3600s = 1 hour)
                 inductor_config.precompilation_timeout_seconds = 2 * 60 * 60  # 2 hours
-                print(f"  Set precompilation timeout to 2 hours")
+                print("  Set precompilation timeout to 2 hours")
 
                 # If using max-autotune mode, also increase autotune subprocess timeouts
                 if compile_mode == "max-autotune":
@@ -570,7 +540,7 @@ def main(cfg: DictConfig) -> None:
                     inductor_config.max_autotune_subproc_terminate_timeout_seconds = (
                         20.0
                     )
-                    print(f"  Set autotune subprocess timeout to 5 minutes")
+                    print("  Set autotune subprocess timeout to 5 minutes")
 
                 # Compile the model within the task
                 # Use dynamic=True since batch sizes and gene counts vary

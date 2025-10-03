@@ -50,13 +50,13 @@ trainer:
   max_epochs: 300 # Updated for shorter training
   strategy: auto #ddp_find_unused_parameters_true #auto # ddp
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 4
   overfit_batches: 0
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
 # Compilation settings for PyTorch 2.0+
-compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
+compile_mode: null #"max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
 
 # ------ Placeholders for hydra optuna
 heads: 8 #10 # placeholder
@@ -132,23 +132,29 @@ model:
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
-  loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr
+  loss: mle_wass_supcr # Options: logcosh, icloss, mle_dist_supcr, mle_wass_supcr
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  lambda_dist: 0.01 # 0.1 # 0.1 #0.1 #0.1
+  lambda_dist: 0.1 # 0.1 # 0.1 #0.1 #0.1  # For MleDistSupCR
+  lambda_wasserstein: 0.1  # For MleWassSupCR (replaces lambda_dist)
   lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
   
-  # MleDistSupCR specific configuration
+  # MleDistSupCR/MleWassSupCR specific configuration
   loss_config:
     # Component-specific parameters
-    dist_bandwidth: 2.0
+    dist_bandwidth: 2.0  # For MleDistSupCR
+    # Wasserstein-specific parameters (for MleWassSupCR)
+    wasserstein_blur: 0.05  # Smoothing for entropic regularization
+    wasserstein_p: 2  # p=1 for W1 distance, p=2 for W2 distance
+    wasserstein_scaling: 0.9  # Multi-scale scaling parameter
+    min_samples_for_wasserstein: 16  # Minimum samples for Wasserstein
     supcr_temperature: 0.1
     # embedding_dim is dynamically set from model.hidden_channels
     
     # Buffer configuration
     use_buffer: true
-    buffer_size: 256
+    buffer_size: 4096
     min_samples_for_dist: 64
     min_samples_for_supcr: 64
     

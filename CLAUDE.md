@@ -26,15 +26,13 @@ All images should be saved in `ASSET_IMAGES_DIR`
 
 Do this by using `load_dotenv` and time stamp the images with by using torchcell/timestamp.py
 
-The common patters is `(osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp}.png"))`
+The common patters is `(osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png"))`
 
 ## Running Python Files
 
 Don't recommend to run python files. After editing files I will either run them from the terminal or debugger.
 
 ## Code Execution
-
-#TODO
 
 - ~/opt/miniconda3/envs/torchcell/bin/torchcell python script.py
 

@@ -154,6 +154,9 @@ dcell.pdf
 distloss.md
 causal-disentanglement.md
 Zhang.mmd
+kuzmin2018_SI.mmd
+kuzmin2018.mmd
+suther_ynb-to-ypd.mmd
 
 # torchcell egg info
 torchcell.egg-info/*

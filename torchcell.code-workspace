@@ -46,7 +46,7 @@
         },
         {   "name": "biocypher",
             "path": "../biocypher"
-        }
+        },
         {   "name": "collectri",
             "path": "../collectri"
         },
@@ -324,7 +324,7 @@
                 "args": [
                     "${workspaceFolder}/notes/assets/scripts/python_move_dendron_pytest.py",
                     "${file}",
-                    "${input:newFilePath}"
+                    "${input:moveDestinationPath}"
                 ],
                 "problemMatcher": [],
                 "presentation": {
@@ -467,15 +467,19 @@
                     "1",
                     "2",
                     "4",
-                    "8"
-                    "16",
+                    "8",
+                    "16"
                 ]
             },
             {
                 "id": "newFilePath",
                 "type": "promptString",
-                "description": "Enter the new file path:",
-                "default": "torchcell/"
+                "description": "Enter the new file path (current: ${file}):"
+            },
+            {
+                "id": "moveDestinationPath",
+                "type": "promptString",
+                "description": "Enter destination path for move/rename:"
             },
             {
                 "id" : "jobName",

@@ -69,6 +69,33 @@ def handle_python_file(file_path, new_file_path):
 
 if __name__ == "__main__":
     file_path = sys.argv[1]
-    new_file_path = sys.argv[2]
+    new_file_path = sys.argv[2] if len(sys.argv) > 2 else ""
+
+    # If new_file_path is empty or an unresolved VS Code variable, prompt with current as default
+    if not new_file_path or new_file_path.startswith("${") or new_file_path == "${relativeFile}":
+        # Get relative path from workspace root for cleaner display
+        relative_path = osp.relpath(file_path, WORKSPACE_DIR)
+
+        print(f"\nCurrent file: {relative_path}")
+        print(f"Enter new path below (relative to workspace root):")
+        print(f"Default: {relative_path}")
+        print("-" * 50)
+
+        user_input = input(f"New path [{relative_path}]: ").strip()
+
+        # If empty, use the current path (no-op)
+        if not user_input:
+            new_file_path = file_path
+        # If user input is relative (no leading /), make it relative to workspace
+        elif not user_input.startswith("/"):
+            new_file_path = osp.join(WORKSPACE_DIR, user_input)
+        else:
+            new_file_path = user_input
+
+    # Don't proceed if paths are identical
+    if file_path == new_file_path:
+        print(f"Source and destination paths are the same: {file_path}")
+        print("No action taken.")
+        sys.exit(0)
 
     handle_python_file(file_path, new_file_path)

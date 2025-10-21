@@ -46,12 +46,14 @@ class RegressionTask(L.LightningModule):
         self.cell_graph = cell_graph.clone()
         self.inverse_transform = inverse_transform
         self.loss_func = loss_func
-        
+
         # Initialize gradient accumulation
         self.current_accumulation_steps = 1
         if self.hparams.grad_accumulation_schedule is not None:
             # Get the accumulation steps for epoch 0
-            self.current_accumulation_steps = self.hparams.grad_accumulation_schedule.get(0, 1)
+            self.current_accumulation_steps = (
+                self.hparams.grad_accumulation_schedule.get(0, 1)
+            )
 
         reg_metrics = MetricCollection(
             {
@@ -147,9 +149,16 @@ class RegressionTask(L.LightningModule):
             # Check if loss function accepts epoch parameter (for MleDistSupCR and MleWassSupCR)
             if z_p is not None:
                 if isinstance(self.loss_func, (MleDistSupCR, MleWassSupCR)):
-                    loss_output = self.loss_func(predictions, gene_interaction_vals, z_p, epoch=self.current_epoch)
+                    loss_output = self.loss_func(
+                        predictions,
+                        gene_interaction_vals,
+                        z_p,
+                        epoch=self.current_epoch,
+                    )
                 else:
-                    loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
+                    loss_output = self.loss_func(
+                        predictions, gene_interaction_vals, z_p
+                    )
             else:
                 loss_output = self.loss_func(predictions, gene_interaction_vals)
 
@@ -205,23 +214,23 @@ class RegressionTask(L.LightningModule):
             self.log(
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
-        
+
         # Log gate weights if available
         if "gate_weights" in representations:
             gate_weights = representations["gate_weights"]
             # Average gate weights across batch
             avg_gate_weights = gate_weights.mean(dim=0)
             self.log(
-                f"{stage}/gate_weight_global", 
-                avg_gate_weights[0], 
-                batch_size=batch_size, 
-                sync_dist=True
+                f"{stage}/gate_weight_global",
+                avg_gate_weights[0],
+                batch_size=batch_size,
+                sync_dist=True,
             )
             self.log(
-                f"{stage}/gate_weight_local", 
-                avg_gate_weights[1], 
-                batch_size=batch_size, 
-                sync_dist=True
+                f"{stage}/gate_weight_local",
+                avg_gate_weights[1],
+                batch_size=batch_size,
+                sync_dist=True,
             )
 
         # Update transformed metrics
@@ -237,13 +246,17 @@ class RegressionTask(L.LightningModule):
         if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
             # Create a temp HeteroData object with predictions in COO format
             temp_data = HeteroData()
-            
+
             # Create COO format data for predictions
             batch_size = predictions.size(0)
             device = predictions.device
             temp_data["gene"].phenotype_values = predictions.squeeze()
-            temp_data["gene"].phenotype_type_indices = torch.zeros(batch_size, dtype=torch.long, device=device)
-            temp_data["gene"].phenotype_sample_indices = torch.arange(batch_size, device=device)
+            temp_data["gene"].phenotype_type_indices = torch.zeros(
+                batch_size, dtype=torch.long, device=device
+            )
+            temp_data["gene"].phenotype_sample_indices = torch.arange(
+                batch_size, device=device
+            )
             temp_data["gene"].phenotype_types = ["gene_interaction"]
 
             # Apply the inverse transform
@@ -354,13 +367,18 @@ class RegressionTask(L.LightningModule):
         if self.hparams.grad_accumulation_schedule is not None:
             # Get world size for DDP
             world_size = 1
-            if hasattr(self.trainer, "strategy") and hasattr(self.trainer.strategy, "_strategy_name"):
+            if hasattr(self.trainer, "strategy") and hasattr(
+                self.trainer.strategy, "_strategy_name"
+            ):
                 if self.trainer.strategy._strategy_name == "ddp":
                     import torch.distributed as dist
+
                     if dist.is_initialized():
                         world_size = dist.get_world_size()
-            
-            effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+
+            effective_batch_size = (
+                batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+            )
             self.log(
                 "effective_batch_size",
                 effective_batch_size,
@@ -398,10 +416,10 @@ class RegressionTask(L.LightningModule):
     def _plot_samples(self, samples, stage: str) -> None:
         if not samples["true_values"]:
             return
-            
+
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
-        
+
         # Process latents if they exist
         latents = {}
         if "latents" in samples and samples["latents"]:
@@ -416,30 +434,28 @@ class RegressionTask(L.LightningModule):
             predictions = predictions[idx]
             for key in latents:
                 latents[key] = latents[key][idx]
-        
+
         # Use Visualization for enhanced plotting
         vis = Visualization(
             base_dir=self.trainer.default_root_dir, max_points=max_samples
         )
-        
+
         loss_name = (
-            self.loss_func.__class__.__name__
-            if self.loss_func is not None
-            else "Loss"
+            self.loss_func.__class__.__name__ if self.loss_func is not None else "Loss"
         )
-        
+
         # Ensure data is in the correct format for visualization
         # For gene interactions, we only need a single dimension
         if true_values.dim() == 1:
             true_values = true_values.unsqueeze(1)
         if predictions.dim() == 1:
             predictions = predictions.unsqueeze(1)
-        
+
         # For hetero_cell_bipartite_dango_gi, we use z_p latents
         z_p_latents = {}
         if "z_p" in latents:
             z_p_latents["z_p"] = latents["z_p"]
-        
+
         # Use our updated visualize_model_outputs method
         vis.visualize_model_outputs(
             predictions,
@@ -450,12 +466,12 @@ class RegressionTask(L.LightningModule):
             None,
             stage=stage,
         )
-        
+
         # Log oversmoothing metrics on latent spaces if available
         if "z_p" in latents:
             smoothness = VisGraphDegen.compute_smoothness(latents["z_p"])
             wandb.log({f"{stage}/oversmoothing_z_p": smoothness.item()})
-        
+
         # Log genetic interaction box plot
         if torch.any(~torch.isnan(true_values)):
             # For gene interactions, values are in the first dimension
@@ -500,13 +516,23 @@ class RegressionTask(L.LightningModule):
     def on_train_epoch_start(self):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+            for epoch_threshold in sorted(
+                self.hparams.grad_accumulation_schedule.keys()
+            ):
                 # Convert epoch_threshold to int if it's a string
-                epoch_threshold_int = int(epoch_threshold) if isinstance(epoch_threshold, str) else epoch_threshold
+                epoch_threshold_int = (
+                    int(epoch_threshold)
+                    if isinstance(epoch_threshold, str)
+                    else epoch_threshold
+                )
                 if self.current_epoch >= epoch_threshold_int:
-                    self.current_accumulation_steps = self.hparams.grad_accumulation_schedule[epoch_threshold]
-            print(f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}")
-        
+                    self.current_accumulation_steps = (
+                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                    )
+            print(
+                f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
+            )
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -551,7 +577,9 @@ class RegressionTask(L.LightningModule):
         self.test_metrics.reset()
 
         # Compute and log transformed metrics
-        transformed_metrics = self._compute_metrics_safely(self.test_transformed_metrics)
+        transformed_metrics = self._compute_metrics_safely(
+            self.test_transformed_metrics
+        )
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.test_transformed_metrics.reset()
@@ -570,20 +598,25 @@ class RegressionTask(L.LightningModule):
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
-        
+
         # If no lr_scheduler_config is provided, return just the optimizer
         if self.hparams.lr_scheduler_config is None:
             return optimizer
-        
+
         # Handle different scheduler types
-        scheduler_type = self.hparams.lr_scheduler_config.get("type", "ReduceLROnPlateau")
+        scheduler_type = self.hparams.lr_scheduler_config.get(
+            "type", "ReduceLROnPlateau"
+        )
         scheduler_params = {
             k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
         }
-        
+
         if scheduler_type == "CosineAnnealingWarmupRestarts":
             # Import the custom scheduler
-            from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+            from torchcell.scheduler.cosine_annealing_warmup import (
+                CosineAnnealingWarmupRestarts,
+            )
+
             scheduler = CosineAnnealingWarmupRestarts(optimizer, **scheduler_params)
             return {
                 "optimizer": optimizer,
@@ -594,7 +627,9 @@ class RegressionTask(L.LightningModule):
                 },
             }
         elif scheduler_type == "CosineAnnealingLR":
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_params)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, **scheduler_params
+            )
             return {
                 "optimizer": optimizer,
                 "lr_scheduler": {
@@ -608,23 +643,23 @@ class RegressionTask(L.LightningModule):
             scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
             return {
                 "optimizer": optimizer,
-            "lr_scheduler": {
-                "scheduler": scheduler,
-                "monitor": "val/gene_interaction/MSE",
-                "interval": "epoch",
-                "frequency": 1,
-            },
-        }
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "val/gene_interaction/MSE",
+                    "interval": "epoch",
+                    "frequency": 1,
+                },
+            }
 
 
 class DiffusionRegressionTask(L.LightningModule):
     """Standalone regression task specifically for diffusion models.
-    
+
     This task handles the unique training requirements of diffusion models,
     including diffusion loss during training and MSE evaluation during validation/testing.
     All visualization and metric tracking functionality is preserved from RegressionTask.
     """
-    
+
     def __init__(
         self,
         model: nn.Module,
@@ -649,11 +684,13 @@ class DiffusionRegressionTask(L.LightningModule):
         self.cell_graph = cell_graph.clone()
         self.inverse_transform = inverse_transform
         self.loss_func = loss_func
-        
+
         # Initialize gradient accumulation
         self.current_accumulation_steps = 1
         if self.hparams.grad_accumulation_schedule is not None:
-            self.current_accumulation_steps = self.hparams.grad_accumulation_schedule.get(0, 1)
+            self.current_accumulation_steps = (
+                self.hparams.grad_accumulation_schedule.get(0, 1)
+            )
 
         # Setup metrics
         reg_metrics = MetricCollection(
@@ -679,13 +716,14 @@ class DiffusionRegressionTask(L.LightningModule):
         self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
-        
+
         # Diffusion-specific tracking
         self.train_diffusion_loss = []
         self.val_mse_during_inference = []
-        
+
         # Manual optimization for gradient accumulation
         self.automatic_optimization = False
+
     def forward(self, batch):
         batch_device = batch["gene"].x.device
         if (
@@ -705,7 +743,7 @@ class DiffusionRegressionTask(L.LightningModule):
             if param.requires_grad and param.grad is None:
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
-    
+
     def _shared_step(self, batch, batch_idx, stage="train"):
         # Get model outputs
         predictions, representations = self(batch)
@@ -741,17 +779,17 @@ class DiffusionRegressionTask(L.LightningModule):
 
         # Get z_p from representations for conditioning
         z_p = representations.get("z_p")
-        
+
         # Compute loss based on training/evaluation stage
         if stage == "train":
             # During training, use diffusion loss (noise prediction)
             loss_output = self.loss_func(predictions, gene_interaction_vals, z_p)
-            
+
             # Handle tuple return from DiffusionLoss
             if isinstance(loss_output, tuple):
                 loss = loss_output[0]
                 loss_dict = loss_output[1] if len(loss_output) > 1 else {}
-                
+
                 # Log diffusion-specific metrics
                 for key, value in loss_dict.items():
                     if isinstance(value, torch.Tensor):
@@ -764,16 +802,16 @@ class DiffusionRegressionTask(L.LightningModule):
             else:
                 loss = loss_output
                 loss_dict = {}
-                
+
             # Track diffusion loss separately
             self.train_diffusion_loss.append(loss.detach())
-            
+
         else:
             # During validation/test, evaluate using MSE on inference samples
             mse_loss = nn.functional.mse_loss(predictions, gene_interaction_vals)
             loss = mse_loss
             loss_dict = {}
-            
+
             # Log inference MSE separately
             self.log(
                 f"{stage}/inference_mse",
@@ -781,10 +819,10 @@ class DiffusionRegressionTask(L.LightningModule):
                 batch_size=batch_size,
                 sync_dist=True,
             )
-            
+
             if stage == "val":
                 self.val_mse_during_inference.append(mse_loss.detach())
-        
+
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()
         loss = loss + dummy_loss
@@ -798,22 +836,22 @@ class DiffusionRegressionTask(L.LightningModule):
             self.log(
                 f"{stage}/z_p_norm", z_p_norm, batch_size=batch_size, sync_dist=True
             )
-        
+
         # Log gate weights if available (for Dango-like architectures)
         if "gate_weights" in representations:
             gate_weights = representations["gate_weights"]
             avg_gate_weights = gate_weights.mean(dim=0)
             self.log(
-                f"{stage}/gate_weight_global", 
-                avg_gate_weights[0], 
-                batch_size=batch_size, 
-                sync_dist=True
+                f"{stage}/gate_weight_global",
+                avg_gate_weights[0],
+                batch_size=batch_size,
+                sync_dist=True,
             )
             self.log(
-                f"{stage}/gate_weight_local", 
-                avg_gate_weights[1], 
-                batch_size=batch_size, 
-                sync_dist=True
+                f"{stage}/gate_weight_local",
+                avg_gate_weights[1],
+                batch_size=batch_size,
+                sync_dist=True,
             )
 
         # Update transformed metrics
@@ -829,13 +867,17 @@ class DiffusionRegressionTask(L.LightningModule):
         if hasattr(self, "inverse_transform") and self.inverse_transform is not None:
             # Create a temp HeteroData object with predictions in COO format
             temp_data = HeteroData()
-            
+
             # Create COO format data for predictions
             batch_size = predictions.size(0)
             device = predictions.device
             temp_data["gene"].phenotype_values = predictions.squeeze()
-            temp_data["gene"].phenotype_type_indices = torch.zeros(batch_size, dtype=torch.long, device=device)
-            temp_data["gene"].phenotype_sample_indices = torch.arange(batch_size, device=device)
+            temp_data["gene"].phenotype_type_indices = torch.zeros(
+                batch_size, dtype=torch.long, device=device
+            )
+            temp_data["gene"].phenotype_sample_indices = torch.arange(
+                batch_size, device=device
+            )
             temp_data["gene"].phenotype_types = ["gene_interaction"]
 
             # Apply the inverse transform
@@ -919,7 +961,7 @@ class DiffusionRegressionTask(L.LightningModule):
                 self.test_samples["latents"]["z_p"].append(z_p.detach())
 
         return loss, predictions, gene_interaction_orig
-    
+
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
         if self.hparams.grad_accumulation_schedule is not None:
@@ -946,13 +988,18 @@ class DiffusionRegressionTask(L.LightningModule):
         if self.hparams.grad_accumulation_schedule is not None:
             # Get world size for DDP
             world_size = 1
-            if hasattr(self.trainer, "strategy") and hasattr(self.trainer.strategy, "_strategy_name"):
+            if hasattr(self.trainer, "strategy") and hasattr(
+                self.trainer.strategy, "_strategy_name"
+            ):
                 if self.trainer.strategy._strategy_name == "ddp":
                     import torch.distributed as dist
+
                     if dist.is_initialized():
                         world_size = dist.get_world_size()
-            
-            effective_batch_size = batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+
+            effective_batch_size = (
+                batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+            )
             self.log(
                 "effective_batch_size",
                 effective_batch_size,
@@ -989,10 +1036,10 @@ class DiffusionRegressionTask(L.LightningModule):
     def _plot_samples(self, samples, stage: str) -> None:
         if not samples["true_values"]:
             return
-            
+
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
-        
+
         # Process latents if they exist
         latents = {}
         if "latents" in samples and samples["latents"]:
@@ -1007,29 +1054,27 @@ class DiffusionRegressionTask(L.LightningModule):
             predictions = predictions[idx]
             for key in latents:
                 latents[key] = latents[key][idx]
-        
+
         # Use Visualization for enhanced plotting
         vis = Visualization(
             base_dir=self.trainer.default_root_dir, max_points=max_samples
         )
-        
+
         loss_name = (
-            self.loss_func.__class__.__name__
-            if self.loss_func is not None
-            else "Loss"
+            self.loss_func.__class__.__name__ if self.loss_func is not None else "Loss"
         )
-        
+
         # Ensure data is in the correct format for visualization
         if true_values.dim() == 1:
             true_values = true_values.unsqueeze(1)
         if predictions.dim() == 1:
             predictions = predictions.unsqueeze(1)
-        
+
         # For diffusion models, we use z_p latents
         z_p_latents = {}
         if "z_p" in latents:
             z_p_latents["z_p"] = latents["z_p"]
-        
+
         # Use our updated visualize_model_outputs method
         vis.visualize_model_outputs(
             predictions,
@@ -1040,12 +1085,12 @@ class DiffusionRegressionTask(L.LightningModule):
             None,
             stage=stage,
         )
-        
+
         # Log oversmoothing metrics on latent spaces if available
         if "z_p" in latents:
             smoothness = VisGraphDegen.compute_smoothness(latents["z_p"])
             wandb.log({f"{stage}/oversmoothing_z_p": smoothness.item()})
-        
+
         # Log genetic interaction box plot
         if torch.any(~torch.isnan(true_values)):
             fig_gi = genetic_interaction_score.box_plot(
@@ -1057,13 +1102,23 @@ class DiffusionRegressionTask(L.LightningModule):
     def on_train_epoch_start(self):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+            for epoch_threshold in sorted(
+                self.hparams.grad_accumulation_schedule.keys()
+            ):
                 # Convert epoch_threshold to int if it's a string
-                epoch_threshold_int = int(epoch_threshold) if isinstance(epoch_threshold, str) else epoch_threshold
+                epoch_threshold_int = (
+                    int(epoch_threshold)
+                    if isinstance(epoch_threshold, str)
+                    else epoch_threshold
+                )
                 if self.current_epoch >= epoch_threshold_int:
-                    self.current_accumulation_steps = self.hparams.grad_accumulation_schedule[epoch_threshold]
-            print(f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}")
-        
+                    self.current_accumulation_steps = (
+                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                    )
+            print(
+                f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
+            )
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1091,7 +1146,7 @@ class DiffusionRegressionTask(L.LightningModule):
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.train_transformed_metrics.reset()
-        
+
         # Log average diffusion loss if available
         if self.train_diffusion_loss:
             avg_diffusion_loss = torch.stack(self.train_diffusion_loss).mean()
@@ -1114,7 +1169,7 @@ class DiffusionRegressionTask(L.LightningModule):
                 sch[0].step()
             else:
                 sch.step()
-    
+
     def on_validation_epoch_end(self):
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)
@@ -1127,7 +1182,7 @@ class DiffusionRegressionTask(L.LightningModule):
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.val_transformed_metrics.reset()
-        
+
         # Log average inference MSE if available
         if self.val_mse_during_inference:
             avg_inference_mse = torch.stack(self.val_mse_during_inference).mean()
@@ -1152,7 +1207,9 @@ class DiffusionRegressionTask(L.LightningModule):
         self.test_metrics.reset()
 
         # Compute and log transformed metrics
-        transformed_metrics = self._compute_metrics_safely(self.test_transformed_metrics)
+        transformed_metrics = self._compute_metrics_safely(
+            self.test_transformed_metrics
+        )
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.test_transformed_metrics.reset()
@@ -1171,20 +1228,25 @@ class DiffusionRegressionTask(L.LightningModule):
         if "learning_rate" in optimizer_params:
             optimizer_params["lr"] = optimizer_params.pop("learning_rate")
         optimizer = optimizer_class(self.parameters(), **optimizer_params)
-        
+
         # If no lr_scheduler_config is provided, return just the optimizer
         if self.hparams.lr_scheduler_config is None:
             return optimizer
-        
+
         # Handle different scheduler types
-        scheduler_type = self.hparams.lr_scheduler_config.get("type", "ReduceLROnPlateau")
+        scheduler_type = self.hparams.lr_scheduler_config.get(
+            "type", "ReduceLROnPlateau"
+        )
         scheduler_params = {
             k: v for k, v in self.hparams.lr_scheduler_config.items() if k != "type"
         }
-        
+
         if scheduler_type == "CosineAnnealingWarmupRestarts":
             # Import the custom scheduler
-            from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+            from torchcell.scheduler.cosine_annealing_warmup import (
+                CosineAnnealingWarmupRestarts,
+            )
+
             scheduler = CosineAnnealingWarmupRestarts(optimizer, **scheduler_params)
             return {
                 "optimizer": optimizer,
@@ -1195,7 +1257,9 @@ class DiffusionRegressionTask(L.LightningModule):
                 },
             }
         elif scheduler_type == "CosineAnnealingLR":
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, **scheduler_params)
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, **scheduler_params
+            )
             return {
                 "optimizer": optimizer,
                 "lr_scheduler": {

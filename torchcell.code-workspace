@@ -55,6 +55,9 @@
         },
         {   "name": "CausCell",
             "path": "../CausCell"
+        },
+        {   "name": "HyperNetX",
+            "path": "../HyperNetX"
         }
     ],
     "settings": {

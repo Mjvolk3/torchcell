@@ -33,21 +33,68 @@ echo "Python: $(which python)"
 echo "Working directory: $(pwd)"
 echo ""
 
-# Step 0: Clean up old results for fresh start
-echo "=== Step 0: Cleaning Up Old Results ==="
+# Step 0: Run verification checks as recommended by Vikas Upadhyay
+echo "=== Step 0: Running Verification Checks ==="
 echo "Start time: $(date)"
 RESULTS_DIR="/home/michaelvolk/Documents/projects/torchcell/experiments/007-kuzmin-tm/results/cobra-fba-growth"
 
-# Backup old results if they exist
-if [ -d "$RESULTS_DIR" ] && [ "$(ls -A $RESULTS_DIR)" ]; then
-    BACKUP_DIR="${RESULTS_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
-    echo "Backing up existing results to: $BACKUP_DIR"
-    mv "$RESULTS_DIR" "$BACKUP_DIR"
+# Run GPR knockout logic verification
+echo "\n--- Verifying GPR Knockout Logic (AND/OR rules) ---"
+python /home/michaelvolk/Documents/projects/torchcell/experiments/007-kuzmin-tm/scripts/verify_gpr_knockout_logic.py
+if [ $? -ne 0 ]; then
+    echo "Warning: GPR verification encountered issues"
 fi
 
-# Create fresh results directory
+# Run biomass and maintenance verification
+echo "\n--- Verifying Biomass and Maintenance Parameters ---"
+python /home/michaelvolk/Documents/projects/torchcell/experiments/007-kuzmin-tm/scripts/verify_biomass_maintenance.py
+if [ $? -ne 0 ]; then
+    echo "Warning: Biomass/maintenance verification encountered issues"
+fi
+
+# Run glucose/oxygen sensitivity analysis
+echo "\n--- Running Glucose/Oxygen Sensitivity Analysis ---"
+echo "This checks if discrete growth bands are due to media constraints"
+python /home/michaelvolk/Documents/projects/torchcell/experiments/007-kuzmin-tm/scripts/glucose_oxygen_sensitivity.py
+if [ $? -ne 0 ]; then
+    echo "Warning: Sensitivity analysis encountered issues"
+fi
+
+echo "Verification checks complete. Results saved in $RESULTS_DIR"
+echo ""
+
+# Step 0.5: Clean up old results for fresh start
+echo "=== Step 0.5: Cleaning Up Old Results ==="
+echo "Start time: $(date)"
+
+# Backup old FBA results if they exist (but keep verification results)
+if [ -d "$RESULTS_DIR" ] && [ "$(ls -A $RESULTS_DIR)" ]; then
+    # Move verification results temporarily
+    TEMP_VERIFY="/tmp/verify_results_$$"
+    mkdir -p "$TEMP_VERIFY"
+    mv "$RESULTS_DIR"/gpr_verification_results.json "$TEMP_VERIFY"/ 2>/dev/null
+    mv "$RESULTS_DIR"/biomass_maintenance_verification.json "$TEMP_VERIFY"/ 2>/dev/null
+    mv "$RESULTS_DIR"/glucose_oxygen_sensitivity_results.parquet "$TEMP_VERIFY"/ 2>/dev/null
+    mv "$RESULTS_DIR"/sensitivity_analysis_summary.json "$TEMP_VERIFY"/ 2>/dev/null
+    mv "$RESULTS_DIR"/glucose_oxygen_sensitivity_*.png "$TEMP_VERIFY"/ 2>/dev/null
+    mv "$RESULTS_DIR"/fitness_bands_heatmap_*.png "$TEMP_VERIFY"/ 2>/dev/null
+
+    # Backup remaining old results
+    if [ "$(ls -A $RESULTS_DIR)" ]; then
+        BACKUP_DIR="${RESULTS_DIR}_backup_$(date +%Y%m%d_%H%M%S)"
+        echo "Backing up existing FBA results to: $BACKUP_DIR"
+        mkdir -p "$BACKUP_DIR"
+        mv "$RESULTS_DIR"/* "$BACKUP_DIR"/ 2>/dev/null
+    fi
+
+    # Restore verification results
+    mv "$TEMP_VERIFY"/* "$RESULTS_DIR"/ 2>/dev/null
+    rm -rf "$TEMP_VERIFY"
+fi
+
+# Ensure results directory exists
 mkdir -p "$RESULTS_DIR"
-echo "Created fresh results directory"
+echo "Results directory ready"
 echo ""
 
 # Step 1: Extract unique perturbations from the dataset
@@ -143,9 +190,21 @@ echo ""
 echo "======================================================================"
 echo "Pipeline Complete!"
 echo "Results directory: $RESULTS_DIR"
-echo "Main outputs:"
+echo ""
+echo "VERIFICATION OUTPUTS (Vikas's recommendations):"
+echo "  - GPR logic check: gpr_verification_results.json"
+echo "  - Biomass/maintenance: biomass_maintenance_verification.json"
+echo "  - Sensitivity analysis: sensitivity_analysis_summary.json"
+echo "  - Sensitivity plots: glucose_oxygen_sensitivity_*.png"
+echo ""
+echo "FBA ANALYSIS OUTPUTS:"
 echo "  - FBA predictions: singles/doubles/triples_deletions.parquet"
 echo "  - Genetic interactions: digenic/trigenic_interactions.parquet"
 echo "  - Matched data: matched_fba_experimental_fixed.parquet"
 echo "  - Visualization: fba_comparison_latest.png"
+echo ""
+echo "Review verification outputs to check:"
+echo "  1. GPR knockout logic (complexes vs isoenzymes)"
+echo "  2. Biomass/GAM/NGAM parameters match Yeast9 standards"
+echo "  3. Whether discrete growth bands shift with media conditions"
 echo "======================================================================"

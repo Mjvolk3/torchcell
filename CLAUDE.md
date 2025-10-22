@@ -34,7 +34,7 @@ Don't recommend to run python files. After editing files I will either run them 
 
 ## Code Execution
 
-- ~/opt/miniconda3/envs/torchcell/bin/torchcell python script.py
+~/miniconda3/envs/torchcell/bin/python script.py
 
-/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python -m pytest                                                                                        │
+~/miniconda3/envs/torchcell/bin/python -m pytest                                                                                        │
 │   tests/torchcell/transforms/test_coo_regression_to_classification.py::TestCOOLabelNormalizationTransform::test_inverse_minmax_coo -xvs

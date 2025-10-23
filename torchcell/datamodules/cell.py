@@ -369,9 +369,9 @@ class CellDataModule(L.LightningDataModule):
 
         # Save the index and details separately
         with open(index_file, "w") as f:
-            json.dump(self._index.dict(), f, indent=2)
+            json.dump(self._index.model_dump(), f, indent=2)
         with open(details_file, "w") as f:
-            json.dump(self._index_details.dict(), f, indent=2)
+            json.dump(self._index_details.model_dump(), f, indent=2)
 
     def _cached_files_exist(self):
         index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")

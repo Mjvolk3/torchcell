@@ -158,12 +158,57 @@ Created benchmark script that loops through dataset with two different graph pro
 
 ---
 
-## Phases 2-5: Pending
+## Phase 2: Optimize Mask Indexing - READY TO START
 
-- Phase 2: Optimize mask indexing (expected ~340ms, 1.8x)
-- Phase 3: Optimize buffer reuse (expected ~320ms, 1.95x)
-- Phase 4: Eliminate device transfers (expected ~310ms, 2.0x)
-- Phase 5: Cache edge types (expected ~305ms, 2.05x)
+**Expected Impact**: 10-15% speedup in edge filtering operations
+**Target**: Replace O(n×m) `torch.isin()` with O(n) boolean indexing
+
+### Target for Optimization
+
+File: `torchcell/data/graph_processor.py`
+Method: `_process_reaction_info()` (around lines 296-298)
+
+Problem: Uses expensive `torch.isin()` for edge filtering, which is O(n×m) complexity.
+
+Solution: Replace with boolean mask indexing for O(n) complexity.
+
+### Implementation
+
+Current code:
+```python
+edge_mask = torch.isin(
+    reaction_indices, torch.where(valid_with_genes_mask)[0]
+) & torch.isin(gene_indices, gene_info["keep_subset"])
+```
+
+Optimized code:
+```python
+# Create boolean masks for O(1) lookup instead of O(n×m) torch.isin
+valid_reactions_mask = torch.zeros(max_reaction_idx, dtype=torch.bool, device=self.device)
+valid_reactions_mask[torch.where(valid_with_genes_mask)[0]] = True
+
+keep_genes_mask = torch.zeros(cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device)
+keep_genes_mask[gene_info["keep_subset"]] = True
+
+# Direct indexing - O(n) instead of O(n×m)
+edge_mask = valid_reactions_mask[reaction_indices] & keep_genes_mask[gene_indices]
+```
+
+### Tasks
+
+1. Implement boolean mask optimization in `_process_reaction_info()`
+2. Run equivalence tests
+3. Save reference as `reference_opt2_mask_indexing.pkl`
+4. Run benchmark to measure speedup
+5. Commit Phase 2
+
+---
+
+## Phases 3-5: Pending
+
+- Phase 3: Optimize buffer reuse (reduce memory allocations)
+- Phase 4: Eliminate device transfers (check device before transfer)
+- Phase 5: Cache edge types (pre-filter gene-gene edges)
 
 ---
 
@@ -171,23 +216,26 @@ Created benchmark script that loops through dataset with two different graph pro
 
 | Metric | Value |
 |--------|-------|
-| Baseline CUDA Time | 624.345ms |
-| Target CUDA Time | 312ms or better |
-| Required Speedup | 2.0x minimum |
-| Current Progress | Phase 0 complete, Phase 1 ready |
+| Baseline Data Loading | 44.38ms/sample (SubgraphRepresentation) |
+| Target | 0.42ms/sample (match Perturbation) |
+| Required Speedup | ~100x in dataset creation |
+| Current Progress | Phase 0 complete, Phase 1 complete, Phase 1.5 complete |
 
 ---
 
-## Test and Profile Commands
+## Test and Benchmark Commands
 
 **Run equivalence tests**:
-
 ```bash
 pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs
 ```
 
-**Run profiling**:
+**Run benchmark**:
+```bash
+sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
+```
 
+**Run profiling**:
 ```bash
 sbatch experiments/006-kuzmin-tmi/scripts/profile_single_model.slurm
 ```
@@ -196,4 +244,4 @@ sbatch experiments/006-kuzmin-tmi/scripts/profile_single_model.slurm
 
 ## Next Action
 
-Implement Phase 1 fast path in `torchcell/data/graph_processor.py` lines 364-395.
+Implement Phase 2 mask indexing optimization in `torchcell/data/graph_processor.py`.

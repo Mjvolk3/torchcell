@@ -705,6 +705,246 @@ Tests: All equivalence tests pass
 "
 
 ---
+Phase 1.5: Benchmark Verification (CRITICAL)
+
+## Phase 1 Post-Mortem
+
+**Result**: Phase 1 optimization was implemented and tested successfully, but showed no measurable training speedup.
+
+**Key Finding**: The gather/scatter operations (244ms) in the profiler are from the GNN model's forward pass (message passing), NOT from the graph processor's `bipartite_subgraph()` call.
+
+**Root Cause**:
+- Graph processor runs during dataset creation (one-time cost)
+- Dataset is cached - profiling uses pre-cached data from August
+- Phase 1 optimization improves dataset creation time, not training time
+- Cannot observe benefit without clearing cache and re-creating dataset
+
+## Verification Strategy
+
+Before proceeding with Phase 2-5, we need to definitively verify whether graph processing is the bottleneck.
+
+Step 1.5.1: Create Benchmark Script
+
+File: experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py
+
+#!/usr/bin/env python3
+"""
+Benchmark graph processors to verify whether graph processing is the bottleneck.
+
+Compares:
+1. SubgraphRepresentation (current implementation with Phase 1 optimization)
+2. Perturbation (simpler processor used by Dango model)
+
+This test measures data loading with GPU transfer to simulate real training.
+"""
+
+import time
+import torch
+import os
+from torch_geometric.loader import DataLoader
+from torchcell.datamodules import CellDataModule
+from torchcell.data.graph_processor import SubgraphRepresentation, Perturbation
+
+def benchmark_graph_processor(processor_name, processor, num_samples=10000, batch_size=32):
+    """Benchmark a graph processor on data loading."""
+
+    print(f"\n{'='*80}")
+    print(f"Benchmarking: {processor_name}")
+    print(f"{'='*80}")
+
+    # Create data module with specified processor
+    dm = CellDataModule(
+        batch_size=batch_size,
+        num_workers=2,
+        pin_memory=True,
+        graph_processor=processor,
+        # Use production settings
+        graphs=["physical", "regulatory"],
+        incidence_graphs=["metabolism_bipartite"],
+        # ... other config from hetero_cell_bipartite_dango_gi.yaml
+    )
+
+    dm.setup()
+
+    # Get dataloader
+    dataloader = dm.train_dataloader()
+
+    # Warmup
+    print("Warming up GPU...")
+    for i, batch in enumerate(dataloader):
+        if i >= 3:
+            break
+        batch = batch.to('cuda')
+
+    # Benchmark
+    print(f"Processing {num_samples} samples with batch_size={batch_size}...")
+
+    device = torch.device('cuda')
+    start_time = time.time()
+
+    samples_processed = 0
+    for batch in dataloader:
+        # Transfer to GPU like real training
+        batch = batch.to(device)
+
+        samples_processed += batch.num_graphs
+
+        if samples_processed >= num_samples:
+            break
+
+    elapsed = time.time() - start_time
+
+    print(f"\nResults:")
+    print(f"  Samples processed: {samples_processed}")
+    print(f"  Total time: {elapsed:.2f}s")
+    print(f"  Time per sample: {elapsed/samples_processed*1000:.2f}ms")
+    print(f"  Throughput: {samples_processed/elapsed:.1f} samples/sec")
+
+    return elapsed, samples_processed
+
+def main():
+    print("="*80)
+    print("Graph Processor Benchmark")
+    print("="*80)
+    print("\nObjective: Verify whether graph processing is the training bottleneck")
+    print("\nComparing:")
+    print("  1. SubgraphRepresentation (HeteroCell model - with Phase 1 optimization)")
+    print("  2. Perturbation (Dango model)")
+
+    # Test 1: SubgraphRepresentation
+    subgraph_time, subgraph_samples = benchmark_graph_processor(
+        "SubgraphRepresentation (optimized)",
+        SubgraphRepresentation(),
+        num_samples=10000,
+        batch_size=32
+    )
+
+    # Test 2: Perturbation
+    pert_time, pert_samples = benchmark_graph_processor(
+        "Perturbation",
+        Perturbation(),
+        num_samples=10000,
+        batch_size=32
+    )
+
+    # Summary
+    print(f"\n{'='*80}")
+    print("BENCHMARK SUMMARY")
+    print(f"{'='*80}")
+    print(f"\nSubgraphRepresentation: {subgraph_time:.2f}s ({subgraph_samples} samples)")
+    print(f"Perturbation:           {pert_time:.2f}s ({pert_samples} samples)")
+    print(f"\nRelative Performance:")
+
+    if subgraph_time > pert_time:
+        slowdown = subgraph_time / pert_time
+        print(f"  SubgraphRepresentation is {slowdown:.2f}x SLOWER than Perturbation")
+        print(f"\n  → Graph processing IS a bottleneck")
+        print(f"  → Continue with Phase 2-5 optimizations")
+        print(f"  → Clear cache and re-profile to see training benefit")
+    else:
+        speedup = pert_time / subgraph_time
+        print(f"  SubgraphRepresentation is {speedup:.2f}x FASTER than Perturbation")
+        print(f"\n  → Graph processing is NOT the bottleneck")
+        print(f"  → Pivot to optimizing GNN model forward pass")
+        print(f"  → Target: torchcell/models/hetero_cell_bipartite_dango_gi.py")
+
+    print(f"{'='*80}\n")
+
+if __name__ == "__main__":
+    main()
+
+Step 1.5.2: Create SLURM Script
+
+File: experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
+
+#!/bin/bash
+#SBATCH -p main
+#SBATCH --mem=100g
+#SBATCH -N 1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=16
+#SBATCH --gres=gpu:1
+#SBATCH --job-name=bench-processors
+#SBATCH --time=02:00:00
+#SBATCH --output=/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/slurm/output/%x_%j.out
+
+cd /home/michaelvolk/Documents/projects/torchcell || exit 1
+
+export CUDA_VISIBLE_DEVICES=0
+export PYTHONPATH="/home/michaelvolk/Documents/projects/torchcell:$PYTHONPATH"
+export PYTHONUNBUFFERED=1
+
+if [ -f /home/michaelvolk/Documents/projects/torchcell/rockylinux_9.sif ]; then
+    apptainer exec --nv \
+        --bind /scratch:/scratch \
+        --bind /home/michaelvolk/Documents/projects/torchcell/.env:/home/michaelvolk/Documents/projects/torchcell/.env \
+        --env PYTHONUNBUFFERED=1 \
+        /home/michaelvolk/Documents/projects/torchcell/rockylinux_9.sif bash -lc '
+
+        source ~/miniconda3/bin/activate
+        conda activate torchcell
+
+        cd /home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/scripts
+
+        echo "========================================="
+        echo "Benchmarking Graph Processors"
+        echo "========================================="
+        python benchmark_graph_processors.py
+        '
+else
+    source ~/miniconda3/bin/activate
+    conda activate torchcell
+
+    cd experiments/006-kuzmin-tmi/scripts
+
+    python benchmark_graph_processors.py
+fi
+
+echo ""
+echo "Benchmark complete!"
+
+Step 1.5.3: Run Benchmark
+
+sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
+
+Step 1.5.4: Analyze Results and Make Decision
+
+Based on benchmark results, either:
+
+Option A: SubgraphRepresentation is significantly slower
+- Continue with Phase 2-5 optimizations
+- Graph processing IS the bottleneck
+- Need to clear cache to see training speedup
+- Expected improvement: ~2x speedup in dataset creation time
+
+Option B: SubgraphRepresentation is similar speed to Perturbation
+- Graph processing is NOT the bottleneck
+- Pivot to GNN model optimization
+- Target: Message passing in hetero_cell_bipartite_dango_gi.py
+- Focus on gather/scatter operations in model forward pass
+
+Step 1.5.5: Update Documentation and Commit
+
+Update both plan and progress report with benchmark results.
+
+git add experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py
+git add experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
+git add 2025-10-22-subgraph-optimization-plan.md
+git add subgraph-optimization-progress-report.md
+git commit -m "Phase 1.5: Add graph processor benchmark verification
+
+Phase 1 optimization was correct but showed no training speedup
+because it targets dataset creation (cached) not training loop.
+
+Benchmark compares SubgraphRepresentation vs Perturbation on data
+loading with GPU transfer to definitively identify bottleneck.
+
+Based on results, will either:
+- Continue Phase 2-5 if graph processing is bottleneck
+- Pivot to GNN model optimization if not
+"
+
+---
 Phase 2: Optimize Mask Indexing (MEDIUM IMPACT)
 
 Step 2.1: Replace torch.isin with Boolean Masks

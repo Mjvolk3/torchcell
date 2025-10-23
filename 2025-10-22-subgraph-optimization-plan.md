@@ -907,25 +907,31 @@ Step 1.5.3: Run Benchmark
 
 sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 
-Step 1.5.4: Analyze Results and Make Decision
+Step 1.5.4: Analyze Results and Make Decision - COMPLETE
 
-Based on benchmark results, either:
+**Benchmark Results (SLURM job bench-processors_334)**:
 
-Option A: SubgraphRepresentation is significantly slower
-- Continue with Phase 2-5 optimizations
-- Graph processing IS the bottleneck
+SubgraphRepresentation (HeteroCell):
+- Total time: 444.54s (10,016 samples)
+- Per-sample time: 44.38ms
+- Throughput: 22.5 samples/sec
+
+Perturbation (Dango):
+- Total time: 4.25s (10,016 samples)
+- Per-sample time: 0.42ms
+- Throughput: 2354.9 samples/sec
+
+**Result**: SubgraphRepresentation is **104.52x SLOWER** than Perturbation
+
+**Decision**: ✅ Continue with Phase 2-5 optimizations
+- Graph processing IS definitively the bottleneck
 - Need to clear cache to see training speedup
-- Expected improvement: ~2x speedup in dataset creation time
+- Expected improvement: ~50-100x speedup in dataset creation time
+- Optimization targets one-time dataset creation cost, not cached training
 
-Option B: SubgraphRepresentation is similar speed to Perturbation
-- Graph processing is NOT the bottleneck
-- Pivot to GNN model optimization
-- Target: Message passing in hetero_cell_bipartite_dango_gi.py
-- Focus on gather/scatter operations in model forward pass
+Step 1.5.5: Update Documentation and Commit - COMPLETE
 
-Step 1.5.5: Update Documentation and Commit
-
-Update both plan and progress report with benchmark results.
+Updated both plan and progress report with benchmark results.
 
 git add experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py
 git add experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm

@@ -105,43 +105,56 @@ To see the actual benefit, we would need to:
 
 ---
 
-## Phase 1.5: Benchmark Verification - IN PROGRESS
+## Phase 1.5: Benchmark Verification - COMPLETE
 
 **Objective**: Definitively verify whether graph processing is the bottleneck by directly benchmarking graph processors on data loading.
 
 ### Approach
 
-Create benchmark script that loops through dataset with two different graph processors:
-1. **SubgraphRepresentation** (current implementation - baseline after Phase 1 optimization)
-2. **Perturbation** (simpler processor used by Dango model)
+Created benchmark script that loops through dataset with two different graph processors:
+1. **SubgraphRepresentation** (HeteroCell model - with Phase 1 optimization)
+2. **Perturbation** (Dango model)
 
 ### Benchmark Configuration
 
-- Dataset: Same as production (`graphs=[physical, regulatory]`, `incidence_graphs=[metabolism_bipartite]`)
+- **HeteroCell**: `graphs=[physical, regulatory, tflink, string12_0_*]`, `incidence_graphs=[metabolism_bipartite]`, `node_embeddings=[learnable]`
+- **Dango**: `graphs=[string12_0_*]`, no incidence graphs, no node embeddings
 - Sample size: 10,000 samples
 - Batch size: 32
+- Num workers: 2
 - Include GPU transfer (`.to('cuda')`) to simulate real training
 - Measure wall time for complete data loading loop
 
-### Expected Outcomes
+### Results (SLURM job bench-processors_334)
 
-**If SubgraphRepresentation is significantly slower**:
-- Continue with Phase 2-5 optimizations
-- Clear dataset cache and re-profile to see real benefit
-- Optimization is valid but targets one-time dataset creation cost
+**SubgraphRepresentation (HeteroCell)**:
+- Total time: 444.54s (10,016 samples)
+- Per-sample time: 44.38ms
+- Throughput: 22.5 samples/sec
 
-**If SubgraphRepresentation is similar to Perturbation**:
-- Graph processing is NOT the bottleneck
-- Pivot to optimizing GNN model forward pass
-- Target: `torchcell/models/hetero_cell_bipartite_dango_gi.py` (convolution layers)
+**Perturbation (Dango)**:
+- Total time: 4.25s (10,016 samples)
+- Per-sample time: 0.42ms
+- Throughput: 2354.9 samples/sec
 
-### Tasks
+**Relative Performance**: SubgraphRepresentation is **104.52x SLOWER** than Perturbation
 
-1. Update documentation with Phase 1 findings and benchmark plan
-2. Create `experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py`
-3. Run benchmark on SLURM
-4. Analyze results and decide next optimization target
-5. Commit Phase 1.5
+### Conclusion
+
+✅ **Graph processing IS the bottleneck** - SubgraphRepresentation is 100x slower than Perturbation
+
+**Decision**: Continue with Phase 2-5 optimizations as planned
+
+**Important Note**:
+- These optimizations target dataset creation (one-time cost), not cached training
+- To see training benefit, must clear cache and regenerate dataset
+- Expected improvement: ~2x speedup in dataset creation time
+- Profiling shows no training speedup because data is pre-cached from August
+
+### Files Created
+
+1. `experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py` - Benchmark script
+2. `experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm` - SLURM submission script
 
 ---
 

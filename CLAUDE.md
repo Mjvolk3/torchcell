@@ -1,6 +1,6 @@
 ## Programming Guide
 
-- Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, etc.
+- Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, unnecessary conditionals, etc.
 
 ## Dendron Paths
 

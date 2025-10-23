@@ -37,6 +37,7 @@ import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.dango import DangoLoss, PreThenPost, LinearUntilUniform
 from torchcell.graph import build_gene_multigraph
+from lightning.pytorch.profilers import PyTorchProfiler
 
 # Import lambda calculation function directly from sibling module
 import os.path as osp
@@ -361,8 +362,53 @@ def main(cfg: DictConfig) -> None:
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
     num_nodes = get_slurm_nodes()
+
+    # Setup profiler based on configuration
     profiler = None
+    if wandb.config.get("profiler", {}).get("is_pytorch", False):
+        print("Setting up PyTorch profiler...")
+        # Create profiler output directory using proper path
+        profiler_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/profiler_output", f"dango_{group}")
+        os.makedirs(profiler_dir, exist_ok=True)
+
+        # Import schedule from torch.profiler
+        from torch.profiler import schedule
+        from torch.profiler import ProfilerActivity
+
+        profiler = PyTorchProfiler(
+            dirpath=profiler_dir,
+            filename=f"profile_{timestamp()}",
+            # Profile CPU and CUDA activities
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            # Use the schedule function properly
+            schedule=schedule(
+                wait=1,  # Wait 1 step before profiling
+                warmup=1,  # Warmup for 1 step
+                active=3,  # Profile for 3 steps
+                repeat=2,  # Repeat cycle 2 times
+            ),
+            # Capture memory usage
+            profile_memory=True,
+            # Record tensor shapes for better analysis
+            record_shapes=True,
+            # Export to Chrome tracing format for visualization
+            export_to_chrome=True,
+            # Also export to TensorBoard
+            on_trace_ready=None,  # Will save to dirpath automatically
+        )
+        print(f"Profiler output will be saved to: {profiler_dir}")
+
     print(f"Starting training ({timestamp()})")
+
+    # Only add checkpoint callbacks if not profiling (to avoid serialization errors)
+    callbacks = []
+    enable_checkpointing = True
+    if not wandb.config.get("profiler", {}).get("is_pytorch", False):
+        callbacks = [checkpoint_callback_best, checkpoint_callback_last]
+    else:
+        print("Profiling mode: Checkpointing disabled to avoid serialization errors")
+        enable_checkpointing = False
+
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -370,10 +416,11 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[checkpoint_callback_best, checkpoint_callback_last],
+        callbacks=callbacks,
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
+        enable_checkpointing=enable_checkpointing,  # Explicitly disable checkpointing when profiling
         # limit_val_batches=0,  # FLAG
     )
 

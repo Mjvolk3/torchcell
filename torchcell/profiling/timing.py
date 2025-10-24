@@ -52,7 +52,7 @@ def time_method(func):
 
 def print_timing_summary(title: str = "Method Timing Profile"):
     """
-    Print formatted timing summary.
+    Print formatted timing summary with standard deviations.
 
     Args:
         title: Custom title for the report
@@ -62,17 +62,20 @@ def print_timing_summary(title: str = "Method Timing Profile"):
             print(f"\n[TIMING] Profiling enabled but no timing data collected")
         return
 
+    import numpy as np
+
     print("\n" + "="*80)
     print(title)
     print("="*80)
-    print(f"{'Method':<50} {'Calls':>8} {'Total (ms)':>12} {'Mean (ms)':>12}")
+    print(f"{'Method':<50} {'Calls':>8} {'Mean (ms)':>12} {'Std (ms)':>11}")
     print("-"*80)
 
     # Sort by total time descending
     for name, times in sorted(_TIMINGS.items(), key=lambda x: sum(x[1]), reverse=True):
-        total_ms = sum(times) * 1000
-        mean_ms = total_ms / len(times)
-        print(f"{name:<50} {len(times):>8} {total_ms:>12.2f} {mean_ms:>12.4f}")
+        times_ms = np.array(times) * 1000
+        mean_ms = times_ms.mean()
+        std_ms = times_ms.std()
+        print(f"{name:<50} {len(times):>8} {mean_ms:>12.4f} {std_ms:>11.4f}")
 
     print("="*80 + "\n")
 

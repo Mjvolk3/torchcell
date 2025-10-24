@@ -26,6 +26,7 @@ from torchcell.graph.graph import build_gene_multigraph
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 from torchcell.datamodules import CellDataModule
+from torchcell.profiling.timing import print_timing_summary
 
 # Load environment
 load_dotenv()
@@ -265,18 +266,19 @@ def main():
     print("     - No node embeddings")
     print("\nConfiguration:")
     print("  - Batch size: 32")
-    print("  - Sample count: 10,000")
+    print("  - Sample count: 1,000")
     print("  - Num workers: 2")
     print("  - GPU transfer: Yes")
 
     # Test 1: SubgraphRepresentation with HeteroCell configuration
+    # TEMPORARY: num_workers=0 to test timing collection
     subgraph_time, subgraph_samples = benchmark_graph_processor(
         "SubgraphRepresentation (HeteroCell)",
         SubgraphRepresentation(),
         create_dataset_hetero,
-        num_samples=10000,
+        num_samples=1000,
         batch_size=32,
-        num_workers=2
+        num_workers=0  # Changed from 2 to 0 for timing test
     )
 
     # Test 2: Perturbation with Dango configuration
@@ -284,7 +286,7 @@ def main():
         "Perturbation (Dango)",
         Perturbation(),
         create_dataset_dango,
-        num_samples=10000,
+        num_samples=1000,
         batch_size=32,
         num_workers=2
     )
@@ -304,25 +306,19 @@ def main():
         slowdown = subgraph_time / pert_time
         print(f"  SubgraphRepresentation is {slowdown:.2f}x SLOWER than Perturbation")
         print(f"\n  ✓ Graph processing IS a bottleneck")
-        print(f"  → Recommendation: Continue with Phase 2-5 optimizations")
-        print(f"  → Clear cache and re-profile to see training benefit")
-        print(f"  → Expected: Dataset creation speedup, not training speedup (data is cached)")
     elif pert_time > subgraph_time * 1.1:
         speedup = pert_time / subgraph_time
         print(f"  SubgraphRepresentation is {speedup:.2f}x FASTER than Perturbation")
         print(f"\n  ✓ Graph processing is NOT the bottleneck")
-        print(f"  → Recommendation: Pivot to optimizing GNN model forward pass")
-        print(f"  → Target: torchcell/models/hetero_cell_bipartite_dango_gi.py")
-        print(f"  → Focus on: Message passing layers (gather/scatter operations)")
     else:
         print(f"  SubgraphRepresentation and Perturbation have similar performance")
         print(f"  → Difference is within 10% margin")
         print(f"\n  ✓ Graph processing is NOT the bottleneck")
-        print(f"  → Recommendation: Pivot to optimizing GNN model forward pass")
-        print(f"  → Target: torchcell/models/hetero_cell_bipartite_dango_gi.py")
-        print(f"  → Focus on: Message passing layers (gather/scatter operations)")
 
     print(f"{'='*80}\n")
+
+    # Print timing breakdown if profiling is enabled
+    print_timing_summary("SubgraphRepresentation Timing Profile")
 
 
 if __name__ == "__main__":

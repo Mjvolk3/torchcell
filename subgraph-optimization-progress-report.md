@@ -1,214 +1,21 @@
 # SubgraphRepresentation Optimization Progress
 
-**Objective**: Achieve 2x CUDA speedup (from 624ms to 312ms or better)
+**Objective**: Achieve 100x speedup in dataset creation (from 44.38ms/sample to <1ms/sample)
+
+**See Also**: `2025-10-22-subgraph-optimization-plan.md` for detailed strategy
 
 ---
 
-## Phase 0: Setup and Baseline - COMPLETE
-
-**Baseline CUDA Time**: 624.345ms
-
-### Completed Tasks
-
-1. Created stable profiling configuration
-   - File: `experiments/006-kuzmin-tmi/conf/profiling_stable_config.yaml`
-   - Production settings: batch_size=32, num_workers=2, pin_memory=true
-
-2. Created SLURM profiling script
-   - File: `experiments/006-kuzmin-tmi/scripts/profile_single_model.slurm`
-
-3. Built equivalence test suite
-   - File: `tests/torchcell/data/test_graph_processor_equivalence.py`
-   - Handles unordered attributes (sets stored as lists)
-   - Canonical edge sorting using PyG's sort_edge_index()
-   - Tests single instance and batch data
-
-4. Generated baseline reference data
-   - File: `torchcell/scratch/save_reference_baseline.py`
-   - Saved to: `/scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005/reference_baseline.pkl`
-
-5. Made data loading deterministic
-   - Modified: `torchcell/scratch/load_batch_005.py`
-   - Added comprehensive seeding (random, numpy, torch, cudnn)
-   - Tests pass with production settings (num_workers=2, pin_memory=true)
-
-6. Ran baseline profiling
-   - Profile saved: `/scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005/profiling_results/baseline_profile.txt`
-   - Key bottleneck identified: aten::gather operations consume 242.590ms (38.86% of CUDA time)
-
-7. All tests passing
-   - Command: `pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs`
-
-8. Committed baseline work
-   - Commit 1: Profiling infrastructure for dango models
-   - Commit 2: SubgraphRepresentation optimization baseline setup
-
-### Key Notes from Phase 0
-
-- Tests initially failed due to non-deterministic data loading - fixed with comprehensive seeding
-- Some attributes like `ids_pert` are semantically sets but stored as lists - needed set-based comparison
-- Edge ordering differs between runs - needed canonical sorting with PyG's sort_edge_index()
-- Batch data has nested lists - needed special handling for list-of-lists comparison
-- Production settings work with proper seeding - no need to force num_workers=0
-
----
-
-## Phase 1: Bipartite Subgraph Optimization - IN PROGRESS
-
-**Expected CUDA Time**: ~380ms (1.6x speedup)
-**Target**: Reduce aten::gather operations from 242ms to ~120ms
-
-### Target for Optimization
-
-File: `torchcell/data/graph_processor.py`
-Method: `_process_metabolism_bipartite()` (lines 364-395)
-
-Problem: Uses expensive bipartite_subgraph() which performs gather/scatter operations even though we always keep all metabolites (100% of production cases).
-
-Solution: Replace with direct boolean masking and reaction index remapping.
-
-### Tasks Remaining
-
-1. Implement fast path optimization
-2. Run equivalence tests
-3. Profile and measure speedup
-4. Save reference as `reference_opt1_bipartite.pkl`
-5. Commit Phase 1
-
-###
-
- Phase 1 Results
-
-**Implemented**: Fast path optimization completed
-**Tests**: All equivalence tests PASSED
-**CUDA Time**: 624.987ms (vs baseline 624.345ms)
-**Speedup**: None measurable in training time
-
-### Key Finding
-
-The optimization is valid but targets dataset creation, not training:
-- Graph processor runs during dataset creation/caching (one-time cost)
-- Dataset is cached - profiling uses pre-processed data from August
-- Gather/scatter operations in profile (244ms) are from GNN model's message passing, NOT from bipartite_subgraph()
-- Optimization improves dataset creation time but not cached training time
-
-### Conclusion
-
-The optimization plan misidentified the bottleneck. The 244ms gather operations are from the model's forward pass (GNN message passing via index_select), not from the graph processor's bipartite_subgraph() call.
-
-To see the actual benefit, we would need to:
-1. Clear the cache and measure dataset creation time
-2. Or profile dataset creation specifically
-3. Or identify optimizations in the GNN model itself
-
-**Decision**: Before continuing with remaining phases, we need to definitively verify whether graph processing is the actual bottleneck. Proceeding with Phase 1.5 - Benchmark Verification.
-
----
-
-## Phase 1.5: Benchmark Verification - COMPLETE
-
-**Objective**: Definitively verify whether graph processing is the bottleneck by directly benchmarking graph processors on data loading.
-
-### Approach
-
-Created benchmark script that loops through dataset with two different graph processors:
-1. **SubgraphRepresentation** (HeteroCell model - with Phase 1 optimization)
-2. **Perturbation** (Dango model)
-
-### Benchmark Configuration
-
-- **HeteroCell**: `graphs=[physical, regulatory, tflink, string12_0_*]`, `incidence_graphs=[metabolism_bipartite]`, `node_embeddings=[learnable]`
-- **Dango**: `graphs=[string12_0_*]`, no incidence graphs, no node embeddings
-- Sample size: 10,000 samples
-- Batch size: 32
-- Num workers: 2
-- Include GPU transfer (`.to('cuda')`) to simulate real training
-- Measure wall time for complete data loading loop
-
-### Results (SLURM job bench-processors_334)
-
-**SubgraphRepresentation (HeteroCell)**:
-- Total time: 444.54s (10,016 samples)
-- Per-sample time: 44.38ms
-- Throughput: 22.5 samples/sec
-
-**Perturbation (Dango)**:
-- Total time: 4.25s (10,016 samples)
-- Per-sample time: 0.42ms
-- Throughput: 2354.9 samples/sec
-
-**Relative Performance**: SubgraphRepresentation is **104.52x SLOWER** than Perturbation
-
-### Conclusion
-
-✅ **Graph processing IS the bottleneck** - SubgraphRepresentation is 100x slower than Perturbation
-
-**Decision**: Continue with Phase 2-5 optimizations as planned
-
-**Important Note**:
-- These optimizations target dataset creation (one-time cost), not cached training
-- To see training benefit, must clear cache and regenerate dataset
-- Expected improvement: ~2x speedup in dataset creation time
-- Profiling shows no training speedup because data is pre-cached from August
-
-### Files Created
-
-1. `experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py` - Benchmark script
-2. `experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm` - SLURM submission script
-
----
-
-## Phase 2: Optimize Mask Indexing - READY TO START
-
-**Expected Impact**: 10-15% speedup in edge filtering operations
-**Target**: Replace O(n×m) `torch.isin()` with O(n) boolean indexing
-
-### Target for Optimization
-
-File: `torchcell/data/graph_processor.py`
-Method: `_process_reaction_info()` (around lines 296-298)
-
-Problem: Uses expensive `torch.isin()` for edge filtering, which is O(n×m) complexity.
-
-Solution: Replace with boolean mask indexing for O(n) complexity.
-
-### Implementation
-
-Current code:
-```python
-edge_mask = torch.isin(
-    reaction_indices, torch.where(valid_with_genes_mask)[0]
-) & torch.isin(gene_indices, gene_info["keep_subset"])
-```
-
-Optimized code:
-```python
-# Create boolean masks for O(1) lookup instead of O(n×m) torch.isin
-valid_reactions_mask = torch.zeros(max_reaction_idx, dtype=torch.bool, device=self.device)
-valid_reactions_mask[torch.where(valid_with_genes_mask)[0]] = True
-
-keep_genes_mask = torch.zeros(cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device)
-keep_genes_mask[gene_info["keep_subset"]] = True
-
-# Direct indexing - O(n) instead of O(n×m)
-edge_mask = valid_reactions_mask[reaction_indices] & keep_genes_mask[gene_indices]
-```
-
-### Tasks
-
-1. Implement boolean mask optimization in `_process_reaction_info()`
-2. Run equivalence tests
-3. Save reference as `reference_opt2_mask_indexing.pkl`
-4. Run benchmark to measure speedup
-5. Commit Phase 2
-
----
-
-## Phases 3-5: Pending
-
-- Phase 3: Optimize buffer reuse (reduce memory allocations)
-- Phase 4: Eliminate device transfers (check device before transfer)
-- Phase 5: Cache edge types (pre-filter gene-gene edges)
+## Summary
+
+| Phase | Status | Result |
+|-------|--------|--------|
+| Phase 0: Setup and Baseline | ✅ Complete | Baseline established, tests passing |
+| Phase 1: Bipartite Optimization | ✅ Complete | 0.70ms/call (5% of time) - SUCCESS |
+| Phase 1.5: Benchmark Verification | ✅ Complete | Confirmed 104.52x slower than Perturbation |
+| Phase 2: Boolean Mask Indexing | ❌ Failed | 3.15% SLOWER - reverted |
+| Phase 2.1: Timing Instrumentation | ✅ Complete | Identified `_process_gene_interactions` as #1 bottleneck (62%) |
+| **Phase 2 (Revised): Optimize Gene Interactions** | 🔄 **NEXT** | Target: 8.38ms → <4ms per call |
 
 ---
 
@@ -216,32 +23,248 @@ edge_mask = valid_reactions_mask[reaction_indices] & keep_genes_mask[gene_indice
 
 | Metric | Value |
 |--------|-------|
-| Baseline Data Loading | 44.38ms/sample (SubgraphRepresentation) |
-| Target | 0.42ms/sample (match Perturbation) |
+| Baseline (SubgraphRepresentation) | 44.38ms/sample |
+| Target (Perturbation baseline) | 0.42ms/sample |
 | Required Speedup | ~100x in dataset creation |
-| Current Progress | Phase 0 complete, Phase 1 complete, Phase 1.5 complete |
+| Current Bottleneck | `_process_gene_interactions` at 8.38ms/call (62% of time) |
+| Phase 1 Success | `_process_metabolism_bipartite` now 0.70ms/call (5% of time) |
+
+---
+
+## Phase 0: Setup and Baseline ✅
+
+**Objective**: Establish testing infrastructure and baseline performance
+
+**Deliverables**:
+
+1. Equivalence test suite (`tests/torchcell/data/test_graph_processor_equivalence.py`)
+2. Baseline reference data (`/scratch/.../reference_baseline.pkl`)
+3. Deterministic data loading (comprehensive seeding)
+
+**Baseline Metrics**:
+
+- CUDA Time: 624.345ms (for training profiling)
+- Data Loading: 44.38ms/sample (for dataset creation)
+
+**Key Learnings**:
+
+- Tests initially failed due to non-deterministic data loading
+- Some attributes (like `ids_pert`) are semantically sets but stored as lists
+- Edge ordering differs between runs - needed canonical sorting
+- Production settings work with proper seeding
+
+---
+
+## Phase 1: Bipartite Subgraph Optimization ✅
+
+**Target**: `_process_metabolism_bipartite()` method (lines 364-395)
+
+**Problem**: Used expensive `bipartite_subgraph()` which performs gather/scatter operations even though we always keep all metabolites (100% of production cases).
+
+**Solution**: Replaced with direct boolean masking and reaction index remapping.
+
+**Result**:
+
+- Optimization implemented successfully
+- All equivalence tests PASSED
+- **CUDA Time**: 624.987ms (vs baseline 624.345ms) - no training speedup
+- **Why**: Graph processor runs during dataset creation (one-time cost), not training loop
+- Dataset is cached - profiling uses pre-cached data from August
+
+**Key Finding**: The 244ms gather/scatter operations in the profiler are from the GNN model's forward pass (message passing), NOT from the graph processor's `bipartite_subgraph()` call.
+
+**Decision**: Need to verify whether graph processing is actually the bottleneck → Proceed to Phase 1.5
+
+---
+
+## Phase 1.5: Benchmark Verification ✅
+
+**Objective**: Definitively verify whether graph processing is the bottleneck
+
+**Approach**: Direct benchmark comparing SubgraphRepresentation vs Perturbation processors on data loading with GPU transfer.
+
+**Benchmark Configuration**:
+
+- Sample size: 10,000 samples
+- Batch size: 32
+- Num workers: 2
+- GPU transfer: Yes (`.to('cuda')`)
+
+**Results** (SLURM job bench-processors_334):
+
+| Processor | Time | Per-sample | Throughput |
+|-----------|------|------------|------------|
+| SubgraphRepresentation (HeteroCell) | 444.54s | 44.38ms | 22.5 samples/sec |
+| Perturbation (Dango) | 4.25s | 0.42ms | 2354.9 samples/sec |
+
+**Relative Performance**: SubgraphRepresentation is **104.52x SLOWER** than Perturbation
+
+**Conclusion**: ✅ Graph processing IS definitively the bottleneck
+
+**Decision**: Continue with optimization phases, but use timing instrumentation to identify actual hotspots
+
+---
+
+## Phase 2: Boolean Mask Indexing ❌ FAILED
+
+**Target**: `_process_reaction_info()` method (lines 296-310)
+
+**Attempted**: Replace `torch.isin()` with boolean mask indexing for O(n) vs O(n×m) complexity
+
+**Benchmark Results** (SLURM job bench-processors_335):
+
+- **Phase 1 Baseline**: 44.38ms/sample
+- **Phase 2 with mask indexing**: 45.78ms/sample
+- **Result**: 3.15% SLOWER
+
+**Why It Failed**:
+
+- Allocation overhead (~13,000 boolean values per call) exceeded algorithmic savings
+- `torch.isin()` is highly optimized in PyTorch's C++/CUDA backend
+- Big-O notation ignores constant factors
+- Memory allocation and zeroing overhead dominated performance
+
+**Lesson Learned**:
+
+- Don't optimize blindly based on algorithmic complexity
+- Library implementations (torch, numpy) are heavily optimized
+- **Always measure before and after**
+- Data-driven optimization > theoretical optimization
+
+**Action**: Reverted Phase 2 changes, implemented timing instrumentation
+
+---
+
+## Phase 2.1: Timing Instrumentation ✅
+
+**Objective**: Establish data-driven optimization approach with timing instrumentation
+
+**Implementation**:
+
+1. Created `torchcell/profiling/timing.py` with `@time_method` decorator
+2. Added decorators to all SubgraphRepresentation methods
+3. Environment variable control: `TORCHCELL_DEBUG_TIMING=1`
+4. Updated SLURM script to export environment variable
+5. Set `num_workers=0` for timing collection (multiprocessing limitation)
+
+**Benchmark Configuration**:
+
+- Sample count: 1,000 samples
+- Batch size: 32
+- **Num workers: 0** (required for timing collection)
+- Environment: `TORCHCELL_DEBUG_TIMING=1`
+
+**Timing Results** (SLURM job bench-processors_340, 1,152 calls):
+
+```
+================================================================================
+Method                                                Calls   Total (ms)    Mean (ms)
+--------------------------------------------------------------------------------
+SubgraphRepresentation._process_gene_interactions     1152      9649.85       8.3766
+SubgraphRepresentation._process_gene_info             1152      2248.75       1.9520
+SubgraphRepresentation._process_reaction_info         1152      2237.11       1.9419
+SubgraphRepresentation._process_metabolism_bipartite  1152       804.50       0.6983
+SubgraphRepresentation._initialize_masks              1152       233.53       0.2027
+SubgraphRepresentation.process                        1152       164.37       0.1427
+================================================================================
+```
+
+**Breakdown by % of total time**:
+
+1. `_process_gene_interactions`: 8.38ms/call **(62%)**
+2. `_process_gene_info`: 1.95ms/call (14%)
+3. `_process_reaction_info`: 1.94ms/call (14%)
+4. `_process_metabolism_bipartite`: 0.70ms/call (5%)
+5. `_initialize_masks`: 0.20ms/call (1.5%)
+6. `process`: 0.14ms/call (1%) - overhead only
+
+**Key Finding**: `_process_gene_interactions` is the #1 bottleneck at **8.38ms/call (62% of time)**
+
+**Phase 1 Validation**: The `_process_metabolism_bipartite` optimization DID work! It's now only 0.70ms/call (5% of time).
+
+**Multiprocessing Limitation Discovered**:
+
+- DataLoader with `num_workers > 0` creates worker processes with separate `_TIMINGS` dictionaries
+- Timing data collected in workers is lost when processes terminate
+- **Solution**: Use `num_workers=0` for profiling, `num_workers > 0` for production
+
+**Files Modified**:
+
+1. `torchcell/profiling/timing.py` - Created timing utility
+2. `torchcell/profiling/__init__.py` - Created package
+3. `torchcell/data/graph_processor.py` - Added `@time_method` decorators, reverted Phase 2
+4. `experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py` - Added timing summary, set num_workers=0
+5. `experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm` - Added `TORCHCELL_DEBUG_TIMING=1` environment variable
+
+---
+
+## Phase 2 (Revised): Optimize Gene Interactions Processing - NEXT
+
+**Target**: `torchcell/data/graph_processor.py:312-352` - `_process_gene_interactions()` method
+
+**Current Performance**: 8.38ms/call (62% of total processing time)
+
+**Goal**: Reduce to <4ms per call (2x speedup → 25-40% overall improvement)
+
+**What It Does**:
+
+- Loops over 9 edge types (physical, regulatory, tflink, 6x string12_0 channels)
+- Each loop calls PyG's `subgraph()` for edge filtering and node relabeling
+- Total 9 calls to `subgraph()` per invocation
+
+**Optimization Strategy**:
+
+1. Pre-compute gene mapping tensor once (reuse across all 9 edge types)
+2. Replace 9 sequential `subgraph()` calls with optimized batch processing
+3. Direct edge filtering to avoid PyG's subgraph() overhead
+4. Reuse node mask across all edge types
+
+**Validation Plan**:
+
+1. Implement optimization
+2. Run equivalence tests
+3. Benchmark with `TORCHCELL_DEBUG_TIMING=1` and `num_workers=0`
+4. **Only commit if measurable improvement achieved**
 
 ---
 
 ## Test and Benchmark Commands
 
 **Run equivalence tests**:
+
 ```bash
 pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs
 ```
 
-**Run benchmark**:
+**Run benchmark with timing**:
+
 ```bash
+# Ensure TORCHCELL_DEBUG_TIMING=1 is set in SLURM script
 sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 ```
 
-**Run profiling**:
+**Run benchmark without timing** (production speed):
+
 ```bash
-sbatch experiments/006-kuzmin-tmi/scripts/profile_single_model.slurm
+# Comment out TORCHCELL_DEBUG_TIMING=1, set num_workers=2
+sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 ```
 
 ---
 
 ## Next Action
 
-Implement Phase 2 mask indexing optimization in `torchcell/data/graph_processor.py`.
+**Phase 2 (Revised)**: Optimize `_process_gene_interactions` method
+
+1. Analyze PyG's `subgraph()` implementation to understand overhead
+2. Design optimized edge filtering approach
+3. Implement optimization
+4. Run equivalence tests to verify correctness
+5. Benchmark with timing enabled to measure improvement
+6. Document results and commit if successful
+
+---
+
+**Last Updated**: October 2024
+**Current Status**: Phase 2.1 complete, ready for Phase 2 (revised)
+**Key Principle**: No optimization without measurement proving it helps

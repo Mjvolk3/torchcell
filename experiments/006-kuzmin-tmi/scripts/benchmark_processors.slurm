@@ -26,6 +26,7 @@ if [ -f /home/michaelvolk/Documents/projects/torchcell/rockylinux_9.sif ]; then
         --bind /scratch:/scratch \
         --bind /home/michaelvolk/Documents/projects/torchcell/.env:/home/michaelvolk/Documents/projects/torchcell/.env \
         --env PYTHONUNBUFFERED=1 \
+        --env TORCHCELL_DEBUG_TIMING=1 \
         /home/michaelvolk/Documents/projects/torchcell/rockylinux_9.sif bash -lc '
 
         source ~/miniconda3/bin/activate
@@ -36,6 +37,7 @@ if [ -f /home/michaelvolk/Documents/projects/torchcell/rockylinux_9.sif ]; then
         echo "========================================="
         echo "Benchmarking Graph Processors"
         echo "========================================="
+        echo "TORCHCELL_DEBUG_TIMING=${TORCHCELL_DEBUG_TIMING}"
         python benchmark_graph_processors.py
         '
 else
@@ -49,6 +51,8 @@ else
     echo "========================================="
     echo "Benchmarking Graph Processors"
     echo "========================================="
+    export TORCHCELL_DEBUG_TIMING=1
+    echo "TORCHCELL_DEBUG_TIMING=${TORCHCELL_DEBUG_TIMING}"
     python benchmark_graph_processors.py
 fi
 

@@ -12,6 +12,7 @@ from torch_geometric.utils._subgraph import bipartite_subgraph, subgraph
 from torch_scatter import scatter
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
+from torchcell.profiling.timing import time_method
 
 
 class GraphProcessor(ABC):
@@ -35,6 +36,7 @@ class SubgraphRepresentation(GraphProcessor):
         self.device: torch.device = torch.device("cpu")
         self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
 
+    @time_method
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
         # Initialize masks dictionary
         self.masks = {
@@ -81,6 +83,7 @@ class SubgraphRepresentation(GraphProcessor):
                 ),
             }
 
+    @time_method
     def process(
         self,
         cell_graph: HeteroData,
@@ -136,6 +139,7 @@ class SubgraphRepresentation(GraphProcessor):
 
         return integrated_subgraph
 
+    @time_method
     def _process_gene_info(
         self, cell_graph: HeteroData, data: list[Dict[str, Any]]
     ) -> Dict[str, Any]:
@@ -175,6 +179,7 @@ class SubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]
         integrated_subgraph["gene"].x_pert = x_full[gene_info["remove_subset"]]
 
+    @time_method
     def _process_gene_interactions(
         self,
         integrated_subgraph: HeteroData,
@@ -196,6 +201,7 @@ class SubgraphRepresentation(GraphProcessor):
                 integrated_subgraph[et].num_edges = edge_index.size(1)
                 integrated_subgraph[et].pert_mask = ~edge_mask
 
+    @time_method
     def _process_reaction_info(
         self,
         cell_graph: HeteroData,
@@ -361,6 +367,7 @@ class SubgraphRepresentation(GraphProcessor):
                 integrated_subgraph, cell_graph, reaction_info
             )
 
+    @time_method
     def _process_metabolism_bipartite(
         self,
         integrated_subgraph: HeteroData,
@@ -371,19 +378,32 @@ class SubgraphRepresentation(GraphProcessor):
         rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
         hyperedge_index = rmr_edges.hyperedge_index.to(self.device)
         stoichiometry = rmr_edges.stoichiometry.to(self.device)
-        metabolite_subset = torch.arange(
-            cell_graph["metabolite"].num_nodes, device=self.device
+
+        # Fast path optimization: Since we keep all metabolites (100% of production cases),
+        # avoid expensive bipartite_subgraph() gather/scatter operations.
+        # Instead, use direct boolean masking and reaction index remapping.
+        num_reactions = cell_graph["reaction"].num_nodes
+
+        # Create reaction mapping for O(1) lookup
+        reaction_map = torch.full(
+            (num_reactions,), -1, dtype=torch.long, device=self.device
+        )
+        reaction_map[valid_reactions] = torch.arange(
+            len(valid_reactions), dtype=torch.long, device=self.device
         )
 
-        # The stoichiometry values already have sign information
-        # No need to check edge_type
-        final_edge_index, final_edge_attr = bipartite_subgraph(
-            (valid_reactions, metabolite_subset),
-            hyperedge_index,
-            edge_attr=stoichiometry,
-            relabel_nodes=True,
-            size=(cell_graph["reaction"].num_nodes, cell_graph["metabolite"].num_nodes),
-        )
+        # Filter edges: keep only edges from valid reactions
+        reaction_indices = hyperedge_index[0]
+        metabolite_indices = hyperedge_index[1]
+        edge_mask = reaction_map[reaction_indices] != -1
+
+        # Apply filter and remap reaction indices (metabolite indices unchanged)
+        final_edge_index = torch.stack([
+            reaction_map[reaction_indices[edge_mask]],
+            metabolite_indices[edge_mask]
+        ], dim=0)
+        final_edge_attr = stoichiometry[edge_mask]
+
         edge_type = ("reaction", "rmr", "metabolite")
         integrated_subgraph[edge_type].hyperedge_index = final_edge_index
         integrated_subgraph[edge_type].stoichiometry = final_edge_attr

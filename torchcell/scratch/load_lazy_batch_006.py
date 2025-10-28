@@ -150,6 +150,86 @@ def main():
             print(f"    - {num_removed} False (remove)")
             print()
 
+    # Inspect GPR and reaction data (Phase 4.1)
+    print("-" * 80)
+    print("Sample 0 - GPR Edges and Reactions (Phase 4.1)")
+    print("-" * 80)
+    print()
+
+    if ("gene", "gpr", "reaction") in sample.edge_types:
+        gpr_et = ("gene", "gpr", "reaction")
+        gpr_hyperedge_index = sample[gpr_et].hyperedge_index
+        gpr_num_edges = sample[gpr_et].num_edges
+        gpr_mask = sample[gpr_et].mask
+
+        num_gpr_kept = gpr_mask.sum().item()
+        num_gpr_removed = (~gpr_mask).sum().item()
+
+        print(f"{gpr_et}:")
+        print(f"  hyperedge_index: {gpr_hyperedge_index.shape} [FULL graph, not filtered]")
+        print(f"  num_edges: {gpr_num_edges} [FULL count]")
+        print(f"  mask: {gpr_mask.shape}")
+        print(f"    - {num_gpr_kept} True (gene not deleted)")
+        print(f"    - {num_gpr_removed} False (gene deleted)")
+        print()
+
+    # Inspect reaction nodes
+    if "reaction" in sample.node_types:
+        print("Reaction nodes:")
+        print(f"  num_nodes: {sample['reaction'].num_nodes}")
+        print(f"  node_ids: {len(sample['reaction'].node_ids)} reactions")
+
+        if hasattr(sample['reaction'], 'pert_mask'):
+            num_reaction_invalid = sample['reaction'].pert_mask.sum().item()
+            num_reaction_valid = sample['reaction'].mask.sum().item()
+            print(f"  pert_mask: {sample['reaction'].pert_mask.shape}")
+            print(f"    - {num_reaction_invalid} True (reaction invalid - required genes deleted)")
+            print(f"  mask: {sample['reaction'].mask.shape}")
+            print(f"    - {num_reaction_valid} True (reaction valid)")
+            print(f"  ✓ Masks are inverse: {torch.equal(sample['reaction'].mask, ~sample['reaction'].pert_mask)}")
+        print()
+
+    # Inspect metabolite nodes
+    if "metabolite" in sample.node_types:
+        print("Metabolite nodes:")
+        print(f"  num_nodes: {sample['metabolite'].num_nodes}")
+        print(f"  node_ids: {len(sample['metabolite'].node_ids)} metabolites")
+
+        if hasattr(sample['metabolite'], 'pert_mask'):
+            num_metabolite_removed = sample['metabolite'].pert_mask.sum().item()
+            num_metabolite_kept = sample['metabolite'].mask.sum().item()
+            print(f"  pert_mask: {sample['metabolite'].pert_mask.shape}")
+            print(f"    - {num_metabolite_removed} True (removed)")
+            print(f"  mask: {sample['metabolite'].mask.shape}")
+            print(f"    - {num_metabolite_kept} True (kept)")
+            print(f"  ✓ All metabolites kept: {num_metabolite_removed == 0}")
+        print()
+
+    # Inspect RMR edges (Phase 4.2)
+    if ("reaction", "rmr", "metabolite") in sample.edge_types:
+        print("-" * 80)
+        print("Sample 0 - RMR Edges (Phase 4.2)")
+        print("-" * 80)
+        print()
+
+        rmr_et = ("reaction", "rmr", "metabolite")
+        rmr_hyperedge_index = sample[rmr_et].hyperedge_index
+        rmr_num_edges = sample[rmr_et].num_edges
+        rmr_mask = sample[rmr_et].mask
+        rmr_stoichiometry = sample[rmr_et].stoichiometry
+
+        num_rmr_kept = rmr_mask.sum().item()
+        num_rmr_removed = (~rmr_mask).sum().item()
+
+        print(f"{rmr_et}:")
+        print(f"  hyperedge_index: {rmr_hyperedge_index.shape} [FULL graph, not filtered]")
+        print(f"  stoichiometry: {rmr_stoichiometry.shape} [FULL attributes, not filtered]")
+        print(f"  num_edges: {rmr_num_edges} [FULL count]")
+        print(f"  mask: {rmr_mask.shape}")
+        print(f"    - {num_rmr_kept} True (reaction is valid)")
+        print(f"    - {num_rmr_removed} False (reaction is invalid)")
+        print()
+
     # Zero-copy verification
     print("-" * 80)
     print("Zero-Copy Verification")
@@ -158,6 +238,7 @@ def main():
 
     cell_graph = dataset.cell_graph
 
+    # Verify gene-gene edges
     for et in sample.edge_types:
         if et[0] == "gene" and et[2] == "gene":
             is_reference = id(sample[et].edge_index) == id(cell_graph[et].edge_index)
@@ -168,6 +249,36 @@ def main():
             else:
                 print(f"  ✗ WARNING: edge_index was copied")
             print()
+
+    # Verify GPR edges (Phase 4.1)
+    if ("gene", "gpr", "reaction") in sample.edge_types:
+        gpr_et = ("gene", "gpr", "reaction")
+        is_gpr_reference = id(sample[gpr_et].hyperedge_index) == id(cell_graph[gpr_et].hyperedge_index)
+        print(f"{gpr_et}:")
+        print(f"  hyperedge_index is reference: {is_gpr_reference}")
+        if is_gpr_reference:
+            print(f"  ✓ Zero-copy confirmed!")
+        else:
+            print(f"  ✗ WARNING: hyperedge_index was copied")
+        print()
+
+    # Verify RMR edges (Phase 4.2)
+    if ("reaction", "rmr", "metabolite") in sample.edge_types:
+        rmr_et = ("reaction", "rmr", "metabolite")
+        is_rmr_hyperedge_reference = id(sample[rmr_et].hyperedge_index) == id(cell_graph[rmr_et].hyperedge_index)
+        is_rmr_stoich_reference = id(sample[rmr_et].stoichiometry) == id(cell_graph[rmr_et].stoichiometry)
+
+        print(f"{rmr_et}:")
+        print(f"  hyperedge_index is reference: {is_rmr_hyperedge_reference}")
+        print(f"  stoichiometry is reference: {is_rmr_stoich_reference}")
+        if is_rmr_hyperedge_reference and is_rmr_stoich_reference:
+            print(f"  ✓ Zero-copy confirmed for both tensors!")
+        else:
+            if not is_rmr_hyperedge_reference:
+                print(f"  ✗ WARNING: hyperedge_index was copied")
+            if not is_rmr_stoich_reference:
+                print(f"  ✗ WARNING: stoichiometry was copied")
+        print()
 
     # Memory estimation
     print("-" * 80)

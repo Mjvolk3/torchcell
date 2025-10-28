@@ -1439,15 +1439,17 @@ class LazySubgraphRepresentation(GraphProcessor):
         # Add phenotype data (same as SubgraphRepresentation)
         self._add_phenotype_data(integrated_subgraph, phenotype_info, data)
 
-        # Attach masks (same as SubgraphRepresentation)
+        # Attach masks
         integrated_subgraph["gene"].pert_mask = self.masks["gene"]["perturbed"]
         integrated_subgraph["gene"].mask = ~self.masks["gene"]["perturbed"]
 
         if "reaction" in self.masks:
             integrated_subgraph["reaction"].pert_mask = self.masks["reaction"]["removed"]
+            integrated_subgraph["reaction"].mask = self.masks["reaction"]["kept"]  # Phase 4.1: Add reaction.mask
 
         if "metabolite" in self.masks:
             integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"]["removed"]
+            integrated_subgraph["metabolite"].mask = self.masks["metabolite"]["kept"]  # Phase 4.1: Add metabolite.mask
 
         return integrated_subgraph
 
@@ -1544,7 +1546,12 @@ class LazySubgraphRepresentation(GraphProcessor):
         gene_info: Dict[str, Any],
         integrated_subgraph: HeteroData,
     ) -> Dict[str, Any]:
-        # Same as SubgraphRepresentation - copy entire method
+        """
+        Process reaction information using lazy approach.
+
+        Returns full reaction set with masks instead of filtered reactions.
+        Computes reaction validity based on whether all required genes are present.
+        """
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
         w_growth = torch.zeros(max_reaction_idx, dtype=torch.float, device=self.device)
@@ -1563,21 +1570,16 @@ class LazySubgraphRepresentation(GraphProcessor):
                     if subsystems[i] == "Growth":
                         w_growth[i] = 1.0
 
+        # If no GPR edges, all reactions are valid
         if ("gene", "gpr", "reaction") not in cell_graph.edge_types:
-            valid_reactions = torch.arange(max_reaction_idx, device=self.device)
+            # Keep all reactions
             self.masks["reaction"]["kept"].fill_(True)
             self.masks["reaction"]["removed"].fill_(False)
 
-            gene_map = torch.full(
-                (cell_graph["gene"].num_nodes,),
-                -1,
-                dtype=torch.long,
-                device=self.device,
-            )
-            gene_map[gene_info["keep_subset"]] = torch.arange(
-                len(gene_info["keep_subset"]), device=self.device
-            )
+            # Identity mappings (no relabeling in lazy approach)
+            gene_map = torch.arange(cell_graph["gene"].num_nodes, device=self.device)
             reaction_map = torch.arange(max_reaction_idx, device=self.device)
+            valid_reactions = torch.arange(max_reaction_idx, device=self.device)
 
             return {
                 "valid_reactions": valid_reactions,
@@ -1586,9 +1588,12 @@ class LazySubgraphRepresentation(GraphProcessor):
                 "w_growth": w_growth,
             }
 
+        # Get FULL GPR edge_index (zero-copy reference)
         gpr_edge_index = cell_graph["gene", "gpr", "reaction"].hyperedge_index.to(
             self.device
         )
+
+        # Create gene mask (True = gene is kept/not deleted)
         gene_mask = torch.zeros(
             cell_graph["gene"].num_nodes, dtype=torch.bool, device=self.device
         )
@@ -1598,15 +1603,18 @@ class LazySubgraphRepresentation(GraphProcessor):
         reaction_indices = gpr_edge_index[1]
         max_gene_idx = cell_graph["gene"].num_nodes
 
+        # Validate indices
         valid_mask = (gene_indices < max_gene_idx) & (
             reaction_indices < max_reaction_idx
         )
         gene_indices = gene_indices[valid_mask]
         reaction_indices = reaction_indices[valid_mask]
 
+        # Track which reactions have gene associations
         has_genes = torch.zeros(max_reaction_idx, dtype=torch.bool, device=self.device)
         has_genes[reaction_indices.unique()] = True
 
+        # For each reaction, count how many of its genes are kept
         reaction_gene_sum = scatter(
             gene_mask[gene_indices].float(),
             reaction_indices,
@@ -1614,6 +1622,7 @@ class LazySubgraphRepresentation(GraphProcessor):
             dim_size=max_reaction_idx,
             reduce="sum",
         )
+        # Count total genes per reaction
         total_gene_count = scatter(
             torch.ones_like(gene_indices, dtype=torch.float),
             reaction_indices,
@@ -1621,42 +1630,30 @@ class LazySubgraphRepresentation(GraphProcessor):
             dim_size=max_reaction_idx,
             reduce="sum",
         )
+
+        # Reaction is valid if ALL its genes are kept (not deleted)
+        # OR if it has no gene associations
         valid_with_genes_mask = (reaction_gene_sum == total_gene_count) & has_genes
         valid_without_genes_mask = ~has_genes
         valid_mask_combined = valid_with_genes_mask | valid_without_genes_mask
-        valid_reactions = torch.nonzero(valid_mask_combined).squeeze(-1)
 
+        # Store reaction validity masks
         self.masks["reaction"]["kept"] = valid_mask_combined
         self.masks["reaction"]["removed"] = ~valid_mask_combined
 
-        edge_mask = torch.isin(
-            reaction_indices, torch.where(valid_with_genes_mask)[0]
-        ) & torch.isin(gene_indices, gene_info["keep_subset"])
-        new_gpr_edge_index = gpr_edge_index[:, edge_mask].clone()
+        # Compute GPR edge mask (edge is valid if gene is NOT deleted)
+        edge_mask = torch.ones(gpr_edge_index.size(1), dtype=torch.bool, device=self.device)
+        edge_mask[valid_mask] = gene_mask[gene_indices]
 
-        gene_map = torch.full(
-            (cell_graph["gene"].num_nodes,), -1, dtype=torch.long, device=self.device
-        )
-        gene_map[gene_info["keep_subset"]] = torch.arange(
-            len(gene_info["keep_subset"]), device=self.device
-        )
-        reaction_map = torch.full(
-            (max_reaction_idx,), -1, dtype=torch.long, device=self.device
-        )
-        reaction_map[valid_reactions] = torch.arange(
-            len(valid_reactions), device=self.device
-        )
+        # Return FULL GPR hyperedge_index (zero-copy reference)
+        integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = gpr_edge_index
+        integrated_subgraph["gene", "gpr", "reaction"].num_edges = gpr_edge_index.size(1)
+        integrated_subgraph["gene", "gpr", "reaction"].mask = edge_mask
 
-        new_gpr_edge_index[0] = gene_map[new_gpr_edge_index[0]]
-        new_gpr_edge_index[1] = reaction_map[new_gpr_edge_index[1]]
-
-        integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = (
-            new_gpr_edge_index
-        )
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = (
-            new_gpr_edge_index.size(1)
-        )
-        integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
+        # Return identity mappings (no node relabeling in lazy approach)
+        gene_map = torch.arange(cell_graph["gene"].num_nodes, device=self.device)
+        reaction_map = torch.arange(max_reaction_idx, device=self.device)
+        valid_reactions = torch.arange(max_reaction_idx, device=self.device)  # Keep ALL reactions
 
         return {
             "valid_reactions": valid_reactions,
@@ -1671,16 +1668,22 @@ class LazySubgraphRepresentation(GraphProcessor):
         reaction_info: Dict[str, Any],
         cell_graph: HeteroData,
     ) -> None:
-        # Same as SubgraphRepresentation
+        """
+        Add reaction node data using lazy approach.
+
+        Returns ALL reactions (no filtering), with w_growth attribute.
+        """
         if not reaction_info:
             return
+
         valid_reactions = reaction_info["valid_reactions"]
         integrated_subgraph["reaction"].num_nodes = len(valid_reactions)
         integrated_subgraph["reaction"].node_ids = valid_reactions.tolist()
 
+        # Return full w_growth (reference, no filtering since valid_reactions contains all indices)
         if hasattr(cell_graph["reaction"], "w_growth"):
-            w_growth = cell_graph["reaction"].w_growth
-            integrated_subgraph["reaction"].w_growth = w_growth[valid_reactions]
+            w_growth = reaction_info["w_growth"]
+            integrated_subgraph["reaction"].w_growth = w_growth
 
     def _process_metabolic_network(
         self,
@@ -1703,36 +1706,31 @@ class LazySubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         reaction_info: Dict[str, Any],
     ) -> None:
-        # Same as SubgraphRepresentation
-        valid_reactions = reaction_info["valid_reactions"]
+        """
+        Process RMR (Reaction-Metabolite-Reaction) edges using lazy approach.
+
+        Returns full hyperedge_index and stoichiometry (zero-copy references)
+        with edge masks based on reaction validity from Phase 4.1.
+
+        Phase 4.2: Zero-copy for metabolism bipartite edges
+        """
+        # Get FULL RMR hyperedge_index and stoichiometry (zero-copy references)
         rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
         hyperedge_index = rmr_edges.hyperedge_index.to(self.device)
         stoichiometry = rmr_edges.stoichiometry.to(self.device)
 
-        num_reactions = cell_graph["reaction"].num_nodes
-
-        reaction_map = torch.full(
-            (num_reactions,), -1, dtype=torch.long, device=self.device
-        )
-        reaction_map[valid_reactions] = torch.arange(
-            len(valid_reactions), dtype=torch.long, device=self.device
-        )
-
+        # Compute edge mask: edge is valid if source reaction is valid
         reaction_indices = hyperedge_index[0]
-        metabolite_indices = hyperedge_index[1]
-        edge_mask = reaction_map[reaction_indices] != -1
+        edge_mask = self.masks["reaction"]["kept"][reaction_indices]
 
-        final_edge_index = torch.stack([
-            reaction_map[reaction_indices[edge_mask]],
-            metabolite_indices[edge_mask]
-        ], dim=0)
-        final_edge_attr = stoichiometry[edge_mask]
-
+        # Return FULL graph with mask (zero-copy)
         edge_type = ("reaction", "rmr", "metabolite")
-        integrated_subgraph[edge_type].hyperedge_index = final_edge_index
-        integrated_subgraph[edge_type].stoichiometry = final_edge_attr
-        integrated_subgraph[edge_type].num_edges = final_edge_index.size(1)
+        integrated_subgraph[edge_type].hyperedge_index = hyperedge_index  # Reference
+        integrated_subgraph[edge_type].stoichiometry = stoichiometry      # Reference
+        integrated_subgraph[edge_type].mask = edge_mask                   # Boolean mask
+        integrated_subgraph[edge_type].num_edges = hyperedge_index.size(1)  # Full count
 
+        # Metabolite nodes (keep all)
         integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
         integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
         self.masks["metabolite"]["kept"].fill_(True)

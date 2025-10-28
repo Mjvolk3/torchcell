@@ -165,73 +165,233 @@ _initialize_masks                             1152       233.53       0.2027  (1
 
 ---
 
-## Current Phase: Optimize Gene Interactions
+### Phase 2.2: Incidence-Based Optimization (Path A) ❌ FAILED
 
-**Phase 2 (Revised)**: Data-driven optimization of `_process_gene_interactions`
+**Attempted**: Use incidence cache to accelerate edge mask computation
 
-**Target**: `torchcell/data/graph_processor.py:312-352`
+**Strategy**: Pre-compute node-to-edge incidence mappings to find edges touching perturbed genes in O(k×d) instead of O(E)
 
-**Current Performance**: 8.38ms/call (62% of total processing time)
+**Implementation Attempts**:
+1. Python set operations: 9.59ms/call (14% slower)
+2. Pure tensor operations: 9.10ms/call (10% slower)
 
-**Goal**: Reduce to <4ms per call (2x speedup → 25-40% overall improvement)
+**Why It Failed**:
+- Incidence cache successfully computed masks faster
+- BUT: Still doing expensive operations afterward:
+  - Tensor allocation: `kept_edges = edge_index[:, edge_mask]` (O(E') copy)
+  - Node relabeling: `gene_map[kept_edges[0]]` (O(E') operations)
+  - New tensor creation: `torch.stack([...])` per edge type
+- Competing against PyTorch Geometric's C++/CUDA optimized `subgraph()` using Python-level operations
+- **Core issue**: Wrong optimization layer - computing mask faster doesn't help if we still allocate new tensors
 
-### What `_process_gene_interactions` Does
+**Benchmark Results** (bench-processors_347):
+- SubgraphRepresentation: 54.80ms/sample (_process_gene_interactions: 8.28ms)
+- IncidenceSubgraphRepresentation: 55.62ms/sample (_process_gene_interactions: 9.10ms)
+- **Still 0.82ms SLOWER**
 
-```python
-@time_method
-def _process_gene_interactions(
-    self, integrated_subgraph, cell_graph, gene_info
-):
-    # Process all gene-to-gene edge types (9 types total)
-    for et in cell_graph.edge_types:
-        if et[0] == "gene" and et[2] == "gene":
-            edge_index, _, edge_mask = pyg.utils.subgraph(
-                subset=gene_info["keep_subset"],
-                edge_index=cell_graph[et].edge_index,
-                relabel_nodes=True,
-                num_nodes=cell_graph["gene"].num_nodes,
-                return_edge_mask=True,
-            )
-            integrated_subgraph[et].edge_index = edge_index
-            integrated_subgraph[et].num_edges = edge_index.size(1)
-            integrated_subgraph[et].pert_mask = ~edge_mask
-```
-
-### Bottleneck Analysis
-
-- Loops over 9 edge types (physical, regulatory, tflink, 6x string12_0 channels)
-- Each loop calls PyG's `subgraph()` which:
-  1. Creates boolean mask for subset edges
-  2. Filters edges with boolean indexing
-  3. Relabels node indices (this is expensive!)
-  4. Returns edge_index, edge_attr, edge_mask
-
-### Optimization Opportunities
-
-1. **Pre-compute gene mapping once** instead of 9 times
-2. **Batch process edge types** instead of sequential loop
-3. **Direct edge filtering** to avoid PyG's subgraph() overhead
-4. **Reuse node mask** across all edge types
-
-### Implementation Strategy
-
-1. Pre-compute gene mapping tensor once (reuse across all 9 edge types)
-2. Replace 9 sequential `subgraph()` calls with optimized batch processing
-3. Test equivalence thoroughly
-4. Benchmark with `TORCHCELL_DEBUG_TIMING=1` and `num_workers=0`
-5. Only commit if measurable improvement achieved
+**Key Insight**: The theory is sound, but the implementation is at the wrong architectural layer. We need to stop building new graphs entirely (Path B), not just optimize how we build them (Path A).
 
 ---
 
-## Future Phases
+## Phase 3: LazySubgraphRepresentation (Gene Graphs) ✅ COMPLETE
 
-Based on timing data, if further optimization is needed:
+**Status**: ✅ **11.8x speedup achieved on gene graph processing!**
 
-- **Phase 3**: Optimize `_process_gene_info` and `_process_reaction_info` (14% each)
-- **Phase 4**: Buffer reuse to reduce memory allocations
-- **Phase 5**: Cache edge types (pre-filter gene-gene edges)
+**Implementation**: Created `LazySubgraphRepresentation` class
 
-**Key Principle**: No optimization without timing data proving it's a bottleneck
+**Results**:
+- Gene graph processing: 8.26ms → 0.69ms (**11.8x faster**)
+- Total graph processing: 13.28ms → 5.64ms (2.35x faster)
+- Overall per-sample: 54.98ms → 45.99ms (1.20x faster)
+- Memory savings: ~2.7 MB per sample (93.7% reduction for edge tensors)
+
+**What Was Optimized**:
+- ✅ All gene-gene edge types (physical, regulatory, tflink, string12_0)
+- ✅ Zero-copy edge references
+- ✅ O(k×d) mask computation using incidence cache
+
+**What's Still NOT Optimized**:
+- ❌ Metabolism bipartite edges (reaction-metabolite)
+- ❌ Gene-reaction (GPR) edges
+- ❌ Stoichiometry attributes
+
+See `subgraph-optimization-progress-report.md` for detailed benchmark results.
+
+---
+
+## Current Phase: Lazy All Edge Types (Phase 4)
+
+**Phase 4**: Extend lazy approach to ALL edge types
+
+**Strategy**: Apply zero-copy + mask architecture to metabolism bipartite and GPR edges
+
+**Target**: Complete lazy transformation in `graph_processor.py`
+
+### What's Left to Optimize
+
+**Current State** (from `load_lazy_batch_006.py`):
+
+```python
+HeteroData(
+  # ✅ OPTIMIZED - Zero-copy with masks
+  (gene, physical, gene)={ edge_index=[2,144211], mask=[144211] }
+  (gene, regulatory, gene)={ edge_index=[2,44310], mask=[44310] }
+
+  # ❌ NOT OPTIMIZED - Still allocating/filtering
+  (gene, gpr, reaction)={ hyperedge_index=[2,5450], pert_mask=[5450] }
+  (reaction, rmr, metabolite)={
+    hyperedge_index=[2,26325],
+    stoichiometry=[26325]
+  }
+)
+```
+
+**Phase 4 Tasks**:
+
+1. **Lazy GPR edges** (gene → reaction):
+   - Return full hyperedge_index (reference)
+   - Compute mask based on perturbed genes
+   - ~0.5ms savings
+
+2. **Lazy metabolism bipartite** (reaction → metabolite):
+   - Return full hyperedge_index and stoichiometry (references)
+   - Compute mask based on invalid reactions
+   - ~0.6ms savings
+
+**Expected Total Speedup**: Additional 1-2ms reduction in graph processing
+
+### Phase 3 Success - What Was Achieved
+
+**Current approach** (both SubgraphRepresentation and IncidenceSubgraphRepresentation):
+```python
+# Per batch, per edge type:
+kept_edges = edge_index[:, edge_mask]           # O(E') copy ~2.4M edges
+new_edge_index = torch.stack([                  # O(E') allocation
+    gene_map[kept_edges[0]],                    # O(E') relabeling
+    gene_map[kept_edges[1]]
+])
+integrated_subgraph[et].edge_index = new_edge_index  # Store new tensor
+```
+
+**Cost per batch:**
+- Allocate new tensors: 9 edge types × 2.4M edges × 8 bytes = ~170MB
+- Copy operations: 9 × O(E)
+- Node relabeling: 9 × O(E)
+- Competing against PyG's C++/CUDA with Python operations
+
+**Perturbation processor** (97× faster):
+```python
+# One-time reference, never copied:
+processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
+processed_graph["gene"].pert_mask = pert_mask      # Just mask (6K bools)
+processed_graph["gene"].mask = ~pert_mask         # Just mask
+# No edge_index, no tensor allocation, no copying
+```
+
+---
+
+### Path B Strategy: Mask-Based Architecture
+
+**Key Difference from Perturbation:**
+
+| Aspect | Perturbation (Dango) | HeteroCell (Our Need) |
+|--------|---------------------|----------------------|
+| Message passing | On FULL unperturbed graph | On PERTURBED graph |
+| Mask usage | Node masks for downstream only | Node + edge masks for MP |
+| Edge handling | Model sees all edges | Must simulate edge removal |
+
+**Proposed Architecture:**
+
+```python
+# Processor returns full graph + masks (no tensor allocation)
+processed_graph[et].edge_index = cell_graph[et].edge_index        # Reference only
+processed_graph[et].edge_alive_mask = compute_edge_mask(...)      # Boolean mask
+processed_graph["gene"].x = cell_graph["gene"].x                  # Reference only
+processed_graph["gene"].node_alive_mask = node_mask               # Boolean mask
+processed_graph["gene"].pert_mask = ~node_mask                    # Boolean mask
+```
+
+**Edge mask computation using incidence cache:**
+```python
+# One-time cache build (O(E)):
+incidence[edge_type][gene_idx] = tensor([edge_ids where gene appears])
+
+# Per batch (O(k×d) where k=perturbed genes, d=degree):
+edge_alive_mask = torch.ones(num_edges, dtype=bool)
+for gene_idx in perturbed_genes:
+    edge_alive_mask[incidence[edge_type][gene_idx]] = False
+```
+
+**Cost per batch:**
+- Compute edge masks: O(k×d) ≈ 10 genes × 50 edges = 500 ops (vs 2.4M)
+- Compute node masks: O(k) ≈ 10 ops
+- Tensor allocation: 9 boolean masks × 2.4M bits ≈ 2.7MB (vs 170MB)
+- **No edge_index copying, no node relabeling**
+
+---
+
+### Implementation Plan
+
+**Phase 3.1: Modify Graph Processor**
+
+Create new `MaskedGraphProcessor`:
+1. Build incidence cache on initialization (one-time O(E))
+2. In `process()`:
+   - Return references to full `cell_graph` tensors (no copying)
+   - Compute `node_alive_mask` (O(k))
+   - Compute `edge_alive_mask` per edge type using incidence (O(k×d))
+   - Attach masks to returned graph
+3. Validate with equivalence test modified to compare after mask application
+
+**Phase 3.2: Modify HeteroCell Model**
+
+Update model forward pass to handle masks:
+
+**Option A (Quick)**: Pre-filter edges on GPU before message passing
+```python
+for edge_type in batch.edge_types:
+    edge_mask = batch[edge_type].edge_alive_mask
+    edge_index_active = batch[edge_type].edge_index[:, edge_mask]
+    # Use edge_index_active in message passing
+```
+- Cost: One-time O(E') filter per forward pass on GPU
+- Still faster than CPU-side filtering + host→device transfer
+
+**Option B (Optimal)**: Mask-aware message passing
+```python
+# Custom MessagePassing that applies edge_alive_mask internally
+# Reuse same edge_index every batch, multiply messages by mask
+```
+- Cost: Zero edge filtering, mask applied during aggregation
+- Requires custom layer implementation
+
+**Phase 3.3: Validation Strategy**
+
+1. Create test comparing:
+   - Old: SubgraphRepresentation output
+   - New: MaskedGraphProcessor + mask application
+   - Verify identical after mask filtering
+2. Benchmark both options A and B
+3. Measure end-to-end training speedup
+
+---
+
+### Expected Performance
+
+**Theoretical speedup:**
+- Current: O(N+E) per batch × 9 edge types ≈ 22M ops
+- Path B: O(k×d) per batch × 9 edge types ≈ 4.5K ops
+- **~4800× reduction in preprocessing**
+
+**Realistic expectations:**
+- Current bottleneck: 8.28ms for `_process_gene_interactions`
+- Target: <0.5ms (10-20× speedup)
+- Overall: 54.80ms → 5-10ms per sample (5-10× total)
+
+**Why not 100×?**
+- Other operations still needed (phenotype, GPU transfer, etc.)
+- Model changes (Option A) add some overhead back
+- Conservative: Achieve 10-20× speedup total
 
 ---
 

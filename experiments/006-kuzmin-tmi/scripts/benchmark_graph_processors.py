@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-Benchmark graph processors to verify whether graph processing is the bottleneck.
+Benchmark graph processors to measure Phase 2 optimization (incidence cache) improvements.
 
 Compares:
-1. SubgraphRepresentation (HeteroCell model - with Phase 1 optimization)
+1. SubgraphRepresentation (HeteroCell model - baseline)
    - Uses production graphs from hetero_cell_bipartite_dango_gi_cabbi_056.yaml
-2. Perturbation (Dango model)
+2. IncidenceSubgraphRepresentation (HeteroCell model - Phase 2 optimized)
+   - Same configuration as SubgraphRepresentation
+   - Uses precomputed node-to-edge incidence mappings for O(k*d) edge filtering
+3. Perturbation (Dango model - ideal reference)
    - Uses production graphs from dango_kuzmin2018_tmi_string12_0.yaml
 
 This test measures data loading with GPU transfer to simulate real training.
@@ -18,7 +21,7 @@ import os.path as osp
 from dotenv import load_dotenv
 from torch_geometric.loader import DataLoader
 from torchcell.data import Neo4jCellDataset, MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.data.graph_processor import SubgraphRepresentation, Perturbation
+from torchcell.data.graph_processor import SubgraphRepresentation, Perturbation, IncidenceSubgraphRepresentation
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.metabolism.yeast_GEM import YeastGEM
@@ -200,6 +203,16 @@ def benchmark_graph_processor(processor_name, processor, dataset_creator, num_sa
     dataset = dataset_creator(processor)
     print(f"Dataset length: {len(dataset)}")
 
+    # If this is IncidenceSubgraphRepresentation, build cache before timing
+    from torchcell.data.graph_processor import IncidenceSubgraphRepresentation
+    if isinstance(processor, IncidenceSubgraphRepresentation):
+        print("Building incidence cache (one-time cost)...")
+        cache_stats = processor.build_cache(dataset.cell_graph)
+        print(f"  Cache build time: {cache_stats['total_time_ms']:.2f}ms")
+        print(f"  Edge types cached: {cache_stats['num_edge_types']}")
+        print(f"  Total edges: {cache_stats['total_edges']:,}")
+        print("  → This cost is amortized over entire training run")
+
     # Create dataloader
     dataloader = DataLoader(
         dataset,
@@ -254,13 +267,16 @@ def main():
     print("="*80)
     print("Graph Processor Benchmark")
     print("="*80)
-    print("\nObjective: Verify whether graph processing is the training bottleneck")
+    print("\nObjective: Measure Phase 2 optimization (incidence cache) performance improvement")
     print("\nComparing:")
-    print("  1. SubgraphRepresentation (HeteroCell model - with Phase 1 optimization)")
+    print("  1. SubgraphRepresentation (HeteroCell model - baseline)")
     print("     - Graphs: physical, regulatory, tflink, string12_0 (all 6 channels)")
     print("     - Incidence graphs: metabolism_bipartite")
     print("     - Node embeddings: learnable (64 channels)")
-    print("  2. Perturbation (Dango model)")
+    print("  2. IncidenceSubgraphRepresentation (HeteroCell - Phase 2 optimized)")
+    print("     - Same configuration as SubgraphRepresentation")
+    print("     - Uses precomputed incidence cache for O(k*d) edge filtering")
+    print("  3. Perturbation (Dango model - ideal reference)")
     print("     - Graphs: string12_0 (all 6 channels)")
     print("     - No incidence graphs")
     print("     - No node embeddings")
@@ -270,10 +286,10 @@ def main():
     print("  - Num workers: 2")
     print("  - GPU transfer: Yes")
 
-    # Test 1: SubgraphRepresentation with HeteroCell configuration
+    # Test 1: SubgraphRepresentation with HeteroCell configuration (baseline)
     # TEMPORARY: num_workers=0 to test timing collection
     subgraph_time, subgraph_samples = benchmark_graph_processor(
-        "SubgraphRepresentation (HeteroCell)",
+        "SubgraphRepresentation (HeteroCell - Baseline)",
         SubgraphRepresentation(),
         create_dataset_hetero,
         num_samples=1000,
@@ -281,7 +297,17 @@ def main():
         num_workers=0  # Changed from 2 to 0 for timing test
     )
 
-    # Test 2: Perturbation with Dango configuration
+    # Test 2: IncidenceSubgraphRepresentation with HeteroCell configuration (Phase 2 optimized)
+    incidence_time, incidence_samples = benchmark_graph_processor(
+        "IncidenceSubgraphRepresentation (HeteroCell - Phase 2 Optimized)",
+        IncidenceSubgraphRepresentation(),
+        create_dataset_hetero,
+        num_samples=1000,
+        batch_size=32,
+        num_workers=0  # Keep 0 for fair comparison with SubgraphRepresentation
+    )
+
+    # Test 3: Perturbation with Dango configuration
     pert_time, pert_samples = benchmark_graph_processor(
         "Perturbation (Dango)",
         Perturbation(),
@@ -295,30 +321,45 @@ def main():
     print(f"\n{'='*80}")
     print("BENCHMARK SUMMARY")
     print(f"{'='*80}")
-    print(f"\nSubgraphRepresentation (HeteroCell): {subgraph_time:.2f}s ({subgraph_samples} samples)")
-    print(f"Perturbation (Dango):                {pert_time:.2f}s ({pert_samples} samples)")
-    print(f"\nPer-sample time:")
-    print(f"  SubgraphRepresentation: {subgraph_time/subgraph_samples*1000:.2f}ms/sample")
-    print(f"  Perturbation:           {pert_time/pert_samples*1000:.2f}ms/sample")
-    print(f"\nRelative Performance:")
+    print(f"\nSubgraphRepresentation (Baseline):     {subgraph_time:.2f}s ({subgraph_samples} samples)")
+    print(f"IncidenceSubgraphRepresentation (Ph2): {incidence_time:.2f}s ({incidence_samples} samples)")
+    print(f"Perturbation (Dango):                  {pert_time:.2f}s ({pert_samples} samples)")
 
-    if subgraph_time > pert_time * 1.1:  # 10% threshold for significance
-        slowdown = subgraph_time / pert_time
-        print(f"  SubgraphRepresentation is {slowdown:.2f}x SLOWER than Perturbation")
-        print(f"\n  ✓ Graph processing IS a bottleneck")
-    elif pert_time > subgraph_time * 1.1:
-        speedup = pert_time / subgraph_time
-        print(f"  SubgraphRepresentation is {speedup:.2f}x FASTER than Perturbation")
-        print(f"\n  ✓ Graph processing is NOT the bottleneck")
+    print(f"\nPer-sample time:")
+    print(f"  SubgraphRepresentation:         {subgraph_time/subgraph_samples*1000:.2f}ms/sample")
+    print(f"  IncidenceSubgraphRepresentation: {incidence_time/incidence_samples*1000:.2f}ms/sample")
+    print(f"  Perturbation:                   {pert_time/pert_samples*1000:.2f}ms/sample")
+
+    print(f"\nPhase 2 Optimization Results:")
+    if subgraph_time > incidence_time:
+        speedup = subgraph_time / incidence_time
+        reduction = (1 - incidence_time/subgraph_time) * 100
+        print(f"  IncidenceSubgraphRepresentation is {speedup:.2f}x FASTER than baseline")
+        print(f"  Time reduction: {reduction:.1f}%")
+        if speedup >= 1.5:
+            print(f"\n  ✓ Phase 2 optimization SUCCESSFUL - significant speedup achieved!")
+        else:
+            print(f"\n  → Phase 2 optimization shows improvement but modest")
     else:
-        print(f"  SubgraphRepresentation and Perturbation have similar performance")
-        print(f"  → Difference is within 10% margin")
-        print(f"\n  ✓ Graph processing is NOT the bottleneck")
+        print(f"  ⚠ IncidenceSubgraphRepresentation is NOT faster than baseline")
+        print(f"  → Phase 2 optimization did not improve performance")
+
+    print(f"\nRelative to Perturbation (ideal):")
+    incidence_vs_pert = incidence_time / pert_time
+    print(f"  IncidenceSubgraphRepresentation is {incidence_vs_pert:.2f}x slower than Perturbation")
+
+    if incidence_time > pert_time * 10:
+        print(f"  → Graph processing remains a significant bottleneck")
+    elif incidence_time > pert_time * 2:
+        print(f"  → Graph processing is still a bottleneck, but improved")
+    else:
+        print(f"  → Graph processing bottleneck largely resolved!")
 
     print(f"{'='*80}\n")
 
     # Print timing breakdown if profiling is enabled
     print_timing_summary("SubgraphRepresentation Timing Profile")
+    print_timing_summary("IncidenceSubgraphRepresentation Timing Profile")
 
 
 if __name__ == "__main__":

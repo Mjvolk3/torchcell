@@ -28,6 +28,9 @@ apptainer exec --nv \
 # Add the project root to Python path
 export PYTHONPATH="/home/michaelvolk/Documents/projects/torchcell:$PYTHONPATH"
 
+# Enable expandable memory segments to reduce GPU memory fragmentation
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
 # Activate conda environment
 source ~/miniconda3/bin/activate
 conda activate torchcell

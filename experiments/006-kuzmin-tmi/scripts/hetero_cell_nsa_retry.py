@@ -1,7 +1,7 @@
-# experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_bipartite_dango_gi.py
+# experiments/006-kuzmin-tmi/scripts/hetero_cell_nsa_retry
+# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_nsa_retry]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_nsa_retry
+# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_nsa_retry.py
 
 
 import hashlib

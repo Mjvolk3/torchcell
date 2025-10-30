@@ -152,6 +152,12 @@
                 "problemMatcher": []
             },
             {
+                "label": "Delta: Interactive H200x8",
+                "type": "shell",
+                "command": "srun --account=bbub-delta-gpu --partition=gpuH200x8-interactive --nodes=1 --gpus-per-node=${input:H200x8_num_gpus} --tasks=${input:delta_num_tasks} --cpus-per-task=${input:H200x8_num_cpus} --mem=${input:H200x8_mem} --pty bash",
+                "problemMatcher": []
+            },
+            {
                 "label": "Delta: Interactive CPU",
                 "type": "shell",
                 "command": "srun --account=bbub-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=32g --pty bash",
@@ -348,6 +354,37 @@
                 "type": "pickString",
                 "options": ["1", "2", "4", "8", "16"],
                 "default": "1"
+            },
+            {
+                "id": "H200x8_num_gpus",
+                "description": "H200x8 num gpus (octa-H200)",
+                "type": "pickString",
+                "options": [
+                    "1",
+                    "2",
+                    "4",
+                    "8"
+                ],
+                "default": "1"
+            },
+            {
+                "id": "H200x8_num_cpus",
+                "description": "H200x8 CPUs per task",
+                "type": "pickString",
+                "options": ["1", "8", "16", "32", "64"],
+                "default": "8"
+            },
+            {
+                "id": "H200x8_mem",
+                "description": "H200x8 memory",
+                "type": "pickString",
+                "options": [
+                    "128g",
+                    "256g",
+                    "512g",
+                    "1024g"
+                ],
+                "default": "128g"
             },
             {
                 "id": "delta_num_tasks",

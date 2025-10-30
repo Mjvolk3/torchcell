@@ -1,0 +1,33 @@
+Dead gRNA Design Results
+================================================================================
+
+Total genome gRNA targets analyzed: 740,442
+Target GC content: 38% ± 15%
+
+⚠️  WARNING: Some guides do NOT meet minimum 2 PAM-proximal mismatch requirement!
+These guides may have higher off-target risk. Consider re-running with more iterations.
+
+Dead gRNAs (non-targeting):
+
+dead_1: TCCTATAGAAAACGCTCGGT
+  GC content: 45.0%
+  Weighted mismatch score: 7.0
+  PAM-proximal region (13-20): CGCTCGGT
+  Minimum PAM-proximal mismatches: 1/8 ⚠️  BELOW MINIMUM REQUIREMENT
+
+dead_2:   
+  GC content: 40.0%
+  Weighted mismatch score: 6.5
+  PAM-proximal region (13-20): GCGCGACC
+  Minimum PAM-proximal mismatches: 1/8 ⚠️  BELOW MINIMUM REQUIREMENT
+
+Pairwise mismatches:
+  dead_1 vs dead_2: 16 mismatches
+
+================================================================================
+Design notes:
+- Sequences optimized for S. cerevisiae GC content (~38%)
+- Mismatches prioritized in PAM-proximal region (positions 13-20)
+- Minimum 2 PAM-proximal mismatches required for safety
+- Weighted scoring emphasizes PAM-proximal mismatches (2x weight)
+- Use as negative controls in multiplex gRNA arrays

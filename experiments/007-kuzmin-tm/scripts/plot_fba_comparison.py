@@ -12,6 +12,7 @@ import numpy as np
 from scipy import stats
 from dotenv import load_dotenv
 from datetime import datetime
+from torchcell.timestamp import timestamp
 
 # Use the torchcell style
 mplstyle.use('/home/michaelvolk/Documents/projects/torchcell/torchcell/torchcell.mplstyle')
@@ -69,9 +70,10 @@ def plot_correlations(x_pred, y_exp, title, xlabel="FBA Predicted", ylabel="Expe
 def main():
     """Main function to generate FBA comparison plots."""
     load_dotenv()
-    
+
     # Set up paths
     results_dir = "/home/michaelvolk/Documents/projects/torchcell/experiments/007-kuzmin-tm/results/cobra-fba-growth"
+    ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     
     # Check if matched data exists - try fixed version first
     matched_file_fixed = osp.join(results_dir, "matched_fba_experimental_fixed.parquet")
@@ -179,17 +181,11 @@ def main():
     fig.suptitle('FBA Predictions vs Experimental Data', fontsize=16, fontweight='bold', y=1.02)
     
     plt.tight_layout()
-    
+
     # Save figure
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = osp.join(results_dir, f"fba_comparison_{timestamp}.png")
+    output_file = osp.join(ASSET_IMAGES_DIR, f"experiments.007.fba_comparison_{timestamp()}.png")
     plt.savefig(output_file, dpi=300, bbox_inches='tight')
     print(f"Saved plot to {output_file}")
-    
-    # Also save without timestamp for easy reference
-    output_file_latest = osp.join(results_dir, "fba_comparison_latest.png")
-    plt.savefig(output_file_latest, dpi=300, bbox_inches='tight')
-    print(f"Saved plot to {output_file_latest}")
     
     plt.show()
     

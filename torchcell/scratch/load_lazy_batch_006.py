@@ -3,7 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/scratch/load_lazy_batch_006
 
 """
-Inspect LazySubgraphRepresentation data structure.
+Load data with LazySubgraphRepresentation for masked message passing.
 
 Demonstrates zero-copy edge handling with boolean masks.
 """
@@ -24,9 +24,194 @@ from torchcell.data import Neo4jCellDataset
 from torchcell.data.graph_processor import LazySubgraphRepresentation
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.graph import build_gene_multigraph
+from torchcell.transforms.regression_to_classification import (
+    LabelNormalizationTransform,
+)
+from torchcell.datamodules.lazy_collate import lazy_collate_hetero
+from tqdm import tqdm
+from typing import Literal
 
 
-def main():
+def load_sample_data_batch(
+    batch_size=2,
+    num_workers=2,
+    config: Literal["hetero_cell_bipartite"] = "hetero_cell_bipartite",
+    is_dense: bool = False,
+    use_custom_collate: bool = True,
+):
+    """
+    Load a sample data batch with LazySubgraphRepresentation for masked message passing.
+
+    Args:
+        batch_size: Batch size for dataloader
+        num_workers: Number of workers for dataloader
+        config: Model configuration (currently only "hetero_cell_bipartite" supported)
+        is_dense: Whether to use dense representation (not supported with lazy)
+        use_custom_collate: Whether to use custom collate function for zero-copy batching
+
+    Returns:
+        Tuple of (dataset, batch, input_channels, max_num_nodes)
+    """
+    if is_dense:
+        raise ValueError("Dense representation not supported with LazySubgraphRepresentation")
+
+    # Set all random seeds for reproducibility
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+    EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
+
+    # Initialize genome
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+    genome.drop_empty_go()
+
+    # Initialize graph
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
+
+    # Configuration
+    config_options = {
+        "hetero_cell_bipartite": {
+            "graph_names": ["physical", "regulatory"],
+            "use_metabolism": True,
+            "follow_batch": ["perturbation_indices"],  # Masks batch automatically
+        },
+    }
+
+    selected_config = config_options[config]
+
+    # Build gene multigraph
+    gene_multigraph = build_gene_multigraph(
+        graph=graph,
+        graph_names=selected_config["graph_names"]
+    )
+
+    # Prepare incidence graphs
+    incidence_graphs = {}
+    if selected_config["use_metabolism"]:
+        yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
+        incidence_graphs["metabolism_bipartite"] = yeast_gem.bipartite_graph
+
+    # Load query - same as in hetero_cell_bipartite_dango_gi.py
+    with open(
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+    ) as f:
+        query = f.read()
+
+    # Use same dataset root as existing dataset - graph processor is just a transformation
+    dataset_root = osp.join(
+        DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/001-small-build"
+    )
+
+    # Create dataset with LazySubgraphRepresentation (same dataset, different processor)
+    dataset = Neo4jCellDataset(
+        root=dataset_root,
+        query=query,
+        gene_set=genome.gene_set,
+        graphs=gene_multigraph,
+        incidence_graphs=incidence_graphs,
+        node_embeddings=None,
+        converter=None,
+        deduplicator=MeanExperimentDeduplicator,
+        aggregator=GenotypeAggregator,
+        graph_processor=LazySubgraphRepresentation(),
+        transform=None,
+    )
+
+    # Normalization transform
+    norm_configs = {
+        "gene_interaction": {"strategy": "standard"}  # z-score: (x - mean) / std
+    }
+    normalizer = LabelNormalizationTransform(dataset, norm_configs)
+
+    # Print the normalization parameters
+    for label, stats in normalizer.stats.items():
+        print(f"\nNormalization parameters for {label}:")
+        for key, value in stats.items():
+            if key not in ["bin_edges", "bin_counts", "strategy"]:
+                print(f"  {key}: {value:.6f}")
+        print(f"  strategy: {stats['strategy']}")
+
+    dataset.transform = normalizer
+
+    # Base Module
+    cell_data_module = CellDataModule(
+        dataset=dataset,
+        cache_dir=osp.join(dataset_root, "data_module_cache"),
+        split_indices=[
+            "phenotype_label_index",
+            "perturbation_count_index",
+        ],
+        batch_size=8,
+        random_seed=42,
+        num_workers=4,
+        pin_memory=False,
+        train_shuffle=False,
+    )
+
+    cell_data_module.setup()
+
+    # Subset Module
+    size = 5e4
+
+    perturbation_subset_data_module = PerturbationSubsetDataModule(
+        cell_data_module=cell_data_module,
+        size=int(size),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        pin_memory=True,
+        prefetch=False,
+        seed=seed,
+        follow_batch=selected_config["follow_batch"],
+        train_shuffle=False,
+    )
+    perturbation_subset_data_module.setup()
+
+    max_num_nodes = len(dataset.gene_set)
+
+    # Get a batch
+    if use_custom_collate:
+        # Create custom DataLoader with LazyCollater for Lightning compatibility
+        # PyG's DataLoader respects collate_fn when it's a Collater instance
+        from torch_geometric.loader import DataLoader
+        from torchcell.datamodules.lazy_collate import LazyCollater
+
+        loader = DataLoader(
+            perturbation_subset_data_module.train_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=True,
+            collate_fn=LazyCollater(perturbation_subset_data_module.train_dataset),
+        )
+        for batch in tqdm(loader):
+            break
+    else:
+        # Use standard dataloader from module
+        for batch in tqdm(perturbation_subset_data_module.train_dataloader()):
+            break
+
+    input_channels = dataset.cell_graph["gene"].x.size()[-1]
+
+    return dataset, batch, input_channels, max_num_nodes
+
+
+def inspect_data():
     # Set all random seeds for reproducibility
     seed = 42
     random.seed(seed)
@@ -348,4 +533,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # inspect_data()
+    load_sample_data_batch()

@@ -198,9 +198,11 @@ class CellDataModule(L.LightningDataModule):
         pin_memory: bool = False,
         prefetch: bool = False,
         prefetch_factor: int = 2,
+        persistent_workers: bool = True,
         split_indices: Union[str, List[str], None] = None,
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
+        collate_fn: Optional[object] = None,
     ):
         super().__init__()
         self.dataset = dataset
@@ -211,6 +213,7 @@ class CellDataModule(L.LightningDataModule):
         self.pin_memory = pin_memory
         self.prefetch = prefetch
         self.prefetch_factor = prefetch_factor
+        self.persistent_workers = persistent_workers
         self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
@@ -225,6 +228,7 @@ class CellDataModule(L.LightningDataModule):
             self.follow_batch = ["x", "x_pert"]
         else:
             self.follow_batch = follow_batch
+        self.collate_fn = collate_fn
 
         # Compute index during initialization
         self.index
@@ -390,18 +394,23 @@ class CellDataModule(L.LightningDataModule):
         self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
 
     def _get_dataloader(self, dataset, shuffle=False):
-        loader = DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            persistent_workers=True if self.num_workers > 0 else False,
-            pin_memory=self.pin_memory,
-            follow_batch=self.follow_batch,
-            timeout=10800,
-            multiprocessing_context=("spawn" if self.num_workers > 0 else None),
-            prefetch_factor=self.prefetch_factor,
-        )
+        dataloader_kwargs = {
+            "batch_size": self.batch_size,
+            "shuffle": shuffle,
+            "num_workers": self.num_workers,
+            "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
+            "pin_memory": self.pin_memory,
+            "follow_batch": self.follow_batch,
+            "timeout": 10800,
+            "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
+            "prefetch_factor": self.prefetch_factor,
+        }
+
+        # Add collate_fn if provided
+        if self.collate_fn is not None:
+            dataloader_kwargs["collate_fn"] = self.collate_fn
+
+        loader = DataLoader(dataset, **dataloader_kwargs)
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)

@@ -36,11 +36,13 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         pin_memory: bool = False,
         prefetch: bool = False,
         prefetch_factor: int = 2,
+        persistent_workers: bool = True,
         seed: int = 42,
         dense: bool = False,
         gene_subsets: Optional[dict[str, GeneSet]] = None,
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
+        collate_fn: Optional[object] = None,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -60,12 +62,14 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.pin_memory = pin_memory
         self.prefetch = prefetch
         self.prefetch_factor = prefetch_factor
+        self.persistent_workers = persistent_workers
         self.seed = seed
         self.dense = dense
         if follow_batch is None:
             self.follow_batch = ["x", "x_pert"]
         else:
             self.follow_batch = follow_batch
+        self.collate_fn = collate_fn
         self.cache_dir = self.cell_data_module.cache_dir
         if self.subset_tag:
             self.subset_dir = osp.join(
@@ -367,21 +371,28 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 batch_size=self.batch_size,
                 shuffle=shuffle,
                 num_workers=self.num_workers,
+                persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
                 pin_memory=self.pin_memory,
                 follow_batch=self.follow_batch,
                 multiprocessing_context=("spawn" if self.num_workers > 0 else None),
                 prefetch_factor=self.prefetch_factor,
             )
         else:
-            loader = DataLoader(
-                dataset,
-                batch_size=self.batch_size,
-                shuffle=shuffle,
-                num_workers=self.num_workers,
-                pin_memory=self.pin_memory,
-                follow_batch=self.follow_batch,
-                multiprocessing_context=("spawn" if self.num_workers > 0 else None),
-            )
+            dataloader_kwargs = {
+                "batch_size": self.batch_size,
+                "shuffle": shuffle,
+                "num_workers": self.num_workers,
+                "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
+                "pin_memory": self.pin_memory,
+                "follow_batch": self.follow_batch,
+                "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
+            }
+
+            # Add collate_fn if provided
+            if self.collate_fn is not None:
+                dataloader_kwargs["collate_fn"] = self.collate_fn
+
+            loader = DataLoader(dataset, **dataloader_kwargs)
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)

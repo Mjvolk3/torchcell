@@ -1485,15 +1485,16 @@ class LazySubgraphRepresentation(GraphProcessor):
         cell_graph: HeteroData,
         gene_info: Dict[str, Any],
     ) -> None:
-        # Same as SubgraphRepresentation
-        integrated_subgraph["gene"].node_ids = gene_info["keep_node_ids"]
-        integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
+        # ZERO-COPY: Reference full graph, don't filter anything
+        # This ensures x indices align with edge_index (which uses original node IDs)
+        integrated_subgraph["gene"].node_ids = cell_graph["gene"].node_ids  # All nodes
+        integrated_subgraph["gene"].num_nodes = cell_graph["gene"].num_nodes  # Full count
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
         integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
 
-        x_full = cell_graph["gene"].x
-        integrated_subgraph["gene"].x = x_full[gene_info["keep_subset"]]
-        integrated_subgraph["gene"].x_pert = x_full[gene_info["remove_subset"]]
+        # ZERO-COPY: Reference full x tensor (no slicing/copying)
+        integrated_subgraph["gene"].x = cell_graph["gene"].x  # [num_nodes, feat_dim]
+        # No x_pert - use pert_mask to access perturbed features: x[pert_mask]
 
     @time_method
     def _process_gene_interactions(

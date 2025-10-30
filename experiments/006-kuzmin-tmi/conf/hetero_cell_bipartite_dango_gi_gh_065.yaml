@@ -41,7 +41,7 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 24 # 32 works ... 48 fails, 40 fails, 38 fails
+  batch_size: 28 # 32 works ... 48 fails, 40 fails, 38 fails
   num_workers: 4 # 2 > 8...
   pin_memory: true
   prefetch: false

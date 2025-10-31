@@ -536,6 +536,11 @@ class RegressionTask(L.LightningModule):
             else:
                 sch.step()
 
+        # CRITICAL: Clear GPU memory at end of training epoch
+        # This ensures validation starts with maximum available memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     def on_train_epoch_start(self):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
@@ -561,6 +566,14 @@ class RegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        # CRITICAL: Aggressively clear GPU memory before validation starts
+        # This prevents OOM when transitioning from training to validation
+        # Training state (optimizer, gradients, cached activations) can fragment memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            # Synchronize to ensure all pending operations complete before validation
+            torch.cuda.synchronize()
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1170,6 +1183,14 @@ class DiffusionRegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        # CRITICAL: Aggressively clear GPU memory before validation starts
+        # This prevents OOM when transitioning from training to validation
+        # Training state (optimizer, gradients, cached activations) can fragment memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            # Synchronize to ensure all pending operations complete before validation
+            torch.cuda.synchronize()
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1210,11 +1231,36 @@ class DiffusionRegressionTask(L.LightningModule):
         # Step the scheduler when using manual optimization
         sch = self.lr_schedulers()
         if sch is not None:
-            # Lightning returns a list of schedulers even if there's only one
             if isinstance(sch, list) and len(sch) > 0:
                 sch[0].step()
             else:
                 sch.step()
+
+        # CRITICAL: Clear GPU memory at end of training epoch
+        # This ensures validation starts with maximum available memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    def on_train_epoch_start(self):
+        # Update gradient accumulation steps based on current epoch
+        if self.hparams.grad_accumulation_schedule is not None:
+            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+                epoch_threshold_int = (
+                    int(epoch_threshold)
+                    if isinstance(epoch_threshold, str)
+                    else epoch_threshold
+                )
+                if self.current_epoch >= epoch_threshold_int:
+                    self.current_accumulation_steps = (
+                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                    )
+            print(
+                f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
+            )
+
+        # Clear sample containers at the start of epochs where we'll collect samples
+        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+            self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
         # Log validation metrics

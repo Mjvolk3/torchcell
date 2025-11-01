@@ -14,7 +14,7 @@ load_dotenv()
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
 
 # Load YAML configuration
-yaml_path = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_mmli_038.yaml"
+yaml_path = "/home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_gh_069.yaml"
 with open(yaml_path, 'r') as f:
     config = yaml.safe_load(f)
 

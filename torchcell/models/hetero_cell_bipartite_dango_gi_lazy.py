@@ -18,13 +18,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import Batch, HeteroData
-from torch_geometric.nn import BatchNorm, GATv2Conv, GINConv, HeteroConv, LayerNorm
+from torch_geometric.nn import GATv2Conv, GINConv
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torch_scatter import scatter_mean
 
 from torchcell.graph.graph import GeneMultiGraph
 from torchcell.nn.masked_gin_conv import MaskedGINConv
 from torchcell.models.act import act_register
+from torchcell.models.norm import norm_register
 from typing import List
 from torch_geometric.typing import EdgeType
 
@@ -107,6 +108,7 @@ class PairwiseGraphAggregation(nn.Module):
         activation: str = "relu",
         num_layers: int = 2,
         bottleneck_dim: Optional[int] = None,
+        norm: Optional[str] = None,
     ):
         super().__init__()
         self.graph_names = sorted(graph_names)
@@ -118,8 +120,13 @@ class PairwiseGraphAggregation(nn.Module):
             bottleneck_dim if bottleneck_dim is not None else hidden_dim // 2
         )
 
-        # Get activation layer from register
-        act_layer = act_register.get(activation, nn.ReLU())
+        # Get activation layer from register - NO FALLBACK
+        if activation not in act_register:
+            raise ValueError(
+                f"activation '{activation}' not found in act_register. "
+                f"Available: {list(act_register.keys())}"
+            )
+        act_layer = act_register[activation]
 
         # Pairwise interaction networks with configurable depth and bottleneck
         self.interaction_mlps = nn.ModuleDict()
@@ -161,6 +168,12 @@ class PairwiseGraphAggregation(nn.Module):
             act_layer,
             nn.Linear(self.bottleneck_dim, 1),
         )
+
+        # Normalization after aggregation
+        if norm is not None:
+            self.norm = get_norm_layer(hidden_dim, norm)
+        else:
+            self.norm = None
 
     def forward(
         self, graph_outputs: Dict[str, torch.Tensor]
@@ -222,6 +235,10 @@ class PairwiseGraphAggregation(nn.Module):
         # Weighted aggregation over all options
         aggregated = (stacked * pair_weights.unsqueeze(-1)).sum(dim=1)
 
+        # Apply normalization after aggregation if configured
+        if self.norm is not None:
+            aggregated = self.norm(aggregated)
+
         return aggregated, pair_weights
 
 
@@ -266,6 +283,7 @@ class HeteroConvAggregator(nn.Module):
                 activation=config.get("activation", "relu"),
                 num_layers=config.get("pairwise_num_layers", 2),
                 bottleneck_dim=config.get("pairwise_hidden_dim", None),
+                norm=config.get("aggregation_norm", None),
             )
         elif aggregation_method in ["sum", "mean"]:
             self.aggregator = None  # Will use simple aggregation
@@ -360,16 +378,24 @@ class HeteroConvAggregator(nn.Module):
 
 
 class AttentionalGraphAggregation(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
+    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1, activation: str = "relu"):
         super().__init__()
+        # Validate activation - NO FALLBACK
+        if activation not in act_register:
+            raise ValueError(
+                f"activation '{activation}' not found in act_register. "
+                f"Available: {list(act_register.keys())}"
+            )
+
+        act_layer = act_register[activation]
         self.gate_nn = nn.Sequential(
             nn.Linear(in_channels, in_channels // 2),
-            nn.ReLU(),
+            act_layer,
             nn.Dropout(dropout),
             nn.Linear(in_channels // 2, 1),
         )
         self.transform_nn = nn.Sequential(
-            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
+            nn.Linear(in_channels, out_channels), act_layer, nn.Dropout(dropout)
         )
         self.aggregator = AttentionalAggregation(
             gate_nn=self.gate_nn, nn=self.transform_nn
@@ -387,7 +413,7 @@ class DangoLikeHyperSAGNN(nn.Module):
     Implements multi-layer self-attention with multi-head attention and ReZero connections.
     """
 
-    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1):
+    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
@@ -398,9 +424,16 @@ class DangoLikeHyperSAGNN(nn.Module):
             hidden_dim % num_heads == 0
         ), f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
 
-        # Static embedding layer (like Dango)
+        # Validate activation - NO FALLBACK
+        if activation not in act_register:
+            raise ValueError(
+                f"activation '{activation}' not found in act_register. "
+                f"Available: {list(act_register.keys())}"
+            )
+
+        # Static embedding layer with config-driven activation
         self.static_embedding = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim), nn.ReLU()
+            nn.Linear(hidden_dim, hidden_dim), act_register[activation]
         )
 
         # Create multiple attention layers
@@ -519,14 +552,15 @@ class DangoLikeHyperSAGNN(nn.Module):
 
 
 class GeneInteractionPredictor(nn.Module):
-    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1):
+    def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"):
         super().__init__()
-        # Use the new Dango-like HyperSAGNN
+        # Use the new Dango-like HyperSAGNN with config-driven activation
         self.hyper_sagnn = DangoLikeHyperSAGNN(
             hidden_dim=hidden_dim,
             num_heads=num_heads,
             num_layers=num_layers,
             dropout=dropout,
+            activation=activation,
         )
         # Prediction layer to compute scores from squared differences
         self.prediction_layer = nn.Linear(hidden_dim, 1)
@@ -564,14 +598,25 @@ class GeneInteractionPredictor(nn.Module):
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
-    if norm == "layer":
-        return nn.LayerNorm(
-            channels, eps=1e-5
-        )  # Increased epsilon for better stability
-    elif norm == "batch":
-        return nn.BatchNorm1d(channels, eps=1e-5)  # Also increase batch norm epsilon
-    else:
-        raise ValueError(f"Unsupported norm type: {norm}")
+    """Get normalization layer from norm_register - NO FALLBACK.
+
+    Args:
+        channels: Number of channels for normalization
+        norm: Normalization type string (must be in norm_register)
+
+    Returns:
+        Normalization layer instance
+
+    Raises:
+        ValueError: If norm not found in norm_register
+    """
+    if norm not in norm_register:
+        raise ValueError(
+            f"norm '{norm}' not found in norm_register. "
+            f"Available: {list(norm_register.keys())}"
+        )
+    # PyG norm classes take in_channels as first parameter
+    return norm_register[norm](channels)
 
 
 class PreProcessor(nn.Module):
@@ -585,7 +630,15 @@ class PreProcessor(nn.Module):
         activation: str = "relu",
     ):
         super().__init__()
-        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
+        # Get activation from register - NO FALLBACK
+        if activation is None:
+            raise ValueError("activation must be specified for PreProcessor")
+        if activation not in act_register:
+            raise ValueError(
+                f"activation '{activation}' not found in act_register. "
+                f"Available: {list(act_register.keys())}"
+            )
+        self.act = act_register[activation]
         norm_layer = get_norm_layer(hidden_channels, norm)
         layers = []
         layers.append(nn.Linear(in_channels, hidden_channels))
@@ -642,17 +695,21 @@ class AttentionConvWrapper(nn.Module):
             else nn.Linear(expected_dim, target_dim)
         )
 
+        # Use norm_register - NO FALLBACK
         if norm is not None:
-            if norm == "batch":
-                self.norm = BatchNorm(target_dim)
-            elif norm == "layer":
-                self.norm = LayerNorm(target_dim)
-            else:
-                self.norm = None
+            self.norm = get_norm_layer(target_dim, norm)
         else:
             self.norm = None
 
-        self.act = nn.ReLU() if activation == "relu" else nn.SiLU()
+        # Get activation from register - NO FALLBACK
+        if activation is None:
+            raise ValueError("activation must be specified for AttentionConvWrapper")
+        if activation not in act_register:
+            raise ValueError(
+                f"activation '{activation}' not found in act_register. "
+                f"Available: {list(act_register.keys())}"
+            )
+        self.act = act_register[activation]
         self.dropout = nn.Dropout(dropout) if dropout > 0 else None
 
     def forward(self, x, edge_index, edge_mask=None, **kwargs):
@@ -686,6 +743,7 @@ def create_conv_layer(
     in_channels: int,
     out_channels: int,
     config: Dict[str, Any],
+    activation: str,
     edge_dim: Optional[int] = None,
     dropout: float = 0.1,
 ) -> nn.Module:
@@ -698,12 +756,23 @@ def create_conv_layer(
         in_channels: Input channel dimension
         out_channels: Output channel dimension
         config: Configuration dict for the encoder
+        activation: Activation function name (must be in act_register)
         edge_dim: Edge feature dimension (unused for GIN)
         dropout: Dropout rate for GIN MLP
 
     Returns:
         MaskedGINConv layer with edge masking support
+
+    Raises:
+        ValueError: If activation not found in act_register
     """
+    # Validate activation - NO FALLBACK
+    if activation not in act_register:
+        raise ValueError(
+            f"activation '{activation}' not found in act_register. "
+            f"Available: {list(act_register.keys())}"
+        )
+
     if encoder_type == "gatv2":
         raise NotImplementedError(
             "GATv2 not yet supported for lazy architecture - use GIN encoder. "
@@ -714,18 +783,19 @@ def create_conv_layer(
         gin_hidden = config.get("gin_hidden_dim") or out_channels
         gin_layers = config.get("gin_num_layers", 2)
 
-        # Build MLP
+        # Build MLP with config-driven activation
         mlp_layers = []
+        act_layer = act_register[activation]
         for i in range(gin_layers):
             if i == 0:
                 mlp_layers.extend(
-                    [nn.Linear(in_channels, gin_hidden), nn.ReLU(), nn.Dropout(dropout)]
+                    [nn.Linear(in_channels, gin_hidden), act_layer, nn.Dropout(dropout)]
                 )
             elif i == gin_layers - 1:
                 mlp_layers.append(nn.Linear(gin_hidden, out_channels))
             else:
                 mlp_layers.extend(
-                    [nn.Linear(gin_hidden, gin_hidden), nn.ReLU(), nn.Dropout(dropout)]
+                    [nn.Linear(gin_hidden, gin_hidden), act_layer, nn.Dropout(dropout)]
                 )
 
         mlp = nn.Sequential(*mlp_layers)
@@ -807,6 +877,7 @@ class GeneInteractionDango(nn.Module):
                     in_channels=hidden_channels,
                     out_channels=hidden_channels,
                     config=gene_encoder_config,
+                    activation=activation,
                     dropout=dropout,
                 )
 
@@ -842,17 +913,18 @@ class GeneInteractionDango(nn.Module):
             num_heads=local_predictor_config.get("num_heads", 4),
             num_layers=local_predictor_config.get("num_attention_layers", 2),
             dropout=dropout,
+            activation=activation,
         )
 
         # Global aggregator for proper aggregation
         self.global_aggregator = AttentionalGraphAggregation(
-            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout
+            in_channels=hidden_channels, out_channels=hidden_channels, dropout=dropout, activation=activation
         )
 
         # Global predictor for z_p_global
         self.global_interaction_predictor = nn.Sequential(
             nn.Linear(hidden_channels, hidden_channels),
-            nn.ReLU(),
+            act_register[activation],
             nn.Dropout(dropout),
             nn.Linear(hidden_channels, 1),
         )
@@ -861,7 +933,7 @@ class GeneInteractionDango(nn.Module):
         if self.combination_method == "gating":
             self.gate_mlp = nn.Sequential(
                 nn.Linear(2, hidden_channels),
-                nn.ReLU(),
+                act_register[activation],
                 nn.Dropout(dropout),
                 nn.Linear(hidden_channels, 2),
             )

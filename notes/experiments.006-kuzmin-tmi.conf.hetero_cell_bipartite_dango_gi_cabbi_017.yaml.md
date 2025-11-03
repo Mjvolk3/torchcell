@@ -1,7 +1,7 @@
 ---
 id: eg242o1grrw41qvy7y50eyf
 title: CABBI 017 Config Justification
-desc: 'Justification for configuration changes from CABBI 016 to 017'
+desc: Justification for configuration changes from CABBI 016 to 017
 updated: 1753223931817
 created: 1753223699774
 ---

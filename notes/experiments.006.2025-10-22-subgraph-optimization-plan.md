@@ -1,4 +1,12 @@
-# SubgraphRepresentation Performance Optimization Plan
+---
+id: hgssv2ra7mb0p3kuqa2kien
+title: 2025 10 22 Subgraph Optimization Plan
+desc: ''
+updated: 1762192040385
+created: 1762191965787
+---
+
+## SubgraphRepresentation Performance Optimization Plan
 
 **Project**: TorchCell HeteroCell Model Optimization
 **Target**: 100x speedup in dataset creation (from 44.38ms/sample to <1ms/sample)
@@ -7,7 +15,7 @@
 
 ---
 
-## Table of Contents
+### Table of Contents
 
 1. [Executive Summary](#executive-summary)
 2. [Directory Structure](#directory-structure)
@@ -20,7 +28,7 @@
 
 ---
 
-## Executive Summary
+### Executive Summary
 
 This document outlines a data-driven plan to optimize the SubgraphRepresentation class in TorchCell's graph processor module. The optimization targets dataset creation time, which was 100x slower than the simpler Perturbation processor.
 
@@ -42,30 +50,30 @@ This document outlines a data-driven plan to optimize the SubgraphRepresentation
 
 ---
 
-## Directory Structure
+### Directory Structure
 
 ```
-# Core Implementation
-torchcell/data/graph_processor.py                    # TARGET FILE - SubgraphRepresentation class
-torchcell/profiling/timing.py                        # Timing instrumentation utility
+## Core Implementation
+torchcell/data/graph_processor.py                    ## TARGET FILE - SubgraphRepresentation class
+torchcell/profiling/timing.py                        ## Timing instrumentation utility
 
-# Testing and Benchmarking
+## Testing and Benchmarking
 tests/torchcell/data/test_graph_processor_equivalence.py
 experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py
 experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 
-# Test Data and References
+## Test Data and References
 /scratch/projects/torchcell/data/tests/torchcell/scratch/load_batch_005/
-├── reference_baseline.pkl                           # Baseline reference data
-└── profiling_results/                               # Benchmark outputs
+├── reference_baseline.pkl                           ## Baseline reference data
+└── profiling_results/                               ## Benchmark outputs
 
-# SLURM Outputs
-experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
+## SLURM Outputs
+experiments/006-kuzmin-tmi/slurm/output/*.out       ## Job outputs
 ```
 
 ---
 
-## Key Files Reference
+### Key Files Reference
 
 **Primary Target**: `torchcell/data/graph_processor.py`
 
@@ -91,9 +99,9 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 
 ---
 
-## Completed Phases
+### Completed Phases
 
-### Phase 0: Setup and Baseline ✅
+#### Phase 0: Setup and Baseline ✅
 
 **Deliverables**:
 
@@ -105,7 +113,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 
 ---
 
-### Phase 1: Bipartite Subgraph Optimization ✅
+#### Phase 1: Bipartite Subgraph Optimization ✅
 
 **Target**: `_process_metabolism_bipartite()` method
 
@@ -119,7 +127,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 
 ---
 
-### Phase 1.5: Benchmark Verification ✅
+#### Phase 1.5: Benchmark Verification ✅
 
 **Objective**: Definitively verify whether graph processing is the bottleneck
 
@@ -135,7 +143,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 
 ---
 
-### Phase 2: Boolean Mask Indexing ❌ FAILED
+#### Phase 2: Boolean Mask Indexing ❌ FAILED
 
 **Attempted**: Replace `torch.isin()` with boolean mask indexing
 
@@ -155,7 +163,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 
 ---
 
-### Phase 2.1: Timing Instrumentation ✅
+#### Phase 2.1: Timing Instrumentation ✅
 
 **Objective**: Identify actual bottlenecks using measurement instead of theory
 
@@ -183,7 +191,7 @@ _initialize_masks                             1152       233.53       0.2027  (1
 
 ---
 
-### Phase 2.2: Incidence-Based Optimization (Path A) ❌ FAILED
+#### Phase 2.2: Incidence-Based Optimization (Path A) ❌ FAILED
 
 **Attempted**: Use incidence cache to accelerate edge mask computation
 
@@ -214,7 +222,7 @@ _initialize_masks                             1152       233.53       0.2027  (1
 
 ---
 
-## Phase 3: LazySubgraphRepresentation (Gene Graphs) ✅ COMPLETE
+### Phase 3: LazySubgraphRepresentation (Gene Graphs) ✅ COMPLETE
 
 **Status**: ✅ **11.8x speedup achieved on gene graph processing!**
 
@@ -243,7 +251,7 @@ See `subgraph-optimization-progress-report.md` for detailed benchmark results.
 
 ---
 
-## Current Phase: Lazy All Edge Types (Phase 4)
+### Current Phase: Lazy All Edge Types (Phase 4)
 
 **Phase 4**: Extend lazy approach to ALL edge types
 
@@ -251,17 +259,17 @@ See `subgraph-optimization-progress-report.md` for detailed benchmark results.
 
 **Target**: Complete lazy transformation in `graph_processor.py`
 
-### What's Left to Optimize
+#### What's Left to Optimize
 
 **Current State** (from `load_lazy_batch_006.py`):
 
 ```python
 HeteroData(
-  # ✅ OPTIMIZED - Zero-copy with masks
+  ## ✅ OPTIMIZED - Zero-copy with masks
   (gene, physical, gene)={ edge_index=[2,144211], mask=[144211] }
   (gene, regulatory, gene)={ edge_index=[2,44310], mask=[44310] }
 
-  # ❌ NOT OPTIMIZED - Still allocating/filtering
+  ## ❌ NOT OPTIMIZED - Still allocating/filtering
   (gene, gpr, reaction)={ hyperedge_index=[2,5450], pert_mask=[5450] }
   (reaction, rmr, metabolite)={
     hyperedge_index=[2,26325],
@@ -284,18 +292,18 @@ HeteroData(
 
 **Expected Total Speedup**: Additional 1-2ms reduction in graph processing
 
-### Phase 3 Success - What Was Achieved
+#### Phase 3 Success - What Was Achieved
 
 **Current approach** (both SubgraphRepresentation and IncidenceSubgraphRepresentation):
 
 ```python
-# Per batch, per edge type:
-kept_edges = edge_index[:, edge_mask]           # O(E') copy ~2.4M edges
-new_edge_index = torch.stack([                  # O(E') allocation
-    gene_map[kept_edges[0]],                    # O(E') relabeling
+## Per batch, per edge type:
+kept_edges = edge_index[:, edge_mask]           ## O(E') copy ~2.4M edges
+new_edge_index = torch.stack([                  ## O(E') allocation
+    gene_map[kept_edges[0]],                    ## O(E') relabeling
     gene_map[kept_edges[1]]
 ])
-integrated_subgraph[et].edge_index = new_edge_index  # Store new tensor
+integrated_subgraph[et].edge_index = new_edge_index  ## Store new tensor
 ```
 
 **Cost per batch:**
@@ -308,16 +316,16 @@ integrated_subgraph[et].edge_index = new_edge_index  # Store new tensor
 **Perturbation processor** (97× faster):
 
 ```python
-# One-time reference, never copied:
+## One-time reference, never copied:
 processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
-processed_graph["gene"].pert_mask = pert_mask      # Just mask (6K bools)
-processed_graph["gene"].mask = ~pert_mask         # Just mask
-# No edge_index, no tensor allocation, no copying
+processed_graph["gene"].pert_mask = pert_mask      ## Just mask (6K bools)
+processed_graph["gene"].mask = ~pert_mask         ## Just mask
+## No edge_index, no tensor allocation, no copying
 ```
 
 ---
 
-### Path B Strategy: Mask-Based Architecture
+#### Path B Strategy: Mask-Based Architecture
 
 **Key Difference from Perturbation:**
 
@@ -330,21 +338,21 @@ processed_graph["gene"].mask = ~pert_mask         # Just mask
 **Proposed Architecture:**
 
 ```python
-# Processor returns full graph + masks (no tensor allocation)
-processed_graph[et].edge_index = cell_graph[et].edge_index        # Reference only
-processed_graph[et].edge_alive_mask = compute_edge_mask(...)      # Boolean mask
-processed_graph["gene"].x = cell_graph["gene"].x                  # Reference only
-processed_graph["gene"].node_alive_mask = node_mask               # Boolean mask
-processed_graph["gene"].pert_mask = ~node_mask                    # Boolean mask
+## Processor returns full graph + masks (no tensor allocation)
+processed_graph[et].edge_index = cell_graph[et].edge_index        ## Reference only
+processed_graph[et].edge_alive_mask = compute_edge_mask(...)      ## Boolean mask
+processed_graph["gene"].x = cell_graph["gene"].x                  ## Reference only
+processed_graph["gene"].node_alive_mask = node_mask               ## Boolean mask
+processed_graph["gene"].pert_mask = ~node_mask                    ## Boolean mask
 ```
 
 **Edge mask computation using incidence cache:**
 
 ```python
-# One-time cache build (O(E)):
+## One-time cache build (O(E)):
 incidence[edge_type][gene_idx] = tensor([edge_ids where gene appears])
 
-# Per batch (O(k×d) where k=perturbed genes, d=degree):
+## Per batch (O(k×d) where k=perturbed genes, d=degree):
 edge_alive_mask = torch.ones(num_edges, dtype=bool)
 for gene_idx in perturbed_genes:
     edge_alive_mask[incidence[edge_type][gene_idx]] = False
@@ -359,7 +367,7 @@ for gene_idx in perturbed_genes:
 
 ---
 
-### Implementation Plan
+#### Implementation Plan
 
 **Phase 3.1: Modify Graph Processor**
 
@@ -383,7 +391,7 @@ Update model forward pass to handle masks:
 for edge_type in batch.edge_types:
     edge_mask = batch[edge_type].edge_alive_mask
     edge_index_active = batch[edge_type].edge_index[:, edge_mask]
-    # Use edge_index_active in message passing
+    ## Use edge_index_active in message passing
 ```
 
 - Cost: One-time O(E') filter per forward pass on GPU
@@ -392,8 +400,8 @@ for edge_type in batch.edge_types:
 **Option B (Optimal)**: Mask-aware message passing
 
 ```python
-# Custom MessagePassing that applies edge_alive_mask internally
-# Reuse same edge_index every batch, multiply messages by mask
+## Custom MessagePassing that applies edge_alive_mask internally
+## Reuse same edge_index every batch, multiply messages by mask
 ```
 
 - Cost: Zero edge filtering, mask applied during aggregation
@@ -410,7 +418,7 @@ for edge_type in batch.edge_types:
 
 ---
 
-### Expected Performance
+#### Expected Performance
 
 **Theoretical speedup:**
 
@@ -432,7 +440,7 @@ for edge_type in batch.edge_types:
 
 ---
 
-## Rollback Procedure
+### Rollback Procedure
 
 If any optimization fails:
 
@@ -449,7 +457,7 @@ If any optimization fails:
 
 ---
 
-## Fresh Session Startup
+### Fresh Session Startup
 
 When starting work on this optimization:
 
@@ -472,7 +480,7 @@ When starting work on this optimization:
 
 ---
 
-## Important Notes
+### Important Notes
 
 1. **Never skip equivalence testing** - This ensures correctness
 2. **Always measure before and after** - No optimization without proof it helps

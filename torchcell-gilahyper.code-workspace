@@ -5,9 +5,9 @@
             "path": "."
         },
         {
-            "name": "/scratch/projects/torchcell",
+            "name": "torchcell-scratch",
             "path": "/scratch/projects/torchcell"
-        },
+        }
     ],
     "settings": {
         "dendron.rootDir": ".",

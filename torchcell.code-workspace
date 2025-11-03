@@ -61,7 +61,7 @@
         }
     ],
     "settings": {
-        "dendron.rootDir": ".",
+        "dendron.rootDir": "${workspaceFolder:torchcell}",
         "files.autoSave": "onFocusChange",
         "pasteImage.path": "${currentFileDir}/assets/images",
         "pasteImage.prefix": "./",

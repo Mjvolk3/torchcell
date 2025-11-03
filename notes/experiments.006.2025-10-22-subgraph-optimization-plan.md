@@ -31,6 +31,7 @@ This document outlines a data-driven plan to optimize the SubgraphRepresentation
 **Status**: ✅ **COMPLETE** - Optimization campaign successfully concluded
 
 **Final Results**:
+
 - **Graph processor speedup: 3.65x** (13.72ms → 3.76ms)
 - **Overall speedup: 1.21x** (54.21ms → 44.64ms per sample)
 - **Memory reduction: 93.7%** in edge tensor allocation
@@ -67,19 +68,23 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 ## Key Files Reference
 
 **Primary Target**: `torchcell/data/graph_processor.py`
+
 - Class: `SubgraphRepresentation`
 - Current Bottleneck: `_process_gene_interactions()` (8.38ms/call, 62% of time)
 
 **Benchmarking**:
+
 - Script: `experiments/006-kuzmin-tmi/scripts/benchmark_graph_processors.py`
 - SLURM: `experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm`
 - Run with: `TORCHCELL_DEBUG_TIMING=1` for timing data
 
 **Testing**:
+
 - Equivalence tests: `tests/torchcell/data/test_graph_processor_equivalence.py`
 - Command: `pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs`
 
 **Timing Instrumentation**:
+
 - Utility: `torchcell/profiling/timing.py`
 - Decorator: `@time_method`
 - Enable: Set `TORCHCELL_DEBUG_TIMING=1` environment variable
@@ -91,6 +96,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 ### Phase 0: Setup and Baseline ✅
 
 **Deliverables**:
+
 - Created equivalence test suite
 - Generated baseline reference data
 - Established testing infrastructure
@@ -106,6 +112,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 **Optimization**: Replaced general `bipartite_subgraph()` with optimized filtering for all-metabolite case (100% of usage). Uses direct boolean masking instead of expensive gather/scatter operations.
 
 **Result**:
+
 - Optimization successful (0.70ms/call, only 5% of total time)
 - No training speedup observed (profiler uses cached data)
 - Dataset creation speedup confirmed in Phase 1.5 benchmark
@@ -119,6 +126,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 **Approach**: Direct benchmark comparing SubgraphRepresentation vs Perturbation processors
 
 **Results**:
+
 - SubgraphRepresentation: 44.38ms/sample
 - Perturbation: 0.42ms/sample
 - **104.52x SLOWER**
@@ -136,6 +144,7 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 **Result**: 3.15% SLOWDOWN (45.78ms vs 44.38ms baseline)
 
 **Why It Failed**:
+
 - Allocation overhead (~13k boolean values per call) exceeded algorithmic savings
 - `torch.isin()` is highly optimized in PyTorch's C++/CUDA backend
 - Big-O notation ignores constant factors - library implementations are heavily optimized
@@ -151,11 +160,13 @@ experiments/006-kuzmin-tmi/slurm/output/*.out       # Job outputs
 **Objective**: Identify actual bottlenecks using measurement instead of theory
 
 **Implementation**:
+
 - Created `torchcell/profiling/timing.py` with `@time_method` decorator
 - Added decorators to all SubgraphRepresentation methods
 - Environment variable control: `TORCHCELL_DEBUG_TIMING=1`
 
 **Timing Results** (1,152 calls):
+
 ```
 Method                                       Calls    Total (ms)    Mean (ms)
 -------------------------------------------------------------------------------
@@ -179,10 +190,12 @@ _initialize_masks                             1152       233.53       0.2027  (1
 **Strategy**: Pre-compute node-to-edge incidence mappings to find edges touching perturbed genes in O(k×d) instead of O(E)
 
 **Implementation Attempts**:
+
 1. Python set operations: 9.59ms/call (14% slower)
 2. Pure tensor operations: 9.10ms/call (10% slower)
 
 **Why It Failed**:
+
 - Incidence cache successfully computed masks faster
 - BUT: Still doing expensive operations afterward:
   - Tensor allocation: `kept_edges = edge_index[:, edge_mask]` (O(E') copy)
@@ -192,6 +205,7 @@ _initialize_masks                             1152       233.53       0.2027  (1
 - **Core issue**: Wrong optimization layer - computing mask faster doesn't help if we still allocate new tensors
 
 **Benchmark Results** (bench-processors_347):
+
 - SubgraphRepresentation: 54.80ms/sample (_process_gene_interactions: 8.28ms)
 - IncidenceSubgraphRepresentation: 55.62ms/sample (_process_gene_interactions: 9.10ms)
 - **Still 0.82ms SLOWER**
@@ -207,17 +221,20 @@ _initialize_masks                             1152       233.53       0.2027  (1
 **Implementation**: Created `LazySubgraphRepresentation` class
 
 **Results**:
+
 - Gene graph processing: 8.26ms → 0.69ms (**11.8x faster**)
 - Total graph processing: 13.28ms → 5.64ms (2.35x faster)
 - Overall per-sample: 54.98ms → 45.99ms (1.20x faster)
 - Memory savings: ~2.7 MB per sample (93.7% reduction for edge tensors)
 
 **What Was Optimized**:
+
 - ✅ All gene-gene edge types (physical, regulatory, tflink, string12_0)
 - ✅ Zero-copy edge references
 - ✅ O(k×d) mask computation using incidence cache
 
 **What's Still NOT Optimized**:
+
 - ❌ Metabolism bipartite edges (reaction-metabolite)
 - ❌ Gene-reaction (GPR) edges
 - ❌ Stoichiometry attributes
@@ -270,6 +287,7 @@ HeteroData(
 ### Phase 3 Success - What Was Achieved
 
 **Current approach** (both SubgraphRepresentation and IncidenceSubgraphRepresentation):
+
 ```python
 # Per batch, per edge type:
 kept_edges = edge_index[:, edge_mask]           # O(E') copy ~2.4M edges
@@ -281,12 +299,14 @@ integrated_subgraph[et].edge_index = new_edge_index  # Store new tensor
 ```
 
 **Cost per batch:**
+
 - Allocate new tensors: 9 edge types × 2.4M edges × 8 bytes = ~170MB
 - Copy operations: 9 × O(E)
 - Node relabeling: 9 × O(E)
 - Competing against PyG's C++/CUDA with Python operations
 
 **Perturbation processor** (97× faster):
+
 ```python
 # One-time reference, never copied:
 processed_graph["gene"].num_nodes = cell_graph["gene"].num_nodes
@@ -319,6 +339,7 @@ processed_graph["gene"].pert_mask = ~node_mask                    # Boolean mask
 ```
 
 **Edge mask computation using incidence cache:**
+
 ```python
 # One-time cache build (O(E)):
 incidence[edge_type][gene_idx] = tensor([edge_ids where gene appears])
@@ -330,6 +351,7 @@ for gene_idx in perturbed_genes:
 ```
 
 **Cost per batch:**
+
 - Compute edge masks: O(k×d) ≈ 10 genes × 50 edges = 500 ops (vs 2.4M)
 - Compute node masks: O(k) ≈ 10 ops
 - Tensor allocation: 9 boolean masks × 2.4M bits ≈ 2.7MB (vs 170MB)
@@ -342,6 +364,7 @@ for gene_idx in perturbed_genes:
 **Phase 3.1: Modify Graph Processor**
 
 Create new `MaskedGraphProcessor`:
+
 1. Build incidence cache on initialization (one-time O(E))
 2. In `process()`:
    - Return references to full `cell_graph` tensors (no copying)
@@ -355,20 +378,24 @@ Create new `MaskedGraphProcessor`:
 Update model forward pass to handle masks:
 
 **Option A (Quick)**: Pre-filter edges on GPU before message passing
+
 ```python
 for edge_type in batch.edge_types:
     edge_mask = batch[edge_type].edge_alive_mask
     edge_index_active = batch[edge_type].edge_index[:, edge_mask]
     # Use edge_index_active in message passing
 ```
+
 - Cost: One-time O(E') filter per forward pass on GPU
 - Still faster than CPU-side filtering + host→device transfer
 
 **Option B (Optimal)**: Mask-aware message passing
+
 ```python
 # Custom MessagePassing that applies edge_alive_mask internally
 # Reuse same edge_index every batch, multiply messages by mask
 ```
+
 - Cost: Zero edge filtering, mask applied during aggregation
 - Requires custom layer implementation
 
@@ -386,16 +413,19 @@ for edge_type in batch.edge_types:
 ### Expected Performance
 
 **Theoretical speedup:**
+
 - Current: O(N+E) per batch × 9 edge types ≈ 22M ops
 - Path B: O(k×d) per batch × 9 edge types ≈ 4.5K ops
 - **~4800× reduction in preprocessing**
 
 **Realistic expectations:**
+
 - Current bottleneck: 8.28ms for `_process_gene_interactions`
 - Target: <0.5ms (10-20× speedup)
 - Overall: 54.80ms → 5-10ms per sample (5-10× total)
 
 **Why not 100×?**
+
 - Other operations still needed (phenotype, GPU transfer, etc.)
 - Model changes (Option A) add some overhead back
 - Conservative: Achieve 10-20× speedup total
@@ -409,9 +439,11 @@ If any optimization fails:
 1. **STOP** - Do not proceed to next optimization
 2. Check test output for specific failure
 3. If quick fix not possible, revert:
+
    ```bash
    git checkout HEAD~1 torchcell/data/graph_processor.py
    ```
+
 4. Re-run equivalence test to confirm rollback
 5. Document issue before re-attempting
 
@@ -424,14 +456,18 @@ When starting work on this optimization:
 1. **Read this document** and the progress report
 2. **Check current status**: Review git log to see what's been completed
 3. **Verify environment**:
+
    ```bash
    cd /home/michaelvolk/Documents/projects/torchcell
    conda activate torchcell
    ```
+
 4. **Test baseline**:
+
    ```bash
    pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs
    ```
+
 5. **Review timing data**: Check latest benchmark output with timing enabled
 
 ---

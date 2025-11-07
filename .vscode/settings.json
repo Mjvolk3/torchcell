@@ -1,4 +1,6 @@
 {
+    "dendron.rootDir": ".",
+    "dendron.enableSelfContainedVaultWorkspace": true,
     "python.testing.pytestArgs": [
         "tests"
     ],

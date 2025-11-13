@@ -2,7 +2,7 @@
 id: fhnlsnhc5jzs2jeqjl7g3o2
 title: report
 desc: ''
-updated: 1763015567576
+updated: 1763016338122
 created: 1762703906577
 ---
 ## Chapters
@@ -470,6 +470,7 @@ with a transformer cell encoder, graph-regularized attention heads, a CLS whole-
 All files were moved from their original locations to follow dendron naming conventions for better organization and future reference.
 
 #### Profile Results
+
 *Moved from root directory to `experiments/006-kuzmin-tmi/profiling_results/`*
 
 - `profile_results_2025-11-05-02-53-40.txt` → `lazy.hetero.profile.2025.11.05.025340.txt`
@@ -481,6 +482,7 @@ All files were moved from their original locations to follow dendron naming conv
 - `profile_dango_results_2025-11-05-16-26-56.txt` → `dango.profile.2025.11.05.162656.txt`
 
 #### Documentation Files
+
 *Moved from `experiments/006-kuzmin-tmi/` to `notes/`*
 
 - `DANGO_VS_LAZY_HETERO_PROFILE_COMPARISON.md` → `experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison.md`
@@ -490,6 +492,7 @@ All files were moved from their original locations to follow dendron naming conv
 - `VECTORIZATION_SUMMARY.md` → `experiments.006-kuzmin-tmi.2025.11.06.gpu-mask-vectorization.md`
 
 #### Analysis Files
+
 *Moved from `experiments/006-kuzmin-tmi/analysis/` to `notes/`*
 
 - `final_preprocessing_solution.md` → `experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution.md`
@@ -542,11 +545,13 @@ Key modifications to torchcell package during experiments:
 ### Experiment Configurations
 
 Key configuration files used (preserved in `experiments/006-kuzmin-tmi/conf/`):
+
 - Configs 073-087: Various attempts at optimization
 - Final test config 087: Comprehensive comparison of all methods
 
 ### Profiling Results
 
 All profiling outputs preserved in:
+
 - `experiments/006-kuzmin-tmi/profiling_results/`
 - Multiple runs showing consistent 380x slowdown (545 it/s vs 1.4 it/s)

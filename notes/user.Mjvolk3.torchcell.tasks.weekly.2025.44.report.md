@@ -2,7 +2,7 @@
 id: fhnlsnhc5jzs2jeqjl7g3o2
 title: report
 desc: ''
-updated: 1763011107577
+updated: 1763015567576
 created: 1762703906577
 ---
 ## Chapters
@@ -84,7 +84,7 @@ Compare all 5 graph processing methods under identical conditions:
 
 | Method       | it/s    | Speedup vs DANGO | Est. Max  GPU Mem (MB/batch) | Batch   | Nodes/sample | Edges/sample |
 |--------------|---------|------------------|------------------------------|---------|--------------|--------------|
-| DANGO        | 545.120 | 1.00×            | 4.0                          | 60      | 103.2        | 0.0          |
+| DANGO        | 545.120 | 1.00×            | 4.0                          | 60      | 103.2        | 0.a0          |
 | LazySubgraph | 1.433   | 0×               | 1,155.4                      | 973,650 | 6,607.0      | 2,527,683.0  |
 | 1-hop        | 6.798   | .01×             | 88.7                         | 60      | 697.0        | 196,445.6    |
 | 2-hop        | 2.499   | 0×               | 808.7                        | 1488    | 3,758.9      | 1,878,158.4  |
@@ -470,6 +470,7 @@ with a transformer cell encoder, graph-regularized attention heads, a CLS whole-
 All files were moved from their original locations to follow dendron naming conventions for better organization and future reference.
 
 #### Profile Results
+
 *Moved from root directory to `experiments/006-kuzmin-tmi/profiling_results/`*
 
 - `profile_results_2025-11-05-02-53-40.txt` → `lazy.hetero.profile.2025.11.05.025340.txt`
@@ -481,6 +482,7 @@ All files were moved from their original locations to follow dendron naming conv
 - `profile_dango_results_2025-11-05-16-26-56.txt` → `dango.profile.2025.11.05.162656.txt`
 
 #### Documentation Files
+
 *Moved from `experiments/006-kuzmin-tmi/` to `notes/`*
 
 - `DANGO_VS_LAZY_HETERO_PROFILE_COMPARISON.md` → `experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison.md`
@@ -490,6 +492,7 @@ All files were moved from their original locations to follow dendron naming conv
 - `VECTORIZATION_SUMMARY.md` → `experiments.006-kuzmin-tmi.2025.11.06.gpu-mask-vectorization.md`
 
 #### Analysis Files
+
 *Moved from `experiments/006-kuzmin-tmi/analysis/` to `notes/`*
 
 - `final_preprocessing_solution.md` → `experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution.md`
@@ -498,7 +501,8 @@ All files were moved from their original locations to follow dendron naming conv
 ### Key Supporting Files
 
 1. **Performance Analysis**: [[experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison]]
-   - Comprehensive comparison showing 875x slowdown of LazySubgraph vs DANGO
+   - Comprehensive comparison showing 380x slowdown of LazySubgraph vs DANGO (545 it/s vs 1.4 it/s)
+   - 25-step DDP profiling showed even worse 875x slowdown in specific conditions
    - Analysis of why HeteroData collation is so expensive
 
 2. **Optimization Attempts**:
@@ -541,11 +545,13 @@ Key modifications to torchcell package during experiments:
 ### Experiment Configurations
 
 Key configuration files used (preserved in `experiments/006-kuzmin-tmi/conf/`):
+
 - Configs 073-087: Various attempts at optimization
 - Final test config 087: Comprehensive comparison of all methods
 
 ### Profiling Results
 
 All profiling outputs preserved in:
+
 - `experiments/006-kuzmin-tmi/profiling_results/`
-- Multiple runs showing consistent 875x slowdown
+- Multiple runs showing consistent 380x slowdown (545 it/s vs 1.4 it/s)

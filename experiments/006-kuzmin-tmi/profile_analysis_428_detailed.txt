@@ -1,0 +1,101 @@
+Loading trace file: /scratch/projects/torchcell/data/torchcell/experiments/006-kuzmin-tmi/profiler_output/hetero_dango_gi_lazy_gilahyper-428_abebce6773e3499993d3e0102a244bfa99c20e8dcee764b81dcf64696d79ed9c/gilahyper_14756.1762199860065785297.pt.trace.json
+(This may take 30-60 seconds for large files...)
+
+Total trace events: 8,096,161
+
+================================================================================
+OPERATION CATEGORY BREAKDOWN
+================================================================================
+Category                        Time (ms)          % Description                   
+--------------------------------------------------------------------------------
+other                          311,451.09      27.3% Miscellaneous operations      
+optimizer                      274,122.53      24.0% Parameter updates             
+model_forward                  162,506.92      14.2% Model forward pass            
+ddp_communication              158,441.66      13.9% DDP gradient sync             
+tensor_ops                      96,695.94       8.5% Tensor operations (aten::)    
+cuda_kernels                    55,793.52       4.9% GPU kernel execution          
+graph_processing                34,301.22       3.0% Graph operations, masking     
+loss_computation                24,394.86       2.1% Loss calculation              
+backward                        23,426.98       2.1% Gradient computation          
+data_loading                         4.02       0.0% DataLoader, batching, workers 
+o
+Total time                   1,141,138.74 ms
+
+================================================================================
+TOP 10 OPERATIONS PER CATEGORY
+================================================================================
+
+--- OPTIMIZER ---
+Operation                                                                    Time (ms)
+--------------------------------------------------------------------------------------
+ProfilerStep#601                                                             97,112.24
+[pl][profile][Strategy]DDPStrategy.training_step                             82,139.07
+ProfilerStep#624                                                              4,229.35
+ProfilerStep#610                                                              4,189.70
+ProfilerStep#618                                                              4,185.60
+ProfilerStep#608                                                              4,136.43
+ProfilerStep#611                                                              4,085.99
+ProfilerStep#605                                                              4,019.26
+ProfilerStep#615                                                              4,012.95
+ProfilerStep#617                                                              3,994.69
+
+--- MODEL FORWARD ---
+Operation                                                                    Time (ms)
+--------------------------------------------------------------------------------------
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.He...       19,101.89
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.Pa...        8,136.40
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.He...        7,925.13
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.He...        7,490.76
+autograd::engine::evaluate_function: MulBackward0                             6,626.38
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.Pa...        6,587.49
+[pl][module]torchcell.models.hetero_cell_bipartite_dango_gi_lazy.Pa...        5,973.05
+autograd::engine::evaluate_function: AddmmBackward0                           5,617.26
+aten::gather                                                                  5,546.88
+void at::native::vectorized_gather_kernel<16, long>(char*, char*, l...        5,423.79
+
+--- DDP COMMUNICATION ---
+Operation                                                                    Time (ms)
+--------------------------------------------------------------------------------------
+DistributedDataParallel.forward                                             122,919.71
+nccl:all_reduce                                                               7,454.99
+ncclDevKernel_AllReduce_Sum_f32_RING_LL(ncclDevKernelArgsStorage<40...        7,151.99
+nccl:all_reduce_barrier                                                       6,914.39
+nccl:all_gather                                                               4,715.17
+c10d::allreduce_                                                              3,764.26
+c10d::allgather_                                                              2,370.78
+ncclDevKernel_AllGather_RING_LL(ncclDevKernelArgsStorage<4096ul>)             2,339.23
+torch::distributed::reducer::mul_out                                            431.55
+torch.distributed.ddp.reducer::copy_bucket_to_grad                              373.44
+
+--- TENSOR OPS ---
+Operation                                                                    Time (ms)
+--------------------------------------------------------------------------------------
+aten::mul                                                                    11,894.29
+void at::native::elementwise_kernel<128, 2, at::native::gpu_kernel_...        9,404.63
+aten::to                                                                      7,926.45
+aten::_to_copy                                                                7,644.08
+aten::linear                                                                  7,265.95
+aten::copy_                                                                   6,233.81
+aten::sum                                                                     6,227.13
+aten::mm                                                                      5,642.97
+aten::logsumexp                                                               3,699.64
+aten::index_select                                                            2,853.59
+
+================================================================================
+BOTTLENECK ANALYSIS
+================================================================================
+Data Loading:             0.0%  (4 ms)
+Graph Processing:         3.0%  (34,301 ms)
+Model Forward:           14.2%  (162,507 ms)
+Loss Computation:         2.1%  (24,395 ms)
+Backward Pass:            2.1%  (23,427 ms)
+DDP Communication:       13.9%  (158,442 ms)
+Optimizer:               24.0%  (274,123 ms)
+CUDA Kernels:             4.9%  (55,794 ms)
+
+BOTTLENECK IDENTIFICATION:
+⚠️  CPU OVERHEAD (19.3% CPU vs 4.9% GPU)
+    → GPU is underutilized. Increase batch size or reduce CPU preprocessing.
+✅  DATA LOADING OPTIMIZED (3.0%)
+    → Data loading is not a bottleneck. No need to save masks to disk.
+================================================================================

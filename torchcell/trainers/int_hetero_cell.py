@@ -37,10 +37,12 @@ class RegressionTask(L.LightningModule):
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
         inverse_transform: Optional[nn.Module] = None,
+        execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
+        self.execution_mode = execution_mode
         # Clone cell_graph to avoid modifying the dataset's original cell_graph
         # This is necessary for pin_memory compatibility in DataLoader
         self.cell_graph = cell_graph.clone()
@@ -101,6 +103,30 @@ class RegressionTask(L.LightningModule):
         return dummy_loss
 
     def _shared_step(self, batch, batch_idx, stage="train"):
+        # DataLoader profiling mode: Skip model forward, create dummy loss
+        if self.execution_mode == "dataloader_profiling":
+            # Execute all batch preparation (moving to device happens in forward())
+            batch_device = batch["gene"].x.device
+            # Ensure cell_graph is on correct device
+            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+                self.cell_graph = self.cell_graph.to(batch_device)
+                self._cell_graph_device = batch_device
+
+            # Create trivial loss that touches ALL model parameters (required for DDP)
+            # This ensures no "unused parameters" error in DDP mode
+            loss = torch.zeros((), device=batch_device, requires_grad=True)
+            for param in self.model.parameters():
+                if param.requires_grad:
+                    loss = loss + (param * 0.0).sum()
+
+            # Log minimal metrics
+            batch_size = batch["gene"].x.size(0)
+            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
+            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+
+            return loss, None, None
+
+        # Normal training/validation/test execution
         # Get model outputs
         predictions, representations = self(batch)
 
@@ -226,12 +252,14 @@ class RegressionTask(L.LightningModule):
                 batch_size=batch_size,
                 sync_dist=True,
             )
-            self.log(
-                f"{stage}/gate_weight_local",
-                avg_gate_weights[1],
-                batch_size=batch_size,
-                sync_dist=True,
-            )
+            # Only log local weight if it exists (when local predictor is enabled)
+            if avg_gate_weights.size(0) > 1:
+                self.log(
+                    f"{stage}/gate_weight_local",
+                    avg_gate_weights[1],
+                    batch_size=batch_size,
+                    sync_dist=True,
+                )
 
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)
@@ -361,6 +389,12 @@ class RegressionTask(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
+
+        # Model profiling mode: Skip optimizer step to isolate model compute
+        if self.execution_mode == "model_profiling":
+            return loss
+
+        # Normal training: Run optimizer
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
         opt = self.optimizers()
@@ -711,10 +745,12 @@ class DiffusionRegressionTask(L.LightningModule):
         grad_accumulation_schedule: Optional[dict[int, int]] = None,
         device: str = "cuda",
         inverse_transform: Optional[nn.Module] = None,
+        execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
+        self.execution_mode = execution_mode
         # Clone cell_graph to avoid modifying the dataset's original cell_graph
         # This is necessary for pin_memory compatibility in DataLoader
         self.cell_graph = cell_graph.clone()
@@ -781,6 +817,30 @@ class DiffusionRegressionTask(L.LightningModule):
         return dummy_loss
 
     def _shared_step(self, batch, batch_idx, stage="train"):
+        # DataLoader profiling mode: Skip model forward, create dummy loss
+        if self.execution_mode == "dataloader_profiling":
+            # Execute all batch preparation (moving to device happens in forward())
+            batch_device = batch["gene"].x.device
+            # Ensure cell_graph is on correct device
+            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+                self.cell_graph = self.cell_graph.to(batch_device)
+                self._cell_graph_device = batch_device
+
+            # Create trivial loss that touches ALL model parameters (required for DDP)
+            # This ensures no "unused parameters" error in DDP mode
+            loss = torch.zeros((), device=batch_device, requires_grad=True)
+            for param in self.model.parameters():
+                if param.requires_grad:
+                    loss = loss + (param * 0.0).sum()
+
+            # Log minimal metrics
+            batch_size = batch["gene"].x.size(0)
+            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
+            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+
+            return loss, None, None
+
+        # Normal training/validation/test execution
         # Get model outputs
         predictions, representations = self(batch)
 
@@ -883,12 +943,14 @@ class DiffusionRegressionTask(L.LightningModule):
                 batch_size=batch_size,
                 sync_dist=True,
             )
-            self.log(
-                f"{stage}/gate_weight_local",
-                avg_gate_weights[1],
-                batch_size=batch_size,
-                sync_dist=True,
-            )
+            # Only log local weight if it exists (when local predictor is enabled)
+            if avg_gate_weights.size(0) > 1:
+                self.log(
+                    f"{stage}/gate_weight_local",
+                    avg_gate_weights[1],
+                    batch_size=batch_size,
+                    sync_dist=True,
+                )
 
         # Update transformed metrics
         mask = ~torch.isnan(gene_interaction_vals)
@@ -1018,6 +1080,12 @@ class DiffusionRegressionTask(L.LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
+
+        # Model profiling mode: Skip optimizer step to isolate model compute
+        if self.execution_mode == "model_profiling":
+            return loss
+
+        # Normal training: Run optimizer
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
         opt = self.optimizers()

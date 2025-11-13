@@ -1,0 +1,11 @@
+# Experiment 086a: DataLoader profiling only (skip model forward/backward)
+# Measures: Data loading + graph processor + collation + CPU→GPU transfer
+defaults:
+  - hetero_cell_bipartite_dango_gi_gh_086
+  - _self_
+
+wandb:
+  tags: [experiment_086a, dataloader_profiling, lazy_hetero, single_gpu]
+
+regression_task:
+  execution_mode: "dataloader_profiling"  # Skip model forward, use dummy loss

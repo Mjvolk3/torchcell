@@ -1,0 +1,17 @@
+# DataLoader profiling config for DANGO model
+# Inherits from dango_kuzmin2018_tmi_string12_0 but enables dataloader profiling mode
+defaults:
+  - dango_kuzmin2018_tmi_string12_0  # Inherit from base DANGO config
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_dango_debug  # Debug project
+  tags: [dataloader_profiling, dango, debug, ddp]
+
+trainer:
+  max_steps: 100  # Short run for profiling (measure overhead only)
+  max_epochs: 1
+
+regression_task:
+  execution_mode: "dataloader_profiling"  # Enable profiling mode - skips model forward
+  plot_every_n_epochs: 999999  # Disable plotting during profiling

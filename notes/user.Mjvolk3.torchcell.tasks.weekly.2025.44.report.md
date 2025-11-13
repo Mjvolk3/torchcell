@@ -2,7 +2,7 @@
 id: fhnlsnhc5jzs2jeqjl7g3o2
 title: report
 desc: ''
-updated: 1762972759543
+updated: 1763011107577
 created: 1762703906577
 ---
 ## Chapters
@@ -458,3 +458,94 @@ with a transformer cell encoder, graph-regularized attention heads, a CLS whole-
 - Regularization might compete with the overall objective. I doubt this is true, but it could be that the graph structures make it harder to learn the objective. Regardless I think we need it because our training signal is so sparse.
 - Balancing regularization strength. See above point.
 - Attention interpretability. Graph attention on previous model is pretty obvious to interpret but it will be difficult to know how far we can take interpretation on the regularized attention. More on this later.
+
+---
+
+## Supporting Documentation and Artifacts
+
+*Files reorganized 2025.11.12 to document experimental findings*
+
+### File Movement Mapping
+
+All files were moved from their original locations to follow dendron naming conventions for better organization and future reference.
+
+#### Profile Results
+*Moved from root directory to `experiments/006-kuzmin-tmi/profiling_results/`*
+
+- `profile_results_2025-11-05-02-53-40.txt` → `lazy.hetero.profile.2025.11.05.025340.txt`
+- `profile_results_2025-11-05-03-00-04.txt` → `lazy.hetero.profile.2025.11.05.030004.txt`
+- `profile_results_2025-11-05-03-22-23.txt` → `lazy.hetero.profile.2025.11.05.032223.txt`
+- `profile_results_2025-11-05-03-28-17.txt` → `lazy.hetero.profile.2025.11.05.032817.txt`
+- `profile_results_2025-11-05-03-34-41.txt` → `lazy.hetero.profile.2025.11.05.033441.txt`
+- `profile_results_2025-11-05-16-33-37.txt` → `lazy.hetero.profile.2025.11.05.163337.txt`
+- `profile_dango_results_2025-11-05-16-26-56.txt` → `dango.profile.2025.11.05.162656.txt`
+
+#### Documentation Files
+*Moved from `experiments/006-kuzmin-tmi/` to `notes/`*
+
+- `DANGO_VS_LAZY_HETERO_PROFILE_COMPARISON.md` → `experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison.md`
+- `DDP_DEVICE_FIX.md` → `experiments.006-kuzmin-tmi.2025.11.06.ddp-device-fix.md`
+- `FINAL_FIX_SUMMARY.md` → `experiments.006-kuzmin-tmi.2025.11.06.vectorization-final-fix.md`
+- `README_PREPROCESSING.md` → `experiments.006-kuzmin-tmi.2025.11.06.preprocessing-workflow.md`
+- `VECTORIZATION_SUMMARY.md` → `experiments.006-kuzmin-tmi.2025.11.06.gpu-mask-vectorization.md`
+
+#### Analysis Files
+*Moved from `experiments/006-kuzmin-tmi/analysis/` to `notes/`*
+
+- `final_preprocessing_solution.md` → `experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution.md`
+- `corrected_storage_calculations.md` → `experiments.006-kuzmin-tmi.2025.11.04.storage-calculations.md`
+
+### Key Supporting Files
+
+1. **Performance Analysis**: [[experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison]]
+   - Comprehensive comparison showing 875x slowdown of LazySubgraph vs DANGO
+   - Analysis of why HeteroData collation is so expensive
+
+2. **Optimization Attempts**:
+   - [[experiments.006-kuzmin-tmi.2025.11.06.vectorization-final-fix|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.vectorization-final-fix]] - GPU mask vectorization
+   - [[experiments.006-kuzmin-tmi.2025.11.06.ddp-device-fix|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.ddp-device-fix]] - Multi-GPU device handling
+
+3. **Preprocessing Solutions**:
+   - [[experiments.006-kuzmin-tmi.2025.11.06.preprocessing-workflow|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.preprocessing-workflow]] - Full preprocessing pipeline
+   - [[experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution]] - UINT8 masks storage
+
+4. **Storage Analysis**: [[experiments.006-kuzmin-tmi.2025.11.04.storage-calculations|dendron://torchcell/experiments.006-kuzmin-tmi.2025.11.04.storage-calculations]]
+   - Corrected calculations: 820GB (not 13TB as initially feared)
+
+### Package File Changes
+
+Key modifications to torchcell package during experiments:
+
+1. **torchcell/data/graph_processor.py** (+192 lines)
+   - Added `NeighborSubgraphRepresentation` class for k-hop neighborhood sampling
+   - Attempted to reduce graph size by only including k-hop neighborhoods
+
+2. **torchcell/models/hetero_cell_bipartite_dango_gi_lazy.py** (+262/-131 lines)
+   - Major refactor attempting various optimizations
+   - Added GPU mask generation and vectorized operations
+
+3. **torchcell/trainers/int_hetero_cell.py** (+92 lines)
+   - Added `execution_mode` parameter for profiling modes
+   - Supports `dataloader_profiling` to skip model forward pass
+   - Supports `model_profiling` to skip optimizer step
+
+4. **torchcell/trainers/int_dango.py** (+34 lines)
+   - Similar execution_mode support for DANGO baseline comparisons
+
+5. **torchcell/datamodules/cell.py** (+12 lines)
+   - Minor adjustments for profiling support
+
+6. **torchcell/datamodules/perturbation_subset.py** (+14 lines)
+   - Subset handling improvements for profiling
+
+### Experiment Configurations
+
+Key configuration files used (preserved in `experiments/006-kuzmin-tmi/conf/`):
+- Configs 073-087: Various attempts at optimization
+- Final test config 087: Comprehensive comparison of all methods
+
+### Profiling Results
+
+All profiling outputs preserved in:
+- `experiments/006-kuzmin-tmi/profiling_results/`
+- Multiple runs showing consistent 875x slowdown

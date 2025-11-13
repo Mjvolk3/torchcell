@@ -1,4 +1,11 @@
 ---
+id: v8ds0hmvgpz1ap34i81izta
+title: 2025 10 28 Lazy_hetero_cell_bipartite_dango_gi
+desc: ''
+updated: 1762411216205
+created: 1762411216205
+---
+"---
 id: 26numbyqvg8vz3orkktjz25
 title: 2025 10 28 Lazy_hetero_cell_bipartite_dango_gi
 desc: ''

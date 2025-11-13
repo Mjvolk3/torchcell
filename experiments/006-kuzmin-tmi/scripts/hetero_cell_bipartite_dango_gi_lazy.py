@@ -10,7 +10,11 @@ import logging
 import os
 import os.path as osp
 import uuid
+import warnings
 import hydra
+
+# Suppress SWIG-related deprecation warnings from frozen importlib
+warnings.filterwarnings("ignore", message="builtin type SwigPy", category=DeprecationWarning)
 import torch.nn as nn
 import lightning as L
 import torch
@@ -310,6 +314,10 @@ def main(cfg: DictConfig) -> None:
     print("LazyCollater initialized for zero-copy batching")
 
     seed = 42
+
+    # CRITICAL: For GPU masking, need to track perturbation_indices to create perturbation_ptr
+    follow_batch_list = ["x", "x_pert", "perturbation_indices"]
+
     data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
@@ -322,6 +330,8 @@ def main(cfg: DictConfig) -> None:
         prefetch_factor=wandb.config.data_module["prefetch_factor"],
         persistent_workers=wandb.config.data_module["persistent_workers"],
         collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
+        follow_batch=follow_batch_list,  # CRITICAL: Track perturbation_indices for GPU masking
+        val_batch_size=wandb.config.data_module.get("val_batch_size"),
     )
     data_module.setup()
     if wandb.config.data_module["is_perturbation_subset"]:
@@ -338,6 +348,8 @@ def main(cfg: DictConfig) -> None:
             persistent_workers=wandb.config.data_module["persistent_workers"],
             gene_subsets={"metabolism": yeast_gem.gene_set},
             collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
+            follow_batch=follow_batch_list,  # CRITICAL: Track perturbation_indices for GPU masking
+            val_batch_size=wandb.config.data_module.get("val_batch_size"),
         )
         data_module.setup()
 
@@ -514,6 +526,9 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Creating GeneInteractionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
+    # Get execution mode from config (default to training for backward compatibility)
+    execution_mode = wandb.config["regression_task"].get("execution_mode", "training")
+    print(f"Execution mode: {execution_mode}")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
         # Load the checkpoint with all required arguments
@@ -537,6 +552,7 @@ def main(cfg: DictConfig) -> None:
             grad_accumulation_schedule=wandb.config["regression_task"][
                 "grad_accumulation_schedule"
             ],
+            execution_mode=execution_mode,
         )
         print("Successfully loaded model weights from checkpoint")
     else:
@@ -559,6 +575,7 @@ def main(cfg: DictConfig) -> None:
             device=device,
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+            execution_mode=execution_mode,
         )
 
     # Try to compile the model for better performance (PyTorch 2.0+)
@@ -647,7 +664,7 @@ def main(cfg: DictConfig) -> None:
         if is_pytorch_profiler:
             print("Setting up PyTorch profiler...")
             # Import schedule from torch.profiler
-            from torch.profiler import schedule
+            from torch.profiler import schedule, tensorboard_trace_handler
             from torch.profiler import ProfilerActivity
 
             profiler = PyTorchProfiler(
@@ -657,10 +674,10 @@ def main(cfg: DictConfig) -> None:
                 activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
                 # Use the schedule function properly
                 schedule=schedule(
-                    wait=1,  # Wait 1 step before profiling
-                    warmup=1,  # Warmup for 1 step
-                    active=3,  # Profile for 3 steps
-                    repeat=2,  # Repeat cycle 2 times
+                    wait=600,  # Wait 600 steps for steady-state performance (warmup complete)
+                    warmup=1,   # Warmup for 1 step
+                    active=25,  # Profile for 25 steps for detailed analysis
+                    repeat=1,   # Single profiling window after warmup
                 ),
                 # Capture memory usage
                 profile_memory=True,
@@ -668,10 +685,13 @@ def main(cfg: DictConfig) -> None:
                 record_shapes=True,
                 # Export to Chrome tracing format for visualization
                 export_to_chrome=True,
-                # Also export to TensorBoard
-                on_trace_ready=None,  # Will save to dirpath automatically
+                # Write trace files immediately after each profiling cycle
+                on_trace_ready=tensorboard_trace_handler(profiler_dir),
             )
             print(f"PyTorch Profiler output will be saved to: {profiler_dir}")
+            print("Profiler will write trace files after each profiling cycle")
+            print("NOTE: Profiling 25 steps (601-625) after warmup plateau")
+            print("      Use analyze_profile_detailed.py for comprehensive analysis")
         else:
             print("Setting up Advanced profiler...")
             profiler = AdvancedProfiler(

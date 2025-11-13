@@ -1,0 +1,105 @@
+=============================================================================
+EXPERIMENT 087a: MULTI-HOP NEIGHBOR SUBGRAPH PROFILING
+Generated: 2025-11-07-05-55-56
+=============================================================================
+
+CONFIGURATION:
+- GPU: Single GPU (no DDP)
+- Dataset: 10,000 sample subset
+- Batch size: 28 (for all runs)
+- Graph Processor: NeighborSubgraphRepresentation
+- Steps profiled: 100 (per run)
+
+PURPOSE:
+Compare 1-hop, 2-hop, and 3-hop neighborhood sampling to understand the
+speed vs memory tradeoff. Larger neighborhoods provide more context but
+require more memory and processing time.
+
+=============================================================================
+RESULTS SUMMARY TABLE:
+=============================================================================
+
+| Hop Count | it/s      | Speedup   | Slowdown  | GPU Mem   | Est. Max  | Nodes     | Edges     |
+|           |           | vs Lazy   | vs DANGO  | (MB/batch)| Batch     | /sample   | /sample   |
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| 1-hop     | 6.906      | 5.27×      | 10.68×     | 87.8       | 19603       | N/A       | N/A       |
+| 2-hop     | 2.769      | 2.11×      | 26.65×     | 810.7       | 2121       | N/A       | N/A       |
+| 3-hop     | 2.221      | 1.69×      | 33.23×     | 931.7       | 1846       | N/A       | N/A       |
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| Baseline  |           |           |           |           |           |           |           |
+| LazySubg  | 1.31      | 1.00×     | 56.34×    | ~2000     | 28        | 6607      | ~50000    |
+| DANGO     | 73.82     | 56.34×    | 1.00×     | ~200      | 300+      | 6607      | 0         |
+
+=============================================================================
+COMPARISON WITH EXPERIMENT 086a:
+=============================================================================
+
+Experiment 086a showed that LazySubgraphRepresentation was 56.34× slower
+than DANGO for data loading (1.31 it/s vs 73.82 it/s).
+
+Key findings from 087a:
+- Smaller hop counts process faster but provide less neighborhood context
+- GPU memory usage scales with subgraph size
+- Estimated max batch size inversely scales with memory usage
+- All approaches remain significantly slower than DANGO due to:
+  * HeteroData collation overhead
+  * Variable-sized graph batching
+  * Phenotype data processing (COO format)
+
+=============================================================================
+INTERPRETATION:
+=============================================================================
+
+**Speed Analysis:**
+- 1-hop: 6.906 it/s (5.27× vs LazySubgraph)
+- 2-hop: 2.769 it/s (2.11× vs LazySubgraph)
+- 3-hop: 2.221 it/s (1.69× vs LazySubgraph)
+
+**Memory vs Batch Size Tradeoff:**
+- 1-hop allows batch size ~19603 (smallest graphs, fastest)
+- 2-hop allows batch size ~2121 (medium graphs, balanced)
+- 3-hop allows batch size ~1846 (largest graphs, slowest)
+
+**Effective Throughput (samples/sec = it/s × batch_size):**
+- 1-hop: 135378.318 samples/sec
+- 2-hop: 77.532 samples/sec
+- 3-hop: 4099.966 samples/sec
+
+=============================================================================
+RECOMMENDATIONS:
+=============================================================================
+
+1. **If 1-hop with larger batch size has highest throughput:**
+   → Use 1-hop for initial experiments
+   → Test if model performance is acceptable with limited neighborhood
+
+2. **If 2-hop provides best throughput/context balance:**
+   → Continue with 2-hop as baseline
+   → Current batch size (28) is reasonable
+
+3. **If 3-hop is needed for model performance:**
+   → Reduce batch size to 1846
+   → Consider preprocessing or other optimizations
+
+=============================================================================
+NEXT STEPS:
+=============================================================================
+
+1. Test model training with optimal hop count and batch size
+2. Evaluate if model performance justifies the compute cost vs DANGO
+3. If neighborhood sampling is promising:
+   - Consider using PyG's C++ NeighborSampler (5-10× faster)
+   - Explore preprocessing approach (save subgraphs to disk)
+4. If still too slow:
+   - Return to LazySubgraph with optimizations
+   - Consider hybrid approach (DANGO + selected graph features)
+
+=============================================================================
+RAW LOG FILES:
+=============================================================================
+
+1-hop: experiments/006-kuzmin-tmi/profiling_results/profiling_087a_2025-11-07-05-55-56/087a_1hop.log
+2-hop: experiments/006-kuzmin-tmi/profiling_results/profiling_087a_2025-11-07-05-55-56/087a_2hop.log
+3-hop: experiments/006-kuzmin-tmi/profiling_results/profiling_087a_2025-11-07-05-55-56/087a_3hop.log
+
+=============================================================================

@@ -1,0 +1,183 @@
+#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_gh_074.yaml
+# Preprocessed dataset version - 100x faster data loading
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  tags: [preprocessed, lazy, fast]
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64
+  incidence_graphs: [metabolism_bipartite]
+
+  # NEW: Use preprocessed dataset (eliminates 10ms/sample graph processing)
+  use_preprocessed: true
+  preprocessed_root: null  # Will be set in script based on DATA_ROOT
+
+# Transform configuration moved out of regression_task
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+# Profiling disabled for production training
+profiler:
+  enabled: false  # Profiling complete, now train at full speed
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000
+  batch_size: 28
+  num_workers: 6  # Increased workers - preprocessed data loads so fast we need more parallelism
+  pin_memory: true  # Disabled: pin_memory with LMDB + DDP exhausts /dev/shm
+  prefetch: false
+  prefetch_factor: 3  # Reduced prefetch since we have many workers now
+  persistent_workers: true  # Keep workers alive between epochs
+
+trainer:
+  max_epochs: 500  # Full training now that data loading is fast
+  strategy: ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+
+# ------ Placeholders for hydra optuna
+heads: 8
+norms: "layer"
+# ------
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64
+  num_layers: 3
+  norm: ${norms}
+  activation: "gelu"
+  dropout: 0.0
+  gene_encoder_config:
+    encoder_type: "gin"
+
+    # Graph aggregation configuration
+    graph_aggregation_method: "pairwise_interaction"
+
+    graph_aggregation_config:
+      aggregation_norm: "layer"
+      pairwise_num_layers: 2
+      pairwise_hidden_dim: 32
+      dropout: 0.0
+
+    # GIN-specific parameters
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+    gin_num_layers: 4
+    gin_hidden_dim: null
+  gpr_conv_config:
+    encoder_type: "gin"
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+    gin_num_layers: 4
+    gin_hidden_dim: null
+  metabolism_config:
+    encoder_type: "gin"
+    is_stoich_gated: true
+    use_attention: true
+    heads: ${heads}
+    concat: true
+    gin_num_layers: 4
+    gin_hidden_dim: null
+  prediction_head_config:
+    hidden_channels: 64
+    head_num_layers: 4
+    dropout: 0.0
+    activation: "gelu"
+    head_norm: ${norms}
+  # Dango-like local predictor config
+  local_predictor_config:
+    num_attention_layers: 2
+    num_heads: 8
+    combination_method: "concat"
+
+regression_task:
+  loss: mle_wass_supcr
+  is_weighted_phenotype_loss: false
+  # Lambda weights for loss components
+  lambda_mse: 1.0
+  lambda_wasserstein: 0.1
+  lambda_supcr: 0.0
+
+  # MleWassSupCR specific configuration
+  loss_config:
+    # Wasserstein-specific parameters
+    wasserstein_blur: 0.05
+    wasserstein_p: 2
+    wasserstein_scaling: 0.9
+    min_samples_for_wasserstein: 224
+
+    supcr_temperature: 0.1
+
+    # Buffer configuration
+    use_buffer: true
+    buffer_size: 224
+    min_samples_for_supcr: 224
+
+    # DDP configuration
+    use_ddp_gather: true
+    gather_interval: 1
+
+    # Adaptive weighting
+    use_adaptive_weighting: true
+
+    # Temperature scheduling
+    use_temp_scheduling: true
+    init_temperature: 1.0
+    final_temperature: 0.1
+    temp_schedule: "exponential"
+
+    # Training duration
+    max_epochs: 500
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-12
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 300
+    cycle_mult: 0.75
+    max_lr: 5e-4
+    min_lr: 1e-6
+    warmup_steps: 0
+    gamma: 0.50
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

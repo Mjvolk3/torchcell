@@ -1,0 +1,131 @@
+#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi_gh_profile_v3.yaml
+# Profile configuration v3 - Global-only mode (NO local predictor)
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  tags: [profile, analysis, global_only, optimized_v3]
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64
+  incidence_graphs: [metabolism_bipartite]
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard"
+
+# PROFILER ENABLED FOR THIS CONFIG
+profiler:
+  enabled: true  # Enable profiling
+  is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling
+
+data_module:
+  is_perturbation_subset: true  # Use subset for faster profiling
+  perturbation_subset_size: 100  # Small subset for profiling
+  batch_size: 8  # Smaller batch for detailed analysis
+  num_workers: 0  # Single worker for cleaner profiling
+  pin_memory: false  # Disable for profiling
+  prefetch: false
+  prefetch_factor: 2
+  persistent_workers: false
+
+trainer:
+  max_epochs: 1  # Single epoch for profiling
+  strategy: auto  # Single GPU for cleaner profiling
+  num_nodes: 1
+  accelerator: gpu
+  devices: 1  # Single GPU for profiling
+  overfit_batches: 0
+  precision: "32-true"  # Full precision for accurate profiling
+
+# Compilation disabled for profiling
+compile_mode: null
+
+# Model configuration - OPTIMIZED
+heads: 8
+norms: "layer"
+
+model:
+  checkpoint_path: null
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64
+  num_layers: 3  # Keep 3 conv layers (biological theory requirement)
+  norm: ${norms}
+  activation: "gelu"
+  dropout: 0.0
+  gene_encoder_config:
+    encoder_type: "gin"
+    graph_aggregation_method: "sum"  # Keep pairwise for now
+    graph_aggregation_config:
+      aggregation_norm: "layer"
+      pairwise_num_layers: 2
+      pairwise_hidden_dim: 16
+      dropout: 0.0
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+    gin_num_layers: 2  # REDUCED FROM 4 TO 2 - should speed up convolutions
+    gin_hidden_dim: null
+  gpr_conv_config:
+    encoder_type: "gin"
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+    gin_num_layers: 2  # REDUCED FROM 4 TO 2
+    gin_hidden_dim: null
+  metabolism_config:
+    encoder_type: "gin"
+    is_stoich_gated: true
+    use_attention: true
+    heads: ${heads}
+    concat: true
+    gin_num_layers: 2  # REDUCED FROM 4 TO 2
+    gin_hidden_dim: null
+  prediction_head_config:
+    hidden_channels: 64
+    head_num_layers: 4
+    dropout: 0.0
+    activation: "gelu"
+    head_norm: ${norms}
+  local_predictor_config:
+    use_local_predictor: false  # DISABLED - global-only mode (~17% faster)
+    num_attention_layers: 2  # Ignored when use_local_predictor=false
+    num_heads: 4  # Ignored when use_local_predictor=false
+    combination_method: "concat"  # Ignored when use_local_predictor=false
+
+regression_task:
+  loss: logcosh  # Simple loss for profiling
+  is_weighted_phenotype_loss: false
+  lambda_mse: 1.0
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4
+    weight_decay: 1e-12
+  lr_scheduler: null  # No scheduler for profiling
+  clip_grad_norm: false  # Disable for cleaner profiling
+  plot_sample_ceiling: 0  # No plotting during profile
+  plot_every_n_epochs: 0

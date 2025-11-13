@@ -43,10 +43,12 @@ class RegressionTask(LightningModule):
         device: str = "cuda",
         forward_transform: Optional[nn.Module] = None,
         inverse_transform: Optional[nn.Module] = None,
+        execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model", "loss_func"])
         self.model = model
+        self.execution_mode = execution_mode
         self.cell_graph = cell_graph
         self.inverse_transform = inverse_transform
         self.forward_transform = forward_transform
@@ -112,9 +114,33 @@ class RegressionTask(LightningModule):
         return dummy_loss
 
     def _shared_step(self, batch, batch_idx, stage="train"):
+        # DataLoader profiling mode: Skip model forward, create dummy loss
+        if self.execution_mode == "dataloader_profiling":
+            # Execute all batch preparation (moving to device happens in forward())
+            batch_device = batch["gene"].perturbation_indices.device
+            # Ensure cell_graph is on correct device
+            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+                self.cell_graph = self.cell_graph.to(batch_device)
+                self._cell_graph_device = batch_device
+
+            # Create trivial loss that touches ALL model parameters (required for DDP)
+            # This ensures no "unused parameters" error in DDP mode
+            loss = torch.zeros((), device=batch_device, requires_grad=True)
+            for param in self.model.parameters():
+                if param.requires_grad:
+                    loss = loss + (param * 0.0).sum()
+
+            # Log minimal metrics
+            batch_size = batch["gene"].phenotype_values.size(0)
+            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
+            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+
+            return loss, None, None
+
+        # Normal training/validation/test execution
         # Get model outputs
         predictions, representations = self(batch)
-        
+
         # Ensure predictions has correct shape (batch_size, 1) for gene interactions
         if predictions.dim() == 0:
             predictions = predictions.unsqueeze(0).unsqueeze(0)  # Make it [1, 1]
@@ -324,6 +350,12 @@ class RegressionTask(LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "train")
+
+        # Model profiling mode: Skip optimizer step to isolate model compute
+        if self.execution_mode == "model_profiling":
+            return loss
+
+        # Normal training: Run optimizer
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
         opt = self.optimizers()

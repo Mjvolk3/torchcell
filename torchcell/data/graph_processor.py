@@ -9,6 +9,7 @@ from typing import Any, Dict
 from torchcell.datamodels import PhenotypeType, ExperimentReferenceType, ExperimentType
 import torch
 from torch_geometric.utils._subgraph import bipartite_subgraph, subgraph
+from torch_geometric.utils import k_hop_subgraph
 from torch_scatter import scatter
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
@@ -2355,3 +2356,194 @@ class DCellGraphProcessor(GraphProcessor):
                 all_stat_sample_indices, dtype=torch.long, device=self.device
             )
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
+
+class NeighborSubgraphRepresentation(GraphProcessor):
+    """
+    GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
+
+    Unlike SubgraphRepresentation (which filters out perturbed genes) or
+    LazySubgraphRepresentation (which keeps full graph with masks), this processor
+    creates small induced subgraphs containing only k-hop neighborhoods around
+    perturbed genes.
+
+    Benefits:
+    - Smaller graphs for faster message passing
+    - Reduced data loading overhead
+    - Preserves original node indices for easy mapping back to full graph
+
+    Args:
+        num_hops: Number of hops to include in neighborhood (default: 2)
+    """
+
+    def __init__(self, num_hops: int = 2):
+        self.num_hops = num_hops
+        self.device = torch.device("cpu")
+        self.masks = {}
+
+    def _initialize_masks(self, cell_graph: HeteroData):
+        """Initialize boolean masks for all nodes and edges."""
+        self.masks = {}
+        num_genes = cell_graph["gene"].num_nodes
+        self.masks["gene"] = {
+            "perturbed": torch.zeros(num_genes, dtype=torch.bool, device=self.device),
+            "kept": torch.zeros(num_genes, dtype=torch.bool, device=self.device),
+        }
+
+    def _process_gene_info(self, cell_graph: HeteroData, data):
+        """Identify perturbed genes from experiment data."""
+        perturbed_names = set()
+        for item in data:
+            for p in item["experiment"].genotype.perturbations:
+                perturbed_names.add(p.systematic_gene_name)
+        node_ids = cell_graph["gene"].node_ids
+        perturbed_indices = []
+        for i, name in enumerate(node_ids):
+            if name in perturbed_names:
+                perturbed_indices.append(i)
+        perturbed_indices = torch.tensor(perturbed_indices, dtype=torch.long)
+        self.masks["gene"]["perturbed"][perturbed_indices] = True
+        return {
+            "perturbed_names": perturbed_names,
+            "perturbed_indices": perturbed_indices,
+            "perturbed_node_ids": [node_ids[i] for i in perturbed_indices],
+        }
+
+    def _build_khop_subgraph(self, cell_graph: HeteroData, gene_info: dict) -> dict:
+        """Build k-hop induced subgraph around perturbed genes."""
+        perturbed_indices = gene_info["perturbed_indices"]
+        num_genes = cell_graph["gene"].num_nodes
+        all_neighbors = set(perturbed_indices.tolist())
+        edge_data = {}
+        for et in cell_graph.edge_types:
+            if et[0] == "gene" and et[2] == "gene":
+                subset, edge_index, mapping, edge_mask = k_hop_subgraph(
+                    node_idx=perturbed_indices,
+                    num_hops=self.num_hops,
+                    edge_index=cell_graph[et].edge_index,
+                    relabel_nodes=False,
+                    num_nodes=num_genes,
+                )
+                all_neighbors.update(subset.tolist())
+                edge_data[et] = {"edge_index": edge_index, "edge_mask": edge_mask, "subset": subset}
+        subset_nodes = torch.tensor(sorted(all_neighbors), dtype=torch.long)
+        subset_node_ids = [cell_graph["gene"].node_ids[i] for i in subset_nodes]
+
+        # Vectorized perturbed mask creation
+        perturbed_mask = self.masks["gene"]["perturbed"][subset_nodes]
+
+        # Vectorized edge filtering
+        filtered_edge_data = {}
+        for et, data_dict in edge_data.items():
+            edge_index = cell_graph[et].edge_index
+            # Use torch.isin for vectorized membership testing
+            src_mask = torch.isin(edge_index[0], subset_nodes)
+            dst_mask = torch.isin(edge_index[1], subset_nodes)
+            mask = src_mask & dst_mask
+            filtered_edge_index = edge_index[:, mask]
+            filtered_edge_data[et] = {"edge_index": filtered_edge_index, "num_edges": filtered_edge_index.size(1)}
+        return {"subset_nodes": subset_nodes, "subset_node_ids": subset_node_ids, "edge_data": filtered_edge_data, "perturbed_mask": perturbed_mask}
+
+    def _process_metabolism(self, integrated_subgraph: HeteroData, cell_graph: HeteroData, subgraph_info: dict):
+        """Add metabolism edges for genes in the k-hop subgraph."""
+        if "reaction" not in cell_graph.node_types:
+            return
+        subset_nodes = subgraph_info["subset_nodes"]
+
+        if ("gene", "gpr", "reaction") in cell_graph.edge_types:
+            gpr_et = ("gene", "gpr", "reaction")
+            gpr_hyperedge_index = cell_graph[gpr_et].hyperedge_index
+
+            # Vectorized GPR edge filtering
+            gpr_mask = torch.isin(gpr_hyperedge_index[0], subset_nodes)
+            included_reaction_indices = gpr_hyperedge_index[1, gpr_mask].unique()
+
+            integrated_subgraph[gpr_et].hyperedge_index = gpr_hyperedge_index
+            integrated_subgraph[gpr_et].num_edges = gpr_hyperedge_index.size(1)
+            integrated_subgraph[gpr_et].mask = gpr_mask
+
+            if included_reaction_indices.numel() > 0:
+                reaction_indices = included_reaction_indices.sort()[0]
+                integrated_subgraph["reaction"].node_ids = [cell_graph["reaction"].node_ids[i] for i in reaction_indices]
+                integrated_subgraph["reaction"].num_nodes = len(reaction_indices)
+                integrated_subgraph["reaction"].pert_mask = torch.zeros(len(reaction_indices), dtype=torch.bool)
+                integrated_subgraph["reaction"].mask = torch.ones(len(reaction_indices), dtype=torch.bool)
+
+                if ("reaction", "rmr", "metabolite") in cell_graph.edge_types:
+                    rmr_et = ("reaction", "rmr", "metabolite")
+                    rmr_hyperedge_index = cell_graph[rmr_et].hyperedge_index
+                    rmr_stoichiometry = cell_graph[rmr_et].stoichiometry
+
+                    # Vectorized RMR edge filtering
+                    rmr_mask = torch.isin(rmr_hyperedge_index[0], included_reaction_indices)
+
+                    integrated_subgraph[rmr_et].hyperedge_index = rmr_hyperedge_index
+                    integrated_subgraph[rmr_et].stoichiometry = rmr_stoichiometry
+                    integrated_subgraph[rmr_et].num_edges = rmr_hyperedge_index.size(1)
+                    integrated_subgraph[rmr_et].mask = rmr_mask
+                    integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
+                    integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
+                    integrated_subgraph["metabolite"].pert_mask = torch.zeros(cell_graph["metabolite"].num_nodes, dtype=torch.bool)
+                    integrated_subgraph["metabolite"].mask = torch.ones(cell_graph["metabolite"].num_nodes, dtype=torch.bool)
+
+    def _add_gene_data(self, integrated_subgraph: HeteroData, cell_graph: HeteroData, gene_info: dict, subgraph_info: dict):
+        """Add gene node data to the subgraph."""
+        subset_nodes = subgraph_info["subset_nodes"]
+        integrated_subgraph["gene"].node_ids = subgraph_info["subset_node_ids"]
+        integrated_subgraph["gene"].num_nodes = len(subset_nodes)
+        integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
+        integrated_subgraph["gene"].perturbation_indices = gene_info["perturbed_indices"]
+        integrated_subgraph["gene"].x = cell_graph["gene"].x[subset_nodes]
+        integrated_subgraph["gene"].pert_mask = subgraph_info["perturbed_mask"]
+        integrated_subgraph["gene"].x_pert = integrated_subgraph["gene"].x.clone()
+        integrated_subgraph["gene"].x_pert[subgraph_info["perturbed_mask"]] = 0.0
+
+    def _add_phenotype_data(self, integrated_subgraph: HeteroData, phenotype_info: list, data: list):
+        """Add phenotype data in COO format."""
+        all_values, all_type_indices, all_sample_indices, phenotype_types = [], [], [], []
+        all_stat_values, all_stat_type_indices, all_stat_sample_indices, stat_types = [], [], [], []
+        for phenotype_class in phenotype_info:
+            label_name = phenotype_class.model_fields["label_name"].default
+            stat_name = phenotype_class.model_fields["label_statistic_name"].default
+            phenotype_types.append(label_name)
+            if stat_name:
+                stat_types.append(stat_name)
+        for item_idx, item in enumerate(data):
+            phenotype = item["experiment"].phenotype
+            for type_idx, field_name in enumerate(phenotype_types):
+                value = getattr(phenotype, field_name, None)
+                if value is not None:
+                    values = [value] if not isinstance(value, (list, tuple)) else value
+                    all_values.extend(values)
+                    all_type_indices.extend([type_idx] * len(values))
+                    all_sample_indices.extend([item_idx] * len(values))
+            for stat_type_idx, stat_field_name in enumerate(stat_types):
+                stat_value = getattr(phenotype, stat_field_name, None)
+                if stat_value is not None:
+                    stat_values = [stat_value] if not isinstance(stat_value, (list, tuple)) else stat_value
+                    all_stat_values.extend(stat_values)
+                    all_stat_type_indices.extend([stat_type_idx] * len(stat_values))
+                    all_stat_sample_indices.extend([item_idx] * len(stat_values))
+        if all_values:
+            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(all_values, dtype=torch.float, device=self.device)
+            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(all_type_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(all_sample_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+        if all_stat_values:
+            integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(all_stat_values, dtype=torch.float, device=self.device)
+            integrated_subgraph["gene"]["phenotype_stat_type_indices"] = torch.tensor(all_stat_type_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(all_stat_sample_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
+
+    def process(self, cell_graph: HeteroData, phenotype_info: list[PhenotypeType], data: list[Dict[str, ExperimentType | ExperimentReferenceType]]) -> HeteroData:
+        """Main processing method. Creates k-hop induced subgraph around perturbed genes."""
+        self._initialize_masks(cell_graph)
+        integrated_subgraph = HeteroData()
+        gene_info = self._process_gene_info(cell_graph, data)
+        subgraph_info = self._build_khop_subgraph(cell_graph, gene_info)
+        self._add_gene_data(integrated_subgraph, cell_graph, gene_info, subgraph_info)
+        for et, edge_data in subgraph_info["edge_data"].items():
+            integrated_subgraph[et].edge_index = edge_data["edge_index"]
+            integrated_subgraph[et].num_edges = edge_data["num_edges"]
+        self._process_metabolism(integrated_subgraph, cell_graph, subgraph_info)
+        self._add_phenotype_data(integrated_subgraph, phenotype_info, data)
+        return integrated_subgraph

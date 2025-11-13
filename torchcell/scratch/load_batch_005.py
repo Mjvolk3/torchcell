@@ -133,6 +133,21 @@ def load_sample_data_batch(
             "follow_batch": ["perturbation_indices"],
             "date_filter": None,
         },
+        "dango_string12_0": {
+            "graph_names": [
+                "string12_0_neighborhood",
+                "string12_0_fusion",
+                "string12_0_cooccurence",
+                "string12_0_coexpression",
+                "string12_0_experimental",
+                "string12_0_database",
+            ],
+            "use_metabolism": True,
+            "use_gene_ontology": False,
+            "graph_processor": Perturbation(),
+            "follow_batch": ["perturbation_indices"],
+            "date_filter": None,
+        },
         "hetero_cell_bipartite": {
             "graph_names": [
                 "physical",

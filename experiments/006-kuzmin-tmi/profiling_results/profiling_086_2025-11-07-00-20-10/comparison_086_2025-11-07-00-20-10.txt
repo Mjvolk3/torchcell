@@ -1,0 +1,213 @@
+=============================================================================
+EXPERIMENT 086: COMPREHENSIVE PROFILING COMPARISON
+Generated: 2025-11-07-00-20-10
+=============================================================================
+
+CONFIGURATION:
+- GPU: Single GPU (no DDP)
+- Dataset: 10,000 sample subset
+- Batch size: Lazy Hetero=28, DANGO=64
+- Steps per run: 100
+
+EXPERIMENTS:
+  086a: DataLoader profiling (data pipeline only)
+  086b: Model profiling (data + model forward/backward)
+
+=============================================================================
+EXPERIMENT 086a: DATALOADER PROFILING (Data Pipeline Only)
+=============================================================================
+
+Lazy Hetero DataLoader avg it/s: 1.310
+DANGO DataLoader avg it/s:       73.816
+
+Speedup ratio (DANGO / Lazy Hetero): 56.34x
+
+WHAT THIS MEASURES:
+- DataLoader fetch from Neo4j/LMDB
+- Graph processor (LazySubgraphRepresentation vs Perturbation)
+- Collation function (LazyCollater vs default)
+- CPU→GPU batch transfer
+- ❌ NO model forward/backward
+
+INTERPRETATION:
+If ratio is >10×: Data pipeline is severely bottlenecked
+  → LazySubgraphRepresentation processes 100-200× more data
+  → Consider switching to Perturbation processor or preprocessing
+
+Last 20 it/s measurements (Lazy Hetero):
+     1	1.38
+     2	1.33
+     3	1.36
+     4	1.38
+     5	1.37
+     6	1.33
+     7	1.36
+     8	1.37
+     9	1.36
+    10	1.33
+    11	1.35
+    12	1.36
+    13	1.36
+    14	1.32
+    15	1.35
+    16	1.36
+    17	1.37
+    18	1.05
+    19	1.05
+    20	1.05
+
+Last 20 it/s measurements (DANGO):
+     1	47.39
+     2	251.16
+     3	95.66
+     4	43.12
+     5	53.10
+     6	61.67
+     7	69.03
+     8	70.66
+     9	76.42
+    10	66.51
+    11	70.98
+    12	66.17
+    13	69.88
+    14	73.35
+    15	76.64
+    16	77.08
+    17	80.19
+    18	42.47
+    19	42.46
+    20	42.37
+
+=============================================================================
+EXPERIMENT 086b: MODEL PROFILING (Data + Model Forward/Backward)
+=============================================================================
+
+Lazy Hetero Model avg it/s: 0.879
+DANGO Model avg it/s:       16.980
+
+Speedup ratio (DANGO / Lazy Hetero): 19.31x
+
+WHAT THIS MEASURES:
+- DataLoader + graph processor + collation + CPU→GPU (from 086a)
+- ✅ Model forward pass
+- ✅ Model backward pass (gradient computation)
+- ❌ NO optimizer step
+
+INTERPRETATION:
+Compare 086b ratio vs 086a ratio to isolate model compute:
+  - If ratios similar: Model compute adds minimal overhead
+  - If 086b ratio > 086a ratio: Model is also slower in Lazy Hetero
+  - If 086b ratio < 086a ratio: Model actually faster (unlikely)
+
+Last 20 it/s measurements (Lazy Hetero):
+     1	0.94
+     2	0.94
+     3	0.93
+     4	0.93
+     5	0.93
+     6	0.93
+     7	0.92
+     8	0.92
+     9	0.93
+    10	0.93
+    11	0.94
+    12	0.94
+    13	0.95
+    14	0.95
+    15	0.96
+    16	0.96
+    17	0.97
+    18	0.54
+    19	0.54
+    20	0.54
+
+Last 20 it/s measurements (DANGO):
+     1	15.43
+     2	18.77
+     3	18.53
+     4	18.46
+     5	18.41
+     6	18.39
+     7	18.37
+     8	18.36
+     9	18.35
+    10	16.61
+    11	16.77
+    12	16.90
+    13	17.01
+    14	17.10
+    15	17.18
+    16	17.25
+    17	17.32
+    18	13.47
+    19	13.47
+    20	13.46
+
+=============================================================================
+DECOMPOSITION ANALYSIS
+=============================================================================
+
+Estimated per-component overhead (Lazy Hetero vs DANGO):
+
+1. Data Pipeline Overhead (086a):
+   DANGO: 73.816 it/s
+   Lazy:  1.310 it/s
+   Ratio: 56.34x slower
+
+2. Model Compute Overhead (086b - 086a):
+   If 086a measures data only and 086b measures data+model:
+   Model overhead ≈ (1/086b_it/s - 1/086a_it/s)
+
+   Lazy Hetero model time: .374 sec/it
+   DANGO model time:       .045 sec/it
+
+3. Expected Full Training Overhead:
+   Includes optimizer step (AdamW) - not measured here
+   Estimate: add ~5-10% to 086b times
+
+=============================================================================
+COMPARISON WITH PREVIOUS PROFILING (524/DDP)
+=============================================================================
+
+Previous results (4 GPU DDP, full dataset):
+  Lazy Hetero: ~1.6 it/s
+  DANGO: ~19.9 it/s
+  Ratio: ~12.5× slower
+
+Current results (1 GPU, 10K subset):
+  086a ratio: 56.34×
+  086b ratio: 19.31×
+
+INSIGHTS:
+- If 086a ratio matches 524 ratio: Data pipeline is the bottleneck
+- If 086b ratio >> 086a ratio: Model is also significantly slower
+- Single GPU should be faster than DDP (no communication overhead)
+
+=============================================================================
+NEXT STEPS BASED ON RESULTS
+=============================================================================
+
+If 56.34x > 10 (high data pipeline overhead):
+  → Test Perturbation() processor instead of LazySubgraphRepresentation
+  → Use preprocessed dataset with precomputed masks
+  → Profile LazyCollater vs default PyG collation
+
+If 19.31x > 56.34x + 2 (high model overhead):
+  → Profile model architecture differences
+  → Check for dual forward passes in Lazy Hetero
+  → Consider packaging cell_graph into batch
+
+If both ratios ~1-2× only:
+  → Previous 12.5× slowdown was from DDP + full dataset
+  → Real bottleneck might be in optimizer or DDP communication
+
+=============================================================================
+RAW LOG FILES
+=============================================================================
+
+086a Lazy Hetero DataLoader: experiments/006-kuzmin-tmi/profiling_results/profiling_086_2025-11-07-00-20-10/086a_lazy_hetero_dataloader.log
+086a DANGO DataLoader:       experiments/006-kuzmin-tmi/profiling_results/profiling_086_2025-11-07-00-20-10/086a_dango_dataloader.log
+086b Lazy Hetero Model:      experiments/006-kuzmin-tmi/profiling_results/profiling_086_2025-11-07-00-20-10/086b_lazy_hetero_model.log
+086b DANGO Model:            experiments/006-kuzmin-tmi/profiling_results/profiling_086_2025-11-07-00-20-10/086b_dango_model.log
+
+=============================================================================

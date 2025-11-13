@@ -1,0 +1,11 @@
+# Experiment 086b: Model profiling (data + model forward/backward, skip optimizer)
+# Measures: Data loading + graph processor + collation + CPU→GPU + model compute
+defaults:
+  - hetero_cell_bipartite_dango_gi_gh_086
+  - _self_
+
+wandb:
+  tags: [experiment_086b, model_profiling, lazy_hetero, single_gpu]
+
+regression_task:
+  execution_mode: "model_profiling"  # Do real model forward/backward, skip optimizer

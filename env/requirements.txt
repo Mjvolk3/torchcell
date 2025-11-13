@@ -49,6 +49,7 @@
 
     # ML stack
     scikit-learn>=1.2.2
+    geomloss>=0.2.6
 
     # Transformer / Huggingface Stack
     transformers>=4.55.4

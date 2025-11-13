@@ -6,6 +6,9 @@
 
 import os
 import os.path as osp
+import random
+import numpy as np
+import torch
 from dotenv import load_dotenv
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.datamodules import CellDataModule
@@ -58,6 +61,16 @@ def load_sample_data_batch(
     Returns:
         Tuple of (dataset, batch, input_channels, max_num_nodes)
     """
+    # Set all random seeds for reproducibility
+    seed = 42
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    # Ensure deterministic behavior
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
     print(f"DATA_ROOT: {DATA_ROOT}")
@@ -230,7 +243,6 @@ def load_sample_data_batch(
     else:
         dataset.transform = normalizer
 
-    seed = 42
     # Base Module
 
     cell_data_module = CellDataModule(

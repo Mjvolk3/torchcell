@@ -319,15 +319,33 @@ class RegressionTask(L.LightningModule):
             stage == "val"
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
         ):
-            # Only collect validation samples on epochs we'll plot
-            self.val_samples["true_values"].append(gene_interaction_orig.detach())
-            self.val_samples["predictions"].append(inv_predictions.detach())
-            if z_p is not None:
-                if "latents" not in self.val_samples:
-                    self.val_samples["latents"] = {}
-                if "z_p" not in self.val_samples["latents"]:
-                    self.val_samples["latents"]["z_p"] = []
-                self.val_samples["latents"]["z_p"].append(z_p.detach())
+            # Only collect validation samples on epochs we'll plot, respecting ceiling
+            current_count = sum(t.size(0) for t in self.val_samples["true_values"])
+            if current_count < self.hparams.plot_sample_ceiling:
+                remaining = self.hparams.plot_sample_ceiling - current_count
+                if batch_size > remaining:
+                    idx = torch.randperm(batch_size)[:remaining]
+                    self.val_samples["true_values"].append(
+                        gene_interaction_orig[idx].detach()
+                    )
+                    self.val_samples["predictions"].append(inv_predictions[idx].detach())
+                    if z_p is not None:
+                        if "latents" not in self.val_samples:
+                            self.val_samples["latents"] = {}
+                        if "z_p" not in self.val_samples["latents"]:
+                            self.val_samples["latents"]["z_p"] = []
+                        self.val_samples["latents"]["z_p"].append(z_p[idx].detach())
+                else:
+                    self.val_samples["true_values"].append(
+                        gene_interaction_orig.detach()
+                    )
+                    self.val_samples["predictions"].append(inv_predictions.detach())
+                    if z_p is not None:
+                        if "latents" not in self.val_samples:
+                            self.val_samples["latents"] = {}
+                        if "z_p" not in self.val_samples["latents"]:
+                            self.val_samples["latents"]["z_p"] = []
+                        self.val_samples["latents"]["z_p"].append(z_p.detach())
         elif stage == "test":
             # For test, always collect samples (no epoch check since test runs once)
             self.test_samples["true_values"].append(gene_interaction_orig.detach())
@@ -390,6 +408,11 @@ class RegressionTask(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
+
+        # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
+        if batch_idx > 0 and batch_idx % 50 == 0:
+            torch.cuda.empty_cache()
+
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -513,6 +536,11 @@ class RegressionTask(L.LightningModule):
             else:
                 sch.step()
 
+        # CRITICAL: Clear GPU memory at end of training epoch
+        # This ensures validation starts with maximum available memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     def on_train_epoch_start(self):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
@@ -538,6 +566,14 @@ class RegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        # CRITICAL: Aggressively clear GPU memory before validation starts
+        # This prevents OOM when transitioning from training to validation
+        # Training state (optimizer, gradients, cached activations) can fragment memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            # Synchronize to ensure all pending operations complete before validation
+            torch.cuda.synchronize()
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -940,15 +976,33 @@ class DiffusionRegressionTask(L.LightningModule):
             stage == "val"
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
         ):
-            # Only collect validation samples on epochs we'll plot
-            self.val_samples["true_values"].append(gene_interaction_orig.detach())
-            self.val_samples["predictions"].append(inv_predictions.detach())
-            if z_p is not None:
-                if "latents" not in self.val_samples:
-                    self.val_samples["latents"] = {}
-                if "z_p" not in self.val_samples["latents"]:
-                    self.val_samples["latents"]["z_p"] = []
-                self.val_samples["latents"]["z_p"].append(z_p.detach())
+            # Only collect validation samples on epochs we'll plot, respecting ceiling
+            current_count = sum(t.size(0) for t in self.val_samples["true_values"])
+            if current_count < self.hparams.plot_sample_ceiling:
+                remaining = self.hparams.plot_sample_ceiling - current_count
+                if batch_size > remaining:
+                    idx = torch.randperm(batch_size)[:remaining]
+                    self.val_samples["true_values"].append(
+                        gene_interaction_orig[idx].detach()
+                    )
+                    self.val_samples["predictions"].append(inv_predictions[idx].detach())
+                    if z_p is not None:
+                        if "latents" not in self.val_samples:
+                            self.val_samples["latents"] = {}
+                        if "z_p" not in self.val_samples["latents"]:
+                            self.val_samples["latents"]["z_p"] = []
+                        self.val_samples["latents"]["z_p"].append(z_p[idx].detach())
+                else:
+                    self.val_samples["true_values"].append(
+                        gene_interaction_orig.detach()
+                    )
+                    self.val_samples["predictions"].append(inv_predictions.detach())
+                    if z_p is not None:
+                        if "latents" not in self.val_samples:
+                            self.val_samples["latents"] = {}
+                        if "z_p" not in self.val_samples["latents"]:
+                            self.val_samples["latents"]["z_p"] = []
+                        self.val_samples["latents"]["z_p"].append(z_p.detach())
         elif stage == "test":
             # For test, always collect samples (no test runs once)
             self.test_samples["true_values"].append(gene_interaction_orig.detach())
@@ -1010,6 +1064,11 @@ class DiffusionRegressionTask(L.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         loss, _, _ = self._shared_step(batch, batch_idx, "val")
+
+        # Defragment GPU memory every 50 batches to prevent OOM from fragmentation
+        if batch_idx > 0 and batch_idx % 50 == 0:
+            torch.cuda.empty_cache()
+
         return loss
 
     def test_step(self, batch, batch_idx):
@@ -1124,6 +1183,14 @@ class DiffusionRegressionTask(L.LightningModule):
             self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_start(self):
+        # CRITICAL: Aggressively clear GPU memory before validation starts
+        # This prevents OOM when transitioning from training to validation
+        # Training state (optimizer, gradients, cached activations) can fragment memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            # Synchronize to ensure all pending operations complete before validation
+            torch.cuda.synchronize()
+
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -1164,11 +1231,36 @@ class DiffusionRegressionTask(L.LightningModule):
         # Step the scheduler when using manual optimization
         sch = self.lr_schedulers()
         if sch is not None:
-            # Lightning returns a list of schedulers even if there's only one
             if isinstance(sch, list) and len(sch) > 0:
                 sch[0].step()
             else:
                 sch.step()
+
+        # CRITICAL: Clear GPU memory at end of training epoch
+        # This ensures validation starts with maximum available memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    def on_train_epoch_start(self):
+        # Update gradient accumulation steps based on current epoch
+        if self.hparams.grad_accumulation_schedule is not None:
+            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+                epoch_threshold_int = (
+                    int(epoch_threshold)
+                    if isinstance(epoch_threshold, str)
+                    else epoch_threshold
+                )
+                if self.current_epoch >= epoch_threshold_int:
+                    self.current_accumulation_steps = (
+                        self.hparams.grad_accumulation_schedule[epoch_threshold]
+                    )
+            print(
+                f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
+            )
+
+        # Clear sample containers at the start of epochs where we'll collect samples
+        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
+            self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
 
     def on_validation_epoch_end(self):
         # Log validation metrics

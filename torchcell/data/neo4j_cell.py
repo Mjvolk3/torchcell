@@ -27,6 +27,7 @@ from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
+from torchcell.profiling.timing import time_method
 from torchcell.datamodels import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
@@ -447,35 +448,59 @@ class Neo4jCellDataset(Dataset):
         self._write_json_with_lock(gene_set_path, list(sorted(value)))
         self._gene_set = value
 
+    @time_method
+    def _read_from_lmdb(self, idx):
+        """Read serialized data from LMDB."""
+        with self.env.begin() as txn:
+            serialized_data = txn.get(f"{idx}".encode("utf-8"))
+            return serialized_data
+
+    @time_method
+    def _deserialize_json(self, serialized_data):
+        """Deserialize JSON data."""
+        return json.loads(serialized_data.decode("utf-8"))
+
+    @time_method
+    def _reconstruct_experiments(self, data_list):
+        """Reconstruct experiment objects from deserialized data."""
+        data = []
+        for item in data_list:
+            experiment_class = EXPERIMENT_TYPE_MAP[
+                item["experiment"]["experiment_type"]
+            ]
+            experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
+                item["experiment_reference"]["experiment_reference_type"]
+            ]
+            reconstructed_data = {
+                "experiment": experiment_class(**item["experiment"]),
+                "experiment_reference": experiment_reference_class(
+                    **item["experiment_reference"]
+                ),
+            }
+            data.append(reconstructed_data)
+        return data
+
+    @time_method
     def get(self, idx):
+        """Load and process a single sample."""
         if self.env is None:
             self._init_lmdb_read()
 
-        with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode("utf-8"))
-            if serialized_data is None:
-                return None
-            data_list = json.loads(serialized_data.decode("utf-8"))
+        # Read from LMDB
+        serialized_data = self._read_from_lmdb(idx)
+        if serialized_data is None:
+            return None
 
-            data = []
-            for item in data_list:
-                experiment_class = EXPERIMENT_TYPE_MAP[
-                    item["experiment"]["experiment_type"]
-                ]
-                experiment_reference_class = EXPERIMENT_REFERENCE_TYPE_MAP[
-                    item["experiment_reference"]["experiment_reference_type"]
-                ]
-                reconstructed_data = {
-                    "experiment": experiment_class(**item["experiment"]),
-                    "experiment_reference": experiment_reference_class(
-                        **item["experiment_reference"]
-                    ),
-                }
-                data.append(reconstructed_data)
+        # Deserialize JSON
+        data_list = self._deserialize_json(serialized_data)
 
-            processed_graph = self.process_graph.process(
-                self.cell_graph, self.phenotype_info, data
-            )
+        # Reconstruct experiment objects
+        data = self._reconstruct_experiments(data_list)
+
+        # Process graph (graph processor is already timed with @time_method)
+        processed_graph = self.process_graph.process(
+            self.cell_graph, self.phenotype_info, data
+        )
 
         return processed_graph
 

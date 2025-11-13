@@ -1,7 +1,7 @@
-# experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi
-# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_bipartite_dango_gi.py
+# experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi_lazy
+# [[experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi_lazy]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi_lazy
+# Test file: experiments/006-kuzmin-tmi/scripts/test_hetero_cell_bipartite_dango_gi_lazy.py
 
 
 import hashlib
@@ -22,7 +22,8 @@ from torchcell.transforms.coo_regression_to_classification import (
     COOInverseCompose,
 )
 from torch_geometric.transforms import Compose
-from torchcell.data.graph_processor import SubgraphRepresentation
+from torchcell.data.graph_processor import LazySubgraphRepresentation
+from torchcell.datamodules.lazy_collate import LazyCollater
 from torchcell.trainers.int_hetero_cell import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
@@ -34,7 +35,7 @@ from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
 from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
+from torchcell.models.hetero_cell_bipartite_dango_gi_lazy import GeneInteractionDango
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
@@ -89,7 +90,7 @@ def get_num_devices() -> int:
     config_name="hetero_cell_bipartite_dango_gi",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting GeneInteractionDango Training 🔫")
+    print("Starting GeneInteractionDango Lazy Training 🚀")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
 
     # Set distributed timeout to 2 hours if using DDP
@@ -178,7 +179,7 @@ def main(cfg: DictConfig) -> None:
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # HACK
-    # don't think we even need this for now the learnable bit is disgusting...
+    # don't think we even need this for now the learnable bit is disgusting..
     # git rid of it.
     # Build node embeddings using the NodeEmbeddingBuilder
     node_embeddings = NodeEmbeddingBuilder.build(
@@ -194,7 +195,9 @@ def main(cfg: DictConfig) -> None:
     )
     # HACK
 
-    graph_processor = SubgraphRepresentation()
+    # CRITICAL: Use LazySubgraphRepresentation for zero-copy architecture
+    graph_processor = LazySubgraphRepresentation()
+    print("Using LazySubgraphRepresentation for zero-copy graph processing")
 
     incidence_graphs = {}
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
@@ -302,6 +305,10 @@ def main(cfg: DictConfig) -> None:
         )
     print(f"Dataset Length: {len(dataset)}")
 
+    # CRITICAL: Initialize LazyCollater for batching
+    lazy_collater = LazyCollater(dataset)
+    print("LazyCollater initialized for zero-copy batching")
+
     seed = 42
     data_module = CellDataModule(
         dataset=dataset,
@@ -313,6 +320,8 @@ def main(cfg: DictConfig) -> None:
         pin_memory=wandb.config.data_module["pin_memory"],
         prefetch=wandb.config.data_module["prefetch"],
         prefetch_factor=wandb.config.data_module["prefetch_factor"],
+        persistent_workers=wandb.config.data_module["persistent_workers"],
+        collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
     )
     data_module.setup()
     if wandb.config.data_module["is_perturbation_subset"]:
@@ -326,7 +335,9 @@ def main(cfg: DictConfig) -> None:
             prefetch=wandb.config.data_module["prefetch"],
             seed=seed,
             prefetch_factor=wandb.config.data_module["prefetch_factor"],
+            persistent_workers=wandb.config.data_module["persistent_workers"],
             gene_subsets={"metabolism": yeast_gem.gene_set},
+            collate_fn=lazy_collater,  # CRITICAL: Use LazyCollater
         )
         data_module.setup()
 
@@ -346,9 +357,16 @@ def main(cfg: DictConfig) -> None:
     #     for name in wandb.config.cell_dataset["graphs"]
     # ]
 
-    print(f"Instantiating model ({timestamp()})")
+    print(f"Instantiating lazy model ({timestamp()})")
     # Instantiate new IsomorphicCell model
     gene_encoder_config = dict(wandb.config["model"]["gene_encoder_config"])
+
+    # CRITICAL: Enforce GIN encoder for lazy version
+    if gene_encoder_config.get("encoder_type") != "gin":
+        print(f"WARNING: Changing encoder from {gene_encoder_config.get('encoder_type')} to GIN")
+        print("Lazy version only supports GIN encoder with MaskedGINConv")
+    gene_encoder_config["encoder_type"] = "gin"
+
     if any(
         "learnable" in emb for emb in wandb.config["cell_dataset"]["node_embeddings"]
     ):
@@ -617,45 +635,57 @@ def main(cfg: DictConfig) -> None:
 
     # Setup profiler based on configuration
     profiler = None
-    if wandb.config.get("profiler", {}).get("is_pytorch", False):
-        print("Setting up PyTorch profiler...")
+    profiler_enabled = wandb.config.get("profiler", {}).get("enabled", False)
+
+    if profiler_enabled:
+        is_pytorch_profiler = wandb.config.get("profiler", {}).get("is_pytorch", True)
+
         # Create profiler output directory using proper path
-        profiler_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/profiler_output", f"hetero_dango_gi_{group}")
+        profiler_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/profiler_output", f"hetero_dango_gi_lazy_{group}")
         os.makedirs(profiler_dir, exist_ok=True)
 
-        # Import schedule from torch.profiler
-        from torch.profiler import schedule
-        from torch.profiler import ProfilerActivity
+        if is_pytorch_profiler:
+            print("Setting up PyTorch profiler...")
+            # Import schedule from torch.profiler
+            from torch.profiler import schedule
+            from torch.profiler import ProfilerActivity
 
-        profiler = PyTorchProfiler(
-            dirpath=profiler_dir,
-            filename=f"profile_{timestamp()}",
-            # Profile CPU and CUDA activities
-            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
-            # Use the schedule function properly
-            schedule=schedule(
-                wait=1,  # Wait 1 step before profiling
-                warmup=1,  # Warmup for 1 step
-                active=3,  # Profile for 3 steps
-                repeat=2,  # Repeat cycle 2 times
-            ),
-            # Capture memory usage
-            profile_memory=True,
-            # Record tensor shapes for better analysis
-            record_shapes=True,
-            # Export to Chrome tracing format for visualization
-            export_to_chrome=True,
-            # Also export to TensorBoard
-            on_trace_ready=None,  # Will save to dirpath automatically
-        )
-        print(f"Profiler output will be saved to: {profiler_dir}")
+            profiler = PyTorchProfiler(
+                dirpath=profiler_dir,
+                filename=f"profile_{timestamp()}",
+                # Profile CPU and CUDA activities
+                activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+                # Use the schedule function properly
+                schedule=schedule(
+                    wait=1,  # Wait 1 step before profiling
+                    warmup=1,  # Warmup for 1 step
+                    active=3,  # Profile for 3 steps
+                    repeat=2,  # Repeat cycle 2 times
+                ),
+                # Capture memory usage
+                profile_memory=True,
+                # Record tensor shapes for better analysis
+                record_shapes=True,
+                # Export to Chrome tracing format for visualization
+                export_to_chrome=True,
+                # Also export to TensorBoard
+                on_trace_ready=None,  # Will save to dirpath automatically
+            )
+            print(f"PyTorch Profiler output will be saved to: {profiler_dir}")
+        else:
+            print("Setting up Advanced profiler...")
+            profiler = AdvancedProfiler(
+                dirpath=profiler_dir,
+                filename=f"profile_{timestamp()}",
+            )
+            print(f"Advanced Profiler output will be saved to: {profiler_dir}")
 
     print(f"Starting training ({timestamp()})")
 
     # Only add checkpoint callbacks if not profiling (to avoid serialization errors)
     callbacks = []
     enable_checkpointing = True
-    if not wandb.config.get("profiler", {}).get("is_pytorch", False):
+    if not profiler_enabled:
         callbacks = [
             checkpoint_callback_best_mse,
             checkpoint_callback_best_pearson,

@@ -1,12 +1,15 @@
-#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi.yaml
+# DO NOT MODIFY THIS FILE - Used for profiling benchmarks
+# Created: 2025-10-22
+# Purpose: Stable config for measuring SubgraphRepresentation optimizations
+# Based on: experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi.yaml
+
 defaults:
   - default
   - _self_
 
 wandb:
-  # FLAG
-  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi_test
-  tags: []
+  project: torchcell_profiling_optimization
+  tags: [profiling, optimization, subgraph_representation]
 
 cell_dataset:
   graphs: [
@@ -23,7 +26,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 64 #64 to match cabbi_056
+  learnable_embedding_input_channels: 64
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -40,14 +43,14 @@ profiler:
 data_module:
   is_perturbation_subset: true
   perturbation_subset_size: 1000  # Reasonable subset for profiling
-  batch_size: 128 #32 to match cabbi_056
+  batch_size: 32 #32 to match cabbi_056
   num_workers: 2 #2 to match cabbi_056
   pin_memory: true
   prefetch: false
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 1000 # Updated for shorter training
+  max_epochs: 1 # Updated for shorter training
   strategy: auto # Will use single GPU strategy
   num_nodes: 1
   accelerator: gpu
@@ -82,11 +85,9 @@ model:
     graph_aggregation_method: "sum"  # Simple sum to match cabbi_056
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
 
-    graph_aggregation_config:
-      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
-      aggregation_norm: "layer"  # Options: "layer", "batch", null
-      # num_heads: 4  # Number of attention heads for cross_attention
-      dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
+    # graph_aggregation_config:
+    #   num_heads: 4  # Number of attention heads for cross_attention
+    #   dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
     
     # GAT-specific parameters (used when encoder_type="gatv2")
     # heads: 5

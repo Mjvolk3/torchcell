@@ -1,0 +1,29 @@
+# Experiment 086 base config: Single-GPU DANGO profiling with 10K subset
+# Inherits from dango_kuzmin2018_tmi_string12_0 but uses single GPU and subset
+defaults:
+  - dango_kuzmin2018_tmi_string12_0
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_dango_debug
+  tags: [experiment_086, dango, single_gpu, subset_10k]
+
+data_module:
+  is_perturbation_subset: true  # Enable subset sampling
+  perturbation_subset_size: 10000  # 10K samples for faster profiling
+  batch_size: 64  # DANGO's default batch size
+  num_workers: 8
+  pin_memory: false
+  prefetch: false
+
+trainer:
+  max_steps: 100  # Short profiling run (100 steps)
+  max_epochs: 1
+  strategy: auto  # Single GPU (not DDP)
+  num_nodes: 1
+  accelerator: gpu
+  devices: 1  # SINGLE GPU
+
+regression_task:
+  execution_mode: "training"  # DEFAULT - override in variant configs or via CLI
+  plot_every_n_epochs: 999999  # Disable plotting during profiling

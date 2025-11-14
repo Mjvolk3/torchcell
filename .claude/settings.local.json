@@ -18,5 +18,6 @@
       "Read(biocypher/config/PRODUCTION_*.yaml)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": false,
+  "outputStyle": "Explanatory"
 }

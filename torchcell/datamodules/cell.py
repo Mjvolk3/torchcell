@@ -203,11 +203,13 @@ class CellDataModule(L.LightningDataModule):
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
         collate_fn: Optional[object] = None,
+        val_batch_size: Optional[int] = None,
     ):
         super().__init__()
         self.dataset = dataset
         self.cache_dir = cache_dir
         self.batch_size = batch_size
+        self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
         self.random_seed = random_seed
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -393,9 +395,13 @@ class CellDataModule(L.LightningDataModule):
         self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
         self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
 
-    def _get_dataloader(self, dataset, shuffle=False):
+    def _get_dataloader(self, dataset, shuffle=False, batch_size=None):
+        # Use provided batch_size or fall back to self.batch_size
+        if batch_size is None:
+            batch_size = self.batch_size
+
         dataloader_kwargs = {
-            "batch_size": self.batch_size,
+            "batch_size": batch_size,
             "shuffle": shuffle,
             "num_workers": self.num_workers,
             "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
@@ -420,7 +426,7 @@ class CellDataModule(L.LightningDataModule):
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
-        return self._get_dataloader(self.val_dataset)
+        return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
     def test_dataloader(self):
         return self._get_dataloader(self.test_dataset)

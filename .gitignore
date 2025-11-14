@@ -35,6 +35,7 @@ data/safe_keeping
 .dendron.port
 .dendron.ws
 notes/.dendron.cache.json
+dendronrc.yml
 
 # ncbi_cli
 ncbi_cli/*
@@ -158,9 +159,12 @@ kuzmin2018_SI.mmd
 kuzmin2018.mmd
 suther_ynb-to-ypd.mmd
 suther_ynb-to-ypd.mmd
+dango.mmd
+
 
 # torchcell egg info
 torchcell.egg-info/*
 
 # results
 experiments/007-kuzmin-tm/results/cobra-fba-growth/*
+torchcell-scratch

@@ -1,0 +1,5 @@
+DANGO COMPLETE TRAINING STEP PROFILING
+================================================================================
+Model: Dango
+Parameters: 3,138,270
+Device: cuda

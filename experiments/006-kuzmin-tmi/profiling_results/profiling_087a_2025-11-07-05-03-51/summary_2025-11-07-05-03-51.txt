@@ -1,0 +1,80 @@
+=============================================================================
+EXPERIMENT 087a: NEIGHBOR SUBGRAPH DATALOADER PROFILING
+Generated: 2025-11-07-05-03-51
+=============================================================================
+
+CONFIGURATION:
+- GPU: Single GPU (no DDP)
+- Dataset: 10,000 sample subset
+- Batch size: 28
+- Graph Processor: NeighborSubgraphRepresentation (2-hop)
+- Steps profiled: 100
+
+PURPOSE:
+Test if k-hop neighborhood sampling is faster than LazySubgraphRepresentation
+for data loading. This should reduce graph processing overhead by only
+including relevant neighbors instead of the full 6607-node graph with masks.
+
+=============================================================================
+RESULTS:
+=============================================================================
+
+NeighborSubgraph (2-hop): 2.479 it/s
+LazySubgraph (086a):      1.31 it/s
+DANGO (086a):             73.82 it/s
+
+Speedup vs LazySubgraph:  1.89×
+Slowdown vs DANGO:        29.77×
+
+=============================================================================
+COMPARISON WITH EXPERIMENT 086a:
+=============================================================================
+
+Experiment 086a showed that LazySubgraphRepresentation was 56.34× slower
+than DANGO for data loading (1.31 it/s vs 73.82 it/s).
+
+The graph processor (mask computation) accounted for 57% of total time,
+or ~0.65 sec per batch.
+
+If NeighborSubgraph achieves >5× speedup over LazySubgraph:
+  → K-hop sampling successfully reduces data processing overhead
+  → Smaller subgraphs are much faster to process
+  → Should test with model next (experiment 088b)
+
+If speedup is <2×:
+  → Neighborhood sampling doesn't help much
+  → Bottleneck may be elsewhere (collation, I/O, etc.)
+  → Consider other optimizations (preprocessing, etc.)
+
+=============================================================================
+INTERPRETATION:
+=============================================================================
+
+⚠ MODERATE IMPROVEMENT
+NeighborSubgraph is 1.89× faster than LazySubgraph.
+Some improvement, but not dramatic.
+
+=============================================================================
+NEXT STEPS:
+=============================================================================
+
+If speedup is significant (>5×):
+1. Create experiment 087b (data + model profiling)
+2. Test if smaller subgraphs also speed up message passing
+3. Develop model architecture to handle variable-size subgraphs
+4. Profile full training with NeighborSubgraphRepresentation
+
+If speedup is minimal (<2×):
+1. Analyze where time is spent (profiling trace)
+2. Consider other optimizations:
+   - Preprocessing approach (experiment 087)
+   - GPU-accelerated mask generation
+   - Architectural changes
+
+=============================================================================
+RAW LOG FILE:
+=============================================================================
+
+experiments/006-kuzmin-tmi/profiling_results/profiling_087a_2025-11-07-05-03-51/087a_neighbor_subgraph_dataloader.log
+
+=============================================================================

@@ -20,6 +20,8 @@ notes/torchcell.models.dcell.md
 
 Dendron encode from `torchcell/torchcell.models.dcell` to `notes/torchcell.models.dcell.md`
 
+When I tell you to write some output to a file that is in `notes/` then typially you just need to append or modify, we don't want you messing up dendron frontmatter.
+
 ## Saving Images in Python
 
 All images should be saved in `ASSET_IMAGES_DIR`

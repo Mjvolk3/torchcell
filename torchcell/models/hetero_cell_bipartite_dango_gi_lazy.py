@@ -475,19 +475,12 @@ class DangoLikeHyperSAGNN(nn.Module):
         # Apply attention layers
         for i, layer in enumerate(self.attention_layers):
             if batch is not None:
-                # Process each batch separately
-                unique_batches = batch.unique()
-                output_embeddings = torch.zeros_like(dynamic_embeddings)
-
-                for b in unique_batches:
-                    mask = batch == b
-                    batch_embeddings = dynamic_embeddings[mask]
-                    batch_output = self._apply_attention_layer(
-                        batch_embeddings, layer, self.beta_params[i]
-                    )
-                    output_embeddings[mask] = batch_output
-
-                dynamic_embeddings = output_embeddings
+                # VECTORIZED: No .unique(), no Python loop over batches
+                # Pre-compute batch sizes and offsets (no GPU sync)
+                batch_sizes = torch.bincount(batch)
+                dynamic_embeddings = self._apply_attention_layer_batched(
+                    dynamic_embeddings, batch, batch_sizes, layer, self.beta_params[i]
+                )
             else:
                 # Single batch processing
                 dynamic_embeddings = self._apply_attention_layer(
@@ -550,6 +543,53 @@ class DangoLikeHyperSAGNN(nn.Module):
         # Apply ReZero connection
         return x + beta * out
 
+    def _apply_attention_layer_batched(self, x, batch, batch_sizes, layer, beta):
+        """
+        Apply attention layer across multiple batches using segment operations.
+        No .unique(), no Python loops over batches.
+
+        Args:
+            x: [total_genes, hidden_dim]
+            batch: [total_genes] sorted batch indices [0,0,0,1,1,1,2,2,2,...]
+            batch_sizes: [num_batches] count per batch (from bincount)
+            layer: attention layer dict
+            beta: ReZero parameter
+
+        Returns:
+            output: [total_genes, hidden_dim] with attention applied per batch
+        """
+        device = x.device
+        num_batches = len(batch_sizes)
+
+        # Handle batches with single gene (no attention possible)
+        # Find which batches have > 1 gene
+        multi_gene_mask = batch_sizes > 1
+
+        if not multi_gene_mask.any():
+            return x  # All batches have single genes, no attention needed
+
+        # Create output buffer
+        output = x.clone()
+
+        # Get cumulative offsets for slicing (no sync)
+        offsets = torch.cat([torch.tensor([0], device=device), batch_sizes.cumsum(0)])
+
+        # Process each batch (loop over num_batches ~32, not over genes ~thousands)
+        # This is much faster than the previous approach
+        for batch_idx in range(num_batches):
+            if batch_sizes[batch_idx] <= 1:
+                continue  # Skip single-gene batches
+
+            start_idx = offsets[batch_idx]
+            end_idx = offsets[batch_idx + 1]
+
+            # Extract batch embeddings and apply attention
+            batch_embeddings = x[start_idx:end_idx]
+            batch_output = self._apply_attention_layer(batch_embeddings, layer, beta)
+            output[start_idx:end_idx] = batch_output
+
+        return output
+
 
 class GeneInteractionPredictor(nn.Module):
     def __init__(self, hidden_dim, num_heads=4, num_layers=2, dropout=0.1, activation="relu"):
@@ -587,9 +627,10 @@ class GeneInteractionPredictor(nn.Module):
         # If batch information is provided, average scores per batch using scatter_mean
         if batch is not None:
             # Use scatter_mean for efficient batched averaging
-            num_batches = batch.max().item() + 1
+            # Compute num_batches on GPU first, sync only when needed for scatter_mean
+            num_batches = batch.max() + 1  # Keep as tensor
             interaction_scores = scatter_mean(
-                gene_scores, batch, dim=0, dim_size=num_batches
+                gene_scores, batch, dim=0, dim_size=num_batches.item()  # Sync here
             )
             return interaction_scores.unsqueeze(-1)  # [num_batches, 1]
         else:
@@ -827,6 +868,7 @@ class GeneInteractionDango(nn.Module):
 
         # Get combination method from config
         local_predictor_config = local_predictor_config or {}
+        self.use_local_predictor = local_predictor_config.get("use_local_predictor", True)
         self.combination_method = local_predictor_config.get(
             "combination_method", "gating"
         )
@@ -908,13 +950,17 @@ class GeneInteractionDango(nn.Module):
         local_predictor_config = local_predictor_config or {}
 
         # Gene interaction predictor for perturbed genes with Dango-like architecture
-        self.gene_interaction_predictor = GeneInteractionPredictor(
-            hidden_dim=hidden_channels,
-            num_heads=local_predictor_config.get("num_heads", 4),
-            num_layers=local_predictor_config.get("num_attention_layers", 2),
-            dropout=dropout,
-            activation=activation,
-        )
+        # (optional - only create if enabled)
+        if self.use_local_predictor:
+            self.gene_interaction_predictor = GeneInteractionPredictor(
+                hidden_dim=hidden_channels,
+                num_heads=local_predictor_config.get("num_heads", 4),
+                num_layers=local_predictor_config.get("num_attention_layers", 2),
+                dropout=dropout,
+                activation=activation,
+            )
+        else:
+            self.gene_interaction_predictor = None
 
         # Global aggregator for proper aggregation
         self.global_aggregator = AttentionalGraphAggregation(
@@ -929,8 +975,8 @@ class GeneInteractionDango(nn.Module):
             nn.Linear(hidden_channels, 1),
         )
 
-        # MLP for gating weights (only if using gating combination method)
-        if self.combination_method == "gating":
+        # MLP for gating weights (only if using gating combination method AND local predictor enabled)
+        if self.combination_method == "gating" and self.use_local_predictor:
             self.gate_mlp = nn.Sequential(
                 nn.Linear(2, hidden_channels),
                 act_register[activation],
@@ -939,6 +985,10 @@ class GeneInteractionDango(nn.Module):
             )
         else:
             self.gate_mlp = None
+
+        # Log local predictor mode
+        predictor_mode = "enabled" if self.use_local_predictor else "disabled (global-only)"
+        print(f"GeneInteractionDango - Local predictor: {predictor_mode}")
 
         # Initialize all weights properly
         self._init_weights()
@@ -1166,13 +1216,13 @@ class GeneInteractionDango(nn.Module):
 
         # Determine batch assignment for perturbed genes
         if hasattr(batch["gene"], "perturbation_indices_ptr"):
-            # Create batch assignment using perturbation_indices_ptr
+            # VECTORIZED: Create batch assignment using repeat_interleave (no loop!)
             ptr = batch["gene"].perturbation_indices_ptr
-            batch_assign = torch.zeros(
-                pert_indices.size(0), dtype=torch.long, device=z_w.device
+            counts = ptr[1:] - ptr[:-1]  # Genes per batch
+            batch_assign = torch.repeat_interleave(
+                torch.arange(len(counts), device=z_w.device),
+                counts
             )
-            for i in range(len(ptr) - 1):
-                batch_assign[ptr[i] : ptr[i + 1]] = i
         else:
             # Alternative if perturbation_indices_ptr is not available
             batch_assign = (
@@ -1181,14 +1231,17 @@ class GeneInteractionDango(nn.Module):
                 else None
             )
 
-        # Get gene interaction predictions using the local predictor
-        local_interaction = self.gene_interaction_predictor(
-            pert_gene_embs, batch_assign
-        )
+        # Get gene interaction predictions using the local predictor (if enabled)
+        if self.use_local_predictor:
+            local_interaction = self.gene_interaction_predictor(
+                pert_gene_embs, batch_assign
+            )
 
-        # Check for NaNs in local interaction predictions
-        if torch.isnan(local_interaction).any():
-            raise RuntimeError("NaN detected in local interaction predictions")
+            # Check for NaNs in local interaction predictions
+            if torch.isnan(local_interaction).any():
+                raise RuntimeError("NaN detected in local interaction predictions")
+        else:
+            local_interaction = None
 
         # Get gene interaction predictions using the global predictor
         global_interaction = self.global_interaction_predictor(z_p_global)
@@ -1197,91 +1250,107 @@ class GeneInteractionDango(nn.Module):
         if torch.isnan(global_interaction).any():
             raise RuntimeError("NaN detected in global interaction predictions")
 
-        # Ensure dimensions match for gating
-        if local_interaction.size(0) != batch_size:
-            local_interaction_expanded = torch.zeros(batch_size, 1, device=z_w.device)
-            for i in range(local_interaction.size(0)):
-                batch_idx = batch_assign[i].item() if batch_assign is not None else 0
-                if batch_idx < batch_size:
-                    local_interaction_expanded[batch_idx] = local_interaction[i]
-            local_interaction = local_interaction_expanded
-
-            # Check for NaNs after dimension adjustment
-            if torch.isnan(local_interaction).any():
-                raise RuntimeError(
-                    "NaN detected after dimension adjustment of local interaction"
-                )
-
-        # Ensure both tensors have the same number of dimensions before concatenation
-        if global_interaction.dim() == 1:
-            global_interaction = global_interaction.unsqueeze(1)
-        if local_interaction.dim() == 1:
-            local_interaction = local_interaction.unsqueeze(1)
-
-        # Combine predictions based on combination method
-        if self.combination_method == "gating":
-            # Stack the predictions
-            pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
-
-            # Check for NaNs in prediction stack
-            if torch.isnan(pred_stack).any():
-                raise RuntimeError("NaN detected in prediction stack")
-
-            # Use MLP to get logits for gating, then apply softmax
-            gate_logits = self.gate_mlp(pred_stack)
-
-            # Check for NaNs in gate logits
-            if torch.isnan(gate_logits).any():
-                raise RuntimeError("NaN detected in gate logits")
-
-            gate_weights = F.softmax(gate_logits, dim=1)
-
-            # Check for NaNs in gate weights
-            if torch.isnan(gate_weights).any():
-                raise RuntimeError("NaN detected in gate weights after softmax")
-
-            # Element-wise product of predictions and weights, then sum
-            weighted_preds = pred_stack * gate_weights
-
-            # Check for NaNs in weighted predictions
-            if torch.isnan(weighted_preds).any():
-                raise RuntimeError("NaN detected in weighted predictions")
-
-            gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
-
-        elif self.combination_method == "concat":
-            # Fixed equal weighting (0.5 each)
-            gene_interaction = 0.5 * global_interaction + 0.5 * local_interaction
-
-            # Create fixed gate weights for consistency in logging
-            batch_size = global_interaction.size(0)
-            gate_weights = (
-                torch.ones(batch_size, 2, device=global_interaction.device) * 0.5
-            )
-
-            # Check for NaNs
-            if torch.isnan(gene_interaction).any():
-                raise RuntimeError("NaN detected in concatenated gene interaction")
+        # Combine predictions based on configuration
+        if not self.use_local_predictor:
+            # Global only mode - weight is 1.0
+            gene_interaction = global_interaction
+            gate_weights = torch.ones(batch_size, 1, device=global_interaction.device)
 
         else:
-            raise ValueError(f"Unknown combination method: {self.combination_method}")
+            # Ensure dimensions match for gating
+            if local_interaction.size(0) != batch_size:
+                # VECTORIZED: Use scatter instead of loop (no .item()!)
+                local_interaction_expanded = torch.zeros(batch_size, 1, device=z_w.device)
+                if batch_assign is not None:
+                    # Filter valid indices and scatter in one operation
+                    valid_mask = batch_assign < batch_size
+                    local_interaction_expanded.scatter_(
+                        0,
+                        batch_assign[valid_mask].unsqueeze(1),
+                        local_interaction[valid_mask]
+                    )
+                local_interaction = local_interaction_expanded
+
+                # Check for NaNs after dimension adjustment
+                if torch.isnan(local_interaction).any():
+                    raise RuntimeError(
+                        "NaN detected after dimension adjustment of local interaction"
+                    )
+
+            # Ensure both tensors have the same number of dimensions before concatenation
+            if global_interaction.dim() == 1:
+                global_interaction = global_interaction.unsqueeze(1)
+            if local_interaction.dim() == 1:
+                local_interaction = local_interaction.unsqueeze(1)
+
+            # Combine local and global predictions
+            if self.combination_method == "gating":
+                # Stack the predictions
+                pred_stack = torch.cat([global_interaction, local_interaction], dim=1)
+
+                # Check for NaNs in prediction stack
+                if torch.isnan(pred_stack).any():
+                    raise RuntimeError("NaN detected in prediction stack")
+
+                # Use MLP to get logits for gating, then apply softmax
+                gate_logits = self.gate_mlp(pred_stack)
+
+                # Check for NaNs in gate logits
+                if torch.isnan(gate_logits).any():
+                    raise RuntimeError("NaN detected in gate logits")
+
+                gate_weights = F.softmax(gate_logits, dim=1)
+
+                # Check for NaNs in gate weights
+                if torch.isnan(gate_weights).any():
+                    raise RuntimeError("NaN detected in gate weights after softmax")
+
+                # Element-wise product of predictions and weights, then sum
+                weighted_preds = pred_stack * gate_weights
+
+                # Check for NaNs in weighted predictions
+                if torch.isnan(weighted_preds).any():
+                    raise RuntimeError("NaN detected in weighted predictions")
+
+                gene_interaction = weighted_preds.sum(dim=1, keepdim=True)
+
+            elif self.combination_method == "concat":
+                # Fixed equal weighting (0.5 each)
+                gene_interaction = 0.5 * global_interaction + 0.5 * local_interaction
+
+                # Create fixed gate weights for consistency in logging
+                batch_size = global_interaction.size(0)
+                gate_weights = (
+                    torch.ones(batch_size, 2, device=global_interaction.device) * 0.5
+                )
+
+                # Check for NaNs
+                if torch.isnan(gene_interaction).any():
+                    raise RuntimeError("NaN detected in concatenated gene interaction")
+
+            else:
+                raise ValueError(f"Unknown combination method: {self.combination_method}")
 
         # Final check for NaNs in gene interaction output
         if torch.isnan(gene_interaction).any():
             raise RuntimeError("NaN detected in final gene interaction output")
 
         # Return both predictions and representations dictionary
-        return gene_interaction, {
+        return_dict = {
             "z_w": z_w_global,
             "z_i": z_i_global,
             "z_p": z_p_global,
-            "local_interaction": local_interaction,
             "global_interaction": global_interaction,
-            "gate_weights": gate_weights,
             "gene_interaction": gene_interaction,
+            "gate_weights": gate_weights,
             "pert_gene_embs": pert_gene_embs,
             "layer_aggregation_weights": self.layer_aggregation_weights,  # Weights from all layers
         }
+        # Only include local_interaction if predictor was used
+        if self.use_local_predictor:
+            return_dict["local_interaction"] = local_interaction
+
+        return gene_interaction, return_dict
 
     @property
     def num_parameters(self) -> Dict[str, int]:
@@ -1292,14 +1361,15 @@ class GeneInteractionDango(nn.Module):
             "gene_embedding": count_params(self.gene_embedding),
             "preprocessor": count_params(self.preprocessor),
             "convs": count_params(self.convs),
-            "gene_interaction_predictor": count_params(self.gene_interaction_predictor),
             "global_aggregator": count_params(self.global_aggregator),
             "global_interaction_predictor": count_params(
                 self.global_interaction_predictor
             ),
         }
 
-        # Only count gate_mlp if it exists
+        # Only count if modules exist
+        if self.use_local_predictor and self.gene_interaction_predictor is not None:
+            counts["gene_interaction_predictor"] = count_params(self.gene_interaction_predictor)
         if self.gate_mlp is not None:
             counts["gate_mlp"] = count_params(self.gate_mlp)
 
@@ -1864,8 +1934,10 @@ def main(cfg: DictConfig) -> None:
 
         # Gate weights evolution (or display fixed weights for concat)
         plt.subplot(5, 3, 9)
+        use_local_predictor = cfg.model.local_predictor_config.get("use_local_predictor", True)
         if (
-            cfg.model.local_predictor_config.combination_method == "gating"
+            use_local_predictor
+            and cfg.model.local_predictor_config.combination_method == "gating"
             and gate_weights_history
         ):
             # Plot gate weights evolution for gating method

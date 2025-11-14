@@ -1,4 +1,11 @@
-# SubgraphRepresentation Optimization Progress
+---
+id: 0j8o30yg9nybnz6fu9nk39p
+title: Subgraph Optimization Progress Report
+desc: ''
+updated: 1762192216100
+created: 1762192141407
+---
+## SubgraphRepresentation Optimization Progress
 
 **Objective**: Achieve 100x speedup in dataset creation (from 44.38ms/sample to <1ms/sample)
 
@@ -6,7 +13,7 @@
 
 ---
 
-## Summary
+### Summary
 
 | Phase | Status | Result |
 |-------|--------|--------|
@@ -24,7 +31,7 @@
 
 ---
 
-## Key Metrics
+### Key Metrics
 
 | Metric | Value |
 |--------|-------|
@@ -36,7 +43,7 @@
 
 ---
 
-## Phase 0: Setup and Baseline ✅
+### Phase 0: Setup and Baseline ✅
 
 **Objective**: Establish testing infrastructure and baseline performance
 
@@ -60,7 +67,7 @@
 
 ---
 
-## Phase 1: Bipartite Subgraph Optimization ✅
+### Phase 1: Bipartite Subgraph Optimization ✅
 
 **Target**: `_process_metabolism_bipartite()` method (lines 364-395)
 
@@ -82,7 +89,7 @@
 
 ---
 
-## Phase 1.5: Benchmark Verification ✅
+### Phase 1.5: Benchmark Verification ✅
 
 **Objective**: Definitively verify whether graph processing is the bottleneck
 
@@ -110,7 +117,7 @@
 
 ---
 
-## Phase 2: Boolean Mask Indexing ❌ FAILED
+### Phase 2: Boolean Mask Indexing ❌ FAILED
 
 **Target**: `_process_reaction_info()` method (lines 296-310)
 
@@ -140,7 +147,7 @@
 
 ---
 
-## Phase 2.1: Timing Instrumentation ✅
+### Phase 2.1: Timing Instrumentation ✅
 
 **Objective**: Establish data-driven optimization approach with timing instrumentation
 
@@ -203,7 +210,7 @@ SubgraphRepresentation.process                        1152       164.37       0.
 
 ---
 
-## Phase 2.2: Incidence-Based Optimization (Path A) ❌ FAILED
+### Phase 2.2: Incidence-Based Optimization (Path A) ❌ FAILED
 
 **Target**: `torchcell/data/graph_processor.py` - `_process_gene_interactions()` method
 
@@ -230,13 +237,13 @@ SubgraphRepresentation.process                        1152       164.37       0.
 The incidence cache successfully computed edge masks faster, BUT we were still doing expensive operations afterward:
 
 ```python
-# Still expensive even with faster mask computation:
-kept_edges = edge_index[:, edge_mask]        # O(E') tensor copy ~2.4M edges
-new_edge_index = torch.stack([               # O(E') allocation
-    gene_map[kept_edges[0]],                 # O(E') node relabeling
+## Still expensive even with faster mask computation:
+kept_edges = edge_index[:, edge_mask]        ## O(E') tensor copy ~2.4M edges
+new_edge_index = torch.stack([               ## O(E') allocation
+    gene_map[kept_edges[0]],                 ## O(E') node relabeling
     gene_map[kept_edges[1]]
 ])
-integrated_subgraph[et].edge_index = new_edge_index  # New tensor storage
+integrated_subgraph[et].edge_index = new_edge_index  ## New tensor storage
 ```
 
 **Root Cause Analysis**:
@@ -268,7 +275,7 @@ Algorithmic optimization at the wrong architectural layer yields no benefit. To 
 
 ---
 
-## Phase 3: LazySubgraphRepresentation (Gene Graphs) ✅
+### Phase 3: LazySubgraphRepresentation (Gene Graphs) ✅
 
 **Target**: Gene-gene edge types (9 edge types: physical, regulatory, tflink, string12_0 channels)
 
@@ -279,12 +286,12 @@ Algorithmic optimization at the wrong architectural layer yields no benefit. To 
 **Key Features**:
 
 ```python
-# Returns FULL edge_index (reference to cell_graph)
-integrated_subgraph[et].edge_index = cell_graph[et].edge_index  # Zero-copy
-integrated_subgraph[et].num_edges = num_edges                    # FULL count
-integrated_subgraph[et].mask = edge_mask                         # Boolean mask only (True=keep)
+## Returns FULL edge_index (reference to cell_graph)
+integrated_subgraph[et].edge_index = cell_graph[et].edge_index  ## Zero-copy
+integrated_subgraph[et].num_edges = num_edges                    ## FULL count
+integrated_subgraph[et].mask = edge_mask                         ## Boolean mask only (True=keep)
 
-# Uses incidence cache for O(k×d) mask computation
+## Uses incidence cache for O(k×d) mask computation
 edge_mask = torch.ones(num_edges, dtype=torch.bool)
 for node_idx in perturbed_nodes:
     edge_mask[incidence_cache[et][node_idx]] = False
@@ -304,6 +311,7 @@ for node_idx in perturbed_nodes:
 **Key Achievement**: Gene graph processing went from **8.26ms → 0.69ms** (91.6% reduction)
 
 **Memory Savings**:
+
 - Per sample: ~2.7 MB (93.7% reduction for edge tensors)
 - Edge tensors: Zero-copy references (0 bytes allocated)
 - Edge masks: ~0.2 MB boolean masks (vs ~2.9 MB int64 tensors)
@@ -311,6 +319,7 @@ for node_idx in perturbed_nodes:
 **Why Only 1.20x Overall?**
 
 The remaining 40ms per sample is spent on:
+
 - DataLoader overhead
 - GPU transfer (`.to('cuda')`)
 - Batch collation
@@ -323,10 +332,10 @@ Looking at the current data structure:
 
 ```python
 HeteroData(
-  (gene, physical, gene)={ mask=[144211] }           # ✅ Lazy (zero-copy)
-  (gene, regulatory, gene)={ mask=[44310] }          # ✅ Lazy (zero-copy)
-  (gene, gpr, reaction)={ hyperedge_index=[2,5450] } # ❌ Still filtered
-  (reaction, rmr, metabolite)={                      # ❌ Still filtered
+  (gene, physical, gene)={ mask=[144211] }           ## ✅ Lazy (zero-copy)
+  (gene, regulatory, gene)={ mask=[44310] }          ## ✅ Lazy (zero-copy)
+  (gene, gpr, reaction)={ hyperedge_index=[2,5450] } ## ❌ Still filtered
+  (reaction, rmr, metabolite)={                      ## ❌ Still filtered
     hyperedge_index=[2,26325],
     stoichiometry=[26325]
   }
@@ -351,7 +360,7 @@ HeteroData(
 
 ---
 
-## Phase 4.1: Lazy GPR Edges ✅ COMPLETE
+### Phase 4.1: Lazy GPR Edges ✅ COMPLETE
 
 **Target**: Apply lazy approach to GPR (Gene-Protein-Reaction) edges
 
@@ -361,21 +370,22 @@ HeteroData(
 
 ---
 
-### What Was Changed
+#### What Was Changed
 
 1. **GPR Edge Semantics**: Changed from `pert_mask` to `mask`
    - Old: `pert_mask` (True=gene deleted, confusing for edges)
    - New: `mask` (True=keep edge, consistent with gene-gene edges)
 
 2. **Zero-Copy GPR Hyperedge_index**:
+
    ```python
-   # Old (expensive):
+   ## Old (expensive):
    filtered_gpr = hyperedge_index[:, edge_mask]
    relabeled_gpr = torch.stack([gene_map[...], reaction_map[...]])
 
-   # New (lazy):
-   integrated_subgraph[et].hyperedge_index = gpr_edge_index  # Reference
-   integrated_subgraph[et].mask = edge_mask                   # Boolean only
+   ## New (lazy):
+   integrated_subgraph[et].hyperedge_index = gpr_edge_index  ## Reference
+   integrated_subgraph[et].mask = edge_mask                   ## Boolean only
    ```
 
 3. **Reaction Node Masks**: Added both `pert_mask` and `mask`
@@ -390,9 +400,10 @@ HeteroData(
 
 ---
 
-### Key Technical Details
+#### Key Technical Details
 
 **YeastGEM GPR Splitting**:
+
 - OR relations in GPR rules create separate reaction nodes
 - Example: `(A and B) or C` creates:
   - `R_0001_comb0_fwd` with `genes={A, B}`
@@ -401,38 +412,42 @@ HeteroData(
 - Reaction is invalid only if ALL its required genes are deleted
 
 **Mask Computation**:
+
 ```python
-# Create gene mask (True = gene is kept/not deleted)
+## Create gene mask (True = gene is kept/not deleted)
 gene_mask = torch.zeros(num_genes, dtype=torch.bool)
 gene_mask[keep_subset] = True
 
-# Scatter to compute per-reaction gene counts
+## Scatter to compute per-reaction gene counts
 reaction_gene_sum = scatter(gene_mask[gene_indices].long(), ...)
 total_gene_count = scatter(torch.ones(...), ...)
 
-# Reaction is valid if ALL genes are present
+## Reaction is valid if ALL genes are present
 valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 ```
 
 ---
 
-### Verification Results
+#### Verification Results
 
 **Sample 0 Inspection** (from `load_lazy_batch_006.py`):
 
 **GPR Edges**:
+
 - hyperedge_index: `torch.Size([2, 5450])` [FULL graph]
 - ✅ **mask attribute** (not pert_mask)
 - 5,450 True (gene not deleted), 0 False (gene deleted)
 - ✅ **Zero-copy confirmed** (reference to full graph)
 
 **Reaction Nodes**:
+
 - num_nodes: 7,122 reactions
 - ✅ **pert_mask**: 0 invalid reactions
 - ✅ **mask**: 7,122 valid reactions
 - ✅ Masks are inverse: True
 
 **Metabolite Nodes**:
+
 - num_nodes: 2,806 metabolites
 - ✅ **pert_mask**: 0 removed (all kept)
 - ✅ **mask**: 2,806 kept (all kept)
@@ -440,9 +455,10 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### Performance Impact
+#### Performance Impact
 
 **Expected Savings** (not yet benchmarked):
+
 - GPR edge processing: Estimated ~0.5ms reduction per sample
 - Zero-copy for GPR hyperedge_index reduces memory allocation
 - Simplified reaction validity computation (O(k) scatter operations)
@@ -451,7 +467,7 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### Files Modified
+#### Files Modified
 
 1. `torchcell/data/graph_processor.py`:
    - `_process_reaction_info()`: Complete rewrite for lazy approach (lines 1541-1661)
@@ -464,7 +480,7 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-## Phase 4.2: Lazy RMR Edges ✅ COMPLETE
+### Phase 4.2: Lazy RMR Edges ✅ COMPLETE
 
 **Target**: Apply lazy approach to RMR (Reaction-Metabolite-Reaction) edges
 
@@ -474,26 +490,28 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### What Was Changed
+#### What Was Changed
 
 1. **Zero-Copy RMR Hyperedge_index and Stoichiometry**:
+
    ```python
-   # Old (expensive):
+   ## Old (expensive):
    final_edge_index = torch.stack([
-       reaction_map[reaction_indices[edge_mask]],  # Relabeling + filtering
+       reaction_map[reaction_indices[edge_mask]],  ## Relabeling + filtering
        metabolite_indices[edge_mask]
    ])
-   final_edge_attr = stoichiometry[edge_mask]       # Copy
+   final_edge_attr = stoichiometry[edge_mask]       ## Copy
 
-   # New (lazy):
-   integrated_subgraph[et].hyperedge_index = hyperedge_index  # Reference
-   integrated_subgraph[et].stoichiometry = stoichiometry      # Reference
-   integrated_subgraph[et].mask = edge_mask                   # Boolean only
+   ## New (lazy):
+   integrated_subgraph[et].hyperedge_index = hyperedge_index  ## Reference
+   integrated_subgraph[et].stoichiometry = stoichiometry      ## Reference
+   integrated_subgraph[et].mask = edge_mask                   ## Boolean only
    ```
 
 2. **RMR Edge Mask Computation**:
+
    ```python
-   # Edge is valid if source reaction is valid
+   ## Edge is valid if source reaction is valid
    reaction_indices = hyperedge_index[0]
    edge_mask = self.masks["reaction"]["kept"][reaction_indices]
    ```
@@ -502,45 +520,51 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### Verification Results
+#### Verification Results
 
 **Inspection (sample 5 with 4 invalid reactions):**
+
 - ✅ RMR hyperedge_index: Full graph (26,325 edges)
 - ✅ stoichiometry: Full attributes (26,325 values)
 - ✅ mask: 26,307 True (valid), 18 False (invalid)
 - ✅ Zero-copy confirmed for both tensors
 
 **Equivalence Testing** (`verify_lazy_equivalence.py`):
+
 - ✅ **All 5 samples PASSED** (including samples with invalid reactions)
 - ✅ RMR edge counts match SubgraphRepresentation after mask application
 - ✅ RMR edge masks correctly based on source reaction validity
 - ✅ Metabolites kept in both implementations
 
 **Sample 5 Details:**
+
 - 4 invalid reactions (all required genes deleted)
 - 18 RMR edges masked out (from those 4 invalid reactions)
 - 2,806 metabolites all kept (no propagation)
 
 ---
 
-### Performance Impact
+#### Performance Impact
 
 **Benchmark Results** (SLURM job 356):
 
 **Method-level speedup:**
+
 - `_process_metabolism_bipartite`: 0.70ms → 0.13ms (**5.4x faster**)
 
 **Combined Phase 4 (4.1 + 4.2) Impact:**
+
 - GPR + RMR processing: 2.65ms → 0.79ms (**3.4x faster**)
 
 **Overall graph processing:**
+
 - SubgraphRepresentation: 13.39ms
 - LazySubgraphRepresentation: 3.79ms
 - **3.54x speedup for graph processing!**
 
 ---
 
-### Biological Correctness
+#### Biological Correctness
 
 **Equivalence verified with SubgraphRepresentation:**
 
@@ -552,6 +576,7 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 | Edge counts | Filtered | Full + mask | ✅ Yes (after mask) |
 
 **Biological interpretation:**
+
 - Invalid reactions (all required genes deleted) can't occur
 - RMR edges from invalid reactions are inactive (masked)
 - Metabolites persist (other reactions might produce them)
@@ -559,7 +584,7 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### Files Modified
+#### Files Modified
 
 1. `torchcell/data/graph_processor.py`:
    - `_process_metabolism_bipartite()`: Complete rewrite for lazy approach (lines 1703-1738)
@@ -576,35 +601,35 @@ valid_mask = (reaction_gene_sum == total_gene_count) & has_genes
 
 ---
 
-### Model Architecture Considerations
+#### Model Architecture Considerations
 
 After Phase 4.2, the model will need mask-aware message passing. Proposed pattern:
 
 ```python
 def masked_mp_layer(
-    x_batch,            # [B, N, F_in]
-    edge_index_full,    # [2, E] (src, dst) long - SHARED across batches
-    edge_mask,          # [B, E] bool - per-sample masks
-    W,                  # [F_in, F_out] learnable
+    x_batch,            ## [B, N, F_in]
+    edge_index_full,    ## [2, E] (src, dst) long - SHARED across batches
+    edge_mask,          ## [B, E] bool - per-sample masks
+    W,                  ## [F_in, F_out] learnable
 ):
-    # 1. Gather source features for all edges (batched)
-    x_src = x_batch[:, edge_index_full[0], :]  # [B, E, F_in]
+    ## 1. Gather source features for all edges (batched)
+    x_src = x_batch[:, edge_index_full[0], :]  ## [B, E, F_in]
 
-    # 2. Transform messages
-    msg = x_src @ W  # [B, E, F_out]
+    ## 2. Transform messages
+    msg = x_src @ W  ## [B, E, F_out]
 
-    # 3. Apply per-sample edge masks
-    msg = msg * edge_mask.unsqueeze(-1).to(msg.dtype)  # Zero out deleted edges
+    ## 3. Apply per-sample edge masks
+    msg = msg * edge_mask.unsqueeze(-1).to(msg.dtype)  ## Zero out deleted edges
 
-    # 4. Scatter to destinations
-    # ... (using torch_scatter with mask-aware aggregation)
+    ## 4. Scatter to destinations
+    ## ... (using torch_scatter with mask-aware aggregation)
 ```
 
 This pattern works for ALL edge types (gene-gene, gene-reaction, reaction-metabolite).
 
 ---
 
-## Test and Benchmark Commands
+### Test and Benchmark Commands
 
 **Run equivalence tests**:
 
@@ -615,26 +640,27 @@ pytest tests/torchcell/data/test_graph_processor_equivalence.py -xvs
 **Run benchmark with timing**:
 
 ```bash
-# Ensure TORCHCELL_DEBUG_TIMING=1 is set in SLURM script
+## Ensure TORCHCELL_DEBUG_TIMING=1 is set in SLURM script
 sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 ```
 
 **Run benchmark without timing** (production speed):
 
 ```bash
-# Comment out TORCHCELL_DEBUG_TIMING=1, set num_workers=2
+## Comment out TORCHCELL_DEBUG_TIMING=1, set num_workers=2
 sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 ```
 
 ---
 
-## Three-Way Benchmark: Final Validation
+### Three-Way Benchmark: Final Validation
 
 **Benchmark**: Perturbation vs LazySubgraphRepresentation vs SubgraphRepresentation
 
 **Objective**: Compare optimized LazySubgraphRepresentation against both the baseline (SubgraphRepresentation) and theoretical minimum (Perturbation).
 
 **Configuration**:
+
 - Perturbation: No graphs, no embeddings (simplest possible)
 - Lazy + Subgraph: Full HeteroCell (9 edge types + metabolism)
 - 1,000 samples, batch size 32, num_workers=0
@@ -680,11 +706,12 @@ sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 
 ---
 
-## Final Conclusions
+### Final Conclusions
 
-### ✅ Optimization Campaign Successfully Complete
+#### ✅ Optimization Campaign Successfully Complete
 
 **Mission Accomplished**:
+
 - ✅ Graph processor optimized 3.65x (13.72ms → 3.76ms)
 - ✅ Overall speedup 1.21x (54.21ms → 44.64ms per sample)
 - ✅ Bottleneck eliminated (graph processing now only 8% of total time)
@@ -692,6 +719,7 @@ sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 - ✅ Biologically correct (equivalence verified)
 
 **Phases Completed**:
+
 - Phase 0: Baseline and testing infrastructure ✅
 - Phase 1: Bipartite optimization ✅
 - Phase 1.5: Benchmark verification ✅
@@ -701,12 +729,14 @@ sbatch experiments/006-kuzmin-tmi/scripts/benchmark_processors.slurm
 - Phase 4.2: Lazy RMR edges ✅
 
 **Implementation Strategy**:
+
 - Zero-copy architecture: Return full graphs with boolean masks
 - Incidence cache: O(k×d) edge mask computation
 - No tensor allocation: 93.7% memory reduction
 - Biological correctness: Validated against baseline
 
 **Next Optimization Targets** (outside graph processor):
+
 1. Node embedding computation (~15ms)
 2. Phenotype COO tensor creation (~10ms)
 3. GPU transfer optimization (~10ms)

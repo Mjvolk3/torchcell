@@ -1,0 +1,112 @@
+=============================================================================
+DATALOADER PROFILING COMPARISON (DDP, 4 GPUs)
+Generated: 2025-11-06-23-24-11
+=============================================================================
+
+CONFIGURATION:
+- Mode: DataLoader profiling (model forward/backward skipped)
+- GPUs: 4 (DDP strategy)
+- Steps per run: 100
+- Batch preparation: Data loading + collation + GPU transfer + DDP sync
+
+PURPOSE:
+This profiling measures ONLY the data pipeline overhead, excluding model
+computation. The difference between this and full-step profiling reveals
+the pure model compute cost.
+
+=============================================================================
+LAZY HETERO RESULTS (Hetero Cell Bipartite DANGO GI):
+=============================================================================
+
+Average iterations/sec: 1.592
+
+Last 20 it/s measurements:
+     1	4.93
+     2	2.95
+     3	0.03
+     4	0.03
+     5	0.02
+
+Sample log output:
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  4.93it/s]Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00,  2.95it/s]/home/michaelvolk/miniconda3/envs/torchcell/lib/python3.13/site-packages/torchmetrics/utilities/prints.py:43: UserWarning: The ``compute`` method of metric MeanSquaredError was called before the ``update`` method which may lead to errors, as metric states have not yet been updated.
+Training: |          | 0/? [00:00<?, ?it/s]Training: |          | 0/? [00:00<?, ?it/s]Epoch 0:   0%|          | 0/2374 [00:00<?, ?it/s]Epoch 0:   0%|          | 1/2374 [00:37<24:49:30,  0.03it/s]Epoch 0:   0%|          | 1/2374 [00:37<24:49:31,  0.03it/s, v_num=tr9i]<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+Epoch 0:   0%|          | 1/2374 [00:46<30:31:23,  0.02it/s, v_num=tr9i]
+
+=============================================================================
+DANGO RESULTS:
+=============================================================================
+
+Average iterations/sec: 19.904
+
+Last 20 it/s measurements:
+     1	33.02
+     2	58.28
+     3	4.07
+     4	4.06
+     5	0.09
+
+Sample log output:
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Execution mode: dataloader_profiling
+Sanity Checking: |          | 0/? [00:00<?, ?it/s][rank2]:[W1106 23:28:48.771903286 kineto_shim.cpp:456] Profiler is not initialized: skipping profiling metadata
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s][rank0]:[W1106 23:28:48.544011983 kineto_shim.cpp:456] Profiler is not initialized: skipping profiling metadata
+Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00, 33.02it/s][rank0]:[W1106 23:28:48.548082156 kineto_shim.cpp:456] Profiler is not initialized: skipping profiling metadata
+Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00, 58.28it/s]/home/michaelvolk/miniconda3/envs/torchcell/lib/python3.13/site-packages/torchmetrics/utilities/prints.py:43: UserWarning: The ``compute`` method of metric MeanSquaredError was called before the ``update`` method which may lead to errors, as metric states have not yet been updated.
+                                                                           Training: |          | 0/? [00:00<?, ?it/s]Training: |          | 0/? [00:00<?, ?it/s]Epoch 0:   0%|          | 0/1039 [00:00<?, ?it/s]Loss: 0.0Loss: 0.0Loss: 0.0Loss: 0.0
+Epoch 0:   0%|          | 1/1039 [00:00<04:15,  4.07it/s]Epoch 0:   0%|          | 1/1039 [00:00<04:15,  4.06it/s, v_num=123l][rank2]:[W1106 23:29:53.938128227 kineto_shim.cpp:456] Profiler is not initialized: skipping profiling metadata
+    Epoch 0:   0%|          | 1/1039 [00:11<3:19:15,  0.09it/s, v_num=123l]self.function_events = self.profiler.events()
+
+=============================================================================
+COMPARISON SUMMARY:
+=============================================================================
+
+DANGO avg it/s:      19.904
+Lazy Hetero avg it/s: 1.592
+
+Speedup ratio (DANGO / Lazy Hetero): 12.50x
+
+INTERPRETATION:
+- These numbers represent ONLY data pipeline overhead (no model compute)
+- If ratio is close to 1.0: Data pipelines are comparable
+- If ratio is >2.0: Lazy Hetero has significantly higher data overhead
+- Compare with full-step profiling to isolate model vs data costs
+
+Expected analysis:
+  Full-step ratio = (Model compute ratio) × (Data pipeline ratio)
+
+If full-step shows 40× slowdown but data pipeline is only 12.50×,
+then model compute must account for the remaining difference.
+
+=============================================================================
+NEXT STEPS:
+=============================================================================
+
+1. Compare with full-step profiling results to decompose:
+   - Pure model forward+backward cost
+   - Pure data pipeline cost
+
+2. If data pipeline ratio is high (>12.50×):
+   - Investigate batch collation differences
+   - Check DataLoader worker efficiency
+   - Profile CPU→GPU transfer sizes
+
+3. If model compute ratio is high:
+   - Consider architectural changes (package cell_graph into batch)
+   - Optimize message passing patterns
+   - Reduce dual forward passes
+
+=============================================================================
+RAW LOG FILES:
+=============================================================================
+
+Lazy Hetero: experiments/006-kuzmin-tmi/profiling_results/dataloader_ddp_2025-11-06-23-24-11/lazy_hetero_dataloader_profile.log
+DANGO:       experiments/006-kuzmin-tmi/profiling_results/dataloader_ddp_2025-11-06-23-24-11/dango_dataloader_profile.log
+
+=============================================================================

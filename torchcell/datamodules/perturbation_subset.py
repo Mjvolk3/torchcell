@@ -43,6 +43,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
         collate_fn: Optional[object] = None,
+        val_batch_size: Optional[int] = None,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -58,6 +59,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         # Check that requested size does not exceed maximum possible.
         self._set_size(size)
         self.batch_size = batch_size
+        self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
@@ -364,11 +366,15 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.test_dataset = Subset(self.dataset, self.index.test)
         print("Setup complete.")
 
-    def _get_dataloader(self, dataset, shuffle=False):
+    def _get_dataloader(self, dataset, shuffle=False, batch_size=None):
+        # Use provided batch_size or fall back to self.batch_size
+        if batch_size is None:
+            batch_size = self.batch_size
+
         if self.dense:
             loader = DensePaddingDataLoader(
                 dataset,
-                batch_size=self.batch_size,
+                batch_size=batch_size,
                 shuffle=shuffle,
                 num_workers=self.num_workers,
                 persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
@@ -379,7 +385,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             )
         else:
             dataloader_kwargs = {
-                "batch_size": self.batch_size,
+                "batch_size": batch_size,
                 "shuffle": shuffle,
                 "num_workers": self.num_workers,
                 "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
@@ -402,7 +408,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
-        return self._get_dataloader(self.val_dataset)
+        return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
     def test_dataloader(self):
         return self._get_dataloader(self.test_dataset)

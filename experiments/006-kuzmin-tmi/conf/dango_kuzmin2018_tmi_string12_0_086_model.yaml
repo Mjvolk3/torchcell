@@ -1,0 +1,11 @@
+# Experiment 086b: DANGO Model profiling (data + model forward/backward, skip optimizer)
+# Measures: Data loading + graph processor + collation + CPU→GPU + model compute
+defaults:
+  - dango_kuzmin2018_tmi_string12_0_086
+  - _self_
+
+wandb:
+  tags: [experiment_086b, model_profiling, dango, single_gpu]
+
+regression_task:
+  execution_mode: "model_profiling"  # Do real model forward/backward, skip optimizer

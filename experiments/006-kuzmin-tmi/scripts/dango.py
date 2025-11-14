@@ -294,6 +294,9 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Creating GeneInteractionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
+    # Get execution mode from config (default to training for backward compatibility)
+    execution_mode = wandb.config["regression_task"].get("execution_mode", "training")
+    print(f"Execution mode: {execution_mode}")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
         # Load the checkpoint with all required arguments
@@ -318,6 +321,7 @@ def main(cfg: DictConfig) -> None:
             grad_accumulation_schedule=wandb.config["regression_task"][
                 "grad_accumulation_schedule"
             ],
+            execution_mode=execution_mode,
         )
         print("Successfully loaded model weights from checkpoint")
     else:
@@ -341,6 +345,7 @@ def main(cfg: DictConfig) -> None:
             inverse_transform=None,
             forward_transform=None,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+            execution_mode=execution_mode,
         )
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")
@@ -372,7 +377,7 @@ def main(cfg: DictConfig) -> None:
         os.makedirs(profiler_dir, exist_ok=True)
 
         # Import schedule from torch.profiler
-        from torch.profiler import schedule
+        from torch.profiler import schedule, tensorboard_trace_handler
         from torch.profiler import ProfilerActivity
 
         profiler = PyTorchProfiler(
@@ -382,10 +387,10 @@ def main(cfg: DictConfig) -> None:
             activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
             # Use the schedule function properly
             schedule=schedule(
-                wait=1,  # Wait 1 step before profiling
-                warmup=1,  # Warmup for 1 step
-                active=3,  # Profile for 3 steps
-                repeat=2,  # Repeat cycle 2 times
+                wait=600,  # Wait 600 steps for steady-state performance (warmup complete)
+                warmup=1,   # Warmup for 1 step
+                active=25,  # Profile for 25 steps for detailed analysis
+                repeat=1,   # Single profiling window after warmup
             ),
             # Capture memory usage
             profile_memory=True,
@@ -393,10 +398,13 @@ def main(cfg: DictConfig) -> None:
             record_shapes=True,
             # Export to Chrome tracing format for visualization
             export_to_chrome=True,
-            # Also export to TensorBoard
-            on_trace_ready=None,  # Will save to dirpath automatically
+            # Write trace files immediately after each profiling cycle
+            on_trace_ready=tensorboard_trace_handler(profiler_dir),
         )
-        print(f"Profiler output will be saved to: {profiler_dir}")
+        print(f"PyTorch Profiler output will be saved to: {profiler_dir}")
+        print("Profiler will write trace files after each profiling cycle")
+        print("NOTE: Profiling 25 steps (601-625) after warmup plateau")
+        print("      Use analyze_profile_detailed.py for comprehensive analysis")
 
     print(f"Starting training ({timestamp()})")
 

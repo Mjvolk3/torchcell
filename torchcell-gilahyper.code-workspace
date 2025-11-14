@@ -5,12 +5,12 @@
             "path": "."
         },
         {
-            "name": "/scratch/projects/torchcell",
-            "path": "/scratch/projects/torchcell"
-        },
+            "name": "torchcell-scratch",
+            "path": "./torchcell-scratch"
+        }
     ],
     "settings": {
-        "dendron.rootDir": ".",
+        "dendron.rootDir": "${workspaceFolder:torchcell}",
         "files.autoSave": "onFocusChange",
         "pasteImage.path": "${currentFileDir}/assets/images",
         "pasteImage.prefix": "./",

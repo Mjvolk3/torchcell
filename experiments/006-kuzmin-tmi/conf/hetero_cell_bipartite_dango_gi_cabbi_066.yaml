@@ -23,7 +23,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 16 #16
+  learnable_embedding_input_channels: 64 #64
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -41,7 +41,7 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 86 # 32 works ... 48 fails, 40 fails, 38 fails
+  batch_size: 28 # 32 works ... 48 fails, 40 fails, 38 fails
   num_workers: 4 # 2 > 8...
   pin_memory: true
   prefetch: false
@@ -69,7 +69,7 @@ model:
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 16 #16
+  hidden_channels: 64 #64
   num_layers: 3 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
@@ -85,11 +85,9 @@ model:
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
 
     graph_aggregation_config:
-      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
-      aggregation_norm: "layer"  # Options: "layer", "batch", null
       # Pairwise interaction parameters (only used when graph_aggregation_method="pairwise_interaction")
       pairwise_num_layers: 2  # Number of MLP layers per pair (min: 2 for universal approximation)
-      pairwise_hidden_dim: 8  # Bottleneck dimension (default: hidden_channels // 2 = 32)
+      pairwise_hidden_dim: 32  # Bottleneck dimension (default: hidden_channels // 2 = 32)
       # Cross-attention parameters (only used when graph_aggregation_method="cross_attention")
       # num_heads: 4  # Number of attention heads
       dropout: 0.0  # Dropout for aggregation modules
@@ -126,7 +124,7 @@ model:
     gin_num_layers: 4
     gin_hidden_dim: null
   prediction_head_config:
-    hidden_channels: 16 #16
+    hidden_channels: 64 #64
     head_num_layers: 4
     dropout: 0.0 #0.1
     activation: "gelu"
@@ -136,7 +134,7 @@ model:
   # Dango-like local predictor config
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 4 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
@@ -193,14 +191,14 @@ regression_task:
     weight_decay: 1e-12
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 300  # First convergence at epoch 50
-    cycle_mult: 0.75  # Each cycle is 3x longer: 50 -> 150 -> 450
+    first_cycle_steps: 300 
+    cycle_mult: 1.0
     max_lr: 5e-4 #5e-4  # Higher peak LR since no overfitting
-    min_lr: 1e-6  # Higher floor for faster convergence
+    min_lr: 1e-7  # Higher floor for faster convergence
     warmup_steps: 0  # Quick warmup to peak
-    gamma: 0.50  #0.85 Moderate decay across cycles (reduces peak LR by 50% each restart)
+    gamma: 0.50  #0.85 Moderate decay across cycles
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: null #{0: 2} #{0: 16}  # Accumulate for 16 steps to get effective batch size of 224
+  grad_accumulation_schedule: {0: 2} #{0: 2} #{0: 16}  # Accumulate for 16 steps to get effective batch size of 224
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

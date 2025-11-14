@@ -88,35 +88,35 @@ model:
         lambda: ${graph_reg_lambda}
       regulatory:
         layer: 4
-        head: 0
+        head: 1
         lambda: ${graph_reg_lambda}
       tflink:
         layer: 4
-        head: 0
+        head: 2
         lambda: ${graph_reg_lambda}
       string12_0_neighborhood:
         layer: 4
-        head: 0
+        head: 3
         lambda: ${graph_reg_lambda}
       string12_0_fusion:
         layer: 4
-        head: 0
+        head: 4
         lambda: ${graph_reg_lambda}
       string12_0_cooccurence:
         layer: 4
-        head: 0
+        head: 5
         lambda: ${graph_reg_lambda}
       string12_0_coexpression:
         layer: 4
-        head: 0
+        head: 6
         lambda: ${graph_reg_lambda}
       string12_0_experimental:
         layer: 4
-        head: 0
+        head: 7
         lambda: ${graph_reg_lambda}
       string12_0_database:
         layer: 4
-        head: 0
+        head: 8
         lambda: ${graph_reg_lambda}
 
   # Perturbation head configuration

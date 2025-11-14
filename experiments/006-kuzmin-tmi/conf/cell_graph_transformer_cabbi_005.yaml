@@ -139,7 +139,7 @@ regression_task:
     # Distribution loss configuration
     distribution_loss:
       type: "wasserstein"  # "dist", "wasserstein", or null to disable
-      lambda: 0.0  # Disabled to verify torch.compile fix works
+      lambda: 0.1  # Disabled to verify torch.compile fix works
 
       # Wasserstein-specific parameters (active when type="wasserstein")
       wasserstein_blur: 0.05  # Entropic regularization (smaller = more precise)

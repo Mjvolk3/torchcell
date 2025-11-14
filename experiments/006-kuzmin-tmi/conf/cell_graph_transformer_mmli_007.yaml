@@ -39,7 +39,7 @@ data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000  # 2.5e4
   batch_size: 512  # Limited by transformer memory requirements
-  num_workers: 12  # Will be overridden by SLURM script
+  num_workers: 16  # Will be overridden by SLURM script
   pin_memory: true
   prefetch: false
   prefetch_factor: 4
@@ -58,14 +58,14 @@ trainer:
 compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
 
 # Graph regularization lambda (shared across all graphs)
-graph_reg_lambda: 0.001
+graph_reg_lambda: 0.01
 
 # Transformer model configuration
 model:
   checkpoint_path: null  # *.ckpt
   gene_num: 6607
-  hidden_channels: 96  # d in weekly report
-  num_transformer_layers: 8  # L layers
+  hidden_channels: 128 # d in weekly report
+  num_transformer_layers: 12  # L layers
   num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
@@ -76,53 +76,53 @@ model:
   # Graph regularization configuration
   graph_regularization:
     enabled: true
-    row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
+    row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
     # Map graph names to (layer, head, lambda) for regularization
     # Early-mid layers, one head per graph
     # REDUCED lambdas significantly to balance with MSE loss
     regularized_heads:
       physical:
-        layer: 4
+        layer: 6
         head: 0
         lambda: ${graph_reg_lambda}
       regulatory:
-        layer: 4
+        layer: 6
         head: 1
         lambda: ${graph_reg_lambda}
       tflink:
-        layer: 4
+        layer: 6
         head: 2
         lambda: ${graph_reg_lambda}
       string12_0_neighborhood:
-        layer: 4
+        layer: 6
         head: 3
         lambda: ${graph_reg_lambda}
       string12_0_fusion:
-        layer: 4
+        layer: 6
         head: 4
         lambda: ${graph_reg_lambda}
       string12_0_cooccurence:
-        layer: 4
+        layer: 6
         head: 5
         lambda: ${graph_reg_lambda}
       string12_0_coexpression:
-        layer: 4
+        layer: 6
         head: 6
         lambda: ${graph_reg_lambda}
       string12_0_experimental:
-        layer: 4
+        layer: 6
         head: 7
         lambda: ${graph_reg_lambda}
       string12_0_database:
-        layer: 4
+        layer: 6
         head: 8
         lambda: ${graph_reg_lambda}
 
   # Perturbation head configuration
   perturbation_head:
     use_cross_attention: true
-    num_heads: 8
+    num_heads: 16
     dropout: 0.1
 
 # Loss and optimization configuration

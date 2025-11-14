@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -p cabbi
-#SBATCH --mem=400g
+#SBATCH --mem=600g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=14

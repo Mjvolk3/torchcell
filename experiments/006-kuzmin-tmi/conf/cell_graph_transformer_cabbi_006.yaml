@@ -71,7 +71,7 @@ model:
 
   # Loss balancing
   adaptive_loss_weighting: false  # Set to true to use learnable weights
-  graph_reg_scale: 0.001  # Global scale factor for graph regularization
+  graph_reg_scale: 0.01  # Global scale factor for graph regularization
 
   # Graph regularization configuration
   graph_regularization:
@@ -133,7 +133,7 @@ regression_task:
 
     # Point estimator configuration
     point_estimator:
-      type: "logcosh"  # "logcosh" or "mse"
+      type: "mse"  # "logcosh" or "mse"
       lambda: 1.0
 
     # Distribution loss configuration

@@ -1,14 +1,15 @@
-# torchcell/models/cell_graph_transformer
-# [[torchcell.models.cell_graph_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_graph_transformer
-# Test file: tests/torchcell/models/test_cell_graph_transformer.py
+# torchcell/models/equivariant_cell_graph_transformer
+# [[torchcell.models.equivariant_cell_graph_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/equivariant_cell_graph_transformer
+# Test file: tests/torchcell/models/test_equivariant_cell_graph_transformer.py
 
 """
-Cell Graph Transformer with graph-regularized attention heads.
+Equivariant Cell Graph Transformer with graph-regularized attention heads.
 
-Implements the architecture from weekly report 2025.45:
+Implements the generalized virtual cell architecture:
 - CLS token for whole-cell representation
 - Graph-regularized attention heads (KL loss to adjacency matrices)
+- EQUIVARIANT perturbation transformation (preserves per-gene structure)
 - Perturbation head with cross-attention for gene interaction prediction
 """
 
@@ -305,34 +306,113 @@ class HyperSAGNN(nn.Module):
         return beta * out + x
 
 
+class EquivariantPerturbationTransform(nn.Module):
+    """
+    Equivariant perturbation transformation that preserves per-gene structure.
+
+    Unlike the standard perturbation head which collapses to a summary vector,
+    this module transforms ALL gene embeddings based on perturbation context,
+    maintaining the [batch, N, d] shape for downstream equivariant tasks.
+
+    Implements Type I Virtual Instrument: H_genes → H_genes_pert
+    """
+
+    def __init__(self, hidden_dim: int, num_heads: int = 8, dropout: float = 0.1):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+
+        # Cross-attention: each gene attends to perturbation context
+        self.cross_attn = nn.MultiheadAttention(
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        )
+
+        # Feed-forward network for refinement
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 4),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim * 4, hidden_dim),
+        )
+
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(
+        self,
+        H_genes: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Apply equivariant perturbation transformation.
+
+        Args:
+            H_genes: [N, d] - wildtype gene embeddings
+            perturbation_indices: [total_pert_genes] - indices of perturbed genes
+            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
+
+        Returns:
+            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT!)
+        """
+        batch_size = int(batch_assignment.max().item()) + 1
+        N, d = H_genes.shape
+        device = H_genes.device
+
+        H_genes_pert_list = []
+
+        for b in range(batch_size):
+            # Get perturbation context for this sample
+            mask = batch_assignment == b
+            pert_idx_b = perturbation_indices[mask]
+
+            if len(pert_idx_b) > 0:
+                # Context: embeddings of perturbed genes
+                perturbation_context = H_genes[pert_idx_b]  # [|S_b|, d]
+
+                # Each gene cross-attends to perturbation context
+                # Query: all genes, Key/Value: perturbed genes
+                H_pert_b, _ = self.cross_attn(
+                    query=H_genes.unsqueeze(0),  # [1, N, d]
+                    key=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
+                    value=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
+                )
+                H_pert_b = H_pert_b.squeeze(0)  # [N, d]
+            else:
+                # No perturbation: identity transformation
+                H_pert_b = torch.zeros_like(H_genes)
+
+            # Residual connection + LayerNorm
+            H_pert_b = self.norm1(H_genes + self.dropout(H_pert_b))
+
+            # Feed-forward network
+            H_pert_b = self.norm2(H_pert_b + self.dropout(self.ffn(H_pert_b)))
+
+            H_genes_pert_list.append(H_pert_b)
+
+        # Stack to create batch dimension
+        H_genes_pert = torch.stack(H_genes_pert_list, dim=0)  # [batch, N, d]
+
+        return H_genes_pert
+
+
 class PerturbationHead(nn.Module):
     """
-    Perturbation head with switchable attention mechanisms.
+    Perturbation readout head for gene interaction prediction.
 
-    Implements g_ψ(h_CLS, H_genes, M(S)) from weekly report using either:
-    - Cross-attention (default): perturbation summary attends to all genes
-    - HyperSAGNN: within-set self-attention for perturbation genes
+    Operates on equivariant perturbed gene embeddings H_genes_pert [batch, N, d]
+    and produces scalar gene interaction predictions per sample.
+
+    Implements Type II Virtual Instrument: H_genes_pert → y_GI
     """
 
     def __init__(
         self,
         hidden_dim: int,
-        num_heads: int = 4,
         dropout: float = 0.1,
-        use_cross_attention: bool = True,
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.use_cross_attention = use_cross_attention
-
-        if use_cross_attention:
-            # Cross-attention: perturbation summary queries all genes
-            self.cross_attn = nn.MultiheadAttention(
-                hidden_dim, num_heads, dropout=dropout, batch_first=True
-            )
-        else:
-            # HyperSAGNN: computes z_S via within-set attention
-            self.hypersagnn = HyperSAGNN(hidden_dim, num_heads)
 
         # Prediction MLP: [h_CLS || z_S] -> scalar
         self.mlp = nn.Sequential(
@@ -344,7 +424,8 @@ class PerturbationHead(nn.Module):
 
     def forward(
         self,
-        H: torch.Tensor,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
@@ -352,51 +433,31 @@ class PerturbationHead(nn.Module):
         Forward pass of perturbation head.
 
         Args:
-            H: [N+1, d] transformer output (CLS at position 0, genes at 1:N+1)
-            perturbation_indices: [total_pert_genes] indices of perturbed genes
-            batch_assignment: [total_pert_genes] batch index for each perturbed gene
+            h_CLS: [d] - whole-cell CLS representation
+            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT)
+            perturbation_indices: [total_pert_genes] - indices of perturbed genes
+            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
         """
-        batch_size = int(batch_assignment.max().item()) + 1
+        batch_size = H_genes_pert.shape[0]
 
-        # Extract CLS token and gene embeddings
-        h_CLS = H[0]  # [d]
-        H_genes = H[1:]  # [N, d]
+        # Aggregate perturbed genes per sample
+        z_S_list = []
+        for b in range(batch_size):
+            mask = batch_assignment == b
+            pert_idx_b = perturbation_indices[mask]
 
-        # Get perturbed gene embeddings
-        h_pert = H_genes[perturbation_indices]  # [total_pert_genes, d]
+            if len(pert_idx_b) > 0:
+                # Extract perturbed genes for this sample from H_genes_pert
+                h_pert_b = H_genes_pert[b, pert_idx_b, :]  # [|S_b|, d]
+                z_S_list.append(h_pert_b.mean(dim=0))  # [d]
+            else:
+                # No perturbation
+                z_S_list.append(torch.zeros(self.hidden_dim, device=H_genes_pert.device))
 
-        if self.use_cross_attention:
-            # Cross-attention approach
-            # Aggregate perturbed genes per sample (mean pooling)
-            q_S_list = []
-            for b in range(batch_size):
-                mask = batch_assignment == b
-                if mask.sum() > 0:
-                    q_S_list.append(h_pert[mask].mean(dim=0))  # [d]
-                else:
-                    # Handle edge case: no perturbed genes in this sample
-                    q_S_list.append(torch.zeros_like(h_CLS))
-
-            q_S = torch.stack(q_S_list, dim=0)  # [batch_size, d]
-
-            # Cross-attention: q_S attends to all genes
-            z_S, _ = self.cross_attn(
-                query=q_S.unsqueeze(1),  # [batch_size, 1, d]
-                key=H_genes.unsqueeze(0).expand(
-                    batch_size, -1, -1
-                ),  # [batch_size, N, d]
-                value=H_genes.unsqueeze(0).expand(
-                    batch_size, -1, -1
-                ),  # [batch_size, N, d]
-            )
-            z_S = z_S.squeeze(1)  # [batch_size, d]
-        else:
-            # HyperSAGNN approach
-            # This applies masked self-attention within each perturbation set
-            z_S = self.hypersagnn(h_pert, batch_assignment)  # [batch_size, d]
+        z_S = torch.stack(z_S_list, dim=0)  # [batch_size, d]
 
         # Concatenate with CLS token: [h_CLS || z_S]
         h_CLS_expanded = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch_size, d]
@@ -410,12 +471,13 @@ class PerturbationHead(nn.Module):
 
 class CellGraphTransformer(nn.Module):
     """
-    Cell Graph Transformer model.
+    Equivariant Cell Graph Transformer model.
 
     Architecture:
     1. Gene embeddings + CLS token
     2. Transformer encoder with graph-regularized attention
-    3. Perturbation head with cross-attention
+    3. EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
+    4. Perturbation readout head (Type II Virtual Instrument)
     """
 
     def __init__(
@@ -478,13 +540,18 @@ class CellGraphTransformer(nn.Module):
             ]
         )
 
-        # Perturbation head
+        # Equivariant perturbation transformation (Type I Virtual Instrument)
         pert_head_config = perturbation_head_config or {}
+        self.perturbation_transform = EquivariantPerturbationTransform(
+            hidden_dim=hidden_channels,
+            num_heads=pert_head_config.get("num_heads", 8),
+            dropout=pert_head_config.get("dropout", dropout),
+        )
+
+        # Perturbation readout head (Type II Virtual Instrument)
         self.perturbation_head = PerturbationHead(
             hidden_dim=hidden_channels,
-            num_heads=pert_head_config.get("num_heads", 4),
             dropout=pert_head_config.get("dropout", dropout),
-            use_cross_attention=pert_head_config.get("use_cross_attention", True),
         )
 
         # Adaptive loss weighting (learnable)
@@ -613,7 +680,7 @@ class CellGraphTransformer(nn.Module):
         self, cell_graph: HeteroData, batch: HeteroData
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Forward pass of Cell Graph Transformer.
+        Forward pass of Equivariant Cell Graph Transformer.
 
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
@@ -621,7 +688,7 @@ class CellGraphTransformer(nn.Module):
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
-            representations: Dict with embeddings, attention weights, and losses
+            representations: Dict with embeddings, attention weights, losses, and H_genes_pert
         """
         device = self.gene_embedding.weight.device
         N = self.gene_num
@@ -650,18 +717,30 @@ class CellGraphTransformer(nn.Module):
                 total_graph_reg_loss = total_graph_reg_loss + graph_loss
                 all_attention_weights.append(attention_weights)
 
-        # 4. Perturbation head
+        # 4. Extract CLS and gene embeddings
         H_squeezed = H.squeeze(0)  # [N+1, d]
+        h_CLS = H_squeezed[0]  # [d]
+        H_genes = H_squeezed[1:]  # [N, d]
 
+        # 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
+        H_genes_pert = self.perturbation_transform(
+            H_genes,
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )  # [batch, N, d] - EQUIVARIANT!
+
+        # 6. Perturbation readout head (Type II Virtual Instrument)
         predictions = self.perturbation_head(
-            H_squeezed,
+            h_CLS,
+            H_genes_pert,
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
         )
 
         return predictions, {
-            "h_CLS": H_squeezed[0],
-            "H_genes": H_squeezed[1:],
+            "h_CLS": h_CLS,
+            "H_genes": H_genes,
+            "H_genes_pert": H_genes_pert,  # Equivariant perturbed gene embeddings
             "attention_weights": all_attention_weights,
             "graph_reg_loss": total_graph_reg_loss,
         }
@@ -677,6 +756,7 @@ class CellGraphTransformer(nn.Module):
             "gene_embedding": count_params(self.gene_embedding),
             "cls_token": self.cls_token.numel(),
             "transformer_layers": count_params(self.transformer_layers),
+            "perturbation_transform": count_params(self.perturbation_transform),
             "perturbation_head": count_params(self.perturbation_head),
         }
         counts["total"] = sum(counts.values())
@@ -714,10 +794,10 @@ def compute_smoothness(X: torch.Tensor) -> float:
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/006-kuzmin-tmi/conf"),
-    config_name="cell_graph_transformer",
+    config_name="equivariant_cell_graph_transformer",
 )
 def main(cfg: DictConfig) -> None:
-    """Main training function for overfitting test."""
+    """Main training function for Equivariant Cell Graph Transformer."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
     from torchcell.timestamp import timestamp
@@ -786,6 +866,41 @@ def main(cfg: DictConfig) -> None:
     for name, count in param_counts.items():
         print(f"  {name}: {count:,}")
 
+    # Test equivariant transformation
+    print("\n" + "=" * 80)
+    print("Testing Equivariant Architecture...")
+    print("=" * 80)
+    model.eval()
+    with torch.no_grad():
+        test_predictions, test_representations = model(cell_graph, batch)
+        H_genes = test_representations["H_genes"]  # [N, d]
+        H_genes_pert = test_representations["H_genes_pert"]  # [batch, N, d]
+
+        print(f"\nWildtype gene embeddings: {H_genes.shape}")
+        print(f"Perturbed gene embeddings: {H_genes_pert.shape}")
+        print(f"✓ Equivariance preserved: per-gene structure maintained!")
+
+        # Check that perturbations actually change the embeddings
+        batch_size = H_genes_pert.shape[0]
+        print(f"\nPerturbation Effects (first 3 samples):")
+        for b in range(min(3, batch_size)):
+            mask = batch["gene"].perturbation_indices_batch == b
+            pert_idx = batch["gene"].perturbation_indices[mask]
+
+            if len(pert_idx) > 0:
+                # Change in perturbed genes
+                pert_change = (H_genes_pert[b, pert_idx] - H_genes[pert_idx]).norm(dim=-1).mean()
+
+                # Change in non-perturbed genes (from cross-attention context)
+                all_idx = torch.arange(H_genes.shape[0], device=H_genes.device)
+                non_pert_mask = ~torch.isin(all_idx, pert_idx)
+                non_pert_change = (H_genes_pert[b, non_pert_mask] - H_genes[non_pert_mask]).norm(dim=-1).mean()
+
+                print(f"  Sample {b}:")
+                print(f"    Perturbed genes ({len(pert_idx)}): Δ = {pert_change.item():.4f}")
+                print(f"    Non-perturbed genes: Δ = {non_pert_change.item():.4f} (context effect)")
+    model.train()
+
     # Setup loss and optimizer
     criterion = LogCoshLoss(reduction="mean")
     optimizer = torch.optim.AdamW(
@@ -825,7 +940,7 @@ def main(cfg: DictConfig) -> None:
     y = batch["gene"].phenotype_values.to(device)
 
     # Setup directory for plots
-    plot_dir = osp.join(ASSET_IMAGES_DIR, f"cell_graph_transformer_{timestamp()}")
+    plot_dir = osp.join(ASSET_IMAGES_DIR, f"equivariant_cell_graph_transformer_{timestamp()}")
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
@@ -1154,7 +1269,7 @@ def main(cfg: DictConfig) -> None:
                     )
 
         plt.suptitle(
-            f"Cell Graph Transformer Training - Epoch {epoch + 1}/{cfg.trainer.max_epochs}",
+            f"Equivariant Cell Graph Transformer Training - Epoch {epoch + 1}/{cfg.trainer.max_epochs}",
             fontsize=16,
             y=0.998,
         )

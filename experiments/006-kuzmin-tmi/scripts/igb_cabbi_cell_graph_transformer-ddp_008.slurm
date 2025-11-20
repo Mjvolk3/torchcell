@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -p mmli
-#SBATCH --mem=488g
+#SBATCH -p cabbi
+#SBATCH --mem=400g
 #SBATCH -N 1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=14
 #SBATCH --gres=gpu:4
-#SBATCH --job-name=006-CGT-007
+#SBATCH --job-name=006-CGT-008
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
@@ -43,7 +43,7 @@ export PYTHONUNBUFFERED=1
 # Run training with torchrun
 torchrun --standalone --nnodes=1 --nproc_per_node=4 \
   /home/a-m/mjvolk3/projects/torchcell/experiments/006-kuzmin-tmi/scripts/cell_graph_transformer.py \
-  --config-name cell_graph_transformer_mmli_007 \
+  --config-name cell_graph_transformer_cabbi_008 \
   data_module.num_workers=\$NUM_WORKERS
 "
 

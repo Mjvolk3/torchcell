@@ -71,12 +71,12 @@ model:
 
   # Loss balancing
   adaptive_loss_weighting: false  # Set to true to use learnable weights
-  graph_reg_scale: 0.01  # Global scale factor for graph regularization
+  graph_reg_scale: 0.00001  # 0.00001 is will give loss on scale with OM of MSE - Global scale factor for graph regularization
 
   # Graph regularization configuration
   graph_regularization:
     enabled: true
-    row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
+    row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
     # Map graph names to (layer, head, lambda) for regularization
     # Early-mid layers, one head per graph

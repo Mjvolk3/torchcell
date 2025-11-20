@@ -55,7 +55,7 @@ trainer:
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
 # Compilation settings for PyTorch 2.0+
-compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 
 # Graph regularization lambda (shared across all graphs)
 graph_reg_lambda: 0.001

@@ -55,7 +55,7 @@ trainer:
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
 # Compilation settings for PyTorch 2.0+
-compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 
 # Graph regularization lambda (shared across all graphs)
 graph_reg_lambda: 0.01
@@ -66,7 +66,7 @@ model:
   gene_num: 6607
   hidden_channels: 128 # d in weekly report
   num_transformer_layers: 12  # L layers
-  num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
+  num_attention_heads: 16  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
   # Loss balancing

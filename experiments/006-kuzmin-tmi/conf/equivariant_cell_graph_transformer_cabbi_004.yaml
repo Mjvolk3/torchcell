@@ -67,7 +67,7 @@ model:
   dropout: 0.1
 
   # Loss balancing
-  graph_reg_scale: 0  # Global scale factor for graph regularization
+  graph_reg_scale: 0.001  # Global scale factor for graph regularization
 
   # Learnable embedding configuration
   learnable_embedding:
@@ -160,7 +160,7 @@ regression_task:
 
     # Graph regularization configuration (from model)
     graph_regularization:
-      lambda: 1.0
+      lambda: 0.0
 
     # Supervised contrastive loss configuration (disabled for now)
     supervised_contrastive:

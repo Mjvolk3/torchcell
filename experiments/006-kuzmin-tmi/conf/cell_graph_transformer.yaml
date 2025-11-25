@@ -72,7 +72,6 @@ model:
 
   # Graph regularization configuration
   graph_regularization:
-    enabled: true
     row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
 
     # Map graph names to (layer, head, lambda) for regularization

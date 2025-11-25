@@ -4,7 +4,7 @@ defaults:
   - _self_
 
 wandb:
-  project: torchcell_006-kuzmin-tmi_cell_graph_transformer
+  project: torchcell_006-kuzmin-tmi_equivariant_cell_graph_transformer
   tags: [transformer, graph_regularization, gene_interaction]
 
 cell_dataset:
@@ -38,7 +38,7 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000  # 2.5e4
-  batch_size: 512  # Limited by transformer memory requirements
+  batch_size: 256  # Limited by transformer memory requirements
   num_workers: 16  # 2 > 8...
   pin_memory: true
   prefetch: false
@@ -67,12 +67,12 @@ model:
   dropout: 0.1
 
   # Loss balancing
-  adaptive_loss_weighting: false  # Set to true to use learnable weights
-  graph_reg_scale: 0.001  # Global scale factor for graph regularization
+  graph_reg_scale: 0.00001  # Global scale factor for graph regularization
 
   # Graph regularization configuration
   graph_regularization:
-    row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
+    enabled: true
+    row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
     # Map graph names to (layer, head, lambda) for regularization
     # Early-mid layers, one head per graph
@@ -128,8 +128,8 @@ regression_task:
 
   optimizer:
     type: "AdamW"
-    lr: 1e-4  # Reduced from 5e-4 to stabilize training
-    weight_decay: 1e-8  # Very light regularization - transformer embeddings are sensitive to L2
+    lr: 5e-4  # Constant high LR for testing
+    weight_decay: 1e-12
 
   lr_scheduler: null  # No scheduler - constant LR
 
@@ -138,3 +138,4 @@ regression_task:
   grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2
+  plot_edge_recovery_every_n_epochs: 10  # Plot edge recovery metrics less frequently

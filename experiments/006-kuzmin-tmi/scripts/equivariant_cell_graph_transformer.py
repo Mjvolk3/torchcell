@@ -1,7 +1,11 @@
-# experiments/006-kuzmin-tmi/scripts/cell_graph_transformer
-# [[experiments.006-kuzmin-tmi.scripts.cell_graph_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/cell_graph_transformer
-# Test file: experiments/006-kuzmin-tmi/scripts/test_cell_graph_transformer.py
+# experiments/006-kuzmin-tmi/scripts/equivariant_cell_graph_transformer
+# [[experiments.006-kuzmin-tmi.scripts.equivariant_cell_graph_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/006-kuzmin-tmi/scripts/equivariant_cell_graph_transformer
+# Test file: experiments/006-kuzmin-tmi/scripts/test_equivariant_cell_graph_transformer.py
+
+# MUST be first import to catch SWIG warnings in worker processes
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import hashlib
 import json
@@ -9,13 +13,7 @@ import logging
 import os
 import os.path as osp
 import uuid
-import warnings
 import hydra
-
-# Suppress SWIG-related deprecation warnings from frozen importlib
-warnings.filterwarnings(
-    "ignore", message="builtin type SwigPy", category=DeprecationWarning
-)
 import torch.nn as nn
 import lightning as L
 import torch
@@ -28,7 +26,7 @@ from torchcell.transforms.coo_regression_to_classification import (
 )
 from torch_geometric.transforms import Compose
 from torchcell.data.graph_processor import Perturbation
-from torchcell.trainers.int_hetero_cell import RegressionTask
+from torchcell.trainers.int_transformer_cell import RegressionTask
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import ModelCheckpoint
 from lightning.pytorch.loggers import WandbLogger
@@ -37,10 +35,11 @@ import wandb
 import socket
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.models.cell_graph_transformer import CellGraphTransformer
+from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.datamodules import CellDataModule
 from torchcell.data import Neo4jCellDataset
+from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
 import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
@@ -82,10 +81,10 @@ def get_num_devices() -> int:
 @hydra.main(
     version_base=None,
     config_path=osp.join(osp.dirname(__file__), "../conf"),
-    config_name="cell_graph_transformer",
+    config_name="equivariant_cell_graph_transformer",
 )
 def main(cfg: DictConfig) -> None:
-    print("Starting Cell Graph Transformer Training 🚀")
+    print("Starting Equivariant Cell Graph Transformer Training 🚀")
     os.environ["WANDB__SERVICE_WAIT"] = "600"
 
     # Set distributed timeout to 2 hours if using DDP
@@ -175,6 +174,16 @@ def main(cfg: DictConfig) -> None:
     graph_names = wandb.config.cell_dataset["graphs"]
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
+    # Build node embeddings using NodeEmbeddingBuilder
+    node_embedding_names = wandb.config.cell_dataset.get("node_embeddings", [])
+    node_embeddings = NodeEmbeddingBuilder.build(
+        embedding_names=node_embedding_names,
+        data_root=DATA_ROOT,
+        genome=genome,
+        graph=graph,
+    )
+    print(f"Built node embeddings: {list(node_embeddings.keys()) if node_embeddings else 'None (using learnable)'}")
+
     # Log static graph statistics for edge recovery monitoring
     from torchcell.viz.graph_recovery import GraphRecoveryVisualization
     from torchcell.timestamp import timestamp
@@ -236,7 +245,7 @@ def main(cfg: DictConfig) -> None:
             query=query,
             gene_set=genome.gene_set,
             graphs=gene_multigraph,
-            node_embeddings={},
+            node_embeddings=node_embeddings,
             converter=None,
             deduplicator=MeanExperimentDeduplicator,
             aggregator=GenotypeAggregator,
@@ -299,7 +308,7 @@ def main(cfg: DictConfig) -> None:
             query=query,
             gene_set=genome.gene_set,
             graphs=gene_multigraph,
-            node_embeddings={},
+            node_embeddings=node_embeddings,
             converter=None,
             deduplicator=MeanExperimentDeduplicator,
             aggregator=GenotypeAggregator,
@@ -349,7 +358,7 @@ def main(cfg: DictConfig) -> None:
     log.info(device)
     devices = get_num_devices()
 
-    print(f"Instantiating CellGraphTransformer ({timestamp()})")
+    print(f"Instantiating Equivariant CellGraphTransformer ({timestamp()})")
 
     # Instantiate CellGraphTransformer model
     model = CellGraphTransformer(
@@ -361,10 +370,9 @@ def main(cfg: DictConfig) -> None:
         graph_regularization_config=wandb.config["model"]["graph_regularization"],
         perturbation_head_config=wandb.config["model"]["perturbation_head"],
         dropout=wandb.config["model"]["dropout"],
-        adaptive_loss_weighting=wandb.config["model"].get(
-            "adaptive_loss_weighting", False
-        ),
         graph_reg_scale=wandb.config["model"].get("graph_reg_scale", 0.001),
+        node_embeddings=node_embeddings,
+        learnable_embedding_config=wandb.config["model"].get("learnable_embedding"),
     ).to(device)
 
     # Log parameter counts
@@ -376,6 +384,9 @@ def main(cfg: DictConfig) -> None:
             "model/params_cls_token": param_counts.get("cls_token", 0),
             "model/params_transformer_layers": param_counts.get(
                 "transformer_layers", 0
+            ),
+            "model/params_perturbation_transform": param_counts.get(
+                "perturbation_transform", 0
             ),
             "model/params_perturbation_head": param_counts.get(
                 "perturbation_head", 0
@@ -442,6 +453,12 @@ def main(cfg: DictConfig) -> None:
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
             plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"].get(
+                "plot_edge_recovery_every_n_epochs", 10
+            ),
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"].get(
+                "plot_transformer_diagnostics_every_n_epochs", 10
+            ),
             grad_accumulation_schedule=wandb.config["regression_task"][
                 "grad_accumulation_schedule"
             ],
@@ -467,6 +484,12 @@ def main(cfg: DictConfig) -> None:
             device=device,
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"].get(
+                "plot_edge_recovery_every_n_epochs", 10
+            ),
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"].get(
+                "plot_transformer_diagnostics_every_n_epochs", 10
+            ),
             execution_mode=execution_mode,
         )
 
@@ -495,11 +518,11 @@ def main(cfg: DictConfig) -> None:
 
                 task.model = torch.compile(task.model, mode=compile_mode, dynamic=True)
                 print(
-                    f"✓ Successfully compiled model with torch.compile (mode={compile_mode}, dynamic=True)"
+                    f"Successfully compiled model with torch.compile (mode={compile_mode}, dynamic=True)"
                 )
                 print("  Expected speedup: 2-3x for forward/backward passes")
             except Exception as e:
-                print(f"⚠️ torch.compile not compatible with this model: {e}")
+                print(f"Warning: torch.compile not compatible with this model: {e}")
                 print("Continuing without compilation optimization")
 
     model_base_path = osp.join(DATA_ROOT, "models/checkpoints")

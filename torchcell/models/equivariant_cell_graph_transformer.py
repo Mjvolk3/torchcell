@@ -1,14 +1,15 @@
-# torchcell/models/cell_graph_transformer
-# [[torchcell.models.cell_graph_transformer]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_graph_transformer
-# Test file: tests/torchcell/models/test_cell_graph_transformer.py
+# torchcell/models/equivariant_cell_graph_transformer
+# [[torchcell.models.equivariant_cell_graph_transformer]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/equivariant_cell_graph_transformer
+# Test file: tests/torchcell/models/test_equivariant_cell_graph_transformer.py
 
 """
-Cell Graph Transformer with graph-regularized attention heads.
+Equivariant Cell Graph Transformer with graph-regularized attention heads.
 
-Implements the architecture from weekly report 2025.45:
+Implements the generalized virtual cell architecture:
 - CLS token for whole-cell representation
 - Graph-regularized attention heads (KL loss to adjacency matrices)
+- EQUIVARIANT perturbation transformation (preserves per-gene structure)
 - Perturbation head with cross-attention for gene interaction prediction
 """
 
@@ -36,8 +37,6 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self,
         hidden_dim: int,
         num_heads: int,
-        adjacency_matrices: Optional[Dict[str, torch.Tensor]] = None,
-        regularized_head_config: Optional[Dict[str, Dict]] = None,
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -68,10 +67,6 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-        # Store adjacency matrices and regularization config
-        self.adjacency_matrices = adjacency_matrices
-        self.regularized_head_config = regularized_head_config
-
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
@@ -84,7 +79,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         Returns:
             output: [batch, N+1, d] transformed features
-            gene_attention: [batch, heads, N, N] gene-gene attention weights (if return_attention=True)
+            gene_attention_weights: [batch, heads, N, N] gene-gene attention weights (if return_attention=True)
         """
         batch_size, seq_len, hidden_dim = x.shape
 
@@ -114,14 +109,14 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         # Extract gene-gene attention block for regularization (exclude CLS token)
         # attention_weights: [batch, heads, N+1, N+1]
-        # gene_attention: [batch, heads, N, N]
-        gene_attention = (
+        # gene_attention_weights: [batch, heads, N, N]
+        gene_attention_weights = (
             attention_weights[:, :, 1:, 1:] if return_attention else None
         )
 
         # Reshape back: [batch, seq_len, hidden_dim]
         attn_output = (
-            attn_output.transpose(1, 2)
+            attn_output.transpose(1, 2)  
             .contiguous()
             .view(batch_size, seq_len, hidden_dim)
         )
@@ -134,7 +129,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         ffn_output = self.ffn(output)
         output = self.norm2(output + self.dropout(ffn_output))
 
-        return output, gene_attention
+        return output, gene_attention_weights
 
 
 class HyperSAGNN(nn.Module):
@@ -305,34 +300,113 @@ class HyperSAGNN(nn.Module):
         return beta * out + x
 
 
+class EquivariantPerturbationTransform(nn.Module):
+    """
+    Equivariant perturbation transformation that preserves per-gene structure.
+
+    Unlike the standard perturbation head which collapses to a summary vector,
+    this module transforms ALL gene embeddings based on perturbation context,
+    maintaining the [batch, N, d] shape for downstream equivariant tasks.
+
+    Implements Type I Virtual Instrument: H_genes → H_genes_pert
+    """
+
+    def __init__(self, hidden_dim: int, num_heads: int = 8, dropout: float = 0.1):
+        super().__init__()
+        self.hidden_dim = hidden_dim
+
+        # Cross-attention: each gene attends to perturbation context
+        self.cross_attn = nn.MultiheadAttention(
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
+        )
+
+        # Feed-forward network for refinement
+        self.ffn = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim * 4),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim * 4, hidden_dim),
+        )
+
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(
+        self,
+        H_genes: torch.Tensor,
+        perturbation_indices: torch.Tensor,
+        batch_assignment: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Apply equivariant perturbation transformation.
+
+        Args:
+            H_genes: [N, d] - wildtype gene embeddings
+            perturbation_indices: [total_pert_genes] - indices of perturbed genes
+            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
+
+        Returns:
+            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT!)
+        """
+        batch_size = int(batch_assignment.max().item()) + 1
+        N, d = H_genes.shape
+        device = H_genes.device
+
+        H_genes_pert_list = []
+
+        for b in range(batch_size):
+            # Get perturbation context for this sample
+            mask = batch_assignment == b
+            pert_idx_b = perturbation_indices[mask]
+
+            if len(pert_idx_b) > 0:
+                # Context: embeddings of perturbed genes
+                perturbation_context = H_genes[pert_idx_b]  # [|S_b|, d]
+
+                # Each gene cross-attends to perturbation context
+                # Query: all genes, Key/Value: perturbed genes
+                H_pert_b, _ = self.cross_attn(
+                    query=H_genes.unsqueeze(0),  # [1, N, d]
+                    key=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
+                    value=perturbation_context.unsqueeze(0),  # [1, |S_b|, d]
+                )
+                H_pert_b = H_pert_b.squeeze(0)  # [N, d]
+            else:
+                # No perturbation: identity transformation
+                H_pert_b = torch.zeros_like(H_genes)
+
+            # Residual connection + LayerNorm
+            H_pert_b = self.norm1(H_genes + self.dropout(H_pert_b))
+
+            # Feed-forward network
+            H_pert_b = self.norm2(H_pert_b + self.dropout(self.ffn(H_pert_b)))
+
+            H_genes_pert_list.append(H_pert_b)
+
+        # Stack to create batch dimension
+        H_genes_pert = torch.stack(H_genes_pert_list, dim=0)  # [batch, N, d]
+
+        return H_genes_pert
+
+
 class PerturbationHead(nn.Module):
     """
-    Perturbation head with switchable attention mechanisms.
+    Perturbation readout head for gene interaction prediction.
 
-    Implements g_ψ(h_CLS, H_genes, M(S)) from weekly report using either:
-    - Cross-attention (default): perturbation summary attends to all genes
-    - HyperSAGNN: within-set self-attention for perturbation genes
+    Operates on equivariant perturbed gene embeddings H_genes_pert [batch, N, d]
+    and produces scalar gene interaction predictions per sample.
+
+    Implements Type II Virtual Instrument: H_genes_pert → y_GI
     """
 
     def __init__(
         self,
         hidden_dim: int,
-        num_heads: int = 4,
         dropout: float = 0.1,
-        use_cross_attention: bool = True,
     ):
         super().__init__()
         self.hidden_dim = hidden_dim
-        self.use_cross_attention = use_cross_attention
-
-        if use_cross_attention:
-            # Cross-attention: perturbation summary queries all genes
-            self.cross_attn = nn.MultiheadAttention(
-                hidden_dim, num_heads, dropout=dropout, batch_first=True
-            )
-        else:
-            # HyperSAGNN: computes z_S via within-set attention
-            self.hypersagnn = HyperSAGNN(hidden_dim, num_heads)
 
         # Prediction MLP: [h_CLS || z_S] -> scalar
         self.mlp = nn.Sequential(
@@ -344,7 +418,8 @@ class PerturbationHead(nn.Module):
 
     def forward(
         self,
-        H: torch.Tensor,
+        h_CLS: torch.Tensor,
+        H_genes_pert: torch.Tensor,
         perturbation_indices: torch.Tensor,
         batch_assignment: torch.Tensor,
     ) -> torch.Tensor:
@@ -352,51 +427,31 @@ class PerturbationHead(nn.Module):
         Forward pass of perturbation head.
 
         Args:
-            H: [N+1, d] transformer output (CLS at position 0, genes at 1:N+1)
-            perturbation_indices: [total_pert_genes] indices of perturbed genes
-            batch_assignment: [total_pert_genes] batch index for each perturbed gene
+            h_CLS: [d] - whole-cell CLS representation
+            H_genes_pert: [batch, N, d] - perturbed gene embeddings (EQUIVARIANT)
+            perturbation_indices: [total_pert_genes] - indices of perturbed genes
+            batch_assignment: [total_pert_genes] - batch index for each perturbed gene
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
         """
-        batch_size = int(batch_assignment.max().item()) + 1
+        batch_size = H_genes_pert.shape[0]
 
-        # Extract CLS token and gene embeddings
-        h_CLS = H[0]  # [d]
-        H_genes = H[1:]  # [N, d]
+        # Aggregate perturbed genes per sample
+        z_S_list = []
+        for b in range(batch_size):
+            mask = batch_assignment == b
+            pert_idx_b = perturbation_indices[mask]
 
-        # Get perturbed gene embeddings
-        h_pert = H_genes[perturbation_indices]  # [total_pert_genes, d]
+            if len(pert_idx_b) > 0:
+                # Extract perturbed genes for this sample from H_genes_pert
+                h_pert_b = H_genes_pert[b, pert_idx_b, :]  # [|S_b|, d]
+                z_S_list.append(h_pert_b.mean(dim=0))  # [d]
+            else:
+                # No perturbation
+                z_S_list.append(torch.zeros(self.hidden_dim, device=H_genes_pert.device))
 
-        if self.use_cross_attention:
-            # Cross-attention approach
-            # Aggregate perturbed genes per sample (mean pooling)
-            q_S_list = []
-            for b in range(batch_size):
-                mask = batch_assignment == b
-                if mask.sum() > 0:
-                    q_S_list.append(h_pert[mask].mean(dim=0))  # [d]
-                else:
-                    # Handle edge case: no perturbed genes in this sample
-                    q_S_list.append(torch.zeros_like(h_CLS))
-
-            q_S = torch.stack(q_S_list, dim=0)  # [batch_size, d]
-
-            # Cross-attention: q_S attends to all genes
-            z_S, _ = self.cross_attn(
-                query=q_S.unsqueeze(1),  # [batch_size, 1, d]
-                key=H_genes.unsqueeze(0).expand(
-                    batch_size, -1, -1
-                ),  # [batch_size, N, d]
-                value=H_genes.unsqueeze(0).expand(
-                    batch_size, -1, -1
-                ),  # [batch_size, N, d]
-            )
-            z_S = z_S.squeeze(1)  # [batch_size, d]
-        else:
-            # HyperSAGNN approach
-            # This applies masked self-attention within each perturbation set
-            z_S = self.hypersagnn(h_pert, batch_assignment)  # [batch_size, d]
+        z_S = torch.stack(z_S_list, dim=0)  # [batch_size, d]
 
         # Concatenate with CLS token: [h_CLS || z_S]
         h_CLS_expanded = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch_size, d]
@@ -410,12 +465,13 @@ class PerturbationHead(nn.Module):
 
 class CellGraphTransformer(nn.Module):
     """
-    Cell Graph Transformer model.
+    Equivariant Cell Graph Transformer model.
 
     Architecture:
     1. Gene embeddings + CLS token
     2. Transformer encoder with graph-regularized attention
-    3. Perturbation head with cross-attention
+    3. EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
+    4. Perturbation readout head (Type II Virtual Instrument)
     """
 
     def __init__(
@@ -428,20 +484,83 @@ class CellGraphTransformer(nn.Module):
         graph_regularization_config: Optional[Dict] = None,
         perturbation_head_config: Optional[Dict] = None,
         dropout: float = 0.1,
-        adaptive_loss_weighting: bool = False,
         graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
+        node_embeddings: Optional[Dict] = None,  # Pre-computed embeddings
+        learnable_embedding_config: Optional[Dict] = None,  # Learnable config
     ):
         super().__init__()
         self.gene_num = gene_num
         self.hidden_channels = hidden_channels
         self.num_transformer_layers = num_transformer_layers
         self.num_attention_heads = num_attention_heads
-        self.adaptive_loss_weighting = adaptive_loss_weighting
         self.graph_reg_scale = graph_reg_scale
 
-        # Gene embeddings
-        self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
-        nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
+        # === Node Embedding Configuration ===
+        # Determine embedding strategy based on config
+        self.node_embeddings = node_embeddings
+        self.learnable_embedding_config = learnable_embedding_config
+
+        # Calculate pre-computed embedding dimension
+        precomputed_dim = 0
+        if node_embeddings is not None and len(node_embeddings) > 0:
+            # Get dimension from first node's embedding in first graph
+            first_graph = list(node_embeddings.values())[0]
+            first_node = list(first_graph.graph.nodes(data=True))[0]
+            precomputed_dim = first_node[1]["embedding"].shape[0]
+
+        # Learnable embedding configuration
+        learnable_enabled = False
+        learnable_size = hidden_channels  # Default
+
+        if learnable_embedding_config is not None:
+            learnable_enabled = learnable_embedding_config.get("enabled", False)
+            learnable_size = learnable_embedding_config.get("size", hidden_channels)
+        else:
+            # Auto-enable learnable if no pre-computed embeddings
+            if precomputed_dim == 0:
+                learnable_enabled = True
+
+        # Create learnable embedding if enabled
+        if learnable_enabled:
+            self.gene_embedding = nn.Embedding(gene_num, learnable_size)
+            nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
+        else:
+            self.gene_embedding = None
+
+        # Calculate total input dimension
+        total_input_dim = (learnable_size if learnable_enabled else 0) + precomputed_dim
+
+        # Create preprocessor if input_dim != hidden_channels
+        if total_input_dim > 0 and total_input_dim != hidden_channels:
+            preprocessor_config = learnable_embedding_config.get("preprocessor", {}) if learnable_embedding_config else {}
+            num_layers = preprocessor_config.get("num_layers", 2)
+            dropout_rate = preprocessor_config.get("dropout", dropout)
+
+            # Build MLP with LayerNorm and GELU activation
+            layers = []
+            current_dim = total_input_dim
+
+            for i in range(num_layers):
+                # Linear layer
+                next_dim = hidden_channels if i == num_layers - 1 else (total_input_dim + hidden_channels) // 2
+                layers.append(nn.Linear(current_dim, next_dim))
+
+                # LayerNorm
+                layers.append(nn.LayerNorm(next_dim))
+
+                # GELU activation (consistent with transformer)
+                if i < num_layers - 1:  # No activation after last layer
+                    layers.append(nn.GELU())
+
+                # Dropout
+                if dropout_rate > 0:
+                    layers.append(nn.Dropout(dropout_rate))
+
+                current_dim = next_dim
+
+            self.embedding_preprocessor = nn.Sequential(*layers)
+        else:
+            self.embedding_preprocessor = None
 
         # CLS token (learnable)
         self.cls_token = nn.Parameter(torch.randn(1, hidden_channels) * 0.02)
@@ -450,9 +569,7 @@ class CellGraphTransformer(nn.Module):
         # Graph regularization is enabled when graph_reg_scale > 0
         if self.graph_reg_scale > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
-            self.adjacency_matrices = self._normalize_adjacency_matrices(
-                cell_graph
-            )
+            self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
             self.regularized_head_config = graph_regularization_config.get(
                 "regularized_heads", {}
             )
@@ -470,27 +587,25 @@ class CellGraphTransformer(nn.Module):
                 GraphRegularizedTransformerLayer(
                     hidden_dim=hidden_channels,
                     num_heads=num_attention_heads,
-                    adjacency_matrices=self.adjacency_matrices,
-                    regularized_head_config=self.regularized_head_config,
                     dropout=dropout,
                 )
                 for _ in range(num_transformer_layers)
             ]
         )
 
-        # Perturbation head
+        # Equivariant perturbation transformation (Type I Virtual Instrument)
         pert_head_config = perturbation_head_config or {}
-        self.perturbation_head = PerturbationHead(
+        self.perturbation_transform = EquivariantPerturbationTransform(
             hidden_dim=hidden_channels,
-            num_heads=pert_head_config.get("num_heads", 4),
+            num_heads=pert_head_config.get("num_heads", 8),
             dropout=pert_head_config.get("dropout", dropout),
-            use_cross_attention=pert_head_config.get("use_cross_attention", True),
         )
 
-        # Adaptive loss weighting (learnable)
-        if adaptive_loss_weighting:
-            self.log_mse_weight = nn.Parameter(torch.tensor(0.0))
-            self.log_reg_weight = nn.Parameter(torch.tensor(-3.0))  # Start very small
+        # Perturbation readout head (Type II Virtual Instrument)
+        self.perturbation_head = PerturbationHead(
+            hidden_dim=hidden_channels,
+            dropout=pert_head_config.get("dropout", dropout),
+        )
 
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
@@ -552,22 +667,16 @@ class CellGraphTransformer(nn.Module):
         batch_size, num_heads, N, _ = attention_weights.shape
 
         for graph_name, config in self.regularized_head_config.items():
-            # Handle both single layer (int) and multiple layers (list)
-            layer_config = config["layer"]
-            layers = [layer_config] if isinstance(layer_config, int) else layer_config
-            if layer_idx not in layers:
+            if config["layer"] != layer_idx:
                 continue
 
             head_idx = config["head"]
             lambda_k = config["lambda"]
 
-            # Get normalized adjacency
+            # Get normalized adjacency from dict
             if graph_name not in self.adjacency_matrices:
                 continue
-
-            A_tilde = self.adjacency_matrices[graph_name].to(
-                attention_weights.device
-            )  # [N, N]
+            A_tilde = self.adjacency_matrices[graph_name].to(attention_weights.device)  # [N, N]
 
             # Sample rows (for efficiency)
             if self.row_sampling_rate < 1.0:
@@ -605,33 +714,66 @@ class CellGraphTransformer(nn.Module):
             total_loss = total_loss + lambda_k * kl_loss
 
         # Apply global scale factor and normalize by number of edges
-        total_edges = sum(len(self.adjacency_matrices[g].nonzero()[0])
-                         for g in self.adjacency_matrices.keys())
+        total_edges = sum(
+            len(self.adjacency_matrices[g].nonzero()[0])
+            for g in self.adjacency_matrices.keys()
+        )
         if total_edges > 0:
             total_loss = total_loss * self.graph_reg_scale / (total_edges / self.gene_num)
 
         return total_loss
 
     def forward(
-        self, cell_graph: HeteroData, batch: HeteroData
+        self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
-        Forward pass of Cell Graph Transformer.
+        Forward pass of Equivariant Cell Graph Transformer.
 
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
             batch: Perturbation data with indices and phenotypes
+            return_attention: If True, store and return attention weights (memory intensive)
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
-            representations: Dict with embeddings, attention weights, and losses
+            representations: Dict with embeddings, attention weights (if requested), losses, and H_genes_pert
         """
-        device = self.gene_embedding.weight.device
+        # Get device from learnable embedding or CLS token
+        device = self.gene_embedding.weight.device if self.gene_embedding is not None else self.cls_token.device
         N = self.gene_num
 
         # 1. Create gene embeddings for all genes
         gene_idx = torch.arange(N, device=device)
-        gene_embs = self.gene_embedding(gene_idx)  # [N, d]
+
+        # Get learnable embeddings if enabled
+        if self.gene_embedding is not None:
+            H_genes_learnable = self.gene_embedding(gene_idx)  # [N, learnable_size]
+        else:
+            H_genes_learnable = None
+
+        # Get pre-computed embeddings if available
+        if self.node_embeddings is not None and len(self.node_embeddings) > 0:
+            # Extract pre-computed embeddings from cell_graph node attributes
+            # They should be concatenated in cell_graph["gene"].x
+            H_genes_precomputed = cell_graph["gene"].x.to(device)  # [N, precomputed_dim]
+        else:
+            H_genes_precomputed = None
+
+        # Combine embeddings
+        if H_genes_learnable is not None and H_genes_precomputed is not None:
+            H_genes_combined = torch.cat([H_genes_learnable, H_genes_precomputed], dim=-1)
+        elif H_genes_learnable is not None:
+            H_genes_combined = H_genes_learnable
+        elif H_genes_precomputed is not None:
+            H_genes_combined = H_genes_precomputed
+        else:
+            raise ValueError("No gene embeddings available (neither learnable nor pre-computed)")
+
+        # Apply preprocessor if needed
+        if self.embedding_preprocessor is not None:
+            gene_embs = self.embedding_preprocessor(H_genes_combined)  # [N, hidden_channels]
+        else:
+            gene_embs = H_genes_combined  # [N, hidden_channels]
 
         # 2. Prepend CLS token
         cls_token = self.cls_token  # [1, d]
@@ -639,33 +781,71 @@ class CellGraphTransformer(nn.Module):
 
         # 3. Transformer encoder
         H = X
-        all_attention_weights = []
+        all_attention_weights = [] if return_attention else None
+        residual_update_ratios = [] if return_attention else None
         total_graph_reg_loss = torch.tensor(0.0, device=device)
 
         for layer_idx, layer in enumerate(self.transformer_layers):
-            H, attention_weights = layer(H, return_attention=True)
+            # Store input for residual ratio computation
+            H_prev = H
+
+            # CRITICAL FIX: Only compute attention when actually needed
+            # - During training: need for graph_reg_loss (if graph_reg_scale > 0)
+            # - During validation with return_attention=True: need for diagnostics
+            need_attention_for_graph_reg = (self.graph_reg_scale > 0.0)
+            should_return_attention = need_attention_for_graph_reg or return_attention
+
+            H, attention_weights = layer(H, return_attention=should_return_attention)
 
             if attention_weights is not None:
-                # Compute graph regularization loss
+                # Always compute graph regularization loss (needed for training)
                 graph_loss = self.compute_graph_regularization_loss(
                     attention_weights, layer_idx
                 )
                 total_graph_reg_loss = total_graph_reg_loss + graph_loss
-                all_attention_weights.append(attention_weights)
 
-        # 4. Perturbation head
+                # Only store attention weights if requested for diagnostics (memory intensive)
+                if return_attention:
+                    all_attention_weights.append(attention_weights)
+                else:
+                    # CRITICAL: Delete if not storing to prevent memory accumulation
+                    del attention_weights
+
+            # Compute residual update ratio: ||H - H_prev|| / ||H_prev||
+            if return_attention:
+                with torch.no_grad():
+                    residual_norm = torch.norm(H - H_prev, p=2).item()
+                    input_norm = torch.norm(H_prev, p=2).item()
+                    ratio = residual_norm / (input_norm + 1e-8)
+                    residual_update_ratios.append(ratio)
+
+        # 4. Extract CLS and gene embeddings
         H_squeezed = H.squeeze(0)  # [N+1, d]
+        h_CLS = H_squeezed[0]  # [d]
+        H_genes = H_squeezed[1:]  # [N, d]
 
+        # 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
+        H_genes_pert = self.perturbation_transform(
+            H_genes,
+            batch["gene"].perturbation_indices,
+            batch["gene"].perturbation_indices_batch,
+        )  # [batch, N, d] - EQUIVARIANT!
+
+        # 6. Perturbation readout head (Type II Virtual Instrument)
         predictions = self.perturbation_head(
-            H_squeezed,
+            h_CLS,
+            H_genes_pert,
             batch["gene"].perturbation_indices,
             batch["gene"].perturbation_indices_batch,
         )
 
         return predictions, {
-            "h_CLS": H_squeezed[0],
-            "H_genes": H_squeezed[1:],
+            "h_CLS": h_CLS,
+            "H_genes": H_genes,
+            "H_genes_pert": H_genes_pert,  # Equivariant perturbed gene embeddings
+            "z_p": H_genes_pert,  # Backward compatibility alias
             "attention_weights": all_attention_weights,
+            "residual_update_ratios": residual_update_ratios,
             "graph_reg_loss": total_graph_reg_loss,
         }
 
@@ -680,6 +860,7 @@ class CellGraphTransformer(nn.Module):
             "gene_embedding": count_params(self.gene_embedding),
             "cls_token": self.cls_token.numel(),
             "transformer_layers": count_params(self.transformer_layers),
+            "perturbation_transform": count_params(self.perturbation_transform),
             "perturbation_head": count_params(self.perturbation_head),
         }
         counts["total"] = sum(counts.values())
@@ -717,10 +898,10 @@ def compute_smoothness(X: torch.Tensor) -> float:
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/006-kuzmin-tmi/conf"),
-    config_name="cell_graph_transformer",
+    config_name="equivariant_cell_graph_transformer",
 )
 def main(cfg: DictConfig) -> None:
-    """Main training function for overfitting test."""
+    """Main training function for Equivariant Cell Graph Transformer."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
     from torchcell.timestamp import timestamp
@@ -778,7 +959,6 @@ def main(cfg: DictConfig) -> None:
         graph_regularization_config=cfg.model.graph_regularization,
         perturbation_head_config=cfg.model.perturbation_head,
         dropout=cfg.model.dropout,
-        adaptive_loss_weighting=cfg.model.get("adaptive_loss_weighting", False),
         graph_reg_scale=cfg.model.get("graph_reg_scale", 0.001),
     ).to(device)
 
@@ -788,6 +968,41 @@ def main(cfg: DictConfig) -> None:
     print("\nParameter counts:")
     for name, count in param_counts.items():
         print(f"  {name}: {count:,}")
+
+    # Test equivariant transformation
+    print("\n" + "=" * 80)
+    print("Testing Equivariant Architecture...")
+    print("=" * 80)
+    model.eval()
+    with torch.no_grad():
+        test_predictions, test_representations = model(cell_graph, batch)
+        H_genes = test_representations["H_genes"]  # [N, d]
+        H_genes_pert = test_representations["H_genes_pert"]  # [batch, N, d]
+
+        print(f"\nWildtype gene embeddings: {H_genes.shape}")
+        print(f"Perturbed gene embeddings: {H_genes_pert.shape}")
+        print(f"Equivariance preserved: per-gene structure maintained")
+
+        # Check that perturbations actually change the embeddings
+        batch_size = H_genes_pert.shape[0]
+        print(f"\nPerturbation Effects (first 3 samples):")
+        for b in range(min(3, batch_size)):
+            mask = batch["gene"].perturbation_indices_batch == b
+            pert_idx = batch["gene"].perturbation_indices[mask]
+
+            if len(pert_idx) > 0:
+                # Change in perturbed genes
+                pert_change = (H_genes_pert[b, pert_idx] - H_genes[pert_idx]).norm(dim=-1).mean()
+
+                # Change in non-perturbed genes (from cross-attention context)
+                all_idx = torch.arange(H_genes.shape[0], device=H_genes.device)
+                non_pert_mask = ~torch.isin(all_idx, pert_idx)
+                non_pert_change = (H_genes_pert[b, non_pert_mask] - H_genes[non_pert_mask]).norm(dim=-1).mean()
+
+                print(f"  Sample {b}:")
+                print(f"    Perturbed genes ({len(pert_idx)}): Δ = {pert_change.item():.4f}")
+                print(f"    Non-perturbed genes: Δ = {non_pert_change.item():.4f} (context effect)")
+    model.train()
 
     # Setup loss and optimizer
     criterion = LogCoshLoss(reduction="mean")
@@ -828,7 +1043,7 @@ def main(cfg: DictConfig) -> None:
     y = batch["gene"].phenotype_values.to(device)
 
     # Setup directory for plots
-    plot_dir = osp.join(ASSET_IMAGES_DIR, f"cell_graph_transformer_{timestamp()}")
+    plot_dir = osp.join(ASSET_IMAGES_DIR, f"equivariant_cell_graph_transformer_{timestamp()}")
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
@@ -1157,7 +1372,7 @@ def main(cfg: DictConfig) -> None:
                     )
 
         plt.suptitle(
-            f"Cell Graph Transformer Training - Epoch {epoch + 1}/{cfg.trainer.max_epochs}",
+            f"Equivariant Cell Graph Transformer Training - Epoch {epoch + 1}/{cfg.trainer.max_epochs}",
             fontsize=16,
             y=0.998,
         )
@@ -1208,18 +1423,7 @@ def main(cfg: DictConfig) -> None:
         # Compute losses
         pred_loss = criterion(predictions.squeeze(), y)
         graph_reg_loss = representations["graph_reg_loss"]
-
-        # Apply adaptive weighting if enabled
-        if model.adaptive_loss_weighting:
-            mse_weight = model.log_mse_weight.exp()
-            reg_weight = model.log_reg_weight.exp()
-            # Normalize weights
-            weight_sum = mse_weight + reg_weight
-            mse_weight = 2 * mse_weight / weight_sum
-            reg_weight = 2 * reg_weight / weight_sum
-            total_loss = mse_weight * pred_loss + reg_weight * graph_reg_loss
-        else:
-            total_loss = pred_loss + graph_reg_loss
+        total_loss = pred_loss + graph_reg_loss
 
         # Compute metrics before backward pass
         with torch.no_grad():

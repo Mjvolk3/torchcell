@@ -175,6 +175,40 @@ def main(cfg: DictConfig) -> None:
     graph_names = wandb.config.cell_dataset["graphs"]
     gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
+    # Log static graph statistics for edge recovery monitoring
+    from torchcell.viz.graph_recovery import GraphRecoveryVisualization
+    from torchcell.timestamp import timestamp
+
+    graph_reg_config = wandb.config.model["graph_regularization"]
+    regularized_heads = graph_reg_config.get("regularized_heads", {})
+
+    # Collect graph info for aggregated visualization
+    graph_info = {}
+    for graph_name, gene_graph in gene_multigraph.items():
+        num_edges = gene_graph.graph.number_of_edges()
+        num_nodes = gene_graph.graph.number_of_nodes()
+        avg_degree = 2 * num_edges / max(num_nodes, 1)
+
+        graph_info[graph_name] = {
+            "num_edges": num_edges,
+            "num_nodes": num_nodes,
+            "avg_degree": avg_degree,
+        }
+
+        # Add regularization info if this graph is regularized
+        if graph_name in regularized_heads:
+            graph_info[graph_name]["reg_layer"] = regularized_heads[graph_name][
+                "layer"
+            ]
+            graph_info[graph_name]["reg_head"] = regularized_heads[graph_name]["head"]
+
+    # Create aggregated graph info visualization and save to disk
+    vis = GraphRecoveryVisualization(base_dir=wandb.run.dir)
+    graph_info_path = osp.join(
+        wandb.run.dir, f"graph_info_summary_{timestamp()}.png"
+    )
+    vis.plot_graph_info_summary(graph_info, save_path=graph_info_path)
+
     print(EXPERIMENT_ROOT)
     with open(
         osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"

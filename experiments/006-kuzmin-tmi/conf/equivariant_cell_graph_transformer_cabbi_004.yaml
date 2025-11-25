@@ -36,7 +36,7 @@ profiler:
   is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling
 
 data_module:
-  is_perturbation_subset: true
+  is_perturbation_subset: false
   perturbation_subset_size: 10000  # 2.5e4
   batch_size: 256  # Limited by transformer memory requirements
   num_workers: 16  # 2 > 8...
@@ -62,12 +62,12 @@ model:
   checkpoint_path: null  # *.ckpt
   gene_num: 6607
   hidden_channels: 180 #90 #96  # d in weekly report
-  num_transformer_layers: 6 #8  # L layers
+  num_transformer_layers: 8 #8  # L layers
   num_attention_heads: 9  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
   # Loss balancing
-  graph_reg_scale: 1.0  # Global scale factor for graph regularization
+  graph_reg_scale: 0  # Global scale factor for graph regularization
 
   # Learnable embedding configuration
   learnable_embedding:
@@ -81,7 +81,7 @@ model:
   graph_regularization:
     # Global regularization hyperparameters for easy sweeping
     graph_reg_lambda: 0.001
-    graph_reg_layer: 2 # python indexed
+    graph_reg_layer: 1 # python indexed
 
     row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
@@ -215,5 +215,5 @@ regression_task:
   grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 1 # Sample plotting (predictions vs truth)
-  plot_transformer_diagnostics_every_n_epochs: 1
-  plot_edge_recovery_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 10

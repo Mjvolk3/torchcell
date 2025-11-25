@@ -3,7 +3,7 @@
 #SBATCH --mem=400g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=14
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
 #SBATCH --job-name=006-ECGT-004
 #SBATCH --time=300-00:00:00

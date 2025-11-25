@@ -1,0 +1,169 @@
+Forward Pass Profiling Results
+================================================================================
+Model: GeneInteractionDango
+Parameters: 1,519,040
+Device: cuda
+Batch size: 8
+================================================================================
+
+FULL MODEL CONFIGURATION (YAML)
+--------------------------------------------------------------------------------
+checkpoint_path: null
+gene_num: 6607
+reaction_num: 7122
+metabolite_num: 2806
+hidden_channels: 64
+num_layers: 3
+norm: layer
+activation: gelu
+dropout: 0.0
+gene_encoder_config:
+  encoder_type: gin
+  graph_aggregation_method: pairwise_interaction
+  graph_aggregation_config:
+    aggregation_norm: layer
+    pairwise_num_layers: 2
+    pairwise_hidden_dim: 32
+    dropout: 0.0
+  heads: 8
+  concat: true
+  bias: true
+  add_self_loops: false
+  share_weights: false
+  gin_num_layers: 2
+  gin_hidden_dim: null
+gpr_conv_config:
+  encoder_type: gin
+  heads: 8
+  concat: true
+  add_self_loops: false
+  gin_num_layers: 2
+  gin_hidden_dim: null
+metabolism_config:
+  encoder_type: gin
+  is_stoich_gated: true
+  use_attention: true
+  heads: 8
+  concat: true
+  gin_num_layers: 2
+  gin_hidden_dim: null
+prediction_head_config:
+  hidden_channels: 64
+  head_num_layers: 4
+  dropout: 0.0
+  activation: gelu
+  head_norm: layer
+local_predictor_config:
+  use_local_predictor: false
+  num_attention_layers: 2
+  num_heads: 4
+  combination_method: concat
+
+CONFIGURATION SUMMARY
+--------------------------------------------------------------------------------
+Config name: hetero_cell_bipartite_dango_gi_gh_profile
+Hidden channels: 64
+Num layers: 3
+Activation: gelu
+Norm: layer
+Dropout: 0.0
+
+Gene Encoder Config:
+  Encoder type: gin
+  Graph aggregation: pairwise_interaction
+  GIN layers: 2
+  GIN hidden dim: 64
+  Pairwise layers: 2
+  Pairwise hidden dim: 32
+
+Local Predictor Config:
+  Enabled: False
+  Mode: Global-only (local predictor disabled)
+
+Graphs used (9):
+  - physical
+  - regulatory
+  - tflink
+  - string12_0_neighborhood
+  - string12_0_fusion
+  - string12_0_cooccurence
+  - string12_0_coexpression
+  - string12_0_experimental
+  - string12_0_database
+================================================================================
+
+FORWARD PASS PROFILING SUMMARY
+================================================================================
+Component                      CPU (ms)     CUDA (ms)    Total (ms)   % of Total
+--------------------------------------------------------------------------------
+graph_convolutions                  10.346      13.953      24.299      48.0%
+conv_layer_0                         2.334       5.014       7.348      14.5%
+conv_layer_1                         1.360       4.677       6.037      11.9%
+conv_layer_2                         1.405       4.606       6.011      11.9%
+global_aggregation                   3.255       0.793       4.048       8.0%
+embedding_preprocessing              1.146       0.567       1.713       3.4%
+global_predictor                     0.537       0.551       1.088       2.2%
+combination                          0.033       0.000       0.033       0.1%
+--------------------------------------------------------------------------------
+TOTAL                               20.417      30.161      50.578     100.0%
+Full Forward (measured)             14.033      12.097      26.129
+
+GPU Utilization: 59.6% (CUDA time / Total time)
+================================================================================
+
+RAW PROFILING RESULTS
+--------------------------------------------------------------------------------
+full_forward:
+  CPU time: 14.033 ms
+  CUDA time: 12.097 ms
+  Total: 26.129 ms
+  Calls: 40
+
+graph_convolutions:
+  CPU time: 10.346 ms
+  CUDA time: 13.953 ms
+  Total: 24.299 ms
+  Calls: 20
+
+conv_layer_0:
+  CPU time: 2.334 ms
+  CUDA time: 5.014 ms
+  Total: 7.348 ms
+  Calls: 40
+
+conv_layer_1:
+  CPU time: 1.360 ms
+  CUDA time: 4.677 ms
+  Total: 6.037 ms
+  Calls: 40
+
+conv_layer_2:
+  CPU time: 1.405 ms
+  CUDA time: 4.606 ms
+  Total: 6.011 ms
+  Calls: 40
+
+global_aggregation:
+  CPU time: 3.255 ms
+  CUDA time: 0.793 ms
+  Total: 4.048 ms
+  Calls: 40
+
+embedding_preprocessing:
+  CPU time: 1.146 ms
+  CUDA time: 0.567 ms
+  Total: 1.713 ms
+  Calls: 40
+
+global_predictor:
+  CPU time: 0.537 ms
+  CUDA time: 0.551 ms
+  Total: 1.088 ms
+  Calls: 40
+
+combination:
+  CPU time: 0.033 ms
+  CUDA time: 0.000 ms
+  Total: 0.033 ms
+  Calls: 20
+

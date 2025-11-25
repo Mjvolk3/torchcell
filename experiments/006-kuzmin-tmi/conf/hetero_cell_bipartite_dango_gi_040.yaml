@@ -131,14 +131,7 @@ model:
     num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
-regression_task:
-  loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr
-  is_weighted_phenotype_loss: false
-  # Lambda weights for loss components
-  lambda_mse: 1.0
-  lambda_dist: 100.0 # 0.1 # 0.1 #0.1 #0.1
-  lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
-  
+~
   # MleDistSupCR specific configuration
   loss_config:
     # Component-specific parameters

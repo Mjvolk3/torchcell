@@ -1,0 +1,11 @@
+{
+  "dataset_size": 332313,
+  "perturbation_counts": {
+    "3": 332313
+  },
+  "unique_singles": 4036,
+  "unique_doubles": 651181,
+  "unique_triples": 332313,
+  "total_unique": 987530,
+  "reduction_percent": 99.93689647227241
+}

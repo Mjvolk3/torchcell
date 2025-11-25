@@ -35,6 +35,7 @@ data/safe_keeping
 .dendron.port
 .dendron.ws
 notes/.dendron.cache.json
+dendronrc.yml
 
 # ncbi_cli
 ncbi_cli/*
@@ -53,7 +54,7 @@ experiments/003-fit-int/slurm/*
 experiments/004-dmi-tmi/slurm/*
 experiments/005-kuzmin2018-tmi/slurm/*
 experiments/006-kuzmin-tmi/slurm/*
-
+experiments/007-kuzmin-tm/slurm/*
 # docx
 CHBE-symposium.docx
 CHBE-symposium-2023.docx
@@ -141,12 +142,30 @@ notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.
 .claude/config.json
 
 # papers
+how_to_build_virtual_cell.mmd
+Culley.mmd
+Giaever.mmd
+Kemmeren.mmd
+ohya.mmd
+Sameith.mmd
+Zhang.mmd
 dango.md
 dango.pdf
 dcell.md
 dcell.pdf
 distloss.md
 causal-disentanglement.md
+Zhang.mmd
+kuzmin2018_SI.mmd
+kuzmin2018.mmd
+suther_ynb-to-ypd.mmd
+suther_ynb-to-ypd.mmd
+dango.mmd
+
 
 # torchcell egg info
 torchcell.egg-info/*
+
+# results
+experiments/007-kuzmin-tm/results/cobra-fba-growth/*
+torchcell-scratch

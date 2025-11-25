@@ -5,7 +5,7 @@
 #SBATCH --ntasks=6
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:6
-#SBATCH --job-name=006-041-HCPD
+#SBATCH --job-name=006-042-HCPD
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END

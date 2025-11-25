@@ -51,8 +51,9 @@ class Visualization:
         timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
-        predictions_np = predictions.detach().cpu().numpy()
-        true_values_np = true_values.detach().cpu().numpy()
+        # Convert to float32 before numpy to handle BFloat16 from mixed precision training
+        predictions_np = predictions.detach().cpu().float().numpy()
+        true_values_np = true_values.detach().cpu().float().numpy()
         mask = ~np.isnan(true_values_np[:, dim])
         x = predictions_np[mask, dim]
         y = true_values_np[mask, dim]
@@ -105,8 +106,9 @@ class Visualization:
         timestamp_str: Optional[str],
         stage: str = "",
     ) -> None:
-        true_np = true_values.detach().cpu().numpy()
-        pred_np = predictions.detach().cpu().numpy()
+        # Convert to float32 before numpy to handle BFloat16 from mixed precision training
+        true_np = true_values.detach().cpu().float().numpy()
+        pred_np = predictions.detach().cpu().float().numpy()
         mask = ~np.isnan(true_np[:, dim])
         y_true = true_np[mask, dim]
         y_pred = pred_np[mask, dim]
@@ -191,8 +193,9 @@ class Visualization:
         stage: str = "",
         title_type: str = "loss",
     ) -> None:
-        features_np = features.detach().cpu().numpy()
-        labels_np = labels.detach().cpu().numpy()
+        # Convert to float32 before numpy to handle BFloat16 from mixed precision training
+        features_np = features.detach().cpu().float().numpy()
+        labels_np = labels.detach().cpu().float().numpy()
         valid_mask = ~np.isnan(features_np).any(axis=1)
         features_np = features_np[valid_mask]
         labels_np = labels_np[valid_mask]
@@ -235,8 +238,9 @@ class Visualization:
     def log_sample_metrics(
         self, predictions: torch.Tensor, true_values: torch.Tensor, stage: str = ""
     ) -> None:
-        predictions_np = predictions.detach().cpu().numpy()
-        true_values_np = true_values.detach().cpu().numpy()
+        # Convert to float32 before numpy to handle BFloat16 from mixed precision training
+        predictions_np = predictions.detach().cpu().float().numpy()
+        true_values_np = true_values.detach().cpu().float().numpy()
         num_targets = true_values_np.shape[1]
         prefix = stage  # use the provided stage directly as key prefix
         for dim in range(num_targets):

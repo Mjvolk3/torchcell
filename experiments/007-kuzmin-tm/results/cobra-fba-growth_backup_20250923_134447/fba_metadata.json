@@ -1,0 +1,9 @@
+{
+  "timestamp": "2025-09-15T17:50:09.825348",
+  "wt_growth": 0.08584396972646822,
+  "n_singles": 4036,
+  "n_doubles": 651181,
+  "n_triples": 332313,
+  "n_processes": 128,
+  "runtime_seconds": 608.644092
+}

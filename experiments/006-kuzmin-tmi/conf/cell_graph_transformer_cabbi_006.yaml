@@ -1,0 +1,201 @@
+#experiments/006-kuzmin-tmi/conf/cell_graph_transformer_cabbi_005.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_cell_graph_transformer
+  tags: [transformer, graph_regularization, gene_interaction, cabbi]
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  # Transformer uses learned gene embeddings, not pre-computed
+  node_embeddings: []
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false  # Toggle profiling on/off
+  is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000  # 2.5e4
+  batch_size: 512  # Limited by transformer memory requirements
+  num_workers: 12  # Will be overridden by SLURM script
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 1000  # Match DANGO long training duration
+  strategy: ddp  # ddp_find_unused_parameters_true # auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+
+# Graph regularization lambda (shared across all graphs)
+graph_reg_lambda: 0.001
+
+# Transformer model configuration
+model:
+  checkpoint_path: null  # *.ckpt
+  gene_num: 6607
+  hidden_channels: 96  # d in weekly report
+  num_transformer_layers: 8  # L layers
+  num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
+  dropout: 0.1
+
+  # Loss balancing
+  adaptive_loss_weighting: false  # Set to true to use learnable weights
+  graph_reg_scale: 0.01  # Global scale factor for graph regularization
+
+  # Graph regularization configuration
+  graph_regularization:
+    row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
+
+    # Map graph names to (layer, head, lambda) for regularization
+    # Early-mid layers, one head per graph
+    # REDUCED lambdas significantly to balance with MSE loss
+    regularized_heads:
+      physical:
+        layer: 4
+        head: 0
+        lambda: ${graph_reg_lambda}
+      regulatory:
+        layer: 4
+        head: 1
+        lambda: ${graph_reg_lambda}
+      tflink:
+        layer: 4
+        head: 2
+        lambda: ${graph_reg_lambda}
+      string12_0_neighborhood:
+        layer: 4
+        head: 3
+        lambda: ${graph_reg_lambda}
+      string12_0_fusion:
+        layer: 4
+        head: 4
+        lambda: ${graph_reg_lambda}
+      string12_0_cooccurence:
+        layer: 4
+        head: 5
+        lambda: ${graph_reg_lambda}
+      string12_0_coexpression:
+        layer: 4
+        head: 6
+        lambda: ${graph_reg_lambda}
+      string12_0_experimental:
+        layer: 4
+        head: 7
+        lambda: ${graph_reg_lambda}
+      string12_0_database:
+        layer: 4
+        head: 8
+        lambda: ${graph_reg_lambda}
+
+  # Perturbation head configuration
+  perturbation_head:
+    use_cross_attention: true
+    num_heads: 8
+    dropout: 0.1
+
+# Loss and optimization configuration
+regression_task:
+  # Loss configuration
+  loss:
+    type: "point_dist_graph_reg"  # Modular loss: point + distribution + graph_reg
+
+    # Point estimator configuration
+    point_estimator:
+      type: "mse"  # "logcosh" or "mse"
+      lambda: 1.0
+
+    # Distribution loss configuration
+    distribution_loss:
+      type: "wasserstein"  # "dist", "wasserstein", or null to disable
+      lambda: 0.1  # Disabled to verify torch.compile fix works
+
+      # Wasserstein-specific parameters (active when type="wasserstein")
+      wasserstein_blur: 0.05  # Entropic regularization (smaller = more precise)
+      wasserstein_p: 2  # p=2 for W2 (quadratic) distance, p=1 for W1
+      wasserstein_scaling: 0.9  # Multi-scale parameter (0.5-1.0)
+      min_samples_for_wasserstein: 512  # Minimum samples for Wasserstein distance
+
+      # Dist loss parameters (active when type="dist")
+      # dist_bandwidth: 0.5  # Bandwidth for distribution loss
+      # min_samples_for_dist: 512  # Minimum samples for dist computation
+
+    # Graph regularization configuration (from model)
+    graph_regularization:
+      lambda: 1.0
+
+    # Supervised contrastive loss configuration (disabled for now)
+    supervised_contrastive:
+      lambda: 0.0  # Set to 0.001 or higher to enable
+      # supcr_temperature: 0.1  # Temperature for contrastive loss
+      # min_samples_for_supcr: 512  # Minimum samples for SupCR
+      # embedding_dim is dynamically set from model.hidden_channels
+
+    # Buffer configuration (disabled for large batch)
+    buffer:
+      use_buffer: false  # Set true for small batches (e.g., batch_size < 64)
+      # buffer_size: 8192  # Size of circular buffer for distribution estimation
+
+    # DDP configuration (disabled for large batch)
+    ddp:
+      use_ddp_gather: false  # Set true to gather samples across GPUs
+      # gather_interval: 1  # Gather every N forward passes
+
+    # Adaptive weighting (optional)
+    # adaptive_weighting:
+    #   enabled: true  # Learn loss weights dynamically
+    #   warmup_epochs: null  # None -> will be 10% of max_epochs
+    #   stable_epoch: null  # None -> will be 50% of max_epochs
+
+    # Temperature scheduling (for SupCR when enabled)
+    # temperature_scheduling:
+    #   enabled: true
+    #   init_temperature: 1.0
+    #   final_temperature: 0.1
+    #   schedule: "exponential"  # Options: "exponential", "linear"
+    #   max_epochs: 300
+
+  execution_mode: "training"  # "training" or "dataloader_profiling"
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4  # Reduced from 5e-4 to stabilize training
+    weight_decay: 1e-8  # Very light regularization - transformer embeddings are sensitive to L2
+
+  lr_scheduler: null  # No scheduler - constant LR
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

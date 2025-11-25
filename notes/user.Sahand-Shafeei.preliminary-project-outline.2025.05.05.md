@@ -1,6 +1,6 @@
 ---
 id: 8idydyfk79r59r2c1rualwy
-title: 'Sahand-Shafeei.preliminary-project-outline.2025.05.05'
+title: Sahand-Shafeei.preliminary-project-outline.2025.05.05
 desc: ''
 updated: 1746811155367
 created: 1746499667043

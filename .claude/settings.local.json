@@ -6,7 +6,8 @@
       "Read(*.txt)",
       "Write(*.py)",
       "Bash(mkdir:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(python:*)"
     ],
     "deny": [
       "Bash(rm:*)",
@@ -17,5 +18,6 @@
       "Read(biocypher/config/PRODUCTION_*.yaml)"
     ]
   },
-  "enableAllProjectMcpServers": false
+  "enableAllProjectMcpServers": false,
+  "outputStyle": "Explanatory"
 }

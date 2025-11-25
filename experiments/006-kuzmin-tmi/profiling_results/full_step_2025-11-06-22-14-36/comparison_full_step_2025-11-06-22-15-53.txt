@@ -1,0 +1,39 @@
+DANGO vs LAZY HETERO: COMPLETE TRAINING STEP COMPARISON
+====================================================================================================
+
+TIMING BREAKDOWN
+----------------------------------------------------------------------------------------------------
+Phase                       DANGO (ms)   Lazy Hetero (ms)      Ratio    Diff (ms)
+----------------------------------------------------------------------------------------------------
+1. Forward Pass                 18.639             29.190       1.6x       10.551
+2. Loss Computation              0.223              0.215       1.0x       -0.008
+3. Backward Pass                 4.651              8.973       1.9x        4.322
+4. Optimizer Step                2.389              2.469       1.0x        0.080
+----------------------------------------------------------------------------------------------------
+TOTAL                           25.902             40.848       1.6x       14.946
+
+PERCENTAGE BREAKDOWN COMPARISON
+----------------------------------------------------------------------------------------------------
+Phase                          DANGO %      Lazy Hetero %      Delta
+----------------------------------------------------------------------------------------------------
+1. Forward Pass                  72.0%              71.5%      -0.5%
+2. Loss Computation               0.9%               0.5%      -0.4%
+3. Backward Pass                 18.0%              22.0%       4.0%
+4. Optimizer Step                 9.2%               6.0%      -3.2%
+
+BOTTLENECK IDENTIFICATION
+----------------------------------------------------------------------------------------------------
+OVERALL ANALYSIS
+----------------------------------------------------------------------------------------------------
+Total training step is 1.6x slower in Lazy Hetero (40.8ms vs 25.9ms)`
+
+Lazy Hetero bottleneck: 1. Forward Pass (71.5% of total time)
+
+RECOMMENDATION
+----------------------------------------------------------------------------------------------------
+Adopt DANGO's architecture:
+1. Process full graph embeddings ONCE per batch
+2. Use perturbation masks as indexing operations AFTER message passing
+3. Avoid expand() operation that creates multiple gradient computation paths
+
+Expected speedup: 1.6x (bringing lazy hetero to DANGO performance)

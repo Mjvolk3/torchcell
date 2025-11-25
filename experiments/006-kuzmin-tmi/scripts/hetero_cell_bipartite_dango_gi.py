@@ -38,6 +38,7 @@ from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
 from torchcell.graph.graph import build_gene_multigraph
 from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
+from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.datamodules import CellDataModule
 from torchcell.metabolism.yeast_GEM import YeastGEM
 from torchcell.data import Neo4jCellDataset
@@ -46,6 +47,7 @@ from datetime import timedelta
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.scheduler.cosine_annealing_warmup import CosineAnnealingWarmupRestarts
+from lightning.pytorch.profilers import PyTorchProfiler, AdvancedProfiler
 
 
 log = logging.getLogger(__name__)
@@ -432,9 +434,7 @@ def main(cfg: DictConfig) -> None:
             # Component-specific parameters
             dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
             supcr_temperature=loss_config.get("supcr_temperature", 0.1),
-            embedding_dim=wandb.config.model[
-                "hidden_channels"
-            ],  # Use model's hidden_channels
+            embedding_dim=wandb.config.model["hidden_channels"],
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
@@ -454,9 +454,42 @@ def main(cfg: DictConfig) -> None:
             temp_schedule=loss_config.get("temp_schedule", "exponential"),
             # Other parameters
             weights=weights,
-            max_epochs=loss_config.get(
-                "max_epochs", wandb.config.trainer["max_epochs"]
-            ),
+            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
+        )
+    elif wandb.config.regression_task["loss"] == "mle_wass_supcr":
+        loss_config = wandb.config.regression_task.get("loss_config", {})
+
+        loss_func = MleWassSupCR(
+            # Lambda weights (passed individually, not as dict)
+            lambda_mse=wandb.config.regression_task.get("lambda_mse", 1.0),
+            lambda_wasserstein=wandb.config.regression_task.get("lambda_wasserstein", 0.1),
+            lambda_supcr=wandb.config.regression_task.get("lambda_supcr", 0.001),
+            # Wasserstein-specific parameters
+            wasserstein_blur=loss_config.get("wasserstein_blur", 0.05),
+            wasserstein_p=loss_config.get("wasserstein_p", 2),
+            wasserstein_scaling=loss_config.get("wasserstein_scaling", 0.9),
+            min_samples_for_wasserstein=loss_config.get("min_samples_for_wasserstein", 512),
+            # SupCR-specific parameters
+            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
+            embedding_dim=wandb.config.model["hidden_channels"],
+            # Buffer configuration
+            use_buffer=loss_config.get("use_buffer", True),
+            buffer_size=loss_config.get("buffer_size", 256),
+            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 32),
+            # DDP configuration
+            use_ddp_gather=loss_config.get("use_ddp_gather", True),
+            gather_interval=loss_config.get("gather_interval", 1),
+            # Adaptive weighting
+            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
+            warmup_epochs=loss_config.get("warmup_epochs", 100),
+            stable_epoch=loss_config.get("stable_epoch", 500),
+            # Temperature scheduling
+            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
+            init_temperature=loss_config.get("init_temperature", 1.0),
+            final_temperature=loss_config.get("final_temperature", 0.1),
+            temp_schedule=loss_config.get("temp_schedule", "exponential"),
+            # Training duration for loss scheduling
+            max_epochs=loss_config.get("max_epochs", wandb.config.trainer["max_epochs"]),
         )
     elif wandb.config.regression_task["loss"] == "logcosh":
         loss_func = LogCoshLoss(reduction="mean")
@@ -581,8 +614,57 @@ def main(cfg: DictConfig) -> None:
     print(f"devices: {devices}")
     torch.set_float32_matmul_precision("medium")
     num_nodes = get_slurm_nodes()
+
+    # Setup profiler based on configuration
     profiler = None
+    if wandb.config.get("profiler", {}).get("is_pytorch", False):
+        print("Setting up PyTorch profiler...")
+        # Create profiler output directory using proper path
+        profiler_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/profiler_output", f"hetero_dango_gi_{group}")
+        os.makedirs(profiler_dir, exist_ok=True)
+
+        # Import schedule from torch.profiler
+        from torch.profiler import schedule
+        from torch.profiler import ProfilerActivity
+
+        profiler = PyTorchProfiler(
+            dirpath=profiler_dir,
+            filename=f"profile_{timestamp()}",
+            # Profile CPU and CUDA activities
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            # Use the schedule function properly
+            schedule=schedule(
+                wait=1,  # Wait 1 step before profiling
+                warmup=1,  # Warmup for 1 step
+                active=3,  # Profile for 3 steps
+                repeat=2,  # Repeat cycle 2 times
+            ),
+            # Capture memory usage
+            profile_memory=True,
+            # Record tensor shapes for better analysis
+            record_shapes=True,
+            # Export to Chrome tracing format for visualization
+            export_to_chrome=True,
+            # Also export to TensorBoard
+            on_trace_ready=None,  # Will save to dirpath automatically
+        )
+        print(f"Profiler output will be saved to: {profiler_dir}")
+
     print(f"Starting training ({timestamp()})")
+
+    # Only add checkpoint callbacks if not profiling (to avoid serialization errors)
+    callbacks = []
+    enable_checkpointing = True
+    if not wandb.config.get("profiler", {}).get("is_pytorch", False):
+        callbacks = [
+            checkpoint_callback_best_mse,
+            checkpoint_callback_best_pearson,
+            checkpoint_callback_last,
+        ]
+    else:
+        print("Profiling mode: Checkpointing disabled to avoid serialization errors")
+        enable_checkpointing = False
+
     trainer = L.Trainer(
         strategy=wandb.config.trainer["strategy"],
         accelerator=wandb.config.trainer["accelerator"],
@@ -590,17 +672,14 @@ def main(cfg: DictConfig) -> None:
         num_nodes=num_nodes,
         logger=wandb_logger,
         max_epochs=wandb.config.trainer["max_epochs"],
-        callbacks=[
-            checkpoint_callback_best_mse,
-            checkpoint_callback_best_pearson,
-            checkpoint_callback_last,
-        ],
+        callbacks=callbacks,
         profiler=profiler,
         log_every_n_steps=10,
         overfit_batches=wandb.config.trainer["overfit_batches"],
         precision=wandb.config.trainer.get(
             "precision", "32-true"
         ),  # Use precision from config
+        enable_checkpointing=enable_checkpointing,  # Explicitly disable checkpointing when profiling
         # limit_val_batches=0,  # FLAG
     )
 

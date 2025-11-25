@@ -40,19 +40,19 @@ profiler:
   is_pytorch: true
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: null # 100
+  is_perturbation_subset: true
+  perturbation_subset_size: 1000  # Reasonable subset for profiling
   batch_size: 32 #32
   num_workers: 4
   pin_memory: false
   prefetch: false
 
 trainer:
-  max_epochs: 1000 #1000 # 20 # FLAG
-  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 1  # Short run for profiling
+  strategy: auto  # Will use single GPU strategy
   num_nodes: 1
   accelerator: gpu
-  devices: 2  # For interactive testing with 2 GPUs
+  devices: 1  # Single GPU for profiling
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna

@@ -12,18 +12,18 @@ cell_dataset:
   graphs: [
       physical,
       regulatory,
-      # tflink,
-      # string12_0_neighborhood,
-      # string12_0_fusion,
-      # string12_0_cooccurence,
-      # string12_0_coexpression,
-      # string12_0_experimental,
-      # string12_0_database,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
     ]
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 64 #64
+  learnable_embedding_input_channels: 64 #64 to match cabbi_056
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -39,24 +39,24 @@ profiler:
 
 data_module:
   is_perturbation_subset: true
-  perturbation_subset_size: 1000 #2.5e4
-  batch_size: 32 #32 #4 #16
-  num_workers: 4 #2
+  perturbation_subset_size: 1000  # Reasonable subset for profiling
+  batch_size: 128 #32 to match cabbi_056
+  num_workers: 2 #2 to match cabbi_056
   pin_memory: true
   prefetch: false
   prefetch_factor: 2
 
 trainer:
-  max_epochs: 300 # Updated for shorter training
-  strategy: auto #ddp_find_unused_parameters_true #auto # ddp
+  max_epochs: 1000 # Updated for shorter training
+  strategy: auto # Will use single GPU strategy
   num_nodes: 1
-  accelerator: cpu
-  devices: 1
+  accelerator: gpu
+  devices: 1  # Single GPU for profiling
   overfit_batches: 0
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
 # Compilation settings for PyTorch 2.0+
-compile_mode: "max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
+compile_mode: null #"max-autotune"  # null, "default", "reduce-overhead", "max-autotune"
 
 # ------ Placeholders for hydra optuna
 heads: 8 #10 # placeholder
@@ -67,8 +67,8 @@ model:
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 64 #64
-  num_layers: 2 # Number of hetero conv layers
+  hidden_channels: 64 #64 to match cabbi_056
+  num_layers: 3 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
   activation: "gelu"
@@ -77,13 +77,15 @@ model:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
     
     # Graph aggregation configuration (NEW)
-    graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
+    # graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
     # graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
-    # graph_aggregation_method: "sum"  # Alternative: simple sum (original behavior)
+    graph_aggregation_method: "sum"  # Simple sum to match cabbi_056
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
-    
+
     graph_aggregation_config:
-      num_heads: 4  # Number of attention heads for cross_attention
+      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
+      aggregation_norm: "layer"  # Options: "layer", "batch", null
+      # num_heads: 4  # Number of attention heads for cross_attention
       dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
     
     # GAT-specific parameters (used when encoder_type="gatv2")
@@ -94,7 +96,7 @@ model:
     add_self_loops: false
     share_weights: false
     # GIN-specific parameters (used when encoder_type="gin")
-    gin_num_layers: 2      # Number of MLP layers in GIN
+    gin_num_layers: 4      # Number of MLP layers in GIN (4 to match cabbi_056)
     gin_hidden_dim: null   # If null, defaults to hidden_channels
   gpr_conv_config:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
@@ -104,7 +106,7 @@ model:
     concat: true
     add_self_loops: false
     # GIN-specific parameters
-    gin_num_layers: 2
+    gin_num_layers: 4  # 4 to match cabbi_056
     gin_hidden_dim: null
   metabolism_config:
     encoder_type: "gin"  # Options: "gatv2" or "gin"
@@ -115,7 +117,7 @@ model:
     heads: ${heads}
     concat: true
     # GIN-specific parameters
-    gin_num_layers: 2
+    gin_num_layers: 4  # 4 to match cabbi_056
     gin_hidden_dim: null
   prediction_head_config:
     hidden_channels: 64 #64
@@ -132,25 +134,32 @@ model:
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
-  loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr
+  loss: mle_wass_supcr # Using Wasserstein to match cabbi_056
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  lambda_dist: 0.01 # 0.1 # 0.1 #0.1 #0.1
+  # lambda_dist: 0.1 # For MleDistSupCR (not used with mle_wass_supcr)
+  lambda_wasserstein: 1.0  # For MleWassSupCR (1.0 to match cabbi_056)
   lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
-  
-  # MleDistSupCR specific configuration
+
+  # MleDistSupCR/MleWassSupCR specific configuration
   loss_config:
-    # Component-specific parameters
-    dist_bandwidth: 2.0
+    # Component-specific parameters for MleDistSupCR (not used with mle_wass_supcr)
+    # dist_bandwidth: 1.0  # For MleDistSupCR
+    # min_samples_for_dist: 256  # For MleDistSupCR
+
+    # Wasserstein-specific parameters (for MleWassSupCR)
+    wasserstein_blur: 0.05  # Entropic regularization (smaller = more precise)
+    wasserstein_p: 2  # p=2 for W2 (quadratic) distance, p=1 for W1
+    wasserstein_scaling: 0.9  # Multi-scale parameter (0.5-1.0)
+    min_samples_for_wasserstein: 256  # Minimum samples for Wasserstein distance
     supcr_temperature: 0.1
     # embedding_dim is dynamically set from model.hidden_channels
     
     # Buffer configuration
     use_buffer: true
-    buffer_size: 256
-    min_samples_for_dist: 64
-    min_samples_for_supcr: 64
+    buffer_size: 256  # 256 to match cabbi_056
+    min_samples_for_supcr: 256  # 256 to match cabbi_056
     
     # DDP configuration
     use_ddp_gather: true
@@ -169,21 +178,21 @@ regression_task:
     temp_schedule: "exponential"
     
     # Training duration (for temperature scheduling)
-    max_epochs: 300
+    max_epochs: 500  # 500 to match cabbi_056
   optimizer:
     type: "AdamW"
-    lr: 5e-4 #overrode by type
+    lr: 1e-4 #overrode by type (1e-4 to match cabbi_056)
     weight_decay: 1e-12
-  lr_scheduler: null
-    # type: "CosineAnnealingWarmupRestarts"
-    # first_cycle_steps: 60 # Minima every 60 epochs (5 cycles in 300 epochs)
-    # cycle_mult: 1.0 # Keep cycles the same length
-    # max_lr: 1e-4 # Starting peak
-    # min_lr: 1e-8 # Minimum value
-    # warmup_steps: 1 # Warmup for 1 step to reach max_lr
-    # gamma: 0.8 # Less aggressive decay for shorter training
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 300  # Match cabbi_056
+    cycle_mult: 1.0  # Keep cycles the same length
+    max_lr: 5e-4  # 5e-4 to match cabbi_056
+    min_lr: 1e-7  # Higher floor for faster convergence
+    warmup_steps: 0  # Quick warmup to peak
+    gamma: 0.50  # 0.50 to match cabbi_056
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256
+  grad_accumulation_schedule: {0: 2}  # Accumulate for 2 steps to match cabbi_056
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

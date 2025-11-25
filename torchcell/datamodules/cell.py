@@ -198,19 +198,24 @@ class CellDataModule(L.LightningDataModule):
         pin_memory: bool = False,
         prefetch: bool = False,
         prefetch_factor: int = 2,
+        persistent_workers: bool = True,
         split_indices: Union[str, List[str], None] = None,
         follow_batch: Optional[list] = None,
         train_shuffle: bool = True,
+        collate_fn: Optional[object] = None,
+        val_batch_size: Optional[int] = None,
     ):
         super().__init__()
         self.dataset = dataset
         self.cache_dir = cache_dir
         self.batch_size = batch_size
+        self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
         self.random_seed = random_seed
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
         self.prefetch_factor = prefetch_factor
+        self.persistent_workers = persistent_workers
         self.train_shuffle = train_shuffle
         self.train_ratio = 0.8
         self.val_ratio = 0.1
@@ -225,6 +230,7 @@ class CellDataModule(L.LightningDataModule):
             self.follow_batch = ["x", "x_pert"]
         else:
             self.follow_batch = follow_batch
+        self.collate_fn = collate_fn
 
         # Compute index during initialization
         self.index
@@ -369,9 +375,9 @@ class CellDataModule(L.LightningDataModule):
 
         # Save the index and details separately
         with open(index_file, "w") as f:
-            json.dump(self._index.dict(), f, indent=2)
+            json.dump(self._index.model_dump(), f, indent=2)
         with open(details_file, "w") as f:
-            json.dump(self._index_details.dict(), f, indent=2)
+            json.dump(self._index_details.model_dump(), f, indent=2)
 
     def _cached_files_exist(self):
         index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
@@ -389,19 +395,28 @@ class CellDataModule(L.LightningDataModule):
         self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
         self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
 
-    def _get_dataloader(self, dataset, shuffle=False):
-        loader = DataLoader(
-            dataset,
-            batch_size=self.batch_size,
-            shuffle=shuffle,
-            num_workers=self.num_workers,
-            persistent_workers=True if self.num_workers > 0 else False,
-            pin_memory=self.pin_memory,
-            follow_batch=self.follow_batch,
-            timeout=10800,
-            multiprocessing_context=("spawn" if self.num_workers > 0 else None),
-            prefetch_factor=self.prefetch_factor,
-        )
+    def _get_dataloader(self, dataset, shuffle=False, batch_size=None):
+        # Use provided batch_size or fall back to self.batch_size
+        if batch_size is None:
+            batch_size = self.batch_size
+
+        dataloader_kwargs = {
+            "batch_size": batch_size,
+            "shuffle": shuffle,
+            "num_workers": self.num_workers,
+            "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
+            "pin_memory": self.pin_memory,
+            "follow_batch": self.follow_batch,
+            "timeout": 10800,
+            "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),
+            "prefetch_factor": self.prefetch_factor,
+        }
+
+        # Add collate_fn if provided
+        if self.collate_fn is not None:
+            dataloader_kwargs["collate_fn"] = self.collate_fn
+
+        loader = DataLoader(dataset, **dataloader_kwargs)
         if self.prefetch:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
             return PrefetchLoader(loader, device=device)
@@ -411,7 +426,7 @@ class CellDataModule(L.LightningDataModule):
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
     def val_dataloader(self):
-        return self._get_dataloader(self.val_dataset)
+        return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
     def test_dataloader(self):
         return self._get_dataloader(self.test_dataset)

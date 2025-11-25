@@ -1,0 +1,11 @@
+# Experiment 086a: DANGO DataLoader profiling only (skip model forward/backward)
+# Measures: Data loading + graph processor + collation + CPU→GPU transfer
+defaults:
+  - dango_kuzmin2018_tmi_string12_0_086
+  - _self_
+
+wandb:
+  tags: [experiment_086a, dataloader_profiling, dango, single_gpu]
+
+regression_task:
+  execution_mode: "dataloader_profiling"  # Skip model forward, use dummy loss

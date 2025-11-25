@@ -37,8 +37,6 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self,
         hidden_dim: int,
         num_heads: int,
-        adjacency_matrices: Optional[Dict[str, torch.Tensor]] = None,
-        regularized_head_config: Optional[Dict[str, Dict]] = None,
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -69,10 +67,6 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         self.dropout = nn.Dropout(dropout)
 
-        # Store adjacency matrices and regularization config
-        self.adjacency_matrices = adjacency_matrices
-        self.regularized_head_config = regularized_head_config
-
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
     ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
@@ -85,7 +79,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         Returns:
             output: [batch, N+1, d] transformed features
-            gene_attention: [batch, heads, N, N] gene-gene attention weights (if return_attention=True)
+            gene_attention_weights: [batch, heads, N, N] gene-gene attention weights (if return_attention=True)
         """
         batch_size, seq_len, hidden_dim = x.shape
 
@@ -115,14 +109,14 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         # Extract gene-gene attention block for regularization (exclude CLS token)
         # attention_weights: [batch, heads, N+1, N+1]
-        # gene_attention: [batch, heads, N, N]
-        gene_attention = (
+        # gene_attention_weights: [batch, heads, N, N]
+        gene_attention_weights = (
             attention_weights[:, :, 1:, 1:] if return_attention else None
         )
 
         # Reshape back: [batch, seq_len, hidden_dim]
         attn_output = (
-            attn_output.transpose(1, 2)
+            attn_output.transpose(1, 2)  
             .contiguous()
             .view(batch_size, seq_len, hidden_dim)
         )
@@ -135,7 +129,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         ffn_output = self.ffn(output)
         output = self.norm2(output + self.dropout(ffn_output))
 
-        return output, gene_attention
+        return output, gene_attention_weights
 
 
 class HyperSAGNN(nn.Module):
@@ -490,20 +484,83 @@ class CellGraphTransformer(nn.Module):
         graph_regularization_config: Optional[Dict] = None,
         perturbation_head_config: Optional[Dict] = None,
         dropout: float = 0.1,
-        adaptive_loss_weighting: bool = False,
         graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
+        node_embeddings: Optional[Dict] = None,  # Pre-computed embeddings
+        learnable_embedding_config: Optional[Dict] = None,  # Learnable config
     ):
         super().__init__()
         self.gene_num = gene_num
         self.hidden_channels = hidden_channels
         self.num_transformer_layers = num_transformer_layers
         self.num_attention_heads = num_attention_heads
-        self.adaptive_loss_weighting = adaptive_loss_weighting
         self.graph_reg_scale = graph_reg_scale
 
-        # Gene embeddings
-        self.gene_embedding = nn.Embedding(gene_num, hidden_channels)
-        nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
+        # === Node Embedding Configuration ===
+        # Determine embedding strategy based on config
+        self.node_embeddings = node_embeddings
+        self.learnable_embedding_config = learnable_embedding_config
+
+        # Calculate pre-computed embedding dimension
+        precomputed_dim = 0
+        if node_embeddings is not None and len(node_embeddings) > 0:
+            # Get dimension from first node's embedding in first graph
+            first_graph = list(node_embeddings.values())[0]
+            first_node = list(first_graph.graph.nodes(data=True))[0]
+            precomputed_dim = first_node[1]["embedding"].shape[0]
+
+        # Learnable embedding configuration
+        learnable_enabled = False
+        learnable_size = hidden_channels  # Default
+
+        if learnable_embedding_config is not None:
+            learnable_enabled = learnable_embedding_config.get("enabled", False)
+            learnable_size = learnable_embedding_config.get("size", hidden_channels)
+        else:
+            # Auto-enable learnable if no pre-computed embeddings
+            if precomputed_dim == 0:
+                learnable_enabled = True
+
+        # Create learnable embedding if enabled
+        if learnable_enabled:
+            self.gene_embedding = nn.Embedding(gene_num, learnable_size)
+            nn.init.normal_(self.gene_embedding.weight, mean=0.0, std=0.02)
+        else:
+            self.gene_embedding = None
+
+        # Calculate total input dimension
+        total_input_dim = (learnable_size if learnable_enabled else 0) + precomputed_dim
+
+        # Create preprocessor if input_dim != hidden_channels
+        if total_input_dim > 0 and total_input_dim != hidden_channels:
+            preprocessor_config = learnable_embedding_config.get("preprocessor", {}) if learnable_embedding_config else {}
+            num_layers = preprocessor_config.get("num_layers", 2)
+            dropout_rate = preprocessor_config.get("dropout", dropout)
+
+            # Build MLP with LayerNorm and GELU activation
+            layers = []
+            current_dim = total_input_dim
+
+            for i in range(num_layers):
+                # Linear layer
+                next_dim = hidden_channels if i == num_layers - 1 else (total_input_dim + hidden_channels) // 2
+                layers.append(nn.Linear(current_dim, next_dim))
+
+                # LayerNorm
+                layers.append(nn.LayerNorm(next_dim))
+
+                # GELU activation (consistent with transformer)
+                if i < num_layers - 1:  # No activation after last layer
+                    layers.append(nn.GELU())
+
+                # Dropout
+                if dropout_rate > 0:
+                    layers.append(nn.Dropout(dropout_rate))
+
+                current_dim = next_dim
+
+            self.embedding_preprocessor = nn.Sequential(*layers)
+        else:
+            self.embedding_preprocessor = None
 
         # CLS token (learnable)
         self.cls_token = nn.Parameter(torch.randn(1, hidden_channels) * 0.02)
@@ -512,9 +569,7 @@ class CellGraphTransformer(nn.Module):
         # Graph regularization is enabled when graph_reg_scale > 0
         if self.graph_reg_scale > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
-            self.adjacency_matrices = self._normalize_adjacency_matrices(
-                cell_graph
-            )
+            self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
             self.regularized_head_config = graph_regularization_config.get(
                 "regularized_heads", {}
             )
@@ -532,8 +587,6 @@ class CellGraphTransformer(nn.Module):
                 GraphRegularizedTransformerLayer(
                     hidden_dim=hidden_channels,
                     num_heads=num_attention_heads,
-                    adjacency_matrices=self.adjacency_matrices,
-                    regularized_head_config=self.regularized_head_config,
                     dropout=dropout,
                 )
                 for _ in range(num_transformer_layers)
@@ -553,11 +606,6 @@ class CellGraphTransformer(nn.Module):
             hidden_dim=hidden_channels,
             dropout=pert_head_config.get("dropout", dropout),
         )
-
-        # Adaptive loss weighting (learnable)
-        if adaptive_loss_weighting:
-            self.log_mse_weight = nn.Parameter(torch.tensor(0.0))
-            self.log_reg_weight = nn.Parameter(torch.tensor(-3.0))  # Start very small
 
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
@@ -625,13 +673,10 @@ class CellGraphTransformer(nn.Module):
             head_idx = config["head"]
             lambda_k = config["lambda"]
 
-            # Get normalized adjacency
+            # Get normalized adjacency from dict
             if graph_name not in self.adjacency_matrices:
                 continue
-
-            A_tilde = self.adjacency_matrices[graph_name].to(
-                attention_weights.device
-            )  # [N, N]
+            A_tilde = self.adjacency_matrices[graph_name].to(attention_weights.device)  # [N, N]
 
             # Sample rows (for efficiency)
             if self.row_sampling_rate < 1.0:
@@ -669,15 +714,17 @@ class CellGraphTransformer(nn.Module):
             total_loss = total_loss + lambda_k * kl_loss
 
         # Apply global scale factor and normalize by number of edges
-        total_edges = sum(len(self.adjacency_matrices[g].nonzero()[0])
-                         for g in self.adjacency_matrices.keys())
+        total_edges = sum(
+            len(self.adjacency_matrices[g].nonzero()[0])
+            for g in self.adjacency_matrices.keys()
+        )
         if total_edges > 0:
             total_loss = total_loss * self.graph_reg_scale / (total_edges / self.gene_num)
 
         return total_loss
 
     def forward(
-        self, cell_graph: HeteroData, batch: HeteroData
+        self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         """
         Forward pass of Equivariant Cell Graph Transformer.
@@ -685,17 +732,48 @@ class CellGraphTransformer(nn.Module):
         Args:
             cell_graph: Full wildtype graph structure (not used directly, genes indexed by order)
             batch: Perturbation data with indices and phenotypes
+            return_attention: If True, store and return attention weights (memory intensive)
 
         Returns:
             predictions: [batch_size, 1] gene interaction predictions
-            representations: Dict with embeddings, attention weights, losses, and H_genes_pert
+            representations: Dict with embeddings, attention weights (if requested), losses, and H_genes_pert
         """
-        device = self.gene_embedding.weight.device
+        # Get device from learnable embedding or CLS token
+        device = self.gene_embedding.weight.device if self.gene_embedding is not None else self.cls_token.device
         N = self.gene_num
 
         # 1. Create gene embeddings for all genes
         gene_idx = torch.arange(N, device=device)
-        gene_embs = self.gene_embedding(gene_idx)  # [N, d]
+
+        # Get learnable embeddings if enabled
+        if self.gene_embedding is not None:
+            H_genes_learnable = self.gene_embedding(gene_idx)  # [N, learnable_size]
+        else:
+            H_genes_learnable = None
+
+        # Get pre-computed embeddings if available
+        if self.node_embeddings is not None and len(self.node_embeddings) > 0:
+            # Extract pre-computed embeddings from cell_graph node attributes
+            # They should be concatenated in cell_graph["gene"].x
+            H_genes_precomputed = cell_graph["gene"].x.to(device)  # [N, precomputed_dim]
+        else:
+            H_genes_precomputed = None
+
+        # Combine embeddings
+        if H_genes_learnable is not None and H_genes_precomputed is not None:
+            H_genes_combined = torch.cat([H_genes_learnable, H_genes_precomputed], dim=-1)
+        elif H_genes_learnable is not None:
+            H_genes_combined = H_genes_learnable
+        elif H_genes_precomputed is not None:
+            H_genes_combined = H_genes_precomputed
+        else:
+            raise ValueError("No gene embeddings available (neither learnable nor pre-computed)")
+
+        # Apply preprocessor if needed
+        if self.embedding_preprocessor is not None:
+            gene_embs = self.embedding_preprocessor(H_genes_combined)  # [N, hidden_channels]
+        else:
+            gene_embs = H_genes_combined  # [N, hidden_channels]
 
         # 2. Prepend CLS token
         cls_token = self.cls_token  # [1, d]
@@ -703,19 +781,43 @@ class CellGraphTransformer(nn.Module):
 
         # 3. Transformer encoder
         H = X
-        all_attention_weights = []
+        all_attention_weights = [] if return_attention else None
+        residual_update_ratios = [] if return_attention else None
         total_graph_reg_loss = torch.tensor(0.0, device=device)
 
         for layer_idx, layer in enumerate(self.transformer_layers):
-            H, attention_weights = layer(H, return_attention=True)
+            # Store input for residual ratio computation
+            H_prev = H
+
+            # CRITICAL FIX: Only compute attention when actually needed
+            # - During training: need for graph_reg_loss (if graph_reg_scale > 0)
+            # - During validation with return_attention=True: need for diagnostics
+            need_attention_for_graph_reg = (self.graph_reg_scale > 0.0)
+            should_return_attention = need_attention_for_graph_reg or return_attention
+
+            H, attention_weights = layer(H, return_attention=should_return_attention)
 
             if attention_weights is not None:
-                # Compute graph regularization loss
+                # Always compute graph regularization loss (needed for training)
                 graph_loss = self.compute_graph_regularization_loss(
                     attention_weights, layer_idx
                 )
                 total_graph_reg_loss = total_graph_reg_loss + graph_loss
-                all_attention_weights.append(attention_weights)
+
+                # Only store attention weights if requested for diagnostics (memory intensive)
+                if return_attention:
+                    all_attention_weights.append(attention_weights)
+                else:
+                    # CRITICAL: Delete if not storing to prevent memory accumulation
+                    del attention_weights
+
+            # Compute residual update ratio: ||H - H_prev|| / ||H_prev||
+            if return_attention:
+                with torch.no_grad():
+                    residual_norm = torch.norm(H - H_prev, p=2).item()
+                    input_norm = torch.norm(H_prev, p=2).item()
+                    ratio = residual_norm / (input_norm + 1e-8)
+                    residual_update_ratios.append(ratio)
 
         # 4. Extract CLS and gene embeddings
         H_squeezed = H.squeeze(0)  # [N+1, d]
@@ -741,7 +843,9 @@ class CellGraphTransformer(nn.Module):
             "h_CLS": h_CLS,
             "H_genes": H_genes,
             "H_genes_pert": H_genes_pert,  # Equivariant perturbed gene embeddings
+            "z_p": H_genes_pert,  # Backward compatibility alias
             "attention_weights": all_attention_weights,
+            "residual_update_ratios": residual_update_ratios,
             "graph_reg_loss": total_graph_reg_loss,
         }
 
@@ -855,7 +959,6 @@ def main(cfg: DictConfig) -> None:
         graph_regularization_config=cfg.model.graph_regularization,
         perturbation_head_config=cfg.model.perturbation_head,
         dropout=cfg.model.dropout,
-        adaptive_loss_weighting=cfg.model.get("adaptive_loss_weighting", False),
         graph_reg_scale=cfg.model.get("graph_reg_scale", 0.001),
     ).to(device)
 
@@ -878,7 +981,7 @@ def main(cfg: DictConfig) -> None:
 
         print(f"\nWildtype gene embeddings: {H_genes.shape}")
         print(f"Perturbed gene embeddings: {H_genes_pert.shape}")
-        print(f"✓ Equivariance preserved: per-gene structure maintained!")
+        print(f"Equivariance preserved: per-gene structure maintained")
 
         # Check that perturbations actually change the embeddings
         batch_size = H_genes_pert.shape[0]
@@ -1320,18 +1423,7 @@ def main(cfg: DictConfig) -> None:
         # Compute losses
         pred_loss = criterion(predictions.squeeze(), y)
         graph_reg_loss = representations["graph_reg_loss"]
-
-        # Apply adaptive weighting if enabled
-        if model.adaptive_loss_weighting:
-            mse_weight = model.log_mse_weight.exp()
-            reg_weight = model.log_reg_weight.exp()
-            # Normalize weights
-            weight_sum = mse_weight + reg_weight
-            mse_weight = 2 * mse_weight / weight_sum
-            reg_weight = 2 * reg_weight / weight_sum
-            total_loss = mse_weight * pred_loss + reg_weight * graph_reg_loss
-        else:
-            total_loss = pred_loss + graph_reg_loss
+        total_loss = pred_loss + graph_reg_loss
 
         # Compute metrics before backward pass
         with torch.no_grad():

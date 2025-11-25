@@ -3,7 +3,7 @@
 #SBATCH --mem=500g
 #SBATCH -N 1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=14
+#SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
 #SBATCH --job-name=006-HCGT-002
 #SBATCH --time=300-00:00:00
@@ -27,17 +27,17 @@ conda activate torchcell
 export PYTHONPATH="/home/michaelvolk/Documents/projects/torchcell:$PYTHONPATH"
 
 # CUDA optimizations
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:False
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export CUDA_LAUNCH_BLOCKING=0
 export TORCH_USE_CUDA_DSA=0
 export PYTHONUNBUFFERED=1
-
+export PYTHONWARNINGS="ignore"  # Suppress all warnings including SWIG DeprecationWarnings
 # Calculate num_workers from SLURM CPU allocation (reserve 2 for overhead)
 export NUM_WORKERS=$((SLURM_CPUS_PER_TASK - 2))
 
 # Run training directly (no container)
 torchrun --standalone --nnodes=1 --nproc_per_node=4 \
   /home/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py \
-  --config-name equivariant_cell_graph_transformer_gh_001 \
+  --config-name equivariant_cell_graph_transformer_gh_002 \
   data_module.num_workers=$NUM_WORKERS
 

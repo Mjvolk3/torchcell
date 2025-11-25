@@ -36,8 +36,8 @@ profiler:
   is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling
 
 data_module:
-  is_perturbation_subset: false
-  perturbation_subset_size: 1000  # 2.5e4
+  is_perturbation_subset: true
+  perturbation_subset_size: 10000  # 2.5e4
   batch_size: 256  # Reduced for equivariant propagation layers (256 → 16)
   num_workers: 16  # 2 > 8...
   pin_memory: true
@@ -47,10 +47,10 @@ data_module:
 
 trainer:
   max_epochs: 500  # Match DANGO training duration
-  strategy: ddp  # ddp_find_unused_parameters_true # auto # ddp
+  strategy: auto  # ddp_find_unused_parameters_true # auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 4
+  devices: 1
   overfit_batches: 0
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
@@ -63,15 +63,23 @@ model:
   gene_num: 6607
   hidden_channels: 64  # d in weekly report
   num_transformer_layers: 6  # L layers
-  num_attention_heads: 8  # H heads per layer (must divide hidden_channels evenly)
+  num_attention_heads: 9  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
   # Loss balancing
-  adaptive_loss_weighting: false  # Set to true to use learnable weights
   graph_reg_scale: 0.001  # Global scale factor for graph regularization
+
+  # Learnable embedding configuration
+  learnable_embedding:
+    enabled: true  # Auto-enabled when node_embeddings is empty
+    size: ${model.hidden_channels}  # Default to match hidden_channels
+    preprocessor:  # Only used if total_input_dim != hidden_channels
+      num_layers: 2
+      dropout: 0.1
 
   # Graph regularization configuration
   graph_regularization:
+    enabled: true
     row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
 
     # Map graph names to (layer, head, lambda) for regularization
@@ -128,4 +136,6 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
   plot_sample_ceiling: 10000
-  plot_every_n_epochs: 2
+plot_every_n_epochs: 1 # Sample plotting (predictions vs truth)
+plot_transformer_diagnostics_every_n_epochs: 1
+plot_edge_recovery_every_n_epochs: 1

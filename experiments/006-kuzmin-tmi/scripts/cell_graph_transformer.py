@@ -148,7 +148,6 @@ def main(cfg: DictConfig) -> None:
 
     # Log num_workers configuration for resource tracking
     num_workers = wandb.config.data_module["num_workers"]
-    print(f"Using num_workers: {num_workers}")
     wandb.log({"config/num_workers": num_workers})
 
     if torch.cuda.is_available() and dist.is_initialized():
@@ -373,33 +372,23 @@ def main(cfg: DictConfig) -> None:
                 buffer=buffer,
                 ddp=ddp,
             )
-            print(f"Using PointDistGraphReg loss:")
-            print(f"  Point: {point_estimator.get('type') if point_estimator else 'N/A'}")
-            print(f"  Dist: {distribution_loss.get('type') if distribution_loss else 'disabled'}")
-            print(f"  Graph reg λ: {graph_regularization.get('lambda') if graph_regularization else 'disabled'}")
         elif loss_type == "logcosh":
             loss_func = LogCoshLoss(reduction="mean")
-            print("Using LogCosh loss")
         elif loss_type == "mse":
             loss_func = nn.MSELoss()
-            print("Using MSE loss")
         else:
             raise ValueError(f"Unknown loss type: {loss_type}")
     else:
         # Legacy string-based config (backward compatibility)
         if loss_config == "logcosh":
             loss_func = LogCoshLoss(reduction="mean")
-            print("Using LogCosh loss")
         elif loss_config == "mse":
             loss_func = nn.MSELoss()
-            print("Using MSE loss")
         else:
             raise ValueError(f"Unknown loss type: {loss_config}")
 
-    print(f"Creating RegressionTask ({timestamp()})")
     checkpoint_path = wandb.config["model"].get("checkpoint_path")
     execution_mode = wandb.config["regression_task"].get("execution_mode", "training")
-    print(f"Execution mode: {execution_mode}")
 
     if checkpoint_path and os.path.exists(checkpoint_path):
         task = RegressionTask.load_from_checkpoint(

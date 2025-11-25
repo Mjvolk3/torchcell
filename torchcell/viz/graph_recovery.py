@@ -162,15 +162,30 @@ class GraphRecoveryVisualization:
         table_data = []
         for name in graph_names:
             info = graph_info[name]
+
+            # Handle reg_layer: can be int, list[int], or missing
+            if "reg_layer" in info:
+                reg_layer_val = info.get("reg_layer")
+                if isinstance(reg_layer_val, list):
+                    reg_layer_str = str(reg_layer_val)
+                else:
+                    reg_layer_str = str(int(reg_layer_val))
+            else:
+                reg_layer_str = "N/A"
+
+            # Handle reg_head: can be int or missing
+            if "reg_head" in info:
+                reg_head_str = str(int(info.get("reg_head")))
+            else:
+                reg_head_str = "N/A"
+
             row = [
                 name,
                 f"{int(info.get('num_nodes', 0)):,}",
                 f"{int(info.get('num_edges', 0)):,}",
                 f"{info.get('avg_degree', 0):.2f}",
-                str(int(info.get("reg_layer", -1)))
-                if "reg_layer" in info
-                else "N/A",
-                str(int(info.get("reg_head", -1))) if "reg_head" in info else "N/A",
+                reg_layer_str,
+                reg_head_str,
             ]
             table_data.append(row)
 
@@ -378,18 +393,33 @@ class GraphRecoveryVisualization:
         # Sort graph names alphabetically
         graph_names = sorted(parsed_metrics.keys())
 
+        # Collect all unique layer indices and create sequential mapping
+        all_layer_indices = set()
+        for entries in parsed_metrics.values():
+            for _, layer_idx in entries:
+                all_layer_indices.add(layer_idx)
+        sorted_layers = sorted(all_layer_indices)
+        layer_to_style_idx = {
+            layer: idx for idx, layer in enumerate(sorted_layers)
+        }
+
         # Create figure
         fig, ax = plt.subplots(figsize=(12, 8))
 
-        # Line styles for different layers
+        # Line styles for different layers (sequential mapping)
         line_styles = ['-', '--', '-.', ':']  # solid, dashed, dash-dot, dotted
 
         # Assign one color per graph name
-        colors = {name: self.colors[i % len(self.colors)] for i, name in enumerate(graph_names)}
+        colors = {
+            name: self.colors[i % len(self.colors)]
+            for i, name in enumerate(graph_names)
+        }
 
         # Plot lines grouped by graph name
+        data_lines = []  # For graph legend
         for graph_name in graph_names:
-            metric_entries = sorted(parsed_metrics[graph_name], key=lambda x: x[1])  # Sort by layer
+            entries = parsed_metrics[graph_name]
+            metric_entries = sorted(entries, key=lambda x: x[1])  # Sort by layer
             color = colors[graph_name]
 
             for metric_key, layer_idx in metric_entries:
@@ -397,27 +427,70 @@ class GraphRecoveryVisualization:
                 # Get precision values for this metric at each k
                 prec_values = [prec_dict.get(k, 0.0) for k in k_values]
 
-                # Select line style based on layer index
-                linestyle = line_styles[layer_idx % len(line_styles)]
+                # Map actual layer index to sequential style index
+                style_idx = layer_to_style_idx[layer_idx]
+                linestyle = line_styles[style_idx % len(line_styles)]
 
-                # Create label with graph name and layer
-                if len(metric_entries) > 1:
-                    label = f"{graph_name} (L{layer_idx})"
-                else:
-                    label = graph_name
-
-                # Plot line with markers
-                ax.plot(
+                # Plot line with markers (no label yet)
+                line = ax.plot(
                     k_values,
                     prec_values,
                     marker="o",
                     markersize=8,
                     linewidth=2,
                     linestyle=linestyle,
-                    label=label,
                     color=color,
                     alpha=0.8,
-                )
+                )[0]
+
+                # Store first line per graph for legend
+                if not any(dl[1] == graph_name for dl in data_lines):
+                    data_lines.append((line, graph_name))
+
+        # Create two separate legends
+        # Legend 1: Graph names (colors)
+        graph_legend_handles = [line for line, _ in data_lines]
+        graph_legend_labels = [name for _, name in data_lines]
+        legend1 = ax.legend(
+            graph_legend_handles,
+            graph_legend_labels,
+            loc="upper left",
+            fontsize=9,
+            framealpha=0.9,
+            title="Graph Type",
+            title_fontsize=10
+        )
+
+        # Legend 2: Layer indices (line styles)
+        from matplotlib.lines import Line2D
+        layer_legend_handles = []
+        layer_legend_labels = []
+        for layer_idx in sorted_layers:
+            style_idx = layer_to_style_idx[layer_idx]
+            linestyle = line_styles[style_idx % len(line_styles)]
+            handle = Line2D(
+                [0], [0],
+                color='gray',
+                linewidth=2,
+                linestyle=linestyle,
+                marker='o',
+                markersize=6
+            )
+            layer_legend_handles.append(handle)
+            layer_legend_labels.append(f"Layer {layer_idx}")
+
+        ax.legend(
+            layer_legend_handles,
+            layer_legend_labels,
+            loc="upper right",
+            fontsize=9,
+            framealpha=0.9,
+            title="Reg Layer",
+            title_fontsize=10
+        )
+
+        # Add first legend back to the plot (second legend is added automatically)
+        ax.add_artist(legend1)
 
         # Formatting
         ax.set_xlabel("k (Top-k Attention)", fontsize=12)
@@ -432,7 +505,6 @@ class GraphRecoveryVisualization:
         ax.set_xticklabels([str(k) for k in k_values])
         ax.set_ylim(0, 1.0)
         ax.grid(True, alpha=0.3, which="both")
-        ax.legend(loc="best", fontsize=9, framealpha=0.9)
 
         plt.tight_layout()
 

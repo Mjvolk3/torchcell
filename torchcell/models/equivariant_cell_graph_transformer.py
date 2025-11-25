@@ -667,7 +667,10 @@ class CellGraphTransformer(nn.Module):
         batch_size, num_heads, N, _ = attention_weights.shape
 
         for graph_name, config in self.regularized_head_config.items():
-            if config["layer"] != layer_idx:
+            # Handle both single int and list of ints for layer
+            layer_spec = config["layer"]
+            layer_list = [layer_spec] if isinstance(layer_spec, int) else layer_spec
+            if layer_idx not in layer_list:
                 continue
 
             head_idx = config["head"]

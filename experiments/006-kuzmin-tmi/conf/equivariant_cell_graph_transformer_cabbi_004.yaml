@@ -81,7 +81,7 @@ model:
   graph_regularization:
     # Global regularization hyperparameters for easy sweeping
     graph_reg_lambda: 0.001
-    graph_reg_layer: [1, 3] # python indexed
+    graph_reg_layer: 2 # python indexed
 
     row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 

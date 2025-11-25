@@ -671,15 +671,23 @@ class RegressionTask(L.LightningModule):
                         graph_name,
                         config,
                     ) in self.model.regularized_head_config.items():
-                        layer_idx = config["layer"]
+                        layer_spec = config["layer"]
                         head_idx = config["head"]
-                        if layer_idx < len(attention_weights_list):
-                            self._accumulate_degree_bias(
-                                attention_weights_list[layer_idx],
-                                graph_name,
-                                layer_idx,
-                                head_idx,
-                            )
+
+                        # Handle both single int and list of ints for layer
+                        layer_indices = (
+                            layer_spec if isinstance(layer_spec, list) else [layer_spec]
+                        )
+
+                        # Process each layer
+                        for layer_idx in layer_indices:
+                            if layer_idx < len(attention_weights_list):
+                                self._accumulate_degree_bias(
+                                    attention_weights_list[layer_idx],
+                                    graph_name,
+                                    layer_idx,
+                                    head_idx,
+                                )
 
             elif batch_idx == 0:  # Print once per validation epoch
                 print(

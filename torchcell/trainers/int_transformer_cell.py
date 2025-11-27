@@ -198,20 +198,22 @@ class RegressionTask(L.LightningModule):
         if not hasattr(self.model, "regularized_head_config") or not hasattr(
             self.model, "adjacency_matrices"
         ):
-            if batch_idx == 0:  # Print once per epoch
-                print(
-                    "Edge recovery: Model missing regularized_head_config or adjacency_matrices attributes"
-                )
+            # Removed debug print - not a warning, just informational
+            # if batch_idx == 0:  # Print once per epoch
+            #     print(
+            #         "Edge recovery: Model missing regularized_head_config or adjacency_matrices attributes"
+            #     )
             return
 
         if (
             self.model.regularized_head_config is None
             or self.model.adjacency_matrices is None
         ):
-            if batch_idx == 0:  # Print once per epoch
-                print(
-                    "Edge recovery: Model has None for regularized_head_config or adjacency_matrices"
-                )
+            # Removed debug print - not a warning, just informational
+            # if batch_idx == 0:  # Print once per epoch
+            #     print(
+            #         "Edge recovery: Model has None for regularized_head_config or adjacency_matrices"
+            #     )
             return
 
         # For each regularized graph, expand multi-layer configs
@@ -616,11 +618,12 @@ class RegressionTask(L.LightningModule):
             return_attention = is_diagnostic_epoch
 
             # Debug: Log attention storage decision (only on rank 0, once per epoch)
-            if batch_idx == 0 and self.trainer.global_rank == 0:
-                if return_attention:
-                    print(f"Epoch {self.current_epoch}: Storing attention for diagnostics")
-                else:
-                    print(f"Epoch {self.current_epoch}: Skipping attention storage")
+            # Commented out to reduce output clutter - these are debug messages, not warnings
+            # if batch_idx == 0 and self.trainer.global_rank == 0:
+            #     if return_attention:
+            #         print(f"Epoch {self.current_epoch}: Storing attention for diagnostics")
+            #     else:
+            #         print(f"Epoch {self.current_epoch}: Skipping attention storage")
         else:
             return_attention = False  # Never during training (graph reg doesn't need storage)
 
@@ -689,10 +692,11 @@ class RegressionTask(L.LightningModule):
                                     head_idx,
                                 )
 
-            elif batch_idx == 0:  # Print once per validation epoch
-                print(
-                    "Edge recovery: Model not returning 'attention_weights' in representations"
-                )
+            # Removed debug print - not a warning, just informational
+            # elif batch_idx == 0:  # Print once per validation epoch
+            #     print(
+            #         "Edge recovery: Model not returning 'attention_weights' in representations"
+            #     )
 
         # Ensure predictions has correct shape (batch_size, 1)
         if predictions.dim() == 0:

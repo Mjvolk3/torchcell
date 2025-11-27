@@ -38,8 +38,8 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 10000  # 2.5e4
-  batch_size: 32 #256  # Limited by transformer memory requirements
-  num_workers: 4  # 2 > 8...
+  batch_size: 256  # Limited by transformer memory requirements
+  num_workers: 16  # 2 > 8...
   pin_memory: true
   prefetch: false
   prefetch_factor: 4
@@ -47,10 +47,10 @@ data_module:
 
 trainer:
   max_epochs: 1000  # Match DANGO training duration
-  strategy: auto #ddp  # ddp_find_unused_parameters_true # auto # ddp
+  strategy: ddp  # ddp_find_unused_parameters_true # auto # ddp
   num_nodes: 1
   accelerator: gpu
-  devices: 1
+  devices: 4
   overfit_batches: 0
   precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
 
@@ -61,11 +61,10 @@ compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 model:
   checkpoint_path: null  # *.ckpt
   gene_num: 6607
-  hidden_channels: 90 #90 #96  # d in weekly report
-  num_transformer_layers: 2 #8  # L layers
+  hidden_channels: 180 #90 #96  # d in weekly report
+  num_transformer_layers: 8 #8  # L layers
   num_attention_heads: 9  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
-
 
   # Learnable embedding configuration
   learnable_embedding:
@@ -212,8 +211,7 @@ regression_task:
   clip_grad_norm_max_norm: 10.0
   grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
   plot_sample_ceiling: 10000
-
   # Plot frequency parameters (inside regression_task)
   plot_every_n_epochs: 1  # Sample plotting (predictions vs truth)
-  plot_transformer_diagnostics_every_n_epochs: 1
-  plot_edge_recovery_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 10
+  plot_edge_recovery_every_n_epochs: 10

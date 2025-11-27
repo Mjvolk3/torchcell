@@ -484,7 +484,7 @@ class CellGraphTransformer(nn.Module):
         graph_regularization_config: Optional[Dict] = None,
         perturbation_head_config: Optional[Dict] = None,
         dropout: float = 0.1,
-        graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
+        graph_reg_lambda: float = 0.0,  # Loss lambda for graph regularization
         node_embeddings: Optional[Dict] = None,  # Pre-computed embeddings
         learnable_embedding_config: Optional[Dict] = None,  # Learnable config
     ):
@@ -493,7 +493,7 @@ class CellGraphTransformer(nn.Module):
         self.hidden_channels = hidden_channels
         self.num_transformer_layers = num_transformer_layers
         self.num_attention_heads = num_attention_heads
-        self.graph_reg_scale = graph_reg_scale
+        self.graph_reg_lambda = graph_reg_lambda
 
         # === Node Embedding Configuration ===
         # Determine embedding strategy based on config
@@ -566,8 +566,8 @@ class CellGraphTransformer(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, hidden_channels) * 0.02)
 
         # Process graph regularization config
-        # Graph regularization is enabled when graph_reg_scale > 0
-        if self.graph_reg_scale > 0.0 and graph_regularization_config is not None:
+        # Graph regularization is enabled when graph_reg_lambda > 0
+        if self.graph_reg_lambda > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
             self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
             self.regularized_head_config = graph_regularization_config.get(
@@ -659,8 +659,8 @@ class CellGraphTransformer(nn.Module):
         Returns:
             Total regularization loss for this layer
         """
-        # Early return if graph regularization is disabled (scale is 0)
-        if self.graph_reg_scale == 0.0:
+        # Early return if graph regularization is disabled (lambda is 0)
+        if self.graph_reg_lambda == 0.0:
             return torch.tensor(0.0, device=attention_weights.device)
 
         total_loss = torch.tensor(0.0, device=attention_weights.device)
@@ -722,7 +722,7 @@ class CellGraphTransformer(nn.Module):
             for g in self.adjacency_matrices.keys()
         )
         if total_edges > 0:
-            total_loss = total_loss * self.graph_reg_scale / (total_edges / self.gene_num)
+            total_loss = total_loss * self.graph_reg_lambda / (total_edges / self.gene_num)
 
         return total_loss
 
@@ -793,9 +793,9 @@ class CellGraphTransformer(nn.Module):
             H_prev = H
 
             # CRITICAL FIX: Only compute attention when actually needed
-            # - During training: need for graph_reg_loss (if graph_reg_scale > 0)
+            # - During training: need for graph_reg_loss (if graph_reg_lambda > 0)
             # - During validation with return_attention=True: need for diagnostics
-            need_attention_for_graph_reg = (self.graph_reg_scale > 0.0)
+            need_attention_for_graph_reg = (self.graph_reg_lambda > 0.0)
             should_return_attention = need_attention_for_graph_reg or return_attention
 
             H, attention_weights = layer(H, return_attention=should_return_attention)

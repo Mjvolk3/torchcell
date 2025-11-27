@@ -12,7 +12,7 @@ import json
 import logging
 import os
 import os.path as osp
-import uuid
+import uuido
 import hydra
 import torch.nn as nn
 import lightning as L
@@ -360,6 +360,17 @@ def main(cfg: DictConfig) -> None:
 
     print(f"Instantiating Equivariant CellGraphTransformer ({timestamp()})")
 
+    # Get graph regularization lambda from loss config to pass to model
+    # This allows model to skip computation when lambda=0
+    loss_config = wandb.config.regression_task.get("loss", {})
+    graph_reg_lambda = 0.0
+    if isinstance(loss_config, dict):
+        graph_reg_config = loss_config.get("graph_regularization", {})
+        if isinstance(graph_reg_config, dict):
+            lambda_val = graph_reg_config.get("lambda", 0.0)
+            # Handle null, 0, or 0.0 - all should disable graph regularization
+            graph_reg_lambda = 0.0 if lambda_val is None else float(lambda_val)
+
     # Instantiate CellGraphTransformer model
     model = CellGraphTransformer(
         gene_num=wandb.config["model"]["gene_num"],
@@ -370,7 +381,7 @@ def main(cfg: DictConfig) -> None:
         graph_regularization_config=wandb.config["model"]["graph_regularization"],
         perturbation_head_config=wandb.config["model"]["perturbation_head"],
         dropout=wandb.config["model"]["dropout"],
-        graph_reg_scale=wandb.config["model"].get("graph_reg_scale", 0.001),
+        graph_reg_lambda=graph_reg_lambda,  # Pass loss lambda for computation control
         node_embeddings=node_embeddings,
         learnable_embedding_config=wandb.config["model"].get("learnable_embedding"),
     ).to(device)
@@ -453,12 +464,8 @@ def main(cfg: DictConfig) -> None:
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
             plot_sample_ceiling=wandb.config["regression_task"]["plot_sample_ceiling"],
-            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"].get(
-                "plot_edge_recovery_every_n_epochs", 10
-            ),
-            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"].get(
-                "plot_transformer_diagnostics_every_n_epochs", 10
-            ),
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"]["plot_edge_recovery_every_n_epochs"],
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"]["plot_transformer_diagnostics_every_n_epochs"],
             grad_accumulation_schedule=wandb.config["regression_task"][
                 "grad_accumulation_schedule"
             ],
@@ -484,12 +491,8 @@ def main(cfg: DictConfig) -> None:
             device=device,
             inverse_transform=inverse_transform,
             plot_every_n_epochs=wandb.config["regression_task"]["plot_every_n_epochs"],
-            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"].get(
-                "plot_edge_recovery_every_n_epochs", 10
-            ),
-            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"].get(
-                "plot_transformer_diagnostics_every_n_epochs", 10
-            ),
+            plot_edge_recovery_every_n_epochs=wandb.config["regression_task"]["plot_edge_recovery_every_n_epochs"],
+            plot_transformer_diagnostics_every_n_epochs=wandb.config["regression_task"]["plot_transformer_diagnostics_every_n_epochs"],
             execution_mode=execution_mode,
         )
 

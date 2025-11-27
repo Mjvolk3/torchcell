@@ -5,7 +5,7 @@ defaults:
 
 wandb:
   project: torchcell_006-kuzmin-tmi_equivariant_cell_graph_transformer
-  tags: [no_graph_regularization]
+  tags: [interleaved_graph_regularization]
 
 cell_dataset:
   graphs: [
@@ -78,7 +78,7 @@ model:
   graph_regularization:
     # Global regularization hyperparameters for easy sweeping
     graph_reg_lambda: 0.001
-    graph_reg_layer: 1 # python indexed
+    graph_reg_layer: [0, 2, 4, 6] # python indexed
 
     row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
@@ -156,7 +156,7 @@ regression_task:
 
     # Graph regularization configuration (from model)
     graph_regularization:
-      lambda: 0.0
+      lambda: 1.0
 
     # Supervised contrastive loss configuration (disabled for now)
     supervised_contrastive:

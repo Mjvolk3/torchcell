@@ -126,7 +126,6 @@ model:
 
   # Perturbation head configuration
   perturbation_head:
-    use_cross_attention: true
     num_heads: 9  # Must divide hidden_channels (180/9=20)
     dropout: 0.1
 

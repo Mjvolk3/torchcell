@@ -12,7 +12,7 @@ import json
 import logging
 import os
 import os.path as osp
-import uuido
+import uuid
 import hydra
 import torch.nn as nn
 import lightning as L

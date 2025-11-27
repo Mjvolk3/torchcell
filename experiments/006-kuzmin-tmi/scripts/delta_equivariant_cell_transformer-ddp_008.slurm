@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --partition=gpuA40x4
 #SBATCH --account=bbtp-delta-gpu
-#SBATCH --job-name=006-006-ECGT
+#SBATCH --job-name=008-006-ECGT
 #SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --gres=gpu:4              # Total GPU allocation using gres instead

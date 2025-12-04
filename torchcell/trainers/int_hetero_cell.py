@@ -17,6 +17,7 @@ from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.diffusion_loss import DiffusionLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
 from torchcell.losses.mle_wasserstein import MleWassSupCR
+from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 
 log = logging.getLogger(__name__)
 
@@ -82,8 +83,35 @@ class RegressionTask(L.LightningModule):
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
         self.automatic_optimization = False
 
+    def _get_batch_size(self, batch):
+        """Get batch size from batch, handling different batch structures."""
+        if hasattr(batch["gene"], "x"):
+            return batch["gene"].x.size(0)
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            # For Perturbation processor, count unique batch indices
+            if hasattr(batch["gene"], "perturbation_indices_batch"):
+                return batch["gene"].perturbation_indices_batch.max().item() + 1
+            else:
+                # Fallback: assume batch size from perturbation_indices
+                return batch["gene"].perturbation_indices.size(0)
+        elif hasattr(batch["gene"], "phenotype_values"):
+            return batch["gene"].phenotype_values.size(0)
+        else:
+            # Last resort fallback
+            return 1
+
     def forward(self, batch):
-        batch_device = batch["gene"].x.device
+        # Get device from batch - handle different batch structures
+        if hasattr(batch["gene"], "x"):
+            batch_device = batch["gene"].x.device
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            batch_device = batch["gene"].perturbation_indices.device
+        elif hasattr(batch["gene"], "phenotype_values"):
+            batch_device = batch["gene"].phenotype_values.device
+        else:
+            # Fallback to model device
+            batch_device = next(self.model.parameters()).device
+
         if (
             not hasattr(self, "_cell_graph_device")
             or self._cell_graph_device != batch_device
@@ -106,7 +134,16 @@ class RegressionTask(L.LightningModule):
         # DataLoader profiling mode: Skip model forward, create dummy loss
         if self.execution_mode == "dataloader_profiling":
             # Execute all batch preparation (moving to device happens in forward())
-            batch_device = batch["gene"].x.device
+            # Get device from batch - handle different batch structures
+            if hasattr(batch["gene"], "x"):
+                batch_device = batch["gene"].x.device
+            elif hasattr(batch["gene"], "perturbation_indices"):
+                batch_device = batch["gene"].perturbation_indices.device
+            elif hasattr(batch["gene"], "phenotype_values"):
+                batch_device = batch["gene"].phenotype_values.device
+            else:
+                batch_device = next(self.model.parameters()).device
+
             # Ensure cell_graph is on correct device
             if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
                 self.cell_graph = self.cell_graph.to(batch_device)
@@ -120,7 +157,7 @@ class RegressionTask(L.LightningModule):
                     loss = loss + (param * 0.0).sum()
 
             # Log minimal metrics
-            batch_size = batch["gene"].x.size(0)
+            batch_size = self._get_batch_size(batch)
             self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
             self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
 
@@ -170,6 +207,35 @@ class RegressionTask(L.LightningModule):
         if isinstance(self.loss_func, LogCoshLoss):
             # For LogCoshLoss, just pass predictions and targets
             loss = self.loss_func(predictions, gene_interaction_vals)
+        elif isinstance(self.loss_func, PointDistGraphReg):
+            # For PointDistGraphReg, pass predictions, targets, and representations
+            # Returns (total_loss, loss_dict) with all components
+            total_loss, loss_dict = self.loss_func(
+                predictions,
+                gene_interaction_vals,
+                representations,
+                epoch=self.current_epoch,
+            )
+            loss = total_loss
+
+            # Log all loss components
+            if isinstance(loss_dict, dict):
+                for key, value in loss_dict.items():
+                    if isinstance(value, torch.Tensor):
+                        if value.numel() == 1:
+                            self.log(
+                                f"{stage}/{key}",
+                                value.item(),
+                                batch_size=batch_size,
+                                sync_dist=True,
+                            )
+                    elif isinstance(value, (int, float)):
+                        self.log(
+                            f"{stage}/{key}",
+                            value,
+                            batch_size=batch_size,
+                            sync_dist=True,
+                        )
         else:
             # For ICLoss or other custom losses that might use z_p
             # Check if loss function accepts epoch parameter (for MleDistSupCR and MleWassSupCR)
@@ -226,6 +292,20 @@ class RegressionTask(L.LightningModule):
                             )
             else:
                 loss = loss_output
+
+        # Add graph regularization loss if present (for transformer models)
+        # IMPORTANT: Skip if using PointDistGraphReg, as it already includes graph_reg in total
+        if "graph_reg_loss" in representations and not isinstance(
+            self.loss_func, PointDistGraphReg
+        ):
+            graph_reg_loss = representations["graph_reg_loss"]
+            loss = loss + graph_reg_loss
+            self.log(
+                f"{stage}/graph_reg_loss",
+                graph_reg_loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
 
         # Add dummy loss for unused parameters
         dummy_loss = self._ensure_no_unused_params_loss()
@@ -394,6 +474,9 @@ class RegressionTask(L.LightningModule):
         if self.execution_mode == "model_profiling":
             return loss
 
+        # Get batch size using helper method
+        batch_size = self._get_batch_size(batch)
+
         # Normal training: Run optimizer
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -412,7 +495,7 @@ class RegressionTask(L.LightningModule):
         self.log(
             "learning_rate",
             self.optimizers().param_groups[0]["lr"],
-            batch_size=batch["gene"].x.size(0),
+            batch_size=batch_size,
             sync_dist=True,
         )
         # Log effective batch size when using gradient accumulation
@@ -429,12 +512,12 @@ class RegressionTask(L.LightningModule):
                         world_size = dist.get_world_size()
 
             effective_batch_size = (
-                batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+                batch_size * self.current_accumulation_steps * world_size
             )
             self.log(
                 "effective_batch_size",
                 effective_batch_size,
-                batch_size=batch["gene"].x.size(0),
+                batch_size=batch_size,
                 sync_dist=True,
             )
         # print(f"Loss: {loss}")
@@ -796,8 +879,35 @@ class DiffusionRegressionTask(L.LightningModule):
         # Manual optimization for gradient accumulation
         self.automatic_optimization = False
 
+    def _get_batch_size(self, batch):
+        """Get batch size from batch, handling different batch structures."""
+        if hasattr(batch["gene"], "x"):
+            return batch["gene"].x.size(0)
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            # For Perturbation processor, count unique batch indices
+            if hasattr(batch["gene"], "perturbation_indices_batch"):
+                return batch["gene"].perturbation_indices_batch.max().item() + 1
+            else:
+                # Fallback: assume batch size from perturbation_indices
+                return batch["gene"].perturbation_indices.size(0)
+        elif hasattr(batch["gene"], "phenotype_values"):
+            return batch["gene"].phenotype_values.size(0)
+        else:
+            # Last resort fallback
+            return 1
+
     def forward(self, batch):
-        batch_device = batch["gene"].x.device
+        # Get device from batch - handle different batch structures
+        if hasattr(batch["gene"], "x"):
+            batch_device = batch["gene"].x.device
+        elif hasattr(batch["gene"], "perturbation_indices"):
+            batch_device = batch["gene"].perturbation_indices.device
+        elif hasattr(batch["gene"], "phenotype_values"):
+            batch_device = batch["gene"].phenotype_values.device
+        else:
+            # Fallback to model device
+            batch_device = next(self.model.parameters()).device
+
         if (
             not hasattr(self, "_cell_graph_device")
             or self._cell_graph_device != batch_device
@@ -820,7 +930,16 @@ class DiffusionRegressionTask(L.LightningModule):
         # DataLoader profiling mode: Skip model forward, create dummy loss
         if self.execution_mode == "dataloader_profiling":
             # Execute all batch preparation (moving to device happens in forward())
-            batch_device = batch["gene"].x.device
+            # Get device from batch - handle different batch structures
+            if hasattr(batch["gene"], "x"):
+                batch_device = batch["gene"].x.device
+            elif hasattr(batch["gene"], "perturbation_indices"):
+                batch_device = batch["gene"].perturbation_indices.device
+            elif hasattr(batch["gene"], "phenotype_values"):
+                batch_device = batch["gene"].phenotype_values.device
+            else:
+                batch_device = next(self.model.parameters()).device
+
             # Ensure cell_graph is on correct device
             if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
                 self.cell_graph = self.cell_graph.to(batch_device)
@@ -834,7 +953,7 @@ class DiffusionRegressionTask(L.LightningModule):
                     loss = loss + (param * 0.0).sum()
 
             # Log minimal metrics
-            batch_size = batch["gene"].x.size(0)
+            batch_size = self._get_batch_size(batch)
             self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
             self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
 
@@ -1085,6 +1204,9 @@ class DiffusionRegressionTask(L.LightningModule):
         if self.execution_mode == "model_profiling":
             return loss
 
+        # Get batch size using helper method
+        batch_size = self._get_batch_size(batch)
+
         # Normal training: Run optimizer
         if self.hparams.grad_accumulation_schedule is not None:
             loss = loss / self.current_accumulation_steps
@@ -1103,7 +1225,7 @@ class DiffusionRegressionTask(L.LightningModule):
         self.log(
             "learning_rate",
             self.optimizers().param_groups[0]["lr"],
-            batch_size=batch["gene"].x.size(0),
+            batch_size=batch_size,
             sync_dist=True,
         )
         # Log effective batch size when using gradient accumulation
@@ -1120,12 +1242,12 @@ class DiffusionRegressionTask(L.LightningModule):
                         world_size = dist.get_world_size()
 
             effective_batch_size = (
-                batch["gene"].x.size(0) * self.current_accumulation_steps * world_size
+                batch_size * self.current_accumulation_steps * world_size
             )
             self.log(
                 "effective_batch_size",
                 effective_batch_size,
-                batch_size=batch["gene"].x.size(0),
+                batch_size=batch_size,
                 sync_dist=True,
             )
         return loss

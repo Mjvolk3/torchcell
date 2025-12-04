@@ -36,7 +36,7 @@ savefig.bbox: tight
 savefig.facecolor: white
 # axes.prop_cycle: cycler('color', ['0072B2','D55E00','009E73','E69F00','F0E442','56B4E9','CC79A7','000000']) # color blind 1
 # axes.prop_cycle: cycler('color', ['000000', 'C51010', '1F77B4', 'FF7F0E', '2CA02C', '9467BD', '8C564B', 'BCBD22', '17BECF', 'E377C2', '7F7F7F']) # color blind 2 tableau 10
-axes.prop_cycle: cycler('color', ['000000','CC8250','7191A9','6B8D3A', 'B73C39','34699D','3D796E','4A9C60','E6A65D','A05B2C','3978B5','D86E2F','775A9F','EBB386','8D5694','52B2A8','35978A','AB4B4B','6D666F','4E7C7F','905353','C17132',])
+axes.prop_cycle: cycler('color', ['000000','D86E2F','7191A9','6B8D3A', 'B73C39','34699D','775A9F','4A9C60','E6A65D','52B2A8','A05B2C','3978B5','EBB386','3D796E','8D5694','CC8250','35978A','AB4B4B','6D666F','4E7C7F','905353','C17132',])
 
 
 ## HIST

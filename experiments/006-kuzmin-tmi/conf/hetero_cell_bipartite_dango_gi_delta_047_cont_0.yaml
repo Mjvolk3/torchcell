@@ -6,7 +6,7 @@ defaults:
 wandb:
   # FLAG
   project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
-  tags: []
+  tags: ["pairwise_aggregation", "047"]
 
 cell_dataset:
   graphs: [
@@ -23,7 +23,7 @@ cell_dataset:
 
   node_embeddings:
     - learnable
-  learnable_embedding_input_channels: 16 #16
+  learnable_embedding_input_channels: 64 #64
   incidence_graphs: [metabolism_bipartite]
 
 # Transform configuration moved out of regression_task
@@ -35,18 +35,16 @@ transforms:
         strategy: "standard" # Options: standard, minmax, robust
 
 profiler:
-  enabled: false  # Toggle profiling on/off
-  is_pytorch: true  
+  is_pytorch: true
 
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 1000 #2.5e4
-  batch_size: 86 # 32 works ... 48 fails, 40 fails, 38 fails
-  num_workers: 4 # 2 > 8...
+  batch_size: 32 # 16
+  num_workers: 2 # 4
   pin_memory: true
   prefetch: false
-  prefetch_factor: 4
-  persistent_workers: true
+  prefetch_factor: 2
 
 trainer:
   max_epochs: 1000 # Updated for shorter training
@@ -65,11 +63,11 @@ heads: 8 #10 # placeholder
 norms: "layer" # placeholder
 # ------
 model:
-  checkpoint_path: null #*.ckpt 
+  checkpoint_path: /work/hdd/bbub/mjvolk3/torchcell/models/checkpoints/gpub026.delta.ncsa.illinois.edu-12434920_13f6164750f89ac1ecfc5d11fd9693839d4d748d7f6d6f8940300d02ca28bfdd/last.ckpt #*.ckpt 
   gene_num: 6607
   reaction_num: 7122
   metabolite_num: 2806
-  hidden_channels: 16 #16
+  hidden_channels: 64 #64
   num_layers: 3 # Number of hetero conv layers
   # norm: "batch"
   norm: ${norms}
@@ -83,16 +81,10 @@ model:
     graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
     # graph_aggregation_method: "sum"  # Alternative: simple sum (original behavior)
     # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
-
-    graph_aggregation_config:
-      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
-      aggregation_norm: "layer"  # Options: "layer", "batch", null
-      # Pairwise interaction parameters (only used when graph_aggregation_method="pairwise_interaction")
-      pairwise_num_layers: 2  # Number of MLP layers per pair (min: 2 for universal approximation)
-      pairwise_hidden_dim: 8  # Bottleneck dimension (default: hidden_channels // 2 = 32)
-      # Cross-attention parameters (only used when graph_aggregation_method="cross_attention")
-      # num_heads: 4  # Number of attention heads
-      dropout: 0.0  # Dropout for aggregation modules
+    
+    # graph_aggregation_config:
+    #   num_heads: 4  # Number of attention heads for cross_attention
+    #   dropout: 0.0  # Dropout for aggregation modules (set to 0 as requested)
     
     # GAT-specific parameters (used when encoder_type="gatv2")
     # heads: 5
@@ -126,7 +118,7 @@ model:
     gin_num_layers: 4
     gin_hidden_dim: null
   prediction_head_config:
-    hidden_channels: 16 #16
+    hidden_channels: 64 #64
     head_num_layers: 4
     dropout: 0.0 #0.1
     activation: "gelu"
@@ -136,38 +128,29 @@ model:
   # Dango-like local predictor config
   local_predictor_config:
     num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
-    num_heads: 4 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
     combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
 
 regression_task:
-  # loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr, mle_wass_supcr
-  loss: mle_wass_supcr  # Using Wasserstein distance with SupCR instead of standard distribution loss
+  loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr
   is_weighted_phenotype_loss: false
   # Lambda weights for loss components
   lambda_mse: 1.0
-  # lambda_dist: 0.1 # 0.1 # 0.1 #0.1 #0.1  # For MleDistSupCR
-  lambda_wasserstein: 0.1  # For MleWassSupCR - replaces lambda_dist
+  lambda_dist: 100.0 # 0.1 # 0.1 #0.1 #0.1
   lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
-
-  # MleDistSupCR/MleWassSupCR specific configuration
+  
+  # MleDistSupCR specific configuration
   loss_config:
-    # Component-specific parameters for MleDistSupCR (not used with mle_wass_supcr)
-    # dist_bandwidth: 1.0  # For MleDistSupCR
-    # min_samples_for_dist: 224  # For MleDistSupCR
-
-    # Wasserstein-specific parameters (for MleWassSupCR)
-    wasserstein_blur: 0.05  # Entropic regularization (smaller = more precise)
-    wasserstein_p: 2  # p=2 for W2 (quadratic) distance, p=1 for W1
-    wasserstein_scaling: 0.9  # Multi-scale parameter (0.5-1.0)
-    min_samples_for_wasserstein: 224  # Minimum samples for Wasserstein distance
-
+    # Component-specific parameters
+    dist_bandwidth: 0.5
     supcr_temperature: 0.1
     # embedding_dim is dynamically set from model.hidden_channels
-
+    
     # Buffer configuration
     use_buffer: true
-    buffer_size: 224
-    min_samples_for_supcr: 224
+    buffer_size: 8192
+    min_samples_for_dist: 512
+    min_samples_for_supcr: 512
     
     # DDP configuration
     use_ddp_gather: true
@@ -190,17 +173,17 @@ regression_task:
   optimizer:
     type: "AdamW"
     lr: 1e-4 #overrode by type
-    weight_decay: 1e-12
+    weight_decay: 0 # 1e-10
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 300  # First convergence at epoch 50
-    cycle_mult: 0.75  # Each cycle is 3x longer: 50 -> 150 -> 450
-    max_lr: 5e-4 #5e-4  # Higher peak LR since no overfitting
-    min_lr: 1e-6  # Higher floor for faster convergence
+    first_cycle_steps: 300 
+    cycle_mult: 1.0
+    max_lr: 4e-4 #5e-4  # Higher peak LR since no overfitting
+    min_lr: 1e-7  # Higher floor for faster convergence
     warmup_steps: 0  # Quick warmup to peak
-    gamma: 0.50  #0.85 Moderate decay across cycles (reduces peak LR by 50% each restart)
+    gamma: 0.50  #0.85 Moderate decay across cycles
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: null #{0: 2} #{0: 16}  # Accumulate for 16 steps to get effective batch size of 224
+  grad_accumulation_schedule: {0: 16}  # Accumulate for 16 steps to get effective batch size of 256
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 2

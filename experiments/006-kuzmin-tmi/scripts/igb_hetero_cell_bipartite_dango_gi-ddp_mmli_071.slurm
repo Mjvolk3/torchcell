@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH -p mmli
-#SBATCH --mem=488g
+#SBATCH --mem=488g #120g
 #SBATCH -N 1
 #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:4
-#SBATCH --job-name=006-007-HCPD
+#SBATCH --job-name=006-071-HCPD-lazy
 #SBATCH --time=300-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
-#SBATCH --output=/home/a-m/mjvolk3/scratch/torchcell/experiments/006-kuzmin-tmi/slurm/output/%x_%j.out
+#SBATCH --output=/home/a-m/mjvolk3/scratch/torchcell/experiments/006-kuzmin-tmi/slurm/output/%x_%j.out 
 #SBATCH --error=/home/a-m/mjvolk3/scratch/torchcell/experiments/006-kuzmin-tmi/slurm/output/%x_%j.out
 
 module purge
@@ -26,8 +26,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Launch with srun to ensure proper process distribution
 srun --ntasks-per-node=4 --gpus-per-task=1 singularity exec --nv rockylinux_9.sif bash -c "
-source \$HOME/miniconda3/bin/activate
+source $HOME/miniconda3/bin/activate
 conda activate torchcell
-python /home/a-m/mjvolk3/projects/torchcell/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi.py --config-name hetero_cell_bipartite_dango_gi_mmli_007
+python /home/a-m/mjvolk3/projects/torchcell/experiments/006-kuzmin-tmi/scripts/hetero_cell_bipartite_dango_gi_lazy.py --config-name hetero_cell_bipartite_dango_gi_mmli_071
 "
-

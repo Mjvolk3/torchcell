@@ -1,8 +1,12 @@
+# experiments/008-xue-ffa/scripts/glm_log_link_epistatic_interactions
+# [[experiments.008-xue-ffa.scripts.glm_log_link_epistatic_interactions]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/008-xue-ffa/scripts/glm_log_link_epistatic_interactions
+
 #!/usr/bin/env python3
 
 """
-Log-OLS with WT-differencing epistatic interaction analysis for FFA production data.
-Implements primary model using log-transformed fitness with WT-differencing.
+GLM with log link epistatic interaction analysis for FFA production data.
+Implements GLM with Gamma family and log link for robustness checking.
 """
 
 import numpy as np
@@ -31,7 +35,7 @@ load_dotenv()
 # Define paths
 BASE_DIR = Path("/Users/michaelvolk/Documents/projects/torchcell/experiments/008-xue-ffa")
 DATA_DIR = BASE_DIR / "data"
-RESULTS_DIR = BASE_DIR / "results" / "glm_models"
+RESULTS_DIR = BASE_DIR / "results" / "glm_log_link"
 ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR", str(BASE_DIR / "figures"))
 
 # Create output directories
@@ -184,58 +188,35 @@ def create_design_matrix(df: pd.DataFrame) -> pd.DataFrame:
     return X
 
 
-def model_a_log_ols(df: pd.DataFrame, trait_col: str) -> Dict:
-    """
-    Model A: Primary model - Product-null hypothesis on log scale.
-    Uses WT-differencing: s_{g,r} = log(y_{g,r} + δ) - log(y_{ref,r} + δ)
-    """
+def glm_log_link(df: pd.DataFrame, trait_col: str) -> Dict:
+    """GLM with Gamma family and log link for epistatic interaction analysis."""
     results = {}
 
-    # Get reference values per replicate
-    ref_df = df[df['is_reference']].copy()
-    if len(ref_df) == 0:
-        print(f"Warning: No reference strain found for trait {trait_col}")
-        return {}
-
-    # Calculate reference mean per replicate
-    ref_means = ref_df.groupby('replicate')[trait_col].mean()
-
-    # Prepare data with WT-differencing
+    # Prepare data - EXCLUDE reference strain (WT)
+    # The reference level is captured by the intercept
     model_df = df[~df['is_reference']].copy()
-
-    # Apply WT-differencing
-    model_df['log_response'] = np.nan
-    for rep in ref_means.index:
-        mask = model_df['replicate'] == rep
-        if mask.sum() > 0:
-            model_df.loc[mask, 'log_response'] = (
-                np.log(model_df.loc[mask, trait_col] + DELTA) -
-                np.log(ref_means[rep] + DELTA)
-            )
-
-    # Remove NaN values
-    model_df = model_df.dropna(subset=['log_response'])
+    model_df = model_df.dropna(subset=[trait_col])
 
     if len(model_df) == 0:
-        print(f"Warning: No valid data after WT-differencing for {trait_col}")
         return {}
 
     # Create design matrix
     X = create_design_matrix(model_df)
 
-    # Add replicate effects (even with WT-differencing, can capture remaining variation)
+    # Add replicate effects
     for rep in model_df['replicate'].unique():
-        if rep != 1:  # Use rep 1 as baseline
+        if rep != 1:
             X[f'rep_{rep}'] = (model_df['replicate'] == rep).astype(int)
 
-    y = model_df['log_response']
+    y = model_df[trait_col]
 
-    # Fit OLS model
+    # Fit GLM
     try:
-        model = sm.OLS(y, X)
+        glm_family = Gamma(link=Log())
+        model = sm.GLM(y, X, family=glm_family)
         fit = model.fit()
     except Exception as e:
-        print(f"Error fitting model for {trait_col}: {e}")
+        print(f"Error fitting GLM for {trait_col}: {e}")
         return {}
 
     # Store results
@@ -243,29 +224,26 @@ def model_a_log_ols(df: pd.DataFrame, trait_col: str) -> Dict:
     results['coefficients'] = fit.params
     results['std_errors'] = fit.bse
     results['pvalues'] = fit.pvalues
-    results['conf_intervals'] = fit.conf_int()
-    results['r_squared'] = fit.rsquared
-    results['adj_r_squared'] = fit.rsquared_adj
+
+    # Calculate pseudo-R² (McFadden's R²)
+    # McFadden's R² = 1 - (deviance / null deviance)
+    results['pseudo_r_squared'] = 1 - (fit.deviance / fit.null_deviance)
+    results['deviance'] = fit.deviance
+    results['null_deviance'] = fit.null_deviance
 
     # Extract epistatic interactions
     epistasis = {}
 
     for param in fit.params.index:
-        if ':' in param and 'rep_' not in param:  # Interaction term (not replicate)
+        if ':' in param and 'rep_' not in param:
             n_interactions = param.count(':')
-
-            # Clean gene names
             clean_name = param.replace('ko_', '')
 
             epistasis[clean_name] = {
-                'E': fit.params[param],  # Log scale epistasis coefficient
-                'phi': np.exp(fit.params[param]),  # Epistatic fold
+                'gamma': fit.params[param],
+                'phi': np.exp(fit.params[param]),
                 'se': fit.bse[param],
                 'pvalue': fit.pvalues[param],
-                'ci_lower': fit.conf_int().loc[param, 0],
-                'ci_upper': fit.conf_int().loc[param, 1],
-                'phi_ci_lower': np.exp(fit.conf_int().loc[param, 0]),
-                'phi_ci_upper': np.exp(fit.conf_int().loc[param, 1]),
                 'order': 'digenic' if n_interactions == 1 else 'trigenic'
             }
 
@@ -303,8 +281,8 @@ def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
 
             # Extract effect sizes from epistasis dict
             epistasis = results[trait].get('epistasis', {})
-            dig_effects = [abs(v['E']) for v in epistasis.values() if v['order'] == 'digenic']
-            tri_effects = [abs(v['E']) for v in epistasis.values() if v['order'] == 'trigenic']
+            dig_effects = [abs(v['gamma']) for v in epistasis.values() if v['order'] == 'digenic']
+            tri_effects = [abs(v['gamma']) for v in epistasis.values() if v['order'] == 'trigenic']
 
             summary[trait] = {
                 'n_digenic': results[trait].get('n_digenic', 0),
@@ -313,7 +291,7 @@ def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
                 'n_sig_trigenic': results[trait].get('n_sig_trigenic', 0),
                 'n_sig_digenic_fdr': 0,  # FDR is in CSV
                 'n_sig_trigenic_fdr': 0,
-                'r_squared': results[trait].get('r_squared', None),
+                'pseudo_r_squared': results[trait].get('pseudo_r_squared', None),
                 'effect_size_digenic': {
                     'mean': float(np.mean(dig_effects)) if dig_effects else 0.0,
                     'median': float(np.median(dig_effects)) if dig_effects else 0.0,
@@ -335,7 +313,7 @@ def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
         'n_sig_trigenic': overall_sig_tri
     }
 
-    with open(output_dir / 'log_ols_summary.json', 'w') as f:
+    with open(output_dir / 'glm_log_link_summary.json', 'w') as f:
         json.dump(summary, f, indent=2, default=str)
 
     # Create CSV output matching multiplicative model format
@@ -371,16 +349,14 @@ def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
                 'gene_set': gene_set,
                 'interaction_type': epi_data['order'],
                 'ffa_type': trait_name,
-                'interaction_score': epi_data['E'],  # Log-scale epistasis coefficient
-                'epistatic_fold': epi_data['phi'],  # exp(E)
+                'interaction_score': epi_data['gamma'],  # GLM coefficient
+                'epistatic_fold': epi_data['phi'],  # exp(gamma)
                 'standard_error': epi_data['se'],
                 'p_value': epi_data['pvalue'],
                 'fdr_corrected_p': fdr_dict.get((trait, gene_set), np.nan),
-                'effect_size': abs(epi_data['E']),
+                'effect_size': abs(epi_data['gamma']),
                 'significant_p05': epi_data['pvalue'] < 0.05,
-                'significant_fdr05': fdr_dict.get((trait, gene_set), 1.0) < 0.05,
-                'ci_lower': epi_data['ci_lower'],
-                'ci_upper': epi_data['ci_upper']
+                'significant_fdr05': fdr_dict.get((trait, gene_set), 1.0) < 0.05
             })
 
     # Save as CSV
@@ -388,15 +364,15 @@ def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
         df = pd.DataFrame(csv_rows)
 
         # Save combined results
-        csv_path = output_dir / "log_ols_all_interactions.csv"
+        csv_path = output_dir / "glm_log_link_all_interactions.csv"
         df.to_csv(csv_path, index=False)
 
         # Save digenic and trigenic separately
         digenic_df = df[df['interaction_type'] == 'digenic']
         trigenic_df = df[df['interaction_type'] == 'trigenic']
 
-        digenic_path = output_dir / "log_ols_digenic_interactions.csv"
-        trigenic_path = output_dir / "log_ols_trigenic_interactions.csv"
+        digenic_path = output_dir / "glm_log_link_digenic_interactions.csv"
+        trigenic_path = output_dir / "glm_log_link_trigenic_interactions.csv"
 
         digenic_df.to_csv(digenic_path, index=False)
         trigenic_df.to_csv(trigenic_path, index=False)
@@ -434,20 +410,18 @@ def main():
     # Initialize results
     results = {}
 
-    # Run Log-OLS model
+    # Run GLM log link model
     print("\n" + "="*60)
-    print("Log-OLS with WT-Differencing Epistatic Interaction Analysis")
+    print("GLM with Log Link Epistatic Interaction Analysis")
     print("="*60)
 
     for trait_col in FFA_COLUMNS:
         print(f"\nProcessing {trait_col}...")
-        result = model_a_log_ols(df, trait_col)
+        result = glm_log_link(df, trait_col)
         if result:
             results[trait_col] = result
             print(f"  Total: {result['n_digenic']} digenic, {result['n_trigenic']} trigenic")
             print(f"  Significant: {result['n_sig_digenic']} digenic, {result['n_sig_trigenic']} trigenic")
-            if 'r_squared' in result:
-                print(f"  R-squared: {result['r_squared']:.3f}")
 
     # Save results
     print("\nSaving results...")

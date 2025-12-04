@@ -316,8 +316,12 @@ def create_digenic_bar_plots(
         plt.tight_layout()
 
         # Save figure
-        filename = f"additive_digenic_bars_3_delta_normalized_{ffa.replace(':', '')}_{timestamp()}.png"
-        filepath = osp.join(ASSET_IMAGES_DIR, filename)
+        # Replace spaces and colons in filename
+        safe_ffa = ffa.replace(':', '').replace(' ', '_')
+        filename = f"additive_digenic_bars_3_delta_normalized_{safe_ffa}.png"
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        filepath = osp.join(ffa_dir, filename)
         fig.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.close()
 
@@ -440,8 +444,10 @@ def create_summary_plot(digenic_interactions, single_mutants, double_mutants, co
     plt.tight_layout()
 
     # Save figure
-    filename = f"additive_digenic_summary_3_delta_normalized_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "additive_digenic_summary_3_delta_normalized.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 

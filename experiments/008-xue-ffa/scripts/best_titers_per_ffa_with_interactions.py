@@ -386,8 +386,12 @@ def plot_top_titers(top_genotypes_by_ffa, columns):
         plt.tight_layout()
 
         # Save figure
-        filename = f"top_titers_{ffa.replace(':', '')}_{timestamp()}.png"
-        filepath = osp.join(ASSET_IMAGES_DIR, filename)
+        # Replace spaces and colons in filename
+        safe_ffa = ffa.replace(':', '').replace(' ', '_')
+        filename = f"multiplicative_top_titers_{safe_ffa}.png"
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        filepath = osp.join(ffa_dir, filename)
         fig.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.close()
         print(f"Top titers plot for {ffa} saved to:")

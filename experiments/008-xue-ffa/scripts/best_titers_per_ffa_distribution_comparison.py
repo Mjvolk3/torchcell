@@ -162,8 +162,10 @@ def create_distribution_comparison(
     plt.tight_layout()
 
     # Save figure
-    filename = f"distribution_comparison_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "multiplicative_distribution_comparison.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 
@@ -252,8 +254,10 @@ def create_triple_vs_best_double_plot(
     plt.tight_layout()
 
     # Save figure
-    filename = f"triple_vs_best_double_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "multiplicative_triple_vs_best_double.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 
@@ -396,8 +400,10 @@ def analyze_top_performer_composition(
     plt.tight_layout()
 
     # Save figure
-    filename = f"top_performer_composition_p{percentile}_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = f"multiplicative_top_performer_composition_p{percentile}.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 

@@ -321,8 +321,12 @@ def create_recovery_pattern_plots(
         plt.tight_layout()
 
         # Save figure
-        filename = f"trigenic_suppression_relaxed_{ffa.replace(':', '')}_{timestamp()}.png"
-        filepath = osp.join(ASSET_IMAGES_DIR, filename)
+        # Replace spaces and colons in filename
+        safe_ffa = ffa.replace(':', '').replace(' ', '_')
+        filename = f"multiplicative_trigenic_suppression_relaxed_{safe_ffa}.png"
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        filepath = osp.join(ffa_dir, filename)
         fig.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.close()
         print(f"Trigenic suppression (relaxed) plot for {ffa} saved to:")
@@ -421,8 +425,10 @@ def create_recovery_pattern_plots(
     plt.tight_layout()
 
     # Save summary figure
-    filename = f"trigenic_suppression_summary_relaxed_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "multiplicative_trigenic_suppression_summary_relaxed.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"\nTrigenic suppression summary (relaxed) plot saved to:")

@@ -2,7 +2,7 @@
 id: mgpddo7a262ku0fby76rx1l
 title: '35'
 desc: ''
-updated: 1756766017668
+updated: 1764812584567
 created: 1756226258184
 ---
 ## 2025.08.25
@@ -21,5 +21,3 @@ created: 1756226258184
 5. OpenStack DB query test, and OpenStack build.
 
 - [x] Install apptainer on `GH` for consistent experiment env.
-
-TODO. FILLin rest of the week and keep it terse like I normally do no m

@@ -2,12 +2,13 @@
 id: vkn6qyf19u3m1bluvbza37t
 title: '50'
 desc: ''
-updated: 1765214952750
+updated: 1765218843268
 created: 1765212725596
 ---
 ## 2025.12.08
 
-- [ ] Clean up investigation on query 006 #M1
+- [x] Clean up investigation on query 006 #M1
+- [x] [[Query Issue|experiments.006-kuzmin-tmi.2025.12.08.query-issue]] - First we are checking against all deletion → Need to rebuild db for this. Using as excuse to test entire pipeline to Radiant.
 - [ ] Rebuild dataset with only deletions on #GH
 - [ ] Construct inference dataset locally based on genes contained in morphology and micro array.
 - [ ] Transfer inference dataset to #GH

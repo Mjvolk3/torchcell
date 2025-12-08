@@ -1,3 +1,8 @@
+# torchcell/viz/transformer_diagnostics
+# [[torchcell.viz.transformer_diagnostics]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/transformer_diagnostics
+# Test file: tests/torchcell/viz/test_transformer_diagnostics.py
+
 import io
 import os
 import os.path as osp

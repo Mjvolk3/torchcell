@@ -2,10 +2,10 @@
 #SBATCH --mem=243g
 #SBATCH --nodes=1
 #SBATCH --ntasks=4               # Changed from ntasks-per-node
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=16
 #SBATCH --partition=gpuA40x4
 #SBATCH --account=bbtp-delta-gpu
-#SBATCH --job-name=008-006-ECGT
+#SBATCH --job-name=011-006-ECGT
 #SBATCH --time=48:00:00
 #SBATCH --constraint="scratch"
 #SBATCH --gres=gpu:4              # Total GPU allocation using gres instead
@@ -32,7 +32,7 @@ echo "job is starting on `hostname`"
 wandb artifact cache cleanup 1GB
 
 # CUDA optimizations
-export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:False
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 export CUDA_LAUNCH_BLOCKING=0
 export TORCH_USE_CUDA_DSA=0
 export PYTHONUNBUFFERED=1
@@ -59,5 +59,5 @@ srun --ntasks-per-node=4 apptainer exec \
     bash -c "source /projects/bbub/miniconda3/bin/activate && \
     conda activate torchcell && \
     python /scratch/bbub/mjvolk3/torchcell/experiments/006-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py \
-    --config-name equivariant_cell_graph_transformer_delta_008 \
+    --config-name equivariant_cell_graph_transformer_delta_011 \
     data_module.num_workers=$NUM_WORKERS"

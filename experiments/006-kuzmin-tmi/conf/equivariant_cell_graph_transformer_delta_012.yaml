@@ -61,9 +61,9 @@ compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 model:
   checkpoint_path: null  # *.ckpt
   gene_num: 6607
-  hidden_channels: 180 #90 #96  # d in weekly report
+  hidden_channels: 84 #90 #96  # d in weekly report
   num_transformer_layers: 8 #8  # L layers
-  num_attention_heads: 18  # H heads per layer (must divide hidden_channels evenly)
+  num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
   # Learnable embedding configuration
@@ -125,7 +125,7 @@ model:
 
   # Perturbation head configuration
   perturbation_head:
-    num_heads: 9  # Must divide hidden_channels (180/9=20)
+    num_heads: 12  # Must divide hidden_channels (180/9=20)
     dropout: 0.1
 
 # Loss and optimization configuration

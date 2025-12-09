@@ -1,0 +1,140 @@
+#experiments/006-kuzmin-tmi/conf/cell_graph_transformer.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin-tmi_cell_graph_transformer
+  tags: [transformer, graph_regularization, gene_interaction]
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  # Transformer uses learned gene embeddings, not pre-computed
+  node_embeddings: []
+
+# Transform configuration
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false  # Toggle profiling on/off
+  is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000  # 2.5e4
+  batch_size: 512  # Limited by transformer memory requirements
+  num_workers: 16  # 2 > 8...
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 300  # Match DANGO training duration
+  strategy: ddp  # ddp_find_unused_parameters_true # auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+
+# Transformer model configuration
+model:
+  checkpoint_path: null  # *.ckpt
+  gene_num: 6607
+  hidden_channels: 96  # d in weekly report
+  num_transformer_layers: 8  # L layers
+  num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
+  dropout: 0.1
+
+  # Loss balancing
+  adaptive_loss_weighting: false  # Set to true to use learnable weights
+  graph_reg_scale: 0.001  # Global scale factor for graph regularization
+
+  # Graph regularization configuration
+  graph_regularization:
+    row_sampling_rate: 0.5  # Sample 50% of adjacency rows for KL computation
+
+    # Map graph names to (layer, head, lambda) for regularization
+    # Early-mid layers, one head per graph
+    # REDUCED lambdas significantly to balance with MSE loss
+    regularized_heads:
+      physical:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      regulatory:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      tflink:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_neighborhood:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_fusion:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_cooccurence:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_coexpression:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_experimental:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+      string12_0_database:
+        layer: 4
+        head: 0
+        lambda: 0.001 
+
+  # Perturbation head configuration
+  perturbation_head:
+    use_cross_attention: true
+    num_heads: 8
+    dropout: 0.1
+
+# Loss and optimization configuration
+regression_task:
+  loss: logcosh  # Options: logcosh, mse
+  execution_mode: "training"  # "training" or "dataloader_profiling"
+
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4  # Reduced from 5e-4 to stabilize training
+    weight_decay: 1e-8  # Very light regularization - transformer embeddings are sensitive to L2
+
+  lr_scheduler: null  # No scheduler - constant LR
+
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

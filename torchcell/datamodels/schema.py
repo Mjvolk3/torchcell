@@ -6,6 +6,7 @@
 import re
 from typing import List, Union, Dict, Type, Optional, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
+from sortedcontainers import SortedDict
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.calmorph_labels import (
     CALMORPH_PARAMETERS,
@@ -31,7 +32,17 @@ class GenePerturbation(ModelStrict):
     @field_validator("systematic_gene_name", mode="after")
     @classmethod
     def validate_sys_gene_name(cls, v):
-        if not re.match(r"^(Y[A-P][LR]\d{3}[WC](-[A-Z])?|Q\d+)$", v):
+        # Define named patterns for clarity based on genome feature types
+        # protein-coding genes, pseudogenes, transposable_element_genes
+        coding_gene_pattern = r"Y[A-P][LR]\d{3}[WC](-[A-Z])?"
+        # mitochondrial genes
+        mitochondrial_gene_pattern = r"Q\d{4}"
+        # ncRNA_gene, rRNA_gene, snRNA_gene, snoRNA_gene, tRNA_gene, telomerase_RNA_gene
+        noncoding_gene_pattern = r"YNC[A-Q]\d{4}[WC]"
+        # Combine patterns
+        full_pattern = f"^({coding_gene_pattern}|{mitochondrial_gene_pattern}|{noncoding_gene_pattern})$"
+
+        if not re.match(full_pattern, v):
             raise ValueError("Invalid systematic gene name format")
         return v
 
@@ -174,7 +185,12 @@ SgaPerturbationType = Union[
     SgaAllelePerturbation,
 ]
 
-GenePerturbationType = Union[SgaPerturbationType, MeanDeletionPerturbation]
+GenePerturbationType = Union[
+    SgaPerturbationType,
+    MeanDeletionPerturbation,
+    KanMxDeletionPerturbation,
+    NatMxDeletionPerturbation,
+]
 
 
 class Genotype(ModelStrict):
@@ -480,7 +496,7 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
     )
     calmorph_coefficient_of_variation: Dict[str, float] | None = Field(
         default=None,
-        description="Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)"
+        description="Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)",
     )
 
     # CALMORPH_PARAMETERS: All 501 parameters from Ohya et al. 2005
@@ -632,6 +648,105 @@ class CalMorphExperiment(Experiment, ModelStrict):
     phenotype: CalMorphPhenotype
 
 
+class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
+    graph_level: str = "node"
+    label_name: str = "expression_log2_ratio"
+    label_statistic_name: str = "expression_log2_ratio_std"
+    expression_log2_ratio: Dict[str, float] = Field(
+        description="SortedDict of log2 fold change ratios relative to wildtype reference",
+        repr=False,  # Hide in repr to avoid clutter
+    )
+    expression_log2_ratio_std: Dict[str, float] | None = Field(
+        default=None,
+        description="SortedDict of standard deviations for log2 ratios (propagated from technical stds)",
+        repr=False,  # Hide in repr to avoid clutter
+    )
+    expression: Dict[str, float] = Field(
+        description="SortedDict of gene expression values (raw intensities or normalized values)",
+        repr=False,  # Hide in repr to avoid clutter
+    )
+    expression_technical_std: Dict[str, float] | None = Field(
+        default=None,
+        description="SortedDict of technical standard deviations from replicate measurements (NaN if no replicates)",
+        repr=False,  # Hide in repr to avoid clutter
+    )
+
+    def __repr__(self):
+        """Custom repr that shows summary statistics instead of full data."""
+        expr_count = len(self.expression) if self.expression else 0
+        log2_count = (
+            len(self.expression_log2_ratio) if self.expression_log2_ratio else 0
+        )
+        std_count = (
+            len(self.expression_technical_std) if self.expression_technical_std else 0
+        )
+
+        return (
+            f"MicroarrayExpressionPhenotype("
+            f"expression_genes={expr_count}, "
+            f"log2_ratio_genes={log2_count}, "
+            f"technical_std_genes={std_count})"
+        )
+
+    @field_validator("expression", mode="before")
+    def convert_and_validate_expression(cls, v):
+        if v is None:
+            raise ValueError("expression measurements cannot be None")
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("expression measurements cannot be empty")
+        for key, value in v.items():
+            # Accept any gene name, not just systematic patterns
+            if math.isinf(value):
+                raise ValueError(f"Invalid expression value for gene {key}: {value}")
+        return v
+
+    @field_validator("expression_log2_ratio", mode="before")
+    def convert_and_validate_log2_ratio(cls, v):
+        if v is None:
+            raise ValueError("expression_log2_ratio cannot be None")
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("expression_log2_ratio cannot be empty")
+        # Accept any gene name keys, no validation needed
+        return v
+
+    @field_validator("expression_technical_std", mode="before")
+    def convert_and_validate_std(cls, v):
+        if v is None:
+            return v
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        # Allow NaN values in std for genes without replicates
+        return v
+
+    @model_validator(mode="after")
+    def validate_matching_keys(self):
+        """Ensure expression_technical_std has same keys as expression."""
+        if self.expression_technical_std is not None:
+            if set(self.expression_technical_std.keys()) != set(self.expression.keys()):
+                raise ValueError(
+                    "expression_technical_std must have the same keys as expression"
+                )
+        return self
+
+
+class MicroarrayExpressionExperimentReference(ExperimentReference, ModelStrict):
+    experiment_reference_type: str = "microarray_expression"
+    phenotype_reference: MicroarrayExpressionPhenotype
+
+
+class MicroarrayExpressionExperiment(Experiment, ModelStrict):
+    experiment_type: str = "microarray_expression"
+    genotype: Union[Genotype, List[Genotype,]]
+    phenotype: MicroarrayExpressionPhenotype
+
+
 PhenotypeType = Union[
     Phenotype,
     FitnessPhenotype,
@@ -640,6 +755,7 @@ PhenotypeType = Union[
     SyntheticLethalityPhenotype,
     SyntheticRescuePhenotype,
     CalMorphPhenotype,
+    MicroarrayExpressionPhenotype,
 ]
 
 ExperimentType = Union[
@@ -650,6 +766,7 @@ ExperimentType = Union[
     SyntheticLethalityExperiment,
     SyntheticRescueExperiment,
     CalMorphExperiment,
+    MicroarrayExpressionExperiment,
 ]
 
 ExperimentReferenceType = Union[
@@ -660,6 +777,7 @@ ExperimentReferenceType = Union[
     SyntheticLethalityExperimentReference,
     SyntheticRescueExperimentReference,
     CalMorphExperimentReference,
+    MicroarrayExpressionExperimentReference,
 ]
 
 
@@ -670,6 +788,7 @@ EXPERIMENT_TYPE_MAP = {
     "synthetic lethality": SyntheticLethalityExperiment,
     "synthetic rescue": SyntheticRescueExperiment,
     "calmorph": CalMorphExperiment,
+    "microarray_expression": MicroarrayExpressionExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -679,6 +798,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "synthetic lethality": SyntheticLethalityExperimentReference,
     "synthetic rescue": SyntheticRescueExperimentReference,
     "calmorph": CalMorphExperimentReference,
+    "microarray_expression": MicroarrayExpressionExperimentReference,
 }
 
 

@@ -55,7 +55,7 @@ trainer:
   overfit_batches: 0
 
 # ------ Placeholders for hydra optuna
-heads: 8 #10 # placeholder
+heads: 8 #10 # placeholder  
 norms: "layer" # placeholder
 # ------
 model:

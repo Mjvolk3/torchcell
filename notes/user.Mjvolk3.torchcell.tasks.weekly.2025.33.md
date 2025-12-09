@@ -2,14 +2,14 @@
 id: pv3a69tpspow1fz3qxp903b
 title: '33'
 desc: ''
-updated: 1756226275030
+updated: 1757447566614
 created: 1754939102234
 ---
 ## 2025.08.11
 
 - [x] ![](./assets/drawio/cabbi-agent-idea.drawio.png)
 - [x] We need to save best val pearson correlation model along with best mse [[Hetero_cell_bipartite_dango_gi|dendron://torchcell/experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi]]
-- [ ] WIP diffusion decoder → Cannot overfit batch which is concerning, but this might be expected with such small batch size for diffusion decoder. [[Hetero_cell_bipartite_dango_diff_gi|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_diff_gi]]
+- [x] WIP diffusion decoder → Cannot overfit batch which is concerning, but this might be expected with such small batch size for diffusion decoder. [[Hetero_cell_bipartite_dango_diff_gi|dendron://torchcell/torchcell.models.hetero_cell_bipartite_dango_diff_gi]]
 
 ## 2025.08.12
 
@@ -31,4 +31,3 @@ created: 1754939102234
 - [x] Morphology Calmorph label id and description generation as python scripts. → [[2025.08.14 - First Attempt With Open Questions|dendron://torchcell/scripts.generate_calmorph_labels#20250814---first-attempt-with-open-questions]]
 
 - [x] Split between labels and statistics. This changes the original representation but matches torchcell data schema better [[Calmorph_labels|dendron://torchcell/torchcell.datamodels.calmorph_labels]].
-

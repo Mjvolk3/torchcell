@@ -1,0 +1,16 @@
+# Experiment 087a: NeighborSubgraph DataLoader profiling (skip model forward/backward)
+# Tests NeighborSubgraphRepresentation (2-hop) vs LazySubgraphRepresentation
+# Measures: Data loading + graph processor + collation + CPU→GPU transfer
+defaults:
+  - hetero_cell_bipartite_dango_gi_gh_086
+  - _self_
+
+wandb:
+  tags: [experiment_087a, dataloader_profiling, neighbor_subgraph, single_gpu, 2hop]
+
+graph_processor:
+  type: "neighbor_subgraph"  # Use NeighborSubgraphRepresentation
+  num_hops: 2  # 2-hop neighborhood sampling
+
+regression_task:
+  execution_mode: "dataloader_profiling"  # Skip model forward, use dummy loss

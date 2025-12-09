@@ -1,0 +1,206 @@
+#experiments/006-kuzmin-tmi/conf/hetero_cell_bipartite_dango_gi.yaml
+defaults:
+  - default
+  - _self_
+
+wandb:
+  # FLAG
+  project: torchcell_006-kuzmin-tmi_hetero_cell_bipartite_dango_gi
+  tags: []
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+  node_embeddings:
+    - learnable
+  learnable_embedding_input_channels: 64 #64
+  incidence_graphs: [metabolism_bipartite]
+
+# Transform configuration moved out of regression_task
+transforms:
+  use_transforms: true
+  forward_transform:
+    normalization:
+      gene_interaction:
+        strategy: "standard" # Options: standard, minmax, robust
+
+profiler:
+  enabled: false  # Toggle profiling on/off
+  is_pytorch: true  # Use PyTorch Profiler for detailed CPU/CUDA operator-level profiling  
+
+data_module:
+  is_perturbation_subset: false
+  perturbation_subset_size: 1000 #2.5e4
+  batch_size: 28 # 32 works ... 48 fails, 40 fails, 38 fails
+  num_workers: 4 # 2 > 8...
+  pin_memory: true
+  prefetch: false
+  prefetch_factor: 4
+  persistent_workers: true
+
+trainer:
+  max_epochs: 1 # Single epoch for profiling runs (step 600-626 profiled)
+  strategy: ddp #ddp_find_unused_parameters_true #auto # ddp
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4
+  overfit_batches: 0
+  precision: "bf16-mixed"  # "32-true", "16-mixed", "bf16-mixed"
+
+# Compilation settings for PyTorch 2.0+
+compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
+
+# ------ Placeholders for hydra optuna
+heads: 8 #10 # placeholder
+norms: "layer" # placeholder
+# ------
+model:
+  checkpoint_path: null #*.ckpt 
+  gene_num: 6607
+  reaction_num: 7122
+  metabolite_num: 2806
+  hidden_channels: 64 #64
+  num_layers: 3 # Number of hetero conv layers
+  # norm: "batch"
+  norm: ${norms}
+  activation: "gelu"
+  dropout: 0.0 # 0.1
+  gene_encoder_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    
+    # Graph aggregation configuration (NEW)
+    # graph_aggregation_method: "cross_attention"  # Default: cross-attention for multiple graphs
+    graph_aggregation_method: "pairwise_interaction"  # Alternative: pairwise graph interactions
+    # graph_aggregation_method: "sum"  # Alternative: simple sum (original behavior)
+    # graph_aggregation_method: "mean"  # Alternative: simple mean aggregation
+
+    graph_aggregation_config:
+      # Normalization after graph aggregation (applies to pairwise_interaction and cross_attention)
+      aggregation_norm: "layer"  # Options: "layer", "batch", null
+      # Pairwise interaction parameters (only used when graph_aggregation_method="pairwise_interaction")
+      pairwise_num_layers: 2  # Number of MLP layers per pair (min: 2 for universal approximation)
+      pairwise_hidden_dim: 32  # Bottleneck dimension (default: hidden_channels // 2 = 32)
+      # Cross-attention parameters (only used when graph_aggregation_method="cross_attention")
+      # num_heads: 4  # Number of attention heads
+      dropout: 0.0  # Dropout for aggregation modules
+    
+    # GAT-specific parameters (used when encoder_type="gatv2")
+    # heads: 5
+    heads: ${heads}
+    concat: true
+    bias: true
+    add_self_loops: false
+    share_weights: false
+    # GIN-specific parameters (used when encoder_type="gin")
+    gin_num_layers: 4      # Number of MLP layers in GIN
+    gin_hidden_dim: null   # If null, defaults to hidden_channels
+  gpr_conv_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    # GAT-specific parameters
+    # heads: 2
+    heads: ${heads}
+    concat: true
+    add_self_loops: false
+    # GIN-specific parameters
+    gin_num_layers: 4
+    gin_hidden_dim: null
+  metabolism_config:
+    encoder_type: "gin"  # Options: "gatv2" or "gin"
+    is_stoich_gated: true
+    use_attention: true
+    # GAT-specific parameters
+    # heads: 2
+    heads: ${heads}
+    concat: true
+    # GIN-specific parameters
+    gin_num_layers: 4
+    gin_hidden_dim: null
+  prediction_head_config:
+    hidden_channels: 64 #64
+    head_num_layers: 4
+    dropout: 0.0 #0.1
+    activation: "gelu"
+    # residual: true
+    # head_norm: "batch"
+    head_norm: ${norms}
+  # Dango-like local predictor config
+  local_predictor_config:
+    num_attention_layers: 2 # Number of self-attention layers (like Dango HyperSAGNN)
+    num_heads: 8 # 16 16 # Number of attention heads (matching Dango) - hidden divisible by num HEADS #FLAG
+    combination_method: "concat" # Options: "gating" (learned weights) or "concat" (fixed 0.5/0.5 weights)
+
+regression_task:
+  # loss: mle_dist_supcr # Options: logcosh, icloss, mle_dist_supcr, mle_wass_supcr
+  loss: mle_wass_supcr  # Using Wasserstein distance with SupCR instead of standard distribution loss
+  is_weighted_phenotype_loss: false
+  # Lambda weights for loss components
+  lambda_mse: 1.0
+  # lambda_dist: 0.1 # 0.1 # 0.1 #0.1 #0.1  # For MleDistSupCR
+  lambda_wasserstein: 0.1  # For MleWassSupCR - replaces lambda_dist
+  lambda_supcr: 0.0 #0.001 #0.001 #0.001 #0.001
+
+  # MleDistSupCR/MleWassSupCR specific configuration
+  loss_config:
+    # Component-specific parameters for MleDistSupCR (not used with mle_wass_supcr)
+    # dist_bandwidth: 1.0  # For MleDistSupCR
+    # min_samples_for_dist: 224  # For MleDistSupCR
+
+    # Wasserstein-specific parameters (for MleWassSupCR)
+    wasserstein_blur: 0.05  # Entropic regularization (smaller = more precise)
+    wasserstein_p: 2  # p=2 for W2 (quadratic) distance, p=1 for W1
+    wasserstein_scaling: 0.9  # Multi-scale parameter (0.5-1.0)
+    min_samples_for_wasserstein: 224  # Minimum samples for Wasserstein distance
+
+    supcr_temperature: 0.1
+    # embedding_dim is dynamically set from model.hidden_channels
+
+    # Buffer configuration
+    use_buffer: true
+    buffer_size: 224
+    min_samples_for_supcr: 224
+    
+    # DDP configuration
+    use_ddp_gather: true
+    gather_interval: 1  # Gather every forward pass
+    
+    # Adaptive weighting
+    use_adaptive_weighting: true
+    # warmup_epochs and stable_epoch now dynamically set based on max_epochs
+    # warmup_epochs: None -> will be 10% of max_epochs (30 epochs)
+    # stable_epoch: None -> will be 50% of max_epochs (150 epochs)
+    
+    # Temperature scheduling
+    use_temp_scheduling: true
+    init_temperature: 1.0
+    final_temperature: 0.1
+    temp_schedule: "exponential"
+    
+    # Training duration (for temperature scheduling)
+    max_epochs: 500
+  optimizer:
+    type: "AdamW"
+    lr: 1e-4 #overrode by type
+    weight_decay: 1e-12
+  lr_scheduler:
+    type: "CosineAnnealingWarmupRestarts"
+    first_cycle_steps: 300  # First convergence at epoch 50
+    cycle_mult: 0.75  # Each cycle is 3x longer: 50 -> 150 -> 450
+    max_lr: 5e-4 #5e-4  # Higher peak LR since no overfitting
+    min_lr: 1e-6  # Higher floor for faster convergence
+    warmup_steps: 0  # Quick warmup to peak
+    gamma: 0.50  #0.85 Moderate decay across cycles (reduces peak LR by 50% each restart)
+  clip_grad_norm: true
+  clip_grad_norm_max_norm: 10.0
+  grad_accumulation_schedule: null #{0: 2} #{0: 16}  # Accumulate for 16 steps to get effective batch size of 224
+  plot_sample_ceiling: 10000
+  plot_every_n_epochs: 2

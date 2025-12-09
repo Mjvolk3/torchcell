@@ -810,9 +810,9 @@ def main() -> None:
     genome = SCerevisiaeGenome(
         genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
         go_root=osp.join(DATA_ROOT, "data/go"),
-        overwrite=False,
+        overwrite=True,
     )
-    print()
+    print(f"genome.gene_set: {genome.gene_set}")
     # orf_classes = []
     # lengths = []
     # for gene in genome.gene_set:
@@ -820,9 +820,9 @@ def main() -> None:
     #     lengths.append(len(genome[gene].protein.seq))
     # print(pd.Series(orf_classes).value_counts())
     # genome.go
-    genome.drop_chrmt()
+    # genome.drop_chrmt()
     # print(len(genome.gene_set))
-    genome.drop_empty_go()
+    # genome.drop_empty_go()
 
     # # genes_not_divisible_by_3 = [
     # #     gene for gene in genome.gene_set if len(genome[gene]) % 3 != 0

@@ -10,11 +10,11 @@ from scipy import stats
 
 
 def box_plot(true_values: torch.tensor, predictions: torch.tensor) -> plt.Figure:
-    # Convert input to numpy arrays
+    # Convert input to numpy arrays (convert to float32 first to handle BFloat16 from mixed precision)
     if isinstance(true_values, torch.Tensor):
-        true_values = true_values.cpu().numpy()
+        true_values = true_values.cpu().float().numpy()
     if isinstance(predictions, torch.Tensor):
-        predictions = predictions.cpu().numpy()
+        predictions = predictions.cpu().float().numpy()
 
     # Calculate percentage of NaN predictions
     nan_percentage = np.isnan(predictions).mean() * 100

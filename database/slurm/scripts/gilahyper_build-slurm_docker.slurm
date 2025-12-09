@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=build_database
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=128
-#SBATCH --mem=995G
+#SBATCH --cpus-per-task=64
+#SBATCH --mem=500G
 #SBATCH --time=365-00:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
@@ -66,7 +66,6 @@ docker run \
     -v $(pwd)/database/data/sgd:/var/lib/neo4j/data/sgd \
     -v $(pwd)/database/data:/var/lib/neo4j/data \
     -v $(pwd)/database/.env:/.env \
-    -v $(pwd)/database/biocypher:/var/lib/neo4j/biocypher \
     -v $(pwd)/database/conf:/var/lib/neo4j/conf \
     -v $(pwd)/database/logs:/logs \
     -v $(pwd)/database/plugins:/plugins \
@@ -96,7 +95,18 @@ sleep 5
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/Mjvolk3/biocypher@main
 sleep 5
 docker exec tc-neo4j python -m pip install --no-cache-dir git+https://github.com/oxpig/CaLM@main
+docker exec tc-neo4j python -m pip install --no-cache-dir hypernetx fastjsonschema
 
+echo "Setting up BioCypher configuration..."
+docker exec tc-neo4j mkdir -p /var/lib/neo4j/biocypher/config
+docker exec tc-neo4j wget -O /var/lib/neo4j/biocypher/config/torchcell_schema_config.yaml \
+  https://raw.githubusercontent.com/Mjvolk3/torchcell/main/biocypher/config/torchcell_schema_config.yaml
+docker exec tc-neo4j wget -O /var/lib/neo4j/biocypher/config/linux-amd_biocypher_config.yaml \
+  https://raw.githubusercontent.com/Mjvolk3/torchcell/main/biocypher/config/linux-amd_biocypher_config.yaml
+
+# Check what paths are in .env
+echo "Checking .env configuration..."
+docker exec tc-neo4j bash -c "grep -E 'BIOCYPHER_CONFIG_PATH|SCHEMA_CONFIG_PATH' /.env || echo 'Paths not found in .env'"
 
 echo "Logging in to wandb..."
 docker exec tc-neo4j wandb login $WANDB_API_KEY
@@ -107,11 +117,17 @@ echo "----------------NOW_BUILDING_GRAPHS---------------------"
 #torchcell.torchcell.knowledge_graphs.create_scerevisiae_kg
 #torchcell.knowledge_graphs.dmi_costanzo_2016_kg
 echo "Creating knowledge graph..."
-if ! docker exec tc-neo4j python -m torchcell.knowledge_graphs.create_kg --config-name=scerevisiae_global_kg; then
+if ! docker exec tc-neo4j bash -c "export BIOCYPHER_CONFIG_PATH=/var/lib/neo4j/biocypher/config/linux-amd_biocypher_config.yaml && \
+  export SCHEMA_CONFIG_PATH=/var/lib/neo4j/biocypher/config/torchcell_schema_config.yaml && \
+  export DATA_ROOT=/var/lib/neo4j && \
+  export BIOCYPHER_OUT_PATH=biocypher-out && \
+  python -m torchcell.knowledge_graphs.create_kg --config-name=calmorph_ohya2005_kg"; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1
 fi
+#scerevisiae_global_kg
+#calmorph_ohya2005_kg
 
 echo "Knowledge graph creation completed."
 
@@ -139,11 +155,11 @@ docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "
 docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" "START DATABASE torchcell;"'
 
 echo "Running query to generate index stats..."
-docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD -d torchcell "MATCH (n) RETURN count(n);"'
+docker exec tc-neo4j bash -c "source /.env && cypher-shell -u \"\$NEO4J_USER\" -p \"\$NEO4J_PASSWORD\" -d torchcell 'MATCH (n) RETURN count(n);'"
 
 # Verify APOC installation
 echo "Verifying APOC installation..."
-docker exec tc-neo4j bash -c 'source /.env && cypher-shell -u $NEO4J_USER -p $NEO4J_PASSWORD -d torchcell "RETURN apoc.version() AS apoc_version;"'
+docker exec tc-neo4j bash -c "source /.env && cypher-shell -u \"\$NEO4J_USER\" -p \"\$NEO4J_PASSWORD\" -d torchcell 'RETURN apoc.version() AS apoc_version;'"
 
 docker exec tc-neo4j neo4j stop
 docker exec tc-neo4j neo4j start

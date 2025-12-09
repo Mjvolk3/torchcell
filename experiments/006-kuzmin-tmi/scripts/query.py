@@ -46,8 +46,8 @@ def main():
 
     ### Add Embeddings
     genome = SCerevisiaeGenome(osp.join(DATA_ROOT, "data/sgd/genome"))
-    genome.drop_chrmt()
-    genome.drop_empty_go()
+    # genome.drop_chrmt()
+    # genome.drop_empty_go()
 
     print(f"length of gene_set: {len(genome.gene_set)}")
     with open("gene_set.json", "w") as f:

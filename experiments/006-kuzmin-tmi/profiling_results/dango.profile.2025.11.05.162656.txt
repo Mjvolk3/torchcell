@@ -1,0 +1,258 @@
+Dango Forward Pass Profiling Results
+================================================================================
+Model: Dango
+Parameters: 3,138,270
+Device: cuda
+Batch size: 8
+================================================================================
+
+FULL MODEL CONFIGURATION (YAML)
+--------------------------------------------------------------------------------
+checkpoint_path: null
+hidden_channels: 64
+num_heads: 4
+
+CONFIGURATION SUMMARY
+--------------------------------------------------------------------------------
+Config name: dango_kuzmin2018_tmi_string12_0_profile
+Hidden channels: 64
+Num attention heads: 4
+
+Graphs used (6):
+  - string12_0_neighborhood
+  - string12_0_fusion
+  - string12_0_cooccurence
+  - string12_0_coexpression
+  - string12_0_experimental
+  - string12_0_database
+================================================================================
+
+FORWARD PASS PROFILING SUMMARY
+================================================================================
+Component                                CPU (ms)     CUDA (ms)    Total (ms)   % of Total
+------------------------------------------------------------------------------------------
+dango_pretrain_total                           5.218       3.179       8.397      35.2%
+  dango_pretrain_string12_0_neighborhood_layer1       0.921       0.504       1.425       6.0%
+  dango_pretrain_string12_0_coexpression_layer1       0.355       1.007       1.362       5.7%
+dango_hyper_sagnn_total                        1.183       0.071       1.254       5.3%
+  dango_pretrain_string12_0_coexpression_layer2       0.243       1.005       1.248       5.2%
+  dango_pretrain_string12_0_experimental_layer1       0.241       0.851       1.092       4.6%
+  dango_pretrain_string12_0_experimental_layer2       0.237       0.849       1.086       4.5%
+  dango_pretrain_string12_0_neighborhood_reconstruction       0.324       0.332       0.656       2.7%
+dango_meta_embedding_total                     0.506       0.091       0.597       2.5%
+dango_hyper_sagnn_prediction                   0.300       0.284       0.584       2.4%
+  dango_pretrain_string12_0_neighborhood_layer2       0.250       0.263       0.513       2.2%
+  dango_hyper_sagnn_attention_layer2           0.298       0.192       0.490       2.1%
+  dango_pretrain_string12_0_fusion_layer2       0.241       0.208       0.448       1.9%
+  dango_pretrain_string12_0_cooccurence_layer2       0.240       0.206       0.447       1.9%
+  dango_hyper_sagnn_attention_layer1           0.347       0.070       0.417       1.7%
+  dango_pretrain_string12_0_fusion_layer1       0.249       0.136       0.385       1.6%
+  dango_pretrain_string12_0_cooccurence_reconstruction       0.046       0.330       0.376       1.6%
+  dango_pretrain_string12_0_cooccurence_layer1       0.242       0.129       0.371       1.6%
+  dango_pretrain_string12_0_fusion_reconstruction       0.050       0.318       0.368       1.5%
+  dango_pretrain_string12_0_experimental_reconstruction       0.045       0.322       0.367       1.5%
+  dango_pretrain_string12_0_database_reconstruction       0.045       0.316       0.362       1.5%
+  dango_pretrain_string12_0_coexpression_reconstruction       0.050       0.312       0.361       1.5%
+  dango_pretrain_string12_0_database_layer1       0.239       0.105       0.344       1.4%
+  dango_pretrain_string12_0_database_layer2       0.241       0.101       0.342       1.4%
+dango_meta_embedding_mlp                       0.123       0.061       0.184       0.8%
+  dango_pretrain_embedding                     0.089       0.005       0.094       0.4%
+dango_hyper_sagnn_mask                         0.086       0.008       0.094       0.4%
+dango_hyper_sagnn_static                       0.066       0.008       0.074       0.3%
+dango_meta_embedding_combine                   0.055       0.016       0.071       0.3%
+dango_meta_embedding_stack                     0.047       0.016       0.063       0.3%
+------------------------------------------------------------------------------------------
+TOTAL                                         12.577      11.294      23.871     100.0%
+Full Forward (measured)                       13.365       6.589      19.955
+
+GPU Utilization: 47.3% (CUDA time / Total time)
+================================================================================
+
+RAW PROFILING RESULTS
+--------------------------------------------------------------------------------
+dango_full_forward:
+  CPU time: 13.365 ms
+  CUDA time: 6.589 ms
+  Total: 19.955 ms
+  Calls: 20
+
+dango_pretrain_total:
+  CPU time: 5.218 ms
+  CUDA time: 3.179 ms
+  Total: 8.397 ms
+  Calls: 40
+
+dango_pretrain_string12_0_neighborhood_layer1:
+  CPU time: 0.921 ms
+  CUDA time: 0.504 ms
+  Total: 1.425 ms
+  Calls: 40
+
+dango_pretrain_string12_0_coexpression_layer1:
+  CPU time: 0.355 ms
+  CUDA time: 1.007 ms
+  Total: 1.362 ms
+  Calls: 40
+
+dango_hyper_sagnn_total:
+  CPU time: 1.183 ms
+  CUDA time: 0.071 ms
+  Total: 1.254 ms
+  Calls: 40
+
+dango_pretrain_string12_0_coexpression_layer2:
+  CPU time: 0.243 ms
+  CUDA time: 1.005 ms
+  Total: 1.248 ms
+  Calls: 40
+
+dango_pretrain_string12_0_experimental_layer1:
+  CPU time: 0.241 ms
+  CUDA time: 0.851 ms
+  Total: 1.092 ms
+  Calls: 40
+
+dango_pretrain_string12_0_experimental_layer2:
+  CPU time: 0.237 ms
+  CUDA time: 0.849 ms
+  Total: 1.086 ms
+  Calls: 40
+
+dango_pretrain_string12_0_neighborhood_reconstruction:
+  CPU time: 0.324 ms
+  CUDA time: 0.332 ms
+  Total: 0.656 ms
+  Calls: 40
+
+dango_meta_embedding_total:
+  CPU time: 0.506 ms
+  CUDA time: 0.091 ms
+  Total: 0.597 ms
+  Calls: 20
+
+dango_hyper_sagnn_prediction:
+  CPU time: 0.300 ms
+  CUDA time: 0.284 ms
+  Total: 0.584 ms
+  Calls: 40
+
+dango_pretrain_string12_0_neighborhood_layer2:
+  CPU time: 0.250 ms
+  CUDA time: 0.263 ms
+  Total: 0.513 ms
+  Calls: 40
+
+dango_hyper_sagnn_attention_layer2:
+  CPU time: 0.298 ms
+  CUDA time: 0.192 ms
+  Total: 0.490 ms
+  Calls: 40
+
+dango_pretrain_string12_0_fusion_layer2:
+  CPU time: 0.241 ms
+  CUDA time: 0.208 ms
+  Total: 0.448 ms
+  Calls: 40
+
+dango_pretrain_string12_0_cooccurence_layer2:
+  CPU time: 0.240 ms
+  CUDA time: 0.206 ms
+  Total: 0.447 ms
+  Calls: 40
+
+dango_hyper_sagnn_attention_layer1:
+  CPU time: 0.347 ms
+  CUDA time: 0.070 ms
+  Total: 0.417 ms
+  Calls: 40
+
+dango_pretrain_string12_0_fusion_layer1:
+  CPU time: 0.249 ms
+  CUDA time: 0.136 ms
+  Total: 0.385 ms
+  Calls: 40
+
+dango_pretrain_string12_0_cooccurence_reconstruction:
+  CPU time: 0.046 ms
+  CUDA time: 0.330 ms
+  Total: 0.376 ms
+  Calls: 40
+
+dango_pretrain_string12_0_cooccurence_layer1:
+  CPU time: 0.242 ms
+  CUDA time: 0.129 ms
+  Total: 0.371 ms
+  Calls: 40
+
+dango_pretrain_string12_0_fusion_reconstruction:
+  CPU time: 0.050 ms
+  CUDA time: 0.318 ms
+  Total: 0.368 ms
+  Calls: 40
+
+dango_pretrain_string12_0_experimental_reconstruction:
+  CPU time: 0.045 ms
+  CUDA time: 0.322 ms
+  Total: 0.367 ms
+  Calls: 40
+
+dango_pretrain_string12_0_database_reconstruction:
+  CPU time: 0.045 ms
+  CUDA time: 0.316 ms
+  Total: 0.362 ms
+  Calls: 40
+
+dango_pretrain_string12_0_coexpression_reconstruction:
+  CPU time: 0.050 ms
+  CUDA time: 0.312 ms
+  Total: 0.361 ms
+  Calls: 40
+
+dango_pretrain_string12_0_database_layer1:
+  CPU time: 0.239 ms
+  CUDA time: 0.105 ms
+  Total: 0.344 ms
+  Calls: 40
+
+dango_pretrain_string12_0_database_layer2:
+  CPU time: 0.241 ms
+  CUDA time: 0.101 ms
+  Total: 0.342 ms
+  Calls: 40
+
+dango_meta_embedding_mlp:
+  CPU time: 0.123 ms
+  CUDA time: 0.061 ms
+  Total: 0.184 ms
+  Calls: 40
+
+dango_pretrain_embedding:
+  CPU time: 0.089 ms
+  CUDA time: 0.005 ms
+  Total: 0.094 ms
+  Calls: 40
+
+dango_hyper_sagnn_mask:
+  CPU time: 0.086 ms
+  CUDA time: 0.008 ms
+  Total: 0.094 ms
+  Calls: 40
+
+dango_hyper_sagnn_static:
+  CPU time: 0.066 ms
+  CUDA time: 0.008 ms
+  Total: 0.074 ms
+  Calls: 40
+
+dango_meta_embedding_combine:
+  CPU time: 0.055 ms
+  CUDA time: 0.016 ms
+  Total: 0.071 ms
+  Calls: 40
+
+dango_meta_embedding_stack:
+  CPU time: 0.047 ms
+  CUDA time: 0.016 ms
+  Total: 0.063 ms
+  Calls: 40
+

@@ -1,0 +1,118 @@
+=============================================================================
+EXPERIMENT 087: COMPREHENSIVE GRAPH PROCESSOR PROFILING
+Generated: 2025-11-07-17-34-41
+=============================================================================
+
+CONFIGURATION:
+- GPU: Single GPU (no DDP)
+- Dataset: 10,000 sample subset
+- Batch size: 64 for DANGO, 28 for others
+- Steps profiled: 100 (per run)
+
+PURPOSE:
+Compare all 5 graph processing methods under identical conditions:
+1. DANGO (Perturbation) - Minimal graph data, fastest baseline
+2. Lazy Hetero (LazySubgraphRepresentation) - Full graph + masks
+3. NeighborSubgraph (1/2/3-hop) - Variable-sized k-hop neighborhoods
+
+=============================================================================
+RESULTS SUMMARY TABLE:
+=============================================================================
+
+| Method    | it/s      | Speedup   | GPU Mem   | Est. Max  | Nodes     | Edges     |
+|           |           | vs DANGO  | (MB/batch)| Batch     | /sample   | /sample   |
+|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
+| DANGO     | 773.067      | 1.00×     | 4.0       | 60       | 103.2       | 0.0       |
+| LazySubg  | 1.495      | 0×     | 1155.4       | 973650       | 6607.0       | 2527683.0       |
+| 1-hop     | 6.952      | 0×     | 87.8       | 60       | 691.6       | 194228.3       |
+| 2-hop     | 2.725      | 0×     | 811.7       | 1488       | 3771.3       | 1885256.6       |
+| 3-hop     | 2.445      | 0×     | 928.9       | 60       | 4487.6       | 2158920.7       |
+
+=============================================================================
+DETAILED ANALYSIS:
+=============================================================================
+
+**Speed Rankings (iterations/sec):**
+1. DANGO:     773.067 it/s (baseline - minimal graph data)
+2. Lazy:      1.495 it/s (0× vs DANGO)
+3. 1-hop:     6.952 it/s (0× vs DANGO, 4.65× vs Lazy)
+4. 2-hop:     2.725 it/s (0× vs DANGO, 1.82× vs Lazy)
+5. 3-hop:     2.445 it/s (0× vs DANGO, 1.63× vs Lazy)
+
+**Memory Efficiency (GPU memory per batch):**
+- DANGO:     4.0 MB (minimal - no graph edges)
+- Lazy:      1155.4 MB (full graph for all samples)
+- 1-hop:     87.8 MB (smallest subgraphs)
+- 2-hop:     811.7 MB (medium subgraphs)
+- 3-hop:     928.9 MB (largest subgraphs)
+
+**Graph Size per Sample:**
+- DANGO:     103.2 nodes, 0.0 edges (no graph in batch)
+- Lazy:      6607.0 nodes, 2527683.0 edges (full 6607-node graph + masks)
+- 1-hop:     691.6 nodes, 194228.3 edges
+- 2-hop:     3771.3 nodes, 1885256.6 edges
+- 3-hop:     4487.6 nodes, 2158920.7 edges
+
+**Effective Throughput (samples/sec):**
+- DANGO:     49476.288 samples/sec (batch=64)
+- Lazy:      41.860 samples/sec (batch=28)
+- 1-hop:     194.656 samples/sec (batch=28)
+- 2-hop:     76.300 samples/sec (batch=28)
+- 3-hop:     68.460 samples/sec (batch=28)
+
+=============================================================================
+KEY FINDINGS:
+=============================================================================
+
+1. **DANGO Performance:**
+   - Fastest method (773.067 it/s) due to minimal graph data
+   - Only stores perturbation indices, no graph structure in batches
+   - Best for pure interaction prediction without graph context
+
+2. **LazySubgraph vs NeighborSubgraph:**
+   - Lazy uses full graph (6607.0 nodes) with boolean masks
+   - 1-hop extracts ~691.6 nodes/sample (4.65× faster)
+   - 2-hop extracts ~3771.3 nodes/sample (1.82× faster)
+   - 3-hop extracts ~4487.6 nodes/sample (1.63× faster)
+
+3. **Memory Tradeoffs:**
+   - Smaller hop counts allow larger batch sizes
+   - 1-hop: max batch ~60
+   - 2-hop: max batch ~1488
+   - 3-hop: max batch ~60
+   - Lazy: max batch ~973650
+
+=============================================================================
+RECOMMENDATIONS:
+=============================================================================
+
+1. **If model needs full graph context:**
+   → Consider LazySubgraph despite slower speed
+   → All samples see complete 6607-node graph
+
+2. **If local neighborhoods sufficient:**
+   → Use 1-hop or 2-hop NeighborSubgraph
+   → Significantly faster with reasonable context
+
+3. **If speed is critical:**
+   → Use DANGO for pure interaction prediction
+   → Trade graph features for maximum throughput
+
+4. **For production training:**
+   → Balance between speed and model performance
+   → Test model accuracy vs throughput for each method
+
+=============================================================================
+OUTPUT FILES:
+=============================================================================
+
+All profiling runs (DANGO, Lazy, 1/2/3-hop):
+  experiments/006-kuzmin-tmi/profiling_results/profiling_087_2025-11-07-17-34-41/087_all_runs.log
+
+Summary report (this file):
+  experiments/006-kuzmin-tmi/profiling_results/profiling_087_2025-11-07-17-34-41/summary_2025-11-07-17-34-41.txt
+
+SLURM scheduler output:
+  experiments/006-kuzmin-tmi/slurm/output/PROFILE-087_531.out
+
+=============================================================================

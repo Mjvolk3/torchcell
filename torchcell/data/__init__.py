@@ -12,6 +12,14 @@ from .deduplicate import Deduplicator
 from .mean_experiment_deduplicate import MeanExperimentDeduplicator
 from .aggregate import Aggregator
 from .genotype_aggregate import GenotypeAggregator
+from .graph_processor import (
+    SubgraphRepresentation,
+    LazySubgraphRepresentation,
+    IncidenceSubgraphRepresentation,
+    Perturbation,
+    DCellGraphProcessor,
+    Unperturbed,
+)
 
 data = ["ExperimentReferenceIndex", "ReferenceIndex", "compute_md5_hash"]
 
@@ -36,6 +44,15 @@ functions = [
 
 gene_essentiality_to_fitness = ["GeneEssentialityToFitnessConverter"]
 
+graph_processors = [
+    "SubgraphRepresentation",
+    "LazySubgraphRepresentation",
+    "IncidenceSubgraphRepresentation",
+    "Perturbation",
+    "DCellGraphProcessor",
+    "Unperturbed",
+]
+
 __all__ = (
     data
     + base_deduplicator
@@ -44,4 +61,5 @@ __all__ = (
     + aggregators
     + dataset
     + functions
+    + graph_processors
 )

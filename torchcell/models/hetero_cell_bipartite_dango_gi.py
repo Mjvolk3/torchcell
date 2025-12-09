@@ -33,24 +33,26 @@ from sklearn.decomposition import PCA
 
 class SelfAttentionGraphAggregation(nn.Module):
     """Self-attention mechanism for aggregating multiple graph representations of the same nodes"""
-    def __init__(self, hidden_dim: int, num_graphs: int, num_heads: int = 4, dropout: float = 0.0):
+
+    def __init__(
+        self, hidden_dim: int, num_graphs: int, num_heads: int = 4, dropout: float = 0.0
+    ):
         super().__init__()
         self.num_graphs = num_graphs
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
-        
+
         # Multi-head self-attention
         self.multihead_attn = nn.MultiheadAttention(
-            hidden_dim, 
-            num_heads, 
-            dropout=dropout,
-            batch_first=True
+            hidden_dim, num_heads, dropout=dropout, batch_first=True
         )
-        
+
         # Learnable graph positional encodings
         self.graph_embeddings = nn.Parameter(torch.randn(num_graphs, hidden_dim) * 0.02)
-        
-    def forward(self, graph_outputs: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+
+    def forward(
+        self, graph_outputs: Dict[str, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             graph_outputs: Dict mapping graph names to node features [num_nodes, hidden_dim]
@@ -62,38 +64,43 @@ class SelfAttentionGraphAggregation(nn.Module):
         graph_names = sorted(graph_outputs.keys())
         if not graph_names:
             return None, None
-            
+
         # Stack graph outputs: [num_nodes, num_graphs, hidden_dim]
         stacked = torch.stack([graph_outputs[name] for name in graph_names], dim=1)
-        
+
         # Add learnable graph positional encodings
         num_nodes = stacked.size(0)
         num_actual_graphs = len(graph_names)
-        graph_emb_expanded = self.graph_embeddings[:num_actual_graphs].unsqueeze(0).expand(num_nodes, -1, -1)
+        graph_emb_expanded = (
+            self.graph_embeddings[:num_actual_graphs]
+            .unsqueeze(0)
+            .expand(num_nodes, -1, -1)
+        )
         stacked = stacked + graph_emb_expanded
-        
+
         # Apply self-attention
         attended, attn_weights = self.multihead_attn(
             query=stacked,
-            key=stacked, 
+            key=stacked,
             value=stacked,
             need_weights=True,
-            average_attn_weights=True  # Average over heads for visualization
+            average_attn_weights=True,  # Average over heads for visualization
         )
-        
+
         # Mean pooling across graphs dimension
         aggregated = attended.mean(dim=1)  # [num_nodes, hidden_dim]
-        
+
         return aggregated, attn_weights
 
 
 class PairwiseGraphAggregation(nn.Module):
     """Pairwise interaction mechanism for aggregating multiple graph representations"""
+
     def __init__(self, hidden_dim: int, graph_names: List[str], dropout: float = 0.0):
         super().__init__()
         self.graph_names = sorted(graph_names)
         self.hidden_dim = hidden_dim
-        
+
         # Pairwise interaction networks
         self.interaction_mlps = nn.ModuleDict()
         for i, g1 in enumerate(self.graph_names):
@@ -105,17 +112,19 @@ class PairwiseGraphAggregation(nn.Module):
                     nn.Dropout(dropout),
                     nn.Linear(hidden_dim, hidden_dim),
                     nn.ReLU(),
-                    nn.Dropout(dropout)
+                    nn.Dropout(dropout),
                 )
-        
+
         # Attention mechanism for aggregating interactions
         self.attention = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim // 4),
             nn.ReLU(),
-            nn.Linear(hidden_dim // 4, 1)
+            nn.Linear(hidden_dim // 4, 1),
         )
-        
-    def forward(self, graph_outputs: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+
+    def forward(
+        self, graph_outputs: Dict[str, torch.Tensor]
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Compute pairwise graph interactions and aggregate them.
         Returns:
@@ -124,47 +133,49 @@ class PairwiseGraphAggregation(nn.Module):
         """
         if not graph_outputs:
             return None, None
-            
+
         interactions = []
         interaction_pairs = []
-        
+
         for i, g1 in enumerate(self.graph_names):
             if g1 not in graph_outputs:
                 continue
             g1_feat = graph_outputs[g1]
-            
+
             for j, g2 in enumerate(self.graph_names[i:], i):
                 if g2 not in graph_outputs:
                     continue
                 g2_feat = graph_outputs[g2]
-                
+
                 # Concatenate features
                 if i == j:  # Self-interaction
                     combined = torch.cat([g1_feat, g1_feat], dim=-1)
                 else:
                     combined = torch.cat([g1_feat, g2_feat], dim=-1)
-                
+
                 # Compute interaction
                 key = f"{g1}_{g2}"
                 if key in self.interaction_mlps:
                     interaction = self.interaction_mlps[key](combined)
                     interactions.append(interaction)
                     interaction_pairs.append((g1, g2))
-        
+
         if not interactions:
             # Fallback to mean if no interactions
             return torch.stack(list(graph_outputs.values())).mean(dim=0), None
-        
+
         # Stack interactions: [num_nodes, num_interactions, hidden_dim]
         stacked = torch.stack(interactions, dim=1)
-        
+
         # Compute attention weights
-        attn_logits = self.attention(stacked).squeeze(-1)  # [num_nodes, num_interactions]
+        attn_logits = self.attention(stacked).squeeze(
+            -1
+        )  # [num_nodes, num_interactions]
         attn_weights = F.softmax(attn_logits, dim=-1)
-        
+
         # Weighted aggregation
         aggregated = (stacked * attn_weights.unsqueeze(-1)).sum(dim=1)
-        
+
         return aggregated, attn_weights
 
 
@@ -173,6 +184,7 @@ class HeteroConvAggregator(nn.Module):
     HeteroConv wrapper with configurable aggregation strategies.
     Supports: sum, mean, cross_attention, pairwise_interaction
     """
+
     def __init__(
         self,
         convs: Dict[EdgeType, nn.Module],
@@ -184,39 +196,41 @@ class HeteroConvAggregator(nn.Module):
         self.convs = nn.ModuleDict({str(k): v for k, v in convs.items()})
         self.hidden_channels = hidden_channels
         self.aggregation_method = aggregation_method
-        
+
         # Extract unique graph names from edge types
-        self.graph_names = sorted(list(set([edge_type[1] for edge_type in convs.keys()])))
-        
+        self.graph_names = sorted(
+            list(set([edge_type[1] for edge_type in convs.keys()]))
+        )
+
         # Initialize aggregation module based on method
         config = aggregation_config or {}
-        
+
         if aggregation_method == "cross_attention":
             self.aggregator = SelfAttentionGraphAggregation(
                 hidden_dim=hidden_channels,
                 num_graphs=len(self.graph_names),
                 num_heads=config.get("num_heads", 4),
-                dropout=config.get("dropout", 0.0)
+                dropout=config.get("dropout", 0.0),
             )
         elif aggregation_method == "pairwise_interaction":
             self.aggregator = PairwiseGraphAggregation(
                 hidden_dim=hidden_channels,
                 graph_names=self.graph_names,
-                dropout=config.get("dropout", 0.0)
+                dropout=config.get("dropout", 0.0),
             )
         elif aggregation_method in ["sum", "mean"]:
             self.aggregator = None  # Will use simple aggregation
         else:
             raise ValueError(f"Unknown aggregation method: {aggregation_method}")
-    
+
     def forward(
         self,
         x_dict: Dict[str, torch.Tensor],
-        edge_index_dict: Dict[EdgeType, torch.Tensor]
+        edge_index_dict: Dict[EdgeType, torch.Tensor],
     ) -> Tuple[Dict[str, torch.Tensor], Optional[torch.Tensor]]:
         """
         Apply graph convolutions and aggregate using specified method.
-        
+
         Returns:
             out_dict: Updated node features
             attention_weights: Graph aggregation weights (if applicable)
@@ -224,45 +238,47 @@ class HeteroConvAggregator(nn.Module):
         # Store outputs by destination node type and graph name
         out_dict = {}
         graph_outputs_by_dst = {}  # {dst_type: {graph_name: tensor}}
-        
+
         # Apply convolutions for each edge type
         for edge_type_str, conv in self.convs.items():
             # Parse the edge type string back to tuple
-            edge_type = eval(edge_type_str) if isinstance(edge_type_str, str) else edge_type_str
+            edge_type = (
+                eval(edge_type_str) if isinstance(edge_type_str, str) else edge_type_str
+            )
             src, rel, dst = edge_type
-            
+
             # Get the edge index for this edge type
             if edge_type in edge_index_dict:
                 edge_index = edge_index_dict[edge_type]
             else:
                 continue
-            
+
             # Apply convolution
             out = conv(x_dict[src], edge_index)
-            
+
             # Organize outputs by destination and graph
             if dst not in graph_outputs_by_dst:
                 graph_outputs_by_dst[dst] = {}
             graph_outputs_by_dst[dst][rel] = out
-        
+
         # Aggregate for each destination node type
         all_attention_weights = {}
-        
+
         for dst, graph_outputs in graph_outputs_by_dst.items():
             if not graph_outputs:
                 continue
-                
+
             if self.aggregation_method == "sum":
                 # Simple sum aggregation
                 out_dict[dst] = sum(graph_outputs.values())
                 all_attention_weights[dst] = None
-                
+
             elif self.aggregation_method == "mean":
                 # Simple mean aggregation
                 stacked = torch.stack(list(graph_outputs.values()))
                 out_dict[dst] = stacked.mean(dim=0)
                 all_attention_weights[dst] = None
-                
+
             elif self.aggregator is not None:
                 # Use learned aggregation (cross_attention or pairwise_interaction)
                 out_dict[dst], attn_weights = self.aggregator(graph_outputs)
@@ -271,9 +287,13 @@ class HeteroConvAggregator(nn.Module):
                 # Fallback to sum
                 out_dict[dst] = sum(graph_outputs.values())
                 all_attention_weights[dst] = None
-        
+
         # Return aggregated features and attention weights
-        return out_dict, all_attention_weights if any(v is not None for v in all_attention_weights.values()) else None
+        return out_dict, (
+            all_attention_weights
+            if any(v is not None for v in all_attention_weights.values())
+            else None
+        )
 
 
 class AttentionalGraphAggregation(nn.Module):
@@ -531,7 +551,7 @@ class AttentionConvWrapper(nn.Module):
     ) -> None:
         super().__init__()
         self.conv = conv
-        
+
         # Determine expected output dimension based on conv type
         if isinstance(conv, GINConv):
             # For GINConv, get output dim from the last layer of the MLP
@@ -552,7 +572,7 @@ class AttentionConvWrapper(nn.Module):
         else:
             # For other conv types that have out_channels
             expected_dim = conv.out_channels
-            
+
         self.proj = (
             nn.Identity()
             if expected_dim == target_dim
@@ -589,10 +609,10 @@ def create_conv_layer(
     out_channels: int,
     config: Dict[str, Any],
     edge_dim: Optional[int] = None,
-    dropout: float = 0.1
+    dropout: float = 0.1,
 ) -> nn.Module:
     """Create appropriate conv layer based on encoder type.
-    
+
     Args:
         encoder_type: Type of encoder - "gatv2" or "gin"
         in_channels: Input channel dimension
@@ -600,7 +620,7 @@ def create_conv_layer(
         config: Configuration dict for the encoder
         edge_dim: Edge feature dimension (for GATv2)
         dropout: Dropout rate for GIN MLP
-        
+
     Returns:
         Conv layer (GATv2Conv or GINConv)
     """
@@ -611,31 +631,27 @@ def create_conv_layer(
             heads=config.get("heads", 1),
             concat=config.get("concat", True),
             add_self_loops=config.get("add_self_loops", False),
-            edge_dim=edge_dim
+            edge_dim=edge_dim,
         )
     elif encoder_type == "gin":
         # GIN uses MLP for transformation
         gin_hidden = config.get("gin_hidden_dim") or out_channels
         gin_layers = config.get("gin_num_layers", 2)
-        
+
         # Build MLP
         mlp_layers = []
         for i in range(gin_layers):
             if i == 0:
-                mlp_layers.extend([
-                    nn.Linear(in_channels, gin_hidden),
-                    nn.ReLU(),
-                    nn.Dropout(dropout)
-                ])
+                mlp_layers.extend(
+                    [nn.Linear(in_channels, gin_hidden), nn.ReLU(), nn.Dropout(dropout)]
+                )
             elif i == gin_layers - 1:
                 mlp_layers.append(nn.Linear(gin_hidden, out_channels))
             else:
-                mlp_layers.extend([
-                    nn.Linear(gin_hidden, gin_hidden),
-                    nn.ReLU(),
-                    nn.Dropout(dropout)
-                ])
-        
+                mlp_layers.extend(
+                    [nn.Linear(gin_hidden, gin_hidden), nn.ReLU(), nn.Dropout(dropout)]
+                )
+
         mlp = nn.Sequential(*mlp_layers)
         return GINConv(mlp, train_eps=True)
     else:
@@ -687,7 +703,7 @@ class GeneInteractionDango(nn.Module):
 
         # Default config if not provided
         gene_encoder_config = gene_encoder_config or {}
-        
+
         # Get graph aggregation configuration
         self.graph_aggregation_method = gene_encoder_config.get(
             "graph_aggregation_method", "cross_attention"  # Default to cross_attention
@@ -695,7 +711,7 @@ class GeneInteractionDango(nn.Module):
         self.graph_aggregation_config = gene_encoder_config.get(
             "graph_aggregation_config", {}
         )
-        
+
         # Store attention weights for visualization
         self.last_layer_attention_weights = []
 
@@ -703,20 +719,20 @@ class GeneInteractionDango(nn.Module):
         self.convs = nn.ModuleList()
         for layer_idx in range(num_layers):
             conv_dict = {}
-            
+
             # Create a conv layer for each graph in the multigraph
             for graph_name in self.graph_names:
                 edge_type = ("gene", graph_name, "gene")
                 encoder_type = gene_encoder_config.get("encoder_type", "gatv2")
-                
+
                 conv_layer = create_conv_layer(
                     encoder_type=encoder_type,
                     in_channels=hidden_channels,
                     out_channels=hidden_channels,
                     config=gene_encoder_config,
-                    dropout=dropout
+                    dropout=dropout,
                 )
-                
+
                 # Wrap with AttentionConvWrapper
                 conv_dict[edge_type] = AttentionConvWrapper(
                     conv_layer,
@@ -725,7 +741,7 @@ class GeneInteractionDango(nn.Module):
                     activation=activation,
                     dropout=dropout,
                 )
-            
+
             # Use our custom HeteroConvAggregator with configurable aggregation
             self.convs.append(
                 HeteroConvAggregator(
@@ -734,8 +750,8 @@ class GeneInteractionDango(nn.Module):
                     aggregation_method=self.graph_aggregation_method,
                     aggregation_config={
                         **self.graph_aggregation_config,
-                        "dropout": dropout  # Pass model dropout to aggregation
-                    }
+                        "dropout": dropout,  # Pass model dropout to aggregation
+                    },
                 )
             )
 
@@ -859,10 +875,10 @@ class GeneInteractionDango(nn.Module):
             x_dict, attn_weights = conv(x_dict, edge_index_dict)
             if attn_weights is not None:
                 layer_attention_weights.append(attn_weights)
-        
+
         # Store for visualization/analysis
         self.last_layer_attention_weights = layer_attention_weights
-        
+
         return x_dict["gene"]
 
     def forward(
@@ -1114,9 +1130,11 @@ def main(cfg: DictConfig) -> None:
     from torchcell.losses.logcosh import LogCoshLoss
     from torchcell.losses.isomorphic_cell_loss import ICLoss
     from torchcell.losses.mle_dist_supcr import MleDistSupCR
+    from torchcell.losses.mle_wasserstein import MleWassSupCR
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
+    DATA_ROOT = os.getenv("DATA_ROOT")
     device = torch.device(
         "cuda"
         if torch.cuda.is_available() and cfg.trainer.accelerator.lower() == "gpu"
@@ -1136,13 +1154,21 @@ def main(cfg: DictConfig) -> None:
 
     # Build gene multigraph using the proper function
     # Initialize genome and graph for building the multigraph
-    genome = SCerevisiaeGenome()
-    sc_graph = SCerevisiaeGraph(genome=genome)
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=False,
+    )
+    graph = SCerevisiaeGraph(
+        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        string_root=osp.join(DATA_ROOT, "data/string"),
+        tflink_root=osp.join(DATA_ROOT, "data/tflink"),
+        genome=genome,
+    )
+    graph_names = cfg.cell_dataset["graphs"]
 
     # Build the multigraph with graph names from config
-    gene_multigraph = build_gene_multigraph(
-        graph=sc_graph, graph_names=cfg.cell_dataset.graphs
-    )
+    gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # Initialize the gene interaction model
     # Ensure configs are properly converted
@@ -1202,40 +1228,34 @@ def main(cfg: DictConfig) -> None:
             weights = torch.ones(1).to(device)
         else:
             weights = None
-        
+
         # Get loss configuration
         loss_config = cfg.regression_task.get("loss_config", {})
-        
+
         criterion = MleDistSupCR(
             # Lambda weights
             lambda_mse=cfg.regression_task.get("lambda_mse", 1.0),
             lambda_dist=cfg.regression_task.get("lambda_dist", 0.1),
             lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
-            
             # Component-specific parameters
             dist_bandwidth=loss_config.get("dist_bandwidth", 2.0),
             supcr_temperature=loss_config.get("supcr_temperature", 0.1),
             embedding_dim=cfg.model.hidden_channels,  # Use model's hidden_channels
-            
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
             min_samples_for_dist=loss_config.get("min_samples_for_dist", 64),
             min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 64),
-            
             # DDP configuration
             use_ddp_gather=loss_config.get("use_ddp_gather", True),
             gather_interval=loss_config.get("gather_interval", 1),
-            
             # Adaptive weighting - let it default to dynamic based on max_epochs
             use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
-            
             # Temperature scheduling
             use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
             init_temperature=loss_config.get("init_temperature", 1.0),
             final_temperature=loss_config.get("final_temperature", 0.1),
             temp_schedule=loss_config.get("temp_schedule", "exponential"),
-            
             # Other parameters
             weights=weights,
             max_epochs=cfg.trainer.max_epochs,
@@ -1245,8 +1265,58 @@ def main(cfg: DictConfig) -> None:
             f"lambda_dist={cfg.regression_task.get('lambda_dist', 0.1)}, "
             f"lambda_supcr={cfg.regression_task.get('lambda_supcr', 0.001)}"
         )
+    elif loss_type == "mle_wass_supcr":
+        # For MleWassSupCR, we need phenotype weights if weighted loss is enabled
+        if cfg.regression_task.get("is_weighted_phenotype_loss", False):
+            # For gene interaction only dataset, we have just one phenotype
+            weights = torch.ones(1).to(device)
+        else:
+            weights = None
+
+        # Get loss configuration
+        loss_config = cfg.regression_task.get("loss_config", {})
+
+        criterion = MleWassSupCR(
+            # Lambda weights
+            lambda_mse=cfg.regression_task.get("lambda_mse", 1.0),
+            lambda_wasserstein=cfg.regression_task.get("lambda_wasserstein", 0.1),
+            lambda_supcr=cfg.regression_task.get("lambda_supcr", 0.001),
+            # Wasserstein-specific parameters
+            wasserstein_blur=loss_config.get("wasserstein_blur", 0.05),
+            wasserstein_p=loss_config.get("wasserstein_p", 2),
+            wasserstein_scaling=loss_config.get("wasserstein_scaling", 0.9),
+            # SupCR-specific parameters
+            supcr_temperature=loss_config.get("supcr_temperature", 0.1),
+            embedding_dim=cfg.model.hidden_channels,  # Use model's hidden_channels
+            # Buffer configuration
+            use_buffer=loss_config.get("use_buffer", True),
+            buffer_size=loss_config.get("buffer_size", 256),
+            min_samples_for_wasserstein=loss_config.get("min_samples_for_wasserstein", 64),
+            min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 64),
+            # DDP configuration
+            use_ddp_gather=loss_config.get("use_ddp_gather", True),
+            gather_interval=loss_config.get("gather_interval", 1),
+            # Adaptive weighting
+            use_adaptive_weighting=loss_config.get("use_adaptive_weighting", True),
+            # Temperature scheduling
+            use_temp_scheduling=loss_config.get("use_temp_scheduling", True),
+            init_temperature=loss_config.get("init_temperature", 1.0),
+            final_temperature=loss_config.get("final_temperature", 0.1),
+            temp_schedule=loss_config.get("temp_schedule", "exponential"),
+            # Other parameters
+            weights=weights,
+            max_epochs=cfg.trainer.max_epochs,
+        )
+        print(
+            f"Using MleWassSupCR with lambda_mse={cfg.regression_task.get('lambda_mse', 1.0)}, "
+            f"lambda_wasserstein={cfg.regression_task.get('lambda_wasserstein', 0.1)}, "
+            f"lambda_supcr={cfg.regression_task.get('lambda_supcr', 0.001)}"
+        )
     else:
         raise ValueError(f"Unknown loss type: {loss_type}")
+
+    # Move criterion to the same device as the model
+    criterion = criterion.to(device)
 
     # Optimizer
     optimizer = torch.optim.AdamW(
@@ -1323,6 +1393,8 @@ def main(cfg: DictConfig) -> None:
             loss_label = "LogCosh Loss"
         elif loss_type == "icloss":
             loss_label = "ICLoss"
+        elif loss_type == "mle_wass_supcr":
+            loss_label = "MleWassSupCR"
         else:
             loss_label = "MleDistSupCR"
 
@@ -1362,12 +1434,25 @@ def main(cfg: DictConfig) -> None:
             true_np = y.cpu().numpy()
             pred_np = current_predictions.squeeze().cpu().numpy()
 
-            # Current correlation
+            # Current correlation with numerical stability check
             valid_mask = ~np.isnan(true_np)
             if np.sum(valid_mask) > 0:
-                current_corr = np.corrcoef(pred_np[valid_mask], true_np[valid_mask])[
-                    0, 1
-                ]
+                # Check for sufficient variance in predictions
+                pred_std = np.std(pred_np[valid_mask])
+                true_std = np.std(true_np[valid_mask])
+
+                if pred_std < 1e-8 or true_std < 1e-8:
+                    # If either variable has near-zero variance, correlation is undefined
+                    current_corr = 0.0
+                else:
+                    try:
+                        corr_matrix = np.corrcoef(pred_np[valid_mask], true_np[valid_mask])
+                        current_corr = corr_matrix[0, 1]
+                        # Check for NaN and replace with 0
+                        if np.isnan(current_corr):
+                            current_corr = 0.0
+                    except:
+                        current_corr = 0.0
             else:
                 current_corr = 0.0
         model.train()
@@ -1545,7 +1630,7 @@ def main(cfg: DictConfig) -> None:
                 global_weights,
                 "b-",
                 label="Global weight",
-        )
+            )
             plt.plot(
                 range(1, len(local_weights) + 1),
                 local_weights,
@@ -1587,9 +1672,9 @@ def main(cfg: DictConfig) -> None:
             plt.ylim(0, 1)
 
         # ROW 4: ICLoss components with L2, Unweighted losses with L2, Dist-MSE diff
-        # Weighted Loss components evolution with L2 norm (for ICLoss/MleDistSupCR)
+        # Weighted Loss components evolution with L2 norm (for ICLoss/MleDistSupCR/MleWassSupCR)
         plt.subplot(5, 3, 10)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract components
@@ -1603,8 +1688,10 @@ def main(cfg: DictConfig) -> None:
             plt.plot(
                 epochs_range, weighted_mse, "b-", label="Weighted MSE", linewidth=2
             )
+            # Use appropriate label based on loss type
+            dist_label = "Weighted Wasserstein" if loss_type == "mle_wass_supcr" else "Weighted Dist"
             plt.plot(
-                epochs_range, weighted_dist, "r-", label="Weighted Dist", linewidth=2
+                epochs_range, weighted_dist, "r-", label=dist_label, linewidth=2
             )
             plt.plot(
                 epochs_range, weighted_supcr, "g-", label="Weighted SupCR", linewidth=2
@@ -1626,14 +1713,20 @@ def main(cfg: DictConfig) -> None:
 
             plt.xlabel("Epoch")
             plt.ylabel("Loss Component Value")
-            plt.title("Weighted ICLoss Components with L2 Norm")
+            if loss_type == "icloss":
+                loss_name = "ICLoss"
+            elif loss_type == "mle_wass_supcr":
+                loss_name = "MleWassSupCR"
+            else:
+                loss_name = "MleDistSupCR"
+            plt.title(f"Weighted {loss_name} Components with L2 Norm")
             plt.grid(True, alpha=0.3)
             plt.legend()
             plt.yscale("log")
 
         # Unweighted loss components with L2 norm
         plt.subplot(5, 3, 11)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract unweighted components
@@ -1643,7 +1736,9 @@ def main(cfg: DictConfig) -> None:
 
             # Plot all loss components on same scale
             plt.plot(epochs_range, mse_loss, "b-", label="MSE Loss", linewidth=2)
-            plt.plot(epochs_range, dist_loss, "r-", label="Dist Loss", linewidth=2)
+            # Use appropriate label based on loss type
+            dist_label = "Wasserstein Loss" if loss_type == "mle_wass_supcr" else "Dist Loss"
+            plt.plot(epochs_range, dist_loss, "r-", label=dist_label, linewidth=2)
             plt.plot(epochs_range, supcr_loss, "g-", label="SupCR Loss", linewidth=2)
 
             # Add L2 norm if available (without weight decay for unweighted plot)
@@ -1667,7 +1762,7 @@ def main(cfg: DictConfig) -> None:
 
         # Dist Loss vs MSE Loss difference
         plt.subplot(5, 3, 12)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr"]:
+        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Calculate difference between unweighted dist and mse losses
@@ -2082,11 +2177,13 @@ def main(cfg: DictConfig) -> None:
             # Handle different loss functions
             if isinstance(criterion, LogCoshLoss):
                 loss = criterion(predictions.squeeze(), y)
-            elif isinstance(criterion, (ICLoss, MleDistSupCR)):
-                # ICLoss and MleDistSupCR expect z_p as third argument
+            elif isinstance(criterion, (ICLoss, MleDistSupCR, MleWassSupCR)):
+                # ICLoss, MleDistSupCR, and MleWassSupCR expect z_p as third argument
                 z_p = representations.get("z_p")
                 if z_p is None:
-                    raise ValueError("ICLoss/MleDistSupCR requires z_p from model representations")
+                    raise ValueError(
+                        "ICLoss/MleDistSupCR/MleWassSupCR requires z_p from model representations"
+                    )
 
                 # ICLoss expects inputs with shape [batch_size, num_phenotypes]
                 # For gene interaction only, we need to add a dummy dimension
@@ -2101,11 +2198,16 @@ def main(cfg: DictConfig) -> None:
                 y_reshaped = y_reshaped.unsqueeze(1)  # [batch_size, 1]
 
                 loss_output = criterion(pred_reshaped, y_reshaped, z_p)
-                # ICLoss and MleDistSupCR return tuple (loss, loss_dict)
+                # ICLoss, MleDistSupCR, and MleWassSupCR return tuple (loss, loss_dict)
                 loss = loss_output[0]
                 loss_dict = loss_output[1]
                 # You can log additional loss components if needed
-                loss_name = "ICLoss" if isinstance(criterion, ICLoss) else "MleDistSupCR"
+                if isinstance(criterion, ICLoss):
+                    loss_name = "ICLoss"
+                elif isinstance(criterion, MleWassSupCR):
+                    loss_name = "MleWassSupCR"
+                else:
+                    loss_name = "MleDistSupCR"
                 print(
                     f"  {loss_name} components: mse={loss_dict['mse_loss']:.4f}, dist={loss_dict['weighted_dist']:.4f}, supcr={loss_dict['weighted_supcr']:.4f}"
                 )
@@ -2122,12 +2224,21 @@ def main(cfg: DictConfig) -> None:
                     }
                 )
                 # Track lambda values (fixed hyperparameters only for gene interaction)
-                lambda_values_history.append(
-                    {
-                        "lambda_dist": cfg.regression_task.lambda_dist,
-                        "lambda_supcr": cfg.regression_task.lambda_supcr,
-                    }
-                )
+                # Track lambda values - use lambda_wasserstein for MleWassSupCR
+                if isinstance(criterion, MleWassSupCR):
+                    lambda_values_history.append(
+                        {
+                            "lambda_dist": cfg.regression_task.get("lambda_wasserstein", 0.1),
+                            "lambda_supcr": cfg.regression_task.lambda_supcr,
+                        }
+                    )
+                else:
+                    lambda_values_history.append(
+                        {
+                            "lambda_dist": cfg.regression_task.lambda_dist,
+                            "lambda_supcr": cfg.regression_task.lambda_supcr,
+                        }
+                    )
             else:
                 loss = criterion(predictions.squeeze(), y)
 
@@ -2138,13 +2249,35 @@ def main(cfg: DictConfig) -> None:
                 valid_mask = ~np.isnan(target_np)
 
                 if np.sum(valid_mask) > 0:
-                    correlation = np.corrcoef(
-                        pred_np[valid_mask], target_np[valid_mask]
-                    )[0, 1]
-                    # Calculate Spearman correlation
-                    spearman_corr, _ = stats.spearmanr(
-                        pred_np[valid_mask], target_np[valid_mask]
-                    )
+                    # Check for sufficient variance before calculating correlation
+                    pred_std = np.std(pred_np[valid_mask])
+                    target_std = np.std(target_np[valid_mask])
+
+                    if pred_std < 1e-8 or target_std < 1e-8:
+                        # Near-zero variance makes correlation undefined
+                        correlation = 0.0
+                        spearman_corr = 0.0
+                    else:
+                        try:
+                            corr_matrix = np.corrcoef(
+                                pred_np[valid_mask], target_np[valid_mask]
+                            )
+                            correlation = corr_matrix[0, 1]
+                            if np.isnan(correlation):
+                                correlation = 0.0
+                        except:
+                            correlation = 0.0
+
+                        try:
+                            # Calculate Spearman correlation
+                            spearman_corr, _ = stats.spearmanr(
+                                pred_np[valid_mask], target_np[valid_mask]
+                            )
+                            if np.isnan(spearman_corr):
+                                spearman_corr = 0.0
+                        except:
+                            spearman_corr = 0.0
+
                     mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
                     mae = np.mean(np.abs(pred_np[valid_mask] - target_np[valid_mask]))
                     rmse = np.sqrt(mse)  # Calculate RMSE
@@ -2246,12 +2379,32 @@ def main(cfg: DictConfig) -> None:
                     updated_predictions, _ = model(cell_graph, batch)
                     updated_pred_np = updated_predictions.squeeze().cpu().numpy()
                     if np.sum(valid_mask) > 0:
-                        updated_correlation = np.corrcoef(
-                            updated_pred_np[valid_mask], target_np[valid_mask]
-                        )[0, 1]
-                        updated_spearman, _ = stats.spearmanr(
-                            updated_pred_np[valid_mask], target_np[valid_mask]
-                        )
+                        # Check variance before calculating updated correlations
+                        pred_std = np.std(updated_pred_np[valid_mask])
+                        target_std = np.std(target_np[valid_mask])
+
+                        if pred_std < 1e-8 or target_std < 1e-8:
+                            updated_correlation = 0.0
+                            updated_spearman = 0.0
+                        else:
+                            try:
+                                corr_matrix = np.corrcoef(
+                                    updated_pred_np[valid_mask], target_np[valid_mask]
+                                )
+                                updated_correlation = corr_matrix[0, 1]
+                                if np.isnan(updated_correlation):
+                                    updated_correlation = 0.0
+                            except:
+                                updated_correlation = 0.0
+
+                            try:
+                                updated_spearman, _ = stats.spearmanr(
+                                    updated_pred_np[valid_mask], target_np[valid_mask]
+                                )
+                                if np.isnan(updated_spearman):
+                                    updated_spearman = 0.0
+                            except:
+                                updated_spearman = 0.0
                         # Update the last values in the lists
                         correlations[-1] = updated_correlation
                         spearman_correlations[-1] = updated_spearman
@@ -2303,12 +2456,32 @@ def main(cfg: DictConfig) -> None:
         valid_mask = ~np.isnan(target_np)
 
         if np.sum(valid_mask) > 0:
-            final_correlation = np.corrcoef(pred_np[valid_mask], target_np[valid_mask])[
-                0, 1
-            ]
-            final_spearman, _ = stats.spearmanr(
-                pred_np[valid_mask], target_np[valid_mask]
-            )
+            # Check variance for final correlation calculations
+            pred_std = np.std(pred_np[valid_mask])
+            target_std = np.std(target_np[valid_mask])
+
+            if pred_std < 1e-8 or target_std < 1e-8:
+                final_correlation = 0.0
+                final_spearman = 0.0
+                print(f"Warning: Low variance in predictions (std={pred_std:.2e}) or targets (std={target_std:.2e})")
+                print("Correlation is undefined with near-constant values")
+            else:
+                try:
+                    corr_matrix = np.corrcoef(pred_np[valid_mask], target_np[valid_mask])
+                    final_correlation = corr_matrix[0, 1]
+                    if np.isnan(final_correlation):
+                        final_correlation = 0.0
+                except:
+                    final_correlation = 0.0
+
+                try:
+                    final_spearman, _ = stats.spearmanr(
+                        pred_np[valid_mask], target_np[valid_mask]
+                    )
+                    if np.isnan(final_spearman):
+                        final_spearman = 0.0
+                except:
+                    final_spearman = 0.0
             final_mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
             final_mae = np.mean(np.abs(pred_np[valid_mask] - target_np[valid_mask]))
             final_rmse = np.sqrt(final_mse)
@@ -2326,7 +2499,14 @@ def main(cfg: DictConfig) -> None:
             plt.figure(figsize=(20, 12))
 
             # Determine loss label for final plots
-            loss_label = "LogCosh Loss" if loss_type == "logcosh" else "ICLoss"
+            if loss_type == "logcosh":
+                loss_label = "LogCosh Loss"
+            elif loss_type == "icloss":
+                loss_label = "ICLoss"
+            elif loss_type == "mle_wass_supcr":
+                loss_label = "MleWassSupCR"
+            else:
+                loss_label = "MleDistSupCR"
 
             # Loss curve
             plt.subplot(3, 4, 1)

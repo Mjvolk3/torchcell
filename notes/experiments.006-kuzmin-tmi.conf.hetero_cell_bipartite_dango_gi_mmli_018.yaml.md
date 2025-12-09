@@ -1,7 +1,9 @@
 ---
 id: eum97l77licyhifqb4x3oth
 title: MMLI 018 Config Justification
-desc: 'Justification for MMLI 018 configuration as complementary experiment to CABBI 017'
+desc: >-
+  Justification for MMLI 018 configuration as complementary experiment to CABBI
+  017
 updated: 1753238150996
 created: 1753231391117
 ---

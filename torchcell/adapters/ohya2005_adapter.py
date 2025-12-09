@@ -11,7 +11,7 @@ from biocypher._create import BioCypherEdge, BioCypherNode
 from biocypher._logger import get_logger
 import logging
 from typing import Set
-from torchcell.datasets.scerevisiae.Ohya2005 import (
+from torchcell.datasets.scerevisiae.ohya2005 import (
     ScmdOhya2005Dataset,
 )
 from torchcell.adapters.cell_adapter import CellAdapter

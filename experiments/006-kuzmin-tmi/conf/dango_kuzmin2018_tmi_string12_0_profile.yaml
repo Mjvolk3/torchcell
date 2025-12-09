@@ -1,0 +1,69 @@
+# experiments/006-kuzmin-tmi/conf/dango_kuzmin2018_tmi_string12_0_profile.yaml
+# Profile configuration for Dango model with STRING12.0 networks
+# For fair comparison with GeneInteractionDango profiling
+defaults:
+  - dango_kuzmin2018_tmi_string12_0
+  - _self_
+
+wandb:
+  project: torchcell_006-kuzmin2018-tmi_dango
+  tags: [profile, analysis, string12_0, dango]
+
+cell_dataset:
+  graphs: [
+    string12_0_neighborhood,
+    string12_0_fusion,
+    string12_0_cooccurence,
+    string12_0_coexpression,
+    string12_0_experimental,
+    string12_0_database,
+  ]
+  node_embeddings: null
+
+profiler:
+  enabled: true
+  is_pytorch: true
+
+data_module:
+  is_perturbation_subset: true  # Use subset for faster profiling
+  perturbation_subset_size: 100  # Small subset
+  batch_size: 8  # Smaller batch for detailed analysis
+  num_workers: 0  # Single worker for cleaner profiling
+  pin_memory: false  # Disable for profiling
+  prefetch: false
+
+trainer:
+  max_epochs: 220  # With DDP (4 GPUs): 100 samples / (8*4) = 3 steps/epoch → need 220 epochs for 660 steps
+  strategy: ddp  # DDP with 4 GPUs to match lazy hetero profiling
+  num_nodes: 1
+  accelerator: gpu
+  devices: 4  # 4 GPUs for DDP profiling (match lazy hetero)
+  overfit_batches: 0
+
+model:
+  hidden_channels: 64
+  num_heads: 4  # Number of attention heads in HyperSAGNN
+
+regression_task:
+  loss: "dango"
+  loss_scheduler:
+    type: "LinearUntilUniform"
+    transition_epoch: 10
+  is_weighted_phenotype_loss: false
+  optimizer:
+    type: "AdamW"
+    lr: 1e-5
+    weight_decay: 1e-6
+  lr_scheduler:
+    type: "ReduceLROnPlateau"  # Match production config structure
+    mode: "min"
+    factor: 0.5  # Won't matter for 1 epoch
+    patience: 10  # High patience so it won't trigger in 1 epoch
+    threshold: 1e-4
+    threshold_mode: "rel"
+    cooldown: 0
+    min_lr: 1e-9
+    eps: 1e-10
+  clip_grad_norm: false  # Disable for cleaner profiling
+  plot_sample_ceiling: 0  # No plotting during profile
+  plot_every_n_epochs: 1000  # Large value to prevent plotting in single epoch

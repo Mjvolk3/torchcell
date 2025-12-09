@@ -1,3 +1,8 @@
+# torchcell/viz/graph_recovery
+# [[torchcell.viz.graph_recovery]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/viz/graph_recovery
+# Test file: tests/torchcell/viz/test_graph_recovery.py
+
 import io
 import os
 import os.path as osp

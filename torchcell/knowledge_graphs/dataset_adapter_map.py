@@ -22,7 +22,7 @@ from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
-from torchcell.datasets.scerevisiae.Ohya2005 import ScmdOhya2005Dataset
+from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
 from torchcell.adapters import (
     SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,

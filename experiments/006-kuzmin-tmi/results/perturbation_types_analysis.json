@@ -1,0 +1,331 @@
+{
+  "summary": {
+    "total_perturbations": 996939,
+    "perturbation_type_counts": {
+      "deletion": 956007,
+      "allele": 26644,
+      "temperature_sensitive_allele": 14288
+    },
+    "by_dataset": {
+      "TmiKuzmin2018Dataset": {
+        "deletion": 230811,
+        "allele": 26644,
+        "temperature_sensitive_allele": 14288
+      },
+      "TmiKuzmin2020Dataset": {
+        "deletion": 695085
+      },
+      "TmiKuzmin2020Dataset+TmiKuzmin2020Dataset": {
+        "deletion": 28704
+      },
+      "TmiKuzmin2018Dataset+TmiKuzmin2020Dataset": {
+        "deletion": 1224
+      },
+      "TmiKuzmin2018Dataset+TmiKuzmin2018Dataset": {
+        "deletion": 183
+      }
+    }
+  },
+  "non_deletion_examples": [
+    {
+      "index": 0,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YLR459W",
+      "full_perturbation": {
+        "systematic_gene_name": "YLR459W",
+        "perturbed_gene_name": "gab1-2",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YLR459W+YPR109W_tm2468",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 1,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "temperature_sensitive_allele",
+      "gene": "YDL017W",
+      "full_perturbation": {
+        "systematic_gene_name": "YDL017W",
+        "perturbed_gene_name": "cdc7-1",
+        "description": "Temperature sensitive allele compromised by amino acid substitution.",
+        "perturbation_type": "temperature_sensitive_allele",
+        "ts_allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YDL017W_tsa880",
+        "temperature_sensitive_allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100004,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YOR075W",
+      "full_perturbation": {
+        "systematic_gene_name": "YOR075W",
+        "perturbed_gene_name": "ufe1-1",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YOR075W+YLL038C_tm2448",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 10001,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YGL093W",
+      "full_perturbation": {
+        "systematic_gene_name": "YGL093W",
+        "perturbed_gene_name": "spc105-15",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YGL093W+YKL052C_tm2474",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 10001,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YKL052C",
+      "full_perturbation": {
+        "systematic_gene_name": "YKL052C",
+        "perturbed_gene_name": "ask1-3",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YGL093W+YKL052C_tm2474",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100013,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YIR006C",
+      "full_perturbation": {
+        "systematic_gene_name": "YIR006C",
+        "perturbed_gene_name": "pan1-4",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YIR006C+YMR036C_tm2456",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100105,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YGL137W",
+      "full_perturbation": {
+        "systematic_gene_name": "YGL137W",
+        "perturbed_gene_name": "sec27-1",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YGL137W+YOR164C_tm2464",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100126,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "temperature_sensitive_allele",
+      "gene": "YJL091C",
+      "full_perturbation": {
+        "systematic_gene_name": "YJL091C",
+        "perturbed_gene_name": "gwt1-20",
+        "description": "Temperature sensitive allele compromised by amino acid substitution.",
+        "perturbation_type": "temperature_sensitive_allele",
+        "ts_allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YJL091C_tsa655",
+        "temperature_sensitive_allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100130,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "temperature_sensitive_allele",
+      "gene": "YOR236W",
+      "full_perturbation": {
+        "systematic_gene_name": "YOR236W",
+        "perturbed_gene_name": "dfr1-td",
+        "description": "Temperature sensitive allele compromised by amino acid substitution.",
+        "perturbation_type": "temperature_sensitive_allele",
+        "ts_allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YOR236W_tsa884",
+        "temperature_sensitive_allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 10016,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YLR347C",
+      "full_perturbation": {
+        "systematic_gene_name": "YLR347C",
+        "perturbed_gene_name": "kap95-E126K",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YLR347C+YHR167W_tm2442",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100176,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YBR087W",
+      "full_perturbation": {
+        "systematic_gene_name": "YBR087W",
+        "perturbed_gene_name": "rfc5-1",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YBR087W+YDR386W_tm2436",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100187,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YFL045C",
+      "full_perturbation": {
+        "systematic_gene_name": "YFL045C",
+        "perturbed_gene_name": "sec53-6",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YFL045C+YJL097W_tm2488",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100187,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YJL097W",
+      "full_perturbation": {
+        "systematic_gene_name": "YJL097W",
+        "perturbed_gene_name": "phs1-1",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YFL045C+YJL097W_tm2488",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100222,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YPL085W",
+      "full_perturbation": {
+        "systematic_gene_name": "YPL085W",
+        "perturbed_gene_name": "sec16-2",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YPL085W+YLR292C_tm2453",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100255,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YIR006C",
+      "full_perturbation": {
+        "systematic_gene_name": "YIR006C",
+        "perturbed_gene_name": "pan1-4",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YIR006C+YMR036C_tm2456",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100277,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YBR152W",
+      "full_perturbation": {
+        "systematic_gene_name": "YBR152W",
+        "perturbed_gene_name": "SPP381-ph",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YBR152W+YKL074C_tm2627",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 10029,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YFR051C",
+      "full_perturbation": {
+        "systematic_gene_name": "YFR051C",
+        "perturbed_gene_name": "ret2-1",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YFR051C+YDL099W_tm2471",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100310,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YIR006C",
+      "full_perturbation": {
+        "systematic_gene_name": "YIR006C",
+        "perturbed_gene_name": "pan1-4",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YIR006C+YMR036C_tm2456",
+        "allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100323,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "temperature_sensitive_allele",
+      "gene": "YJR017C",
+      "full_perturbation": {
+        "systematic_gene_name": "YJR017C",
+        "perturbed_gene_name": "ess1-H164R",
+        "description": "Temperature sensitive allele compromised by amino acid substitution.",
+        "perturbation_type": "temperature_sensitive_allele",
+        "ts_allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YJR017C_tsa698",
+        "temperature_sensitive_allele_perturbation_type": "SGA"
+      }
+    },
+    {
+      "index": 100347,
+      "dataset_name": "TmiKuzmin2018Dataset",
+      "perturbation_type": "allele",
+      "gene": "YLR383W",
+      "full_perturbation": {
+        "systematic_gene_name": "YLR383W",
+        "perturbed_gene_name": "smc6-9",
+        "description": "Allele compromised by amino acid substitution without more genericphenotypic information specified.",
+        "perturbation_type": "allele",
+        "allele_description": "Ts Allele Perturbation information specific to SGA experiments.",
+        "strain_id": "YLR383W+YLR135W_tm2450",
+        "allele_perturbation_type": "SGA"
+      }
+    }
+  ]
+}

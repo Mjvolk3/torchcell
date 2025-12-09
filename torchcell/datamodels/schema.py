@@ -128,7 +128,7 @@ class TsAllelePerturbation(GenePerturbation, ModelStrict):
 
 class AllelePerturbation(GenePerturbation, ModelStrict):
     description: str = (
-        "Allele compromised by amino acid substitution without more generic"
+        "Allele compromised by amino acid substitution without more generic "
         "phenotypic information specified."
     )
     # seq: str = "NOT IMPLEMENTED"

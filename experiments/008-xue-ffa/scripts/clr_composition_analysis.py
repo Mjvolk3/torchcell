@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Model C: Composition (CLR) analysis for FFA production data.
+CLR Composition analysis for FFA production data.
 Separates capacity (total production) vs mixture (which FFAs are produced).
 """
 
@@ -17,7 +17,6 @@ from typing import Dict, List, Tuple, Optional
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import pickle
 
 warnings.filterwarnings('ignore')
 
@@ -198,7 +197,7 @@ def compute_clr_transform(df: pd.DataFrame) -> pd.DataFrame:
 
 def model_c_clr_single_chain(df: pd.DataFrame, chain: str) -> Dict:
     """
-    Model C for a single FFA chain using CLR transformation.
+    CLR analysis for a single FFA chain using CLR transformation.
     Analyzes composition-only epistasis.
     """
     results = {}
@@ -292,8 +291,8 @@ def model_c_clr_single_chain(df: pd.DataFrame, chain: str) -> Dict:
 
 def model_c_total_capacity(df: pd.DataFrame) -> Dict:
     """
-    Model C for total titer (capacity analysis).
-    Same as Model A but specifically for total titer.
+    Total titer capacity analysis.
+    Same as log-OLS but specifically for total titer.
     """
     results = {}
     trait_col = 'Total Titer'
@@ -452,8 +451,106 @@ def combine_capacity_and_composition(total_results: Dict, chain_results: Dict, c
     return combined
 
 
+def save_clr_results_to_csv(model_c_results: Dict, output_dir: Path):
+    """
+    Save CLR Composition Analysis results to CSV files for compatibility with other models.
+
+    Creates separate files for digenic and trigenic interactions, both for total capacity
+    and for each FFA composition.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Prepare data for total capacity
+    if 'total' in model_c_results and 'epistasis' in model_c_results['total']:
+        total_data = []
+        for gene_set, data in model_c_results['total']['epistasis'].items():
+            total_data.append({
+                'gene_set': gene_set,
+                'interaction_type': data['order'],
+                'ffa_type': 'Total Capacity',
+                'interaction_score': data['E_tot'],
+                'epistatic_fold': data['phi_tot'],
+                'p_value': data['pvalue'],
+                'significant_p05': data['pvalue'] < 0.05,
+                'standard_error': data.get('se', 0)
+            })
+
+        if total_data:
+            df_total = pd.DataFrame(total_data)
+
+            # Save digenic and trigenic separately
+            df_digenic = df_total[df_total['interaction_type'] == 'digenic']
+            df_trigenic = df_total[df_total['interaction_type'] == 'trigenic']
+
+            if not df_digenic.empty:
+                df_digenic.to_csv(output_dir / 'clr_capacity_digenic_interactions.csv', index=False)
+                print(f"  Saved {len(df_digenic)} digenic capacity interactions")
+
+            if not df_trigenic.empty:
+                df_trigenic.to_csv(output_dir / 'clr_capacity_trigenic_interactions.csv', index=False)
+                print(f"  Saved {len(df_trigenic)} trigenic capacity interactions")
+
+    # Prepare data for each FFA composition
+    all_composition_data = []
+    for chain in FFA_CHAINS:
+        if chain in model_c_results and 'epistasis' in model_c_results[chain]:
+            for gene_set, data in model_c_results[chain]['epistasis'].items():
+                all_composition_data.append({
+                    'gene_set': gene_set,
+                    'interaction_type': data['order'],
+                    'ffa_type': chain,
+                    'interaction_score': data['E_mix'],
+                    'epistatic_fold': data['phi_mix'],
+                    'p_value': data['pvalue'],
+                    'significant_p05': data['pvalue'] < 0.05,
+                    'standard_error': data.get('se', 0)
+                })
+
+    if all_composition_data:
+        df_comp = pd.DataFrame(all_composition_data)
+
+        # Save digenic and trigenic separately
+        df_digenic = df_comp[df_comp['interaction_type'] == 'digenic']
+        df_trigenic = df_comp[df_comp['interaction_type'] == 'trigenic']
+
+        if not df_digenic.empty:
+            df_digenic.to_csv(output_dir / 'clr_composition_digenic_interactions.csv', index=False)
+            print(f"  Saved {len(df_digenic)} digenic composition interactions")
+
+        if not df_trigenic.empty:
+            df_trigenic.to_csv(output_dir / 'clr_composition_trigenic_interactions.csv', index=False)
+            print(f"  Saved {len(df_trigenic)} trigenic composition interactions")
+
+    # Also save combined analysis (capacity + composition effects)
+    combined_data = []
+    for chain in FFA_CHAINS:
+        combined_key = f'{chain}_combined'
+        if combined_key in model_c_results:
+            for gene_set, data in model_c_results[combined_key].items():
+                combined_data.append({
+                    'gene_set': gene_set,
+                    'interaction_type': data['order'],
+                    'ffa_type': chain,
+                    'E_capacity': data['E_tot'],
+                    'E_composition': data['E_mix'],
+                    'E_combined': data['E_combined'],
+                    'phi_capacity': data['phi_tot'],
+                    'phi_composition': data['phi_mix'],
+                    'phi_combined': data['phi_combined'],
+                    'p_value_capacity': data['pvalue_tot'],
+                    'p_value_composition': data['pvalue_mix'],
+                    'effect_type': data['type']
+                })
+
+    if combined_data:
+        df_combined = pd.DataFrame(combined_data)
+        df_combined.to_csv(output_dir / 'clr_combined_effects.csv', index=False)
+        print(f"  Saved {len(df_combined)} combined effect classifications")
+
+
 def main():
-    """Main execution function for Model C (CLR)."""
+    """Main execution function for CLR Composition Analysis."""
     print("Loading FFA data...")
 
     # Use the correct data file location
@@ -475,9 +572,9 @@ def main():
         if n_ko > 0:
             print(f"  {col}: {n_ko} observations")
 
-    # Run Model C
+    # Run CLR Composition Analysis
     print("\n" + "="*60)
-    print("MODEL C - Composition (CLR) Analysis")
+    print("CLR Composition Analysis")
     print("="*60)
 
     # First, analyze total capacity
@@ -518,14 +615,9 @@ def main():
             print(f"  Classification: {capacity_only} capacity-only, "
                   f"{composition_only} composition-only, {both} both")
 
-    # Save results
-    print("\nSaving Model C results...")
-    with open(RESULTS_DIR / 'model_c_clr_results.pkl', 'wb') as f:
-        pickle.dump({'model_c': model_c_results}, f)
-
     # Summary
     print("\n" + "="*60)
-    print("SUMMARY - MODEL C (CLR)")
+    print("SUMMARY - CLR Composition Analysis")
     print("="*60)
 
     print("\nTotal Capacity:")
@@ -539,8 +631,11 @@ def main():
             print(f"  Significant effects: {result['n_sig_digenic']} digenic, "
                   f"{result['n_sig_trigenic']} trigenic")
 
+    # Save results to CSV files for compatibility with other scripts
+    save_clr_results_to_csv(model_c_results, RESULTS_DIR)
+
     print(f"\nResults saved to {RESULTS_DIR}")
-    print("Model C (CLR) analysis complete!")
+    print("CLR Composition analysis complete!")
 
 
 if __name__ == "__main__":

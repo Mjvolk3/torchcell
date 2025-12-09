@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 """
-Final corrected GLM-based epistatic interaction analysis for FFA production data.
-Properly implements Model A as the primary model according to specification.
+Log-OLS with WT-differencing epistatic interaction analysis for FFA production data.
+Implements primary model using log-transformed fitness with WT-differencing.
 """
 
 import numpy as np
@@ -13,14 +13,15 @@ from scipy import stats
 import statsmodels.api as sm
 from statsmodels.genmod.families import Gamma
 from statsmodels.genmod.families.links import Log
+from statsmodels.stats.multitest import multipletests
 import warnings
 from itertools import combinations
 from typing import Dict, List, Tuple, Optional
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-import pickle
 import json
+from torchcell.timestamp import timestamp
 
 warnings.filterwarnings('ignore')
 
@@ -282,104 +283,128 @@ def model_a_log_ols(df: pd.DataFrame, trait_col: str) -> Dict:
     return results
 
 
-def model_b_glm(df: pd.DataFrame, trait_col: str) -> Dict:
-    """Model B: GLM with Gamma family and log link (robustness check)."""
-    results = {}
+def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
+    """Save results to files including CSV format matching multiplicative model."""
+    # Build comprehensive summary JSON matching standardized format
+    summary = {}
 
-    # Prepare data - EXCLUDE reference strain (WT)
-    # The reference level is captured by the intercept
-    model_df = df[~df['is_reference']].copy()
-    model_df = model_df.dropna(subset=[trait_col])
+    # Create overall summary
+    overall_dig = 0
+    overall_tri = 0
+    overall_sig_dig = 0
+    overall_sig_tri = 0
 
-    if len(model_df) == 0:
-        return {}
+    for trait in results:
+        if results[trait]:
+            overall_dig += results[trait].get('n_digenic', 0)
+            overall_tri += results[trait].get('n_trigenic', 0)
+            overall_sig_dig += results[trait].get('n_sig_digenic', 0)
+            overall_sig_tri += results[trait].get('n_sig_trigenic', 0)
 
-    # Create design matrix
-    X = create_design_matrix(model_df)
+            # Extract effect sizes from epistasis dict
+            epistasis = results[trait].get('epistasis', {})
+            dig_effects = [abs(v['E']) for v in epistasis.values() if v['order'] == 'digenic']
+            tri_effects = [abs(v['E']) for v in epistasis.values() if v['order'] == 'trigenic']
 
-    # Add replicate effects
-    for rep in model_df['replicate'].unique():
-        if rep != 1:
-            X[f'rep_{rep}'] = (model_df['replicate'] == rep).astype(int)
-
-    y = model_df[trait_col]
-
-    # Fit GLM
-    try:
-        glm_family = Gamma(link=Log())
-        model = sm.GLM(y, X, family=glm_family)
-        fit = model.fit()
-    except Exception as e:
-        print(f"Error fitting GLM for {trait_col}: {e}")
-        return {}
-
-    # Store results
-    results['model'] = fit
-    results['coefficients'] = fit.params
-    results['std_errors'] = fit.bse
-    results['pvalues'] = fit.pvalues
-
-    # Calculate pseudo-R² (McFadden's R²)
-    # McFadden's R² = 1 - (deviance / null deviance)
-    results['pseudo_r_squared'] = 1 - (fit.deviance / fit.null_deviance)
-    results['deviance'] = fit.deviance
-    results['null_deviance'] = fit.null_deviance
-
-    # Extract epistatic interactions
-    epistasis = {}
-
-    for param in fit.params.index:
-        if ':' in param and 'rep_' not in param:
-            n_interactions = param.count(':')
-            clean_name = param.replace('ko_', '')
-
-            epistasis[clean_name] = {
-                'gamma': fit.params[param],
-                'phi': np.exp(fit.params[param]),
-                'se': fit.bse[param],
-                'pvalue': fit.pvalues[param],
-                'order': 'digenic' if n_interactions == 1 else 'trigenic'
+            summary[trait] = {
+                'n_digenic': results[trait].get('n_digenic', 0),
+                'n_trigenic': results[trait].get('n_trigenic', 0),
+                'n_sig_digenic': results[trait].get('n_sig_digenic', 0),
+                'n_sig_trigenic': results[trait].get('n_sig_trigenic', 0),
+                'n_sig_digenic_fdr': 0,  # FDR is in CSV
+                'n_sig_trigenic_fdr': 0,
+                'r_squared': results[trait].get('r_squared', None),
+                'effect_size_digenic': {
+                    'mean': float(np.mean(dig_effects)) if dig_effects else 0.0,
+                    'median': float(np.median(dig_effects)) if dig_effects else 0.0,
+                    'max': float(np.max(dig_effects)) if dig_effects else 0.0
+                },
+                'effect_size_trigenic': {
+                    'mean': float(np.mean(tri_effects)) if tri_effects else 0.0,
+                    'median': float(np.median(tri_effects)) if tri_effects else 0.0,
+                    'max': float(np.max(tri_effects)) if tri_effects else 0.0
+                }
             }
 
-    results['epistasis'] = epistasis
-    results['trait'] = trait_col
+    # Add overall summary
+    summary['_overall'] = {
+        'total_interactions': overall_dig + overall_tri,
+        'n_digenic': overall_dig,
+        'n_trigenic': overall_tri,
+        'n_sig_digenic': overall_sig_dig,
+        'n_sig_trigenic': overall_sig_tri
+    }
 
-    # Count interactions
-    results['n_digenic'] = sum(1 for v in epistasis.values() if v['order'] == 'digenic')
-    results['n_trigenic'] = sum(1 for v in epistasis.values() if v['order'] == 'trigenic')
-    results['n_sig_digenic'] = sum(1 for v in epistasis.values()
-                                   if v['order'] == 'digenic' and v['pvalue'] < 0.05)
-    results['n_sig_trigenic'] = sum(1 for v in epistasis.values()
-                                    if v['order'] == 'trigenic' and v['pvalue'] < 0.05)
+    with open(output_dir / 'log_ols_summary.json', 'w') as f:
+        json.dump(summary, f, indent=2, default=str)
 
-    return results
+    # Create CSV output matching multiplicative model format
+    csv_rows = []
 
+    # Collect all p-values for FDR correction
+    all_pvalues = []
+    pvalue_keys = []  # (trait, gene_set) tuples
 
-def save_results(results: Dict, output_dir: Path = RESULTS_DIR):
-    """Save results to files."""
-    # Save pickle
-    with open(output_dir / 'glm_results.pkl', 'wb') as f:
-        pickle.dump(results, f)
+    for trait, result in results.items():
+        if result and 'epistasis' in result:
+            for gene_set, epi_data in result['epistasis'].items():
+                all_pvalues.append(epi_data['pvalue'])
+                pvalue_keys.append((trait, gene_set))
 
-    # Save summary JSON
-    summary = {}
-    for model_name in ['model_a', 'model_b']:
-        if model_name not in results:
+    # Apply FDR correction
+    if all_pvalues:
+        _, fdr_pvals, _, _ = multipletests(all_pvalues, method='fdr_bh', alpha=0.05)
+        fdr_dict = dict(zip(pvalue_keys, fdr_pvals))
+    else:
+        fdr_dict = {}
+
+    # Create rows for each interaction
+    for trait, result in results.items():
+        if not result or 'epistasis' not in result:
             continue
 
-        summary[model_name] = {}
-        for trait in results[model_name]:
-            if results[model_name][trait]:
-                summary[model_name][trait] = {
-                    'n_digenic': results[model_name][trait].get('n_digenic', 0),
-                    'n_trigenic': results[model_name][trait].get('n_trigenic', 0),
-                    'n_sig_digenic': results[model_name][trait].get('n_sig_digenic', 0),
-                    'n_sig_trigenic': results[model_name][trait].get('n_sig_trigenic', 0),
-                    'r_squared': results[model_name][trait].get('r_squared', None)
-                }
+        for gene_set, epi_data in result['epistasis'].items():
+            # Convert trait name to match multiplicative format
+            trait_name = trait.replace('Total Titer', 'Total Titer')
 
-    with open(output_dir / 'glm_summary.json', 'w') as f:
-        json.dump(summary, f, indent=2, default=str)
+            csv_rows.append({
+                'gene_set': gene_set,
+                'interaction_type': epi_data['order'],
+                'ffa_type': trait_name,
+                'interaction_score': epi_data['E'],  # Log-scale epistasis coefficient
+                'epistatic_fold': epi_data['phi'],  # exp(E)
+                'standard_error': epi_data['se'],
+                'p_value': epi_data['pvalue'],
+                'fdr_corrected_p': fdr_dict.get((trait, gene_set), np.nan),
+                'effect_size': abs(epi_data['E']),
+                'significant_p05': epi_data['pvalue'] < 0.05,
+                'significant_fdr05': fdr_dict.get((trait, gene_set), 1.0) < 0.05,
+                'ci_lower': epi_data['ci_lower'],
+                'ci_upper': epi_data['ci_upper']
+            })
+
+    # Save as CSV
+    if csv_rows:
+        df = pd.DataFrame(csv_rows)
+
+        # Save combined results
+        csv_path = output_dir / "log_ols_all_interactions.csv"
+        df.to_csv(csv_path, index=False)
+
+        # Save digenic and trigenic separately
+        digenic_df = df[df['interaction_type'] == 'digenic']
+        trigenic_df = df[df['interaction_type'] == 'trigenic']
+
+        digenic_path = output_dir / "log_ols_digenic_interactions.csv"
+        trigenic_path = output_dir / "log_ols_trigenic_interactions.csv"
+
+        digenic_df.to_csv(digenic_path, index=False)
+        trigenic_df.to_csv(trigenic_path, index=False)
+
+        print(f"CSV results saved to {output_dir}")
+        print(f"  - {csv_path.name}")
+        print(f"  - {digenic_path.name}")
+        print(f"  - {trigenic_path.name}")
 
     print(f"Results saved to {output_dir}")
 
@@ -407,59 +432,44 @@ def main():
             print(f"  {col}: {count} observations")
 
     # Initialize results
-    all_results = {'model_a': {}, 'model_b': {}}
+    results = {}
 
-    # Run Model A (primary)
+    # Run Log-OLS model
     print("\n" + "="*60)
-    print("MODEL A - Primary Model (Log-OLS with WT-differencing)")
+    print("Log-OLS with WT-Differencing Epistatic Interaction Analysis")
     print("="*60)
 
     for trait_col in FFA_COLUMNS:
         print(f"\nProcessing {trait_col}...")
         result = model_a_log_ols(df, trait_col)
         if result:
-            all_results['model_a'][trait_col] = result
+            results[trait_col] = result
             print(f"  Total: {result['n_digenic']} digenic, {result['n_trigenic']} trigenic")
             print(f"  Significant: {result['n_sig_digenic']} digenic, {result['n_sig_trigenic']} trigenic")
             if 'r_squared' in result:
                 print(f"  R-squared: {result['r_squared']:.3f}")
 
-    # Run Model B (robustness)
-    print("\n" + "="*60)
-    print("MODEL B - Robustness Check (GLM with log link)")
-    print("="*60)
-
-    for trait_col in FFA_COLUMNS:
-        print(f"\nProcessing {trait_col}...")
-        result = model_b_glm(df, trait_col)
-        if result:
-            all_results['model_b'][trait_col] = result
-            print(f"  Total: {result['n_digenic']} digenic, {result['n_trigenic']} trigenic")
-            print(f"  Significant: {result['n_sig_digenic']} digenic, {result['n_sig_trigenic']} trigenic")
-
     # Save results
     print("\nSaving results...")
-    save_results(all_results)
+    save_results(results)
 
     # Print summary
     print("\n" + "="*60)
     print("SUMMARY")
     print("="*60)
 
-    for model_name in ['model_a', 'model_b']:
-        print(f"\n{model_name.upper()}:")
-        total_dig = sum(r.get('n_digenic', 0) for r in all_results[model_name].values())
-        total_tri = sum(r.get('n_trigenic', 0) for r in all_results[model_name].values())
-        sig_dig = sum(r.get('n_sig_digenic', 0) for r in all_results[model_name].values())
-        sig_tri = sum(r.get('n_sig_trigenic', 0) for r in all_results[model_name].values())
+    total_dig = sum(r.get('n_digenic', 0) for r in results.values())
+    total_tri = sum(r.get('n_trigenic', 0) for r in results.values())
+    sig_dig = sum(r.get('n_sig_digenic', 0) for r in results.values())
+    sig_tri = sum(r.get('n_sig_trigenic', 0) for r in results.values())
 
-        print(f"  Total: {total_dig} digenic, {total_tri} trigenic")
-        if total_dig > 0 or total_tri > 0:
-            print(f"  Significant: {sig_dig} digenic ({100*sig_dig/max(total_dig,1):.1f}%), "
-                  f"{sig_tri} trigenic ({100*sig_tri/max(total_tri,1):.1f}%)")
+    print(f"\nTotal: {total_dig} digenic, {total_tri} trigenic")
+    if total_dig > 0 or total_tri > 0:
+        print(f"Significant: {sig_dig} digenic ({100*sig_dig/max(total_dig,1):.1f}%), "
+              f"{sig_tri} trigenic ({100*sig_tri/max(total_tri,1):.1f}%)")
 
     print("\nAnalysis complete!")
-    return all_results
+    return results
 
 
 if __name__ == "__main__":

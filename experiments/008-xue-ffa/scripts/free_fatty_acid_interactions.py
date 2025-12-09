@@ -197,9 +197,9 @@ def parse_genotype(genotype_str, abbreviations=None, reference_strain=None):
             if abbreviations and letters:
                 # Create reverse mapping from letter to TF name
                 letter_to_gene = {v: k for k, v in abbreviations.items()}
-                # Add F = PKH1 if missing from abbreviations
-                if 'F' not in letter_to_gene:
-                    letter_to_gene['F'] = 'PKH1'
+                # REMOVED: PKH1 hardcoding - only use genes from abbreviations (10 TFs)
+                # if 'F' not in letter_to_gene:
+                #     letter_to_gene['F'] = 'PKH1'
                 genes = [letter_to_gene.get(letter, letter) for letter in letters]
             else:
                 genes = letters
@@ -582,48 +582,65 @@ def save_interaction_results(digenic_interactions, digenic_sd, digenic_se, digen
     combined_df = pd.concat([digenic_df, trigenic_df], ignore_index=True)
 
     # Save to CSV
-    ts = timestamp()
-    digenic_df.to_csv(osp.join(results_dir, f"digenic_interactions_3_delta_normalized_{ts}.csv"), index=False)
-    trigenic_df.to_csv(osp.join(results_dir, f"trigenic_interactions_3_delta_normalized_{ts}.csv"), index=False)
-    combined_df.to_csv(osp.join(results_dir, f"all_interactions_3_delta_normalized_{ts}.csv"), index=False)
+    digenic_df.to_csv(osp.join(results_dir, "multiplicative_digenic_interactions_3_delta_normalized.csv"), index=False)
+    trigenic_df.to_csv(osp.join(results_dir, "multiplicative_trigenic_interactions_3_delta_normalized.csv"), index=False)
+    combined_df.to_csv(osp.join(results_dir, "multiplicative_all_interactions_3_delta_normalized.csv"), index=False)
 
-    # Save summary statistics
-    summary_file = osp.join(results_dir, f"interaction_summary_3_delta_normalized_{ts}.txt")
-    with open(summary_file, 'w') as f:
-        f.write("=== Interaction Summary Statistics ===\n\n")
-        f.write(f"Total interactions tested: {len(combined_df)}\n")
-        f.write(f"  - Digenic: {len(digenic_df)}\n")
-        f.write(f"  - Trigenic: {len(trigenic_df)}\n\n")
+    # Create JSON summary with standardized structure
+    summary_json = {}
 
-        f.write("Significant interactions (p < 0.05):\n")
-        sig_di = digenic_df['significant_p05'].sum()
-        sig_tri = trigenic_df['significant_p05'].sum()
-        f.write(f"  - Digenic: {sig_di}/{len(digenic_df)} ({100*sig_di/len(digenic_df):.1f}%)\n")
-        f.write(f"  - Trigenic: {sig_tri}/{len(trigenic_df)} ({100*sig_tri/len(trigenic_df):.1f}%)\n\n")
+    for ffa in columns:
+        ffa_dig = digenic_df[digenic_df['ffa_type'] == ffa]
+        ffa_tri = trigenic_df[trigenic_df['ffa_type'] == ffa]
 
-        f.write("Significant after FDR correction (q < 0.05):\n")
-        sig_di_fdr = digenic_df['significant_fdr05'].sum()
-        sig_tri_fdr = trigenic_df['significant_fdr05'].sum()
-        f.write(f"  - Digenic: {sig_di_fdr}/{len(digenic_df)} ({100*sig_di_fdr/len(digenic_df):.1f}%)\n")
-        f.write(f"  - Trigenic: {sig_tri_fdr}/{len(trigenic_df)} ({100*sig_tri_fdr/len(trigenic_df):.1f}%)\n\n")
+        summary_json[ffa] = {
+            'n_digenic': len(ffa_dig),
+            'n_trigenic': len(ffa_tri),
+            'n_sig_digenic': int(ffa_dig['significant_p05'].sum()),
+            'n_sig_trigenic': int(ffa_tri['significant_p05'].sum()),
+            'n_sig_digenic_fdr': int(ffa_dig['significant_fdr05'].sum()),
+            'n_sig_trigenic_fdr': int(ffa_tri['significant_fdr05'].sum()),
+            'effect_size_digenic': {
+                'mean': float(ffa_dig['effect_size'].mean()),
+                'median': float(ffa_dig['effect_size'].median()),
+                'max': float(ffa_dig['effect_size'].max())
+            },
+            'effect_size_trigenic': {
+                'mean': float(ffa_tri['effect_size'].mean()),
+                'median': float(ffa_tri['effect_size'].median()),
+                'max': float(ffa_tri['effect_size'].max())
+            }
+        }
 
-        f.write("Effect size statistics:\n")
-        f.write(f"  Digenic effect sizes: mean={digenic_df['effect_size'].mean():.2f}, "
-                f"median={digenic_df['effect_size'].median():.2f}, "
-                f"max={digenic_df['effect_size'].max():.2f}\n")
-        f.write(f"  Trigenic effect sizes: mean={trigenic_df['effect_size'].mean():.2f}, "
-                f"median={trigenic_df['effect_size'].median():.2f}, "
-                f"max={trigenic_df['effect_size'].max():.2f}\n\n")
+    # Add overall summary
+    summary_json['_overall'] = {
+        'total_interactions': len(combined_df),
+        'n_digenic': len(digenic_df),
+        'n_trigenic': len(trigenic_df),
+        'n_sig_digenic': int(digenic_df['significant_p05'].sum()),
+        'n_sig_trigenic': int(trigenic_df['significant_p05'].sum()),
+        'n_sig_digenic_fdr': int(digenic_df['significant_fdr05'].sum()),
+        'n_sig_trigenic_fdr': int(trigenic_df['significant_fdr05'].sum()),
+        'effect_size_digenic': {
+            'mean': float(digenic_df['effect_size'].mean()),
+            'median': float(digenic_df['effect_size'].median()),
+            'max': float(digenic_df['effect_size'].max())
+        },
+        'effect_size_trigenic': {
+            'mean': float(trigenic_df['effect_size'].mean()),
+            'median': float(trigenic_df['effect_size'].median()),
+            'max': float(trigenic_df['effect_size'].max())
+        }
+    }
 
-        # By FFA type
-        f.write("By FFA type (p < 0.05 / total):\n")
-        for ffa in columns:
-            ffa_df = combined_df[combined_df['ffa_type'] == ffa]
-            sig = ffa_df['significant_p05'].sum()
-            f.write(f"  {ffa}: {sig}/{len(ffa_df)} ({100*sig/len(ffa_df):.1f}%)\n")
+    # Save JSON summary
+    import json
+    summary_json_file = osp.join(results_dir, "multiplicative_interaction_summary.json")
+    with open(summary_json_file, 'w') as f:
+        json.dump(summary_json, f, indent=2)
 
     print(f"\nResults saved to {results_dir}")
-    print(f"Summary saved to {summary_file}")
+    print(f"Summary saved to {summary_json_file}")
 
     return combined_df
 
@@ -898,8 +915,10 @@ def main():
         trigenic_interactions, trigenic_se, trigenic_pvalues,
         columns
     )
-    filename1 = f"ffa_distributions_and_volcano_3_delta_normalized_{timestamp()}.png"
-    filepath1 = osp.join(ASSET_IMAGES_DIR, filename1)
+    filename1 = "multiplicative_ffa_distributions_and_volcano_3_delta_normalized.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath1 = osp.join(ffa_dir, filename1)
     fig1.savefig(filepath1, dpi=300)
     plt.close()
     print(f"Distribution and volcano plot saved to:")
@@ -907,8 +926,8 @@ def main():
 
     # 2. Statistical significance summary
     fig2 = plot_significance_summary(combined_df, columns)
-    filename2 = f"ffa_significance_summary_3_delta_normalized_{timestamp()}.png"
-    filepath2 = osp.join(ASSET_IMAGES_DIR, filename2)
+    filename2 = "multiplicative_ffa_significance_summary_3_delta_normalized.png"
+    filepath2 = osp.join(ffa_dir, filename2)
     fig2.savefig(filepath2, dpi=300)
     plt.close()
     print(f"Significance summary plot saved to:")

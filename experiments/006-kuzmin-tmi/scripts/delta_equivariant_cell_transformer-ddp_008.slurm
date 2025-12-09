@@ -59,5 +59,5 @@ srun --ntasks-per-node=4 apptainer exec \
     bash -c "source /projects/bbub/miniconda3/bin/activate && \
     conda activate torchcell && \
     python /scratch/bbub/mjvolk3/torchcell/experiments/006-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py \
-    --config-name equivariant_cell_graph_transformer_delta_006 \
+    --config-name equivariant_cell_graph_transformer_delta_008 \
     data_module.num_workers=$NUM_WORKERS"

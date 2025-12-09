@@ -38,7 +38,7 @@ profiler:
 data_module:
   is_perturbation_subset: false
   perturbation_subset_size: 10000  # 2.5e4
-  batch_size: 256  # Limited by transformer memory requirements
+  batch_size: 128  # Limited by transformer memory requirements
   num_workers: 16  # 2 > 8...
   pin_memory: true
   prefetch: false
@@ -61,9 +61,9 @@ compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 model:
   checkpoint_path: null  # *.ckpt
   gene_num: 6607
-  hidden_channels: 180 #90 #96  # d in weekly report
+  hidden_channels: 84 #90 #96  # d in weekly report
   num_transformer_layers: 8 #8  # L layers
-  num_attention_heads: 18  # H heads per layer (must divide hidden_channels evenly)
+  num_attention_heads: 12  # H heads per layer (must divide hidden_channels evenly)
   dropout: 0.1
 
   # Learnable embedding configuration
@@ -78,7 +78,7 @@ model:
   graph_regularization:
     # Global regularization hyperparameters for easy sweeping
     graph_reg_lambda: 0.001
-    graph_reg_layer: [0, 2, 4, 6] # python indexed
+    graph_reg_layer: [0, 2, 4] # python indexed
 
     row_sampling_rate: 1.0  # Sample 50% of adjacency rows for KL computation
 
@@ -125,7 +125,7 @@ model:
 
   # Perturbation head configuration
   perturbation_head:
-    num_heads: 9  # Must divide hidden_channels (180/9=20)
+    num_heads: 12  # Must divide hidden_channels (180/9=20)
     dropout: 0.1
 
 # Loss and optimization configuration
@@ -208,7 +208,7 @@ regression_task:
 
   clip_grad_norm: true
   clip_grad_norm_max_norm: 10.0
-  grad_accumulation_schedule: null  # {0: 2} for gradient accumulation
+  grad_accumulation_schedule: {0: 2} #null  # {0: 2} for gradient accumulation
   plot_sample_ceiling: 10000
   plot_every_n_epochs: 1 # Sample plotting (predictions vs truth)
   plot_transformer_diagnostics_every_n_epochs: 10

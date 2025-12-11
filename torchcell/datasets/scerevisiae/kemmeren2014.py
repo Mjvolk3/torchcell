@@ -219,6 +219,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         # Load both GEO objects and extract platform annotation
         all_gsms = {}
         probe_to_gene_map = {}
+        responsive_gsm_names = set()  # Track which samples are responsive mutants
 
         for geo_accession in [
             self.geo_accession_responsive,
@@ -237,6 +238,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             # Extract platform annotation for probe-to-gene mapping
             if not probe_to_gene_map and hasattr(gse, "gpls"):
                 probe_to_gene_map = self._extract_probe_to_gene_mapping(gse)
+
+            # Track responsive mutant GSM names
+            if geo_accession == self.geo_accession_responsive:
+                responsive_gsm_names.update(gse.gsms.keys())
 
             # Combine GSMs from both datasets
             all_gsms.update(gse.gsms)
@@ -341,6 +346,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             sample_info["systematic_gene_name"] = systematic_gene_name
             sample_info["is_deletion"] = is_deletion
             sample_info["is_wildtype"] = is_wildtype
+
+            # Determine if this is a responsive mutant based on GEO accession
+            sample_info["is_responsive_mutant"] = gsm_name in responsive_gsm_names
 
             sample_info["gsm_object"] = gsm
 

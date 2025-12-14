@@ -1,10 +1,10 @@
-#experiments/009-kuzmin-tmi/conf/cell_graph_transformer.yaml
+#experiments/010-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_000.yaml
 defaults:
   - default
   - _self_
 
 wandb:
-  project: torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer
+  project: torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer
   tags: [parity_wasserstein]
 
 cell_dataset:

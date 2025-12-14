@@ -8,7 +8,7 @@ set -e
 # Configuration
 CONTAINER_NAME="tc-neo4j"
 DATABASE_NAME="torchcell"
-EXPORT_DIR="/scratch/projects/torchcell/database/export"
+EXPORT_DIR="/scratch/projects/torchcell-scratch/database/export"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 EXPORT_FILE="${DATABASE_NAME}_${TIMESTAMP}.dump"
 

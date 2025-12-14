@@ -4,8 +4,8 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=500G
 #SBATCH --time=365-00:00:00
-#SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
-#SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
+#SBATCH --output=/scratch/projects/torchcell-scratch/database/slurm/output/%j_%x.out
+#SBATCH --error=/scratch/projects/torchcell-scratch/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
 
 ###
@@ -40,7 +40,7 @@ mem_mb=$((SLURM_MEM_PER_NODE))
 echo "Memory in MB: $mem_mb"
 
 # Move to the project directory
-cd /scratch/projects/torchcell
+cd /scratch/projects/torchcell-scratch
 
 # Remove existing container if it exists
 docker stop tc-neo4j || true
@@ -121,13 +121,14 @@ if ! docker exec tc-neo4j bash -c "export BIOCYPHER_CONFIG_PATH=/var/lib/neo4j/b
   export SCHEMA_CONFIG_PATH=/var/lib/neo4j/biocypher/config/torchcell_schema_config.yaml && \
   export DATA_ROOT=/var/lib/neo4j && \
   export BIOCYPHER_OUT_PATH=biocypher-out && \
-  python -m torchcell.knowledge_graphs.create_kg --config-name=calmorph_ohya2005_kg"; then
+  python -m torchcell.knowledge_graphs.create_kg --config-name=tmi_tmf_kg"; then
     echo "Error: Failed to create knowledge graph"
     docker logs tc-neo4j
     exit 1
 fi
 #scerevisiae_global_kg
 #calmorph_ohya2005_kg
+#tmi_tmf_kg
 
 echo "Knowledge graph creation completed."
 

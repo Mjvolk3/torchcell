@@ -389,8 +389,10 @@ def create_trigenic_bar_plots(
         plt.tight_layout()
 
         # Save figure with filename matching script name
-        filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_{ffa.replace(':', '')}_{timestamp()}.png"
-        filepath = osp.join(ASSET_IMAGES_DIR, filename)
+        filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_{ffa.replace(':', '')}.png"
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        filepath = osp.join(ffa_dir, filename)
         fig.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.close()
         print(f"Trigenic interaction bar plot for {ffa} saved to:")
@@ -621,8 +623,10 @@ def create_recovery_pattern_plots(
         plt.tight_layout()
 
         # Save figure with filename matching script name
-        filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_recovery_{ffa.replace(':', '')}_{timestamp()}.png"
-        filepath = osp.join(ASSET_IMAGES_DIR, filename)
+        filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_recovery_{ffa.replace(':', '')}.png"
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        filepath = osp.join(ffa_dir, filename)
         fig.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.close()
         print(f"Trigenic recovery pattern plot for {ffa} saved to:")
@@ -754,8 +758,10 @@ def create_recovery_pattern_plots(
     plt.tight_layout()
 
     # Save summary figure with filename matching script name
-    filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_recovery_summary_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "additive_trigenic_interaction_bar_plots_triple_suppression_recovery_summary.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"\nRecovery summary plot saved to:")
@@ -871,8 +877,10 @@ def create_trigenic_summary_plot(trigenic_interactions, triple_mutants, columns,
     plt.tight_layout()
 
     # Save figure with filename matching script name
-    filename = f"additive_trigenic_interaction_bar_plots_triple_suppression_summary_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "additive_trigenic_interaction_bar_plots_triple_suppression_summary.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
     print(f"\nTrigenic summary plot saved to:")

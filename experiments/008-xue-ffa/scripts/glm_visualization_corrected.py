@@ -170,8 +170,10 @@ def plot_digenic_interactions(results: Dict):
                 bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.8))
 
         plt.tight_layout()
-        save_path = osp.join(ASSET_IMAGES_DIR,
-                           f'glm_digenic_{trait}_{timestamp()}.png')
+        filename = f'glm_digenic_{trait}.png'
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        save_path = osp.join(ffa_dir, filename)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         plt.close()
 
@@ -277,8 +279,10 @@ def plot_trigenic_interactions(results: Dict):
         ax.legend(handles=legend_elements, loc='upper left', fontsize=9)
 
         plt.tight_layout()
-        save_path = osp.join(ASSET_IMAGES_DIR,
-                           f'glm_trigenic_{trait}_{timestamp()}.png')
+        filename = f'glm_trigenic_{trait}.png'
+        ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+        os.makedirs(ffa_dir, exist_ok=True)
+        save_path = osp.join(ffa_dir, filename)
         plt.savefig(save_path, dpi=150, bbox_inches='tight')
         plt.close()
 
@@ -442,7 +446,10 @@ def plot_summary_statistics(results: Dict):
     plt.suptitle('GLM Epistatic Interactions - Summary Statistics', fontsize=14)
     plt.tight_layout()
 
-    save_path = osp.join(ASSET_IMAGES_DIR, f'glm_summary_{timestamp()}.png')
+    filename = 'glm_summary.png'
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    save_path = osp.join(ffa_dir, filename)
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
 

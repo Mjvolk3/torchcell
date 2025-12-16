@@ -9,7 +9,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
-import pickle
 import os
 import os.path as osp
 from dotenv import load_dotenv
@@ -57,23 +56,20 @@ FFA_MAP = {
 def load_simple_model_results(model_type='multiplicative'):
     """Load results from CSV files for simple models."""
 
-    # Find the most recent files
+    # Build filenames (with _3_delta_normalized suffix)
     if model_type == 'multiplicative':
-        digenic_pattern = str(RESULTS_DIR / 'digenic_interactions_*.csv')
-        trigenic_pattern = str(RESULTS_DIR / 'trigenic_interactions_*.csv')
+        digenic_path = RESULTS_DIR / 'multiplicative_digenic_interactions_3_delta_normalized.csv'
+        trigenic_path = RESULTS_DIR / 'multiplicative_trigenic_interactions_3_delta_normalized.csv'
     else:  # additive
-        digenic_pattern = str(RESULTS_DIR / 'additive_digenic_interactions_*.csv')
-        trigenic_pattern = str(RESULTS_DIR / 'additive_trigenic_interactions_*.csv')
-
-    digenic_files = glob.glob(digenic_pattern)
-    trigenic_files = glob.glob(trigenic_pattern)
+        digenic_path = RESULTS_DIR / 'additive_digenic_interactions_3_delta_normalized.csv'
+        trigenic_path = RESULTS_DIR / 'additive_trigenic_interactions_3_delta_normalized.csv'
 
     results = {}
 
-    if digenic_files:
-        # Use most recent file
-        digenic_file = sorted(digenic_files)[-1]
-        dig_df = pd.read_csv(digenic_file)
+    if digenic_path.exists():
+        print(f"  Loading {model_type} digenic from: {digenic_path.name}")
+        dig_df = pd.read_csv(digenic_path)
+        print(f"    Found {len(dig_df)} digenic interactions")
 
         # Count significant interactions per FFA
         for ffa in ['C14:0', 'C16:0', 'C18:0', 'C16:1', 'C18:1', 'Total Titer']:
@@ -83,11 +79,13 @@ def load_simple_model_results(model_type='multiplicative'):
             ffa_data = dig_df[dig_df['ffa_type'] == ffa]
             results[ffa]['n_digenic'] = len(ffa_data)
             results[ffa]['n_sig_digenic'] = len(ffa_data[ffa_data['p_value'] < 0.05])
+    else:
+        print(f"  WARNING: {model_type} digenic file not found: {digenic_path.name}")
 
-    if trigenic_files:
-        # Use most recent file
-        trigenic_file = sorted(trigenic_files)[-1]
-        tri_df = pd.read_csv(trigenic_file)
+    if trigenic_path.exists():
+        print(f"  Loading {model_type} trigenic from: {trigenic_path.name}")
+        tri_df = pd.read_csv(trigenic_path)
+        print(f"    Found {len(tri_df)} trigenic interactions")
 
         # Count significant interactions per FFA
         for ffa in ['C14:0', 'C16:0', 'C18:0', 'C16:1', 'C18:1', 'Total Titer']:
@@ -97,72 +95,92 @@ def load_simple_model_results(model_type='multiplicative'):
             ffa_data = tri_df[tri_df['ffa_type'] == ffa]
             results[ffa]['n_trigenic'] = len(ffa_data)
             results[ffa]['n_sig_trigenic'] = len(ffa_data[ffa_data['p_value'] < 0.05])
+    else:
+        print(f"  WARNING: {model_type} trigenic file not found: {trigenic_path.name}")
 
     return results
 
 
 def load_glm_results():
-    """Load GLM models A and B results."""
+    """Load log-OLS and GLM log link results from CSV files."""
     results = {}
 
-    glm_file = GLM_RESULTS_DIR / 'glm_results.pkl'
-    if glm_file.exists():
-        with open(glm_file, 'rb') as f:
-            glm_data = pickle.load(f)
+    # GLM CSV files use different FFA naming (no colons): C140, C160, etc.
+    # We need to map these to the standard format used by simple models
+    glm_ffa_names = ['C140', 'C160', 'C180', 'C161', 'C181', 'Total Titer']
+    standard_ffa_names = ['C14:0', 'C16:0', 'C18:0', 'C16:1', 'C18:1', 'Total Titer']
 
-            # Process Model A
-            if 'model_a' in glm_data:
-                model_a = {}
-                for trait, data in glm_data['model_a'].items():
-                    # Map trait names
-                    if trait == 'C140':
-                        ffa = 'C14:0'
-                    elif trait == 'C160':
-                        ffa = 'C16:0'
-                    elif trait == 'C180':
-                        ffa = 'C18:0'
-                    elif trait == 'C161':
-                        ffa = 'C16:1'
-                    elif trait == 'C181':
-                        ffa = 'C18:1'
-                    else:
-                        ffa = trait
+    # Load log-OLS results from CSV (no wildcards/timestamps)
+    log_ols_path = GLM_RESULTS_DIR / 'log_ols_digenic_interactions.csv'
 
-                    model_a[ffa] = {
-                        'n_digenic': data.get('n_digenic', 45),
-                        'n_sig_digenic': data.get('n_sig_digenic', 0),
-                        'n_trigenic': data.get('n_trigenic', 120),
-                        'n_sig_trigenic': data.get('n_sig_trigenic', 0),
-                        'r_squared': data.get('r_squared', 0)
-                    }
-                results['model_a'] = model_a
+    if log_ols_path.exists():
+        df = pd.read_csv(log_ols_path)
 
-            # Process Model B
-            if 'model_b' in glm_data:
-                model_b = {}
-                for trait, data in glm_data['model_b'].items():
-                    # Map trait names
-                    if trait == 'C140':
-                        ffa = 'C14:0'
-                    elif trait == 'C160':
-                        ffa = 'C16:0'
-                    elif trait == 'C180':
-                        ffa = 'C18:0'
-                    elif trait == 'C161':
-                        ffa = 'C16:1'
-                    elif trait == 'C181':
-                        ffa = 'C18:1'
-                    else:
-                        ffa = trait
+        model_a = {}
+        for glm_ffa, std_ffa in zip(glm_ffa_names, standard_ffa_names):
+            ffa_data = df[df['ffa_type'] == glm_ffa]
+            digenic_data = ffa_data[ffa_data['interaction_type'] == 'digenic']
 
-                    model_b[ffa] = {
-                        'n_digenic': data.get('n_digenic', 45),
-                        'n_sig_digenic': data.get('n_sig_digenic', 0),
-                        'n_trigenic': data.get('n_trigenic', 120),
-                        'n_sig_trigenic': data.get('n_sig_trigenic', 0),
-                        'pseudo_r_squared': data.get('pseudo_r_squared', 0)
-                    }
-                results['model_b'] = model_b
+            # Use standard FFA name as key for consistency
+            model_a[std_ffa] = {
+                'n_digenic': len(digenic_data),
+                'n_sig_digenic': len(digenic_data[digenic_data['p_value'] < 0.05]),
+                'n_trigenic': 0,  # Will be filled from trigenic file
+                'n_sig_trigenic': 0,
+                'r_squared': 0  # Not available from CSV
+            }
+
+        # Load trigenic interactions
+        log_ols_tri_path = GLM_RESULTS_DIR / 'log_ols_trigenic_interactions.csv'
+
+        if log_ols_tri_path.exists():
+            tri_df = pd.read_csv(log_ols_tri_path)
+
+            for glm_ffa, std_ffa in zip(glm_ffa_names, standard_ffa_names):
+                ffa_data = tri_df[tri_df['ffa_type'] == glm_ffa]
+                trigenic_data = ffa_data[ffa_data['interaction_type'] == 'trigenic']
+
+                if std_ffa in model_a:
+                    model_a[std_ffa]['n_trigenic'] = len(trigenic_data)
+                    model_a[std_ffa]['n_sig_trigenic'] = len(trigenic_data[trigenic_data['p_value'] < 0.05])
+
+        results['ols'] = model_a
+
+    # Load GLM log link results from CSV (no wildcards/timestamps)
+    glm_log_link_path = RESULTS_DIR / 'glm_log_link' / 'glm_log_link_digenic_interactions.csv'
+
+    if glm_log_link_path.exists():
+        df = pd.read_csv(glm_log_link_path)
+
+        model_b = {}
+        for glm_ffa, std_ffa in zip(glm_ffa_names, standard_ffa_names):
+            ffa_data = df[df['ffa_type'] == glm_ffa]
+            digenic_data = ffa_data[ffa_data['interaction_type'] == 'digenic']
+
+            # Use standard FFA name as key for consistency
+            model_b[std_ffa] = {
+                'n_digenic': len(digenic_data),
+                'n_sig_digenic': len(digenic_data[digenic_data['p_value'] < 0.05]),
+                'n_trigenic': 0,  # Will be filled from trigenic file
+                'n_sig_trigenic': 0,
+                'pseudo_r_squared': 0  # Not available from CSV
+            }
+
+        # Load trigenic interactions
+        glm_tri_path = RESULTS_DIR / 'glm_log_link' / 'glm_log_link_trigenic_interactions.csv'
+
+        if glm_tri_path.exists():
+            tri_df = pd.read_csv(glm_tri_path)
+
+            for glm_ffa, std_ffa in zip(glm_ffa_names, standard_ffa_names):
+                ffa_data = tri_df[tri_df['ffa_type'] == glm_ffa]
+                trigenic_data = ffa_data[ffa_data['interaction_type'] == 'trigenic']
+
+                if std_ffa in model_b:
+                    model_b[std_ffa]['n_trigenic'] = len(trigenic_data)
+                    model_b[std_ffa]['n_sig_trigenic'] = len(trigenic_data[trigenic_data['p_value'] < 0.05])
+
+        results['glm'] = model_b
 
     return results
 
@@ -190,8 +208,8 @@ def create_comparison_plot():
     all_data = {
         'Multiplicative': mult_results,
         'Additive': add_results,
-        'WT-diff Log-OLS': glm_results.get('model_a', {}),
-        'GLM Gamma': glm_results.get('model_b', {})
+        'WT-diff Log-OLS': glm_results.get('ols', {}),
+        'GLM Gamma': glm_results.get('glm', {})
     }
 
     # ========== Plot 1: Digenic Interactions ==========
@@ -350,7 +368,10 @@ def create_comparison_plot():
     plt.suptitle('Comprehensive Model Comparison: Simple vs GLM Approaches', fontsize=14)
     plt.tight_layout()
 
-    save_path = osp.join(ASSET_IMAGES_DIR, f'all_models_comparison_{timestamp()}.png')
+    filename = 'all_models_comparison.png'
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    save_path = osp.join(ffa_dir, filename)
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
 
@@ -376,9 +397,20 @@ def create_comparison_plot():
                 sig_tri += data[ffa].get('n_sig_trigenic', 0)
 
         print(f"\n{model}:")
-        print(f"  Digenic: {sig_dig}/{total_dig} ({100*sig_dig/total_dig:.1f}%)")
-        print(f"  Trigenic: {sig_tri}/{total_tri} ({100*sig_tri/total_tri:.1f}%)")
-        print(f"  Total: {sig_dig + sig_tri}/{total_dig + total_tri} ({100*(sig_dig + sig_tri)/(total_dig + total_tri):.1f}%)")
+        if total_dig > 0:
+            print(f"  Digenic: {sig_dig}/{total_dig} ({100*sig_dig/total_dig:.1f}%)")
+        else:
+            print(f"  Digenic: {sig_dig}/{total_dig} (no data)")
+
+        if total_tri > 0:
+            print(f"  Trigenic: {sig_tri}/{total_tri} ({100*sig_tri/total_tri:.1f}%)")
+        else:
+            print(f"  Trigenic: {sig_tri}/{total_tri} (no data)")
+
+        if (total_dig + total_tri) > 0:
+            print(f"  Total: {sig_dig + sig_tri}/{total_dig + total_tri} ({100*(sig_dig + sig_tri)/(total_dig + total_tri):.1f}%)")
+        else:
+            print(f"  Total: {sig_dig + sig_tri}/{total_dig + total_tri} (no data)")
 
 
 if __name__ == "__main__":

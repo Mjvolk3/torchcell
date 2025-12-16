@@ -164,8 +164,10 @@ def create_model_comparison_heatmaps(mult_data=None, add_data=None):
     plt.tight_layout()
 
     # Save figure
-    filename = f"model_comparison_heatmaps_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "model_comparison_heatmaps.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 
@@ -327,12 +329,14 @@ def compare_significant_interactions(mult_data, add_data, columns, p_threshold=0
     plt.tight_layout()
 
     # Save figure
-    filename = f"significant_interactions_comparison_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "multiplicative_v_additive_comparison.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 
-    print("Significant interactions comparison saved to:")
+    print("Multiplicative vs Additive comparison saved to:")
     print(f"  {filepath}")
 
     # Print summary statistics
@@ -462,8 +466,10 @@ def create_interaction_distribution_comparison(mult_data, add_data, columns):
     plt.tight_layout()
 
     # Save figure
-    filename = f"interaction_distribution_comparison_{timestamp()}.png"
-    filepath = osp.join(ASSET_IMAGES_DIR, filename)
+    filename = "interaction_distribution_comparison.png"
+    ffa_dir = osp.join(ASSET_IMAGES_DIR, "008-xue-ffa")
+    os.makedirs(ffa_dir, exist_ok=True)
+    filepath = osp.join(ffa_dir, filename)
     fig.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.close()
 

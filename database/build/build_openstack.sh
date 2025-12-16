@@ -20,14 +20,50 @@ if [ -z "$YAML_PASSWORD" ]; then
 fi
 echo "Password successfully read from config file"
 
-# Use home directory for data (need to manage disk space carefully)
-DATA_DIR="$HOME/neo4j-data"
+# Hybrid approach: local for Neo4j system files, Delta for large data
+LOCAL_DATA_DIR="$HOME/neo4j-data"
+DELTA_DATA_DIR="/mnt/delta_bbub/mjvolk3/torchcell"
 
-echo "Using local storage at: $DATA_DIR"
+echo "Using hybrid storage:"
+echo "  Neo4j system: $LOCAL_DATA_DIR (local)"
+echo "  Large data: $DELTA_DATA_DIR (Delta mount)"
+echo "Local space:"
+df -h /
+echo "Delta space:"
+timeout 2 df -h /mnt/delta_bbub 2>/dev/null || echo "  (Delta mount check timed out - may be slow but will continue)"
 
-# Create directories locally
-mkdir -p $DATA_DIR/{biocypher-out,torchcell,sgd,neo4j-data,logs}
-chmod -R 777 $DATA_DIR
+# Create local directories for Neo4j system files
+echo "Creating local directories..."
+# Clean up old data if it exists (owned by docker container)
+if [ -d "$LOCAL_DATA_DIR" ]; then
+    echo "Cleaning up old local data..."
+    sudo rm -rf $LOCAL_DATA_DIR
+fi
+mkdir -p $LOCAL_DATA_DIR/{neo4j-data,logs}
+chmod -R 777 $LOCAL_DATA_DIR
+
+# Check Delta directories
+echo "Checking Delta directories..."
+# First try regular check
+if [ -d "$DELTA_DATA_DIR/biocypher-out" ] && [ -d "$DELTA_DATA_DIR/torchcell" ] && [ -d "$DELTA_DATA_DIR/sgd" ]; then
+    echo "✓ Delta directories accessible"
+else
+    # If regular check fails, try with sudo to see if they exist
+    echo "Checking with elevated permissions..."
+    if sudo test -d "$DELTA_DATA_DIR/biocypher-out" && sudo test -d "$DELTA_DATA_DIR/torchcell" && sudo test -d "$DELTA_DATA_DIR/sgd"; then
+        echo "✓ Delta directories exist (may need permission adjustment)"
+        # Try to fix permissions
+        echo "Attempting to fix permissions..."
+        sudo chmod -R 777 $DELTA_DATA_DIR/{biocypher-out,torchcell,sgd} 2>/dev/null || true
+    else
+        echo "ERROR: Delta directories not found."
+        echo "Please run the setup script with sudo:"
+        echo "  sudo bash $PROJECT_DIR/database/scripts/setup_storage_directories.sh"
+        echo ""
+        echo "This will create all necessary directories with proper permissions."
+        exit 1
+    fi
+fi
 
 # Check for SSL certificates
 CERT_DIR="$PROJECT_DIR/database/certificates/https"
@@ -55,10 +91,10 @@ docker run \
     --env=NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -d --name tc-neo4j \
     -p 7474:7474 -p 7473:7473 -p 7687:7687 \
-    -v "$DATA_DIR/biocypher-out:/var/lib/neo4j/biocypher-out" \
-    -v "$DATA_DIR/torchcell:/var/lib/neo4j/data/torchcell" \
-    -v "$DATA_DIR/sgd:/var/lib/neo4j/data/sgd" \
-    -v "$DATA_DIR/neo4j-data:/var/lib/neo4j/data" \
+    -v "$DELTA_DATA_DIR/biocypher-out:/var/lib/neo4j/biocypher-out" \
+    -v "$DELTA_DATA_DIR/torchcell:/var/lib/neo4j/data/torchcell" \
+    -v "$DELTA_DATA_DIR/sgd:/var/lib/neo4j/data/sgd" \
+    -v "$LOCAL_DATA_DIR/neo4j-data:/var/lib/neo4j/data" \
     -v "$(pwd)/database/.env:/.env:ro" \
     -v "$(pwd)/biocypher:/var/lib/neo4j/biocypher" \
     -v "$(pwd)/database/conf:/var/lib/neo4j/conf" \
@@ -119,6 +155,10 @@ if [ -z "$bash_script_path_cleaned" ]; then
 fi
 
 docker exec tc-neo4j bash -c "chmod +x ${bash_script_path_cleaned}"
+
+# Fix ownership of biocypher-out files so neo4j-admin can read them
+echo "Fixing biocypher-out ownership for import..."
+docker exec tc-neo4j bash -c "chown -R neo4j:neo4j /var/lib/neo4j/biocypher-out/"
 
 # Drop the existing database if it exists to avoid "database in use" error
 echo "Dropping existing torchcell database if it exists..."

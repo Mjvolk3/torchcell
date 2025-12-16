@@ -1,0 +1,69 @@
+{
+  "dataset_2018": {
+    "total_experiments": 91111,
+    "perturbation_counts": {
+      "deletion": 232304,
+      "temperature_sensitive_allele": 14349,
+      "allele": 26680
+    },
+    "experiment_categories": {
+      "deletion_only": 57883,
+      "ts_allele_only": 0,
+      "allele_only": 0,
+      "deletion_and_ts_allele": 10852,
+      "deletion_and_allele": 18879,
+      "ts_allele_and_allele": 683,
+      "all_three": 2814
+    }
+  },
+  "dataset_2020": {
+    "total_experiments": 301798,
+    "perturbation_counts": {
+      "deletion": 856296,
+      "temperature_sensitive_allele": 49098
+    },
+    "experiment_categories": {
+      "deletion_only": 252700,
+      "ts_allele_only": 0,
+      "allele_only": 0,
+      "deletion_and_ts_allele": 49098,
+      "deletion_and_allele": 0,
+      "ts_allele_and_allele": 0,
+      "all_three": 0
+    }
+  },
+  "filtering_scenarios": {
+    "deletion_only": {
+      "2018": 57883,
+      "2020": 252700,
+      "combined": 310583,
+      "description": "Only experiments with pure deletion perturbations"
+    },
+    "deletion_plus_mixed": {
+      "2018": 90428,
+      "2020": 301798,
+      "combined": 392226,
+      "description": "Experiments containing at least one deletion (current 006 query for 2020)"
+    },
+    "all_perturbations": {
+      "2018": 91111,
+      "2020": 301798,
+      "combined": 392909,
+      "description": "All experiments regardless of perturbation type"
+    },
+    "non_deletion_only": {
+      "2018": 683,
+      "2020": 0,
+      "combined": 683,
+      "description": "Only non-deletion experiments (TS alleles and/or alleles)"
+    }
+  },
+  "impact_of_deletion_only_filter": {
+    "2018_kept": 57883,
+    "2018_lost": 33228,
+    "2020_kept": 252700,
+    "2020_lost": 49098,
+    "combined_kept": 310583,
+    "combined_lost": 82326
+  }
+}

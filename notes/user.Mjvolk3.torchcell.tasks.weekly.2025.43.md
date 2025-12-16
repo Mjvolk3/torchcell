@@ -2,7 +2,7 @@
 id: 3t8yv5hfwlmud7mkxh4n5o0
 title: '43'
 desc: ''
-updated: 1763015685193
+updated: 1764089650628
 created: 1761068557730
 ---
 ## 2025.10.21
@@ -19,4 +19,3 @@ created: 1761068557730
 ## 2025.10.23
 
 - [x] Biofoundry cellulase research. → This would be a pretty good choice for demonstrating mass spec capability. Plus you have a 3 synergistic enzymes.
-

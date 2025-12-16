@@ -1,0 +1,14 @@
+# experiments/conf/default.yaml
+defaults:
+  - _self_ # suppresses warning, recommended for default.yaml
+
+# HYDRA_LOGGING_SETTINGS - toggle to suppress output
+hydra_logging:
+  loggers:
+    logging_example:
+      level: INFO
+
+# Profiler configuration
+profiler:
+  enabled: false  # Toggle profiling on/off
+  is_pytorch: true  # Use PyTorch Profiler (vs AdvancedProfiler)

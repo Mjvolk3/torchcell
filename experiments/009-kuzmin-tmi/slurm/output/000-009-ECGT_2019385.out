@@ -1,0 +1,174 @@
+/home/a-m/mjvolk3/.bashrc: line 35: bind: warning: line editing not enabled
+/home/a-m/mjvolk3/.bashrc: line 36: bind: warning: line editing not enabled
+/home/a-m/mjvolk3/.bashrc: line 37: bind: warning: line editing not enabled
+W1209 15:46:16.435000 312666 site-packages/torch/distributed/run.py:774] 
+W1209 15:46:16.435000 312666 site-packages/torch/distributed/run.py:774] *****************************************
+W1209 15:46:16.435000 312666 site-packages/torch/distributed/run.py:774] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W1209 15:46:16.435000 312666 site-packages/torch/distributed/run.py:774] *****************************************
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+Starting Equivariant Cell Graph Transformer Training 🚀
+Starting Equivariant Cell Graph Transformer Training 🚀Starting Equivariant Cell Graph Transformer Training 🚀
+Starting Equivariant Cell Graph Transformer Training 🚀
+
+wandb_cfg {'hydra_logging': {'loggers': {'logging_example': {'level': 'INFO'}}}, 'profiler': {'enabled': False, 'is_pytorch': True}, 'wandb': {'project': 'torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer', 'tags': ['parity_wasserstein']}, 'cell_dataset': {'graphs': ['physical', 'regulatory', 'tflink', 'string12_0_neighborhood', 'string12_0_fusion', 'string12_0_cooccurence', 'string12_0_coexpression', 'string12_0_experimental', 'string12_0_database'], 'node_embeddings': []}, 'transforms': {'use_transforms': True, 'forward_transform': {'normalization': {'gene_interaction': {'strategy': 'standard'}}}}, 'data_module': {'is_perturbation_subset': False, 'perturbation_subset_size': 10000, 'batch_size': 256, 'num_workers': 14, 'pin_memory': True, 'prefetch': False, 'prefetch_factor': 4, 'persistent_workers': True}, 'trainer': {'max_epochs': 600, 'strategy': 'ddp', 'num_nodes': 1, 'accelerator': 'gpu', 'devices': 4, 'overfit_batches': 0, 'precision': 'bf16-mixed'}, 'compile_mode': None, 'model': {'checkpoint_path': None, 'gene_num': 6607, 'hidden_channels': 180, 'num_transformer_layers': 8, 'num_attention_heads': 9, 'dropout': 0.1, 'learnable_embedding': {'enabled': True, 'size': 180, 'preprocessor': {'num_layers': 2, 'dropout': 0.1}}, 'graph_regularization': {'graph_reg_lambda': 0.001, 'graph_reg_layer': 1, 'row_sampling_rate': 1.0, 'regularized_heads': {'physical': {'layer': 1, 'head': 0, 'lambda': 0.001}, 'regulatory': {'layer': 1, 'head': 1, 'lambda': 0.001}, 'tflink': {'layer': 1, 'head': 2, 'lambda': 0.001}, 'string12_0_neighborhood': {'layer': 1, 'head': 3, 'lambda': 0.001}, 'string12_0_fusion': {'layer': 1, 'head': 4, 'lambda': 0.001}, 'string12_0_cooccurence': {'layer': 1, 'head': 5, 'lambda': 0.001}, 'string12_0_coexpression': {'layer': 1, 'head': 6, 'lambda': 0.001}, 'string12_0_experimental': {'layer': 1, 'head': 7, 'lambda': 0.001}, 'string12_0_database': {'layer': 1, 'head': 8, 'lambda': 0.001}}}, 'perturbation_head': {'num_heads': 9, 'dropout': 0.1}}, 'regression_task': {'loss': {'type': 'point_dist_graph_reg', 'point_estimator': {'type': 'mse', 'lambda': 1.0}, 'distribution_loss': {'type': 'wasserstein', 'lambda': 0.1, 'wasserstein_blur': 0.05, 'wasserstein_p': 2, 'wasserstein_scaling': 0.9, 'min_samples_for_wasserstein': 512}, 'graph_regularization': {'lambda': 1.0}, 'supervised_contrastive': {'lambda': 0.0}, 'buffer': {'use_buffer': False}, 'ddp': {'use_ddp_gather': False}}, 'execution_mode': 'training', 'optimizer': {'type': 'AdamW', 'lr': 0.0001, 'weight_decay': 1e-08}, 'lr_scheduler': {'type': 'CosineAnnealingWarmupRestarts', 'first_cycle_steps': 25, 'cycle_mult': 1.0, 'max_lr': 0.0005, 'min_lr': 1e-07, 'warmup_steps': 1, 'gamma': 0.7}, 'clip_grad_norm': True, 'clip_grad_norm_max_norm': 10.0, 'grad_accumulation_schedule': None, 'plot_sample_ceiling': 10000, 'plot_every_n_epochs': 1, 'plot_transformer_diagnostics_every_n_epochs': 10, 'plot_edge_recovery_every_n_epochs': 10}}
+wandb_cfgwandb_cfg  wandb_cfg {'hydra_logging': {'loggers': {'logging_example': {'level': 'INFO'}}}, 'profiler': {'enabled': False, 'is_pytorch': True}, 'wandb': {'project': 'torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer', 'tags': ['parity_wasserstein']}, 'cell_dataset': {'graphs': ['physical', 'regulatory', 'tflink', 'string12_0_neighborhood', 'string12_0_fusion', 'string12_0_cooccurence', 'string12_0_coexpression', 'string12_0_experimental', 'string12_0_database'], 'node_embeddings': []}, 'transforms': {'use_transforms': True, 'forward_transform': {'normalization': {'gene_interaction': {'strategy': 'standard'}}}}, 'data_module': {'is_perturbation_subset': False, 'perturbation_subset_size': 10000, 'batch_size': 256, 'num_workers': 14, 'pin_memory': True, 'prefetch': False, 'prefetch_factor': 4, 'persistent_workers': True}, 'trainer': {'max_epochs': 600, 'strategy': 'ddp', 'num_nodes': 1, 'accelerator': 'gpu', 'devices': 4, 'overfit_batches': 0, 'precision': 'bf16-mixed'}, 'compile_mode': None, 'model': {'checkpoint_path': None, 'gene_num': 6607, 'hidden_channels': 180, 'num_transformer_layers': 8, 'num_attention_heads': 9, 'dropout': 0.1, 'learnable_embedding': {'enabled': True, 'size': 180, 'preprocessor': {'num_layers': 2, 'dropout': 0.1}}, 'graph_regularization': {'graph_reg_lambda': 0.001, 'graph_reg_layer': 1, 'row_sampling_rate': 1.0, 'regularized_heads': {'physical': {'layer': 1, 'head': 0, 'lambda': 0.001}, 'regulatory': {'layer': 1, 'head': 1, 'lambda': 0.001}, 'tflink': {'layer': 1, 'head': 2, 'lambda': 0.001}, 'string12_0_neighborhood': {'layer': 1, 'head': 3, 'lambda': 0.001}, 'string12_0_fusion': {'layer': 1, 'head': 4, 'lambda': 0.001}, 'string12_0_cooccurence': {'layer': 1, 'head': 5, 'lambda': 0.001}, 'string12_0_coexpression': {'layer': 1, 'head': 6, 'lambda': 0.001}, 'string12_0_experimental': {'layer': 1, 'head': 7, 'lambda': 0.001}, 'string12_0_database': {'layer': 1, 'head': 8, 'lambda': 0.001}}}, 'perturbation_head': {'num_heads': 9, 'dropout': 0.1}}, 'regression_task': {'loss': {'type': 'point_dist_graph_reg', 'point_estimator': {'type': 'mse', 'lambda': 1.0}, 'distribution_loss': {'type': 'wasserstein', 'lambda': 0.1, 'wasserstein_blur': 0.05, 'wasserstein_p': 2, 'wasserstein_scaling': 0.9, 'min_samples_for_wasserstein': 512}, 'graph_regularization': {'lambda': 1.0}, 'supervised_contrastive': {'lambda': 0.0}, 'buffer': {'use_buffer': False}, 'ddp': {'use_ddp_gather': False}}, 'execution_mode': 'training', 'optimizer': {'type': 'AdamW', 'lr': 0.0001, 'weight_decay': 1e-08}, 'lr_scheduler': {'type': 'CosineAnnealingWarmupRestarts', 'first_cycle_steps': 25, 'cycle_mult': 1.0, 'max_lr': 0.0005, 'min_lr': 1e-07, 'warmup_steps': 1, 'gamma': 0.7}, 'clip_grad_norm': True, 'clip_grad_norm_max_norm': 10.0, 'grad_accumulation_schedule': None, 'plot_sample_ceiling': 10000, 'plot_every_n_epochs': 1, 'plot_transformer_diagnostics_every_n_epochs': 10, 'plot_edge_recovery_every_n_epochs': 10}}{'hydra_logging': {'loggers': {'logging_example': {'level': 'INFO'}}}, 'profiler': {'enabled': False, 'is_pytorch': True}, 'wandb': {'project': 'torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer', 'tags': ['parity_wasserstein']}, 'cell_dataset': {'graphs': ['physical', 'regulatory', 'tflink', 'string12_0_neighborhood', 'string12_0_fusion', 'string12_0_cooccurence', 'string12_0_coexpression', 'string12_0_experimental', 'string12_0_database'], 'node_embeddings': []}, 'transforms': {'use_transforms': True, 'forward_transform': {'normalization': {'gene_interaction': {'strategy': 'standard'}}}}, 'data_module': {'is_perturbation_subset': False, 'perturbation_subset_size': 10000, 'batch_size': 256, 'num_workers': 14, 'pin_memory': True, 'prefetch': False, 'prefetch_factor': 4, 'persistent_workers': True}, 'trainer': {'max_epochs': 600, 'strategy': 'ddp', 'num_nodes': 1, 'accelerator': 'gpu', 'devices': 4, 'overfit_batches': 0, 'precision': 'bf16-mixed'}, 'compile_mode': None, 'model': {'checkpoint_path': None, 'gene_num': 6607, 'hidden_channels': 180, 'num_transformer_layers': 8, 'num_attention_heads': 9, 'dropout': 0.1, 'learnable_embedding': {'enabled': True, 'size': 180, 'preprocessor': {'num_layers': 2, 'dropout': 0.1}}, 'graph_regularization': {'graph_reg_lambda': 0.001, 'graph_reg_layer': 1, 'row_sampling_rate': 1.0, 'regularized_heads': {'physical': {'layer': 1, 'head': 0, 'lambda': 0.001}, 'regulatory': {'layer': 1, 'head': 1, 'lambda': 0.001}, 'tflink': {'layer': 1, 'head': 2, 'lambda': 0.001}, 'string12_0_neighborhood': {'layer': 1, 'head': 3, 'lambda': 0.001}, 'string12_0_fusion': {'layer': 1, 'head': 4, 'lambda': 0.001}, 'string12_0_cooccurence': {'layer': 1, 'head': 5, 'lambda': 0.001}, 'string12_0_coexpression': {'layer': 1, 'head': 6, 'lambda': 0.001}, 'string12_0_experimental': {'layer': 1, 'head': 7, 'lambda': 0.001}, 'string12_0_database': {'layer': 1, 'head': 8, 'lambda': 0.001}}}, 'perturbation_head': {'num_heads': 9, 'dropout': 0.1}}, 'regression_task': {'loss': {'type': 'point_dist_graph_reg', 'point_estimator': {'type': 'mse', 'lambda': 1.0}, 'distribution_loss': {'type': 'wasserstein', 'lambda': 0.1, 'wasserstein_blur': 0.05, 'wasserstein_p': 2, 'wasserstein_scaling': 0.9, 'min_samples_for_wasserstein': 512}, 'graph_regularization': {'lambda': 1.0}, 'supervised_contrastive': {'lambda': 0.0}, 'buffer': {'use_buffer': False}, 'ddp': {'use_ddp_gather': False}}, 'execution_mode': 'training', 'optimizer': {'type': 'AdamW', 'lr': 0.0001, 'weight_decay': 1e-08}, 'lr_scheduler': {'type': 'CosineAnnealingWarmupRestarts', 'first_cycle_steps': 25, 'cycle_mult': 1.0, 'max_lr': 0.0005, 'min_lr': 1e-07, 'warmup_steps': 1, 'gamma': 0.7}, 'clip_grad_norm': True, 'clip_grad_norm_max_norm': 10.0, 'grad_accumulation_schedule': None, 'plot_sample_ceiling': 10000, 'plot_every_n_epochs': 1, 'plot_transformer_diagnostics_every_n_epochs': 10, 'plot_edge_recovery_every_n_epochs': 10}}
+
+{'hydra_logging': {'loggers': {'logging_example': {'level': 'INFO'}}}, 'profiler': {'enabled': False, 'is_pytorch': True}, 'wandb': {'project': 'torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer', 'tags': ['parity_wasserstein']}, 'cell_dataset': {'graphs': ['physical', 'regulatory', 'tflink', 'string12_0_neighborhood', 'string12_0_fusion', 'string12_0_cooccurence', 'string12_0_coexpression', 'string12_0_experimental', 'string12_0_database'], 'node_embeddings': []}, 'transforms': {'use_transforms': True, 'forward_transform': {'normalization': {'gene_interaction': {'strategy': 'standard'}}}}, 'data_module': {'is_perturbation_subset': False, 'perturbation_subset_size': 10000, 'batch_size': 256, 'num_workers': 14, 'pin_memory': True, 'prefetch': False, 'prefetch_factor': 4, 'persistent_workers': True}, 'trainer': {'max_epochs': 600, 'strategy': 'ddp', 'num_nodes': 1, 'accelerator': 'gpu', 'devices': 4, 'overfit_batches': 0, 'precision': 'bf16-mixed'}, 'compile_mode': None, 'model': {'checkpoint_path': None, 'gene_num': 6607, 'hidden_channels': 180, 'num_transformer_layers': 8, 'num_attention_heads': 9, 'dropout': 0.1, 'learnable_embedding': {'enabled': True, 'size': 180, 'preprocessor': {'num_layers': 2, 'dropout': 0.1}}, 'graph_regularization': {'graph_reg_lambda': 0.001, 'graph_reg_layer': 1, 'row_sampling_rate': 1.0, 'regularized_heads': {'physical': {'layer': 1, 'head': 0, 'lambda': 0.001}, 'regulatory': {'layer': 1, 'head': 1, 'lambda': 0.001}, 'tflink': {'layer': 1, 'head': 2, 'lambda': 0.001}, 'string12_0_neighborhood': {'layer': 1, 'head': 3, 'lambda': 0.001}, 'string12_0_fusion': {'layer': 1, 'head': 4, 'lambda': 0.001}, 'string12_0_cooccurence': {'layer': 1, 'head': 5, 'lambda': 0.001}, 'string12_0_coexpression': {'layer': 1, 'head': 6, 'lambda': 0.001}, 'string12_0_experimental': {'layer': 1, 'head': 7, 'lambda': 0.001}, 'string12_0_database': {'layer': 1, 'head': 8, 'lambda': 0.001}}}, 'perturbation_head': {'num_heads': 9, 'dropout': 0.1}}, 'regression_task': {'loss': {'type': 'point_dist_graph_reg', 'point_estimator': {'type': 'mse', 'lambda': 1.0}, 'distribution_loss': {'type': 'wasserstein', 'lambda': 0.1, 'wasserstein_blur': 0.05, 'wasserstein_p': 2, 'wasserstein_scaling': 0.9, 'min_samples_for_wasserstein': 512}, 'graph_regularization': {'lambda': 1.0}, 'supervised_contrastive': {'lambda': 0.0}, 'buffer': {'use_buffer': False}, 'ddp': {'use_ddp_gather': False}}, 'execution_mode': 'training', 'optimizer': {'type': 'AdamW', 'lr': 0.0001, 'weight_decay': 1e-08}, 'lr_scheduler': {'type': 'CosineAnnealingWarmupRestarts', 'first_cycle_steps': 25, 'cycle_mult': 1.0, 'max_lr': 0.0005, 'min_lr': 1e-07, 'warmup_steps': 1, 'gamma': 0.7}, 'clip_grad_norm': True, 'clip_grad_norm_max_norm': 10.0, 'grad_accumulation_schedule': None, 'plot_sample_ceiling': 10000, 'plot_every_n_epochs': 1, 'plot_transformer_diagnostics_every_n_epochs': 10, 'plot_edge_recovery_every_n_epochs': 10}}
+wandb: Tracking run with wandb version 0.22.3
+wandb: Tracking run with wandb version 0.22.3
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-wskzvgqu
+wandb: Tracking run with wandb version 0.22.3
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-uo82nvuu
+wandb: Tracking run with wandb version 0.22.3
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-7ppgwwcr
+wandb: W&B syncing is set to `offline` in this directory. Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: Run data is saved locally in /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-p6kfq76k
+Built node embeddings: None (using learnable)Built node embeddings: None (using learnable)Built node embeddings: None (using learnable)Built node embeddings: None (using learnable)
+
+
+
+Graph info summary saved to: /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-p6kfq76k/files/graph_info_summary_2025-12-09-15-48-24.png
+Graph info summary saved to: /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-uo82nvuu/files/graph_info_summary_2025-12-09-15-48-24.png
+Graph info summary saved to: /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-7ppgwwcr/files/graph_info_summary_2025-12-09-15-48-24.png
+Graph info summary saved to: /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-wskzvgqu/files/graph_info_summary_2025-12-09-15-48-24.png
+/home/a-m/mjvolk3/projects/torchcell/experiments/home/a-m/mjvolk3/projects/torchcell/experiments/home/a-m/mjvolk3/projects/torchcell/experiments
+
+
+Error executing job with overrides: ['data_module.num_workers=14']
+Error executing job with overrides: ['data_module.num_workers=14']
+Error executing job with overrides: ['data_module.num_workers=14']
+/home/a-m/mjvolk3/projects/torchcell/experiments
+Error executing job with overrides: ['data_module.num_workers=14']
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py", line 222, in main
+    with open(
+         ~~~~^
+        osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as f:
+    ^
+  File "/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py", line 222, in main
+    with open(
+         ~~~~^
+        osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as f:
+    ^
+  File "/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py", line 222, in main
+    with open(
+         ~~~~^
+        osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as f:
+    ^
+  File "/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py", line 222, in main
+    with open(
+         ~~~~^
+        osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ) as f:
+    ^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/queries/001_small_build.cql'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/queries/001_small_build.cql'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/queries/001_small_build.cql'
+FileNotFoundError: [Errno 2] No such file or directory: '/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/queries/001_small_build.cql'
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+
+Set the environment variable HYDRA_FULL_ERROR=1 for a complete stack trace.
+[1;34mwandb[0m: 
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: [1mwandb sync /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-p6kfq76k[0m
+[1;34mwandb[0m: Find logs at: [1;35m../../../scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-p6kfq76k/logs[0m
+[1;34mwandb[0m: 
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: [1mwandb sync /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-uo82nvuu[0m
+[1;34mwandb[0m: 
+[1;34mwandb[0m: Find logs at: [1;35m../../../scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-uo82nvuu/logs[0m
+[1;34mwandb[0m: 
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: [1mwandb sync /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-wskzvgqu[0m
+[1;34mwandb[0m: [1mwandb sync /home/a-m/mjvolk3/scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-7ppgwwcr[0m
+[1;34mwandb[0m: Find logs at: [1;35m../../../scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-wskzvgqu/logs[0m
+[1;34mwandb[0m: Find logs at: [1;35m../../../scratch/torchcell/wandb-experiments/compute-3-3-2019385_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/wandb/offline-run-20251209_154810-7ppgwwcr/logs[0m
+<sys>--- Logging error ---
+--- Logging error ---
+<sys><sys>--- Logging error ---
+--- Logging error ---
+--- Logging error ---
+--- Logging error ---
+<sys>--- Logging error ---
+--- Logging error ---
+W1209 15:48:30.921000 312666 site-packages/torch/distributed/elastic/multiprocessing/api.py:900] Sending process 312735 closing signal SIGTERM
+E1209 15:48:30.986000 312666 site-packages/torch/distributed/elastic/multiprocessing/api.py:874] failed (exitcode: 1) local_rank: 1 (pid: 312736) of binary: /home/a-m/mjvolk3/miniconda3/envs/torchcell/bin/python
+Traceback (most recent call last):
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/bin/torchrun", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.13/site-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 357, in wrapper
+    return f(*args, **kwargs)
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.13/site-packages/torch/distributed/run.py", line 901, in main
+    run(args)
+    ~~~^^^^^^
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.13/site-packages/torch/distributed/run.py", line 892, in run
+    elastic_launch(
+    ~~~~~~~~~~~~~~~
+        config=config,
+        ~~~~~~~~~~~~~~
+        entrypoint=cmd,
+        ~~~~~~~~~~~~~~~
+    )(*cmd_args)
+    ~^^^^^^^^^^^
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.13/site-packages/torch/distributed/launcher/api.py", line 143, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+  File "/home/a-m/mjvolk3/miniconda3/envs/torchcell/lib/python3.13/site-packages/torch/distributed/launcher/api.py", line 277, in launch_agent
+    raise ChildFailedError(
+    ...<2 lines>...
+    )
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/home/a-m/mjvolk3/projects/torchcell/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2025-12-09_15:48:30
+  host      : compute-3-3.localdomain
+  rank      : 2 (local_rank: 2)
+  exitcode  : 1 (pid: 312737)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2025-12-09_15:48:30
+  host      : compute-3-3.localdomain
+  rank      : 3 (local_rank: 3)
+  exitcode  : 1 (pid: 312738)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2025-12-09_15:48:30
+  host      : compute-3-3.localdomain
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 312736)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================

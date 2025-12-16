@@ -2,7 +2,7 @@
 id: x0gu5mfzyyc9yg1sp28ngu7
 title: report
 desc: ''
-updated: 1763022070917
+updated: 1764812481392
 created: 1762703906577
 ---
 ## Chapters
@@ -84,7 +84,7 @@ Compare all 5 graph processing methods under identical conditions:
 
 | Method       | it/s    | Speedup vs DANGO | Est. Max  GPU Mem (MB/batch) | Batch   | Nodes/sample | Edges/sample |
 |--------------|---------|------------------|------------------------------|---------|--------------|--------------|
-| DANGO        | 545.120 | 1.00×            | 4.0                          | 60      | 103.2        | 0.a0          |
+| DANGO        | 545.120 | 1.00×            | 4.0                          | 60      | 103.2        | 0.0          |
 | LazySubgraph | 1.433   | 0×               | 1,155.4                      | 973,650 | 6,607.0      | 2,527,683.0  |
 | 1-hop        | 6.798   | .01×             | 88.7                         | 60      | 697.0        | 196,445.6    |
 | 2-hop        | 2.499   | 0×               | 808.7                        | 1488    | 3,758.9      | 1,878,158.4  |

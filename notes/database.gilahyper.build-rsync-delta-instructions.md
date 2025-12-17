@@ -2,7 +2,7 @@
 id: nhm52r608rqgj8b51v1q3je
 title: Build Rsync Delta Instructions
 desc: ''
-updated: 1765321338357
+updated: 1765931284752
 created: 1765319911784
 ---
 ## Database Build and Sync to Production

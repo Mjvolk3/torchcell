@@ -2,7 +2,7 @@
 id: qxq9inv88fvcse4w4kb9k78
 title: '51'
 desc: ''
-updated: 1765928164364
+updated: 1765931196843
 created: 1765827901397
 ---
 
@@ -20,13 +20,13 @@ created: 1765827901397
 ## 2025.12.16
 
 - [x] Cancel dead #IGB job → purple looks very good highest pearson yet. → Started new `002-009` so that we can get three triplicates over the different datasets.
+- [x] Notes on #GH build → [[Build Rsync Delta Instructions|database.gilahyper.build-rsync-delta-instructions]]
 
 - [ ] Follow up on the dataset outlier comparison by reporting the spearman at snapshot for very best model across the different scenarios. → From quick comparison it looks like spearman for datasets with more data are still higher. Test datasets are obviously not exactly the same. →
 
 - [ ] Kemmeren, Sameith dataset verify metadata #M1
 - [ ] Expression datasets write adapters #M1
 
-- [ ] Notes on #GH build
 
 - [ ] Start DB build over night #GH
 

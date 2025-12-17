@@ -46,7 +46,7 @@ env/pypy/*
 biochatter.env
 
 # slurm
-slurm/output
+
 slurm/error
 experiments/smf-dmf-tmf-001/slurm/*
 experiments/002-dmi-tmi/slurm/*
@@ -56,6 +56,7 @@ experiments/005-kuzmin2018-tmi/slurm/*
 experiments/006-kuzmin-tmi/slurm/*
 experiments/007-kuzmin-tm/slurm/*
 experiments/009-kuzmin-tmi/slurm/*
+experiments/010-kuzmin-tmi/slurm/*
 # docx
 CHBE-symposium.docx
 CHBE-symposium-2023.docx

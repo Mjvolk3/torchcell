@@ -2,17 +2,17 @@
 id: 7f5qxqvqi4si81oyv3p39y9
 title: '02'
 desc: ''
-updated: 1767747019589
+updated: 1767750723380
 created: 1767743671512
 ---
 
 ## 2026.01.06
 
-- [x] 010 inference scripts for 3 models (m00, m01, m02) - renamed from E006/r0 naming
 - [x] notes on [[Triple_interaction_enrichment_of_uncharacterized_genes|experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
+- [x] 010 inference scripts for 3 models (m00, m01, m02) - renamed from E006/r0 naming
 - [x] 12/24 gene panel selection for wetlab with best model [[select_12_and_24_genes_top_triples|experiments.010-kuzmin-tmi.scripts.select_12_and_24_genes_top_triples]]
-- [x] panel histogram visualizations [[inferred_triple_interaction_histogram_from_gene_selection|experiments.010-kuzmin-tmi.scripts.inferred_triple_interaction_histogram_from_gene_selection]]
-- [x] k=200 wetlab tables (singles, doubles, triples) [[select_12_k200_tables_hist|experiments.010-kuzmin-tmi.scripts.select_12_k200_tables_hist]]
+- [x] panel histogram visualizations (C(12,3)=220, C(24,3)=2024 constructible triples) [[inferred_triple_interaction_histogram_from_gene_selection|experiments.010-kuzmin-tmi.scripts.inferred_triple_interaction_histogram_from_gene_selection]]
+- [x] k=200 wetlab tables: 12 singles, 66 doubles C(12,2), 220 triples C(12,3) with overlay histogram [[select_12_k200_tables_hist|experiments.010-kuzmin-tmi.scripts.select_12_k200_tables_hist]]
 - [x] Sameith overlap reference table [[select_12_experimental_table_reference|experiments.010-kuzmin-tmi.scripts.select_12_experimental_table_reference]]
 - [x] gene list overlap analysis (UpSet) [[12_panel_gene_list_overlap|experiments.010-kuzmin-tmi.scripts.12_panel_gene_list_overlap]]
 

@@ -1,0 +1,33 @@
+# experiments/010-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_metrics_4gpu_test_gh_004_hook_eval.yaml
+# Eval config for 4-GPU DDP trained model WITH on_fit_start hook (job 740)
+# Tests if DDP training metrics match single-GPU eval metrics - 30 epochs, format_scientific_notation fix
+
+defaults:
+  - equivariant_cell_graph_transformer_cabbi_metrics_4gpu_test_gh_004_inference
+  - _self_
+
+wandb:
+  project: torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer
+  tags: [evaluation, metrics_consistency_test, 4gpu_trained, hook_enabled]
+
+# Override checkpoint path with new hook-enabled model
+model:
+  checkpoint_path: "models/checkpoints/gilahyper-740_7611b85f469d398c835b378142115a2c0619d2a6ea9fc2dd4f50fc949eae98a6/lvjota1b-best-mse-epoch=22-val/gene_interaction/MSE=0.0034.ckpt"
+
+regression_task:
+  plot_sample_ceiling: 1000000  # Collect ALL samples
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 1
+  plot_edge_recovery_every_n_epochs: 1
+
+trainer:
+  devices: 1
+  strategy: auto
+  max_epochs: 1
+
+evaluation:
+  splits: ["val", "test"]
+  threshold: 0.08
+  save_predictions: true
+  results_subdir: "metrics_consistency_test_hook"
+  training_group: "gilahyper-740_7611b85f469d398c835b378142115a2c0619d2a6ea9fc2dd4f50fc949eae98a6"

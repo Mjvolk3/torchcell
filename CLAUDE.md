@@ -28,7 +28,53 @@ Dendron encode from `torchcell/torchcell.models.dcell` to `notes/torchcell.model
 
 When I tell you to write some output to a file that is in `notes/` then typially you just need to append or modify, we don't want you messing up dendron frontmatter.
 
-## Saving Images in Python
+## Structure of Python Program Outputs
+
+`notes/assets/scripts/add_frontmatter.py` is used with vscode cmd to apply frontmatter to python files. This creates a linked dendron note file that I will use for natural language notes associated with this file. Here is an example.
+
+Front matter:
+
+```python
+# experiments/013-uncharacterized-genes/scripts/triple_interaction_enrichment_of_uncharacterized_genes.py
+# [[experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/013-uncharacterized-genes/scripts/triple_interaction_enrichment_of_uncharacterized_genes
+```
+
+- python file: `experiments/013-uncharacterized-genes/scripts/triple_interaction_enrichment_of_uncharacterized_genes.py`
+- image output: `notes/assets/images/013-uncharacterized-genes/gene_interaction_counts_2025-12-21-06-26-21.png`
+  - Note that the path matches experimental dir, but is name such so we don't have to go back dirs in relative path for associated note file.
+  - If we are outputting images, they must be references in some dendron note file. The most logical place to md image referens is in the note file that is associated with the python script.
+- data output: `experiments/013-uncharacterized-genes/results`
+
+```bash
+michaelvolk@M1-MV-6 torchcell % tree experiments/013-uncharacterized-genes/results
+experiments/013-uncharacterized-genes/results
+├── dubious_genes.json
+├── gene_interaction_counts.csv
+├── only_dubious_genes.json
+├── only_uncharacterized_genes.json
+├── uncharacterized_genes.json
+├── uncharacterized_triple_interactions.csv
+└── union_all_genes.json
+
+1 directory, 7 files
+```
+
+- note file: `notes/experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes.md`
+
+Note files can then be linked to from our current weekly note where we track todos and progress. For example in.
+
+`notes/user.Mjvolk3.torchcell.tasks.weekly.2026.02.md`
+
+We have the following, which helps us track work easily.
+
+```markdown
+## 2026.01.06
+
+- [x] notes on [[Triple_interaction_enrichment_of_uncharacterized_genes|experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
+```
+
+### Saving Images in Python
 
 All images should be saved in `ASSET_IMAGES_DIR`
 

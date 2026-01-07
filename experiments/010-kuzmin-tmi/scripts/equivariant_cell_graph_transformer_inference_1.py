@@ -244,7 +244,9 @@ def main(cfg: DictConfig) -> None:
     # Key difference: Use Perturbation processor (not SubgraphRepresentation)
     graph_processor = Perturbation()
 
-    # Dataset path - using inference_1 from 006 (shared processed LMDB)
+    # Dataset path - using inference_1 from 006
+    # NOTE: The 275M triple combinations LMDB was originally created in 006-kuzmin-tmi.
+    # It's fine to reuse here since the inference dataset is the same across experiments.
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/inference_1"
     )
@@ -264,11 +266,11 @@ def main(cfg: DictConfig) -> None:
 
         # Load the original training dataset to get normalization statistics
         original_dataset_root = osp.join(
-            DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/001-small-build"
+            DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build"
         )
 
         with open(
-            osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+            osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi/queries/001_small_build.cql"), "r"
         ) as f:
             query = f.read()
 
@@ -462,7 +464,6 @@ def main(cfg: DictConfig) -> None:
 
     # Create output file in inferred/ directory, named by checkpoint path
     # Expected compression: ~50GB CSV → ~2-4GB Parquet with dictionary encoding
-    # Use output_root (010-kuzmin-tmi) instead of dataset_root (006-kuzmin-tmi)
     inferred_dir = osp.join(output_root, "inferred")
     os.makedirs(inferred_dir, exist_ok=True)
 

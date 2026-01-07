@@ -32,6 +32,6 @@ export PYTHONWARNINGS="ignore"
 # Run inference with explicit config (using local script that outputs to 010-kuzmin-tmi)
 ~/miniconda3/envs/torchcell/bin/python \
   experiments/010-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_inference_1.py \
-  --config-name equivariant_cell_graph_transformer_cabbi_000_inference_r0 \
+  --config-name equivariant_cell_graph_transformer_cabbi_000_inference_m00 \
   data_module.batch_size=4096
 

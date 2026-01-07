@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=010-inference-M03
+#SBATCH --job-name=010-inference-M02
 #SBATCH --time=7-00:00:00
 #SBATCH --mail-user=mjvolk3@illinois.edu
 #SBATCH --mail-type=END
@@ -32,6 +32,6 @@ export PYTHONWARNINGS="ignore"
 # Run inference with explicit config (using local script that outputs to 010-kuzmin-tmi)
 ~/miniconda3/envs/torchcell/bin/python \
   experiments/010-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_inference_1.py \
-  --config-name equivariant_cell_graph_transformer_cabbi_000_inference_r2 \
+  --config-name equivariant_cell_graph_transformer_cabbi_000_inference_m01 \
   data_module.batch_size=4096
 

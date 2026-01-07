@@ -171,3 +171,9 @@ Here is more depth on a more recent experiment. We cannot show for previous becu
         ├── 010-inference-M03_699.out
         └── 010-select-12-genes_694.out
 ```
+
+## Troubleshooting  Deep Learning Experiments
+
+Before investigating complex distributed computing issues (DDP sync, TorchMetrics configuration, Lightning hooks), **verify your data paths first**.
+
+Dendron note source: `notes/experiments.010-kuzmin-tmi.false-torchmetrics-bug-bc-wrong-dataset-path.md`

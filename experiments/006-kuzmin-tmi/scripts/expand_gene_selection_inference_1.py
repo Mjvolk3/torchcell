@@ -1,11 +1,20 @@
 #!/usr/bin/env python
 """
-Expand gene selection for inference_1 from ~220 to ~3000+ genes.
-Combines genes from 4 sources:
-1. Ohya morphology (top 2000 by most stringent significance)
-2. Kemmeren responsive mutants
-3. Sameith doubles
-4. Expanded metabolic genes (GO terms + betaxanthin + original YeastGEM/kinase)
+Tiered gene selection for inference_1 using Score >= 2 overlap strategy.
+
+Strategy:
+- Tier 1 (Always Include): betaxanthin (2 genes) + sameith_doubles (~82 genes)
+- Large Lists: metabolic, ohya, kemmeren
+- Score each gene 0-3 based on membership in large lists
+- Select: Tier 1 + (genes with score >= 2 from large lists)
+
+This reduces inference from ~130 hours to ~7 hours by selecting genes
+that appear in 2+ datasets instead of taking a full UNION.
+
+Expected Results:
+- Score 3: Genes in ALL 3 large lists = ~55 genes
+- Score 2: Genes in exactly 2 large lists = ~760 genes
+- Final: Tier 1 + Score >= 2 = ~886 genes → ~16M triples → ~7 hours inference
 
 Filters out essential genes and low fitness genes (< 0.9).
 """
@@ -274,11 +283,22 @@ def save_gene_list(genes, filename, results_dir):
 
 def create_analysis_dataframe(
     all_gene_sources,
+    tier1_genes,
     essential_genes,
     low_fitness_genes,
-    gene_fitness_map
+    gene_fitness_map,
+    selected_genes
 ):
-    """Create comprehensive analysis dataframe."""
+    """Create comprehensive analysis dataframe with overlap scoring.
+
+    Args:
+        all_gene_sources: Dict mapping source names to gene sets
+        tier1_genes: Set of Tier 1 genes (betaxanthin + sameith_doubles)
+        essential_genes: Set of essential genes
+        low_fitness_genes: Set of low fitness genes
+        gene_fitness_map: Dict mapping genes to minimum fitness
+        selected_genes: Set of final selected genes (after filtering)
+    """
     print("\nCreating analysis dataframe...")
 
     # Combine all genes
@@ -286,18 +306,52 @@ def create_analysis_dataframe(
     for source_name, genes in all_gene_sources.items():
         all_genes.update(genes)
 
+    # Define large lists (for overlap scoring)
+    metabolic_genes = all_gene_sources.get('expanded_metabolic', set())
+    ohya_genes = all_gene_sources.get('ohya_morphology', set())
+    kemmeren_genes = all_gene_sources.get('kemmeren_responsive', set())
+
     # Create dataframe
     gene_data = []
     for gene in sorted(all_genes):
+        # Calculate overlap score (0-3) based on large lists only
+        overlap_score = sum([
+            gene in metabolic_genes,
+            gene in ohya_genes,
+            gene in kemmeren_genes,
+        ])
+
+        # Determine selection reason
+        is_tier1 = gene in tier1_genes
+        is_selected = gene in selected_genes
+
+        if is_tier1 and is_selected:
+            selection_reason = "tier1"
+        elif overlap_score >= 2 and is_selected:
+            selection_reason = "score>=2"
+        elif gene in essential_genes:
+            selection_reason = "excluded_essential"
+        elif gene in low_fitness_genes:
+            selection_reason = "excluded_low_fitness"
+        elif overlap_score < 2 and not is_tier1:
+            selection_reason = "excluded_low_overlap"
+        else:
+            selection_reason = "excluded"
+
         gene_info = {
             'gene': gene,
-            'in_ohya_morphology': gene in all_gene_sources.get('ohya_morphology', set()),
-            'in_kemmeren_responsive': gene in all_gene_sources.get('kemmeren_responsive', set()),
+            'in_ohya_morphology': gene in ohya_genes,
+            'in_kemmeren_responsive': gene in kemmeren_genes,
             'in_sameith_doubles': gene in all_gene_sources.get('sameith_doubles', set()),
-            'in_expanded_metabolic': gene in all_gene_sources.get('expanded_metabolic', set()),
+            'in_expanded_metabolic': gene in metabolic_genes,
+            'in_betaxanthin': gene in all_gene_sources.get('betaxanthin', set()),
+            'is_tier1': is_tier1,
+            'overlap_score': overlap_score,
             'is_essential': gene in essential_genes,
             'is_low_fitness': gene in low_fitness_genes,
             'min_fitness': gene_fitness_map.get(gene, None),
+            'is_selected': is_selected,
+            'selection_reason': selection_reason,
             'num_sources': sum([
                 gene in all_gene_sources.get('ohya_morphology', set()),
                 gene in all_gene_sources.get('kemmeren_responsive', set()),
@@ -310,15 +364,21 @@ def create_analysis_dataframe(
     df = pd.DataFrame(gene_data)
 
     print(f"  Created dataframe with {len(df)} genes")
-    print(f"\nGene overlap statistics:")
+    print(f"\nGene source statistics:")
     for source_name, genes in all_gene_sources.items():
         print(f"  {source_name}: {len(genes)} genes")
 
-    # Source overlap counts
-    overlap_counts = df['num_sources'].value_counts().sort_index()
-    print(f"\nGenes by number of sources:")
-    for num_sources, count in overlap_counts.items():
-        print(f"  {num_sources} sources: {count} genes")
+    # Overlap score distribution
+    print(f"\nOverlap score distribution (large lists: metabolic, ohya, kemmeren):")
+    score_counts = df['overlap_score'].value_counts().sort_index()
+    for score, count in score_counts.items():
+        print(f"  Score {score}: {count} genes")
+
+    # Selection summary
+    print(f"\nSelection summary:")
+    reason_counts = df['selection_reason'].value_counts()
+    for reason, count in reason_counts.items():
+        print(f"  {reason}: {count} genes")
 
     return df
 
@@ -399,10 +459,11 @@ def create_visualizations(df, all_gene_sources, ts, results_dir):
 
 def main():
     ts = timestamp()
-    print(f"Starting expanded gene selection at {ts}")
+    print(f"Starting tiered gene selection (Score >= 2) at {ts}")
     print(f"Parameters:")
     print(f"  SINGLE_GENE_FITNESS_THRESHOLD: {SINGLE_GENE_FITNESS_THRESHOLD}")
     print(f"  OHYA_TOP_N_GENES: {OHYA_TOP_N_GENES}")
+    print(f"  SELECTION_STRATEGY: Tier 1 + Score >= 2 overlap")
 
     # Initialize genome and graph
     print("\n" + "="*80)
@@ -423,8 +484,8 @@ def main():
 
     print(f"Genome gene set size: {len(genome.gene_set)}")
 
-    # Setup results directory
-    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results/inference_preprocessing_expansion"
+    # Setup results directory (relative to project root)
+    results_dir = "experiments/006-kuzmin-tmi/results/inference_preprocessing_expansion"
     os.makedirs(results_dir, exist_ok=True)
 
     # Get essential genes and low fitness genes
@@ -441,97 +502,141 @@ def main():
 
     all_gene_sources = {}
 
-    # Source 1: Ohya morphology
+    # Source 1: Ohya morphology (LARGE LIST)
     ohya_genes = get_ohya_morphology_genes(genome, top_n=OHYA_TOP_N_GENES)
     all_gene_sources['ohya_morphology'] = ohya_genes
-    save_gene_list(ohya_genes, f"ohya_morphology_genes_list_{ts}.txt", results_dir)
+    save_gene_list(ohya_genes, "ohya_morphology_genes.txt", results_dir)
 
-    # Source 2: Kemmeren responsive
+    # Source 2: Kemmeren responsive (LARGE LIST)
     kemmeren_genes = get_kemmeren_responsive_genes()
     all_gene_sources['kemmeren_responsive'] = kemmeren_genes
-    save_gene_list(kemmeren_genes, f"kemmeren_responsive_genes_list_{ts}.txt", results_dir)
+    save_gene_list(kemmeren_genes, "kemmeren_responsive_genes.txt", results_dir)
 
-    # Source 3: Sameith doubles
+    # Source 3: Sameith doubles (TIER 1)
     sameith_genes = get_sameith_doubles_genes()
     all_gene_sources['sameith_doubles'] = sameith_genes
-    save_gene_list(sameith_genes, f"sameith_doubles_genes_list_{ts}.txt", results_dir)
+    save_gene_list(sameith_genes, "sameith_doubles_genes.txt", results_dir)
 
-    # Source 4: Expanded metabolic
+    # Source 4: Expanded metabolic (LARGE LIST)
     metabolic_genes, betaxanthin_genes = get_expanded_metabolic_genes(genome, graph, yeast_gem)
     all_gene_sources['expanded_metabolic'] = metabolic_genes
-    save_gene_list(metabolic_genes, f"expanded_metabolic_genes_list_{ts}.txt", results_dir)
-    save_gene_list(betaxanthin_genes, f"betaxanthin_genes_list_{ts}.txt", results_dir)
+    all_gene_sources['betaxanthin'] = betaxanthin_genes  # Track separately
+    save_gene_list(metabolic_genes, "expanded_metabolic_genes.txt", results_dir)
+    save_gene_list(betaxanthin_genes, "betaxanthin_genes.txt", results_dir)
 
-    # Take union of all sources
+    # =========================================================================
+    # TIERED SELECTION: Score >= 2 overlap strategy
+    # =========================================================================
     print("\n" + "="*80)
-    print("Combining all gene sources...")
+    print("Applying tiered selection (Score >= 2)...")
     print("="*80)
-    all_genes_union = set()
-    for source_name, genes in all_gene_sources.items():
-        all_genes_union.update(genes)
 
-    # Filter out mitochondrial genes from all sources
-    all_genes_before_mito_filter = len(all_genes_union)
-    all_genes_union = {g for g in all_genes_union if not g.startswith('Q')}
-    mito_filtered_count = all_genes_before_mito_filter - len(all_genes_union)
+    # Define Tier 1 genes (always included regardless of overlap)
+    tier1_genes = betaxanthin_genes | sameith_genes
+    print(f"\nTier 1 genes (always included):")
+    print(f"  Betaxanthin: {len(betaxanthin_genes)} genes")
+    print(f"  Sameith doubles: {len(sameith_genes)} genes")
+    print(f"  Total Tier 1: {len(tier1_genes)} genes")
 
-    print(f"Total unique genes before filtering: {all_genes_before_mito_filter}")
+    # Score each gene by membership in large lists (0-3)
+    all_large_list_genes = metabolic_genes | ohya_genes | kemmeren_genes
+    gene_scores = {}
+    for gene in all_large_list_genes:
+        score = sum([
+            gene in metabolic_genes,
+            gene in ohya_genes,
+            gene in kemmeren_genes
+        ])
+        gene_scores[gene] = score
+
+    # Count genes by score
+    score_counts = {0: 0, 1: 0, 2: 0, 3: 0}
+    for gene, score in gene_scores.items():
+        score_counts[score] += 1
+
+    print(f"\nOverlap score distribution (large lists only):")
+    for score in [3, 2, 1, 0]:
+        print(f"  Score {score}: {score_counts[score]} genes")
+
+    # Select high overlap genes (score >= 2)
+    high_overlap_genes = {gene for gene, score in gene_scores.items() if score >= 2}
+    print(f"\nHigh overlap genes (score >= 2): {len(high_overlap_genes)} genes")
+
+    # Combine: Tier 1 + high overlap genes
+    selected_genes_pre_filter = tier1_genes | high_overlap_genes
+    print(f"Combined (Tier 1 + Score >= 2): {len(selected_genes_pre_filter)} genes")
+
+    # Filter out mitochondrial genes (Q-prefix)
+    selected_before_mito = len(selected_genes_pre_filter)
+    selected_genes_pre_filter = {g for g in selected_genes_pre_filter if not g.startswith('Q')}
+    mito_filtered_count = selected_before_mito - len(selected_genes_pre_filter)
     if mito_filtered_count > 0:
         print(f"  Filtered {mito_filtered_count} mitochondrial genes (Q-prefix)")
-    print(f"Total unique genes after mitochondrial filter: {len(all_genes_union)}")
 
-    # Apply filtering
-    print("\nApplying filters...")
-    filtered_genes = all_genes_union - essential_genes - low_fitness_genes
+    # Apply filtering (essential and low fitness)
+    print("\nApplying essential and low fitness filters...")
+    filtered_genes = selected_genes_pre_filter - essential_genes - low_fitness_genes
 
-    print(f"  Removed {len(all_genes_union & essential_genes)} essential genes")
-    print(f"  Removed {len(all_genes_union & low_fitness_genes)} low fitness genes")
+    essential_removed = len(selected_genes_pre_filter & essential_genes)
+    low_fitness_removed = len(selected_genes_pre_filter & low_fitness_genes)
+
+    print(f"  Removed {essential_removed} essential genes")
+    print(f"  Removed {low_fitness_removed} low fitness genes")
     print(f"  Final gene count: {len(filtered_genes)}")
 
-    # Save final expanded gene list
+    # Save final gene list (no timestamp)
     print("\n" + "="*80)
-    print("Saving final expanded gene list...")
+    print("Saving final selected gene list...")
     print("="*80)
     final_filepath = save_gene_list(
         filtered_genes,
-        f"expanded_genes_inference_1_{ts}.txt",
+        "expanded_genes_inference_1.txt",
         results_dir
     )
 
-    # Create analysis dataframe
+    # Create analysis dataframe with new columns
     df = create_analysis_dataframe(
         all_gene_sources,
+        tier1_genes,
         essential_genes,
         low_fitness_genes,
-        gene_fitness_map
+        gene_fitness_map,
+        filtered_genes
     )
 
-    # Save analysis CSV
-    analysis_filepath = osp.join(results_dir, f"expanded_genes_analysis_{ts}.csv")
+    # Save analysis CSV (no timestamp)
+    analysis_filepath = osp.join(results_dir, "expanded_genes_analysis.csv")
     df.to_csv(analysis_filepath, index=False)
     print(f"\n  Saved analysis to {analysis_filepath}")
 
-    # Create visualizations
+    # Create visualizations (still uses timestamp for image versioning)
     create_visualizations(df, all_gene_sources, ts, results_dir)
 
     # Print final summary
     print("\n" + "="*80)
-    print("GENE SELECTION SUMMARY")
+    print("TIERED GENE SELECTION SUMMARY (Score >= 2)")
     print("="*80)
-    print(f"Source contributions:")
+    print(f"Strategy: Tier 1 + Score >= 2 overlap")
+    print(f"\nSource contributions:")
     for source_name, genes in all_gene_sources.items():
         print(f"  {source_name}: {len(genes)} genes")
 
-    print(f"\nTotal unique genes (union): {len(all_genes_union)}")
-    print(f"After filtering:")
-    print(f"  Essential genes removed: {len(all_genes_union & essential_genes)}")
-    print(f"  Low fitness genes removed: {len(all_genes_union & low_fitness_genes)}")
-    print(f"  Final selected genes: {len(filtered_genes)}")
+    print(f"\nTiered selection:")
+    print(f"  Tier 1 (betaxanthin + sameith_doubles): {len(tier1_genes)} genes")
+    print(f"  Score 3 (all 3 large lists): {score_counts[3]} genes")
+    print(f"  Score 2 (2 large lists): {score_counts[2]} genes")
+    print(f"  Score 1 (1 large list): {score_counts[1]} genes (excluded)")
+
+    print(f"\nSelection pipeline:")
+    print(f"  Tier 1 + Score >= 2: {len(tier1_genes | high_overlap_genes)} genes")
+    print(f"  After mitochondrial filter: {len(selected_genes_pre_filter)} genes")
+    print(f"  After essential filter: {len(selected_genes_pre_filter) - essential_removed} genes")
+    print(f"  After low fitness filter: {len(filtered_genes)} genes")
 
     print(f"\nFiles saved:")
     print(f"  Final gene list: {final_filepath}")
     print(f"  Analysis CSV: {analysis_filepath}")
-    print(f"  Timestamp: {ts}")
+    print(f"  Timestamp (for images): {ts}")
 
 
 if __name__ == "__main__":

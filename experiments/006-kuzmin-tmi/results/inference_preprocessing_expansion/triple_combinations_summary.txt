@@ -1,0 +1,23 @@
+Triple Combination Generation Summary (Adjacency Graph + Streaming Parquet)
+Timestamp: 2025-12-15-16-58-08
+Fitness threshold: 1.0
+Strategy: Adjacency graph + missing data = invalid + streaming Parquet (~50x compression)
+Format: Parquet with dictionary encoding + snappy compression
+
+Selected genes: 601
+Maximum possible triples C(n,3): 35,999,900
+
+DMF pair statistics:
+  Total pairs with data: 122,382
+  Valid pairs (fitness >= 1.0): 66,229
+  Invalid pairs (fitness < 1.0): 56,153
+
+Triple generation:
+  After DMF graph filtering: 4,370,595
+  After TMI filtering: 4,370,595
+  Total reduction: 87.86%
+
+DMF dataset contributions:
+  dmf_kuzmin2018: 4,911 pairs
+  dmf_costanzo2016: 121,363 pairs
+  dmf_kuzmin2020: 12,605 pairs

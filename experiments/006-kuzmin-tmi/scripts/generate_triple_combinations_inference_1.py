@@ -6,16 +6,16 @@ Key differences from original:
 - FITNESS_THRESHOLD = 1.0 (was 0.5) - maximum stringency
 - Adjacency graph approach - only generates valid triples
 - Missing DMF data = invalid pair (aggressive strategy)
-- Uses expanded gene list (~2261 genes from 4 sources)
+- Uses tiered gene list (~886 genes from Score >= 2 selection)
 - TMI filtering against 009-kuzmin-tmi (deletion-only dataset)
-- **Streaming Parquet output** - columnar format with dictionary encoding (handles 281M+ triples)
-- **~50x compression** - 20GB text → 400MB parquet (dictionary encoding + snappy)
+- **Streaming Parquet output** - columnar format with dictionary encoding
+- **Non-timestamped filenames** for consistent file references
 
 Strategy:
 1. Build graph of valid pairs (fitness = 1.0 in DMF datasets)
 2. Load TMI index before triple generation
 3. Generate triples using mutual neighbors, checking TMI and writing to Parquet in batches
-4. Dictionary encoding: 2261 unique gene names stored once, referenced by 16-bit integers
+4. Dictionary encoding: gene names stored once, referenced by integers
 5. No in-memory triple storage - batches of 100K triples (~20MB peak memory)
 """
 
@@ -417,17 +417,17 @@ def main():
     print(f"Starting triple combination generation (adjacency graph) at {ts}")
     print(f"FITNESS_THRESHOLD: {FITNESS_THRESHOLD}")
 
-    # Find the most recent gene selection file
-    results_dir = "/Users/michaelvolk/Documents/projects/torchcell/experiments/006-kuzmin-tmi/results/inference_preprocessing_expansion"
-    gene_list_files = [f for f in os.listdir(results_dir)
-                       if f.startswith("expanded_genes_inference_1_") and f.endswith(".txt")]
+    # Use the non-timestamped gene list file (relative to project root)
+    results_dir = "experiments/006-kuzmin-tmi/results/inference_preprocessing_expansion"
+    gene_list_path = osp.join(results_dir, "expanded_genes_inference_1.txt")
 
-    if not gene_list_files:
-        raise FileNotFoundError(f"No expanded gene list found in {results_dir}")
+    if not osp.exists(gene_list_path):
+        raise FileNotFoundError(
+            f"Gene list not found at {gene_list_path}\n"
+            f"Run expand_gene_selection_inference_1.py first."
+        )
 
-    latest_file = sorted(gene_list_files)[-1]
-    gene_list_path = osp.join(results_dir, latest_file)
-    print(f"Using gene list: {latest_file}")
+    print(f"Using gene list: expanded_genes_inference_1.txt")
 
     # Setup output directory
     inference_dir = osp.join(DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/inference_1")
@@ -484,6 +484,9 @@ def main():
         root=dataset_root,
         query=query,
         gene_set=genome.gene_set,
+        uri="bolt://torchcell-database.ncsa.illinois.edu:7687",
+        username="readonly",
+        password="ReadOnly",
         graphs=None,
         node_embeddings=None,
         converter=None,
@@ -495,13 +498,13 @@ def main():
     # Get the is_any_perturbed_gene_index
     is_any_perturbed_gene_index = dataset.is_any_perturbed_gene_index
 
-    # Prepare output files (Parquet format)
+    # Prepare output files (Parquet format, no timestamps)
     inference_raw_dir = osp.join(inference_dir, "raw")
     os.makedirs(inference_raw_dir, exist_ok=True)
 
-    triple_list_file_results = osp.join(results_dir, f"triple_combinations_list_{ts}.parquet")
-    triple_list_file_inference = osp.join(inference_raw_dir, f"triple_combinations_list_{ts}.parquet")
-    tmi_removed_file = osp.join(results_dir, f"tmi_removed_triples_{ts}.parquet")
+    triple_list_file_results = osp.join(results_dir, "triple_combinations_list.parquet")
+    triple_list_file_inference = osp.join(inference_raw_dir, "triple_combinations_list.parquet")
+    tmi_removed_file = osp.join(results_dir, "tmi_removed_triples.parquet")
 
     # Generate triples using adjacency graph with streaming Parquet output
     # Write to both locations simultaneously
@@ -549,8 +552,8 @@ def main():
     # Clean up dataset
     dataset.close_lmdb()
 
-    # Save results summary
-    summary_file = osp.join(results_dir, f"triple_combinations_summary_{ts}.txt")
+    # Save results summary (no timestamp)
+    summary_file = osp.join(results_dir, "triple_combinations_summary.txt")
     with open(summary_file, 'w') as f:
         f.write(f"Triple Combination Generation Summary (Adjacency Graph + Streaming Parquet)\n")
         f.write(f"Timestamp: {ts}\n")

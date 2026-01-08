@@ -44,6 +44,8 @@ import torch.distributed as dist
 from torchcell.timestamp import timestamp
 from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
+from torchcell.viz.graph_recovery import GraphRecoveryVisualization
+from torchcell.timestamp import timestamp
 
 log = logging.getLogger(__name__)
 load_dotenv()
@@ -183,10 +185,6 @@ def main(cfg: DictConfig) -> None:
         graph=graph,
     )
     print(f"Built node embeddings: {list(node_embeddings.keys()) if node_embeddings else 'None (using learnable)'}")
-
-    # Log static graph statistics for edge recovery monitoring
-    from torchcell.viz.graph_recovery import GraphRecoveryVisualization
-    from torchcell.timestamp import timestamp
 
     graph_reg_config = wandb.config.model["graph_regularization"]
     regularized_heads = graph_reg_config.get("regularized_heads", {})

@@ -1,0 +1,33 @@
+# experiments/010-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_metrics_1gpu_test_gh_005_hook_eval.yaml
+# Eval config for 1-GPU trained model WITH on_fit_start hook (job 741)
+# Baseline for metrics consistency test - 30 epochs, format_scientific_notation fix
+
+defaults:
+  - equivariant_cell_graph_transformer_cabbi_metrics_1gpu_test_gh_005_inference
+  - _self_
+
+wandb:
+  project: torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer
+  tags: [evaluation, metrics_consistency_test, 1gpu_trained, hook_enabled]
+
+# Override checkpoint path with new hook-enabled model
+model:
+  checkpoint_path: "models/checkpoints/gilahyper-741_76f89452ed5d08aed3028c6bf9214923ba1265c998d44d24c1b6f1a70271aa44/0me5dmqu-best-mse-epoch=13-val/gene_interaction/MSE=0.0033.ckpt"
+
+regression_task:
+  plot_sample_ceiling: 1000000  # Collect ALL samples
+  plot_every_n_epochs: 1
+  plot_transformer_diagnostics_every_n_epochs: 1
+  plot_edge_recovery_every_n_epochs: 1
+
+trainer:
+  devices: 1
+  strategy: auto
+  max_epochs: 1
+
+evaluation:
+  splits: ["val", "test"]
+  threshold: 0.08
+  save_predictions: true
+  results_subdir: "metrics_consistency_test_hook"
+  training_group: "gilahyper-741_76f89452ed5d08aed3028c6bf9214923ba1265c998d44d24c1b6f1a70271aa44"

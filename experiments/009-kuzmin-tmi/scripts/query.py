@@ -41,7 +41,7 @@ from torchcell.transforms.regression_to_classification import (
 def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
-    with open("experiments/010-kuzmin-tmi/queries/001_small_build.cql", "r") as f:
+    with open("experiments/009-kuzmin-tmi/queries/001_small_build.cql", "r") as f:
         query = f.read()
 
     ### Add Embeddings
@@ -71,7 +71,7 @@ def main():
     )
 
     dataset_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build"
+        DATA_ROOT, "data/torchcell/experiments/009-kuzmin-tmi/001-small-build"
     )
 
     codon_frequency = CodonFrequencyDataset(

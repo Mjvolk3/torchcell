@@ -1,0 +1,31 @@
+# experiments/009-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_000_eval_m01.yaml
+# Full evaluation config for CellGraphTransformer on val and test sets
+# Inherits from inference config, overrides for full data collection
+# Model: compute-3-3-2019396, Pearson=0.4008
+
+defaults:
+  - equivariant_cell_graph_transformer_cabbi_000_inference_m01
+  - _self_
+
+wandb:
+  project: torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer
+  tags: [evaluation, full_dataset]
+
+# KEY OVERRIDES for full data collection:
+regression_task:
+  plot_sample_ceiling: 1000000  # Large number > dataset size to collect ALL samples
+  plot_every_n_epochs: 1        # So val plots trigger (epoch 0 + 1 = 1, 1 % 1 == 0)
+  plot_transformer_diagnostics_every_n_epochs: 1  # Always plot diagnostics
+  plot_edge_recovery_every_n_epochs: 1            # Always plot edge recovery
+
+# Single GPU for evaluation
+trainer:
+  devices: 1
+  strategy: auto
+  max_epochs: 1  # Not used for evaluation, just required
+
+# Evaluation-specific settings
+# NOTE: training_group is derived from model.checkpoint_path (single source of truth)
+# NOTE: results_dir uses full checkpoint path structure for traceability
+evaluation:
+  threshold: 0.08  # Kuzmin paper: |tau or epsilon| > 0.08, P < 0.05

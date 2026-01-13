@@ -76,11 +76,15 @@ We have the following, which helps us track work easily.
 
 ### Saving Images in Python
 
-All images should be saved in `ASSET_IMAGES_DIR`
+- All images should be saved in `ASSET_IMAGES_DIR`
+- Do this by using `load_dotenv`
+- Time stamp the images with by using torchcell/timestamp.py
 
-Do this by using `load_dotenv` and time stamp the images with by using torchcell/timestamp.py
+The common pattern is `(osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png"))`
 
-The common patters is `(osp.join(ASSET_IMAGES_DIR, f"{title}_{timestamp()}.png"))`
+- We do this to iterate on the plots until we are satisfied with them. Then we will typically ask for `timestamp` to be removed once we are satisfied.
+
+The common pattern is `(osp.join(ASSET_IMAGES_DIR, f"{title}}.png"))`
 
 ## When Creating or Designing new Experiments
 
@@ -177,3 +181,14 @@ Here is more depth on a more recent experiment. We cannot show for previous becu
 Before investigating complex distributed computing issues (DDP sync, TorchMetrics configuration, Lightning hooks), **verify your data paths first**.
 
 Dendron note source: `notes/experiments.010-kuzmin-tmi.false-torchmetrics-bug-bc-wrong-dataset-path.md`
+
+## Running Experiment Scripts
+
+All experiment scripts should be run from the torchcell root directory:
+
+```bash
+# From /Users/michaelvolk/Documents/projects/torchcell/
+python experiments/<experiment-id>/scripts/<script-name>.py
+```
+
+This ensures consistent path resolution for `DATA_ROOT`, `ASSET_IMAGES_DIR`, `EXPERIMENT_ROOT`.

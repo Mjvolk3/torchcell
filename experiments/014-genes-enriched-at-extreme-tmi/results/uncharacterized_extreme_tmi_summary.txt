@@ -1,0 +1,38 @@
+UNCHARACTERIZED GENES IN EXTREME TMI ANALYSIS
+============================================================
+
+Parameters:
+  Score threshold: |τ| > 0.1
+  P-value threshold: p < 0.05
+  Uncharacterized genes analyzed: 668
+
+Results:
+  Total interactions in dataset: 376732
+  Extreme interactions with uncharacterized genes (all): 2852
+  High-confidence extreme interactions: 239
+  Unique uncharacterized genes in extreme interactions (all): 178
+  Unique uncharacterized genes in high-conf interactions: 68
+
+Top 10 uncharacterized genes (all criterion):
+   1. YMR310C     :   208 extreme interactions
+   2. YGL082W     :   206 extreme interactions
+   3. YJR115W     :   198 extreme interactions
+   4. YBL059W     :   161 extreme interactions
+   5. YHL029C     :   149 extreme interactions
+   6. YJR030C     :   116 extreme interactions
+   7. YJL181W     :   116 extreme interactions
+   8. YPR157W     :    85 extreme interactions
+   9. YGR273C     :    80 extreme interactions
+  10. YOL024W     :    79 extreme interactions
+
+Top 10 uncharacterized genes (high-confidence criterion):
+   1. YJR115W     :    51 extreme interactions
+   2. YBL059W     :    19 extreme interactions
+   3. YLR177W     :    15 extreme interactions
+   4. YCR095C     :    12 extreme interactions
+   5. YPR078C     :    11 extreme interactions
+   6. YJL147C     :     9 extreme interactions
+   7. YKL121W     :     9 extreme interactions
+   8. YDR067C     :     8 extreme interactions
+   9. YOL024W     :     8 extreme interactions
+  10. YPR157W     :     6 extreme interactions

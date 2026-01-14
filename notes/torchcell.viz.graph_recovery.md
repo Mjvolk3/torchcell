@@ -18,7 +18,11 @@ The `GraphRecoveryVisualization` class provides visualization tools for graph re
 
 ### Recall@Degree
 
-**Definition:** For each node $i$ with true neighbors $N(i) = \{j \mid A_{ij}^{\text{true}} = 1\}$ and degree $d_i = |N(i)|$:
+**What it measures:** For each gene, does the attention head attend to at least as many neighbors as the gene has in the reference graph?
+
+**Intuition:** If gene A has degree 5 in the physical interaction graph (5 known neighbors), and the attention head's top-5 attended genes include all 5 true neighbors → recall = 1.0
+
+**Formula:** For each node $i$ with true neighbors $N(i) = \{j \mid A_{ij}^{\text{true}} = 1\}$ and degree $d_i = |N(i)|$:
 
 $$
 \text{recall}_i = \frac{|N(i) \cap T_{d_i}(i)|}{d_i}
@@ -32,15 +36,21 @@ $$
 \text{Recall@Degree}(g) = \frac{1}{|\{i : d_i > 0\}|} \sum_{i: d_i>0} \text{recall}_i
 $$
 
-**Intuition:** "If I predict as many neighbors as each node *actually* has, what fraction do I recover?"
+**Interpretation:**
 
+- High recall (→ 1.0): Attention heads are recovering the local neighborhood structure
+- Low recall (→ 0): Attention patterns don't align with known graph edges
 - **Node-wise fairness:** Degree-3 and degree-300 nodes evaluated equally
 - **Upper bound = 1.0** when model perfectly ranks true neighbors highest
 - **No dense matrix reconstruction** needed (memory efficient)
 
 ### Precision@k
 
-**Definition:** For each node $i$, let $T_k(i)$ = top-$k$ attention-ranked nodes:
+**What it measures:** Among the top-k attended gene pairs, what fraction are true edges in the reference graph?
+
+**Intuition:** If you look at the 32 gene pairs with highest attention weights, and 24 of them are actual edges → precision@32 = 0.75
+
+**Formula:** For each node $i$, let $T_k(i)$ = top-$k$ attention-ranked nodes:
 
 $$
 \text{prec}_k(i) = \frac{|N(i) \cap T_k(i)|}{k}
@@ -52,15 +62,20 @@ $$
 \text{Precision@k}(g) = \frac{\sum_{i: d_i > 0} \text{prec}_k(i)}{|\{i \mid d_i > 0\}|}
 $$
 
-**Intuition:** "Among the top-$k$ attention-ranked edges, what fraction are real edges?"
+**Interpretation:**
 
-- **Measures false-positive rate** among strongest attention weights
-- **Not degree-dependent:** Even low-degree nodes can have high precision
+- Evaluated at multiple k values (e.g., k=8, 32, 128, 320)
+- Higher precision at small k: Model confidently identifies true edges
+- Precision decay as k increases: Expected, since you're including weaker signals
 - **Max precision for node $i$ is** $\min(d_i/k, 1)$
 
 ### Edge-Mass Alignment
 
-**Definition:** The fraction of total attention mass placed on known graph edges:
+**What it measures:** What fraction of total attention weight falls on known graph edges?
+
+**Intuition:** If an attention head puts 80% of its attention mass on gene pairs that are connected in the reference graph → edge-mass = 0.80
+
+**Formula:**
 
 $$
 \text{EdgeMass}(g) = \frac{\sum_{(i,j) \in E_g} A_{ij}^{\text{attn}}}{\sum_{i,j} A_{ij}^{\text{attn}}}
@@ -68,10 +83,21 @@ $$
 
 where $E_g$ is the edge set of graph $g$ and $A^{\text{attn}}$ is the attention matrix.
 
-**Intuition:** "What fraction of attention is concentrated on real biological edges?"
+**Interpretation:**
 
+- High (→ 1.0): Most attention is focused on known interactions
+- ~0.5 (random baseline): Attention is roughly uniformly distributed
+- Low (< 0.5): Attention avoids known edges (unusual)
 - **Random baseline ≈ edge_density** of the graph
 - **Values > baseline** indicate attention is learning graph structure
+
+### Summary
+
+| Metric | What it tells you |
+|--------|-------------------|
+| Recall@Degree | Are attention heads learning the *topology* of biological networks? |
+| Edge-Mass | Is attention *concentrated* on known interactions vs scattered? |
+| Precision@k | Can you trust the highest-attention pairs as real biological relationships? |
 
 ## Visualization Methods
 

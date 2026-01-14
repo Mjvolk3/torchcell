@@ -2,7 +2,7 @@
 id: 7f5qxqvqi4si81oyv3p39y9
 title: '02'
 desc: ''
-updated: 1767757297160
+updated: 1768415096062
 created: 1767743671512
 ---
 
@@ -15,54 +15,23 @@ created: 1767743671512
 - [x] k=200 wetlab tables: 12 singles, 66 doubles C(12,2), 220 triples C(12,3) with overlay histogram [[select_12_k200_tables_hist|experiments.010-kuzmin-tmi.scripts.select_12_k200_tables_hist]]
 - [x] Sameith overlap reference table [[select_12_experimental_table_reference|experiments.010-kuzmin-tmi.scripts.select_12_experimental_table_reference]]
 - [x] gene list overlap analysis (UpSet) [[12_panel_gene_list_overlap|experiments.010-kuzmin-tmi.scripts.12_panel_gene_list_overlap]]
+- [x] fixed Kemmeren sign inversion bug - cross-study correlation now +0.599 (was -0.599) [[verify_metadata|experiments.012-sameith-kemmeren.scripts.verify_metadata]]
+- [x] single mutant expression distributions with improved stats (counts+percentages) [[single_mutant_expression_distributions|experiments.012-sameith-kemmeren.scripts.single_mutant_expression_distributions]]
+- [x] combined triangular heatmap (Greens colormap for SD, RdBu for mean) [[double_mutant_combined_heatmap|experiments.012-sameith-kemmeren.scripts.double_mutant_combined_heatmap]]
+- [x] gene-by-gene cross-study correlation analysis - confirms biological consistency [[gene_by_gene_expression_correlation|experiments.012-sameith-kemmeren.scripts.gene_by_gene_expression_correlation]]
+- [x] Kemmeren-Sameith overlap analysis (mean-based, publication-quality plots) [[kemmeren_sameith_overlap_analysis|experiments.012-sameith-kemmeren.scripts.kemmeren_sameith_overlap_analysis]]
+- [x] technical noise comparison using log2_ratio_std for both datasets [[noise_comparison_analysis|experiments.012-sameith-kemmeren.scripts.noise_comparison_analysis]]
+- [x] master run_all script with stable filenames (no timestamps) [[run_all|experiments.012-sameith-kemmeren.scripts.run_all]]
 
-- [ ] #GH Get a inference comparison on deletion versus larger dataset [[171235 Inference_006 009 010 Kuzmin Tmi Wip|scratch.2025.12.16.171235-inference_006-009-010-kuzmin-tmi-wip]] and [[006 009 Inference Comparison|experiments.010-kuzmin-tmi.006-009-inference-comparison]]
+## 2026.01.07
 
-***
+- [x] Construct refactor plan [[182525 Micro Rna Correcting Noise in Schema and for Datasets Kemmeren Sameit|scratch.2026.01.07.182525-micro-array-correcting-noise-in-schema-and-for-datasets-kemmeren-sameith]]
+- [x] Describe some of the consquences of schema structure → [[2026.01.07 - Current Constraints on Schematization|torchcell.datamodels.schema#20260107---current-constraints-on-schematization]] → These manifest as sneaky design rules that could break later stuffy.
 
-From previous week needs to be integrated.
+## 2026.01.08
 
-## 2025.12.17
+- 🔲 On the [[2026.01.07 - Current Constraints on Schematization|torchcell.datamodels.schema#20260107---current-constraints-on-schematization]], do we specify the base class well enough to ensure that named properties are easily captured?
 
-- [ ] Add a check to the final gene list to see if we have any genes overlapped with the double gene expression #GH
+## 2026.01.09
 
-- [ ] Kemmeren, Sameith dataset verify metadata #M1
-
-- [ ] Follow up on the dataset outlier comparison by reporting the spearman at snapshot for very best model across the different scenarios. → From quick comparison it looks like spearman for datasets with more data are still higher. Test datasets are obviously not exactly the same. →
-
-- [ ] Expression datasets write adapters #M1
-
-- [ ] Start DB build over night #GH
-
-## 2025.12.18
-
-- [ ]
-- [ ]
-- [ ]
-
-## 2025.12.19
-
-- [ ]
-- [ ]
-- [ ]
-
-## 2025.12.20
-
-- [x] Is expression data from SGD web browser available in the gene json? → It is not it comes from SPELL
-- [ ] Are there images associated with [yeast-gfp data](https://yeastgfp.yeastgenome.org/). Yes if needed.. Maybe they do have some more information then just categorical classification? Maybe not.
-- [ ]
-- [ ]
-
-***
-
- Move to ideas notes
-
-- Studying epistasis through knockouts ... maybe not feasible... too many parts.
-- Do locations of proteins change depending on populations changes of different kinds of proteins. We know that proteins go to different places. Maybe you can track this probabilistically, but can you shift the distribution of other proteins?
-- The GFP-tagged library is distributed by < Invitrogen >.
-- The RFP-tagged strains used for the colocalization studies can be
-- If we could obtain these strains
-
-***
-
-- [ ] Email CW
+- [x] prepare presentation

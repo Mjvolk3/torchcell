@@ -1,0 +1,10 @@
+Category,Count
+Essential genes,1140
+Genome uncharacterized,668
+Graph uncharacterized,667
+Both sources agree uncharacterized,667
+Either source uncharacterized,668
+Essential ∩ Genome-Unchar,3
+Essential ∩ Graph-Unchar,3
+Essential ∩ Agreed-Unchar,3
+Essential ∩ Any-Unchar,3

@@ -21,6 +21,12 @@ repos:
         args: [--skip-magic-trailing-comma]
         files: ^(src/torchcell|tests/torchcell)/
 
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.16.0
+    hooks:
+      - id: markdownlint-cli2
+        files: ^notes/.*\.md$
+
   # -   repo: https://github.com/pycqa/flake8.git
   #     rev: 6.1.0
   #     hooks:

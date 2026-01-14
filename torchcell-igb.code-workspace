@@ -25,21 +25,7 @@
         "workbench.colorCustomizations": {
             "titleBar.activeBackground": "#6d1400df"
         },
-        "markdownlint.config":{
-            "MD007": { "indent": 2 },
-            "MD008": false,
-            "MD013": false,
-            "MD014": false,
-            "MD018": false,
-            "MD025": false,
-            "MD026": false,
-            "MD033": false,
-            "MD045": false,
-            "MD050": false,
-            "MD029": false,
-            "MD036": false,
-            "MD040": false
-        },
+        // Markdownlint config now in .markdownlint.json (single source of truth for VSCode extension and pre-commit)
         "[markdown]": {
             "editor.codeActionsOnSave": {
                 "source.fixAll.markdownlint": "explicit"

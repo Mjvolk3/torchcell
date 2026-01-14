@@ -1,10 +1,20 @@
-# DDP Multi-GPU Device Mismatch Fix
+---
+id: fykqjl6fyk72urg3wjbgi43
+title: Ddp Device Fix
+desc: ''
+updated: 1767845278062
+created: 1767845278062
+---
 
-## Date: 2025-11-06
+## DDP Multi-GPU Device Mismatch Fix
 
-## Issue: Device mismatch in DDP mode (experiment 082)
+**Date:** 2025-11-06
 
-## Problem
+Documents the enhanced device consistency checks required for DDP multi-GPU training, resolving RuntimeError issues where tensors from different GPUs (cuda:0-3) needed explicit device matching before indexing operations.
+
+**Issue:** Device mismatch in DDP mode (experiment 082)
+
+### Problem
 
 Experiment 082 failed even after initial fixes with:
 
@@ -14,7 +24,7 @@ RuntimeError: indices should be either on cpu or on the same device as the index
 
 The issue only occurred in DDP (Distributed Data Parallel) mode with 4 GPUs, not in local testing.
 
-## Root Cause
+### Root Cause
 
 In DDP mode with multiple GPUs:
 
@@ -24,9 +34,9 @@ In DDP mode with multiple GPUs:
 - Even after `.to(self.device)`, tensors might not be on the matching device
 - `torch.cat([])` on empty list can return CPU tensor
 
-## Enhanced Fix Applied
+### Enhanced Fix Applied
 
-### 1. Force Device Consistency After Concatenation
+#### 1. Force Device Consistency After Concatenation
 
 **File:** `/torchcell/models/gpu_edge_mask_generator.py` (lines 300-303)
 
@@ -36,7 +46,7 @@ if all_pert_indices.device != self.device:
     all_pert_indices = all_pert_indices.to(self.device, non_blocking=False).contiguous()
 ```
 
-### 2. Device Matching Before Indexing
+#### 2. Device Matching Before Indexing
 
 **File:** `/torchcell/models/gpu_edge_mask_generator.py` (lines 324-333)
 
@@ -51,7 +61,7 @@ if batch_assignment.device != incidence_tensor.device:
     batch_assignment = batch_assignment.to(incidence_tensor.device)
 ```
 
-### 3. Keep .item() for Pointer Indexing
+#### 3. Keep .item() for Pointer Indexing
 
 **File:** `/torchcell/trainers/int_hetero_cell.py` (lines 162-163)
 
@@ -61,7 +71,7 @@ start_idx = ptr[sample_idx].item()
 end_idx = ptr[sample_idx + 1].item()
 ```
 
-## Key Insights
+### Key Insights
 
 1. **DDP Device Assignment**: In DDP, each process uses a different GPU. Tensors created in one place might not match devices used elsewhere.
 
@@ -71,29 +81,29 @@ end_idx = ptr[sample_idx + 1].item()
 
 4. **Defensive Programming**: Multiple device checks at different stages catch edge cases.
 
-## Testing
+### Testing
 
-### Local Test (Single GPU)
+#### Local Test (Single GPU)
 
 ```bash
 python experiments/006-kuzmin-tmi/scripts/test_device_mismatch_fix.py
 # ✅ Passes
 ```
 
-### DDP Test (4 GPUs)
+#### DDP Test (4 GPUs)
 
 ```bash
 sbatch experiments/006-kuzmin-tmi/scripts/gh_hetero_cell_bipartite_dango_gi_lazy-ddp_082.slurm
 # Should now work with enhanced fixes
 ```
 
-## Performance Impact
+### Performance Impact
 
 - Device checks: ~0.001ms per batch (negligible)
 - Device transfers: Only occur on mismatch (rare in practice)
 - Overall: No measurable performance impact
 
-## Debug Logging
+### Debug Logging
 
 Added debug logging to track device mismatches:
 
@@ -104,7 +114,7 @@ log.debug(f"Device mismatch detected: all_pert_indices on {all_pert_indices.devi
 
 Set logging level to DEBUG to see these messages if issues persist.
 
-## Lessons Learned
+### Lessons Learned
 
 1. **DDP is Different**: Always test with actual DDP setup, not just single GPU
 2. **Device Consistency**: Never assume tensors are on expected devices in DDP

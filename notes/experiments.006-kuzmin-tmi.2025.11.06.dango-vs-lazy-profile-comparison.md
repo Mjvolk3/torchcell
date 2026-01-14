@@ -1,12 +1,20 @@
-# DANGO vs Lazy Hetero Profile Comparison
-
-## Date: 2025-11-06
-
-## Goal: Identify why DANGO achieves ~10 it/s vs Lazy Hetero's 0.42 it/s
-
+---
+id: kbiwlc8cqgrwi2louqvmaso
+title: Dango Vs Lazy Profile Comparison
+desc: ''
+updated: 1767845278036
+created: 1767845278036
 ---
 
-## Profiling Setup (Identical Conditions)
+## DANGO vs Lazy Hetero Profile Comparison
+
+**Date:** 2025-11-06
+
+Comprehensive profiling analysis revealing DANGO is 875x faster than Lazy Hetero, with bottlenecks identified in the "Other" category (311s), optimizer (274s), and model forward pass (163s) under identical DDP conditions.
+
+**Goal:** Identify why DANGO achieves ~10 it/s vs Lazy Hetero's 0.42 it/s
+
+### Profiling Setup (Identical Conditions)
 
 | Parameter | Value |
 |-----------|-------|
@@ -19,7 +27,7 @@
 
 ---
 
-## Performance Summary
+### Performance Summary
 
 | Model | Speed | Total Time (25 steps) | Speedup |
 |-------|-------|----------------------|---------|
@@ -30,7 +38,7 @@
 
 ---
 
-## Category Breakdown Comparison
+### Category Breakdown Comparison
 
 | Category | DANGO (ms) | DANGO (%) | Lazy Hetero (ms) | Lazy Hetero (%) | Ratio (Lazy/DANGO) |
 |----------|------------|-----------|------------------|-----------------|-------------------|
@@ -48,34 +56,34 @@
 
 ---
 
-## KEY FINDINGS
+### KEY FINDINGS
 
-### 1. ⚠️ GRAPH PROCESSING: 92,973x SLOWER in Lazy Hetero
+#### 1. ⚠️ GRAPH PROCESSING: 92,973x SLOWER in Lazy Hetero
 
 - **DANGO**: 0.4 ms (0.0%)
 - **Lazy Hetero**: 34,301 ms (3.0%)
 - **Impact**: This is THE major bottleneck!
 - **Why**: Lazy hetero generates edge masks on-the-fly, DANGO has simpler graph structure
 
-### 2. Model Forward: 2,031x Slower in Lazy Hetero
+#### 2. Model Forward: 2,031x Slower in Lazy Hetero
 
 - **DANGO**: 80 ms (6.2%)
 - **Lazy Hetero**: 162,507 ms (14.2%)
 - **Why**: Lazy hetero processes metabolism bipartite graph + more complex architecture
 
-### 3. Optimizer: 1,110x Slower in Lazy Hetero
+#### 3. Optimizer: 1,110x Slower in Lazy Hetero
 
 - **DANGO**: 247 ms (19.0%)
 - **Lazy Hetero**: 274,123 ms (24.0%)
 - **Why**: Lazy hetero has more parameters? Or optimizer inefficiency?
 
-### 4. DDP Communication: Similar Relative Overhead
+#### 4. DDP Communication: Similar Relative Overhead
 
 - **DANGO**: 17.6%
 - **Lazy Hetero**: 13.9%
 - **Note**: Both models have reasonable DDP overhead. Not a major differentiator.
 
-### 5. Data Loading: Both Optimized
+#### 5. Data Loading: Both Optimized
 
 - **DANGO**: 1.2% (15 ms)
 - **Lazy Hetero**: 0.0% (4 ms)
@@ -83,9 +91,9 @@
 
 ---
 
-## Bottleneck Analysis
+### Bottleneck Analysis
 
-### Lazy Hetero's Major Bottlenecks (in order of impact):
+#### Lazy Hetero's Major Bottlenecks (in order of impact):
 
 1. **"Other" Category (27.3%, 311,451 ms)**
    - Contains unclassified operations
@@ -108,7 +116,7 @@
    - Edge mask generation
    - Previous optimization target - already improved significantly
 
-### DANGO's Profile (for comparison):
+#### DANGO's Profile (for comparison):
 
 1. **"Other" Category (27.2%, 354 ms)** - Similar percentage, much faster absolute
 2. **Optimizer (19.0%, 247 ms)** - Reasonable
@@ -118,9 +126,9 @@
 
 ---
 
-## Why is Lazy Hetero 875x Slower?
+### Why is Lazy Hetero 875x Slower?
 
-### The Scale Issue
+#### The Scale Issue
 
 The absolute time difference is so large (1.3s vs 19 minutes) that we need to consider:
 
@@ -149,9 +157,9 @@ The absolute time difference is so large (1.3s vs 19 minutes) that we need to co
 
 ---
 
-## Recommended Next Steps
+### Recommended Next Steps
 
-### Immediate Actions:
+#### Immediate Actions:
 
 1. **Investigate "Other" Category** (311,451 ms, 27.3%)
    - What operations are being classified as "other"?
@@ -172,7 +180,7 @@ The absolute time difference is so large (1.3s vs 19 minutes) that we need to co
    - Still 92,973x slower than DANGO
    - Are masks being generated efficiently?
 
-### Long-term Optimizations:
+#### Long-term Optimizations:
 
 1. **Reduce Model Complexity**
    - Can we simplify the metabolism bipartite graph?
@@ -189,7 +197,7 @@ The absolute time difference is so large (1.3s vs 19 minutes) that we need to co
 
 ---
 
-## Conclusion
+### Conclusion
 
 The lazy hetero model is **875x slower** than DANGO when profiled under identical DDP conditions. The slowdown is distributed across all categories, but the largest absolute contributors are:
 

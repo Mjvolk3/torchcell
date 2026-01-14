@@ -2,7 +2,7 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768421253296
+updated: 1768422045904
 created: 1768264787823
 ---
 ## 2026.01.13
@@ -17,10 +17,13 @@ created: 1768264787823
 - [x] Identified 2,852 extreme TMI interactions involving 178 uncharacterized genes [[experiments.014-genes-enriched-at-extreme-tmi.scripts.analyze_extreme_interactions]]
 - [x] Created 4 multi-panel figures showing extreme interaction patterns [[experiments.014-genes-enriched-at-extreme-tmi.scripts.visualize_extreme_interactions]]
 - [x] Refactored analysis pipeline into modular data processing and visualization steps [[experiments.014-genes-enriched-at-extreme-tmi.scripts.014-genes-enriched-at-extreme-tmi]]
-
 - [x] Enhanced frontmatter script with shebang preservation, clean note naming, and smart test file logic [[notes.assets.scripts.add_frontmatter]]
+- [x] Fixed 7 experiment note files to follow H2 header convention with summaries: [[experiments.006-kuzmin-tmi.2025.11.04.storage-calculations]], [[experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison]], [[experiments.006-kuzmin-tmi.2025.11.06.ddp-device-fix]], [[experiments.006-kuzmin-tmi.2025.11.06.gpu-mask-vectorization]], [[experiments.006-kuzmin-tmi.2025.11.06.preprocessing-workflow]], [[experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution]], [[experiments.006-kuzmin-tmi.2025.11.06.vectorization-final-fix]]
 
 - [ ] Clean up and commit 012
+
+- [ ] Reorganize Spell we don't want any analysis module. Build out into experiment.
+
 - [ ] Add n to fitness interaction data
 - [ ] Put Spell in right place
 - [ ] Add examples or clarify the schema design to avoid ambiguity in property definitions.

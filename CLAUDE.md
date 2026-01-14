@@ -66,13 +66,35 @@ Note files can then be linked to from our current weekly note where we track tod
 
 `notes/user.Mjvolk3.torchcell.tasks.weekly.2026.02.md`
 
-We have the following, which helps us track work easily.
+We have the following, which helps we track work easily.
 
 ```markdown
 ## 2026.01.06
 
 - [x] notes on [[Triple_interaction_enrichment_of_uncharacterized_genes|experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
 ```
+
+### Markdown Formatting
+
+All markdown files in `notes/` are automatically formatted on save using the markdownlint VSCode extension. Configuration is stored in `torchcell.code-workspace` (lines 79-98).
+
+**Markdownlint Rules (from workspace config):**
+
+- **MD007**: `{ "indent": 2 }` - Use 2-space indentation for nested lists
+- **MD008**: `false` - Don't require consistent header style
+- **MD013**: `false` - No line length limit
+- **MD014**: `false` - Dollar signs in shell commands allowed
+- **MD018**: `false` - No space required after hash on atx style headers
+- **MD025**: `false` - Multiple top-level headings allowed
+- **MD026**: `false` - Trailing punctuation in headings allowed
+- **MD029**: `false` - Ordered list item prefix doesn't need to be ordered
+- **MD033**: `false` - Inline HTML allowed
+- **MD036**: `false` - Emphasis used instead of heading allowed
+- **MD040**: `false` - Fenced code blocks without language allowed
+- **MD045**: `false` - Images allowed without alt text
+- **MD050**: `false` - Strong style doesn't need to be consistent
+
+Write clean, well-structured markdown and VSCode will handle consistency automatically. Try to abide by these rules so we don't have to manually save to reformat.
 
 ### Saving Images in Python
 

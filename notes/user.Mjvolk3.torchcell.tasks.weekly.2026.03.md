@@ -2,18 +2,25 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768414996174
+updated: 1768415191929
 created: 1768264787823
 ---
 ## 2026.01.13
 
 - [x] Wandb sync of recent #IGB
+- [x] #GH Get a inference comparison on deletion versus larger dataset [[Performance Diff 010 009|experiments.010-kuzmin-tmi.performance-diff-010-009]]
 
 ## 2026.01.14
 
 - [x] Collected 668 uncharacterized and 684 dubious genes [[experiments.013-uncharacterized-genes.scripts.count_dubious_and_uncharacterized_genes]]
 - [x] Analyzed 44,619 triple interactions involving uncharacterized genes [[experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
 - [x] Found 3 essential ∩ uncharacterized genes, identified YCR016W annotation discrepancy [[experiments.013-uncharacterized-genes.scripts.uncharacterized_essential_overlap]]
+
+- [x] Refactored inference/eval configs from r0/E006_M## to m00/m01/m02 naming convention
+- [x] ADH/ALD triple knockout case study for 2,3-butanediol production (Ng et al. 2012) [[Trigenic_interaction_adh1_adh3_adh5|experiments.010-kuzmin-tmi.scripts.trigenic_interaction_adh1_adh3_adh5]]
+- [x] Costanzo2016 SMF/DMF/ε lookup for ADH1/ADH3/ADH5/ALD6 genes [[Adh_ald_costanzo2016_lookup|experiments.010-kuzmin-tmi.scripts.adh_ald_costanzo2016_lookup]]
+- [x] Improved graph recovery metric documentation with intuition/interpretation format [[Graph_recovery|torchcell.viz.graph_recovery]]
+
 - [ ] Clean up and commit 014
 - [ ] Clean up and commit 012
 - [ ] Add n to fitness interaction data

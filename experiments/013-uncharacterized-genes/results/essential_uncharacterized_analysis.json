@@ -1,0 +1,14 @@
+{
+  "total_genome_uncharacterized": 668,
+  "total_graph_uncharacterized": 667,
+  "total_essential": 1140,
+  "both_sources_agree_uncharacterized": 667,
+  "either_source_uncharacterized": 668,
+  "only_genome_uncharacterized": 1,
+  "only_graph_uncharacterized": 0,
+  "essential_and_genome_uncharacterized": 3,
+  "essential_and_graph_uncharacterized": 3,
+  "essential_and_agreed_uncharacterized": 3,
+  "essential_and_any_uncharacterized": 3,
+  "agreement_percentage": 99.8502994011976
+}

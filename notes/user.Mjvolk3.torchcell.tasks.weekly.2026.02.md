@@ -2,7 +2,7 @@
 id: 7f5qxqvqi4si81oyv3p39y9
 title: '02'
 desc: ''
-updated: 1767750723380
+updated: 1767757297160
 created: 1767743671512
 ---
 
@@ -16,9 +16,7 @@ created: 1767743671512
 - [x] Sameith overlap reference table [[select_12_experimental_table_reference|experiments.010-kuzmin-tmi.scripts.select_12_experimental_table_reference]]
 - [x] gene list overlap analysis (UpSet) [[12_panel_gene_list_overlap|experiments.010-kuzmin-tmi.scripts.12_panel_gene_list_overlap]]
 
-
-
-
+- [ ] #GH Get a inference comparison on deletion versus larger dataset [[171235 Inference_006 009 010 Kuzmin Tmi Wip|scratch.2025.12.16.171235-inference_006-009-010-kuzmin-tmi-wip]] and [[006 009 Inference Comparison|experiments.010-kuzmin-tmi.006-009-inference-comparison]]
 
 ***
 
@@ -51,7 +49,7 @@ From previous week needs to be integrated.
 ## 2025.12.20
 
 - [x] Is expression data from SGD web browser available in the gene json? → It is not it comes from SPELL
-- [ ] Are there images associated with [yeast-gfp data](https://yeastgfp.yeastgenome.org/). Yes if needed.. Maybe they do have some more information then just categorical classification? Maybe not. 
+- [ ] Are there images associated with [yeast-gfp data](https://yeastgfp.yeastgenome.org/). Yes if needed.. Maybe they do have some more information then just categorical classification? Maybe not.
 - [ ]
 - [ ]
 

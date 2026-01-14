@@ -1,7 +1,7 @@
 ---
 id: oaf8eh2vh0ouhl1eqff8inc
 title: Experiment 087a Work in Progress
-desc: 'NeighborSubgraphRepresentation DataLoader Profiling'
+desc: NeighborSubgraphRepresentation DataLoader Profiling
 updated: 1762512228453
 created: 1762512228453
 ---
@@ -35,6 +35,7 @@ Test if k-hop neighborhood sampling (`NeighborSubgraphRepresentation`) is faster
 **Added**: `NeighborSubgraphRepresentation` class (line ~2360)
 
 **Key features**:
+
 - Inherits from `GraphProcessor`
 - Configurable `num_hops` parameter (default: 2)
 - Uses `torch_geometric.utils.k_hop_subgraph()` to find k-hop neighbors
@@ -43,6 +44,7 @@ Test if k-hop neighborhood sampling (`NeighborSubgraphRepresentation`) is faster
 - Handles metabolism (GPR and RMR edges)
 
 **Import added**:
+
 ```python
 from torch_geometric.utils import k_hop_subgraph  # Line 12
 ```
@@ -54,6 +56,7 @@ from torch_geometric.utils import k_hop_subgraph  # Line 12
 **Purpose**: Configure experiment 087a for dataloader profiling only (skip model)
 
 **Key settings**:
+
 ```yaml
 defaults:
   - hetero_cell_bipartite_dango_gi_gh_086  # Inherit from 086
@@ -79,6 +82,7 @@ regression_task:
 **Purpose**: Standalone profiling script that measures dataloader speed
 
 **Configuration**:
+
 - `NUM_HOPS = 2`
 - `BATCH_SIZE = 28` (same as 086a)
 - `NUM_WORKERS = 4`
@@ -86,6 +90,7 @@ regression_task:
 - `MAX_STEPS = 100`
 
 **Process**:
+
 1. Initialize genome, graph, and metabolism
 2. Create dataset with `NeighborSubgraphRepresentation(num_hops=2)`
 3. Apply normalization transform
@@ -102,6 +107,7 @@ regression_task:
 **File**: `experiments/006-kuzmin-tmi/scripts/run_profiling_087a.slurm`
 
 **Job configuration**:
+
 - Job name: `PROFILE-087a`
 - GPU: 1 (single GPU, no DDP)
 - Memory: 250GB
@@ -109,6 +115,7 @@ regression_task:
 - CPUs: 16
 
 **Process**:
+
 1. Run `profile_neighbor_subgraph_087a.py`
 2. Save output to `profiling_results/profiling_087a_<timestamp>/087a_neighbor_subgraph_dataloader.log`
 3. Extract metrics (it/s)
@@ -117,6 +124,7 @@ regression_task:
 6. Generate summary report
 
 **Output files**:
+
 ```
 profiling_results/profiling_087a_<timestamp>/
 ├── 087a_neighbor_subgraph_dataloader.log  # Full log
@@ -126,6 +134,7 @@ profiling_results/profiling_087a_<timestamp>/
 ### Files Created/Modified
 
 **Production code**:
+
 1. `torchcell/data/graph_processor.py` - Added `NeighborSubgraphRepresentation` class
 
 **Experiment files**:
@@ -143,6 +152,7 @@ profiling_results/profiling_087a_<timestamp>/
 **Problem**: The config specifies `graph_processor.type` but the training script may not support dynamic graph processor selection.
 
 **Current config approach**:
+
 ```yaml
 graph_processor:
   type: "neighbor_subgraph"
@@ -150,6 +160,7 @@ graph_processor:
 ```
 
 **Likely needed**: Modify the training script to check config and instantiate the correct processor:
+
 ```python
 if wandb.config.get("graph_processor", {}).get("type") == "neighbor_subgraph":
     num_hops = wandb.config.graph_processor.get("num_hops", 2)
@@ -175,11 +186,13 @@ else:
 **Issue**: Incorrect import path caused ImportError.
 
 **Original (incorrect)**:
+
 ```python
 from torchcell.transforms.regression_to_classification import COOLabelNormalizationTransform
 ```
 
 **Fixed**:
+
 ```python
 from torchcell.transforms.coo_regression_to_classification import COOLabelNormalizationTransform
 ```
@@ -214,6 +227,7 @@ follow_batch=["perturbation_indices"],
 **Fix applied** (2025-11-07):
 
 1. **Edge filtering** - Vectorized with `torch.isin()`:
+
 ```python
 # Before: for loop with .item() calls
 # After:
@@ -223,6 +237,7 @@ mask = src_mask & dst_mask
 ```
 
 2. **Perturbed mask** - Direct indexing:
+
 ```python
 # Before: for loop
 # After:
@@ -230,6 +245,7 @@ perturbed_mask = self.masks["gene"]["perturbed"][subset_nodes]
 ```
 
 3. **GPR filtering** - Vectorized:
+
 ```python
 # Before: for loop with .item() calls
 # After:
@@ -238,6 +254,7 @@ included_reaction_indices = gpr_hyperedge_index[1, gpr_mask].unique()
 ```
 
 4. **RMR filtering** - Vectorized:
+
 ```python
 # Before: for loop with .item() calls
 # After:
@@ -256,6 +273,7 @@ sbatch experiments/006-kuzmin-tmi/scripts/run_profiling_087a.slurm
 ```
 
 **Expected output location**:
+
 ```
 experiments/006-kuzmin-tmi/profiling_results/profiling_087a_<timestamp>/
 experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
@@ -264,16 +282,19 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
 ### Expected Results
 
 **Best case** (>5× speedup):
+
 - NeighborSubgraph: ~7-10 it/s
 - Speedup: 5-8× vs LazySubgraph
 - Conclusion: K-hop sampling successfully reduces overhead
 
 **Good case** (2-5× speedup):
+
 - NeighborSubgraph: ~3-6 it/s
 - Speedup: 2-5× vs LazySubgraph
 - Conclusion: Meaningful improvement, worth exploring further
 
 **Poor case** (<2× speedup):
+
 - NeighborSubgraph: ~1.5-2.5 it/s
 - Speedup: <2× vs LazySubgraph
 - Conclusion: Bottleneck is elsewhere (collation, I/O, etc.)
@@ -281,6 +302,7 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
 ### Experiment 087a Results (Job 528)
 
 **2-hop NeighborSubgraph (vectorized)**:
+
 - **Speed**: 2.479 it/s
 - **Speedup vs LazySubgraph**: 1.89×
 - **Slowdown vs DANGO**: 29.78×
@@ -306,9 +328,11 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
    - Runs 3 sequential experiments: 1-hop, 2-hop, 3-hop
    - Extracts metrics from all logs
    - Generates comprehensive comparison table:
+
      ```
      | Hop | it/s | Speedup | GPU Mem | Est. Max Batch | Nodes/sample | Edges/sample |
      ```
+
    - Calculates effective throughput (samples/sec = it/s × max_batch_size)
 
 **Key Insight**: Smaller neighborhoods may enable larger batch sizes, potentially offsetting slower per-batch speed with higher throughput.
@@ -341,21 +365,25 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
 **Before running, verify**:
 
 1. ✅ **Syntax check**: Verify `graph_processor.py` compiles without errors
+
    ```bash
    python -c "from torchcell.data.graph_processor import NeighborSubgraphRepresentation; print('OK')"
    ```
 
 2. ⚠️ **Import check**: Verify all imports in profiling script work
+
    ```bash
    python -c "from experiments.006-kuzmin-tmi.scripts.profile_neighbor_subgraph_087a import main; print('OK')"
    ```
 
 3. ⚠️ **Config validation**: Ensure YAML config is valid
+
    ```bash
    python -c "import yaml; yaml.safe_load(open('experiments/006-kuzmin-tmi/conf/neighbor_subgraph_gh_087_dataloader.yaml')); print('OK')"
    ```
 
 4. ⚠️ **Data loading test**: Run a quick manual test
+
    ```bash
    python torchcell/scratch/load_neigbor_batch_006.py
    ```
@@ -365,6 +393,7 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
 **If SLURM job fails**:
 
 1. Check SLURM output file for errors:
+
    ```bash
    cat experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_*.out
    ```
@@ -376,6 +405,7 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
    - **DataLoader errors**: Check collation function compatibility
 
 3. Test locally first (without SLURM):
+
    ```bash
    python experiments/006-kuzmin-tmi/scripts/profile_neighbor_subgraph_087a.py
    ```
@@ -394,4 +424,4 @@ experiments/006-kuzmin-tmi/slurm/output/PROFILE-087a_<job_id>.out
 
 - **Experiment 086 summary**: `notes/experiments.006-kuzmin-tmi.scripts.hetero_cell_bipartite_dango_gi_lazy.2025.11.07.experiment-086-results-summary.md`
 - **Scratch prototype**: `torchcell/scratch/load_neigbor_batch_006.py`
-- **PyG k_hop_subgraph docs**: https://pytorch-geometric.readthedocs.io/en/2.5.3/modules/utils.html#torch_geometric.utils.k_hop_subgraph
+- **PyG k_hop_subgraph docs**: <https://pytorch-geometric.readthedocs.io/en/2.5.3/modules/utils.html#torch_geometric.utils.k_hop_subgraph>

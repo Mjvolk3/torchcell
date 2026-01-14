@@ -649,11 +649,32 @@ class CalMorphExperiment(Experiment, ModelStrict):
 
 
 class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
+    """Microarray expression phenotype with canonical log2 ratio convention.
+
+    CONVENTION: All expression_log2_ratio values follow the torchcell standard:
+        expression_log2_ratio = log2(sample_of_interest / reference)
+
+    Where:
+        - sample_of_interest = mutant/deletion strain being studied
+        - reference = wildtype or common reference pool
+
+    This means:
+        - Positive values: gene is MORE expressed in sample vs reference (upregulated)
+        - Negative values: gene is LESS expressed in sample vs reference (downregulated)
+
+    NOTE: Source data (GEO) may use different conventions (e.g., log2(reference/sample)).
+    Dataset loaders MUST transform to this canonical representation for consistency.
+    """
+
     graph_level: str = "node"
     label_name: str = "expression_log2_ratio"
     label_statistic_name: str = "expression_log2_ratio_std"
     expression_log2_ratio: Dict[str, float] = Field(
-        description="SortedDict of log2 fold change ratios relative to wildtype reference",
+        description=(
+            "SortedDict of log2 fold change ratios relative to wildtype reference. "
+            "CONVENTION: log2(sample/reference) where positive = upregulated, "
+            "negative = downregulated. All datasets transformed to this standard."
+        ),
         repr=False,  # Hide in repr to avoid clutter
     )
     expression_log2_ratio_std: Dict[str, float] | None = Field(

@@ -1,8 +1,8 @@
 ---
 id: 2qlur6rz1mzpmtltyf7w0j0
-title: Ontology_pydantic
+title: schema
 desc: ''
-updated: 1727273812496
+updated: 1768423649573
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -239,3 +239,15 @@ I think instead what we do is have some named vocab that matches `label_name` to
 ## 2024.09.25 - Dataset Name on Experiment Reference
 
 #ramble it is a bit strange having `dataset_name` because then all references will be distinct in some way. Not sure if this is a concern or not because we could always check if references are same via properties.
+
+## 2026.01.07 - Current Constraints on Schematization
+
+The schema design is tightly coupled to downstream infrastructure with critical constraints:
+
+**BioCypher + Neo4j**: Only fields explicitly listed in `biocypher/config/torchcell_schema_config.yaml` are exposed as queryable properties in Neo4j. Fields not in the YAML get buried in `serialized_data` blob, making them inaccessible for deduplication, aggregation, or graph queries. Pydantic `@property` methods (computed fields) don't appear in `model_fields`, so can't be automatically added to BioCypher YAML - they're Python-only, not Neo4j-accessible.
+
+**GraphProcessor**: The `label_name` and `label_statistic_name` fields are extracted from Pydantic `model_fields` and used to batch phenotype data into training tensors. While `getattr()` works for properties, the field name must come from `model_fields.default`, meaning `label_statistic_name` must point to a real field (not just a property) that gets batched into tensors.
+
+**Design tradeoff for MicroarrayExpressionPhenotype**: Store both `expression_log2_ratio_variance` (for meta-analysis) and `expression_log2_ratio_se` (as PRIMARY STATISTIC) as fields exposed to Neo4j. SE is chosen over SD because it measures precision of the mean estimate (relevant for ML training and deduplication), while SD (technical variability) can be computed on-demand via property when needed for QC. This balances Neo4j queryability, GraphProcessor batching, and storage efficiency.
+
+Related: [[torchcell.adapters.cell_adapter]] [[torchcell.data.graph_processor]] [[torchcell.data.deduplicate]]

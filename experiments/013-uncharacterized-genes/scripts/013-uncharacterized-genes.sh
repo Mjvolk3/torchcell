@@ -1,4 +1,8 @@
 #!/bin/bash
+# experiments/013-uncharacterized-genes/scripts/013-uncharacterized-genes
+# [[experiments.013-uncharacterized-genes.scripts.013-uncharacterized-genes]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/013-uncharacterized-genes/scripts/013-uncharacterized-genes
+
 
 # Step 1: Count and classify uncharacterized/dubious genes
 python experiments/013-uncharacterized-genes/scripts/count_dubious_and_uncharacterized_genes.py

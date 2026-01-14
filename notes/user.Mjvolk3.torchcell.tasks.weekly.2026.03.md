@@ -2,7 +2,7 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768422045904
+updated: 1768423167286
 created: 1768264787823
 ---
 ## 2026.01.13
@@ -14,6 +14,7 @@ created: 1768264787823
 - [x] Collected 668 uncharacterized and 684 dubious genes [[experiments.013-uncharacterized-genes.scripts.count_dubious_and_uncharacterized_genes]]
 - [x] Analyzed 44,619 triple interactions involving uncharacterized genes [[experiments.013-uncharacterized-genes.scripts.triple_interaction_enrichment_of_uncharacterized_genes]]
 - [x] Found 3 essential ∩ uncharacterized genes, identified YCR016W annotation discrepancy [[experiments.013-uncharacterized-genes.scripts.uncharacterized_essential_overlap]]
+- [x] Complete 3-step pipeline: gene collection, triple interaction analysis, essential overlap [[experiments.013-uncharacterized-genes.scripts.013-uncharacterized-genes]]
 - [x] Identified 2,852 extreme TMI interactions involving 178 uncharacterized genes [[experiments.014-genes-enriched-at-extreme-tmi.scripts.analyze_extreme_interactions]]
 - [x] Created 4 multi-panel figures showing extreme interaction patterns [[experiments.014-genes-enriched-at-extreme-tmi.scripts.visualize_extreme_interactions]]
 - [x] Refactored analysis pipeline into modular data processing and visualization steps [[experiments.014-genes-enriched-at-extreme-tmi.scripts.014-genes-enriched-at-extreme-tmi]]
@@ -27,6 +28,10 @@ created: 1768264787823
 - [ ] Add n to fitness interaction data
 - [ ] Put Spell in right place
 - [ ] Add examples or clarify the schema design to avoid ambiguity in property definitions.
+
+- [ ] Do we have robust way of handling labels? Did we do by some other method?  [[Generate_calmorph_labels|scripts.generate_calmorph_labels]]
+
+- [ ] Build db
 
 ***
 

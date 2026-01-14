@@ -2,7 +2,7 @@
 id: aqvwx9b7hrzu3dv0f1orvlb
 title: Point_dist_graph_reg
 desc: ''
-updated: 1768076367918
+updated: 1768423367955
 created: 1767976523838
 ---
 
@@ -111,3 +111,17 @@ $$
 $$
 
 where $R$ is the number of GPU ranks, ensuring all ranks maintain identical buffer contents.
+
+## Key Question to Answer - Does Graph Reg Help
+
+The `PointDistGraphReg` loss is a modular composite loss combining three components:
+
+$$
+\mathcal{L}_{\text{total}} = \lambda_{\text{point}} \cdot \mathcal{L}_{\text{point}} + \lambda_{\text{dist}} \cdot \mathcal{L}_{\text{dist}} + \lambda_{\text{graph}} \cdot \mathcal{L}_{\text{graph}}
+$$
+
+$$
+\mathcal{L}_{\text{total}} = \lambda_{\text{point}} \cdot \mathcal{L}_{\text{point}} + \lambda_{\text{dist}} \cdot \mathcal{L}_{\text{dist}} + \cancel{\lambda_{\text{graph}} \cdot \mathcal{L}_{\text{graph}}}
+$$
+
+We were able to show under a certain model config, $\lambda_{graph}=0$ prevents the model from learning.

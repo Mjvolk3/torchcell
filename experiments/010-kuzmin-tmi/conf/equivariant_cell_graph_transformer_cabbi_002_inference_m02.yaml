@@ -1,10 +1,10 @@
-#experiments/009-kuzmin-tmi/conf/cell_graph_transformer.yaml
+#experiments/010-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_000.yaml
 defaults:
   - default
   - _self_
 
 wandb:
-  project: torchcell_009-kuzmin-tmi_equivariant_cell_graph_transformer
+  project: torchcell_010-kuzmin-tmi_equivariant_cell_graph_transformer
   tags: [parity_wasserstein]
 
 cell_dataset:
@@ -59,7 +59,7 @@ compile_mode: null  # null, "default", "reduce-overhead", "max-autotune"
 
 # Transformer model configuration
 model:
-  checkpoint_path: models/checkpoints/compute-3-3-2019396_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/hmcirnts-best-pearson-epoch=80-val/gene_interaction/Pearson=0.4008.ckpt
+  checkpoint_path: models/checkpoints/compute-3-3-2036902_bd9e6c666ea1c0e7d1bbb6321fbc4d3bd5f60f100d6dc0e0288cd97e366fc15e/c7671wgj-best-pearson-epoch=24-val/gene_interaction/Pearson=0.4619.ckpt  # *.ckpt
   gene_num: 6607
   hidden_channels: 180 #90 #96  # d in weekly report
   num_transformer_layers: 8 #8  # L layers
@@ -199,7 +199,7 @@ regression_task:
   # lr_scheduler: null  # No scheduler - constant LR
   lr_scheduler:
     type: "CosineAnnealingWarmupRestarts"
-    first_cycle_steps: 25  # First convergence at epoch 50
+    first_cycle_steps: 30  # First convergence at epoch 50
     cycle_mult: 1.0 # Each cycle is 3x longer: 50 -> 150 -> 450
     max_lr: 5e-4 #5e-4  # Higher peak LR since no overfitting
     min_lr: 1e-7  # Higher floor for faster convergence

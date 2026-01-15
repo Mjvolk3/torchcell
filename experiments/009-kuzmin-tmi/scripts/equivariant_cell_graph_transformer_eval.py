@@ -1,6 +1,6 @@
-# experiments/010-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_eval.py
-# [[experiments.010-kuzmin-tmi.scripts.equivariant_cell_graph_transformer_eval]]
-# https://github.com/Mjvolk3/torchcell/tree/main/experiments/010-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_eval.py
+# experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_eval.py
+# [[experiments.009-kuzmin-tmi.scripts.equivariant_cell_graph_transformer_eval]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/009-kuzmin-tmi/scripts/equivariant_cell_graph_transformer_eval.py
 #
 # Full evaluation script for CellGraphTransformer on val and test sets
 # - Collects ALL predictions (no subsampling)
@@ -208,10 +208,10 @@ def main(cfg: DictConfig) -> None:
     print(f"Checkpoint relative path: {checkpoint_rel_path}")
 
     # Create output directories - use full checkpoint structure for traceability
-    results_dir = osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi/results/eval", checkpoint_rel_path)
+    results_dir = osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/results/eval", checkpoint_rel_path)
     os.makedirs(results_dir, exist_ok=True)
 
-    images_dir = osp.join(ASSET_IMAGES_DIR, "010-kuzmin-tmi-eval")
+    images_dir = osp.join(ASSET_IMAGES_DIR, "009-kuzmin-tmi-eval")
     os.makedirs(images_dir, exist_ok=True)
 
     experiment_dir = osp.join(DATA_ROOT, "wandb-experiments", f"eval_{training_group}")
@@ -267,10 +267,10 @@ def main(cfg: DictConfig) -> None:
     print(f"Built node embeddings: {list(node_embeddings.keys()) if node_embeddings else 'None (using learnable)'}")
 
     # Load query and create dataset
-    with open(osp.join(EXPERIMENT_ROOT, "010-kuzmin-tmi/queries/001_small_build.cql"), "r") as f:
+    with open(osp.join(EXPERIMENT_ROOT, "009-kuzmin-tmi/queries/001_small_build.cql"), "r") as f:
         query = f.read()
 
-    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/010-kuzmin-tmi/001-small-build")
+    dataset_root = osp.join(DATA_ROOT, "data/torchcell/experiments/009-kuzmin-tmi/001-small-build")
 
     # Initialize transforms
     forward_transform = None

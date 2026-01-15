@@ -1,0 +1,10 @@
+# experiments/009-kuzmin-tmi/conf/equivariant_cell_graph_transformer_cabbi_000_inference_m00.yaml
+# Inference config for model m00 - inherits from base, only overrides checkpoint_path
+# Model: compute-3-3-2019390, Pearson=0.3993
+
+defaults:
+  - equivariant_cell_graph_transformer_cabbi_000
+  - _self_
+
+model:
+  checkpoint_path: models/checkpoints/compute-3-3-2019390_bdd116a78083f593169e0a0c2e0a4d8cca6018de52926811414e5e9716b08049/pq45p4gu-best-pearson-epoch=19-val/gene_interaction/Pearson=0.3993.ckpt

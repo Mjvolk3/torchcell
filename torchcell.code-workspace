@@ -280,7 +280,7 @@
                 }
             },
             {
-                "label": "tc: add frontmatter (py/sh)",
+                "label": "tcf: add frontmatter (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -298,7 +298,7 @@
                 }
             },
             {
-                "label": "tc: move file [opens note & test] (py/sh)",
+                "label": "tcm: move file [opens note & test] (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -312,7 +312,7 @@
                 }
             },
             {
-                "label": "tc: create test file (py lib only)",
+                "label": "tct: create test file (py lib only)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -331,7 +331,7 @@
                 }
             },
             {
-                "label": "tc: delete file [opens note & test] (py/sh)",
+                "label": "tcd: delete file [opens note & test] (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -350,7 +350,7 @@
                 }
             },
             {
-                "label": "tc: open related code (from note) (py/sh)",
+                "label": "tco: open related code (from note) (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -364,7 +364,7 @@
                 }
             },
             {
-                "label": "tc: publish pypi",
+                "label": "tcp: publish pypi",
                 "type": "shell",
                 "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
                 "problemMatcher": []

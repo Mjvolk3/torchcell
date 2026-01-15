@@ -2,7 +2,7 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768423889342
+updated: 1768427986035
 created: 1768264787823
 ---
 ## 2026.01.13
@@ -22,13 +22,15 @@ created: 1768264787823
 - [x] Fixed 7 experiment note files to follow H2 header convention with summaries: [[experiments.006-kuzmin-tmi.2025.11.04.storage-calculations]], [[experiments.006-kuzmin-tmi.2025.11.06.dango-vs-lazy-profile-comparison]], [[experiments.006-kuzmin-tmi.2025.11.06.ddp-device-fix]], [[experiments.006-kuzmin-tmi.2025.11.06.gpu-mask-vectorization]], [[experiments.006-kuzmin-tmi.2025.11.06.preprocessing-workflow]], [[experiments.006-kuzmin-tmi.2025.11.06.uint8-preprocessing-solution]], [[experiments.006-kuzmin-tmi.2025.11.06.vectorization-final-fix]], [[Experiment 087a Work in Progress|experiments.006-kuzmin-tmi.scripts.087a.wip]]
 - [x] Cancelling out graph reg [[Key Question to Answer - Does Graph Reg Help|torchcell.losses.point_dist_graph_reg#key-question-to-answer---does-graph-reg-help]]
 - [x] Updated microarray description and txt string - no code update. [[schema|torchcell.datamodels.schema]]
+- [x] Reorganized SPELL scripts into experiment dir, removed torchcell/analysis module [[experiments.015-spell.scripts.spell_analysis]]
+- [x] Fixed SPELL imports and paths for experiment directory structure [[experiments.015-spell.scripts.run_phase1_spell_analysis]]
+- [x] Phase 1 SPELL pipeline: load studies, extract metadata, analyze 14k conditions [[experiments.015-spell.scripts.spell_analysis]]
+- [x] Created comprehensive SPELL coverage analysis with 4-panel visualization [[experiments.015-spell.scripts.spell_coverage_analysis]]
+- [x] Analyzed 15 condition categories, prioritized Environment subclass implementation [[experiments.015-spell.scripts.spell_coverage_analysis]]
 
 - [ ] Clean up and commit 012
 
-- [ ] Reorganize Spell we don't want any analysis module. Build out into experiment.
-
 - [ ] Add n to fitness interaction data
-- [ ] Put Spell in right place
 - [ ] Add examples or clarify the schema design to avoid ambiguity in property definitions.
 
 - [ ] Do we have robust way of handling labels? Did we do by some other method?  [[Generate_calmorph_labels|scripts.generate_calmorph_labels]]

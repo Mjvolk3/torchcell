@@ -2,7 +2,7 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768514970083
+updated: 1768515501865
 created: 1768264787823
 ---
 ## 2026.01.13
@@ -32,13 +32,12 @@ created: 1768264787823
 
 - [x] Description of the current wip investigating spell data - expression data shown on SGD over all conditions for queried gene [[Spell|torchcell.datasets.scerevisiae.spell]]
 - [x] Small investigation into ref bio  yeast compendium which contains > 12,000 samples - will need to compare with `spell` → [[2026.01.15 - Other Related Datasets|torchcell.datasets.scerevisiae.spell#20260115---other-related-datasets]]
+- [x] Plan for characterizing uncharacterized genes - simple layout from my interpretation. Need to check exact procedure ![](./assets/drawio/uncharacterized-genes-profile-enricment.drawio.png)
 
 - [ ] Add n to fitness interaction data
 - [ ] Add examples or clarify the schema design to avoid ambiguity in property definitions.
 
 - [ ] Do we have robust way of handling labels? Did we do by some other method?  [[Generate_calmorph_labels|scripts.generate_calmorph_labels]]
-- [x] Checked out ref bio expression compendium[[2026.01.15 - Other Related Datasets|torchcell.datasets.scerevisiae.spell#20260115---other-related-datasets]]
-- [x] Plan for characterizing uncharacterized genes - simple layout from my interpretation. Need to check exact procedure ![](./assets/drawio/uncharacterized-genes-profile-enricment.drawio.png)
 
 - [ ] Build db
 

@@ -2,7 +2,7 @@
 id: 26cw7x2rsicu2lscj23kgjy
 title: '03'
 desc: ''
-updated: 1768515501865
+updated: 1768521149528
 created: 1768264787823
 ---
 ## 2026.01.13
@@ -33,6 +33,15 @@ created: 1768264787823
 - [x] Description of the current wip investigating spell data - expression data shown on SGD over all conditions for queried gene [[Spell|torchcell.datasets.scerevisiae.spell]]
 - [x] Small investigation into ref bio  yeast compendium which contains > 12,000 samples - will need to compare with `spell` → [[2026.01.15 - Other Related Datasets|torchcell.datasets.scerevisiae.spell#20260115---other-related-datasets]]
 - [x] Plan for characterizing uncharacterized genes - simple layout from my interpretation. Need to check exact procedure ![](./assets/drawio/uncharacterized-genes-profile-enricment.drawio.png)
+
+- [x] Migrated run_all.py to shell script with fail-fast execution for 012-sameith-kemmeren pipeline [[experiments.012-sameith-kemmeren.scripts.012-sameith-kemmeren]]
+- [x] Fixed sign inversion bug in Kemmeren dataset - correlation now correctly positive (+0.599 median) [[experiments.012-sameith-kemmeren.scripts.gene_by_gene_expression_correlation]]
+- [x] Verified metadata quality with QC checks for perturbation counts and outlier detection [[experiments.012-sameith-kemmeren.scripts.verify_metadata]]
+- [x] Generated expression distribution box plots for single and double mutants [[experiments.012-sameith-kemmeren.scripts.single_mutant_expression_distributions]]
+- [x] Created triangular heatmap comparing Kemmeren and Sameith double mutant datasets [[experiments.012-sameith-kemmeren.scripts.double_mutant_combined_heatmap]]
+- [x] Analyzed gene-by-gene Pearson and Spearman correlations across both datasets [[experiments.012-sameith-kemmeren.scripts.gene_by_gene_expression_correlation]]
+- [x] Compared mean expression values for overlapping double mutants between studies [[experiments.012-sameith-kemmeren.scripts.kemmeren_sameith_overlap_analysis]]
+- [x] Documented noise comparison analysis - currently broken, requires investigation for technical replicate variance [[experiments.012-sameith-kemmeren.scripts.noise_comparison_analysis]]
 
 - [ ] Add n to fitness interaction data
 - [ ] Add examples or clarify the schema design to avoid ambiguity in property definitions.

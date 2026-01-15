@@ -1,0 +1,4 @@
+dataset_name,total_experiments,strain_by4741_count,strain_by4742_count,strain_unknown_count,reference_log2_all_zeros,reference_log2_violations,media_consistent,temperature_consistent,expression_complete,expression_gene_count_mean,expression_gene_count_std,total_anomalies
+Kemmeren2014,1484,10,1474,0,True,0,True,True,True,6169.0,0.0,0
+SmSameith2015,82,0,82,0,True,0,True,True,True,6169.0,0.0,0
+DmSameith2015,72,0,72,0,True,0,True,True,True,6169.0,0.0,0

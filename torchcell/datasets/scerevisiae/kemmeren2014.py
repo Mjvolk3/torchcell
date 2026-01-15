@@ -797,7 +797,14 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def _extract_expression_from_gsm_static(gsm, probe_to_gene_map=None) -> SortedDict:
-        """Static version of _extract_expression_from_gsm for multiprocessing."""
+        """Static version of _extract_expression_from_gsm for multiprocessing.
+
+        Handles dye-swap design:
+        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
+        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
+
+        This function extracts the deletion mutant channel, accounting for dye swaps.
+        """
         expression_data = SortedDict()
 
         # Get the expression table from the GSM
@@ -808,13 +815,26 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             if "ID_REF" not in table.columns:
                 return expression_data
 
-            # Determine which expression values to use
+            # Determine which channel contains deletion mutant expression
+            # This must account for dye-swap design to extract the correct biological sample
             expression_column = None
             if (
                 "Signal Norm_Cy5" in table.columns
                 and "Signal Norm_Cy3" in table.columns
             ):
-                expression_column = "Signal Norm_Cy5"
+                # Determine which channel has deletion mutant based on sample name
+                title = gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
+
+                # Check for dye-swap pattern
+                if "-a" in title or "_a" in title or title.endswith("a"):
+                    # Standard orientation: deletion in Cy5, refpool in Cy3
+                    expression_column = "Signal Norm_Cy5"
+                elif "-b" in title or "_b" in title or title.endswith("b"):
+                    # Dye swap: deletion in Cy3, refpool in Cy5
+                    expression_column = "Signal Norm_Cy3"
+                else:
+                    # Default to Cy5 for samples without clear dye-swap naming
+                    expression_column = "Signal Norm_Cy5"
             elif "VALUE" in table.columns:
                 expression_column = "VALUE"
             else:
@@ -1174,7 +1194,14 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return probe_to_gene
 
     def _extract_expression_from_gsm(self, gsm, probe_to_gene_map=None) -> SortedDict:
-        """Extract expression values from a GSM object."""
+        """Extract deletion mutant expression values from a GSM object.
+
+        Handles dye-swap design:
+        - Sample ending in '-a': Cy5 = deletion, Cy3 = refpool
+        - Sample ending in '-b': Cy5 = refpool, Cy3 = deletion (dye swap)
+
+        This function extracts the deletion mutant channel, accounting for dye swaps.
+        """
         expression_data = SortedDict()
 
         # Get the expression table from the GSM
@@ -1190,16 +1217,26 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 )
                 return expression_data
 
-            # Determine which expression values to use
-            # Prefer normalized signal values over VALUE column
+            # Determine which channel contains deletion mutant expression
+            # This must account for dye-swap design to extract the correct biological sample
             expression_column = None
             if (
                 "Signal Norm_Cy5" in table.columns
                 and "Signal Norm_Cy3" in table.columns
             ):
-                # Use Cy5 for ch2 (sample) and Cy3 for ch1 (reference)
-                # We'll use Cy5 as it typically contains the sample signal
-                expression_column = "Signal Norm_Cy5"
+                # Determine which channel has deletion mutant based on sample name
+                title = gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
+
+                # Check for dye-swap pattern
+                if "-a" in title or "_a" in title or title.endswith("a"):
+                    # Standard orientation: deletion in Cy5, refpool in Cy3
+                    expression_column = "Signal Norm_Cy5"
+                elif "-b" in title or "_b" in title or title.endswith("b"):
+                    # Dye swap: deletion in Cy3, refpool in Cy5
+                    expression_column = "Signal Norm_Cy3"
+                else:
+                    # Default to Cy5 for samples without clear dye-swap naming
+                    expression_column = "Signal Norm_Cy5"
             elif "VALUE" in table.columns:
                 expression_column = "VALUE"
             else:
@@ -1940,12 +1977,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         if not refpool_expression:
             # Cannot create experiment without refpool - return None to signal skip
             return None, None, None
-        
+
         log2_ratios = SortedDict()
         for gene, value in expression_data.items():
             if gene in refpool_expression and refpool_expression[gene] > 0:
                 # Calculate log2 fold change vs refpool
-                log2_ratios[gene] = np.log2(value / refpool_expression[gene])
+                # NOTE: GEO stores log2(refpool/deletion), but torchcell convention is
+                # log2(deletion/refpool) where positive = upregulated, negative = downregulated.
+                # We negate to transform from GEO convention to torchcell convention.
+                log2_ratios[gene] = -np.log2(value / refpool_expression[gene])
         
         if not log2_ratios:
             # No matching genes between expression and refpool - return None to signal skip

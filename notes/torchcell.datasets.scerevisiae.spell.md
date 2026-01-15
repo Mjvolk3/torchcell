@@ -2,7 +2,7 @@
 id: 5z7dipbt0yr33lnp1d10vce
 title: Spell
 desc: ''
-updated: 1768428149817
+updated: 1768514363558
 created: 1768428149817
 ---
 
@@ -489,3 +489,9 @@ From Phase 1 analysis (~14,000 conditions):
 - **Poorly extracted fields**: pH (<5%), nitrogen source (<1%), temperature (5%)
 
 **Conclusion**: Regex-based extraction provides good baseline for common experimental patterns, but LLM-based extraction needed for comprehensive coverage.
+
+## 2026.01.15 - Other Related Datasets
+
+- [refine bio compendia](https://www.refine.bio/)
+- Contains 12,403 samples with 5,371 genes
+- Searching metadata I find no overlap with [[torchcell.datasets.scerevisiae.kemmeren2014]] or [[torchcell.datasets.scerevisiae.sameith2015]] when search json files with `GSE` number

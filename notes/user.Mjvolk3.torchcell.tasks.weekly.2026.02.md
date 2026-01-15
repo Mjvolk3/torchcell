@@ -2,7 +2,7 @@
 id: 7f5qxqvqi4si81oyv3p39y9
 title: '02'
 desc: ''
-updated: 1768414683218
+updated: 1768515310125
 created: 1767743671512
 ---
 
@@ -21,11 +21,11 @@ created: 1767743671512
 - [x] gene-by-gene cross-study correlation analysis - confirms biological consistency [[gene_by_gene_expression_correlation|experiments.012-sameith-kemmeren.scripts.gene_by_gene_expression_correlation]]
 - [x] Kemmeren-Sameith overlap analysis (mean-based, publication-quality plots) [[kemmeren_sameith_overlap_analysis|experiments.012-sameith-kemmeren.scripts.kemmeren_sameith_overlap_analysis]]
 - [x] technical noise comparison using log2_ratio_std for both datasets [[noise_comparison_analysis|experiments.012-sameith-kemmeren.scripts.noise_comparison_analysis]]
-- [x] master run_all script with stable filenames (no timestamps) [[run_all|experiments.012-sameith-kemmeren.scripts.run_all]]
+- [x] master run_all script with stable filenames (no timestamps) moved file to [[experiments.012-sameith-kemmeren]]
 
 ## 2026.01.07
 
-- [x] Construct refactor plan [[182525 Micro Rna Correcting Noise in Schema and for Datasets Kemmeren Sameit|scratch.2026.01.07.182525-micro-array-correcting-noise-in-schema-and-for-datasets-kemmeren-sameith]]
+- [x] Construct refactor plan [[182525 Micro Rna Correcting Noise in Schema and for Datasets Kemmeren Sameit|scratch.2026.01.07.182525-micro-array-correcting-noise-in-schema-and-for-datasets-kemmeren-sameith]] → deleted... maybe just save wips as scratch knowing they might get deleted at any time? Think I will do this.
 - [x] Describe some of the consquences of schema structure → [[2026.01.07 - Current Constraints on Schematization|torchcell.datamodels.schema#20260107---current-constraints-on-schematization]] → These manifest as sneaky design rules that could break later stuffy.
 
 ## 2026.01.08

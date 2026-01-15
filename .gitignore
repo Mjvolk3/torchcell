@@ -163,7 +163,8 @@ kuzmin2018.mmd
 suther_ynb-to-ypd.mmd
 suther_ynb-to-ypd.mmd
 dango.mmd
-
+# TODO Need to fine a better way to manage papers
+papers/*
 
 # torchcell egg info
 torchcell.egg-info/*

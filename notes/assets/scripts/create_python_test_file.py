@@ -16,6 +16,16 @@ WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
 
 def create_test_file(src_file_path):
     print('=' * 80)
+
+    # Only work on files in the library directory (torchcell/)
+    if not src_file_path.startswith(os.path.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH)):
+        print(f"Error: Test files can only be created for Python files in the {PYTHON_PKG_REL_PATH}/ directory.")
+        print(f"File provided: {src_file_path}")
+        print(f"Expected to start with: {os.path.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH)}")
+        print("Test file creation cancelled.")
+        print('=' * 80)
+        return
+
     # Get the relative path from the source directory to WORKSPACE_DIR
     rel_path_from_workspace_to_src_file = os.path.relpath(src_file_path, WORKSPACE_DIR)
 

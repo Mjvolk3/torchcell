@@ -118,7 +118,6 @@
     "tasks": {
         "version": "2.0.0",
         "tasks": [
-            // Publish
             {
                 "label": "Paper: compile",
                 "type": "shell",
@@ -161,7 +160,6 @@
                 "command": "./notes/assets/publish/scripts/bib_tex_docx.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
                 "problemMatcher": []
             },
-            // Cluster
             {
                 "label": "nano: Interactive",
                 "type": "shell",
@@ -192,14 +190,12 @@
                 "command": "bash src/genPE/sweep_m1.sh",
                 "problemMatcher": []
             },
-            // Notability
             {
                 "label": "notability: sync",
                 "type": "shell",
                 "command": "bash notes/assets/scripts/notability_sync.sh",
                 "problemMatcher": []
             },
-            // Black
             {
                 "label": "black: file",
                 "type": "shell",
@@ -213,7 +209,6 @@
                     "isDefault": true
                 }
             },
-            // autoflake
             {
                 "label": "autoflake: clean imports",
                 "type": "shell",
@@ -230,7 +225,6 @@
                     "isDefault": true
                 }
             },
-            // mypy
             {
                 "label": "mypy: file",
                 "type": "shell",
@@ -249,7 +243,6 @@
                 "command": "bash mypy/dmypy_restart.sh",
                 "problemMatcher": []
             },
-            //pyreverse
             {
                 "label": "tc: pyreverse UML class diagram",
                 "type": "shell",
@@ -275,7 +268,6 @@
                 "problemMatcher": [],
                 "group": "build"
             },
-            // isort
             {
                 "label": "isort: file",
                 "type": "shell",
@@ -287,9 +279,8 @@
                     "close": false
                 }
             },
-            //TC - workspace scripts notes/assets/scripts
             {
-                "label": "tc: add frontmatter (py)",
+                "label": "tc: add frontmatter (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -307,11 +298,11 @@
                 }
             },
             {
-                "label": "tc: move file [note & test safe] (py)",
+                "label": "tc: move file [opens note & test] (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
-                    "${workspaceFolder}/notes/assets/scripts/python_move_dendron_pytest.py",
+                    "${workspaceFolder}/notes/assets/scripts/move_file_with_related.py",
                     "${file}",
                     "${input:moveDestinationPath}"
                 ],
@@ -321,7 +312,7 @@
                 }
             },
             {
-                "label": "tc: test file (py)",
+                "label": "tc: create test file (py lib only)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
@@ -340,30 +331,30 @@
                 }
             },
             {
-                "label": "tc: delete file [note & test safe] (py)",
+                "label": "tc: delete file [opens note & test] (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
-                  "${workspaceFolder}/notes/assets/scripts/delete_file_and_open_related.py",
-                  "${file}"
+                    "${workspaceFolder}/notes/assets/scripts/delete_file_and_open_related.py",
+                    "${file}"
                 ],
                 "problemMatcher": [],
                 "group": {
-                  "kind": "build",
-                  "isDefault": true
+                    "kind": "build",
+                    "isDefault": true
                 },
                 "presentation": {
-                  "reveal": "always",
-                  "focus": true,  // This will focus the terminal after the task is run
-                  "panel": "shared"
+                    "reveal": "always",
+                    "focus": true,
+                    "panel": "shared"
                 }
             },
             {
-                "label": "tc: open related src file (dendron)",
+                "label": "tc: open related code (from note) (py/sh)",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
                 "args": [
-                    "${workspaceFolder}/notes/assets/scripts/from_note_open_related_src.py",
+                    "${workspaceFolder}/notes/assets/scripts/from_note_open_related_file.py",
                     "${file}"
                 ],
                 "problemMatcher": [],
@@ -372,20 +363,30 @@
                     "panel": "shared"
                 }
             },
-            // sphinx sphinx-apidoc -o docs/source/generated torchcell
-            {"label": "sphinx: apidoc",
-            "type": "shell",
-            "command": "sphinx-apidoc -f -o docs/source/generated torchcell",
-            "problemMatcher": []
+            {
+                "label": "tc: publish pypi",
+                "type": "shell",
+                "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
+                "problemMatcher": []
             },
-            // pytest code coverage
+            {
+                "label": "dendron: open random notes",
+                "type": "shell",
+                "command": "python notes/assets/scripts/open_random_notes.py -n ${input:openRandomNotes} -d ${workspaceFolder}/notes",
+                "problemMatcher": []
+            },
+            {
+                "label": "sphinx: apidoc",
+                "type": "shell",
+                "command": "sphinx-apidoc -f -o docs/source/generated torchcell",
+                "problemMatcher": []
+            },
             {
                 "label": "pytest: coverage",
                 "type": "shell",
                 "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pytest --cov=torchcell --cov-report html tests/ ",
-                "problemMatcher": [],
+                "problemMatcher": []
             },
-            // External 
             {
                 "label": "Open External Terminal",
                 "type": "shell",
@@ -433,19 +434,7 @@
                     "kind": "build",
                     "isDefault": true
                 }
-            },
-            {
-                "label": "tc: publish pypi",
-                "type": "shell",
-                "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
-                "problemMatcher": [],
-            },
-            // dendron
-            {"label": "dendron: open random notes",
-            "type": "shell",
-            "command": "python notes/assets/scripts/open_random_notes.py -n ${input:openRandomNotes} -d ${workspaceFolder}/notes",
-            "problemMatcher": [],
-            },
+            }
         ],
         "inputs" : [
             {

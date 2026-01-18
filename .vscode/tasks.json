@@ -1,0 +1,394 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "tcwt: setup worktree",
+            "type": "shell",
+            "command": "./scripts/setup-worktree.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            }
+        },
+        {
+            "label": "Paper: compile",
+            "type": "shell",
+            "command": "bash notes/assets/publish/scripts/compile_paper.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: quick-pdf",
+            "type": "shell",
+            "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' --strip-comments  && cd ..",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: quick-landscape-pdf",
+            "type": "shell",
+            "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex -V geometry:'top=0.1cm, bottom=0.1cm, left=0.1cm, right=0.1cm,landscape' --strip-comments   && cd ..",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: bib-pdf",
+            "type": "shell",
+            "command": "cd ./notes && pandoc -F mermaid-filter -s ${file} -o ${fileDirname}/assets/pdf-output/${fileBasenameNoExtension}.pdf --pdf-engine=xelatex --citeproc --bibliography assets/publish/bib/bib.bib --metadata csl=assets/publish/bib/nature.csl -V geometry:'top=2cm, bottom=1.5cm, left=2cm, right=2cm' --strip-comments  && cd ..",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: bib-tex-pdf",
+            "type": "shell",
+            "command": "./notes/assets/publish/scripts/bib_tex_pdf.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: bib-tex-pdf-landscape",
+            "type": "shell",
+            "command": "./notes/assets/publish/scripts/bib_tex_pdf_landscape.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Pandoc: bib-tex-docx",
+            "type": "shell",
+            "command": "./notes/assets/publish/scripts/bib_tex_docx.sh ${file} ${fileDirname} ${fileBasenameNoExtension}",
+            "problemMatcher": []
+        },
+        {
+            "label": "nano: Interactive",
+            "type": "shell",
+            "command": "qsub -I -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=3600",
+            "problemMatcher": []
+        },
+        {
+            "label": "nano: qsub main",
+            "type": "shell",
+            "command": "qsub main.script -l nodes=nano${input:nanoNode}:ppn=${input:numProcessors}:gpus=1,walltime=96:00:00 -N ${input:jobName}",
+            "problemMatcher": []
+        },
+        {
+            "label": "Delta: Interactive GPU",
+            "type": "shell",
+            "command": "srun --account=bbtp-delta-gpu --partition=gpuA40x4-interactive --nodes=1 --gpus-per-node=1 --tasks=1 --tasks-per-node=16 --cpus-per-task=1 --mem=20g --pty bash",
+            "problemMatcher": []
+        },
+        {
+            "label": "Delta: Interactive CPU",
+            "type": "shell",
+            "command": "srun --account=bbtp-delta-cpu --partition=cpu-interactive --nodes=1 --tasks=1 --tasks-per-node=1 --cpus-per-task=16 --mem=16g --pty bash",
+            "problemMatcher": []
+        },
+        {
+            "label": "genPE: M1 sweep",
+            "type": "shell",
+            "command": "bash src/genPE/sweep_m1.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "notability: sync",
+            "type": "shell",
+            "command": "bash notes/assets/scripts/notability_sync.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "black: file",
+            "type": "shell",
+            "command": "black",
+            "args": [
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "autoflake: clean imports",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/autoflake",
+            "args": [
+                "--remove-all-unused-imports",
+                "--remove-duplicate-keys",
+                "--in-place",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "mypy: file",
+            "type": "shell",
+            "command": "bash mypy/mypy.sh ${file}",
+            "problemMatcher": []
+        },
+        {
+            "label": "mypy: workspace",
+            "type": "shell",
+            "command": "bash mypy/mypy.sh .",
+            "problemMatcher": []
+        },
+        {
+            "label": "dmypy: restart",
+            "type": "shell",
+            "command": "bash mypy/dmypy_restart.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "tc: pyreverse UML class diagram",
+            "type": "shell",
+            "command": "${workspaceFolder}/notes/assets/scripts/run_pyreverse.sh",
+            "args": [
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "pyreverse: UML class diagram",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pyreverse",
+                "-o",
+                "png",
+                "-p",
+                "uml_temp",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "isort: file",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/isort ${file}",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "close": false
+            }
+        },
+        {
+            "label": "tcf: add frontmatter (py/sh)",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "${workspaceFolder}/notes/assets/scripts/add_frontmatter.py",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "tcm: move file [opens note & test] (py/sh)",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "${workspaceFolder}/notes/assets/scripts/move_file_with_related.py",
+                "${file}",
+                "${input:moveDestinationPath}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always"
+            }
+        },
+        {
+            "label": "tct: create test file (py lib only)",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "${workspaceFolder}/notes/assets/scripts/create_python_test_file.py",
+                "create",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        },
+        {
+            "label": "tcd: delete file [opens note & test] (py/sh)",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "${workspaceFolder}/notes/assets/scripts/delete_file_and_open_related.py",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "tco: open related code (from note) (py/sh)",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python",
+            "args": [
+                "${workspaceFolder}/notes/assets/scripts/from_note_open_related_file.py",
+                "${file}"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "tcp: publish pypi",
+            "type": "shell",
+            "command": "source ${workspaceFolder}/notes/assets/scripts/tc_publish_pypi.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "dendron: open random notes",
+            "type": "shell",
+            "command": "python notes/assets/scripts/open_random_notes.py -n ${input:openRandomNotes} -d ${workspaceFolder}/notes",
+            "problemMatcher": []
+        },
+        {
+            "label": "sphinx: apidoc",
+            "type": "shell",
+            "command": "sphinx-apidoc -f -o docs/source/generated torchcell",
+            "problemMatcher": []
+        },
+        {
+            "label": "pytest: coverage",
+            "type": "shell",
+            "command": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python /Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/pytest --cov=torchcell --cov-report html tests/ ",
+            "problemMatcher": []
+        },
+        {
+            "label": "Open External Terminal",
+            "type": "shell",
+            "command": "./notes/assets/scripts/open-external-terminal.sh",
+            "problemMatcher": []
+        },
+        {
+            "label": "tcdb: delta to m1",
+            "type": "shell",
+            "command": "osascript",
+            "args": [
+                "-e",
+                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/delta_to_m1.sh ${input:databaseNameInput}\""
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "tcdb: build linux-arm",
+            "type": "shell",
+            "command": "osascript",
+            "args": [
+                "-e",
+                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build_linux-arm.sh\""
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "tcdb: build linux-arm fresh",
+            "type": "shell",
+            "command": "osascript",
+            "args": [
+                "-e",
+                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build-image-fresh_linux-arm.sh\""
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "openRandomNotes",
+            "description": "number of random notes to open",
+            "type": "pickString",
+            "options": [
+                "1",
+                "2",
+                "4",
+                "8",
+                "16"
+            ]
+        },
+        {
+            "id": "newFilePath",
+            "type": "promptString",
+            "description": "Enter the new file path (current: ${file}):"
+        },
+        {
+            "id": "moveDestinationPath",
+            "type": "promptString",
+            "description": "Enter destination path for move/rename:"
+        },
+        {
+            "id": "jobName",
+            "description": "name of nano job",
+            "type": "promptString"
+        },
+        {
+            "id": "nanoNode",
+            "description": "nano Node",
+            "type": "pickString",
+            "options": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "6",
+                "8"
+            ]
+        },
+        {
+            "id": "numProcessors",
+            "description": "number of cpus (nano2,nano3 (np=28); others (np=14) )",
+            "type": "pickString",
+            "options": [
+                "1",
+                "6",
+                "12",
+                "14",
+                "28"
+            ]
+        },
+        {
+            "id": "databaseNameInput",
+            "type": "pickString",
+            "description": "Choose the database directory:",
+            "options": ["database1", "database2", "database3"],
+            "default": "database1"
+        }
+    ]
+}

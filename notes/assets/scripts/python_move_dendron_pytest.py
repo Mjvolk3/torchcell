@@ -8,14 +8,30 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Retrieve environment variables
-WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
 VSCODE_PATH = os.environ.get("VSCODE_PATH")
 PYTHON_PKG_TEST_REL_PATH = os.environ.get("PYTHON_PKG_TEST_REL_PATH")
 PYTHON_PKG_REL_PATH = os.getenv("PYTHON_PKG_REL_PATH", "torchcell")
 
+
+def get_git_root():
+    """Get the git repository root, works in both main repo and worktrees."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        # Fallback to get_git_root() if not in a git repo
+        return os.environ.get("get_git_root()")
+
+
 def convert_to_dendron_path(file_path):
     """Convert a file path to Dendron's period-delimited format."""
-    relative_path = osp.relpath(file_path, WORKSPACE_DIR)
+    git_root = get_git_root()
+    relative_path = osp.relpath(file_path, git_root)
     dendron_path = relative_path.replace(osp.sep, ".").replace(".py", "")
     return dendron_path
 
@@ -25,8 +41,8 @@ def handle_python_file(file_path, new_file_path):
     os.makedirs(new_dir, exist_ok=True)
 
     # Calculate the relative paths for the source and test files within their respective directories
-    source_relative_path = osp.relpath(file_path, osp.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH))
-    new_source_relative_path = osp.relpath(new_file_path, osp.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH))
+    source_relative_path = osp.relpath(file_path, osp.join(get_git_root(), PYTHON_PKG_REL_PATH))
+    new_source_relative_path = osp.relpath(new_file_path, osp.join(get_git_root(), PYTHON_PKG_REL_PATH))
     print("======================")
     print(source_relative_path)
     print(new_source_relative_path) 
@@ -54,8 +70,8 @@ def handle_python_file(file_path, new_file_path):
     dendron_old_path = convert_to_dendron_path(file_path) + ".md"
     dendron_new_path = convert_to_dendron_path(new_file_path) + ".md"
 
-    dendron_old_full_path = osp.join(WORKSPACE_DIR, "notes", dendron_old_path)
-    dendron_new_full_path = osp.join(WORKSPACE_DIR, "notes", dendron_new_path)
+    dendron_old_full_path = osp.join(get_git_root(), "notes", dendron_old_path)
+    dendron_new_full_path = osp.join(get_git_root(), "notes", dendron_new_path)
 
     if osp.exists(dendron_old_full_path):
         os.rename(dendron_old_full_path, dendron_new_full_path)
@@ -74,7 +90,7 @@ if __name__ == "__main__":
     # If new_file_path is empty or an unresolved VS Code variable, prompt with current as default
     if not new_file_path or new_file_path.startswith("${") or new_file_path == "${relativeFile}":
         # Get relative path from workspace root for cleaner display
-        relative_path = osp.relpath(file_path, WORKSPACE_DIR)
+        relative_path = osp.relpath(file_path, get_git_root())
 
         print(f"\nCurrent file: {relative_path}")
         print(f"Enter new path below (relative to workspace root):")
@@ -88,7 +104,7 @@ if __name__ == "__main__":
             new_file_path = file_path
         # If user input is relative (no leading /), make it relative to workspace
         elif not user_input.startswith("/"):
-            new_file_path = osp.join(WORKSPACE_DIR, user_input)
+            new_file_path = osp.join(get_git_root(), user_input)
         else:
             new_file_path = user_input
 

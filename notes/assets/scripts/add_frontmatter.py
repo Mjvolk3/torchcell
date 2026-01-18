@@ -5,21 +5,38 @@
 import os
 import os.path as osp
 import sys
+import subprocess
 from dotenv import load_dotenv
 load_dotenv()
 from os.path import splitext
-WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
+
 PYTHON_PKG_REL_PATH = os.environ.get("PYTHON_PKG_REL_PATH")
 PYTHON_PKG_TEST_REL_PATH = os.environ.get("PYTHON_PKG_TEST_REL_PATH")
 GIT_REPO_URL = os.environ.get("GIT_REPO_URL")
 
+def get_git_root():
+    """Get the git repository root, works in both main repo and worktrees."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        # Fallback to WORKSPACE_DIR if not in a git repo
+        return os.environ.get("WORKSPACE_DIR")
+
 def add_frontmatter(file_path):
-    # Extract the relative path
-    print(f"file path:{file_path}")
-    relative_path = osp.relpath(
-        file_path, start=WORKSPACE_DIR
-    )
-    print(f"relative path:{relative_path}")
+    # Get the git repository root (works in worktrees too)
+    git_root = get_git_root()
+    print(f"git root: {git_root}")
+
+    # Extract the relative path from git root
+    print(f"file path: {file_path}")
+    relative_path = osp.relpath(file_path, start=git_root)
+    print(f"relative path: {relative_path}")
 
     # Get file extension
     file_extension = splitext(relative_path)[-1]
@@ -34,7 +51,10 @@ def add_frontmatter(file_path):
     # Only for .py files in the library directory (torchcell/)
     include_test_file = False
     test_file_path = None
-    if file_extension == ".py" and relative_path.startswith(PYTHON_PKG_REL_PATH):
+    if (file_extension == ".py" and
+        PYTHON_PKG_REL_PATH is not None and
+        PYTHON_PKG_TEST_REL_PATH is not None and
+        relative_path.startswith(PYTHON_PKG_REL_PATH)):
         include_test_file = True
         # Generate the test file path
         test_file_path = relative_path.replace(PYTHON_PKG_REL_PATH, PYTHON_PKG_TEST_REL_PATH)

@@ -1,0 +1,74 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Workspace Folder",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "internalConsole",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "subProcess": true,
+            "pythonArgs": ["-Xfrozen_modules=off"],
+            "env": {"PYDEVD_DISABLE_FILE_VALIDATION": "1"},
+            "internalConsoleOptions": "openOnSessionStart",
+            "python": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python"
+        },
+        {
+            "name": "Debug Hydra Config",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/experiments/003-fit-int/scripts/isomorphic_cell_attentional.py",
+            "args": [
+                "--config-dir",
+                "${workspaceFolder}/experiments/003-fit-int/conf",
+                "--config-name",
+                "optuna-isomorphic_cell_attentional-sweep_2.5e4",
+                "--multirun"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "subProcess": true,
+            "justMyCode": false,
+            "pythonArgs": ["-Xfrozen_modules=off"],
+            "env": {
+                "PYDEVD_DISABLE_FILE_VALIDATION": "1"
+            },
+            "internalConsoleOptions": "openOnSessionStart",
+            "python": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python"
+        },
+        {
+            "name": "Pytest Current Line",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": ["${relativeFile}::${selectedText}"],
+            "justMyCode": true,
+            "console": "integratedTerminal",
+            "python": "/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python"
+        },
+        {
+            "name": "Python: yeast8",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "subProcess": true,
+            "python": "/Users/michaelvolk/opt/miniconda3/envs/yeast8/bin/python"
+        },
+        {
+            "name": "Python: torchgeo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "subProcess": true,
+            "python": "/Users/michaelvolk/opt/miniconda3/envs/torchgeo/bin/python"
+        }
+    ]
+}

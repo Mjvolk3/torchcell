@@ -6,14 +6,29 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-WORKSPACE_DIR = os.environ.get("WORKSPACE_DIR")
 VSCODE_PATH = os.environ.get("VSCODE_PATH")
+
+
+def get_git_root():
+    """Get the git repository root, works in both main repo and worktrees."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        # Fallback to get_git_root() if not in a git repo
+        return os.environ.get("get_git_root()")
 
 
 def convert_to_file_path(dendron_path, extension):
     """Convert Dendron's period-delimited format to a file path with given extension."""
+    git_root = get_git_root()
     # Append the leading path to the workspace
-    return os.path.join(WORKSPACE_DIR, dendron_path.replace(".", "/") + extension)
+    return os.path.join(git_root, dendron_path.replace(".", "/") + extension)
 
 
 def open_related_file(note_file_path):
@@ -21,7 +36,7 @@ def open_related_file(note_file_path):
 
     # Extract the dendron path from the note file path
     dendron_path = (
-        note_file_path.replace(WORKSPACE_DIR, "")
+        note_file_path.replace(get_git_root(), "")
         .replace("notes", "")
         .replace(".md", "")
         .lstrip("/")

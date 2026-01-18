@@ -11,23 +11,37 @@ load_dotenv()
 PYTHON_PKG_REL_PATH = os.getenv("PYTHON_PKG_REL_PATH")
 PYTHON_PKG_TEST_REL_PATH = os.getenv("PYTHON_PKG_TEST_REL_PATH")
 VSCODE_PATH = os.getenv("VSCODE_PATH")
-WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
+
+
+def get_git_root():
+    """Get the git repository root, works in both main repo and worktrees."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        # Fallback to get_git_root() if not in a git repo
+        return os.environ.get("get_git_root()")
 
 
 def create_test_file(src_file_path):
     print('=' * 80)
 
     # Only work on files in the library directory (torchcell/)
-    if not src_file_path.startswith(os.path.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH)):
+    if not src_file_path.startswith(os.path.join(get_git_root(), PYTHON_PKG_REL_PATH)):
         print(f"Error: Test files can only be created for Python files in the {PYTHON_PKG_REL_PATH}/ directory.")
         print(f"File provided: {src_file_path}")
-        print(f"Expected to start with: {os.path.join(WORKSPACE_DIR, PYTHON_PKG_REL_PATH)}")
+        print(f"Expected to start with: {os.path.join(get_git_root(), PYTHON_PKG_REL_PATH)}")
         print("Test file creation cancelled.")
         print('=' * 80)
         return
 
-    # Get the relative path from the source directory to WORKSPACE_DIR
-    rel_path_from_workspace_to_src_file = os.path.relpath(src_file_path, WORKSPACE_DIR)
+    # Get the relative path from the source directory to get_git_root()
+    rel_path_from_workspace_to_src_file = os.path.relpath(src_file_path, get_git_root())
 
     print(
         f"Relative path from workspace to source file: {rel_path_from_workspace_to_src_file}"
@@ -37,7 +51,7 @@ def create_test_file(src_file_path):
     test_file_relative_path = rel_path_from_workspace_to_src_file.replace(PYTHON_PKG_REL_PATH, PYTHON_PKG_TEST_REL_PATH)
 
     # Construct the full path of the test file
-    test_file_path = os.path.join(WORKSPACE_DIR, test_file_relative_path)
+    test_file_path = os.path.join(get_git_root(), test_file_relative_path)
     test_file_directory = os.path.dirname(test_file_path)
     test_filename = "test_" + os.path.basename(src_file_path)
     test_file_path = os.path.join(test_file_directory, test_filename)

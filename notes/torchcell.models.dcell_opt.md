@@ -1,5 +1,5 @@
 ---
-id: cshdbmlwu123va68dg6pr16
+id: yocicuh9mhdlwzkm02e1eoe
 title: Dcell_opt
 desc: ''
 updated: 1748034112517
@@ -8,7 +8,7 @@ created: 1747191393026
 
 ## 2025.08.29 - Model Update for Torch Compile Optimization
 
-### Problem Analysis
+### Problem Analysis - Torch Compile Optimization
 
 The current DCell implementation in `/home/michaelvolk/Documents/projects/torchcell/torchcell/models/dcell.py` experiences significant graph breaks when using `torch.compile` due to:
 
@@ -326,7 +326,7 @@ For 2655 GO terms with batch_size=400:
    - Slightly more complex initialization
    - Some wasted computation on padded/empty slots
 
-### Implementation Plan
+### Implementation Plan - ModuleList Conversion
 
 1. **Phase 1: Create dcell_opt.py**
    - Copy base structure from dcell.py
@@ -415,7 +415,7 @@ model:
 
 ## 2025.09.02 - Plan Revision
 
-### Problem Analysis
+### Problem Analysis - Sequential Processing Bottleneck
 
 Current DCellOpt processes 2,655 GO terms **sequentially**, resulting in:
 
@@ -440,7 +440,7 @@ The issue: Each GO term is processed one-by-one in a Python loop, causing massiv
 2. **Hierarchical Dependencies**: Only inter-stratum dependencies matter
 3. **GPU Underutilization**: Current approach uses ~100 operations per term when GPU can do trillions
 
-### Implementation Plan
+### Implementation Plan - Parallel Stratum Processing
 
 #### Phase 1: Parallel Input Preparation
 

@@ -28,6 +28,94 @@ Dendron encode from `torchcell/torchcell.models.dcell` to `notes/torchcell.model
 
 When I tell you to write some output to a file that is in `notes/` then typially you just need to append or modify, we don't want you messing up dendron frontmatter.
 
+### Creating New Dendron Notes
+
+**For NEW notes in `notes/` directory, use `dendron-cli` instead of Write tool to ensure proper frontmatter:**
+
+```bash
+dendron-cli note write --fname "note.path.here"
+```
+
+**Pattern:**
+
+- File path: `notes/note.path.here.md`
+- Dendron fname: `note.path.here` (no `notes/` prefix, no `.md` extension)
+
+**Examples:**
+
+```bash
+# Creates notes/torchcell.datamodels.expression-schema-discussion.md
+dendron-cli note write --fname "torchcell.datamodels.expression-schema-discussion"
+
+# Creates notes/experiments.012-sameith-kemmeren.analysis.md
+dendron-cli note write --fname "experiments.012-sameith-kemmeren.analysis"
+```
+
+After creating with `dendron-cli`, you can append content using the Edit tool.
+
+**Important:** Only use `dendron-cli` for NEW notes. Use Edit tool for modifying existing Dendron notes (append mode to preserve frontmatter).
+
+### Dendron Note Organization - Date-Stamped Sections
+
+**Pattern for organizing note content over time:**
+
+Use H2 headings with date prefix to track changes and additions:
+
+```markdown
+## YYYY.MM.DD - Initial Analysis
+
+Content from this date...
+
+## YYYY.MM.DD - Updated Implementation Plan
+
+Revised content from later date...
+
+## YYYY.MM.DD - Final Results
+
+Latest updates...
+```
+
+**Guidelines:**
+
+- **Date format:** `YYYY.MM.DD` (e.g., `2026.01.19`)
+- **Heading level:** Always use H2 (`##`) for date-stamped sections
+- **Title:** Add descriptive title after date separator (` - `)
+- **Scope:** All content below a dated H2 belongs to that date context until the next H2
+- **Revisions:** If a note block needs significant revision, create a new dated H2 section rather than editing the old one (preserves history). We can remove as we see fit.
+- **Chronology** Time goes from top to bottom. Newer notes should be below older notes.
+
+**Example from actual notes:**
+
+```markdown
+## 2025.08.29 - Model Update for Torch Compile Optimization
+
+### Problem Analysis - Torch Compile Optimization
+
+The current DCell implementation experiences significant graph breaks...
+
+### Implementation Plan - ModuleList Conversion
+
+1. Phase 1: Create dcell_opt.py
+2. Phase 2: Test torch.compile compatibility
+
+## 2025.09.02 - Plan Revision
+
+### Problem Analysis - Sequential Processing Bottleneck
+
+After profiling, discovered sequential processing is the real issue...
+
+### Implementation Plan - Parallel Stratum Processing
+
+Updated approach based on new findings...
+```
+
+**Benefits:**
+
+- ✓ Clear temporal tracking of note evolution
+- ✓ Preserves historical context (don't overwrite old dates)
+- ✓ Easy to find when changes were made
+- ✓ Multiple H2 sections per note = multiple work sessions documented
+
 ## Structure of Python Program Outputs
 
 `notes/assets/scripts/add_frontmatter.py` is used with vscode cmd to apply frontmatter to python files. This creates a linked dendron note file that I will use for natural language notes associated with this file. Here is an example.

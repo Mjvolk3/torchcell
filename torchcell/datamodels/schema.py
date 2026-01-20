@@ -664,11 +664,23 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     NOTE: Source data (GEO) may use different conventions (e.g., log2(reference/sample)).
     Dataset loaders MUST transform to this canonical representation for consistency.
+
+    PRIMARY FIELDS (for BioCypher/ML):
+        - expression_log2_ratio: log2 fold change relative to reference
+        - expression_log2_ratio_se: Standard error of log2 ratios
+
+    SECONDARY FIELDS (for QC/reproducibility):
+        - expression: Absolute expression measurements on linear scale
+        - expression_se: Standard error on linear scale
+        - expression_log2_ratio_variance: Variance of log2 ratios
+        - n_samples: Number of independent biological samples
     """
 
     graph_level: str = "node"
     label_name: str = "expression_log2_ratio"
-    label_statistic_name: str = "expression_log2_ratio_std"
+    label_statistic_name: str = "expression_log2_ratio_se"
+
+    # PRIMARY FIELDS - for BioCypher/Neo4j and ML training
     expression_log2_ratio: Dict[str, float] = Field(
         description=(
             "SortedDict of log2 fold change ratios relative to wildtype reference. "
@@ -677,18 +689,44 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_log2_ratio_std: Dict[str, float] | None = Field(
+    expression_log2_ratio_se: Dict[str, float] | None = Field(
         default=None,
-        description="SortedDict of standard deviations for log2 ratios (propagated from technical stds)",
+        description=(
+            "SortedDict of standard errors (SE) for log2 ratios. "
+            "SE = SD / sqrt(n_samples). "
+            "None when unavailable; NaN when n_samples = 1 (SE undefined)."
+        ),
         repr=False,  # Hide in repr to avoid clutter
     )
+
+    # SECONDARY FIELDS - for QC and reproducibility
     expression: Dict[str, float] = Field(
-        description="SortedDict of gene expression values (raw intensities or normalized values)",
+        description=(
+            "SortedDict of per-gene expression measurements on linear scale. "
+            "May be raw probe intensities, background-subtracted, or normalized "
+            "(e.g., quantile normalization, housekeeping gene normalization). "
+            "NOT the ratio to reference - this is the sample's absolute expression."
+        ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_technical_std: Dict[str, float] | None = Field(
+    expression_se: Dict[str, float] | None = Field(
         default=None,
-        description="SortedDict of technical standard deviations from replicate measurements (NaN if no replicates)",
+        description=(
+            "SortedDict of standard errors on linear scale. "
+            "None when unavailable; NaN when n_samples = 1 (SE undefined)."
+        ),
+        repr=False,  # Hide in repr to avoid clutter
+    )
+    expression_log2_ratio_variance: Dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "SortedDict of variance for log2 ratios. "
+            "Variance = SE^2 * n_samples."
+        ),
+        repr=False,  # Hide in repr to avoid clutter
+    )
+    n_samples: Dict[str, int] = Field(
+        description="SortedDict of number of independent biological samples per gene",
         repr=False,  # Hide in repr to avoid clutter
     )
 
@@ -698,15 +736,17 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         log2_count = (
             len(self.expression_log2_ratio) if self.expression_log2_ratio else 0
         )
-        std_count = (
-            len(self.expression_technical_std) if self.expression_technical_std else 0
+        se_count = (
+            len(self.expression_log2_ratio_se) if self.expression_log2_ratio_se else 0
         )
+        n_samples_count = len(self.n_samples) if self.n_samples else 0
 
         return (
             f"MicroarrayExpressionPhenotype("
             f"expression_genes={expr_count}, "
             f"log2_ratio_genes={log2_count}, "
-            f"technical_std_genes={std_count})"
+            f"log2_se_genes={se_count}, "
+            f"n_samples_genes={n_samples_count})"
         )
 
     @field_validator("expression", mode="before")
@@ -736,24 +776,88 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         # Accept any gene name keys, no validation needed
         return v
 
-    @field_validator("expression_technical_std", mode="before")
-    def convert_and_validate_std(cls, v):
+    @field_validator("expression_log2_ratio_se", mode="before")
+    def convert_and_validate_log2_se(cls, v):
         if v is None:
             return v
         # Convert to SortedDict for consistent ordering
         if isinstance(v, dict) and not isinstance(v, SortedDict):
             v = SortedDict(v)
-        # Allow NaN values in std for genes without replicates
+        # SE can be NaN or Inf when n=1
+        for key, value in v.items():
+            if not (math.isnan(value) or math.isinf(value)) and value < 0:
+                raise ValueError(f"SE for {key} cannot be negative: {value}")
+        return v
+
+    @field_validator("expression_se", mode="before")
+    def convert_and_validate_expression_se(cls, v):
+        if v is None:
+            return v
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        # SE can be NaN or Inf when n=1
+        for key, value in v.items():
+            if not (math.isnan(value) or math.isinf(value)) and value < 0:
+                raise ValueError(f"SE for {key} cannot be negative: {value}")
+        return v
+
+    @field_validator("expression_log2_ratio_variance", mode="before")
+    def convert_and_validate_variance(cls, v):
+        if v is None:
+            return v
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        # Variance must be non-negative
+        for key, value in v.items():
+            if not math.isnan(value) and value < 0:
+                raise ValueError(f"Variance for {key} cannot be negative: {value}")
+        return v
+
+    @field_validator("n_samples", mode="before")
+    def convert_and_validate_n_samples(cls, v):
+        if v is None:
+            raise ValueError("n_samples cannot be None - it is required for SE interpretation")
+        # Convert to SortedDict for consistent ordering
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("n_samples cannot be empty")
+        # Validate that all n_samples are positive integers
+        for key, value in v.items():
+            if not isinstance(value, int) or value < 1:
+                raise ValueError(f"n_samples for {key} must be a positive integer, got: {value}")
         return v
 
     @model_validator(mode="after")
     def validate_matching_keys(self):
-        """Ensure expression_technical_std has same keys as expression."""
-        if self.expression_technical_std is not None:
-            if set(self.expression_technical_std.keys()) != set(self.expression.keys()):
+        """Ensure all secondary fields have same keys as expression."""
+        # n_samples must match expression keys
+        if set(self.n_samples.keys()) != set(self.expression.keys()):
+            raise ValueError(
+                "n_samples must have the same keys as expression"
+            )
+
+        # Optional fields should match if present
+        if self.expression_se is not None:
+            if set(self.expression_se.keys()) != set(self.expression.keys()):
                 raise ValueError(
-                    "expression_technical_std must have the same keys as expression"
+                    "expression_se must have the same keys as expression"
                 )
+
+        if self.expression_log2_ratio_se is not None:
+            if set(self.expression_log2_ratio_se.keys()) != set(self.expression_log2_ratio.keys()):
+                raise ValueError(
+                    "expression_log2_ratio_se must have the same keys as expression_log2_ratio"
+                )
+
+        if self.expression_log2_ratio_variance is not None:
+            if set(self.expression_log2_ratio_variance.keys()) != set(self.expression_log2_ratio.keys()):
+                raise ValueError(
+                    "expression_log2_ratio_variance must have the same keys as expression_log2_ratio"
+                )
+
         return self
 
 

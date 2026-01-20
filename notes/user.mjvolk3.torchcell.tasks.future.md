@@ -2,13 +2,12 @@
 id: qrpuop083pghmfiqe6va4y7
 title: torchcell.tasks.future
 desc: ''
-updated: 1764812650159
+updated: 1768948191346
 created: 1675887826601
 ---
 ## Future
 
 - [ ] Fix graphics for metabolic overlays.
-- [ ] Git clean up
 - [ ] Profile training on `GH` - Can also try alternate encoding if subgraphing is the issue. → [[Troubleshoot Gpu Utilization|dendron://torchcell/experiments.006.hetero-cell-bipartite-dango-gi.troubleshoot-gpu-utilization]]
 - [ ] Review comparison of `String` - Why are Dango models training slowest on String 11?
 - [ ]
@@ -216,3 +215,12 @@ genome["YDR210W"].attributes['display'][0]
 ```
 
 - [ ] First `Ollama` application to write documentation, write tests. Both should come with summaries. Automatically run tests to inspect which tests fail. Test if new dataset code is adherent to schema or can be made adherent to schema. We should also generate schema expansion recommendations. This part is hard, and really needs a vast amount of knowledge over different experimental methods if we want it to scale to 1000s of studies. This will build our understanding of ontologizing in the domain along with predictions over the ontology. This should be evidence enough for funding parallelized pilot scale reactors. 100 L to one 1000 L reactor. Once the we can reliably use the 1000 L reactor to produce a product at profit, we should be able to achieve a second round of funding for replicating the process. So we can penetrate the market.
+
+### 2026.01.20 - Deduplicator as it Relates to Schema
+
+**Deduplicator implications (future work):**
+
+- When MeanExperimentDeduplicator averages duplicate measurements, it needs to:
+  - Combine n_samples (sum them)
+  - Propagate SE properly (not simple averaging)
+  - This is out of scope of modifying schema for initial implementation but worth noting  

@@ -2,7 +2,7 @@
 id: 70iqseflyde7ujdmn2kz8l2
 title: '04'
 desc: ''
-updated: 1768946635609
+updated: 1768948224437
 created: 1768841844455
 ---
 
@@ -14,14 +14,7 @@ created: 1768841844455
 ## 2026.01.20
 
 - [x] Unified all `*.code-workspace` files by moving shared tasks/launch/settings to `.vscode/` (single source of truth); workspace files now only contain environment-specific config (folders, titlebar colors, mypy paths for different clusters)
-
-```
-  4. Deduplicator implications (future work):                                                                                                                                          
-    - When MeanExperimentDeduplicator averages duplicate measurements, it needs to:                                                                                                    
-        - Combine n_samples (sum them)                                                                                                                                                 
-      - Propagate SE properly (not simple averaging)                                                                                                                                   
-    - This is out of scope for initial implementation but worth noting  
-```
+- [x] Chanes to SE as implications for `Deduplicator` changes [[2026.01.20 - Deduplicator as it Relates to Schema|user.mjvolk3.torchcell.tasks.future#20260120---deduplicator-as-it-relates-to-schema]]
 
 - [ ] [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
 - [ ] [[fitness-interaction-n_samples|user.Mjvolk3.torchcell.tasks.weekly.2026.03.fitness-interaction-n_samples]]

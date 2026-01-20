@@ -1,16 +1,45 @@
 {
+    // Dendron
     "dendron.rootDir": ".",
     "dendron.enableSelfContainedVaultWorkspace": true,
+
+    // Files
+    "files.autoSave": "onFocusChange",
+
+    // Paste Image
+    "pasteImage.path": "${currentFileDir}/assets/images",
+    "pasteImage.prefix": "./",
+    "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
+
+    // Markdown
+    "markdown-preview-enhanced.enableWikiLinkSyntax": true,
+    "markdown-preview-enhanced.wikiLinkFileExtension": ".md",
+    "[markdown]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll.markdownlint": "explicit"
+        }
+    },
+
+    // Editor
+    "editor.snippetSuggestions": "inline",
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggest.showSnippets": true,
+    "editor.tabCompletion": "on",
+
+    // Python testing
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python-envs.pythonProjects": [
-        {
-            "path": "",
-            "envManager": "ms-python.python:conda",
-            "packageManager": "ms-python.python:conda"
-        }
-    ]
+
+    // Git
+    "git.autoRepositoryDetection": false,
+    "git.ignoreLimitWarning": true,
+
+    // Live Server
+    "liveServer.settings.multiRootWorkspaceName": "TorchCell",
+
+    // Sphinx
+    "esbonio.sphinx.confDir": ""
 }

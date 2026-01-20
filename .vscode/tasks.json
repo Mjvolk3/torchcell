@@ -138,11 +138,23 @@
             "problemMatcher": []
         },
         {
-            "label": "tc: pyreverse UML class diagram",
+            "label": "tc: pyreverse UML class diagram (png)",
             "type": "shell",
             "command": "${workspaceFolder}/notes/assets/scripts/run_pyreverse.sh",
             "args": [
-                "${file}"
+                "${file}",
+                "png"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "tc: pyreverse UML class diagram (pdf)",
+            "type": "shell",
+            "command": "${workspaceFolder}/notes/assets/scripts/run_pyreverse.sh",
+            "args": [
+                "${file}",
+                "pdf"
             ],
             "problemMatcher": [],
             "group": "build"

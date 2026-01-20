@@ -2,7 +2,7 @@
 id: 70iqseflyde7ujdmn2kz8l2
 title: '04'
 desc: ''
-updated: 1768863474932
+updated: 1768946635609
 created: 1768841844455
 ---
 
@@ -11,8 +11,19 @@ created: 1768841844455
 - [x] worktree merge, delete worktree, and branch
 - [x] Created plan updating expression data, but did not have the worktree startup scripts so just committed plan to restart with fresh worktree startup. [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
 
-- [ ]
+## 2026.01.20
 
+- [x] Unified all `*.code-workspace` files by moving shared tasks/launch/settings to `.vscode/` (single source of truth); workspace files now only contain environment-specific config (folders, titlebar colors, mypy paths for different clusters)
+
+```
+  4. Deduplicator implications (future work):                                                                                                                                          
+    - When MeanExperimentDeduplicator averages duplicate measurements, it needs to:                                                                                                    
+        - Combine n_samples (sum them)                                                                                                                                                 
+      - Propagate SE properly (not simple averaging)                                                                                                                                   
+    - This is out of scope for initial implementation but worth noting  
+```
+
+- [ ] [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
 - [ ] [[fitness-interaction-n_samples|user.Mjvolk3.torchcell.tasks.weekly.2026.03.fitness-interaction-n_samples]]
 
 - [ ] Add n to fitness interaction data

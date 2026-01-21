@@ -2,19 +2,19 @@
 id: 70iqseflyde7ujdmn2kz8l2
 title: '04'
 desc: ''
-updated: 1768948224437
+updated: 1769026145243
 created: 1768841844455
 ---
 
 ## 2026.01.19
 
 - [x] worktree merge, delete worktree, and branch
-- [x] Created plan updating expression data, but did not have the worktree startup scripts so just committed plan to restart with fresh worktree startup. [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
+- [x] Created plan updating expression data, but did not have the worktree startup scripts so just committed plan to restart with fresh worktree startup. @Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema.wip
 
 ## 2026.01.20
 
 - [x] Unified all `*.code-workspace` files by moving shared tasks/launch/settings to `.vscode/` (single source of truth); workspace files now only contain environment-specific config (folders, titlebar colors, mypy paths for different clusters)
-- [x] Chanes to SE as implications for `Deduplicator` changes [[2026.01.20 - Deduplicator as it Relates to Schema|user.mjvolk3.torchcell.tasks.future#20260120---deduplicator-as-it-relates-to-schema]]
+- [x] Changes to SE as implications for `Deduplicator` changes [[2026.01.20 - Deduplicator as it Relates to Schema|user.mjvolk3.torchcell.tasks.future#20260120---deduplicator-as-it-relates-to-schema]]
 
 - [ ] [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
 - [ ] [[fitness-interaction-n_samples|user.Mjvolk3.torchcell.tasks.weekly.2026.03.fitness-interaction-n_samples]]

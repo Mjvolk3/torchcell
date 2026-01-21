@@ -2,14 +2,14 @@
 id: 70iqseflyde7ujdmn2kz8l2
 title: '04'
 desc: ''
-updated: 1768863474932
+updated: 1768946753643
 created: 1768841844455
 ---
 
 ## 2026.01.19
 
 - [x] worktree merge, delete worktree, and branch
-- [x] Created plan updating expression data, but did not have the worktree startup scripts so just committed plan to restart with fresh worktree startup. [[expression-schema-wip|user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema-wip]]
+- [x] Created plan updating expression data, but did not have the worktree startup scripts so just committed plan to restart with fresh worktree startup. @Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema.wip
 
 - [ ]
 

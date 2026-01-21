@@ -1,12 +1,20 @@
 ---
 id: 898b8n5swaj3isnqs49btca
-title: expression-schema-wip
+title: wip
 desc: ''
-updated: 1768845735724
+updated: 1769025910963
 created: 1768845735724
 ---
 
 ## 2026.01.19 - Expression Schema Redesign for ML Applications
+
+### Terminology
+
+**`n_samples` (not `n_replicates`):**
+
+- We use `n_samples` to match standard statistical terminology
+- Refers to the number of independent biological measurements
+- Required field (not Optional) - SE cannot be interpreted without knowing n
 
 ### Problem Statement
 
@@ -44,7 +52,7 @@ Our current `MicroarrayExpressionPhenotype` schema stores standard deviation (SD
 
 3. **`expression: Dict[str, float]`** - Raw LINEAR values (QC/reproducibility)
 4. **`expression_log2_ratio_variance: Dict[str, float]`** - Variance on log2 scale (meta-analysis)
-5. **`n_replicates: Dict[str, int]`** - Sample size (available but not cluttering YAML)
+5. **`n_samples: Dict[str, int]`** - Sample size (available but not cluttering YAML)
 6. **`expression_se: Dict[str, float]`** - LINEAR scale SE (reference phenotype only)
 
 **REMOVED fields (no backwards compatibility):**
@@ -57,7 +65,7 @@ Our current `MicroarrayExpressionPhenotype` schema stores standard deviation (SD
 - Only 2 PRIMARY fields in YAML (minimal complexity)
 - SE on log2 scale (matches the transformed data used for ML)
 - Variance (not technical_std) for proper meta-analysis
-- n_replicates in serialized_data (SE already captures precision)
+- n_samples in serialized_data (SE already captures precision)
 
 ### BioCypher YAML Design
 
@@ -73,7 +81,7 @@ microarray expression phenotype:
         label_statistic_name: str
         expression_log2_ratio: map  # Dict[str, float] - PRIMARY label (log2 scale)
         expression_log2_ratio_se: map  # Dict[str, float] - PRIMARY uncertainty (log2 scale)
-        serialized_data: str  # Full phenotype JSON (includes n_replicates, variance, raw expression)
+        serialized_data: str  # Full phenotype JSON (includes n_samples, variance, raw expression)
 ```
 
 **If `map` type is not supported by BioCypher, fallback to:**
@@ -100,7 +108,7 @@ And deserialize in application code as needed.
 2. **Keep SECONDARY fields:**
    - `expression: Dict[str, float]` (already exists)
    - `expression_log2_ratio_variance: Dict[str, float] | None` (NEW - add this field)
-   - `n_replicates: Dict[str, int] | None` (NEW - add this field)
+   - `n_samples: Dict[str, int] | None` (NEW - add this field)
    - `expression_se: Dict[str, float] | None` (NEW - for reference phenotype only)
 
 3. **REMOVE deprecated fields:**
@@ -114,43 +122,98 @@ And deserialize in application code as needed.
 
 **File:** `torchcell/datasets/scerevisiae/kemmeren2014.py`
 
-**Critical fix - Order of operations:**
+**Critical fix - Order of operations for common reference pool design:**
 
-Current (WRONG):
+Kemmeren2014 uses a **common reference pool** design where:
+
+- Reference pool has many replicates (20-200 measurements) → very stable estimate
+- Each mutant strain has 1-4 biological replicates
+- Log2 ratios are computed per-sample against the mean reference pool
+
+**Current implementation (WRONG):**
 
 ```python
 # Step 1: Extract LINEAR expression per replicate
-# Step 2: Average LINEAR expression
-# Step 3: Compute log2(mean_linear / ref)
+all_expressions[gene] = [rep1, rep2, rep3]
+
+# Step 2: Average LINEAR expression FIRST
+averaged_expression[gene] = np.mean(all_expressions[gene])
+
+# Step 3: Compute ONE log2 ratio from averages
+log2_ratio = log2(averaged_expression / mean_refpool)
+
+# Result: n_samples = 1, SE = undefined
 ```
 
-Correct:
+**Why this is mathematically wrong:**
 
 ```python
-# Step 1: Extract LINEAR expression per replicate
-# Step 2: Compute log2(replicate_i / ref) for each replicate
-# Step 3: Average log2 ratios
-# Step 4: Compute SE = SD(log2_ratios) / sqrt(n)
-# Step 5: Compute variance = SD(log2_ratios)²
+# Example with real numbers
+mutant_reps = [100, 400]
+refpool_mean = 200
+
+# WRONG: log2(mean(x))
+mean_mutant = mean([100, 400]) = 250
+log2_ratio = log2(250/200) = 0.32
+
+# CORRECT: mean(log2(x))
+log2_rep1 = log2(100/200) = -1.0
+log2_rep2 = log2(400/200) = 1.0
+mean_log2 = mean([-1.0, 1.0]) = 0.0
+
+# These are NOT equal! log2(mean(x)) ≠ mean(log2(x))
+```
+
+**Correct approach (mean refpool justified by large n):**
+
+```python
+# Step 1: Compute mean reference pool (20-200 reps → highly stable)
+mean_refpool[gene] = np.mean(refpool_reps)
+# Note: With 200 replicates, refpool SE is ~7x smaller than biological SE
+# So we can treat mean_refpool as "ground truth" reference
+
+# Step 2: Extract LINEAR expression per sample replicate
+sample_expressions[gene] = [rep1, rep2, rep3]
+
+# Step 3: Compute log2 ratio PER REPLICATE
+log2_ratios[gene] = []
+for rep_i in sample_expressions[gene]:
+    log2_ratios[gene].append(log2(rep_i / mean_refpool[gene]))
+# Result: log2_ratios[gene] = [log2_rep1, log2_rep2, log2_rep3]
+
+# Step 4: Compute statistics on log2 scale
+mean_log2_ratio[gene] = np.mean(log2_ratios[gene])
+SD_log2 = np.std(log2_ratios[gene], ddof=1)
+SE_log2[gene] = SD_log2 / np.sqrt(len(log2_ratios[gene]))
+variance_log2[gene] = SD_log2 ** 2
+n_samples[gene] = len(log2_ratios[gene])  # 2, 3, 4, etc.
+
+# Result: Proper SE and n_samples for each gene!
 ```
 
 **Changes needed:**
 
-1. Modify `_extract_expression_from_gsm()` to return both LINEAR expression AND log2 ratios
-2. Modify `_average_dye_swaps()` to:
-   - Compute statistics on log2 ratios (not LINEAR)
-   - Return: (mean_log2, se_log2, variance_log2, n_replicates)
-3. Update `create_expression_experiment()` to populate new fields
+1. Modify `_average_dye_swaps()` to:
+   - Keep replicate-level data (don't average yet)
+   - Return: `(all_expressions_per_replicate, n_samples)`
+2. Modify `create_expression_experiment()` to:
+   - Compute log2 ratios PER REPLICATE
+   - Average log2 ratios (not linear values)
+   - Return: `(mean_log2, SE_log2, variance_log2, n_samples)`
+3. Update phenotype instantiation with new fields
 
 **File:** `torchcell/datasets/scerevisiae/sameith2015.py`
 
-**Already mostly correct** - just needs SE instead of SD:
+**Verify order of operations, then add SE/variance:**
 
-1. Change `_calculate_mean_std()` to `_calculate_statistics_for_ml()`
-2. Return SE instead of SD: `se = std / sqrt(n)`
-3. Add variance calculation: `variance = std ** 2`
-4. Add n_replicates tracking
-5. Update phenotype instantiation with new fields
+1. **Audit existing code:** Check if log2 is computed before or after averaging
+   - If after averaging → apply same fix as Kemmeren2014
+   - If already correct → proceed to step 2
+2. Change SD → SE calculation: `SE = SD / sqrt(n_samples)`
+3. Add variance: `variance = SD ** 2`
+4. Add `n_samples` field to track replicate count
+5. Update all field names (`expression_technical_std` → `expression_se`)
+6. Update phenotype instantiation with new schema fields
 
 #### Phase 3: Update BioCypher YAML
 
@@ -288,9 +351,66 @@ def _get_microarray_expression_phenotype_reference_nodes(self):
 3. Re-build Neo4j database with new YAML
 4. Update documentation
 
+### Key Mathematical Insight: log2(mean) ≠ mean(log2)
+
+**Why order of operations matters:**
+
+Log2 transformation is **non-linear**, so applying it before vs after averaging gives different results:
+
+```python
+# Example: Gene has 2 replicates at 100 and 400 intensity
+# Reference pool at 200 intensity
+
+# WRONG: Average first, then log2
+mean_linear = (100 + 400) / 2 = 250
+log2_ratio = log2(250/200) = 0.32  # Appears upregulated
+
+# CORRECT: Log2 first, then average
+log2_rep1 = log2(100/200) = -1.0   # Rep 1 is downregulated
+log2_rep2 = log2(400/200) = 1.0    # Rep 2 is upregulated
+mean_log2 = (-1.0 + 1.0) / 2 = 0.0 # Average is no change!
+
+# Difference: 0.32 vs 0.0 - completely different biological interpretation!
+```
+
+**Impact on downstream ML:**
+
+- Wrong approach biases toward upregulation (geometric mean effect)
+- Loses biological variability information (n_samples = 1, SE undefined)
+- Cannot weight samples by confidence in training
+
+**Current Kemmeren2014 status:**
+
+- ❌ Averages linear values first (`averaged_expression = np.mean(replicates)`)
+- ❌ Computes single log2 ratio from averaged values
+- ❌ Results in n_samples = 1 for all genes
+- ❌ SE is undefined/unusable for ML weighting
+
+**Why using mean refpool is statistically valid:**
+
+In common reference pool designs (Kemmeren, Sameith), the reference has MANY more replicates than samples:
+
+- Kemmeren: 20-200 refpool replicates vs 1-4 sample replicates
+- Reference pool SE is ~7-14x smaller than biological sample SE
+
+```python
+# Example: Reference pool with n=100
+refpool_mean = 200
+refpool_SD = 20
+refpool_SE = 20 / sqrt(100) = 2.0  # Very precise!
+
+# Sample with n=2
+sample_SE = SD / sqrt(2) ≈ 15.0   # Much less precise
+
+# Ratio: sample_SE / refpool_SE = 15/2 = 7.5x
+# Conclusion: Refpool uncertainty is negligible compared to sample uncertainty
+```
+
+Therefore: **Treating mean refpool as fixed/known** introduces negligible error compared to biological variance, and enables proper per-sample SE estimation.
+
 ### Implementation Checklist
 
-- [ ] Phase 1: Update `schema.py` with new fields
+- [x] Phase 1: Update `schema.py` with new fields (committed: f8e6880)
 - [ ] Phase 2a: Fix Kemmeren2014 order of operations
 - [ ] Phase 2b: Update Sameith2015 to compute SE
 - [ ] Phase 3: Add microarray expression phenotype to BioCypher YAML

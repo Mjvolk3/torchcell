@@ -2,7 +2,7 @@
 id: 898b8n5swaj3isnqs49btca
 title: wip
 desc: ''
-updated: 1769025910963
+updated: 1769097964822
 created: 1768845735724
 ---
 
@@ -411,7 +411,7 @@ Therefore: **Treating mean refpool as fixed/known** introduces negligible error 
 ### Implementation Checklist
 
 - [x] Phase 1: Update `schema.py` with new fields (committed: f8e6880)
-- [ ] Phase 2a: Fix Kemmeren2014 order of operations
+- [x] Phase 2a: Fix Kemmeren2014 order of operations (committed: THIS COMMIT)
 - [ ] Phase 2b: Update Sameith2015 to compute SE
 - [ ] Phase 3: Add microarray expression phenotype to BioCypher YAML
 - [ ] Phase 4: Add CellAdapter methods
@@ -430,3 +430,94 @@ Therefore: **Treating mean refpool as fixed/known** introduces negligible error 
 - ✅ Enables confidence-based data filtering
 - ✅ Minimal YAML complexity (only 2 PRIMARY fields)
 - ✅ Streamlined main path for querying
+
+## 2026.01.21 - Phase 2a Complete: Fixed Kemmeren2014 Order of Operations
+
+### What We Fixed
+
+**Critical bug:** Kemmeren2014 was averaging LINEAR expression values, then computing a single log2 ratio. This resulted in:
+
+- All genes having `n_samples = 1` (replicate info lost)
+- `expression_log2_ratio_se = NaN` for all genes (SE undefined when n=1)
+- Incorrect log2 values due to `log2(mean(x)) ≠ mean(log2(x))`
+
+**Solution implemented:**
+
+1. **Renamed method** for clarity:
+   - `_average_dye_swaps()` → `_collect_replicate_expressions()`
+   - Now returns `Dict[gene, List[float]]` (replicate-level data)
+
+2. **Fixed order of operations** in `create_expression_experiment()`:
+
+   ```python
+   # For each gene, for each replicate:
+   for rep_value in replicate_values:
+       log2_ratio = -np.log2(rep_value / refpool_expression[gene])
+       log2_ratios_per_replicate.append(log2_ratio)
+
+   # Then compute statistics on log2 scale:
+   mean_log2 = np.mean(log2_ratios_per_replicate)
+   sd_log2 = np.std(log2_ratios_per_replicate, ddof=1)
+   se_log2 = sd_log2 / np.sqrt(n)
+   variance_log2 = sd_log2 ** 2
+   ```
+
+3. **Updated phenotype instantiation** with new schema fields:
+
+   ```python
+   phenotype = MicroarrayExpressionPhenotype(
+       expression=mean_expression,  # Mean LINEAR (for QC)
+       expression_log2_ratio=mean_log2_ratios,  # Mean log2 ratios
+       expression_log2_ratio_se=log2_se,  # SE on log2 scale
+       expression_log2_ratio_variance=log2_variance,  # Variance on log2 scale
+       n_samples=n_samples_dict,  # Number of replicates per gene
+   )
+   ```
+
+4. **Removed deprecated CV-scaled std logic** - replaced by proper replicate-based SE
+
+### Results
+
+After rebuilding the dataset:
+
+- **1,484 gene deletions** processed
+- **~7.1 million data points** with valid p-values (vs ~9.2 million total)
+- **Variable n_samples**: 2, 3, or 4 replicates per gene (no longer all n=1!)
+- **Non-NaN SE values** for genes with n>1
+
+### Volcano Plot Validation
+
+Created `experiments/012-sameith-kemmeren/scripts/kemmeren_volcano.py` to visualize the new data:
+
+- Uses `expression_log2_ratio` (x-axis) and `expression_log2_ratio_se` (for p-value on y-axis)
+- Computes t-statistics: `t = log2_fold_change / SE`
+- Filters for significance: `|log2FC| > 1.0` and `p < 0.01`
+- **3,598 upregulated** and **1,286 downregulated** genes identified
+
+### Files Changed
+
+**`torchcell/datasets/scerevisiae/kemmeren2014.py`:**
+
+- Renamed `_average_dye_swaps` → `_collect_replicate_expressions` (lines 1892-1920, 749-781)
+- Updated signature: removed `technical_std`, `refpool_std` parameters
+- Fixed `create_expression_experiment()` to compute log2 before averaging (lines 1957-2010)
+- Updated both sequential and parallel processing paths
+- Removed CV-scaled std calculation logic
+
+**`experiments/012-sameith-kemmeren/scripts/kemmeren_volcano.py`:** (NEW)
+
+- Volcano plot using new SE-based p-values
+- Demonstrates proper statistical significance testing
+
+### Worktree Infrastructure Improvements
+
+Also updated `scripts/setup-worktree.sh` to handle worktree-specific env vars:
+
+- `.env` is now COPIED (not symlinked) with worktree-specific path overrides
+- Added `.env.vscode` to `.gitignore`
+- Keeps `DATA_ROOT` shared (expensive datasets)
+- Makes `ASSET_IMAGES_DIR`, `EXPERIMENT_ROOT`, etc. worktree-specific
+
+### Next Steps
+
+Phase 2b: Update Sameith2015 dataset to use the same approach

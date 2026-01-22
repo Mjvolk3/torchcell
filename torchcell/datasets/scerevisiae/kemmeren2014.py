@@ -515,15 +515,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         idx = 0
         with env.begin(write=True) as txn:
-            # Process each unique gene deletion (averaging dye-swaps)
+            # Process each unique gene deletion (collect replicate-level data)
             for gene_name, gsm_list in tqdm(deletion_samples_by_gene.items()):
-                # Average expression data from all dye-swap replicates
-                averaged_expression, technical_std = self._average_dye_swaps(
+                # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
+                replicate_expressions, n_replicates = self._collect_replicate_expressions(
                     gsm_list, probe_to_gene_map
                 )
 
                 # Skip if no expression data was extracted
-                if not averaged_expression:
+                if not replicate_expressions:
                     log.warning(f"No expression data for gene {gene_name}, skipping...")
                     continue
 
@@ -560,29 +560,19 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     gsm_list, probe_to_gene_map
                 )
 
-                # Calculate CV-scaled std for each gene
-                cv_scaled_std = SortedDict()
-                for gene in averaged_expression:
-                    if gene in deletion_refpool and gene in refpool_cv:
-                        # Apply CV to the actual refpool value from deletion sample
-                        cv_scaled_std[gene] = refpool_cv[gene] * deletion_refpool[gene]
-                    else:
-                        # Use original std if we can't scale
-                        cv_scaled_std[gene] = (
-                            technical_std.get(gene, 0.0) if technical_std else 0.0
-                        )
-
                 # Skip if no refpool data
                 if not deletion_refpool:
                     log.error(f"No refpool data extracted for {gene_name}, skipping...")
                     continue
-                
+
+                # NOTE: CV-scaled std calculation removed - we now compute SE from replicates on log2 scale
+                # The new approach: compute log2 per replicate, then calculate SE directly
+
                 experiment, reference, publication = self.create_expression_experiment(
                     self.name,
                     sample_info,
-                    averaged_expression,
-                    technical_std,
-                    deletion_refpool,  # Use actual refpool from deletion samples
+                    replicate_expressions,  # Pass replicate-level data (List[float] per gene)
+                    deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
                     cv_scaled_std,  # Use CV-scaled std instead of original
                 )
                 
@@ -683,15 +673,15 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         results = []
 
         for gene_name, gsm_list in batch_items:
-            # Average expression data from all dye-swap replicates
-            averaged_expression, technical_std = (
-                MicroarrayKemmeren2014Dataset._average_dye_swaps_static(
+            # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
+            replicate_expressions, n_replicates = (
+                MicroarrayKemmeren2014Dataset._collect_replicate_expressions_static(
                     gsm_list, probe_to_gene_map
                 )
             )
 
             # Skip if no expression data was extracted
-            if not averaged_expression:
+            if not replicate_expressions:
                 continue
 
             # Determine strain from systematic_to_strain map - REQUIRED
@@ -714,35 +704,24 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             else:
                 continue
 
-            # Extract refpool from deletion samples' Cy3 channel for CV-scaled std
+            # Extract refpool from deletion samples' Cy3 channel
             deletion_refpool = MicroarrayKemmeren2014Dataset._extract_refpool_from_deletion_samples_static(
                 gsm_list, probe_to_gene_map
             )
 
-            # Calculate CV-scaled std for each gene
-            cv_scaled_std = SortedDict()
-            for gene in averaged_expression:
-                if gene in deletion_refpool and gene in refpool_cv:
-                    # Apply CV to the actual refpool value from deletion sample
-                    cv_scaled_std[gene] = refpool_cv[gene] * deletion_refpool[gene]
-                else:
-                    # Use original std if we can't scale
-                    cv_scaled_std[gene] = (
-                        technical_std.get(gene, 0.0) if technical_std else 0.0
-                    )
-
             # Skip if no refpool data
             if not deletion_refpool:
                 continue
-            
+
+            # NOTE: CV-scaled std calculation removed - we now compute SE from replicates on log2 scale
+            # The new approach: compute log2 per replicate, then calculate SE directly
+
             experiment, reference, publication = (
                 MicroarrayKemmeren2014Dataset.create_expression_experiment(
                     dataset_name,
                     sample_info,
-                    averaged_expression,
-                    technical_std,
-                    deletion_refpool,
-                    cv_scaled_std,
+                    replicate_expressions,  # Pass replicate-level data (List[float] per gene)
+                    deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
                 )
             )
             
@@ -763,11 +742,20 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         return results
 
     @staticmethod
-    def _average_dye_swaps_static(
+    def _collect_replicate_expressions_static(
         gsm_list, probe_to_gene_map=None
     ) -> tuple[SortedDict, SortedDict]:
-        """Static version of _average_dye_swaps for multiprocessing."""
-        # Collect all expression data
+        """Static version of _collect_replicate_expressions for multiprocessing.
+
+        NOTE: Returns REPLICATE-LEVEL data, not averaged values.
+        The averaging will be done on log2 scale in create_expression_experiment.
+
+        Returns:
+            tuple: (replicate_expressions, n_replicates)
+                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate
+                - n_replicates: Dict[gene, int] - number of replicates per gene
+        """
+        # Collect all expression data (LINEAR scale, replicate-level)
         all_expressions = SortedDict()
 
         for gsm in gsm_list:
@@ -781,19 +769,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     all_expressions[gene] = []
                 all_expressions[gene].append(value)
 
-        # Calculate mean and std for each gene
-        averaged_expression = SortedDict()
-        technical_std = SortedDict()
-
+        # Count replicates per gene (for tracking)
+        n_replicates = SortedDict()
         for gene, values in all_expressions.items():
-            if len(values) > 0:
-                averaged_expression[gene] = np.mean(values)
-                if len(values) > 1:
-                    technical_std[gene] = np.std(values, ddof=1)  # Sample std
-                else:
-                    technical_std[gene] = np.nan  # NaN for single measurement
+            n_replicates[gene] = len(values)
 
-        return averaged_expression, technical_std
+        return all_expressions, n_replicates
 
     @staticmethod
     def _extract_expression_from_gsm_static(gsm, probe_to_gene_map=None) -> SortedDict:
@@ -1904,15 +1885,20 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         log.info("===")
 
-    def _average_dye_swaps(
+    def _collect_replicate_expressions(
         self, gsm_list, probe_to_gene_map=None
     ) -> tuple[SortedDict, SortedDict]:
-        """Average expression values from dye-swap technical replicates.
+        """Collect expression values from technical replicates (dye-swaps).
+
+        NOTE: This method returns REPLICATE-LEVEL data, not averaged values.
+        The averaging will be done on log2 scale in create_expression_experiment.
 
         Returns:
-            tuple: (averaged_expression, technical_std)
+            tuple: (replicate_expressions, n_replicates)
+                - replicate_expressions: Dict[gene, List[float]] - LINEAR scale values per replicate
+                - n_replicates: Dict[gene, int] - number of replicates per gene
         """
-        # Collect all expression data
+        # Collect all expression data (LINEAR scale, replicate-level)
         all_expressions = SortedDict()
 
         for gsm in gsm_list:
@@ -1922,28 +1908,19 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     all_expressions[gene] = []
                 all_expressions[gene].append(value)
 
-        # Calculate mean and std for each gene
-        averaged_expression = SortedDict()
-        technical_std = SortedDict()
-
+        # Count replicates per gene (for tracking)
+        n_replicates = SortedDict()
         for gene, values in all_expressions.items():
-            if len(values) > 0:
-                averaged_expression[gene] = np.mean(values)
-                if len(values) > 1:
-                    technical_std[gene] = np.std(values, ddof=1)  # Sample std
-                else:
-                    technical_std[gene] = np.nan  # NaN for single measurement
+            n_replicates[gene] = len(values)
 
-        return averaged_expression, technical_std
+        return all_expressions, n_replicates
 
     @staticmethod
     def create_expression_experiment(
         dataset_name,
         sample_info,
-        expression_data,
-        technical_std,
+        replicate_expressions,
         refpool_expression,
-        refpool_std,
     ):
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
@@ -1973,41 +1950,81 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        # Calculate log2 ratios - REQUIRED for MicroarrayExpressionPhenotype
+        # CRITICAL: Compute log2 ratios PER REPLICATE, then average on log2 scale
+        # This is mathematically correct: mean(log2(x)) ≠ log2(mean(x))
         if not refpool_expression:
             # Cannot create experiment without refpool - return None to signal skip
             return None, None, None
 
-        log2_ratios = SortedDict()
-        for gene, value in expression_data.items():
-            if gene in refpool_expression and refpool_expression[gene] > 0:
-                # Calculate log2 fold change vs refpool
-                # NOTE: GEO stores log2(refpool/deletion), but torchcell convention is
-                # log2(deletion/refpool) where positive = upregulated, negative = downregulated.
-                # We negate to transform from GEO convention to torchcell convention.
-                log2_ratios[gene] = -np.log2(value / refpool_expression[gene])
-        
-        if not log2_ratios:
+        # Step 1: Compute log2 ratios per replicate, then aggregate statistics on log2 scale
+        mean_log2_ratios = SortedDict()
+        log2_se = SortedDict()
+        log2_variance = SortedDict()
+        n_samples_dict = SortedDict()
+        mean_expression = SortedDict()  # Also compute mean LINEAR expression for QC
+
+        for gene, replicate_values in replicate_expressions.items():
+            if gene not in refpool_expression or refpool_expression[gene] <= 0:
+                continue  # Skip genes not in refpool or with invalid refpool values
+
+            # Compute log2 ratio for EACH replicate (correct order of operations!)
+            log2_ratios_per_replicate = []
+            for rep_value in replicate_values:
+                if rep_value > 0:  # Skip invalid values
+                    # NOTE: GEO stores log2(refpool/deletion), but torchcell convention is
+                    # log2(deletion/refpool) where positive = upregulated, negative = downregulated.
+                    # We negate to transform from GEO convention to torchcell convention.
+                    log2_ratio = -np.log2(rep_value / refpool_expression[gene])
+                    log2_ratios_per_replicate.append(log2_ratio)
+
+            # Skip genes with no valid replicates
+            if len(log2_ratios_per_replicate) == 0:
+                continue
+
+            # Compute statistics on log2 scale
+            n = len(log2_ratios_per_replicate)
+            mean_log2 = np.mean(log2_ratios_per_replicate)
+
+            if n > 1:
+                sd_log2 = np.std(log2_ratios_per_replicate, ddof=1)
+                se_log2 = sd_log2 / np.sqrt(n)
+                var_log2 = sd_log2 ** 2
+            else:
+                # n=1: SE and variance are undefined
+                se_log2 = np.nan
+                var_log2 = np.nan
+
+            mean_log2_ratios[gene] = mean_log2
+            log2_se[gene] = se_log2
+            log2_variance[gene] = var_log2
+            n_samples_dict[gene] = n
+            mean_expression[gene] = np.mean(replicate_values)  # For QC purposes
+
+        if not mean_log2_ratios:
             # No matching genes between expression and refpool - return None to signal skip
             return None, None, None
 
-        # Create phenotype with actual expression data
+        # Create phenotype with new schema fields
         phenotype = MicroarrayExpressionPhenotype(
-            expression=expression_data,
-            expression_log2_ratio=log2_ratios,
-            expression_technical_std=technical_std if technical_std else None,
+            expression=mean_expression,  # Mean LINEAR expression (for QC)
+            expression_log2_ratio=mean_log2_ratios,  # Mean log2 ratios
+            expression_log2_ratio_se=log2_se,  # SE on log2 scale
+            expression_log2_ratio_variance=log2_variance,  # Variance on log2 scale
+            n_samples=n_samples_dict,  # Number of replicates per gene
         )
 
         # Create reference phenotype (refpool expression)
         # For reference, create self-referential log2 ratios (all zeros)
         reference_log2_ratios = SortedDict()
+        reference_n_samples = SortedDict()
         for gene in refpool_expression:
             reference_log2_ratios[gene] = 0.0  # log2(1) = 0
-        
+            reference_n_samples[gene] = 1  # Reference is the pooled mean
+
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_expression,
             expression_log2_ratio=reference_log2_ratios,
-            expression_technical_std=refpool_std,  # Include refpool technical std
+            n_samples=reference_n_samples,
         )
 
         # Create reference

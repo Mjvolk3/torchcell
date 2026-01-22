@@ -20,7 +20,7 @@ commands:
         enableMarker: false
     randomNote: {}
     copyNoteLink:
-        aliasMode: title
+        aliasMode: none
     templateHierarchy: template
 workspace:
     vaults:

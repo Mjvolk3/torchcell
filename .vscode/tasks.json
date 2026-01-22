@@ -340,6 +340,16 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "label": "tcg: open all git changed files",
+            "type": "shell",
+            "command": "code $(git status -uall --porcelain | awk '{print $NF}')",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
         }
     ],
     "inputs": [

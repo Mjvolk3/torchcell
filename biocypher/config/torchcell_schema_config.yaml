@@ -1,3 +1,7 @@
+# biocypher/config/torchcell_schema_config.yaml
+# [[biocypher.config.torchcell_schema_config.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/biocypher/config/torchcell_schema_config.yaml
+
 # Nodes
 dataset:
     represented_as: node
@@ -16,18 +20,20 @@ publication:
         doi_url: str
         serialized_data: str
 
-# experiment is a process. "ran an experiment", meaning ran the process
-# study used for collection of.
+# experiment: recorded experimental observation (data record, not the process)
+# Uses continuant (information content entity) rather than occurrent (activity)
+# Note: The experimental procedure/plan would be modeled as "protocol" (could be activity or entity)
+# study: used for collection/aggregation of multiple experiments
 
 experiment:
     represented_as: node
-    is_a: activity
+    is_a: information content entity
     properties:
         serialized_data: str
 
 experiment reference:
     represented_as: node
-    is_a: activity
+    is_a: information content entity
     properties:
         serialized_data: str
 
@@ -202,24 +208,22 @@ genome member of:
     target: experiment reference
 
 # publication mentions experiment:
-# is_a: mentions
-# mentions not supported... unsure why. Maybe query on biocypher zulip.
-# information content entity to named thing association:
-mentions:
+# Edge renamed to avoid name collision with Biolink's "mentions" predicate
+publication mentions experiment:
     is_a: mentions
     represented_as: edge
     source: publication
     target: experiment
 
-# Since we treat experiment as process, we need process to continuant relationship... has_output isn't perfect but only one that makes some sense.
+# Experiments are data records (continuants), so they are components/parts of dataset collections
 experiment reference member of:
-    is_a: has output
+    is_a: part of
     represented_as: edge
     source: experiment reference
     target: dataset
 
 experiment member of:
-    is_a: has output
+    is_a: part of
     represented_as: edge
     source: experiment
     target: dataset

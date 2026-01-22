@@ -2,7 +2,7 @@
 id: 70iqseflyde7ujdmn2kz8l2
 title: '04'
 desc: ''
-updated: 1769046069253
+updated: 1769105336287
 created: 1768841844455
 ---
 
@@ -24,6 +24,11 @@ created: 1768841844455
 - [x] Updated [[schema config|biocypher.config.torchcell_schema_config.yaml]] - changed experiments from `activity` to `information content entity`, dataset membership to `part of`
 - [x] Documented [[implementation plan|torchcell.ontology.mermaid_diagram.wip]] and deferred Phase 2 validation
 - [x] We have an issue in mapping to ontology but it can be delayed... Need more expertise before we move on this [[biocypher.config.torchcell_schema_config.yaml#20260121---flip-flopping-on-mapping]]
+
+## 2026.01.22
+
+- [x] Fix issue associated with `.env` do copy then `sed` to replace listed env vars with proper worktree path. → This is added to [[scripts.setup-worktree]]
+
 - [ ] [[user.Mjvolk3.torchcell.tasks.weekly.2026.04.expression-schema.wip]]
 - [ ] [[fitness-interaction-n_samples|user.Mjvolk3.torchcell.tasks.weekly.2026.03.fitness-interaction-n_samples]]
 

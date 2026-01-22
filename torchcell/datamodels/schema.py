@@ -305,9 +305,24 @@ class Phenotype(ModelStrict):
 class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "fitness"
-    label_statistic_name: str = "fitness_std"
+    label_statistic_name: str = "fitness_se"
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_std: float | None = Field(description="fitness standard deviation")
+    fitness_se: float | None = Field(
+        default=None,
+        description="fitness standard error (primary uncertainty statistic)"
+    )
+    fitness_std: float | None = Field(
+        default=None,
+        description="fitness standard deviation (raw data from publication)"
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="""Number of replicate measurements of the fitness ratio.
+        For experiment: n independent measurements of strain_of_interest/wt.
+        For reference: n independent measurements of wt control.
+        Note: numerator and denominator may have different sample sizes;
+        this tracks the complete ratio measurement."""
+    )
 
     @field_validator("fitness")
     def validate_fitness(cls, v):

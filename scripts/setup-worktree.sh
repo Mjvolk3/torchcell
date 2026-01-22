@@ -60,8 +60,45 @@ else
     echo "  ✗ torchcell Python environment not found at $EXPECTED_PYTHON"
 fi
 
+echo -e "\n${BLUE}4. Configuring VS Code for worktree...${NC}"
+# Use VS Code settings to prioritize worktree over installed package
+# This is safer than pip install -e which would break other worktrees
+
+if [ ! -d .vscode ]; then
+    mkdir -p .vscode
+fi
+
+# Check if settings.json needs PYTHONPATH update
+if [ -f .vscode/settings.json ]; then
+    if grep -q "python.envFile" .vscode/settings.json; then
+        echo "  ✓ VS Code settings already configured"
+    else
+        echo "  ℹ VS Code settings exist but may need PYTHONPATH configuration"
+        echo "  → Check .vscode/settings.json has 'python.envFile': '\${workspaceFolder}/.env.vscode'"
+    fi
+else
+    echo "  ✗ .vscode/settings.json missing"
+fi
+
+# Create .env.vscode for PYTHONPATH override (if not exists)
+if [ ! -f .env.vscode ]; then
+    echo "  Creating .env.vscode with PYTHONPATH..."
+    echo "PYTHONPATH=$WORKTREE_DIR:\${PYTHONPATH}" > .env.vscode
+    echo "  ✓ Created .env.vscode"
+else
+    echo "  ✓ .env.vscode already exists"
+fi
+
 echo -e "\n${GREEN}✓ Worktree setup complete!${NC}"
+echo -e "\n${BLUE}How this works:${NC}"
+echo "  - VS Code will use .env.vscode to set PYTHONPATH"
+echo "  - This worktree's code will be imported BEFORE the installed package"
+echo "  - Other worktrees and main repo are NOT affected"
+echo "  - No need to reinstall when switching worktrees"
 echo -e "\n${BLUE}Quick start:${NC}"
-echo "  - Open this folder in VS Code"
+echo "  - Open this folder in VS Code (or reload window)"
 echo "  - Press F5 to debug (uses 'Python: Workspace Folder' config)"
 echo "  - Press Cmd+Shift+P -> 'Tasks: Run Task' to see all available tasks"
+echo -e "\n${BLUE}Verify worktree is active:${NC}"
+echo "  python -c 'import torchcell; print(torchcell.__file__)'"
+echo "  (should show path to this worktree, not main repo)"

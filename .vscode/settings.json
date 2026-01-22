@@ -41,5 +41,14 @@
     "liveServer.settings.multiRootWorkspaceName": "TorchCell",
 
     // Sphinx
-    "esbonio.sphinx.confDir": ""
+    "esbonio.sphinx.confDir": "",
+
+    "python-envs.pythonProjects": [
+        {
+            "path": "",
+            "envManager": "ms-python.python:conda",
+            "packageManager": "ms-python.python:conda"
+        }
+    ],
+    "python.envFile": "${workspaceFolder}/.env.vscode"
 }

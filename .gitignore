@@ -43,6 +43,7 @@ ncbi_cli/*
 # envs
 env/pypy/*
 .env
+.env.vscode
 biochatter.env
 
 # slurm

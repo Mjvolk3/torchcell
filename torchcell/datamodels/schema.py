@@ -332,6 +332,12 @@ class FitnessPhenotype(Phenotype, ModelStrict):
             return 0.0
         return v
 
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v):
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
     @model_validator(mode="after")
     def validate_label_fields(cls, values):
         if values.label_name not in cls.__annotations__:

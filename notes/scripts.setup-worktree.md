@@ -2,7 +2,7 @@
 id: mrhkxcxh6oui8plh9b2nix8
 title: Setup Worktree
 desc: 'setup-worktree'
-updated: 1768705011439
+updated: 1769533754601
 created: 1768688635122
 ---
 
@@ -12,28 +12,36 @@ This guide documents the streamlined setup process for creating new git worktree
 
 ## Quick Start
 
-When creating a new worktree, run one command:
+**Option 1: Shared data (default)** - Use main repo's datasets (saves disk space)
 
 ```bash
-# From within your new worktree
 ./scripts/setup-worktree.sh
 ```
 
-That's it! Your worktree is now ready for development.
+VS Code: `Cmd+Shift+P` → "Tasks: Run Task" → **"tcwt: setup worktree (data-main)"**
 
-**Or use the VS Code task:**
+**Option 2: Local data** - Build datasets in this worktree (for dataset experimentation)
 
-`Cmd+Shift+P` → "Tasks: Run Task" → "tcwt: setup worktree"
+```bash
+./scripts/setup-worktree.sh --data-local
+```
+
+VS Code: `Cmd+Shift+P` → "Tasks: Run Task" → **"tcwt: setup worktree (data-local)"**
+
+**When to use which:**
+
+- **Shared**: Model training, inference, most feature development
+- **Local**: Testing dataset preprocessing changes, schema updates, data pipeline debugging
 
 ## What Gets Set Up
 
-The setup script handles three critical configurations:
-
 ### 1. Environment Variables (`.env`)
 
-- Creates symlink to main repo's `.env` file
-- Ensures all worktrees use same environment configuration (DATA_ROOT, ASSET_IMAGES_DIR, etc.)
-- No need to maintain multiple `.env` files
+- **Copies** `.env` from main repo with worktree-specific overrides
+- **Worktree-specific paths**: `ASSET_IMAGES_DIR`, `EXPERIMENT_ROOT`, `WORKSPACE_DIR`
+- **Data storage**:
+  - **Shared (default)**: `DATA_ROOT` → main repo, `data/` symlinked
+  - **Local (`--data-local`)**: `DATA_ROOT` → worktree, local `data/` directory
 
 ### 2. VS Code Launch Configurations (`.vscode/launch.json`)
 
@@ -51,7 +59,8 @@ The setup script handles three critical configurations:
 - Tracked in git, appears automatically in all worktrees
 - All workspace tasks available via `Cmd+Shift+P` → "Tasks: Run Task"
 - Key tasks:
-  - **tcwt: setup worktree** - Run this setup script
+  - **tcwt: setup worktree (data-main)** - Setup with shared data (default)
+  - **tcwt: setup worktree (data-local)** - Setup with local data storage
   - **tcf: add frontmatter** - Add dendron frontmatter to files
   - **tcm: move file** - Move file with related note/test
   - **tcd: delete file** - Delete file and open related files
@@ -83,11 +92,17 @@ code .
 
 ## Architecture Decisions
 
-### Why Symlink .env Instead of Copying?
+### Why Copy .env with Overrides?
 
-- **Single source of truth**: Changes propagate automatically to all worktrees
-- **No sync issues**: Impossible for worktrees to have different env vars
-- **Zero maintenance**: Set it once, forget it
+- **Worktree-specific paths**: Each worktree needs its own `ASSET_IMAGES_DIR`, `EXPERIMENT_ROOT`
+- **Flexible data storage**: Can choose shared or local datasets per worktree
+- **No accidental overwrites**: Worktrees won't modify main repo's data accidentally
+
+### Why Two Data Storage Modes?
+
+- **Shared (default)**: Most worktrees share expensive datasets (saves GB of disk space)
+- **Local (`--data-local`)**: For dataset experimentation (preprocessing changes, schema updates)
+- **Symlink in shared mode**: Scripts use relative `data/` paths, transparently resolves to main repo
 
 ### Why Extract Tasks from Workspace File?
 
@@ -152,7 +167,9 @@ scripts/
 These files are created by the setup script:
 
 ```
-.env                  # Symlink to main repo's .env
+.env                  # Copy of main repo's .env with worktree overrides
+data/                 # Symlink to main repo (shared mode) or local dir (local mode)
+.env.vscode           # PYTHONPATH override for VS Code
 ```
 
 ## Troubleshooting
@@ -169,70 +186,21 @@ torch_scatter._version_cpu.so: Symbol not found: __ZN3c1017RegisterOperatorsD1Ev
 
 The debug configurations in `launch.json` specify the correct Python path. Make sure you're using one of the provided debug configurations (F5) rather than running files directly.
 
-### Issue: DATA_ROOT not found
-
-**Symptoms:**
-
-```
-ValueError: DATA_ROOT environment variable is not set
-```
-
-**Solution:**
-
-Run `./scripts/setup-worktree.sh` to create the `.env` symlink.
-
-Verify with:
-
-```bash
-ls -la .env
-# Should show: .env -> /Users/michaelvolk/Documents/projects/torchcell/.env
-```
-
-### Issue: Tasks not showing up
-
-**Symptoms:**
-
-VS Code task menu is empty or missing expected tasks
-
-**Solution:**
-
-Ensure `.vscode/tasks.json` exists and is tracked in git:
-
-```bash
-git ls-files .vscode/tasks.json
-```
-
-If missing, it should be added to git in the main repository.
-
-### Issue: Frontmatter Has Wrong Paths
-
-**Symptoms:**
-
-Frontmatter shows `../torchcell.worktrees/...` paths
-
-**Solution:**
-
-The scripts have been updated to use `git rev-parse`. Regenerate frontmatter:
-
-```bash
-python notes/assets/scripts/add_frontmatter.py path/to/file.py
-```
-
 ## Comparison with Alternatives
 
-###❌ Manual Setup Every Time
+### ❌ Manual Setup Every Time
 
 - Tedious and error-prone
 - Easy to forget steps
 - Inconsistent across worktrees
 
-###❌ Copy Configuration Files
+### ❌ Copy Configuration Files
 
 - Configuration drift between worktrees
 - Hard to update all worktrees when config changes
 - Wastes disk space
 
-###✅ This Approach (Script + Git-tracked Configs)
+### ✅ This Approach (Script + Git-tracked Configs)
 
 - One command setup
 - Consistent across all worktrees

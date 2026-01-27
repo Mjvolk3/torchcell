@@ -2,7 +2,7 @@
 id: bnimi1yfdq5bsmd4itfr13l
 title: '05'
 desc: ''
-updated: 1769528644477
+updated: 1769533516103
 created: 1769477298697
 ---
 ## 2026.01.26
@@ -11,8 +11,8 @@ created: 1769477298697
 
 ## 2026.01.27
 
-- [ ]
-- [ ]
+- [x] Worktree saving data in two different places, fixed this so that we have option → Updated `.vscode/tasks.json` for `data-local` and `data-main`. [[scripts.setup-worktree]]
+- [ ] #WT add ref data to kemmeren - looks like there is one large pooled ref.
 - [ ]
 - [ ]
 - [ ]

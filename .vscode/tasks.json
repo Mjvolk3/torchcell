@@ -2,9 +2,20 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "tcwt: setup worktree",
+            "label": "tcwt: setup worktree (data-main)",
             "type": "shell",
             "command": "./scripts/setup-worktree.sh",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": true
+            }
+        },
+        {
+            "label": "tcwt: setup worktree (data-local)",
+            "type": "shell",
+            "command": "./scripts/setup-worktree.sh --data-local",
             "problemMatcher": [],
             "presentation": {
                 "reveal": "always",

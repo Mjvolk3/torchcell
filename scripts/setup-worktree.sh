@@ -11,7 +11,25 @@ set -e
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Parse command line arguments
+DATA_MODE="shared"  # default: share data with main repo
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --data-local)
+            DATA_MODE="local"
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: ./scripts/setup-worktree.sh [--data-local]"
+            exit 1
+            ;;
+    esac
+done
 
 echo -e "${BLUE}Setting up torchcell worktree...${NC}"
 
@@ -24,6 +42,7 @@ echo -e "\n${BLUE}1. Setting up .env file (worktree-specific)...${NC}"
 # Function to update env var paths
 update_env_paths() {
     local env_file="$1"
+    local data_mode="$2"
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS sed requires '' after -i
@@ -33,6 +52,11 @@ update_env_paths() {
         sed -i '' "s|^BIOCYPHER_CONFIG_PATH=.*|BIOCYPHER_CONFIG_PATH=\"$WORKTREE_DIR/biocypher/config/linux-arm_biocypher_config.yaml\"|" "$env_file"
         sed -i '' "s|^SCHEMA_CONFIG_PATH=.*|SCHEMA_CONFIG_PATH=\"$WORKTREE_DIR/biocypher/config/torchcell_schema_config.yaml\"|" "$env_file"
         sed -i '' "s|^MPLSTYLE_PATH=.*|MPLSTYLE_PATH=\"$WORKTREE_DIR/torchcell/torchcell.mplstyle\"|" "$env_file"
+
+        # Update DATA_ROOT only if --data-local was specified
+        if [[ "$data_mode" == "local" ]]; then
+            sed -i '' "s|^DATA_ROOT=.*|DATA_ROOT=\"$WORKTREE_DIR\"|" "$env_file"
+        fi
     else
         # Linux sed doesn't need '' after -i
         sed -i "s|^ASSET_IMAGES_DIR=.*|ASSET_IMAGES_DIR=\"$WORKTREE_DIR/notes/assets/images\"|" "$env_file"
@@ -41,24 +65,29 @@ update_env_paths() {
         sed -i "s|^BIOCYPHER_CONFIG_PATH=.*|BIOCYPHER_CONFIG_PATH=\"$WORKTREE_DIR/biocypher/config/linux-arm_biocypher_config.yaml\"|" "$env_file"
         sed -i "s|^SCHEMA_CONFIG_PATH=.*|SCHEMA_CONFIG_PATH=\"$WORKTREE_DIR/biocypher/config/torchcell_schema_config.yaml\"|" "$env_file"
         sed -i "s|^MPLSTYLE_PATH=.*|MPLSTYLE_PATH=\"$WORKTREE_DIR/torchcell/torchcell.mplstyle\"|" "$env_file"
+
+        # Update DATA_ROOT only if --data-local was specified
+        if [[ "$data_mode" == "local" ]]; then
+            sed -i "s|^DATA_ROOT=.*|DATA_ROOT=\"$WORKTREE_DIR\"|" "$env_file"
+        fi
     fi
 }
 
 if [ -f .env ] && [ ! -L .env ]; then
     echo "  ✓ .env file already exists (not a symlink)"
     echo "  → Updating worktree-specific paths..."
-    update_env_paths ".env"
+    update_env_paths ".env" "$DATA_MODE"
     echo "  ✓ Updated paths to point to worktree"
 elif [ -L .env ]; then
     echo "  ! .env is a symlink - removing and creating worktree-specific copy"
     rm .env
     cp "$MAIN_REPO/.env" .env
-    update_env_paths ".env"
+    update_env_paths ".env" "$DATA_MODE"
     echo "  ✓ Created worktree-specific .env"
 else
     echo "  → Creating new .env from main repo template..."
     cp "$MAIN_REPO/.env" .env
-    update_env_paths ".env"
+    update_env_paths ".env" "$DATA_MODE"
     echo "  ✓ Created worktree-specific .env"
 fi
 
@@ -66,8 +95,29 @@ echo "  → Worktree-specific paths configured:"
 echo "    - ASSET_IMAGES_DIR → $WORKTREE_DIR/notes/assets/images"
 echo "    - EXPERIMENT_ROOT → $WORKTREE_DIR/experiments"
 echo "    - WORKSPACE_DIR → $WORKTREE_DIR"
-echo "  → Shared paths (unchanged):"
-echo "    - DATA_ROOT remains shared with main repo (large datasets)"
+
+# Handle data storage based on mode
+if [[ "$DATA_MODE" == "local" ]]; then
+    echo -e "  → ${YELLOW}Data storage: LOCAL (worktree-specific)${NC}"
+    echo "    - DATA_ROOT → $WORKTREE_DIR"
+    echo "    - Datasets will be stored in this worktree's data/ directory"
+    # Create local data directory structure
+    mkdir -p "$WORKTREE_DIR/data/torchcell"
+else
+    echo "  → Data storage: SHARED (symlinked to main repo)"
+    echo "    - DATA_ROOT → $MAIN_REPO (unchanged)"
+
+    # Create symlink to main repo's data directory
+    if [ -L "$WORKTREE_DIR/data" ]; then
+        echo "    - data/ symlink already exists"
+    elif [ -d "$WORKTREE_DIR/data" ]; then
+        echo -e "    - ${YELLOW}Warning: data/ directory exists (not a symlink)${NC}"
+        echo "      To use shared data, remove it first: rm -rf data"
+    else
+        ln -s "$MAIN_REPO/data" "$WORKTREE_DIR/data"
+        echo "    - Created symlink: data/ → $MAIN_REPO/data"
+    fi
+fi
 
 echo -e "\n${BLUE}2. Verifying VS Code configs...${NC}"
 if [ -f .vscode/launch.json ]; then
@@ -134,8 +184,17 @@ echo "    • ASSET_IMAGES_DIR → worktree's notes/assets/images"
 echo "    • EXPERIMENT_ROOT → worktree's experiments/"
 echo "    • WORKSPACE_DIR → worktree root"
 echo "    • Config paths (BioCypher, schema, mplstyle) → worktree versions"
-echo "  - Shared paths (large data, not in git):"
-echo "    • DATA_ROOT stays pointed at main repo (datasets are expensive to rebuild)"
+
+if [[ "$DATA_MODE" == "local" ]]; then
+    echo -e "  - ${YELLOW}Data storage: LOCAL${NC}"
+    echo "    • DATA_ROOT → this worktree (datasets stored locally)"
+    echo "    • Use this for dataset experimentation or isolated builds"
+else
+    echo "  - Data storage: SHARED"
+    echo "    • DATA_ROOT → main repo (via .env, data/ symlinked)"
+    echo "    • Datasets are shared across all worktrees (saves disk space)"
+fi
+
 echo "  - .env.vscode sets PYTHONPATH to prioritize this worktree's code"
 echo "  - Other worktrees and main repo are NOT affected"
 echo -e "\n${BLUE}Quick start:${NC}"

@@ -126,39 +126,57 @@ ax.axvline(x=LOG2FC_THRESHOLD, color="gray", linestyle="--", linewidth=1, alpha=
 ax.axvline(x=-LOG2FC_THRESHOLD, color="gray", linestyle="--", linewidth=1, alpha=0.5)
 ax.axvline(x=0, color="black", linewidth=1.5, alpha=0.7)
 
+# Calculate statistics for title and annotations
+total_genes = df_valid['measured_gene'].nunique()
+total_deletions = df_valid['deletion_strain'].nunique()
+total_data_points = len(df_valid)
+n_upregulated = (df_valid['classification'] == 'Upregulated').sum()
+n_downregulated = (df_valid['classification'] == 'Downregulated').sum()
+
 # Labels and annotations
 ax.set_xlabel("Fold Change (log₂)", fontsize=14, fontweight="bold")
 ax.set_ylabel("-log₁₀ p-value", fontsize=14, fontweight="bold")
-ax.set_title("Kemmeren2014 Expression Volcano Plot\n(All Gene Deletions, All Measured Genes)",
+ax.set_title(f"Kemmeren2014 Expression Volcano Plot\n({total_deletions:,} Gene Deletions × {total_genes:,} Measured Genes = {total_data_points:,} Data Points)",
              fontsize=16, fontweight="bold", pad=20)
 
 # Add text annotations - positioned in center of each pane
 # Red text: center of left pane (x from -6 to 0, so center = -3)
-ax.text(-3, 10, "Negative Change in\ngene expression\ncompared to control",
+ax.text(-3, 8.5, "Negative Change in\ngene expression\ncompared to control",
         ha="center", va="center", fontsize=11, color="#8B0000",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"))
 
 # Blue text: center of right pane (x from 0 to 6, so center = 3)
-ax.text(3, 10, "Positive Change in\ngene expression\ncompared to control",
+ax.text(3, 8.5, "Positive Change in\ngene expression\ncompared to control",
         ha="center", va="center", fontsize=11, color="#00008B",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8, edgecolor="none"))
 
-# Threshold label - one line, just inside y-axis at threshold height
-ax.text(-5.7, NEG_LOG10_P_THRESHOLD, "Threshold (p=0.01)",
-        ha="right", va="center", fontsize=9, color="gray",
+# Threshold label - vertical text, very close to threshold line but not covering y-axis
+ax.text(-5.75, NEG_LOG10_P_THRESHOLD + 0.15, "Threshold (p=0.01)",
+        ha="right", va="center", fontsize=9, color="gray", rotation=90,
         bbox=dict(boxstyle="round,pad=0.2", facecolor="white", alpha=0.9, edgecolor="none"))
 
-# Not significant label - centered at x=0, just above x-axis
-ax.text(0, 0.3, "Not significant (p>0.01 or |log2FC|<1)",
+# Not significant label - positioned just above x-axis at y=0
+ax.text(0, -0.15, "Not significant (p>0.01 or |log2FC|<1)",
         ha="center", va="bottom", fontsize=9, color="gray",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9, edgecolor="gray", linewidth=0.5))
+
+# Add count annotations for significant genes (moved down more)
+# Upregulated count (top right)
+ax.text(5.5, 11.0, f"{n_upregulated:,}\nSignificant\nPositive",
+        ha="right", va="top", fontsize=10, color="#00008B", fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9, edgecolor="#4472C4", linewidth=1.5))
+
+# Downregulated count (top left)
+ax.text(-5.5, 11.0, f"{n_downregulated:,}\nSignificant\nNegative",
+        ha="left", va="top", fontsize=10, color="#8B0000", fontweight="bold",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.9, edgecolor="#C55A5A", linewidth=1.5))
 
 # Legend
 ax.legend(loc="upper right", frameon=True, fontsize=11)
 
 # Set axis limits
 ax.set_xlim(-6, 6)
-ax.set_ylim(-0.5, 20)
+ax.set_ylim(-0.5, 15.0)
 
 # Grid
 ax.grid(True, alpha=0.2, linestyle=":", linewidth=0.5)

@@ -311,48 +311,6 @@
             "problemMatcher": []
         },
         {
-            "label": "tcdb: delta to m1",
-            "type": "shell",
-            "command": "osascript",
-            "args": [
-                "-e",
-                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/delta_to_m1.sh ${input:databaseNameInput}\""
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "tcdb: build linux-arm",
-            "type": "shell",
-            "command": "osascript",
-            "args": [
-                "-e",
-                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build_linux-arm.sh\""
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "tcdb: build linux-arm fresh",
-            "type": "shell",
-            "command": "osascript",
-            "args": [
-                "-e",
-                "tell application \"Terminal\" to do script \"bash /Users/michaelvolk/Documents/projects/torchcell/database/build/build-image-fresh_linux-arm.sh\""
-            ],
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
             "label": "tcg: open all git changed files",
             "type": "shell",
             "command": "code $(git status -uall --porcelain | awk '{print $NF}')",
@@ -415,13 +373,6 @@
                 "14",
                 "28"
             ]
-        },
-        {
-            "id": "databaseNameInput",
-            "type": "pickString",
-            "description": "Choose the database directory:",
-            "options": ["database1", "database2", "database3"],
-            "default": "database1"
         }
     ]
 }

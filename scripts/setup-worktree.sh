@@ -33,8 +33,9 @@ done
 
 echo -e "${BLUE}Setting up torchcell worktree...${NC}"
 
-# Get the main repo path (assumes worktrees are in ../torchcell.worktrees/)
-MAIN_REPO="/Users/michaelvolk/Documents/projects/torchcell"
+# Get the main repo path dynamically (works across all devices/clusters)
+# git rev-parse --git-common-dir returns the shared .git directory (always in main repo)
+MAIN_REPO="$(cd "$(git rev-parse --git-common-dir)/.." && pwd)"
 WORKTREE_DIR="$(pwd)"
 
 echo -e "\n${BLUE}1. Setting up .env file (worktree-specific)...${NC}"
@@ -139,12 +140,23 @@ else
 fi
 
 echo -e "\n${BLUE}3. Verifying Python environment...${NC}"
-EXPECTED_PYTHON="/Users/michaelvolk/opt/miniconda3/envs/torchcell/bin/python"
-if [ -f "$EXPECTED_PYTHON" ]; then
-    echo "  ✓ torchcell Python environment found"
-    $EXPECTED_PYTHON --version
+# Check if torchcell conda environment exists
+if command -v conda &> /dev/null; then
+    if conda env list | grep -q "^torchcell "; then
+        echo "  ✓ torchcell conda environment exists"
+        # Try to get Python path from conda
+        CONDA_PYTHON=$(conda run -n torchcell which python 2>/dev/null || echo "")
+        if [ -n "$CONDA_PYTHON" ]; then
+            echo "  → Python: $CONDA_PYTHON"
+            conda run -n torchcell python --version
+        fi
+    else
+        echo "  ℹ torchcell conda environment not found"
+        echo "  → Create it with: conda env create -f environment.yml"
+    fi
 else
-    echo "  ✗ torchcell Python environment not found at $EXPECTED_PYTHON"
+    echo "  ℹ conda not found in PATH"
+    echo "  → Python interpreter will be configured in VS Code settings"
 fi
 
 echo -e "\n${BLUE}4. Configuring VS Code for worktree...${NC}"

@@ -2,7 +2,7 @@
 id: bnimi1yfdq5bsmd4itfr13l
 title: '05'
 desc: ''
-updated: 1769533516103
+updated: 1769550504399
 created: 1769477298697
 ---
 ## 2026.01.26
@@ -11,11 +11,13 @@ created: 1769477298697
 
 ## 2026.01.27
 
-- [x] Worktree saving data in two different places, fixed this so that we have option → Updated `.vscode/tasks.json` for `data-local` and `data-main`. [[scripts.setup-worktree]]
+- [x] #WT saving data in two different places, fixed this so that we have option → Updated `.vscode/tasks.json` for `data-local` and `data-main`. [[scripts.setup-worktree]]
+- [x] #WT more general python setup, moved some #M1 specific tasks to `torchcell-delta.code-workspace`
+- ![](./assets/drawio/dev-third-way.drawio.png)
+
 - [ ] #WT add ref data to kemmeren - looks like there is one large pooled ref.
-- [ ]
-- [ ]
-- [ ]
+- [ ] phenotype-derivable-statistics
+- [ ] First agent with anthropic sdk - Find papers  
 
 ***
 

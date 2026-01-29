@@ -2,7 +2,7 @@
 id: bnimi1yfdq5bsmd4itfr13l
 title: '05'
 desc: ''
-updated: 1769550504399
+updated: 1769649104719
 created: 1769477298697
 ---
 ## 2026.01.26
@@ -14,9 +14,23 @@ created: 1769477298697
 - [x] #WT saving data in two different places, fixed this so that we have option → Updated `.vscode/tasks.json` for `data-local` and `data-main`. [[scripts.setup-worktree]]
 - [x] #WT more general python setup, moved some #M1 specific tasks to `torchcell-delta.code-workspace`
 - ![](./assets/drawio/dev-third-way.drawio.png)
+- [x] Start branch `phenotype-derivable-statistics`
+
+## 2026.01.28
+
+- [x] Need to know SE vs SD vs CV possibly other statistics reachability for fitness, expression, and morphology phenotypes [[user.Mjvolk3.torchcell.tasks.weekly.2026.05.phenotype-derivable-statistics.wip]]
+- [x] Created mathematical framework and flowchart showing relationships between all derivable statistics (SE, SD, CV, Variance, CI). It's pretty unreadable and not super useful. [[user.Mjvolk3.torchcell.tasks.weekly.2026.05.phenotype-derivable-statistics]]
+- [x] Analyzed what statistics are actually computable for each dataset according to [[torchcell.datamodels.schema]], identifying that Costanzo2016 and Ohya2005 cannot compute SE without adding `n_samples` field. This motivates the natural language extraction from paper for some data types. [[user.Mjvolk3.torchcell.tasks.weekly.2026.05.phenotype-derivable-statistics.example-datasets]]
 
 - [ ] #WT add ref data to kemmeren - looks like there is one large pooled ref.
-- [ ] phenotype-derivable-statistics
+- [ ] Generate new list #GH
+- [ ] Run inference on new list #GH
+
+- [ ] Plan on dealing with standard deviation for the fitness/interaction datasets.
+
+- Second guessing trying to include SE, since we cannot use this to reconstruct the p-value for interactions. Compare with previous commit to see what has changed in schema definition.
+  - Might just revert and save the parsing in an attached note
+
 - [ ] First agent with anthropic sdk - Find papers  
 
 ***

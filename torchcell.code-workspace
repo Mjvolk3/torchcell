@@ -117,7 +117,11 @@
         ],
 
         // Sphinx
-        "esbonio.sphinx.confDir": ""
+        "esbonio.sphinx.confDir": "",
+
+        // todo Tree
+        "todo-tree.general.exportPath": "${workspaceFolder:torchcell}/todo-tree-%Y%m%d-%H%M.txt",
+        "todo-tree.filtering.includedWorkspaces": ["torchcell", "experiments"],
     },
     "tasks": {
         "version": "2.0.0",

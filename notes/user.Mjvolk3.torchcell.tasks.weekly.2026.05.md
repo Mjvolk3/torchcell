@@ -2,7 +2,7 @@
 id: bnimi1yfdq5bsmd4itfr13l
 title: '05'
 desc: ''
-updated: 1769649104719
+updated: 1769950064753
 created: 1769477298697
 ---
 ## 2026.01.26
@@ -14,7 +14,7 @@ created: 1769477298697
 - [x] #WT saving data in two different places, fixed this so that we have option → Updated `.vscode/tasks.json` for `data-local` and `data-main`. [[scripts.setup-worktree]]
 - [x] #WT more general python setup, moved some #M1 specific tasks to `torchcell-delta.code-workspace`
 - ![](./assets/drawio/dev-third-way.drawio.png)
-- [x] Start branch `phenotype-derivable-statistics`
+- [x] Start branch `phenotype-derivable-statistics` #WT
 
 ## 2026.01.28
 
@@ -22,11 +22,22 @@ created: 1769477298697
 - [x] Created mathematical framework and flowchart showing relationships between all derivable statistics (SE, SD, CV, Variance, CI). It's pretty unreadable and not super useful. [[user.Mjvolk3.torchcell.tasks.weekly.2026.05.phenotype-derivable-statistics]]
 - [x] Analyzed what statistics are actually computable for each dataset according to [[torchcell.datamodels.schema]], identifying that Costanzo2016 and Ohya2005 cannot compute SE without adding `n_samples` field. This motivates the natural language extraction from paper for some data types. [[user.Mjvolk3.torchcell.tasks.weekly.2026.05.phenotype-derivable-statistics.example-datasets]]
 
-- [ ] #WT add ref data to kemmeren - looks like there is one large pooled ref.
-- [ ] Generate new list #GH
-- [ ] Run inference on new list #GH
+- [x] Generate new list #GH → #TODO
+- [x] Run inference on new list #GH →  #TODO
 
-- [ ] Plan on dealing with standard deviation for the fitness/interaction datasets.
+## 2026.01.29
+
+- [x] Plan on dealing with standard deviation for the fitness/interaction datasets. → We are reverting to `std` report → #TODO
+
+- [ ] iterative-improvement-diagram → #WT
+
+## 2026.01.30
+
+- [ ] Data table on `dataset_inference_2` #TODO
+- [x] Fixed location of ![](./assets/drawio/database-updataes.drawio.png)
+- [ ]
+
+- [ ] #WT add ref data to kemmeren - looks like there is one large pooled ref.
 
 - Second guessing trying to include SE, since we cannot use this to reconstruct the p-value for interactions. Compare with previous commit to see what has changed in schema definition.
   - Might just revert and save the parsing in an attached note

@@ -16,7 +16,12 @@ enableGiscus: true
 
 ## Dendron Cli
 
-- 🚨 **NOT WORKING**
+- ⚠️ **No Longer Under Active Development**
+  - Version 0.119.0 is the last stable release and works for basic operations
+  - You may see Node.js deprecation warnings (e.g., `punycode` module), but core functionality works
+  - Example working commands:
+    - `dendron note write --fname "note.path" --vault "torchcell" --body "content"`
+    - `dendron --version` (returns 0.119.0)
   - I need to rewrite some of the bash scripts, once these are written, [latex-writing-environment](#latex-writing-environment)
   will make more sense.
     - This is an example of linking within a note
@@ -27,8 +32,8 @@ enableGiscus: true
 
 - Initialize a npm repo at the root of your workspace (where dendron.yml is located)
   - `npm init -y`
-- Install dendron-cli
-  - `npm install @dendronhq/dendron-cli@latest`
+- Install dendron-cli (version 0.119.0)
+  - `npm install @dendronhq/dendron-cli@0.119.0`
 
 ## Markdown Linting
 

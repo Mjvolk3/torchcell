@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Search(**)",
+      "Glob(**)",
+      "Grep(**)",
+      "Write(**/*.py)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(python:*)",
+      "Bash(wc:*)",
+      "Bash(dendron-cli:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(grep:*)",
+      "Bash(nvidia-smi:*)",
+      "WebSearch"
+    ],
+    "deny": [
+      "Bash(rm:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod *)",
+      "Read(**/.env)",
+      "Read(**/*.env)",
+      "Read(**/*.pem)",
+      "Read(~/.ssh/**)",
+      "Edit(**/.env)",
+      "Edit(**/*.env)",
+      "Read(biocypher/config/PRODUCTION_*.yaml)",
+      "Edit(biocypher/config/PRODUCTION_*.yaml)"
+    ]
+  },
+  "enableAllProjectMcpServers": false,
+  "outputStyle": "Explanatory"
+}

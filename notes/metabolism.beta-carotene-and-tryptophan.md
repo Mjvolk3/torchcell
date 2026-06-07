@@ -32,5 +32,6 @@ graph LR
   GGPP --> Phytoene --> Lycopene
   Lycopene --> BetaCarotene:::highlight
   
-  classDef highlight fill:#FF9900,stroke:#333,stroke-width:4px;
+  classDef default fill:#7BB3E0,stroke:#333,stroke-width:2px;
+  classDef highlight fill:#E8943D,stroke:#333,stroke-width:4px;
 ```

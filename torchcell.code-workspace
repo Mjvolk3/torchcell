@@ -58,6 +58,9 @@
         },
         {   "name": "HyperNetX",
             "path": "../HyperNetX"
+        },
+        {   "name": "iBioFoundry-AI",
+            "path": "../iBioFoundry-AI"
         }
     ],
     "settings": {

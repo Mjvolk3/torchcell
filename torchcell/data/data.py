@@ -4,13 +4,16 @@
 # Test file: tests/torchcell/data/test_data.py
 
 import hashlib
-from typing import List
-from pydantic import field_validator
+from typing import Annotated, List
+from pydantic import Field, field_validator
 from torchcell.datamodels import ModelStrict, ExperimentReferenceType
 
 
 class ExperimentReferenceIndex(ModelStrict):
-    reference: ExperimentReferenceType
+    reference: Annotated[
+        ExperimentReferenceType,
+        Field(discriminator="experiment_reference_type"),
+    ]
     index: List[bool]
 
     # Use for parallel computation of a Dataset ExperimentReferenceIndices

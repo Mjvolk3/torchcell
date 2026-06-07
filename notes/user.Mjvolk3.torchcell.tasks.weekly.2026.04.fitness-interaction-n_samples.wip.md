@@ -2,11 +2,78 @@
 id: yyug5m463vtw663guqglqfk
 title: wip
 desc: ''
-updated: 1769027455895
+updated: 1769637772365
 created: 1768945278400
 ---
 
-## 2026.01.20 - Implementation Plan: Adding n_samples and fitness_se to Fitness Phenotypes
+## 2026.01.26 - CRITICAL FIX: Renaming n_samples → n_replicates
+
+### Issue Identified
+
+The original implementation used `n_samples` which was confusing and incorrectly interpreted as **total measurements across all screens** rather than **replicates per measurement instance**.
+
+**Example of confusion:**
+
+- Costanzo2016: `N_SAMPLES_ARRAY_SMF_TOTAL = 1400` meant "350 screens × 4 colonies = 1400 total"
+- But `n_samples` should mean: **4 replicates per measurement** (4 colonies per screen)
+- We were storing 1400 instead of 4 ❌
+
+### Fix Applied
+
+**Schema Change:** Renamed `n_samples` → `n_replicates`
+
+- File: `torchcell/datamodels/schema.py`
+- Field: `n_replicates: int | None`
+- Description: "Number of independent biological or technical replicates used to measure **this specific fitness value**"
+
+**Key Principle:**
+`n_replicates` = number of replicates for THIS measurement instance, NOT a total across all strains
+
+### Implementation Plan (Corrected)
+
+**Phase 1: Costanzo2016**
+
+1. ✅ Schema updated with `n_replicates`
+2. ⏳ Analyze SI paper to determine replicate numbers:
+   - Double mutants: "4 replicate colonies per double mutant" → **n_replicates=4**
+   - Query SMF: Determine actual replicates PER measurement (not total)
+   - Array SMF: Determine actual replicates PER measurement (not total)
+3. ⏳ Update costanzo2016.py with correct `n_replicates` values
+4. ⏳ Rebuild datasets and verify
+
+**Phase 2: Kuzmin2018**
+
+1. ⏳ For array strains: Use Costanzo2016 n_replicates (imported data)
+2. ⏳ For query strains: "6 replicates" per query (from SI)
+3. ⏳ For double/triple: "2 independent replicates" per measurement
+4. ⏳ Update kuzmin2018.py and rebuild
+
+**Phase 3: Kuzmin2020**
+
+1. ⏳ Analyze SI paper for replicate numbers
+2. ⏳ Update kuzmin2020.py and rebuild
+
+### Critical: What n_replicates Means
+
+`n_replicates` = **number of replicate measurements for THIS specific fitness value**
+
+**Examples:**
+
+- "4 colonies measured per screen" → `n_replicates=4`
+- "2 independent screens" → `n_replicates=2`
+- "17 screens × 4 colonies = 68 total" → `n_replicates=4` (NOT 68!)
+
+**SE Calculation:**
+
+```python
+fitness_se = fitness_std / sqrt(n_replicates)
+```
+
+---
+
+## 2026.01.20 - Original Implementation Plan (OUTDATED - DO NOT USE)
+
+**⚠️ WARNING: This entire section below uses incorrect `n_samples` terminology and has fundamental conceptual errors. It is preserved for historical context only. Refer to 2026.01.26 section above for correct approach.**
 
 ### Overview
 

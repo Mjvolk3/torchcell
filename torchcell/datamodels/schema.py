@@ -4,7 +4,7 @@
 # Test file: tests/torchcell/datamodels/test_schema.py
 
 import re
-from typing import List, Union, Dict, Type, Optional, Any
+from typing import List, Union, Dict, Optional, Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
 from torchcell.datamodels.pydant import ModelStrict
@@ -305,23 +305,21 @@ class Phenotype(ModelStrict):
 class FitnessPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "fitness"
-    label_statistic_name: str = "fitness_se"
+    label_statistic_name: str = "fitness_std"
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
-    fitness_se: float | None = Field(
-        default=None,
-        description="fitness standard error (primary uncertainty statistic)"
-    )
     fitness_std: float | None = Field(
         default=None,
-        description="fitness standard deviation (raw data from publication)"
+        description="""fitness standard deviation (primary uncertainty statistic).
+        Reports what's actually in source data - may be bootstrap SD, sample SD,
+        or other variance estimates. See dataset documentation for computation method."""
     )
-    n_samples: int | None = Field(
+    n_replicates: int | None = Field(
         default=None,
-        description="""Number of replicate measurements of the fitness ratio.
-        For experiment: n independent measurements of strain_of_interest/wt.
-        For reference: n independent measurements of wt control.
-        Note: numerator and denominator may have different sample sizes;
-        this tracks the complete ratio measurement."""
+        description="""Number of measurements used to compute mean fitness.
+        Interpretation depends on variance method (see dataset docs):
+        - Costanzo SMF: n = screens used in bootstrap (17 or 350)
+        - Costanzo DMF: n = colony measurements (4)
+        See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md"""
     )
 
     @field_validator("fitness")
@@ -332,10 +330,10 @@ class FitnessPhenotype(Phenotype, ModelStrict):
             return 0.0
         return v
 
-    @field_validator("n_samples")
-    def validate_n_samples(cls, v):
+    @field_validator("n_replicates")
+    def validate_n_replicates(cls, v):
         if v is not None and (not isinstance(v, int) or v < 1):
-            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+            raise ValueError(f"n_replicates must be a positive integer or None, got: {v}")
         return v
 
     @model_validator(mode="after")
@@ -587,7 +585,7 @@ class Publication(ModelStrict):
 
 
 class ExperimentReference(ModelStrict):
-    experiment_reference_type: str = "base"
+    experiment_reference_type: Literal["base"] = "base"
     dataset_name: str
     genome_reference: ReferenceGenome
     environment_reference: Environment
@@ -603,7 +601,7 @@ class Experiment(ModelStrict):
 
 
 class FitnessExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "fitness"
+    experiment_reference_type: Literal["fitness"] = "fitness"
     phenotype_reference: FitnessPhenotype
 
 
@@ -614,7 +612,7 @@ class FitnessExperiment(Experiment, ModelStrict):
 
 
 class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "gene interaction"
+    experiment_reference_type: Literal["gene interaction"] = "gene interaction"
     phenotype_reference: GeneInteractionPhenotype
 
 
@@ -625,7 +623,7 @@ class GeneInteractionExperiment(Experiment, ModelStrict):
 
 
 class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "gene essentiality"
+    experiment_reference_type: Literal["gene essentiality"] = "gene essentiality"
     phenotype_reference: GeneEssentialityPhenotype
 
 
@@ -637,7 +635,7 @@ class GeneEssentialityExperiment(Experiment, ModelStrict):
 
 
 class SyntheticLethalityExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "synthetic lethality"
+    experiment_reference_type: Literal["synthetic lethality"] = "synthetic lethality"
     phenotype_reference: SyntheticLethalityPhenotype
 
 
@@ -648,7 +646,7 @@ class SyntheticLethalityExperiment(Experiment, ModelStrict):
 
 
 class SyntheticRescueExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "synthetic rescue"
+    experiment_reference_type: Literal["synthetic rescue"] = "synthetic rescue"
     phenotype_reference: SyntheticRescuePhenotype
 
 
@@ -659,7 +657,7 @@ class SyntheticRescueExperiment(Experiment, ModelStrict):
 
 
 class CalMorphExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "calmorph"
+    experiment_reference_type: Literal["calmorph"] = "calmorph"
     phenotype_reference: CalMorphPhenotype
 
 
@@ -883,7 +881,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
 
 class MicroarrayExpressionExperimentReference(ExperimentReference, ModelStrict):
-    experiment_reference_type: str = "microarray_expression"
+    experiment_reference_type: Literal["microarray_expression"] = "microarray_expression"
     phenotype_reference: MicroarrayExpressionPhenotype
 
 

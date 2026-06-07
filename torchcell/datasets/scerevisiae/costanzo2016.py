@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/costanzo2016
 # Test file: tests/torchcell/datasets/scerevisiae/test_costanzo2016.py
 import logging
-import math
 import os
 import os.path as osp
 import pickle
@@ -43,61 +42,55 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 # ============================================================================
-# Sample Size Metadata - Extracted from Costanzo et al. 2016
+# Replicate Metadata - Extracted from Costanzo et al. 2016
 # ============================================================================
-
-# Default sample size for double mutant fitness measurements (technical replicates)
+#
+# EXCEPTION to data-driven n_replicates philosophy:
+# Costanzo2016 does not publish individual replicate measurements,
+# only summary statistics (mean fitness, bootstrap SD).
+# Therefore we use literature-reported n values extracted from SI methods.
+# See: [[torchcell.datamodels.schema#20260129---philosophy-around-n_replicates]]
+# See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md
+#
+# CRITICAL: All measurements use 4 colony replicates per screen
 # Quote: "All screens were conducted a single time with 4 replicate colonies
 #         per double mutant, unless otherwise indicated"
 # Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 74
 # Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
 #           Section "SGA query strain construction and screening"
-# Date extracted: 2026-01-20
-N_SAMPLES_DOUBLE_MUTANT = 4
+# Date extracted: 2026-01-26
+N_REPLICATES_PER_SCREEN = 4
 
-# Sample size for query strain single mutant fitness (control screens)
+# Double mutant fitness: 4 colonies per screen (screened once)
+N_REPLICATES_DOUBLE_MUTANT = N_REPLICATES_PER_SCREEN  # 4
+
+# Query strain single mutant fitness
 # Quote: "Colony size measurements of SGA deletion and TS query mutant strains
 #         were based on an average of 17 replicate control screens performed
-#         at 26°C or 30°C."
+#         at 26°C or 30°C... bootstrapped means, instead of medians, across
+#         replicates were used in variance estimation"
 # Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 88
-# Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
-#           Section "Single mutant fitness standard"
-# Date extracted: 2026-01-20
-# Note: Each of 17 screens has 4 colonies, so total measurements = 17 × 4 = 68
-N_SAMPLES_QUERY_SMF_SCREENS = 17
-N_SAMPLES_QUERY_SMF_TOTAL = 68  # 17 screens × 4 colonies
+# CRITICAL: Bootstrap resamples SCREENS (not colonies) as independent units
+#           n_replicates = 17 screens (not 17×4=68 total measurements)
+# See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md
+N_QUERY_SMF_NUM_SCREENS = 17
+N_REPLICATES_QUERY_SMF = 17  # Screens used in bootstrap
 
-# Sample size for array strain single mutant fitness (control screens)
+# Array strain single mutant fitness
 # Quote: "Colony size measurements of SGA deletion and TS array mutant strains
 #         were based on an average of 350 replicate control screens performed
-#         at 26°C or 30°C."
+#         at 26°C or 30°C... bootstrapped means, instead of medians, across
+#         replicates were used in variance estimation"
 # Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 88
-# Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5,
-#           Section "Single mutant fitness standard"
-# Date extracted: 2026-01-20
-# Note: Each of 350 screens has 4 colonies, so total measurements = 350 × 4 = 1400
-N_SAMPLES_ARRAY_SMF_SCREENS = 350
-N_SAMPLES_ARRAY_SMF_TOTAL = 1400  # 350 screens × 4 colonies
+# CRITICAL: Bootstrap resamples SCREENS (not colonies) as independent units
+#           n_replicates = 350 screens (not 350×4=1400 total measurements)
+# See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md
+N_ARRAY_SMF_NUM_SCREENS = 350
+N_REPLICATES_ARRAY_SMF = 350  # Screens used in bootstrap
 
 # Wild-type reference measurements
-# For WT reference phenotypes, use the same n_samples as the corresponding
-# strain type (query or array) being measured
-# Reference fitness = 1.0 is derived from the same control screen measurements
-N_SAMPLES_WT_QUERY = N_SAMPLES_QUERY_SMF_TOTAL  # 68
-N_SAMPLES_WT_ARRAY = N_SAMPLES_ARRAY_SMF_TOTAL  # 1400
-
-# Temperature-specific measurements (all use 4 technical replicates per screen)
-# Quote: "Double mutant selection plates involving a nonessential deletion
-#         mutant query strain and the DMA were incubated at 30°C."
-# Quote: "All SGA selection steps involving a TS allele were conducted at
-#         permissive temperature (22°C) except for the final selection of
-#         haploid double mutants, which were incubated at a semipermissive
-#         temperature (26°C) prior to imaging."
-# Source: SI-costanzoGlobalGeneticInteraction2016.mmd, Line 74
-# Verified: SI-costanzoGlobalGeneticInteraction2016.pdf, Page 5
-# Date extracted: 2026-01-20
-N_SAMPLES_TEMP_30C = 4  # For KanMX deletion mutants
-N_SAMPLES_TEMP_26C = 4  # For TS alleles at semipermissive temperature
+# All use the same 4 colony replicates per screen
+N_REPLICATES_WT_REFERENCE = N_REPLICATES_PER_SCREEN  # 4
 
 
 # ============================================================================
@@ -344,20 +337,16 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         smf_key = "Single mutant fitness"
         smf_std_key = "Single mutant fitness stddev"
 
-        # Single mutant fitness uses query strain control measurements
-        # Query strains measured with 17 control screens × 4 colonies = 68 measurements
-        n_samples = N_SAMPLES_QUERY_SMF_TOTAL
+        # Single mutant fitness: Bootstrap SD across 17 screens
+        # Note: fitness_std is bootstrap SD (already SE-like)
+        # See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md
+        n_replicates = N_REPLICATES_QUERY_SMF
         fitness_std_val = row[smf_std_key]
-        if fitness_std_val is not None and n_samples is not None and n_samples > 0:
-            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
-        else:
-            fitness_se_val = None
 
         phenotype = FitnessPhenotype(
             fitness=row[smf_key],
             fitness_std=fitness_std_val,
-            fitness_se=fitness_se_val,
-            n_samples=n_samples,
+            n_replicates=n_replicates,
         )
 
         if row["Temperature"] == 26:
@@ -365,22 +354,13 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
 
-        # Reference phenotype uses same n_samples as query strain
-        n_samples_ref = N_SAMPLES_WT_QUERY
-        if (
-            phenotype_reference_std is not None
-            and n_samples_ref is not None
-            and n_samples_ref > 0
-        ):
-            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
-        else:
-            phenotype_reference_se = None
+        # Reference phenotype uses 4 colony replicates per screen
+        n_replicates_ref = N_REPLICATES_WT_REFERENCE
 
         phenotype_reference = FitnessPhenotype(
             fitness=1.0,
             fitness_std=phenotype_reference_std,
-            fitness_se=phenotype_reference_se,
-            n_samples=n_samples_ref,
+            n_replicates=n_replicates_ref,
         )
 
         reference = FitnessExperimentReference(
@@ -695,19 +675,15 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         dmf_key = "Double mutant fitness"
         dmf_std_key = "Double mutant fitness standard deviation"
 
-        # Double mutant fitness uses standard 4 technical replicates
-        n_samples = N_SAMPLES_DOUBLE_MUTANT
+        # Double mutant fitness: Raw sample SD from 4 colonies (one screen)
+        # See: notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md
+        n_replicates = N_REPLICATES_DOUBLE_MUTANT
         fitness_std_val = row[dmf_std_key]
-        if fitness_std_val is not None and n_samples is not None and n_samples > 0:
-            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
-        else:
-            fitness_se_val = None
 
         phenotype = FitnessPhenotype(
             fitness=row[dmf_key],
             fitness_std=fitness_std_val,
-            fitness_se=fitness_se_val,
-            n_samples=n_samples,
+            n_replicates=n_replicates,
         )
 
         if row["Temperature"] == 26:
@@ -715,22 +691,13 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
         elif row["Temperature"] == 30:
             phenotype_reference_std = phenotype_reference_std_30
 
-        # Reference phenotype (WT/WT) uses WT control measurements
-        n_samples_ref = N_SAMPLES_WT_QUERY
-        if (
-            phenotype_reference_std is not None
-            and n_samples_ref is not None
-            and n_samples_ref > 0
-        ):
-            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
-        else:
-            phenotype_reference_se = None
+        # Reference phenotype (WT/WT) uses 4 colony replicates per screen
+        n_replicates_ref = N_REPLICATES_WT_REFERENCE
 
         phenotype_reference = FitnessPhenotype(
             fitness=1.0,
             fitness_std=phenotype_reference_std,
-            fitness_se=phenotype_reference_se,
-            n_samples=n_samples_ref,
+            n_replicates=n_replicates_ref,
         )
 
         reference = FitnessExperimentReference(

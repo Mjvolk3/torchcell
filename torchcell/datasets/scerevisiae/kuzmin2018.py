@@ -5,6 +5,7 @@
 import hashlib
 import json
 import logging
+import math
 import os
 import os.path as osp
 import pickle
@@ -39,6 +40,48 @@ from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
+# ============================================================================
+# Sample Size Metadata - Extracted from Kuzmin et al. 2018
+# ============================================================================
+
+# Query strain single mutant fitness measurements
+# Quote: "Each high-density array was screened in triplicate for a total of
+#         6 replicates."
+# Source: SI-kuzminSystematicAnalysisComplex2018.mmd, Line 60
+# Verified: SI-kuzminSystematicAnalysisComplex2018.pdf, Page 4,
+#           Section "Query fitness estimation"
+# Date extracted: 2026-01-26
+# Note: 6 replicates = number of independent screens per query strain
+#       (3 in triplicate × 2 control strains = 6 total replicates)
+N_SAMPLES_QUERY_SMF = 6  # Number of replicate screens per query strain
+
+# Wild-type control screens for variance estimation
+# Quote: "Estimates of the variance of array single mutant fitness used in the
+#         calculation of interaction p-values, were obtained by screening a
+#         wild-type control query strain, Y13096, against the diagnostic array
+#         (n=91)."
+# Source: SI-kuzminSystematicAnalysisComplex2018.mmd, Line 64
+# Date extracted: 2026-01-26
+# Note: Array fitness values themselves were imported from Costanzo 2016 (reference 7)
+#       and not re-measured. This n=91 is specifically for variance estimation
+#       used in p-value calculations, not for per-strain fitness measurements.
+N_SAMPLES_WT_VARIANCE = 91  # WT control screens for variance estimation
+
+# Double and triple mutant fitness measurements
+# Quote: "Every double mutant query strain was screened alongside its two
+#         single mutant control strains in two independent replicates."
+# Source: SI-kuzminSystematicAnalysisComplex2018.mmd, Line 76
+# Verified: SI-kuzminSystematicAnalysisComplex2018.pdf, Page 4,
+#           Section "Triple mutant synthetic genetic array (SGA) analysis"
+# Date extracted: 2026-01-26
+N_SAMPLES_DOUBLE_MUTANT = 2
+N_SAMPLES_TRIPLE_MUTANT = 2
+
+# Wild-type reference measurements
+# For WT reference phenotypes, use the variance estimation n_samples
+# Reference fitness = 1.0 is derived from wild-type control measurements
+N_SAMPLES_WT_REFERENCE = N_SAMPLES_WT_VARIANCE  # 91
 
 
 # Fitness
@@ -259,15 +302,56 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype
         if row["smf_type"] == "query_smf":
             smf_key = "Query single/double mutant fitness"
+            n_samples = N_SAMPLES_QUERY_SMF
         elif row["smf_type"] == "array_smf":
             smf_key = "Array single mutant fitness"
+            # Array fitness imported from Costanzo 2016 - not measured in this study
+            # No individual std reported, so n_samples = None
+            n_samples = None
+        else:
+            # Fallback for unexpected smf_type
+            smf_key = "Query single/double mutant fitness"
+            n_samples = None
 
-        # We have no reported std for single mutants
-        # Could use mean of all stds, would be a conservative estimate
-        # Using nan for now
-        phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
+        # SMF std not reported in Kuzmin2018 data
+        fitness_std_val = None
+        # Compute SE using Option 2 policy:
+        # - None if std is None (missing data)
+        # - NaN if n=1 (undefined)
+        # - std/sqrt(n) if n≥2 and std available
+        if fitness_std_val is None:
+            fitness_se_val = None
+        elif n_samples is None or n_samples == 1:
+            fitness_se_val = math.nan
+        else:
+            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        phenotype = FitnessPhenotype(
+            fitness=row[smf_key],
+            fitness_std=fitness_std_val,
+            fitness_se=fitness_se_val,
+            n_samples=n_samples,
+        )
+
+        # Reference phenotype uses WT array measurements
+        n_samples_ref = N_SAMPLES_WT_REFERENCE
+        if (
+            phenotype_reference_std is not None
+            and n_samples_ref is not None
+            and n_samples_ref > 1
+        ):
+            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
+        elif n_samples_ref == 1:
+            phenotype_reference_se = math.nan
+        else:
+            phenotype_reference_se = None
+
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            fitness_se=phenotype_reference_se,
+            n_samples=n_samples_ref,
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -473,14 +557,55 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
         if row["Combined mutant type"] == "digenic":
             dmf_key = "Combined mutant fitness"
             dmf_std_key = "Combined mutant fitness standard deviation"
-            fitness_std = row[dmf_std_key]
+            fitness_std_val = row[dmf_std_key]
+            n_samples = N_SAMPLES_DOUBLE_MUTANT
         elif row["Combined mutant type"] == "trigenic":
             dmf_key = "Query single/double mutant fitness"
             # std of these fitnesses not reported
-            fitness_std = np.nan
-        phenotype = FitnessPhenotype(fitness=row[dmf_key], fitness_std=fitness_std)
+            fitness_std_val = np.nan
+            n_samples = N_SAMPLES_TRIPLE_MUTANT
+        else:
+            # Fallback for unexpected types
+            dmf_key = "Combined mutant fitness"
+            fitness_std_val = None
+            n_samples = None
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        # Compute SE using Option 2 policy
+        if fitness_std_val is None or (isinstance(fitness_std_val, float) and np.isnan(fitness_std_val)):
+            fitness_se_val = None
+        elif n_samples is None or n_samples == 1:
+            fitness_se_val = math.nan
+        elif n_samples >= 2:
+            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
+        else:
+            fitness_se_val = None
+
+        phenotype = FitnessPhenotype(
+            fitness=row[dmf_key],
+            fitness_std=fitness_std_val if not (isinstance(fitness_std_val, float) and np.isnan(fitness_std_val)) else None,
+            fitness_se=fitness_se_val,
+            n_samples=n_samples,
+        )
+
+        # Reference phenotype
+        n_samples_ref = N_SAMPLES_WT_REFERENCE
+        if (
+            phenotype_reference_std is not None
+            and n_samples_ref is not None
+            and n_samples_ref > 1
+        ):
+            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
+        elif n_samples_ref == 1:
+            phenotype_reference_se = math.nan
+        else:
+            phenotype_reference_se = None
+
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            fitness_se=phenotype_reference_se,
+            n_samples=n_samples_ref,
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -702,9 +827,45 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         # Phenotype based on temperature
         tmf_key = "Combined mutant fitness"
         tmf_std_key = "Combined mutant fitness standard deviation"
-        phenotype = FitnessPhenotype(fitness=row[tmf_key], fitness_std=row[tmf_std_key])
+        fitness_std_val = row[tmf_std_key]
+        n_samples = N_SAMPLES_TRIPLE_MUTANT
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        # Compute SE using Option 2 policy
+        if fitness_std_val is None or (isinstance(fitness_std_val, float) and np.isnan(fitness_std_val)):
+            fitness_se_val = None
+        elif n_samples == 1:
+            fitness_se_val = math.nan
+        elif n_samples >= 2:
+            fitness_se_val = fitness_std_val / math.sqrt(n_samples)
+        else:
+            fitness_se_val = None
+
+        phenotype = FitnessPhenotype(
+            fitness=row[tmf_key],
+            fitness_std=fitness_std_val if not (isinstance(fitness_std_val, float) and np.isnan(fitness_std_val)) else None,
+            fitness_se=fitness_se_val,
+            n_samples=n_samples,
+        )
+
+        # Reference phenotype
+        n_samples_ref = N_SAMPLES_WT_REFERENCE
+        if (
+            phenotype_reference_std is not None
+            and n_samples_ref is not None
+            and n_samples_ref > 1
+        ):
+            phenotype_reference_se = phenotype_reference_std / math.sqrt(n_samples_ref)
+        elif n_samples_ref == 1:
+            phenotype_reference_se = math.nan
+        else:
+            phenotype_reference_se = None
+
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0,
+            fitness_std=phenotype_reference_std,
+            fitness_se=phenotype_reference_se,
+            n_samples=n_samples_ref,
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -1150,22 +1311,65 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
 
 if __name__ == "__main__":
     # Fitness
-    print("Fitness")
+    print("="*60)
+    print("FITNESS DATASETS")
+    print("="*60)
+
+    print("\n1. SmfKuzmin2018Dataset")
+    print("-"*60)
     dataset = SmfKuzmin2018Dataset()
-    print(dataset[0])
-    print(len(dataset))
+    print(f"Length: {len(dataset)}")
+    item = dataset[0]
+    print(f"First item phenotype:")
+    print(f"  fitness: {item['experiment']['phenotype']['fitness']}")
+    print(f"  fitness_std: {item['experiment']['phenotype']['fitness_std']}")
+    print(f"  fitness_se: {item['experiment']['phenotype']['fitness_se']}")
+    print(f"  n_samples: {item['experiment']['phenotype']['n_samples']}")
+
+    print("\n2. DmfKuzmin2018Dataset")
+    print("-"*60)
     dataset = DmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    print(f"Length: {len(dataset)}")
+    item = dataset[0]
+    print(f"First item phenotype:")
+    print(f"  fitness: {item['experiment']['phenotype']['fitness']}")
+    print(f"  fitness_std: {item['experiment']['phenotype']['fitness_std']}")
+    print(f"  fitness_se: {item['experiment']['phenotype']['fitness_se']}")
+    print(f"  n_samples: {item['experiment']['phenotype']['n_samples']}")
+
+    print("\n3. TmfKuzmin2018Dataset")
+    print("-"*60)
     dataset = TmfKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
-    print()
-    print("Interactions")
-    # Interactions
+    print(f"Length: {len(dataset)}")
+    item = dataset[0]
+    print(f"First item phenotype:")
+    print(f"  fitness: {item['experiment']['phenotype']['fitness']}")
+    print(f"  fitness_std: {item['experiment']['phenotype']['fitness_std']}")
+    print(f"  fitness_se: {item['experiment']['phenotype']['fitness_se']}")
+    print(f"  n_samples: {item['experiment']['phenotype']['n_samples']}")
+
+    print("\n" + "="*60)
+    print("INTERACTION DATASETS")
+    print("="*60)
+
+    print("\n4. DmiKuzmin2018Dataset")
+    print("-"*60)
     dataset = DmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    print(f"Length: {len(dataset)}")
+    item = dataset[0]
+    print(f"First item phenotype:")
+    print(f"  gene_interaction: {item['experiment']['phenotype']['gene_interaction']}")
+    print(f"  gene_interaction_p_value: {item['experiment']['phenotype']['gene_interaction_p_value']}")
+
+    print("\n5. TmiKuzmin2018Dataset")
+    print("-"*60)
     dataset = TmiKuzmin2018Dataset()
-    dataset[0]
-    print(len(dataset))
+    print(f"Length: {len(dataset)}")
+    item = dataset[0]
+    print(f"First item phenotype:")
+    print(f"  gene_interaction: {item['experiment']['phenotype']['gene_interaction']}")
+    print(f"  gene_interaction_p_value: {item['experiment']['phenotype']['gene_interaction_p_value']}")
+
+    print("\n" + "="*60)
+    print("✓ All datasets loaded successfully!")
+    print("="*60)

@@ -211,18 +211,37 @@ Four GEO datasets provide wildtype measurements:
 ### Usage
 
 ```python
+import os
+import os.path as osp
+from dotenv import load_dotenv
+from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+# Setup environment
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+
+# Initialize genome for gene name mapping (optional dependency injection)
+genome = SCerevisiaeGenome(
+    genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+    go_root=osp.join(DATA_ROOT, "data/go"),
+    overwrite=True,
+)
+
 # Sequential processing (original)
 dataset = MicroarrayKemmeren2014Dataset(
-    root="data/torchcell/microarray_kemmeren2014",
+    root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
+    genome=genome,  # Inject genome dependency
     io_workers=0,
     process_workers=0  # Sequential processing
 )
 
 # Parallel processing (faster, recommended)
 dataset = MicroarrayKemmeren2014Dataset(
-    root="data/torchcell/microarray_kemmeren2014",
+    root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
+    genome=genome,       # Inject genome dependency
     io_workers=10,       # For parallel data loading
-    process_workers=10,   # For parallel experiment processing
+    process_workers=10,  # For parallel experiment processing
     batch_size=10        # Process 10 experiments per batch
 )
 
@@ -235,6 +254,13 @@ data = dataset[0]
 experiment = data['experiment']
 reference = data['reference']
 publication = data['publication']
+
+# Access phenotype data
+phenotype = experiment['phenotype']
+expression = phenotype['expression']  # SortedDict (linear scale)
+log2_ratios = phenotype['expression_log2_ratio']  # SortedDict
+log2_se = phenotype['expression_log2_ratio_se']  # SortedDict
+n_replicates = phenotype['n_replicates']  # Dict[str, int]
 ```
 
 ### Summary
@@ -248,3 +274,48 @@ The Kemmeren2014 dataset implementation is now fully functional with sophisticat
 5. **Production-ready** - Clean logging, robust error handling, and consistent output between processing modes
 
 The dataset successfully processes 1483 deletion mutants with full expression profiles and quality metrics, ready for downstream machine learning applications.
+
+## 2026.01.29 - Replicate Counting Philosophy
+
+### Data-Driven n_replicates Computation
+
+This dataset follows the principle of **computing `n_replicates` from raw data** rather than using paper-reported constants.
+
+**Global constants in code** (lines 42-86 in `kemmeren2014.py`):
+
+```python
+N_EXPECTED_BIOLOGICAL_REPLICATES = 2
+N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
+N_EXPECTED_MAX_REPLICATES_DELETION = 4
+```
+
+These constants are **documentation only** - they record what the paper reports about experimental design:
+
+- Quote from paper: "Each mutant strain was grown twice, from two independently inoculated cultures. Each culture was expression-profiled in technical replicate to yield four measurements for each profiling mutant."
+- Expected design: 2 biological replicates × 2 dye-swap measurements = 4 total
+
+**Actual implementation**: Code counts actual measurements per gene per deletion:
+
+```python
+# Example from processing logic
+for gene, values in grouped_values.items():
+    n_replicates[gene] = len(values)  # Count actual data points
+```
+
+**Why compute rather than use constants?**
+
+1. **QC filtering**: Some samples may fail quality control (actual < 4)
+2. **Data is authoritative**: Direct counts from GEO samples are ground truth
+3. **Gene-specific variation**: Different genes may have different replicate counts
+4. **Reference replicates**: WT reference pool measured in 8-200+ samples (varies by strain/method)
+
+**Reference pool replicates** (lines 82-84):
+
+- `N_EXPECTED_REFPOOL_REPLICATES_BY4741 = None` (computed from data)
+- `N_EXPECTED_REFPOOL_REPLICATES_BY4742 = None` (computed from data)
+- Actual values: ~28 MATa samples, ~400 MATα samples from WT GEO datasets
+- Each deletion's reference phenotype uses computed replicate count from WT sample measurements
+
+This approach enables validation (compare computed vs expected to detect issues) while ensuring data integrity.
+
+Related: [[torchcell.datamodels.schema#20260129---philosophy-around-n_replicates]]

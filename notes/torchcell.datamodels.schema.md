@@ -2,7 +2,7 @@
 id: 2qlur6rz1mzpmtltyf7w0j0
 title: schema
 desc: ''
-updated: 1768423649573
+updated: 1769712432599
 created: 1705045346511
 ---
 ## Costanzo Smf and Dmf Whiteboard Recap
@@ -251,3 +251,55 @@ The schema design is tightly coupled to downstream infrastructure with critical 
 **Design tradeoff for MicroarrayExpressionPhenotype**: Store both `expression_log2_ratio_variance` (for meta-analysis) and `expression_log2_ratio_se` (as PRIMARY STATISTIC) as fields exposed to Neo4j. SE is chosen over SD because it measures precision of the mean estimate (relevant for ML training and deduplication), while SD (technical variability) can be computed on-demand via property when needed for QC. This balances Neo4j queryability, GraphProcessor batching, and storage efficiency.
 
 Related: [[torchcell.adapters.cell_adapter]] [[torchcell.data.graph_processor]] [[torchcell.data.deduplicate]]
+
+## 2026.01.29 - Philosophy around n_replicates
+
+### Data-Driven Computation Over Reported Values
+
+**Principle**: Always compute `n_replicates` from raw data rather than using paper-reported constants.
+
+Even when experimental design is clearly documented in papers or supplementary information (e.g., "2 biological replicates × 2 dye-swap technical replicates = 4 measurements"), we default to counting actual replicates from the data files. This approach is more reliable because:
+
+1. **QC filtering**: Papers report ideal experimental design, but quality control may remove failed samples (actual n_replicates < expected)
+2. **Text extraction complexity**: Parsing methods sections and supplementary files to extract replicate counts is error-prone
+3. **Protocol chasing**: We've encountered many back-and-forth iterations trying to understand true protocols from ambiguous text
+4. **Data is ground truth**: If individual raw data files exist, direct counting is authoritative
+
+**Implementation pattern** (see `kemmeren2014.py`, `sameith2015.py`):
+
+```python
+# Global constants document EXPECTED design from paper (for validation)
+N_EXPECTED_BIOLOGICAL_REPLICATES = 2
+N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
+N_EXPECTED_MAX_REPLICATES_DELETION = 4  # Documentation only
+
+# Actual values COMPUTED from data
+for gene, values in all_values_per_gene.items():
+    n_replicates[gene] = len(values)  # Count actual measurements
+```
+
+Constants serve as **documentation and validation targets**, not data sources. We can compare computed values against expected ranges to detect data issues, but never substitute constants for actual counts.
+
+### Avoiding Replicate Type Fragmentation
+
+**Decision**: Use generic `n_replicates` instead of typed replicates (`biological_replicates`, `technical_replicates`, `pseudo_replicates`).
+
+In reality, replicates have distinct types with different statistical properties:
+
+- **Biological replicates**: Independent cultures/samples (captures biological variation)
+- **Technical replicates**: Same sample measured multiple times (captures measurement noise)
+- **Dye-swap replicates**: Technical replicates correcting for dye bias (microarray-specific)
+- **Pseudo-replicates**: Subsamples from same culture (not true independent replicates)
+
+However, we intentionally avoid this distinction for now:
+
+1. **Simplicity**: Generic `n_replicates` is easier to work with across datasets
+2. **NLP dependency**: Extracting replicate types from text requires robust natural language processing
+3. **Data fragmentation**: Don't want to split data along these axes prematurely
+4. **Primary label focus**: We only track replicates used to compute the mean value being reported as the primary label
+
+**What we report**: The count of measurements that went into computing the mean expression value, regardless of whether those measurements are biological replicates, technical replicates, or dye swaps.
+
+**Future work**: Could add typed replicate counts as optional metadata fields once we have reliable NLP extraction, but the primary `n_replicates` field should remain a simple count.
+
+Related: [[torchcell.datasets.scerevisiae.kemmeren2014]] [[torchcell.datasets.scerevisiae.sameith2015]]

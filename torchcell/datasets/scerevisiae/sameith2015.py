@@ -40,9 +40,48 @@ from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-# Load environment variables
-load_dotenv()
-DATA_ROOT = os.getenv("DATA_ROOT")
+# ============================================================================
+# Replicate Metadata - Extracted from Sameith et al. 2015
+# ============================================================================
+
+# CRITICAL: Replicate structure for GSTF deletion mutant expression measurements
+# Quote: "Each mutant strain was grown twice, from two independently inoculated
+#         cultures. Each culture was expression-profiled in technical replicate
+#         to yield four measurements for each profiling mutant."
+# Quote: "This included four replicates per responsive mutant, robotic procedures
+#         optimized with external calibration controls, a common reference design
+#         with wildtype (WT) reference RNA applied in dye-swap to each microarray"
+# Source: Sameith et al. 2015, Cell Reports, Expression Profiling section
+# Paper: papers/sameithHighresolutionGeneExpression2015/sameithHighresolutionGeneExpression2015.mmd
+# Date extracted: 2026-01-27
+#
+# Experimental design:
+# - 2 biological replicates (two independently inoculated cultures)
+# - Each culture profiled in technical replicate (dye-swap: mutant-Cy5/ref-Cy3 and mutant-Cy3/ref-Cy5)
+# - Total: 4 measurements per gene per deletion mutant (2 biological × 2 dye orientations)
+# - Common reference RNA (WT pool) used in dye-swap on each microarray
+# - Applies to BOTH single and double GSTF deletion mutants
+#
+# NOTE: Actual n_replicates are COMPUTED from raw data (may be < 4 due to QC)
+N_EXPECTED_BIOLOGICAL_REPLICATES = 2
+N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
+N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurements
+
+# Reference pool measurements
+# Quote: "a common reference design was adopted with a batch of WT RNA applied
+#         in dye-swap to one of the channels of each microarray"
+# Quote: "Additional WT cultures were grown alongside batches of mutants on each
+#         day and profiled in parallel to monitor batch effects"
+# Source: Sameith et al. 2015, Cell Reports, Expression Profiling section
+# Date extracted: 2026-01-27
+#
+# The reference pool is:
+# - Batch of WT RNA used as common reference across all experiments
+# - Applied in dye-swap to one channel of each microarray
+# - Additional WT cultures grown alongside mutants for batch effect monitoring
+#
+# NOTE: Actual n_replicates for reference are COMPUTED from WT sample count in data
+N_EXPECTED_REFPOOL_REPLICATES = None  # Computed from data (varies by batch/day)
 
 
 @register_dataset
@@ -66,6 +105,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         process_workers: int = 0,
         batch_size: int = 10,
+        genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
@@ -73,12 +113,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         self.process_workers = process_workers
         self.batch_size = batch_size
 
-        # Initialize genome for gene name mapping BEFORE calling super().__init__
-        self.genome = SCerevisiaeGenome(
-            genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-            go_root=osp.join(DATA_ROOT, "data/go"),
-            overwrite=True,
-        )
+        # Genome for gene name mapping (optional, injected)
+        # If None, gene resolution methods will have limited functionality
+        self.genome = genome
 
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -309,10 +346,10 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                     log.warning(f"No data for {sample_info['gene_names']}, skipping...")
                     continue
 
-                # Calculate means and stds across replicates
-                mutant_mean, mutant_std = self._calculate_mean_std(all_mutant_data)
-                refpool_mean, refpool_std = self._calculate_mean_std(all_refpool_data)
-                log2_mean, log2_std = self._calculate_mean_std(all_log2_ratio_data)
+                # Calculate statistics across replicates
+                mutant_mean, mutant_se, mutant_var, mutant_n = self._calculate_replicate_statistics(all_mutant_data)
+                refpool_mean, refpool_se, refpool_var, refpool_n = self._calculate_replicate_statistics(all_refpool_data)
+                log2_mean, log2_se, log2_var, log2_n = self._calculate_replicate_statistics(all_log2_ratio_data)
 
                 experiment, reference, publication = (
                     self.create_single_mutant_expression_experiment(
@@ -321,9 +358,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                         mutant_mean,
                         refpool_mean,
                         log2_mean,
-                        mutant_std,
-                        refpool_std,
-                        log2_std,
+                        log2_se,
+                        log2_var,
+                        log2_n,
                     )
                 )
 
@@ -341,17 +378,21 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         env.close()
         log.info(f"Wrote {idx} single mutant experiments to LMDB")
 
-    def _calculate_mean_std(self, data_list):
-        """Calculate mean and std across technical replicates.
+    def _calculate_replicate_statistics(self, data_list):
+        """Calculate statistics across biological/technical replicates.
 
         Args:
             data_list: List of SortedDict objects containing gene -> value mappings
 
         Returns:
-            tuple: (mean_dict, std_dict) - SortedDict objects with means and stds
+            tuple: (mean_dict, se_dict, variance_dict, n_replicates_dict)
+                - mean_dict: Mean values per gene
+                - se_dict: Standard error per gene
+                - variance_dict: Variance per gene
+                - n_replicates_dict: Number of replicates per gene
         """
         if not data_list:
-            return SortedDict(), SortedDict()
+            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
         all_values = {}
@@ -361,18 +402,26 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                     all_values[gene] = []
                 all_values[gene].append(value)
 
-        # Calculate mean and std
+        # Calculate statistics
         mean_dict = SortedDict()
-        std_dict = SortedDict()
+        se_dict = SortedDict()
+        variance_dict = SortedDict()
+        n_replicates_dict = SortedDict()
 
         for gene, values in all_values.items():
+            n = len(values)
             mean_dict[gene] = np.mean(values)
-            if len(values) > 1:
-                std_dict[gene] = np.std(values, ddof=1)
-            else:
-                std_dict[gene] = np.nan
+            n_replicates_dict[gene] = n
 
-        return mean_dict, std_dict
+            if n > 1:
+                sd = np.std(values, ddof=1)
+                variance_dict[gene] = sd ** 2
+                se_dict[gene] = sd / np.sqrt(n)
+            else:
+                variance_dict[gene] = np.nan
+                se_dict[gene] = np.nan
+
+        return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
         """Extract systematic gene names from sample title."""
@@ -656,19 +705,21 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         mutant_data,
         refpool_data,
         log2_ratio_data,
-        mutant_std=None,
-        refpool_std=None,
-        log2_ratio_std=None,
+        log2_ratio_se=None,
+        log2_ratio_variance=None,
+        n_replicates=None,
     ):
         """Create experiment for single deletion mutant.
 
         Args:
+            dataset_name: Name of the dataset
+            sample_info: Sample metadata dictionary
             mutant_data: Expression values for deletion mutant
             refpool_data: Expression values for reference pool
             log2_ratio_data: log2(mutant/refpool) ratios
-            mutant_std: Technical std for mutant expression (optional)
-            refpool_std: Technical std for refpool expression (optional)
-            log2_ratio_std: Technical std for log2 ratios (optional)
+            log2_ratio_se: Standard error for log2 ratios (optional)
+            log2_ratio_variance: Variance for log2 ratios (optional)
+            n_replicates: Number of replicates per gene (optional)
         """
         # BY4742 for single mutants (from deletion library)
         # Paper: "Single mutants taken from Deletion library" = BY4742, mata
@@ -706,20 +757,26 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         phenotype = MicroarrayExpressionPhenotype(
             expression=mutant_data,
             expression_log2_ratio=log2_ratios,
-            expression_technical_std=mutant_std,
-            expression_log2_ratio_std=log2_ratio_std,
+            expression_log2_ratio_se=log2_ratio_se,
+            expression_log2_ratio_variance=log2_ratio_variance,
+            n_replicates=n_replicates,
         )
 
         # Create reference phenotype from reference pool
+        # Reference is self-referential, so log2 ratios are all 0
         reference_log2_ratios = SortedDict()
+        reference_n_replicates = SortedDict()
         for gene in refpool_data:
             reference_log2_ratios[gene] = 0.0
+            # Reference samples don't have meaningful n_replicates (they're the baseline)
+            reference_n_replicates[gene] = 1
 
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_data,
             expression_log2_ratio=reference_log2_ratios,
-            expression_technical_std=refpool_std,
-            expression_log2_ratio_std=None,
+            expression_log2_ratio_se=None,
+            expression_log2_ratio_variance=None,
+            n_replicates=reference_n_replicates,
         )
 
         # Create reference
@@ -760,6 +817,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         process_workers: int = 0,
         batch_size: int = 10,
+        genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
         transform: Callable | None = None,
         pre_transform: Callable | None = None,
         **kwargs,
@@ -767,12 +825,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         self.process_workers = process_workers
         self.batch_size = batch_size
 
-        # Initialize genome for gene name mapping BEFORE calling super().__init__
-        self.genome = SCerevisiaeGenome(
-            genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
-            go_root=osp.join(DATA_ROOT, "data/go"),
-            overwrite=True,
-        )
+        # Genome for gene name mapping (optional, injected)
+        # If None, gene resolution methods will have limited functionality
+        self.genome = genome
 
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -1078,10 +1133,10 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     log.warning(f"No data for {sample_info['gene_names']}, skipping...")
                     continue
 
-                # Calculate means and stds across replicates
-                mutant_mean, mutant_std = self._calculate_mean_std(all_mutant_data)
-                refpool_mean, refpool_std = self._calculate_mean_std(all_refpool_data)
-                log2_mean, log2_std = self._calculate_mean_std(all_log2_ratio_data)
+                # Calculate statistics across replicates
+                mutant_mean, mutant_se, mutant_var, mutant_n = self._calculate_replicate_statistics(all_mutant_data)
+                refpool_mean, refpool_se, refpool_var, refpool_n = self._calculate_replicate_statistics(all_refpool_data)
+                log2_mean, log2_se, log2_var, log2_n = self._calculate_replicate_statistics(all_log2_ratio_data)
 
                 # Extract strain for this genotype from gstf_pairs
                 gene_names = sample_info["gene_names"]
@@ -1097,9 +1152,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                         mutant_mean,
                         refpool_mean,
                         log2_mean,
-                        mutant_std,
-                        refpool_std,
-                        log2_std,
+                        log2_se,
+                        log2_var,
+                        log2_n,
                         strain=strain,  # NEW: Pass per-sample strain
                     )
                 )
@@ -1118,17 +1173,21 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         env.close()
         log.info(f"Wrote {idx} double mutant experiments to LMDB")
 
-    def _calculate_mean_std(self, data_list):
-        """Calculate mean and std across technical replicates.
+    def _calculate_replicate_statistics(self, data_list):
+        """Calculate statistics across biological/technical replicates.
 
         Args:
             data_list: List of SortedDict objects containing gene -> value mappings
 
         Returns:
-            tuple: (mean_dict, std_dict) - SortedDict objects with means and stds
+            tuple: (mean_dict, se_dict, variance_dict, n_replicates_dict)
+                - mean_dict: Mean values per gene
+                - se_dict: Standard error per gene
+                - variance_dict: Variance per gene
+                - n_replicates_dict: Number of replicates per gene
         """
         if not data_list:
-            return SortedDict(), SortedDict()
+            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
         all_values = {}
@@ -1138,18 +1197,26 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     all_values[gene] = []
                 all_values[gene].append(value)
 
-        # Calculate mean and std
+        # Calculate statistics
         mean_dict = SortedDict()
-        std_dict = SortedDict()
+        se_dict = SortedDict()
+        variance_dict = SortedDict()
+        n_replicates_dict = SortedDict()
 
         for gene, values in all_values.items():
+            n = len(values)
             mean_dict[gene] = np.mean(values)
-            if len(values) > 1:
-                std_dict[gene] = np.std(values, ddof=1)
-            else:
-                std_dict[gene] = np.nan
+            n_replicates_dict[gene] = n
 
-        return mean_dict, std_dict
+            if n > 1:
+                sd = np.std(values, ddof=1)
+                variance_dict[gene] = sd ** 2
+                se_dict[gene] = sd / np.sqrt(n)
+            else:
+                variance_dict[gene] = np.nan
+                se_dict[gene] = np.nan
+
+        return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _process_parallel(self, double_mutant_groups, probe_to_gene_map):
         """Process double mutant replicate groups in parallel."""
@@ -1235,19 +1302,19 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             if not all_mutant_data:
                 continue
 
-            # Calculate means and stds across replicates
-            mutant_mean, mutant_std = (
-                DmMicroarraySameith2015Dataset._calculate_mean_std_static(
+            # Calculate statistics across replicates
+            mutant_mean, mutant_se, mutant_var, mutant_n = (
+                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
                     all_mutant_data
                 )
             )
-            refpool_mean, refpool_std = (
-                DmMicroarraySameith2015Dataset._calculate_mean_std_static(
+            refpool_mean, refpool_se, refpool_var, refpool_n = (
+                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
                     all_refpool_data
                 )
             )
-            log2_mean, log2_std = (
-                DmMicroarraySameith2015Dataset._calculate_mean_std_static(
+            log2_mean, log2_se, log2_var, log2_n = (
+                DmMicroarraySameith2015Dataset._calculate_replicate_statistics_static(
                     all_log2_ratio_data
                 )
             )
@@ -1264,9 +1331,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     mutant_mean,
                     refpool_mean,
                     log2_mean,
-                    mutant_std,
-                    refpool_std,
-                    log2_std,
+                    log2_se,
+                    log2_var,
+                    log2_n,
                     strain=strain,  # NEW: Pass per-sample strain
                 )
             )
@@ -1284,10 +1351,10 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return results
 
     @staticmethod
-    def _calculate_mean_std_static(data_list):
-        """Static version of _calculate_mean_std for multiprocessing."""
+    def _calculate_replicate_statistics_static(data_list):
+        """Static version of _calculate_replicate_statistics for multiprocessing."""
         if not data_list:
-            return SortedDict(), SortedDict()
+            return SortedDict(), SortedDict(), SortedDict(), SortedDict()
 
         # Collect all values per gene across replicates
         all_values = {}
@@ -1297,18 +1364,26 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     all_values[gene] = []
                 all_values[gene].append(value)
 
-        # Calculate mean and std
+        # Calculate statistics
         mean_dict = SortedDict()
-        std_dict = SortedDict()
+        se_dict = SortedDict()
+        variance_dict = SortedDict()
+        n_replicates_dict = SortedDict()
 
         for gene, values in all_values.items():
+            n = len(values)
             mean_dict[gene] = np.mean(values)
-            if len(values) > 1:
-                std_dict[gene] = np.std(values, ddof=1)
-            else:
-                std_dict[gene] = np.nan
+            n_replicates_dict[gene] = n
 
-        return mean_dict, std_dict
+            if n > 1:
+                sd = np.std(values, ddof=1)
+                variance_dict[gene] = sd ** 2
+                se_dict[gene] = sd / np.sqrt(n)
+            else:
+                variance_dict[gene] = np.nan
+                se_dict[gene] = np.nan
+
+        return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
         """Extract systematic gene names from sample title."""
@@ -1689,20 +1764,22 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         mutant_data,
         refpool_data,
         log2_ratio_data,
-        mutant_std=None,
-        refpool_std=None,
-        log2_ratio_std=None,
+        log2_ratio_se=None,
+        log2_ratio_variance=None,
+        n_replicates=None,
         strain="BY4742",  # NEW: Accept per-sample strain parameter
     ):
         """Create experiment for double deletion mutant with PER-SAMPLE strain.
 
         Args:
+            dataset_name: Name of the dataset
+            sample_info: Sample metadata dictionary
             mutant_data: Expression values for deletion mutant
             refpool_data: Expression values for reference pool
             log2_ratio_data: log2(mutant/refpool) ratios
-            mutant_std: Technical std for mutant expression (optional)
-            refpool_std: Technical std for refpool expression (optional)
-            log2_ratio_std: Technical std for log2 ratios (optional)
+            log2_ratio_se: Standard error for log2 ratios (optional)
+            log2_ratio_variance: Variance for log2 ratios (optional)
+            n_replicates: Number of replicates per gene (optional)
             strain: Strain background (BY4742 or BY4741), extracted from Excel comments
         """
         # USE PROVIDED STRAIN (not hardcoded!)
@@ -1750,21 +1827,26 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         phenotype = MicroarrayExpressionPhenotype(
             expression=mutant_data,
             expression_log2_ratio=log2_ratios,
-            expression_technical_std=mutant_std,
-            expression_log2_ratio_std=log2_ratio_std,
+            expression_log2_ratio_se=log2_ratio_se,
+            expression_log2_ratio_variance=log2_ratio_variance,
+            n_replicates=n_replicates,
         )
 
         # Create reference phenotype from reference pool
-        # Reference log2 ratios are zeros (self-referential)
+        # Reference is self-referential, so log2 ratios are all 0
         reference_log2_ratios = SortedDict()
+        reference_n_replicates = SortedDict()
         for gene in refpool_data:
             reference_log2_ratios[gene] = 0.0
+            # Reference samples don't have meaningful n_replicates (they're the baseline)
+            reference_n_replicates[gene] = 1
 
         phenotype_reference = MicroarrayExpressionPhenotype(
             expression=refpool_data,  # Reference pool
             expression_log2_ratio=reference_log2_ratios,
-            expression_technical_std=refpool_std,
-            expression_log2_ratio_std=None,  # Reference is self-referential
+            expression_log2_ratio_se=None,
+            expression_log2_ratio_variance=None,
+            n_replicates=reference_n_replicates,
         )
 
         # Create reference
@@ -1796,6 +1878,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
 def main():
     """Demonstrate both Sameith2015 datasets (single and double mutants)."""
+    load_dotenv()
+    DATA_ROOT = os.getenv("DATA_ROOT")
+
+    # Initialize genome for gene name mapping
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+        go_root=osp.join(DATA_ROOT, "data/go"),
+        overwrite=True,
+    )
 
     print("=" * 80)
     print("SAMEITH2015 MICROARRAY EXPRESSION DATASETS DEMO")
@@ -1808,6 +1899,7 @@ def main():
 
     dm_dataset = DmMicroarraySameith2015Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/dm_microarray_sameith2015"),
+        genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )
@@ -1831,12 +1923,12 @@ def main():
             f"  Expression measurements: {len(experiment['phenotype']['expression'])} genes"
         )
 
-        # Check if technical std is available
-        exp_std = experiment["phenotype"].get("expression_technical_std")
-        if exp_std:
-            non_nan_count = sum(1 for v in exp_std.values() if not np.isnan(v))
+        # Check if replicate statistics are available
+        n_replicates = experiment["phenotype"].get("n_replicates")
+        if n_replicates:
+            genes_with_replicates = sum(1 for v in n_replicates.values() if v > 1)
             print(
-                f"  Technical replicates: {non_nan_count}/{len(exp_std)} genes have std"
+                f"  Replicate statistics: {genes_with_replicates}/{len(n_replicates)} genes have n>1"
             )
 
     # Single Mutant Dataset
@@ -1846,6 +1938,7 @@ def main():
 
     sm_dataset = SmMicroarraySameith2015Dataset(
         root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),
+        genome=genome,
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )
@@ -1867,12 +1960,12 @@ def main():
             f"  Expression measurements: {len(experiment['phenotype']['expression'])} genes"
         )
 
-        # Check if technical std is available
-        exp_std = experiment["phenotype"].get("expression_technical_std")
-        if exp_std:
-            non_nan_count = sum(1 for v in exp_std.values() if not np.isnan(v))
+        # Check if replicate statistics are available
+        n_replicates = experiment["phenotype"].get("n_replicates")
+        if n_replicates:
+            genes_with_replicates = sum(1 for v in n_replicates.values() if v > 1)
             print(
-                f"  Technical replicates: {non_nan_count}/{len(exp_std)} genes have std"
+                f"  Replicate statistics: {genes_with_replicates}/{len(n_replicates)} genes have n>1"
             )
 
     print("\n" + "=" * 80)

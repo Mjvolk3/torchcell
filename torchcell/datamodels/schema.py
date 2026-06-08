@@ -813,10 +813,9 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         - expression_log2_ratio_se: Standard error of log2 ratios
 
     SECONDARY FIELDS (for QC/reproducibility):
-        - expression: Absolute expression measurements on linear scale
-        - expression_se: Standard error on linear scale
+        - expression: Absolute expression measurements on linear scale (reference only)
         - expression_log2_ratio_variance: Variance of log2 ratios
-        - n_samples: Number of independent biological samples
+        - n_replicates: Number of independent biological/technical replicates
     """
 
     graph_level: str = "node"
@@ -836,8 +835,8 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         default=None,
         description=(
             "SortedDict of standard errors (SE) for log2 ratios. "
-            "SE = SD / sqrt(n_samples). "
-            "None when unavailable; NaN when n_samples = 1 (SE undefined)."
+            "SE = SD / sqrt(n_replicates). "
+            "None when unavailable; NaN when n_replicates = 1 (SE undefined)."
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
@@ -852,23 +851,16 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_se: dict[str, float] | None = Field(
-        default=None,
-        description=(
-            "SortedDict of standard errors on linear scale. "
-            "None when unavailable; NaN when n_samples = 1 (SE undefined)."
-        ),
-        repr=False,  # Hide in repr to avoid clutter
-    )
     expression_log2_ratio_variance: dict[str, float] | None = Field(
         default=None,
         description=(
-            "SortedDict of variance for log2 ratios. Variance = SE^2 * n_samples."
+            "SortedDict of variance for log2 ratios. "
+            "Variance = SE^2 * n_replicates."
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    n_samples: dict[str, int] = Field(
-        description="SortedDict of number of independent biological samples per gene",
+    n_replicates: dict[str, int] = Field(
+        description="SortedDict of number of independent biological/technical replicates per gene",
         repr=False,  # Hide in repr to avoid clutter
     )
 
@@ -881,14 +873,14 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         se_count = (
             len(self.expression_log2_ratio_se) if self.expression_log2_ratio_se else 0
         )
-        n_samples_count = len(self.n_samples) if self.n_samples else 0
+        n_replicates_count = len(self.n_replicates) if self.n_replicates else 0
 
         return (
             f"MicroarrayExpressionPhenotype("
             f"expression_genes={expr_count}, "
             f"log2_ratio_genes={log2_count}, "
             f"log2_se_genes={se_count}, "
-            f"n_samples_genes={n_samples_count})"
+            f"n_replicates_genes={n_replicates_count})"
         )
 
     @field_validator("expression", mode="before")
@@ -934,20 +926,6 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
                 raise ValueError(f"SE for {key} cannot be negative: {value}")
         return v
 
-    @field_validator("expression_se", mode="before")
-    def convert_and_validate_expression_se(cls, v: Any) -> Any:  # raw pre-validation input
-        """Coerce expression SE to a SortedDict and reject negative finite values."""
-        if v is None:
-            return v
-        # Convert to SortedDict for consistent ordering
-        if isinstance(v, dict) and not isinstance(v, SortedDict):
-            v = SortedDict(v)
-        # SE can be NaN or Inf when n=1
-        for key, value in v.items():
-            if not (math.isnan(value) or math.isinf(value)) and value < 0:
-                raise ValueError(f"SE for {key} cannot be negative: {value}")
-        return v
-
     @field_validator("expression_log2_ratio_variance", mode="before")
     def convert_and_validate_variance(cls, v: Any) -> Any:  # raw pre-validation input
         """Coerce variance to a SortedDict and reject negative non-NaN values."""
@@ -962,38 +940,31 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
                 raise ValueError(f"Variance for {key} cannot be negative: {value}")
         return v
 
-    @field_validator("n_samples", mode="before")
-    def convert_and_validate_n_samples(cls, v: Any) -> Any:  # raw pre-validation input
-        """Coerce n_samples to a SortedDict and require positive integer counts."""
+    @field_validator("n_replicates", mode="before")
+    def convert_and_validate_n_replicates(cls, v):
         if v is None:
-            raise ValueError(
-                "n_samples cannot be None - it is required for SE interpretation"
-            )
+            raise ValueError("n_replicates cannot be None - it is required for SE interpretation")
         # Convert to SortedDict for consistent ordering
         if isinstance(v, dict) and not isinstance(v, SortedDict):
             v = SortedDict(v)
         if not v:
-            raise ValueError("n_samples cannot be empty")
-        # Validate that all n_samples are positive integers
+            raise ValueError("n_replicates cannot be empty")
+        # Validate that all n_replicates are positive integers
         for key, value in v.items():
             if not isinstance(value, int) or value < 1:
-                raise ValueError(
-                    f"n_samples for {key} must be a positive integer, got: {value}"
-                )
+                raise ValueError(f"n_replicates for {key} must be a positive integer, got: {value}")
         return v
 
     @model_validator(mode="after")
     def validate_matching_keys(self) -> "MicroarrayExpressionPhenotype":
         """Ensure all secondary fields have same keys as expression."""
-        # n_samples must match expression keys
-        if set(self.n_samples.keys()) != set(self.expression.keys()):
-            raise ValueError("n_samples must have the same keys as expression")
+        # n_replicates must match expression keys
+        if set(self.n_replicates.keys()) != set(self.expression.keys()):
+            raise ValueError(
+                "n_replicates must have the same keys as expression"
+            )
 
         # Optional fields should match if present
-        if self.expression_se is not None:
-            if set(self.expression_se.keys()) != set(self.expression.keys()):
-                raise ValueError("expression_se must have the same keys as expression")
-
         if self.expression_log2_ratio_se is not None:
             if set(self.expression_log2_ratio_se.keys()) != set(
                 self.expression_log2_ratio.keys()

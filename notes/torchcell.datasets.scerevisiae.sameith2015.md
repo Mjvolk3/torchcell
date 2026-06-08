@@ -2,7 +2,7 @@
 id: kiv571b7be9wpx7257wzxbh
 title: Sameith2015
 desc: ''
-updated: 1733695200000
+updated: 1769710922186
 created: 1765215220183
 ---
 
@@ -65,6 +65,7 @@ Where $N_{\text{genes}} \approx 6169$ yeast genes measured on the microarray pla
 ### Technical Replicates
 
 The paper describes: "Each mutant was grown and profiled four times from two independent cultures"
+
 - 2 biological replicates × 2 dye swaps = 4 technical measurements per genotype
 
 Technical standard deviation calculated across replicates:
@@ -109,6 +110,7 @@ Gene names are extracted from GEO sample titles using regex patterns:
    - Converted to systematic names via `SCerevisiaeGenome` mapping
 
 **Bug Fixes Applied**:
+
 - **Bug #1**: Validation regex now accepts genes with suffixes (e.g., `-A`, `-B`)
   - Before: `r"^Y[A-P][LR]\d{3}[WC]$"` rejected YBR089C-A
   - After: `r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$"` accepts YBR089C-A
@@ -125,11 +127,13 @@ Gene names are extracted from GEO sample titles using regex patterns:
 The implementation uses supplementary Excel file `12915_2015_222_MOESM1_ESM.xlsx` as ground truth:
 
 **For Single Mutants**:
+
 - Sheet: "Single mutants - info"
 - Filter: Rows with valid systematic names
 - Total: 82 single mutants
 
 **For Double Mutants**:
+
 - Sheet: "Double mutants - info"
 - Filter: `curation == "passed"`
 - Total: 72 GSTF pairs
@@ -166,6 +170,7 @@ $$
 ### Strain Assignment (Double Mutants)
 
 Double mutants use mixed genetic backgrounds based on mating type compatibility:
+
 - BY4742 (MATa): 63 pairs
 - BY4741 (MATα): 9 pairs
 
@@ -198,10 +203,11 @@ Each experiment returns a `MicroarrayExpressionPhenotype` with:
 
 ```python
 {
-    'expression': SortedDict,           # Mutant expression values
-    'expression_log2_ratio': SortedDict, # log2(mutant/refpool)
-    'expression_technical_std': SortedDict,      # Std across replicates
-    'expression_log2_ratio_std': SortedDict,     # Std of log2 ratios
+    'expression': SortedDict,                      # Mutant expression values (linear scale)
+    'expression_log2_ratio': SortedDict,           # log2(mutant/refpool)
+    'expression_log2_ratio_se': SortedDict,        # Standard error of log2 ratios
+    'expression_log2_ratio_variance': SortedDict,  # Variance of log2 ratios
+    'n_replicates': Dict[str, int],                # Number of replicates per gene
 }
 ```
 
@@ -209,16 +215,18 @@ Reference phenotype uses refpool data:
 
 ```python
 {
-    'expression': SortedDict,           # Reference pool expression
-    'expression_log2_ratio': {gene: 0.0},  # Self-referential
-    'expression_technical_std': SortedDict,
-    'expression_log2_ratio_std': None,
+    'expression': SortedDict,                      # Reference pool expression
+    'expression_log2_ratio': {gene: 0.0},          # Self-referential (log2(1) = 0)
+    'expression_log2_ratio_se': None,              # No SE for self-reference
+    'expression_log2_ratio_variance': None,        # No variance for self-reference
+    'n_replicates': {gene: 1},                     # Reference is baseline (n=1)
 }
 ```
 
 ## Genotype Schema
 
 **Single Mutants**:
+
 ```python
 Genotype(
     perturbations=[
@@ -232,6 +240,7 @@ Genotype(
 ```
 
 **Double Mutants**:
+
 ```python
 Genotype(
     perturbations=[
@@ -252,20 +261,36 @@ Genotype(
 ## Environment
 
 All experiments use standard growth conditions:
+
 - **Media**: SC (synthetic complete), liquid
 - **Temperature**: 30°C
 
 ## Usage
 
 ```python
+import os.path as osp
+from dotenv import load_dotenv
 from torchcell.datasets.scerevisiae import (
     SmMicroarraySameith2015Dataset,
     DmMicroarraySameith2015Dataset
 )
+from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
+
+# Setup environment
+load_dotenv()
+DATA_ROOT = os.getenv("DATA_ROOT")
+
+# Initialize genome for gene name mapping (optional dependency injection)
+genome = SCerevisiaeGenome(
+    genome_root=osp.join(DATA_ROOT, "data/sgd/genome"),
+    go_root=osp.join(DATA_ROOT, "data/go"),
+    overwrite=True,
+)
 
 # Single mutants
 sm_dataset = SmMicroarraySameith2015Dataset(
-    root="data/torchcell/sm_microarray_sameith2015",
+    root=osp.join(DATA_ROOT, "data/torchcell/sm_microarray_sameith2015"),
+    genome=genome,  # Inject genome dependency
     io_workers=10,
     process_workers=0
 )
@@ -275,7 +300,8 @@ print(f"Genes measured: {len(sm_dataset.gene_set)}")  # ~6169
 
 # Double mutants
 dm_dataset = DmMicroarraySameith2015Dataset(
-    root="data/torchcell/dm_microarray_sameith2015",
+    root=osp.join(DATA_ROOT, "data/torchcell/dm_microarray_sameith2015"),
+    genome=genome,  # Inject genome dependency
     io_workers=10,
     process_workers=0
 )
@@ -294,9 +320,10 @@ gene1 = perturbations[0]['systematic_gene_name']
 gene2 = perturbations[1]['systematic_gene_name']
 
 # Get expression data
-expression = experiment['phenotype']['expression']  # SortedDict
-log2_ratios = experiment['phenotype']['expression_log2_ratio']
-expr_std = experiment['phenotype']['expression_technical_std']
+expression = experiment['phenotype']['expression']  # SortedDict (linear scale)
+log2_ratios = experiment['phenotype']['expression_log2_ratio']  # SortedDict
+log2_se = experiment['phenotype']['expression_log2_ratio_se']  # SortedDict
+n_replicates = experiment['phenotype']['n_replicates']  # Dict[str, int]
 
 # Check strain
 strain = reference['genome_reference']['strain']  # BY4742 or BY4741
@@ -305,6 +332,7 @@ strain = reference['genome_reference']['strain']  # BY4742 or BY4741
 ## Validation Results
 
 Dataset validation confirmed:
+
 - **Single mutants**: 82/82 from authoritative Excel list (100%)
 - **Double mutants**: 69/72 from authoritative Excel list (96%)
   - 3 pairs confirmed missing from GEO upload
@@ -323,6 +351,7 @@ The implementation went through several iterations to achieve proper data extrac
 4. **Final validation**: 3 pairs confirmed missing from GEO (not dataset error)
 
 Key challenges solved:
+
 - Handling dye swaps in two-channel microarray data
 - Extracting mixed common/systematic gene names from titles
 - Validating against authoritative supplementary data
@@ -338,7 +367,59 @@ Key challenges solved:
 ## Related Datasets
 
 For fitness-based genetic interaction data, see:
+
 - [[torchcell.datasets.scerevisiae.costanzo2016]]
 - [[torchcell.datasets.scerevisiae.kuzmin2018]]
 
 The Sameith2015 datasets provide expression-based epistasis data, enabling transcriptional analysis of genetic interactions between stress transcription factors.
+
+## 2026.01.29 - Replicate Counting Philosophy
+
+### Data-Driven n_replicates Computation
+
+This dataset follows the principle of **computing `n_replicates` from raw data** rather than using paper-reported constants.
+
+**Global constants in code** (lines 42-84 in `sameith2015.py`):
+
+```python
+N_EXPECTED_BIOLOGICAL_REPLICATES = 2
+N_EXPECTED_DYE_SWAP_TECHNICAL_REPLICATES = 2
+N_EXPECTED_MAX_REPLICATES_DELETION = 4
+```
+
+These constants are **documentation only** - they record what the paper reports about experimental design:
+
+- Quote from paper: "Each mutant strain was grown twice, from two independently inoculated cultures. Each culture was expression-profiled in technical replicate to yield four measurements for each profiling mutant."
+- Expected design: 2 biological replicates × 2 dye-swap measurements = 4 total
+- Applies to BOTH single mutants (SmMicroarray) and double mutants (DmMicroarray)
+
+**Actual implementation**: Code counts actual measurements per gene per deletion:
+
+```python
+# Example from processing logic
+for gene, values in grouped_values.items():
+    n_replicates[gene] = len(values)  # Count actual data points
+```
+
+**Why compute rather than use constants?**
+
+1. **QC filtering**: Some samples may fail quality control (actual < 4)
+2. **Data is authoritative**: Direct counts from GEO samples are ground truth
+3. **Gene-specific variation**: Different genes may have different replicate counts
+4. **Reference replicates**: WT reference pool measured in variable numbers of samples
+
+**Technical Replicates Section Update**: The section "Technical Replicates" (lines 65-77) describes the paper's reported design. However, the actual `n_replicates` stored in `MicroarrayExpressionPhenotype` is **computed from data**:
+
+- Typical value: ~4 (when all replicates pass QC)
+- Can be less (2-3) if some technical replicates were filtered
+- Reference pool: Varies by batch/day as WT samples are measured alongside mutants
+
+**Reference pool replicates** (lines 82-83):
+
+- `N_EXPECTED_REFPOOL_REPLICATES = None` (computed from data)
+- Actual values depend on how many WT samples were profiled for batch effect monitoring
+- Each experiment's reference phenotype uses computed replicate count from actual WT measurements
+
+This approach enables validation (compare computed vs expected to detect issues) while ensuring data integrity across both single and double mutant datasets.
+
+Related: [[torchcell.datamodels.schema#20260129---philosophy-around-n_replicates]]

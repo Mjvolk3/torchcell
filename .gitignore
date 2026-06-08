@@ -143,6 +143,7 @@ rockylinux_9.sif
 notes/assets/pdf-output/user.Sahand-Shafeei.preliminary-project-outline.2025.05.05.pdf
 **/CLAUDE.local.md
 .claude/config.json
+.claude/settings.local.json
 
 # papers
 how_to_build_virtual_cell.mmd

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@dendronhq/dendron-cli": "^0.109.1"
+    "@dendronhq/dendron-cli": "0.119.0"
   },
   "overrides": {
     "handlebars": "^4.7.9",

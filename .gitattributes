@@ -1,0 +1,7 @@
+# Weekly task notes are additive -- union the body so both branches' bullets
+# survive, but keep a SINGLE frontmatter block (a plain merge=union stacks
+# divergent frontmatter into invalid YAML). Driver defined in
+# scripts/git_merge_weekly_note.py; register it per-clone with
+# `bash scripts/setup-worktree.sh` (or `git config merge.weeklynote.*`).
+# Merge drivers live in .git/config, not here.
+notes/user.Mjvolk3.torchcell.tasks.weekly.*.md merge=weeklynote

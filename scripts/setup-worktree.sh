@@ -188,6 +188,15 @@ else
     echo "  ✓ .env.vscode already exists"
 fi
 
+# Register the weekly-note merge driver. Merge drivers live in .git/config
+# (not version-controlled); all worktrees share the main repo's .git, so this
+# is idempotent and covers every worktree. Without it, .gitattributes'
+# merge=weeklynote falls back to the default text merge.
+echo -e "\n${BLUE}Registering weekly-note merge driver...${NC}"
+git config merge.weeklynote.name "union weekly task-note bodies, keep a single frontmatter"
+git config merge.weeklynote.driver "python3 scripts/git_merge_weekly_note.py %O %A %B %P"
+echo "  ✓ merge.weeklynote registered in .git/config (shared across worktrees)"
+
 echo -e "\n${GREEN}✓ Worktree setup complete!${NC}"
 echo -e "\n${BLUE}How this works:${NC}"
 echo "  - .env is COPIED (not symlinked) from main repo with worktree-specific overrides"

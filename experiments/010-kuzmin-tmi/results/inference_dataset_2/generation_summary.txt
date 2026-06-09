@@ -1,0 +1,29 @@
+Inference Dataset 2 - Triple Generation Summary
+Timestamp: 2026-01-29-14-06-08
+
+SMF Source: SmfCostanzo2016Dataset (σ=0.063, lowest noise)
+
+Essential Gene Filtering:
+  Essential genes excluded: 1140
+
+Thresholds:
+  SMF baseline: > 1.0
+  SMF threshold: max > 1.1
+  DMF baseline: > 1.0
+  DMF gap: max(doubles) > max(singles) + 0.03
+
+Data loaded:
+  Genes with SMF (after filtering): 4557
+  Unique pairs with DMF: 13347568
+  Valid pairs (adjacency): 1739295
+
+Triple generation:
+  Candidates evaluated: 778163114
+  Kept (not in TMI): 479195
+  Rejected (in TMI): 243
+
+Rejection reasons:
+  missing_smf: 0
+  missing_dmf: 0
+  singles_threshold: 777423309
+  doubles_threshold: 260367

@@ -5,6 +5,10 @@
             "path": "."
         },
         {
+            "name": "iBioFoundry-AI",
+            "path": "../iBioFoundry-AI"
+        },
+        {
             "name": "torchcell-scratch",
             "path": "./torchcell-scratch"
         }

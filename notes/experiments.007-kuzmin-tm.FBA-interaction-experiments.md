@@ -66,6 +66,34 @@ Based on Suthers et al., 2020, we implemented three media conditions in `setup_m
 
 The Suthers et al. model (`experiments/007-kuzmin-tm/1-s2.0-S2214030120300481-mmc8/iIsor850.json`) for *Issatchenkia orientalis* served as our reference for media composition, adapted for *S. cerevisiae*.
 
+### Reference: Suthers et al. 2020 — iIsor850 (source of media definitions)
+
+The YNB/YPD media formulations above are adapted from **Suthers et al., 2020** (*Metabolic
+Engineering Communications*; ScienceDirect `S2214030120300481`), the genome-scale model
+**iIsor850** for *Issatchenkia orientalis*. This paper is our **source for the media
+definitions** (the vitamin/cofactor list for YNB and the amino-acid list for YPD).
+
+**Paper + full supplements** were moved out of the repo root to keep large reference data off
+git. They now live at `DATA_ROOT/data/external/iIsor850-mmc/` (browsable in the workspace via
+the `./torchcell-scratch/data/external/iIsor850-mmc/` symlink):
+
+| File | Contents |
+|------|----------|
+| `1-s2.0-S2214030120300481-main.pdf` | the paper |
+| `mmc5.xlsx` | **media / growth composition** — the media-definition source |
+| `mmc6.xlsx` | qPCR for biotin genes |
+| `mmc8/iIsor850.{json,xml}` | the model (a working copy also stays at `experiments/007-kuzmin-tm/1-s2.0-S2214030120300481-mmc8/`) |
+| `mmc1.txt` | reactions where iIsor850's GPR is longer (more `or`-isozymes) than Yeast8.3.4 |
+| `mmc7/.zip` | flux-coupling analysis; `mmc2–4.xlsx` other supplementary tables |
+
+**⚠ Known caveat — the iIsor850 media formulations are slightly off.** The published media
+definitions (`mmc5`) are not quite correct. We have since **fixed the formulation in the
+beta-carotene case study** in the `iBioFoundry-AI` repo — use that corrected media as the
+reference going forward rather than the raw `mmc5` values here:
+
+- Repo: `iBioFoundry-AI`, `experiments/case-study/s-cerevsisiae-beta-carotene-knockout/`
+- Note: `experiments.case-study.s-cerevsisiae-beta-carotene-knockout` (separate Dendron vault)
+
 ## FBA Pipeline Architecture
 
 ### Initial Single-Media Pipeline

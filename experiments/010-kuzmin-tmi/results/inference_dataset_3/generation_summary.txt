@@ -1,0 +1,26 @@
+Inference Dataset 3 - Triple Generation Summary
+Timestamp: 2026-02-04-20-23-49
+
+RELAXED THRESHOLDS (JT test validation):
+  SMF baseline: > 0.9
+  SMF threshold: max > 1.04
+  DMF baseline: > 0.9
+  DMF threshold: max > 1.08
+
+Essential genes excluded: 1140
+
+Data loaded:
+  Genes with SMF (after filtering): 4557
+  Unique pairs with DMF: 13347568
+  Valid pairs (adjacency): 5458004
+
+Triple generation:
+  Candidates evaluated: 4703030264
+  Kept (not in TMI): 465735532
+  Rejected (in TMI): 11048
+
+Rejection reasons:
+  missing_smf: 0
+  missing_dmf: 0
+  singles_threshold: 3765800588
+  doubles_threshold: 471483096

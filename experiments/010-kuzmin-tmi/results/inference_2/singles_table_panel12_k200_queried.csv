@@ -1,0 +1,13 @@
+index,gene,mutant_type,SmfCostanzo2016Dataset_fitness,SmfCostanzo2016Dataset_std,SmfCostanzo2016Dataset_strain_id,SmfKuzmin2018Dataset_fitness,SmfKuzmin2018Dataset_std,SmfKuzmin2018Dataset_strain_id,SmfKuzmin2020Dataset_fitness,SmfKuzmin2020Dataset_std,SmfKuzmin2020Dataset_strain_id
+1,YAL059W,single,1.0355,0.034,YAL059W_sn3907,0.9936,,YDL227C+YAL059W_tm2946,,,
+2,YBR078W,single,1.1118,0.0329,YBR078W_dma5187,,,,1.0319,0.006,tm430
+3,YCL011C,single,1.0155,0.0228,YCL011C_sn2074,1.0175,,YCL011C_dma477,0.81795,0.004,tm679
+4,YDR155C,single,1.0077,0.0489,YDR155C_sn352,,,,,,
+5,YER079W,single,1.0387,0.1173,YER079W_sn3579,,,,,,
+6,YER170W,single,1.0367,0.0497,YER170W_sn125,1.0252,,YER170W_dma1458,,,
+7,YGL170C,single,1.0242,0.0219,YGL170C_sn1636,,,,,,
+8,YGR288W,single,1.046,0.0198,YGR288W_sn2033,,,,,,
+9,YKR100C,single,1.0197,0.0469,YKR100C_sn604,,,,,,
+10,YLR343W,single,1.0015,0.047,YLR343W_sn602,,,,,,
+11,YMR148W,single,1.0053,0.0551,YMR148W_sn3673,1.0063,,YMR148W_dma3754,,,
+12,YNL030W,single,1.0267,0.0865,YNL030W_sn1752,1.0155,,YNL030W_dma3954,,,

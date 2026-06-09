@@ -46,6 +46,7 @@
     # graphviz
     plotly>=5.18.0
     seaborn>=0.12.2
+    matplotlib-venn>=1.1.2 # limited usage for experiments/
 
     # ML stack
     scikit-learn>=1.2.2

@@ -5,6 +5,10 @@
             "path": "."
         },
         {
+            "name": "iBioFoundry-AI",
+            "path": "../iBioFoundry-AI"
+        },
+        {
             "name":"torchcell_hosted_data",
             "path": "/Users/michaelvolk/Library/CloudStorage/Box-Box/torchcell"
         },

@@ -1,0 +1,114 @@
+%% Shared manuscript BODY -- this is the file you edit.
+%% Compiled by both submission.tex (single-column) and editing.tex (two-column).
+%% Mapped to notes/paper.nature-biotech-cgt-outline.md.
+
+%% ===== Title (aim <= ~15 words) =====
+\title[TorchCell CGT for multimodal phenotype prediction]{Accelerating metabolic engineering through multimodal phenotype prediction with TorchCell and the Cell Graph Transformer}
+
+%% ===== Authors / affiliations (FILL IN) =====
+\author*[1]{\fnm{Michael} \sur{Volk}}\email{mjvolk3@illinois.edu}
+\author[1]{\fnm{First} \sur{Coauthor}}\email{}
+\author*[1]{\fnm{Huimin} \sur{Zhao}}\email{zhao5@illinois.edu}
+
+\affil[1]{\orgdiv{Department of Chemical and Biomolecular Engineering}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \country{USA}}}
+
+%% ===== Abstract (<= 150 words; shortened from SIMB 2026) =====
+%% Point estimates only (no +/-) to sidestep the unresolved error-bar provenance
+%% (see outline Gaps); restore uncertainties once reconciled.
+\abstract{Deep learning has advanced protein structure prediction, yet metabolic
+engineering lags because phenotype data are scattered across heterogeneous studies
+lacking a shared ontology. We present
+TorchCell, an open-source framework that annotates literature and public datasets
+with a shared ontology and ingests them into a Neo4j knowledge graph, then builds
+deep-learning-ready datasets in which each strain is a perturbation operator over
+a shared wildtype reference cell combining genome sequence, gene networks,
+metabolism, and environment. We develop the Cell Graph Transformer (CGT), a
+virtual-cell architecture in which biological interaction graphs constrain
+multi-head attention and an equivariant perturbation operator feeds multitask
+decoders. In \textit{Saccharomyces cerevisiae}, CGT predicts trigenic
+gene-gene interactions (Pearson $r=0.454$), outperforming DANGO, DCell, and Yeast9
+flux balance analysis, and generalizes to knockout expression ($r=0.543$) and
+morphology ($r=0.619$). CGT recommends gene deletions for beta-carotene and
+betaxanthin production, pairing with autonomous biofoundries for AI-guided strain
+engineering.}
+
+\keywords{metabolic engineering, foundation models, gene interactions, virtual cell, knowledge graph, strain design}
+
+\maketitle
+
+%% ===== Introduction (~500-650 words) =====
+\section{Introduction}\label{sec:intro}
+\textit{[FILLER -- replace with Intro prose.]} Deep learning transformed protein
+structure and function prediction, yet systems biology and metabolic engineering
+lag because phenotype data are scattered across small, heterogeneous studies with
+no shared schema~\cite{volk2023meteng}. Prior approaches fall short: mechanistic
+flux balance analysis misses epistasis, and recent perturbation transformers do
+not consistently beat linear baselines~\cite{ahlmanneltze2025}. Our own classical
+baselines predict knockout fitness but fail on gene interactions (Suppl.\ Fig.\
+S1), motivating a deep, biologically grounded model. Here we present TorchCell and
+the Cell Graph Transformer (CGT).
+
+%% ===== Results (~1,700-2,000 words) =====
+\section{Results}\label{sec:results}
+
+\bmhead{A shared ontology and knowledge graph unify metabolic-engineering data}
+\textit{[FILLER -- R1, see Fig.~\ref{fig:overview}.]} TorchCell annotates
+literature and public datasets with a shared experiment ontology and ingests them
+into a Neo4j knowledge graph; dataloaders emit deep-learning-ready datasets in
+which each strain is a perturbation operator over a shared wildtype reference cell.
+
+\bmhead{The Cell Graph Transformer: a graph-constrained virtual cell}
+\textit{[FILLER -- R2.]} Biological interaction graphs constrain multi-head
+attention through a loss aligning attention to network priors; an equivariant
+perturbation operator maps the reference embedding to the perturbed strain state.
+
+\bmhead{CGT predicts trigenic gene-gene interactions at state of the art}
+\textit{[FILLER -- R3.]} Classical ML fails on this task (Suppl.\ Fig.\ S1); CGT
+reaches Pearson $r = 0.454 \pm 0.006$, outperforming DANGO, DCell, and Yeast9 FBA.
+
+\bmhead{One embedding, many phenotypes: expression and morphology}
+\textit{[FILLER -- R4.]} The same architecture predicts knockout expression
+($r = 0.543$) and single-knockout morphology ($r = 0.619$).
+
+\bmhead{CGT-guided strain design with an autonomous foundry}
+\textit{[FILLER -- R5.]} We recommend gene deletions for beta-carotene and
+betaxanthin production and pair with the UIUC iBioFoundry for iterative design.
+
+%% Full-width figure (figure* spans both columns in two-column; full width in single).
+\begin{figure*}[t]
+\centering
+\fbox{\parbox[c][4.5cm][c]{0.95\textwidth}{\centering \textit{[Figure~1 placeholder]}\\[4pt]
+TorchCell overview --- 4 panels: (a) data-to-KG flow; (b) multimodal reference
+cell; (c) perturbation operator; (d) CGT teaser. Replace with exported vector PDF.}}
+\caption{TorchCell: ontology-unified knowledge graph and the perturbation-operator
+cell representation. Panels (a)--(d) per outline.}
+\label{fig:overview}
+\end{figure*}
+
+%% ===== Discussion (~500-650 words) =====
+\section{Discussion}\label{sec:discussion}
+\textit{[FILLER -- Discussion.]} A strain-aware, biologically grounded
+representation is the differentiator; limitations include single-organism scope,
+morphology-data maturity, and error-bar provenance.
+
+%% ===== Methods (no word limit; full math here) =====
+\section{Methods}\label{sec:methods}
+\textit{[FILLER -- Methods.]} Ontology and knowledge-graph construction; dataset
+and perturbation-operator formalism; CGT architecture and the graph-regularized
+attention loss; training, splits, metrics; baselines (DANGO, DCell, Yeast9 FBA);
+inference at scale; statistics and error-bar definitions.
+
+\backmatter
+
+\bmhead{Supplementary information}
+% Supplementary Figures S1-S6 (see outline). S1 = classical-ML baselines.
+
+\bmhead{Acknowledgments}
+
+\section*{Declarations}
+% Funding; competing interests; data availability (GitHub, NCSA Neo4j, HuggingFace);
+% code availability; author contributions.
+
+%% ===== Bibliography =====
+\nocite{*}% FILLER: force all seeded refs to render in the preview; remove for submission
+\bibliography{references}

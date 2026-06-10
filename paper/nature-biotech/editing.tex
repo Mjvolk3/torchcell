@@ -1,0 +1,17 @@
+%% EDITING / FIGURE-SIZING version.
+%% Single-column (readable for drafting) but with reduced, print-approximate
+%% margins so the text block ~ the journal page width and figures size
+%% realistically. NOT the submission format -- submit submission.tex (which keeps
+%% the official wide-margin Nature layout). Edit content.tex (shared body), not here.
+%%
+%% Figure-sizing guide in this layout (A4, ~170 mm text block):
+%%   \textwidth        ~ full-page-width print figure (figure*)
+%%   ~0.49\textwidth   ~ single print column figure
+%% To instead see the true two-column print typeset, add ,iicol to the documentclass.
+\documentclass[pdflatex,sn-nature,Numbered]{sn-jnl}
+\input{preamble}
+%% Override the class's wide submission margins with print-approximate ones.
+\geometry{a4paper,left=20mm,right=20mm,top=22mm,bottom=22mm,marginparwidth=0pt,marginparsep=0pt}
+\begin{document}
+\input{content}
+\end{document}

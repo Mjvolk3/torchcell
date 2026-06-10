@@ -1,0 +1,35 @@
+%% FIGURE PROTOTYPING SANDBOX -- exact Nature Biotechnology PRINT dimensions.
+%% Extracted from the published spec + a real page (DreaMS Fig. 4,
+%% doi:10.1038/s41587-025-02663-3, whose horizontal rules mark the text block):
+%%   full text width (double column) = 180 mm  -> \textwidth
+%%   single column                   =  88 mm  -> \columnwidth
+%%   column gutter                    =   4 mm  (= 180 - 2x88; why the two text columns look "close")
+%%   max figure height                = 170 mm  (leaves room for the caption)
+%%   side margins on a 210 mm page    = ~15 mm  (210 - 180, split)
+%% NOTE: the sn-jnl class's own iicol is 160/76/8 (submission two-column). We
+%% override geometry below to the PUBLISHED 180/88/4 so a figure here is 1:1 with
+%% the printed page. Drop real panels in; build each to 88 mm or 180 mm wide.
+\documentclass[pdflatex,sn-nature,Numbered,iicol]{sn-jnl}
+\input{preamble}
+\geometry{paperwidth=210mm,paperheight=297mm,textwidth=180mm,textheight=247mm,top=20mm,marginparwidth=0pt,marginparsep=0pt}
+\setlength{\columnsep}{4mm}% -> \columnwidth = (180-4)/2 = 88 mm
+
+\begin{document}
+
+%% Full-width figure canvas at true print scale (180 mm x up to 170 mm) + caption.
+\begin{figure*}[p]
+\centering
+\fbox{\parbox[c][170mm][c]{\textwidth}{\centering
+  \textbf{Full-width figure area}\\[4pt]
+  180 mm wide $\times$ 170 mm tall (maximum)\\[10pt]
+  \textit{Drop your figure here:}\\
+  \texttt{\textbackslash includegraphics[width=\textbackslash textwidth]\{figures/fig.pdf\}}\\[10pt]
+  \textit{A single-column panel is 88 mm} ($=\,$\texttt{\textbackslash columnwidth}, half width, 4 mm gutter).}}
+\caption{True-scale Nature Biotechnology figure canvas. Full-width = 180 mm,
+single column = 88 mm (4 mm gutter), maximum height 170 mm before the caption.
+Build panels to content (real Nature figures are asymmetric) and export at exactly
+88 or 180 mm wide.}
+\label{fig:proto}
+\end{figure*}
+
+\end{document}

@@ -101,33 +101,13 @@ echo "Certificates will expire in 90 days. Setting up auto-renewal..."
 # Setup auto-renewal with cron
 echo -e "${YELLOW}Setting up automatic renewal...${NC}"
 
-# Create renewal hook script
-cat > /etc/letsencrypt/renewal-hooks/deploy/neo4j-reload.sh << 'EOF'
-#!/bin/bash
-# Reload Neo4j after certificate renewal
-
-DOMAIN="torchcell-database.ncsa.illinois.edu"
-CERT_DIR="/home/rocky/projects/torchcell/database/certificates/https"
-
-# Fix permissions after renewal
-chmod 755 /etc/letsencrypt/live
-chmod 755 /etc/letsencrypt/archive
-
-# Copy renewed certificates for Docker access
-cp -L "/etc/letsencrypt/live/$DOMAIN/privkey.pem" "$CERT_DIR/private.key"
-cp -L "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" "$CERT_DIR/public.crt"
-chown rocky:neo4j "$CERT_DIR/private.key" "$CERT_DIR/public.crt"
-chmod 640 "$CERT_DIR/private.key"
-chmod 644 "$CERT_DIR/public.crt"
-
-# If Neo4j container is running, restart it to load new certificates
-if docker ps | grep -q tc-neo4j; then
-    echo "Restarting Neo4j container to load new certificates..."
-    docker restart tc-neo4j
-fi
-EOF
-
-chmod +x /etc/letsencrypt/renewal-hooks/deploy/neo4j-reload.sh
+# Install the deploy hook. It delegates to copy_certs.sh (single source of
+# truth for the copy + restart), so the logic never diverges from the manual
+# path. Remove the old duplicated inline hook left by prior setup runs.
+rm -f /etc/letsencrypt/renewal-hooks/deploy/neo4j-reload.sh
+cp "$PROJECT_DIR/database/scripts/letsencrypt-deploy-hook.sh" \
+   /etc/letsencrypt/renewal-hooks/deploy/torchcell-neo4j.sh
+chmod +x /etc/letsencrypt/renewal-hooks/deploy/torchcell-neo4j.sh
 
 # Add cron job for renewal (runs twice daily as recommended)
 (crontab -l 2>/dev/null | grep -v "certbot renew"; echo "0 0,12 * * * /usr/bin/certbot renew --quiet") | crontab -

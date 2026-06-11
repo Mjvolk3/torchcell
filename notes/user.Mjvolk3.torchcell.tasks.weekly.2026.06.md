@@ -18,6 +18,11 @@ created: 1770243892728
 - [x] After merge, run gene panel selection: `sbatch experiments/010-kuzmin-tmi/scripts/gh_select_12_and_24_gene_top_triples_inference_3.slurm`
 - [x] Inference-3 pipeline + final 12-gene panel graduated to durable note → [[Inference Dataset 3|experiments.010-kuzmin-tmi.inference-dataset-3]]
 
+## 2026.06.10
+
+- [x] Recovered `tc-neo4j` after container prune (data intact on host bind-mount; re-ran `docker run`), refreshed expired Let's Encrypt cert via `copy_certs.sh`
+- [ ] Wire certbot deploy-hook so the Neo4j TLS cert auto-copies + restarts on renewal (install + test pending) [[plan.certbot-deploy-hook-neo4j-tls.2026.06.10]]
+
 ## 2026.06.23
 
 - [x] Drafted the information-accounting argument for the model-construction strategy → [[Information Accounting|paper.information-accounting]] (why the model cuts between the *universe of things* and the *universe of instances*; explains learnable-embedding ≥ seq-embedding for fitness; formalizes the "embeddings only help when sequence changes" hypothesis)

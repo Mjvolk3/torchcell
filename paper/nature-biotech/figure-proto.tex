@@ -20,15 +20,23 @@
 \begin{figure*}[p]
 \centering
 \fbox{\parbox[c][170mm][c]{\textwidth}{\centering
-  \textbf{Full-width figure area}\\[4pt]
-  180 mm wide $\times$ 170 mm tall (maximum)\\[10pt]
-  \textit{Drop your figure here:}\\
-  \texttt{\textbackslash includegraphics[width=\textbackslash textwidth]\{figures/fig.pdf\}}\\[10pt]
-  \textit{A single-column panel is 88 mm} ($=\,$\texttt{\textbackslash columnwidth}, half width, 4 mm gutter).}}
-\caption{True-scale Nature Biotechnology figure canvas. Full-width = 180 mm,
-single column = 88 mm (4 mm gutter), maximum height 170 mm before the caption.
-Build panels to content (real Nature figures are asymmetric) and export at exactly
-88 or 180 mm wide.}
+  \textbf{Maximum full-width figure area}\\[6pt]
+  \textbf{180 mm wide $\times$ 170 mm tall}\\[2pt]
+  draw.io (100 units/inch, 1 mm = 3.94 units):\\
+  \textbf{709 $\times$ 669 units}\quad (full width $\times$ max height)\\[2pt]
+  single column 88 mm = \textbf{347 units} wide (4 mm gutter)\\[12pt]
+  \textit{Design AT this size, fonts 6--7 pt, then:}\\
+  \texttt{\textbackslash includegraphics[width=\textbackslash textwidth]\{figures/fig.pdf\}}\\
+  (scale $\approx$ 1, so 6--7 pt text stays 6--7 pt)\\[12pt]
+  Caption headroom below: text height 247 mm $-$ 170 mm figure\\
+  $=$ \textbf{$\sim$77 mm} ($\approx$ 23 lines at 8 pt) --- legend fits same page.}}
+\caption{True-scale Nature Biotechnology figure canvas. This box is the maximum
+artwork: full width 180 mm = 709 draw.io units; max height 170 mm = 669 units
+(single column 88 mm = 347 units, 4 mm gutter). The 170 mm cap reserves ~77 mm of
+the 247 mm text height for the legend, so a full-page figure plus caption fit on
+one page; for a caption longer than ~20 lines, set figure height = 247 mm minus
+the caption height. Build panels to content (real Nature figures are asymmetric)
+and export at exactly 88 or 180 mm wide.}
 \label{fig:proto}
 \end{figure*}
 

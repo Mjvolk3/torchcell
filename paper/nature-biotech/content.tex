@@ -37,7 +37,9 @@ engineering.}
 \maketitle
 
 %% ===== Introduction (~500-650 words) =====
-\section{Introduction}\label{sec:intro}
+\section{Introduction \cb{target ~3,400 chars}}\label{sec:intro}
+% NOTE: Fig 1 (TorchCell overview, fig:overview) is referenced here in the Intro
+% as the orienting schematic, then again in Results R1.
 \textit{[FILLER -- replace with Intro prose.]} Deep learning transformed protein
 structure and function prediction, yet systems biology and metabolic engineering
 lag because phenotype data are scattered across small, heterogeneous studies with
@@ -46,53 +48,106 @@ flux balance analysis misses epistasis, and recent perturbation transformers do
 not consistently beat linear baselines~\cite{ahlmanneltze2025}. Our own classical
 baselines predict knockout fitness but fail on gene interactions (Suppl.\ Fig.\
 S1), motivating a deep, biologically grounded model. Here we present TorchCell and
-the Cell Graph Transformer (CGT).
+the Cell Graph Transformer (CGT), whose data model and architecture we outline in
+Fig.~\ref{fig:overview}.
 
-%% ===== Results (~1,700-2,000 words) =====
-\section{Results}\label{sec:results}
+%% ===== Results (~1,700-2,000 words; ONE main figure per subsection) =====
+\section{Results \cb{target ~11,500 chars}}\label{sec:results}
 
-\bmhead{A shared ontology and knowledge graph unify metabolic-engineering data}
-\textit{[FILLER -- R1, see Fig.~\ref{fig:overview}.]} TorchCell annotates
-literature and public datasets with a shared experiment ontology and ingests them
-into a Neo4j knowledge graph; dataloaders emit deep-learning-ready datasets in
-which each strain is a perturbation operator over a shared wildtype reference cell.
+\bmhead{A shared ontology and knowledge graph unify metabolic-engineering data \cb{~2,300}}
+\textit{[FILLER -- R1.]} TorchCell annotates literature and public datasets with a
+shared experiment ontology and ingests them into a Neo4j knowledge graph;
+dataloaders emit deep-learning-ready datasets in which each strain is a
+perturbation operator over a shared wildtype reference cell
+(Fig.~\ref{fig:overview}; data scale in Suppl.\ Fig.\ S2; ontology/KG spec in
+Suppl.\ Fig.\ S4).
 
-\bmhead{The Cell Graph Transformer: a graph-constrained virtual cell}
-\textit{[FILLER -- R2.]} Biological interaction graphs constrain multi-head
-attention through a loss aligning attention to network priors; an equivariant
-perturbation operator maps the reference embedding to the perturbed strain state.
-
-\bmhead{CGT predicts trigenic gene-gene interactions at state of the art}
-\textit{[FILLER -- R3.]} Classical ML fails on this task (Suppl.\ Fig.\ S1); CGT
-reaches Pearson $r = 0.454 \pm 0.006$, outperforming DANGO, DCell, and Yeast9 FBA.
-
-\bmhead{One embedding, many phenotypes: expression and morphology}
-\textit{[FILLER -- R4.]} The same architecture predicts knockout expression
-($r = 0.543$) and single-knockout morphology ($r = 0.619$).
-
-\bmhead{CGT-guided strain design with an autonomous foundry}
-\textit{[FILLER -- R5.]} We recommend gene deletions for beta-carotene and
-betaxanthin production and pair with the UIUC iBioFoundry for iterative design.
-
-%% Full-width figure (figure* spans both columns in two-column; full width in single).
+%% --- Figure 1 (R1): TorchCell overview ---
 \begin{figure*}[t]
 \centering
-\fbox{\parbox[c][4.5cm][c]{0.95\textwidth}{\centering \textit{[Figure~1 placeholder]}\\[4pt]
-TorchCell overview --- 4 panels: (a) data-to-KG flow; (b) multimodal reference
-cell; (c) perturbation operator; (d) CGT teaser. Replace with exported vector PDF.}}
+% draw.io: compose figures/fig1_overview.drawio -> export figures/fig1_overview.pdf, then:
+% \includegraphics[width=\textwidth]{figures/fig1_overview.pdf}
+\figph{55mm}{\textbf{[Fig.~1 placeholder -- compose in draw.io]}\\[3pt]
+TorchCell overview. (a) data-to-KG flow; (b) multimodal reference cell;
+(c) perturbation operator; (d) CGT teaser.}
 \caption{TorchCell: ontology-unified knowledge graph and the perturbation-operator
-cell representation. Panels (a)--(d) per outline.}
+cell representation. Panels (a)--(d).}
 \label{fig:overview}
 \end{figure*}
 
+\bmhead{The Cell Graph Transformer: a graph-constrained virtual cell \cb{~2,300}}
+\textit{[FILLER -- R2.]} Biological interaction graphs constrain multi-head
+attention through a loss aligning attention to network priors; an equivariant
+perturbation operator maps the reference embedding to the perturbed strain state
+(Fig.~\ref{fig:cgt}; ablations in Suppl.\ Fig.\ S3).
+
+%% --- Figure 2 (R2): CGT architecture ---
+\begin{figure*}[t]
+\centering
+% draw.io: figures/fig2_cgt_architecture.pdf
+\figph{60mm}{\textbf{[Fig.~2 placeholder -- compose in draw.io]}\\[3pt]
+CGT architecture. (a) graph-regularized attention; (b) attention-prior alignment;
+(c) equivariant perturbation operator; (d) multitask decoder heads.}
+\caption{The Cell Graph Transformer architecture. (a)--(d).}
+\label{fig:cgt}
+\end{figure*}
+
+\bmhead{CGT predicts trigenic gene-gene interactions at state of the art \cb{~2,300}}
+\textit{[FILLER -- R3.]} Classical ML fails on this task (Suppl.\ Fig.\ S1); CGT
+reaches Pearson $r = 0.454$, outperforming DANGO, DCell, and Yeast9 FBA
+(Fig.~\ref{fig:ggi}).
+
+%% --- Figure 3 (R3): GGI state of the art ---
+\begin{figure*}[t]
+\centering
+% draw.io / matplotlib export: figures/fig3_ggi.pdf
+\figph{60mm}{\textbf{[Fig.~3 placeholder -- compose in draw.io]}\\[3pt]
+Trigenic GGI. (a) model comparison (CGT/DANGO/DCell/Yeast9); (b) predicted-vs-actual;
+(c) performance vs interaction magnitude; (d) ablation.}
+\caption{State-of-the-art trigenic gene-gene interaction prediction. (a)--(d).}
+\label{fig:ggi}
+\end{figure*}
+
+\bmhead{One embedding, many phenotypes: expression and morphology \cb{~2,300}}
+\textit{[FILLER -- R4.]} The same architecture predicts knockout expression
+($r = 0.543$) and single-knockout morphology ($r = 0.619$)
+(Fig.~\ref{fig:multitask}; expression diagnostics in Suppl.\ Fig.\ S5).
+
+%% --- Figure 4 (R4): multitask generalization ---
+\begin{figure*}[t]
+\centering
+% draw.io: figures/fig4_multitask.pdf
+\figph{60mm}{\textbf{[Fig.~4 placeholder -- compose in draw.io]}\\[3pt]
+Multitask generalization. (a) expression predicted-vs-actual; (b) morphology
+predicted-vs-actual; (c) cross-phenotype summary; (d) shared-latent UMAP.}
+\caption{One latent cell embedding generalizes across phenotype classes. (a)--(d).}
+\label{fig:multitask}
+\end{figure*}
+
+\bmhead{CGT-guided strain design with an autonomous foundry \cb{~2,300}}
+\textit{[FILLER -- R5.]} We recommend gene deletions for beta-carotene and
+betaxanthin production and pair with the UIUC iBioFoundry for iterative design
+(Fig.~\ref{fig:design}; inference at scale in Suppl.\ Fig.\ S6).
+
+%% --- Figure 5 (R5): strain design + DBTL ---
+\begin{figure*}[t]
+\centering
+% draw.io: figures/fig5_design.pdf
+\figph{60mm}{\textbf{[Fig.~5 placeholder -- compose in draw.io]}\\[3pt]
+CGT-guided strain design. (a) beta-carotene/betaxanthin pathways; (b) ranked
+recommendations; (c) TorchCell + iBioFoundry DBTL loop; (d) validation titers.}
+\caption{CGT-guided strain design closes the DBTL loop with an autonomous foundry. (a)--(d).}
+\label{fig:design}
+\end{figure*}
+
 %% ===== Discussion (~500-650 words) =====
-\section{Discussion}\label{sec:discussion}
+\section{Discussion \cb{target ~3,400 chars}}\label{sec:discussion}
 \textit{[FILLER -- Discussion.]} A strain-aware, biologically grounded
 representation is the differentiator; limitations include single-organism scope,
 morphology-data maturity, and error-bar provenance.
 
 %% ===== Methods (no word limit; full math here) =====
-\section{Methods}\label{sec:methods}
+\section{Methods \cb{no limit}}\label{sec:methods}
 \textit{[FILLER -- Methods.]} Ontology and knowledge-graph construction; dataset
 and perturbation-operator formalism; CGT architecture and the graph-regularized
 attention loss; training, splits, metrics; baselines (DANGO, DCell, Yeast9 FBA);

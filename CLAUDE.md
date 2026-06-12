@@ -8,6 +8,35 @@
 
 - Do NOT ever use fallback mechanisms unless we clearly tell you to. This means minimize try except blocks, unnecessary conditionals, etc.
 
+## Paper / Manuscript Workflow
+
+The Nature Biotechnology manuscript lives in `paper/nature-biotech/`. It uses the
+Springer Nature `sn-jnl` class (Nature Portfolio `sn-nature` style) with a shared
+body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
+
+- **Two tiers (workshop vs shared).** `paper/nature-biotech/` is the **workshop**:
+  private, full, versioned in torchcell (`editing.tex`, `figure-proto.tex`,
+  char-budget tags, draft scaffolding). `~/Documents/projects/torchcell-overleaf` is
+  the **shared** copy: an Overleaf-backed git repo holding a curated subset that
+  collaborators see. Edit in the workshop only.
+- **Publish to collaborators:** `bash paper/nature-biotech/sync-overleaf.sh` copies
+  the curated `SHARE_FILES` (submission.tex -> `main.tex`, plus content/preamble/
+  cls/bst/bib, figures, and the figure guide), pulls collaborator changes first,
+  then pushes to Overleaf. Edit `SHARE_FILES` to control what crosses over.
+- **Build PDFs:** `make -C paper/nature-biotech paper` builds three views with
+  Tectonic -- `submission.pdf` (journal submission; official single column),
+  `editing.pdf` (our drafting/typeset look; print-approx margins + char budgets),
+  `twocolumn.pdf` (published-like double column). `make figproto` builds the
+  true-scale figure-sizing canvas. Install Tectonic via `conda install -c
+  conda-forge tectonic`.
+- **Figures come from assets; never write image data directly to Overleaf.**
+  Generate plots to `ASSET_IMAGES_DIR` (the standard image-output convention),
+  compose figures in draw.io at Nature print size (full 180 mm / column 88 mm,
+  <=170 mm tall -- see `paper/nature-biotech/figures/README.md`), export vector PDF
+  into `paper/nature-biotech/figures/`, then sync. Collaborators may add their own
+  images in Overleaf; the sync pulls first and never deletes their files. The
+  figure-prep guide and the figure-sizing canvas are synced so collaborators see them.
+
 ## Dendron Paths
 
 We use dendron paths in markdown files to link between project notes. These are very useful for giving additional context.

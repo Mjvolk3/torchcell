@@ -14,9 +14,30 @@ tc-onto-expand:
 tc-onto-mermaid:
 	@python torchcell/ontology/mermaid_diagram.py
 
+# --- Manuscript (paper/nature-biotech) passthrough targets ---
+.PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-clean paper-sync
+paper:
+	@$(MAKE) -C paper/nature-biotech paper
+paper-submission:
+	@$(MAKE) -C paper/nature-biotech submission
+paper-editing:
+	@$(MAKE) -C paper/nature-biotech editing
+paper-twocolumn:
+	@$(MAKE) -C paper/nature-biotech twocolumn
+paper-figproto:
+	@$(MAKE) -C paper/nature-biotech figproto
+paper-clean:
+	@$(MAKE) -C paper/nature-biotech clean
+paper-sync:
+	@bash paper/nature-biotech/sync-overleaf.sh
+
 .PHONY: help
 help:
 	@echo "Available commands:"
 	@echo "  make tc-onto         - Show schema → Biolink mappings (compact)"
 	@echo "  make tc-onto-expand  - Show schema → Biolink mappings (detailed tree)"
 	@echo "  make tc-onto-mermaid - Generate Mermaid diagrams from schema"
+	@echo "  make paper           - Build submission + editing + twocolumn PDFs"
+	@echo "  make paper-submission/-editing/-twocolumn/-figproto - one PDF"
+	@echo "  make paper-sync      - Publish the curated subset to Overleaf"
+	@echo "  make paper-clean     - Remove generated paper PDFs"

@@ -17,3 +17,7 @@
 \usepackage{listings}
 
 \raggedbottom
+
+% Drafting helper: figure placeholder box. Swap \figph{height}{desc} for
+% \includegraphics[width=\linewidth]{figures/figN.pdf} once the draw.io export exists.
+\newcommand{\figph}[2]{\fbox{\parbox[c][#1][c]{0.97\linewidth}{\centering #2}}}

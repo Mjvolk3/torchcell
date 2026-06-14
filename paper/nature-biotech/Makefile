@@ -13,10 +13,10 @@
 
 TECTONIC ?= $(shell command -v tectonic 2>/dev/null || echo /tmp/tectonic)
 
-SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst
+SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst $(wildcard sections/*.tex)
 VIEWS  := submission editing twocolumn
 
-.PHONY: paper all submission editing twocolumn figproto clean
+.PHONY: paper all submission editing twocolumn figproto flat clean
 paper: $(addsuffix .pdf,$(VIEWS))
 all: paper figproto
 
@@ -32,5 +32,10 @@ submission.pdf editing.pdf twocolumn.pdf: %.pdf: %.tex $(SHARED)
 figure-proto.pdf: figure-proto.tex preamble.tex
 	$(TECTONIC) -X compile $<
 
+# Flatten to a single .tex for Springer Nature submission (no \input; .bbl inlined
+# if a submission.bbl is present). Springer requires one file -- do this at submit time.
+flat: submission.tex $(SHARED)
+	python3 flatten_tex.py submission.tex submission-flat.tex
+
 clean:
-	rm -f submission.pdf editing.pdf twocolumn.pdf figure-proto.pdf
+	rm -f submission.pdf editing.pdf twocolumn.pdf figure-proto.pdf submission-flat.tex

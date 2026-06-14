@@ -11,6 +11,14 @@
         {
             "name": "torchcell-scratch",
             "path": "./torchcell-scratch"
+        },
+        {
+            "name": "Swanki",
+            "path": "../Swanki"
+        },
+        {
+            "name": "torchcell-overleaf",
+            "path": "../torchcell-overleaf"
         }
     ],
     "settings": {

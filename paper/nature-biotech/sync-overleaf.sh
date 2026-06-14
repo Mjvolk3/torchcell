@@ -29,7 +29,8 @@ SHARE_FILES=(
   sn-nature.bst
   references.bib
 )
-# submission.tex -> main.tex (handled below); figures/ copied whole.
+# submission.tex -> main.tex (handled below); sections/ and figures/ copied whole.
+# (Overleaf compiles multi-file fine; the single-file rule is only for journal upload -- `make flat`.)
 
 [ -d "$DST/.git" ] || { echo "ERROR: $DST is not a git repo. Clone the Overleaf project there first." >&2; exit 1; }
 
@@ -48,6 +49,7 @@ for f in "${SHARE_FILES[@]}"; do cp "$SRC/$f" "$DST/$f"; done
 mkdir -p "$DST/figures"
 cp -r "$SRC/figures/." "$DST/figures/"        # figure assets + the figure-prep guide (figures/README.md)
 [ -f "$SRC/figure-proto.pdf" ] && cp "$SRC/figure-proto.pdf" "$DST/figures/figure-proto.pdf"  # true-scale sizing canvas for collaborators
+mkdir -p "$DST/sections" && cp "$SRC"/sections/*.tex "$DST/sections/"   # split section bodies (Overleaf compiles multi-file)
 
 cd "$DST"
 git add -A

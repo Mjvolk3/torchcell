@@ -1,0 +1,34 @@
+%% Front matter: title, authors, affiliations, abstract, keywords.
+%% ===== Title (aim <= ~15 words) =====
+\title[TorchCell CGT for multimodal phenotype prediction]{Accelerating metabolic engineering through multimodal phenotype prediction with TorchCell and the Cell Graph Transformer}
+
+%% ===== Authors / affiliations (FILL IN) =====
+\author*[1]{\fnm{Michael} \sur{Volk}}\email{mjvolk3@illinois.edu}
+\author[1]{\fnm{First} \sur{Coauthor}}\email{}
+\author*[1]{\fnm{Huimin} \sur{Zhao}}\email{zhao5@illinois.edu}
+
+\affil[1]{\orgdiv{Department of Chemical and Biomolecular Engineering}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \country{USA}}}
+
+%% ===== Abstract (<= 150 words; shortened from SIMB 2026) =====
+%% Point estimates only (no +/-) to sidestep the unresolved error-bar provenance
+%% (see outline Gaps); restore uncertainties once reconciled.
+\abstract{Deep learning has advanced protein structure prediction, yet metabolic
+engineering lags because phenotype data are scattered across heterogeneous studies
+lacking a shared ontology. We present
+TorchCell, an open-source framework that annotates literature and public datasets
+with a shared ontology and ingests them into a Neo4j knowledge graph, then builds
+deep-learning-ready datasets in which each strain is a perturbation operator over
+a shared wildtype reference cell combining genome sequence, gene networks,
+metabolism, and environment. We develop the Cell Graph Transformer (CGT), a
+virtual-cell architecture in which biological interaction graphs constrain
+multi-head attention and an equivariant perturbation operator feeds multitask
+decoders. In \textit{Saccharomyces cerevisiae}, CGT predicts trigenic
+gene-gene interactions (Pearson $r=0.454$), outperforming DANGO, DCell, and Yeast9
+flux balance analysis, and generalizes to knockout expression ($r=0.543$) and
+morphology ($r=0.619$). CGT recommends gene deletions for beta-carotene and
+betaxanthin production, pairing with autonomous biofoundries for AI-guided strain
+engineering.}
+
+\keywords{metabolic engineering, foundation models, gene interactions, virtual cell, knowledge graph, strain design}
+
+\maketitle

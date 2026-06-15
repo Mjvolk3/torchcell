@@ -11,8 +11,26 @@ the "Draw.io Integration" VS Code extension edits `.drawio` files inline).
    `figure-proto.tex` to check the full-page fit.
 3. Export to vector PDF: draw.io `File -> Export as -> PDF` (crop to drawing,
    uncheck page background) -> save as `figN_name.pdf` here.
-4. In `content.tex`, swap the `\figph{...}{...}` placeholder for
-   `\includegraphics[width=\textwidth]{figures/figN_name.pdf}` (or `\linewidth`).
+4. In the section file, swap the `\figph{...}{...}` placeholder for
+   `\includegraphics[...]{figures/figN_name.pdf}`.
+
+## True-to-size (WYSIWYG) -- figure prints at the size you drew
+
+To make the figure render at the size you designed in draw.io, do NOT cap it with
+`height=`; control it by a width that equals your design width, on a vector PDF:
+
+- full-width figure designed at 180 mm:   `\includegraphics[width=180mm]{figures/figN.pdf}`
+- single-column figure designed at 88 mm:  `\includegraphics[width=88mm]{figures/figN.pdf}`
+- pure WYSIWYG (no scaling at all):        `\includegraphics{figures/figN.pdf}`
+  -- renders at the PDF's own exported size; verify draw.io exported at true scale once.
+
+Rules:
+- **Vector PDF only.** A raster PNG's physical size depends on flaky DPI metadata,
+  so true-to-size is unreliable -- use it only as a draft stopgap.
+- **Never mix `width=` and `height=` with `keepaspectratio`** -- the smaller scale
+  wins, so a tall figure gets capped by the height and is no longer true-to-size.
+- **Design within the print box** (180 mm / 88 mm wide, <= 170 mm tall) so the
+  true size still fits the page.
 
 ## draw.io sizing (design at TRUE size)
 

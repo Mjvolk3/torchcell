@@ -15,7 +15,10 @@ Suppl.\ Fig.\ S4).
 %% before submission -- Nature wants vector for line art.
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth,height=170mm,keepaspectratio]{figures/fig1_overview.png}
+% Portrait diagram (aspect ~0.64): size by HEIGHT so it doesn't fill the page.
+% Tune the 130mm to taste. Final: export a vector PDF from draw.io (crop on) and
+% swap to figures/fig1_overview.pdf.
+\includegraphics[height=130mm]{figures/fig1_overview.png}
 \caption{TorchCell: ontology-unified knowledge graph and the perturbation-operator
 cell representation. Panels (a)--(d).}
 \label{fig:overview}

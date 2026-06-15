@@ -8,9 +8,10 @@
 #   Shared   (Overleaf)      = $OVERLEAF_DIR                         <- colleagues see this
 #
 # Only the files listed below are published, so you control exactly what crosses
-# over. submission.tex is published AS main.tex (Overleaf auto-detects the main
-# document). Workshop-only files (editing.tex, figure-proto.tex, *.pdf, READMEs,
-# this script, sn-article.tex) are intentionally NOT shared.
+# over. submission.tex is published AS main.tex (Overleaf's default main document);
+# editing.tex and twocolumn.tex are shared as alternate views (in Overleaf, switch
+# Menu -> Main document to compile them). Workshop-only files (figure-proto.tex,
+# *.pdf, READMEs, this script, sn-article.tex) are intentionally NOT shared.
 #
 # Usage:  bash paper/nature-biotech/sync-overleaf.sh
 # Override the target:  OVERLEAF_DIR=/path/to/clone bash .../sync-overleaf.sh
@@ -28,6 +29,8 @@ SHARE_FILES=(
   sn-jnl.cls
   sn-nature.bst
   references.bib
+  editing.tex
+  twocolumn.tex
 )
 # submission.tex -> main.tex (handled below); sections/ and figures/ copied whole.
 # (Overleaf compiles multi-file fine; the single-file rule is only for journal upload -- `make flat`.)

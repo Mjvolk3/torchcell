@@ -15,7 +15,7 @@ tc-onto-mermaid:
 	@python torchcell/ontology/mermaid_diagram.py
 
 # --- Manuscript (paper/nature-biotech) passthrough targets ---
-.PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-flat paper-clean paper-sync
+.PHONY: paper paper-submission paper-editing paper-twocolumn paper-figproto paper-figures paper-flat paper-clean paper-sync
 paper:
 	@$(MAKE) -C paper/nature-biotech paper
 paper-submission:
@@ -26,6 +26,8 @@ paper-twocolumn:
 	@$(MAKE) -C paper/nature-biotech twocolumn
 paper-figproto:
 	@$(MAKE) -C paper/nature-biotech figproto
+paper-figures:
+	@$(MAKE) -C paper/nature-biotech figures
 paper-flat:
 	@$(MAKE) -C paper/nature-biotech flat
 paper-clean:

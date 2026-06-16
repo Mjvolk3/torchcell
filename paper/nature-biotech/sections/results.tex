@@ -15,12 +15,10 @@ Suppl.\ Fig.\ S4).
 %% before submission -- Nature wants vector for line art.
 \begin{figure*}[t]
 \centering
-% PNG stopgap, sized by HEIGHT (tune 130mm) since the PNG isn't true-to-size.
-% TRUE-TO-SIZE: design this figure at its print width in draw.io, export a vector
-% PDF (crop on), and use a width matching the design -- no height cap, e.g.
-%   \includegraphics[width=88mm]{figures/fig1_overview.pdf}
-% (see figures/README.md "True-to-size").
-\includegraphics[height=130mm]{figures/fig1_overview.png}
+% TRUE-TO-SIZE: vector PDF exported headless from draw.io via `make figures`.
+% No width/height -> prints at the size drawn in draw.io (~53x86mm now; enlarge
+% the drawing in draw.io to scale up). See figures/README.md "True-to-size".
+\includegraphics{figures/fig1_overview.pdf}
 \caption{TorchCell: ontology-unified knowledge graph and the perturbation-operator
 cell representation. Panels (a)--(d).}
 \label{fig:overview}

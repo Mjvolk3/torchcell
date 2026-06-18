@@ -1,16 +1,81 @@
 %% ===== Back matter: declarations + bibliography =====
 \backmatter
 
-\bmhead{Supplementary information}
-% Supplementary Figures S1-S6 (see outline). S1 = classical-ML baselines.
-
 \bmhead{Acknowledgments}
 
 \section*{Declarations}
-% Funding; competing interests; data availability (GitHub, NCSA Neo4j, HuggingFace);
-% code availability; author contributions.
+% Funding; competing interests; author contributions.
+% (Data availability + Code availability live at the END of Methods, per Nature style.)
 
-%% Bibliography. NOTE: for Springer Nature submission, paste the .bbl here instead
-%% of \bibliography{} (see `make flat`).
+%% ---- Supplementary information: SI figures grouped here, references placed AFTER them.
+%% \clearpage flushes pending floats so the short bibliography can't interleave with the SI
+%% figures -- that interleaving was the figure/reference clash. ----
+\clearpage
+\bmhead{Supplementary information}
+% Supplementary Figures S1-S6 (see outline). S1 = classical-ML baselines.
+
+% Supplementary figures use S-numbering. The TorchCell overview schematic is parked
+% here for now (was Fig 1 in the main text); offset the counter so it renders as
+% Suppl. Fig. S7 and the planned S1-S6 keep their numbers. Renumber when the SI is
+% built out. Same true-to-size, left-justified, caption-matched-to-width layout.
+\setcounter{figure}{6}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+% Figures are placed true-to-size with \tcfig (NO LaTeX scaling): each draw.io source is
+% drawn inside the 180x170 mm print-box boundary template, so the --crop export equals the
+% Nature print box and renders 1:1. If a figure exports wider than 180 mm, fix it in draw.io
+% (pull content inside the box) -- do not scale. Order/numbering is provisional.
+\begin{figure}[htbp]
+\tcfig{figures/TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf}{TorchCell: ontology-unified knowledge graph and the
+perturbation-operator cell representation. Panels (a)--(d).}{fig:overview}
+\end{figure}
+
+\begin{figure*}[t]
+\tcfig{figures/ontology_pydantic_hourglass_data_model.pdf}{Ontology data model (hourglass). Each experiment
+funnels genotype, phenotype, environment, and experiment-specific metadata through a
+shared Data Merge Layer that distinguishes records from the same experiment; the layer
+can be ignored when merging into larger datasets.}{fig:data-model}
+\end{figure*}
+
+\begin{figure*}[t]
+\tcfig{figures/neo4j_cell-conversion-deduplication-aggregation.pdf}{Knowledge-graph normalization in three
+stages. Conversion maps phenotype experiment types (GeneEssentiality, SyntheticLethality)
+to a common Fitness type; deduplication collapses records equivalent other than their
+phenotype-label values; aggregation combines equivalent-genotype records with different
+phenotype labels (Fitness, GeneInteraction) into a single HeteroData instance.}{fig:conversion-dedup-agg}
+\end{figure*}
+
+\begin{figure*}[t]
+\tcfig{figures/s288c_selecting_gene_sequence.pdf}{DNA sequence selection for the sequence model.
+The coding sequence is taken from the outermost start to stop codon, ignoring five-prime
+UTR introns unless internal to the gene. Cases: internal intron (YFL039C), 5' UTR intron
+(YBL072C), and a 1\,bp CDS lacking a start codon (YIL111W).}{fig:dna-selection}
+\end{figure*}
+
+\begin{figure*}[t]
+\tcfig{figures/fungal_up_down_transformer_upstream_1003bp_pad_for_undersized.pdf}{DNA tokenization. A 1003\,bp window is
+encoded as [CLS], species proxy, 6-mer sequence, [SEP]; undersized sequences are padded
+with [PAD] to a fixed length before vectorization.}{fig:dna-tokenization}
+\end{figure*}
+
+\begin{figure*}[t]
+% TODO (draw.io source uncharacterized-genes-profile-enricment.drawio.png):
+%   add (f) total quantification of triple interactions across the remaining
+%     (uncharacterized) genome -- how many triple interactions exist in yeast / coverage;
+%   add (g) the new GO annotations produced by the guilt-by-association transfer.
+%   Pull all content inside the 180x170 mm boundary box (currently overflows to ~214 mm wide).
+\tcfig{figures/uncharacterized-genes-profile-enricment.pdf}{Guilt-by-association annotation of
+uncharacterized genes. (a)--(e) Triple-interaction profiles $p$ are correlated (Pearson, PCC)
+across all gene pairs; pairs with PCC $>0.6$ are linked, and GO enrichment over the
+resulting network transfers annotations ($\mathrm{GO}_{g_i}=\mathrm{GO}_{g_j}$).
+(f) Total quantification of triple interactions across the remaining yeast genome
+(coverage of uncharacterized genes). (g) The resulting new annotations transferred to
+previously uncharacterized genes.}{fig:profile-enrichment}
+\end{figure*}
+
+%% ---- References: placed AFTER the SI part. \clearpage first so every SI figure float is
+%% output before the bibliography begins (prevents the float/reference clash). NOTE: for
+%% Springer Nature submission, paste the .bbl here instead of \bibliography{} (see `make flat`). ----
+\clearpage
 \nocite{*}% FILLER: force all seeded refs to render in the preview; remove for submission
 \bibliography{references}

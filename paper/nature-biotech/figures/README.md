@@ -53,9 +53,17 @@ of the drawing sets the final height (must stay <= 170 mm at 180 mm wide).
 Figure float *placement* on the page is automatic (LaTeX floats, `[t]/[b]/[p]`);
 only panel layout inside the figure is set in draw.io.
 
+## Naming convention
+
+Exported PDFs **keep their draw.io source's name**: `figures/NAME.pdf` is built from
+`../../notes/assets/drawio/NAME.drawio.png` via one Makefile pattern rule
+(`figures/%.pdf: $(DRAWIO_SRC)/%.drawio.png`). So source and export are trivially matched
+(easy to find, edit, keep in sync). Add a figure by appending `figures/NAME.pdf` to the
+`figures:` target in the Makefile -- no new rule needed.
+
 ## Expected files (placeholders live in content.tex until these exist)
 
-- `fig1_overview.pdf` -- TorchCell overview (R1)
+- `TorchCell-Supervised-Learning-and-Teacher-Forcing-Generic-Phenotypes.pdf` -- TorchCell overview (R1)
 - `fig2_cgt_architecture.pdf` -- CGT architecture (R2)
 - `fig3_ggi.pdf` -- trigenic GGI state of the art (R3)
 - `fig4_multitask.pdf` -- multitask generalization (R4)

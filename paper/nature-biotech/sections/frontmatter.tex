@@ -2,16 +2,28 @@
 %% ===== Title (aim <= ~15 words) =====
 \title[TorchCell CGT for multimodal phenotype prediction]{Accelerating metabolic engineering through multimodal phenotype prediction with TorchCell and the Cell Graph Transformer}
 
-%% ===== Authors / affiliations (FILL IN) =====
-\author*[1]{\fnm{Michael} \sur{Volk}}\email{mjvolk3@illinois.edu}\equalcont{These authors contributed equally to this work.}
-\author[1]{\fnm{Aurosish} \sur{Sharma}}\email{}\equalcont{These authors contributed equally to this work.}
-\author*[1]{\fnm{Huimin} \sur{Zhao}}\email{zhao5@illinois.edu}
+%% ===== Authors / affiliations =====
+%% Volk & Sharma marked equal-contribution; Zhao corresponding (Volk also retained as
+%% corresponding -- drop the * on Volk if only Zhao should be corresponding).
+%% Affiliation map: Volk = CABBI/ChBE/IGB [1,2,3]; Sharma = CABBI/ChBE/IGB [1,2,3];
+%% Zhao = all six [1-6]. Affiliations reordered so the first two authors use [1,2,3]
+%% (internal order CABBI, ChBE, IGB -- swap if a different primary is preferred).
+\author*[1,2,3]{\fnm{Michael} \sur{Volk}}\email{mjvolk3@illinois.edu}\equalcont{These authors contributed equally to this work.}
+\author[1,2,3]{\fnm{Aurosish} \sur{Sharma}}\email{}\equalcont{These authors contributed equally to this work.}
+\author*[1,2,3,4,5,6]{\fnm{Huimin} \sur{Zhao}}\email{zhao5@illinois.edu}
 
-\affil[1]{\orgdiv{Department of Chemical and Biomolecular Engineering}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \country{USA}}}
+\affil[1]{\orgdiv{DOE Center for Advanced Bioenergy and Bioproducts Innovation}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
+\affil[2]{\orgdiv{Department of Chemical and Biomolecular Engineering}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
+\affil[3]{\orgdiv{Carl R. Woese Institute for Genomic Biology}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
+\affil[4]{\orgdiv{NSF iBioFoundry}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
+\affil[5]{\orgdiv{Center for Biophysics and Quantitative Biology}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
+\affil[6]{\orgdiv{NSF Molecule Maker Lab Institute}, \orgname{University of Illinois Urbana-Champaign}, \orgaddress{\city{Urbana}, \state{IL}, \postcode{61801}, \country{USA}}}
 
 %% ===== Abstract (<= 150 words; shortened from SIMB 2026) =====
 %% Point estimates only (no +/-) to sidestep the unresolved error-bar provenance
 %% (see outline Gaps); restore uncertainties once reconciled.
+%% Put the word-budget tag directly on the "Abstract" heading (editing-only via \cb).
+\renewcommand{\abstractname}{Abstract\cb{$\leq$150 words}}
 \abstract{Deep learning has advanced protein structure prediction, yet metabolic
 engineering lags because phenotype data are scattered across heterogeneous studies
 lacking a shared ontology. We present

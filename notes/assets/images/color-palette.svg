@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="540" viewBox="0 0 660 540" font-family="DejaVu Sans, Arial, sans-serif">
+<rect x="0" y="0" width="660" height="540" fill="white"/>
+<text x="20" y="32" font-size="18" font-weight="bold" fill="#222">TorchCell figure palette (draw.io swatches)</text>
+<text x="20" y="104" font-size="13" font-weight="bold" fill="#444">Base · primary</text>
+<rect x="170" y="60" width="78" height="78" rx="4" fill="#FFE6CC" stroke="#BD8800" stroke-width="6"/>
+<text x="209" y="154" font-size="10.5" text-anchor="middle" fill="#333">FFE6CC</text>
+<text x="209" y="167" font-size="10.5" text-anchor="middle" fill="#BD8800">BD8800</text>
+<rect x="270" y="60" width="78" height="78" rx="4" fill="#F8CECC" stroke="#A24A46" stroke-width="6"/>
+<text x="309" y="154" font-size="10.5" text-anchor="middle" fill="#333">F8CECC</text>
+<text x="309" y="167" font-size="10.5" text-anchor="middle" fill="#A24A46">A24A46</text>
+<rect x="370" y="60" width="78" height="78" rx="4" fill="#E1D5E7" stroke="#846592" stroke-width="6"/>
+<text x="409" y="154" font-size="10.5" text-anchor="middle" fill="#333">E1D5E7</text>
+<text x="409" y="167" font-size="10.5" text-anchor="middle" fill="#846592">846592</text>
+<rect x="470" y="60" width="78" height="78" rx="4" fill="#FFF2CC" stroke="#BCA04C" stroke-width="6"/>
+<text x="509" y="154" font-size="10.5" text-anchor="middle" fill="#333">FFF2CC</text>
+<text x="509" y="167" font-size="10.5" text-anchor="middle" fill="#BCA04C">BCA04C</text>
+<text x="20" y="219" font-size="13" font-weight="bold" fill="#444">Alt · primary</text>
+<rect x="170" y="175" width="78" height="78" rx="4" fill="#DAE8FC" stroke="#5F7DA8" stroke-width="6"/>
+<text x="209" y="269" font-size="10.5" text-anchor="middle" fill="#333">DAE8FC</text>
+<text x="209" y="282" font-size="10.5" text-anchor="middle" fill="#5F7DA8">5F7DA8</text>
+<rect x="270" y="175" width="78" height="78" rx="4" fill="#D5E8D4" stroke="#729E5A" stroke-width="6"/>
+<text x="309" y="269" font-size="10.5" text-anchor="middle" fill="#333">D5E8D4</text>
+<text x="309" y="282" font-size="10.5" text-anchor="middle" fill="#729E5A">729E5A</text>
+<rect x="370" y="175" width="78" height="78" rx="4" fill="#F5F5F5" stroke="#5A5A5A" stroke-width="6"/>
+<text x="409" y="269" font-size="10.5" text-anchor="middle" fill="#333">F5F5F5</text>
+<text x="409" y="282" font-size="10.5" text-anchor="middle" fill="#5A5A5A">5A5A5A</text>
+<text x="20" y="344" font-size="13" font-weight="bold" fill="#444">Base · secondary</text>
+<rect x="170" y="300" width="78" height="78" rx="4" fill="#F3D08F" stroke="#9D7100" stroke-width="6"/>
+<text x="209" y="394" font-size="10.5" text-anchor="middle" fill="#333">F3D08F</text>
+<text x="209" y="407" font-size="10.5" text-anchor="middle" fill="#9D7100">9D7100</text>
+<rect x="270" y="300" width="78" height="78" rx="4" fill="#E5A9A7" stroke="#863D3A" stroke-width="6"/>
+<text x="309" y="394" font-size="10.5" text-anchor="middle" fill="#333">E5A9A7</text>
+<text x="309" y="407" font-size="10.5" text-anchor="middle" fill="#863D3A">863D3A</text>
+<rect x="370" y="300" width="78" height="78" rx="4" fill="#CAB8D4" stroke="#6E5479" stroke-width="6"/>
+<text x="409" y="394" font-size="10.5" text-anchor="middle" fill="#333">CAB8D4</text>
+<text x="409" y="407" font-size="10.5" text-anchor="middle" fill="#6E5479">6E5479</text>
+<rect x="470" y="300" width="78" height="78" rx="4" fill="#F3E0A9" stroke="#9C853F" stroke-width="6"/>
+<text x="509" y="394" font-size="10.5" text-anchor="middle" fill="#333">F3E0A9</text>
+<text x="509" y="407" font-size="10.5" text-anchor="middle" fill="#9C853F">9C853F</text>
+<text x="20" y="459" font-size="13" font-weight="bold" fill="#444">Alt · secondary</text>
+<rect x="170" y="415" width="78" height="78" rx="4" fill="#B9CDEA" stroke="#4F688B" stroke-width="6"/>
+<text x="209" y="509" font-size="10.5" text-anchor="middle" fill="#333">B9CDEA</text>
+<text x="209" y="522" font-size="10.5" text-anchor="middle" fill="#4F688B">4F688B</text>
+<rect x="270" y="415" width="78" height="78" rx="4" fill="#BCD8B3" stroke="#5F834A" stroke-width="6"/>
+<text x="309" y="509" font-size="10.5" text-anchor="middle" fill="#333">BCD8B3</text>
+<text x="309" y="522" font-size="10.5" text-anchor="middle" fill="#5F834A">5F834A</text>
+<rect x="370" y="415" width="78" height="78" rx="4" fill="#CACACA" stroke="#4A4A4A" stroke-width="6"/>
+<text x="409" y="509" font-size="10.5" text-anchor="middle" fill="#333">CACACA</text>
+<text x="409" y="522" font-size="10.5" text-anchor="middle" fill="#4A4A4A">4A4A4A</text>
+</svg>

@@ -122,6 +122,10 @@ clobbers managed files. Likely a `make paper-pull` (merge Overleaf -> workshop)
 companion to `make paper-sync`, or restructure so the Overleaf clone is a genuine
 bidirectional mirror (git subtree, or workshop-as-Overleaf-clone). Deferred.
 
+**[Done 2026.06.15 -- see the section below: `make paper-pull` implements this via a
+per-file 3-way merge. Collaborators now edit managed files directly in Overleaf and
+we pull them in; no collaborator-owned-section split needed.]**
+
 ### Tooling notes / gotchas
 
 - **Tectonic** is the LaTeX engine (handles sn-jnl's newer packages that the
@@ -141,3 +145,80 @@ bidirectional mirror (git subtree, or workshop-as-Overleaf-clone). Deferred.
   corresponding authors.
 - **Local `main`** has been running ahead of `origin/main` -- remember to
   `git push origin main` to land the paper work on GitHub.
+## 2026.06.15 - Bidirectional pull-back implemented (`make paper-pull`)
+
+Collaborators now **edit managed files directly in Overleaf** (`content.tex`,
+`sections/*`, ...) and we **pull their edits back into the workshop** -- no
+collaborator-owned section split, no clobbering. This closes the loop the `#future`
+section above described.
+
+### `make paper-pull` (= `paper/nature-biotech/paper-pull.sh`)
+
+The mirror image of `paper-sync`. For every file we publish it does a **per-file
+3-way merge** (`git merge-file`):
+
+- **BASE** = the state we last published (the common ancestor)
+- **OURS** = current workshop file
+- **THEIRS** = current Overleaf file (after collaborator edits)
+
+Non-overlapping edits merge silently; lines **both** sides changed get
+`<<<<<<<`/`=======`/`>>>>>>>` conflict markers. Results are written into the
+**workshop** files only -- it **never pushes and never auto-commits**. Because the
+workshop is itself tracked by torchcell git, every pulled-in change is just a
+reviewable working-tree diff with a full undo (`git checkout`).
+
+Handles the `submission.tex` <-> `main.tex` rename (workshop `submission.tex` is
+published as Overleaf `main.tex`). **Figures** are binary -> reported, not merged.
+**New files** collaborators added are reported but left on Overleaf (already
+preserved by `sync-overleaf.sh`'s manifest logic; pull them in by hand if wanted).
+
+### Conflicts -> VS Code Merge Editor
+
+When a file conflicts (we and a collaborator changed the **same region** since the
+last publish), `paper-pull` doesn't just leave bare markers -- it registers a real
+**git unmerged entry** in the torchcell repo: index stage 1 = base, stage 2 = ours
+(workshop), stage 3 = theirs (Overleaf), with the working file holding the
+`<<<<<<<`/`=======`/`>>>>>>>` markers. `git status` then shows the file as `UU`, so
+VS Code lists it under **Source Control -> Merge Changes** and offers **"Resolve in
+Merge Editor"** (Current = workshop, Incoming = overleaf, toggle **Base** to see the
+last-published ancestor). Resolve, save, `git add` -> the `UU` clears to a normal
+staged change. Non-VS-Code users can still edit the markers by hand. `paper-pull`
+exits **2** when there are conflicts (0 = clean, 2 = needs resolution). The unmerged
+staging only happens when the workshop lives in a git repo (real use); a plain
+`WORKSHOP_DIR` copy just gets markers.
+
+Key Overleaf gotcha behind all this: **a web-app save is NOT a per-save git commit**.
+Overleaf's git bridge **squashes everything since your last pull into one
+`"Update on Overleaf."` commit**, so you can't merge against its commit graph -- which
+is exactly why we diff against our own recorded BASE instead.
+
+### Merge base tracking
+
+`sync-overleaf.sh` now writes the just-published commit SHA to
+`.torchcell-sync-base` in the Overleaf clone (local-only, `.git/info/exclude`'d
+like the manifest). `paper-pull` reads it as the merge BASE, falling back to the
+most recent "Publish manuscript from torchcell workshop" commit if absent.
+
+### The reconciliation loop
+
+1. Collaborators edit managed files in Overleaf.
+2. `make paper-pull` -> their edits merge into the workshop; resolve any conflicts
+   via VS Code's Merge Editor (Merge Changes group).
+3. Review with `git diff`, commit in torchcell (workshop is now the reconciled
+   source of truth).
+4. `make paper-sync` -> republish. No clobber, because the workshop already
+   contains their changes.
+
+### Validation
+
+Verified end-to-end in a local sandbox (a bare repo standing in for the Overleaf
+remote, so the real shared project is never touched): a collaborator's
+non-overlapping `content.tex` edit merged cleanly alongside our edit; a same-line
+`introduction.tex` edit produced proper conflict markers; a new collaborator file
+was reported and left on Overleaf. Also verified against the **live** Overleaf
+project (a real web-app save pulled back via `git pull` from `git.overleaf.com`),
+and verified that a conflict in a git-backed workshop produces a real `UU` unmerged
+entry with stages 1/2/3 (so VS Code's Merge Editor opens) that clears on
+`git add` after resolution. Test it yourself with
+`OVERLEAF_DIR=... WORKSHOP_DIR=... bash paper/nature-biotech/paper-pull.sh` against
+copies.

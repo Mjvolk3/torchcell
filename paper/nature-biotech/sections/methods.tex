@@ -1,6 +1,91 @@
 %% ===== Methods (no word limit; full math here) =====
+%% Nature/NBT: Methods is a dedicated section at the END of the main article (publishes
+%% online with the paper), NOT in the Supplementary Information. Methods references
+%% continue the numbering after the main reference list. Subsections are unnumbered
+%% (\subsection*) per Nature style. Data/Code availability + Reporting summary live here.
 \section{Methods\cb{no limit}}\label{sec:methods}
-\textit{[FILLER -- Methods.]} Ontology and knowledge-graph construction; dataset
-and perturbation-operator formalism; CGT architecture and the graph-regularized
-attention loss; training, splits, metrics; baselines (DANGO, DCell, Yeast9 FBA);
-inference at scale; statistics and error-bar definitions.
+
+\subsection*{Ontology and knowledge-graph construction}
+\textit{[FILLER.]} Experiment ontology (genotype, phenotype, environment, experiment
+metadata); annotation of literature and public datasets; ingestion into the Neo4j
+knowledge graph; conversion, deduplication, and aggregation into HeteroData records
+(Suppl.\ Figs.\ \ref{fig:data-model}, \ref{fig:conversion-dedup-agg}).
+
+\subsection*{Datasets}
+\textit{[FILLER.]} Source datasets and versions (e.g.\ Costanzo, Kuzmin trigenic;
+knockout expression; single-knockout morphology); inclusion/exclusion criteria; dataset
+sizes and label provenance.
+
+\subsection*{Cell representation and the perturbation operator}
+\textit{[FILLER.]} Shared wildtype reference cell; each strain as a perturbation operator
+over the reference; multimodal node/edge features (genome sequence, gene-interaction
+networks, metabolism, environment); DNA sequence selection and tokenization
+(Suppl.\ Figs.\ \ref{fig:dna-selection}, \ref{fig:dna-tokenization}).
+
+\subsection*{Data splits and preprocessing}
+\textit{[FILLER.]} Train/validation/test partitioning (and any gene- or
+interaction-disjoint splits); label normalization; handling of missing labels.
+
+\subsection*{Cell Graph Transformer architecture}
+\textit{[FILLER.]} Graph-constrained multi-head attention; the equivariant perturbation
+operator mapping reference embedding to perturbed state; multitask decoder heads
+(Fig.~\ref{fig:torchcell}c). Layer counts, hidden dimensions, and parameter budget.
+
+\subsection*{Graph-regularized attention and training objective}
+\textit{[FILLER.]} Attention-prior alignment loss aligning attention to network priors;
+multitask loss weighting; full mathematical formulation.
+
+\subsection*{Model training}
+\textit{[FILLER.]} Optimizer, learning-rate schedule, batch size, early stopping;
+hardware (GPUs, distributed/DDP), wall-clock; software versions; random seeds.
+
+\subsection*{Baselines}
+\textit{[FILLER.]} DANGO, DCell, and Yeast9 flux balance analysis; classical-ML baselines
+(Suppl.\ Fig.\ S1); matched training data and evaluation protocol.
+
+\subsection*{Evaluation metrics}
+\textit{[FILLER.]} Pearson correlation ($r$) and any secondary metrics; aggregation
+across folds; definition of error bars (see Statistics).
+
+\subsection*{Gene--gene interaction prediction}
+\textit{[FILLER.]} Trigenic interaction prediction setup; performance vs.\ interaction
+magnitude; ablations (Fig.~\ref{fig:ggi}).
+
+\subsection*{Expression and morphology prediction}
+\textit{[FILLER.]} Knockout transcriptome and single-knockout morphology tasks; shared
+latent embedding; cross-phenotype transfer (Fig.~\ref{fig:multitask}).
+
+\subsection*{CGT-guided strain design}
+\textit{[FILLER.]} Objective and candidate enumeration for beta-carotene and betaxanthin
+production; ranking and selection of recommended gene deletions (Fig.~\ref{fig:metabolism}).
+
+\subsection*{Strain construction and cultivation}
+\textit{[FILLER.]} Strains, plasmids, and genome edits; the TorchCell + UIUC iBioFoundry
+design--build--test--learn loop; cultivation and fermentation conditions.
+
+\subsection*{Metabolite quantification}
+\textit{[FILLER.]} Sampling, extraction, and analytical method (HPLC/LC--MS); calibration
+and titer quantification.
+
+\subsection*{Inference at scale}
+\textit{[FILLER.]} Large-scale inference pipeline and resources (Suppl.\ Fig.\ S6).
+
+\subsection*{Statistics}
+\textit{[FILLER.]} Statistical tests used and whether one- or two-sided; sample sizes
+($n$); definition of center and dispersion; box-plot conventions (median, IQR hinges,
+whiskers $\le 1.5\times$IQR); multiple-comparison handling; significance thresholds.
+
+\subsection*{Reporting summary}
+Further information on research design is available in the Nature Portfolio Reporting
+Summary linked to this article.
+
+\subsection*{Data availability}
+\textit{[FILLER.]} Datasets are available on Hugging Face
+(\url{https://huggingface.co/...}); the Neo4j knowledge graph is hosted at NCSA
+(\url{...}); trained model weights are available at \url{...}. Source data are provided
+with this paper.
+
+\subsection*{Code availability}
+\textit{[FILLER.]} TorchCell and the Cell Graph Transformer are open source at
+\url{https://github.com/Mjvolk3/torchcell} (license: ...), with a release archived at
+Zenodo (\url{https://doi.org/...}).

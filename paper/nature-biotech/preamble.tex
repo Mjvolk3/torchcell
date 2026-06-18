@@ -2,6 +2,25 @@
 %% Edit packages here once; both wrappers \input it.
 
 \usepackage{graphicx}
+% True-to-size, left-justified figure whose caption width matches the image width.
+% Measures the image into a save-box, then wraps image+caption in a minipage of that
+% exact width. Use inside a figure/figure* environment:
+%   \tcfig{figures/foo.pdf}{Caption text.}{fig:label}
+\newsavebox{\tcfigbox}
+\newcommand{\tcfig}[3]{%
+  \sbox{\tcfigbox}{\includegraphics{#1}}%
+  \noindent\begin{minipage}{\wd\tcfigbox}%
+  \usebox{\tcfigbox}\par
+  \caption{#2}\label{#3}%
+  \end{minipage}%
+}
+% INTERIM fit-to-page variant: scales a figure to fit the print box (text width,
+% capped at 160 mm tall, aspect preserved) -- use for figures not yet redrawn to true
+% size. NOT WYSIWYG; switch to \tcfig once the source is resized to the print box.
+\newcommand{\tcfigfit}[3]{%
+  \noindent\includegraphics[width=\linewidth,height=160mm,keepaspectratio]{#1}\par
+  \caption{#2}\label{#3}%
+}
 \usepackage{multirow}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{amsthm}

@@ -28,6 +28,7 @@ export GIT_TERMINAL_PROMPT=0   # fail fast instead of hanging if a credential is
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DST="${OVERLEAF_DIR:-$HOME/Documents/projects/torchcell-overleaf}"
 MANIFEST=".torchcell-sync-manifest"   # relative to DST; records files WE publish
+BASEFILE=".torchcell-sync-base"       # relative to DST; records our last-published SHA (for paper-pull)
 
 # --- the selective share list (edit to control what colleagues get) ---
 SHARE_FILES=(
@@ -43,8 +44,10 @@ SHARE_FILES=(
 
 [ -d "$DST/.git" ] || { echo "ERROR: $DST is not a git repo. Clone the Overleaf project there first." >&2; exit 1; }
 
-# Keep our manifest out of the Overleaf push (local-only bookkeeping).
-grep -qxF "$MANIFEST" "$DST/.git/info/exclude" 2>/dev/null || echo "$MANIFEST" >> "$DST/.git/info/exclude"
+# Keep our local-only bookkeeping out of the Overleaf push.
+for bk in "$MANIFEST" "$BASEFILE"; do
+  grep -qxF "$bk" "$DST/.git/info/exclude" 2>/dev/null || echo "$bk" >> "$DST/.git/info/exclude"
+done
 
 # Pull collaborator changes first (images/comments they added in Overleaf).
 echo "Pulling collaborator changes from Overleaf..."
@@ -57,6 +60,7 @@ current_files() {
   for f in "$SRC"/sections/*.tex; do [ -e "$f" ] && echo "sections/$(basename "$f")"; done
   [ -d "$SRC/figures" ] && ( cd "$SRC/figures" && find . -type f | sed 's|^\./|figures/|' )
   [ -f "$SRC/figure-proto.pdf" ] && echo "figures/figure-proto.pdf"
+  [ -f "$SRC/figure-limits.pdf" ] && echo "figures/figure-limits.pdf"
 }
 CUR="$(current_files | sort -u)"
 
@@ -80,6 +84,7 @@ cp "$SRC/submission.tex" "$DST/main.tex"
 for f in "${SHARE_FILES[@]}"; do cp "$SRC/$f" "$DST/$f"; done
 mkdir -p "$DST/figures" && cp -r "$SRC/figures/." "$DST/figures/"
 [ -f "$SRC/figure-proto.pdf" ] && cp "$SRC/figure-proto.pdf" "$DST/figures/figure-proto.pdf"
+[ -f "$SRC/figure-limits.pdf" ] && cp "$SRC/figure-limits.pdf" "$DST/figures/figure-limits.pdf"
 mkdir -p "$DST/sections" && cp "$SRC"/sections/*.tex "$DST/sections/"
 
 # Record what we published (local-only, excluded from the push).
@@ -93,4 +98,6 @@ if git diff --cached --quiet; then
 fi
 git commit -m "Publish manuscript from torchcell workshop ($(date -u +%Y-%m-%dT%H:%MZ))"
 git push
+# Record the just-published commit as the merge base for the next paper-pull.
+git rev-parse HEAD > "$DST/$BASEFILE"
 echo "Done. Pushed to Overleaf -- colleagues will see the update on next reload."

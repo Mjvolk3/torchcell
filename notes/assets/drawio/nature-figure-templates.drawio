@@ -1,0 +1,34 @@
+<mxfile host="Electron" type="device">
+  <diagram id="max-full-width" name="Max full-width 180x170mm">
+    <mxGraphModel dx="900" dy="700" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="900" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Nature figure limits — MAXIMUM full-width layout (180 × 170 mm). Scale: 100 units/inch (1 mm = 3.94 u)." style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="22" width="709" height="26" as="geometry" />
+        </mxCell>
+        <mxCell id="widthlabel" value="↔  180 mm  =  709 units  (full width)" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#C92A2A;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="350" y="48" width="309" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="frame" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#C92A2A;dashed=1;dashPattern=10 6;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="150" y="72" width="709" height="669" as="geometry" />
+        </mxCell>
+        <mxCell id="heightlabel" value="↕  170 mm  =  669 units  (max height)" style="text;html=1;align=center;verticalAlign=middle;fontSize=12;fontColor=#C92A2A;fontStyle=1;rotation=270;" vertex="1" parent="1">
+          <mxGeometry x="6" y="396" width="220" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="colline" value="" style="endArrow=none;dashed=1;dashPattern=4 4;strokeColor=#1971C2;strokeWidth=1.5;html=1;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="497" y="72" as="sourcePoint" />
+            <mxPoint x="497" y="741" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="collabel" value="blue dashed = 88 mm single-column width (347 units)" style="text;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#1971C2;" vertex="1" parent="1">
+          <mxGeometry x="350" y="746" width="309" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="Copy the RED box into a figure as a sizing guide and design WITHIN it. Panel / label text 5–7 pt at final size; line weights ≥ 0.25 pt.&#10;Hide or delete this guide before exporting the real figure (File → Export as → PDF, crop to drawing, no page background)." style="text;html=1;align=left;verticalAlign=top;fontSize=11;spacingLeft=2;" vertex="1" parent="1">
+          <mxGeometry x="150" y="772" width="709" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

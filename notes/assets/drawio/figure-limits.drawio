@@ -1,0 +1,16 @@
+<mxfile host="65bd71144e">
+    <diagram id="CUsuJH1H3rhh_td4-MEz" name="Page-1">
+        <mxGraphModel dx="1811" dy="1143" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="&lt;div&gt;Full&lt;/div&gt;180 mm x 170 mm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" parent="1" vertex="1">
+                    <mxGeometry width="707.66" height="669.29" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="&lt;div&gt;column&lt;/div&gt;88 mm x 170 mm" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;" parent="1" vertex="1">
+                    <mxGeometry y="1100" width="346.45599999999996" height="669.29" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

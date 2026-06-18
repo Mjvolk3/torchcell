@@ -53,18 +53,43 @@ Classify each in-scope file:
 
 The classification belongs in the plan's `## Relevant Files` table (Phase 3).
 
-## Phase 0: Setup
+## Phase 0: Setup (worktree-first)
+
+The plan note is born **in its own worktree**, never on local `main`. This is
+load-bearing: a plan note committed to local `main` is never pushed (landings go
+worktree -> origin via `/merge-worktree`), so it accumulates un-pushed and every
+worktree cut afterward inherits it -- the "tangle" that silently lands one
+feature's plan commit under another's merge. Creating the worktree first keeps
+`main` pristine, and the plan note travels with its source.
 
 1. Summarize the request into a 5-8 word title.
 2. Slugify: lowercase, non-alphanumeric -> hyphen, collapse runs, max 60 chars.
-3. Dendron fname: `plan.<slug>.YYYY.MM.DD` (today, Chicago time).
-4. Create the note immediately:
+3. Create the branch worktree off `main` and set it up:
+
+    ```bash
+    MAIN="$HOME/Documents/projects/torchcell"
+    WT="$HOME/Documents/projects/torchcell.worktrees/plan/<slug>"
+    git -C "$MAIN" worktree add "$WT" -b plan/<slug> main
+    cd "$WT"
+    bash scripts/setup-worktree.sh
+    ```
+
+   If the branch/worktree already exists (you are resuming, or `/uber-implement`
+   pre-made it), `cd "$WT"` into it instead of re-creating.
+4. Dendron fname: `plan.<slug>.YYYY.MM.DD` (today, Chicago time). Create the note
+   **in the worktree** (cwd is now the worktree, so it lands under the worktree's
+   `notes/`, on the branch):
 
     ```bash
     dendron-cli note write --fname "plan.<slug>.YYYY.MM.DD"
     ```
 
-5. Announce the fname.
+5. Announce the fname **and the worktree path** so the user knows where output lands.
+
+**Every subsequent phase runs with the worktree as cwd.** Scouts read the
+codebase (identical to `main` at the branch point); the plan-writer and
+reducer-critic edit the note in the worktree; Phase 5 stages on the branch.
+Nothing touches local `main`.
 
 ## Phase 1: Three Parallel Scouts
 
@@ -154,8 +179,10 @@ Loop logic: termination phrase -> exit to Phase 5. Under ~310 with cuts applied 
 
 ## Phase 5: Weekly Task Note + Present
 
-1. Append one pending bullet to the current weekly note under today's `## YYYY.MM.DD`: `- [ ] <one-sentence plan summary> [[plan.<slug>.YYYY.MM.DD]]`. Create the date H2 if missing.
-2. Stage the plan note + weekly note.
+All staging happens **in the worktree, on the branch** -- never on local `main`.
+
+1. Append one pending bullet under today's `## YYYY.MM.DD` H2: `- [ ] <one-sentence plan summary> [[plan.<slug>.YYYY.MM.DD]]`. In a worktree this goes in the **worktree's weekly child note** `user.Mjvolk3.torchcell.tasks.weekly.<YYYY>.<WW>.<slug>.md` (`WW` = ISO week, `TZ=America/Chicago date +%G.%V`; create it with `dendron-cli note write` if missing), not the main weekly -- the child-note convention that keeps worktree weekly edits from colliding on rebase (see `/update-tasks-weekly`). Create the date H2 if missing.
+2. Stage the plan note + weekly child note on the branch (cwd is the worktree, so plain `git add` targets it).
 3. Try `code notes/<fname>.md` -- swallow IPC errors silently.
 4. Print the summary block as your **last output**:
 
@@ -166,13 +193,14 @@ Loop logic: termination phrase -> exit to Phase 5. Under ~310 with cuts applied 
 
     ## Files
 
-    Plan note:    notes/<fname>.md
+    Plan note:    notes/<fname>.md   (in the worktree, on the branch)
     Dendron link: [[plan.<slug>.YYYY.MM.DD]]
+    Branch:       plan/<slug>   (worktree at ~/Documents/projects/torchcell.worktrees/plan/<slug>)
     Line count:   <wc -l result>
 
     Read the plan in your editor. Ask questions or request revisions here.
     When ready to implement: /wt-implement notes/<fname>.md
-    (Use high or xhigh effort for implementation.)
+    (The worktree already exists -- /wt-implement reuses it. Use high or xhigh effort for implementation.)
     ```
 
 Nothing after this block.
@@ -183,6 +211,7 @@ After presenting, enter a revision loop: answer questions from context; make spe
 
 ## Rules (Opus 4.8 takes these literally)
 
+- **Worktree-first: the plan note is born in its own `plan/<slug>` worktree, never on local `main`.** Phase 0 creates the worktree before any note is written; every later phase runs with the worktree as cwd. This is the invariant that keeps `main` pristine.
 - **3 scouts, 1 deliberator, 1 plan-writer, 1 reducer-critic (looped).** Do not add agents.
 - **Scouts run in parallel** in a single message.
 - **No artificial word caps on scouts.** The reducer-critic trims.

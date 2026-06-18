@@ -19,6 +19,10 @@
         {
             "name": "torchcell-overleaf",
             "path": "../torchcell-overleaf"
+        },
+        {
+            "name": "/tmp/screenshots",
+            "path": "/tmp/screenshots"
         }
     ],
     "settings": {

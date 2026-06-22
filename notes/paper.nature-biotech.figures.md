@@ -77,4 +77,61 @@ Source: `notes/assets/drawio/color-palette.drawio`.
 ### CGT mermaid diagrams
 
 - [[torchcell.models.equivariant_cell_graph_transformer.mermaid]] -- source diagrams.
-- [[torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii]] -- recolored Type I/II diagram; vector PDF export `notes/assets/pdf-output/equivariant-cell-graph-transformer-type-i-ii.pdf`.
+- [[torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii]] -- recolored Type I/II diagram; vector PDF export `notes/assets/pdf-output/torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii.pdf` (drop this PDF into the Fig 1 panel C draw.io). Older name `equivariant-cell-graph-transformer-type-i-ii.pdf` is superseded.
+
+## 2026.06.21 - Standalone mermaid -> PDF pipeline (matched naming)
+
+Reusable pipeline for turning a standalone mermaid diagram into a vector PDF for
+placement in a draw.io figure. Use this whenever a `.md` holds a mermaid block we
+want as a figure asset.
+
+**Script:** `notes/assets/publish/scripts/mermaid_pdf.sh`
+
+```bash
+bash notes/assets/publish/scripts/mermaid_pdf.sh <path/to/file.md> [bg]
+# default bg = transparent
+```
+
+**What it does / conventions:**
+
+- Renders with the **global `mmdc`** (`@mermaid-js/mermaid-cli` v11+), *not* the
+  pandoc `mermaid-filter` path. mermaid v11 ships **KaTeX**, so `$$...$$` math in
+  node / cluster / edge labels typesets correctly (mmdc -> headless Chromium ->
+  print-to-PDF = true vector, crisp/selectable math). `--pdfFit` fits the page to
+  the diagram (no whitespace margin).
+- **Output name matches the md file** (Dendron fname), in `notes/assets/pdf-output/`.
+  e.g. `notes/foo.bar.md` -> `notes/assets/pdf-output/foo.bar.{pdf,svg,png}`. mmdc
+  names single-diagram output `<base>-1.pdf`; the script renames it to `<base>.pdf`.
+  Multi-diagram files keep the numeric `-N` suffixes (no SVG/PNG sidecar).
+- Emits three artifacts: `.pdf` (fitted vector), `.svg` (outlined vector for
+  draw.io), `.png` (high-DPI raster fallback).
+
+**Putting the diagram into a draw.io figure (IMPORTANT):** do **NOT** use draw.io
+"Import PDF" -- it parses the PDF content stream into scattered editable text boxes
+(every glyph becomes its own text run), which is why importing "just imports text".
+Instead **embed the `.svg` as an image**: in draw.io drag the `.svg` in (or
+Extras/Edit > ... Insert) and choose **embed as image**, not import/convert to
+shapes. The SVG is outlined by `pdftocairo` (glyphs are paths, zero `<text>`), so
+it stays vector, needs no fonts, and exports cleanly to the final Nature vector
+PDF. If an SVG embed misbehaves, fall back to the `.png`.
+
+**Label authoring rule (so math renders cleanly):** make the *entire* label one
+KaTeX block -- do **not** mix plain text and `$$...$$` on one line (mermaid eats
+the space at the HTML/KaTeX seam). Use `\text{...}` for words and `\` for explicit
+gaps.
+
+**Multi-line labels with math -- use TRIPLE backslash `\\\`:** mermaid pre-parses
+the label and collapses `\\` -> `\` before handing it to KaTeX, so a normal
+`\begin{gathered}...\\...\end{gathered}` renders on ONE line (mermaid warns "`\\`
+does nothing in display mode"). Writing the row separator as **`\\\`** (three
+backslashes) makes mermaid pass `\\` to KaTeX, which then breaks the line. So:
+`$$\begin{gathered}\text{Line 1}\\\ \text{Line 2}\end{gathered}$$`. This is a known
+mermaid bug (mermaid-js/mermaid #7194, #5941; discussion #5885) -- the `\\\`
+workaround lets us keep crisp KaTeX *and* wrap boxes (controls figure width).
+`<br>` only breaks between pure-text segments; it is dropped next to `$$...$$`.
+See [[torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii]] for a
+fully-converted example (every box wraps via `\\\`).
+
+**Why not `mermaid-filter`/pandoc here:** the bundled (older) puppeteer in
+`mermaid-filter` currently times out launching Chromium (30s), so the standalone
+`mmdc` route is the reliable one for figure assets.

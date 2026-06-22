@@ -37,6 +37,30 @@ body (`content.tex`) compiled by thin wrappers, and builds via Tectonic.
   images in Overleaf; the sync pulls first and never deletes their files. The
   figure-prep guide and the figure-sizing canvas are synced so collaborators see them.
 
+## Mermaid Diagrams with Math (KaTeX)
+
+Mermaid (v11+ via `mmdc`) renders `$$...$$` labels with KaTeX. Two non-obvious
+rules, learned the hard way -- follow them when editing any mermaid diagram with
+math:
+
+- **Multi-line labels need TRIPLE backslash `\\\`, not `\\`.** Mermaid collapses
+  `\\` -> `\` before passing to KaTeX, so a normal `\begin{gathered}...\\...\end{gathered}`
+  renders on ONE line. Write the row separator as `\\\` so KaTeX receives `\\` and
+  breaks the line: `$$\begin{gathered}\text{Line 1}\\\ \text{Line 2}\end{gathered}$$`.
+  (Known mermaid bug: mermaid-js/mermaid #7194, #5941.) This is the lever for
+  controlling box/figure width -- wrap long boxes instead of letting them run wide.
+- **Don't mix plain text and `$$...$$` on one line** -- mermaid eats the space at the
+  HTML/KaTeX seam (`Cell Graph|G|`). Make the whole label one KaTeX block; use
+  `\text{...}` for words. `<br>` only breaks between pure-text segments; it is
+  dropped next to math.
+
+**Worked example** (every box wraps via `\\\`, full palette):
+`notes/torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii.md`.
+**Render a standalone diagram to PDF/SVG/PNG** (md-matched name, outlined SVG for
+draw.io): `bash notes/assets/publish/scripts/mermaid_pdf.sh <file.md>`. Full pipeline
+notes in [[paper.nature-biotech.figures]]. Use `mmdc` directly, not the pandoc
+`mermaid-filter` path (its bundled puppeteer times out).
+
 ## Dendron Paths
 
 We use dendron paths in markdown files to link between project notes. These are very useful for giving additional context.

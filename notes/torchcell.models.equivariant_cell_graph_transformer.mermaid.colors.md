@@ -35,6 +35,15 @@ Two tiers, listed **in order of use** (all primaries first, then secondaries): *
 | Green | `#D5E8D4` / `#729E5A` | `#BCD8B3` / `#5F834A` |
 | Grey | `#F5F5F5` / `#5A5A5A` | `#CACACA` / `#4A4A4A` |
 
+**Background**
+
+The diagram canvas / cluster fill (set via the `%%{init ...}%%` line) is a warm beige.
+Use it as the shared figure background so draw.io panels and mermaid diagrams match.
+
+| Color | Fill / border |
+|---|---|
+| Background | `#F5EEDD` / `#E0D6BE` |
+
 ### Live swatch (mermaid)
 
 The `%%{init ...}%%` line sets a beige background (overriding mermaid's default pale-yellow subgraph fill).
@@ -68,6 +77,11 @@ graph TB
     G2["Green"]:::g2
     Gr2["Grey"]:::gr2
   end
+  subgraph BG["Background"]
+    direction LR
+    BGc["Background"]:::bg
+  end
+  classDef bg fill:#F5EEDD,stroke:#E0D6BE,stroke-width:3px
   classDef o1 fill:#FFE6CC,stroke:#BD8800,stroke-width:3px
   classDef r1 fill:#F8CECC,stroke:#A24A46,stroke-width:3px
   classDef p1 fill:#E1D5E7,stroke:#846592,stroke-width:3px

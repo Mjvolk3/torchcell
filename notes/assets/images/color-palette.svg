@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="660" height="540" viewBox="0 0 660 540" font-family="DejaVu Sans, Arial, sans-serif">
-<rect x="0" y="0" width="660" height="540" fill="white"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="670" viewBox="0 0 660 670" font-family="DejaVu Sans, Arial, sans-serif">
+<rect x="0" y="0" width="660" height="670" fill="white"/>
 <text x="20" y="32" font-size="18" font-weight="bold" fill="#222">TorchCell figure palette (draw.io swatches)</text>
 <text x="20" y="104" font-size="13" font-weight="bold" fill="#444">Base · primary</text>
 <rect x="170" y="60" width="78" height="78" rx="4" fill="#FFE6CC" stroke="#BD8800" stroke-width="6"/>
@@ -47,4 +47,8 @@
 <rect x="370" y="415" width="78" height="78" rx="4" fill="#CACACA" stroke="#4A4A4A" stroke-width="6"/>
 <text x="409" y="509" font-size="10.5" text-anchor="middle" fill="#333">CACACA</text>
 <text x="409" y="522" font-size="10.5" text-anchor="middle" fill="#4A4A4A">4A4A4A</text>
+<text x="20" y="579" font-size="13" font-weight="bold" fill="#444">Background</text>
+<rect x="170" y="535" width="78" height="78" rx="4" fill="#F5EEDD" stroke="#E0D6BE" stroke-width="6"/>
+<text x="209" y="629" font-size="10.5" text-anchor="middle" fill="#333">F5EEDD</text>
+<text x="209" y="642" font-size="10.5" text-anchor="middle" fill="#9A8E70">E0D6BE</text>
 </svg>

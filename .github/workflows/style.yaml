@@ -1,4 +1,4 @@
-name: Code Styling
+name: Lint (ruff)
 
 on:
   push:
@@ -11,23 +11,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  code-styling:
+  ruff:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2  # Please update to the latest available version
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v2  # Please update to the latest available version
-      with:
-        python-version: 3.11  # Ensure this version is available
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f env/requirements_style.txt ]; then pip install -r env/requirements_style.txt; else echo "env/requirements_style.txt not found"; exit 1; fi
-        python -m pip install -e .
+      - name: Install ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r env/requirements_style.txt
 
-    - name: Check code styling with flake8 and flake8-black
-      run: |
-        flake8 src --select BLK  # This will only run flake8-black. Remove --select BLK to run all flake8 checks
+      # Advisory + diff-scoped: enforcement lands on changed source while the
+      # repo-wide ruff backlog (the deferred --fix/format sweep) is paid down
+      # separately. continue-on-error keeps the build green during the transition.
+      - name: Ruff check + format-check (changed files; advisory)
+        continue-on-error: true
+        run: |
+          git fetch origin main --depth=1 || true
+          FILES=$(git diff --name-only origin/main...HEAD -- 'torchcell/**/*.py' 'tests/torchcell/**/*.py')
+          if [ -n "$FILES" ]; then
+            echo "Changed Python files:"; echo "$FILES"
+            ruff check $FILES
+            ruff format --check $FILES
+          else
+            echo "No changed torchcell/tests Python files vs origin/main."
+          fi

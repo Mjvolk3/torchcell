@@ -1,1 +1,4 @@
 mypy
+pandas-stubs
+types-tqdm
+types-requests

@@ -18,13 +18,15 @@ classifiers = [
 ]
 keywords = ["An example package", "starving artist"]
 # dependencies = []
-# requires-python = ">=3.11"
-requires-python = ">=3.10"
+# Floor tracks the torch / torch_geometric stack we run (env is 3.13.0);
+# backwards compatibility with older interpreters is a non-goal.
+requires-python = ">=3.13"
 dynamic = ["dependencies"]
 
 [project.optional-dependencies]
 dev = [
-    "black",
+    "ruff",
+    "mypy",
     "semantic-release",
     "pip-tools",
     "pytest",
@@ -44,42 +46,123 @@ include = ["torchcell", "experiments"]
 venvPath = "/Users/michaelvolk/miniconda3/envs"
 venv = "torchcell"
 
-[tool.isort]
-profile = "black"
-known_first_party = ["docs", "tests", "torchcell", "train"]
-skip_gitignore = true
-color_output = true
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+# Dead/legacy trainer: kept for history, not linted (also ignored by mypy below).
+extend-exclude = ["torchcell/trainers/graph_convolution_regression.py"]
+# Honor the exclude even when the path is passed explicitly (pre-commit, CI diff-scope).
+force-exclude = true
 
-[tool.black]
-target-version = ["py311"]
-color = true
-skip_magic_trailing_comma = true # true in torchgeo
+[tool.ruff.lint]
+# E/F: pycodestyle+pyflakes, I: isort, UP: pyupgrade, D: pydocstyle.
+select = ["E", "F", "I", "UP", "D"]
+# E501 owned by the formatter; D205/D212/D415 clash with our frontmatter docstrings.
+ignore = ["E501", "D205", "D212", "D415"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D103", "D104"]
+"notes/assets/scripts/**" = ["D100", "D103"]
+"experiments/**" = ["D100", "D103", "E402"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["docs", "tests", "torchcell", "train"]
+split-on-trailing-comma = false
+
+[tool.ruff.format]
+quote-style = "double"
+skip-magic-trailing-comma = true
 
 [tool.mypy]
-files = ["torchcell/**/*.py", "tests/**/*.py"]
-
-python_version = "3.11"
-ignore_missing_imports = true
+# Directories, not globs: torchcell/cell.py and torchcell/cell/ both map to the
+# module `torchcell.cell`, so a recursive *.py glob feeds mypy the name twice and
+# aborts discovery. Passing the package dirs lets mypy resolve the tree.
+files = ["torchcell", "tests"]
+python_version = "3.13"
+# Full strict bundle on our own code. We do NOT set a global
+# ignore_missing_imports; untyped third-party libs are handled per-module below
+# so our code stays strict instead of silently coercing imports to Any.
+strict = true
 show_error_codes = true
-# Strict
-warn_unused_configs = true
-disallow_any_generics = true
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_return_any = true
-no_implicit_reexport = true
-strict_equality = true
+# Namespace layout (no src/ root); lets discovery complete on the package tree.
+explicit_package_bases = true
+namespace_packages = true
 
-[tool.pydocstyle]
-convention = "google"
-match = "torchcell/.*\\.py"
+[[tool.mypy.overrides]]
+# Tests exercise behavior, not type contracts: relax the untyped-def family.
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+# Untyped third-party libraries (no py.typed marker, no stubs). Suppress the
+# import error per-module rather than globally. Seeded from env/requirements*.txt
+# and confirmed by running mypy; extend as new untyped deps are introduced.
+module = [
+    "GEOparse", "GEOparse.*",
+    "adjustText", "adjustText.*",
+    "biocypher", "biocypher.*",
+    "calm", "calm.*",
+    "cobra", "cobra.*",
+    "dask", "dask.*",
+    "datasets", "datasets.*",
+    "gffutils", "gffutils.*",
+    "geomloss", "geomloss.*",
+    "goatools", "goatools.*",
+    "h5py", "h5py.*",
+    "hypernetx", "hypernetx.*",
+    "intermine", "intermine.*",
+    "lmdb", "lmdb.*",
+    "neo4j", "neo4j.*",
+    "neo4j_utils", "neo4j_utils.*",
+    "networkx", "networkx.*",
+    "owlready2", "owlready2.*",
+    "plotly", "plotly.*",
+    "psutil", "psutil.*",
+    "pytorch_metric_learning", "pytorch_metric_learning.*",
+    "rpy2", "rpy2.*",
+    "rustworkx", "rustworkx.*",
+    "scipy", "scipy.*",
+    "seaborn", "seaborn.*",
+    "sklearn", "sklearn.*",
+    "sortedcontainers", "sortedcontainers.*",
+    "sympy", "sympy.*",
+    "torch", "torch.*",
+    "torch_geometric", "torch_geometric.*",
+    "torch_scatter", "torch_scatter.*",
+    "torch_sparse", "torch_sparse.*",
+    "umap", "umap.*",
+    "yaml", "yaml.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Dead/legacy trainer (commented out of trainers/__init__.py, referenced only by
+# experiments/DEPRECATED_*). Kept for history but not gated; do not maintain.
+module = "torchcell.trainers.graph_convolution_regression"
+ignore_errors = true
+
+[tool.pytest.ini_options]
+markers = [
+    "gpu: requires a CUDA device; deselected on CPU-only CI via -m 'not gpu'",
+]
+
+[tool.coverage.run]
+source = ["torchcell"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+]
 
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 [tool.setuptools.dynamic]

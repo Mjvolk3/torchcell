@@ -28,73 +28,73 @@ Large outer container subgraphs are left neutral beige; alt colors (blue/green/g
 ```mermaid
 %%{init: {'theme':'base','themeVariables':{'background':'#F5EEDD','clusterBkg':'#F5EEDD','clusterBorder':'#E0D6BE','lineColor':'#B7AC93'}}}%%
 graph TD
-  subgraph InputLayer["Input Layer"]
+  subgraph InputLayer["$$\text{Input Layer}$$"]
     direction TB
-    CellGraph["Cell Graph<br>|G| = 6607 genes<br>9 graph types"]
-    PerturbationData["Perturbation Data<br>S ⊆ G, τ ∈ (del, OE, KD)"]
+    CellGraph["$$\begin{gathered}\text{Cell Graph}\\\ |G| = 6607\ \text{genes}\\\ \text{9 graph types}\end{gathered}$$"]
+    PerturbationData["$$\begin{gathered}\text{Perturbation Data}\\\ S \subseteq G,\ \tau \in \{\mathrm{del}, \mathrm{OE}, \mathrm{KD}\}\end{gathered}$$"]
   end
 
-  subgraph TransformerBlock["Graph-Regularized Transformer"]
+  subgraph TransformerBlock["$$\text{Graph-Regularized Transformer}$$"]
     direction TB
 
-    subgraph Embedding["Embeddings"]
-      GeneEmbed["Gene Embeddings<br>H^(0) ∈ R^(N+1)×d"]
-      CLSToken["[CLS] Token"]
+    subgraph Embedding["$$\text{Embeddings}$$"]
+      GeneEmbed["$$\begin{gathered}\text{Gene Embeddings}\\\ H^{(0)} \in \mathbb{R}^{(N+1)\times d}\end{gathered}$$"]
+      CLSToken["$$[\text{CLS}]\ \text{Token}$$"]
     end
 
-    subgraph TransformerLayers["L Transformer Layers"]
+    subgraph TransformerLayers["$$L\ \text{Transformer Layers}$$"]
       direction TB
-      TLayer1["Layer 1: H^(1) = T^(1)(H^(0))"]
-      TLayer2["Layer 2: H^(2) = T^(2)(H^(1))"]
-      TLayerDots["..."]
-      TLayerL["Layer L: H^(L) = T^(L)(H^(L-1))"]
+      TLayer1["$$\begin{gathered}\text{Layer 1}\\\ H^{(1)} = T^{(1)}(H^{(0)})\end{gathered}$$"]
+      TLayer2["$$\begin{gathered}\text{Layer 2}\\\ H^{(2)} = T^{(2)}(H^{(1)})\end{gathered}$$"]
+      TLayerDots["$$\cdots$$"]
+      TLayerL["$$\begin{gathered}\text{Layer L}\\\ H^{(L)} = T^{(L)}(H^{(L-1)})\end{gathered}$$"]
     end
 
-    GraphReg["Graph Regularization<br>KL(A_g || α^(ℓ,k))<br>for each graph type"]
+    GraphReg["$$\begin{gathered}\text{Graph Regularization}\\\ \mathrm{KL}(A_g \,\|\, \alpha^{(\ell,k)})\\\ \text{for each graph type}\end{gathered}$$"]
   end
 
-  subgraph TypeIInstruments["Type I Virtual Instruments<br>(Representation → Representation)"]
+  subgraph TypeIInstruments["$$\begin{gathered}\text{Type I Virtual Instruments}\\\ (\text{Representation} \to \text{Representation})\end{gathered}$$"]
     direction TB
 
-    subgraph PerturbationOps["Perturbation Operators"]
-      DeleteOp["T_ψ^del: Gene Deletion"]
-      OverexpOp["T_ψ^OE: Overexpression"]
-      KnockdownOp["T_ψ^KD: Knockdown"]
+    subgraph PerturbationOps["$$\text{Perturbation Operators}$$"]
+      DeleteOp["$$\begin{gathered}T_\psi^{\mathrm{del}}\\\ \text{Gene Deletion}\end{gathered}$$"]
+      OverexpOp["$$\begin{gathered}T_\psi^{\mathrm{OE}}\\\ \text{Overexpression}\end{gathered}$$"]
+      KnockdownOp["$$\begin{gathered}T_\psi^{\mathrm{KD}}\\\ \text{Knockdown}\end{gathered}$$"]
     end
 
-    CrossAttention["Cross-Attention Mechanism<br>H_pert,i = h_i + Σ_j∈S α_ij W_V h_j"]
+    CrossAttention["$$\begin{gathered}\text{Cross-Attention Mechanism}\\\ H_{\mathrm{pert},i} = h_i + \sum_{j \in S} \alpha_{ij} W_V h_j\end{gathered}$$"]
 
-    PerturbedState["H_pert ∈ R^(B×N×d)<br>EQUIVARIANT"]
+    PerturbedState["$$\begin{gathered}H_{\mathrm{pert}} \in \mathbb{R}^{B \times N \times d}\\\ \text{EQUIVARIANT}\end{gathered}$$"]
   end
 
-  subgraph TypeIIInstruments["Type II Virtual Instruments<br>(Representation → Output)"]
+  subgraph TypeIIInstruments["$$\begin{gathered}\text{Type II Virtual Instruments}\\\ (\text{Representation} \to \text{Output})\end{gathered}$$"]
     direction TB
 
-    subgraph InvariantReadouts["Invariant Readouts"]
-      FitnessInst["R_φ^fit: Fitness<br>GlobalPool → MLP → R"]
-      GeneIntInst["R_φ^GI: Gene Interaction<br>Pool_S → MLP → R"]
-      MorphInst["R_φ^morph: Morphology<br>GeneSetPool → MLP → R^m"]
+    subgraph InvariantReadouts["$$\text{Invariant Readouts}$$"]
+      FitnessInst["$$\begin{gathered}R_\phi^{\mathrm{fit}}\text{: Fitness}\\\ \mathrm{GlobalPool} \to \mathrm{MLP} \to \mathbb{R}\end{gathered}$$"]
+      GeneIntInst["$$\begin{gathered}R_\phi^{\mathrm{GI}}\text{: Gene Interaction}\\\ \mathrm{Pool}_S \to \mathrm{MLP} \to \mathbb{R}\end{gathered}$$"]
+      MorphInst["$$\begin{gathered}R_\phi^{\mathrm{morph}}\text{: Morphology}\\\ \mathrm{GeneSetPool} \to \mathrm{MLP} \to \mathbb{R}^m\end{gathered}$$"]
     end
 
-    subgraph EquivariantReadouts["Equivariant Readouts"]
-      ExprInst["R_φ^expr: Expression<br>Per-gene MLP → R^N"]
-      ProteinInst["R_φ^prot: Protein Levels<br>Per-gene MLP → R^N"]
+    subgraph EquivariantReadouts["$$\text{Equivariant Readouts}$$"]
+      ExprInst["$$\begin{gathered}R_\phi^{\mathrm{expr}}\text{: Expression}\\\ \text{Per-gene}\ \mathrm{MLP} \to \mathbb{R}^N\end{gathered}$$"]
+      ProteinInst["$$\begin{gathered}R_\phi^{\mathrm{prot}}\text{: Protein Levels}\\\ \text{Per-gene}\ \mathrm{MLP} \to \mathbb{R}^N\end{gathered}$$"]
     end
   end
 
-  subgraph SparseBatch["Sparse Batch Handler"]
+  subgraph SparseBatch["$$\text{Sparse Batch Handler}$$"]
     direction TB
-    PtrArrays["Pointer Arrays<br>ptr_t for each task"]
-    MissingLabels["Missing Label Masks<br>n_b^(t) ∈ {0,1}"]
-    SparseLoss["Sparse Loss Computation<br>L = Σ_t w_t Σ_b ℓ_t"]
+    PtrArrays["$$\begin{gathered}\text{Pointer Arrays}\\\ \mathrm{ptr}_t\ \text{for each task}\end{gathered}$$"]
+    MissingLabels["$$\begin{gathered}\text{Missing Label Masks}\\\ n_b^{(t)} \in \{0,1\}\end{gathered}$$"]
+    SparseLoss["$$\begin{gathered}\text{Sparse Loss Computation}\\\ \mathcal{L} = \sum_t w_t \sum_b \ell_t\end{gathered}$$"]
   end
 
-  subgraph Outputs["Multi-Task Outputs"]
+  subgraph Outputs["$$\text{Multi-Task Outputs}$$"]
     direction TB
-    OutFitness["y_fitness ∈ R"]
-    OutGI["y_GI ∈ R"]
-    OutMorph["y_morph ∈ R^m"]
-    OutExpr["y_expr ∈ R^N"]
+    OutFitness["$$y_{\mathrm{fitness}} \in \mathbb{R}$$"]
+    OutGI["$$y_{\mathrm{GI}} \in \mathbb{R}$$"]
+    OutMorph["$$y_{\mathrm{morph}} \in \mathbb{R}^m$$"]
+    OutExpr["$$y_{\mathrm{expr}} \in \mathbb{R}^N$$"]
   end
 
   %% Main Flow
@@ -108,7 +108,7 @@ graph TD
   TLayerDots --> TLayerL
 
   CellGraph --> GraphReg
-  GraphReg -.->|regularize| TransformerLayers
+  GraphReg -.->|"$$\text{regularize}$$"| TransformerLayers
 
   TLayerL --> PerturbationOps
   PerturbationOps --> CrossAttention
@@ -119,6 +119,9 @@ graph TD
   PerturbedState --> MorphInst
   PerturbedState --> ExprInst
   PerturbedState --> ProteinInst
+
+  %% Stack Type II readouts into two rows (Equivariant below Invariant) to reduce width
+  InvariantReadouts ~~~ EquivariantReadouts
 
   FitnessInst --> OutFitness
   GeneIntInst --> OutGI
@@ -154,4 +157,18 @@ graph TD
   class PtrArrays,MissingLabels,SparseLoss sparse
   class OutFitness,OutGI,OutMorph,OutExpr output
   %% large outer containers (InputLayer, TransformerBlock, TypeI/II Instruments, SparseBatch, Outputs) left unstyled -> neutral beige
+```
+
+## 2026.06.21 - All-LaTeX labels + render to PDF
+
+Every label, cluster title, and edge label was converted to a single KaTeX block
+(no mixed text/math on one line; multi-line via `\begin{gathered}...\\...\end{gathered}`)
+so math renders cleanly with consistent spacing. See the pipeline + authoring rule
+in [[paper.nature-biotech.figures]].
+
+Regenerate the figure asset (name matches this note):
+
+```bash
+bash notes/assets/publish/scripts/mermaid_pdf.sh notes/torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii.md
+# -> notes/assets/pdf-output/torchcell.models.equivariant_cell_graph_transformer.mermaid.type-i-ii.pdf
 ```

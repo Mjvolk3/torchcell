@@ -3,17 +3,17 @@
 
 import os.path as osp
 from typing import Dict, List, Optional, Any
-from torchcell.datasets import (
-    OneHotGeneDataset,
-    CodonFrequencyDataset,
-    CalmDataset,
-    FungalUpDownTransformerDataset,
-    NucleotideTransformerDataset,
-    ProtT5Dataset,
-    Esm2Dataset,
-    GraphEmbeddingDataset,
-    RandomEmbeddingDataset,
-)
+# Import from sibling submodules directly, not the package __init__, to avoid a
+# circular import that surfaces once imports are alphabetically sorted.
+from torchcell.datasets.one_hot_gene import OneHotGeneDataset
+from torchcell.datasets.codon_frequency import CodonFrequencyDataset
+from torchcell.datasets.codon_language_model import CalmDataset
+from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
+from torchcell.datasets.protT5 import ProtT5Dataset
+from torchcell.datasets.esm2 import Esm2Dataset
+from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
+from torchcell.datasets.random_embedding import RandomEmbeddingDataset
 
 
 class NodeEmbeddingBuilder:

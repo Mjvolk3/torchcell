@@ -10,9 +10,13 @@ import lmdb
 from tqdm import tqdm
 from abc import ABC, abstractmethod
 from typing import Callable, Type, TYPE_CHECKING, Union
-from torchcell.datamodels import ModelStrict
-from torchcell.datamodels import ExperimentType, ExperimentReferenceType
+# Import from sibling submodules directly, not the package __init__, so this
+# module does not depend on __init__ import order (avoids a circular import that
+# surfaces once imports are alphabetically sorted).
+from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
+    ExperimentType,
+    ExperimentReferenceType,
     EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
 )

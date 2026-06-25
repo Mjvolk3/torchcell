@@ -197,6 +197,15 @@ git config merge.weeklynote.name "union weekly task-note bodies, keep a single f
 git config merge.weeklynote.driver "python3 scripts/git_merge_weekly_note.py %O %A %B %P"
 echo "  ✓ merge.weeklynote registered in .git/config (shared across worktrees)"
 
+# Activate the pre-commit hooks (ruff + strict mypy + markdownlint) for this
+# worktree. Without this, .pre-commit-config.yaml is inert -- commits skip the gates.
+echo -e "\n${BLUE}Installing pre-commit hooks...${NC}"
+if command -v pre-commit >/dev/null 2>&1; then
+    pre-commit install >/dev/null && echo "  ✓ pre-commit hooks installed"
+else
+    echo "  ℹ pre-commit not found in PATH -- run 'pip install pre-commit && pre-commit install'"
+fi
+
 echo -e "\n${GREEN}✓ Worktree setup complete!${NC}"
 echo -e "\n${BLUE}How this works:${NC}"
 echo "  - .env is COPIED (not symlinked) from main repo with worktree-specific overrides"

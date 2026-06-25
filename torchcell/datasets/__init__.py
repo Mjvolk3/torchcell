@@ -8,48 +8,42 @@
 # from .dcell import DCellDataset
 
 # scerevisiae datasets
+# other datasets
+from .codon_frequency import CodonFrequencyDataset
+from .codon_language_model import CalmDataset
+from .dataset_registry import dataset_registry
+from .esm2 import Esm2Dataset
+from .fungal_up_down_transformer import FungalUpDownTransformerDataset
+from .node_embedding_builder import NodeEmbeddingBuilder
+from .nucleotide_transformer import NucleotideTransformerDataset
+from .one_hot_gene import OneHotGeneDataset
+from .protT5 import ProtT5Dataset
+from .random_embedding import RandomEmbeddingDataset
 from .scerevisiae.costanzo2016 import (
-    SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
     DmiCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
 )
-
 from .scerevisiae.kuzmin2018 import (
-    SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
     DmiKuzmin2018Dataset,
+    SmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
     TmiKuzmin2018Dataset,
 )
 from .scerevisiae.kuzmin2020 import (
-    SmfKuzmin2020Dataset,
     DmfKuzmin2020Dataset,
-    TmfKuzmin2020Dataset,
     DmiKuzmin2020Dataset,
+    SmfKuzmin2020Dataset,
+    TmfKuzmin2020Dataset,
     TmiKuzmin2020Dataset,
 )
-
+from .scerevisiae.sgd import GeneEssentialitySgdDataset
 from .scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
-
-from .scerevisiae.sgd import GeneEssentialitySgdDataset
-
-# other datasets
-from .codon_frequency import CodonFrequencyDataset
-from .fungal_up_down_transformer import FungalUpDownTransformerDataset
-from .nucleotide_transformer import NucleotideTransformerDataset
-from .one_hot_gene import OneHotGeneDataset
-from .protT5 import ProtT5Dataset
 from .sgd_gene_graph import GraphEmbeddingDataset
-from .esm2 import Esm2Dataset
-from .codon_language_model import CalmDataset
-from .random_embedding import RandomEmbeddingDataset
-
-from .dataset_registry import dataset_registry
-from .node_embedding_builder import NodeEmbeddingBuilder
-
 
 embedding_datasets = [
     "NucleotideTransformerDataset",

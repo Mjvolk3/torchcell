@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/transforms/test_regression_to_classification_coo
 
 import numpy as np
-import pandas as pd
 import pytest
 import torch
 from torch_geometric.data import HeteroData
@@ -500,9 +499,9 @@ class TestCOOLabelBinningTransform:
             rec_val = recovered["gene"]["phenotype_values"][i]
 
             # Check recovered value is in same bin
-            assert (
-                bin_start <= rec_val <= bin_end
-            ), f"Value {rec_val} not in [{bin_start}, {bin_end}]"
+            assert bin_start <= rec_val <= bin_end, (
+                f"Value {rec_val} not in [{bin_start}, {bin_end}]"
+            )
 
     def test_coo_soft_binning(self, bin_transform, mock_coo_dataset):
         # Select a subset of gene_interaction data for testing
@@ -626,9 +625,9 @@ class TestCOOOrdinalBinning:
         for i in range(num_samples):
             for j in range(1, num_thresholds):
                 if reconstructed[i, j] > 0.5:  # Assuming 0.5 is threshold
-                    assert torch.all(
-                        reconstructed[i, :j] > 0.5
-                    ), f"Ordinal property violated at {i}, {j}"
+                    assert torch.all(reconstructed[i, :j] > 0.5), (
+                        f"Ordinal property violated at {i}, {j}"
+                    )
 
     def test_coo_ordinal_inverse(self, bin_transform):
         # Create test data with ordinal labels in COO format
@@ -681,9 +680,9 @@ class TestCOOOrdinalBinning:
             rec_val = recovered["gene"]["phenotype_values"][i]
 
             # Check it's in the right bin
-            assert (
-                bin_start <= rec_val <= bin_end
-            ), f"Value {rec_val} not in bin {crossings} range [{bin_start}, {bin_end}]"
+            assert bin_start <= rec_val <= bin_end, (
+                f"Value {rec_val} not in bin {crossings} range [{bin_start}, {bin_end}]"
+            )
 
     def test_coo_ordinal_with_nans(self, bin_transform):
         # Create test data with NaNs
@@ -716,9 +715,9 @@ class TestCOOOrdinalBinning:
             if len(matches) > 0:
                 # If sample exists, check for NaN
                 idx = matches[0].item()
-                assert torch.isnan(
-                    recovered["gene"]["phenotype_values"][idx]
-                ), f"NaN not preserved for sample {i}"
+                assert torch.isnan(recovered["gene"]["phenotype_values"][idx]), (
+                    f"NaN not preserved for sample {i}"
+                )
 
 
 class TestCOOOrdinalNormBinning:
@@ -970,9 +969,9 @@ class TestCOOModelOutputSimulation:
             low, high = norm_bin_edges[crossings], norm_bin_edges[crossings + 1]
 
             # Check the value is in the right bin
-            assert (
-                low <= recovered_value <= high
-            ), f"Sample {sample_idx}: value {recovered_value} not in range [{low}, {high}]"
+            assert low <= recovered_value <= high, (
+                f"Sample {sample_idx}: value {recovered_value} not in range [{low}, {high}]"
+            )
 
 
 class TestCOOInverseComposeWithGrads:
@@ -1136,20 +1135,20 @@ def test_coo_composed_transforms():
     rec_num_fitness = (rec_type_indices == 1).sum().item()
 
     # Check we have correct number of values for each type
-    assert (
-        rec_num_gi == orig_num_gi
-    ), f"Expected {orig_num_gi} gene_interaction values, got {rec_num_gi}"
-    assert (
-        rec_num_fitness == orig_num_fitness
-    ), f"Expected {orig_num_fitness} fitness values, got {rec_num_fitness}"
+    assert rec_num_gi == orig_num_gi, (
+        f"Expected {orig_num_gi} gene_interaction values, got {rec_num_gi}"
+    )
+    assert rec_num_fitness == orig_num_fitness, (
+        f"Expected {orig_num_fitness} fitness values, got {rec_num_fitness}"
+    )
 
     # Verify all values are finite (no inf/nan)
-    assert not torch.any(
-        torch.isnan(recovered["gene"]["phenotype_values"])
-    ), "NaN values in recovered data"
-    assert not torch.any(
-        torch.isinf(recovered["gene"]["phenotype_values"])
-    ), "Infinite values in recovered data"
+    assert not torch.any(torch.isnan(recovered["gene"]["phenotype_values"])), (
+        "NaN values in recovered data"
+    )
+    assert not torch.any(torch.isinf(recovered["gene"]["phenotype_values"])), (
+        "Infinite values in recovered data"
+    )
 
     # Verify values are within reasonable ranges without using masks
     assert torch.all(recovered["gene"]["phenotype_values"] >= -2), "Values too small"

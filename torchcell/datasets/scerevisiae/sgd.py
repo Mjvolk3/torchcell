@@ -5,32 +5,32 @@
 
 
 import logging
-import re
-from urllib.parse import urlparse
-from typing import Callable
-import pandas as pd
-import time
-import lmdb
-import pickle
 import os
-import random
-from tqdm import tqdm
 import os.path as osp
-from torchcell.data import ExperimentDataset, post_process
+import pickle
+import random
+import time
+from collections.abc import Callable
+
+import lmdb
+import pandas as pd
 from Bio import Entrez
-from torchcell.datasets.dataset_registry import register_dataset
+from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
-    ReferenceGenome,
     Environment,
-    Media,
-    Temperature,
-    Genotype,
-    SgaKanMxDeletionPerturbation,
-    GeneEssentialityPhenotype,
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
+    GeneEssentialityPhenotype,
+    Genotype,
+    Media,
     Publication,
+    ReferenceGenome,
+    SgaKanMxDeletionPerturbation,
+    Temperature,
 )
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.graph.sgd import main_get_all_genes
 
@@ -147,13 +147,15 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
         os.makedirs(self.preprocess_dir, exist_ok=True)
 
         # Check if SGD gene data exists
-        sgd_genes_dir = osp.join(os.environ.get("DATA_ROOT", "data"), "sgd/genome/genes")
+        sgd_genes_dir = osp.join(
+            os.environ.get("DATA_ROOT", "data"), "sgd/genome/genes"
+        )
         if osp.exists(sgd_genes_dir):
-            gene_files = [f for f in os.listdir(sgd_genes_dir) if f.endswith('.json')]
+            gene_files = [f for f in os.listdir(sgd_genes_dir) if f.endswith(".json")]
             gene_count = len(gene_files)
         else:
             gene_count = 0
-        
+
         if gene_count < 100:  # Arbitrary threshold to check if genes are downloaded
             log.info(f"SGD gene data incomplete or missing (found {gene_count} files).")
             log.info("Downloading SGD gene data. This may take 15-30 minutes...")
@@ -256,7 +258,9 @@ class GeneEssentialitySgdDataset(ExperimentDataset):
 
 def main():
     import os
+
     from dotenv import load_dotenv
+
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

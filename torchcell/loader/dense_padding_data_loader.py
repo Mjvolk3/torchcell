@@ -3,10 +3,9 @@ from collections.abc import Mapping
 
 import numpy as np
 import torch.utils.data
+import torch_geometric
 from beartype.typing import Any, List, Optional, Sequence, Tuple, Union
 from torch.utils.data.dataloader import default_collate
-
-import torch_geometric
 from torch_geometric.data import Batch, Dataset
 from torch_geometric.data.data import BaseData
 from torch_geometric.data.datapipes import DatasetAdapter
@@ -136,7 +135,7 @@ def _dense_padded_collate(
             for nested_tensor in values:
                 tensors.extend(nested_tensor.unbind())
             value = torch.nested.nested_tensor(tensors)
-            mask = torch.nested.map(lambda tensor: (tensor != padding_value), value)
+            mask = torch.nested.map(lambda tensor: tensor != padding_value, value)
 
             return value, mask
 
@@ -406,7 +405,7 @@ class DensePaddingCollater:
         return self(batch)
 
 
-class DensePaddingDataLoader(torch.utils.data.DataLoader): 
+class DensePaddingDataLoader(torch.utils.data.DataLoader):
     r"""A data loader which merges data objects from a `torch_geometric.data.Dataset` to a mini-
     batch using padding along with a new dimension. Data objects can be either of type
     `~torch_geometric.data.Data` or `~torch_geometric.data.HeteroData`.

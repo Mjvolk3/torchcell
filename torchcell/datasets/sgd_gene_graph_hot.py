@@ -6,11 +6,13 @@
 
 import os
 import os.path as osp
+from collections.abc import Callable
+
+import networkx as nx
 import torch
 from torch_geometric.data import Data
+
 from torchcell.data.embedding import BaseEmbeddingDataset
-from typing import Callable
-import networkx as nx
 
 
 class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
@@ -78,7 +80,9 @@ class OneHotGraphEmbeddingDataset(BaseEmbeddingDataset):
             unique_pathways.update(pathways)
 
         # Create dictionaries to map chromosomes and pathways to their indices
-        chromosome_to_index = {chrom: idx for idx, chrom in enumerate(unique_chromosomes)}
+        chromosome_to_index = {
+            chrom: idx for idx, chrom in enumerate(unique_chromosomes)
+        }
         pathway_to_index = {pathway: idx for idx, pathway in enumerate(unique_pathways)}
 
         # Compute median values for each feature
@@ -205,17 +209,21 @@ def main():
     pathway_counts = {}
 
     for i in range(len(dataset)):
-        chromosome_sum = dataset[i].embeddings["normalized_chrom_pathways"][0, 7:24].sum()
+        chromosome_sum = (
+            dataset[i].embeddings["normalized_chrom_pathways"][0, 7:24].sum()
+        )
         if chromosome_sum != 1:
             print(
                 f"Data point {i}: Chromosome one-hot vector: {dataset[i].embeddings['normalized_chrom_pathways'][0, 7:24]}"
             )
             print(f"Sum of chromosome one-hot vector: {chromosome_sum}")
-        
-        pathways_sum = dataset[i].embeddings["normalized_chrom_pathways"][0, 24:].sum().item()
+
+        pathways_sum = (
+            dataset[i].embeddings["normalized_chrom_pathways"][0, 24:].sum().item()
+        )
         if pathways_sum == 0:
             count_pathway += 1
-        
+
         # Update pathway counts dictionary
         pathway_counts[pathways_sum] = pathway_counts.get(pathways_sum, 0) + 1
 

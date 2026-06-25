@@ -6,14 +6,14 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 from attrs import define, field
-from sklearn import base
 
+import torchcell
 from torchcell.sequence import Genome
 from torchcell.sgd.sequence import SCerevisiaeGenome
-import torchcell
 
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class GenomePlot(ABC):
     genome: Genome

@@ -1,17 +1,11 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch_geometric.nn import dense_diff_pool
-from torchcell.models.dense_gat_conv import DenseGATConv
-from typing import Optional, Literal
+
 from torchcell.models.act import act_register
-import torch_geometric.transforms as T
-
-from typing import Dict, Optional, Tuple, Union
-
-import torch
-from torch import Tensor
-from torch_geometric.data import HeteroData, Data
+from torchcell.models.dense_gat_conv import DenseGATConv
 from torchcell.transforms.hetero_to_dense import HeteroToDense
 
 
@@ -388,23 +382,24 @@ class DenseCellDiffPool(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
-    from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules import CellDataModule
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -420,7 +415,7 @@ def load_sample_data_batch():
         genome=genome,
     )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -473,9 +468,8 @@ def load_sample_data_batch():
 
 
 def main_single():
+
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-    import numpy as np
-    from torch_geometric.utils import to_dense_batch, to_dense_adj, dense_to_sparse
 
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
@@ -617,8 +611,8 @@ def main_single():
 
 
 def main():
+
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-    import numpy as np
 
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()

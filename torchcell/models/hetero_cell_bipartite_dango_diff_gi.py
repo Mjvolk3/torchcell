@@ -5,42 +5,43 @@
 
 import os
 import os.path as osp
+
+import hydra
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Dict, Tuple
-import hydra
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from torch_geometric.data import HeteroData
-from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
+
 from torchcell.models.diffusion_decoder import DiffusionDecoder
+from torchcell.models.hetero_cell_bipartite_dango_gi import GeneInteractionDango
 
 
 class LinearDecoder(nn.Module):
     """Simple linear decoder for baseline comparison.
-    
+
     Maps combined embeddings directly to phenotype predictions.
     """
-    
+
     def __init__(self, input_dim: int, output_dim: int = 1):
         super().__init__()
         self.proj = nn.Linear(input_dim, output_dim)
-    
+
     def forward(self, z_c: torch.Tensor) -> torch.Tensor:
         """Forward pass.
-        
+
         Args:
             z_c: Combined embeddings [batch_size, input_dim]
-            
+
         Returns:
             Predictions [batch_size, output_dim]
         """
         return self.proj(z_c)
-    
+
     def sample(self, context: torch.Tensor, **kwargs) -> torch.Tensor:
         """Sample method for compatibility with diffusion decoder interface.
-        
+
         For linear decoder, this is just a forward pass.
         """
         return self.forward(context)
@@ -74,9 +75,9 @@ class GeneInteractionDiff(GeneInteractionDango):
         dropout: float = 0.2,
         norm: str = "batch",
         activation: str = "relu",
-        gene_encoder_config: Optional[Dict] = None,
-        local_predictor_config: Optional[Dict] = None,
-        diffusion_config: Optional[Dict] = None,
+        gene_encoder_config: dict | None = None,
+        local_predictor_config: dict | None = None,
+        diffusion_config: dict | None = None,
         decoder_type: str = "diffusion",  # Add decoder type parameter
     ):
         """Initialize GeneInteractionDiff model.
@@ -111,7 +112,7 @@ class GeneInteractionDiff(GeneInteractionDango):
 
         # Store decoder type
         self.decoder_type = decoder_type
-        
+
         # Create decoder based on type
         if decoder_type == "linear":
             # Simple linear decoder for baseline testing
@@ -122,7 +123,7 @@ class GeneInteractionDiff(GeneInteractionDango):
         elif decoder_type == "diffusion":
             # Parse diffusion config
             diffusion_config = diffusion_config or {}
-            
+
             # Create diffusion decoder with all configuration options
             self.decoder = DiffusionDecoder(
                 input_dim=hidden_channels * 2,  # Concatenated embeddings
@@ -151,7 +152,7 @@ class GeneInteractionDiff(GeneInteractionDango):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass through the model.
 
         Args:
@@ -221,7 +222,9 @@ class GeneInteractionDiff(GeneInteractionDango):
                 )
 
         # Concatenate global and local embeddings for conditioning
-        z_c = torch.cat([z_i_global, pert_gene_embs_aggregated], dim=-1)  # z_c: combined latent
+        z_c = torch.cat(
+            [z_i_global, pert_gene_embs_aggregated], dim=-1
+        )  # z_c: combined latent
 
         # Handle forward pass based on decoder type
         if self.decoder_type == "linear":
@@ -291,10 +294,7 @@ class GeneInteractionDiff(GeneInteractionDango):
             raise ValueError(f"Unknown decoder type: {self.decoder_type}")
 
     def sample(
-        self,
-        cell_graph: HeteroData,
-        batch: HeteroData,
-        num_samples: Optional[int] = None,
+        self, cell_graph: HeteroData, batch: HeteroData, num_samples: int | None = None
     ) -> torch.Tensor:
         """Sample phenotype predictions using the diffusion model.
 
@@ -324,7 +324,7 @@ class GeneInteractionDiff(GeneInteractionDango):
             return self.decoder.sample(z_c, num_samples)
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Get parameter counts for each component."""
 
         # Get parent class parameter counts
@@ -347,7 +347,8 @@ class GeneInteractionDiff(GeneInteractionDango):
         param_counts["total"] = sum(param_counts.values())
         return param_counts
 
-# TODO Load from sample batch 005 will work. Refer to @/Users/michaelvolk/Documents/projects/torchcell/torchcell/models/hetero_cell_bipartite_dango_gi.py 
+
+# TODO Load from sample batch 005 will work. Refer to @/Users/michaelvolk/Documents/projects/torchcell/torchcell/models/hetero_cell_bipartite_dango_gi.py
 @hydra.main(
     version_base=None,
     config_path=osp.join(os.getcwd(), "experiments/006-kuzmin-tmi/conf"),
@@ -355,21 +356,25 @@ class GeneInteractionDiff(GeneInteractionDango):
 )
 def main(cfg: DictConfig) -> None:
     """Test the model with overfitting on a single batch using Hydra config."""
-    import torch
-    import torch.nn as nn
     import matplotlib.pyplot as plt
     import numpy as np
+    import torch
+    import torch.nn as nn
     from scipy import stats
     from torch_geometric.loader import DataLoader
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.graph_processor import SubgraphRepresentation
+    from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.graph.graph import build_gene_multigraph
-    from torchcell.data.graph_processor import SubgraphRepresentation
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
     from torchcell.losses.diffusion_loss import DiffusionLoss
     from torchcell.losses.logcosh import LogCoshLoss
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
     from torchcell.timestamp import timestamp
 
     load_dotenv()
@@ -415,7 +420,7 @@ def main(cfg: DictConfig) -> None:
     # Setup dataset
     print("Loading dataset...")
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -530,19 +535,21 @@ def main(cfg: DictConfig) -> None:
             # Get embeddings once
             predictions, representations = model(cell_graph, batch)
             z_c = representations.get("z_c")
-            
+
             # Sample multiple times
             samples = []
             for _ in range(num_samples):
-                pred = model.diffusion_decoder.sample(context=z_c, num_samples=z_c.shape[0])
+                pred = model.diffusion_decoder.sample(
+                    context=z_c, num_samples=z_c.shape[0]
+                )
                 samples.append(pred)
-            
+
             samples = torch.stack(samples, dim=0)  # [num_samples, batch, 1]
-            
+
             # Compute statistics
             mean_pred = samples.mean(dim=0)
             std_pred = samples.std(dim=0)
-            
+
         model.train()
         return mean_pred, std_pred, samples
 
@@ -550,35 +557,41 @@ def main(cfg: DictConfig) -> None:
     def plot_predictions_with_uncertainty(targets, predictions, std, epoch, save_dir):
         """Plot predictions with error bars showing uncertainty."""
         fig, ax = plt.subplots(1, 1, figsize=(8, 6))
-        
+
         x = targets.cpu().numpy().flatten()
         y = predictions.cpu().numpy().flatten()
         yerr = std.cpu().numpy().flatten()
-        
+
         # Scatter with error bars
-        ax.errorbar(x, y, yerr=yerr, fmt='o', alpha=0.6, 
-                    capsize=3, capthick=1, elinewidth=1)
-        
+        ax.errorbar(
+            x, y, yerr=yerr, fmt="o", alpha=0.6, capsize=3, capthick=1, elinewidth=1
+        )
+
         # Add diagonal line
         min_val = min(x.min(), y.min())
         max_val = max(x.max(), y.max())
-        ax.plot([min_val, max_val], [min_val, max_val], 
-                'r--', alpha=0.5, label='Perfect prediction')
-        
+        ax.plot(
+            [min_val, max_val],
+            [min_val, max_val],
+            "r--",
+            alpha=0.5,
+            label="Perfect prediction",
+        )
+
         # Calculate correlation
         mask = ~np.isnan(x) & ~np.isnan(y)
         if mask.sum() > 1:
             r = np.corrcoef(x[mask], y[mask])[0, 1]
         else:
             r = 0.0
-        
-        ax.set_xlabel('True Values')
-        ax.set_ylabel('Predicted Values (mean ± std)')
-        ax.set_title(f'Epoch {epoch}: Predictions with Uncertainty (r={r:.3f})')
+
+        ax.set_xlabel("True Values")
+        ax.set_ylabel("Predicted Values (mean ± std)")
+        ax.set_title(f"Epoch {epoch}: Predictions with Uncertainty (r={r:.3f})")
         ax.legend()
-        
+
         plt.tight_layout()
-        plt.savefig(osp.join(save_dir, f'uncertainty_epoch_{epoch}.png'))
+        plt.savefig(osp.join(save_dir, f"uncertainty_epoch_{epoch}.png"))
         plt.close()
 
     # Training loop for overfitting with plotting
@@ -613,26 +626,31 @@ def main(cfg: DictConfig) -> None:
         # Compute loss
         if wandb_cfg["regression_task"]["loss"] == "diffusion":
             z_c = representations.get("z_c")
-            
+
             # Get t_mode from config (default to "full" if not specified)
             t_mode = wandb_cfg["regression_task"].get("t_mode", "full")
-            
+
             loss, loss_dict = loss_func(predictions, y_true, z_c, t_mode=t_mode)
             if "diffusion_loss" in loss_dict:
                 diffusion_losses.append(loss_dict["diffusion_loss"].item())
-                
+
             # Add training-time x0 metric for monitoring
             with torch.no_grad():
                 # Sample random timestep
-                t = torch.randint(0, model.diffusion_decoder.num_timesteps, (batch_size,), device=device)
+                t = torch.randint(
+                    0,
+                    model.diffusion_decoder.num_timesteps,
+                    (batch_size,),
+                    device=device,
+                )
                 noise = torch.randn_like(y_true)
-                
+
                 # Add noise
                 x_t, _ = model.diffusion_decoder.forward_diffusion(y_true, t, noise)
-                
+
                 # Predict x0 directly
                 x0_pred = model.diffusion_decoder.denoise(x_t, z_c, t, predict_x0=True)
-                
+
                 # Compute MSE
                 x0_mse = F.mse_loss(x0_pred, y_true).item()
                 x0_mses.append(x0_mse)
@@ -751,7 +769,7 @@ def main(cfg: DictConfig) -> None:
             plot_pred_np = pred_np.copy()
             plot_target_np = target_np.copy()
             plot_valid_mask = valid_mask.copy()
-            
+
             # Perform multi-sample evaluation for uncertainty estimation
             if wandb_cfg["regression_task"]["loss"] == "diffusion" and epoch > 0:
                 mean_pred, std_pred, samples = evaluate_with_uncertainty(
@@ -864,7 +882,7 @@ def main(cfg: DictConfig) -> None:
 
                 # Model info
                 axes[1, 2].axis("off")
-                info_text = f"Model: GeneInteractionDiff\n"
+                info_text = "Model: GeneInteractionDiff\n"
                 info_text += f"Parameters: {param_counts['total']:,}\n"
                 info_text += (
                     f"Hidden channels: {wandb_cfg['model']['hidden_channels']}\n"
@@ -874,7 +892,7 @@ def main(cfg: DictConfig) -> None:
                 info_text += f"Loss type: {wandb_cfg['regression_task']['loss']}\n"
                 info_text += f"Learning rate: {optimizer.param_groups[0]['lr']:.2e}\n"
                 if wandb_cfg["regression_task"]["loss"] == "diffusion":
-                    info_text += f"\n*All metrics from sampled predictions"
+                    info_text += "\n*All metrics from sampled predictions"
                 axes[1, 2].text(
                     0.1,
                     0.5,
@@ -892,36 +910,42 @@ def main(cfg: DictConfig) -> None:
                         # Get embeddings
                         _, reps = model(cell_graph, batch)
                         z_c = reps["z_c"]
-                        
+
                         # Sample with real conditioning - use all batch samples
                         preds_on = model.diffusion_decoder.sample(
                             z_c,
-                            num_samples=None  # Use batch size from context
+                            num_samples=None,  # Use batch size from context
                         )
-                        
+
                         # Sample with zero conditioning (ignored)
                         preds_off = model.diffusion_decoder.sample(
                             torch.zeros_like(z_c),
-                            num_samples=None  # Use batch size from context
+                            num_samples=None,  # Use batch size from context
                         )
-                        
+
                         # Calculate difference
                         delta = (preds_on - preds_off).abs().mean().item()
                         delta_std = (preds_on - preds_off).std().item()
-                        
+
                         # Track conditioning effect over time
-                        if not hasattr(model, '_cond_deltas'):
+                        if not hasattr(model, "_cond_deltas"):
                             model._cond_deltas = []
                         model._cond_deltas.append(delta)
-                        
-                        print(f"\n  [Cond-Check] |preds_on - preds_off| = {delta:.6f} (std: {delta_std:.6f})")
+
+                        print(
+                            f"\n  [Cond-Check] |preds_on - preds_off| = {delta:.6f} (std: {delta_std:.6f})"
+                        )
                         if delta < 1e-4:
                             print("  ⚠️ WARNING: Conditioning appears to be ignored!")
-                        
+
                         # Prepare data for other plots
-                        test_timesteps = [0, model.diffusion_decoder.num_timesteps // 2, model.diffusion_decoder.num_timesteps - 1]
+                        test_timesteps = [
+                            0,
+                            model.diffusion_decoder.num_timesteps // 2,
+                            model.diffusion_decoder.num_timesteps - 1,
+                        ]
                         x0_pred_all = []
-                        
+
                         for t_val in test_timesteps:
                             t_batch = torch.full(
                                 (y_true.shape[0],),
@@ -936,60 +960,83 @@ def main(cfg: DictConfig) -> None:
 
                             # Get x0 prediction with combined embeddings
                             x0_pred = model.diffusion_decoder.denoise(
-                                x_t,
-                                z_c,
-                                t_batch,
-                                predict_x0=True,
+                                x_t, z_c, t_batch, predict_x0=True
                             )
-                            
+
                             x0_pred_all.append(x0_pred.cpu().numpy())
 
                     model.train()
-                    
+
                     # Plot conditioning effect over epochs
-                    if hasattr(model, '_cond_deltas') and len(model._cond_deltas) > 0:
-                        cond_epochs = range(max(0, epoch - len(model._cond_deltas) + 1), epoch + 1)
+                    if hasattr(model, "_cond_deltas") and len(model._cond_deltas) > 0:
+                        cond_epochs = range(
+                            max(0, epoch - len(model._cond_deltas) + 1), epoch + 1
+                        )
                         axes[2, 0].plot(
                             list(cond_epochs),
                             model._cond_deltas,
                             "g-",
                             linewidth=2,
-                            label="Conditioning Effect"
+                            label="Conditioning Effect",
                         )
-                        axes[2, 0].axhline(y=0, color='r', linestyle='--', alpha=0.5)
-                        axes[2, 0].axhline(y=0.01, color='orange', linestyle=':', alpha=0.5, label='Threshold')
+                        axes[2, 0].axhline(y=0, color="r", linestyle="--", alpha=0.5)
+                        axes[2, 0].axhline(
+                            y=0.01,
+                            color="orange",
+                            linestyle=":",
+                            alpha=0.5,
+                            label="Threshold",
+                        )
                         axes[2, 0].set_xlabel("Epoch")
                         axes[2, 0].set_ylabel("|preds_on - preds_off|")
                         axes[2, 0].set_title("Conditioning Effect Check")
                         axes[2, 0].grid(True)
                         axes[2, 0].legend()
-                        
+
                         # Color background based on conditioning strength
                         current_delta = model._cond_deltas[-1]
                         if current_delta < 1e-4:
-                            axes[2, 0].set_facecolor('#ffeeee')  # Light red if ignored
+                            axes[2, 0].set_facecolor("#ffeeee")  # Light red if ignored
                         elif current_delta < 0.01:
-                            axes[2, 0].set_facecolor('#ffffe8')  # Light yellow if weak
+                            axes[2, 0].set_facecolor("#ffffe8")  # Light yellow if weak
                         else:
-                            axes[2, 0].set_facecolor('#eeffee')  # Light green if good
-                        
+                            axes[2, 0].set_facecolor("#eeffee")  # Light green if good
+
                         # Add text annotation
                         axes[2, 0].text(
-                            0.95, 0.95,
-                            f"Current: {current_delta:.4f}\n" + 
-                            ("✓ Active" if current_delta > 0.01 else "⚠ Weak" if current_delta > 1e-4 else "✗ Ignored"),
+                            0.95,
+                            0.95,
+                            f"Current: {current_delta:.4f}\n"
+                            + (
+                                "✓ Active"
+                                if current_delta > 0.01
+                                else "⚠ Weak"
+                                if current_delta > 1e-4
+                                else "✗ Ignored"
+                            ),
                             transform=axes[2, 0].transAxes,
-                            ha="right", va="top",
+                            ha="right",
+                            va="top",
                             bbox=dict(
                                 boxstyle="round",
-                                facecolor="lightgreen" if current_delta > 0.01 else "yellow" if current_delta > 1e-4 else "salmon",
-                                alpha=0.7
+                                facecolor="lightgreen"
+                                if current_delta > 0.01
+                                else "yellow"
+                                if current_delta > 1e-4
+                                else "salmon",
+                                alpha=0.7,
                             ),
-                            fontsize=10
+                            fontsize=10,
                         )
                     else:
-                        axes[2, 0].text(0.5, 0.5, "Conditioning data\nnot yet available", 
-                                      ha='center', va='center', transform=axes[2, 0].transAxes)
+                        axes[2, 0].text(
+                            0.5,
+                            0.5,
+                            "Conditioning data\nnot yet available",
+                            ha="center",
+                            va="center",
+                            transform=axes[2, 0].transAxes,
+                        )
                         axes[2, 0].set_title("Conditioning Effect Check")
 
                     # Plot x0 predictions at different timesteps - show actual variation
@@ -998,11 +1045,13 @@ def main(cfg: DictConfig) -> None:
                         for i in range(min(3, x0_pred_all[0].shape[0])):
                             trajectory = [x0[i, 0] for x0 in x0_pred_all]
                             axes[2, 1].plot(
-                                test_timesteps, trajectory,
-                                alpha=0.4, linewidth=1,
-                                label=f"Sample {i}" if i < 3 else None
+                                test_timesteps,
+                                trajectory,
+                                alpha=0.4,
+                                linewidth=1,
+                                label=f"Sample {i}" if i < 3 else None,
                             )
-                        
+
                         # Plot mean prediction
                         mean_preds = [x0.mean() for x0 in x0_pred_all]
                         axes[2, 1].plot(
@@ -1012,7 +1061,7 @@ def main(cfg: DictConfig) -> None:
                             label="Mean pred",
                             linewidth=3,
                         )
-                        
+
                         # Show true values
                         axes[2, 1].axhline(
                             y=y_true.mean().cpu().item(),
@@ -1022,21 +1071,26 @@ def main(cfg: DictConfig) -> None:
                             label="True mean",
                             linewidth=2,
                         )
-                        
+
                         axes[2, 1].set_xlabel("Timestep")
                         axes[2, 1].set_ylabel("x0 Prediction")
                         axes[2, 1].set_title("x0 Predictions Across Timesteps")
                         axes[2, 1].legend(loc="best")
                         axes[2, 1].grid(True)
-                        
+
                         # Add text showing if predictions are constant
                         pred_std = np.std([x0.mean() for x0 in x0_pred_all])
                         axes[2, 1].text(
-                            0.95, 0.05, 
+                            0.95,
+                            0.05,
                             f"Variation: {pred_std:.6f}",
                             transform=axes[2, 1].transAxes,
                             ha="right",
-                            bbox=dict(boxstyle="round", facecolor="yellow" if pred_std < 1e-4 else "white", alpha=0.8),
+                            bbox=dict(
+                                boxstyle="round",
+                                facecolor="yellow" if pred_std < 1e-4 else "white",
+                                alpha=0.8,
+                            ),
                         )
 
                     # Plot diffusion sampling consistency - compare two different samples
@@ -1046,10 +1100,10 @@ def main(cfg: DictConfig) -> None:
                         sampled_pred2 = model.sample(cell_graph, batch)
                         sampled_pred2_np = sampled_pred2.squeeze().cpu().numpy()
                     model.train()
-                    
+
                     axes[2, 2].scatter(
                         plot_pred_np[plot_valid_mask],  # First sample
-                        sampled_pred2_np[plot_valid_mask],  # Second sample  
+                        sampled_pred2_np[plot_valid_mask],  # Second sample
                         alpha=0.6,
                     )
                     min_val = min(
@@ -1067,13 +1121,15 @@ def main(cfg: DictConfig) -> None:
                     axes[2, 2].set_ylabel("Sample 2")
                     axes[2, 2].set_title("Sampling Consistency Check")
                     axes[2, 2].grid(True)
-                    
+
                     # Calculate correlation between samples
                     sample_corr = np.corrcoef(
                         plot_pred_np[plot_valid_mask], sampled_pred2_np[plot_valid_mask]
                     )[0, 1]
                     axes[2, 2].text(
-                        0.05, 0.95, f"r={sample_corr:.3f}",
+                        0.05,
+                        0.95,
+                        f"r={sample_corr:.3f}",
                         transform=axes[2, 2].transAxes,
                         bbox=dict(boxstyle="round", facecolor="white", alpha=0.8),
                     )
@@ -1249,13 +1305,13 @@ def main(cfg: DictConfig) -> None:
 
         # Summary statistics
         axes[1, 3].axis("off")
-        summary_text = f"Training Summary\n"
-        summary_text += f"=" * 30 + "\n"
-        summary_text += f"Model: GeneInteractionDiff\n"
+        summary_text = "Training Summary\n"
+        summary_text += "=" * 30 + "\n"
+        summary_text += "Model: GeneInteractionDiff\n"
         summary_text += f"Total Parameters: {param_counts['total']:,}\n"
         summary_text += f"Epochs: {num_epochs}\n"
         summary_text += f"Batch Size: {batch_size}\n"
-        summary_text += f"\nFinal Metrics:\n"
+        summary_text += "\nFinal Metrics:\n"
         summary_text += f"Loss: {losses[-1]:.6f}\n"
         summary_text += f"Pearson r: {correlations[-1]:.4f}\n"
         summary_text += f"Spearman ρ: {spearman_correlations[-1]:.4f}\n"
@@ -1263,7 +1319,7 @@ def main(cfg: DictConfig) -> None:
         summary_text += f"MAE: {maes[-1]:.6f}\n"
         summary_text += f"RMSE: {rmses[-1]:.6f}\n"
         if wandb_cfg["regression_task"]["loss"] == "diffusion":
-            summary_text += f"\n*All metrics from sampled predictions"
+            summary_text += "\n*All metrics from sampled predictions"
 
         axes[1, 3].text(
             0.1,
@@ -1275,7 +1331,7 @@ def main(cfg: DictConfig) -> None:
             family="monospace",
         )
 
-        plt.suptitle(f"GeneInteractionDiff Training Summary", fontsize=16)
+        plt.suptitle("GeneInteractionDiff Training Summary", fontsize=16)
         plt.tight_layout()
         plt.savefig(
             osp.join(plot_dir, f"final_summary_{timestamp()}.png"),

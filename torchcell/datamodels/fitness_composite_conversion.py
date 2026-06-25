@@ -4,14 +4,15 @@
 # Test file: tests/torchcell/datamodels/test_fitness_composite_conversion.py
 
 
+from typing import TYPE_CHECKING
+
+from torchcell.datamodels.conversion import ConversionMap, Converter
 from torchcell.datamodels.gene_essentiality_to_fitness_conversion import (
     GeneEssentialityToFitnessConverter,
 )
 from torchcell.datamodels.synthetic_lethality_to_fitness_conversion import (
     SyntheticLethalityToFitnessConverter,
 )
-from torchcell.datamodels.conversion import Converter, ConversionMap
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from torchcell.data.neo4j_query_raw import Neo4jQueryRaw

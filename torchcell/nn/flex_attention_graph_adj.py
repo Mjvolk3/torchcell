@@ -1,9 +1,9 @@
-import torch
 import matplotlib.pyplot as plt
+import torch
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import reverse_cuthill_mckee
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj
-from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.sparse import csr_matrix
 
 # Define dataset parameters
 root = "/tmp/sbm"  # Temporary directory for dataset storage
@@ -110,4 +110,3 @@ plt.imshow(attn_weights_masked.detach().numpy(), cmap="viridis")
 plt.colorbar()
 plt.title(f"Graph-Masked Attention Weights (Head {head_idx})")
 plt.show()
-

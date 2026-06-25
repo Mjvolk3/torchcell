@@ -3,14 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/one_hot_gene.py
 # Test file: torchcell/datasets/test_one_hot_gene.py
 
-from collections.abc import Callable
 import os
+from collections.abc import Callable
+
 import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
 
 from torchcell.data.embedding import BaseEmbeddingDataset
-from torchcell.sequence import GeneSet, ParsedGenome
+from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 

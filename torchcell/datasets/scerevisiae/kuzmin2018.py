@@ -2,39 +2,39 @@
 # [[torchcell.datasets.scerevisiae.kuzmin2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kuzmin2018.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_kuzmin2018.py
-import hashlib
-import json
 import logging
 import os
 import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
+
 import lmdb
 import numpy as np
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
     Environment,
-    Genotype,
+    Experiment,
+    ExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
+    GeneInteractionPhenotype,
+    Genotype,
     Media,
+    Publication,
     ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
     SgaAllelePerturbation,
+    SgaKanMxDeletionPerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    Experiment,
-    ExperimentReference,
-    GeneInteractionPhenotype,
-    GeneInteractionExperimentReference,
-    GeneInteractionExperiment,
-    Publication,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -148,7 +148,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
         self.phenotype_reference_std = df[
@@ -267,7 +269,9 @@ class SmfKuzmin2018Dataset(ExperimentDataset):
         # Using nan for now
         phenotype = FitnessPhenotype(fitness=row[smf_key], fitness_std=None)
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -407,7 +411,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
         self.phenotype_reference_std = df[
@@ -480,7 +486,9 @@ class DmfKuzmin2018Dataset(ExperimentDataset):
             fitness_std = np.nan
         phenotype = FitnessPhenotype(fitness=row[dmf_key], fitness_std=fitness_std)
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -620,7 +628,9 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
         self.phenotype_reference_std = df[
@@ -704,7 +714,9 @@ class TmfKuzmin2018Dataset(ExperimentDataset):
         tmf_std_key = "Combined mutant fitness standard deviation"
         phenotype = FitnessPhenotype(fitness=row[tmf_key], fitness_std=row[tmf_std_key])
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -840,7 +852,9 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -906,7 +920,9 @@ class DmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, gene_interaction_p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(
+            gene_interaction=0.0, gene_interaction_p_value=None
+        )
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,
@@ -1041,7 +1057,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -1123,7 +1141,9 @@ class TmiKuzmin2018Dataset(ExperimentDataset):
         )
 
         # By definition in paper interaction would be 0.
-        phenotype_reference = GeneInteractionPhenotype(gene_interaction=0.0, gene_interaction_p_value=None)
+        phenotype_reference = GeneInteractionPhenotype(
+            gene_interaction=0.0, gene_interaction_p_value=None
+        )
 
         reference = GeneInteractionExperimentReference(
             dataset_name=dataset_name,

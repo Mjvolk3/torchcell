@@ -4,37 +4,26 @@
 # Test file: tests/torchcell/trainers/test_fit_int_gat_diffpool_regression.py
 
 
-import math
+import logging
 import os.path as osp
+import sys
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
-from torchmetrics import (
-    MeanAbsoluteError,
-    MeanSquaredError,
-    MetricCollection,
-    PearsonCorrCoef,
-    SpearmanCorrCoef,
-)
-from tqdm import tqdm
-import wandb
-from torchcell.losses import WeightedMSELoss
-from torchcell.viz import fitness, genetic_interaction_score
-from torchcell.losses.list_mle import ListMLELoss
-import torchcell
-from torchmetrics import Metric
-import torch
-from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
-import logging
-import sys
-from typing import Optional
 import torch.optim as optim
+import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss, NaNTolerantPearsonCorrCoef, NaNTolerantSpearmanCorrCoef
+from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
+
+import torchcell
+from torchcell.losses.multi_dim_nan_tolerant import (
+    CombinedRegressionLoss,
+    NaNTolerantPearsonCorrCoef,
+    NaNTolerantSpearmanCorrCoef,
+)
+from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
 
@@ -86,7 +75,6 @@ def log_error_information(
         f.write(f"cluster_assignments: {cluster_assignments}\n")
 
 
-
 class RegressionTask(L.LightningModule):
     def __init__(
         self,
@@ -101,13 +89,15 @@ class RegressionTask(L.LightningModule):
         cluster_loss_weight: float = 1.0,
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-        self.combined_loss = CombinedRegressionLoss(loss_type=loss_type, weights=torch.ones(2))
+        self.combined_loss = CombinedRegressionLoss(
+            loss_type=loss_type, weights=torch.ones(2)
+        )
         self.current_accumulation_steps = 1
 
         metrics = MetricCollection(
@@ -385,7 +375,7 @@ class RegressionTask(L.LightningModule):
                     if i == len(bin_edges[dim_name]) - 2:
                         range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
                     else:
-                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i+1].item():.2f}"
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
                     wandb_table.add_data(range_str, mean_val, std_val)
 
             # Log the table to wandb

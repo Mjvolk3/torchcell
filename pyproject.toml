@@ -64,6 +64,12 @@ ignore = ["E501", "D205", "D212", "D415"]
 "tests/**" = ["D103", "D104"]
 "notes/assets/scripts/**" = ["D100", "D103"]
 "experiments/**" = ["D100", "D103", "E402"]
+# torch_geometric.MessagePassing inspects message()/forward() signatures at runtime
+# and chokes on PEP 604 unions (X | Y -> types.UnionType has no __qualname__). PyG
+# won't fix this (issue #10138, "not planned"), so keep Optional/Union here. See
+# notes/torchcell.nn.ruff-up-breaks-pyg-messagepassing.md.
+"torchcell/nn/stoichiometric_hypergraph_conv.py" = ["UP007", "UP045"]
+"torchcell/nn/masked_gin_conv.py" = ["UP007", "UP045"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

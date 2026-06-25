@@ -2,34 +2,9 @@
 # [[torchcell.losses.multi_dim_nan_tolerant]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/multi_dim_nan_tolerant
 # Test file: tests/torchcell/losses/test_multi_dim_nan_tolerant.py
-import math
-import os.path as osp
-import lightning as L
-import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
-from torchmetrics import (
-    MeanAbsoluteError,
-    MeanSquaredError,
-    MetricCollection,
-    PearsonCorrCoef,
-    SpearmanCorrCoef,
-)
-from tqdm import tqdm
-import wandb
-from torchcell.viz import fitness, genetic_interaction_score
-from torchcell.losses.list_mle import ListMLELoss
-import torchcell
-from torchmetrics import Metric
-import torch
-from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
-import logging
-import sys
-from typing import Optional, Tuple
-import torch.optim as optim
 import torch.nn.functional as F
 
 
@@ -128,7 +103,7 @@ class WeightedSupCRCell(nn.Module):
     def __init__(
         self,
         temperature: float = 0.1,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         eps: float = 1e-7,
     ):
         super().__init__()
@@ -139,7 +114,7 @@ class WeightedSupCRCell(nn.Module):
 
     def forward(
         self, perturbed_embeddings: torch.Tensor, labels: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         device = labels.device
 
         # Create mask for non-NaN values
@@ -169,7 +144,7 @@ class WeightedSupCRCell(nn.Module):
 
 class NaNTolerantL1Loss(nn.Module):
     def __init__(self):
-        super(NaNTolerantL1Loss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -183,9 +158,9 @@ class NaNTolerantL1Loss(nn.Module):
             tuple: (dim_means, mask) - Loss per dimension and validity mask
         """
         # Ensure tensors have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
 
         # Create mask for non-NaN values
         mask = ~torch.isnan(y_true)
@@ -218,7 +193,7 @@ class NaNTolerantHuberLoss(nn.Module):
             delta (float): Threshold where the loss transitions from quadratic to linear.
                          Default is 1.0
         """
-        super(NaNTolerantHuberLoss, self).__init__()
+        super().__init__()
         self.delta = delta
 
     def forward(self, y_pred, y_true):
@@ -235,9 +210,9 @@ class NaNTolerantHuberLoss(nn.Module):
         device = y_pred.device
 
         # Ensure tensors have the same shape and device
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
         y_true = y_true.to(device)
 
         # Create mask for non-NaN values
@@ -279,7 +254,7 @@ class NaNTolerantHuberLoss(nn.Module):
 
 class NaNTolerantLogCoshLoss(nn.Module):
     def __init__(self):
-        super(NaNTolerantLogCoshLoss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -298,9 +273,9 @@ class NaNTolerantLogCoshLoss(nn.Module):
         device = y_pred.device
 
         # Ensure tensors have the same shape and device
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
         y_true = y_true.to(device)
 
         # Create mask for non-NaN values
@@ -329,7 +304,7 @@ class NaNTolerantLogCoshLoss(nn.Module):
 
 
 class WeightedMSELoss(nn.Module):
-    def __init__(self, weights: Optional[torch.Tensor] = None):
+    def __init__(self, weights: torch.Tensor | None = None):
         super().__init__()
         if weights is not None:
             self.register_buffer("weights", weights / weights.sum())
@@ -338,7 +313,7 @@ class WeightedMSELoss(nn.Module):
 
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         device = predictions.device
         predictions, targets = predictions.to(device), targets.to(device)
 
@@ -383,7 +358,7 @@ class WeightedMSELoss(nn.Module):
 
 class NaNTolerantMSELoss(nn.Module):
     def __init__(self):
-        super(NaNTolerantMSELoss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
         """
@@ -392,9 +367,9 @@ class NaNTolerantMSELoss(nn.Module):
         device = y_pred.device
 
         # Ensure tensors have the same shape and device
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
         y_true = y_true.to(device)
 
         # Create mask for non-NaN values
@@ -639,8 +614,6 @@ class NaNTolerantQuantileLoss(nn.Module):
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 from scipy.stats import gaussian_kde
 
 
@@ -648,27 +621,29 @@ def isotonic_l2_pav(y, weights=None):
     """
     Solves isotonic regression using PAV (Pool Adjacent Violators) algorithm.
     Finds argmin_{v_1 >= v_2 >= ... >= v_n} 0.5 * ||v - y||^2_2
-    
+
     Args:
         y: Input values (1D tensor)
         weights: Optional weights (1D tensor)
-    
+
     Returns:
         Solution to isotonic regression
     """
     device = y.device
     n = len(y)
-    
+
     if weights is None:
         weights = torch.ones(n, device=device)
-    
+
     # Convert to lists for the PAV algorithm
     y_list = y.cpu().numpy().tolist()
     w_list = weights.cpu().numpy().tolist()
-    
+
     # PAV algorithm
-    blocks = [[i, i+1, y_list[i], w_list[i]] for i in range(n)]  # [start, end, value, weight]
-    
+    blocks = [
+        [i, i + 1, y_list[i], w_list[i]] for i in range(n)
+    ]  # [start, end, value, weight]
+
     i = 0
     while i < len(blocks) - 1:
         # If current block value < next block value (violates isotonic constraint)
@@ -676,25 +651,25 @@ def isotonic_l2_pav(y, weights=None):
             # Merge blocks
             start1, end1, val1, w1 = blocks[i]
             start2, end2, val2, w2 = blocks[i + 1]
-            
+
             # Weighted average
             new_val = (val1 * w1 + val2 * w2) / (w1 + w2)
             new_block = [start1, end2, new_val, w1 + w2]
-            
+
             # Replace the two blocks with merged block
-            blocks[i:i+2] = [new_block]
-            
+            blocks[i : i + 2] = [new_block]
+
             # Check if we need to merge with previous blocks
             if i > 0:
                 i -= 1
         else:
             i += 1
-    
+
     # Reconstruct the solution
     solution = torch.zeros_like(y)
     for start, end, val, _ in blocks:
         solution[start:end] = val
-    
+
     return solution
 
 
@@ -703,38 +678,41 @@ class FastSoftSort(torch.autograd.Function):
     Fast differentiable sorting following the original paper implementation.
     Uses isotonic regression for the forward pass and custom gradients.
     """
-    
+
     @staticmethod
     def forward(ctx, values, regularization_strength=1.0):
         """
         Soft sort using isotonic regression.
-        
+
         Args:
             values: 1D tensor to sort
             regularization_strength: Controls smoothness
         """
         device = values.device
         n = len(values)
-        
+
         # Sort in descending order and get permutation
         sorted_values, permutation = torch.sort(values, descending=True)
-        
+
         # Prepare weights for isotonic regression
-        w = torch.arange(n, 0, -1, dtype=values.dtype, device=device) / regularization_strength
-        
+        w = (
+            torch.arange(n, 0, -1, dtype=values.dtype, device=device)
+            / regularization_strength
+        )
+
         # Solve isotonic regression to get v
         # We want to find v such that sorted_values ≈ w - v with v isotonic
         v = isotonic_l2_pav(w - sorted_values.detach())
-        
+
         # The soft sorted values are w - v
         soft_sorted = w - v
-        
+
         # Save for backward
         ctx.save_for_backward(values, permutation, v, w, sorted_values)
         ctx.regularization_strength = regularization_strength
-        
+
         return soft_sorted
-    
+
     @staticmethod
     def backward(ctx, grad_output):
         """
@@ -743,45 +721,45 @@ class FastSoftSort(torch.autograd.Function):
         values, permutation, v, w, sorted_values = ctx.saved_tensors
         n = len(values)
         device = values.device
-        
+
         # Compute partition sizes based on the isotonic solution
         # Elements with same v values belong to same partition
         eps = 1e-9
         partition_ids = torch.zeros(n, dtype=torch.long, device=device)
         current_id = 0
-        
+
         for i in range(1, n):
-            if torch.abs(v[i] - v[i-1]) > eps:
+            if torch.abs(v[i] - v[i - 1]) > eps:
                 current_id += 1
             partition_ids[i] = current_id
-        
+
         # Compute gradient through isotonic regression
         grad_v = torch.zeros_like(grad_output)
-        
+
         # For each partition, gradient is averaged
         for pid in range(current_id + 1):
             mask = partition_ids == pid
             if mask.any():
                 grad_v[mask] = grad_output[mask].mean()
-        
+
         # Since soft_sorted = w - v, gradient w.r.t sorted values is -grad_v
         grad_sorted = -grad_v
-        
+
         # Unsort the gradient
         inverse_permutation = torch.argsort(permutation)
         grad_values = grad_sorted[inverse_permutation]
-        
+
         return grad_values, None
 
 
 def fast_soft_sort(values, regularization_strength=1.0):
     """
     Fast differentiable sorting that follows the original paper's implementation.
-    
+
     Args:
         values: 1D tensor to sort
         regularization_strength: Controls how close to hard sorting (lower = closer)
-    
+
     Returns:
         Soft-sorted tensor
     """
@@ -799,7 +777,7 @@ class WeightedDistLoss(nn.Module):
     ):
         """
         Distribution matching loss following the original DistLoss paper implementation.
-        
+
         Args:
             bandwidth: Bandwidth for KDE (default: 0.5)
             weights: Per-dimension weights for multi-dimensional outputs
@@ -811,20 +789,26 @@ class WeightedDistLoss(nn.Module):
         self.bandwidth = bandwidth
         self.regularization_strength = regularization_strength
         self.eps = eps
-        
+
         if weights is None:
             weights = torch.ones(1)
         self.register_buffer("weights", weights / weights.sum())
-        
+
         # Loss function selection
         if loss_fn == "L1":
-            self.loss_fn = nn.L1Loss(reduction='none')
+            self.loss_fn = nn.L1Loss(reduction="none")
         elif loss_fn == "L2":
-            self.loss_fn = nn.MSELoss(reduction='none')
+            self.loss_fn = nn.MSELoss(reduction="none")
         else:
             raise ValueError("loss_fn must be 'L1' or 'L2'")
-    
-    def _get_label_distribution(self, labels: torch.Tensor, min_label: float, max_label: float, step: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+
+    def _get_label_distribution(
+        self,
+        labels: torch.Tensor,
+        min_label: float,
+        max_label: float,
+        step: float = 1.0,
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Get the label distribution using kernel density estimation.
         Follows the original implementation from utils.py
@@ -833,48 +817,54 @@ class WeightedDistLoss(nn.Module):
         labels_np = labels.cpu().numpy()
         labels_np = labels_np[~np.isnan(labels_np)]
         labels_np = labels_np[(labels_np >= min_label) & (labels_np <= max_label)]
-        
+
         if len(labels_np) == 0:
             # Return uniform distribution if no valid labels
             x = np.arange(min_label, max_label + step, step)
             density = np.ones_like(x) / len(x)
             return density, x
-        
+
         # Perform kernel density estimation
         kde = gaussian_kde(labels_np, bw_method=self.bandwidth)
-        
+
         # Create evaluation points
         x = np.arange(min_label, max_label + step, step)
-        
+
         # Estimate density
         density = kde(x)
         density /= density.sum()
-        
+
         return density, x
-    
-    def _get_batch_label_distribution(self, density: np.ndarray, batch_size: int, region_adjustment: float = 0.5) -> np.ndarray:
+
+    def _get_batch_label_distribution(
+        self, density: np.ndarray, batch_size: int, region_adjustment: float = 0.5
+    ) -> np.ndarray:
         """
         Get batch label distribution following the exact algorithm from the original implementation.
         """
         num_density = density * batch_size
         range_res = int(region_adjustment * len(density))
         batch_label_distribution = np.zeros_like(num_density)
-        
+
         forward_cumsum = num_density.cumsum()
         backward_cumsum = num_density[::-1].cumsum()[::-1]
         forward_index = np.searchsorted(forward_cumsum, 1)
-        backward_index = len(backward_cumsum) - np.searchsorted(backward_cumsum[::-1], 1) - 1
-        
+        backward_index = (
+            len(backward_cumsum) - np.searchsorted(backward_cumsum[::-1], 1) - 1
+        )
+
         forward_index_cumsum = round(forward_cumsum[forward_index])
         backward_index_cumsum = round(backward_cumsum[backward_index])
-        
+
         batch_label_distribution[forward_index] = forward_index_cumsum
-        batch_label_distribution[forward_index + 1:backward_index] = np.round(num_density[forward_index + 1:backward_index])
+        batch_label_distribution[forward_index + 1 : backward_index] = np.round(
+            num_density[forward_index + 1 : backward_index]
+        )
         batch_label_distribution[backward_index] = backward_index_cumsum
-        
+
         res_sum = batch_size - int(batch_label_distribution.sum())
         maximum_index = batch_label_distribution.argmax()
-        
+
         if abs(res_sum) <= range_res:
             left_index = maximum_index - abs(res_sum) // 2
             right_index = left_index + abs(res_sum)
@@ -886,37 +876,43 @@ class WeightedDistLoss(nn.Module):
             right_index = left_index + range_res
             batch_label_distribution[left_index:right_index] += iters * np.sign(res_sum)
             batch_label_distribution[maximum_index] += remainder
-        
+
         return batch_label_distribution
-    
-    def _get_batch_theoretical_labels(self, density: np.ndarray, batch_size: int, min_label: float, step: float = 1.0) -> np.ndarray:
+
+    def _get_batch_theoretical_labels(
+        self, density: np.ndarray, batch_size: int, min_label: float, step: float = 1.0
+    ) -> np.ndarray:
         """
         Generate theoretical labels for a batch based on the distribution.
         Follows the exact algorithm from the original implementation.
         """
-        batch_label_distribution = self._get_batch_label_distribution(density, batch_size)
+        batch_label_distribution = self._get_batch_label_distribution(
+            density, batch_size
+        )
         cumulative_distribution = np.cumsum(batch_label_distribution).astype(int)
-        
+
         batch_theoretical_labels = np.zeros(batch_size)
         current_label = min_label
         num_labels = len(density)
-        
+
         for i in range(num_labels):
             start_index = 0 if i == 0 else cumulative_distribution[i - 1]
             end_index = cumulative_distribution[i]
             batch_theoretical_labels[start_index:end_index] = current_label
             current_label += step
-        
+
         return batch_theoretical_labels
-    
-    def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+
+    def forward(
+        self, y_pred: torch.Tensor, y_true: torch.Tensor
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute distribution loss for multi-dimensional outputs.
-        
+
         Args:
             y_pred: Predictions [batch_size, num_dims]
             y_true: True labels [batch_size, num_dims]
-            
+
         Returns:
             weighted_loss: Weighted sum of dimension losses
             dim_losses: Individual losses per dimension
@@ -924,56 +920,63 @@ class WeightedDistLoss(nn.Module):
         device = y_pred.device
         batch_size, num_dims = y_pred.shape
         dim_losses = torch.zeros(num_dims, device=device)
-        
+
         # Ensure weights match dimensions
         if self.weights.shape[0] != num_dims:
             # Resize weights if needed
             if self.weights.shape[0] == 1:
                 self.weights = self.weights.repeat(num_dims)
             else:
-                raise ValueError(f"Weight dimensions {self.weights.shape[0]} don't match output dimensions {num_dims}")
-        
+                raise ValueError(
+                    f"Weight dimensions {self.weights.shape[0]} don't match output dimensions {num_dims}"
+                )
+
         for dim in range(num_dims):
             true_dim = y_true[:, dim]
             pred_dim = y_pred[:, dim]
-            
+
             # Skip if all values are NaN
             valid_mask = ~torch.isnan(true_dim)
             if not valid_mask.any():
                 continue
-            
+
             # Get valid values
             valid_true = true_dim[valid_mask]
-            
+
             # Determine range
             min_label = valid_true.min().item()
             max_label = valid_true.max().item()
-            
+
             # Add small buffer to avoid single-point distributions
             if min_label == max_label:
                 min_label -= 0.5
                 max_label += 0.5
-            
+
             # Generate theoretical labels using KDE
-            density, x_values = self._get_label_distribution(true_dim, min_label, max_label, step=1.0)
-            theoretical_labels_np = self._get_batch_theoretical_labels(density, batch_size, min_label, step=1.0)
-            
+            density, x_values = self._get_label_distribution(
+                true_dim, min_label, max_label, step=1.0
+            )
+            theoretical_labels_np = self._get_batch_theoretical_labels(
+                density, batch_size, min_label, step=1.0
+            )
+
             # Convert to tensor
-            theoretical_labels = torch.tensor(theoretical_labels_np, dtype=torch.float32, device=device)
-            
+            theoretical_labels = torch.tensor(
+                theoretical_labels_np, dtype=torch.float32, device=device
+            )
+
             # Sort predictions using fast differentiable sorting (following original paper)
             sorted_pred = fast_soft_sort(
-                pred_dim,
-                regularization_strength=self.regularization_strength
+                pred_dim, regularization_strength=self.regularization_strength
             )
-            
+
             # Compute distribution loss only (no plain loss here)
             dist_loss = self.loss_fn(sorted_pred, theoretical_labels).mean()
             dim_losses[dim] = dist_loss
-        
+
         # Apply dimension weights
         weighted_loss = (dim_losses * self.weights).sum()
-        
+
         return weighted_loss, dim_losses
 
 
@@ -981,7 +984,7 @@ class CombinedRegressionLoss(nn.Module):
     def __init__(
         self, loss_type="mse", weights=None, quantile_spacing=None, huber_delta=1.0
     ):
-        super(CombinedRegressionLoss, self).__init__()
+        super().__init__()
         self.loss_type = loss_type
 
         if loss_type == "mse":
@@ -1082,7 +1085,7 @@ class MultiDimNaNTolerantCELoss(nn.Module):
 
     def forward(
         self, logits: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute Cross Entropy loss while handling NaN values.
 
@@ -1132,10 +1135,7 @@ class MultiDimNaNTolerantCELoss(nn.Module):
 
 class CombinedCELoss(nn.Module):
     def __init__(
-        self,
-        num_classes: int,
-        num_tasks: int = 2,
-        weights: Optional[torch.Tensor] = None,
+        self, num_classes: int, num_tasks: int = 2, weights: torch.Tensor | None = None
     ):
         """
         Combined Cross Entropy loss with dimension-wise weighting.
@@ -1159,7 +1159,7 @@ class CombinedCELoss(nn.Module):
 
     def forward(
         self, logits: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute weighted cross entropy loss.
 
@@ -1194,7 +1194,7 @@ class MonotonicParameter(nn.Parameter):
     """Parameter that ensures values are monotonically increasing via cumulative softplus."""
 
     def __new__(cls, data=None, requires_grad=True):
-        return super(MonotonicParameter, cls).__new__(cls, data, requires_grad)
+        return super().__new__(cls, data, requires_grad)
 
     @property
     def data(self):
@@ -1219,7 +1219,7 @@ class MultiDimNaNTolerantOrdinalCELoss(nn.Module):
 
     def forward(
         self, logits: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute ordinal cross entropy loss with NaN handling.
 
@@ -1300,10 +1300,7 @@ class CombinedOrdinalCELoss(nn.Module):
     """Combined ordinal classification loss with dimension-wise weighting."""
 
     def __init__(
-        self,
-        num_classes: int,
-        num_tasks: int = 2,
-        weights: Optional[torch.Tensor] = None,
+        self, num_classes: int, num_tasks: int = 2, weights: torch.Tensor | None = None
     ):
         """
         Args:
@@ -1325,7 +1322,7 @@ class CombinedOrdinalCELoss(nn.Module):
 
     def forward(
         self, logits: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute weighted ordinal classification loss.
 
@@ -1511,7 +1508,7 @@ class MseCategoricalEntropyRegLoss(nn.Module):
         self,
         num_classes: int,
         num_tasks: int = 2,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         lambda_d: float = 0.1,
         lambda_t: float = 0.5,
     ):
@@ -1540,7 +1537,7 @@ class MseCategoricalEntropyRegLoss(nn.Module):
         logits: torch.Tensor,
         categorical_target: torch.Tensor,
         pooled_features: torch.Tensor,
-    ) -> Tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass tracking all loss components.
         Returns total loss and dictionary of component losses.
@@ -1841,7 +1838,7 @@ if __name__ == "__main__":
     )
 
     print("\n=== WeightedMSELoss Test ===")
-    print(f"Input shapes:")
+    print("Input shapes:")
     print(f"Predictions: {predictions.shape}")
     print(f"Labels: {labels.shape}")
     print(f"\nLabels:\n{labels}")
@@ -1850,7 +1847,7 @@ if __name__ == "__main__":
     loss_fn = WeightedMSELoss()
     total_loss, dim_losses = loss_fn(predictions, labels)
 
-    print(f"\nLoss values (equal weights):")
+    print("\nLoss values (equal weights):")
     print(f"Total loss: {total_loss:.4f}")
     print(f"Dimension losses: {dim_losses}")
 
@@ -1859,7 +1856,7 @@ if __name__ == "__main__":
     weighted_loss_fn = WeightedMSELoss(weights=weights)
     weighted_total, weighted_dims = weighted_loss_fn(predictions, labels)
 
-    print(f"\nLoss values (weights=[0.7, 0.3]):")
+    print("\nLoss values (weights=[0.7, 0.3]):")
     print(f"Total loss: {weighted_total:.4f}")
     print(f"Dimension losses: {weighted_dims}")
 
@@ -1875,7 +1872,7 @@ if __name__ == "__main__":
 
     nan_loss, nan_dim_losses = weighted_loss_fn(predictions, labels_with_nan_dim)
 
-    print(f"\n=== Testing with NaN dimension ===")
+    print("\n=== Testing with NaN dimension ===")
     print(f"Labels:\n{labels_with_nan_dim}")
     print(f"Total loss: {nan_loss:.4f}")
     print(f"Dimension losses: {nan_dim_losses}")
@@ -1885,6 +1882,6 @@ if __name__ == "__main__":
     loss, _ = weighted_loss_fn(predictions, labels)
     loss.backward()
 
-    print(f"\n=== Gradient Check ===")
+    print("\n=== Gradient Check ===")
     print(f"Gradients exist: {predictions.grad is not None}")
     print(f"Gradient shape: {predictions.grad.shape}")

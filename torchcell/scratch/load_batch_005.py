@@ -7,34 +7,38 @@
 import os
 import os.path as osp
 import random
+from typing import Literal
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
-from torchcell.graph import SCerevisiaeGraph
+from torch_geometric.transforms import Compose
+from tqdm import tqdm
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
+from torchcell.data.graph_processor import (
+    DCellGraphProcessor,
+    Perturbation,
+    SubgraphRepresentation,
+)
 from torchcell.datamodules import CellDataModule
-from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
 # from torchcell.datasets.fungal_up_down_transformer import (
 #     FungalUpDownTransformerDataset,
 # )
 from torchcell.datasets import CodonFrequencyDataset
-from torchcell.data import MeanExperimentDeduplicator
-from torchcell.data import GenotypeAggregator
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
-from torchcell.data.graph_processor import SubgraphRepresentation
-from torchcell.data.graph_processor import Perturbation
-from torchcell.data.graph_processor import DCellGraphProcessor
-from tqdm import tqdm
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from typing import Literal
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
 from torchcell.transforms.regression_to_classification import (
     LabelNormalizationTransform,
 )
-from torch_geometric.transforms import Compose
-from torchcell.graph import build_gene_multigraph
 
 
 def load_sample_data_batch(
@@ -111,7 +115,7 @@ def load_sample_data_batch(
             genome=genome,
         )
 
-    with open("experiments/005-kuzmin2018-tmi/queries/001_small_build.cql", "r") as f:
+    with open("experiments/005-kuzmin2018-tmi/queries/001_small_build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/005-kuzmin2018-tmi/001-small-build"
@@ -195,10 +199,10 @@ def load_sample_data_batch(
 
         # Apply DCell-specific GO graph filters
         from torchcell.graph import (
+            filter_by_contained_genes,
             filter_by_date,
             filter_go_IGI,
             filter_redundant_terms,
-            filter_by_contained_genes,
         )
 
         # Apply date filter if specified in the configuration

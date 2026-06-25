@@ -4,31 +4,29 @@
 # Test file: tests/torchcell/models/test_hetero_cell_bipartite_dango_gi.py
 
 
-import math
 import os
 import os.path as osp
 import time
-from typing import Any, Dict, Optional, Tuple
-import numpy as np
+from typing import Any
+
 import hydra
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig, OmegaConf
-from torch_geometric.data import Batch, HeteroData
-from torch_geometric.nn import BatchNorm, GATv2Conv, GINConv, HeteroConv, LayerNorm
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torch_scatter import scatter_mean
-
-from torchcell.graph.graph import GeneMultiGraph
-from torchcell.models.act import act_register
-from typing import List
-from torch_geometric.typing import EdgeType
 
 # Additional imports for enhanced plotting
 from scipy.stats import gaussian_kde
-from sklearn.manifold import MDS
 from sklearn.decomposition import PCA
+from sklearn.manifold import MDS
+from torch_geometric.data import Batch, HeteroData
+from torch_geometric.nn import BatchNorm, GATv2Conv, GINConv, LayerNorm
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
+from torch_geometric.typing import EdgeType
+from torch_scatter import scatter_mean
+
+from torchcell.graph.graph import GeneMultiGraph
 
 
 class SelfAttentionGraphAggregation(nn.Module):
@@ -51,11 +49,12 @@ class SelfAttentionGraphAggregation(nn.Module):
         self.graph_embeddings = nn.Parameter(torch.randn(num_graphs, hidden_dim) * 0.02)
 
     def forward(
-        self, graph_outputs: Dict[str, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, graph_outputs: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Args:
             graph_outputs: Dict mapping graph names to node features [num_nodes, hidden_dim]
+
         Returns:
             aggregated: Aggregated node features [num_nodes, hidden_dim]
             attention_weights: Attention weights [num_nodes, num_graphs, num_graphs]
@@ -96,7 +95,7 @@ class SelfAttentionGraphAggregation(nn.Module):
 class PairwiseGraphAggregation(nn.Module):
     """Pairwise interaction mechanism for aggregating multiple graph representations"""
 
-    def __init__(self, hidden_dim: int, graph_names: List[str], dropout: float = 0.0):
+    def __init__(self, hidden_dim: int, graph_names: list[str], dropout: float = 0.0):
         super().__init__()
         self.graph_names = sorted(graph_names)
         self.hidden_dim = hidden_dim
@@ -123,10 +122,11 @@ class PairwiseGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, graph_outputs: Dict[str, torch.Tensor]
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, graph_outputs: dict[str, torch.Tensor]
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute pairwise graph interactions and aggregate them.
+
         Returns:
             aggregated: Aggregated features [num_nodes, hidden_dim]
             attention_weights: Attention weights for interactions [num_nodes, num_interactions]
@@ -187,10 +187,10 @@ class HeteroConvAggregator(nn.Module):
 
     def __init__(
         self,
-        convs: Dict[EdgeType, nn.Module],
+        convs: dict[EdgeType, nn.Module],
         hidden_channels: int,
         aggregation_method: str = "cross_attention",
-        aggregation_config: Optional[Dict] = None,
+        aggregation_config: dict | None = None,
     ):
         super().__init__()
         self.convs = nn.ModuleDict({str(k): v for k, v in convs.items()})
@@ -225,9 +225,9 @@ class HeteroConvAggregator(nn.Module):
 
     def forward(
         self,
-        x_dict: Dict[str, torch.Tensor],
-        edge_index_dict: Dict[EdgeType, torch.Tensor],
-    ) -> Tuple[Dict[str, torch.Tensor], Optional[torch.Tensor]]:
+        x_dict: dict[str, torch.Tensor],
+        edge_index_dict: dict[EdgeType, torch.Tensor],
+    ) -> tuple[dict[str, torch.Tensor], torch.Tensor | None]:
         """
         Apply graph convolutions and aggregate using specified method.
 
@@ -313,7 +313,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -331,9 +331,9 @@ class DangoLikeHyperSAGNN(nn.Module):
         self.num_layers = num_layers
         self.head_dim = hidden_dim // num_heads
 
-        assert (
-            hidden_dim % num_heads == 0
-        ), f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        assert hidden_dim % num_heads == 0, (
+            f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        )
 
         # Static embedding layer (like Dango)
         self.static_embedding = nn.Sequential(
@@ -545,8 +545,8 @@ class AttentionConvWrapper(nn.Module):
         self,
         conv: nn.Module,
         target_dim: int,
-        norm: Optional[str] = None,
-        activation: Optional[str] = None,
+        norm: str | None = None,
+        activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
@@ -607,8 +607,8 @@ def create_conv_layer(
     encoder_type: str,
     in_channels: int,
     out_channels: int,
-    config: Dict[str, Any],
-    edge_dim: Optional[int] = None,
+    config: dict[str, Any],
+    edge_dim: int | None = None,
     dropout: float = 0.1,
 ) -> nn.Module:
     """Create appropriate conv layer based on encoder type.
@@ -668,8 +668,8 @@ class GeneInteractionDango(nn.Module):
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        gene_encoder_config: Optional[Dict[str, Any]] = None,
-        local_predictor_config: Optional[Dict[str, Any]] = None,
+        gene_encoder_config: dict[str, Any] | None = None,
+        local_predictor_config: dict[str, Any] | None = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -706,7 +706,8 @@ class GeneInteractionDango(nn.Module):
 
         # Get graph aggregation configuration
         self.graph_aggregation_method = gene_encoder_config.get(
-            "graph_aggregation_method", "cross_attention"  # Default to cross_attention
+            "graph_aggregation_method",
+            "cross_attention",  # Default to cross_attention
         )
         self.graph_aggregation_config = gene_encoder_config.get(
             "graph_aggregation_config", {}
@@ -883,7 +884,7 @@ class GeneInteractionDango(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
 
@@ -1046,20 +1047,23 @@ class GeneInteractionDango(nn.Module):
             raise RuntimeError("NaN detected in final gene interaction output")
 
         # Return both predictions and representations dictionary
-        return gene_interaction, {
-            "z_w": z_w_global,
-            "z_i": z_i_global,
-            "z_p": z_p_global,
-            "local_interaction": local_interaction,
-            "global_interaction": global_interaction,
-            "gate_weights": gate_weights,
-            "gene_interaction": gene_interaction,
-            "pert_gene_embs": pert_gene_embs,
-            "graph_attention_weights": self.last_layer_attention_weights,  # Add graph aggregation weights
-        }
+        return (
+            gene_interaction,
+            {
+                "z_w": z_w_global,
+                "z_i": z_i_global,
+                "z_p": z_p_global,
+                "local_interaction": local_interaction,
+                "global_interaction": global_interaction,
+                "gate_weights": gate_weights,
+                "gene_interaction": gene_interaction,
+                "pert_gene_embs": pert_gene_embs,
+                "graph_attention_weights": self.last_layer_attention_weights,  # Add graph aggregation weights
+            },
+        )
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -1115,22 +1119,21 @@ def calculate_rolling_correlation(x, y, window=50):
     config_name="hetero_cell_bipartite_dango_gi",
 )
 def main(cfg: DictConfig) -> None:
-    import matplotlib.pyplot as plt
     import os
-    from dotenv import load_dotenv
-    import torch.nn as nn
-    from torchcell.timestamp import timestamp
+
+    import matplotlib.pyplot as plt
     import numpy as np
+    from dotenv import load_dotenv
     from scipy import stats
-    from torchcell.scratch.load_batch_005 import load_sample_data_batch
-    from torchcell.graph.graph import build_gene_multigraph, SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from sortedcontainers import SortedDict
-    from torchcell.graph.graph import GeneMultiGraph, GeneGraph
-    from torchcell.losses.logcosh import LogCoshLoss
+
+    from torchcell.graph.graph import SCerevisiaeGraph, build_gene_multigraph
     from torchcell.losses.isomorphic_cell_loss import ICLoss
+    from torchcell.losses.logcosh import LogCoshLoss
     from torchcell.losses.mle_dist_supcr import MleDistSupCR
     from torchcell.losses.mle_wasserstein import MleWassSupCR
+    from torchcell.scratch.load_batch_005 import load_sample_data_batch
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+    from torchcell.timestamp import timestamp
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -1291,7 +1294,9 @@ def main(cfg: DictConfig) -> None:
             # Buffer configuration
             use_buffer=loss_config.get("use_buffer", True),
             buffer_size=loss_config.get("buffer_size", 256),
-            min_samples_for_wasserstein=loss_config.get("min_samples_for_wasserstein", 64),
+            min_samples_for_wasserstein=loss_config.get(
+                "min_samples_for_wasserstein", 64
+            ),
             min_samples_for_supcr=loss_config.get("min_samples_for_supcr", 64),
             # DDP configuration
             use_ddp_gather=loss_config.get("use_ddp_gather", True),
@@ -1346,7 +1351,7 @@ def main(cfg: DictConfig) -> None:
                 warmup_steps=scheduler_config.warmup_steps,
                 gamma=scheduler_config.get("gamma", 1.0),
             )
-            print(f"Using CosineAnnealingWarmupRestarts scheduler with:")
+            print("Using CosineAnnealingWarmupRestarts scheduler with:")
             print(f"  - first_cycle_steps: {scheduler_config.first_cycle_steps}")
             print(f"  - cycle_mult: {scheduler_config.get('cycle_mult', 1.0)}")
             print(f"  - max_lr: {scheduler_config.max_lr}")
@@ -1446,7 +1451,9 @@ def main(cfg: DictConfig) -> None:
                     current_corr = 0.0
                 else:
                     try:
-                        corr_matrix = np.corrcoef(pred_np[valid_mask], true_np[valid_mask])
+                        corr_matrix = np.corrcoef(
+                            pred_np[valid_mask], true_np[valid_mask]
+                        )
                         current_corr = corr_matrix[0, 1]
                         # Check for NaN and replace with 0
                         if np.isnan(current_corr):
@@ -1674,7 +1681,11 @@ def main(cfg: DictConfig) -> None:
         # ROW 4: ICLoss components with L2, Unweighted losses with L2, Dist-MSE diff
         # Weighted Loss components evolution with L2 norm (for ICLoss/MleDistSupCR/MleWassSupCR)
         plt.subplot(5, 3, 10)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
+        if loss_components_history and loss_type in [
+            "icloss",
+            "mle_dist_supcr",
+            "mle_wass_supcr",
+        ]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract components
@@ -1689,10 +1700,12 @@ def main(cfg: DictConfig) -> None:
                 epochs_range, weighted_mse, "b-", label="Weighted MSE", linewidth=2
             )
             # Use appropriate label based on loss type
-            dist_label = "Weighted Wasserstein" if loss_type == "mle_wass_supcr" else "Weighted Dist"
-            plt.plot(
-                epochs_range, weighted_dist, "r-", label=dist_label, linewidth=2
+            dist_label = (
+                "Weighted Wasserstein"
+                if loss_type == "mle_wass_supcr"
+                else "Weighted Dist"
             )
+            plt.plot(epochs_range, weighted_dist, "r-", label=dist_label, linewidth=2)
             plt.plot(
                 epochs_range, weighted_supcr, "g-", label="Weighted SupCR", linewidth=2
             )
@@ -1726,7 +1739,11 @@ def main(cfg: DictConfig) -> None:
 
         # Unweighted loss components with L2 norm
         plt.subplot(5, 3, 11)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
+        if loss_components_history and loss_type in [
+            "icloss",
+            "mle_dist_supcr",
+            "mle_wass_supcr",
+        ]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Extract unweighted components
@@ -1737,7 +1754,9 @@ def main(cfg: DictConfig) -> None:
             # Plot all loss components on same scale
             plt.plot(epochs_range, mse_loss, "b-", label="MSE Loss", linewidth=2)
             # Use appropriate label based on loss type
-            dist_label = "Wasserstein Loss" if loss_type == "mle_wass_supcr" else "Dist Loss"
+            dist_label = (
+                "Wasserstein Loss" if loss_type == "mle_wass_supcr" else "Dist Loss"
+            )
             plt.plot(epochs_range, dist_loss, "r-", label=dist_label, linewidth=2)
             plt.plot(epochs_range, supcr_loss, "g-", label="SupCR Loss", linewidth=2)
 
@@ -1762,7 +1781,11 @@ def main(cfg: DictConfig) -> None:
 
         # Dist Loss vs MSE Loss difference
         plt.subplot(5, 3, 12)
-        if loss_components_history and loss_type in ["icloss", "mle_dist_supcr", "mle_wass_supcr"]:
+        if loss_components_history and loss_type in [
+            "icloss",
+            "mle_dist_supcr",
+            "mle_wass_supcr",
+        ]:
             epochs_range = range(1, len(loss_components_history) + 1)
 
             # Calculate difference between unweighted dist and mse losses
@@ -2054,9 +2077,9 @@ def main(cfg: DictConfig) -> None:
                 # Component breakdown with spacing
                 y_start = 0.57
                 component_texts = [
-                    f'Weighted MSE: {current_components["weighted_mse"]:.6f}',
-                    f'Weighted Dist: {current_components["weighted_dist"]:.6f}',
-                    f'Weighted SupCR: {current_components["weighted_supcr"]:.6f}',
+                    f"Weighted MSE: {current_components['weighted_mse']:.6f}",
+                    f"Weighted Dist: {current_components['weighted_dist']:.6f}",
+                    f"Weighted SupCR: {current_components['weighted_supcr']:.6f}",
                 ]
 
                 for i, text in enumerate(component_texts):
@@ -2142,7 +2165,7 @@ def main(cfg: DictConfig) -> None:
 
         plt.tight_layout()
         plt.savefig(
-            osp.join(plot_dir, f"training_epoch_{epoch+1:04d}.png"),
+            osp.join(plot_dir, f"training_epoch_{epoch + 1:04d}.png"),
             dpi=150,
             bbox_inches="tight",
         )
@@ -2228,7 +2251,9 @@ def main(cfg: DictConfig) -> None:
                 if isinstance(criterion, MleWassSupCR):
                     lambda_values_history.append(
                         {
-                            "lambda_dist": cfg.regression_task.get("lambda_wasserstein", 0.1),
+                            "lambda_dist": cfg.regression_task.get(
+                                "lambda_wasserstein", 0.1
+                            ),
                             "lambda_supcr": cfg.regression_task.lambda_supcr,
                         }
                     )
@@ -2463,11 +2488,15 @@ def main(cfg: DictConfig) -> None:
             if pred_std < 1e-8 or target_std < 1e-8:
                 final_correlation = 0.0
                 final_spearman = 0.0
-                print(f"Warning: Low variance in predictions (std={pred_std:.2e}) or targets (std={target_std:.2e})")
+                print(
+                    f"Warning: Low variance in predictions (std={pred_std:.2e}) or targets (std={target_std:.2e})"
+                )
                 print("Correlation is undefined with near-constant values")
             else:
                 try:
-                    corr_matrix = np.corrcoef(pred_np[valid_mask], target_np[valid_mask])
+                    corr_matrix = np.corrcoef(
+                        pred_np[valid_mask], target_np[valid_mask]
+                    )
                     final_correlation = corr_matrix[0, 1]
                     if np.isnan(final_correlation):
                         final_correlation = 0.0
@@ -2773,7 +2802,7 @@ def main(cfg: DictConfig) -> None:
             plt.close()
 
             print(f"\nResults saved to: {plot_dir}")
-            print(f"- Training plots: training_epoch_*.png")
+            print("- Training plots: training_epoch_*.png")
             print(f"- Final results: final_results_{timestamp()}.png")
 
     # Save the model

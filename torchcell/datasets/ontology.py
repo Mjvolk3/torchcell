@@ -2,15 +2,8 @@
 # [[torchcell.datasets.ontology]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ontology.py
 # Test file: torchcell/datasets/test_ontology.py
-import json
 
-from owlready2 import (
-    DataProperty,
-    FunctionalProperty,
-    ObjectProperty,
-    Thing,
-    get_ontology,
-)
+from owlready2 import ObjectProperty, Thing, get_ontology
 
 # Create a new ontology
 # currently only have rdf

@@ -4,64 +4,18 @@
 # Test file: tests/torchcell/models/test_hetero_cell_bipartite_dango.py
 
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from omegaconf import DictConfig, OmegaConf
-import os.path as osp
 import os
+import os.path as osp
+from typing import Any
+
 import hydra
-from torch_geometric.nn import HeteroConv
-from torch_geometric.nn import (
-    HeteroConv,
-    GCNConv,
-    GATv2Conv,
-    TransformerConv,
-    GINConv,
-    BatchNorm,
-    LayerNorm,
-    GraphNorm,
-    InstanceNorm,
-    PairNorm,
-    MeanSubtractionNorm,
-    global_add_pool,
-    global_mean_pool,
-    global_max_pool,
-    HypergraphConv,
-)
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from typing import Optional, Literal
-from torch_geometric.typing import EdgeType
-from torchcell.models.act import act_register
-from collections import defaultdict
-
-from typing import Any, Union, Optional
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-import torch
-from torch import Tensor
-import torch.nn as nn
-from torch_geometric.typing import EdgeType
-from torch_geometric.utils import sort_edge_index
-from torch_geometric.data import HeteroData
-from torch_scatter import scatter, scatter_softmax
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv
-from torch_geometric.data import HeteroData
-from torch_geometric.utils import sort_edge_index
+from omegaconf import DictConfig
+from torch_geometric.data import Batch, HeteroData
+from torch_geometric.nn import BatchNorm, GATv2Conv, HeteroConv, LayerNorm
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from torchcell.models.act import act_register
-from typing import Optional, Dict, Any, Tuple
-from torch_geometric.data import Batch
-import torch
-import torch.nn as nn
-from torch_geometric.nn import HeteroConv, GATv2Conv, BatchNorm, LayerNorm
-from torch_geometric.data import HeteroData, Batch
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from typing import Optional, Dict, Any, Tuple
 
 
 class GeneInteractionAttention(nn.Module):
@@ -208,7 +162,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -256,8 +210,8 @@ class AttentionConvWrapper(nn.Module):
         self,
         conv: nn.Module,
         target_dim: int,
-        norm: Optional[str] = None,
-        activation: Optional[str] = None,
+        norm: str | None = None,
+        activation: str | None = None,
         dropout: float = 0.1,
     ) -> None:
         super().__init__()
@@ -310,10 +264,10 @@ class HeteroCellBipartite(nn.Module):
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        gene_encoder_config: Optional[Dict[str, Any]] = None,
-        metabolism_config: Optional[Dict[str, Any]] = None,
-        prediction_head_config: Optional[Dict[str, Any]] = None,
-        gpr_conv_config: Optional[Dict[str, Any]] = None,
+        gene_encoder_config: dict[str, Any] | None = None,
+        metabolism_config: dict[str, Any] | None = None,
+        prediction_head_config: dict[str, Any] | None = None,
+        gpr_conv_config: dict[str, Any] | None = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -340,7 +294,7 @@ class HeteroCellBipartite(nn.Module):
 
         self.convs = nn.ModuleList()
         for _ in range(num_layers):
-            conv_dict: Dict[Any, nn.Module] = {}
+            conv_dict: dict[Any, nn.Module] = {}
 
             # Gene-gene interactions with GATv2Conv
             conv_dict[("gene", "physical_interaction", "gene")] = GATv2Conv(
@@ -419,7 +373,7 @@ class HeteroCellBipartite(nn.Module):
         num_layers: int,
         dropout: float,
         activation: str,
-        norm: Optional[str] = None,
+        norm: str | None = None,
     ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
@@ -523,7 +477,7 @@ class HeteroCellBipartite(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # Process reference graph (wildtype)
         z_w = self.forward_single(cell_graph)
         z_w_global = self.global_aggregator(
@@ -668,7 +622,7 @@ class HeteroCellBipartite(nn.Module):
 
     # TODO update for gene interaction dango addition
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -692,17 +646,19 @@ class HeteroCellBipartite(nn.Module):
     config_name="hetero_cell_bipartite_dango",
 )
 def main(cfg: DictConfig) -> None:
-    import matplotlib.pyplot as plt
     import os
-    from dotenv import load_dotenv
-    from torchcell.losses.isomorphic_cell_loss import ICLoss
-    from torchcell.timestamp import timestamp
+
+    import matplotlib.pyplot as plt
     import numpy as np
-    from torchcell.scratch.load_batch import load_sample_data_batch
+    from dotenv import load_dotenv
+
+    from torchcell.losses.isomorphic_cell_loss import ICLoss
     from torchcell.scratch.cell_batch_overfit_visualization import (
-        plot_embeddings,
         plot_correlations,
+        plot_embeddings,
     )
+    from torchcell.scratch.load_batch import load_sample_data_batch
+    from torchcell.timestamp import timestamp
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -865,10 +821,10 @@ def main(cfg: DictConfig) -> None:
 
                 if device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory reserved: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                        f"GPU memory reserved: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())

@@ -10,33 +10,35 @@ import pickle
 import shutil
 import zipfile
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels import (
     Environment,
-    Genotype,
+    Experiment,
+    ExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
+    GeneInteractionPhenotype,
+    Genotype,
     Media,
+    Publication,
     ReferenceGenome,
+    SgaDampPerturbation,
     SgaKanMxDeletionPerturbation,
     SgaNatMxDeletionPerturbation,
-    SgaDampPerturbation,
     SgaSuppressorAllelePerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    Experiment,
-    ExperimentReference,
-    GeneInteractionPhenotype,
-    GeneInteractionExperimentReference,
-    GeneInteractionExperiment,
-    Publication,
 )
-from torchcell.data import ExperimentDataset, post_process
-from concurrent.futures import ThreadPoolExecutor
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -210,7 +212,9 @@ class SmfCostanzo2016Dataset(ExperimentDataset):
                         else (
                             "NatMX_deletion"
                             if "sn" in x  # or "S" in x or "A_S" in x
-                            else "suppression_allele" if "S" in x else "unknown"
+                            else "suppression_allele"
+                            if "S" in x
+                            else "unknown"
                         )
                     )
                 )
@@ -483,7 +487,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                         else (
                             "NatMX_deletion"
                             if "sn" in x  # or "S" in x or "A_S" in x
-                            else "suppression_allele" if "S" in x else "unknown"
+                            else "suppression_allele"
+                            if "S" in x
+                            else "unknown"
                         )
                     )
                 )
@@ -502,7 +508,9 @@ class DmfCostanzo2016Dataset(ExperimentDataset):
                         else (
                             "NatMX_deletion"
                             if "sn" in x  # or "S" in x or "A_S" in x
-                            else "suppression_allele" if "S" in x else "unknown"
+                            else "suppression_allele"
+                            if "S" in x
+                            else "unknown"
                         )
                     )
                 )
@@ -834,7 +842,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                         else (
                             "NatMX_deletion"
                             if "sn" in x
-                            else "suppression_allele" if "S" in x else "unknown"
+                            else "suppression_allele"
+                            if "S" in x
+                            else "unknown"
                         )
                     )
                 )
@@ -853,7 +863,9 @@ class DmiCostanzo2016Dataset(ExperimentDataset):
                         else (
                             "NatMX_deletion"
                             if "sn" in x
-                            else "suppression_allele" if "S" in x else "unknown"
+                            else "suppression_allele"
+                            if "S" in x
+                            else "unknown"
                         )
                     )
                 )

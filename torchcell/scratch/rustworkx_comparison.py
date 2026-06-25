@@ -1,7 +1,7 @@
-import rustworkx as rx
-import networkx as nx
 import timeit
-import numpy as np
+
+import networkx as nx
+import rustworkx as rx
 
 
 # Function to create and remove nodes in rustworkx graphs

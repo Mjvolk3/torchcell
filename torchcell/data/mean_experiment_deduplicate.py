@@ -4,21 +4,23 @@
 # Test file: tests/torchcell/data/test_mean_experiment_deduplicate.py
 
 import hashlib
-import numpy as np
-from typing import Any
 import logging
+from typing import Any
+
+import numpy as np
+from scipy.stats import t
+
+from torchcell.data import Deduplicator
 from torchcell.datamodels import (
-    Genotype,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
-    MeanDeletionPerturbation,
-    GeneInteractionPhenotype,
     GeneInteractionExperiment,
     GeneInteractionExperimentReference,
+    GeneInteractionPhenotype,
+    Genotype,
+    MeanDeletionPerturbation,
 )
-from scipy.stats import t
-from torchcell.data import Deduplicator
 
 log = logging.getLogger(__name__)
 

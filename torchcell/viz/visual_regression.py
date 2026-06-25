@@ -1,15 +1,15 @@
 import io
 import os
 import os.path as osp
-import wandb
+
 import matplotlib.pyplot as plt
 import numpy as np
-import umap
 import seaborn as sns
+import torch
+import umap
+import wandb
 from PIL import Image
 from scipy import stats
-import torch
-from typing import Optional
 
 
 class Visualization:
@@ -21,7 +21,7 @@ class Visualization:
         self.max_points = max_points
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: Optional[str]
+        self, fig: plt.Figure, name: str, timestamp_str: str | None
     ) -> None:
         buf = io.BytesIO()
         fig.savefig(buf, format="png", bbox_inches="tight", dpi=300)
@@ -48,7 +48,7 @@ class Visualization:
         dim: int,
         loss_name: str,
         num_epochs: int,
-        timestamp_str: Optional[str],
+        timestamp_str: str | None,
         stage: str = "",
     ) -> None:
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
@@ -103,7 +103,7 @@ class Visualization:
         loss_name: str,
         dim: int,
         num_epochs: int,
-        timestamp_str: Optional[str],
+        timestamp_str: str | None,
         stage: str = "",
     ) -> None:
         # Convert to float32 before numpy to handle BFloat16 from mixed precision training
@@ -189,7 +189,7 @@ class Visualization:
         source: str,
         dim: int,
         num_epochs: int,
-        timestamp_str: Optional[str],  # still accepted, but not used for key
+        timestamp_str: str | None,  # still accepted, but not used for key
         stage: str = "",
         title_type: str = "loss",
     ) -> None:
@@ -285,7 +285,7 @@ class Visualization:
         latents: dict[str, torch.Tensor],
         loss_name: str,
         num_epochs: int,
-        timestamp_str: Optional[str],
+        timestamp_str: str | None,
         stage: str = "",
     ) -> None:
         # Determine target dimensions to plot
@@ -297,12 +297,14 @@ class Visualization:
             non_zero_dims = []
             for dim in range(true_values.shape[1]):
                 # Check if this dimension has any non-zero and non-nan values
-                if torch.any(~torch.isnan(true_values[:, dim]) & (true_values[:, dim] != 0)):
+                if torch.any(
+                    ~torch.isnan(true_values[:, dim]) & (true_values[:, dim] != 0)
+                ):
                     non_zero_dims.append(dim)
-            
+
             # If no non-zero dimensions found, just use the first one
             target_dims = non_zero_dims if non_zero_dims else [0]
-        
+
         # Plot correlations and distributions for each actual target dimension
         for dim in target_dims:
             self.plot_correlations(
@@ -323,7 +325,7 @@ class Visualization:
                 timestamp_str,
                 stage=stage,
             )
-            
+
         # Plot UMAP for each latent representation without appending loss info (if latents provided)
         for latent_key, latent in latents.items():
             for dim in target_dims:
@@ -337,6 +339,6 @@ class Visualization:
                     stage=stage,
                     title_type="latent",
                 )
-                
+
         # Log additional sample metrics
         self.log_sample_metrics(predictions, true_values, stage=stage)

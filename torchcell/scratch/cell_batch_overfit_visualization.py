@@ -1,9 +1,9 @@
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
-import matplotlib.pyplot as plt
-import os
-import numpy as np
-from torchcell.timestamp import timestamp
+
 from torchcell.timestamp import timestamp
 
 
@@ -166,7 +166,6 @@ def plot_embeddings(
         epoch: Current epoch number (optional)
         fixed_axes: Dictionary containing fixed min/max values for axes if provided
     """
-
     # Create save directory if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
     current_timestamp = timestamp()

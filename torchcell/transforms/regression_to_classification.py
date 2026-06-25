@@ -3,34 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/transforms/regression_to_classification
 # Test file: tests/torchcell/transforms/test_regression_to_classification.py
 
-import numpy as np
-import torch
-import pandas as pd
-from typing import Dict, List, Literal, Optional
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform
-from abc import ABC, abstractmethod
-from scipy.stats import norm
 import copy
-from enum import Enum, auto
-from typing import Literal
-import torch
-from typing import Dict, Optional, Union, List
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform
-import numpy as np
-import copy
-import numpy as np
-import torch
+from abc import ABC
 
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform, Compose
-import copy
-from typing import List, Union
-from torch_geometric.transforms import Compose, BaseTransform
-from torch_geometric.data import HeteroData, Batch
-import copy
+import numpy as np
 import torch
+from torch_geometric.data import Batch, HeteroData
+from torch_geometric.transforms import BaseTransform, Compose
 
 ### Normalize
 
@@ -41,7 +20,7 @@ class LabelNormalizationTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: Dict[str, Dict],
+        label_configs: dict[str, dict],
         eps: float = 1e-8,
     ):
         """
@@ -275,7 +254,7 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
 class AutoBinStrategy(BaseBinningStrategy):
     def compute_bins(
-        self, values: np.ndarray, num_bins: Optional[int] = None
+        self, values: np.ndarray, num_bins: int | None = None
     ) -> tuple[np.ndarray, dict]:
         """Compute bins based on data std"""
         non_nan = values[~np.isnan(values)]
@@ -289,8 +268,8 @@ class LabelBinningTransform(BaseTransform):
     def __init__(
         self,
         dataset: "Neo4jCellDataset",
-        label_configs: Dict[str, Dict],
-        normalizer: Optional[LabelNormalizationTransform] = None,
+        label_configs: dict[str, dict],
+        normalizer: LabelNormalizationTransform | None = None,
     ):
         """
         Args:
@@ -503,7 +482,7 @@ class LabelBinningTransform(BaseTransform):
 class InverseCompose(BaseTransform):
     """A transform that applies the inverse of a sequence of transforms in reverse order."""
 
-    def __init__(self, transforms: Union[Compose, List[BaseTransform]]):
+    def __init__(self, transforms: Compose | list[BaseTransform]):
         super().__init__()
         if isinstance(transforms, Compose):
             self.transforms = transforms.transforms
@@ -521,7 +500,7 @@ class InverseCompose(BaseTransform):
                     f"Transform {t.__class__.__name__} does not implement inverse method"
                 )
 
-    def forward(self, data: Union[HeteroData, Batch]) -> Union[HeteroData, Batch]:
+    def forward(self, data: HeteroData | Batch) -> HeteroData | Batch:
         """Apply inverse transforms in reverse order."""
         # Use copy.copy instead of deepcopy to avoid tensor copy issues
         data = copy.copy(data)
@@ -531,4 +510,4 @@ class InverseCompose(BaseTransform):
 
     def __repr__(self) -> str:
         args = [f"\n  {t}" for t in self.transforms]
-        return f'{self.__class__.__name__}({"".join(args)}\n)'
+        return f"{self.__class__.__name__}({''.join(args)}\n)"

@@ -1,18 +1,17 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-import matplotlib.pyplot as plt
-from typing import Optional
-import logging
-from torchcell.viz.visual_regression import Visualization
-from torchcell.timestamp import timestamp
-from torchcell.viz.visual_graph_degen import VisGraphDegen
-from torchcell.viz import genetic_interaction_score
-from torchcell.viz import fitness
 from torch_geometric.data import HeteroData
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
+from torchcell.viz import fitness, genetic_interaction_score
+from torchcell.viz.visual_graph_degen import VisGraphDegen
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -30,10 +29,10 @@ class RegressionTask(L.LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,  # New parameter for plotting frequency
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -124,21 +123,20 @@ class RegressionTask(L.LightningModule):
                 dummy_loss = dummy_loss + 0.0 * param.sum()
         return dummy_loss
 
-
     def _shared_step(self, batch, batch_idx, stage="train"):
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
 
         # Get phenotype values from the batch (COO format)
         phenotype_values = batch["gene"].phenotype_values
-        
+
         # Handle phenotype shape based on the model output
         # The model outputs 2 values: fitness and gene_interaction
         if phenotype_values.dim() == 1:
             # If we have a 1D tensor, we need to separate fitness and gene_interaction
             # For now, assume the data contains both values interleaved or just gene_interaction
             if predictions.size(1) == 2:
-                # If predictions has 2 outputs but phenotype is 1D, 
+                # If predictions has 2 outputs but phenotype is 1D,
                 # we might need to reshape or extract the correct values
                 # This depends on how the data is structured
                 fitness_vals = phenotype_values.view(-1, 1)
@@ -150,8 +148,12 @@ class RegressionTask(L.LightningModule):
         else:
             # Multi-dimensional case - extract fitness and gene_interaction
             fitness_vals = phenotype_values[:, 0].view(-1, 1)
-            gene_interaction_vals = phenotype_values[:, 1].view(-1, 1) if phenotype_values.size(1) > 1 else phenotype_values[:, 0].view(-1, 1)
-        
+            gene_interaction_vals = (
+                phenotype_values[:, 1].view(-1, 1)
+                if phenotype_values.size(1) > 1
+                else phenotype_values[:, 0].view(-1, 1)
+            )
+
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
 
         # Get original values for metrics and visualization
@@ -160,18 +162,22 @@ class RegressionTask(L.LightningModule):
             if hasattr(batch["gene"], "phenotype_values_original")
             else phenotype_values
         )
-        
+
         if phenotype_orig.dim() == 1:
             fitness_orig = phenotype_orig.view(-1, 1)
             gene_interaction_orig = phenotype_orig.view(-1, 1)
         else:
             fitness_orig = phenotype_orig[:, 0].view(-1, 1)
-            gene_interaction_orig = phenotype_orig[:, 1].view(-1, 1) if phenotype_orig.size(1) > 1 else phenotype_orig[:, 0].view(-1, 1)
-        
+            gene_interaction_orig = (
+                phenotype_orig[:, 1].view(-1, 1)
+                if phenotype_orig.size(1) > 1
+                else phenotype_orig[:, 0].view(-1, 1)
+            )
+
         orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
 
         loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
-        
+
         # HACK - start
         dummy_loss = self._ensure_no_unused_params_loss()
         loss = loss + dummy_loss
@@ -503,7 +509,7 @@ class RegressionTask(L.LightningModule):
                 "predictions": [],
                 "latents": {"z_p": []},
             }
-    
+
     # def on_after_backward(self):
     #     for name, param in self.named_parameters():
     #         if param.grad is None:

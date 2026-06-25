@@ -3,13 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/hetero_data
 # Test file: tests/torchcell/data/test_hetero_data.py
 
-from torch_geometric.data import HeteroData
-from torch import Tensor
-import numpy as np
-from torch_geometric.typing import SparseTensor
+from collections.abc import Mapping, Sequence
 from typing import Any
-from collections.abc import Sequence, Mapping
-from torch_geometric.typing import TensorFrame
+
+import numpy as np
+from torch import Tensor
+from torch_geometric.data import HeteroData
+from torch_geometric.typing import SparseTensor, TensorFrame
 
 
 def custom_size_repr(key: Any, value: Any, indent: int = 0) -> str:

@@ -3,22 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/ohya2005_adapter.py
 # Test file: tests/torchcell/adapters/test_ohya2005_adapter.py
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher import BioCypher
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
 import logging
-from typing import Set
-from torchcell.datasets.scerevisiae.ohya2005 import (
-    ScmdOhya2005Dataset,
-)
-from torchcell.adapters.cell_adapter import CellAdapter
-import yaml
-from omegaconf import OmegaConf, DictConfig
 import os.path as osp
 
+import yaml
+from biocypher._logger import get_logger
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
+from torchcell.adapters.cell_adapter import CellAdapter
+from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
 
 # logging
 # Get the biocypher logger
@@ -44,7 +38,7 @@ class ScmdOhya2005Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -63,13 +57,14 @@ class ScmdOhya2005Adapter(CellAdapter):
 
 
 def main():
-    import os.path as osp
-    from dotenv import load_dotenv
-    from datetime import datetime
-    import os
-    import multiprocessing as mp
     import math
+    import multiprocessing as mp
+    import os
+    import os.path as osp
+    from datetime import datetime
+
     import wandb
+    from dotenv import load_dotenv
 
     ##
     load_dotenv()
@@ -84,9 +79,7 @@ def main():
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    dataset = ScmdOhya2005Dataset(
-        osp.join(DATA_ROOT, "data/torchcell/scmd_ohya2005")
-    )
+    dataset = ScmdOhya2005Dataset(osp.join(DATA_ROOT, "data/torchcell/scmd_ohya2005"))
     num_workers = mp.cpu_count()
     io_workers = math.ceil(0.2 * num_workers)
     process_workers = num_workers - io_workers

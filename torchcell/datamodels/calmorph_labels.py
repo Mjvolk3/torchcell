@@ -10,11 +10,9 @@ Total of 501 morphological parameters:
   - 220 coefficient of variation parameters (CALMORPH_STATISTICS)
 """
 
-from typing import Dict
-
 # All CalMorph parameters (501 total)
 # This is the complete set of all parameters from the original dataset
-CALMORPH_PARAMETERS: Dict[str, str] = {
+CALMORPH_PARAMETERS: dict[str, str] = {
     # Cell morphology parameters (C)
     "C101_A1B": "Whole_cell_size",
     "C101_C": "Whole_cell_size",
@@ -89,7 +87,6 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "C13_A": "Whole_cell_fitness_for_ellipse",
     "C13_A1B": "Mother_cell_fitness_for_ellipse",
     "C13_C": "Mother_cell_fitness_for_ellipse",
-
     # Actin organization parameters (A)
     "A101_A": "Actin_region_ratio_in_whole_cell",
     "A101_A1B": "Actin_region_ratio_in_whole_cell",
@@ -154,7 +151,6 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "A8-2_C": "Total_brightness_of_actin_region_in_bud",
     "A9_A1B": "Proportion_of_actin_region_at_neck",
     "A9_C": "Proportion_of_actin_region_at_neck",
-
     # Nuclear morphology parameters (D)
     "D102_A": "Distance_between_nuclear_gravity_center_and_mother_tip",
     "D103_C": "Distance_between_nuclear_gravity_center_in_mother_and_mother_tip",
@@ -301,7 +297,6 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "D214": "nuclear_A1_ratio_to_nuclear_A1BC_cells",
     "D215": "nuclear_B_ratio_to_nuclear_A1BC_cells",
     "D216": "nuclear_C_ratio_to_nuclear_A1BC_cells",
-
     # Cell morphology coefficient of variation (CCV)
     "CCV101_A1B": "Coefficient_of_variation_of_C101_A1B",
     "CCV101_C": "Coefficient_of_variation_of_C101_C",
@@ -363,7 +358,6 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "CCV13_A": "Coefficient_of_variation_of_C13_A",
     "CCV13_A1B": "Coefficient_of_variation_of_C13_A1B",
     "CCV13_C": "Coefficient_of_variation_of_C13_C",
-
     # Actin coefficient of variation (ACV)
     "ACV101_A": "Coefficient_of_variation_of_A101_A",
     "ACV101_A1B": "Coefficient_of_variation_of_A101_A1B",
@@ -398,7 +392,6 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "ACV8-2_C": "Coefficient_of_variation_of_A8-2_C",
     "ACV9_A1B": "Coefficient_of_variation_of_A9_A1B",
     "ACV9_C": "Coefficient_of_variation_of_A9_C",
-
     # Nuclear coefficient of variation (DCV)
     "DCV102_A": "Coefficient_of_variation_of_D102_A",
     "DCV103_C": "Coefficient_of_variation_of_D103_C",
@@ -526,13 +519,13 @@ CALMORPH_PARAMETERS: Dict[str, str] = {
     "DCV196_A1B": "Coefficient_of_variation_of_D196_A1B",
     "DCV196_C": "Coefficient_of_variation_of_D196_C",
     "DCV197_C": "Coefficient_of_variation_of_D197_C",
-    "DCV198_C": "Coefficient_of_variation_of_D198_C"
+    "DCV198_C": "Coefficient_of_variation_of_D198_C",
 }
 
 
 # Base CalMorph parameters (281 parameters)
 # These are the primary morphological measurements (excludes CV parameters)
-CALMORPH_LABELS: Dict[str, str] = {
+CALMORPH_LABELS: dict[str, str] = {
     # Cell morphology parameters (C)
     "C101_A1B": "Whole_cell_size",
     "C101_C": "Whole_cell_size",
@@ -607,7 +600,6 @@ CALMORPH_LABELS: Dict[str, str] = {
     "C13_A": "Whole_cell_fitness_for_ellipse",
     "C13_A1B": "Mother_cell_fitness_for_ellipse",
     "C13_C": "Mother_cell_fitness_for_ellipse",
-
     # Actin organization parameters (A)
     "A101_A": "Actin_region_ratio_in_whole_cell",
     "A101_A1B": "Actin_region_ratio_in_whole_cell",
@@ -672,7 +664,6 @@ CALMORPH_LABELS: Dict[str, str] = {
     "A8-2_C": "Total_brightness_of_actin_region_in_bud",
     "A9_A1B": "Proportion_of_actin_region_at_neck",
     "A9_C": "Proportion_of_actin_region_at_neck",
-
     # Nuclear morphology parameters (D)
     "D102_A": "Distance_between_nuclear_gravity_center_and_mother_tip",
     "D103_C": "Distance_between_nuclear_gravity_center_in_mother_and_mother_tip",
@@ -818,13 +809,13 @@ CALMORPH_LABELS: Dict[str, str] = {
     "D213": "nuclear_C_ratio_to_nuclear_AA1BC_cells",
     "D214": "nuclear_A1_ratio_to_nuclear_A1BC_cells",
     "D215": "nuclear_B_ratio_to_nuclear_A1BC_cells",
-    "D216": "nuclear_C_ratio_to_nuclear_A1BC_cells"
+    "D216": "nuclear_C_ratio_to_nuclear_A1BC_cells",
 }
 
 
 # Coefficient of variation parameters (220 parameters)
 # These are statistical measures of variability for base parameters
-CALMORPH_STATISTICS: Dict[str, str] = {
+CALMORPH_STATISTICS: dict[str, str] = {
     # Cell morphology coefficient of variation (CCV)
     "CCV101_A1B": "Coefficient_of_variation_of_C101_A1B",
     "CCV101_C": "Coefficient_of_variation_of_C101_C",
@@ -886,7 +877,6 @@ CALMORPH_STATISTICS: Dict[str, str] = {
     "CCV13_A": "Coefficient_of_variation_of_C13_A",
     "CCV13_A1B": "Coefficient_of_variation_of_C13_A1B",
     "CCV13_C": "Coefficient_of_variation_of_C13_C",
-
     # Actin coefficient of variation (ACV)
     "ACV101_A": "Coefficient_of_variation_of_A101_A",
     "ACV101_A1B": "Coefficient_of_variation_of_A101_A1B",
@@ -921,7 +911,6 @@ CALMORPH_STATISTICS: Dict[str, str] = {
     "ACV8-2_C": "Coefficient_of_variation_of_A8-2_C",
     "ACV9_A1B": "Coefficient_of_variation_of_A9_A1B",
     "ACV9_C": "Coefficient_of_variation_of_A9_C",
-
     # Nuclear coefficient of variation (DCV)
     "DCV102_A": "Coefficient_of_variation_of_D102_A",
     "DCV103_C": "Coefficient_of_variation_of_D103_C",
@@ -1049,5 +1038,5 @@ CALMORPH_STATISTICS: Dict[str, str] = {
     "DCV196_A1B": "Coefficient_of_variation_of_D196_A1B",
     "DCV196_C": "Coefficient_of_variation_of_D196_C",
     "DCV197_C": "Coefficient_of_variation_of_D197_C",
-    "DCV198_C": "Coefficient_of_variation_of_D198_C"
+    "DCV198_C": "Coefficient_of_variation_of_D198_C",
 }

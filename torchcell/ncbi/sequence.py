@@ -4,7 +4,6 @@ import gffutils
 import pandas as pd
 from attrs import define, field
 from Bio import SeqIO
-from Bio.Seq import Seq
 
 
 @define
@@ -143,9 +142,9 @@ def main() -> None:
     print(genome.get_sequence(1, 0, 10))  # Replace with valid parameters
     print(genome.get_gene_sequence("YFL039C"))  # Replace with valid gene
     print(genome.get_gene_sequence("ACT1"))  # Replace with valid gene
-    assert genome.get_gene_sequence("YFL039C") == genome.get_gene_sequence(
-        "ACT1"
-    ), "genes should have same sequence"
+    assert genome.get_gene_sequence("YFL039C") == genome.get_gene_sequence("ACT1"), (
+        "genes should have same sequence"
+    )
     print(genome.translation_table)
     print()
 

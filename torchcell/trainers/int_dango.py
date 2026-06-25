@@ -5,23 +5,20 @@
 
 
 import logging
+
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
 import wandb
 from lightning import LightningModule
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import HeteroData
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-from typing import Dict, Optional, Tuple, Union, List
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
 
-from torchcell.losses.isomorphic_cell_loss import ICLoss
 from torchcell.losses.dango import DangoLoss
-from torchcell.timestamp import timestamp
 from torchcell.viz import genetic_interaction_score
-from torchcell.viz.visual_regression import Visualization
 from torchcell.viz.visual_graph_degen import VisGraphDegen
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -39,10 +36,10 @@ class RegressionTask(LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
@@ -75,35 +72,49 @@ class RegressionTask(LightningModule):
             setattr(self, f"{stage}_transformed_metrics", transformed_metrics)
 
         # Separate accumulators for train and validation samples
-        self.train_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
-        self.val_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
+        self.train_samples = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {"integrated_embeddings": []},
+        }
+        self.val_samples = {
+            "true_values": [],
+            "predictions": [],
+            "latents": {"integrated_embeddings": []},
+        }
         self.automatic_optimization = False
 
     def forward(self, batch):
         """
         Forward pass through the model
-        
+
         Args:
             batch: HeteroData batch containing perturbation information
-            
+
         Returns:
             Tuple of (predictions, representations)
         """
-        batch_device = batch.device if hasattr(batch, 'device') else batch["gene"].perturbation_indices.device
-        
+        batch_device = (
+            batch.device
+            if hasattr(batch, "device")
+            else batch["gene"].perturbation_indices.device
+        )
+
         if (
             not hasattr(self, "_cell_graph_device")
             or self._cell_graph_device != batch_device
         ):
             self.cell_graph = self.cell_graph.to(batch_device)
             self._cell_graph_device = batch_device
-            
+
         # Return all outputs from the model
         # Dango model returns (interaction_scores, outputs_dict)
         interaction_scores, outputs_dict = self.model(self.cell_graph, batch)
-        
+
         # Return the model outputs in a standardized format
-        return interaction_scores, {"integrated_embeddings": outputs_dict.get("integrated_embeddings", None)}
+        return interaction_scores, {
+            "integrated_embeddings": outputs_dict.get("integrated_embeddings", None)
+        }
 
     def _ensure_no_unused_params_loss(self):
         """Add a dummy loss to ensure all parameters are used in backward pass."""
@@ -119,7 +130,10 @@ class RegressionTask(LightningModule):
             # Execute all batch preparation (moving to device happens in forward())
             batch_device = batch["gene"].perturbation_indices.device
             # Ensure cell_graph is on correct device
-            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+            if (
+                not hasattr(self, "_cell_graph_device")
+                or self._cell_graph_device != batch_device
+            ):
                 self.cell_graph = self.cell_graph.to(batch_device)
                 self._cell_graph_device = batch_device
 
@@ -132,8 +146,18 @@ class RegressionTask(LightningModule):
 
             # Log minimal metrics
             batch_size = batch["gene"].phenotype_values.size(0)
-            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
-            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+            self.log(
+                f"{stage}/dataloader_profile_loss",
+                loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.log(
+                f"{stage}/dataloader_profile_batch_size",
+                float(batch_size),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
 
             return loss, None, None
 
@@ -151,7 +175,7 @@ class RegressionTask(LightningModule):
 
         # Get target values - these are now stored in phenotype_values for the Dango model
         gene_interaction_vals = batch["gene"].phenotype_values
-        
+
         # Handle tensor shape - ensure it's [batch_size, 1] for consistency
         if gene_interaction_vals.dim() == 0:
             gene_interaction_vals = gene_interaction_vals.unsqueeze(0).unsqueeze(0)
@@ -188,10 +212,10 @@ class RegressionTask(LightningModule):
         if isinstance(self.loss_func, DangoLoss):
             # Get outputs from the model to access reconstructions and adjacency_matrices
             _, outputs_dict = self.model(self.cell_graph, batch)
-            
+
             # Extract reconstructions and prepare adjacency matrices
             reconstructions = outputs_dict.get("reconstructions", {})
-            
+
             # Create adjacency matrices for each edge type
             adjacency_matrices = {}
             for edge_type in self.loss_func.edge_types:
@@ -200,24 +224,27 @@ class RegressionTask(LightningModule):
                     adj_size = reconstructions[edge_type].shape
                     adj_matrix = torch.sparse_coo_tensor(
                         self.cell_graph[edge_key].edge_index,
-                        torch.ones(self.cell_graph[edge_key].edge_index.shape[1], device=predictions.device),
+                        torch.ones(
+                            self.cell_graph[edge_key].edge_index.shape[1],
+                            device=predictions.device,
+                        ),
                         (adj_size[0], adj_size[1]),
                     ).to_dense()
                     adjacency_matrices[edge_type] = adj_matrix
-            
+
             # Pass to the loss function with current epoch for dynamic weighting
             loss_output = self.loss_func(
-                predictions, 
-                gene_interaction_vals, 
-                reconstructions, 
+                predictions,
+                gene_interaction_vals,
+                reconstructions,
                 adjacency_matrices,
-                current_epoch=self.current_epoch
+                current_epoch=self.current_epoch,
             )
-            
+
             # Handle the tuple return format (loss, loss_dict)
             loss = loss_output[0]  # First element is the loss
             loss_dict = loss_output[1] if len(loss_output) > 1 else {}
-            
+
             # Log additional loss components
             if isinstance(loss_dict, dict):
                 for key, value in loss_dict.items():
@@ -231,15 +258,17 @@ class RegressionTask(LightningModule):
         else:
             # For other loss functions (fallback)
             if integrated_embeddings is not None:
-                loss_output = self.loss_func(predictions, gene_interaction_vals, integrated_embeddings)
+                loss_output = self.loss_func(
+                    predictions, gene_interaction_vals, integrated_embeddings
+                )
             else:
                 loss_output = self.loss_func(predictions, gene_interaction_vals)
-            
+
             # Handle if loss_func returns a tuple
             if isinstance(loss_output, tuple):
                 loss = loss_output[0]  # First element is the loss
                 loss_dict = loss_output[1] if len(loss_output) > 1 else {}
-                
+
                 # Log additional loss components if available
                 if isinstance(loss_dict, dict):
                     for key, value in loss_dict.items():
@@ -264,7 +293,10 @@ class RegressionTask(LightningModule):
         if integrated_embeddings is not None:
             emb_norm = integrated_embeddings.norm(p=2, dim=-1).mean()
             self.log(
-                f"{stage}/integrated_embeddings_norm", emb_norm, batch_size=batch_size, sync_dist=True
+                f"{stage}/integrated_embeddings_norm",
+                emb_norm,
+                batch_size=batch_size,
+                sync_dist=True,
             )
 
         # Update transformed metrics
@@ -323,8 +355,12 @@ class RegressionTask(LightningModule):
                     )
                     if integrated_embeddings is not None:
                         if "latents" not in self.train_samples:
-                            self.train_samples["latents"] = {"integrated_embeddings": []}
-                        self.train_samples["latents"]["integrated_embeddings"].append(integrated_embeddings[idx].detach())
+                            self.train_samples["latents"] = {
+                                "integrated_embeddings": []
+                            }
+                        self.train_samples["latents"]["integrated_embeddings"].append(
+                            integrated_embeddings[idx].detach()
+                        )
                 else:
                     self.train_samples["true_values"].append(
                         gene_interaction_orig.detach()
@@ -332,8 +368,12 @@ class RegressionTask(LightningModule):
                     self.train_samples["predictions"].append(inv_predictions.detach())
                     if integrated_embeddings is not None:
                         if "latents" not in self.train_samples:
-                            self.train_samples["latents"] = {"integrated_embeddings": []}
-                        self.train_samples["latents"]["integrated_embeddings"].append(integrated_embeddings.detach())
+                            self.train_samples["latents"] = {
+                                "integrated_embeddings": []
+                            }
+                        self.train_samples["latents"]["integrated_embeddings"].append(
+                            integrated_embeddings.detach()
+                        )
         elif (
             stage == "val"
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
@@ -344,7 +384,9 @@ class RegressionTask(LightningModule):
             if integrated_embeddings is not None:
                 if "latents" not in self.val_samples:
                     self.val_samples["latents"] = {"integrated_embeddings": []}
-                self.val_samples["latents"]["integrated_embeddings"].append(integrated_embeddings.detach())
+                self.val_samples["latents"]["integrated_embeddings"].append(
+                    integrated_embeddings.detach()
+                )
 
         return loss, predictions, gene_interaction_orig
 
@@ -407,10 +449,10 @@ class RegressionTask(LightningModule):
     def _plot_samples(self, samples, stage: str) -> None:
         if not samples["true_values"]:
             return
-            
+
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
-        
+
         # Process latents if they exist
         latents = {}
         if "latents" in samples and samples["latents"]:
@@ -425,29 +467,27 @@ class RegressionTask(LightningModule):
             predictions = predictions[idx]
             for key in latents:
                 latents[key] = latents[key][idx]
-        
+
         # Use Visualization for enhanced plotting
         vis = Visualization(
             base_dir=self.trainer.default_root_dir, max_points=max_samples
         )
-        
+
         loss_name = (
-            self.loss_func.__class__.__name__
-            if self.loss_func is not None
-            else "Loss"
+            self.loss_func.__class__.__name__ if self.loss_func is not None else "Loss"
         )
-        
+
         # Ensure data is in the correct format for visualization
         # For gene interactions, we only need a single dimension
         if true_values.dim() == 1:
             true_values = true_values.unsqueeze(1)
         if predictions.dim() == 1:
             predictions = predictions.unsqueeze(1)
-        
+
         # Skip UMAP visualization by passing empty latents dictionary
         # The original latents have shape mismatch: integrated_embeddings.shape = [33035, 64] vs true_values.shape = [batch_size, 1]
         z_p_latents = {}  # Empty dictionary to skip UMAP visualization
-        
+
         # Use our updated visualize_model_outputs method which now properly handles single target case
         vis.visualize_model_outputs(
             predictions,
@@ -458,12 +498,16 @@ class RegressionTask(LightningModule):
             None,
             stage=stage,
         )
-        
+
         # Log oversmoothing metrics on latent spaces if available
         if "integrated_embeddings" in latents:
-            smoothness = VisGraphDegen.compute_smoothness(latents["integrated_embeddings"])
-            wandb.log({f"{stage}/oversmoothing_integrated_embeddings": smoothness.item()})
-        
+            smoothness = VisGraphDegen.compute_smoothness(
+                latents["integrated_embeddings"]
+            )
+            wandb.log(
+                {f"{stage}/oversmoothing_integrated_embeddings": smoothness.item()}
+            )
+
         # Log genetic interaction box plot - for gene interactions, always use the first column
         if torch.any(~torch.isnan(true_values)):
             # For Dango model, genetic interaction values are in the first dimension (index 0)
@@ -494,17 +538,29 @@ class RegressionTask(LightningModule):
         ) % self.hparams.plot_every_n_epochs == 0 and self.train_samples["true_values"]:
             self._plot_samples(self.train_samples, "train_sample")
             # Reset the sample containers
-            self.train_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
+            self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"integrated_embeddings": []},
+            }
 
     def on_train_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.train_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
+            self.train_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"integrated_embeddings": []},
+            }
 
     def on_validation_epoch_start(self):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.val_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
+            self.val_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"integrated_embeddings": []},
+            }
 
     def on_validation_epoch_end(self):
         # Log validation metrics
@@ -527,7 +583,11 @@ class RegressionTask(LightningModule):
         ):
             self._plot_samples(self.val_samples, "val_sample")
             # Reset the sample containers
-            self.val_samples = {"true_values": [], "predictions": [], "latents": {"integrated_embeddings": []}}
+            self.val_samples = {
+                "true_values": [],
+                "predictions": [],
+                "latents": {"integrated_embeddings": []},
+            }
 
     def configure_optimizers(self):
         optimizer_class = getattr(torch.optim, self.hparams.optimizer_config["type"])

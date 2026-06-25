@@ -92,7 +92,7 @@ class SelfAttentionSAG(nn.Module):
         print(f"Self-attention output shape: {x.shape}")
         print(f"Number of graphs: {len(graph_attn_weights)}")
         for i, attn_weights in enumerate(graph_attn_weights):
-            print(f"Attention weights shape for graph {i+1}: {attn_weights.shape}")
+            print(f"Attention weights shape for graph {i + 1}: {attn_weights.shape}")
 
         # Binarize the attention weights
         attn_weights_binary = (graph_attn_weights[0] > 0.5).float()
@@ -114,11 +114,11 @@ class SelfAttentionSAG(nn.Module):
 
         for i in range(len(self.gnn_layers)):
             x = self.gnn_layers[i](x, edge_index)
-            print(f"GNN layer {i+1} output shape: {x.shape}")
+            print(f"GNN layer {i + 1} output shape: {x.shape}")
             x, edge_index, _, batch, _, _ = self.pool_layers[i](
                 x, edge_index, batch=batch
             )
-            print(f"Pooling layer {i+1} output shape: {x.shape}")
+            print(f"Pooling layer {i + 1} output shape: {x.shape}")
             print(f"Pooled edge_index shape: {edge_index.shape}")
             print(f"Pooled batch shape: {batch.shape}")
             x = self.norm_layers[i](x)

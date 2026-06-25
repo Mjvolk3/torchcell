@@ -3,15 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression.py
 # Test file: torchcell/trainers/test_regression.py
 
-import math
 import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+import wandb
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -19,16 +17,16 @@ from torchmetrics import (
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
-from tqdm import tqdm
 
-import wandb
+import torchcell
+
 # TODO renamed
 # from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
-import torchcell
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class SimpleLinearRegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""

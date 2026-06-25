@@ -3,24 +3,20 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/costanzo2016_adapter.py
 # Test file: tests/torchcell/adapters/test_costanzo2016_adapter.py
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher import BioCypher
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
 import logging
-from typing import Set
-from torchcell.datasets.scerevisiae.costanzo2016 import (
-    SmfCostanzo2016Dataset,
-    DmfCostanzo2016Dataset,
-    DmiCostanzo2016Dataset,
-)
-from torchcell.adapters.cell_adapter import CellAdapter
-import yaml
-from omegaconf import OmegaConf, DictConfig
 import os.path as osp
 
+import yaml
+from biocypher._logger import get_logger
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
+from torchcell.adapters.cell_adapter import CellAdapter
+from torchcell.datasets.scerevisiae.costanzo2016 import (
+    DmfCostanzo2016Dataset,
+    DmiCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
+)
 
 # logging
 # Get the biocypher logger
@@ -46,7 +42,7 @@ class SmfCostanzo2016Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -80,7 +76,7 @@ class DmfCostanzo2016Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -114,7 +110,7 @@ class DmiCostanzo2016Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -133,13 +129,11 @@ class DmiCostanzo2016Adapter(CellAdapter):
 
 
 def main():
-    import os.path as osp
-    from dotenv import load_dotenv
-    from datetime import datetime
     import os
-    import multiprocessing as mp
-    import math
-    import wandb
+    import os.path as osp
+    from datetime import datetime
+
+    from dotenv import load_dotenv
 
     ##
     load_dotenv()

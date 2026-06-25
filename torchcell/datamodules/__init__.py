@@ -1,5 +1,10 @@
-from .cell import CellDataModule
-from .cell import IndexSplit, DatasetSplit, DataModuleIndex, DataModuleIndexDetails
+from .cell import (
+    CellDataModule,
+    DataModuleIndex,
+    DataModuleIndexDetails,
+    DatasetSplit,
+    IndexSplit,
+)
 
 data_module = ["CellDataModule"]
 data_module_data_models = [

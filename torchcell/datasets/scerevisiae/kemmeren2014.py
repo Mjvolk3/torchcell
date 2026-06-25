@@ -3,36 +3,38 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/kemmeren2014
 # Test file: tests/torchcell/datasets/scerevisiae/test_kemmeren2014.py
 
-import GEOparse
 import logging
 import os
 import os.path as osp
 import pickle
 import re
-import requests
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
+
+import GEOparse
 import lmdb
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+import requests
 from dotenv import load_dotenv
 from sortedcontainers import SortedDict
+from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
     Environment,
+    Experiment,
+    ExperimentReference,
     Genotype,
+    KanMxDeletionPerturbation,
+    Media,
     MicroarrayExpressionExperiment,
     MicroarrayExpressionExperimentReference,
     MicroarrayExpressionPhenotype,
-    Media,
-    ReferenceGenome,
-    KanMxDeletionPerturbation,
-    Temperature,
-    Experiment,
-    ExperimentReference,
     Publication,
+    ReferenceGenome,
+    Temperature,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
@@ -66,7 +68,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     # TLC1: Telomerase RNA component (systematic name YNCB0010W) - non-coding RNA gene
     # Note: TLC1 is not in the standard gene set because it's a telomerase_RNA_gene feature type,
     # not a protein-coding gene. The genome.gene_set only includes features of type "gene" (6607 protein-coding).
-    # Other non-coding RNA genes (tRNA_gene, rRNA_gene, snoRNA_gene, snRNA_gene, ncRNA_gene) 
+    # Other non-coding RNA genes (tRNA_gene, rRNA_gene, snoRNA_gene, snRNA_gene, ncRNA_gene)
     # are stored as separate feature types and require special handling.
     # CMS1: Maps to YLR003C (current SGD gene as of 2025.09.11; YNL307C is already in Excel as SKN7)
     # LUG1: Historical nomenclature issue - LUG1 was reserved for YCR087C-A but never published (SGD note 2012-05-22)
@@ -77,7 +79,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         "HSN1": "YHR127W",  # Historical alias retained by SGD
         "TLC1": "YNCB0010W",  # Telomerase RNA component
         "CMS1": "YLR003C",  # Current SGD gene as of 2025.09.11 (YNL307C is already mapped as SKN7)
-        "LUG1": "YCR087C-A"  # Historical reserved name, now maps to YLR352W but dataset uses old meaning
+        "LUG1": "YCR087C-A",  # Historical reserved name, now maps to YLR352W but dataset uses old meaning
     }
 
     def __init__(
@@ -392,12 +394,18 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             replicate_counts[count] += 1
 
         log.info("\n=== Replicates per Gene Analysis ===")
-        log.info(f"Average samples per gene: {2633/len(deletion_samples_by_gene):.2f}")
+        log.info(
+            f"Average samples per gene: {2633 / len(deletion_samples_by_gene):.2f}"
+        )
         for count in sorted(replicate_counts.keys()):
             log.info(f"Genes with {count} samples: {replicate_counts[count]}")
             # Print out genes with 4 samples to investigate YCR087C-A
             if count == 4:
-                genes_with_4 = [gene for gene, samples in deletion_samples_by_gene.items() if len(samples) == 4]
+                genes_with_4 = [
+                    gene
+                    for gene, samples in deletion_samples_by_gene.items()
+                    if len(samples) == 4
+                ]
                 for gene in genes_with_4:
                     log.info(f"  Gene with 4 samples: {gene}")
                     for sample in deletion_samples_by_gene[gene]:
@@ -427,7 +435,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         extra_in_geo = resolved_orf_names - excel_orf_names
 
         if missing_in_geo:
-            log.warning(f"\n=== Missing ORFs Analysis ===")
+            log.warning("\n=== Missing ORFs Analysis ===")
             log.warning(
                 f"Found {len(missing_in_geo)} ORFs in Excel but not in GEO: {missing_in_geo}"
             )
@@ -518,8 +526,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             # Process each unique gene deletion (collect replicate-level data)
             for gene_name, gsm_list in tqdm(deletion_samples_by_gene.items()):
                 # Collect expression data from all dye-swap replicates (replicate-level, not averaged)
-                replicate_expressions, n_replicates = self._collect_replicate_expressions(
-                    gsm_list, probe_to_gene_map
+                replicate_expressions, n_replicates = (
+                    self._collect_replicate_expressions(gsm_list, probe_to_gene_map)
                 )
 
                 # Skip if no expression data was extracted
@@ -575,10 +583,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
                     cv_scaled_std,  # Use CV-scaled std instead of original
                 )
-                
+
                 # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
                 if experiment is None:
-                    log.error(f"Could not calculate log2 ratios for {gene_name}, skipping...")
+                    log.error(
+                        f"Could not calculate log2 ratios for {gene_name}, skipping..."
+                    )
                     continue
 
                 # Serialize the Pydantic objects
@@ -596,7 +606,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         log.info(f"Wrote {idx} experiments to LMDB")
         log.info(f"Total gene deletions attempted: {len(deletion_samples_by_gene)}")
         if idx < len(deletion_samples_by_gene):
-            log.warning(f"Skipped {len(deletion_samples_by_gene) - idx} genes (could not calculate log2 ratios)")
+            log.warning(
+                f"Skipped {len(deletion_samples_by_gene) - idx} genes (could not calculate log2 ratios)"
+            )
 
     def _process_parallel(
         self, deletion_samples_by_gene, probe_to_gene_map, systematic_to_strain
@@ -652,12 +664,14 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     skipped_genes.append(idx)
 
         env.close()
-        
+
         # Log statistics about experiments
         log.info(f"Wrote {written_count} experiments to LMDB")
         log.info(f"Total gene deletions attempted: {len(all_results)}")
         if skipped_genes:
-            log.warning(f"Skipped {len(skipped_genes)} genes (could not calculate log2 ratios)")
+            log.warning(
+                f"Skipped {len(skipped_genes)} genes (could not calculate log2 ratios)"
+            )
             log.warning(f"Indices of skipped genes: {skipped_genes}")
 
     @staticmethod
@@ -724,7 +738,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
                 )
             )
-            
+
             # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
             if experiment is None:
                 continue
@@ -804,7 +818,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 and "Signal Norm_Cy3" in table.columns
             ):
                 # Determine which channel has deletion mutant based on sample name
-                title = gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
+                title = (
+                    gsm.metadata.get("title", [""])[0]
+                    if hasattr(gsm, "metadata")
+                    else ""
+                )
 
                 # Check for dye-swap pattern
                 if "-a" in title or "_a" in title or title.endswith("a"):
@@ -1023,7 +1041,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             high_cv_genes = [gene for gene, cv in refpool_cv.items() if cv > 0.5]
             if high_cv_genes:
                 log.info(
-                    f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100*len(high_cv_genes)/len(refpool_cv):.1f}%)"
+                    f"Found {len(high_cv_genes)} genes with CV > 0.5 ({100 * len(high_cv_genes) / len(refpool_cv):.1f}%)"
                 )
                 log.debug(f"Example high CV genes: {high_cv_genes[:5]}")
 
@@ -1206,7 +1224,11 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 and "Signal Norm_Cy3" in table.columns
             ):
                 # Determine which channel has deletion mutant based on sample name
-                title = gsm.metadata.get("title", [""])[0] if hasattr(gsm, "metadata") else ""
+                title = (
+                    gsm.metadata.get("title", [""])[0]
+                    if hasattr(gsm, "metadata")
+                    else ""
+                )
 
                 # Check for dye-swap pattern
                 if "-a" in title or "_a" in title or title.endswith("a"):
@@ -1331,7 +1353,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         # Check for expected columns
         if "ID_REF" not in table.columns:
-            log.warning(f"ID_REF column not found")
+            log.warning("ID_REF column not found")
             return expression_data
 
         # We need both Cy5 and Cy3 to extract refpool
@@ -1480,15 +1502,21 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     if pd.notna(systematic_name) and pd.notna(mating_type):
                         # Convert to uppercase
                         systematic_name = str(systematic_name).upper()
-                        
+
                         # Handle special cases where orf name is actually a common name
                         # TLC1 and CMS1 appear in orf name column but are common names, not systematic
                         if systematic_name == "TLC1":
                             systematic_name = "YNCB0010W"  # Telomerase RNA component
-                            log.info(f"Converted TLC1 -> YNCB0010W in Excel orf name column")
+                            log.info(
+                                "Converted TLC1 -> YNCB0010W in Excel orf name column"
+                            )
                         elif systematic_name == "CMS1":
-                            systematic_name = "YLR003C"  # Current SGD gene as of 2025.09.11
-                            log.info(f"Converted CMS1 -> YLR003C in Excel orf name column")
+                            systematic_name = (
+                                "YLR003C"  # Current SGD gene as of 2025.09.11
+                            )
+                            log.info(
+                                "Converted CMS1 -> YLR003C in Excel orf name column"
+                            )
                         excel_genes_original.append(systematic_name)
                         excel_genes_converted.append(systematic_name)
 
@@ -1524,7 +1552,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                         if common_name and pd.notna(common_name):
                             common_name_upper = str(common_name).upper()
                             common_to_systematic[common_name_upper] = systematic_name
-                        
+
                         # For TLC1 and CMS1, also add mapping from common name since they appear in GEO
                         if systematic_name == "YNCB0010W":  # TLC1
                             common_to_systematic["TLC1"] = "YNCB0010W"
@@ -1598,7 +1626,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             # For non-coding RNA genes, we still return the systematic name
             # even if not in Excel, to avoid returning the invalid common name
             else:
-                log.info(f"Special mapping {gene_upper} -> {systematic} (non-coding RNA gene not in Excel)")
+                log.info(
+                    f"Special mapping {gene_upper} -> {systematic} (non-coding RNA gene not in Excel)"
+                )
                 self.resolved_by_alias += 1
                 return systematic
 
@@ -1723,21 +1753,24 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     def create_experiment(self):
         """Required by base class but not used - see create_expression_experiment."""
         pass
-    
+
     def _log_processing_summary(self, deletion_samples_by_gene, samples_data):
         """Log consistent summary statistics for both sequential and parallel processing."""
-        log.info(f"Processed {len(deletion_samples_by_gene)} unique gene deletion experiments")
-        
+        log.info(
+            f"Processed {len(deletion_samples_by_gene)} unique gene deletion experiments"
+        )
+
         # Find and log duplicate genes (genes appearing in multiple deletion experiments)
         from collections import Counter
+
         gene_counter = Counter(deletion_samples_by_gene.keys())
         duplicates = {gene: count for gene, count in gene_counter.items() if count > 1}
-        
+
         if duplicates:
             log.info(f"Found {len(duplicates)} duplicate gene deletions:")
             for gene, count in sorted(duplicates.items()):
                 log.info(f"  {gene}: {count} experiments")
-        
+
         # Log statistics
         total_samples = len(samples_data)
         deletion_samples = sum(1 for s in samples_data if s["is_deletion"])
@@ -1853,7 +1886,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
                                     original_ratios.append(original)
                                     calculated_ratios.append(calculated)
-                            except (ValueError, TypeError) as e:
+                            except (ValueError, TypeError):
                                 continue
 
         if len(original_ratios) > 10:
@@ -1917,10 +1950,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
     @staticmethod
     def create_expression_experiment(
-        dataset_name,
-        sample_info,
-        replicate_expressions,
-        refpool_expression,
+        dataset_name, sample_info, replicate_expressions, refpool_expression
     ):
         # Genome reference - strain MUST be specified (BY4741 or BY4742)
         if "strain" not in sample_info:
@@ -1988,7 +2018,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             if n > 1:
                 sd_log2 = np.std(log2_ratios_per_replicate, ddof=1)
                 se_log2 = sd_log2 / np.sqrt(n)
-                var_log2 = sd_log2 ** 2
+                var_log2 = sd_log2**2
             else:
                 # n=1: SE and variance are undefined
                 se_log2 = np.nan
@@ -2056,13 +2086,13 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
 if __name__ == "__main__":
     dataset = MicroarrayKemmeren2014Dataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"), 
-        io_workers=10, 
-        process_workers=10
+        root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
+        io_workers=10,
+        process_workers=10,
     )
     # dataset = MicroarrayKemmeren2014Dataset(
-    #     root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"), 
-        
+    #     root=osp.join(DATA_ROOT, "data/torchcell/microarray_kemmeren2014"),
+
     # )
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset gene set size: {len(dataset.gene_set)}")
@@ -2073,7 +2103,7 @@ if __name__ == "__main__":
         data = dataset[0]
 
         # The data is returned as a dictionary with deserialized content
-        print(f"\nFirst dataset item (index 0):")
+        print("\nFirst dataset item (index 0):")
         print(f"  Data type: {type(data)}")
         print(f"  Keys: {data.keys()}")
 
@@ -2082,7 +2112,7 @@ if __name__ == "__main__":
         reference = data["reference"]
         publication = data["publication"]
 
-        print(f"\n=== Experiment Details ===")
+        print("\n=== Experiment Details ===")
         print(f"  Dataset: {experiment['dataset_name']}")
         perturbed_gene = experiment["genotype"]["perturbations"][0][
             "systematic_gene_name"
@@ -2094,11 +2124,11 @@ if __name__ == "__main__":
         print(f"  Expression measurements: {len(exp_expression)} genes")
 
         # Show first 5 expression values
-        print(f"  First 5 expression values:")
+        print("  First 5 expression values:")
         for i, (gene, value) in enumerate(list(exp_expression.items())[:5]):
             print(f"    {gene}: {value:.4f}")
 
-        print(f"\n=== Reference Details ===")
+        print("\n=== Reference Details ===")
         print(f"  Dataset: {reference['dataset_name']}")
         print(f"  Genome: {reference['genome_reference']}")
         print(f"  Environment: {reference['environment_reference']}")
@@ -2108,7 +2138,7 @@ if __name__ == "__main__":
         print(f"  Reference expression: {len(ref_expression)} genes")
 
         # Show first 5 reference expression values
-        print(f"  First 5 reference expression values (wildtype):")
+        print("  First 5 reference expression values (wildtype):")
         for i, (gene, value) in enumerate(list(ref_expression.items())[:5]):
             print(f"    {gene}: {value:.4f}")
 
@@ -2119,7 +2149,7 @@ if __name__ == "__main__":
                 print(f"  Reference has technical std for {len(ref_std)} genes")
 
         # Compare specific gene between experiment and reference
-        print(f"\n=== Gene Comparison (exp vs ref) ===")
+        print("\n=== Gene Comparison (exp vs ref) ===")
         # Pick first 3 genes for comparison
         sample_genes = list(exp_expression.keys())[:3]
         for gene in sample_genes:
@@ -2133,11 +2163,11 @@ if __name__ == "__main__":
                 print(f"    Log2 ratio: {log2_ratio:.4f}")
 
         # Check perturbed gene presence
-        print(f"\n=== Perturbed Gene Status ===")
+        print("\n=== Perturbed Gene Status ===")
         print(f"  Gene: {perturbed_gene}")
         print(f"  In deletion mutant expression: {perturbed_gene in exp_expression}")
         print(f"  In wildtype reference expression: {perturbed_gene in ref_expression}")
 
-        print(f"\n=== Publication ===")
+        print("\n=== Publication ===")
         print(f"  PubMed ID: {publication['pubmed_id']}")
         print(f"  DOI: {publication['doi']}")

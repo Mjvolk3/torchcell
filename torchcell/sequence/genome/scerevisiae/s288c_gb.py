@@ -3,39 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/sequence/genome/scerevisiae/S288C_gb.py
 # Test file: torchcell/sequence/genome/scerevisiae/test_S288C_gb.py
 
-import glob
-import gzip
-import logging
 import os
 import os.path as osp
 import shutil
 import subprocess
-import tarfile
 import zipfile
-from typing import Set
 
-import gffutils
-import pandas as pd
 from attrs import define, field
-from Bio import Seq, SeqIO
-from Bio.SeqRecord import SeqRecord
-from gffutils import FeatureDB
-from gffutils.feature import Feature
-from goatools.obo_parser import GODag
-from sortedcontainers import SortedDict, SortedSet
-from torch_geometric.data import download_url
-
-from torchcell.sequence import (  # Genome,
-    DnaSelectionResult,
-    DnaWindowResult,
-    Gene,
-    GeneSet,
-    calculate_window_bounds,
-    calculate_window_bounds_symmetric,
-    get_chr_from_description,
-    mismatch_positions,
-    roman_to_int,
-)
+from Bio import SeqIO
+from sortedcontainers import SortedDict
 
 
 @define

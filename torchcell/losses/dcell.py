@@ -3,9 +3,10 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell_new.py
 # Test file: torchcell/losses/test_dcell_new.py
 
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Dict, List, Tuple, Any, Optional
 
 
 class DCellLoss(nn.Module):
@@ -29,8 +30,8 @@ class DCellLoss(nn.Module):
         self.criterion = nn.MSELoss()
 
     def forward(
-        self, predictions: torch.Tensor, outputs: Dict[str, Any], target: torch.Tensor
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        self, predictions: torch.Tensor, outputs: dict[str, Any], target: torch.Tensor
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute the loss for DCellNew outputs.
 
@@ -69,7 +70,9 @@ class DCellLoss(nn.Module):
         for subsystem_name, subsystem_output in linear_outputs.items():
             # Skip the root output since it's the same as predictions
             # The is_root check is more robust than exact equality
-            is_root = subsystem_name == "GO:ROOT" or torch.equal(subsystem_output, predictions)
+            is_root = subsystem_name == "GO:ROOT" or torch.equal(
+                subsystem_output, predictions
+            )
             if is_root:
                 continue
 

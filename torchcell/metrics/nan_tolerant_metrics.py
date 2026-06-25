@@ -1,9 +1,8 @@
+from typing import Any
+
 import torch
 from torch import Tensor
 from torchmetrics.metric import Metric
-from typing import Any
-from torch.nn import functional as F
-from typing import Tuple
 
 
 def _handle_nan_mask(preds: Tensor, target: Tensor) -> tuple[Tensor, Tensor, Tensor]:
@@ -154,7 +153,7 @@ def _final_aggregation(
     vars_y: Tensor,
     corrs_xy: Tensor,
     nbs: Tensor,
-) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
+) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
     """Aggregate statistics from multiple devices, handling NaN values."""
     if len(means_x) == 1:
         return means_x[0], means_y[0], vars_x[0], vars_y[0], corrs_xy[0], nbs[0]
@@ -217,7 +216,7 @@ def _nan_tolerant_pearson_update(
     corr_xy: Tensor,
     n_total: Tensor,
     num_outputs: int,
-) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
+) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
     """Update Pearson correlation statistics, handling NaN values."""
     # Handle NaN values
     valid_mask = ~torch.isnan(preds) & ~torch.isnan(target)

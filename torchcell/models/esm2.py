@@ -5,9 +5,10 @@
 
 import os
 import os.path as osp
+
 import torch
 from transformers import AutoModelForMaskedLM, AutoTokenizer
-from typing import Union
+
 from torchcell.models.llm import PeptideModel
 
 
@@ -53,7 +54,7 @@ class Esm2(PeptideModel):
         self.model.to(self.device)
 
     def embed(
-        self, sequences: Union[str, list[str]], mean_embedding: bool = False
+        self, sequences: str | list[str], mean_embedding: bool = False
     ) -> torch.Tensor:
         if isinstance(sequences, str):
             sequences = [sequences]  # Convert single string to a list

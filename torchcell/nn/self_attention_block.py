@@ -4,10 +4,11 @@
 # Test file: tests/torchcell/nn/test_self_attention_block.py
 
 # torchcell/nn/self_attention_block.py
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
 
 
 class SelfAttentionBlock(nn.Module):
@@ -36,7 +37,7 @@ class SelfAttentionBlock(nn.Module):
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
-        
+
         # Flag for simulating errors in tests
         self.in_simulated_error_test = False
 
@@ -99,10 +100,10 @@ class SelfAttentionBlock(nn.Module):
             # For testing error propagation
             if self.in_simulated_error_test:
                 raise RuntimeError("Simulated FlexAttention error")
-                
+
             # Import here for better error handling
             from torch.nn.attention.flex_attention import flex_attention
-            
+
             # Use FlexAttention on GPU
             attn_output = flex_attention(q, k, v)
         else:

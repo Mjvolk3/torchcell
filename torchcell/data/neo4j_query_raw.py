@@ -4,24 +4,25 @@
 # Test file: tests/torchcell/data/test_neo4j_query_raw.py
 
 
-import lmdb
-from neo4j import GraphDatabase
-import os
-from tqdm import tqdm
-from attrs import define, field
-import os.path as osp
 import concurrent.futures
-from typing import Union
-from torchcell.datamodels.schema import (
-    EXPERIMENT_TYPE_MAP,
-    EXPERIMENT_REFERENCE_TYPE_MAP,
-)
 import json
-from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
-import multiprocessing as mp
-from concurrent.futures import ProcessPoolExecutor
-from torchcell.sequence import GeneSet
 import logging
+import multiprocessing as mp
+import os
+import os.path as osp
+from concurrent.futures import ProcessPoolExecutor
+
+import lmdb
+from attrs import define, field
+from neo4j import GraphDatabase
+from tqdm import tqdm
+
+from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
+from torchcell.datamodels.schema import (
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
+)
+from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ class Neo4jQueryRaw:
     raw_dir: str = field(init=False, default=None)
     env: str = field(init=False, default=None)
     _gene_set: str = field(init=False, default=None)
-    cypher_kwargs: dict[str, Union[str, int, float, list]] = field(factory=dict)
+    cypher_kwargs: dict[str, str | int | float | list] = field(factory=dict)
 
     def __attrs_post_init__(self):
         self.raw_dir = osp.join(self.root_dir, "raw")
@@ -195,7 +196,7 @@ class Neo4jQueryRaw:
         log_batch_size = int(1e10)
 
         log.info("Processing data...")
-        i = -1 
+        i = -1
         for i, record in tqdm(enumerate(self.fetch_data())):
             # Extract the serialized data from the 'e' node
             e_node_data = json.loads(record["e"]["serialized_data"])
@@ -237,13 +238,12 @@ class Neo4jQueryRaw:
             # if (i + 1) % log_batch_size == 0:
             #     log.info(f"Processed {i + 1} records")
 
-
         log.info(f"Total records processed: {i + 1}")
 
         self.experiment_reference_index
         self.gene_set = self.compute_gene_set()
 
-    def __getitem__(self, index: Union[int, slice, list]):
+    def __getitem__(self, index: int | slice | list):
         if isinstance(index, int):
             return self._get_record_by_index(index)
         elif isinstance(index, slice):
@@ -336,7 +336,7 @@ class Neo4jQueryRaw:
         index_file_path = osp.join(self.raw_dir, "experiment_reference_index.json")
 
         if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
+            with open(index_file_path) as file:
                 data = json.load(file)
             # Deserialize each dict in the list to an ExperimentReferenceIndex object
             self._experiment_reference_index = [
@@ -377,9 +377,7 @@ class Neo4jQueryRaw:
     @property
     def phenotype_label_index(self) -> dict[str, list[bool]]:
         if osp.exists(osp.join(self.raw_dir, "phenotype_label_index.json")):
-            with open(
-                osp.join(self.raw_dir, "phenotype_label_index.json"), "r"
-            ) as file:
+            with open(osp.join(self.raw_dir, "phenotype_label_index.json")) as file:
                 self._phenotype_label_index = json.load(file)
         else:
             self._phenotype_label_index = self.compute_phenotype_label_index()
@@ -439,9 +437,11 @@ class Neo4jQueryRaw:
 
 # Example usage
 if __name__ == "__main__":
-    from torchcell.sequence import GeneSet
-    from dotenv import load_dotenv
     from hashlib import sha256
+
+    from dotenv import load_dotenv
+
+    from torchcell.sequence import GeneSet
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

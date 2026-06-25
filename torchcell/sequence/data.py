@@ -7,6 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from itertools import product
+
 import pandas as pd
 from gffutils import FeatureDB
 from pydantic import field_validator, model_validator
@@ -157,12 +158,12 @@ class Genome(ABC):
         self._gene_set: set[str] | None = None
         self._fasta_path: str | None = None
         self._gff_path: str | None = None
-        
+
     @property
     def db(self) -> FeatureDB | None:
         """
         Get database connection - lazy loaded per process/thread.
-        
+
         Subclasses should set self._db_connection_manager to enable database access.
         """
         if self._db_connection_manager is None:
@@ -234,7 +235,6 @@ def mismatch_positions(seq1: str, seq2: str) -> list[int]:
         >>> mismatch_positions("ATGC", "ATCC")
         [2]
     """
-
     if len(seq1) != len(seq2):
         raise ValueError("Sequences must be the same length")
     mismatches = [i for i, (n1, n2) in enumerate(zip(seq1, seq2)) if n1 != n2]
@@ -370,9 +370,7 @@ def calculate_window_undersized(
     elif strand == "-":
         start_window = end - window_size
         end_window = end
-    assert (
-        end_window - start_window
-    ) == window_size, (
+    assert (end_window - start_window) == window_size, (
         f"Window sizing is incorrect. Window is larger than {window_size}bp"
     )
     return start_window, end_window
@@ -505,9 +503,7 @@ def calculate_window_undersized_symmetric(
     start_window = middle - flank_size
     end_window = middle + flank_size
     # Minus one for odd.
-    assert (
-        end_window - start_window
-    ) >= window_size - 1, (
+    assert (end_window - start_window) >= window_size - 1, (
         f"Window sizing is incorrect. Window is larger than {window_size}bp"
     )
     return start_window, end_window
@@ -550,7 +546,6 @@ def calculate_window_bounds_symmetric(
         limits, symmetric around the middle of the sequence, and the start and end
         of the window are appropriately bounded within the sequence limits.
     """
-
     if end > chromosome_length:
         raise ValueError("End position is out of bounds of chromosome")
     if start >= end:
@@ -583,14 +578,10 @@ def calculate_window_bounds_symmetric(
     start_window = start - sym_flank_len
     end_window = end + sym_flank_len
 
-    assert (
-        end_window - start_window
-    ) <= window_size, (
+    assert (end_window - start_window) <= window_size, (
         f"Window sizing is incorrect. Window is larger than {window_size}bp"
     )
-    assert (
-        end_window - start_window
-    ) >= end - start, (
+    assert (end_window - start_window) >= end - start, (
         f"Window sizing is incorrect. Window is smaller than sequence {end - start}bp"
     )
     assert (start - start_window) == (end_window - end), "sequences are not symmetric"
@@ -608,8 +599,7 @@ class CodonFrequency(SortedDict):
         sum_freq = sum(self.values())
         if not 0.9999 <= sum_freq <= 1.0001:  # Allowing a small deviation
             return (
-                f"Invalid CodonFrequency: Frequencies do not sum to 1 "
-                f"(sum={sum_freq})"
+                f"Invalid CodonFrequency: Frequencies do not sum to 1 (sum={sum_freq})"
             )
 
         # Sort by frequency in descending order and get the 3 most frequent codons

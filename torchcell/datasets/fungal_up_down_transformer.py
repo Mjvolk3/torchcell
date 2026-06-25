@@ -5,19 +5,16 @@
 
 import os
 from collections.abc import Callable
-from typing import Optional
 
 import torch
-from pydantic import validator
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.fungal_up_down_transformer import (  # adjusted import
     FungalUpDownTransformer,
 )
-from torchcell.sequence import GeneSet, ParsedGenome
+from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
@@ -51,7 +48,9 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
             if not os.path.exists(self.processed_paths[0]):
                 self.transformer = self.initialize_model()
                 self.process()
-            self.data, self.slices = torch.load(self.processed_paths[0], weights_only=False)
+            self.data, self.slices = torch.load(
+                self.processed_paths[0], weights_only=False
+            )
 
     @staticmethod
     def parse_genome(genome) -> ParsedGenome:
@@ -71,9 +70,9 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
                 model_name = "downstream_species_lm"
             elif "upstream" in split_name and "species" in split_name:
                 model_name = "upstream_species_lm"
-            assert (
-                model_name in FungalUpDownTransformer.VALID_MODEL_NAMES
-            ), f"{model_name} not in valid model names."
+            assert model_name in FungalUpDownTransformer.VALID_MODEL_NAMES, (
+                f"{model_name} not in valid model names."
+            )
             return FungalUpDownTransformer(model_name)
         return None
 
@@ -85,7 +84,7 @@ class FungalUpDownTransformerDataset(BaseEmbeddingDataset):
         (window_method, window_size, include_cds_codon, allow_undersize) = (
             self.MODEL_TO_WINDOW[self.model_name]
         )
-        for gene_id in tqdm((self.genome.gene_set)):
+        for gene_id in tqdm(self.genome.gene_set):
             sequence = self.genome[gene_id]
             dna_selection = getattr(sequence, window_method)(
                 window_size, include_cds_codon, allow_undersize=allow_undersize

@@ -1,20 +1,19 @@
-import concurrent.futures
-import time
-import numpy as np
-import multiprocessing as mp
-import os
-import signal
 import argparse
-import psutil
-import threading
+import concurrent.futures
+import multiprocessing as mp
 import queue
 import subprocess
-import pandas as pd
-import matplotlib.pyplot as plt
-from datetime import datetime
-from typing import List, Tuple, Dict, Optional, Set, Any
+import threading
+import time
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import psutil
+
 
 @dataclass
 class BenchmarkConfig:
@@ -47,7 +46,7 @@ class IPMICollector:
         self.timeout = timeout
         self.retry_count = retry_count
 
-    def collect_data(self) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def collect_data(self) -> tuple[dict[str, float], dict[str, float]]:
         """Collect IPMI data with retries"""
         for attempt in range(self.retry_count):
             try:
@@ -78,7 +77,7 @@ class IPMICollector:
         return {}, {}
 
     @staticmethod
-    def parse_output(output: str) -> Tuple[Dict[str, float], Dict[str, float]]:
+    def parse_output(output: str) -> tuple[dict[str, float], dict[str, float]]:
         """Parse IPMI output into temperature and RPM data"""
         temps = {}
         rpms = {}
@@ -111,19 +110,18 @@ class SystemMonitor:
     def __init__(self, config: BenchmarkConfig, data_queue: queue.Queue):
         self.config = config
         self.data_queue = data_queue
-        self.temperatures: List[Dict[str, float]] = []
-        self.rpms: List[Dict[str, float]] = []
-        self.timestamps: List[datetime] = []
-        self.benchmark_points: List[int] = []
-        self.benchmark_times: List[float] = []
-        self.run_numbers: List[int] = []
+        self.temperatures: list[dict[str, float]] = []
+        self.rpms: list[dict[str, float]] = []
+        self.timestamps: list[datetime] = []
+        self.benchmark_points: list[int] = []
+        self.benchmark_times: list[float] = []
+        self.run_numbers: list[int] = []
         self.current_run = 1
         self.ipmi_collector = IPMICollector()
         self.stop_event = threading.Event()
 
-
     @staticmethod
-    def discover_sensors() -> Tuple[List[str], List[str]]:
+    def discover_sensors() -> tuple[list[str], list[str]]:
         """Discover available temperature and fan sensors"""
         try:
             result = subprocess.run(
@@ -133,10 +131,10 @@ class SystemMonitor:
                 text=True,
                 timeout=10,
             )
-            
+
             temp_sensors = []
             fan_sensors = []
-            
+
             if result.returncode == 0:
                 for line in result.stdout.split("\n"):
                     if not line:
@@ -146,7 +144,7 @@ class SystemMonitor:
                         name = parts[0].strip()
                         value = parts[1].strip()
                         unit = parts[2].strip()
-                        
+
                         # Only include sensors that have valid readings
                         if value != "na":
                             if "Temp." in name:
@@ -161,16 +159,19 @@ class SystemMonitor:
                                         pass  # Skip if can't convert
                                 else:
                                     fan_sensors.append(name)
-            
-            print(f"Discovered {len(temp_sensors)} temperature sensors: {', '.join(temp_sensors)}")
-            print(f"Discovered {len(fan_sensors)} fan sensors: {', '.join(fan_sensors)}")
-            
+
+            print(
+                f"Discovered {len(temp_sensors)} temperature sensors: {', '.join(temp_sensors)}"
+            )
+            print(
+                f"Discovered {len(fan_sensors)} fan sensors: {', '.join(fan_sensors)}"
+            )
+
             return temp_sensors, fan_sensors
-        
+
         except Exception as e:
             print(f"Error discovering sensors: {e}")
             return [], []
-
 
     def _validate_data(self) -> bool:
         """Validate collected data"""
@@ -243,7 +244,7 @@ class SystemMonitor:
         df.to_csv(output_path, index=False)
         print(f"Data exported to: {output_path}")
 
-    def plot_data(self) -> Optional[Path]:
+    def plot_data(self) -> Path | None:
         """Create visualization of collected data with continuous timeline"""
         if not self._validate_data():
             print("Warning: No valid monitoring data available for plotting")
@@ -265,19 +266,19 @@ class SystemMonitor:
 
         # Define markers to cycle through
         markers = ["o", "s", "^", "D", "v", "<", ">", "p", "*", "h", "8", "H"]
-        
+
         # Get colors from style
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
         # Process data
         temp_df = pd.DataFrame(self.temperatures)
         rpm_df = pd.DataFrame(self.rpms)
-        
+
         # Dynamically create device styles for all sensors found
         device_styles = {}
         color_idx = 0
         marker_idx = 0
-        
+
         # Assign styles to all temperature sensors
         for sensor in sorted(temp_df.columns):
             device_styles[sensor] = {
@@ -286,11 +287,11 @@ class SystemMonitor:
             }
             color_idx += 1
             marker_idx = (marker_idx + 1) % len(markers)
-        
+
         # Reset for fan sensors to have distinct colors
         color_idx = 0
         marker_idx = 0
-        
+
         # Assign styles to all fan sensors
         for fan in sorted(rpm_df.columns):
             device_styles[fan] = {
@@ -324,8 +325,10 @@ class SystemMonitor:
                         else (
                             "PCIe"
                             if "PCIE" in sensor
-                            else "Network" if "LAN" in sensor 
-                            else "System" if "T_Sensor" in sensor
+                            else "Network"
+                            if "LAN" in sensor
+                            else "System"
+                            if "T_Sensor" in sensor
                             else "Other"
                         )
                     )
@@ -354,9 +357,12 @@ class SystemMonitor:
                 group_name = (
                     "CPU Fans"
                     if "CPU" in fan
-                    else "Chassis Fans" if "CHA" in fan 
-                    else "SOC Fan" if "SOC" in fan
-                    else "Chipset Fan" if "CHIPSET" in fan
+                    else "Chassis Fans"
+                    if "CHA" in fan
+                    else "SOC Fan"
+                    if "SOC" in fan
+                    else "Chipset Fan"
+                    if "CHIPSET" in fan
                     else "Other"
                 )
 
@@ -437,7 +443,7 @@ class SystemMonitor:
             else:
                 major_tick = 5
                 minor_tick = 1
-            
+
             ax1.yaxis.set_major_locator(plt.MultipleLocator(major_tick))
             ax1.yaxis.set_minor_locator(plt.MultipleLocator(minor_tick))
             ax1.grid(True, which="major", alpha=0.5)
@@ -451,7 +457,7 @@ class SystemMonitor:
             ax2.yaxis.set_minor_locator(plt.MultipleLocator(50))
             ax2.grid(True, which="major", alpha=0.5)
             ax2.grid(True, which="minor", alpha=0.2)
-        
+
         ax2.tick_params(axis="y", labelsize=8)
 
         plt.tight_layout()
@@ -471,9 +477,9 @@ class SystemMonitor:
         self,
         ax: plt.Axes,
         df: pd.DataFrame,
-        groups: Dict[str, List[str]],
-        colors: Dict[str, str],
-        markers: List[str],
+        groups: dict[str, list[str]],
+        colors: dict[str, str],
+        markers: list[str],
         legend_title: str,
     ) -> None:
         """Helper method to plot data series with consistent styling"""
@@ -534,8 +540,8 @@ class Benchmark:
 
     def __init__(self, config: BenchmarkConfig):
         self.config = config
-        self.monitor: Optional[SystemMonitor] = None
-        self.monitor_queue: Optional[queue.Queue] = None
+        self.monitor: SystemMonitor | None = None
+        self.monitor_queue: queue.Queue | None = None
 
     def setup_monitoring(self) -> None:
         """Initialize system monitoring"""
@@ -560,7 +566,7 @@ class Benchmark:
             print(f"Failed to set monitoring CPU affinity: {e}")
             monitor.collect_data()
 
-    def run(self) -> List[float]:
+    def run(self) -> list[float]:
         """Run the complete benchmark suite"""
         times = []
         seeds = [

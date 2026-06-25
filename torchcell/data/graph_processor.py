@@ -5,12 +5,13 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
-from torchcell.datamodels import PhenotypeType, ExperimentReferenceType, ExperimentType
+from typing import Any
+
 import torch
-from torch_geometric.utils._subgraph import bipartite_subgraph, subgraph
 from torch_geometric.utils import k_hop_subgraph
+from torch_geometric.utils._subgraph import subgraph
 from torch_scatter import scatter
+
 from torchcell.data.hetero_data import HeteroData
 from torchcell.datamodels import ExperimentReferenceType, ExperimentType, PhenotypeType
 from torchcell.profiling.timing import time_method
@@ -35,7 +36,7 @@ class SubgraphRepresentation(GraphProcessor):
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
-        self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
+        self.masks: dict[str, dict[str, torch.Tensor]] = {}
 
     @time_method
     def _initialize_masks(self, cell_graph: HeteroData) -> None:
@@ -89,7 +90,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[Any],
-        data: list[Dict[str, Any]],
+        data: list[dict[str, Any]],
     ) -> HeteroData:
         # Always use CPU for pin_memory compatibility
         # The model will handle moving tensors to GPU after DataLoader
@@ -142,8 +143,8 @@ class SubgraphRepresentation(GraphProcessor):
 
     @time_method
     def _process_gene_info(
-        self, cell_graph: HeteroData, data: list[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, cell_graph: HeteroData, data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         perturbed_names = {
             p.systematic_gene_name
             for item in data
@@ -169,7 +170,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         integrated_subgraph["gene"].node_ids = gene_info["keep_node_ids"]
         integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
@@ -185,7 +186,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         # Process all gene-to-gene edge types
         for et in cell_graph.edge_types:
@@ -206,9 +207,9 @@ class SubgraphRepresentation(GraphProcessor):
     def _process_reaction_info(
         self,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
         integrated_subgraph: HeteroData,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
         # Create Growth subsystem indicator first (before any conditional returns)
@@ -321,12 +322,12 @@ class SubgraphRepresentation(GraphProcessor):
         new_gpr_edge_index[0] = gene_map[new_gpr_edge_index[0]]
         new_gpr_edge_index[1] = reaction_map[new_gpr_edge_index[1]]
 
-        integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = (
-            new_gpr_edge_index
-        )
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = (
-            new_gpr_edge_index.size(1)
-        )
+        integrated_subgraph[
+            "gene", "gpr", "reaction"
+        ].hyperedge_index = new_gpr_edge_index
+        integrated_subgraph[
+            "gene", "gpr", "reaction"
+        ].num_edges = new_gpr_edge_index.size(1)
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
         # Include w_growth in the return
@@ -340,7 +341,7 @@ class SubgraphRepresentation(GraphProcessor):
     def _add_reaction_data(
         self,
         integrated_subgraph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
         cell_graph: HeteroData,
     ) -> None:
         if not reaction_info:
@@ -358,7 +359,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         # Only process if bipartite representation exists
         if not reaction_info or "reaction" not in cell_graph.node_types:
@@ -373,7 +374,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         valid_reactions = reaction_info["valid_reactions"]
         rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
@@ -399,10 +400,10 @@ class SubgraphRepresentation(GraphProcessor):
         edge_mask = reaction_map[reaction_indices] != -1
 
         # Apply filter and remap reaction indices (metabolite indices unchanged)
-        final_edge_index = torch.stack([
-            reaction_map[reaction_indices[edge_mask]],
-            metabolite_indices[edge_mask]
-        ], dim=0)
+        final_edge_index = torch.stack(
+            [reaction_map[reaction_indices[edge_mask]], metabolite_indices[edge_mask]],
+            dim=0,
+        )
         final_edge_attr = stoichiometry[edge_mask]
 
         edge_type = ("reaction", "rmr", "metabolite")
@@ -446,7 +447,7 @@ class SubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         """
         Add phenotype data to the graph in COO format.
@@ -578,11 +579,11 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
-        self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
-        self._edge_incidence_cache: Dict[Any, list[torch.Tensor]] | None = None
+        self.masks: dict[str, dict[str, torch.Tensor]] = {}
+        self._edge_incidence_cache: dict[Any, list[torch.Tensor]] | None = None
 
     @property
-    def edge_incidence_cache(self) -> Dict[Any, list[torch.Tensor]]:
+    def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
         """
         Lazily build and return edge incidence cache.
 
@@ -613,7 +614,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         import time
 
         if self._edge_incidence_cache is not None:
-            return {'total_time_ms': 0.0, 'num_edge_types': 0, 'total_edges': 0}
+            return {"total_time_ms": 0.0, "num_edge_types": 0, "total_edges": 0}
 
         start = time.time()
         self._build_incidence_cache(cell_graph)
@@ -623,16 +624,19 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         assert self._edge_incidence_cache is not None
 
         num_edge_types = len(self._edge_incidence_cache)
-        total_edges = sum(
-            len(edge_list)
-            for node_to_edges in self._edge_incidence_cache.values()
-            for edge_list in node_to_edges
-        ) // 2  # Divide by 2 since each edge counted twice (src and dst)
+        total_edges = (
+            sum(
+                len(edge_list)
+                for node_to_edges in self._edge_incidence_cache.values()
+                for edge_list in node_to_edges
+            )
+            // 2
+        )  # Divide by 2 since each edge counted twice (src and dst)
 
         return {
-            'total_time_ms': elapsed,
-            'num_edge_types': num_edge_types,
-            'total_edges': total_edges
+            "total_time_ms": elapsed,
+            "num_edge_types": num_edge_types,
+            "total_edges": total_edges,
         }
 
     def _build_incidence_cache(self, cell_graph: HeteroData) -> None:
@@ -670,7 +674,8 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
                 # Convert lists to tensors for faster operations
                 cache[edge_type] = [
                     torch.tensor(edges, dtype=torch.long, device=self.device)
-                    if edges else torch.tensor([], dtype=torch.long, device=self.device)
+                    if edges
+                    else torch.tensor([], dtype=torch.long, device=self.device)
                     for edges in node_to_edges
                 ]
 
@@ -728,7 +733,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[Any],
-        data: list[Dict[str, Any]],
+        data: list[dict[str, Any]],
     ) -> HeteroData:
         # Always use CPU for pin_memory compatibility
         # The model will handle moving tensors to GPU after DataLoader
@@ -781,8 +786,8 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
 
     @time_method
     def _process_gene_info(
-        self, cell_graph: HeteroData, data: list[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, cell_graph: HeteroData, data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         perturbed_names = {
             p.systematic_gene_name
             for item in data
@@ -808,7 +813,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         integrated_subgraph["gene"].node_ids = gene_info["keep_node_ids"]
         integrated_subgraph["gene"].num_nodes = len(gene_info["keep_node_ids"])
@@ -824,7 +829,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         """
         Process gene-gene edge types using incidence-based filtering.
@@ -866,22 +871,27 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
                 node_to_edges = self.edge_incidence_cache[et]
 
                 # Gather edges to remove using tensor concatenation
-                edges_to_remove_list = [node_to_edges[node_idx.item()] for node_idx in removed_nodes]
+                edges_to_remove_list = [
+                    node_to_edges[node_idx.item()] for node_idx in removed_nodes
+                ]
 
                 # Create edge mask
                 edge_mask = torch.ones(num_edges, dtype=torch.bool, device=self.device)
-                if edges_to_remove_list and any(len(t) > 0 for t in edges_to_remove_list):
+                if edges_to_remove_list and any(
+                    len(t) > 0 for t in edges_to_remove_list
+                ):
                     # Concatenate all edge tensors and remove duplicates
-                    edges_to_remove = torch.cat([t for t in edges_to_remove_list if len(t) > 0])
+                    edges_to_remove = torch.cat(
+                        [t for t in edges_to_remove_list if len(t) > 0]
+                    )
                     edges_to_remove = edges_to_remove.unique()
                     edge_mask[edges_to_remove] = False
 
                 # Filter and relabel using precomputed mapping
                 kept_edges = edge_index[:, edge_mask]
-                new_edge_index = torch.stack([
-                    gene_map[kept_edges[0]],
-                    gene_map[kept_edges[1]]
-                ])
+                new_edge_index = torch.stack(
+                    [gene_map[kept_edges[0]], gene_map[kept_edges[1]]]
+                )
 
                 # Store results (same format as SubgraphRepresentation)
                 integrated_subgraph[et].edge_index = new_edge_index
@@ -892,9 +902,9 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
     def _process_reaction_info(
         self,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
         integrated_subgraph: HeteroData,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         max_reaction_idx = cell_graph["reaction"].num_nodes
 
         # Create Growth subsystem indicator first (before any conditional returns)
@@ -1007,12 +1017,12 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         new_gpr_edge_index[0] = gene_map[new_gpr_edge_index[0]]
         new_gpr_edge_index[1] = reaction_map[new_gpr_edge_index[1]]
 
-        integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = (
-            new_gpr_edge_index
-        )
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = (
-            new_gpr_edge_index.size(1)
-        )
+        integrated_subgraph[
+            "gene", "gpr", "reaction"
+        ].hyperedge_index = new_gpr_edge_index
+        integrated_subgraph[
+            "gene", "gpr", "reaction"
+        ].num_edges = new_gpr_edge_index.size(1)
         integrated_subgraph["gene", "gpr", "reaction"].pert_mask = ~edge_mask
 
         # Include w_growth in the return
@@ -1026,7 +1036,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
     def _add_reaction_data(
         self,
         integrated_subgraph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
         cell_graph: HeteroData,
     ) -> None:
         if not reaction_info:
@@ -1044,7 +1054,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         # Only process if bipartite representation exists
         if not reaction_info or "reaction" not in cell_graph.node_types:
@@ -1059,7 +1069,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         valid_reactions = reaction_info["valid_reactions"]
         rmr_edges = cell_graph["reaction", "rmr", "metabolite"]
@@ -1085,10 +1095,10 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         edge_mask = reaction_map[reaction_indices] != -1
 
         # Apply filter and remap reaction indices (metabolite indices unchanged)
-        final_edge_index = torch.stack([
-            reaction_map[reaction_indices[edge_mask]],
-            metabolite_indices[edge_mask]
-        ], dim=0)
+        final_edge_index = torch.stack(
+            [reaction_map[reaction_indices[edge_mask]], metabolite_indices[edge_mask]],
+            dim=0,
+        )
         final_edge_attr = stoichiometry[edge_mask]
 
         edge_type = ("reaction", "rmr", "metabolite")
@@ -1105,7 +1115,7 @@ class IncidenceSubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         """
         Add phenotype data to the graph in COO format.
@@ -1256,11 +1266,11 @@ class LazySubgraphRepresentation(GraphProcessor):
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device: torch.device = torch.device("cpu")
-        self.masks: Dict[str, Dict[str, torch.Tensor]] = {}
-        self._edge_incidence_cache: Dict[Any, list[torch.Tensor]] | None = None
+        self.masks: dict[str, dict[str, torch.Tensor]] = {}
+        self._edge_incidence_cache: dict[Any, list[torch.Tensor]] | None = None
 
     @property
-    def edge_incidence_cache(self) -> Dict[Any, list[torch.Tensor]]:
+    def edge_incidence_cache(self) -> dict[Any, list[torch.Tensor]]:
         """
         Lazily build and return edge incidence cache.
 
@@ -1291,7 +1301,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         import time
 
         if self._edge_incidence_cache is not None:
-            return {'total_time_ms': 0.0, 'num_edge_types': 0, 'total_edges': 0}
+            return {"total_time_ms": 0.0, "num_edge_types": 0, "total_edges": 0}
 
         start = time.time()
         self._build_incidence_cache(cell_graph)
@@ -1301,16 +1311,19 @@ class LazySubgraphRepresentation(GraphProcessor):
         assert self._edge_incidence_cache is not None
 
         num_edge_types = len(self._edge_incidence_cache)
-        total_edges = sum(
-            len(edge_list)
-            for node_to_edges in self._edge_incidence_cache.values()
-            for edge_list in node_to_edges
-        ) // 2  # Divide by 2 since each edge counted twice (src and dst)
+        total_edges = (
+            sum(
+                len(edge_list)
+                for node_to_edges in self._edge_incidence_cache.values()
+                for edge_list in node_to_edges
+            )
+            // 2
+        )  # Divide by 2 since each edge counted twice (src and dst)
 
         return {
-            'total_time_ms': elapsed,
-            'num_edge_types': num_edge_types,
-            'total_edges': total_edges
+            "total_time_ms": elapsed,
+            "num_edge_types": num_edge_types,
+            "total_edges": total_edges,
         }
 
     def _build_incidence_cache(self, cell_graph: HeteroData) -> None:
@@ -1348,7 +1361,8 @@ class LazySubgraphRepresentation(GraphProcessor):
                 # Convert lists to tensors for faster operations
                 cache[edge_type] = [
                     torch.tensor(edges, dtype=torch.long, device=self.device)
-                    if edges else torch.tensor([], dtype=torch.long, device=self.device)
+                    if edges
+                    else torch.tensor([], dtype=torch.long, device=self.device)
                     for edges in node_to_edges
                 ]
 
@@ -1405,7 +1419,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[Any],
-        data: list[Dict[str, Any]],
+        data: list[dict[str, Any]],
     ) -> HeteroData:
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
@@ -1445,19 +1459,27 @@ class LazySubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].mask = ~self.masks["gene"]["perturbed"]
 
         if "reaction" in self.masks:
-            integrated_subgraph["reaction"].pert_mask = self.masks["reaction"]["removed"]
-            integrated_subgraph["reaction"].mask = self.masks["reaction"]["kept"]  # Phase 4.1: Add reaction.mask
+            integrated_subgraph["reaction"].pert_mask = self.masks["reaction"][
+                "removed"
+            ]
+            integrated_subgraph["reaction"].mask = self.masks["reaction"][
+                "kept"
+            ]  # Phase 4.1: Add reaction.mask
 
         if "metabolite" in self.masks:
-            integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"]["removed"]
-            integrated_subgraph["metabolite"].mask = self.masks["metabolite"]["kept"]  # Phase 4.1: Add metabolite.mask
+            integrated_subgraph["metabolite"].pert_mask = self.masks["metabolite"][
+                "removed"
+            ]
+            integrated_subgraph["metabolite"].mask = self.masks["metabolite"][
+                "kept"
+            ]  # Phase 4.1: Add metabolite.mask
 
         return integrated_subgraph
 
     @time_method
     def _process_gene_info(
-        self, cell_graph: HeteroData, data: list[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+        self, cell_graph: HeteroData, data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         # Same as SubgraphRepresentation
         perturbed_names = {
             p.systematic_gene_name
@@ -1484,12 +1506,14 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         # ZERO-COPY: Reference full graph, don't filter anything
         # This ensures x indices align with edge_index (which uses original node IDs)
         integrated_subgraph["gene"].node_ids = cell_graph["gene"].node_ids  # All nodes
-        integrated_subgraph["gene"].num_nodes = cell_graph["gene"].num_nodes  # Full count
+        integrated_subgraph["gene"].num_nodes = cell_graph[
+            "gene"
+        ].num_nodes  # Full count
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
         integrated_subgraph["gene"].perturbation_indices = gene_info["remove_subset"]
 
@@ -1502,7 +1526,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
     ) -> None:
         """
         Process gene-gene edge types using zero-copy approach with masks.
@@ -1545,9 +1569,9 @@ class LazySubgraphRepresentation(GraphProcessor):
     def _process_reaction_info(
         self,
         cell_graph: HeteroData,
-        gene_info: Dict[str, Any],
+        gene_info: dict[str, Any],
         integrated_subgraph: HeteroData,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Process reaction information using lazy approach.
 
@@ -1644,18 +1668,24 @@ class LazySubgraphRepresentation(GraphProcessor):
         self.masks["reaction"]["removed"] = ~valid_mask_combined
 
         # Compute GPR edge mask (edge is valid if gene is NOT deleted)
-        edge_mask = torch.ones(gpr_edge_index.size(1), dtype=torch.bool, device=self.device)
+        edge_mask = torch.ones(
+            gpr_edge_index.size(1), dtype=torch.bool, device=self.device
+        )
         edge_mask[valid_mask] = gene_mask[gene_indices]
 
         # Return FULL GPR hyperedge_index (zero-copy reference)
         integrated_subgraph["gene", "gpr", "reaction"].hyperedge_index = gpr_edge_index
-        integrated_subgraph["gene", "gpr", "reaction"].num_edges = gpr_edge_index.size(1)
+        integrated_subgraph["gene", "gpr", "reaction"].num_edges = gpr_edge_index.size(
+            1
+        )
         integrated_subgraph["gene", "gpr", "reaction"].mask = edge_mask
 
         # Return identity mappings (no node relabeling in lazy approach)
         gene_map = torch.arange(cell_graph["gene"].num_nodes, device=self.device)
         reaction_map = torch.arange(max_reaction_idx, device=self.device)
-        valid_reactions = torch.arange(max_reaction_idx, device=self.device)  # Keep ALL reactions
+        valid_reactions = torch.arange(
+            max_reaction_idx, device=self.device
+        )  # Keep ALL reactions
 
         return {
             "valid_reactions": valid_reactions,
@@ -1667,7 +1697,7 @@ class LazySubgraphRepresentation(GraphProcessor):
     def _add_reaction_data(
         self,
         integrated_subgraph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
         cell_graph: HeteroData,
     ) -> None:
         """
@@ -1691,7 +1721,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         # Same as SubgraphRepresentation
         if not reaction_info or "reaction" not in cell_graph.node_types:
@@ -1706,7 +1736,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         cell_graph: HeteroData,
-        reaction_info: Dict[str, Any],
+        reaction_info: dict[str, Any],
     ) -> None:
         """
         Process RMR (Reaction-Metabolite-Reaction) edges using lazy approach.
@@ -1728,8 +1758,8 @@ class LazySubgraphRepresentation(GraphProcessor):
         # Return FULL graph with mask (zero-copy)
         edge_type = ("reaction", "rmr", "metabolite")
         integrated_subgraph[edge_type].hyperedge_index = hyperedge_index  # Reference
-        integrated_subgraph[edge_type].stoichiometry = stoichiometry      # Reference
-        integrated_subgraph[edge_type].mask = edge_mask                   # Boolean mask
+        integrated_subgraph[edge_type].stoichiometry = stoichiometry  # Reference
+        integrated_subgraph[edge_type].mask = edge_mask  # Boolean mask
         integrated_subgraph[edge_type].num_edges = hyperedge_index.size(1)  # Full count
 
         # Metabolite nodes (keep all)
@@ -1742,7 +1772,7 @@ class LazySubgraphRepresentation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         # Same as SubgraphRepresentation - copy entire method
         if self.device is None:
@@ -1935,9 +1965,9 @@ class Unperturbed(GraphProcessor):
                         gene_indices.append(gene_idx)
                     reaction_to_genes_indices[reaction_idx] = gene_indices
 
-                processed_graph[edge_type].reaction_to_genes_indices = (
-                    reaction_to_genes_indices
-                )
+                processed_graph[
+                    edge_type
+                ].reaction_to_genes_indices = reaction_to_genes_indices
 
         return processed_graph
 
@@ -1957,7 +1987,7 @@ class Perturbation(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> HeteroData:
         if not data:
             raise ValueError("Data list is empty")
@@ -2003,12 +2033,12 @@ class Perturbation(GraphProcessor):
         processed_graph["gene"].mask = mask
 
         # Verify mask sums are correct
-        assert pert_mask.sum() == len(
-            perturbed_indices
-        ), "pert_mask sum doesn't match perturbed indices"
-        assert mask.sum() == cell_graph["gene"].num_nodes - len(
-            perturbed_indices
-        ), "mask sum isn't complement of pert_mask"
+        assert pert_mask.sum() == len(perturbed_indices), (
+            "pert_mask sum doesn't match perturbed indices"
+        )
+        assert mask.sum() == cell_graph["gene"].num_nodes - len(perturbed_indices), (
+            "mask sum isn't complement of pert_mask"
+        )
 
         # Add phenotype data in COO format
         self._add_phenotype_data(processed_graph, phenotype_info, data)
@@ -2019,7 +2049,7 @@ class Perturbation(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         # Rest of the phenotype data processing remains the same...
         # Initializing storage, processing phenotypes, etc.
@@ -2133,7 +2163,7 @@ class DCellGraphProcessor(GraphProcessor):
         self,
         cell_graph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> HeteroData:
         if not data:
             raise ValueError("Data list is empty")
@@ -2230,9 +2260,7 @@ class DCellGraphProcessor(GraphProcessor):
         """
         # Copy the base state tensor from cell_graph and keep on CPU
         # This ensures compatibility with pin_memory in DataLoader
-        base_state = (
-            cell_graph["gene_ontology"].go_gene_strata_state.clone().cpu()
-        )
+        base_state = cell_graph["gene_ontology"].go_gene_strata_state.clone().cpu()
 
         # Convert perturbed indices to set for O(1) lookup
         perturbed_set = set(perturbed_indices)
@@ -2254,7 +2282,7 @@ class DCellGraphProcessor(GraphProcessor):
         self,
         integrated_subgraph: HeteroData,
         phenotype_info: list[PhenotypeType],
-        data: list[Dict[str, ExperimentType | ExperimentReferenceType]],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
     ) -> None:
         """
         Add phenotype data to the graph in COO format.
@@ -2357,6 +2385,7 @@ class DCellGraphProcessor(GraphProcessor):
             )
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
 
+
 class NeighborSubgraphRepresentation(GraphProcessor):
     """
     GraphProcessor that creates k-hop induced subgraphs around perturbed genes.
@@ -2424,7 +2453,11 @@ class NeighborSubgraphRepresentation(GraphProcessor):
                     num_nodes=num_genes,
                 )
                 all_neighbors.update(subset.tolist())
-                edge_data[et] = {"edge_index": edge_index, "edge_mask": edge_mask, "subset": subset}
+                edge_data[et] = {
+                    "edge_index": edge_index,
+                    "edge_mask": edge_mask,
+                    "subset": subset,
+                }
         subset_nodes = torch.tensor(sorted(all_neighbors), dtype=torch.long)
         subset_node_ids = [cell_graph["gene"].node_ids[i] for i in subset_nodes]
 
@@ -2440,10 +2473,23 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             dst_mask = torch.isin(edge_index[1], subset_nodes)
             mask = src_mask & dst_mask
             filtered_edge_index = edge_index[:, mask]
-            filtered_edge_data[et] = {"edge_index": filtered_edge_index, "num_edges": filtered_edge_index.size(1)}
-        return {"subset_nodes": subset_nodes, "subset_node_ids": subset_node_ids, "edge_data": filtered_edge_data, "perturbed_mask": perturbed_mask}
+            filtered_edge_data[et] = {
+                "edge_index": filtered_edge_index,
+                "num_edges": filtered_edge_index.size(1),
+            }
+        return {
+            "subset_nodes": subset_nodes,
+            "subset_node_ids": subset_node_ids,
+            "edge_data": filtered_edge_data,
+            "perturbed_mask": perturbed_mask,
+        }
 
-    def _process_metabolism(self, integrated_subgraph: HeteroData, cell_graph: HeteroData, subgraph_info: dict):
+    def _process_metabolism(
+        self,
+        integrated_subgraph: HeteroData,
+        cell_graph: HeteroData,
+        subgraph_info: dict,
+    ):
         """Add metabolism edges for genes in the k-hop subgraph."""
         if "reaction" not in cell_graph.node_types:
             return
@@ -2463,10 +2509,16 @@ class NeighborSubgraphRepresentation(GraphProcessor):
 
             if included_reaction_indices.numel() > 0:
                 reaction_indices = included_reaction_indices.sort()[0]
-                integrated_subgraph["reaction"].node_ids = [cell_graph["reaction"].node_ids[i] for i in reaction_indices]
+                integrated_subgraph["reaction"].node_ids = [
+                    cell_graph["reaction"].node_ids[i] for i in reaction_indices
+                ]
                 integrated_subgraph["reaction"].num_nodes = len(reaction_indices)
-                integrated_subgraph["reaction"].pert_mask = torch.zeros(len(reaction_indices), dtype=torch.bool)
-                integrated_subgraph["reaction"].mask = torch.ones(len(reaction_indices), dtype=torch.bool)
+                integrated_subgraph["reaction"].pert_mask = torch.zeros(
+                    len(reaction_indices), dtype=torch.bool
+                )
+                integrated_subgraph["reaction"].mask = torch.ones(
+                    len(reaction_indices), dtype=torch.bool
+                )
 
                 if ("reaction", "rmr", "metabolite") in cell_graph.edge_types:
                     rmr_et = ("reaction", "rmr", "metabolite")
@@ -2474,33 +2526,63 @@ class NeighborSubgraphRepresentation(GraphProcessor):
                     rmr_stoichiometry = cell_graph[rmr_et].stoichiometry
 
                     # Vectorized RMR edge filtering
-                    rmr_mask = torch.isin(rmr_hyperedge_index[0], included_reaction_indices)
+                    rmr_mask = torch.isin(
+                        rmr_hyperedge_index[0], included_reaction_indices
+                    )
 
                     integrated_subgraph[rmr_et].hyperedge_index = rmr_hyperedge_index
                     integrated_subgraph[rmr_et].stoichiometry = rmr_stoichiometry
                     integrated_subgraph[rmr_et].num_edges = rmr_hyperedge_index.size(1)
                     integrated_subgraph[rmr_et].mask = rmr_mask
-                    integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-                    integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
-                    integrated_subgraph["metabolite"].pert_mask = torch.zeros(cell_graph["metabolite"].num_nodes, dtype=torch.bool)
-                    integrated_subgraph["metabolite"].mask = torch.ones(cell_graph["metabolite"].num_nodes, dtype=torch.bool)
+                    integrated_subgraph["metabolite"].node_ids = cell_graph[
+                        "metabolite"
+                    ].node_ids
+                    integrated_subgraph["metabolite"].num_nodes = cell_graph[
+                        "metabolite"
+                    ].num_nodes
+                    integrated_subgraph["metabolite"].pert_mask = torch.zeros(
+                        cell_graph["metabolite"].num_nodes, dtype=torch.bool
+                    )
+                    integrated_subgraph["metabolite"].mask = torch.ones(
+                        cell_graph["metabolite"].num_nodes, dtype=torch.bool
+                    )
 
-    def _add_gene_data(self, integrated_subgraph: HeteroData, cell_graph: HeteroData, gene_info: dict, subgraph_info: dict):
+    def _add_gene_data(
+        self,
+        integrated_subgraph: HeteroData,
+        cell_graph: HeteroData,
+        gene_info: dict,
+        subgraph_info: dict,
+    ):
         """Add gene node data to the subgraph."""
         subset_nodes = subgraph_info["subset_nodes"]
         integrated_subgraph["gene"].node_ids = subgraph_info["subset_node_ids"]
         integrated_subgraph["gene"].num_nodes = len(subset_nodes)
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
-        integrated_subgraph["gene"].perturbation_indices = gene_info["perturbed_indices"]
+        integrated_subgraph["gene"].perturbation_indices = gene_info[
+            "perturbed_indices"
+        ]
         integrated_subgraph["gene"].x = cell_graph["gene"].x[subset_nodes]
         integrated_subgraph["gene"].pert_mask = subgraph_info["perturbed_mask"]
         integrated_subgraph["gene"].x_pert = integrated_subgraph["gene"].x.clone()
         integrated_subgraph["gene"].x_pert[subgraph_info["perturbed_mask"]] = 0.0
 
-    def _add_phenotype_data(self, integrated_subgraph: HeteroData, phenotype_info: list, data: list):
+    def _add_phenotype_data(
+        self, integrated_subgraph: HeteroData, phenotype_info: list, data: list
+    ):
         """Add phenotype data in COO format."""
-        all_values, all_type_indices, all_sample_indices, phenotype_types = [], [], [], []
-        all_stat_values, all_stat_type_indices, all_stat_sample_indices, stat_types = [], [], [], []
+        all_values, all_type_indices, all_sample_indices, phenotype_types = (
+            [],
+            [],
+            [],
+            [],
+        )
+        all_stat_values, all_stat_type_indices, all_stat_sample_indices, stat_types = (
+            [],
+            [],
+            [],
+            [],
+        )
         for phenotype_class in phenotype_info:
             label_name = phenotype_class.model_fields["label_name"].default
             stat_name = phenotype_class.model_fields["label_statistic_name"].default
@@ -2519,22 +2601,43 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             for stat_type_idx, stat_field_name in enumerate(stat_types):
                 stat_value = getattr(phenotype, stat_field_name, None)
                 if stat_value is not None:
-                    stat_values = [stat_value] if not isinstance(stat_value, (list, tuple)) else stat_value
+                    stat_values = (
+                        [stat_value]
+                        if not isinstance(stat_value, (list, tuple))
+                        else stat_value
+                    )
                     all_stat_values.extend(stat_values)
                     all_stat_type_indices.extend([stat_type_idx] * len(stat_values))
                     all_stat_sample_indices.extend([item_idx] * len(stat_values))
         if all_values:
-            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(all_values, dtype=torch.float, device=self.device)
-            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(all_type_indices, dtype=torch.long, device=self.device)
-            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(all_sample_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
+                all_values, dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_type_indices"] = torch.tensor(
+                all_type_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_sample_indices"] = torch.tensor(
+                all_sample_indices, dtype=torch.long, device=self.device
+            )
             integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
         if all_stat_values:
-            integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(all_stat_values, dtype=torch.float, device=self.device)
-            integrated_subgraph["gene"]["phenotype_stat_type_indices"] = torch.tensor(all_stat_type_indices, dtype=torch.long, device=self.device)
-            integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(all_stat_sample_indices, dtype=torch.long, device=self.device)
+            integrated_subgraph["gene"]["phenotype_stat_values"] = torch.tensor(
+                all_stat_values, dtype=torch.float, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_type_indices"] = torch.tensor(
+                all_stat_type_indices, dtype=torch.long, device=self.device
+            )
+            integrated_subgraph["gene"]["phenotype_stat_sample_indices"] = torch.tensor(
+                all_stat_sample_indices, dtype=torch.long, device=self.device
+            )
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
 
-    def process(self, cell_graph: HeteroData, phenotype_info: list[PhenotypeType], data: list[Dict[str, ExperimentType | ExperimentReferenceType]]) -> HeteroData:
+    def process(
+        self,
+        cell_graph: HeteroData,
+        phenotype_info: list[PhenotypeType],
+        data: list[dict[str, ExperimentType | ExperimentReferenceType]],
+    ) -> HeteroData:
         """Main processing method. Creates k-hop induced subgraph around perturbed genes."""
         self._initialize_masks(cell_graph)
         integrated_subgraph = HeteroData()

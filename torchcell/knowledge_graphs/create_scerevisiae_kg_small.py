@@ -4,40 +4,40 @@
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg_small.py
 
 
-from biocypher import BioCypher
+import hashlib
+import json
+import logging
+import math
+import os
+import os.path as osp
+import time
+import uuid
+from datetime import datetime
+
+import certifi
+import hydra
+import wandb
+from dotenv import load_dotenv
+from omegaconf import OmegaConf
+
 import torchcell
+from biocypher import BioCypher
 from torchcell.adapters import (
-    SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
     DmfKuzmin2018Adapter,
+    SmfCostanzo2016Adapter,
+    SmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
 from torchcell.datasets.scerevisiae.costanzo2016 import (
-    SmfCostanzo2016Dataset,
     DmfCostanzo2016Dataset,
+    SmfCostanzo2016Dataset,
 )
 from torchcell.datasets.scerevisiae.kuzmin2018 import (
-    SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
+    SmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
 )
-import logging
-from dotenv import load_dotenv
-import os
-import os.path as osp
-from datetime import datetime
-import multiprocessing as mp
-import math
-import wandb
-from omegaconf import OmegaConf
-import json
-import hashlib
-import uuid
-import hydra
-import time
-import certifi
-
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -72,8 +72,7 @@ def main(cfg) -> str:
     print(SCHEMA_CONFIG_PATH)
     print(BIOCYPHER_OUT_PATH)
     print("---------")
-    
-    
+
     # wandb configuration
     wandb_cfg = OmegaConf.to_container(cfg, resolve=True, throw_on_missing=True)
     slurm_job_id = os.environ.get("SLURM_JOB_ID", uuid.uuid4())
@@ -236,7 +235,7 @@ if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("biocypher_file_name.txt", "r") as file:
+    with open("biocypher_file_name.txt") as file:
         file_name = file.read().strip()
 
     print(file_name)

@@ -3,25 +3,26 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/cell.py
 # Test file: torchcell/datamodules/test_cell.py
 import json
+import logging
 import os
-from typing import List, Dict, Union, Optional, Set
-import pandas as pd
-import lightning as L
-import torch
+import os.path as osp
 import random
 from collections import defaultdict
-import logging
-import os.path as osp
+
+import lightning as L
+import pandas as pd
+import torch
+from pydantic import BaseModel, Field, model_validator
 from torch_geometric.loader import DataLoader, PrefetchLoader
+
 from torchcell.datamodels import ModelStrict
-from pydantic import BaseModel, model_validator, Field
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
 class IndexSplit(ModelStrict):
-    indices: List[int] = Field(..., description="Must be sorted in ascending order")
+    indices: list[int] = Field(..., description="Must be sorted in ascending order")
     count: int
 
     @model_validator(mode="before")
@@ -44,13 +45,13 @@ class IndexSplit(ModelStrict):
 
 
 class DatasetSplit(BaseModel):
-    phenotype_label_index: Optional[Dict[str, IndexSplit]] = None
-    perturbation_count_index: Optional[Dict[int, IndexSplit]] = None
-    dataset_name_index: Optional[Dict[str, IndexSplit]] = None
+    phenotype_label_index: dict[str, IndexSplit] | None = None
+    perturbation_count_index: dict[int, IndexSplit] | None = None
+    dataset_name_index: dict[str, IndexSplit] | None = None
 
 
 class DataModuleIndexDetails(ModelStrict):
-    methods: List[str]
+    methods: list[str]
     train: DatasetSplit
     val: DatasetSplit
     test: DatasetSplit
@@ -113,9 +114,9 @@ class DataModuleIndexDetails(ModelStrict):
 
 
 class DataModuleIndex(ModelStrict):
-    train: List[int] = Field(..., description="Must be sorted in ascending order")
-    val: List[int] = Field(..., description="Must be sorted in ascending order")
-    test: List[int] = Field(..., description="Must be sorted in ascending order")
+    train: list[int] = Field(..., description="Must be sorted in ascending order")
+    val: list[int] = Field(..., description="Must be sorted in ascending order")
+    test: list[int] = Field(..., description="Must be sorted in ascending order")
 
     @model_validator(mode="before")
     @classmethod
@@ -152,9 +153,9 @@ class DataModuleIndex(ModelStrict):
 
 
 class DatasetIndexSplit(ModelStrict):
-    train: dict[Union[str, int], list[int]] = None
-    val: dict[Union[str, int], list[int]] = None
-    test: dict[Union[str, int], list[int]] = None
+    train: dict[str | int, list[int]] = None
+    val: dict[str | int, list[int]] = None
+    test: dict[str | int, list[int]] = None
 
 
 def overlap_dataset_index_split(
@@ -199,17 +200,19 @@ class CellDataModule(L.LightningDataModule):
         prefetch: bool = False,
         prefetch_factor: int = 2,
         persistent_workers: bool = True,
-        split_indices: Union[str, List[str], None] = None,
-        follow_batch: Optional[list] = None,
+        split_indices: str | list[str] | None = None,
+        follow_batch: list | None = None,
         train_shuffle: bool = True,
-        collate_fn: Optional[object] = None,
-        val_batch_size: Optional[int] = None,
+        collate_fn: object | None = None,
+        val_batch_size: int | None = None,
     ):
         super().__init__()
         self.dataset = dataset
         self.cache_dir = cache_dir
         self.batch_size = batch_size
-        self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
+        self.val_batch_size = (
+            val_batch_size if val_batch_size is not None else batch_size
+        )
         self.random_seed = random_seed
         self.num_workers = num_workers
         self.pin_memory = pin_memory
@@ -222,7 +225,9 @@ class CellDataModule(L.LightningDataModule):
         self.split_indices = (
             split_indices
             if isinstance(split_indices, list)
-            else [split_indices] if split_indices else []
+            else [split_indices]
+            if split_indices
+            else []
         )
         self._index = None
         self._index_details = None
@@ -256,11 +261,11 @@ class CellDataModule(L.LightningDataModule):
         )
         if osp.exists(index_file) and osp.exists(details_file):
             try:
-                with open(index_file, "r") as f:
+                with open(index_file) as f:
                     log.info(f"Loading index from {index_file}")
                     index_dict = json.load(f)
                     self._index = DataModuleIndex(**index_dict)
-                with open(details_file, "r") as f:
+                with open(details_file) as f:
                     log.info(f"Loading index details from {details_file}")
                     details_dict = json.load(f)
                     self._index_details = DataModuleIndexDetails(**details_dict)
@@ -340,8 +345,9 @@ class CellDataModule(L.LightningDataModule):
                     }
                     best_split = min(
                         ["train", "val", "test"],
-                        key=lambda x: (current_counts[x] - target_counts[x])
-                        / target_counts[x],
+                        key=lambda x: (
+                            (current_counts[x] - target_counts[x]) / target_counts[x]
+                        ),
                     )
                     final_splits[best_split].add(idx)
                     current_counts[best_split] += 1
@@ -404,7 +410,9 @@ class CellDataModule(L.LightningDataModule):
             "batch_size": batch_size,
             "shuffle": shuffle,
             "num_workers": self.num_workers,
-            "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
+            "persistent_workers": self.persistent_workers
+            if self.num_workers > 0
+            else False,
             "pin_memory": self.pin_memory,
             "follow_batch": self.follow_batch,
             "timeout": 10800,

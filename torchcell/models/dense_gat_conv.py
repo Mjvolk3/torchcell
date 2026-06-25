@@ -1,10 +1,7 @@
-from typing import Optional
-
 import torch
 import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import Parameter
-
 from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.nn.inits import glorot, zeros
 
@@ -59,7 +56,7 @@ class DenseGATConv(torch.nn.Module):
         self,
         x: Tensor,
         adj: Tensor,
-        mask: Optional[Tensor] = None,
+        mask: Tensor | None = None,
         add_loop: bool = True,
         return_attention_weights: bool = False,
     ):

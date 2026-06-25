@@ -3,8 +3,10 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/ontology/tc_ontology.py
 # Test file: torchcell/ontology/test_tc_ontology.py
 
-import yaml
 from pathlib import Path
+
+import yaml
+
 from biocypher import BioCypher  # type: ignore
 
 
@@ -29,10 +31,7 @@ def print_ontology_structure(
         >>> # Export for visualization in Cytoscape/Gephi
         >>> print_ontology_structure(to_disk="path/to/output")
     """
-    bc = BioCypher(
-        offline=True,
-        schema_config_path=schema_config_path,
-    )
+    bc = BioCypher(offline=True, schema_config_path=schema_config_path)
 
     bc.show_ontology_structure(full=full, to_disk=to_disk)
 
@@ -52,10 +51,7 @@ def print_ontology_summary(
         >>> from torchcell.ontology import print_ontology_summary
         >>> print_ontology_summary()
     """
-    bc = BioCypher(
-        offline=True,
-        schema_config_path=schema_config_path,
-    )
+    bc = BioCypher(offline=True, schema_config_path=schema_config_path)
     bc.summary()
 
 
@@ -83,7 +79,7 @@ def print_schema_mappings(
         print(f"Error: Schema config not found at {schema_config_path}")
         return
 
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         schema = yaml.safe_load(f)
 
     # Separate nodes and edges
@@ -117,8 +113,14 @@ def print_schema_mappings(
             # Check if entity name matches a likely Biolink class (auto-mapping)
             # Common Biolink classes that torchcell might use
             likely_biolink_classes = [
-                'dataset', 'genome', 'genotype', 'publication',
-                'gene', 'protein', 'disease', 'phenotype'
+                "dataset",
+                "genome",
+                "genotype",
+                "publication",
+                "gene",
+                "protein",
+                "disease",
+                "phenotype",
             ]
             if node_name.lower() in likely_biolink_classes:
                 auto_mapped.append(node_name)
@@ -172,18 +174,26 @@ def print_schema_mappings(
 
         print("\n" + "─" * 80)
         print("📊 SUMMARY")
-        print(f"  Nodes:    {mapped_nodes}/{len(nodes)} explicit + {len(auto_mapped)} auto-mapped = {total_nodes_covered}/{len(nodes)} total")
-        print(f"  Edges:    {mapped_edges}/{len(edges)} mapped to {len(biolink_edge_groups)} Biolink concepts")
+        print(
+            f"  Nodes:    {mapped_nodes}/{len(nodes)} explicit + {len(auto_mapped)} auto-mapped = {total_nodes_covered}/{len(nodes)} total"
+        )
+        print(
+            f"  Edges:    {mapped_edges}/{len(edges)} mapped to {len(biolink_edge_groups)} Biolink concepts"
+        )
         print(f"  Total:    {total_biolink_concepts} unique Biolink concepts used")
 
         # Show unmapped entities if any
         if no_mapping or no_edge_mapping:
-            print(f"  ⚠️  Warning: {len(no_mapping)} unmapped nodes, {len(no_edge_mapping)} unmapped edges")
+            print(
+                f"  ⚠️  Warning: {len(no_mapping)} unmapped nodes, {len(no_edge_mapping)} unmapped edges"
+            )
         elif auto_mapped:
             print(f"  ✓ {len(auto_mapped)} nodes auto-mapped by name matching")
 
         # List all Biolink concepts used (one per line)
-        all_concepts = sorted(list(biolink_groups.keys()) + list(biolink_edge_groups.keys()))
+        all_concepts = sorted(
+            list(biolink_groups.keys()) + list(biolink_edge_groups.keys())
+        )
         print(f"\n  Biolink concepts ({len(all_concepts)}):")
         for concept in all_concepts:
             print(f"    • {concept}")
@@ -204,12 +214,12 @@ def print_schema_mappings(
                 print(f"      └─ {node_name}")
 
         if auto_mapped:
-            print(f"\n  ✓ Auto-mapped (name matches Biolink class):")
+            print("\n  ✓ Auto-mapped (name matches Biolink class):")
             for node_name in sorted(auto_mapped):
                 print(f"      └─ {node_name}")
 
         if no_mapping:
-            print(f"\n  ⚠️  No Biolink mapping:")
+            print("\n  ⚠️  No Biolink mapping:")
             for node_name in sorted(no_mapping):
                 print(f"      └─ {node_name}")
 
@@ -225,7 +235,7 @@ def print_schema_mappings(
                 print(f"      └─ {edge_name}: {source} → {target}")
 
         if no_edge_mapping:
-            print(f"\n  ⚠️  No Biolink mapping:")
+            print("\n  ⚠️  No Biolink mapping:")
             for edge_name in sorted(no_edge_mapping):
                 edge_config = schema[edge_name]
                 source = edge_config.get("source", "?")
@@ -240,17 +250,25 @@ def print_schema_mappings(
 
         print("\n" + "=" * 80)
         print("📊 SUMMARY")
-        print(f"  Nodes:    {mapped_nodes}/{len(nodes)} explicit + {len(auto_mapped)} auto-mapped = {total_nodes_covered}/{len(nodes)} total")
-        print(f"  Edges:    {mapped_edges}/{len(edges)} mapped to {len(biolink_edge_groups)} Biolink concepts")
+        print(
+            f"  Nodes:    {mapped_nodes}/{len(nodes)} explicit + {len(auto_mapped)} auto-mapped = {total_nodes_covered}/{len(nodes)} total"
+        )
+        print(
+            f"  Edges:    {mapped_edges}/{len(edges)} mapped to {len(biolink_edge_groups)} Biolink concepts"
+        )
         print(f"  Total:    {total_biolink_concepts} unique Biolink concepts used")
 
         if no_mapping or no_edge_mapping:
-            print(f"  ⚠️  Warning: {len(no_mapping)} unmapped nodes, {len(no_edge_mapping)} unmapped edges")
+            print(
+                f"  ⚠️  Warning: {len(no_mapping)} unmapped nodes, {len(no_edge_mapping)} unmapped edges"
+            )
         elif auto_mapped:
             print(f"  ✓ {len(auto_mapped)} nodes auto-mapped by name matching")
 
         # List all Biolink concepts used (one per line)
-        all_concepts = sorted(list(biolink_groups.keys()) + list(biolink_edge_groups.keys()))
+        all_concepts = sorted(
+            list(biolink_groups.keys()) + list(biolink_edge_groups.keys())
+        )
         print(f"\n  Biolink concepts ({len(all_concepts)}):")
         for concept in all_concepts:
             print(f"    • {concept}")
@@ -280,10 +298,7 @@ def main():
 
     args = parser.parse_args()
 
-    print_schema_mappings(
-        schema_config_path=args.config,
-        compact=not args.expand,
-    )
+    print_schema_mappings(schema_config_path=args.config, compact=not args.expand)
 
 
 if __name__ == "__main__":

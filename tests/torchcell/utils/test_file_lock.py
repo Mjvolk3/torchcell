@@ -2,9 +2,7 @@
 # [[tests.torchcell.utils.test_file_lock]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/utils/test_file_lock.py
 
-import json
 import multiprocessing as mp
-import os
 import tempfile
 import time
 from pathlib import Path

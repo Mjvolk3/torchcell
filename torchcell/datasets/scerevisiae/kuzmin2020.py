@@ -9,30 +9,32 @@ import os.path as osp
 import pickle
 import zipfile
 from collections.abc import Callable
+
 import lmdb
 import pandas as pd
 from torch_geometric.data import download_url
 from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
     Environment,
-    Genotype,
+    Experiment,
+    ExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
+    GeneInteractionExperiment,
+    GeneInteractionExperimentReference,
+    GeneInteractionPhenotype,
+    Genotype,
     Media,
+    Publication,
     ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
     SgaAllelePerturbation,
+    SgaKanMxDeletionPerturbation,
     SgaTsAllelePerturbation,
     Temperature,
-    Experiment,
-    ExperimentReference,
-    GeneInteractionPhenotype,
-    GeneInteractionExperimentReference,
-    GeneInteractionExperiment,
-    Publication,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -319,7 +321,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -393,7 +397,9 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["fitness"], fitness_std=row["fitness_std"])
+        phenotype = FitnessPhenotype(
+            fitness=row["fitness"], fitness_std=row["fitness_std"]
+        )
 
         phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=None)
 
@@ -534,7 +540,9 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -624,9 +632,13 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         )
         environment_reference = environment.model_copy()
 
-        phenotype = FitnessPhenotype(fitness=row["fitness"], fitness_std=row["fitness_std"])
+        phenotype = FitnessPhenotype(
+            fitness=row["fitness"], fitness_std=row["fitness_std"]
+        )
 
-        phenotype_reference = FitnessPhenotype(fitness=1.0, fitness_std=phenotype_reference_std)
+        phenotype_reference = FitnessPhenotype(
+            fitness=1.0, fitness_std=phenotype_reference_std
+        )
 
         reference = FitnessExperimentReference(
             dataset_name=dataset_name,
@@ -763,7 +775,9 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -968,7 +982,9 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             lambda x: (
                 "temperature_sensitive"
                 if "tsa" in x
-                else "KanMX_deletion" if "dma" in x else "unknown"
+                else "KanMX_deletion"
+                if "dma" in x
+                else "unknown"
             )
         )
 
@@ -1094,7 +1110,7 @@ def main():
         # DmfKuzmin2020Dataset(),
         # TmfKuzmin2020Dataset(),
         # DmiKuzmin2020Dataset(),
-        TmiKuzmin2020Dataset(),
+        TmiKuzmin2020Dataset()
     ]
 
     for dataset in datasets:

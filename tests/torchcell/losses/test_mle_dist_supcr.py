@@ -1,6 +1,5 @@
 # tests/torchcell/losses/test_mle_dist_supcr.py
 import torch
-import torch.distributed as dist
 
 from torchcell.losses.mle_dist_supcr import (
     AdaptiveWeighting,

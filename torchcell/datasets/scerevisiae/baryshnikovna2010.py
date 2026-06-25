@@ -3,12 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/baryshnikovna2010.py
 # Test file: torchcell/datasets/scerevisiae/test_baryshnikovna2010.py
 import os
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import pandas as pd
 import torch
 from torch_geometric.data import Data, InMemoryDataset, download_url
-
 
 os.makedirs("data/scerevisiae/baryshnikovna2010", exist_ok=True)
 
@@ -19,8 +18,8 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
     def __init__(
         self,
         root: str = "data/scerevisiae/baryshnikovna2010",
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
     ):
         super().__init__(root, transform, pre_transform)
         self.data, self.slices = torch.load(self.processed_paths[0])
@@ -45,19 +44,12 @@ class Baryshnikovna2010Dataset(InMemoryDataset):
         for index, row in df.iterrows():
             id = row["id"].split("_")[0]
             id_full = row["id"]
-            genotype = {
-                "id": id,
-                "interventions": "deletion",
-                "id_full": id_full,
-            }
+            genotype = {"id": id, "interventions": "deletion", "id_full": id_full}
             observation = {
                 "smf_fitness": torch.tensor([row["fitness"]], dtype=torch.float),
                 "smf_std": torch.tensor([row["std"]], dtype=torch.float),
             }
-            environment = {
-                "media": "YEPD",
-                "temperature": "30C",
-            }
+            environment = {"media": "YEPD", "temperature": "30C"}
             phenotype = {"observation": observation, "environment": environment}
 
             data = Data()

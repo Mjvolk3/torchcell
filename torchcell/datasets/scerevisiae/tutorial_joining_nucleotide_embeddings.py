@@ -3,18 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/nucleotide_transformer.py
 # Test file: tests/torchcell/datasets/scerevisiae/test_nucleotide_transformer.py
 
-import os
-from collections.abc import Callable
-from typing import Optional
 
-import torch
-from torch_geometric.data import Data, InMemoryDataset
-from tqdm import tqdm
-
-from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.datasets.fungal_utr_transformer import FungalUtrTransformerDataset
 from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
-from torchcell.models.nucleotide_transformer import NucleotideTransformer
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 if __name__ == "__main__":

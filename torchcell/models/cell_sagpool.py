@@ -1,22 +1,19 @@
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
-    GCNConv,
-    GATv2Conv,
-    SAGPooling,
     BatchNorm,
-    LayerNorm,
+    GATv2Conv,
     GraphNorm,
     InstanceNorm,
-    PairNorm,
+    LayerNorm,
     MeanSubtractionNorm,
-    global_mean_pool,
+    PairNorm,
+    SAGPooling,
     global_add_pool,
+    global_mean_pool,
 )
-import torch.nn.functional as F
-from typing import Optional, Literal
+
 from torchcell.models.act import act_register
-from torchcell.models.norm import norm_register
 
 
 class SingleSAGPool(nn.Module):
@@ -29,7 +26,7 @@ class SingleSAGPool(nn.Module):
         activation: str = "relu",
         norm: str = None,
         target_dim: int = 2,
-        min_score: Optional[float] = None,
+        min_score: float | None = None,
         gnn_type: str = "GATv2Conv",
         heads: int = 1,
         dropout: float = 0.0,
@@ -236,7 +233,7 @@ class CellSAGPool(nn.Module):
         activation: str = "relu",
         norm: str = None,
         target_dim: int = 2,
-        min_score: Optional[float] = None,
+        min_score: float | None = None,
         heads: int = 1,
         dropout: float = 0.0,
     ):
@@ -367,23 +364,24 @@ class CellSAGPool(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
-    from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules import CellDataModule
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -399,7 +397,7 @@ def load_sample_data_batch():
         genome=genome,
     )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"

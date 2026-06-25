@@ -12,16 +12,17 @@ Key insight: Replicate edge_index during batching (~100x per epoch) to maintain
 the 3.65x speedup from avoiding copies during data loading (~17k+ samples).
 """
 
-from typing import List, Optional, Union, Sequence, Any
+from collections.abc import Sequence
+from typing import Any
+
 import torch
-from torch_geometric.data import HeteroData
-from torch_geometric.loader.dataloader import Collater
-from torch_geometric.data import Dataset
+from torch_geometric.data import Dataset, HeteroData
 from torch_geometric.data.data import BaseData
 from torch_geometric.data.datapipes import DatasetAdapter
+from torch_geometric.loader.dataloader import Collater
 
 
-def lazy_collate_hetero(data_list: List[HeteroData]) -> HeteroData:
+def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
     """
     Custom collate function for batching HeteroData with LazySubgraphRepresentation.
 
@@ -75,8 +76,8 @@ def lazy_collate_hetero(data_list: List[HeteroData]) -> HeteroData:
 
         # Determine if this edge type uses edge_index or hyperedge_index
         edge_data_sample = data_list[0][edge_type]
-        uses_hyperedge = hasattr(edge_data_sample, 'hyperedge_index')
-        edge_index_key = 'hyperedge_index' if uses_hyperedge else 'edge_index'
+        uses_hyperedge = hasattr(edge_data_sample, "hyperedge_index")
+        edge_index_key = "hyperedge_index" if uses_hyperedge else "edge_index"
 
         # Get the shared edge_index (same for all samples due to zero-copy)
         # We'll replicate it for each graph with proper offsets
@@ -99,14 +100,16 @@ def lazy_collate_hetero(data_list: List[HeteroData]) -> HeteroData:
             src_offset = node_offsets[src_type][i]
             dst_offset = node_offsets[dst_type][i]
 
-            offset_edge_index = edge_index.clone()  # Clone to avoid modifying shared tensor
+            offset_edge_index = (
+                edge_index.clone()
+            )  # Clone to avoid modifying shared tensor
             offset_edge_index[0] += src_offset
             offset_edge_index[1] += dst_offset
 
             edge_indices.append(offset_edge_index)
 
             # Collect edge mask
-            if hasattr(edge_data, 'mask'):
+            if hasattr(edge_data, "mask"):
                 edge_masks.append(edge_data.mask)
 
         # Concatenate across batch
@@ -118,10 +121,13 @@ def lazy_collate_hetero(data_list: List[HeteroData]) -> HeteroData:
 
         # Copy other edge attributes if they exist
         for key in data_list[0][edge_type].keys():
-            if key not in ['edge_index', 'hyperedge_index', 'mask']:
+            if key not in ["edge_index", "hyperedge_index", "mask"]:
                 attrs = [data[edge_type][key] for data in data_list]
                 # Only concatenate if all are tensors
-                if all(attr is not None and isinstance(attr, torch.Tensor) for attr in attrs):
+                if all(
+                    attr is not None and isinstance(attr, torch.Tensor)
+                    for attr in attrs
+                ):
                     batch[edge_type][key] = torch.cat(attrs, dim=0)
                 elif all(attr is not None for attr in attrs):
                     # For non-tensors (like num_edges), store as list
@@ -165,9 +171,14 @@ def lazy_collate_hetero(data_list: List[HeteroData]) -> HeteroData:
 
         # Concatenate all node attributes
         for key in batch[node_type].keys():
-            if isinstance(batch[node_type][key], list) and len(batch[node_type][key]) > 0:
+            if (
+                isinstance(batch[node_type][key], list)
+                and len(batch[node_type][key]) > 0
+            ):
                 # Check if all elements are tensors
-                if all(isinstance(item, torch.Tensor) for item in batch[node_type][key]):
+                if all(
+                    isinstance(item, torch.Tensor) for item in batch[node_type][key]
+                ):
                     # Concatenate tensors
                     batch[node_type][key] = torch.cat(batch[node_type][key], dim=0)
                 # else: keep as list for non-tensors (e.g., node_ids, phenotype_types)
@@ -206,12 +217,14 @@ def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
         # Check node batch vectors
         for node_type in batch.node_types:
             batch_vec = batch[node_type].batch
-            assert batch_vec.max().item() == expected_graphs - 1, \
+            assert batch_vec.max().item() == expected_graphs - 1, (
                 f"Batch vector max {batch_vec.max()} != {expected_graphs - 1}"
+            )
 
             num_nodes = batch[node_type].num_nodes
-            assert batch_vec.size(0) == num_nodes, \
+            assert batch_vec.size(0) == num_nodes, (
                 f"Batch vector size {batch_vec.size(0)} != num_nodes {num_nodes}"
+            )
 
         # Check edge indices are within bounds
         for edge_type in batch.edge_types:
@@ -219,9 +232,9 @@ def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
             edge_data = batch[edge_type]
 
             # Handle both edge_index and hyperedge_index
-            if hasattr(edge_data, 'edge_index'):
+            if hasattr(edge_data, "edge_index"):
                 edge_index = edge_data.edge_index
-            elif hasattr(edge_data, 'hyperedge_index'):
+            elif hasattr(edge_data, "hyperedge_index"):
                 edge_index = edge_data.hyperedge_index
             else:
                 # Skip if this edge type doesn't have indices
@@ -230,17 +243,20 @@ def verify_batch_structure(batch: HeteroData, expected_graphs: int = 2) -> bool:
             src_max = batch[src_type].num_nodes
             dst_max = batch[dst_type].num_nodes
 
-            assert edge_index[0].max() < src_max, \
+            assert edge_index[0].max() < src_max, (
                 f"Source index {edge_index[0].max()} >= {src_max}"
-            assert edge_index[1].max() < dst_max, \
+            )
+            assert edge_index[1].max() < dst_max, (
                 f"Dest index {edge_index[1].max()} >= {dst_max}"
+            )
 
             # Check edge mask length
-            if hasattr(edge_data, 'mask'):
+            if hasattr(edge_data, "mask"):
                 edge_mask = edge_data.mask
                 num_edges = edge_index.size(1)
-                assert edge_mask.size(0) == num_edges, \
+                assert edge_mask.size(0) == num_edges, (
                     f"Mask size {edge_mask.size(0)} != num_edges {num_edges}"
+                )
 
         return True
 
@@ -289,13 +305,13 @@ class LazyCollater(Collater):
 
     def __init__(
         self,
-        dataset: Union[Dataset, Sequence[BaseData], DatasetAdapter],
-        follow_batch: Optional[List[str]] = None,
-        exclude_keys: Optional[List[str]] = None,
+        dataset: Dataset | Sequence[BaseData] | DatasetAdapter,
+        follow_batch: list[str] | None = None,
+        exclude_keys: list[str] | None = None,
     ):
         super().__init__(dataset, follow_batch, exclude_keys)
 
-    def __call__(self, batch: List[Any]) -> Any:
+    def __call__(self, batch: list[Any]) -> Any:
         """
         Override collate to use lazy_collate_hetero for HeteroData.
 
@@ -312,7 +328,7 @@ class LazyCollater(Collater):
             # Check if this uses lazy representation (has masks on edges)
             is_lazy = False
             for edge_type in elem.edge_types:
-                if hasattr(elem[edge_type], 'mask'):
+                if hasattr(elem[edge_type], "mask"):
                     is_lazy = True
                     break
 
@@ -329,6 +345,10 @@ if __name__ == "__main__":
     # Example usage and testing
     print("Custom collate function for LazySubgraphRepresentation")
     print("Import and use with DataLoader:")
-    print("  loader = DataLoader(dataset, batch_size=2, collate_fn=lazy_collate_hetero)")
+    print(
+        "  loader = DataLoader(dataset, batch_size=2, collate_fn=lazy_collate_hetero)"
+    )
     print("Or use LazyCollater for Lightning compatibility:")
-    print("  loader = DataLoader(dataset, batch_size=2, collate_fn=LazyCollater(dataset))")
+    print(
+        "  loader = DataLoader(dataset, batch_size=2, collate_fn=LazyCollater(dataset))"
+    )

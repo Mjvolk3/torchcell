@@ -1,18 +1,17 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-import matplotlib.pyplot as plt
-from typing import Optional
-import logging
-from torchcell.viz.visual_regression import Visualization
-from torchcell.timestamp import timestamp
+from torch_geometric.data import Batch, HeteroData
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
+from torchcell.viz import fitness, genetic_interaction_score
 from torchcell.viz.visual_graph_degen import VisGraphDegen
-from torchcell.viz import genetic_interaction_score
-from torchcell.viz import fitness
-from torch_geometric.data import HeteroData, Batch
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -30,17 +29,17 @@ class RegressionTask(L.LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,  # New parameter for plotting frequency
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
         graph_processor=None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
         self.model = model
         self.cell_graph = cell_graph
-        self.inverse_transform = inverse_transform      
+        self.inverse_transform = inverse_transform
         self.current_accumulation_steps = 1
         self.loss_func = loss_func
         self.graph_processor = graph_processor
@@ -349,14 +348,17 @@ class RegressionTask(L.LightningModule):
 
         df_to_save = pd.DataFrame(self.df)
         # BUG there is some issue with the trigen true label... but results so bad on digenic we moved on.
-        df_to_save.to_csv("experiments/003-fit-int/results/test_results_digenic_only.csv ", index=False)
+        df_to_save.to_csv(
+            "experiments/003-fit-int/results/test_results_digenic_only.csv ",
+            index=False,
+        )
 
         return None
 
     def test_multiset_breakout(self, batch, batch_idx):
-        
+
         num_gene_interactions = [len(i) for i in batch["gene"]["ids_pert"]]
-        
+
         predictions, representations = self(batch)
         batch_size = predictions.size(0)
 
@@ -445,14 +447,16 @@ class RegressionTask(L.LightningModule):
         This implementation only supports 1-, 2-, and 3-gene combinations.
         """
         from itertools import chain, combinations
+
         import torch
-        from torch_geometric.data import Batch, HeteroData
+        from torch_geometric.data import HeteroData
+
         from torchcell.datamodels import (
             Environment,
-            Genotype,
             FitnessExperiment,
             FitnessExperimentReference,
             FitnessPhenotype,
+            Genotype,
             Media,
             ReferenceGenome,
             SgaKanMxDeletionPerturbation,

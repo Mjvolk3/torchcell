@@ -10,10 +10,9 @@ import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.models.protT5 import ProtT5
-from torchcell.sequence import GeneSet, ParsedGenome
+from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 

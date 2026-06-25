@@ -3,40 +3,29 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/cell_latent_perturbation_unified
 # Test file: tests/torchcell/models/test_cell_latent_perturbation_unified.py
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import (
-    HeteroConv,
-    GCNConv,
-    GATv2Conv,
-    TransformerConv,
-    GINConv,
-    BatchNorm,
-    LayerNorm,
-    GraphNorm,
-    InstanceNorm,
-    PairNorm,
-    MeanSubtractionNorm,
-    global_add_pool,
-    global_mean_pool,
-    global_max_pool,
-    HypergraphConv,
-)
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from typing import Dict, Optional, List, Literal
-from torch_geometric.typing import EdgeType
-from torchcell.models.act import act_register
 from collections import defaultdict
-from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
+from typing import Any, Literal
 
-from typing import Any
-from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, List, Literal
+from torch_geometric.nn import (
+    BatchNorm,
+    GATv2Conv,
+    GCNConv,
+    GINConv,
+    GraphNorm,
+    HeteroConv,
+    InstanceNorm,
+    LayerNorm,
+    MeanSubtractionNorm,
+    PairNorm,
+    TransformerConv,
+)
 from torch_geometric.typing import EdgeType
-from torch_geometric.utils import sort_edge_index
+
+from torchcell.models.act import act_register
+from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class WholeIntactProcessor(nn.Module):
@@ -179,7 +168,7 @@ class ReactionGeneProcessor(nn.Module):
     def forward(
         self,
         gene_embeddings: torch.Tensor,
-        reaction_to_genes_indices: Dict[int, List],
+        reaction_to_genes_indices: dict[int, list],
         batch: Any,
     ) -> torch.Tensor:
         """Process gene sets for each reaction.
@@ -274,7 +263,7 @@ class ProjectedGATConv(nn.Module):
 
 
 class PredictionHead(nn.Module):
-    def __init__(self, layers: nn.ModuleList, residual: bool, dims: List[int]):
+    def __init__(self, layers: nn.ModuleList, residual: bool, dims: list[int]):
         super().__init__()
         self.layers = layers
         self.residual = residual
@@ -307,19 +296,19 @@ class HeteroGnn(nn.Module):
         hidden_channels: int,
         out_channels: int,
         num_layers: int,
-        edge_types: List[EdgeType],
+        edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: Optional[Dict] = None,
+        layer_config: dict | None = None,
         activation: str = "relu",
-        norm: Optional[str] = None,
+        norm: str | None = None,
         head_num_layers: int = 2,
-        head_hidden_channels: Optional[int] = None,
+        head_hidden_channels: int | None = None,
         head_dropout: float = 0.0,
         head_activation: str = "relu",
         head_residual: bool = False,
-        head_norm: Optional[Literal["batch", "layer", "instance"]] = None,
+        head_norm: Literal["batch", "layer", "instance"] | None = None,
         learnable_embedding: bool = False,
-        num_nodes: Optional[int] = None,
+        num_nodes: int | None = None,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -369,7 +358,7 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: Optional[Dict]) -> Dict:
+    def _get_layer_config(self, layer_config: dict | None) -> dict:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -411,7 +400,7 @@ class HeteroGnn(nn.Module):
             return default_configs[self.conv_type]
         return {**default_configs[self.conv_type], **layer_config}
 
-    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> Dict:
+    def _calculate_dimensions(self, in_channels: int, hidden_channels: int) -> dict:
         dims = {"in_channels": in_channels, "hidden_channels": hidden_channels}
 
         if self.conv_type in ["GAT", "Transformer"]:
@@ -478,7 +467,7 @@ class HeteroGnn(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def _create_conv_dict(self, in_dim: int) -> Dict:
+    def _create_conv_dict(self, in_dim: int) -> dict:
         conv_dict = {}
 
         for edge_type in self.edge_types:
@@ -578,9 +567,7 @@ class HeteroGnn(nn.Module):
             return norm_layer()
         return norm_layer(channels)
 
-    def _get_head_norm(
-        self, channels: int, norm_type: Optional[str]
-    ) -> Optional[nn.Module]:
+    def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
         """Get standard PyTorch normalization layer for prediction head."""
         if norm_type is None:
             return None
@@ -601,7 +588,7 @@ class HeteroGnn(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str],
+        norm: str | None,
     ) -> nn.Module:
         if num_layers < 1:
             raise ValueError("Prediction head must have at least one layer")
@@ -730,7 +717,7 @@ class HeteroGnn(nn.Module):
         return x
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         conv_params = sum(
             sum(p.numel() for p in conv.parameters()) for conv in self.convs
         )
@@ -1036,7 +1023,7 @@ class CellLatentPerturbation(nn.Module):
         # Gene encoder params
         gene_encoder_num_layers: int = 3,
         gene_encoder_conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        gene_encoder_layer_config: Optional[Dict] = None,
+        gene_encoder_layer_config: dict | None = None,
         gene_encoder_head_num_layers: int = 2,
         # Metabolism processor params
         metabolism_num_layers: int = 2,
@@ -1059,12 +1046,12 @@ class CellLatentPerturbation(nn.Module):
         head_hidden_factor: float = 1.0,
         head_num_layers: int = 2,
         # Global params
-        edge_types: List[EdgeType] = None,
+        edge_types: list[EdgeType] = None,
         activation: str = "relu",
-        norm: Optional[str] = None,
+        norm: str | None = None,
         dropout: float = 0.1,
         learnable_embedding: bool = False,
-        num_nodes: Optional[int] = None,
+        num_nodes: int | None = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -1190,9 +1177,9 @@ class CellLatentPerturbation(nn.Module):
 
         # Update metabolism batch with reaction embeddings as edge attributes
         batch_metabolism = batch.clone()
-        batch_metabolism["metabolite", "reaction_genes", "metabolite"].edge_attr = (
-            reaction_embeddings
-        )
+        batch_metabolism[
+            "metabolite", "reaction_genes", "metabolite"
+        ].edge_attr = reaction_embeddings
 
         # Process through metabolism pathway
         metabolism_embeddings = self.metabolism_processor(batch_metabolism)
@@ -1221,7 +1208,7 @@ class CellLatentPerturbation(nn.Module):
 
         return predictions, z_pert
 
-    def _split_embeddings(self, embeddings: torch.Tensor, batch) -> Dict[str, tuple]:
+    def _split_embeddings(self, embeddings: torch.Tensor, batch) -> dict[str, tuple]:
         """Split embeddings into whole, intact, and perturbed sets."""
         device = embeddings.device
         batch_size = len(batch["gene"].ptr) - 1
@@ -1330,7 +1317,7 @@ class CellLatentPerturbation(nn.Module):
         return nn.Sequential(*layers)
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Get parameter counts for different components of the model."""
         gene_preprocessor_params = sum(
             p.numel() for p in self.gene_preprocessor.parameters()
@@ -1370,24 +1357,25 @@ class CellLatentPerturbation(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
-    from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules import CellDataModule
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation 
-    from tqdm import tqdm
+    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -1404,7 +1392,7 @@ def load_sample_data_batch():
         genome=genome,
     )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -1455,9 +1443,9 @@ def load_sample_data_batch():
 
 
 def plot_correlations(predictions, true_values, save_path):
+    import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
-    import matplotlib.pyplot as plt
 
     # Convert to numpy and handle NaN values
     predictions_np = predictions.detach().cpu().numpy()
@@ -1520,13 +1508,15 @@ def plot_correlations(predictions, true_values, save_path):
 
 
 def main(device="cpu"):
-    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-    import matplotlib.pyplot as plt
-    from dotenv import load_dotenv
-    import os.path as osp
     import os
-    from torchcell.timestamp import timestamp
+    import os.path as osp
+
+    import matplotlib.pyplot as plt
     import torch
+    from dotenv import load_dotenv
+
+    from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
+    from torchcell.timestamp import timestamp
 
     # Check if CUDA is available when device='cuda' is requested
     if device == "cuda" and not torch.cuda.is_available():
@@ -1642,10 +1632,10 @@ def main(device="cpu"):
                 # Print memory usage if using CUDA
                 if device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
                     )
 
             # Store loss value
@@ -1703,9 +1693,9 @@ def main(device="cpu"):
         print("Loss components:", final_components)
 
         if device.type == "cuda":
-            print(f"\nFinal GPU memory usage:")
-            print(f"Allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB")
-            print(f"Cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB")
+            print("\nFinal GPU memory usage:")
+            print(f"Allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB")
+            print(f"Cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB")
 
     # Optional: Clear CUDA cache if using GPU
     if device.type == "cuda":

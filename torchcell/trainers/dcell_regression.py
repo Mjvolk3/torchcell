@@ -1,13 +1,11 @@
-import math
+import os.path as osp
 import tracemalloc
 
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+import wandb
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -15,14 +13,13 @@ from torchmetrics import (
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
-from tqdm import tqdm
-import os.path as osp
-import wandb
+
+import torchcell
+
 # TODO will need to fix
 # from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.losses import DCellLoss
 from torchcell.viz import fitness, genetic_interaction_score
-import torchcell
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)

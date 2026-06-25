@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/pronto_ontology.py
 # Test file: torchcell/datasets/test_pronto_ontology.py
 
-from collections import Counter
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -14,9 +13,8 @@ import networkx as nx
 # nx.draw(G, pos, labels=labels, with_labels=True, node_size=3000, node_color='skyblue', font_size=10, font_weight='bold')
 # plt.show()
 import pronto
-from nxontology.imports import multidigraph_to_digraph, pronto_to_multidigraph
-from nxontology.viz import create_similarity_graphviz
-from pronto import Definition, Ontology
+from nxontology.imports import pronto_to_multidigraph
+from pronto import Definition
 
 # # https://obofoundry.org/ontology/mco.html
 # url = "https://raw.githubusercontent.com/microbial-conditions-ontology/microbial-conditions-ontology/master/mco.owl"

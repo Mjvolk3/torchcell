@@ -1,7 +1,7 @@
 import torch
 from pytorch_metric_learning.distances import CosineSimilarity
-from pytorch_metric_learning.reducers import AvgNonZeroReducer
 from pytorch_metric_learning.losses import BaseMetricLossFunction
+from pytorch_metric_learning.reducers import AvgNonZeroReducer
 from pytorch_metric_learning.utils import common_functions as c_f
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 

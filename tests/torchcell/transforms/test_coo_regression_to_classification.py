@@ -549,7 +549,6 @@ class TestBatchProcessingCOO:
         batch2["gene"]["phenotype_types"] = ["gene_interaction"]
 
         # Create batch
-        from torch_geometric.data import Batch
 
         batch = Batch.from_data_list([batch1, batch2])
 

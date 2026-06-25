@@ -4,34 +4,34 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test_syn_leth_db_yeast.py
 
 
+import logging
 import os
-import pandas as pd
-import pickle
-import lmdb
-from tqdm import tqdm
 import os.path as osp
+import pickle
+
+import lmdb
+import pandas as pd
 import requests
+from tqdm import tqdm
+
 from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
-    ReferenceGenome,
     Environment,
-    Media,
-    Temperature,
     Genotype,
+    Media,
+    Publication,
+    ReferenceGenome,
     SgaKanMxDeletionPerturbation,
-    SyntheticLethalityPhenotype,
     SyntheticLethalityExperiment,
     SyntheticLethalityExperimentReference,
-    SyntheticRescuePhenotype,
+    SyntheticLethalityPhenotype,
     SyntheticRescueExperiment,
     SyntheticRescueExperimentReference,
-    Publication,
+    SyntheticRescuePhenotype,
+    Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from pydantic import field_validator
-import re
-import logging
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -395,6 +395,7 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
 def main():
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()

@@ -6,43 +6,43 @@
 
 import os.path as osp
 import threading
-from typing import Protocol, TypeVar, Generic, Iterator, Any
+from collections.abc import Iterator
+from typing import Any, Generic, Protocol, TypeVar
 
-import gffutils
 from gffutils import FeatureDB
 
 
 class DatabaseProtocol(Protocol):
     """Protocol for database-like objects that need connection management."""
-    
+
     def __getitem__(self, key: str) -> Any:
         """Get item by key/ID."""
         ...
-    
+
     def features_of_type(self, featuretype: str) -> Iterator[Any]:
         """Get features of a specific type."""
         ...
-    
+
     def region(self, region: tuple, completely_within: bool = False) -> Iterator[Any]:
         """Get features in a specific region."""
         ...
-    
+
     def all_features(self) -> Iterator[Any]:
         """Iterate through all features in the database."""
         ...
-    
+
     def featuretypes(self) -> Iterator[str]:
         """Get all feature types in the database."""
         ...
-    
+
     def update(self, features: list[Any], merge_strategy: str = "merge") -> None:
         """Update features in the database."""
         ...
-    
+
     def delete(self, id: str, feature_type: str) -> None:
         """Delete a feature from the database."""
         ...
-    
+
     @property
     def conn(self) -> Any:
         """Access to the underlying database connection."""

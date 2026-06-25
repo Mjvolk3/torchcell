@@ -1,38 +1,15 @@
-import glob
-import requests
-import gzip
-import json
 import logging
 import os
 import os.path as osp
-import pickle
-import shutil
-import tarfile
-import time
 from collections import defaultdict
 from datetime import datetime
-from itertools import product
-from typing import Set
 
-import gffutils
 import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
 import networkx as nx
-import pandas as pd
-from attrs import define, field
-from Bio import Seq, SeqIO
-from Bio.SeqRecord import SeqRecord
-from gffutils import FeatureDB
-from gffutils.feature import Feature
 from matplotlib.patches import Patch
-from sortedcontainers import SortedDict, SortedSet
-from torch_geometric.data import download_url
-from torch_geometric.utils import from_networkx
-from tqdm import tqdm
 
-from torchcell.sequence import GeneSet, Genome, ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 import torchcell
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -146,7 +123,6 @@ def plot_go_graph(G):
 # TODO add a function that will remove genes not in dmf costanzo and smf costanzo
 
 
-
 def plot_annotation_dates_by_month(G_go: nx.DiGraph):
     # Function to convert date strings to datetime objects
     def convert_to_datetime(date_str):
@@ -217,7 +193,6 @@ def plot_histogram_of_contained_gene_counts(
 ):
     def compute_containment(go_term):
         """Function to compute containment of a given term with its subsequent terms."""
-
         # Reverse the graph to travel in the opposite direction
         G_reverse = G_go.reverse(copy=False)
 
@@ -298,18 +273,9 @@ def compare_go_terms(G_raw, G):
 
 
 def go_gaf_investigation():
-    import os
-    import random
 
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from Bio.UniProt.GOA import gafiterator
     from dotenv import load_dotenv
-
-    from torchcell.datasets.scerevisiae import (
-        DmfCostanzo2016Dataset,
-        SmfCostanzo2016Dataset,
-    )
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -537,17 +503,8 @@ def plot_pathway_annotations(G_gene: nx.Graph):
 
 
 def old_main() -> None:
-    import os
-    import random
 
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from dotenv import load_dotenv
-
-    from torchcell.datasets.scerevisiae import (
-        DmfCostanzo2016Dataset,
-        SmfCostanzo2016Dataset,
-    )
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -651,7 +608,6 @@ def old_main() -> None:
 
 
 def main():
-    import os
     from dotenv import load_dotenv
 
     load_dotenv()

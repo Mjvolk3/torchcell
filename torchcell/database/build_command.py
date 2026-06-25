@@ -1,15 +1,15 @@
-from cliff.command import Command
-import argparse
-import subprocess
 import os
 import os.path as osp
+import subprocess
+
+from cliff.command import Command
 
 
 class BuildCommand(Command):
-    "A simple command that builds something."
+    """A simple command that builds something."""
 
     def get_parser(self, prog_name):
-        parser = super(BuildCommand, self).get_parser(prog_name)
+        parser = super().get_parser(prog_name)
         parser.add_argument(
             "-m",
             "--mode",

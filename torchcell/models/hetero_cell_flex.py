@@ -1,61 +1,18 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from omegaconf import DictConfig, OmegaConf
-import os.path as osp
 import os
+import os.path as osp
+from typing import Any
+
 import hydra
-from torch_geometric.nn import HeteroConv
-from torch_geometric.nn import (
-    HeteroConv,
-    GCNConv,
-    GATv2Conv,
-    TransformerConv,
-    GINConv,
-    BatchNorm,
-    LayerNorm,
-    GraphNorm,
-    InstanceNorm,
-    PairNorm,
-    MeanSubtractionNorm,
-    global_add_pool,
-    global_mean_pool,
-    global_max_pool,
-    HypergraphConv,
-)
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from typing import Optional, Literal
-from torch_geometric.typing import EdgeType
-from torchcell.models.act import act_register
-from collections import defaultdict
-
-from typing import Any, Union, Optional
+import torch
+import torch.nn as nn
+from omegaconf import DictConfig
+from torch.nn.attention.flex_attention import create_block_mask, flex_attention
+from torch_geometric.data import HeteroData
+from torch_geometric.nn import GATv2Conv, HeteroConv
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
-import torch
-from torch import Tensor
-import torch.nn as nn
-from torch_geometric.typing import EdgeType
-from torch_geometric.utils import sort_edge_index
-from torch_geometric.data import HeteroData
-from torch_scatter import scatter, scatter_softmax
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv
-from torch_geometric.data import HeteroData
-from torch_geometric.utils import sort_edge_index
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 from torchcell.models.act import act_register
-from typing import Optional, Dict, Any, Tuple
-
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.nn.attention.flex_attention import flex_attention, create_block_mask
-from torch_geometric.data import HeteroData
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 class GraphMaskedAttention(nn.Module):
@@ -68,9 +25,9 @@ class GraphMaskedAttention(nn.Module):
         self.hidden_channels = hidden_channels
         self.num_heads = num_heads
         self.head_dim = hidden_channels // num_heads
-        assert (
-            self.head_dim * num_heads == hidden_channels
-        ), "hidden_channels must be divisible by num_heads"
+        assert self.head_dim * num_heads == hidden_channels, (
+            "hidden_channels must be divisible by num_heads"
+        )
 
         # Projection matrices
         self.q_proj = nn.Linear(hidden_channels, hidden_channels)
@@ -172,7 +129,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -243,16 +200,9 @@ class Combiner(nn.Module):
 ###############################################################################
 # New Model: HeteroCell
 ###############################################################################
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torch_geometric.nn import HeteroConv, GATv2Conv
-from torch_geometric.data import HeteroData
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from torchcell.models.act import act_register
-from torch_scatter import scatter, scatter_softmax
-from typing import Optional, Dict, Any, Tuple
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -284,7 +234,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -359,10 +309,10 @@ class HeteroCell(nn.Module):
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        gene_encoder_config: Optional[Dict[str, Any]] = None,
-        metabolism_config: Optional[Dict[str, Any]] = None,
-        prediction_head_config: Optional[Dict[str, Any]] = None,
-        gpr_conv_config: Optional[Dict[str, Any]] = None,
+        gene_encoder_config: dict[str, Any] | None = None,
+        metabolism_config: dict[str, Any] | None = None,
+        prediction_head_config: dict[str, Any] | None = None,
+        gpr_conv_config: dict[str, Any] | None = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -384,7 +334,7 @@ class HeteroCell(nn.Module):
         # Inside the HeteroCell class constructor
         self.convs = nn.ModuleList()
         for _ in range(num_layers):
-            conv_dict: Dict[Any, nn.Module] = {}
+            conv_dict: dict[Any, nn.Module] = {}
 
             # Replace GATv2Conv with GraphMaskedAttention for gene-gene interactions
             gene_att = GraphMaskedAttention(
@@ -491,7 +441,7 @@ class HeteroCell(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str] = None,
+        norm: str | None = None,
     ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
@@ -608,7 +558,7 @@ class HeteroCell(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         # Process the reference (wildtype) graph.
         z_w = self.forward_single(cell_graph)
         z_w = self.global_aggregator(
@@ -637,7 +587,7 @@ class HeteroCell(nn.Module):
         }
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         def count_params(module: nn.Module) -> int:
             return sum(p.numel() for p in module.parameters() if p.requires_grad)
 
@@ -658,25 +608,29 @@ class HeteroCell(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
     # from torchcell.datasets.fungal_up_down_transformer import (
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -713,7 +667,7 @@ def load_sample_data_batch():
             genome=genome,
         )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -768,9 +722,9 @@ def load_sample_data_batch():
 def plot_correlations(
     predictions, true_values, save_path, lambda_info="", weight_decay=""
 ):
+    import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
-    import matplotlib.pyplot as plt
 
     # Convert to numpy and handle NaN values
     predictions_np = predictions.detach().cpu().numpy()
@@ -838,9 +792,11 @@ def plot_correlations(
     config_name="hetero_cell",
 )
 def main(cfg: DictConfig) -> None:
-    import matplotlib.pyplot as plt
     import os
+
+    import matplotlib.pyplot as plt
     from dotenv import load_dotenv
+
     from torchcell.losses.isomorphic_cell_loss import ICLoss
     from torchcell.timestamp import timestamp
 
@@ -928,10 +884,10 @@ def main(cfg: DictConfig) -> None:
                 print("Loss components:", loss_components)
                 if device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())

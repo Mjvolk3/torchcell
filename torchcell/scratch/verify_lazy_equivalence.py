@@ -14,20 +14,23 @@ invalid reactions.
 import os
 import os.path as osp
 import random
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.datamodules import CellDataModule
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
-from torchcell.data.graph_processor import (
-    SubgraphRepresentation,
-    LazySubgraphRepresentation,
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
 )
+from torchcell.data.graph_processor import (
+    LazySubgraphRepresentation,
+    SubgraphRepresentation,
+)
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.graph import build_gene_multigraph
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 def create_dataset(graph_processor):
@@ -72,7 +75,7 @@ def create_dataset(graph_processor):
 
     # Load query
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -116,9 +119,9 @@ def find_samples_with_invalid_reactions(dataset, max_samples=100):
 
 def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
     """Verify that SubgraphRepresentation and LazySubgraphRepresentation are equivalent."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Verifying Sample {sample_idx}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     errors = []
 
@@ -131,7 +134,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
         errors.append(
             f"Gene count mismatch: Subgraph={subgraph_num_genes}, Lazy (kept)={lazy_num_genes_kept}"
         )
-        print(f"  ✗ Gene count mismatch")
+        print("  ✗ Gene count mismatch")
     else:
         print(f"  ✓ Gene counts match: {subgraph_num_genes}")
 
@@ -146,11 +149,9 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
         errors.append(
             f"Reaction count mismatch: Subgraph={subgraph_num_reactions}, Lazy (valid)={lazy_num_reactions_valid}"
         )
-        print(f"  ✗ Reaction count mismatch")
+        print("  ✗ Reaction count mismatch")
     else:
-        print(
-            f"  ✓ Reaction counts match: {subgraph_num_reactions} valid reactions"
-        )
+        print(f"  ✓ Reaction counts match: {subgraph_num_reactions} valid reactions")
         print(
             f"    (Lazy has {lazy_num_reactions_invalid} additional invalid reactions marked by mask)"
         )
@@ -164,7 +165,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
         errors.append(
             f"Metabolite count mismatch: Subgraph={subgraph_num_metabolites}, Lazy={lazy_num_metabolites}"
         )
-        print(f"  ✗ Metabolite count mismatch")
+        print("  ✗ Metabolite count mismatch")
     else:
         print(f"  ✓ Metabolite counts match: {subgraph_num_metabolites}")
 
@@ -174,9 +175,9 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
         errors.append(
             f"Lazy metabolites not all kept: {lazy_metabolites_kept}/{lazy_num_metabolites}"
         )
-        print(f"  ✗ Not all metabolites kept in Lazy")
+        print("  ✗ Not all metabolites kept in Lazy")
     else:
-        print(f"  ✓ All metabolites kept in Lazy")
+        print("  ✓ All metabolites kept in Lazy")
 
     # 4. Check GPR edges
     print("\nChecking GPR edges...")
@@ -189,7 +190,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
             errors.append(
                 f"GPR edge count mismatch: Subgraph={subgraph_gpr_edges}, Lazy (kept)={lazy_gpr_edges_kept}"
             )
-            print(f"  ✗ GPR edge count mismatch")
+            print("  ✗ GPR edge count mismatch")
         else:
             print(f"  ✓ GPR edge counts match: {subgraph_gpr_edges}")
             lazy_gpr_removed = lazy_gpr_edges_total - lazy_gpr_edges_kept
@@ -198,9 +199,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
     # 5. Check RMR edges
     print("\nChecking RMR edges...")
     if ("reaction", "rmr", "metabolite") in subgraph_sample.edge_types:
-        subgraph_rmr_edges = subgraph_sample[
-            "reaction", "rmr", "metabolite"
-        ].num_edges
+        subgraph_rmr_edges = subgraph_sample["reaction", "rmr", "metabolite"].num_edges
         lazy_rmr_edges_total = lazy_sample["reaction", "rmr", "metabolite"].num_edges
         lazy_rmr_edges_kept = (
             lazy_sample["reaction", "rmr", "metabolite"].mask.sum().item()
@@ -210,7 +209,7 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
             errors.append(
                 f"RMR edge count mismatch: Subgraph={subgraph_rmr_edges}, Lazy (kept)={lazy_rmr_edges_kept}"
             )
-            print(f"  ✗ RMR edge count mismatch")
+            print("  ✗ RMR edge count mismatch")
         else:
             print(f"  ✓ RMR edge counts match: {subgraph_rmr_edges}")
             lazy_rmr_removed = lazy_rmr_edges_total - lazy_rmr_edges_kept
@@ -230,13 +229,11 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
 
             if torch.equal(rmr_mask, expected_rmr_mask):
                 print(
-                    f"    ✓ RMR edge masks correctly based on source reaction validity"
+                    "    ✓ RMR edge masks correctly based on source reaction validity"
                 )
             else:
-                errors.append(
-                    "RMR edge mask does not match source reaction validity"
-                )
-                print(f"    ✗ RMR edge mask inconsistent with reaction validity")
+                errors.append("RMR edge mask does not match source reaction validity")
+                print("    ✗ RMR edge mask inconsistent with reaction validity")
                 # Debug info
                 mismatches = (rmr_mask != expected_rmr_mask).sum().item()
                 print(f"      {mismatches} edge mask mismatches")
@@ -257,16 +254,16 @@ def verify_sample_equivalence(subgraph_sample, lazy_sample, sample_idx):
                 print(f"  ✓ {et}: {subgraph_edges} edges")
 
     # Summary
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     if errors:
         print(f"Sample {sample_idx}: FAILED ✗")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
         for error in errors:
             print(f"  - {error}")
         return False
     else:
         print(f"Sample {sample_idx}: PASSED ✓")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
         return True
 
 
@@ -292,7 +289,9 @@ def main():
 
     # Find samples with invalid reactions
     print("Finding samples with invalid reactions...")
-    samples_with_invalid = find_samples_with_invalid_reactions(lazy_dataset, max_samples=100)
+    samples_with_invalid = find_samples_with_invalid_reactions(
+        lazy_dataset, max_samples=100
+    )
     print(f"Found {len(samples_with_invalid)} samples with invalid reactions:")
     for idx, num_invalid in samples_with_invalid[:10]:
         print(f"  Sample {idx}: {num_invalid} invalid reactions")
@@ -362,7 +361,9 @@ def main():
         print("✗✗ SOME TESTS FAILED ✗✗")
         print("=" * 80)
         print()
-        print("LazySubgraphRepresentation may not be equivalent to SubgraphRepresentation.")
+        print(
+            "LazySubgraphRepresentation may not be equivalent to SubgraphRepresentation."
+        )
         print("Please review the errors above.")
 
     print()

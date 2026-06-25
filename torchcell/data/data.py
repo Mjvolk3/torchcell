@@ -4,14 +4,15 @@
 # Test file: tests/torchcell/data/test_data.py
 
 import hashlib
-from typing import List
+
 from pydantic import field_validator
-from torchcell.datamodels import ModelStrict, ExperimentReferenceType
+
+from torchcell.datamodels import ExperimentReferenceType, ModelStrict
 
 
 class ExperimentReferenceIndex(ModelStrict):
     reference: ExperimentReferenceType
-    index: List[bool]
+    index: list[bool]
 
     # Use for parallel computation of a Dataset ExperimentReferenceIndices
     def combine(self, other: "ExperimentReferenceIndex"):
@@ -30,7 +31,7 @@ class ExperimentReferenceIndex(ModelStrict):
 
 
 class ReferenceIndex(ModelStrict):
-    data: List[ExperimentReferenceIndex]
+    data: list[ExperimentReferenceIndex]
 
     def __getitem__(self, index):
         return self.data[index]

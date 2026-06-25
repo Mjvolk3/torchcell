@@ -4,8 +4,6 @@
 # Test file: tests/torchcell/losses/test_diffusion_loss.py
 
 
-from typing import Dict, Optional, Tuple
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -28,7 +26,7 @@ class DiffusionLoss(nn.Module):
         *,
         lambda_diffusion: float = 1.0,
         lambda_x0: float = 0.0,
-        x0_loss: Optional[nn.Module] = None,
+        x0_loss: nn.Module | None = None,
     ) -> None:
         super().__init__()
         if lambda_diffusion <= 0.0 and lambda_x0 <= 0.0:
@@ -57,15 +55,15 @@ class DiffusionLoss(nn.Module):
         self,
         predictions: torch.Tensor,  # kept for API compatibility; unused
         targets: torch.Tensor,
-        context: Optional[torch.Tensor] = None,
+        context: torch.Tensor | None = None,
         *,
-        epoch: Optional[int] = None,  # kept for API comp.
+        epoch: int | None = None,  # kept for API comp.
         t_mode: str = "full",
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         if context is None:
             raise ValueError("context (conditioning) tensor is required.")
 
-        loss_dict: Dict[str, torch.Tensor] = {}
+        loss_dict: dict[str, torch.Tensor] = {}
         total = torch.zeros((), device=targets.device, dtype=targets.dtype)
 
         if self.lambda_diffusion > 0.0:

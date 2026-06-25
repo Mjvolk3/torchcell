@@ -1,22 +1,10 @@
 # torchcell/cell/cell.py
-import os
-import shutil
-import zipfile
-from abc import ABC, abstractmethod
 from collections.abc import Callable
-from os import environ
-from typing import List, Optional, Tuple, Union
 
-import pandas as pd
-import torch
-from attrs import define
-from torch_geometric.data import Data, InMemoryDataset, download_url, extract_zip
+from torch_geometric.data import Data, InMemoryDataset
 
 from torchcell.data_prior.sequence import SCerevisiaeGenome
-from torchcell.datasets.scerevisiae import (
-    DmfCostanzo2016Dataset,
-    SmfCostanzo2016Dataset,
-)
+from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.sequence import Genome
 
 

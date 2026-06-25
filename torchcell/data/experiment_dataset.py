@@ -3,32 +3,30 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset/experiment_dataset
 # Test file: tests/torchcell/dataset/test_experiment_dataset.py
 
-import multiprocessing as mp
-from torch_geometric.data import Data, Batch
-from torch_geometric.loader import DataLoader
 import json
 import logging
 import os.path as osp
 import pickle
-from collections.abc import Callable
-import numpy as np
-import lmdb
-import pandas as pd
-from tqdm import tqdm
-from torch_geometric.data import Dataset
-from torchcell.datamodels import Experiment, ExperimentReference
-from torchcell.sequence import GeneSet
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from functools import wraps
+
+import lmdb
+import numpy as np
+import pandas as pd
 import torch
-from torchcell.datamodels import ExperimentReferenceType, Publication
+from torch_geometric.data import Dataset
+from tqdm import tqdm
+
 from torchcell.data import ExperimentReferenceIndex, compute_sha256_hash
-from concurrent.futures import ProcessPoolExecutor
-import concurrent.futures
+from torchcell.datamodels import (
+    Experiment,
+    ExperimentReference,
+    ExperimentReferenceType,
+    Publication,
+)
 from torchcell.loader import CpuExperimentLoaderMultiprocessing
-import multiprocessing as mp
-import pickle
-from multiprocessing import Pool
+from torchcell.sequence import GeneSet
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -151,9 +149,9 @@ def post_process(func):
             index_tensor = torch.tensor(eri.index, dtype=torch.bool)
             total_index_coverage |= index_tensor
 
-        assert (
-            torch.all(total_index_coverage).item() is True
-        ), "Each item in the dataset must be covered exactly once."
+        assert torch.all(total_index_coverage).item() is True, (
+            "Each item in the dataset must be covered exactly once."
+        )
 
         return result
 
@@ -340,7 +338,7 @@ class ExperimentDataset(Dataset, ABC):
         )
 
         if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
+            with open(index_file_path) as file:
                 data = json.load(file)
                 self._experiment_reference_index = [
                     ExperimentReferenceIndex(**item) for item in data

@@ -3,22 +3,19 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/synth_leth_db
 # Test file: tests/torchcell/adapters/test_synth_leth_db.py
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher import BioCypher
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
 import logging
-from typing import Set
+import os.path as osp
+
+import yaml
+from biocypher._logger import get_logger
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
+from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datasets.scerevisiae.synth_leth_db import (
     SynthLethalityYeastSynthLethDbDataset,
     SynthRescueYeastSynthLethDbDataset,
 )
-from torchcell.adapters.cell_adapter import CellAdapter
-import yaml
-from omegaconf import OmegaConf, DictConfig
-import os.path as osp
 
 # logging
 # Get the biocypher logger
@@ -46,7 +43,7 @@ class SynthLethalityYeastSynthLethDbAdapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -82,7 +79,7 @@ class SynthRescueYeastSynthLethDbAdapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -101,13 +98,14 @@ class SynthRescueYeastSynthLethDbAdapter(CellAdapter):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    from datetime import datetime
+    import math
+    import multiprocessing as mp
     import os
     import os.path as osp
-    import multiprocessing as mp
-    import math
-    from torchcell.graph import SCerevisiaeGraph
+    from datetime import datetime
+
+    from dotenv import load_dotenv
+
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()

@@ -15,19 +15,13 @@ import numpy as np
 import torch
 from pydantic import field_validator
 from torch_geometric.data import Data, InMemoryDataset
-from torch_geometric.utils import (
-    add_self_loops,
-    from_networkx,
-    k_hop_subgraph,
-)
+from torch_geometric.utils import add_self_loops, from_networkx, k_hop_subgraph
 from tqdm import tqdm
 
-from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.data.embedding import BaseEmbeddingDataset
+from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.scerevisiae import (
-    DmfCostanzo2016Dataset,
-)
+from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
 from torchcell.sequence import GeneSet, Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -383,9 +377,9 @@ class CellDataset(Dataset):
             subset_graph.x_one_hop_pert = combined_subgraph.x
             subset_graph.edge_index_one_hop_pert = combined_subgraph.edge_index
             assert len(subset_graph.x_one_hop_pert) > 0, "x_one_hop_pert is empty"
-            assert (
-                subset_graph.edge_index_one_hop_pert.size()[-1] > 0
-            ), "edge_index_one_hop_pert is empty"
+            assert subset_graph.edge_index_one_hop_pert.size()[-1] > 0, (
+                "edge_index_one_hop_pert is empty"
+            )
         else:
             subset_graph.x_one_hop_pert = None
             subset_graph.edge_index_one_hop_pert = None
@@ -497,6 +491,7 @@ class CellDataset(Dataset):
 
 class NeoCellDataset(Dataset):
     pass
+
 
 def main():
     # genome

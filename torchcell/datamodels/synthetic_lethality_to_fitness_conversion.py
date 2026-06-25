@@ -3,15 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/synthetic_lethality_to_fitness_conversion
 # Test file: tests/torchcell/datamodels/test_synthetic_lethality_to_fitness_conversion.py
 
+from typing import TYPE_CHECKING
+
+from torchcell.datamodels.conversion import ConversionEntry, ConversionMap, Converter
 from torchcell.datamodels.schema import (
-    SyntheticLethalityExperiment,
-    SyntheticLethalityExperimentReference,
     FitnessExperiment,
     FitnessExperimentReference,
     FitnessPhenotype,
+    SyntheticLethalityExperiment,
+    SyntheticLethalityExperimentReference,
 )
-from torchcell.datamodels.conversion import Converter, ConversionEntry, ConversionMap
-from typing import Callable, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from torchcell.data.neo4j_query_raw import Neo4jQueryRaw

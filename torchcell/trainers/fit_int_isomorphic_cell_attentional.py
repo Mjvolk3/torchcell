@@ -1,14 +1,15 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-import matplotlib.pyplot as plt
-from typing import Optional
-import logging
-from torchcell.viz.visual_regression import Visualization
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
 from torchcell.timestamp import timestamp
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -25,10 +26,10 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         plot_sample_ceiling: int = 1000,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])

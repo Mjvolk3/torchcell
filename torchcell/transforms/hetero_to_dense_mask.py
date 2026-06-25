@@ -1,9 +1,8 @@
-from torch_geometric.data.datapipes import functional_transform
-from torch_geometric.transforms import BaseTransform
-from torch_geometric.data import HeteroData
-from typing import Dict, Optional
 import torch
 from torch import Tensor
+from torch_geometric.data import HeteroData
+from torch_geometric.data.datapipes import functional_transform
+from torch_geometric.transforms import BaseTransform
 
 
 @functional_transform("hetero_to_dense_mask")
@@ -17,7 +16,7 @@ class HeteroToDenseMask(BaseTransform):
             use the maximum number of nodes found for that type. (default: None)
     """
 
-    def __init__(self, num_nodes_dict: Optional[Dict[str, int]] = None) -> None:
+    def __init__(self, num_nodes_dict: dict[str, int] | None = None) -> None:
         self.num_nodes_dict = num_nodes_dict or {}
 
     def forward(self, data: HeteroData) -> HeteroData:
@@ -42,49 +41,55 @@ class HeteroToDenseMask(BaseTransform):
                 src_num_nodes = num_nodes_dict[src]
                 dst_num_nodes = num_nodes_dict[dst]
                 edge_index = store.edge_index
-                
+
                 # Create boolean dense adjacency matrix (8x memory savings)
                 adj_mask = torch.zeros(
-                    (src_num_nodes, dst_num_nodes), 
+                    (src_num_nodes, dst_num_nodes),
                     dtype=torch.bool,
-                    device=edge_index.device
+                    device=edge_index.device,
                 )
-                
+
                 # Fill the mask with valid edges
-                valid_edges = (edge_index[0] < src_num_nodes) & (edge_index[1] < dst_num_nodes)
+                valid_edges = (edge_index[0] < src_num_nodes) & (
+                    edge_index[1] < dst_num_nodes
+                )
                 valid_edge_index = edge_index[:, valid_edges]
-                
+
                 if valid_edge_index.size(1) > 0:
                     adj_mask[valid_edge_index[0], valid_edge_index[1]] = True
-                
+
                 # Store the boolean adjacency mask
                 store.adj_mask = adj_mask
-                
+
                 # KEEP the original edge_index and edge_attr for attribute reference
 
             # Handle hyperedge_index (for hypergraph/bipartite relations)
-            elif hasattr(store, "hyperedge_index") and store.hyperedge_index is not None:
+            elif (
+                hasattr(store, "hyperedge_index") and store.hyperedge_index is not None
+            ):
                 src_num_nodes = num_nodes_dict[src]
                 dst_num_nodes = num_nodes_dict[dst]
                 hyperedge_index = store.hyperedge_index
 
                 # Create a boolean bipartite incidence matrix
                 inc_mask = torch.zeros(
-                    (src_num_nodes, dst_num_nodes), 
+                    (src_num_nodes, dst_num_nodes),
                     dtype=torch.bool,
-                    device=hyperedge_index.device
+                    device=hyperedge_index.device,
                 )
 
                 # Fill in the incidence matrix from the hyperedge_index
-                valid_edges = (hyperedge_index[0] < src_num_nodes) & (hyperedge_index[1] < dst_num_nodes)
+                valid_edges = (hyperedge_index[0] < src_num_nodes) & (
+                    hyperedge_index[1] < dst_num_nodes
+                )
                 valid_he_index = hyperedge_index[:, valid_edges]
-                
+
                 if valid_he_index.size(1) > 0:
                     inc_mask[valid_he_index[0], valid_he_index[1]] = True
 
                 # Store the boolean incidence matrix
                 store.inc_mask = inc_mask
-                
+
                 # KEEP the original hyperedge_index and attributes for reference
 
         # Handle node features for each node type

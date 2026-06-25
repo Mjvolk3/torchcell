@@ -3,20 +3,21 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/cell_adapter
 # Test file: tests/torchcell/adapters/test_cell_adapter.py
 
-from tqdm import tqdm
 import hashlib
 import json
-from biocypher._create import BioCypherEdge, BioCypherNode
-import torch
-from omegaconf import OmegaConf, DictConfig
-from torchcell.loader import CpuExperimentLoaderMultiprocessing
-from concurrent.futures import ProcessPoolExecutor
-from torch_geometric.data import Dataset
-from typing import List, Tuple, Callable, Generator, Set, Optional
-from functools import wraps
 import logging
-import wandb
+from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
+from functools import wraps
+
+import wandb
+from biocypher._create import BioCypherEdge, BioCypherNode
+from omegaconf import DictConfig
+from torch_geometric.data import Dataset
+from tqdm import tqdm
+
+from torchcell.loader import CpuExperimentLoaderMultiprocessing
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -271,11 +272,11 @@ class CellAdapter:
                 wandb.log({"event": self.event, "method": method_name, "type": "edge"})
 
     @property
-    def supported_node_methods(self) -> List[str]:
+    def supported_node_methods(self) -> list[str]:
         return [method_name for method_name, _ in self.node_methods]
 
     @property
-    def supported_edge_methods(self) -> List[str]:
+    def supported_edge_methods(self) -> list[str]:
         return [method_name for method_name, _ in self.edge_methods]
 
     # nodes
@@ -296,7 +297,7 @@ class CellAdapter:
 
     def _get_genome_nodes(self) -> list[BioCypherNode]:
         nodes = []
-        seen_node_ids: Set[str] = set()
+        seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             genome_id = hashlib.sha256(
                 json.dumps(data.reference.genome_reference.model_dump()).encode("utf-8")
@@ -492,7 +493,7 @@ class CellAdapter:
 
     def _get_temperature_reference_nodes(self) -> list[BioCypherNode]:
         nodes = []
-        seen_node_ids: Set[str] = set()
+        seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             temperature_id = hashlib.sha256(
                 json.dumps(
@@ -847,7 +848,11 @@ class CellAdapter:
             "label_name": label_name,
             "label_statistic_name": label_statistic_name,
             "calmorph": json.dumps(calmorph),  # Store as JSON string
-            "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
+            "calmorph_coefficient_of_variation": json.dumps(
+                calmorph_coefficient_of_variation
+            )
+            if calmorph_coefficient_of_variation
+            else None,
             "serialized_data": json.dumps(phenotype.model_dump()),
         }
 
@@ -871,14 +876,20 @@ class CellAdapter:
             label_name = phenotype.label_name
             label_statistic_name = phenotype.label_statistic_name
             calmorph = phenotype.calmorph
-            calmorph_coefficient_of_variation = phenotype.calmorph_coefficient_of_variation
+            calmorph_coefficient_of_variation = (
+                phenotype.calmorph_coefficient_of_variation
+            )
 
             properties = {
                 "graph_level": graph_level,
                 "label_name": label_name,
                 "label_statistic_name": label_statistic_name,
                 "calmorph": json.dumps(calmorph),  # Store as JSON string
-                "calmorph_coefficient_of_variation": json.dumps(calmorph_coefficient_of_variation) if calmorph_coefficient_of_variation else None,
+                "calmorph_coefficient_of_variation": json.dumps(
+                    calmorph_coefficient_of_variation
+                )
+                if calmorph_coefficient_of_variation
+                else None,
                 "serialized_data": json.dumps(phenotype.model_dump()),
             }
 
@@ -1026,7 +1037,7 @@ class CellAdapter:
 
     def _get_environment_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []
-        seen_environment_experiment_ref_pairs: Set[tuple] = set()
+        seen_environment_experiment_ref_pairs: set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -1103,7 +1114,7 @@ class CellAdapter:
 
     def _get_genome_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []
-        seen_genome_experiment_ref_pairs: Set[tuple] = set()
+        seen_genome_experiment_ref_pairs: set[tuple] = set()
         for i, data in tqdm(enumerate(self.dataset.experiment_reference_index)):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")
@@ -1124,7 +1135,7 @@ class CellAdapter:
 
     def _get_phenotype_to_experiment_reference_edges(self) -> list[BioCypherEdge]:
         edges = []
-        seen_phenotype_experiment_ref_pairs: Set[tuple] = set()
+        seen_phenotype_experiment_ref_pairs: set[tuple] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             experiment_ref_id = hashlib.sha256(
                 json.dumps(data.reference.model_dump()).encode("utf-8")

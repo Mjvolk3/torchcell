@@ -12,7 +12,6 @@ import lmdb
 from tqdm import tqdm
 
 from torchcell.data import Dataset
-from torchcell.datamodels import ModelStrictArbitrary
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)

@@ -194,10 +194,10 @@ def main():
     print("x_nodes shape:", x_nodes.shape)
     print("Number of attention weights:", len(attn_weights_list))
     for i, graph_attn_weights in enumerate(attn_weights_list):
-        print(f"Number of graphs at layer {i+1}:", len(graph_attn_weights))
+        print(f"Number of graphs at layer {i + 1}:", len(graph_attn_weights))
         for j, attn_weights in enumerate(graph_attn_weights):
             print(
-                f"Attention weights shape for graph {j+1} at layer {i+1}:",
+                f"Attention weights shape for graph {j + 1} at layer {i + 1}:",
                 attn_weights.shape,
             )
 

@@ -132,15 +132,21 @@ class Esm2Dataset(BaseEmbeddingDataset):
                 and orf_classification in self.exclude_classifications
             ):
                 print(f"zeros for {gene_id}")
-                embeddings = torch.zeros(
-                    self.transformer.model.config.hidden_size, dtype=torch.float32
-                ).unsqueeze(0).to(self.device)  # Ensure embeddings has shape (1, hidden_size)
+                embeddings = (
+                    torch.zeros(
+                        self.transformer.model.config.hidden_size, dtype=torch.float32
+                    )
+                    .unsqueeze(0)
+                    .to(self.device)
+                )  # Ensure embeddings has shape (1, hidden_size)
             else:
                 embeddings = self.transformer.embed(
                     [protein_sequence], mean_embedding=True
                 )
 
-            embeddings = embeddings.cpu().squeeze()  # Remove extra dimensions if necessary
+            embeddings = (
+                embeddings.cpu().squeeze()
+            )  # Remove extra dimensions if necessary
 
             protein_data_dict = {self.model_name: protein_sequence}
 

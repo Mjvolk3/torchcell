@@ -3,17 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/codon_language_model
 # Test file: tests/torchcell/datasets/test_codon_language_model.py
 
-from calm import CaLM
 import os
 from collections.abc import Callable
-from typing import Optional
+
 import torch
-from pydantic import validator
+from calm import CaLM
 from torch_geometric.data import Data
 from tqdm import tqdm
-from torchcell.datamodels import ModelStrictArbitrary
+
 from torchcell.data.embedding import BaseEmbeddingDataset
-from torchcell.sequence import GeneSet, ParsedGenome
+from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
@@ -79,10 +78,10 @@ class CalmDataset(BaseEmbeddingDataset):
             data.embeddings = {self.model_name: embeddings}
             if self.pre_transform is not None:
                 data = self.pre_transform(data)
-            
+
             # Detach the tensors in the data object
             data = data.detach()
-            
+
             data_list.append(data)
 
             if (i + 1) % self.batch_size == 0 or (i + 1) == len(self.genome.gene_set):
@@ -98,6 +97,7 @@ class CalmDataset(BaseEmbeddingDataset):
                     # Save the updated data back to the file
                     torch.save({"data_list": data_list}, self.processed_paths[0])
                 data_list = []
+
 
 if __name__ == "__main__":
     genome = SCerevisiaeGenome()

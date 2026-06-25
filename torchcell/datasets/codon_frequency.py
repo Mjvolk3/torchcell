@@ -86,5 +86,5 @@ if __name__ == "__main__":
 
     yg = YeastGEM()
     H = yg.reaction_map
-    print(YeastGEM().gene_set -  SCerevisiaeGenome().gene_set)
+    print(YeastGEM().gene_set - SCerevisiaeGenome().gene_set)
     print()

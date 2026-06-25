@@ -1,13 +1,9 @@
 import json
 
-import torch
-from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
-from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 from torchcell.data_priorsequence import SCerevisiaeGenome
 from torchcell.datasets.scerevisiae import Baryshnikovna2010Dataset
-from torchcell.models import DeepSet
 from torchcell.sequence import roman_to_int
 
 # Genome and dataset

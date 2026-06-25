@@ -3,44 +3,26 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/graph.py
 # Test file: torchcell/graph/test_graph.py
 
-import glob
-import requests
-import gzip
 import json
 import logging
 import os
 import os.path as osp
 import pickle
-import shutil
-import tarfile
-import time
-from collections import defaultdict
-from datetime import datetime
-from itertools import product
-from typing import Set
-from typing import Optional
-import gffutils
-import matplotlib.pyplot as plt
-import matplotlib.ticker as ticker
-import networkx as nx
-import pandas as pd
-from attrs import define, field
-from Bio import Seq, SeqIO
-from Bio.SeqRecord import SeqRecord
-from gffutils import FeatureDB
-from gffutils.feature import Feature
-from matplotlib.patches import Patch
-from sortedcontainers import SortedDict, SortedSet
-from torch_geometric.data import download_url
-from torch_geometric.utils import from_networkx
-from tqdm import tqdm
-from torchcell.datamodels.pydant import ModelStrictArbitrary
-from torchcell.sequence import GeneSet, Genome, ParsedGenome
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-import torchcell
-from pydantic import field_validator
 from copy import deepcopy
 
+import matplotlib.pyplot as plt
+import networkx as nx
+import pandas as pd
+import requests
+from attrs import define, field
+from pydantic import field_validator
+from sortedcontainers import SortedDict, SortedSet
+from tqdm import tqdm
+
+import torchcell
+from torchcell.datamodels.pydant import ModelStrictArbitrary
+from torchcell.sequence import GeneSet, ParsedGenome
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -153,7 +135,6 @@ def filter_by_contained_genes(G_go: nx.DiGraph, n: int, gene_set: set) -> nx.DiG
 
     def compute_containment(go_term) -> set[str]:
         """Function to compute containment of a given term with its subsequent terms."""
-
         # Reverse the graph to travel in the opposite direction
         G_reverse = G.reverse(copy=False)
 
@@ -1078,9 +1059,9 @@ class SCerevisiaeGraph:
         num_level_0_nodes = len(
             [node for node in G.nodes(data=True) if node[1]["level"] == 0]
         )
-        assert (
-            num_level_0_nodes == 1
-        ), "There should be only one root node for a GO subgraph"
+        assert num_level_0_nodes == 1, (
+            "There should be only one root node for a GO subgraph"
+        )
         root_node = [node for node, data in G.nodes(data=True) if data["level"] == 0][0]
 
         # Check for each level starting from level 0, if all nodes have a path to root
@@ -1299,7 +1280,7 @@ SCEREVISIAE_GENE_GRAPH_VALID_NAMES = list(SCEREVISIAE_GENE_GRAPH_MAP.keys())
 
 
 def build_gene_multigraph(
-    graph: "SCerevisiaeGraph", graph_names: Optional[list[str]] = None
+    graph: "SCerevisiaeGraph", graph_names: list[str] | None = None
 ) -> GeneMultiGraph:
     """
     Build a GeneMultiGraph containing GeneGraph objects based on the provided graph names.
@@ -1325,7 +1306,6 @@ def build_gene_multigraph(
         name for name in graph_names if name not in SCEREVISIAE_GENE_GRAPH_MAP
     ]
     if invalid_graph_names:
-
         raise ValueError(
             f"Invalid graph type(s): {', '.join(invalid_graph_names)}. "
             f"Valid types are: {', '.join(SCEREVISIAE_GENE_GRAPH_VALID_NAMES)}"
@@ -1353,7 +1333,9 @@ def check_regulatory_nodes_have_edges() -> None:
     """
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
+
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     # Load environment variables
@@ -1402,16 +1384,8 @@ def check_regulatory_nodes_have_edges() -> None:
 
 def main() -> None:
     import os
-    import random
 
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from dotenv import load_dotenv
-
-    from torchcell.datasets.scerevisiae import (
-        DmfCostanzo2016Dataset,
-        SmfCostanzo2016Dataset,
-    )
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")

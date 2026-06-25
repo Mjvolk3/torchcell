@@ -1,32 +1,29 @@
 from .cell_adapter import CellAdapter
 from .costanzo2016_adapter import (
-    SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
     DmiCostanzo2016Adapter,
+    SmfCostanzo2016Adapter,
 )
 from .kuzmin2018_adapter import (
-    SmfKuzmin2018Adapter,
     DmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
     DmiKuzmin2018Adapter,
+    SmfKuzmin2018Adapter,
+    TmfKuzmin2018Adapter,
     TmiKuzmin2018Adapter,
 )
 from .kuzmin2020_adapter import (
-    SmfKuzmin2020Adapter,
     DmfKuzmin2020Adapter,
-    TmfKuzmin2020Adapter,
     DmiKuzmin2020Adapter,
+    SmfKuzmin2020Adapter,
+    TmfKuzmin2020Adapter,
     TmiKuzmin2020Adapter,
 )
-
+from .ohya2005_adapter import ScmdOhya2005Adapter
 from .sgd_adapter import GeneEssentialitySgdAdapter
-
 from .synth_leth_db_adapter import (
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
 )
-
-from .ohya2005_adapter import ScmdOhya2005Adapter
 
 cell_adapters = ["CellAdapter"]
 

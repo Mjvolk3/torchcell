@@ -1,10 +1,10 @@
-import torch
 import matplotlib.pyplot as plt
+import torch
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 from torch_geometric.datasets import StochasticBlockModelDataset
 from torch_geometric.utils import to_dense_adj
-from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.sparse import csr_matrix
-from torch.nn.attention.flex_attention import flex_attention, create_block_mask
 
 # Define dataset parameters
 root = "/tmp/sbm"  # Temporary directory for dataset storage
@@ -34,6 +34,7 @@ perm = torch.tensor(reverse_cuthill_mckee(sparse_adj).copy(), dtype=torch.long)
 # Apply permutation
 reordered_adj = dense_adj[perm][:, perm]
 
+
 # Now define the FlexAttention with the adjacency matrix
 def graph_adjacency_mask(score, b, h, q_idx, kv_idx, adj_matrix):
     # Check if there's an edge in the adjacency matrix
@@ -41,8 +42,10 @@ def graph_adjacency_mask(score, b, h, q_idx, kv_idx, adj_matrix):
     has_edge = adj_matrix[q_idx, kv_idx]
     return torch.where(has_edge, score, -float("inf"))
 
+
 # Using the reordered adjacency matrix
 adj_matrix = reordered_adj
+
 
 # Create a score_mod that captures the adjacency matrix
 def create_adjacency_score_mod(adj_matrix):
@@ -53,11 +56,14 @@ def create_adjacency_score_mod(adj_matrix):
             score,
             torch.tensor(-float("inf"), device=score.device, dtype=score.dtype),
         )
+
     return score_mod
+
 
 # For better performance, we can also use the mask_mod approach
 def adjacency_mask_mod(b, h, q_idx, kv_idx):
     return adj_matrix[q_idx, kv_idx] > 0  # True where an edge exists
+
 
 # Create a BlockMask for more efficient computation
 block_mask = create_block_mask(

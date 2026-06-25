@@ -4,37 +4,28 @@
 # Test file: tests/torchcell/trainers/test_fit_int_gat_diffpool_regression.py
 
 
-import math
+import logging
 import os.path as osp
+import sys
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+import torch.optim as optim
+import wandb
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
+    Metric,
     MetricCollection,
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
-from tqdm import tqdm
-import wandb
-from torchcell.losses import WeightedMSELoss
-from torchcell.viz import fitness, genetic_interaction_score
-from torchcell.losses.list_mle import ListMLELoss
-import torchcell
-from torchmetrics import Metric
-import torch
-from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
-import logging
-import sys
-from typing import Optional
-import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+import torchcell
+from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
 
@@ -78,12 +69,12 @@ class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
 
 class MultiDimNaNTolerantL1Loss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantL1Loss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
         mask = ~torch.isnan(y_true)
         n_valid = mask.sum(dim=0)
         y_true_masked = torch.where(mask, y_true, torch.zeros_like(y_true))
@@ -97,13 +88,13 @@ class MultiDimNaNTolerantL1Loss(nn.Module):
 
 class MultiDimNaNTolerantMSELoss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
         # Ensure y_pred and y_true have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
 
         # Create a mask for non-NaN values
         mask = ~torch.isnan(y_true)
@@ -130,7 +121,7 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
 
 class CombinedRegressionLoss(nn.Module):
     def __init__(self, loss_type="mse", weights=None):
-        super(CombinedRegressionLoss, self).__init__()
+        super().__init__()
         self.loss_type = loss_type
         if loss_type == "mse":
             self.loss_fn = MultiDimNaNTolerantMSELoss()
@@ -159,13 +150,15 @@ class RegressionTask(L.LightningModule):
         loss_type: str = "mse",
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
 
         self.model = model
-        self.combined_loss = CombinedRegressionLoss(loss_type=loss_type, weights=torch.ones(2))
+        self.combined_loss = CombinedRegressionLoss(
+            loss_type=loss_type, weights=torch.ones(2)
+        )
         self.current_accumulation_steps = 1
 
         metrics = MetricCollection(
@@ -450,7 +443,7 @@ class RegressionTask(L.LightningModule):
                     if i == len(bin_edges[dim_name]) - 2:
                         range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
                     else:
-                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i+1].item():.2f}"
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
                     wandb_table.add_data(range_str, mean_val, std_val)
 
             # Log the table to wandb

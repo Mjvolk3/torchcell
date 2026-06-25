@@ -1,13 +1,18 @@
-import os
 import json
-import lmdb
+import os
 from abc import ABC, abstractmethod
-from typing import Type
+
+import lmdb
 from tqdm import tqdm
-from torchcell.datamodels import ModelStrict
-from torchcell.datamodels import EXPERIMENT_TYPE_MAP, EXPERIMENT_REFERENCE_TYPE_MAP
-from torchcell.datamodels import ExperimentType, ExperimentReferenceType
-from torchcell.datamodels import Phenotype
+
+from torchcell.datamodels import (
+    EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
+    ExperimentReferenceType,
+    ExperimentType,
+    ModelStrict,
+    Phenotype,
+)
 
 
 class ExperimentInfo(ModelStrict):
@@ -42,12 +47,12 @@ class Aggregator(ABC):
 
     # TODO now that phenotype info is moved to [[torchcell.data.neo4j_cell]] we can probably remove this
     @property
-    def phenotype_info(self) -> list[Type[Phenotype]]:
+    def phenotype_info(self) -> list[type[Phenotype]]:
         if self._phenotype_info is None:
             self._phenotype_info = self._get_phenotype_info()
         return self._phenotype_info
 
-    def _get_phenotype_info(self) -> list[Type[Phenotype]]:
+    def _get_phenotype_info(self) -> list[type[Phenotype]]:
         self._init_lmdb(readonly=True)
         if self.env is None:
             return []

@@ -1,25 +1,26 @@
-from biocypher import BioCypher
+import hashlib
+import inspect
+import json
 import logging
-from dotenv import load_dotenv
+import math
+import multiprocessing as mp
 import os
 import os.path as osp
-import multiprocessing as mp
-from datetime import datetime
-import math
-import wandb
-from omegaconf import OmegaConf
-import json
-import hashlib
-import uuid
-import hydra
 import time
+import uuid
+from datetime import datetime
+
 import certifi
+import hydra
+import wandb
+from dotenv import load_dotenv
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
 from torchcell.datasets import dataset_registry
+from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs import dataset_adapter_map
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.graph import SCerevisiaeGraph
-
-import inspect
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -190,7 +191,7 @@ if __name__ == "__main__":
     main()
 
     # Read the logged file name from the file
-    with open("biocypher_file_name.txt", "r") as file:
+    with open("biocypher_file_name.txt") as file:
         file_name = file.read().strip()
 
     print(file_name)

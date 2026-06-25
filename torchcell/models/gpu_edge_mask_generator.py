@@ -14,11 +14,11 @@ Key optimization:
 - Expected speedup: 20-30x in data loading pipeline
 """
 
+import logging
+
 import torch
 import torch.nn as nn
-from typing import Dict, List, Tuple, Any
 from torch_geometric.data import HeteroData
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +67,9 @@ class GPUEdgeMaskGenerator(nn.Module):
         # Register base masks as buffers (included in model.to(device))
         self._create_base_masks(cell_graph)
 
-        log.info(f"GPUEdgeMaskGenerator initialized: {len(self.incidence_cache)} edge types")
+        log.info(
+            f"GPUEdgeMaskGenerator initialized: {len(self.incidence_cache)} edge types"
+        )
 
     def _build_incidence_cache_gpu(self, cell_graph: HeteroData) -> None:
         """
@@ -103,19 +105,25 @@ class GPUEdgeMaskGenerator(nn.Module):
                 gpu_tensors = []
                 for edges in node_to_edges:
                     if edges:
-                        tensor = torch.tensor(edges, dtype=torch.long, device=self.device)
+                        tensor = torch.tensor(
+                            edges, dtype=torch.long, device=self.device
+                        )
                         gpu_tensors.append(tensor)
                         total_elements += len(edges)
                     else:
-                        gpu_tensors.append(torch.tensor([], dtype=torch.long, device=self.device))
+                        gpu_tensors.append(
+                            torch.tensor([], dtype=torch.long, device=self.device)
+                        )
 
                 cache[edge_type] = gpu_tensors
 
         self.incidence_cache = cache
 
         # Estimate GPU memory usage
-        memory_mb = (total_elements * 8) / (1024 ** 2)  # 8 bytes per int64
-        log.info(f"Incidence cache GPU memory: {memory_mb:.2f} MB ({total_elements} elements)")
+        memory_mb = (total_elements * 8) / (1024**2)  # 8 bytes per int64
+        log.info(
+            f"Incidence cache GPU memory: {memory_mb:.2f} MB ({total_elements} elements)"
+        )
 
     def _build_vectorized_incidence_tensors(self) -> None:
         """
@@ -127,27 +135,29 @@ class GPUEdgeMaskGenerator(nn.Module):
         self.incidence_tensors = {}
         self.incidence_masks = {}  # Track valid vs padded positions
 
-        num_genes = len(list(self.incidence_cache.values())[0]) if self.incidence_cache else 0
+        num_genes = (
+            len(list(self.incidence_cache.values())[0]) if self.incidence_cache else 0
+        )
 
         for edge_type in self.incidence_cache.keys():
             node_to_edges = self.incidence_cache[edge_type]
 
             # Find max edges per node for padding
-            max_edges = max(len(edges) for edges in node_to_edges) if node_to_edges else 0
+            max_edges = (
+                max(len(edges) for edges in node_to_edges) if node_to_edges else 0
+            )
 
             # Create padded tensor
             incidence_tensor = torch.full(
                 (num_genes, max_edges),
                 -1,  # Padding value
                 dtype=torch.long,
-                device=self.device
+                device=self.device,
             )
 
             # Create mask for valid positions
             incidence_mask = torch.zeros(
-                (num_genes, max_edges),
-                dtype=torch.bool,
-                device=self.device
+                (num_genes, max_edges), dtype=torch.bool, device=self.device
             )
 
             # Fill tensor with actual edge indices
@@ -160,8 +170,10 @@ class GPUEdgeMaskGenerator(nn.Module):
             self.incidence_tensors[edge_type] = incidence_tensor
             self.incidence_masks[edge_type] = incidence_mask
 
-            log.debug(f"Edge type {edge_type}: tensor shape {incidence_tensor.shape}, "
-                     f"density {incidence_mask.float().mean().item():.3f}")
+            log.debug(
+                f"Edge type {edge_type}: tensor shape {incidence_tensor.shape}, "
+                f"density {incidence_mask.float().mean().item():.3f}"
+            )
 
     def _create_base_masks(self, cell_graph: HeteroData) -> None:
         """
@@ -174,14 +186,12 @@ class GPUEdgeMaskGenerator(nn.Module):
             base_mask = torch.ones(num_edges, dtype=torch.bool, device=self.device)
 
             # Register as buffer (automatically moved with model.to(device))
-            buffer_name = f'base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}'
+            buffer_name = f"base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}"
             self.register_buffer(buffer_name, base_mask)
 
     def generate_batch_masks(
-        self,
-        batch_perturbation_indices: List[torch.Tensor],
-        batch_size: int,
-    ) -> Dict[Tuple[str, str, str], torch.Tensor]:
+        self, batch_perturbation_indices: list[torch.Tensor], batch_size: int
+    ) -> dict[tuple[str, str, str], torch.Tensor]:
         """
         Generate edge masks for a batch of perturbations.
 
@@ -209,7 +219,7 @@ class GPUEdgeMaskGenerator(nn.Module):
         # Generate mask for each sample, then concatenate
         for edge_type in self.incidence_cache.keys():
             # Get base mask
-            buffer_name = f'base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}'
+            buffer_name = f"base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}"
             base_mask = getattr(self, buffer_name)
 
             # Generate mask for each sample in batch
@@ -252,10 +262,8 @@ class GPUEdgeMaskGenerator(nn.Module):
         return batch_masks
 
     def generate_batch_masks_vectorized(
-        self,
-        batch_perturbation_indices: List[torch.Tensor],
-        batch_size: int,
-    ) -> Dict[Tuple[str, str, str], torch.Tensor]:
+        self, batch_perturbation_indices: list[torch.Tensor], batch_size: int
+    ) -> dict[tuple[str, str, str], torch.Tensor]:
         """
         VECTORIZED: Generate edge masks with zero Python loops and zero .item() calls.
 
@@ -278,40 +286,49 @@ class GPUEdgeMaskGenerator(nn.Module):
 
         # Flatten all perturbation indices and create batch assignments
         # This allows us to process all perturbations in parallel
-        pert_lengths = torch.tensor([len(p) for p in batch_perturbation_indices],
-                                   dtype=torch.long, device=self.device)
+        pert_lengths = torch.tensor(
+            [len(p) for p in batch_perturbation_indices],
+            dtype=torch.long,
+            device=self.device,
+        )
 
         # Skip if no perturbations
         if pert_lengths.sum() == 0:
             # Return all-True masks
             for edge_type in self.incidence_tensors.keys():
-                buffer_name = f'base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}'
+                buffer_name = (
+                    f"base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}"
+                )
                 base_mask = getattr(self, buffer_name)
                 batch_masks[edge_type] = base_mask.repeat(batch_size)
             return batch_masks
 
         # Concatenate all perturbation indices
         # DEFENSIVE: Force contiguous GPU tensors to ensure proper device backing
-        all_pert_indices = torch.cat([
-            p.to(self.device, non_blocking=False).contiguous()
-            for p in batch_perturbation_indices if len(p) > 0
-        ])
+        all_pert_indices = torch.cat(
+            [
+                p.to(self.device, non_blocking=False).contiguous()
+                for p in batch_perturbation_indices
+                if len(p) > 0
+            ]
+        )
 
         # EXTRA DEFENSIVE: Ensure concatenated result is on the right device
         # torch.cat can sometimes return CPU tensor if inputs are mixed
         if all_pert_indices.device != self.device:
-            all_pert_indices = all_pert_indices.to(self.device, non_blocking=False).contiguous()
+            all_pert_indices = all_pert_indices.to(
+                self.device, non_blocking=False
+            ).contiguous()
 
         # Create batch assignment for each perturbation
         batch_assignment = torch.repeat_interleave(
-            torch.arange(batch_size, device=self.device),
-            pert_lengths
+            torch.arange(batch_size, device=self.device), pert_lengths
         )
 
         # Process each edge type
         for edge_type in self.incidence_tensors.keys():
             # Get base mask and incidence data
-            buffer_name = f'base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}'
+            buffer_name = f"base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}"
             base_mask = getattr(self, buffer_name)
             num_edges = len(base_mask)
 
@@ -322,20 +339,30 @@ class GPUEdgeMaskGenerator(nn.Module):
             # CRITICAL FIX: Ensure indices are on the same device as incidence_tensor
             # In DDP mode, tensors can be on different GPUs (cuda:0, cuda:1, etc.)
             if all_pert_indices.device != incidence_tensor.device:
-                log.debug(f"Device mismatch detected: all_pert_indices on {all_pert_indices.device}, "
-                         f"incidence_tensor on {incidence_tensor.device}. Fixing...")
-                all_pert_indices = all_pert_indices.to(incidence_tensor.device, non_blocking=False)
+                log.debug(
+                    f"Device mismatch detected: all_pert_indices on {all_pert_indices.device}, "
+                    f"incidence_tensor on {incidence_tensor.device}. Fixing..."
+                )
+                all_pert_indices = all_pert_indices.to(
+                    incidence_tensor.device, non_blocking=False
+                )
 
             # Also ensure batch_assignment is on the same device
             if batch_assignment.device != incidence_tensor.device:
-                log.debug(f"Device mismatch detected: batch_assignment on {batch_assignment.device}, "
-                         f"incidence_tensor on {incidence_tensor.device}. Fixing...")
-                batch_assignment = batch_assignment.to(incidence_tensor.device, non_blocking=False)
+                log.debug(
+                    f"Device mismatch detected: batch_assignment on {batch_assignment.device}, "
+                    f"incidence_tensor on {incidence_tensor.device}. Fixing..."
+                )
+                batch_assignment = batch_assignment.to(
+                    incidence_tensor.device, non_blocking=False
+                )
 
             # Bounds check (vectorized)
             max_node_idx = incidence_tensor.shape[0] - 1
             if (all_pert_indices < 0).any() or (all_pert_indices > max_node_idx).any():
-                invalid_idx = all_pert_indices[(all_pert_indices < 0) | (all_pert_indices > max_node_idx)]
+                invalid_idx = all_pert_indices[
+                    (all_pert_indices < 0) | (all_pert_indices > max_node_idx)
+                ]
                 raise IndexError(
                     f"Perturbation indices {invalid_idx.tolist()} out of bounds [0, {max_node_idx}]. "
                     f"Edge type: {edge_type}"
@@ -369,9 +396,8 @@ class GPUEdgeMaskGenerator(nn.Module):
         return batch_masks
 
     def generate_single_mask(
-        self,
-        perturbation_indices: torch.Tensor
-    ) -> Dict[Tuple[str, str, str], torch.Tensor]:
+        self, perturbation_indices: torch.Tensor
+    ) -> dict[tuple[str, str, str], torch.Tensor]:
         """
         Generate edge masks for a single sample.
 
@@ -391,7 +417,7 @@ class GPUEdgeMaskGenerator(nn.Module):
 
         for edge_type in self.incidence_cache.keys():
             # Get base mask (all True)
-            buffer_name = f'base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}'
+            buffer_name = f"base_mask_{edge_type[0]}__{edge_type[1]}__{edge_type[2]}"
             base_mask = getattr(self, buffer_name)
 
             # Clone for this sample
@@ -408,7 +434,7 @@ class GPUEdgeMaskGenerator(nn.Module):
 
         return edge_mask_dict
 
-    def get_memory_usage(self) -> Dict[str, float]:
+    def get_memory_usage(self) -> dict[str, float]:
         """
         Get estimated GPU memory usage.
 
@@ -423,14 +449,14 @@ class GPUEdgeMaskGenerator(nn.Module):
             sum(len(tensor) for tensor in node_to_edges)
             for node_to_edges in self.incidence_cache.values()
         )
-        cache_mb = (cache_elements * 8) / (1024 ** 2)  # int64 = 8 bytes
+        cache_mb = (cache_elements * 8) / (1024**2)  # int64 = 8 bytes
 
         # Count base mask elements
         mask_elements = sum(
-            getattr(self, f'base_mask_{et[0]}__{et[1]}__{et[2]}').numel()
+            getattr(self, f"base_mask_{et[0]}__{et[1]}__{et[2]}").numel()
             for et in self.incidence_cache.keys()
         )
-        mask_mb = (mask_elements * 1) / (1024 ** 2)  # bool = 1 byte
+        mask_mb = (mask_elements * 1) / (1024**2)  # bool = 1 byte
 
         return {
             "incidence_cache_mb": cache_mb,

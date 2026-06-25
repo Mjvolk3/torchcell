@@ -1,12 +1,14 @@
-from dotenv import load_dotenv
 import os
 import os.path as osp
 import shutil
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
 DATA_ROOT = os.getenv("DATA_ROOT")
 WORKSPACE_DIR = os.getenv("WORKSPACE_DIR")
+
 
 def main() -> None:
     # Create directories
@@ -22,7 +24,7 @@ def main() -> None:
         osp.join(DATA_ROOT, "database/metrics"),
         osp.join(DATA_ROOT, "database/import"),
     ]
-    
+
     for dir_path in directories:
         os.makedirs(dir_path, exist_ok=True)
 
@@ -44,6 +46,7 @@ def main() -> None:
     shutil.copytree(src_biocypher, dst_biocypher)
 
     print("Setup completed successfully.")
+
 
 if __name__ == "__main__":
     main()

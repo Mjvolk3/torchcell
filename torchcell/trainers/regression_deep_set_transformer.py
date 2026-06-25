@@ -7,6 +7,7 @@ import lightning as L
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+import wandb
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -16,12 +17,12 @@ from torchmetrics import (
     SpearmanCorrCoef,
 )
 
-import wandb
+import torchcell
 from torchcell.losses import WeightedMSELoss
 
-import torchcell
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class RegressionTaskDeepSetTransformer(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""
@@ -273,7 +274,7 @@ class RegressionTaskDeepSetTransformer(L.LightningModule):
             mask = (predictions >= bins[i]) & (predictions < bins[i + 1])
             binned_values = true_values[mask].cpu().numpy()
             binned_true_values.append(binned_values)
-            bin_labels.append(f"{bins[i]}-{bins[i+1]}")
+            bin_labels.append(f"{bins[i]}-{bins[i + 1]}")
 
         # Create a box plot using matplotlib
         fig, ax = plt.subplots()

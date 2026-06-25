@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.optim.lr_scheduler import _LRScheduler
 
@@ -40,7 +41,7 @@ class CosineAnnealingWarmupRestarts(_LRScheduler):
         self.cycle = 0  # cycle count
         self.step_in_cycle = last_epoch  # step size of the current cycle
 
-        super(CosineAnnealingWarmupRestarts, self).__init__(optimizer, last_epoch)
+        super().__init__(optimizer, last_epoch)
 
         # set learning rate min_lr
         self.init_lr()

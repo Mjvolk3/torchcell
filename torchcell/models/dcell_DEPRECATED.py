@@ -2,12 +2,11 @@
 # [[torchcell.models.dcell]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dcell.py
 # Test file: torchcell/models/test_dcell.py
-from collections import OrderedDict
 
 import networkx as nx
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+from torch_geometric.data import Batch
 from torch_geometric.utils import from_networkx
 
 from torchcell.graph import (
@@ -247,16 +246,9 @@ def dcell_from_networkx(G_mutant):
 def main():
     import os
     import os.path as osp
-    import random
 
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from dotenv import load_dotenv
 
-    from torchcell.datasets.scerevisiae import (
-        DmfCostanzo2016Dataset,
-        SmfCostanzo2016Dataset,
-    )
     from torchcell.losses import DCellLoss
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

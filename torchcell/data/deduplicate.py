@@ -3,39 +3,19 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/deduplicate
 # Test file: tests/torchcell/data/test_deduplicate.py
 
-import hashlib
-import numpy as np
-from typing import Any
+import json
 import logging
-import json
-from torchcell.datamodels import (
-    Genotype,
-    FitnessExperiment,
-    FitnessExperimentReference,
-    FitnessPhenotype,
-    MeanDeletionPerturbation,
-    GeneInteractionPhenotype,
-    GeneInteractionExperiment,
-    GeneInteractionExperimentReference,
-)
-from abc import ABC, abstractmethod
-from scipy.stats import t
-import os
-import lmdb
-import pickle
-from abc import ABC, abstractmethod
-from typing import Any
-from tqdm import tqdm
-import json
 import os
 import os.path as osp
+from abc import ABC, abstractmethod
+from typing import Any
+
 import lmdb
 from tqdm import tqdm
-from abc import ABC, abstractmethod
-from typing import Any, Union
+
 from torchcell.datamodels.schema import (
-    EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
 )
 
 log = logging.getLogger(__name__)
@@ -145,7 +125,7 @@ class Deduplicator(ABC):
             f"Total number of instances after deduplication: {len(deduplicated_data)}"
         )
 
-    def __getitem__(self, index: Union[int, slice, list]):
+    def __getitem__(self, index: int | slice | list):
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
             return self._get_record_by_index(index)

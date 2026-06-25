@@ -4,18 +4,17 @@
 # Test file: tests/torchcell/knowledge_graphs/test_create_pypy_scerevisiae_kg.py
 
 
+import logging
+
 from biocypher import BioCypher
+from torchcell.dataset_readers import LmdbDatasetReader
 from torchcell.pypy_adapters import (
-    SmfCostanzo2016Adapter,
     DmfCostanzo2016Adapter,
-    SmfKuzmin2018Adapter,
     DmfKuzmin2018Adapter,
+    SmfCostanzo2016Adapter,
+    SmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
-from torchcell.dataset_readers import LmdbDatasetReader
-
-import logging
-from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")

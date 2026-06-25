@@ -3,17 +3,17 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/dango
 # Test file: tests/torchcell/models/test_dango.py
 
+import os
+import os.path as osp
+
+import hydra
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Union
-from torch_geometric.nn import SAGEConv
+from omegaconf import DictConfig
 from torch_geometric.data import HeteroData
+from torch_geometric.nn import SAGEConv
 from torch_scatter import scatter_mean
-import hydra
-import os
-import os.path as osp
-from omegaconf import DictConfig, OmegaConf
 
 
 class DangoPreTrain(nn.Module):
@@ -28,7 +28,7 @@ class DangoPreTrain(nn.Module):
     4. Uses the output embeddings for downstream tasks
     """
 
-    def __init__(self, gene_num: int, edge_types: List[str], hidden_channels: int = 64):
+    def __init__(self, gene_num: int, edge_types: list[str], hidden_channels: int = 64):
         super().__init__()
 
         # Initialize model parameters
@@ -99,7 +99,7 @@ class DangoPreTrain(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData
-    ) -> Dict[str, Union[Dict[str, torch.Tensor], torch.Tensor]]:
+    ) -> dict[str, dict[str, torch.Tensor] | torch.Tensor]:
         """
         Forward pass for the DangoPreTrain model
 
@@ -188,7 +188,7 @@ class MetaEmbedding(nn.Module):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
-    def forward(self, embeddings_dict: Dict[str, torch.Tensor]) -> torch.Tensor:
+    def forward(self, embeddings_dict: dict[str, torch.Tensor]) -> torch.Tensor:
         """
         Forward pass to integrate embeddings from multiple networks
 
@@ -409,7 +409,7 @@ class Dango(nn.Module):
     def __init__(
         self,
         gene_num: int,
-        edge_types: List[str],
+        edge_types: list[str],
         hidden_channels: int = 64,
         num_heads: int = 4,
     ):
@@ -451,7 +451,7 @@ class Dango(nn.Module):
 
     def forward(
         self, cell_graph: HeteroData, batch
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass for the DANGO model
 
@@ -496,7 +496,7 @@ class Dango(nn.Module):
         return interaction_scores, outputs
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """
         Count the number of trainable parameters in the model
         """
@@ -526,20 +526,16 @@ def main(cfg: DictConfig):
     Main function to test the DANGO model with overfitting on a batch
     """
     import os
-    import matplotlib.pyplot as plt
-    from torchcell.scratch.load_batch_005 import load_sample_data_batch
-    import torch.optim as optim
-    import numpy as np
     from datetime import datetime
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import torch.optim as optim
     from dotenv import load_dotenv
 
     # Import all scheduler types for easy toggling
-    from torchcell.losses.dango import (
-        DangoLoss,
-        PreThenPost,
-        LinearUntilUniform,
-        LinearUntilFlipped,
-    )
+    from torchcell.losses.dango import DangoLoss
+    from torchcell.scratch.load_batch_005 import load_sample_data_batch
 
     load_dotenv()
 
@@ -714,7 +710,7 @@ def main(cfg: DictConfig):
         # Print progress and generate plots at intervals
         if (epoch + 1) % plot_interval == 0 or epoch == epochs - 1:
             print(
-                f"Epoch {epoch+1}/{epochs}, Total Loss: {total_loss.item():.4f}, "
+                f"Epoch {epoch + 1}/{epochs}, Total Loss: {total_loss.item():.4f}, "
                 f"Recon Loss: {recon_loss.item():.4f}, Interaction Loss: {interaction_loss.item():.4f}, "
                 f"Alpha: {alpha.item():.2f}, Weighted Recon: {weighted_recon_loss.item():.4f}, "
                 f"Weighted Interaction: {weighted_interaction_loss.item():.4f}"
@@ -758,7 +754,7 @@ def main(cfg: DictConfig):
             )
             plt.xlabel("Epoch")
             plt.ylabel("Loss Value")
-            plt.title("Weighted Component Losses (alpha={:.2f})".format(alpha.item()))
+            plt.title(f"Weighted Component Losses (alpha={alpha.item():.2f})")
             plt.grid(True)
             plt.legend()
 
@@ -801,7 +797,7 @@ def main(cfg: DictConfig):
 
                     plt.xlabel("True Interaction Scores")
                     plt.ylabel("Predicted Interaction Scores")
-                    plt.title(f"Epoch {epoch+1}: MSE={mse:.6f}, MAE={mae:.6f}")
+                    plt.title(f"Epoch {epoch + 1}: MSE={mse:.6f}, MAE={mae:.6f}")
                     plt.grid(True)
 
                     # Add error distribution
@@ -815,7 +811,7 @@ def main(cfg: DictConfig):
 
                     # Save the combined figure
                     plt.tight_layout()
-                    plt.savefig(os.path.join(loss_dir, f"loss_epoch_{epoch+1}.png"))
+                    plt.savefig(os.path.join(loss_dir, f"loss_epoch_{epoch + 1}.png"))
                     plt.close()
 
                     # Also save separate correlation plot for specific directory
@@ -828,11 +824,11 @@ def main(cfg: DictConfig):
                     plt.plot([min_val, max_val], [min_val, max_val], "r--")
                     plt.xlabel("True Interaction Scores")
                     plt.ylabel("Predicted Interaction Scores")
-                    plt.title(f"Epoch {epoch+1}: MSE={mse:.6f}, MAE={mae:.6f}")
+                    plt.title(f"Epoch {epoch + 1}: MSE={mse:.6f}, MAE={mae:.6f}")
                     plt.grid(True)
                     plt.savefig(
                         os.path.join(
-                            correlation_dir, f"correlation_epoch_{epoch+1}.png"
+                            correlation_dir, f"correlation_epoch_{epoch + 1}.png"
                         )
                     )
                     plt.close()

@@ -1,7 +1,8 @@
+from typing import Literal
+
 import torch
 from torch import Tensor
 from torchmetrics.metric import Metric
-from typing import Tuple, Literal, Optional, Any
 
 
 class NaNTolerantMetricBase(Metric):
@@ -20,7 +21,7 @@ class NaNTolerantMetricBase(Metric):
     def _create_tensor_on_device(self, value, *shape):
         return torch.full(shape, value, device=self._device_buffer.device)
 
-    def _prepare_inputs(self, preds: Tensor, target: Tensor) -> Tuple[Tensor, Tensor]:
+    def _prepare_inputs(self, preds: Tensor, target: Tensor) -> tuple[Tensor, Tensor]:
         """Handle NaN values and convert predictions to appropriate format."""
         self._track_device(preds)
         device = self._device_buffer.device

@@ -199,7 +199,10 @@ def test_nsa_encoder_with_batched_graphs(simple_graph):
     # Forward pass with batch information
     with torch.no_grad():
         node_embeddings = encoder(
-            batch.x, batch.edge_index, None, batch.batch  # No edge attributes
+            batch.x,
+            batch.edge_index,
+            None,
+            batch.batch,  # No edge attributes
         )
 
     # Check output shape

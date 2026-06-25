@@ -3,15 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/dcell_regression_slim.py
 # Test file: torchcell/trainers/test_dcell_regression_slim.py
 
-import math
 import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+
+# from torchmetrics.regression import PearsonCorrCoef, SpearmanCorrCoef
+import wandb
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
@@ -20,19 +20,15 @@ from torchmetrics import (
     SpearmanCorrCoef,
 )
 
-# from torchmetrics.regression import PearsonCorrCoef, SpearmanCorrCoef
-from tqdm import tqdm
+import torchcell
 
-import wandb
 # TODO name change
 # from torchcell.losses import DCellLoss, WeightedMSELoss
 from torchcell.losses import DCellLoss
-from torchcell.viz import fitness, genetic_interaction_score
 
-import torchcell
-
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class DCellRegressionSlimTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""

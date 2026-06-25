@@ -1,7 +1,7 @@
-import os
 import argparse
-from tqdm import tqdm
+import os
 from concurrent.futures import ThreadPoolExecutor
+
 
 def delete_file(file_path):
     if os.path.exists(file_path):  # Check if file exists
@@ -9,14 +9,25 @@ def delete_file(file_path):
     else:
         print(f"File {file_path} does not exist.")
 
+
 def delete_files(files):
     with ThreadPoolExecutor() as executor:
-        list(executor.map(delete_file, files), total=len(files), desc="Deleting files", unit="file")
+        list(
+            executor.map(delete_file, files),
+            total=len(files),
+            desc="Deleting files",
+            unit="file",
+        )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Delete a subset of files.")
-    parser.add_argument("path", help="Path to the directory containing files to delete.")
-    parser.add_argument("--task-id", type=int, help="ID of this task (starting from 1).")
+    parser.add_argument(
+        "path", help="Path to the directory containing files to delete."
+    )
+    parser.add_argument(
+        "--task-id", type=int, help="ID of this task (starting from 1)."
+    )
     parser.add_argument("--total-tasks", type=int, help="Total number of tasks.")
     args = parser.parse_args()
 

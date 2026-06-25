@@ -1,25 +1,18 @@
+import logging
+import os.path as osp
+import sys
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
-from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-from torchcell.metrics.nan_tolerant_metrics import (
-    NaNTolerantMSE,
-    NaNTolerantMAE,
-    NaNTolerantRMSE,
-    NaNTolerantPearsonCorrCoef,
-    NaNTolerantSpearmanCorrCoef,
-)
-import logging
-import sys
-import torch.optim as optim
-from typing import Optional
-import os.path as osp
+from torchmetrics import MetricCollection
+
 import torchcell
+from torchcell.metrics.nan_tolerant_metrics import NaNTolerantMSE
 from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
@@ -98,7 +91,7 @@ class RegressionTask(L.LightningModule):
         boxplot_every_n_epochs: int = 1,
         loss_func: nn.Module = None,
         intermediate_loss_weight: float = 0.1,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
         super().__init__()
@@ -111,7 +104,7 @@ class RegressionTask(L.LightningModule):
         metrics = MetricCollection(
             {
                 # "RMSE": NaNTolerantRMSE(),
-                "MSE": NaNTolerantMSE(),
+                "MSE": NaNTolerantMSE()
                 # "MAE": NaNTolerantMAE(),
                 # "PearsonR": NaNTolerantPearsonCorrCoef(),
                 # # "SpearmanR": NaNTolerantSpearmanCorrCoef(),
@@ -216,29 +209,31 @@ class RegressionTask(L.LightningModule):
         batch_size = x.size(0)
 
         # Logging
-        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True) # OK
-        self.log(f"{stage}/head_loss", head_loss, batch_size=batch_size, sync_dist=True) # OK
+        self.log(f"{stage}/loss", loss, batch_size=batch_size, sync_dist=True)  # OK
+        self.log(
+            f"{stage}/head_loss", head_loss, batch_size=batch_size, sync_dist=True
+        )  # OK
         self.log(
             f"{stage}/intermediate_loss",
             intermediate_losses,
             batch_size=batch_size,
             sync_dist=True,
-        ) # OK
+        )  # OK
         self.log(
             f"{stage}/graph_losses", graph_losses, batch_size=batch_size, sync_dist=True
-        ) # OK
+        )  # OK
         self.log(
             f"{stage}/fitness_loss",
             dim_losses[0],
             batch_size=batch_size,
             sync_dist=True,
-        ) # OK
+        )  # OK
         self.log(
             f"{stage}/gene_interaction_loss",
             dim_losses[1],
             batch_size=batch_size,
             sync_dist=True,
-        ) # OK
+        )  # OK
 
         # Log pooling information
         device = next(self.parameters()).device  # or size.device
@@ -250,7 +245,7 @@ class RegressionTask(L.LightningModule):
                     mean_size,
                     batch_size=batch_size,
                     sync_dist=True,
-                ) # OK after device
+                )  # OK after device
 
         # Update metrics
         metrics = getattr(self, f"{stage}_metrics")
@@ -392,7 +387,7 @@ class RegressionTask(L.LightningModule):
                     if i == len(bin_edges[dim_name]) - 2:
                         range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
                     else:
-                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i+1].item():.2f}"
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
                     wandb_table.add_data(range_str, mean_val, std_val)
 
             # Log the table to wandb

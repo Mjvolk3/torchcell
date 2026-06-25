@@ -19,7 +19,7 @@ from tqdm import tqdm
 ##############################--Encoders--####################################
 class CategoricalEncoder(torch.nn.Module):
     def __init__(self, emb_dim, full_feature_dims):
-        super(CategoricalEncoder, self).__init__()
+        super().__init__()
         self.embedding_list = torch.nn.ModuleList()
         for i, dim in enumerate(full_feature_dims):
             emb = torch.nn.Embedding(dim, emb_dim)
@@ -42,7 +42,7 @@ def regulators_edge_dict() -> nx.DiGraph:
     G = nx.Graph()
     G.add_nodes_from(gene_list)
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
             regulators = [attrs["regulators"] for attrs in data.values()][0]
             # initialize lists
@@ -97,7 +97,7 @@ def protein_interactions_edge_dict() -> nx.DiGraph:
     G = nx.Graph()
     G.add_nodes_from(gene_list)
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
             physical_interactions = [
                 attrs["physical_interactions"] for attrs in data.values()
@@ -155,7 +155,7 @@ def gene_interactions_edge_dict() -> nx.DiGraph:
     G = nx.Graph()
     G.add_nodes_from(gene_list)
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
             gene_interactions = [attrs["gene_interactions"] for attrs in data.values()][
                 0
@@ -253,7 +253,7 @@ def get_synthetic_lethal() -> list:
     G.add_nodes_from(gene_list)
     synthetic_lethal = []
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
             gene_interactions = [attrs["gene_interactions"] for attrs in data.values()][
                 0
@@ -268,14 +268,9 @@ def get_synthetic_lethal() -> list:
                         if v == "inviable":
                             interactions_details_phenotype.append(v)
 
-            for ggi in zip(
-                participant,
-                interactions_details_phenotype,
-            ):
+            for ggi in zip(participant, interactions_details_phenotype):
                 if gene in G.nodes and ggi[0] in G.nodes:
-                    edge_dict = {
-                        "interactions_details_phenotype": ggi[1],
-                    }
+                    edge_dict = {"interactions_details_phenotype": ggi[1]}
                     genes_inviable = [
                         [[gene, ggi[0]], [v]] for k, v in edge_dict.items()
                     ]
@@ -299,7 +294,7 @@ def protein_half_life_df(gene_list: list) -> tuple:
     print("protein half life features:")
     df_protein_half_life = pd.DataFrame()
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
         protein_half_life = [attrs["protein_half_life"] for attrs in data.values()][0]
         df = pd.DataFrame(protein_half_life)
@@ -349,7 +344,7 @@ def median_protein_abundance_df(gene_list: list) -> tuple:
     print("median protein abundance features:")
     df_median_protein_abundance = pd.DataFrame()
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
         median_protein_abundance = [
             attrs["median_protein_abundance"] for attrs in data.values()
@@ -360,9 +355,9 @@ def median_protein_abundance_df(gene_list: list) -> tuple:
         (~df_median_protein_abundance["proteins.median"].isna())
     ]
     df_clean = df_median_protein_abundance.copy()
-    df_clean.loc[
-        df_clean["proteins.MAD"].isna(), "proteins.MAD"
-    ] = df_median_protein_abundance["proteins.MAD"].mean()
+    df_clean.loc[df_clean["proteins.MAD"].isna(), "proteins.MAD"] = (
+        df_median_protein_abundance["proteins.MAD"].mean()
+    )
     df_clean["proteins.MAD"].isna().sum()
     df_clean = df_clean[
         ["secondaryIdentifier", "qualifier", "proteins.median", "proteins.MAD"]
@@ -393,7 +388,7 @@ def chromosomal_location_df(gene_list: list) -> tuple:
     print("chromosomal location features:")
     df_chromosomal_location = pd.DataFrame()
     for gene in tqdm(gene_list):
-        with open(f"data/preprocessed/node_ym_attrs/{gene}.json", "r") as f:
+        with open(f"data/preprocessed/node_ym_attrs/{gene}.json") as f:
             data = json.load(f)
         chromosomal_location = [
             attrs["chromosomal_location"] for attrs in data.values()
@@ -629,10 +624,7 @@ def join_edge_node_reprs(data_edge: Data, data_node: Data):
 
 
 def nx_regulators_to_torch(
-    enc: str = "lookup",
-    emb_dim: int = 2,
-    attr_included_names: list = None,
-    save=True,
+    enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
     # enc: ["lookup", "ordinal","one_hot"]
     # One hot encoding regulators
@@ -695,10 +687,7 @@ def nx_regulators_to_torch(
 
 
 def nx_protein_interactions_to_torch(
-    enc: str = "lookup",
-    emb_dim: int = 2,
-    attr_included_names: list = None,
-    save=True,
+    enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
     # One hot encoding protein interactions
     # default behavior is to include the all one_hot features inside conditional
@@ -757,10 +746,7 @@ def nx_protein_interactions_to_torch(
 
 
 def nx_gene_interactions_to_torch(
-    enc: str = "lookup",
-    emb_dim: int = 2,
-    attr_included_names: list = None,
-    save=True,
+    enc: str = "lookup", emb_dim: int = 2, attr_included_names: list = None, save=True
 ):
     # One hot encoding protein interactions
     # default behavior is to include the all one_hot features inside conditional
@@ -877,31 +863,19 @@ def nx_attr_to_torch(
     print(f"Converting {graph} to torch Data:")
     if graph == "regulators":
         data = nx_regulators_to_torch(
-            enc=enc,
-            emb_dim=emb_dim,
-            attr_included_names=attr_included_names,
-            save=save,
+            enc=enc, emb_dim=emb_dim, attr_included_names=attr_included_names, save=save
         )
     elif graph == "protein_interactions":
         data = nx_protein_interactions_to_torch(
-            enc=enc,
-            emb_dim=emb_dim,
-            attr_included_names=attr_included_names,
-            save=save,
+            enc=enc, emb_dim=emb_dim, attr_included_names=attr_included_names, save=save
         )
     elif graph == "gene_interactions":
         data = nx_gene_interactions_to_torch(
-            enc=enc,
-            emb_dim=emb_dim,
-            attr_included_names=attr_included_names,
-            save=save,
+            enc=enc, emb_dim=emb_dim, attr_included_names=attr_included_names, save=save
         )
     elif graph == "yeastmine_node":
         data = node_reprs_to_data(
-            enc=enc,
-            emb_dim=emb_dim,
-            attr_included_names=attr_included_names,
-            save=save,
+            enc=enc, emb_dim=emb_dim, attr_included_names=attr_included_names, save=save
         )
     else:
         raise ValueError("graph not found")

@@ -4,48 +4,20 @@
 # Test file: tests/torchcell/transforms/test_regression_to_classification_coo.py
 
 
-import numpy as np
-import torch
-import pandas as pd
-from typing import Dict, List, Literal, Optional
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform
-from abc import ABC, abstractmethod
-from scipy.stats import norm
 import copy
-from enum import Enum, auto
-from typing import Literal
-import torch
-from typing import Dict, Optional, Union, List
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform
-import numpy as np
-import copy
-import numpy as np
-import torch
-from torch_geometric.data import HeteroData
-from torch_geometric.transforms import BaseTransform, Compose
-import copy
-from typing import List, Union
-from torch_geometric.transforms import Compose, BaseTransform
-from torch_geometric.data import HeteroData, Batch
-import copy
-import torch
+from abc import ABC
+from typing import Any
 
 import numpy as np
 import torch
-import pandas as pd
-from typing import Dict, List, Literal, Optional, Union, Tuple, Any
-from torch_geometric.data import HeteroData, Batch
+from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
-from abc import ABC, abstractmethod
-import copy
 
 
 class COOLabelNormalizationTransform(BaseTransform):
     """Transform for normalizing labels in COO format with different strategies."""
 
-    def __init__(self, dataset: Any, label_configs: Dict[str, Dict], eps: float = 1e-8):
+    def __init__(self, dataset: Any, label_configs: dict[str, dict], eps: float = 1e-8):
         """
         Args:
             dataset: Dataset instance containing COO format phenotype data
@@ -382,7 +354,7 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
 
 class AutoBinStrategy(BaseBinningStrategy):
     def compute_bins(
-        self, values: np.ndarray, num_bins: Optional[int] = None
+        self, values: np.ndarray, num_bins: int | None = None
     ) -> tuple[np.ndarray, dict]:
         """Compute bins based on data std"""
         non_nan = values[~np.isnan(values)]
@@ -398,8 +370,8 @@ class COOLabelBinningTransform(BaseTransform):
     def __init__(
         self,
         dataset: Any,
-        label_configs: Dict[str, Dict],
-        normalizer: Optional[COOLabelNormalizationTransform] = None,
+        label_configs: dict[str, dict],
+        normalizer: COOLabelNormalizationTransform | None = None,
     ):
         """
         Args:
@@ -763,9 +735,10 @@ class COOLabelBinningTransform(BaseTransform):
 
 class COOInverseCompose(BaseTransform):
     """A transform that applies the inverse of a sequence of transforms in reverse order
-    for data in COO format."""
+    for data in COO format.
+    """
 
-    def __init__(self, transforms: Union[Compose, List[BaseTransform]]):
+    def __init__(self, transforms: Compose | list[BaseTransform]):
         super().__init__()
         if isinstance(transforms, Compose):
             self.transforms = transforms.transforms
@@ -783,7 +756,7 @@ class COOInverseCompose(BaseTransform):
                     f"Transform {t.__class__.__name__} does not implement inverse method"
                 )
 
-    def forward(self, data: Union[HeteroData, Batch]) -> Union[HeteroData, Batch]:
+    def forward(self, data: HeteroData | Batch) -> HeteroData | Batch:
         """Apply inverse transforms in reverse order."""
         data = copy.copy(data)
         for t in reversed(self.transforms):
@@ -792,4 +765,4 @@ class COOInverseCompose(BaseTransform):
 
     def __repr__(self) -> str:
         args = [f"\n  {t}" for t in self.transforms]
-        return f'{self.__class__.__name__}({"".join(args)}\n)'
+        return f"{self.__class__.__name__}({''.join(args)}\n)"

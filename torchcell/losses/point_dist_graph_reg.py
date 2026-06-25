@@ -4,21 +4,22 @@
 # Test file: tests/torchcell/losses/test_point_dist_graph_reg.py
 
 
-from typing import Dict, Optional, Tuple, Any
+from typing import Any
+
 import torch
-import torch.nn as nn
 import torch.distributed as dist
+import torch.nn as nn
 
 from torchcell.losses.logcosh import LogCoshLoss
-from torchcell.losses.multi_dim_nan_tolerant import WeightedMSELoss, WeightedDistLoss
-
+from torchcell.losses.multi_dim_nan_tolerant import WeightedDistLoss, WeightedMSELoss
 
 # Import Wasserstein loss components from mle_wasserstein
 try:
     from torchcell.losses.mle_wasserstein import (
-        WeightedWassersteinLoss,
         BufferedWeightedWassersteinLoss,
+        WeightedWassersteinLoss,
     )
+
     WASSERSTEIN_AVAILABLE = True
 except ImportError:
     WASSERSTEIN_AVAILABLE = False
@@ -37,38 +38,32 @@ class PointDistGraphReg(nn.Module):
     def __init__(
         self,
         # Point estimator configuration
-        point_estimator: Optional[Dict] = None,
-
+        point_estimator: dict | None = None,
         # Distribution loss configuration
-        distribution_loss: Optional[Dict] = None,
-
+        distribution_loss: dict | None = None,
         # Graph regularization configuration
-        graph_regularization: Optional[Dict] = None,
-
+        graph_regularization: dict | None = None,
         # Buffer configuration
-        buffer: Optional[Dict] = None,
-
+        buffer: dict | None = None,
         # DDP configuration
-        ddp: Optional[Dict] = None,
-
+        ddp: dict | None = None,
         # Other
-        weights: Optional[torch.Tensor] = None,
-
+        weights: torch.Tensor | None = None,
         # Backward compatibility - deprecated, use nested dicts
-        point_loss_type: Optional[str] = None,
-        lambda_point: Optional[float] = None,
-        dist_loss_type: Optional[str] = None,
-        lambda_dist: Optional[float] = None,
-        lambda_graph_reg: Optional[float] = None,
-        dist_bandwidth: Optional[float] = None,
-        wasserstein_blur: Optional[float] = None,
-        wasserstein_p: Optional[float] = None,
-        wasserstein_scaling: Optional[float] = None,
-        use_buffer: Optional[bool] = None,
-        buffer_size: Optional[int] = None,
-        min_samples_for_dist: Optional[int] = None,
-        use_ddp_gather: Optional[bool] = None,
-        gather_interval: Optional[int] = None,
+        point_loss_type: str | None = None,
+        lambda_point: float | None = None,
+        dist_loss_type: str | None = None,
+        lambda_dist: float | None = None,
+        lambda_graph_reg: float | None = None,
+        dist_bandwidth: float | None = None,
+        wasserstein_blur: float | None = None,
+        wasserstein_p: float | None = None,
+        wasserstein_scaling: float | None = None,
+        use_buffer: bool | None = None,
+        buffer_size: int | None = None,
+        min_samples_for_dist: int | None = None,
+        use_ddp_gather: bool | None = None,
+        gather_interval: int | None = None,
     ):
         super().__init__()
 
@@ -90,22 +85,32 @@ class PointDistGraphReg(nn.Module):
             _wasserstein_p = distribution_loss.get("wasserstein_p", 2)
             _wasserstein_scaling = distribution_loss.get("wasserstein_scaling", 0.9)
             _min_samples_dist = distribution_loss.get("min_samples_for_dist", 64)
-            _min_samples_wasserstein = distribution_loss.get("min_samples_for_wasserstein", 224)
+            _min_samples_wasserstein = distribution_loss.get(
+                "min_samples_for_wasserstein", 224
+            )
         else:
             _dist_type = dist_loss_type or "dist"
             _lambda_dist = lambda_dist if lambda_dist is not None else 0.1
             _dist_bandwidth = dist_bandwidth if dist_bandwidth is not None else 0.5
-            _wasserstein_blur = wasserstein_blur if wasserstein_blur is not None else 0.05
+            _wasserstein_blur = (
+                wasserstein_blur if wasserstein_blur is not None else 0.05
+            )
             _wasserstein_p = wasserstein_p if wasserstein_p is not None else 2
-            _wasserstein_scaling = wasserstein_scaling if wasserstein_scaling is not None else 0.9
-            _min_samples_dist = min_samples_for_dist if min_samples_for_dist is not None else 64
+            _wasserstein_scaling = (
+                wasserstein_scaling if wasserstein_scaling is not None else 0.9
+            )
+            _min_samples_dist = (
+                min_samples_for_dist if min_samples_for_dist is not None else 64
+            )
             _min_samples_wasserstein = 224
 
         # Graph regularization config
         if graph_regularization is not None:
             _lambda_graph_reg = graph_regularization.get("lambda", 1.0)
         else:
-            _lambda_graph_reg = lambda_graph_reg if lambda_graph_reg is not None else 1.0
+            _lambda_graph_reg = (
+                lambda_graph_reg if lambda_graph_reg is not None else 1.0
+            )
 
         # Buffer config
         if buffer is not None:
@@ -148,6 +153,7 @@ class PointDistGraphReg(nn.Module):
                 if _use_buffer:
                     # Import buffered version
                     from torchcell.losses.mle_dist_supcr import BufferedWeightedDistLoss
+
                     self.dist_loss = BufferedWeightedDistLoss(
                         buffer_size=_buffer_size,
                         bandwidth=_dist_bandwidth,
@@ -156,8 +162,7 @@ class PointDistGraphReg(nn.Module):
                     )
                 else:
                     self.dist_loss = WeightedDistLoss(
-                        bandwidth=_dist_bandwidth,
-                        weights=weights,
+                        bandwidth=_dist_bandwidth, weights=weights
                     )
             elif _dist_type == "wasserstein":
                 if not WASSERSTEIN_AVAILABLE:
@@ -215,9 +220,9 @@ class PointDistGraphReg(nn.Module):
         self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        representations: Dict[str, Any],
-        epoch: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        representations: dict[str, Any],
+        epoch: int | None = None,
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """
         Forward pass computing composite loss.
 
@@ -244,10 +249,9 @@ class PointDistGraphReg(nn.Module):
         weighted_point = self.lambda_point * point_val
         total_loss = total_loss + weighted_point
 
-        loss_dict.update({
-            "point_loss": point_val.item(),
-            "weighted_point": weighted_point.item(),
-        })
+        loss_dict.update(
+            {"point_loss": point_val.item(), "weighted_point": weighted_point.item()}
+        )
 
         # 2. Distribution loss (optional)
         if self.dist_loss is not None and self.lambda_dist > 0:
@@ -279,17 +283,13 @@ class PointDistGraphReg(nn.Module):
             weighted_dist = self.lambda_dist * dist_val
             total_loss = total_loss + weighted_dist
 
-            loss_dict.update({
-                "dist_loss": dist_val.item(),
-                "weighted_dist": weighted_dist.item(),
-            })
+            loss_dict.update(
+                {"dist_loss": dist_val.item(), "weighted_dist": weighted_dist.item()}
+            )
         else:
             # Use pre-allocated zero to prevent torch.compile graph breaks
             dist_val = self._zero
-            loss_dict.update({
-                "dist_loss": 0.0,
-                "weighted_dist": 0.0,
-            })
+            loss_dict.update({"dist_loss": 0.0, "weighted_dist": 0.0})
 
         # 3. Graph regularization loss (from model)
         if "graph_reg_loss" in representations and self.lambda_graph_reg > 0:
@@ -298,17 +298,16 @@ class PointDistGraphReg(nn.Module):
 
             total_loss = total_loss + weighted_graph_reg
 
-            loss_dict.update({
-                "graph_reg_loss": graph_reg_val.item(),
-                "weighted_graph_reg": weighted_graph_reg.item(),
-            })
+            loss_dict.update(
+                {
+                    "graph_reg_loss": graph_reg_val.item(),
+                    "weighted_graph_reg": weighted_graph_reg.item(),
+                }
+            )
         else:
             # Use pre-allocated zero to prevent torch.compile graph breaks
             graph_reg_val = self._zero
-            loss_dict.update({
-                "graph_reg_loss": 0.0,
-                "weighted_graph_reg": 0.0,
-            })
+            loss_dict.update({"graph_reg_loss": 0.0, "weighted_graph_reg": 0.0})
 
         # Compute normalized contributions
         if total_loss > 0:

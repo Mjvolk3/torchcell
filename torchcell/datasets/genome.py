@@ -3,9 +3,9 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/genome.py
 # Test file: torchcell/datasets/test_genome.py
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
-from torch_geometric.data import Data, InMemoryDataset, download_url
+from torch_geometric.data import InMemoryDataset
 
 
 class GenomeDataset(InMemoryDataset, ABC):

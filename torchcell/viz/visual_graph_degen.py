@@ -1,6 +1,6 @@
 import torch
 import wandb
-from typing import Optional
+
 
 class VisGraphDegen:
     def __init__(self, adj_matrix: torch.Tensor, node_features: torch.Tensor) -> None:
@@ -13,7 +13,7 @@ class VisGraphDegen:
         N = X.shape[0]
         mean_features = X.mean(dim=0)
         diff = X - mean_features.expand(N, -1)
-        return torch.norm(diff, p='fro')
+        return torch.norm(diff, p="fro")
 
     @staticmethod
     def local_bottleneck_score(
@@ -33,7 +33,9 @@ class VisGraphDegen:
     def log_metrics(self, wandb_key_prefix: str = "train_sample") -> None:
         smoothness = self.compute_smoothness(self.node_features)
         bottleneck = self.local_bottleneck_score(self.adj_matrix, self.node_features)
-        wandb.log({
-            f"{wandb_key_prefix}/oversmoothing": smoothness.item(),
-            f"{wandb_key_prefix}/oversquashing": bottleneck.item()
-        })
+        wandb.log(
+            {
+                f"{wandb_key_prefix}/oversmoothing": smoothness.item(),
+                f"{wandb_key_prefix}/oversquashing": bottleneck.item(),
+            }
+        )

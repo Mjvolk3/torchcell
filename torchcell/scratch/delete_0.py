@@ -5,7 +5,7 @@ from tqdm import tqdm
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
 # Read the data
-with open("data/bary_data.json", "r") as f:
+with open("data/bary_data.json") as f:
     data = json.load(f)
 sequences = [entry["sequence"] for entry in data.values()]
 

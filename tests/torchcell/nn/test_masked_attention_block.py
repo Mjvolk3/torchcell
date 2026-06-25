@@ -271,9 +271,9 @@ def test_memory_usage():
     float_bytes = adj_float.element_size() * adj_float.numel()
 
     # Print memory usage
-    print(f"Boolean mask: {bool_bytes/1024**2:.2f} MB")
-    print(f"Float mask: {float_bytes/1024**2:.2f} MB")
-    print(f"Memory ratio (float32/bool): {float_bytes/bool_bytes:.2f}x")
+    print(f"Boolean mask: {bool_bytes / 1024**2:.2f} MB")
+    print(f"Float mask: {float_bytes / 1024**2:.2f} MB")
+    print(f"Memory ratio (float32/bool): {float_bytes / bool_bytes:.2f}x")
 
     # Verify the byte size of boolean elements
     assert adj_bool.element_size() == 1, "PyTorch bool should use 1 byte per element"
@@ -348,7 +348,6 @@ def test_node_set_attention_with_bool_mask_and_edge_attr():
 
 def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
     """Test NodeSetAttention with metabolic network stoichiometry"""
-
     # Setup
     hidden_dim = 32
 
@@ -514,9 +513,9 @@ def test_gpu_mask_memory_efficiency():
     float_bytes = adj_float.element_size() * adj_float.numel()
 
     # Print memory usage
-    print(f"[GPU] Boolean mask: {bool_bytes/1024**2:.2f} MB")
-    print(f"[GPU] Float mask: {float_bytes/1024**2:.2f} MB")
-    print(f"[GPU] Memory ratio (float32/bool): {float_bytes/bool_bytes:.2f}x")
+    print(f"[GPU] Boolean mask: {bool_bytes / 1024**2:.2f} MB")
+    print(f"[GPU] Float mask: {float_bytes / 1024**2:.2f} MB")
+    print(f"[GPU] Memory ratio (float32/bool): {float_bytes / bool_bytes:.2f}x")
 
     # Boolean should use much less memory than float32 on GPU too
     assert float_bytes / bool_bytes >= 4.0
@@ -577,17 +576,21 @@ def test_flex_attention_fails_correctly(metabolic_graph):
 
     # Extract edge information
     edge_index = metabolic_graph.edge_index.cuda()
-    stoichiometry = metabolic_graph.edge_attr.squeeze(-1).cuda()  # Remove extra dimension
+    stoichiometry = metabolic_graph.edge_attr.squeeze(
+        -1
+    ).cuda()  # Remove extra dimension
 
     # Create boolean adjacency matrix
-    adj_mask = to_dense_adj(edge_index)[0].bool().unsqueeze(0).cuda()  # Add batch dimension
+    adj_mask = (
+        to_dense_adj(edge_index)[0].bool().unsqueeze(0).cuda()
+    )  # Add batch dimension
 
     # Create node features (batch size 1)
     x = torch.randn(1, metabolic_graph.num_nodes, hidden_dim, device="cuda")
 
     # Create NSA model
     nsa = NodeSelfAttention(hidden_dim=hidden_dim).cuda()
-    
+
     # Set the flag to enable error propagation
     nsa.in_simulated_error_test = True
 
@@ -644,6 +647,7 @@ def test_gpu_vs_cpu_outputs(metabolic_graph):
     assert not torch.isnan(cpu_output).any()
     assert not torch.isnan(gpu_output_cpu).any()
 
+
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_compiled_mask_function():
     """Test that compiled mask functions work correctly with FlexAttention."""
@@ -654,15 +658,13 @@ def test_compiled_mask_function():
 
     # Create models with and without compilation
     nsa_uncompiled = NodeSelfAttention(
-        hidden_dim=hidden_dim, 
-        compile_block_mask=False
+        hidden_dim=hidden_dim, compile_block_mask=False
     ).cuda()
-    
+
     nsa_compiled = NodeSelfAttention(
-        hidden_dim=hidden_dim, 
-        compile_block_mask=True
+        hidden_dim=hidden_dim, compile_block_mask=True
     ).cuda()
-    
+
     # Make sure they use the same weights
     nsa_compiled.load_state_dict(nsa_uncompiled.state_dict())
 
@@ -677,17 +679,20 @@ def test_compiled_mask_function():
         # Diagonal (self-connections)
         for i in range(seq_len):
             adj_mask[b, i, i] = True
-            
+
         # Random connections (10% density)
         random_mask = torch.rand(seq_len, seq_len, device="cuda") < 0.1
         adj_mask[b] = adj_mask[b] | random_mask
 
     # Create edge attributes
-    edge_index = torch.stack([
-        torch.arange(seq_len, device="cuda"),  # Source nodes
-        (torch.arange(seq_len, device="cuda") + 1) % seq_len,  # Target nodes (shifted)
-    ])
-    
+    edge_index = torch.stack(
+        [
+            torch.arange(seq_len, device="cuda"),  # Source nodes
+            (torch.arange(seq_len, device="cuda") + 1)
+            % seq_len,  # Target nodes (shifted)
+        ]
+    )
+
     edge_attr = torch.randn(seq_len, device="cuda")  # Random edge attributes
 
     # Run forward passes with both models
@@ -695,9 +700,11 @@ def test_compiled_mask_function():
         # First run with basic inputs (just adj_mask)
         output_uncompiled = nsa_uncompiled(x, adj_mask)
         output_compiled = nsa_compiled(x, adj_mask)
-        
+
         # Then run with edge attributes
-        output_uncompiled_with_edges = nsa_uncompiled(x, adj_mask, edge_attr, edge_index)
+        output_uncompiled_with_edges = nsa_uncompiled(
+            x, adj_mask, edge_attr, edge_index
+        )
         output_compiled_with_edges = nsa_compiled(x, adj_mask, edge_attr, edge_index)
 
     # Check that both models produce valid outputs
@@ -705,26 +712,52 @@ def test_compiled_mask_function():
     assert not torch.isnan(output_compiled).any()
     assert not torch.isnan(output_uncompiled_with_edges).any()
     assert not torch.isnan(output_compiled_with_edges).any()
-    
+
     # Check shapes
     assert output_uncompiled.shape == x.shape
     assert output_compiled.shape == x.shape
     assert output_uncompiled_with_edges.shape == x.shape
     assert output_compiled_with_edges.shape == x.shape
-    
+
     # Check statistical properties instead of exact tensor values
     # Basic model - check mean, std, min, max
-    assert torch.allclose(output_uncompiled.mean(), output_compiled.mean(), rtol=0.3, atol=0.3)
-    assert torch.allclose(output_uncompiled.std(), output_compiled.std(), rtol=0.3, atol=0.3)
+    assert torch.allclose(
+        output_uncompiled.mean(), output_compiled.mean(), rtol=0.3, atol=0.3
+    )
+    assert torch.allclose(
+        output_uncompiled.std(), output_compiled.std(), rtol=0.3, atol=0.3
+    )
     assert abs(output_uncompiled.min().item() - output_compiled.min().item()) < 1.0
     assert abs(output_uncompiled.max().item() - output_compiled.max().item()) < 1.0
-    
+
     # Edge attribute model - similar checks
-    assert torch.allclose(output_uncompiled_with_edges.mean(), output_compiled_with_edges.mean(), rtol=0.3, atol=0.3)
-    assert torch.allclose(output_uncompiled_with_edges.std(), output_compiled_with_edges.std(), rtol=0.3, atol=0.3)
-    assert abs(output_uncompiled_with_edges.min().item() - output_compiled_with_edges.min().item()) < 1.0
-    assert abs(output_uncompiled_with_edges.max().item() - output_compiled_with_edges.max().item()) < 1.0
-    
+    assert torch.allclose(
+        output_uncompiled_with_edges.mean(),
+        output_compiled_with_edges.mean(),
+        rtol=0.3,
+        atol=0.3,
+    )
+    assert torch.allclose(
+        output_uncompiled_with_edges.std(),
+        output_compiled_with_edges.std(),
+        rtol=0.3,
+        atol=0.3,
+    )
+    assert (
+        abs(
+            output_uncompiled_with_edges.min().item()
+            - output_compiled_with_edges.min().item()
+        )
+        < 1.0
+    )
+    assert (
+        abs(
+            output_uncompiled_with_edges.max().item()
+            - output_compiled_with_edges.max().item()
+        )
+        < 1.0
+    )
+
     # Check correlation between outputs (flattened tensors)
     def correlation(x, y):
         x_flat = x.flatten().cpu()
@@ -732,40 +765,42 @@ def test_compiled_mask_function():
         x_norm = (x_flat - x_flat.mean()) / x_flat.std()
         y_norm = (y_flat - y_flat.mean()) / y_flat.std()
         return (x_norm * y_norm).mean()
-    
+
     # Outputs should be positively correlated
     assert correlation(output_uncompiled, output_compiled) > 0.7
     assert correlation(output_uncompiled_with_edges, output_compiled_with_edges) > 0.7
-    
+
     # Optional: Benchmark performance (compiled should be faster)
     # This is a simple benchmark - in practice you might want to use torch.utils.benchmark
     import time
-    
+
     # Warm-up
     for _ in range(5):
         _ = nsa_uncompiled(x, adj_mask)
         _ = nsa_compiled(x, adj_mask)
-    
+
     # Time uncompiled
     start_time = time.time()
     for _ in range(10):
         _ = nsa_uncompiled(x, adj_mask)
     uncompiled_time = time.time() - start_time
-    
+
     # Time compiled
     start_time = time.time()
     for _ in range(10):
         _ = nsa_compiled(x, adj_mask)
     compiled_time = time.time() - start_time
-    
+
     # Print timing information
     print(f"Uncompiled time: {uncompiled_time:.4f}s")
     print(f"Compiled time: {compiled_time:.4f}s")
     print(f"Speedup: {uncompiled_time / compiled_time:.2f}x")
-    
+
     # No strict assertion for speedup since it can vary by hardware,
     # but compiled should generally not be slower
-    assert compiled_time <= uncompiled_time * 1.2, "Compiled version shouldn't be significantly slower"
+    assert compiled_time <= uncompiled_time * 1.2, (
+        "Compiled version shouldn't be significantly slower"
+    )
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
@@ -776,17 +811,14 @@ def test_mab_with_compilation():
     seq_len = 32
 
     # Create model with compilation enabled
-    mab = MaskedAttentionBlock(
-        hidden_dim=hidden_dim, 
-        compile_block_mask=True
-    ).cuda()
+    mab = MaskedAttentionBlock(hidden_dim=hidden_dim, compile_block_mask=True).cuda()
 
     # Create inputs
     x = torch.randn(batch_size, seq_len, hidden_dim, device="cuda")
     adj_mask = torch.zeros(
         batch_size, seq_len, seq_len, dtype=torch.bool, device="cuda"
     )
-    
+
     # Create a block diagonal mask pattern
     for b in range(batch_size):
         for i in range(seq_len):
@@ -802,6 +834,6 @@ def test_mab_with_compilation():
     assert output.shape == x.shape
     assert output.device.type == "cuda"
     assert not torch.isnan(output).any()
-    
+
     # Check that the output is different from the input (processing happened)
     assert not torch.allclose(output, x)

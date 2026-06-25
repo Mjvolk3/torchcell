@@ -14,18 +14,22 @@ import os
 import os.path as osp
 import random
 import time
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
 from torch_geometric.loader import DataLoader
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
 from torchcell.data.graph_processor import LazySubgraphRepresentation
-from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.graph import build_gene_multigraph
 from torchcell.datasets.node_embedding_builder import NodeEmbeddingBuilder
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
+from torchcell.metabolism.yeast_GEM import YeastGEM
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 class TimingContext:
@@ -109,10 +113,7 @@ def profile_dataset_creation():
 
         with TimingContext("6. Create dataset"):
             with open(
-                osp.join(
-                    EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"
-                ),
-                "r",
+                osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
             ) as f:
                 query = f.read()
 
@@ -171,10 +172,10 @@ def profile_batch_loading(dataset, batch_size=32, num_samples=100):
     print("BATCH LOADING PROFILING")
     print("=" * 80 + "\n")
 
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  Batch size: {batch_size}")
     print(f"  Num samples: {num_samples}")
-    print(f"  Num workers: 0 (single process for accurate timing)")
+    print("  Num workers: 0 (single process for accurate timing)")
     print()
 
     # Create dataloader
@@ -246,18 +247,20 @@ def profile_batch_loading(dataset, batch_size=32, num_samples=100):
     std_total = np.std(total_times)
     mean_per_sample = mean_total / batch_size
 
-    print(f"Results:")
+    print("Results:")
     print(f"  Samples processed: {samples_processed}")
     print(f"  Batches processed: {len(batch_create_times)}")
     print()
-    print(f"Batch-level timing:")
-    print(f"  Mean batch creation (CPU): {mean_batch_create:.2f}ms ± {std_batch_create:.2f}ms")
+    print("Batch-level timing:")
+    print(
+        f"  Mean batch creation (CPU): {mean_batch_create:.2f}ms ± {std_batch_create:.2f}ms"
+    )
     print(
         f"  Mean GPU transfer:         {mean_transfer_time:.2f}ms ± {std_transfer_time:.2f}ms"
     )
     print(f"  Mean total time:           {mean_total:.2f}ms ± {std_total:.2f}ms")
     print()
-    print(f"Per-sample estimates:")
+    print("Per-sample estimates:")
     print(f"  Batch creation per sample: {mean_batch_create / batch_size:.2f}ms")
     print(f"  GPU transfer per sample:   {mean_transfer_time / batch_size:.2f}ms")
     print(f"  Total time per sample:     {mean_per_sample:.2f}ms")
@@ -309,8 +312,8 @@ def main():
     )
     print()
 
-    cpu_time = batch_stats['mean_batch_create'] / 32
-    gpu_time = batch_stats['mean_transfer_time'] / 32
+    cpu_time = batch_stats["mean_batch_create"] / 32
+    gpu_time = batch_stats["mean_transfer_time"] / 32
     graph_proc_time = 3.76  # From benchmark
     remaining_cpu = cpu_time - graph_proc_time
 
@@ -344,12 +347,11 @@ def main():
     from torchcell.profiling.timing import print_timing_summary
 
     print_timing_summary(
-        title="Neo4jCellDataset - Method Timing",
-        filter_class="Neo4jCellDataset"
+        title="Neo4jCellDataset - Method Timing", filter_class="Neo4jCellDataset"
     )
     print_timing_summary(
         title="LazySubgraphRepresentation - Method Timing",
-        filter_class="LazySubgraphRepresentation"
+        filter_class="LazySubgraphRepresentation",
     )
 
 

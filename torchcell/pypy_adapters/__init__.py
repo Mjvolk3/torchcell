@@ -1,10 +1,9 @@
+from .costanzo2016_pypy_adapter import DmfCostanzo2016Adapter, SmfCostanzo2016Adapter
 from .kuzmin2018_pypy_adapter import (
-    SmfKuzmin2018Adapter,
     DmfKuzmin2018Adapter,
+    SmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
-from .costanzo2016_pypy_adapter import SmfCostanzo2016Adapter, DmfCostanzo2016Adapter
-
 
 kuzmin2018_adapters = [
     "SmfKuzmin2018Adapter",

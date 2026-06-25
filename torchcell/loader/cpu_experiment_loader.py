@@ -4,16 +4,10 @@
 # Test file: tests/torchcell/loader/test_cpu_experiment_loader.py
 
 
-from threading import Thread
-from queue import Queue
-from typing import Iterable
+from collections.abc import Iterable
 from multiprocessing import Process, Queue
-import json
-import torch
-from typing import Optional
-import os
-from torch_geometric.data import HeteroData, Data
-import pickle
+from queue import Queue
+from threading import Thread
 
 
 class CpuExperimentLoader:
@@ -144,7 +138,6 @@ class CpuExperimentLoaderMultiprocessing:
         # Calculate how many batches are needed
         return (len(self.dataset) + self.batch_size - 1) // self.batch_size
 
-
     def close(self):
         if not self.is_closed:
             # Send termination signal to each worker
@@ -153,7 +146,8 @@ class CpuExperimentLoaderMultiprocessing:
             for worker in self.workers:
                 worker.join()  # Wait for all workers to finish
             self.is_closed = True  # Set the flag to prevent repeated cleanup
-            
+
+
 # class CpuExperimentLoaderMultiprocessing:
 #     def __init__(self, dataset, batch_size: int, num_workers: int):
 #         self.dataset = dataset

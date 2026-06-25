@@ -3,32 +3,40 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/experiments/003-fit-int/scripts/plot_ppi_reg_rcm
 # Test file: tests/torchcell/experiments/003-fit-int/scripts/test_plot_ppi_reg_rcm.py
 
-import torch
-import matplotlib.pyplot as plt
-from torch_geometric.utils import to_dense_adj, contains_isolated_nodes
-from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.sparse import csr_matrix
-import numpy as np
-import networkx as nx
-import time
 import os
 import os.path as osp
+import time
+
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import torch
 from dotenv import load_dotenv
-from torch_geometric.utils import to_undirected, add_remaining_self_loops
+from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch_geometric.utils import (
+    add_remaining_self_loops,
+    contains_isolated_nodes,
+    to_dense_adj,
+    to_undirected,
+)
 
 
 def load_dataset():
     """Load just the dataset with cell_graph."""
-    from torchcell.graph import SCerevisiaeGraph
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -53,7 +61,7 @@ def load_dataset():
     }
 
     # Setup dataset with Neo4jCellDataset
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -197,14 +205,14 @@ def plot_adjacency_matrix(adj_matrix, title, stats, filename=None):
     # Create statistics text
     stat_lines = [
         f"Nodes: {stats['num_nodes']:,}",
-        f"",
-        f"PyG Edge Counts:",
+        "",
+        "PyG Edge Counts:",
         f"Original: {stats['pyg_num_edges']:,}",
         f"Original+SelfLoops: {stats['pyg_self_loops_num_edges']:,}",
         f"Undirected: {stats['pyg_undirected_num_edges']:,}",
         f"Undirected+SelfLoops: {stats['pyg_undirected_self_loops_num_edges']:,}",
-        f"",
-        f"NetworkX Edge Counts:",
+        "",
+        "NetworkX Edge Counts:",
         f"Original: {stats['nx_num_edges']:,}",
     ]
 
@@ -219,12 +227,12 @@ def plot_adjacency_matrix(adj_matrix, title, stats, filename=None):
         )
 
     # Add empty line
-    stat_lines.append(f"")
+    stat_lines.append("")
 
     # Network properties
     stat_lines.extend(
         [
-            f"Network Properties:",
+            "Network Properties:",
             f"Density: {stats['density']:.5f}",
             f"Avg Degree: {stats['avg_degree']:.2f}",
             f"Max Degree: {stats['max_degree']}",
@@ -269,7 +277,7 @@ def process_network(
     edge_index, max_num_nodes, name, is_directed=False, output_dir=None
 ):
     """Process a network: calculate stats and plot original and reordered matrices."""
-    print(f"\n{'='*80}\nProcessing {name} network\n{'='*80}")
+    print(f"\n{'=' * 80}\nProcessing {name} network\n{'=' * 80}")
     process_start = time.time()
 
     # If output_dir not specified, use current directory
@@ -284,7 +292,7 @@ def process_network(
     # Calculate statistics
     stats = calculate_graph_statistics(edge_index, max_num_nodes, is_directed, name)
 
-    print(f"Preparing for RCM reordering...")
+    print("Preparing for RCM reordering...")
     # Convert to scipy sparse matrix for RCM reordering
     sparse_adj = csr_matrix(dense_adj.numpy())
 
@@ -326,9 +334,10 @@ def process_network(
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
     import os
     import os.path as osp
+
+    from dotenv import load_dotenv
 
     # Load environment variables
     load_dotenv()
@@ -350,7 +359,7 @@ if __name__ == "__main__":
     dataset = load_dataset()
     max_num_nodes = len(dataset.gene_set)
 
-    print(f"\nData loaded successfully:")
+    print("\nData loaded successfully:")
     print(f"- Number of nodes: {max_num_nodes:,}")
 
     # Process physical interaction network
@@ -378,9 +387,11 @@ if __name__ == "__main__":
     )
 
     # Print summary
-    print(f"\n{'='*80}")
-    print(f"Analysis complete! Total time: {(time.time() - start_time)/60:.2f} minutes")
+    print(f"\n{'=' * 80}")
+    print(
+        f"Analysis complete! Total time: {(time.time() - start_time) / 60:.2f} minutes"
+    )
     print(f"PPI: {ppi_edge_index.shape[1]:,} edges among {max_num_nodes:,} nodes")
     print(f"REG: {reg_edge_index.shape[1]:,} edges among {max_num_nodes:,} nodes")
     print(f"Images saved to: {ASSET_IMAGES_DIR}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")

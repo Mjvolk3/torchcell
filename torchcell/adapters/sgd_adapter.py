@@ -3,19 +3,16 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2020_adapter
 
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher import BioCypher
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
 import logging
-from typing import Set
-from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
-from torchcell.adapters.cell_adapter import CellAdapter
-import yaml
-from omegaconf import OmegaConf, DictConfig
 import os.path as osp
+
+import yaml
+from biocypher._logger import get_logger
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
+from torchcell.adapters.cell_adapter import CellAdapter
+from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
 
 # logging
 # Get the biocypher logger
@@ -36,12 +33,14 @@ class GeneEssentialitySgdAdapter(CellAdapter):
     ):
         current_dir = osp.dirname(osp.abspath(__file__))
 
-        config_path = osp.join(current_dir, "conf", "gene_essentiality_sgd_adapter.yaml")
+        config_path = osp.join(
+            current_dir, "conf", "gene_essentiality_sgd_adapter.yaml"
+        )
 
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -60,12 +59,14 @@ class GeneEssentialitySgdAdapter(CellAdapter):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    from datetime import datetime
+    import math
+    import multiprocessing as mp
     import os
     import os.path as osp
-    import multiprocessing as mp
-    import math
+    from datetime import datetime
+
+    from dotenv import load_dotenv
+
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 

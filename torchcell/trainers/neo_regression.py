@@ -3,31 +3,28 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression.py
 # Test file: torchcell/trainers/test_regression.py
 
-import math
 import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+import wandb
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
+    Metric,
     MetricCollection,
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
-from tqdm import tqdm
 
-import wandb
+import torchcell
+from torchcell.losses.list_mle import ListMLELoss
+
 # TODO renamed.
 # from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
-from torchcell.losses.list_mle import ListMLELoss
-import torchcell
-from torchmetrics import Metric
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -51,7 +48,7 @@ class ListMLEMetric(Metric):
 
 class MSEListMLELoss(nn.Module):
     def __init__(self, alpha=0.5):
-        super(MSEListMLELoss, self).__init__()
+        super().__init__()
         self.mse_loss = nn.MSELoss()
         self.list_mle_loss = ListMLELoss()
         self.alpha = alpha
@@ -245,7 +242,7 @@ class RegressionTask(L.LightningModule):
                     range_str = "1.2 - inf"
                 else:
                     range_str = (
-                        f"{bin_edges[i].item():.1f} - {bin_edges[i+1].item():.1f}"
+                        f"{bin_edges[i].item():.1f} - {bin_edges[i + 1].item():.1f}"
                     )
                 wandb_table.add_data(range_str, mean_val, std_val)
 

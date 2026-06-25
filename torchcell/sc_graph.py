@@ -3,16 +3,8 @@ import json
 import os.path as osp
 
 # Saccharomyces cerevisiae Raw Data Extraction Functions
-from typing import Optional
-
-import networkx as nx
 import pandas as pd
 import torch
-from goatools.obo_parser import GODag
-from torch_geometric.data import Data, Dataset, download_url
-from torch_geometric.utils.convert import from_networkx
-
-import torchcell.yeastmine as ym
 
 # TODO write a data loader that can download the below files into ../data/
 # This works already... just need to fully implement.
@@ -98,12 +90,7 @@ def read_raw_data(
         df_names.append("df_trigenic")
         dfs.append(df_trigenic)
 
-    raw_data = dict(
-        zip(
-            df_names,
-            dfs,
-        )
-    )
+    raw_data = dict(zip(df_names, dfs))
     return raw_data
 
 
@@ -120,7 +107,7 @@ def get_gene_list(
     """
     gene_list_file = "data/preprocessed/gene_list.csv"
     if osp.exists(gene_list_file):
-        with open("data/preprocessed/gene_list.csv", "r") as f:
+        with open("data/preprocessed/gene_list.csv") as f:
             g_list = csv.reader(f, delimiter=",")
             gene_list = [row for row in g_list][0]
     else:
@@ -180,7 +167,7 @@ def get_smf_bary(write_json=True, to_tensor=False) -> list:
     # TODO docstring
     data_path = "data/preprocessed/gene_singles_fitness_bary.json"
     if osp.exists(data_path):
-        with open(data_path, "r") as f:
+        with open(data_path) as f:
             gene_singles = json.load(f)
         if to_tensor:
             gene_singles = [val[0] for _, val in gene_singles]
@@ -199,7 +186,7 @@ def get_smf_bary(write_json=True, to_tensor=False) -> list:
         label_data = {i[0]: i[1] for i in label_data}
         # read gene_essentiality_raw.json to list of lists -> raw null mutant
         # TODO call lethality.whatever
-        with open("data/preprocessed/gene_essentiality_raw.json", "r") as f:
+        with open("data/preprocessed/gene_essentiality_raw.json") as f:
             essential_genes = json.load(f)
         gene_singles = get_gene_list()
         gene_singles = {i: None for i in gene_singles}

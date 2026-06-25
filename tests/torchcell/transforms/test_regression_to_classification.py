@@ -473,9 +473,9 @@ class TestOrdinalBinning:
         for orig, rec in zip(original_values, recovered_values):
             orig_bin = get_bin_index(orig, bin_edges)
             rec_bin = get_bin_index(rec, bin_edges)
-            assert (
-                orig_bin == rec_bin
-            ), f"Original value {orig} and recovered value {rec} are in different bins"
+            assert orig_bin == rec_bin, (
+                f"Original value {orig} and recovered value {rec} are in different bins"
+            )
 
     def test_ordinal_with_nans(self, bin_transform):
         data = HeteroData()
@@ -740,9 +740,9 @@ class TestModelOutputSimulation:
             bin_start = bin_edges[pred_bin]
             bin_end = bin_edges[pred_bin + 1]
 
-            assert (
-                bin_start <= recovered_values[i] <= bin_end
-            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            assert bin_start <= recovered_values[i] <= bin_end, (
+                f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            )
 
     def test_soft_logits(self, mock_dataset):
         """Test soft classification with model-like logit outputs."""
@@ -795,9 +795,9 @@ class TestModelOutputSimulation:
             bin_start = bin_edges[pred_bin]
             bin_end = bin_edges[pred_bin + 1]
 
-            assert (
-                bin_start <= recovered_values[i] <= bin_end
-            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            assert bin_start <= recovered_values[i] <= bin_end, (
+                f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            )
 
     def test_ordinal_logits(self, mock_dataset):
         """Test ordinal classification with model-like logit outputs."""
@@ -851,9 +851,9 @@ class TestModelOutputSimulation:
             bin_start = bin_edges[i]  # Constructed so row i should be in bin i
             bin_end = bin_edges[i + 1]
 
-            assert (
-                bin_start <= recovered_values[i] <= bin_end
-            ), f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            assert bin_start <= recovered_values[i] <= bin_end, (
+                f"Value {recovered_values[i]} not in bin {i} range [{bin_start}, {bin_end}]"
+            )
 
 
 class TestInverseComposeWithGrads:

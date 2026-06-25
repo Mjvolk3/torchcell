@@ -4,9 +4,9 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test___init__.py
 
 from .costanzo2016 import DmfCostanzo2016Dataset, SmfCostanzo2016Dataset
-from .kuzmin2018 import SmfKuzmin2018Dataset, DmfKuzmin2018Dataset, TmfKuzmin2018Dataset
+from .kuzmin2018 import DmfKuzmin2018Dataset, SmfKuzmin2018Dataset, TmfKuzmin2018Dataset
 from .ohya2005 import ScmdOhya2005Dataset
-from .sameith2015 import SmMicroarraySameith2015Dataset, DmMicroarraySameith2015Dataset
+from .sameith2015 import DmMicroarraySameith2015Dataset, SmMicroarraySameith2015Dataset
 
 # from .baryshnikovna2010 import Baryshnikovna2010Dataset
 
@@ -20,9 +20,6 @@ kuzmin_datasets = [
 
 ohya_datasets = ["ScmdOhya2005Dataset"]
 
-sameith_datasets = [
-    "SmMicroarraySameith2015Dataset",
-    "DmMicroarraySameith2015Dataset",
-]
+sameith_datasets = ["SmMicroarraySameith2015Dataset", "DmMicroarraySameith2015Dataset"]
 
 __all__ = costanzo_datasets + kuzmin_datasets + ohya_datasets + sameith_datasets

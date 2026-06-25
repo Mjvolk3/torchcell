@@ -1,13 +1,13 @@
 # db_cli.py
 from cliff.app import App
 from cliff.commandmanager import CommandManager
+
 from torchcell.database import BuildCommand  # Import the command
 
 
 class TCDB(App):
-
     def __init__(self):
-        super(TCDB, self).__init__(
+        super().__init__(
             description="Database CLI",
             version="0.1",
             command_manager=CommandManager("db.cli"),

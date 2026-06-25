@@ -1,6 +1,7 @@
 import hashlib
+
 from torchcell.data import Aggregator
-from torchcell.datamodels import ExperimentType, ExperimentReferenceType
+from torchcell.datamodels import ExperimentReferenceType, ExperimentType
 
 
 class GenotypeAggregator(Aggregator):

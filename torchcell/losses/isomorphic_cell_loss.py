@@ -4,15 +4,14 @@
 # Test file: tests/torchcell/losses/test_isomorphic_cell_loss.py
 
 
-from typing import Optional, Tuple
 import torch
 import torch.nn as nn
+
 from torchcell.losses.multi_dim_nan_tolerant import (
-    WeightedMSELoss,
     WeightedDistLoss,
+    WeightedMSELoss,
     WeightedSupCRCell,
 )
-import math
 
 
 class ICLoss(nn.Module):
@@ -20,7 +19,7 @@ class ICLoss(nn.Module):
         self,
         lambda_dist: float,
         lambda_supcr: float,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
     ) -> None:
         """
         Args:
@@ -38,7 +37,7 @@ class ICLoss(nn.Module):
 
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor, z_P: torch.Tensor
-    ) -> Tuple[torch.Tensor, dict]:
+    ) -> tuple[torch.Tensor, dict]:
         mse_loss, mse_dim_losses = self.mse_loss_fn(predictions, targets)
         dist_loss, dist_dim_losses = self.dist_loss_fn(predictions, targets)
 
@@ -104,7 +103,7 @@ class ICLossStd(nn.Module):
         lambda_supcr: float,
         lambda_reg: float = 0.01,
         init_sigma: float = 1.0,
-        task_weights: Optional[torch.Tensor] = None,
+        task_weights: torch.Tensor | None = None,
         eps: float = 1e-6,
     ) -> None:
         """
@@ -150,7 +149,7 @@ class ICLossStd(nn.Module):
         targets: torch.Tensor,
         z_P: torch.Tensor,
         z_I: torch.Tensor,
-    ) -> Tuple[torch.Tensor, dict]:
+    ) -> tuple[torch.Tensor, dict]:
         """
         Forward pass to compute the heteroscedastic IC loss.
 

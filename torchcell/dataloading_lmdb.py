@@ -2,27 +2,13 @@ import logging
 import os
 import os.path as osp
 
-import hydra
-import lightning as L
-import torch
 from dotenv import load_dotenv
-from lightning.pytorch.callbacks import ModelCheckpoint
-from lightning.pytorch.loggers import WandbLogger
-from omegaconf import DictConfig, OmegaConf
 from torch_geometric.loader import DataLoader
 from tqdm import tqdm
 
-import wandb
-from torchcell.datamodules import CellDataModule
-from torchcell.datasets import (
-    CellDataset,
-    FungalUtrTransformerDataset,
-    NucleotideTransformerDataset,
-)
+from torchcell.datasets import CellDataset, NucleotideTransformerDataset
 from torchcell.datasets.scerevisiae import DmfCostanzo2016Dataset
-from torchcell.models import DeepSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.trainers import RegressionTask
 
 
 def main():

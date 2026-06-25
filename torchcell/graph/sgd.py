@@ -10,32 +10,24 @@ import logging
 import os
 import os.path as osp
 import tempfile
-import time
 from asyncio import Task
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 import aiohttp
 from aiohttp import ClientError, ContentTypeError
 from attrs import define, field
-from tqdm import tqdm
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 load_dotenv()
 DATA_ROOT = os.getenv("DATA_ROOT")
 if not DATA_ROOT:
-    raise ValueError("DATA_ROOT environment variable is not set. Please set it in your .env file.")
+    raise ValueError(
+        "DATA_ROOT environment variable is not set. Please set it in your .env file."
+    )
 
-from torchcell.graph.validation.locus_related.locus import (
-    Alias,
-    InteractionOverview,
-    LocusData,
-    LocusDataUrl,
-    PhysicalExperiments,
-    Qualities,
-    Reference,
-    validate_data,
-)
+from torchcell.graph.validation.locus_related.locus import validate_data
 
 log = logging.getLogger(__name__)
 

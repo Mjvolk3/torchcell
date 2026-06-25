@@ -6,11 +6,11 @@
 
 from torch_geometric.nn import (
     BatchNorm,
-    LayerNorm,
     GraphNorm,
     InstanceNorm,
-    PairNorm,
+    LayerNorm,
     MeanSubtractionNorm,
+    PairNorm,
 )
 
 norm_register = {

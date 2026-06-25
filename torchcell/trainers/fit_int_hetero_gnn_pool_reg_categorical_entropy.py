@@ -1,25 +1,26 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection
-import logging
-import sys
-import torch.optim as optim
-from typing import Optional
-import os.path as osp
-from torch.nn.functional import binary_cross_entropy_with_logits
-from torchcell.losses.multi_dim_nan_tolerant import MseCategoricalEntropyRegLoss
-from torchmetrics import Accuracy, F1Score, Precision, Recall
-from torchmetrics import MeanSquaredError, R2Score, PearsonCorrCoef, SpearmanCorrCoef
-
-from torchcell.viz import fitness, genetic_interaction_score
-import torch.nn.functional as F
-from torch_geometric.transforms import BaseTransform
 from torch_geometric.data import HeteroData
+from torch_geometric.transforms import BaseTransform
+from torchmetrics import (
+    Accuracy,
+    F1Score,
+    MeanSquaredError,
+    MetricCollection,
+    PearsonCorrCoef,
+    Precision,
+    Recall,
+)
+
 from torchcell.transforms.regression_to_classification import LabelBinningTransform
-import matplotlib.pyplot as plt
+from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class RegCategoricalEntropyTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
         super().__init__()
@@ -143,12 +144,12 @@ class RegCategoricalEntropyTask(L.LightningModule):
             # Create table columns
             columns = [
                 f"True Reg ({display_name})",
-                f"True Bin",
-                f"True Bin Start",
-                f"True Bin End",
-                f"Predicted Bin",
-                f"Predicted Bin Start",
-                f"Predicted Bin End",
+                "True Bin",
+                "True Bin Start",
+                "True Bin End",
+                "Predicted Bin",
+                "Predicted Bin Start",
+                "Predicted Bin End",
                 f"Predicted Reg ({display_name})",
                 f"{display_name} Loss",
                 f"{display_name} Sample Loss",

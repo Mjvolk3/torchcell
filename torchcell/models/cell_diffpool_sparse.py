@@ -1,24 +1,22 @@
+from typing import Literal
+
 import torch
 import torch.nn as nn
 from torch_geometric.nn import (
-    GCNConv,
-    GATv2Conv,
     BatchNorm,
-    LayerNorm,
+    GATv2Conv,
     GraphNorm,
     InstanceNorm,
-    PairNorm,
+    LayerNorm,
     MeanSubtractionNorm,
+    PairNorm,
+    dense_diff_pool,
+    global_add_pool,
+    global_mean_pool,
 )
-import torch.nn.functional as F
-from torch_geometric.nn import dense_diff_pool
-from torch_geometric.utils import to_dense_batch, to_dense_adj, dense_to_sparse
-from typing import Optional, Literal
+from torch_geometric.utils import dense_to_sparse, to_dense_adj, to_dense_batch
 
 from torchcell.models.act import act_register
-from torchcell.models.norm import norm_register
-from torch_geometric.nn import global_mean_pool, global_add_pool
-import torch
 
 
 def from_dense_batch(dense_x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
@@ -31,7 +29,6 @@ def from_dense_batch(dense_x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]
 
     :rtype: (:class:`Tensor`, :class:`Tensor`)
     """
-
     # Flatten the dense tensor
     batch_size, max_num_nodes, num_features = dense_x.shape
     flattened_x = dense_x.view(batch_size * max_num_nodes, num_features)
@@ -181,7 +178,6 @@ class SingleDiffPool(nn.Module):
                 pool_layer_attention = []
                 # GAT layer
                 if isinstance(pool_layer, GATv2Conv):
-
                     # Get output and attention weights
                     s, pool_att = pool_layer(
                         s, edge_index, return_attention_weights=True
@@ -420,23 +416,24 @@ class CellDiffPool(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
-    from torchcell.datasets.fungal_up_down_transformer import (
-        FungalUpDownTransformerDataset,
-    )
-    from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
+    from torchcell.datamodules import CellDataModule
     from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+    from torchcell.datasets import CodonFrequencyDataset
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -452,7 +449,7 @@ def load_sample_data_batch():
         genome=genome,
     )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -503,8 +500,8 @@ def load_sample_data_batch():
 
 
 def main_single():
+
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-    import numpy as np
 
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
@@ -613,8 +610,8 @@ def main_single():
 
 
 def main():
+
     from torchcell.losses.multi_dim_nan_tolerant import CombinedRegressionLoss
-    import numpy as np
 
     # Load the sample data batch
     batch, max_num_nodes = load_sample_data_batch()
@@ -631,7 +628,6 @@ def main():
         "physical": edge_index_physical,
         "regulatory": edge_index_regulatory,
     }
-
 
     # Model configuration
     model = CellDiffPool(

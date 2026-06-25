@@ -1,7 +1,6 @@
 # Test file
 import pytest
 import torch
-from torch_geometric.data import Data
 
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 

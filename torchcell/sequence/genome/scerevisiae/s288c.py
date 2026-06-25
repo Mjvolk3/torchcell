@@ -12,17 +12,15 @@ import os.path as osp
 import shutil
 import tarfile
 from itertools import product
-from typing import Set
 
 import gffutils
 import pandas as pd
 from attrs import define, field
-from Bio import Seq, SeqIO
+from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
-from gffutils import FeatureDB
 from gffutils.feature import Feature
 from goatools.obo_parser import GODag
-from sortedcontainers import SortedDict, SortedSet, SortedDict
+from sortedcontainers import SortedDict, SortedSet
 from torch_geometric.data import download_url
 
 from torchcell.sequence import (
@@ -35,7 +33,6 @@ from torchcell.sequence import (
     calculate_window_bounds_symmetric,
     compute_codon_frequency,
     get_chr_from_description,
-    mismatch_positions,
     roman_to_int,
 )
 from torchcell.sequence.db_connection import GffutilsConnectionManager
@@ -729,9 +726,9 @@ class SCerevisiaeGenome(Genome):
 
     def compute_gene_set(self) -> SortedSet[str]:
         genes = [feat.id for feat in list(self.db.features_of_type("gene"))]
-        assert len(genes) == len(
-            set(genes)
-        ), "Duplicate genes found... chekc handled by gff."
+        assert len(genes) == len(set(genes)), (
+            "Duplicate genes found... chekc handled by gff."
+        )
         return GeneSet(genes)
 
     def drop_chrmt(self) -> None:
@@ -798,10 +795,7 @@ class SCerevisiaeGenome(Genome):
 
 def main() -> None:
     import os
-    import random
 
-    import matplotlib.pyplot as plt
-    import pandas as pd
     from dotenv import load_dotenv
 
     load_dotenv()

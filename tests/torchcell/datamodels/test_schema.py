@@ -3,7 +3,6 @@ from pydantic import TypeAdapter
 
 from torchcell.datamodels.schema import (
     Environment,
-    Experiment,
     ExperimentType,
     FitnessExperiment,
     FitnessPhenotype,

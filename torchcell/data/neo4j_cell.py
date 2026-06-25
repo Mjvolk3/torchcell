@@ -9,9 +9,7 @@ import os
 import os.path as osp
 from collections.abc import Callable
 from enum import Enum, auto
-from typing import Optional, Type, Any
-import time
-import random
+from typing import Any
 
 import hypernetx as hnx
 import lmdb
@@ -20,14 +18,15 @@ import numpy as np
 import pandas as pd
 import torch
 from pydantic import field_validator
+from sortedcontainers import SortedDict
 from torch_geometric.data import Dataset
 from tqdm import tqdm
-from torchcell.data.graph_processor import GraphProcessor
+
 from torchcell.data.cell_data import to_cell_data
 from torchcell.data.deduplicate import Deduplicator
 from torchcell.data.embedding import BaseEmbeddingDataset
+from torchcell.data.graph_processor import GraphProcessor
 from torchcell.data.neo4j_query_raw import Neo4jQueryRaw
-from torchcell.profiling.timing import time_method
 from torchcell.datamodels import (
     EXPERIMENT_REFERENCE_TYPE_MAP,
     EXPERIMENT_TYPE_MAP,
@@ -35,10 +34,10 @@ from torchcell.datamodels import (
     ModelStrictArbitrary,
     PhenotypeType,
 )
+from torchcell.graph import GeneGraph, GeneMultiGraph
+from torchcell.profiling.timing import time_method
 from torchcell.sequence import GeneSet
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.graph import GeneGraph, GeneMultiGraph
-from sortedcontainers import SortedDict
 from torchcell.utils.file_lock import FileLockHelper
 
 log = logging.getLogger(__name__)
@@ -162,14 +161,19 @@ class Neo4jCellDataset(Dataset):
     def _read_json_with_lock(filepath: str, max_retries: int = 10) -> Any:
         """Read JSON file with file locking and retry logic."""
         return FileLockHelper.read_json_with_lock(
-            filepath, timeout=60.0, create_if_missing=False  # 60 second timeout
+            filepath,
+            timeout=60.0,
+            create_if_missing=False,  # 60 second timeout
         )
 
     @staticmethod
     def _write_json_with_lock(filepath: str, data: Any) -> None:
         """Write JSON file with exclusive lock and atomic rename."""
         FileLockHelper.write_json_with_lock(
-            filepath, data, timeout=60.0, indent=0  # 60 second timeout  # Compact JSON
+            filepath,
+            data,
+            timeout=60.0,
+            indent=0,  # 60 second timeout  # Compact JSON
         )
 
     # @profile
@@ -183,9 +187,9 @@ class Neo4jCellDataset(Dataset):
         node_embeddings: dict[str, BaseEmbeddingDataset] = None,
         graph_processor: GraphProcessor = None,
         add_remaining_gene_self_loops: bool = True,
-        converter: Optional[Type[Converter]] = None,
-        deduplicator: Type[Deduplicator] = None,
-        aggregator: Type[Aggregator] = None,
+        converter: type[Converter] | None = None,
+        deduplicator: type[Deduplicator] = None,
+        aggregator: type[Aggregator] = None,
         overwrite_intermediates: bool = False,
         uri: str = "bolt://localhost:7687",
         username: str = "neo4j",
@@ -452,7 +456,7 @@ class Neo4jCellDataset(Dataset):
     def _read_from_lmdb(self, idx):
         """Read serialized data from LMDB."""
         with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode("utf-8"))
+            serialized_data = txn.get(f"{idx}".encode())
             return serialized_data
 
     @time_method
@@ -849,6 +853,7 @@ def main():
     from dotenv import load_dotenv
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
+    from torchcell.data.graph_processor import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -857,12 +862,11 @@ def main():
         FungalUpDownTransformerDataset,
     )
     from torchcell.graph import SCerevisiaeGraph
-    from torchcell.data.graph_processor import SubgraphRepresentation
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
 
     ### Add Embeddings
@@ -989,7 +993,7 @@ def main_incidence():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
 
     ### Add Embeddings
@@ -1110,8 +1114,8 @@ def main_transform_standardization():
     from tqdm import tqdm
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
-    from torchcell.data.neo4j_cell import Neo4jCellDataset
     from torchcell.data.graph_processor import SubgraphRepresentation
+    from torchcell.data.neo4j_cell import Neo4jCellDataset
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1137,7 +1141,7 @@ def main_transform_standardization():
     DATA_ROOT = os.getenv("DATA_ROOT")
 
     # Load query
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
 
     # Set up genome and graph
@@ -1365,7 +1369,7 @@ def main_transform_categorical():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
 
     genome = SCerevisiaeGenome(
@@ -1570,7 +1574,7 @@ def main_transform_categorical_dense():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
 
     # Dataset setup
@@ -1697,7 +1701,7 @@ def main_transform_categorical_dense():
     print("\nBatch structure:")
     print(f"Batch keys: {batch.keys}")
     print(f"\nNode features shape: {batch['gene'].x.shape}")
-    print(f"Adjacency matrix shapes:")
+    print("Adjacency matrix shapes:")
     # print(f"Physical: {batch['gene', 'physical_interaction', 'gene'].adj.shape}")
     # print(f"Regulatory: {batch['gene', 'regulatory_interaction', 'gene'].adj.shape}")
 
@@ -1711,14 +1715,14 @@ def main_transform_categorical_dense():
             soft_labels = batch["gene"][label].squeeze()
             if soft_labels.dim() == 3:  # If [batch, 1, num_classes]
                 soft_labels = soft_labels.squeeze(1)
-            print(f"Soft label sums (first 5):")
+            print("Soft label sums (first 5):")
             print(soft_labels.sum(dim=-1)[:5])  # Sum over classes
         else:
             print(f"Ordinal label shape: {batch['gene'][label].shape}")
             ordinal_labels = batch["gene"][label].squeeze()
             if ordinal_labels.dim() == 3:  # If [batch, 1, num_thresholds]
                 ordinal_labels = ordinal_labels.squeeze(1)
-            print(f"Ordinal values (first 5):")
+            print("Ordinal values (first 5):")
             print(ordinal_labels[:5])
 
         # Handle continuous and original values

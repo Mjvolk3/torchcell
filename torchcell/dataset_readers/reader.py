@@ -3,14 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/dataset_readers/reader.py
 # Test file: tests/torchcell/dataset_readers/test_reader.py
 
+import json
 import os.path as osp
 import pickle
+
 import lmdb
 import numpy as np
-import json
 
-from torchcell.datamodels import BaseGenotype, InterferenceGenotype
 from torchcell.data.data import ExperimentReferenceIndex
+
 
 class LmdbDatasetReader:
     def __init__(self, dataset_dir):
@@ -29,22 +30,25 @@ class LmdbDatasetReader:
             lock=False,
             readahead=False,
             meminit=False,
-            max_dbs=20
+            max_dbs=20,
         )
         # Open the default database
         with self.env.begin(write=False) as txn:
-            self.db = self.env.open_db(None, create=False)  # None refers to the default database
-
+            self.db = self.env.open_db(
+                None, create=False
+            )  # None refers to the default database
 
     def _load_experiment_reference_index(self):
         index_file_path = osp.join(
             self.dataset_dir, "preprocess/experiment_reference_index.json"
         )
         if osp.exists(index_file_path):
-            with open(index_file_path, "r") as file:
+            with open(index_file_path) as file:
                 index_data = json.load(file)
                 # Convert dictionaries to ExperimentReferenceIndex objects
-                self._experiment_reference_index = [ExperimentReferenceIndex(**item) for item in index_data]
+                self._experiment_reference_index = [
+                    ExperimentReferenceIndex(**item) for item in index_data
+                ]
 
     @property
     def experiment_reference_index(self):
@@ -90,7 +94,6 @@ class LmdbDatasetReader:
         """Return an iterator over the dataset."""
         for idx in range(len(self)):
             yield self[idx]
-
 
     def __repr__(self):
         return f"{self.__class__.__name__}({len(self)})"

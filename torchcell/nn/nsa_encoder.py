@@ -3,12 +3,12 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/nsa_encoder
 # Test file: tests/torchcell/nn/test_nsa_encoder.py
 
+from typing import Literal, Union
+
 import torch
 import torch.nn as nn
-from torch.nn.attention.flex_attention import flex_attention, create_block_mask
-from typing import Optional, Union
+
 from torchcell.nn.masked_attention_block import NodeSelfAttention
-from typing import Literal
 
 # Import SelfAttentionBlock from your project.
 from torchcell.nn.self_attention_block import SelfAttentionBlock
@@ -24,7 +24,7 @@ class NSAEncoder(nn.Module):
         self,
         input_dim: int,
         hidden_dim: int,
-        pattern: list[Union[Literal["M"], Literal["S"]]] = None,
+        pattern: list[Literal["M"] | Literal["S"]] = None,
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
@@ -60,8 +60,8 @@ class NSAEncoder(nn.Module):
         self,
         x: torch.Tensor,
         data_or_edge_index: Union[torch.Tensor, "HeteroData"],
-        edge_attr: Optional[torch.Tensor] = None,
-        batch: Optional[torch.Tensor] = None,
+        edge_attr: torch.Tensor | None = None,
+        batch: torch.Tensor | None = None,
     ) -> torch.Tensor:
         if batch is None:
             batch = torch.zeros(x.size(0), dtype=torch.long, device=x.device)

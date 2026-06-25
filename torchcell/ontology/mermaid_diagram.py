@@ -12,10 +12,8 @@ Supports both horizontal (RL) and vertical (BT) orientations.
 Ensures deterministic output for clean git diffs.
 """
 
-import os
 import re
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 import yaml
 
@@ -30,7 +28,7 @@ class MermaidDiagramGenerator:
             schema_config_path: Path to torchcell_schema_config.yaml
         """
         self.schema_config_path = Path(schema_config_path)
-        with open(self.schema_config_path, "r") as f:
+        with open(self.schema_config_path) as f:
             self.schema = yaml.safe_load(f)
 
         # Parse schema into structured data
@@ -39,7 +37,7 @@ class MermaidDiagramGenerator:
         self.biolink_classes = self._extract_biolink_classes()
         self.auto_mapped_nodes = self._get_auto_mapped_nodes()
 
-    def _extract_nodes(self) -> Dict[str, Dict]:
+    def _extract_nodes(self) -> dict[str, dict]:
         """Extract all nodes from schema.
 
         Returns:
@@ -51,7 +49,7 @@ class MermaidDiagramGenerator:
                 nodes[name] = config
         return nodes
 
-    def _extract_edges(self) -> Dict[str, Dict]:
+    def _extract_edges(self) -> dict[str, dict]:
         """Extract all edges from schema.
 
         Returns:
@@ -63,7 +61,7 @@ class MermaidDiagramGenerator:
                 edges[name] = config
         return edges
 
-    def _extract_biolink_classes(self) -> Set[str]:
+    def _extract_biolink_classes(self) -> set[str]:
         """Extract Biolink parent classes from nodes.
 
         Returns:
@@ -75,7 +73,7 @@ class MermaidDiagramGenerator:
                 classes.add(node_config["is_a"])
         return classes
 
-    def _get_auto_mapped_nodes(self) -> Set[str]:
+    def _get_auto_mapped_nodes(self) -> set[str]:
         """Get nodes that don't have is_a (direct Biolink class usage).
 
         Returns:
@@ -251,7 +249,9 @@ class MermaidDiagramGenerator:
             lines.append(f"    class {auto_mapped_ids},L2 autoMappedStyle")
 
         # Inherited entities (those with is_a)
-        inherited_nodes = [n for n in self.nodes.keys() if n not in self.auto_mapped_nodes]
+        inherited_nodes = [
+            n for n in self.nodes.keys() if n not in self.auto_mapped_nodes
+        ]
         if inherited_nodes:
             inherited_ids = ",".join(
                 self._format_node_id(n) for n in sorted(inherited_nodes)
@@ -260,7 +260,7 @@ class MermaidDiagramGenerator:
 
         return "\n".join(lines)
 
-    def _extract_frontmatter(self, content: str) -> Tuple[str, str]:
+    def _extract_frontmatter(self, content: str) -> tuple[str, str]:
         """Extract Dendron frontmatter from file content.
 
         Args:
@@ -306,7 +306,7 @@ class MermaidDiagramGenerator:
         if not path.exists():
             return True
 
-        with open(path, "r") as f:
+        with open(path) as f:
             existing_content = f.read()
 
         # Extract existing mermaid content
@@ -338,7 +338,7 @@ class MermaidDiagramGenerator:
         # Preserve existing frontmatter if file exists
         frontmatter = ""
         if path.exists():
-            with open(path, "r") as f:
+            with open(path) as f:
                 existing_content = f.read()
             frontmatter, _ = self._extract_frontmatter(existing_content)
 

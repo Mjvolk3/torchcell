@@ -1,12 +1,13 @@
-from typing import Dict, List, Optional, Tuple, Union, Literal, Set
+from typing import Literal
+
 import torch
 import torch.nn as nn
 from torch import Tensor
 from torch_geometric.data import HeteroData
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
 
-from torchcell.nn.self_attention_block import SelfAttentionBlock
 from torchcell.nn.masked_attention_block import NodeSelfAttention
+from torchcell.nn.self_attention_block import SelfAttentionBlock
 
 
 class _HeteroNSA_Block(nn.Module):
@@ -16,12 +17,13 @@ class _HeteroNSA_Block(nn.Module):
     (with an optional aggregator if aggregation=='attention').
     If layer_type=='S', applies self-attention (SAB) using per–node-type SelfAttentionBlock.
     """
+
     def __init__(
         self,
         layer_type: Literal["M", "S"],
         hidden_dim: int,
-        node_types: Set[str],
-        edge_types: Set[Tuple[str, str, str]],
+        node_types: set[str],
+        edge_types: set[tuple[str, str, str]],
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
@@ -38,7 +40,7 @@ class _HeteroNSA_Block(nn.Module):
 
         if layer_type == "M":
             self.masked_blocks = nn.ModuleDict()
-            for (src, rel, dst) in edge_types:
+            for src, rel, dst in edge_types:
                 key = f"{src}__{rel}__{dst}"
                 self.masked_blocks[key] = NodeSelfAttention(
                     hidden_dim=hidden_dim,
@@ -49,7 +51,9 @@ class _HeteroNSA_Block(nn.Module):
             if aggregation == "attention":
                 self.node_aggregators = nn.ModuleDict()
                 for nt in node_types:
-                    connected = [(s, r, d) for (s, r, d) in edge_types if s == nt or d == nt]
+                    connected = [
+                        (s, r, d) for (s, r, d) in edge_types if s == nt or d == nt
+                    ]
                     if len(connected) > 1:
                         gate_nn = nn.Sequential(
                             nn.Linear(hidden_dim, hidden_dim // 2),
@@ -80,8 +84,8 @@ class _HeteroNSA_Block(nn.Module):
         block: nn.Module,
         embeddings: Tensor,
         mask: Tensor,
-        edge_attr: Optional[Tensor] = None,
-        edge_index: Optional[Tensor] = None,
+        edge_attr: Tensor | None = None,
+        edge_index: Tensor | None = None,
     ) -> Tensor:
         original_dim = embeddings.dim()
         if mask.dim() == 2 and embeddings.dim() == 2:
@@ -104,13 +108,13 @@ class _HeteroNSA_Block(nn.Module):
 
     def forward(
         self,
-        x_dict: Dict[str, Tensor],
+        x_dict: dict[str, Tensor],
         data: HeteroData,
-        batch_idx: Optional[Dict[str, Tensor]] = None,
-    ) -> Dict[str, Tensor]:
+        batch_idx: dict[str, Tensor] | None = None,
+    ) -> dict[str, Tensor]:
         if self.layer_type == "M":
             relation_outputs = {nt: [] for nt in self.node_types}
-            for (src, rel, dst) in self.edge_types:
+            for src, rel, dst in self.edge_types:
                 key = f"{src}__{rel}__{dst}"
                 if key not in self.masked_blocks:
                     continue
@@ -130,39 +134,64 @@ class _HeteroNSA_Block(nn.Module):
                         edge_attr = edge_store.stoichiometry
                         edge_index = edge_store.edge_index
                     if src == dst:
-                        out_src = self._process_with_mask(block, src_emb, adj_mask, edge_attr, edge_index)
+                        out_src = self._process_with_mask(
+                            block, src_emb, adj_mask, edge_attr, edge_index
+                        )
                         relation_outputs[src].append(out_src)
                     else:
-                        out_src = self._process_with_mask(block, src_emb, adj_mask, edge_attr, edge_index)
+                        out_src = self._process_with_mask(
+                            block, src_emb, adj_mask, edge_attr, edge_index
+                        )
                         relation_outputs[src].append(out_src)
                         adj_mask_t = adj_mask.transpose(-2, -1)
-                        out_dst = self._process_with_mask(block, dst_emb, adj_mask_t, edge_attr, edge_index)
+                        out_dst = self._process_with_mask(
+                            block, dst_emb, adj_mask_t, edge_attr, edge_index
+                        )
                         relation_outputs[dst].append(out_dst)
-                elif hasattr(edge_store, "inc_mask") and edge_store.inc_mask is not None:
+                elif (
+                    hasattr(edge_store, "inc_mask") and edge_store.inc_mask is not None
+                ):
                     inc_mask = edge_store.inc_mask
                     edge_attr = None
                     edge_index = None
                     if rel == "rmr" and hasattr(edge_store, "stoichiometry"):
                         edge_attr = edge_store.stoichiometry
-                        edge_index = getattr(edge_store, "hyperedge_index", None) or edge_store.edge_index
-                    out_src = self._process_with_mask(block, src_emb, inc_mask, edge_attr, edge_index)
+                        edge_index = (
+                            getattr(edge_store, "hyperedge_index", None)
+                            or edge_store.edge_index
+                        )
+                    out_src = self._process_with_mask(
+                        block, src_emb, inc_mask, edge_attr, edge_index
+                    )
                     relation_outputs[src].append(out_src)
                     if src != dst:
                         inc_mask_t = inc_mask.transpose(-2, -1)
-                        out_dst = self._process_with_mask(block, dst_emb, inc_mask_t, edge_attr, edge_index)
+                        out_dst = self._process_with_mask(
+                            block, dst_emb, inc_mask_t, edge_attr, edge_index
+                        )
                         relation_outputs[dst].append(out_dst)
                 elif hasattr(edge_store, "edge_index"):
                     edge_index = edge_store.edge_index
                     edge_attr = getattr(edge_store, "edge_attr", None)
                     if src == dst:
                         adj = torch.eye(src_emb.size(0), device=src_emb.device).bool()
-                        out_src = self._process_with_mask(block, src_emb, adj, edge_attr, edge_index)
+                        out_src = self._process_with_mask(
+                            block, src_emb, adj, edge_attr, edge_index
+                        )
                         relation_outputs[src].append(out_src)
                     else:
-                        src_adj = torch.eye(src_emb.size(0), device=src_emb.device).bool()
-                        dst_adj = torch.eye(dst_emb.size(0), device=dst_emb.device).bool()
-                        out_src = self._process_with_mask(block, src_emb, src_adj, edge_attr, edge_index)
-                        out_dst = self._process_with_mask(block, dst_emb, dst_adj, edge_attr, edge_index)
+                        src_adj = torch.eye(
+                            src_emb.size(0), device=src_emb.device
+                        ).bool()
+                        dst_adj = torch.eye(
+                            dst_emb.size(0), device=dst_emb.device
+                        ).bool()
+                        out_src = self._process_with_mask(
+                            block, src_emb, src_adj, edge_attr, edge_index
+                        )
+                        out_dst = self._process_with_mask(
+                            block, dst_emb, dst_adj, edge_attr, edge_index
+                        )
                         relation_outputs[src].append(out_src)
                         relation_outputs[dst].append(out_dst)
             new_x = {}
@@ -177,11 +206,17 @@ class _HeteroNSA_Block(nn.Module):
                         new_x[nt] = sum(outs)
                     elif self.aggregation == "mean":
                         new_x[nt] = sum(outs) / len(outs)
-                    elif self.aggregation == "attention" and hasattr(self, "node_aggregators"):
+                    elif self.aggregation == "attention" and hasattr(
+                        self, "node_aggregators"
+                    ):
                         if nt in self.node_aggregators:
                             flat_embs = torch.cat(outs, dim=0)
-                            node_indices = torch.arange(len(outs), device=flat_embs.device).repeat_interleave(outs[0].size(0))
-                            new_x[nt] = self.node_aggregators[nt](flat_embs, index=node_indices)
+                            node_indices = torch.arange(
+                                len(outs), device=flat_embs.device
+                            ).repeat_interleave(outs[0].size(0))
+                            new_x[nt] = self.node_aggregators[nt](
+                                flat_embs, index=node_indices
+                            )
                         else:
                             new_x[nt] = sum(outs) / len(outs)
                     else:
@@ -209,12 +244,13 @@ class HeteroNSA(nn.Module):
     Instead of reusing a single set of modules for every block, this version builds a
     stack of independent blocks—one per element in the provided pattern.
     """
+
     def __init__(
         self,
         hidden_dim: int,
-        node_types: Set[str],
-        edge_types: Set[Tuple[str, str, str]],
-        pattern: List[str],
+        node_types: set[str],
+        edge_types: set[tuple[str, str, str]],
+        pattern: list[str],
         num_heads: int = 8,
         dropout: float = 0.1,
         activation: nn.Module = nn.GELU(),
@@ -225,37 +261,43 @@ class HeteroNSA(nn.Module):
             raise ValueError("Pattern list cannot be empty")
         for block_type in pattern:
             if block_type not in ["M", "S"]:
-                raise ValueError(f"Invalid block type '{block_type}'. Must be 'M' or 'S'.")
+                raise ValueError(
+                    f"Invalid block type '{block_type}'. Must be 'M' or 'S'."
+                )
         if aggregation not in ["sum", "mean", "attention"]:
-            raise ValueError(f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'.")
+            raise ValueError(
+                f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'."
+            )
         self.hidden_dim = hidden_dim
         self.node_types = node_types
         self.edge_types = edge_types
         self.pattern = pattern
         self.aggregation = aggregation
 
-        self.blocks = nn.ModuleList([
-            _HeteroNSA_Block(
-                layer_type=layer_type,
-                hidden_dim=hidden_dim,
-                node_types=node_types,
-                edge_types=edge_types,
-                num_heads=num_heads,
-                dropout=dropout,
-                activation=activation,
-                aggregation=aggregation,
-            )
-            for layer_type in pattern
-        ])
+        self.blocks = nn.ModuleList(
+            [
+                _HeteroNSA_Block(
+                    layer_type=layer_type,
+                    hidden_dim=hidden_dim,
+                    node_types=node_types,
+                    edge_types=edge_types,
+                    num_heads=num_heads,
+                    dropout=dropout,
+                    activation=activation,
+                    aggregation=aggregation,
+                )
+                for layer_type in pattern
+            ]
+        )
         # Expose the first block's _process_with_mask for monkey patching.
         self._process_with_mask = self.blocks[0]._process_with_mask
 
     def forward(
         self,
-        node_embeddings: Dict[str, Tensor],
+        node_embeddings: dict[str, Tensor],
         data: HeteroData,
-        batch_idx: Optional[Dict[str, Tensor]] = None,
-    ) -> Dict[str, Tensor]:
+        batch_idx: dict[str, Tensor] | None = None,
+    ) -> dict[str, Tensor]:
         x_dict = {k: v.clone() for k, v in node_embeddings.items()}
         for block in self.blocks:
             x_dict = block(x_dict, data, batch_idx)
@@ -268,13 +310,14 @@ class HeteroNSAEncoder(nn.Module):
     The constructor accepts a 'pattern' (a list of 'M'/'S' strings) and a 'num_layers'
     count; a separate HeteroNSA is built for each layer.
     """
+
     def __init__(
         self,
-        input_dims: Dict[str, int],
+        input_dims: dict[str, int],
         hidden_dim: int,
-        node_types: Set[str],
-        edge_types: Set[Tuple[str, str, str]],
-        pattern: List[str],
+        node_types: set[str],
+        edge_types: set[tuple[str, str, str]],
+        pattern: list[str],
         num_layers: int = 3,
         num_heads: int = 8,
         dropout: float = 0.1,
@@ -283,7 +326,9 @@ class HeteroNSAEncoder(nn.Module):
     ) -> None:
         super().__init__()
         if aggregation not in ["sum", "mean", "attention"]:
-            raise ValueError(f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'.")
+            raise ValueError(
+                f"Invalid aggregation '{aggregation}'. Must be 'sum', 'mean', or 'attention'."
+            )
         self.hidden_dim = hidden_dim
         self.node_types = node_types
         self.edge_types = edge_types
@@ -293,34 +338,42 @@ class HeteroNSAEncoder(nn.Module):
         )
 
         # Build a separate HeteroNSA layer for each repetition.
-        self.nsa_layers = nn.ModuleList([
-            HeteroNSA(
-                hidden_dim=hidden_dim,
-                node_types=node_types,
-                edge_types=edge_types,
-                pattern=pattern,
-                num_heads=num_heads,
-                dropout=dropout,
-                activation=activation,
-                aggregation=aggregation,
-            )
-            for _ in range(num_layers)
-        ])
+        self.nsa_layers = nn.ModuleList(
+            [
+                HeteroNSA(
+                    hidden_dim=hidden_dim,
+                    node_types=node_types,
+                    edge_types=edge_types,
+                    pattern=pattern,
+                    num_heads=num_heads,
+                    dropout=dropout,
+                    activation=activation,
+                    aggregation=aggregation,
+                )
+                for _ in range(num_layers)
+            ]
+        )
 
         self.layer_norms = nn.ModuleDict(
-            {nt: nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
-             for nt in node_types}
+            {
+                nt: nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
+                for nt in node_types
+            }
         )
         self.graph_projections = nn.ModuleDict(
             {nt: nn.Linear(hidden_dim, hidden_dim) for nt in node_types}
         )
         self.final_projection = nn.Linear(hidden_dim * len(node_types), hidden_dim)
 
-    def forward(self, data: HeteroData) -> Tuple[Dict[str, Tensor], Tensor]:
+    def forward(self, data: HeteroData) -> tuple[dict[str, Tensor], Tensor]:
         x_dict = {}
         batch_idx = {}
         for nt in self.node_types:
-            if nt in data.node_types and hasattr(data[nt], "x") and data[nt].x is not None:
+            if (
+                nt in data.node_types
+                and hasattr(data[nt], "x")
+                and data[nt].x is not None
+            ):
                 proj = self.input_projections[nt](data[nt].x.clone())
                 x_dict[nt] = proj
                 if hasattr(data[nt], "batch") and data[nt].batch is not None:

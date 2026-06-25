@@ -5,7 +5,6 @@
 
 import argparse
 import logging
-import os.path as osp
 
 import yaml
 
@@ -13,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 def main(sweep_file: str) -> str:
-    with open(sweep_file, "r") as file:
+    with open(sweep_file) as file:
         sweep_config = yaml.load(file, Loader=yaml.FullLoader)
     return sweep_config["project"]
 

@@ -1,24 +1,21 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import wandb
-import numpy as np
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-import matplotlib.pyplot as plt
-from typing import Optional
-import logging
-from torchcell.viz.visual_graph_degen import VisGraphDegen
-from torchcell.viz import genetic_interaction_score
-from torchcell.viz.visual_regression import Visualization
-from torchcell.timestamp import timestamp
 from torch_geometric.data import HeteroData
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
 from torchcell.losses.logcosh import LogCoshLoss
-from torchcell.losses.diffusion_loss import DiffusionLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
 from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
+from torchcell.viz import genetic_interaction_score
+from torchcell.viz.visual_graph_degen import VisGraphDegen
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -38,9 +35,9 @@ class RegressionTask(L.LightningModule):
         plot_transformer_diagnostics_every_n_epochs: int = 10,
         plot_edge_recovery_every_n_epochs: int = 10,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        inverse_transform: Optional[nn.Module] = None,
+        inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
@@ -91,15 +88,11 @@ class RegressionTask(L.LightningModule):
         self.reset_edge_recovery_accumulators()
 
         # Attention diagnostic accumulators (for validation)
-        self.attention_stats_accumulators = (
-            {}
-        )  # {layer_idx: {"entropy_sum": float, "effective_rank_sum": float, "top5_sum": float, "top10_sum": float, "top50_sum": float, "count": int}}
+        self.attention_stats_accumulators = {}  # {layer_idx: {"entropy_sum": float, "effective_rank_sum": float, "top5_sum": float, "top10_sum": float, "top50_sum": float, "count": int}}
         self.gradient_norms = {}  # {layer_idx: norm_value}
 
         # Residual update accumulators (Tier 1 - very cheap)
-        self.residual_update_accumulators = (
-            {}
-        )  # {layer_idx: {"sum_ratio": float, "count": int}}
+        self.residual_update_accumulators = {}  # {layer_idx: {"sum_ratio": float, "count": int}}
 
     def _get_batch_size(self, batch):
         """Get batch size from batch, handling different batch structures."""
@@ -236,7 +229,9 @@ class RegressionTask(L.LightningModule):
                 # Get true adjacency for this graph from dict
                 if graph_name not in self.model.adjacency_matrices:
                     continue
-                adj_true = self.model.adjacency_matrices[graph_name].to(attn_for_head.device)  # [N, N]
+                adj_true = self.model.adjacency_matrices[graph_name].to(
+                    attn_for_head.device
+                )  # [N, N]
 
                 # Average attention across batch dimension
                 attn_avg = attn_for_head.mean(dim=0)  # [N, N]
@@ -259,9 +254,14 @@ class RegressionTask(L.LightningModule):
                         "degree_correlation_sum": 0.0,
                         "degree_corr_count": 0,
                     }
-                elif "degree_correlation_sum" not in self.edge_recovery_accumulators[metric_key]:
+                elif (
+                    "degree_correlation_sum"
+                    not in self.edge_recovery_accumulators[metric_key]
+                ):
                     # Add degree fields if accumulator exists but was created by degree bias
-                    self.edge_recovery_accumulators[metric_key]["degree_correlation_sum"] = 0.0
+                    self.edge_recovery_accumulators[metric_key][
+                        "degree_correlation_sum"
+                    ] = 0.0
                     self.edge_recovery_accumulators[metric_key]["degree_corr_count"] = 0
 
                 acc = self.edge_recovery_accumulators[metric_key]
@@ -447,7 +447,9 @@ class RegressionTask(L.LightningModule):
         # Get adjacency matrix from dict
         if graph_name not in self.model.adjacency_matrices:
             return
-        adj_true = self.model.adjacency_matrices[graph_name].to(attention_weights.device)  # [N, N]
+        adj_true = self.model.adjacency_matrices[graph_name].to(
+            attention_weights.device
+        )  # [N, N]
         degrees = adj_true.sum(dim=-1).detach().cpu().numpy()  # [N]
 
         # Average attention across batch
@@ -608,13 +610,16 @@ class RegressionTask(L.LightningModule):
         # Get model outputs - only request attention weights during validation on diagnostic epochs
         if stage == "val":
             # Check if ANY diagnostic tier is scheduled for this epoch
-            plot_transformer_freq = self.hparams.get("plot_transformer_diagnostics_every_n_epochs", 10)
+            plot_transformer_freq = self.hparams.get(
+                "plot_transformer_diagnostics_every_n_epochs", 10
+            )
             plot_edge_freq = self.hparams.get("plot_edge_recovery_every_n_epochs", 10)
 
             is_diagnostic_epoch = (
-                (self.current_epoch + 1) % plot_transformer_freq == 0
-                or (self.current_epoch + 1) % plot_edge_freq == 0
-            )
+                self.current_epoch + 1
+            ) % plot_transformer_freq == 0 or (
+                self.current_epoch + 1
+            ) % plot_edge_freq == 0
             return_attention = is_diagnostic_epoch
 
             # Debug: Log attention storage decision (only on rank 0, once per epoch)
@@ -625,13 +630,18 @@ class RegressionTask(L.LightningModule):
             #     else:
             #         print(f"Epoch {self.current_epoch}: Skipping attention storage")
         else:
-            return_attention = False  # Never during training (graph reg doesn't need storage)
+            return_attention = (
+                False  # Never during training (graph reg doesn't need storage)
+            )
 
         predictions, representations = self(batch, return_attention=return_attention)
 
         # In validation stage, compute edge recovery metrics and attention diagnostics
         if stage == "val":
-            if "attention_weights" in representations and representations["attention_weights"] is not None:
+            if (
+                "attention_weights" in representations
+                and representations["attention_weights"] is not None
+            ):
                 attention_weights_list = representations["attention_weights"]
 
                 # TIER 1: Cheap transformer diagnostics (attention stats, entropy, residual ratios)
@@ -653,8 +663,13 @@ class RegressionTask(L.LightningModule):
                     )
 
                 # TIER 1: Accumulate residual update ratios (from model)
-                if "residual_update_ratios" in representations and representations["residual_update_ratios"]:
-                    for layer_idx, ratio in enumerate(representations["residual_update_ratios"]):
+                if (
+                    "residual_update_ratios" in representations
+                    and representations["residual_update_ratios"]
+                ):
+                    for layer_idx, ratio in enumerate(
+                        representations["residual_update_ratios"]
+                    ):
                         if layer_idx not in self.residual_update_accumulators:
                             self.residual_update_accumulators[layer_idx] = {
                                 "sum_ratio": 0.0,
@@ -754,7 +769,9 @@ class RegressionTask(L.LightningModule):
             # Compute the ratio of update magnitude to input magnitude
             residual_norm = (H_genes_pert - H_genes).norm(p=2)
             input_norm = H_genes.norm(p=2)
-            residual_ratio = residual_norm / (input_norm + 1e-8)  # Avoid division by zero
+            residual_ratio = residual_norm / (
+                input_norm + 1e-8
+            )  # Avoid division by zero
 
             self.log(
                 f"{stage}/residual_update_ratio",
@@ -982,10 +999,16 @@ class RegressionTask(L.LightningModule):
                         if "H_pooled" not in self.train_samples["latents"]:
                             self.train_samples["latents"]["H_pooled"] = []
                         # Pool immediately: mean([h_CLS, H_genes_pert]) -> [batch, d]
-                        h_CLS_batched = h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)  # [batch, 1, d]
-                        H_combined = torch.cat([h_CLS_batched, H_genes_pert], dim=1)  # [batch, N+1, d]
+                        h_CLS_batched = (
+                            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+                        )  # [batch, 1, d]
+                        H_combined = torch.cat(
+                            [h_CLS_batched, H_genes_pert], dim=1
+                        )  # [batch, N+1, d]
                         H_pooled = H_combined.mean(dim=1)  # [batch, d]
-                        self.train_samples["latents"]["H_pooled"].append(H_pooled[idx].detach().cpu())
+                        self.train_samples["latents"]["H_pooled"].append(
+                            H_pooled[idx].detach().cpu()
+                        )
                 else:
                     self.train_samples["true_values"].append(
                         gene_interaction_orig.detach()
@@ -1001,10 +1024,16 @@ class RegressionTask(L.LightningModule):
                         if "H_pooled" not in self.train_samples["latents"]:
                             self.train_samples["latents"]["H_pooled"] = []
                         # Pool immediately: mean([h_CLS, H_genes_pert]) -> [batch, d]
-                        h_CLS_batched = h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)  # [batch, 1, d]
-                        H_combined = torch.cat([h_CLS_batched, H_genes_pert], dim=1)  # [batch, N+1, d]
+                        h_CLS_batched = (
+                            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+                        )  # [batch, 1, d]
+                        H_combined = torch.cat(
+                            [h_CLS_batched, H_genes_pert], dim=1
+                        )  # [batch, N+1, d]
                         H_pooled = H_combined.mean(dim=1)  # [batch, d]
-                        self.train_samples["latents"]["H_pooled"].append(H_pooled.detach().cpu())
+                        self.train_samples["latents"]["H_pooled"].append(
+                            H_pooled.detach().cpu()
+                        )
         elif (
             stage == "val"
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
@@ -1031,10 +1060,16 @@ class RegressionTask(L.LightningModule):
                         if "H_pooled" not in self.val_samples["latents"]:
                             self.val_samples["latents"]["H_pooled"] = []
                         # Pool immediately: mean([h_CLS, H_genes_pert]) -> [batch, d]
-                        h_CLS_batched = h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)  # [batch, 1, d]
-                        H_combined = torch.cat([h_CLS_batched, H_genes_pert], dim=1)  # [batch, N+1, d]
+                        h_CLS_batched = (
+                            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+                        )  # [batch, 1, d]
+                        H_combined = torch.cat(
+                            [h_CLS_batched, H_genes_pert], dim=1
+                        )  # [batch, N+1, d]
                         H_pooled = H_combined.mean(dim=1)  # [batch, d]
-                        self.val_samples["latents"]["H_pooled"].append(H_pooled[idx].detach().cpu())
+                        self.val_samples["latents"]["H_pooled"].append(
+                            H_pooled[idx].detach().cpu()
+                        )
                 else:
                     self.val_samples["true_values"].append(
                         gene_interaction_orig.detach()
@@ -1050,10 +1085,16 @@ class RegressionTask(L.LightningModule):
                         if "H_pooled" not in self.val_samples["latents"]:
                             self.val_samples["latents"]["H_pooled"] = []
                         # Pool immediately: mean([h_CLS, H_genes_pert]) -> [batch, d]
-                        h_CLS_batched = h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)  # [batch, 1, d]
-                        H_combined = torch.cat([h_CLS_batched, H_genes_pert], dim=1)  # [batch, N+1, d]
+                        h_CLS_batched = (
+                            h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+                        )  # [batch, 1, d]
+                        H_combined = torch.cat(
+                            [h_CLS_batched, H_genes_pert], dim=1
+                        )  # [batch, N+1, d]
                         H_pooled = H_combined.mean(dim=1)  # [batch, d]
-                        self.val_samples["latents"]["H_pooled"].append(H_pooled.detach().cpu())
+                        self.val_samples["latents"]["H_pooled"].append(
+                            H_pooled.detach().cpu()
+                        )
         elif stage == "test":
             # For test, always collect samples (no epoch check since test runs once)
             self.test_samples["true_values"].append(gene_interaction_orig.detach())
@@ -1068,8 +1109,12 @@ class RegressionTask(L.LightningModule):
                 if "H_pooled" not in self.test_samples["latents"]:
                     self.test_samples["latents"]["H_pooled"] = []
                 # Pool immediately: mean([h_CLS, H_genes_pert]) -> [batch, d]
-                h_CLS_batched = h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)  # [batch, 1, d]
-                H_combined = torch.cat([h_CLS_batched, H_genes_pert], dim=1)  # [batch, N+1, d]
+                h_CLS_batched = (
+                    h_CLS.unsqueeze(0).expand(batch_size, -1).unsqueeze(1)
+                )  # [batch, 1, d]
+                H_combined = torch.cat(
+                    [h_CLS_batched, H_genes_pert], dim=1
+                )  # [batch, N+1, d]
                 H_pooled = H_combined.mean(dim=1)  # [batch, d]
                 self.test_samples["latents"]["H_pooled"].append(H_pooled.detach().cpu())
 

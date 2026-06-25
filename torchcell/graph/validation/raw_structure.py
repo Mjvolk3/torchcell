@@ -5,10 +5,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import pydot
 from adjustText import adjust_text
-from networkx.drawing.nx_agraph import graphviz_layout
-from networkx.drawing.nx_pydot import graphviz_layout
 
 
 def analyze_structure(data, parent_key="") -> dict[str, Any]:
@@ -173,7 +170,6 @@ def analyze_json(file_path, create_images=False, layout="spring"):
 
 
 def main():
-    import os
 
     file_path = "data/sgd/genes/YPR201W.json"
     analyze_json(file_path, create_images=True, layout="tree")

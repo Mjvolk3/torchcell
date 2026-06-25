@@ -3,16 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/database/biocypher_out_combine
 # Test file: tests/torchcell/database/test_biocypher_out_combine.py
 
+import argparse
+import json
 import os
 import shutil
-import yaml
 from datetime import datetime
-import argparse
-from deepdiff import DeepDiff
-import glob
-import subprocess
-import json
-import csv
+
+import yaml
 
 
 def merge_dicts(dict1, dict2):
@@ -36,7 +33,7 @@ def merge_dicts(dict1, dict2):
 def check_yaml_compatibility(yaml_files):
     combined_data = {}
     for file in yaml_files:
-        with open(file, "r") as f:
+        with open(file) as f:
             data = yaml.safe_load(f)
         try:
             combined_data = merge_dicts(combined_data, data)
@@ -104,7 +101,7 @@ def combine_csv_files(input_dirs, output_dir):
 
 
 def load_neo4j_config(config_file):
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         config = yaml.safe_load(f)
 
     # Extract Neo4j configuration, preferring the second neo4j block if it exists
@@ -132,7 +129,7 @@ def load_neo4j_config(config_file):
 
 
 def load_schema_info(schema_file):
-    with open(schema_file, "r") as f:
+    with open(schema_file) as f:
         schema = yaml.safe_load(f)
     return schema
 
@@ -143,13 +140,13 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
         "#!/bin/bash",
         "version=$(bin/neo4j-admin --version | cut -d '.' -f 1)",
         "if [[ $version -ge 5 ]]; then",
-        f'    {neo4j_config["import_call_bin_prefix"]}neo4j-admin database import full \\',
+        f"    {neo4j_config['import_call_bin_prefix']}neo4j-admin database import full \\",
         f'    --delimiter="{neo4j_config["delimiter"]}" \\',
         f'    --array-delimiter="{neo4j_config["array_delimiter"]}" \\',
         '    --quote="\'" \\',
-        f'    --overwrite-destination={str(neo4j_config["wipe"]).lower()} \\',
-        f'    --skip-bad-relationships={str(neo4j_config["skip_bad_relationships"]).lower()} \\',
-        f'    --skip-duplicate-nodes={str(neo4j_config["skip_duplicate_nodes"]).lower()} \\',
+        f"    --overwrite-destination={str(neo4j_config['wipe']).lower()} \\",
+        f"    --skip-bad-relationships={str(neo4j_config['skip_bad_relationships']).lower()} \\",
+        f"    --skip-duplicate-nodes={str(neo4j_config['skip_duplicate_nodes']).lower()} \\",
         f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-part.*" \\',
     ]
 
@@ -197,19 +194,19 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
             )
 
     # Add database name for Neo4j 5+
-    script_content[-1] = script_content[-1] + f'{neo4j_config["database_name"]}'
+    script_content[-1] = script_content[-1] + f"{neo4j_config['database_name']}"
 
     # Add Neo4j 4.x version command
     script_content.extend(
         [
             "else",
-            f'    {neo4j_config["import_call_bin_prefix"]}neo4j-admin import \\',
+            f"    {neo4j_config['import_call_bin_prefix']}neo4j-admin import \\",
             f'    --delimiter="{neo4j_config["delimiter"]}" \\',
             f'    --array-delimiter="{neo4j_config["array_delimiter"]}" \\',
             '    --quote="\'" \\',
-            f'    --force={str(neo4j_config["wipe"]).lower()} \\',
-            f'    --skip-bad-relationships={str(neo4j_config["skip_bad_relationships"]).lower()} \\',
-            f'    --skip-duplicate-nodes={str(neo4j_config["skip_duplicate_nodes"]).lower()} \\',
+            f"    --force={str(neo4j_config['wipe']).lower()} \\",
+            f"    --skip-bad-relationships={str(neo4j_config['skip_bad_relationships']).lower()} \\",
+            f"    --skip-duplicate-nodes={str(neo4j_config['skip_duplicate_nodes']).lower()} \\",
             f'    --nodes="{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-header.csv,{neo4j_config["import_call_file_prefix"]}biocypher-out/{output_dir_name}/Schema_info-part.*" \\',
         ]
     )
@@ -234,7 +231,7 @@ def generate_neo4j_import_script(output_dir, neo4j_config, schema):
 
     # Add database name for Neo4j 4.x
     script_content[-1] = (
-        script_content[-1] + f'--database={neo4j_config["database_name"]}'
+        script_content[-1] + f"--database={neo4j_config['database_name']}"
     )
 
     # Close the if-else statement
@@ -295,7 +292,7 @@ def main(input_dirs, output_base_dir, config_yaml):
         return
 
     # Check if Schema_info is included in the import script
-    with open(import_script, "r") as f:
+    with open(import_script) as f:
         script_content = f.read()
         if "Schema_info-header.csv" not in script_content:
             print(

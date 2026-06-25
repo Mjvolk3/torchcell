@@ -4,25 +4,15 @@
 # Test file: torchcell/models/test_species_aware_lm.py
 
 
-import collections
-import itertools
-import math
-import os
-from collections.abc import Mapping
-
 import numpy as np
 import pandas as pd
 import torch
 import tqdm
 from datasets import Dataset
 from transformers import (
-    AutoConfig,
     AutoModelForMaskedLM,
-    AutoModelForSequenceClassification,
     AutoTokenizer,
     DataCollatorForLanguageModeling,
-    DataCollatorWithPadding,
-    Trainer,
 )
 
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome

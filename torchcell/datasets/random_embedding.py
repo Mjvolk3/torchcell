@@ -6,9 +6,11 @@
 
 import os
 from collections.abc import Callable
+
 import torch
 from torch_geometric.data import Data
 from tqdm import tqdm
+
 from torchcell.data.embedding import BaseEmbeddingDataset
 from torchcell.sequence import ParsedGenome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome

@@ -1,7 +1,9 @@
+from collections import defaultdict
+
 import matplotlib.pyplot as plt
 import numpy as np
+
 from torchcell.datamodules.cell import DatasetIndexSplit
-from collections import defaultdict
 
 
 def plot_dataset_index_split(

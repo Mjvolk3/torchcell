@@ -4,26 +4,25 @@
 # Test file: tests/torchcell/trainers/test_fit_int_cell_gin_diffpool_dense_binary.py
 
 
+import logging
+import os.path as osp
+import sys
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MeanAbsoluteError, MeanSquaredError, MetricCollection
-from torchcell.losses.multi_dim_nan_tolerant import CombinedBCELoss
+from torchmetrics import MetricCollection
+
+import torchcell
 from torchcell.metrics.nan_tolerant_classification_metrics import (
-    NaNTolerantAUROC,
     NaNTolerantAccuracy,
+    NaNTolerantAUROC,
     NaNTolerantF1Score,
 )
-import logging
-import sys
-import torch.optim as optim
-from typing import Optional
-import os.path as osp
-import torchcell
 from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
@@ -89,7 +88,7 @@ class RegressionTask(L.LightningModule):
         cluster_loss_weight: float = 1.0,
         link_pred_loss_weight: float = 1.0,
         entropy_loss_weight: float = 1.0,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -436,7 +435,7 @@ class RegressionTask(L.LightningModule):
                     if i == len(bin_edges[dim_name]) - 2:
                         range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
                     else:
-                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i+1].item():.2f}"
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
                     wandb_table.add_data(range_str, mean_val, std_val)
 
             # Log the table to wandb

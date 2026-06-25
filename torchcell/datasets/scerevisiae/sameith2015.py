@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sameith2015
 # Test file: tests/torchcell/datasets/scerevisiae/test_sameith2015.py
 
-import GEOparse
 import logging
 import os
 import os.path as osp
@@ -12,28 +11,31 @@ import re
 import urllib.request
 from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
+
+import GEOparse
 import lmdb
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from dotenv import load_dotenv
 from sortedcontainers import SortedDict
+from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
     Environment,
+    Experiment,
+    ExperimentReference,
     Genotype,
+    Media,
     MicroarrayExpressionExperiment,
     MicroarrayExpressionExperimentReference,
     MicroarrayExpressionPhenotype,
-    Media,
+    Publication,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
     SgaNatMxDeletionPerturbation,
     Temperature,
-    Experiment,
-    ExperimentReference,
-    Publication,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
@@ -112,19 +114,19 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         except Exception as e:
             log.error(f"Failed to download GEO dataset: {e}")
-            raise RuntimeError(f"GEO download failed")
+            raise RuntimeError("GEO download failed")
 
         # Download supplementary Excel file
         suppl_url = "https://static-content.springer.com/esm/art%3A10.1186%2Fs12915-015-0222-5/MediaObjects/12915_2015_222_MOESM1_ESM.xlsx"
         suppl_path = osp.join(self.raw_dir, "12915_2015_222_MOESM1_ESM.xlsx")
 
         try:
-            log.info(f"Downloading supplementary file...")
+            log.info("Downloading supplementary file...")
             urllib.request.urlretrieve(suppl_url, suppl_path)
             log.info(f"Downloaded supplementary file to {suppl_path}")
         except Exception as e:
             log.error(f"Failed to download supplementary file: {e}")
-            raise RuntimeError(f"Failed to download supplementary data")
+            raise RuntimeError("Failed to download supplementary data")
 
     def _load_authoritative_single_mutants(self):
         """Load authoritative single mutants from supplementary Excel file."""
@@ -241,7 +243,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         # Filter to only include single mutant samples
         single_mutant_df = samples_df[samples_df["is_single_mutant"] == True]
         single_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-        log.info(f"Saved {len(single_mutant_df)} single mutant samples to preprocess data.csv")
+        log.info(
+            f"Saved {len(single_mutant_df)} single mutant samples to preprocess data.csv"
+        )
 
         log.info(f"Processed {len(single_mutant_groups)} single mutant experiments")
 
@@ -673,8 +677,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         # BY4742 for single mutants (from deletion library)
         # Paper: "Single mutants taken from Deletion library" = BY4742, mata
         genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae",
-            strain="BY4742"
+            species="Saccharomyces cerevisiae", strain="BY4742"
         )
 
         # Create genotype for single deletion mutant
@@ -820,7 +823,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                 log.info("Supplementary file already exists")
         except Exception as e:
             log.error(f"Failed to download supplementary file: {e}")
-            raise RuntimeError(f"Failed to download supplementary data")
+            raise RuntimeError("Failed to download supplementary data")
 
     def _load_authoritative_gstf_pairs(self):
         """Load authoritative GSTF pairs WITH PER-SAMPLE STRAIN from supplementary Excel file.
@@ -993,7 +996,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         # Filter to only include double mutant samples
         double_mutant_df = samples_df[samples_df["is_double_mutant"] == True]
         double_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
-        log.info(f"Saved {len(double_mutant_df)} double mutant samples to preprocess data.csv")
+        log.info(
+            f"Saved {len(double_mutant_df)} double mutant samples to preprocess data.csv"
+        )
 
         log.info(f"Processed {len(double_mutant_samples)} double mutant experiments")
 
@@ -1796,7 +1801,6 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
 def main():
     """Demonstrate both Sameith2015 datasets (single and double mutants)."""
-
     print("=" * 80)
     print("SAMEITH2015 MICROARRAY EXPRESSION DATASETS DEMO")
     print("=" * 80)
@@ -1811,7 +1815,7 @@ def main():
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )
-    print(f"\nDataset loaded successfully")
+    print("\nDataset loaded successfully")
     print(f"  Size: {len(dm_dataset)} double mutant genotypes")
     print(f"  Gene set size: {len(dm_dataset.gene_set)} unique genes")
     print(f"  First 10 genes: {list(dm_dataset.gene_set)[:10]}")
@@ -1821,7 +1825,7 @@ def main():
         experiment = data["experiment"]
         reference = data["reference"]
 
-        print(f"\n--- Example: First double mutant ---")
+        print("\n--- Example: First double mutant ---")
         perturbations = experiment["genotype"]["perturbations"]
         print(
             f"  Genotype: {perturbations[0]['systematic_gene_name']} × {perturbations[1]['systematic_gene_name']}"
@@ -1849,7 +1853,7 @@ def main():
         io_workers=10,
         process_workers=0,  # Use sequential for demo
     )
-    print(f"\nDataset loaded successfully")
+    print("\nDataset loaded successfully")
     print(f"  Size: {len(sm_dataset)} single mutant genotypes")
     print(f"  Gene set size: {len(sm_dataset.gene_set)} unique genes")
     print(f"  First 10 genes: {list(sm_dataset.gene_set)[:10]}")
@@ -1859,7 +1863,7 @@ def main():
         experiment = data["experiment"]
         reference = data["reference"]
 
-        print(f"\n--- Example: First single mutant ---")
+        print("\n--- Example: First single mutant ---")
         perturbations = experiment["genotype"]["perturbations"]
         print(f"  Genotype: {perturbations[0]['systematic_gene_name']} deletion")
         print(f"  Strain: {reference['genome_reference']['strain']}")

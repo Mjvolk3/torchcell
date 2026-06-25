@@ -1,6 +1,7 @@
-import requests
 import os
 import zipfile
+
+import requests
 
 url = "https://api.ncbi.nlm.nih.gov/datasets/v2alpha/genome/accession/GCF_000146045.2/download"
 

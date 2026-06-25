@@ -7,35 +7,22 @@ import logging
 import os
 import os.path as osp
 import pickle
-import random
-import re
 import shutil
 import zipfile
 from abc import ABC, abstractproperty
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
-from typing import Literal, Optional
+from typing import Literal
 
-import h5py
 import lmdb
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
+
 # import polars as pl
-import torch
 # from polars import DataFrame, col
-from torch_geometric.data import (
-    Data,
-    DataLoader,
-    InMemoryDataset,
-    download_url,
-    extract_zip,
-)
+from torch_geometric.data import Data, download_url
 from tqdm import tqdm
 
 from torchcell.data import Dataset
 from torchcell.datamodels import ModelStrict
-from torchcell.prof import prof, prof_input
 from torchcell.sequence import GeneSet
 
 log = logging.getLogger(__name__)

@@ -3,32 +3,24 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/fit_int_deep_set_regression
 # Test file: tests/torchcell/trainers/test_fit_int_deep_set_regression.py
 
-import math
 import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
-from torch_geometric.data import Batch, Data
+import wandb
 from torchmetrics import (
     MeanAbsoluteError,
     MeanSquaredError,
+    Metric,
     MetricCollection,
     PearsonCorrCoef,
     SpearmanCorrCoef,
 )
-from tqdm import tqdm
 
-import wandb
-from torchcell.losses import WeightedMSELoss
-from torchcell.viz import fitness, genetic_interaction_score
-from torchcell.losses.list_mle import ListMLELoss
 import torchcell
-from torchmetrics import Metric
-import torch
-from torchmetrics import PearsonCorrCoef, SpearmanCorrCoef
+from torchcell.viz import fitness, genetic_interaction_score
 
 style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
@@ -63,13 +55,13 @@ class NaNTolerantSpearmanCorrCoef(NaNTolerantCorrelation):
 
 class MultiDimNaNTolerantMSELoss(nn.Module):
     def __init__(self):
-        super(MultiDimNaNTolerantMSELoss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred, y_true):
         # Ensure y_pred and y_true have the same shape
-        assert (
-            y_pred.shape == y_true.shape
-        ), "Predictions and targets must have the same shape"
+        assert y_pred.shape == y_true.shape, (
+            "Predictions and targets must have the same shape"
+        )
 
         # Create a mask for non-NaN values
         mask = ~torch.isnan(y_true)
@@ -96,7 +88,7 @@ class MultiDimNaNTolerantMSELoss(nn.Module):
 
 class CombinedMSELoss(nn.Module):
     def __init__(self, weights=None):
-        super(CombinedMSELoss, self).__init__()
+        super().__init__()
         self.multi_dim_mse = MultiDimNaNTolerantMSELoss()
         self.weights = weights if weights is not None else torch.ones(2)
 
@@ -296,7 +288,7 @@ class RegressionTask(L.LightningModule):
                     if i == len(bin_edges[dim_name]) - 2:
                         range_str = f"{bin_edges[dim_name][i].item():.2f} - inf"
                     else:
-                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i+1].item():.2f}"
+                        range_str = f"{bin_edges[dim_name][i].item():.2f} - {bin_edges[dim_name][i + 1].item():.2f}"
                     wandb_table.add_data(range_str, mean_val, std_val)
 
             # Log the table to wandb

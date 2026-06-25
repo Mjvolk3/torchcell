@@ -4,36 +4,35 @@
 # Test file: tests/torchcell/losses/test_dango.py
 
 
+from abc import ABC, abstractmethod
+
 import torch
 import torch.nn as nn
-from typing import Dict, Optional, Tuple, Union, List
-from abc import ABC, abstractmethod
-import math
 
 
 class DangoLossSched(ABC):
     """
     Abstract base class for DANGO loss schedulers.
-    
+
     All schedulers must implement a forward method that computes the total loss
     based on reconstruction loss, interaction loss, and current epoch.
     """
-    
+
     @abstractmethod
     def forward(
-        self, 
+        self,
         recon_loss: torch.Tensor,
         interaction_loss: torch.Tensor,
-        current_epoch: int = 0
-    ) -> Tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
+        current_epoch: int = 0,
+    ) -> tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
         """
         Compute the combined loss according to the schedule.
-        
+
         Args:
             recon_loss: Reconstruction loss value
             interaction_loss: Interaction prediction loss value
             current_epoch: Current training epoch
-            
+
         Returns:
             Tuple containing:
                 - total_loss: The combined loss value
@@ -48,23 +47,23 @@ class PreThenPost(DangoLossSched):
     """
     Schedule that uses reconstruction loss only before transition_epoch,
     then switches to interaction loss only.
-    
+
     Args:
         transition_epoch: Epoch at which to switch from reconstruction to interaction loss
     """
-    
+
     def __init__(self, transition_epoch: int = 10):
         self.transition_epoch = transition_epoch
-    
+
     def forward(
-        self, 
+        self,
         recon_loss: torch.Tensor,
         interaction_loss: torch.Tensor,
-        current_epoch: int = 0
-    ) -> Tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
+        current_epoch: int = 0,
+    ) -> tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
         """
         Compute loss based on transition epoch.
-        
+
         Before transition: alpha = 1.0 (reconstruction only)
         After transition: alpha = 0.0 (interaction only)
         """
@@ -80,30 +79,30 @@ class PreThenPost(DangoLossSched):
             weighted_recon_loss = torch.zeros_like(recon_loss)
             weighted_interaction_loss = interaction_loss
             total_loss = weighted_interaction_loss
-            
+
         return total_loss, alpha, weighted_recon_loss, weighted_interaction_loss
 
 
 class LinearUntilUniform(DangoLossSched):
     """
     Schedule that linearly transitions from reconstruction-focused to uniform weighting.
-    
+
     Args:
         transition_epoch: Epoch at which weights become uniform (0.5 each)
     """
-    
+
     def __init__(self, transition_epoch: int = 20):
         self.transition_epoch = transition_epoch
-    
+
     def forward(
-        self, 
+        self,
         recon_loss: torch.Tensor,
         interaction_loss: torch.Tensor,
-        current_epoch: int = 0
-    ) -> Tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
+        current_epoch: int = 0,
+    ) -> tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
         """
         Compute loss with linearly decreasing alpha.
-        
+
         Alpha starts at 1.0 (reconstruction only) and linearly decreases to 0.5 (uniform)
         over transition_epoch epochs. After that, it remains at 0.5.
         """
@@ -114,37 +113,37 @@ class LinearUntilUniform(DangoLossSched):
             # Linearly adjust from 1.0 (recon only) to 0.5 (balanced)
             progress = current_epoch / self.transition_epoch
             alpha = 1.0 - (0.5 * progress)
-        
+
         # Calculate weighted loss components
         weighted_recon_loss = alpha * recon_loss
         weighted_interaction_loss = (1 - alpha) * interaction_loss
-        
+
         # Combine losses with dynamic weighting
         total_loss = weighted_recon_loss + weighted_interaction_loss
-        
+
         return total_loss, alpha, weighted_recon_loss, weighted_interaction_loss
 
 
 class LinearUntilFlipped(DangoLossSched):
     """
     Schedule that linearly transitions from reconstruction-focused to interaction-focused.
-    
+
     Args:
         transition_epoch: Epoch at which the transition completes (fully flipped to interaction loss)
     """
-    
+
     def __init__(self, transition_epoch: int = 20):
         self.transition_epoch = transition_epoch
-    
+
     def forward(
-        self, 
+        self,
         recon_loss: torch.Tensor,
         interaction_loss: torch.Tensor,
-        current_epoch: int = 0
-    ) -> Tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
+        current_epoch: int = 0,
+    ) -> tuple[torch.Tensor, float, torch.Tensor, torch.Tensor]:
         """
         Compute loss with a linear transition from recon loss to interaction loss.
-        
+
         Alpha linearly decreases from 1.0 (reconstruction only) to 0.0 (interaction only)
         over transition_epoch epochs.
         """
@@ -155,14 +154,14 @@ class LinearUntilFlipped(DangoLossSched):
         else:
             # Linear decrease from 1.0 to 0.0 over transition_epoch
             alpha = 1.0 - (current_epoch / self.transition_epoch)
-        
+
         # Calculate weighted loss components
         weighted_recon_loss = alpha * recon_loss
         weighted_interaction_loss = (1 - alpha) * interaction_loss
-        
+
         # Combine losses with dynamic weighting
         total_loss = weighted_recon_loss + weighted_interaction_loss
-        
+
         return total_loss, alpha, weighted_recon_loss, weighted_interaction_loss
 
 
@@ -176,35 +175,36 @@ SCHEDULER_MAP = {
 
 class DangoLoss(nn.Module):
     """
-    Combined loss for the DANGO model with dynamic weighting between 
+    Combined loss for the DANGO model with dynamic weighting between
     reconstruction loss and interaction loss.
-    
+
     Args:
         edge_types: List of edge types for reconstruction loss
         lambda_values: Dictionary mapping edge types to their lambda values for weighted MSE
         scheduler: DangoLossSched instance that determines loss weighting over epochs
         reduction: Reduction method for the loss ('none', 'mean', 'sum')
     """
+
     def __init__(
         self,
-        edge_types: List[str],
-        lambda_values: Dict[str, float],
-        scheduler: Optional[DangoLossSched] = None,
-        reduction: str = "mean"
+        edge_types: list[str],
+        lambda_values: dict[str, float],
+        scheduler: DangoLossSched | None = None,
+        reduction: str = "mean",
     ) -> None:
         super().__init__()
         if reduction not in ("none", "mean", "sum"):
             raise ValueError(f"Invalid reduction mode: {reduction}")
-        
+
         self.edge_types = edge_types
         self.lambda_values = lambda_values
         self.scheduler = scheduler or PreThenPost(transition_epoch=10)
         self.reduction = reduction
-        
+
         # Ensure scheduler is a DangoLossSched instance
         if not isinstance(self.scheduler, DangoLossSched):
             raise TypeError("scheduler must be an instance of DangoLossSched")
-        
+
     def compute_weighted_mse_loss(
         self, predictions: torch.Tensor, targets: torch.Tensor, lambda_value: float
     ) -> torch.Tensor:
@@ -240,8 +240,8 @@ class DangoLoss(nn.Module):
 
     def compute_reconstruction_loss(
         self,
-        reconstructions: Dict[str, torch.Tensor],
-        adjacency_matrices: Dict[str, torch.Tensor],
+        reconstructions: dict[str, torch.Tensor],
+        adjacency_matrices: dict[str, torch.Tensor],
     ) -> torch.Tensor:
         """
         Compute the total reconstruction loss across all networks
@@ -272,7 +272,7 @@ class DangoLoss(nn.Module):
             total_loss /= num_networks
 
         return total_loss
-    
+
     def compute_interaction_loss(
         self, predictions: torch.Tensor, targets: torch.Tensor
     ) -> torch.Tensor:
@@ -287,15 +287,15 @@ class DangoLoss(nn.Module):
             Log-cosh loss
         """
         return torch.mean(torch.log(torch.cosh(predictions - targets)))
-        
+
     def forward(
-        self, 
+        self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        reconstructions: Dict[str, torch.Tensor],
-        adjacency_matrices: Dict[str, torch.Tensor],
-        current_epoch: int = 0
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        reconstructions: dict[str, torch.Tensor],
+        adjacency_matrices: dict[str, torch.Tensor],
+        current_epoch: int = 0,
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Compute the combined loss for DANGO model.
 
@@ -310,23 +310,25 @@ class DangoLoss(nn.Module):
             Tuple containing the total loss and a dictionary with component losses
         """
         # Compute reconstruction loss
-        recon_loss = self.compute_reconstruction_loss(reconstructions, adjacency_matrices)
-        
+        recon_loss = self.compute_reconstruction_loss(
+            reconstructions, adjacency_matrices
+        )
+
         # Compute interaction loss using log-cosh
         interaction_loss = self.compute_interaction_loss(predictions, targets)
-        
+
         # Use scheduler to compute combined loss, alpha value, and weighted components
-        total_loss, alpha, weighted_recon_loss, weighted_interaction_loss = self.scheduler.forward(
-            recon_loss, interaction_loss, current_epoch
+        total_loss, alpha, weighted_recon_loss, weighted_interaction_loss = (
+            self.scheduler.forward(recon_loss, interaction_loss, current_epoch)
         )
-        
+
         # Create loss dictionary for logging
         loss_dict = {
             "reconstruction_loss": recon_loss,
             "interaction_loss": interaction_loss,
             "weighted_reconstruction_loss": weighted_recon_loss,
             "weighted_interaction_loss": weighted_interaction_loss,
-            "alpha": torch.tensor(alpha, device=recon_loss.device)
+            "alpha": torch.tensor(alpha, device=recon_loss.device),
         }
-        
+
         return total_loss, loss_dict

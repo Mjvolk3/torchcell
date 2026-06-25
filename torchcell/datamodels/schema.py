@@ -3,17 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/schema
 # Test file: tests/torchcell/datamodels/test_schema.py
 
+import math
 import re
-from typing import List, Union, Dict, Type, Optional, Any
+from typing import Union
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
+
+from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.pydant import ModelStrict
-from torchcell.datamodels.calmorph_labels import (
-    CALMORPH_PARAMETERS,
-    CALMORPH_LABELS,
-    CALMORPH_STATISTICS,
-)
-import math
 
 # causes circular import
 # from torchcell.datasets.dataset_registry import dataset_registry
@@ -276,7 +274,7 @@ class Phenotype(ModelStrict):
         description="most natural level of graph at which phenotype is observed"
     )
     label_name: str = Field(description="name of label")
-    label_statistic_name: Optional[str] = Field(
+    label_statistic_name: str | None = Field(
         default=None,
         description="name of error or confidence statistic related to label",
     )
@@ -309,11 +307,11 @@ class FitnessPhenotype(Phenotype, ModelStrict):
     fitness: float = Field(description="wt_growth_rate/ko_growth_rate")
     fitness_se: float | None = Field(
         default=None,
-        description="fitness standard error (primary uncertainty statistic)"
+        description="fitness standard error (primary uncertainty statistic)",
     )
     fitness_std: float | None = Field(
         default=None,
-        description="fitness standard deviation (raw data from publication)"
+        description="fitness standard deviation (raw data from publication)",
     )
     n_samples: int | None = Field(
         default=None,
@@ -321,7 +319,7 @@ class FitnessPhenotype(Phenotype, ModelStrict):
         For experiment: n independent measurements of strain_of_interest/wt.
         For reference: n independent measurements of wt control.
         Note: numerator and denominator may have different sample sizes;
-        this tracks the complete ratio measurement."""
+        this tracks the complete ratio measurement.""",
     )
 
     @field_validator("fitness")
@@ -512,10 +510,10 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
     graph_level: str = "global"
     label_name: str = "calmorph"
     label_statistic_name: str = "calmorph_coefficient_of_variation"
-    calmorph: Dict[str, float] = Field(
+    calmorph: dict[str, float] = Field(
         description="Dictionary of CalMorph base morphological measurements (281 parameters)"
     )
-    calmorph_coefficient_of_variation: Dict[str, float] | None = Field(
+    calmorph_coefficient_of_variation: dict[str, float] | None = Field(
         default=None,
         description="Dictionary of coefficient of variation values for CalMorph parameters (220 parameters)",
     )
@@ -609,7 +607,7 @@ class FitnessExperimentReference(ExperimentReference, ModelStrict):
 
 class FitnessExperiment(Experiment, ModelStrict):
     experiment_type: str = "fitness"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: FitnessPhenotype
 
 
@@ -620,7 +618,7 @@ class GeneInteractionExperimentReference(ExperimentReference, ModelStrict):
 
 class GeneInteractionExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene interaction"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: GeneInteractionPhenotype
 
 
@@ -632,7 +630,7 @@ class GeneEssentialityExperimentReference(ExperimentReference, ModelStrict):
 # shouldn't it jut be one gene for genotype?
 class GeneEssentialityExperiment(Experiment, ModelStrict):
     experiment_type: str = "gene essentiality"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: GeneEssentialityPhenotype
 
 
@@ -643,7 +641,7 @@ class SyntheticLethalityExperimentReference(ExperimentReference, ModelStrict):
 
 class SyntheticLethalityExperiment(Experiment, ModelStrict):
     experiment_type: str = "synthetic lethality"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: SyntheticLethalityPhenotype
 
 
@@ -654,7 +652,7 @@ class SyntheticRescueExperimentReference(ExperimentReference, ModelStrict):
 
 class SyntheticRescueExperiment(Experiment, ModelStrict):
     experiment_type: str = "synthetic rescue"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: SyntheticRescuePhenotype
 
 
@@ -665,7 +663,7 @@ class CalMorphExperimentReference(ExperimentReference, ModelStrict):
 
 class CalMorphExperiment(Experiment, ModelStrict):
     experiment_type: str = "calmorph"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: CalMorphPhenotype
 
 
@@ -702,7 +700,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     label_statistic_name: str = "expression_log2_ratio_se"
 
     # PRIMARY FIELDS - for BioCypher/Neo4j and ML training
-    expression_log2_ratio: Dict[str, float] = Field(
+    expression_log2_ratio: dict[str, float] = Field(
         description=(
             "SortedDict of log2 fold change ratios relative to wildtype reference. "
             "CONVENTION: log2(sample/reference) where positive = upregulated, "
@@ -710,7 +708,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_log2_ratio_se: Dict[str, float] | None = Field(
+    expression_log2_ratio_se: dict[str, float] | None = Field(
         default=None,
         description=(
             "SortedDict of standard errors (SE) for log2 ratios. "
@@ -721,7 +719,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     )
 
     # SECONDARY FIELDS - for QC and reproducibility
-    expression: Dict[str, float] = Field(
+    expression: dict[str, float] = Field(
         description=(
             "SortedDict of per-gene expression measurements on linear scale. "
             "May be raw probe intensities, background-subtracted, or normalized "
@@ -730,7 +728,7 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_se: Dict[str, float] | None = Field(
+    expression_se: dict[str, float] | None = Field(
         default=None,
         description=(
             "SortedDict of standard errors on linear scale. "
@@ -738,15 +736,14 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    expression_log2_ratio_variance: Dict[str, float] | None = Field(
+    expression_log2_ratio_variance: dict[str, float] | None = Field(
         default=None,
         description=(
-            "SortedDict of variance for log2 ratios. "
-            "Variance = SE^2 * n_samples."
+            "SortedDict of variance for log2 ratios. Variance = SE^2 * n_samples."
         ),
         repr=False,  # Hide in repr to avoid clutter
     )
-    n_samples: Dict[str, int] = Field(
+    n_samples: dict[str, int] = Field(
         description="SortedDict of number of independent biological samples per gene",
         repr=False,  # Hide in repr to avoid clutter
     )
@@ -839,7 +836,9 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     @field_validator("n_samples", mode="before")
     def convert_and_validate_n_samples(cls, v):
         if v is None:
-            raise ValueError("n_samples cannot be None - it is required for SE interpretation")
+            raise ValueError(
+                "n_samples cannot be None - it is required for SE interpretation"
+            )
         # Convert to SortedDict for consistent ordering
         if isinstance(v, dict) and not isinstance(v, SortedDict):
             v = SortedDict(v)
@@ -848,7 +847,9 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         # Validate that all n_samples are positive integers
         for key, value in v.items():
             if not isinstance(value, int) or value < 1:
-                raise ValueError(f"n_samples for {key} must be a positive integer, got: {value}")
+                raise ValueError(
+                    f"n_samples for {key} must be a positive integer, got: {value}"
+                )
         return v
 
     @model_validator(mode="after")
@@ -856,25 +857,25 @@ class MicroarrayExpressionPhenotype(Phenotype, ModelStrict):
         """Ensure all secondary fields have same keys as expression."""
         # n_samples must match expression keys
         if set(self.n_samples.keys()) != set(self.expression.keys()):
-            raise ValueError(
-                "n_samples must have the same keys as expression"
-            )
+            raise ValueError("n_samples must have the same keys as expression")
 
         # Optional fields should match if present
         if self.expression_se is not None:
             if set(self.expression_se.keys()) != set(self.expression.keys()):
-                raise ValueError(
-                    "expression_se must have the same keys as expression"
-                )
+                raise ValueError("expression_se must have the same keys as expression")
 
         if self.expression_log2_ratio_se is not None:
-            if set(self.expression_log2_ratio_se.keys()) != set(self.expression_log2_ratio.keys()):
+            if set(self.expression_log2_ratio_se.keys()) != set(
+                self.expression_log2_ratio.keys()
+            ):
                 raise ValueError(
                     "expression_log2_ratio_se must have the same keys as expression_log2_ratio"
                 )
 
         if self.expression_log2_ratio_variance is not None:
-            if set(self.expression_log2_ratio_variance.keys()) != set(self.expression_log2_ratio.keys()):
+            if set(self.expression_log2_ratio_variance.keys()) != set(
+                self.expression_log2_ratio.keys()
+            ):
                 raise ValueError(
                     "expression_log2_ratio_variance must have the same keys as expression_log2_ratio"
                 )
@@ -889,7 +890,7 @@ class MicroarrayExpressionExperimentReference(ExperimentReference, ModelStrict):
 
 class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     experiment_type: str = "microarray_expression"
-    genotype: Union[Genotype, List[Genotype,]]
+    genotype: Genotype | list[Genotype,]
     phenotype: MicroarrayExpressionPhenotype
 
 

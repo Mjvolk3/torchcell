@@ -4,12 +4,14 @@
 # Test file: tests/torchcell/data/test_cell_data.py
 
 
-import torch
-import networkx as nx
-import hypernetx as hnx
 from collections import defaultdict, deque
-from torchcell.data.hetero_data import HeteroData
+
+import hypernetx as hnx
+import networkx as nx
+import torch
 from torch_geometric.utils import add_remaining_self_loops
+
+from torchcell.data.hetero_data import HeteroData
 from torchcell.graph import GeneMultiGraph
 
 
@@ -352,9 +354,9 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
             ]
         ).cpu()
 
-        hetero_data["gene", "has_annotation", "gene_ontology"].edge_index = (
-            gene_to_go_edge_index
-        )
+        hetero_data[
+            "gene", "has_annotation", "gene_ontology"
+        ].edge_index = gene_to_go_edge_index
         hetero_data["gene", "has_annotation", "gene_ontology"].num_edges = len(
             gene_to_go_src
         )
@@ -368,9 +370,9 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
             ]
         ).cpu()
 
-        hetero_data["gene_ontology", "is_child_of", "gene_ontology"].edge_index = (
-            go_to_go_edge_index
-        )
+        hetero_data[
+            "gene_ontology", "is_child_of", "gene_ontology"
+        ].edge_index = go_to_go_edge_index
         hetero_data["gene_ontology", "is_child_of", "gene_ontology"].num_edges = len(
             go_to_go_src
         )
@@ -424,7 +426,7 @@ def _process_gene_ontology(hetero_data, go_graph, node_idx_mapping):
     for stratum, terms in sorted(stratum_to_terms.items())[:5]:
         print(f"  Stratum {stratum}: {len(terms)} terms")
     if len(stratum_to_terms) > 5:
-        print(f"  ... and {len(stratum_to_terms)-5} more strata")
+        print(f"  ... and {len(stratum_to_terms) - 5} more strata")
 
 
 def _process_metabolism_bipartite(hetero_data, bipartite, node_idx_mapping):

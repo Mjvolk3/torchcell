@@ -1,5 +1,4 @@
 #############
-from intermine.webservice import Service
 
 
 # def ym_kb_plus(gene="rad54"):
@@ -80,7 +79,7 @@ from intermine.webservice import Service
 #         genes.append(str(gene_seq))  # Convert Seq to str
 #     print(genes)  # Prints the sequences of genes
 
-from Bio import Entrez, SeqIO
+from Bio import Entrez
 
 
 def download_gene(gene_name, filename):

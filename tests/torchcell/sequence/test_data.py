@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import patch
 
 import pytest
 from sortedcontainers import SortedDict
@@ -410,14 +409,14 @@ def test_compute_codon_frequency():
     codon_frequency = compute_codon_frequency(cds_str)
 
     # Asserting that the returned object is a SortedDict
-    assert isinstance(
-        codon_frequency, SortedDict
-    ), "The returned object is not a SortedDict"
+    assert isinstance(codon_frequency, SortedDict), (
+        "The returned object is not a SortedDict"
+    )
 
     # Asserting that the sum of the frequencies is 1.0
-    assert sum(codon_frequency.values()) == pytest.approx(
-        1.0
-    ), "The sum of the frequencies is not 1.0"
+    assert sum(codon_frequency.values()) == pytest.approx(1.0), (
+        "The sum of the frequencies is not 1.0"
+    )
 
 
 if __name__ == "__main__":

@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-from torch.nn.attention.flex_attention import flex_attention, create_block_mask
-from torch_geometric.utils import to_dense_adj
-import matplotlib.pyplot as plt
-from torch_geometric.datasets import StochasticBlockModelDataset
-from scipy.sparse.csgraph import reverse_cuthill_mckee
 from scipy.sparse import csr_matrix
+from scipy.sparse.csgraph import reverse_cuthill_mckee
+from torch.nn.attention.flex_attention import create_block_mask, flex_attention
+from torch_geometric.datasets import StochasticBlockModelDataset
+from torch_geometric.utils import to_dense_adj
 
 
 class AttentionBlock(nn.Module):

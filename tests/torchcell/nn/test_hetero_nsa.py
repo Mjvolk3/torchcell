@@ -1,5 +1,4 @@
 # tests/torchcell/nn/test_hetero_nsa.py
-import inspect
 import os
 
 import pytest
@@ -123,21 +122,21 @@ def test_hetero_nsa_initialization(standard_encoder_config):
 
     # Check if the model has the necessary components for each node type
     for node_type in config["node_types"]:
-        assert (
-            node_type in model.input_projections
-        ), f"Missing input projection for {node_type}"
+        assert node_type in model.input_projections, (
+            f"Missing input projection for {node_type}"
+        )
 
     # Check if the model has the right number of NSA layers
-    assert (
-        len(model.nsa_layers) == config["num_layers"]
-    ), "Incorrect number of NSA layers"
+    assert len(model.nsa_layers) == config["num_layers"], (
+        "Incorrect number of NSA layers"
+    )
 
     # Check if the model has the right number of layer norms
     for node_type in config["node_types"]:
         assert node_type in model.layer_norms, f"Missing layer norms for {node_type}"
-        assert (
-            len(model.layer_norms[node_type]) == config["num_layers"]
-        ), f"Incorrect number of layer norms for {node_type}"
+        assert len(model.layer_norms[node_type]) == config["num_layers"], (
+            f"Incorrect number of layer norms for {node_type}"
+        )
 
 
 def test_nsa_encoder_forward(test_hetero_graph, nsa_encoder_config):
@@ -386,19 +385,19 @@ def test_hetero_nsa_with_real_data(real_data_batch):
     for node_type in node_types:
         if node_type in node_embeddings:
             # Verify node embeddings have correct shapes
-            assert (
-                node_embeddings[node_type].shape[1] == 64
-            ), f"Wrong embedding dimension for {node_type}"
+            assert node_embeddings[node_type].shape[1] == 64, (
+                f"Wrong embedding dimension for {node_type}"
+            )
             # Check no NaNs in output
-            assert not torch.isnan(
-                node_embeddings[node_type]
-            ).any(), f"NaN values in {node_type} embeddings"
+            assert not torch.isnan(node_embeddings[node_type]).any(), (
+                f"NaN values in {node_type} embeddings"
+            )
 
     # Verify graph embedding shape - more flexible check
     assert graph_embedding.dim() == 2, "Graph embedding should be 2-dimensional"
-    assert (
-        graph_embedding.shape[1] == 64
-    ), "Graph embedding hidden dimension should be 64"
+    assert graph_embedding.shape[1] == 64, (
+        "Graph embedding hidden dimension should be 64"
+    )
 
     # Log memory usage
     if torch.cuda.is_available():
@@ -669,12 +668,12 @@ def test_batched_processing(standard_encoder_config):
             # Check if the output has an extra dimension and handle it
             if output.dim() == 3 and output.size(0) == 1:
                 # When an extra batch dimension is added, check that the content dimensions match
-                assert (
-                    output.size(1) == input_shape[0]
-                ), f"Node count mismatch for {node_type}"
-                assert (
-                    output.size(2) == input_shape[1]
-                ), f"Feature dimension mismatch for {node_type}"
+                assert output.size(1) == input_shape[0], (
+                    f"Node count mismatch for {node_type}"
+                )
+                assert output.size(2) == input_shape[1], (
+                    f"Feature dimension mismatch for {node_type}"
+                )
 
                 # Verify we can get back to the original shape by squeezing
                 output_squeezed = output.squeeze(0)
@@ -750,22 +749,20 @@ def test_hetero_nsa_gpu():
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="CUDA not available")
 def test_gpu_flex_attention_error_propagation():
     """Test that errors in attention mechanisms on GPU propagate correctly."""
-    import torch.nn as nn
-    
     # Create a simple graph
     data = HeteroData()
-    
+
     # Setup dimensions
     hidden_dim = 64
     gene_count = 20
     reaction_count = 15
-    
+
     # Create node features (on GPU)
     data["gene"].x = torch.randn(gene_count, hidden_dim, device="cuda")
     data["gene"].num_nodes = gene_count
     data["reaction"].x = torch.randn(reaction_count, hidden_dim, device="cuda")
     data["reaction"].num_nodes = reaction_count
-    
+
     # Create edges
     edge_index = torch.stack(
         [
@@ -774,19 +771,19 @@ def test_gpu_flex_attention_error_propagation():
         ]
     )
     data["gene", "gpr", "reaction"].edge_index = edge_index
-    
+
     # Create boolean adjacency mask
     adj_mask = torch.zeros(gene_count, reaction_count, dtype=torch.bool, device="cuda")
     for i in range(edge_index.size(1)):
         src, dst = edge_index[0, i], edge_index[1, i]
         adj_mask[src, dst] = True
     data["gene", "gpr", "reaction"].adj_mask = adj_mask
-    
+
     # Setup model parameters
     node_types = {"gene", "reaction"}
     edge_types = {("gene", "gpr", "reaction")}
     pattern = ["M"]  # Just use masked attention
-    
+
     # Create model on GPU
     model = HeteroNSA(
         hidden_dim=hidden_dim,
@@ -795,29 +792,26 @@ def test_gpu_flex_attention_error_propagation():
         pattern=pattern,
         num_heads=4,
     ).cuda()
-    
+
     # Save the original _process_with_mask method from the first block
     original_process = model.blocks[0]._process_with_mask
-    
+
     # Replace with a method that raises an error
     def mock_process(*args, **kwargs):
         raise RuntimeError("Simulated attention error")
-    
+
     # Monkey-patch the first block's method
     model.blocks[0]._process_with_mask = mock_process
-    
+
     # Create input embeddings (on GPU)
-    x_dict = {
-        "gene": data["gene"].x.clone(),
-        "reaction": data["reaction"].x.clone()
-    }
-    
+    x_dict = {"gene": data["gene"].x.clone(), "reaction": data["reaction"].x.clone()}
+
     # Forward pass should now raise an error
     with pytest.raises(RuntimeError) as excinfo:
         model(x_dict, data)
-    
+
     # Check the error message
     assert "Simulated attention error" in str(excinfo.value)
-    
+
     # Restore the original method
     model.blocks[0]._process_with_mask = original_process

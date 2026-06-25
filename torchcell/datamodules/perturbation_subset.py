@@ -3,27 +3,26 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodules/perturbation_subset
 # Test file: tests/torchcell/datamodules/test_perturbation_subset.py
 
+import json
 import os
 import os.path as osp
-import json
 import random
-from typing import Optional
+
 import lightning as L
+import torch
 from torch.utils.data import Subset
-from torchcell.utils import format_scientific_notation
+from torch_geometric.loader import DataLoader, PrefetchLoader
+from tqdm import tqdm
+
 from torchcell.datamodules import (
-    IndexSplit,
-    DatasetSplit,
     DataModuleIndex,
     DataModuleIndexDetails,
+    DatasetSplit,
+    IndexSplit,
 )
-from torch_geometric.loader import DataLoader, PrefetchLoader
-import torch
-from torch_geometric.loader import DenseDataLoader
 from torchcell.loader.dense_padding_data_loader import DensePaddingDataLoader
 from torchcell.sequence import GeneSet
-from torchcell.datamodules import DataModuleIndex
-from tqdm import tqdm
+from torchcell.utils import format_scientific_notation
 
 
 class PerturbationSubsetDataModule(L.LightningDataModule):
@@ -39,11 +38,11 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         persistent_workers: bool = True,
         seed: int = 42,
         dense: bool = False,
-        gene_subsets: Optional[dict[str, GeneSet]] = None,
-        follow_batch: Optional[list] = None,
+        gene_subsets: dict[str, GeneSet] | None = None,
+        follow_batch: list | None = None,
         train_shuffle: bool = True,
-        collate_fn: Optional[object] = None,
-        val_batch_size: Optional[int] = None,
+        collate_fn: object | None = None,
+        val_batch_size: int | None = None,
     ):
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -59,7 +58,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         # Check that requested size does not exceed maximum possible.
         self._set_size(size)
         self.batch_size = batch_size
-        self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
+        self.val_batch_size = (
+            val_batch_size if val_batch_size is not None else batch_size
+        )
         self.num_workers = num_workers
         self.pin_memory = pin_memory
         self.prefetch = prefetch
@@ -131,9 +132,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
         if osp.exists(index_file) and osp.exists(details_file):
             print("Loading cached index files...")
-            with open(index_file, "r") as f:
+            with open(index_file) as f:
                 self._index = DataModuleIndex(**json.load(f))
-            with open(details_file, "r") as f:
+            with open(details_file) as f:
                 self._index_details = DataModuleIndexDetails(**json.load(f))
         else:
             print("Computing subset index...")
@@ -289,9 +290,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             )
             self.size = total_selected  # Update size to match actual selection
 
-        assert (
-            total_selected <= self.size
-        ), f"Selected {total_selected} samples, which exceeds the requested {self.size}"
+        assert total_selected <= self.size, (
+            f"Selected {total_selected} samples, which exceeds the requested {self.size}"
+        )
 
     def _create_index_details(self):
         cell_index_details = self.cell_data_module.index_details
@@ -352,7 +353,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         )
         return osp.exists(index_file) and osp.exists(details_file)
 
-    def setup(self, stage: Optional[str] = None):
+    def setup(self, stage: str | None = None):
         print("Setting up PerturbationSubsetDataModule...")
         if (
             self._index is None
@@ -377,7 +378,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 batch_size=batch_size,
                 shuffle=shuffle,
                 num_workers=self.num_workers,
-                persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
+                persistent_workers=self.persistent_workers
+                if self.num_workers > 0
+                else False,
                 pin_memory=self.pin_memory,
                 follow_batch=self.follow_batch,
                 multiprocessing_context=("spawn" if self.num_workers > 0 else None),
@@ -388,7 +391,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 "batch_size": batch_size,
                 "shuffle": shuffle,
                 "num_workers": self.num_workers,
-                "persistent_workers": self.persistent_workers if self.num_workers > 0 else False,
+                "persistent_workers": self.persistent_workers
+                if self.num_workers > 0
+                else False,
                 "pin_memory": self.pin_memory,
                 "follow_batch": self.follow_batch,
                 "multiprocessing_context": ("spawn" if self.num_workers > 0 else None),

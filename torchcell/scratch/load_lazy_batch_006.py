@@ -11,25 +11,27 @@ Demonstrates zero-copy edge handling with boolean masks.
 import os
 import os.path as osp
 import random
-import sys
+from typing import Literal
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.datamodules import CellDataModule
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
+from tqdm import tqdm
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
 from torchcell.data.graph_processor import LazySubgraphRepresentation
+from torchcell.datamodules import CellDataModule
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.graph import build_gene_multigraph
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.transforms.regression_to_classification import (
     LabelNormalizationTransform,
 )
-from torchcell.datamodules.lazy_collate import lazy_collate_hetero
-from tqdm import tqdm
-from typing import Literal
 
 
 def load_sample_data_batch(
@@ -53,7 +55,9 @@ def load_sample_data_batch(
         Tuple of (dataset, batch, input_channels, max_num_nodes)
     """
     if is_dense:
-        raise ValueError("Dense representation not supported with LazySubgraphRepresentation")
+        raise ValueError(
+            "Dense representation not supported with LazySubgraphRepresentation"
+        )
 
     # Set all random seeds for reproducibility
     seed = 42
@@ -90,15 +94,14 @@ def load_sample_data_batch(
             "graph_names": ["physical", "regulatory"],
             "use_metabolism": True,
             "follow_batch": ["perturbation_indices"],  # Masks batch automatically
-        },
+        }
     }
 
     selected_config = config_options[config]
 
     # Build gene multigraph
     gene_multigraph = build_gene_multigraph(
-        graph=graph,
-        graph_names=selected_config["graph_names"]
+        graph=graph, graph_names=selected_config["graph_names"]
     )
 
     # Prepare incidence graphs
@@ -109,7 +112,7 @@ def load_sample_data_batch(
 
     # Load query - same as in hetero_cell_bipartite_dango_gi.py
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -153,10 +156,7 @@ def load_sample_data_batch(
     cell_data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        split_indices=[
-            "phenotype_label_index",
-            "perturbation_count_index",
-        ],
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
         batch_size=8,
         random_seed=42,
         num_workers=4,
@@ -189,6 +189,7 @@ def load_sample_data_batch(
         # Create custom DataLoader with LazyCollater for Lightning compatibility
         # PyG's DataLoader respects collate_fn when it's a Collater instance
         from torch_geometric.loader import DataLoader
+
         from torchcell.datamodules.lazy_collate import LazyCollater
 
         loader = DataLoader(
@@ -225,9 +226,9 @@ def inspect_data():
     DATA_ROOT = os.getenv("DATA_ROOT")
     EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
-    print("="*80)
+    print("=" * 80)
     print("LazySubgraphRepresentation Data Structure Inspection")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Initialize genome
@@ -249,20 +250,15 @@ def inspect_data():
     # Use physical and regulatory networks (HeteroCell configuration)
     graph_names = ["physical", "regulatory"]
 
-    gene_multigraph = build_gene_multigraph(
-        graph=graph,
-        graph_names=graph_names
-    )
+    gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # Load metabolism
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
-    incidence_graphs = {
-        "metabolism_bipartite": yeast_gem.bipartite_graph
-    }
+    incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
     # Load query
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -303,13 +299,21 @@ def inspect_data():
 
     print("Gene node attributes:")
     print(f"  node_ids: {len(sample['gene'].node_ids)} genes (kept)")
-    print(f"  ids_pert: {sample['gene'].ids_pert} ({len(sample['gene'].ids_pert)} perturbed)")
+    print(
+        f"  ids_pert: {sample['gene'].ids_pert} ({len(sample['gene'].ids_pert)} perturbed)"
+    )
     print(f"  perturbation_indices: {sample['gene'].perturbation_indices}")
     print(f"  x: {sample['gene'].x.shape}")
     print(f"  x_pert: {sample['gene'].x_pert.shape}")
-    print(f"  pert_mask: {sample['gene'].pert_mask.shape}, {sample['gene'].pert_mask.sum().item()} True (perturbed)")
-    print(f"  mask: {sample['gene'].mask.shape}, {sample['gene'].mask.sum().item()} True (kept)")
-    print(f"  ✓ Masks are inverse: {torch.equal(sample['gene'].mask, ~sample['gene'].pert_mask)}")
+    print(
+        f"  pert_mask: {sample['gene'].pert_mask.shape}, {sample['gene'].pert_mask.sum().item()} True (perturbed)"
+    )
+    print(
+        f"  mask: {sample['gene'].mask.shape}, {sample['gene'].mask.sum().item()} True (kept)"
+    )
+    print(
+        f"  ✓ Masks are inverse: {torch.equal(sample['gene'].mask, ~sample['gene'].pert_mask)}"
+    )
     print()
 
     # Inspect edge data
@@ -351,7 +355,9 @@ def inspect_data():
         num_gpr_removed = (~gpr_mask).sum().item()
 
         print(f"{gpr_et}:")
-        print(f"  hyperedge_index: {gpr_hyperedge_index.shape} [FULL graph, not filtered]")
+        print(
+            f"  hyperedge_index: {gpr_hyperedge_index.shape} [FULL graph, not filtered]"
+        )
         print(f"  num_edges: {gpr_num_edges} [FULL count]")
         print(f"  mask: {gpr_mask.shape}")
         print(f"    - {num_gpr_kept} True (gene not deleted)")
@@ -364,14 +370,18 @@ def inspect_data():
         print(f"  num_nodes: {sample['reaction'].num_nodes}")
         print(f"  node_ids: {len(sample['reaction'].node_ids)} reactions")
 
-        if hasattr(sample['reaction'], 'pert_mask'):
-            num_reaction_invalid = sample['reaction'].pert_mask.sum().item()
-            num_reaction_valid = sample['reaction'].mask.sum().item()
+        if hasattr(sample["reaction"], "pert_mask"):
+            num_reaction_invalid = sample["reaction"].pert_mask.sum().item()
+            num_reaction_valid = sample["reaction"].mask.sum().item()
             print(f"  pert_mask: {sample['reaction'].pert_mask.shape}")
-            print(f"    - {num_reaction_invalid} True (reaction invalid - required genes deleted)")
+            print(
+                f"    - {num_reaction_invalid} True (reaction invalid - required genes deleted)"
+            )
             print(f"  mask: {sample['reaction'].mask.shape}")
             print(f"    - {num_reaction_valid} True (reaction valid)")
-            print(f"  ✓ Masks are inverse: {torch.equal(sample['reaction'].mask, ~sample['reaction'].pert_mask)}")
+            print(
+                f"  ✓ Masks are inverse: {torch.equal(sample['reaction'].mask, ~sample['reaction'].pert_mask)}"
+            )
         print()
 
     # Inspect metabolite nodes
@@ -380,9 +390,9 @@ def inspect_data():
         print(f"  num_nodes: {sample['metabolite'].num_nodes}")
         print(f"  node_ids: {len(sample['metabolite'].node_ids)} metabolites")
 
-        if hasattr(sample['metabolite'], 'pert_mask'):
-            num_metabolite_removed = sample['metabolite'].pert_mask.sum().item()
-            num_metabolite_kept = sample['metabolite'].mask.sum().item()
+        if hasattr(sample["metabolite"], "pert_mask"):
+            num_metabolite_removed = sample["metabolite"].pert_mask.sum().item()
+            num_metabolite_kept = sample["metabolite"].mask.sum().item()
             print(f"  pert_mask: {sample['metabolite'].pert_mask.shape}")
             print(f"    - {num_metabolite_removed} True (removed)")
             print(f"  mask: {sample['metabolite'].mask.shape}")
@@ -407,8 +417,12 @@ def inspect_data():
         num_rmr_removed = (~rmr_mask).sum().item()
 
         print(f"{rmr_et}:")
-        print(f"  hyperedge_index: {rmr_hyperedge_index.shape} [FULL graph, not filtered]")
-        print(f"  stoichiometry: {rmr_stoichiometry.shape} [FULL attributes, not filtered]")
+        print(
+            f"  hyperedge_index: {rmr_hyperedge_index.shape} [FULL graph, not filtered]"
+        )
+        print(
+            f"  stoichiometry: {rmr_stoichiometry.shape} [FULL attributes, not filtered]"
+        )
         print(f"  num_edges: {rmr_num_edges} [FULL count]")
         print(f"  mask: {rmr_mask.shape}")
         print(f"    - {num_rmr_kept} True (reaction is valid)")
@@ -430,39 +444,45 @@ def inspect_data():
             print(f"{et}:")
             print(f"  edge_index is reference: {is_reference}")
             if is_reference:
-                print(f"  ✓ Zero-copy confirmed!")
+                print("  ✓ Zero-copy confirmed!")
             else:
-                print(f"  ✗ WARNING: edge_index was copied")
+                print("  ✗ WARNING: edge_index was copied")
             print()
 
     # Verify GPR edges (Phase 4.1)
     if ("gene", "gpr", "reaction") in sample.edge_types:
         gpr_et = ("gene", "gpr", "reaction")
-        is_gpr_reference = id(sample[gpr_et].hyperedge_index) == id(cell_graph[gpr_et].hyperedge_index)
+        is_gpr_reference = id(sample[gpr_et].hyperedge_index) == id(
+            cell_graph[gpr_et].hyperedge_index
+        )
         print(f"{gpr_et}:")
         print(f"  hyperedge_index is reference: {is_gpr_reference}")
         if is_gpr_reference:
-            print(f"  ✓ Zero-copy confirmed!")
+            print("  ✓ Zero-copy confirmed!")
         else:
-            print(f"  ✗ WARNING: hyperedge_index was copied")
+            print("  ✗ WARNING: hyperedge_index was copied")
         print()
 
     # Verify RMR edges (Phase 4.2)
     if ("reaction", "rmr", "metabolite") in sample.edge_types:
         rmr_et = ("reaction", "rmr", "metabolite")
-        is_rmr_hyperedge_reference = id(sample[rmr_et].hyperedge_index) == id(cell_graph[rmr_et].hyperedge_index)
-        is_rmr_stoich_reference = id(sample[rmr_et].stoichiometry) == id(cell_graph[rmr_et].stoichiometry)
+        is_rmr_hyperedge_reference = id(sample[rmr_et].hyperedge_index) == id(
+            cell_graph[rmr_et].hyperedge_index
+        )
+        is_rmr_stoich_reference = id(sample[rmr_et].stoichiometry) == id(
+            cell_graph[rmr_et].stoichiometry
+        )
 
         print(f"{rmr_et}:")
         print(f"  hyperedge_index is reference: {is_rmr_hyperedge_reference}")
         print(f"  stoichiometry is reference: {is_rmr_stoich_reference}")
         if is_rmr_hyperedge_reference and is_rmr_stoich_reference:
-            print(f"  ✓ Zero-copy confirmed for both tensors!")
+            print("  ✓ Zero-copy confirmed for both tensors!")
         else:
             if not is_rmr_hyperedge_reference:
-                print(f"  ✗ WARNING: hyperedge_index was copied")
+                print("  ✗ WARNING: hyperedge_index was copied")
             if not is_rmr_stoich_reference:
-                print(f"  ✗ WARNING: stoichiometry was copied")
+                print("  ✗ WARNING: stoichiometry was copied")
         print()
 
     # Memory estimation
@@ -478,21 +498,25 @@ def inspect_data():
 
     # SubgraphRepresentation would copy edge_index (2 × num_edges × 8 bytes per edge)
     # plus relabeled indices, etc.
-    subgraph_edge_memory_mb = (total_edges * 2 * 8) / (1024 ** 2)
+    subgraph_edge_memory_mb = (total_edges * 2 * 8) / (1024**2)
 
     # LazySubgraphRepresentation only stores masks (1 bit per edge, but stored as bool = 1 byte)
-    lazy_edge_memory_mb = total_edges / (1024 ** 2)
+    lazy_edge_memory_mb = total_edges / (1024**2)
 
     print(f"Total edges across all gene-gene edge types: {total_edges:,}")
     print()
-    print(f"SubgraphRepresentation (estimated):")
-    print(f"  Edge tensors: ~{subgraph_edge_memory_mb:.1f} MB (filtered + relabeled copies)")
+    print("SubgraphRepresentation (estimated):")
+    print(
+        f"  Edge tensors: ~{subgraph_edge_memory_mb:.1f} MB (filtered + relabeled copies)"
+    )
     print()
-    print(f"LazySubgraphRepresentation (actual):")
+    print("LazySubgraphRepresentation (actual):")
     print(f"  Edge masks: ~{lazy_edge_memory_mb:.1f} MB (boolean masks only)")
     print()
     print(f"Memory savings: ~{subgraph_edge_memory_mb - lazy_edge_memory_mb:.1f} MB")
-    print(f"Reduction: {(1 - lazy_edge_memory_mb / subgraph_edge_memory_mb) * 100:.1f}%")
+    print(
+        f"Reduction: {(1 - lazy_edge_memory_mb / subgraph_edge_memory_mb) * 100:.1f}%"
+    )
     print()
 
     # Edge mask application example
@@ -514,7 +538,9 @@ def inspect_data():
             edge_index_filtered = edge_index_full[:, edge_mask]
 
             print(f"Full edge_index: {edge_index_full.shape}")
-            print(f"Edge mask: {edge_mask.sum().item()} / {edge_mask.shape[0]} edges kept")
+            print(
+                f"Edge mask: {edge_mask.sum().item()} / {edge_mask.shape[0]} edges kept"
+            )
             print(f"Filtered edge_index: {edge_index_filtered.shape}")
             print()
             print("Sample edges (first 5):")
@@ -527,9 +553,9 @@ def inspect_data():
             print("      2. Use mask-aware message passing")
             break
 
-    print("="*80)
+    print("=" * 80)
     print("Inspection complete!")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":

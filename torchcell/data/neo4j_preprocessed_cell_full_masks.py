@@ -20,7 +20,6 @@ import logging
 import os
 import os.path as osp
 import pickle
-from typing import Optional
 
 import lmdb
 import torch
@@ -47,11 +46,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         - Conversion: <0.001% overhead (GPU handles dtype conversion)
     """
 
-    def __init__(
-        self,
-        root: str,
-        source_dataset: Optional[Neo4jCellDataset] = None,
-    ):
+    def __init__(self, root: str, source_dataset: Neo4jCellDataset | None = None):
         """
         Initialize preprocessed dataset.
 
@@ -108,7 +103,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
     def _load_metadata(self):
         """Load metadata from JSON file."""
         metadata_path = osp.join(self.processed_dir, "metadata.json")
-        with open(metadata_path, "r") as f:
+        with open(metadata_path) as f:
             metadata = json.load(f)
             self._length = metadata["length"]
             storage_type = metadata.get("storage_type", "unknown")
@@ -118,7 +113,9 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
     def _init_lmdb_read(self):
         """Initialize LMDB environment for reading."""
         if not self._is_preprocessed():
-            raise RuntimeError("Dataset not preprocessed. Run preprocessing script first.")
+            raise RuntimeError(
+                "Dataset not preprocessed. Run preprocessing script first."
+            )
 
         lmdb_path = osp.join(self.processed_dir, "lmdb")
         self.env = lmdb.open(
@@ -145,7 +142,7 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
 
         # Read from LMDB
         with self.env.begin() as txn:
-            serialized = txn.get(f"{idx}".encode("utf-8"))
+            serialized = txn.get(f"{idx}".encode())
             if serialized is None:
                 raise IndexError(f"Sample {idx} not found in LMDB")
 
@@ -183,76 +180,96 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         processed_graph["gene"].x = self.cell_graph["gene"].x  # Reference!
 
         # Add sample-specific gene data
-        for key, value in full_data['gene'].items():
+        for key, value in full_data["gene"].items():
             if value is None:
                 continue  # Skip None values (e.g., x_pert if not present)
             elif isinstance(value, torch.Tensor):
                 # Convert masks from uint8 back to bool if needed
-                if key in ['pert_mask'] and value.dtype == torch.uint8:
-                    processed_graph['gene'][key] = value.to(torch.bool).to(device)
+                if key in ["pert_mask"] and value.dtype == torch.uint8:
+                    processed_graph["gene"][key] = value.to(torch.bool).to(device)
                 else:
-                    processed_graph['gene'][key] = value.to(device)
+                    processed_graph["gene"][key] = value.to(device)
             else:
-                processed_graph['gene'][key] = value
+                processed_graph["gene"][key] = value
 
         # ZERO-COPY: Add references to edge indices
         for edge_type in self.cell_graph.edge_types:
-            if hasattr(self.cell_graph[edge_type], 'edge_index'):
-                processed_graph[edge_type].edge_index = self.cell_graph[edge_type].edge_index
-            if hasattr(self.cell_graph[edge_type], 'hyperedge_index'):
-                processed_graph[edge_type].hyperedge_index = self.cell_graph[edge_type].hyperedge_index
-            if hasattr(self.cell_graph[edge_type], 'num_edges'):
-                processed_graph[edge_type].num_edges = self.cell_graph[edge_type].num_edges
-            if hasattr(self.cell_graph[edge_type], 'stoichiometry'):
-                processed_graph[edge_type].stoichiometry = self.cell_graph[edge_type].stoichiometry
+            if hasattr(self.cell_graph[edge_type], "edge_index"):
+                processed_graph[edge_type].edge_index = self.cell_graph[
+                    edge_type
+                ].edge_index
+            if hasattr(self.cell_graph[edge_type], "hyperedge_index"):
+                processed_graph[edge_type].hyperedge_index = self.cell_graph[
+                    edge_type
+                ].hyperedge_index
+            if hasattr(self.cell_graph[edge_type], "num_edges"):
+                processed_graph[edge_type].num_edges = self.cell_graph[
+                    edge_type
+                ].num_edges
+            if hasattr(self.cell_graph[edge_type], "stoichiometry"):
+                processed_graph[edge_type].stoichiometry = self.cell_graph[
+                    edge_type
+                ].stoichiometry
 
         # Add reaction and metabolite node data if present
         if "reaction" in self.cell_graph.node_types:
             processed_graph["reaction"].node_ids = self.cell_graph["reaction"].node_ids
-            processed_graph["reaction"].num_nodes = self.cell_graph["reaction"].num_nodes
+            processed_graph["reaction"].num_nodes = self.cell_graph[
+                "reaction"
+            ].num_nodes
             if hasattr(self.cell_graph["reaction"], "w_growth"):
-                processed_graph["reaction"].w_growth = self.cell_graph["reaction"].w_growth
+                processed_graph["reaction"].w_growth = self.cell_graph[
+                    "reaction"
+                ].w_growth
             # Load reaction-specific data if present
             if "reaction" in full_data:
                 for key, value in full_data["reaction"].items():
                     if isinstance(value, torch.Tensor):
                         # Convert uint8 masks back to bool
-                        if key == 'pert_mask':
-                            processed_graph["reaction"][key] = value.to(torch.bool).to(device)
+                        if key == "pert_mask":
+                            processed_graph["reaction"][key] = value.to(torch.bool).to(
+                                device
+                            )
                         else:
                             processed_graph["reaction"][key] = value.to(device)
                     else:
                         processed_graph["reaction"][key] = value
 
         if "metabolite" in self.cell_graph.node_types:
-            processed_graph["metabolite"].node_ids = self.cell_graph["metabolite"].node_ids
-            processed_graph["metabolite"].num_nodes = self.cell_graph["metabolite"].num_nodes
+            processed_graph["metabolite"].node_ids = self.cell_graph[
+                "metabolite"
+            ].node_ids
+            processed_graph["metabolite"].num_nodes = self.cell_graph[
+                "metabolite"
+            ].num_nodes
             # Load metabolite-specific data if present
             if "metabolite" in full_data:
                 for key, value in full_data["metabolite"].items():
                     if isinstance(value, torch.Tensor):
                         # Convert uint8 masks back to bool
-                        if key == 'pert_mask':
-                            processed_graph["metabolite"][key] = value.to(torch.bool).to(device)
+                        if key == "pert_mask":
+                            processed_graph["metabolite"][key] = value.to(
+                                torch.bool
+                            ).to(device)
                         else:
                             processed_graph["metabolite"][key] = value.to(device)
                     else:
                         processed_graph["metabolite"][key] = value
 
         # DIRECT ASSIGNMENT: Load full node masks (convert uint8 back to bool)
-        for node_type, mask in full_data['node_masks'].items():
+        for node_type, mask in full_data["node_masks"].items():
             # Convert uint8 back to bool for use
             bool_mask = mask.to(torch.bool).to(device)
-            processed_graph[node_type]['mask'] = bool_mask
+            processed_graph[node_type]["mask"] = bool_mask
             # Only create pert_mask as inverse if not already loaded
             # (gene pert_mask is loaded from gene dict, reaction/metabolite from their dicts)
-            if 'pert_mask' not in processed_graph[node_type]:
-                processed_graph[node_type]['pert_mask'] = ~bool_mask
+            if "pert_mask" not in processed_graph[node_type]:
+                processed_graph[node_type]["pert_mask"] = ~bool_mask
 
         # DIRECT ASSIGNMENT: Load full edge masks (convert uint8 back to bool)
-        for edge_type, mask in full_data['edge_masks'].items():
+        for edge_type, mask in full_data["edge_masks"].items():
             # Convert uint8 back to bool for use
-            processed_graph[edge_type]['mask'] = mask.to(torch.bool).to(device)
+            processed_graph[edge_type]["mask"] = mask.to(torch.bool).to(device)
 
         return processed_graph
 
@@ -260,7 +277,9 @@ class Neo4jPreprocessedCellDatasetFullMasks(Dataset):
         """Return dataset length."""
         if self._length is None:
             if not self._is_preprocessed():
-                raise RuntimeError("Dataset not preprocessed. Run preprocessing script first.")
+                raise RuntimeError(
+                    "Dataset not preprocessed. Run preprocessing script first."
+                )
             self._load_metadata()
         return self._length
 

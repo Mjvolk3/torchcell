@@ -14,6 +14,7 @@ Implements the architecture from weekly report 2025.45:
 
 import os
 import os.path as osp
+
 import hydra
 import numpy as np
 import torch
@@ -21,7 +22,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
 from torch_geometric.data import HeteroData
-from typing import Dict, Optional, Tuple
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
@@ -36,8 +36,8 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self,
         hidden_dim: int,
         num_heads: int,
-        adjacency_matrices: Optional[Dict[str, torch.Tensor]] = None,
-        regularized_head_config: Optional[Dict[str, Dict]] = None,
+        adjacency_matrices: dict[str, torch.Tensor] | None = None,
+        regularized_head_config: dict[str, dict] | None = None,
         dropout: float = 0.1,
     ):
         super().__init__()
@@ -45,9 +45,9 @@ class GraphRegularizedTransformerLayer(nn.Module):
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
 
-        assert (
-            hidden_dim % num_heads == 0
-        ), f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        assert hidden_dim % num_heads == 0, (
+            f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        )
 
         # Projections for Q, K, V
         self.q_proj = nn.Linear(hidden_dim, hidden_dim)
@@ -74,7 +74,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Forward pass with manual attention computation.
 
@@ -115,9 +115,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
         # Extract gene-gene attention block for regularization (exclude CLS token)
         # attention_weights: [batch, heads, N+1, N+1]
         # gene_attention: [batch, heads, N, N]
-        gene_attention = (
-            attention_weights[:, :, 1:, 1:] if return_attention else None
-        )
+        gene_attention = attention_weights[:, :, 1:, 1:] if return_attention else None
 
         # Reshape back: [batch, seq_len, hidden_dim]
         attn_output = (
@@ -151,9 +149,9 @@ class HyperSAGNN(nn.Module):
         self.num_heads = num_heads
         self.head_dim = hidden_channels // num_heads
 
-        assert (
-            hidden_channels % num_heads == 0
-        ), f"hidden_channels {hidden_channels} must be divisible by num_heads {num_heads}"
+        assert hidden_channels % num_heads == 0, (
+            f"hidden_channels {hidden_channels} must be divisible by num_heads {num_heads}"
+        )
 
         # Static embedding layer
         self.static_embedding = nn.Sequential(
@@ -425,8 +423,8 @@ class CellGraphTransformer(nn.Module):
         num_transformer_layers: int,
         num_attention_heads: int,
         cell_graph: HeteroData,
-        graph_regularization_config: Optional[Dict] = None,
-        perturbation_head_config: Optional[Dict] = None,
+        graph_regularization_config: dict | None = None,
+        perturbation_head_config: dict | None = None,
         dropout: float = 0.1,
         adaptive_loss_weighting: bool = False,
         graph_reg_scale: float = 0.001,  # Global scale factor for graph reg
@@ -450,9 +448,7 @@ class CellGraphTransformer(nn.Module):
         # Graph regularization is enabled when graph_reg_scale > 0
         if self.graph_reg_scale > 0.0 and graph_regularization_config is not None:
             # Normalize adjacency matrices from cell_graph
-            self.adjacency_matrices = self._normalize_adjacency_matrices(
-                cell_graph
-            )
+            self.adjacency_matrices = self._normalize_adjacency_matrices(cell_graph)
             self.regularized_head_config = graph_regularization_config.get(
                 "regularized_heads", {}
             )
@@ -494,7 +490,7 @@ class CellGraphTransformer(nn.Module):
 
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
@@ -594,7 +590,9 @@ class CellGraphTransformer(nn.Module):
             # Compute KL divergence row-wise: KL(A_tilde[i,:] || alpha[i,:])
             # KL = Σ A_tilde[i,j] * log(A_tilde[i,j] / alpha[i,j])
             kl_loss = F.kl_div(
-                (alpha[:, sample_idx, :] + 1e-8).log(),  # log predictions with epsilon for numerical stability
+                (
+                    alpha[:, sample_idx, :] + 1e-8
+                ).log(),  # log predictions with epsilon for numerical stability
                 A_tilde[sample_idx, :]
                 .unsqueeze(0)
                 .expand(batch_size, -1, -1),  # targets
@@ -605,16 +603,20 @@ class CellGraphTransformer(nn.Module):
             total_loss = total_loss + lambda_k * kl_loss
 
         # Apply global scale factor and normalize by number of edges
-        total_edges = sum(len(self.adjacency_matrices[g].nonzero()[0])
-                         for g in self.adjacency_matrices.keys())
+        total_edges = sum(
+            len(self.adjacency_matrices[g].nonzero()[0])
+            for g in self.adjacency_matrices.keys()
+        )
         if total_edges > 0:
-            total_loss = total_loss * self.graph_reg_scale / (total_edges / self.gene_num)
+            total_loss = (
+                total_loss * self.graph_reg_scale / (total_edges / self.gene_num)
+            )
 
         return total_loss
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass of Cell Graph Transformer.
 
@@ -670,7 +672,7 @@ class CellGraphTransformer(nn.Module):
         }
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in each component."""
 
         def count_params(module: nn.Module) -> int:
@@ -723,13 +725,12 @@ def main(cfg: DictConfig) -> None:
     """Main training function for overfitting test."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
-    from torchcell.timestamp import timestamp
-    from torchcell.scratch.load_batch_006_perturbation import (
-        load_perturbation_batch,
-    )
-    from torchcell.losses.logcosh import LogCoshLoss
-    from scipy.stats import gaussian_kde
     from scipy import stats
+    from scipy.stats import gaussian_kde
+
+    from torchcell.losses.logcosh import LogCoshLoss
+    from torchcell.scratch.load_batch_006_perturbation import load_perturbation_batch
+    from torchcell.timestamp import timestamp
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -763,7 +764,7 @@ def main(cfg: DictConfig) -> None:
     print("=" * 80)
 
     # Extract gene-gene edge types from cell_graph
-    print(f"\nCell graph edge types:")
+    print("\nCell graph edge types:")
     for edge_type in cell_graph.edge_types:
         src, rel, dst = edge_type
         if src == "gene" and dst == "gene":
@@ -895,13 +896,7 @@ def main(cfg: DictConfig) -> None:
 
         # ROW 1 cont: Correlations
         plt.subplot(3, 4, 4)
-        plt.plot(
-            range(1, epoch + 2),
-            correlations,
-            "g-",
-            label="Pearson",
-            linewidth=2,
-        )
+        plt.plot(range(1, epoch + 2), correlations, "g-", label="Pearson", linewidth=2)
         if spearman_correlations:
             plt.plot(
                 range(1, epoch + 2),
@@ -1012,7 +1007,9 @@ def main(cfg: DictConfig) -> None:
                 x_range = np.linspace(
                     true_np[valid_mask].min(), true_np[valid_mask].max(), 200
                 )
-                plt.plot(x_range, kde_true(x_range), "b-", linewidth=2, label="True KDE")
+                plt.plot(
+                    x_range, kde_true(x_range), "b-", linewidth=2, label="True KDE"
+                )
                 plt.plot(
                     x_range, kde_pred(x_range), "r-", linewidth=2, label="Pred KDE"
                 )
@@ -1077,9 +1074,7 @@ def main(cfg: DictConfig) -> None:
             weight_decay = cfg.regression_task.optimizer.weight_decay
             l2_penalty = [norm * weight_decay for norm in l2_norms]
 
-            plt.plot(
-                epochs_range, pred_losses, "b-", label="Pred Loss", linewidth=2
-            )
+            plt.plot(epochs_range, pred_losses, "b-", label="Pred Loss", linewidth=2)
             plt.plot(
                 epochs_range,
                 graph_reg_losses,
@@ -1110,7 +1105,9 @@ def main(cfg: DictConfig) -> None:
         plt.axvline(x=0, color="r", linestyle="--", linewidth=2)
         plt.xlabel("Prediction Error")
         plt.ylabel("Frequency")
-        plt.title(f"Error Distribution (μ={np.mean(errors):.4f}, σ={np.std(errors):.4f})")
+        plt.title(
+            f"Error Distribution (μ={np.mean(errors):.4f}, σ={np.std(errors):.4f})"
+        )
         plt.grid(True, alpha=0.3)
 
         # Smoothness evolution (oversmoothing diagnostic)
@@ -1164,7 +1161,7 @@ def main(cfg: DictConfig) -> None:
 
         plt.tight_layout()
         plt.savefig(
-            osp.join(plot_dir, f"training_epoch_{epoch+1:04d}.png"),
+            osp.join(plot_dir, f"training_epoch_{epoch + 1:04d}.png"),
             dpi=150,
             bbox_inches="tight",
         )

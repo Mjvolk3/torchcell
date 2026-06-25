@@ -1,9 +1,8 @@
-from intermine.webservice import Service
 import os
-from Bio import Entrez
 import pickle
-from Bio import Entrez
-from Bio import SeqIO
+
+from Bio import Entrez, SeqIO
+from intermine.webservice import Service
 
 
 def main1():

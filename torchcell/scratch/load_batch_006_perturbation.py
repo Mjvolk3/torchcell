@@ -5,18 +5,24 @@ This is for experiment 006 with the new transformer architecture.
 
 import os
 import os.path as osp
-from dotenv import load_dotenv
+
 import torch
-from torchcell.data import Neo4jCellDataset
+from dotenv import load_dotenv
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
+from torchcell.data.graph_processor import Perturbation
 from torchcell.datamodules import CellDataModule
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
-from torchcell.data.graph_processor import Perturbation
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.graph import build_gene_multigraph
-from torchcell.transforms.coo_regression_to_classification import COOLabelNormalizationTransform
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.transforms.coo_regression_to_classification import (
+    COOLabelNormalizationTransform,
+)
 
 
 def load_perturbation_batch(
@@ -68,7 +74,7 @@ def load_perturbation_batch(
 
     # Load query
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -97,7 +103,7 @@ def load_perturbation_batch(
     normalizer = COOLabelNormalizationTransform(dataset, norm_configs)
     dataset.transform = normalizer
 
-    print(f"\nNormalization parameters:")
+    print("\nNormalization parameters:")
     for phenotype, params in normalizer.stats.items():
         print(f"  {phenotype}:")
         for key, value in params.items():
@@ -122,7 +128,7 @@ def load_perturbation_batch(
     cell_data_module.setup()
 
     # Create subset for faster iteration
-    print(f"Setting up PerturbationSubsetDataModule...")
+    print("Setting up PerturbationSubsetDataModule...")
     perturbation_subset_data_module = PerturbationSubsetDataModule(
         cell_data_module=cell_data_module,
         size=subset_size,
@@ -149,28 +155,28 @@ def load_perturbation_batch(
     # Get gene set size
     gene_set_size = len(dataset.gene_set)
 
-    print(f"\nData loaded successfully!")
+    print("\nData loaded successfully!")
     print(f"  Gene set size: {gene_set_size}")
     print(f"  Batch size: {batch['gene'].perturbation_indices.shape[0]}")
 
     # Print batch structure
-    print(f"\nBatch structure:")
-    if hasattr(batch, 'node_types'):
+    print("\nBatch structure:")
+    if hasattr(batch, "node_types"):
         for node_type in batch.node_types:
             print(f"  {node_type}:")
             node_data = batch[node_type]
             for key, value in node_data.items():
-                if hasattr(value, 'shape'):
+                if hasattr(value, "shape"):
                     print(f"    {key}: {value.shape}")
     else:
         # For simple batch from Perturbation processor
         for key, value in batch.items():
-            if hasattr(value, 'shape'):
+            if hasattr(value, "shape"):
                 print(f"  {key}: {value.shape}")
             elif isinstance(value, dict):
                 print(f"  {key}:")
                 for k, v in value.items():
-                    if hasattr(v, 'shape'):
+                    if hasattr(v, "shape"):
                         print(f"    {k}: {v.shape}")
 
     return dataset, batch, cell_graph, gene_set_size
@@ -179,9 +185,7 @@ def load_perturbation_batch(
 if __name__ == "__main__":
     # Test the loader
     dataset, batch, cell_graph, gene_set_size = load_perturbation_batch(
-        batch_size=32,
-        num_workers=4,
-        subset_size=10000
+        batch_size=32, num_workers=4, subset_size=10000
     )
 
     print("\nCell graph structure:")
@@ -190,4 +194,3 @@ if __name__ == "__main__":
     print(batch)
     print(cell_graph)
     print(gene_set_size)
-    

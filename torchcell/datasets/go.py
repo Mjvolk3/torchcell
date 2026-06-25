@@ -8,15 +8,14 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import networkx as nx
 from goatools.obo_parser import GODag
-from sortedcontainers import SortedSet
 from torch_geometric.data import download_url
 
+import torchcell
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
-import torchcell
-
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class GoPlot(ABC):
     @abstractmethod

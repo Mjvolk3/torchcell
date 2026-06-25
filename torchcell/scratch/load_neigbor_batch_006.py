@@ -11,25 +11,29 @@ Creates small induced subgraphs around perturbed genes using k-hop sampling.
 import os
 import os.path as osp
 import random
+from typing import Literal
+
 import numpy as np
 import torch
 from dotenv import load_dotenv
 from torch_geometric.data import HeteroData
 from torch_geometric.utils import k_hop_subgraph
-from torchcell.graph import SCerevisiaeGraph
-from torchcell.datamodules import CellDataModule
-from torchcell.data import MeanExperimentDeduplicator, GenotypeAggregator
+from tqdm import tqdm
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
 from torchcell.data.graph_processor import GraphProcessor
+from torchcell.datamodules import CellDataModule
 from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
+from torchcell.graph import SCerevisiaeGraph, build_gene_multigraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from torchcell.graph import build_gene_multigraph
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.transforms.regression_to_classification import (
     LabelNormalizationTransform,
 )
-from tqdm import tqdm
-from typing import Literal
 
 
 class NeighborSubgraphRepresentation(GraphProcessor):
@@ -100,11 +104,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             "perturbed_node_ids": [node_ids[i] for i in perturbed_indices],
         }
 
-    def _build_khop_subgraph(
-        self,
-        cell_graph: HeteroData,
-        gene_info: dict
-    ) -> dict:
+    def _build_khop_subgraph(self, cell_graph: HeteroData, gene_info: dict) -> dict:
         """
         Build k-hop induced subgraph around perturbed genes.
 
@@ -233,7 +233,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
 
             # Add reaction nodes
             if included_reactions:
-                reaction_indices = torch.tensor(sorted(included_reactions), dtype=torch.long)
+                reaction_indices = torch.tensor(
+                    sorted(included_reactions), dtype=torch.long
+                )
                 integrated_subgraph["reaction"].node_ids = [
                     cell_graph["reaction"].node_ids[i] for i in reaction_indices
                 ]
@@ -254,7 +256,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
                     rmr_stoichiometry = cell_graph[rmr_et].stoichiometry
 
                     # Filter RMR edges: keep edges where reaction is included
-                    rmr_mask = torch.zeros(rmr_hyperedge_index.size(1), dtype=torch.bool)
+                    rmr_mask = torch.zeros(
+                        rmr_hyperedge_index.size(1), dtype=torch.bool
+                    )
 
                     for i in range(rmr_hyperedge_index.size(1)):
                         reaction_idx = rmr_hyperedge_index[0, i].item()
@@ -268,8 +272,12 @@ class NeighborSubgraphRepresentation(GraphProcessor):
                     integrated_subgraph[rmr_et].mask = rmr_mask
 
                     # Add all metabolites (we keep all metabolites)
-                    integrated_subgraph["metabolite"].node_ids = cell_graph["metabolite"].node_ids
-                    integrated_subgraph["metabolite"].num_nodes = cell_graph["metabolite"].num_nodes
+                    integrated_subgraph["metabolite"].node_ids = cell_graph[
+                        "metabolite"
+                    ].node_ids
+                    integrated_subgraph["metabolite"].num_nodes = cell_graph[
+                        "metabolite"
+                    ].num_nodes
                     integrated_subgraph["metabolite"].pert_mask = torch.zeros(
                         cell_graph["metabolite"].num_nodes, dtype=torch.bool
                     )
@@ -293,7 +301,9 @@ class NeighborSubgraphRepresentation(GraphProcessor):
 
         # Perturbed gene info
         integrated_subgraph["gene"].ids_pert = list(gene_info["perturbed_names"])
-        integrated_subgraph["gene"].perturbation_indices = gene_info["perturbed_indices"]
+        integrated_subgraph["gene"].perturbation_indices = gene_info[
+            "perturbed_indices"
+        ]
 
         # Node features (subset)
         integrated_subgraph["gene"].x = cell_graph["gene"].x[subset_nodes]
@@ -306,10 +316,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
         integrated_subgraph["gene"].x_pert[subgraph_info["perturbed_mask"]] = 0.0
 
     def _add_phenotype_data(
-        self,
-        integrated_subgraph: HeteroData,
-        phenotype_info: list,
-        data: list,
+        self, integrated_subgraph: HeteroData, phenotype_info: list, data: list
     ):
         """Add phenotype data in COO (coordinate) format."""
         # Collect phenotype values and indices
@@ -391,10 +398,7 @@ class NeighborSubgraphRepresentation(GraphProcessor):
             integrated_subgraph["gene"]["phenotype_stat_types"] = stat_types
 
     def process(
-        self,
-        cell_graph: HeteroData,
-        phenotype_info: list,
-        data: list,
+        self, cell_graph: HeteroData, phenotype_info: list, data: list
     ) -> HeteroData:
         """
         Main processing method.
@@ -494,15 +498,14 @@ def load_sample_data_batch(
             ],
             "use_metabolism": True,
             "follow_batch": ["perturbation_indices"],
-        },
+        }
     }
 
     selected_config = config_options[config]
 
     # Build gene multigraph
     gene_multigraph = build_gene_multigraph(
-        graph=graph,
-        graph_names=selected_config["graph_names"]
+        graph=graph, graph_names=selected_config["graph_names"]
     )
 
     # Prepare incidence graphs
@@ -513,7 +516,7 @@ def load_sample_data_batch(
 
     # Load query
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -538,9 +541,7 @@ def load_sample_data_batch(
     )
 
     # Normalization transform
-    norm_configs = {
-        "gene_interaction": {"strategy": "standard"}
-    }
+    norm_configs = {"gene_interaction": {"strategy": "standard"}}
     normalizer = LabelNormalizationTransform(dataset, norm_configs)
 
     # Print normalization parameters
@@ -557,10 +558,7 @@ def load_sample_data_batch(
     cell_data_module = CellDataModule(
         dataset=dataset,
         cache_dir=osp.join(dataset_root, "data_module_cache"),
-        split_indices=[
-            "phenotype_label_index",
-            "perturbation_count_index",
-        ],
+        split_indices=["phenotype_label_index", "perturbation_count_index"],
         batch_size=8,
         random_seed=42,
         num_workers=4,
@@ -612,9 +610,9 @@ def inspect_data():
     DATA_ROOT = os.getenv("DATA_ROOT")
     EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
-    print("="*80)
+    print("=" * 80)
     print("NeighborSubgraphRepresentation Data Structure Inspection")
-    print("="*80)
+    print("=" * 80)
     print()
 
     # Initialize genome
@@ -646,20 +644,15 @@ def inspect_data():
         "string12_0_database",
     ]
 
-    gene_multigraph = build_gene_multigraph(
-        graph=graph,
-        graph_names=graph_names
-    )
+    gene_multigraph = build_gene_multigraph(graph=graph, graph_names=graph_names)
 
     # Load metabolism
     yeast_gem = YeastGEM(root=osp.join(DATA_ROOT, "data/torchcell/yeast_gem"))
-    incidence_graphs = {
-        "metabolism_bipartite": yeast_gem.bipartite_graph
-    }
+    incidence_graphs = {"metabolism_bipartite": yeast_gem.bipartite_graph}
 
     # Load query
     with open(
-        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r"
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
     ) as f:
         query = f.read()
 
@@ -669,9 +662,9 @@ def inspect_data():
 
     # Test with different num_hops values
     for num_hops in [1, 2, 3]:
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"Testing with num_hops={num_hops}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
         # Create dataset with NeighborSubgraphRepresentation
         print(f"Creating dataset with {num_hops}-hop neighborhood sampling...")
@@ -705,12 +698,20 @@ def inspect_data():
         print()
 
         print("Gene node attributes:")
-        print(f"  node_ids: {len(sample['gene'].node_ids)} genes (in {num_hops}-hop neighborhood)")
-        print(f"  ids_pert: {sample['gene'].ids_pert} ({len(sample['gene'].ids_pert)} perturbed)")
-        print(f"  perturbation_indices: {sample['gene'].perturbation_indices} (original indices)")
+        print(
+            f"  node_ids: {len(sample['gene'].node_ids)} genes (in {num_hops}-hop neighborhood)"
+        )
+        print(
+            f"  ids_pert: {sample['gene'].ids_pert} ({len(sample['gene'].ids_pert)} perturbed)"
+        )
+        print(
+            f"  perturbation_indices: {sample['gene'].perturbation_indices} (original indices)"
+        )
         print(f"  x: {sample['gene'].x.shape}")
         print(f"  x_pert: {sample['gene'].x_pert.shape}")
-        print(f"  pert_mask: {sample['gene'].pert_mask.shape}, {sample['gene'].pert_mask.sum().item()} True (perturbed)")
+        print(
+            f"  pert_mask: {sample['gene'].pert_mask.shape}, {sample['gene'].pert_mask.sum().item()} True (perturbed)"
+        )
         print()
 
         # Inspect edge data
@@ -762,7 +763,9 @@ def inspect_data():
 
             if "metabolite" in sample.node_types:
                 print("Metabolite nodes:")
-                print(f"  num_nodes: {sample['metabolite'].num_nodes} (all metabolites kept)")
+                print(
+                    f"  num_nodes: {sample['metabolite'].num_nodes} (all metabolites kept)"
+                )
                 print()
 
         # Size comparison
@@ -772,7 +775,7 @@ def inspect_data():
         print()
 
         full_graph_nodes = len(genome.gene_set)
-        subgraph_nodes = len(sample['gene'].node_ids)
+        subgraph_nodes = len(sample["gene"].node_ids)
         reduction = (1 - subgraph_nodes / full_graph_nodes) * 100
 
         print(f"Full cell graph: {full_graph_nodes} nodes")
@@ -792,9 +795,9 @@ def inspect_data():
         print(f"Edge reduction: {edge_reduction:.1f}%")
         print()
 
-    print("="*80)
+    print("=" * 80)
     print("Inspection complete!")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":

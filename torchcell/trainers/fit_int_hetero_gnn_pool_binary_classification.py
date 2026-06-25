@@ -1,34 +1,29 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch_geometric.data import HeteroData
+from torch_geometric.transforms import BaseTransform
 from torchmetrics import MetricCollection
-import logging
-import sys
-import torch.optim as optim
-from typing import Optional
-import os.path as osp
-from torch.nn.functional import binary_cross_entropy_with_logits
+
 from torchcell.metrics.nan_tolerant_classification_metrics import (
     NaNTolerantAccuracy,
     NaNTolerantF1Score,
-    NaNTolerantAUROC,
     NaNTolerantPrecision,
     NaNTolerantRecall,
 )
 from torchcell.metrics.nan_tolerant_metrics import (
     NaNTolerantMSE,
-    NaNTolerantRMSE,
-    NaNTolerantR2Score,
     NaNTolerantPearsonCorrCoef,
+    NaNTolerantR2Score,
 )
-from torchcell.viz import fitness, genetic_interaction_score
-import torch.nn.functional as F
-from torch_geometric.transforms import BaseTransform
-from torch_geometric.data import HeteroData
 from torchcell.transforms.regression_to_classification import LabelBinningTransform
-import matplotlib.pyplot as plt
+from torchcell.viz import fitness, genetic_interaction_score
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +43,7 @@ class ClassificationTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
     ):
         super().__init__()
@@ -153,12 +148,12 @@ class ClassificationTask(L.LightningModule):
             # Create table columns
             columns = [
                 f"True Reg ({display_name})",
-                f"True Bin",
-                f"True Bin Start",
-                f"True Bin End",
-                f"Predicted Bin",
-                f"Predicted Bin Start",
-                f"Predicted Bin End",
+                "True Bin",
+                "True Bin Start",
+                "True Bin End",
+                "Predicted Bin",
+                "Predicted Bin Start",
+                "Predicted Bin End",
                 f"Predicted Reg ({display_name})",
                 f"{display_name} Loss",
             ]
@@ -418,11 +413,11 @@ class ClassificationTask(L.LightningModule):
             fig_fitness = fitness.box_plot(true_fitness, pred_fitness)
             wandb.log({"val/fitness_box_plot": wandb.Image(fig_fitness)})
             plt.close(fig_fitness)
-            
+
             fig_gi = genetic_interaction_score.box_plot(true_gi, pred_gi)
             wandb.log({"val/gene_interaction_box_plot": wandb.Image(fig_gi)})
             plt.close(fig_gi)
-            
+
         self.true_reg_values = []
         self.predictions = []
 

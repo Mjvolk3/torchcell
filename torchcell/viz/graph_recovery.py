@@ -4,20 +4,19 @@
 # Test file: tests/torchcell/viz/test_graph_recovery.py
 
 import io
-import os
 import os.path as osp
-import wandb
+
 import matplotlib.pyplot as plt
-from matplotlib import rc_params_from_file
 import numpy as np
+import wandb
+from matplotlib import rc_params_from_file
 from PIL import Image
-from typing import Optional
 
 
 class GraphRecoveryVisualization:
     """Visualization class for graph regularization and edge recovery metrics."""
 
-    def __init__(self, base_dir: str, mplstyle_path: Optional[str] = None) -> None:
+    def __init__(self, base_dir: str, mplstyle_path: str | None = None) -> None:
         self.base_dir = base_dir
 
         # Load color palette from mplstyle
@@ -41,22 +40,42 @@ class GraphRecoveryVisualization:
         try:
             # Use matplotlib's official parser for style files
             rc_params = rc_params_from_file(mplstyle_path, use_default_template=False)
-            prop_cycle = rc_params.get('axes.prop_cycle')
+            prop_cycle = rc_params.get("axes.prop_cycle")
             if prop_cycle is not None:
-                colors = prop_cycle.by_key().get('color', [])
+                colors = prop_cycle.by_key().get("color", [])
                 # Ensure '#' prefix on all colors
-                return ['#' + c if not c.startswith('#') else c for c in colors]
+                return ["#" + c if not c.startswith("#") else c for c in colors]
         except Exception as e:
             print(f"Warning: Could not load colors from {mplstyle_path}: {e}")
 
         # Fallback to full torchcell.mplstyle palette (22 colors)
-        return ['#000000','#CC8250','#7191A9','#6B8D3A','#B73C39','#34699D',
-                '#3D796E','#4A9C60','#E6A65D','#A05B2C','#3978B5','#D86E2F',
-                '#775A9F','#EBB386','#8D5694','#52B2A8','#35978A','#AB4B4B',
-                '#6D666F','#4E7C7F','#905353','#C17132']
+        return [
+            "#000000",
+            "#CC8250",
+            "#7191A9",
+            "#6B8D3A",
+            "#B73C39",
+            "#34699D",
+            "#3D796E",
+            "#4A9C60",
+            "#E6A65D",
+            "#A05B2C",
+            "#3978B5",
+            "#D86E2F",
+            "#775A9F",
+            "#EBB386",
+            "#8D5694",
+            "#52B2A8",
+            "#35978A",
+            "#AB4B4B",
+            "#6D666F",
+            "#4E7C7F",
+            "#905353",
+            "#C17132",
+        ]
 
     def save_and_log_figure(
-        self, fig: plt.Figure, name: str, timestamp_str: Optional[str] = None
+        self, fig: plt.Figure, name: str, timestamp_str: str | None = None
     ) -> None:
         """
         Log figure to wandb only (no disk save).
@@ -83,9 +102,7 @@ class GraphRecoveryVisualization:
         buf.close()
 
     def plot_graph_info_summary(
-        self,
-        graph_info: dict[str, dict[str, float]],
-        save_path: Optional[str] = None,
+        self, graph_info: dict[str, dict[str, float]], save_path: str | None = None
     ) -> None:
         """
         Create a comprehensive summary visualization of graph statistics.
@@ -226,9 +243,7 @@ class GraphRecoveryVisualization:
                 else:
                     table[(i, j)].set_facecolor("#FFFFFF")
 
-        fig.suptitle(
-            "Graph Statistics Summary", fontsize=14, fontweight="bold", y=0.98
-        )
+        fig.suptitle("Graph Statistics Summary", fontsize=14, fontweight="bold", y=0.98)
 
         # Save to disk if path provided
         if save_path:
@@ -243,7 +258,7 @@ class GraphRecoveryVisualization:
         self,
         recall_metrics: dict[str, float],
         num_epochs: int,
-        timestamp_str: Optional[str] = None,
+        timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
         """
@@ -305,15 +320,12 @@ class GraphRecoveryVisualization:
                 graph_to_color_idx[graph_name] = len(unique_graphs)
                 unique_graphs.append(graph_name)
 
-        bar_colors = [self.colors[graph_to_color_idx[g] % len(self.colors)] for g in graph_names]
+        bar_colors = [
+            self.colors[graph_to_color_idx[g] % len(self.colors)] for g in graph_names
+        ]
 
         # Create bar chart with colors by graph name
-        bars = ax.bar(
-            range(len(labels)),
-            recall_values,
-            color=bar_colors,
-            alpha=0.8
-        )
+        bars = ax.bar(range(len(labels)), recall_values, color=bar_colors, alpha=0.8)
 
         # Use natural bounds for recall [0, 1]
         ax.set_ylim(0, 1.0)
@@ -355,7 +367,7 @@ class GraphRecoveryVisualization:
         precision_metrics: dict[str, dict[int, float]],
         k_values: list[int],
         num_epochs: int,
-        timestamp_str: Optional[str] = None,
+        timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
         """
@@ -404,15 +416,13 @@ class GraphRecoveryVisualization:
             for _, layer_idx in entries:
                 all_layer_indices.add(layer_idx)
         sorted_layers = sorted(all_layer_indices)
-        layer_to_style_idx = {
-            layer: idx for idx, layer in enumerate(sorted_layers)
-        }
+        layer_to_style_idx = {layer: idx for idx, layer in enumerate(sorted_layers)}
 
         # Create figure
         fig, ax = plt.subplots(figsize=(12, 8))
 
         # Line styles for different layers (sequential mapping)
-        line_styles = ['-', '--', '-.', ':']  # solid, dashed, dash-dot, dotted
+        line_styles = ["-", "--", "-.", ":"]  # solid, dashed, dash-dot, dotted
 
         # Assign one color per graph name
         colors = {
@@ -463,23 +473,25 @@ class GraphRecoveryVisualization:
             fontsize=9,
             framealpha=0.9,
             title="Graph Type",
-            title_fontsize=10
+            title_fontsize=10,
         )
 
         # Legend 2: Layer indices (line styles)
         from matplotlib.lines import Line2D
+
         layer_legend_handles = []
         layer_legend_labels = []
         for layer_idx in sorted_layers:
             style_idx = layer_to_style_idx[layer_idx]
             linestyle = line_styles[style_idx % len(line_styles)]
             handle = Line2D(
-                [0], [0],
-                color='gray',
+                [0],
+                [0],
+                color="gray",
                 linewidth=2,
                 linestyle=linestyle,
-                marker='o',
-                markersize=6
+                marker="o",
+                markersize=6,
             )
             layer_legend_handles.append(handle)
             layer_legend_labels.append(f"Layer {layer_idx}")
@@ -491,7 +503,7 @@ class GraphRecoveryVisualization:
             fontsize=9,
             framealpha=0.9,
             title="Reg Layer",
-            title_fontsize=10
+            title_fontsize=10,
         )
 
         # Add first legend back to the plot (second legend is added automatically)
@@ -524,7 +536,7 @@ class GraphRecoveryVisualization:
         precision_metrics: dict[str, dict[int, float]],
         k_values: list[int],
         num_epochs: int,
-        timestamp_str: Optional[str] = None,
+        timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
         """
@@ -564,7 +576,7 @@ class GraphRecoveryVisualization:
                 prec_values,
                 alpha=0.8,
                 color=self.colors[2],  # #7191A9
-                label="Precision@k"
+                label="Precision@k",
             )
 
             # Add headspace and bold value labels on bars
@@ -616,7 +628,7 @@ class GraphRecoveryVisualization:
         self,
         edge_mass_metrics: dict[str, float],
         num_epochs: int,
-        timestamp_str: Optional[str] = None,
+        timestamp_str: str | None = None,
         stage: str = "val",
     ) -> None:
         """
@@ -671,15 +683,12 @@ class GraphRecoveryVisualization:
                 graph_to_color_idx[graph_name] = len(unique_graphs)
                 unique_graphs.append(graph_name)
 
-        bar_colors = [self.colors[graph_to_color_idx[g] % len(self.colors)] for g in graph_names]
+        bar_colors = [
+            self.colors[graph_to_color_idx[g] % len(self.colors)] for g in graph_names
+        ]
 
         # Create bar chart with colors by graph name
-        bars = ax.bar(
-            range(len(labels)),
-            edge_mass_values,
-            color=bar_colors,
-            alpha=0.8
-        )
+        bars = ax.bar(range(len(labels)), edge_mass_values, color=bar_colors, alpha=0.8)
 
         # Use natural bounds [0, 1]
         ax.set_ylim(0, 1.0)
@@ -698,7 +707,14 @@ class GraphRecoveryVisualization:
             )
 
         # Add reference line at random baseline (varies by graph density)
-        ax.axhline(y=0.5, color='gray', linestyle='--', linewidth=1, alpha=0.5, label='Random baseline (approx.)')
+        ax.axhline(
+            y=0.5,
+            color="gray",
+            linestyle="--",
+            linewidth=1,
+            alpha=0.5,
+            label="Random baseline (approx.)",
+        )
 
         # Formatting
         ax.set_xlabel("Graph + Layer + Head", fontsize=12)

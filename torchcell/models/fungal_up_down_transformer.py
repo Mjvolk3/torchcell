@@ -132,9 +132,9 @@ class FungalUpDownTransformer(NucleotideModel):
             AssertionError: If not using mean embedding and sequence length is
              below 1001 bp.
         """
-        assert (
-            mean_embedding
-        ), "sequences must be 1003 bp if not using meaning embedding"
+        assert mean_embedding, (
+            "sequences must be 1003 bp if not using meaning embedding"
+        )
         # Find out how much we need to pad
         pad_length = 1001 - tokenized_data["input_ids"].shape[-1]
         pad_start = 2

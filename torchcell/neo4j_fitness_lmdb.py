@@ -1,7 +1,9 @@
-import lmdb
-import os.path as osp
 import json
+import os.path as osp
+
+import lmdb
 from tqdm import tqdm
+
 
 def iterate_lmdb_database(lmdb_dir: str):
     """
@@ -29,6 +31,7 @@ def iterate_lmdb_database(lmdb_dir: str):
 
     # Close the LMDB environment
     env.close()
+
 
 # Example usage
 if __name__ == "__main__":

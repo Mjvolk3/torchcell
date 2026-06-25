@@ -3,18 +3,19 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/metabolism/yeast_GEM
 # Test file: tests/torchcell/metabolism/test_yeast_GEM.py
 
-import os.path as osp
 import os
-import zipfile
-import requests
-import cobra
-import networkx as nx
-from typing import Optional
-from attrs import define, field
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
+import os.path as osp
 import re
+import zipfile
+
+import cobra
 import hypernetx as hnx
+import matplotlib.pyplot as plt
+import networkx as nx
+import requests
+from attrs import define, field
+from matplotlib.patches import Patch
+
 from torchcell.sequence import GeneSet
 
 
@@ -22,11 +23,11 @@ from torchcell.sequence import GeneSet
 class YeastGEM:
     root: str = field(default="data/torchcell/yeast-GEM")
     version: str = field(default="9.0.2")
-    induced_gene_set: Optional[GeneSet] = field(default=None)
-    _model: Optional[cobra.Model] = field(default=None, init=False)
-    _compound_graph: Optional[nx.DiGraph] = field(default=None, init=False)
-    _gene_set: Optional[GeneSet] = field(default=None, init=False)
-    _bipartite_graph: Optional[nx.Graph] = field(default=None, init=False)
+    induced_gene_set: GeneSet | None = field(default=None)
+    _model: cobra.Model | None = field(default=None, init=False)
+    _compound_graph: nx.DiGraph | None = field(default=None, init=False)
+    _gene_set: GeneSet | None = field(default=None, init=False)
+    _bipartite_graph: nx.Graph | None = field(default=None, init=False)
     model_dir: str = field(init=False)
 
     def __attrs_post_init__(self):
@@ -354,7 +355,7 @@ class YeastGEM:
             if not graph.has_node(metabolite.id):
                 # Add metabolite node with all requested attributes
                 graph.add_node(
-                    metabolite.id, 
+                    metabolite.id,
                     node_type="metabolite",
                     name=metabolite.name,
                     composition=metabolite.formula,
@@ -551,7 +552,7 @@ def plot_full_network(yeast_gem: YeastGEM, output_path: str = "full_network.png"
     n_edges = len(H.edges)
     n_reversible = sum(1 for e in H.edges if H.edges[e].properties["reversibility"])
 
-    print(f"\nNetwork Statistics:")
+    print("\nNetwork Statistics:")
     print(f"Number of metabolites (nodes): {n_nodes}")
     print(f"Number of reactions (edges): {n_edges}")
     print(f"Number of reversible reactions: {n_reversible}")
@@ -615,10 +616,11 @@ def plot_random_network(
     layout="spring",
 ):
     import random
+
     from networkx.drawing.layout import (
-        spring_layout,
-        spectral_layout,
         kamada_kawai_layout,
+        spectral_layout,
+        spring_layout,
     )
 
     H = yeast_gem.reaction_map
@@ -805,7 +807,7 @@ def plot_bipartite_network(
     plt.close()
 
     # Print some statistics
-    print(f"\nNetwork Statistics:")
+    print("\nNetwork Statistics:")
     print(f"Number of genes: {len(gene_nodes)}")
     print(f"Number of metabolites: {len(metabolite_nodes)}")
     print(f"Number of edges: {B.number_of_edges()}")
@@ -860,6 +862,7 @@ def main():
 
 def main_with_gene_set():
     from dotenv import load_dotenv
+
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     # Setup dataset (unchanged)
@@ -918,19 +921,19 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
     print("\n===== YeastGEM Metabolic Network Sanity Check =====")
 
     for rxn in sample_reactions:
-        print(f"\n\n{'='*50}")
+        print(f"\n\n{'=' * 50}")
         print(f"REACTION: {rxn.id}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         # Print COBRA model information
-        print(f"\n--- COBRA Model Information ---")
+        print("\n--- COBRA Model Information ---")
         print(f"Equation: {rxn.reaction}")
         print(f"Reversible: {rxn.reversibility}")
         print(f"Gene rule: {rxn.gene_reaction_rule}")
         print(f"Genes involved: {', '.join(gene.id for gene in rxn.genes)}")
 
         # Print metabolite details
-        print(f"\nMetabolites:")
+        print("\nMetabolites:")
         for metabolite, coefficient in rxn.metabolites.items():
             role = "Reactant" if coefficient < 0 else "Product"
             print(f"  - {metabolite.id} ({role}, coefficient: {coefficient})")
@@ -939,7 +942,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
             print(f"    Compartment: {metabolite.compartment}")
 
         # Check reaction_map (hypergraph)
-        print(f"\n--- Reaction Map (Hypergraph) Information ---")
+        print("\n--- Reaction Map (Hypergraph) Information ---")
         reaction_edges = []
 
         # Correct way to iterate through edges and check properties
@@ -959,7 +962,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
             print(f"Products: {', '.join(edge_props['products'])}")
 
         # Check bipartite_graph with corrected implementation
-        print(f"\n--- Bipartite Graph Information ---")
+        print("\n--- Bipartite Graph Information ---")
         rxn_nodes = [
             node
             for node in B.nodes()
@@ -971,14 +974,14 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
 
         # Show reaction node details
         for i, node in enumerate(rxn_nodes):
-            print(f"\nReaction node {i+1}: {node}")
+            print(f"\nReaction node {i + 1}: {node}")
             node_data = B.nodes[node]
             print(f"  Direction: {node_data.get('direction')}")
             genes = node_data.get("genes", set())
             if genes:
                 print(f"  Genes: {', '.join(sorted(genes))}")
             else:
-                print(f"  Genes: None")
+                print("  Genes: None")
 
             # Get connected metabolites
             connected_metabolites = list(B.neighbors(node))
@@ -997,11 +1000,11 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
             print(f"  Products: {', '.join(products)}")
 
             # Print a few sample edges
-            print(f"\n  Sample edges:")
+            print("\n  Sample edges:")
             for j, metabolite in enumerate(
                 connected_metabolites[:3]
             ):  # Show at most 3 edges
-                print(f"    {j+1}. {node} -- {metabolite}")
+                print(f"    {j + 1}. {node} -- {metabolite}")
                 print(f"       Edge type: {B.edges[node, metabolite].get('edge_type')}")
                 print(
                     f"       Stoichiometry: {B.edges[node, metabolite].get('stoichiometry')}"
@@ -1042,7 +1045,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
         print(f"WARNING: {len(mixed_edges)} edges connect nodes of the same type!")
         # Print a few examples
         for i, (u, v) in enumerate(mixed_edges[:3]):
-            print(f"  {i+1}. {u} -- {v}")
+            print(f"  {i + 1}. {u} -- {v}")
             print(
                 f"     Node types: {B.nodes[u].get('node_type')} -- {B.nodes[v].get('node_type')}"
             )
@@ -1060,7 +1063,7 @@ def sanity_check_metabolic_networks(yeast_gem: YeastGEM, num_reactions: int = 3)
         print(f"WARNING: {len(isolated)} isolated nodes found!")
         # Print node types of a few examples
         for i, node in enumerate(isolated[:3]):
-            print(f"  {i+1}. {node} (Type: {B.nodes[node].get('node_type')})")
+            print(f"  {i + 1}. {node} (Type: {B.nodes[node].get('node_type')})")
 
         if len(isolated) > 3:
             print(f"  ... and {len(isolated) - 3} more isolated nodes")
@@ -1143,7 +1146,7 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
     print("\n===== Analysis of Reactions Without Gene Associations =====")
     print(f"Total reactions in model: {len(yeast_gem.model.reactions)}")
     print(
-        f"Reactions without gene rules: {len(no_gene_rule)} ({len(no_gene_rule)/len(yeast_gem.model.reactions):.1%})"
+        f"Reactions without gene rules: {len(no_gene_rule)} ({len(no_gene_rule) / len(yeast_gem.model.reactions):.1%})"
     )
 
     if methods_consistent:
@@ -1156,13 +1159,13 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
 
     print("\nReaction classification:")
     print(
-        f"  - Exchange reactions: {len(exchange_rxns)} ({len(exchange_rxns)/len(no_gene_rule):.1%})"
+        f"  - Exchange reactions: {len(exchange_rxns)} ({len(exchange_rxns) / len(no_gene_rule):.1%})"
     )
     print(
-        f"  - Transport reactions: {len(transport_rxns)} ({len(transport_rxns)/len(no_gene_rule):.1%})"
+        f"  - Transport reactions: {len(transport_rxns)} ({len(transport_rxns) / len(no_gene_rule):.1%})"
     )
     print(
-        f"  - Other reactions: {len(other_rxns)} ({len(other_rxns)/len(no_gene_rule):.1%})"
+        f"  - Other reactions: {len(other_rxns)} ({len(other_rxns) / len(no_gene_rule):.1%})"
     )
 
     print("\nReactions by number of metabolites:")
@@ -1180,7 +1183,7 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
         )
         for i, rxn_id in enumerate(rxn_list[:n]):
             rxn = yeast_gem.model.reactions.get_by_id(rxn_id)
-            print(f"  {i+1}. {rxn_id}: {rxn.reaction}")
+            print(f"  {i + 1}. {rxn_id}: {rxn.reaction}")
 
     print_examples(exchange_rxns, "exchange reactions")
     print_examples(transport_rxns, "transport reactions")
@@ -1196,37 +1199,41 @@ def analyze_reactions_without_genes(yeast_gem: YeastGEM):
         "methods_consistent": methods_consistent,
     }
 
+
 def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
     """
     Test and display the new attributes added to the bipartite graph.
-    
+
     Args:
         yeast_gem: YeastGEM instance
         num_reactions: Number of random reactions to sample
     """
     import random
-    
+
     # Get the bipartite graph
     B = yeast_gem.bipartite_graph
-    
+
     # Get a few random reactions
     all_reactions = list(yeast_gem.model.reactions)
-    sample_reactions = random.sample(all_reactions, min(num_reactions, len(all_reactions)))
-    
+    sample_reactions = random.sample(
+        all_reactions, min(num_reactions, len(all_reactions))
+    )
+
     print("\n===== Bipartite Graph Attribute Test =====")
-    
+
     for rxn in sample_reactions:
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"REACTION: {rxn.id} - {rxn.name}")
-        print(f"{'='*50}")
-        
+        print(f"{'=' * 50}")
+
         # Find the reaction nodes in the bipartite graph
         rxn_nodes = [
-            node for node in B.nodes()
-            if B.nodes[node].get("node_type") == "reaction" 
+            node
+            for node in B.nodes()
+            if B.nodes[node].get("node_type") == "reaction"
             and B.nodes[node].get("reaction_id") == rxn.id
         ]
-        
+
         # Print reaction node attributes
         for node_id in rxn_nodes:
             node = B.nodes[node_id]
@@ -1234,43 +1241,46 @@ def test_bipartite_attributes(yeast_gem: YeastGEM, num_reactions: int = 3):
             print(f"  Subsystem: {node.get('subsystem', 'N/A')}")
             print(f"  Direction: {node.get('direction', 'N/A')}")
             print(f"  Reversibility: {node.get('reversibility', 'N/A')}")
-            
+
             # Get connected metabolites
             connected_mets = list(B.neighbors(node_id))
             if connected_mets:
                 # Sample up to 3 metabolites
-                sample_mets = connected_mets[:min(3, len(connected_mets))]
-                
+                sample_mets = connected_mets[: min(3, len(connected_mets))]
+
                 print("\n  Connected Metabolites:")
                 for i, met_id in enumerate(sample_mets):
                     met_node = B.nodes[met_id]
                     edge = B.edges[node_id, met_id]
-                    
-                    print(f"\n    Metabolite {i+1}: {met_id}")
+
+                    print(f"\n    Metabolite {i + 1}: {met_id}")
                     print(f"      Name: {met_node.get('name', 'N/A')}")
                     print(f"      Composition: {met_node.get('composition', 'N/A')}")
                     print(f"      Compartment: {met_node.get('compartment', 'N/A')}")
                     print(f"      Charge: {met_node.get('charge', 'N/A')}")
                     print(f"      Edge Type: {edge.get('edge_type', 'N/A')}")
                     print(f"      Stoichiometry: {edge.get('stoichiometry', 'N/A')}")
-                
+
                 if len(connected_mets) > 3:
                     print(f"\n    ... and {len(connected_mets) - 3} more metabolites")
 
+
 def main_test_bipartite_attributes():
-    from dotenv import load_dotenv
     import random
-    
+
+    from dotenv import load_dotenv
+
     load_dotenv()
-    
+
     print("Initializing YeastGEM...")
     yeast_gem = YeastGEM()
-    
+
     # Set random seed for reproducibility
     random.seed(42)
-    
+
     # Test the bipartite graph with newly added attributes
     test_bipartite_attributes(yeast_gem, num_reactions=3)
+
 
 if __name__ == "__main__":
     # # main_bipartite()

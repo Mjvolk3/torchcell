@@ -4,36 +4,32 @@
 # Test file: tests/torchcell/datasets/scerevisiae/test_Ohya2005.py
 
 
-import hashlib
-import json
 import logging
 import os
 import os.path as osp
 import pickle
-import zipfile
 from collections.abc import Callable
+
 import lmdb
-import numpy as np
 import pandas as pd
 import requests
-from pathlib import Path
-from typing import Tuple, Optional
 from tqdm import tqdm
+
+from torchcell.data import ExperimentDataset, post_process
 from torchcell.datamodels.schema import (
-    Environment,
-    Genotype,
     CalMorphExperiment,
     CalMorphExperimentReference,
     CalMorphPhenotype,
-    Media,
-    ReferenceGenome,
-    KanMxDeletionPerturbation,
-    Temperature,
+    Environment,
     Experiment,
     ExperimentReference,
+    Genotype,
+    KanMxDeletionPerturbation,
+    Media,
     Publication,
+    ReferenceGenome,
+    Temperature,
 )
-from torchcell.data import ExperimentDataset, post_process
 from torchcell.datasets.dataset_registry import register_dataset
 
 logging.basicConfig(level=logging.INFO)
@@ -145,7 +141,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
 
             file_size = osp.getsize(output_path)
             if file_size > 0:
-                log.info(f"Downloaded {output_path} ({file_size/1024/1024:.2f} MB)")
+                log.info(f"Downloaded {output_path} ({file_size / 1024 / 1024:.2f} MB)")
                 return True
             else:
                 log.error("Downloaded file is empty")
@@ -204,7 +200,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         # For this dataset, preprocessing happens in process() with both dfs
         # This method is required by base class but not used in our flow
         return df
-    
+
     def preprocess_calmorph_data(
         self, df_mutant: pd.DataFrame, df_wt: pd.DataFrame
     ) -> pd.DataFrame:
@@ -222,7 +218,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
         # Clean gene names - the ORF column contains the systematic gene name
         # Convert to uppercase for consistency with standard yeast nomenclature
         df_mutant["systematic_gene_name"] = df_mutant["ORF"].str.strip().str.upper()
-        # For perturbed_gene_name, we'll use the same as systematic name 
+        # For perturbed_gene_name, we'll use the same as systematic name
         # since there's no separate gene column
         df_mutant["perturbed_gene_name"] = df_mutant["systematic_gene_name"]
 
@@ -244,7 +240,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
             info_columns.append("NAME")
         if "ORF" in df_wt.columns:
             info_columns.append("ORF")
-        
+
         morphology_columns = [col for col in df_wt.columns if col not in info_columns]
 
         # Calculate mean across all wildtype replicates
@@ -259,7 +255,7 @@ class ScmdOhya2005Dataset(ExperimentDataset):
     def create_experiment(self):
         """Required by base class but not used - see create_calmorph_experiment."""
         pass
-    
+
     @staticmethod
     def create_calmorph_experiment(dataset_name, row, wt_reference_phenotype):
         # Genome reference - BY4741 (MATa his3Δ1 leu2Δ0 lys2Δ0 ura3Δ0)

@@ -1,11 +1,11 @@
 """Profiling utilities for TorchCell."""
 
 from torchcell.profiling.timing import (
-    time_method,
+    get_timing_summary,
+    get_timings,
     print_timing_summary,
     reset_timings,
-    get_timings,
-    get_timing_summary,
+    time_method,
 )
 
 __all__ = [

@@ -3,45 +3,34 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/isomorphic_cell_attentional
 # Test file: tests/torchcell/models/test_isomorphic_cell_attentional.py
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from omegaconf import DictConfig, OmegaConf
-import os.path as osp
 import os
-import hydra
-from torch_geometric.nn import (
-    HeteroConv,
-    GCNConv,
-    GATv2Conv,
-    TransformerConv,
-    GINConv,
-    BatchNorm,
-    LayerNorm,
-    GraphNorm,
-    InstanceNorm,
-    PairNorm,
-    MeanSubtractionNorm,
-    global_add_pool,
-    global_mean_pool,
-    global_max_pool,
-    HypergraphConv,
-)
-from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
-from typing import Optional, Literal
-from torch_geometric.typing import EdgeType
-from torchcell.models.act import act_register
-from collections import defaultdict
+import os.path as osp
+from typing import Literal
 
-from typing import Any, Union, Optional
-from torch_geometric.nn.aggr.attention import AttentionalAggregation
+import hydra
 import torch
-from torch import Tensor
 import torch.nn as nn
+from omegaconf import DictConfig
+from torch_geometric.data import HeteroData
+from torch_geometric.nn import (
+    BatchNorm,
+    GATv2Conv,
+    GCNConv,
+    GINConv,
+    GraphNorm,
+    HeteroConv,
+    InstanceNorm,
+    LayerNorm,
+    MeanSubtractionNorm,
+    PairNorm,
+    TransformerConv,
+)
+from torch_geometric.nn.aggr.attention import AttentionalAggregation
 from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
-from torch_geometric.data import HeteroData
-from torch_scatter import scatter, scatter_softmax
+
+from torchcell.models.act import act_register
+from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
 def get_norm_layer(channels: int, norm: str):
@@ -75,7 +64,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -209,17 +198,17 @@ class HeteroGnn(nn.Module):
         num_layers: int,
         edge_types: list[EdgeType],
         conv_type: Literal["GCN", "GAT", "Transformer", "GIN"] = "GCN",
-        layer_config: Optional[dict] = None,
+        layer_config: dict | None = None,
         activation: str = "gelu",
-        norm: Optional[str] = None,
+        norm: str | None = None,
         head_num_layers: int = 2,
-        head_hidden_channels: Optional[int] = None,
+        head_hidden_channels: int | None = None,
         head_dropout: float = 0.0,
         head_activation: str = "gelu",
         head_residual: bool = False,
-        head_norm: Optional[Literal["batch", "layer", "instance"]] = None,
+        head_norm: Literal["batch", "layer", "instance"] | None = None,
         learnable_embedding: bool = False,
-        num_nodes: Optional[int] = None,
+        num_nodes: int | None = None,
     ):
         super().__init__()
         self.num_layers = num_layers
@@ -269,7 +258,7 @@ class HeteroGnn(nn.Module):
             norm=head_norm,
         )
 
-    def _get_layer_config(self, layer_config: Optional[dict]) -> dict:
+    def _get_layer_config(self, layer_config: dict | None) -> dict:
         default_configs = {
             "GCN": {
                 "bias": True,
@@ -478,9 +467,7 @@ class HeteroGnn(nn.Module):
             return norm_layer()
         return norm_layer(channels)
 
-    def _get_head_norm(
-        self, channels: int, norm_type: Optional[str]
-    ) -> Optional[nn.Module]:
+    def _get_head_norm(self, channels: int, norm_type: str | None) -> nn.Module | None:
         """Get standard PyTorch normalization layer for prediction head."""
         if norm_type is None:
             return None
@@ -501,7 +488,7 @@ class HeteroGnn(nn.Module):
         dropout: float,
         activation: str,
         residual: bool,
-        norm: Optional[str] = None,
+        norm: str | None = None,
     ) -> nn.Module:
         if num_layers == 0:
             return nn.Identity()
@@ -823,7 +810,7 @@ class MetabolismProcessor(nn.Module):
         )
 
     def whole_forward(
-        self, graph: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+        self, graph: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Process single instance (whole cell graph)"""
         # 1. Gene -> Reaction context
@@ -891,7 +878,7 @@ class MetabolismProcessor(nn.Module):
         return Z_mg
 
     def intact_perturbed_forward(
-        self, batch: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+        self, batch: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Process batched data"""
         # 1. Gene -> Reaction mapping
@@ -967,7 +954,7 @@ class MetabolismProcessor(nn.Module):
         return Z_mg
 
     def forward(
-        self, data: HeteroData, preprocessed_features: Optional[torch.Tensor] = None
+        self, data: HeteroData, preprocessed_features: torch.Tensor | None = None
     ) -> torch.Tensor:
         """Main forward pass"""
         is_batched = hasattr(data["gene"], "batch")
@@ -990,12 +977,12 @@ class IsomorphicCell(nn.Module):
             "combiner": 2,
         },
         dropout: float = 0.1,
-        gene_encoder_config: Optional[dict] = None,
-        metabolism_config: Optional[dict] = None,
-        attention_config: Optional[dict] = None,
-        preprocessor_config: Optional[dict] = None,
-        combiner_config: Optional[dict] = None,
-        prediction_head_config: Optional[dict] = None,
+        gene_encoder_config: dict | None = None,
+        metabolism_config: dict | None = None,
+        attention_config: dict | None = None,
+        preprocessor_config: dict | None = None,
+        combiner_config: dict | None = None,
+        prediction_head_config: dict | None = None,
     ):
         super().__init__()
 
@@ -1297,25 +1284,29 @@ class IsomorphicCell(nn.Module):
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
     # from torchcell.datasets.fungal_up_down_transformer import (
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -1352,7 +1343,7 @@ def load_sample_data_batch():
             genome=genome,
         )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -1407,9 +1398,9 @@ def load_sample_data_batch():
 def plot_correlations(
     predictions, true_values, save_path, lambda_info="", weight_decay=""
 ):
+    import matplotlib.pyplot as plt
     import numpy as np
     from scipy import stats
-    import matplotlib.pyplot as plt
 
     # Convert to numpy and handle NaN values
     predictions_np = predictions.detach().cpu().numpy()
@@ -1477,9 +1468,11 @@ def plot_correlations(
     config_name="isomorphic_cell_attentional",
 )
 def main(cfg: DictConfig) -> None:
-    import matplotlib.pyplot as plt
     import os
+
+    import matplotlib.pyplot as plt
     from dotenv import load_dotenv
+
     from torchcell.losses.isomorphic_cell_loss import ICLoss
     from torchcell.timestamp import timestamp
 
@@ -1595,10 +1588,10 @@ def main(cfg: DictConfig) -> None:
                 print("Cell dimension losses:", loss_components.get("cell_dim_losses"))
                 if device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                        f"GPU memory cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())
@@ -1670,9 +1663,9 @@ def main(cfg: DictConfig) -> None:
         print("Final SupCR dimension losses:", final_components.get("supcr_dim_losses"))
         print("Final Cell dimension losses:", final_components.get("cell_dim_losses"))
         if device.type == "cuda":
-            print(f"\nFinal GPU memory usage:")
-            print(f"Allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB")
-            print(f"Cached: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB")
+            print("\nFinal GPU memory usage:")
+            print(f"Allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB")
+            print(f"Cached: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB")
 
     if device.type == "cuda":
         torch.cuda.empty_cache()

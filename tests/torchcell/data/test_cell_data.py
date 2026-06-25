@@ -100,12 +100,12 @@ def test_stoichiometric_matrix_equivalence():
     print(f"Duplicate edges in our representation: {duplicate_count}")
 
     # 5. Verify both matrices have negative values (indicating reactants)
-    assert (
-        cobra_S.min() < 0
-    ), f"COBRApy S matrix should have negative values, min: {cobra_S.min()}"
-    assert (
-        our_S.min() < 0
-    ), f"Our S matrix should have negative values, min: {our_S.min()}"
+    assert cobra_S.min() < 0, (
+        f"COBRApy S matrix should have negative values, min: {cobra_S.min()}"
+    )
+    assert our_S.min() < 0, (
+        f"Our S matrix should have negative values, min: {our_S.min()}"
+    )
 
     # 6. Debug: Print some statistics
     print(
@@ -117,12 +117,12 @@ def test_stoichiometric_matrix_equivalence():
 
     # 7. Check if the matrices have similar properties
     # Note: We don't check exact equivalence because node ordering might differ
-    assert np.isclose(
-        cobra_S.min(), our_S.min(), rtol=0.1
-    ), "Minimum values differ significantly"
-    assert np.isclose(
-        cobra_S.max(), our_S.max(), rtol=0.1
-    ), "Maximum values differ significantly"
+    assert np.isclose(cobra_S.min(), our_S.min(), rtol=0.1), (
+        "Minimum values differ significantly"
+    )
+    assert np.isclose(cobra_S.max(), our_S.max(), rtol=0.1), (
+        "Maximum values differ significantly"
+    )
 
     # Relax the sparsity check until we fix the issue
     # assert np.isclose(
@@ -177,7 +177,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     our_S = S_sparse.to_dense().numpy()
 
     # Print basic stats before analysis
-    print(f"Original matrices:")
+    print("Original matrices:")
     print(f"COBRApy S: {cobra_S.shape}, nnz={np.count_nonzero(cobra_S)}")
     print(f"Our S: {our_S.shape}, nnz={np.count_nonzero(our_S)}")
 
@@ -227,7 +227,7 @@ def test_stoichiometric_matrix_with_duplicate_detection():
             col_idx = indices[0]
             col = our_S[:, col_idx]
             nnz = np.count_nonzero(col)
-            print(f"Pattern {i+1}: {len(indices)} occurrences, {nnz} non-zeros")
+            print(f"Pattern {i + 1}: {len(indices)} occurrences, {nnz} non-zeros")
 
             # Get reaction node ids for these duplicates (limited to first 3)
             reaction_ids = [cell_graph["reaction"].node_ids[idx] for idx in indices[:3]]
@@ -252,17 +252,17 @@ def test_stoichiometric_matrix_with_duplicate_detection():
     assert our_S.min() < 0, "Our matrix should have negative values"
 
     # Check if min/max values are similar
-    assert np.isclose(
-        cobra_S.min(), our_S.min(), rtol=0.2
-    ), "Minimum values differ significantly"
-    assert np.isclose(
-        cobra_S.max(), our_S.max(), rtol=0.2
-    ), "Maximum values differ significantly"
+    assert np.isclose(cobra_S.min(), our_S.min(), rtol=0.2), (
+        "Minimum values differ significantly"
+    )
+    assert np.isclose(cobra_S.max(), our_S.max(), rtol=0.2), (
+        "Maximum values differ significantly"
+    )
 
     # Success if the ratio is reasonable (e.g., > 0.8) and properties match
-    assert (
-        ratio > 0.7
-    ), f"Number of unique reactions differs too much: {actual_unique} vs {expected_unique}"
+    assert ratio > 0.7, (
+        f"Number of unique reactions differs too much: {actual_unique} vs {expected_unique}"
+    )
 
     print(
         "\nTest passed: Matrix representations are consistent after accounting for duplicates"
@@ -301,7 +301,7 @@ def test_stoichiometric_matrix_exact_equivalence():
     our_S = S_sparse.to_dense().numpy()
 
     # Print basic stats before analysis
-    print(f"Original matrices:")
+    print("Original matrices:")
     print(f"COBRApy S: {cobra_S.shape}, nnz={np.count_nonzero(cobra_S)}")
     print(f"Our S: {our_S.shape}, nnz={np.count_nonzero(our_S)}")
 
@@ -416,7 +416,7 @@ def test_stoichiometric_matrix_exact_equivalence():
         else 0
     )
 
-    print(f"\nExact column pattern matching (accounting for reversibility):")
+    print("\nExact column pattern matching (accounting for reversibility):")
     print(f"Exact matches: {exact_matches}")
     print(f"Patterns only in COBRApy: {len(cobra_only)}")
     print(f"Patterns only in reduced S: {len(reduced_only)}")
@@ -433,7 +433,7 @@ def test_stoichiometric_matrix_exact_equivalence():
                 col_idx = cobra_column_hashes[h]
                 col = cobra_S[:, col_idx]
                 nonzero_count = np.count_nonzero(col)
-                print(f"Pattern {i+1}: {nonzero_count} non-zeros")
+                print(f"Pattern {i + 1}: {nonzero_count} non-zeros")
 
         # Show sample of reduced-only patterns
         if len(reduced_only) > 0:
@@ -442,12 +442,12 @@ def test_stoichiometric_matrix_exact_equivalence():
                 col_idx = reduced_column_hashes[h]
                 col = reduced_S[:, col_idx]
                 nonzero_count = np.count_nonzero(col)
-                print(f"Pattern {i+1}: {nonzero_count} non-zeros")
+                print(f"Pattern {i + 1}: {nonzero_count} non-zeros")
 
     # Assert a reasonable match percentage (e.g., >85%)
     print(
         f"\nTest {'passed' if match_percentage > 85 else 'failed'}: Matrix representations are {match_percentage:.2f}% equivalent after accounting for duplicates and reversibility"
     )
-    assert (
-        match_percentage > 85
-    ), f"Matrices differ too much: only {match_percentage:.2f}% exact matches"
+    assert match_percentage > 85, (
+        f"Matrices differ too much: only {match_percentage:.2f}% exact matches"
+    )

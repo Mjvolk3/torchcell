@@ -1,5 +1,6 @@
-from neo4j import GraphDatabase
 import time
+
+from neo4j import GraphDatabase
 
 # Neo4j Bolt URI and credentials
 uri = "bolt://gilahyper.zapto.org:7687"

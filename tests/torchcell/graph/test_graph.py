@@ -49,9 +49,9 @@ def test_filter_go_IGI(get_sample_graph):
 
     G_filtered = filter_go_IGI(G_sample)
 
-    assert check_no_IGI_in_graph(
-        G_filtered
-    ), "Found 'IGI' display name in the filtered graph."
+    assert check_no_IGI_in_graph(G_filtered), (
+        "Found 'IGI' display name in the filtered graph."
+    )
 
 
 def check_no_genes_after_date(G: nx.DiGraph, cutoff_date: str) -> bool:
@@ -76,9 +76,9 @@ def test_filter_by_date(get_sample_graph):
 
     G_filtered = filter_by_date(G_sample, cutoff_date)
 
-    assert check_no_genes_after_date(
-        G_filtered, cutoff_date
-    ), f"Found genes annotated after {cutoff_date} in the filtered graph."
+    assert check_no_genes_after_date(G_filtered, cutoff_date), (
+        f"Found genes annotated after {cutoff_date} in the filtered graph."
+    )
 
 
 # if __name__ == "__main__":

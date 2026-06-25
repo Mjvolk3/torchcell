@@ -4,30 +4,32 @@
 # Test file: tests/torchcell/scratch/test_load_batch.py
 import os
 import os.path as osp
+from typing import Literal
+
 from dotenv import load_dotenv
-from torchcell.graph import SCerevisiaeGraph
+from torch_geometric.transforms import Compose
+from tqdm import tqdm
+
+from torchcell.data import (
+    GenotypeAggregator,
+    MeanExperimentDeduplicator,
+    Neo4jCellDataset,
+)
+from torchcell.data.graph_processor import SubgraphRepresentation
 from torchcell.datamodules import CellDataModule
-from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
+from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
 # from torchcell.datasets.fungal_up_down_transformer import (
 #     FungalUpDownTransformerDataset,
 # )
 from torchcell.datasets import CodonFrequencyDataset
-from torchcell.data import MeanExperimentDeduplicator
-from torchcell.data import GenotypeAggregator
-from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-from torchcell.data import Neo4jCellDataset
-from torchcell.data.graph_processor import SubgraphRepresentation
-from torchcell.data.graph_processor import SubgraphRepresentation
-from tqdm import tqdm
+from torchcell.graph import SCerevisiaeGraph
 from torchcell.metabolism.yeast_GEM import YeastGEM
-from typing import Literal
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
 from torchcell.transforms.regression_to_classification import (
     LabelNormalizationTransform,
 )
-from torch_geometric.transforms import Compose
 
 
 def load_sample_data_batch(
@@ -78,7 +80,7 @@ def load_sample_data_batch(
             genome=genome,
         )
 
-    with open("experiments/004-dmi-tmi/queries/001_small_build.cql", "r") as f:
+    with open("experiments/004-dmi-tmi/queries/001_small_build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/004-dmi-tmi/001-small-build"

@@ -3,12 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/data/neo4j_preprocessed_cell
 # Test file: tests/torchcell/data/test_neo4j_preprocessed_cell.py
 
-import json
 import logging
 import os
 import os.path as osp
 import pickle
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import lmdb
 import torch
@@ -51,10 +50,10 @@ class Neo4jPreprocessedCellDataset(Dataset):
     def __init__(
         self,
         root: str,
-        source_dataset: Optional[Neo4jCellDataset] = None,
-        transform: Optional[Callable] = None,
-        pre_transform: Optional[Callable] = None,
-        pre_filter: Optional[Callable] = None,
+        source_dataset: Neo4jCellDataset | None = None,
+        transform: Callable | None = None,
+        pre_transform: Callable | None = None,
+        pre_filter: Callable | None = None,
     ):
         """
         Initialize preprocessed dataset.
@@ -156,44 +155,44 @@ class Neo4jPreprocessedCellDataset(Dataset):
 
         # Store sample-specific data (phenotypes, perturbations)
         # Note: Some fields are lists (ids_pert, phenotype_types), some are tensors
-        gene_data = processed_graph['gene']
-        compact_data['gene'] = {
-            'ids_pert': gene_data.ids_pert,  # Already a list, no .cpu() needed
-            'perturbation_indices': gene_data.perturbation_indices.cpu(),
-            'phenotype_values': gene_data.phenotype_values.cpu(),
-            'phenotype_type_indices': gene_data.phenotype_type_indices.cpu(),
-            'phenotype_sample_indices': gene_data.phenotype_sample_indices.cpu(),
-            'phenotype_types': gene_data.phenotype_types,  # List, no .cpu() needed
-            'phenotype_stat_values': gene_data.phenotype_stat_values.cpu(),
-            'phenotype_stat_type_indices': gene_data.phenotype_stat_type_indices.cpu(),
-            'phenotype_stat_sample_indices': gene_data.phenotype_stat_sample_indices.cpu(),
-            'phenotype_stat_types': gene_data.phenotype_stat_types,  # List, no .cpu() needed
+        gene_data = processed_graph["gene"]
+        compact_data["gene"] = {
+            "ids_pert": gene_data.ids_pert,  # Already a list, no .cpu() needed
+            "perturbation_indices": gene_data.perturbation_indices.cpu(),
+            "phenotype_values": gene_data.phenotype_values.cpu(),
+            "phenotype_type_indices": gene_data.phenotype_type_indices.cpu(),
+            "phenotype_sample_indices": gene_data.phenotype_sample_indices.cpu(),
+            "phenotype_types": gene_data.phenotype_types,  # List, no .cpu() needed
+            "phenotype_stat_values": gene_data.phenotype_stat_values.cpu(),
+            "phenotype_stat_type_indices": gene_data.phenotype_stat_type_indices.cpu(),
+            "phenotype_stat_sample_indices": gene_data.phenotype_stat_sample_indices.cpu(),
+            "phenotype_stat_types": gene_data.phenotype_stat_types,  # List, no .cpu() needed
         }
 
         # For each node type, store indices where mask is False (nodes to remove)
-        compact_data['node_masks'] = {}
+        compact_data["node_masks"] = {}
         for node_type in processed_graph.node_types:
-            if 'mask' in processed_graph[node_type]:
-                mask = processed_graph[node_type]['mask']
+            if "mask" in processed_graph[node_type]:
+                mask = processed_graph[node_type]["mask"]
                 # Store indices where mask is False (much smaller than full mask)
                 false_indices = (~mask).nonzero(as_tuple=True)[0].cpu()
                 # Save both false indices AND the original mask size for correct reconstruction
-                compact_data['node_masks'][node_type] = {
-                    'false_indices': false_indices,
-                    'mask_size': len(mask),
+                compact_data["node_masks"][node_type] = {
+                    "false_indices": false_indices,
+                    "mask_size": len(mask),
                 }
 
         # For each edge type, store indices where mask is False (edges to remove)
-        compact_data['edge_masks'] = {}
+        compact_data["edge_masks"] = {}
         for edge_type in processed_graph.edge_types:
-            if 'mask' in processed_graph[edge_type]:
-                mask = processed_graph[edge_type]['mask']
+            if "mask" in processed_graph[edge_type]:
+                mask = processed_graph[edge_type]["mask"]
                 # Store indices where mask is False
                 false_indices = (~mask).nonzero(as_tuple=True)[0].cpu()
                 # Save both false indices AND the original mask size for correct reconstruction
-                compact_data['edge_masks'][edge_type] = {
-                    'false_indices': false_indices,
-                    'mask_size': len(mask),
+                compact_data["edge_masks"][edge_type] = {
+                    "false_indices": false_indices,
+                    "mask_size": len(mask),
                 }
 
         return compact_data
@@ -219,57 +218,73 @@ class Neo4jPreprocessedCellDataset(Dataset):
         processed_graph["gene"].x = self.cell_graph["gene"].x  # Reference, not copy!
 
         # Add sample-specific gene data from compact storage
-        for key, value in compact_data['gene'].items():
+        for key, value in compact_data["gene"].items():
             if isinstance(value, torch.Tensor):
-                processed_graph['gene'][key] = value.to(device)
+                processed_graph["gene"][key] = value.to(device)
             else:
                 # Lists (ids_pert, phenotype_types, phenotype_stat_types) stay as-is
-                processed_graph['gene'][key] = value
+                processed_graph["gene"][key] = value
 
         # ZERO-COPY: Add references to edge indices
         for edge_type in self.cell_graph.edge_types:
             # Copy edge attributes - some edges have edge_index, some have hyperedge_index
-            if hasattr(self.cell_graph[edge_type], 'edge_index'):
-                processed_graph[edge_type].edge_index = self.cell_graph[edge_type].edge_index
-            if hasattr(self.cell_graph[edge_type], 'hyperedge_index'):
-                processed_graph[edge_type].hyperedge_index = self.cell_graph[edge_type].hyperedge_index
-            if hasattr(self.cell_graph[edge_type], 'num_edges'):
-                processed_graph[edge_type].num_edges = self.cell_graph[edge_type].num_edges
-            if hasattr(self.cell_graph[edge_type], 'stoichiometry'):
-                processed_graph[edge_type].stoichiometry = self.cell_graph[edge_type].stoichiometry
+            if hasattr(self.cell_graph[edge_type], "edge_index"):
+                processed_graph[edge_type].edge_index = self.cell_graph[
+                    edge_type
+                ].edge_index
+            if hasattr(self.cell_graph[edge_type], "hyperedge_index"):
+                processed_graph[edge_type].hyperedge_index = self.cell_graph[
+                    edge_type
+                ].hyperedge_index
+            if hasattr(self.cell_graph[edge_type], "num_edges"):
+                processed_graph[edge_type].num_edges = self.cell_graph[
+                    edge_type
+                ].num_edges
+            if hasattr(self.cell_graph[edge_type], "stoichiometry"):
+                processed_graph[edge_type].stoichiometry = self.cell_graph[
+                    edge_type
+                ].stoichiometry
 
         # Add reaction and metabolite node data if present
         if "reaction" in self.cell_graph.node_types:
             processed_graph["reaction"].node_ids = self.cell_graph["reaction"].node_ids
-            processed_graph["reaction"].num_nodes = self.cell_graph["reaction"].num_nodes
+            processed_graph["reaction"].num_nodes = self.cell_graph[
+                "reaction"
+            ].num_nodes
             if hasattr(self.cell_graph["reaction"], "w_growth"):
-                processed_graph["reaction"].w_growth = self.cell_graph["reaction"].w_growth
+                processed_graph["reaction"].w_growth = self.cell_graph[
+                    "reaction"
+                ].w_growth
 
         if "metabolite" in self.cell_graph.node_types:
-            processed_graph["metabolite"].node_ids = self.cell_graph["metabolite"].node_ids
-            processed_graph["metabolite"].num_nodes = self.cell_graph["metabolite"].num_nodes
+            processed_graph["metabolite"].node_ids = self.cell_graph[
+                "metabolite"
+            ].node_ids
+            processed_graph["metabolite"].num_nodes = self.cell_graph[
+                "metabolite"
+            ].num_nodes
 
         # Reconstruct node masks from False indices using saved mask sizes
-        for node_type, mask_info in compact_data['node_masks'].items():
-            false_indices = mask_info['false_indices']
-            mask_size = mask_info['mask_size']
+        for node_type, mask_info in compact_data["node_masks"].items():
+            false_indices = mask_info["false_indices"]
+            mask_size = mask_info["mask_size"]
             mask = torch.ones(mask_size, dtype=torch.bool, device=device)
             if len(false_indices) > 0:
                 mask[false_indices.to(device)] = False
-            processed_graph[node_type]['mask'] = mask
+            processed_graph[node_type]["mask"] = mask
 
             # pert_mask is always the inverse of mask (for all node types)
             # mask: True = keep, pert_mask: True = remove
-            processed_graph[node_type]['pert_mask'] = ~mask
+            processed_graph[node_type]["pert_mask"] = ~mask
 
         # Reconstruct edge masks from False indices using saved mask sizes
-        for edge_type, mask_info in compact_data['edge_masks'].items():
-            false_indices = mask_info['false_indices']
-            mask_size = mask_info['mask_size']
+        for edge_type, mask_info in compact_data["edge_masks"].items():
+            false_indices = mask_info["false_indices"]
+            mask_size = mask_info["mask_size"]
             mask = torch.ones(mask_size, dtype=torch.bool, device=device)
             if len(false_indices) > 0:
                 mask[false_indices.to(device)] = False
-            processed_graph[edge_type]['mask'] = mask
+            processed_graph[edge_type]["mask"] = mask
 
         return processed_graph
 
@@ -327,9 +342,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
 
                 # Apply graph processor
                 processed_graph = graph_processor.process(
-                    source_dataset.cell_graph,
-                    source_dataset.phenotype_info,
-                    data
+                    source_dataset.cell_graph, source_dataset.phenotype_info, data
                 )
 
                 # OPTIMIZED: Extract only False mask indices (not full graph)
@@ -339,7 +352,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
                 serialized_compact = pickle.dumps(compact_data)
 
                 # Store in LMDB
-                txn.put(f"{idx}".encode("utf-8"), serialized_compact)
+                txn.put(f"{idx}".encode(), serialized_compact)
 
         env.close()
         source_dataset.close_lmdb()
@@ -348,7 +361,9 @@ class Neo4jPreprocessedCellDataset(Dataset):
         self._save_metadata(len(source_dataset))
         self._length = len(source_dataset)
 
-        log.info(f"Preprocessing complete! Saved {len(source_dataset)} samples to {lmdb_path}")
+        log.info(
+            f"Preprocessing complete! Saved {len(source_dataset)} samples to {lmdb_path}"
+        )
 
         # Get actual LMDB size
         lmdb_data_file = osp.join(lmdb_path, "data.mdb")
@@ -356,7 +371,9 @@ class Neo4jPreprocessedCellDataset(Dataset):
             actual_size_gb = os.path.getsize(lmdb_data_file) / 1e9
             log.info(f"LMDB size: {actual_size_gb:.2f} GB")
             avg_size_kb = (actual_size_gb * 1e6) / len(source_dataset)
-            log.info(f"Average size per sample: {avg_size_kb:.2f} KB (vs ~43 MB for full graph!)")
+            log.info(
+                f"Average size per sample: {avg_size_kb:.2f} KB (vs ~43 MB for full graph!)"
+            )
 
     def _init_lmdb_read(self):
         """Initialize LMDB environment for reading."""
@@ -388,7 +405,7 @@ class Neo4jPreprocessedCellDataset(Dataset):
 
         # Read compact data from LMDB
         with self.env.begin() as txn:
-            serialized_data = txn.get(f"{idx}".encode("utf-8"))
+            serialized_data = txn.get(f"{idx}".encode())
             if serialized_data is None:
                 return None
 
@@ -430,12 +447,12 @@ class Neo4jPreprocessedCellDataset(Dataset):
 def main_preprocess():
     """Example: Preprocess a dataset for faster training."""
     import os.path as osp
+
     from dotenv import load_dotenv
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
     from torchcell.data.graph_processor import LazySubgraphRepresentation
     from torchcell.data.neo4j_cell import Neo4jCellDataset
-    from torchcell.datamodels.fitness_composite_conversion import CompositeFitnessConverter
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
@@ -445,7 +462,9 @@ def main_preprocess():
     EXPERIMENT_ROOT = os.getenv("EXPERIMENT_ROOT")
 
     # Load query
-    with open(osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql"), "r") as f:
+    with open(
+        osp.join(EXPERIMENT_ROOT, "006-kuzmin-tmi/queries/001_small_build.cql")
+    ) as f:
         query = f.read()
 
     # Setup genome and graph
@@ -485,12 +504,12 @@ def main_preprocess():
 
     # Create preprocessed dataset and run one-time preprocessing
     preprocessed_root = osp.join(
-        DATA_ROOT, "data/torchcell/experiments/006-kuzmin-tmi/001-small-build-preprocessed-lazy"
+        DATA_ROOT,
+        "data/torchcell/experiments/006-kuzmin-tmi/001-small-build-preprocessed-lazy",
     )
 
     preprocessed_dataset = Neo4jPreprocessedCellDataset(
-        root=preprocessed_root,
-        source_dataset=source_dataset,
+        root=preprocessed_root, source_dataset=source_dataset
     )
 
     # One-time preprocessing with LazySubgraphRepresentation
@@ -499,8 +518,7 @@ def main_preprocess():
     print("But will save ~280 seconds per epoch during training!")
 
     preprocessed_dataset.preprocess_from_source(
-        source_dataset=source_dataset,
-        graph_processor=LazySubgraphRepresentation(),
+        source_dataset=source_dataset, graph_processor=LazySubgraphRepresentation()
     )
 
     # Test loading
@@ -514,7 +532,9 @@ def main_preprocess():
     preprocessed_dataset.close_lmdb()
 
     print("\nPreprocessing complete! Use this dataset for training:")
-    print(f"  preprocessed_dataset = Neo4jPreprocessedCellDataset(root='{preprocessed_root}')")
+    print(
+        f"  preprocessed_dataset = Neo4jPreprocessedCellDataset(root='{preprocessed_root}')"
+    )
 
 
 if __name__ == "__main__":

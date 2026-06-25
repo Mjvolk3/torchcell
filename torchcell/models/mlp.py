@@ -3,10 +3,12 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/mlp.py
 # Test file: torchcell/models/test_mlp.py
 
+
 import torch
 import torch.nn as nn
+
 from torchcell.models import act_register
-from typing import Optional
+
 
 class Mlp(nn.Module):
     def __init__(
@@ -16,18 +18,18 @@ class Mlp(nn.Module):
         out_channels: int,
         num_layers: int,
         dropout_prob: float = 0.0,
-        norm: Optional[str] = None,
-        activation: Optional[str] = None,
-        output_activation: Optional[str] = None,
+        norm: str | None = None,
+        activation: str | None = None,
+        output_activation: str | None = None,
     ):
         super().__init__()
         assert norm in [None, "batch", "instance", "layer"], "Invalid norm type"
-        assert activation in [None] + list(
-            act_register.keys()
-        ), "Invalid activation type"
+        assert activation in [None] + list(act_register.keys()), (
+            "Invalid activation type"
+        )
 
         def create_block(
-            in_dim: int, out_dim: int, norm: Optional[str], activation: Optional[str]
+            in_dim: int, out_dim: int, norm: str | None, activation: str | None
         ) -> nn.Sequential:
             block = [nn.Linear(in_dim, out_dim)]
             if norm:

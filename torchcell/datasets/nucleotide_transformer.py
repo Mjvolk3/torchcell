@@ -5,10 +5,9 @@
 import os
 import os.path as osp
 from collections.abc import Callable
-from typing import Optional
 
 import torch
-from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.data import Data
 from tqdm import tqdm
 
 from torchcell.data.embedding import BaseEmbeddingDataset
@@ -130,9 +129,9 @@ class NucleotideTransformerDataset(BaseEmbeddingDataset):
 
 
 def main():
-    from dotenv import load_dotenv
+
     import wandb
-    from time import sleep
+    from dotenv import load_dotenv
 
     print("Starting main...")
     wandb.init(mode="online", project="torchcell_embeddings")

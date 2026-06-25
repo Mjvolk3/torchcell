@@ -3,12 +3,14 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/sgd_gene_graph
 # Test file: tests/torchcell/datasets/test_sgd_gene_graph.py
 
+import os.path as osp
+from collections.abc import Callable
+
+import networkx as nx
 import torch
 from torch_geometric.data import Data
+
 from torchcell.data.embedding import BaseEmbeddingDataset
-from typing import Callable
-import networkx as nx
-import os.path as osp
 
 
 class GraphEmbeddingDataset(BaseEmbeddingDataset):
@@ -160,10 +162,11 @@ class GraphEmbeddingDataset(BaseEmbeddingDataset):
 
 
 def main():
+    import os
+    import os.path as osp
+
     from torchcell.graph import SCerevisiaeGraph
     from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    import os.path as osp
-    import os
 
     DATA_ROOT = os.getenv("DATA_ROOT")
 

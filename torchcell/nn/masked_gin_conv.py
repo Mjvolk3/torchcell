@@ -132,4 +132,4 @@ class MaskedGINConv(GINConv):
         return msg  # PyG aggregates these masked messages
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(nn={self.nn})'
+        return f"{self.__class__.__name__}(nn={self.nn})"

@@ -5,12 +5,13 @@
 
 import math
 import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import torch
 import torch.nn as nn
+import wandb
 from torch_geometric.data import Batch, Data
 from torchmetrics import (
     MeanAbsoluteError,
@@ -21,13 +22,13 @@ from torchmetrics import (
 )
 from tqdm import tqdm
 
-import wandb
+import torchcell
 from torchcell.losses import WeightedMSELoss
 from torchcell.viz import fitness, genetic_interaction_score
 
-import torchcell
-style_file_path = osp.join(osp.dirname(torchcell.__file__), 'torchcell.mplstyle')
+style_file_path = osp.join(osp.dirname(torchcell.__file__), "torchcell.mplstyle")
 plt.style.use(style_file_path)
+
 
 class RegressionTask(L.LightningModule):
     """LightningModule for training models on graph-based regression datasets."""

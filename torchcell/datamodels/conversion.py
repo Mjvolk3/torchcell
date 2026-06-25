@@ -2,23 +2,26 @@
 # [[torchcell.datamodels.conversion]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datamodels/conversion
 # Test file: tests/torchcell/datamodels/test_conversion.py
+import hashlib
 import json
 import os
-import hashlib
 import os.path as osp
+from abc import ABC, abstractmethod
+from collections.abc import Callable
+from typing import TYPE_CHECKING
+
 import lmdb
 from tqdm import tqdm
-from abc import ABC, abstractmethod
-from typing import Callable, Type, TYPE_CHECKING, Union
+
 # Import from sibling submodules directly, not the package __init__, so this
 # module does not depend on __init__ import order (avoids a circular import that
 # surfaces once imports are alphabetically sorted).
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
-    ExperimentType,
-    ExperimentReferenceType,
-    EXPERIMENT_TYPE_MAP,
     EXPERIMENT_REFERENCE_TYPE_MAP,
+    EXPERIMENT_TYPE_MAP,
+    ExperimentReferenceType,
+    ExperimentType,
 )
 
 if TYPE_CHECKING:
@@ -29,12 +32,12 @@ log = logging.getLogger(__name__)
 
 
 class ConversionEntry(ModelStrict):
-    experiment_input_type: Type[ExperimentType]
+    experiment_input_type: type[ExperimentType]
     experiment_conversion_function: Callable
-    experiment_output_type: Type[ExperimentType]
-    experiment_reference_input_type: Type[ExperimentReferenceType]
+    experiment_output_type: type[ExperimentType]
+    experiment_reference_input_type: type[ExperimentReferenceType]
     experiment_reference_conversion_function: Callable
-    experiment_reference_output_type: Type[ExperimentReferenceType]
+    experiment_reference_output_type: type[ExperimentReferenceType]
 
 
 class ConversionMap(ModelStrict):
@@ -77,7 +80,7 @@ class Converter(ABC):
             self.env = None
 
     def convert(
-        self, data: dict[str, Union[ExperimentType, ExperimentReferenceType]]
+        self, data: dict[str, ExperimentType | ExperimentReferenceType]
     ) -> dict:
         if "experiment" not in data or "experiment_reference" not in data:
             raise ValueError(
@@ -202,7 +205,7 @@ class Converter(ABC):
         log.info(f"Number of instances converted: {converted_count}")
         log.info(f"Total number of instances processed: {total_count}")
 
-    def __getitem__(self, index: Union[int, slice, list]):
+    def __getitem__(self, index: int | slice | list):
         self._init_lmdb(readonly=True)  # Initialize LMDB for reading
         if isinstance(index, int):
             return self._get_record_by_index(index)

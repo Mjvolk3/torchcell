@@ -1,9 +1,8 @@
-from torch_geometric.data.datapipes import functional_transform
-from torch_geometric.transforms import BaseTransform
-from torch_geometric.data import HeteroData, Data
-from typing import Dict, Optional
 import torch
 from torch import Tensor
+from torch_geometric.data import HeteroData
+from torch_geometric.data.datapipes import functional_transform
+from torch_geometric.transforms import BaseTransform
 
 
 @functional_transform("hetero_to_dense")
@@ -17,7 +16,7 @@ class HeteroToDense(BaseTransform):
             use the maximum number of nodes found for that type. (default: None)
     """
 
-    def __init__(self, num_nodes_dict: Optional[Dict[str, int]] = None) -> None:
+    def __init__(self, num_nodes_dict: dict[str, int] | None = None) -> None:
         self.num_nodes_dict = num_nodes_dict or {}
 
     def forward(self, data: HeteroData) -> HeteroData:

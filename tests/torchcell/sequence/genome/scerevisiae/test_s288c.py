@@ -1,12 +1,9 @@
 import os
 import os.path as osp
-import random
 
-import gffutils
 import pytest
 from dotenv import load_dotenv
 
-from torchcell.sequence import DnaSelectionResult
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 load_dotenv()

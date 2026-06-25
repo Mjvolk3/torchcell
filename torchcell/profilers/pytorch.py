@@ -16,32 +16,21 @@
 import inspect
 import logging
 import os
+from collections.abc import Callable
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    ContextManager,
-    Dict,
-    List,
-    Optional,
-    Type,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, ContextManager, Union, override
 
 import torch
-from torch import Tensor, nn
-from torch.autograd.profiler import EventList, record_function
-from torch.profiler import ProfilerAction, ProfilerActivity, tensorboard_trace_handler
-from torch.utils.hooks import RemovableHandle
-from typing_extensions import override
-
 from lightning.fabric.accelerators.cuda import is_cuda_available
 from lightning.fabric.utilities.imports import _TORCH_GREATER_EQUAL_2_4
 from lightning.pytorch.profilers.profiler import Profiler
 from lightning.pytorch.utilities.exceptions import MisconfigurationException
 from lightning.pytorch.utilities.rank_zero import WarningCache, rank_zero_warn
+from torch import Tensor, nn
+from torch.autograd.profiler import EventList, record_function
+from torch.profiler import ProfilerAction, ProfilerActivity, tensorboard_trace_handler
+from torch.utils.hooks import RemovableHandle
 
 if TYPE_CHECKING:
     from lightning.pytorch.core.module import LightningModule
@@ -79,8 +68,8 @@ class RegisterRecordFunction:
 
     def __init__(self, model: nn.Module) -> None:
         self._model = model
-        self._records: Dict[str, record_function] = {}
-        self._handles: Dict[str, List[RemovableHandle]] = {}
+        self._records: dict[str, record_function] = {}
+        self._handles: dict[str, list[RemovableHandle]] = {}
 
     def _start_recording_forward(
         self, _: nn.Module, input: Tensor, record_name: str
@@ -120,7 +109,8 @@ class RegisterRecordFunction:
 
 class ScheduleWrapper:
     """This class is used to override the schedule logic from the profiler and perform recording for both
-    `training_step`, `validation_step`."""
+    `training_step`, `validation_step`.
+    """
 
     def __init__(self, schedule: Callable) -> None:
         if not _KINETO_AVAILABLE:
@@ -141,9 +131,9 @@ class ScheduleWrapper:
         self._test_step_reached_end = False
         self._predict_step_reached_end = False
         # used to stop profiler when `ProfilerAction.RECORD_AND_SAVE` is reached.
-        self._current_action: Optional[str] = None
-        self._prev_schedule_action: Optional[ProfilerAction] = None
-        self._start_action_name: Optional[str] = None
+        self._current_action: str | None = None
+        self._prev_schedule_action: ProfilerAction | None = None
+        self._start_action_name: str | None = None
 
     def setup(self, start_action_name: str) -> None:
         self._start_action_name = start_action_name
@@ -256,15 +246,15 @@ class PyTorchProfiler(Profiler):
 
     def __init__(
         self,
-        dirpath: Optional[Union[str, Path]] = None,
-        filename: Optional[str] = None,
+        dirpath: str | Path | None = None,
+        filename: str | None = None,
         group_by_input_shapes: bool = False,
         emit_nvtx: bool = False,
         export_to_chrome: bool = True,
         row_limit: int = 20,
-        sort_by_key: Optional[str] = None,
+        sort_by_key: str | None = None,
         record_module_names: bool = True,
-        table_kwargs: Optional[Dict[str, Any]] = None,
+        table_kwargs: dict[str, Any] | None = None,
         **profiler_kwargs: Any,
     ) -> None:
         r"""This profiler uses PyTorch's Autograd Profiler and lets you inspect the cost of
@@ -328,16 +318,16 @@ class PyTorchProfiler(Profiler):
         self._profiler_kwargs = profiler_kwargs
         self._table_kwargs = table_kwargs if table_kwargs is not None else {}
 
-        self.profiler: Optional[_PROFILER] = None
-        self.function_events: Optional[EventList] = None
-        self._lightning_module: Optional[LightningModule] = (
+        self.profiler: _PROFILER | None = None
+        self.function_events: EventList | None = None
+        self._lightning_module: LightningModule | None = (
             None  # set by ProfilerConnector
         )
-        self._register: Optional[RegisterRecordFunction] = None
-        self._parent_profiler: Optional[ContextManager] = None
-        self._recording_map: Dict[str, record_function] = {}
-        self._start_action_name: Optional[str] = None
-        self._schedule: Optional[ScheduleWrapper] = None
+        self._register: RegisterRecordFunction | None = None
+        self._parent_profiler: ContextManager | None = None
+        self._recording_map: dict[str, record_function] = {}
+        self._start_action_name: str | None = None
+        self._schedule: ScheduleWrapper | None = None
 
         if _KINETO_AVAILABLE:
             self._init_kineto(profiler_kwargs)
@@ -392,7 +382,7 @@ class PyTorchProfiler(Profiler):
         self._profiler_kwargs["with_stack"] = with_stack
 
     @property
-    def _total_steps(self) -> Union[int, float]:
+    def _total_steps(self) -> int | float:
         assert self._schedule is not None
         assert self._lightning_module is not None
         trainer = self._lightning_module.trainer
@@ -431,14 +421,14 @@ class PyTorchProfiler(Profiler):
 
     @staticmethod
     @lru_cache(1)
-    def _default_schedule() -> Optional[Callable]:
+    def _default_schedule() -> Callable | None:
         if _KINETO_AVAILABLE:
             # Those schedule defaults allow the profiling overhead to be negligible over training time.
             return torch.profiler.schedule(wait=1, warmup=1, active=3)
         return None
 
-    def _default_activities(self) -> List["ProfilerActivity"]:
-        activities: List[ProfilerActivity] = []
+    def _default_activities(self) -> list["ProfilerActivity"]:
+        activities: list[ProfilerActivity] = []
         if not _KINETO_AVAILABLE:
             return activities
         if _TORCH_GREATER_EQUAL_2_4:
@@ -591,7 +581,7 @@ class PyTorchProfiler(Profiler):
                 else torch.autograd.profiler.profile
             )
 
-    def _create_profiler(self, profiler: Type[_PROFILER]) -> _PROFILER:
+    def _create_profiler(self, profiler: type[_PROFILER]) -> _PROFILER:
         init_parameters = inspect.signature(profiler.__init__).parameters
         kwargs = {
             k: v for k, v in self._profiler_kwargs.items() if k in init_parameters
@@ -627,7 +617,7 @@ class PyTorchProfiler(Profiler):
             self._register = None
 
     @override
-    def teardown(self, stage: Optional[str]) -> None:
+    def teardown(self, stage: str | None) -> None:
         self._delete_profilers()
 
         for k in list(self._recording_map):

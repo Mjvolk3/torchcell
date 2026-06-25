@@ -1,14 +1,14 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection
-import logging
-from typing import Optional
-from torchmetrics import MeanSquaredError, R2Score, PearsonCorrCoef, SpearmanCorrCoef
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
 from torchcell.viz import fitness, genetic_interaction_score
-import matplotlib.pyplot as plt
 
 log = logging.getLogger(__name__)
 
@@ -24,10 +24,10 @@ class RegressionTask(L.LightningModule):
         clip_grad_norm_max_norm: float = 0.1,
         boxplot_every_n_epochs: int = 1,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model"])
@@ -160,8 +160,7 @@ class RegressionTask(L.LightningModule):
         if stage in ["val", "test"]:
             self.true_values.append(targets.detach())
             self.predictions.append(predictions.detach())
-        
-        
+
         # Handle prediction table logging
         num_batches = (
             self.trainer.num_training_batches
@@ -172,9 +171,9 @@ class RegressionTask(L.LightningModule):
                 else self.trainer.num_test_batches
             )
         )
-        
+
         num_batches = num_batches[0] if isinstance(num_batches, list) else num_batches
-        
+
         if batch_idx == num_batches - 2:
             # Log prediction table
             self._log_prediction_table(

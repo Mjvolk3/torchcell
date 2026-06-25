@@ -1,13 +1,12 @@
-from typing import Optional
 import torch
 from torch import Tensor
+from torch_geometric.experimental import disable_dynamic_shapes
 from torch_geometric.nn.aggr import Aggregation
 from torch_geometric.nn.aggr.utils import (
+    InducedSetAttentionBlock,
     PoolingByMultiheadAttention,
     SetAttentionBlock,
-    InducedSetAttentionBlock,
 )
-from torch_geometric.experimental import disable_dynamic_shapes
 
 
 class SetTransformerAggregation(Aggregation):
@@ -68,11 +67,11 @@ class SetTransformerAggregation(Aggregation):
     def forward(
         self,
         x: Tensor,
-        index: Optional[Tensor] = None,
-        ptr: Optional[Tensor] = None,
-        dim_size: Optional[int] = None,
+        index: Tensor | None = None,
+        ptr: Tensor | None = None,
+        dim_size: int | None = None,
         dim: int = -2,
-        max_num_elements: Optional[int] = None,
+        max_num_elements: int | None = None,
     ) -> Tensor:
         x, mask = self.to_dense_batch(
             x, index, ptr, dim_size, dim, max_num_elements=max_num_elements
@@ -93,8 +92,8 @@ class SetTransformerAggregation(Aggregation):
 
 
 def main():
-    from torch.optim import Adam
     import torch
+    from torch.optim import Adam
 
     # Set random seed for reproducibility
     torch.manual_seed(42)
@@ -136,9 +135,9 @@ def main():
         # Check if output makes sense
         # Should be [batch_size, num_seed_points * channels]
         expected_shape = (batch_size, 2 * channels)
-        assert (
-            out.shape == expected_shape
-        ), f"Expected shape {expected_shape}, got {out.shape}"
+        assert out.shape == expected_shape, (
+            f"Expected shape {expected_shape}, got {out.shape}"
+        )
 
         # Test backprop
         loss = out.sum()

@@ -3,9 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/graph/validation/locus_related/locus.py
 # Test file: torchcell/graph/validation/locus_related/test_locus.py
 
-from typing import Dict, List, Optional, Union
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from torchcell.datamodels import ModelStrict
 

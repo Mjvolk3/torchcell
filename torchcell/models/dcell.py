@@ -4,22 +4,23 @@
 # Test file: tests/torchcell/models/test_dcell.py
 
 
+import math
+import os
+import os.path as osp
+import time
+from typing import Any
+
+import hydra
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, List, Tuple, Union, Optional, Any
-from torch_geometric.data import HeteroData, Batch
-import networkx as nx
-import hydra
-import os
-import os.path as osp
-import numpy as np
-import time
-import matplotlib.pyplot as plt
-from omegaconf import DictConfig
 from dotenv import load_dotenv
+from omegaconf import DictConfig
+from torch_geometric.data import HeteroData
+
 from torchcell.timestamp import timestamp
-import math
 
 
 class DCell(nn.Module):
@@ -68,19 +69,19 @@ class DCell(nn.Module):
         # Pre-compute gene state extraction indices
         self._precompute_gene_indices(hetero_data)
 
-        print(f"DCell model initialized:")
+        print("DCell model initialized:")
         print(f"  GO terms: {self.num_go_terms}")
         print(f"  Genes: {self.num_genes}")
         print(f"  Strata: {len(self.strata_order)} (max: {self.max_stratum})")
         print(f"  Total subsystems: {len(self.subsystems)}")
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in different parts of the model."""
         subsystem_params = sum(p.numel() for p in self.subsystems.parameters())
         linear_head_params = sum(p.numel() for p in self.linear_heads.parameters())
         total_params = sum(p.numel() for p in self.parameters())
-        
+
         return {
             "subsystems": subsystem_params,
             "dcell_linear": linear_head_params,
@@ -90,7 +91,7 @@ class DCell(nn.Module):
             "num_subsystems": len(self.subsystems),
         }
 
-    def _build_hierarchy(self, hetero_data: HeteroData) -> Dict[int, List[int]]:
+    def _build_hierarchy(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build child -> parents mapping from edge_index."""
         child_to_parents = {}
 
@@ -109,7 +110,7 @@ class DCell(nn.Module):
 
         return child_to_parents
 
-    def _build_parent_to_children(self) -> Dict[int, List[int]]:
+    def _build_parent_to_children(self) -> dict[int, list[int]]:
         """Build parent -> children mapping from child_to_parents."""
         parent_to_children = {}
 
@@ -121,7 +122,7 @@ class DCell(nn.Module):
 
         return parent_to_children
 
-    def _build_term_gene_mapping(self, hetero_data: HeteroData) -> Dict[int, List[int]]:
+    def _build_term_gene_mapping(self, hetero_data: HeteroData) -> dict[int, list[int]]:
         """Build term -> genes mapping from go_gene_strata_state."""
         term_to_genes = {}
 
@@ -183,90 +184,98 @@ class DCell(nn.Module):
 
     def _precompute_gene_indices(self, hetero_data: HeteroData):
         """Pre-compute indices for efficient gene state extraction.
-        
+
         This runs once at model initialization and stores indices in RAM.
         When GO versions change, a new model instance will recompute these.
         """
         go_gene_state = hetero_data["gene_ontology"].go_gene_strata_state
-        
+
         # Store the template structure info
         self.rows_per_sample = len(go_gene_state)
-        
+
         # Create a mapping from GO term to row indices in go_gene_strata_state
         # This avoids the expensive linear search through 59986 rows for each term
         self.term_row_indices = {}
         self.term_num_genes = {}
-        
+
         print(f"Pre-computing gene indices for {self.num_go_terms} GO terms...")
         start_time = time.time()
-        
+
         for term_idx in range(self.num_go_terms):
             # Find all rows for this GO term (column 0 contains term indices)
             mask = go_gene_state[:, 0] == term_idx
             row_indices = torch.where(mask)[0]
-            
+
             # Store the indices for fast lookup during forward pass
-            self.term_row_indices[term_idx] = row_indices.cpu()  # Store on CPU to save GPU memory
+            self.term_row_indices[term_idx] = (
+                row_indices.cpu()
+            )  # Store on CPU to save GPU memory
             self.term_num_genes[term_idx] = len(row_indices)
-        
+
         elapsed = time.time() - start_time
         print(f"Pre-computed indices in {elapsed:.2f} seconds")
         print(f"  Total rows per sample: {self.rows_per_sample}")
-        print(f"  Average genes per GO term: {np.mean(list(self.term_num_genes.values())):.1f}")
+        print(
+            f"  Average genes per GO term: {np.mean(list(self.term_num_genes.values())):.1f}"
+        )
 
     def _extract_gene_states_for_term(
         self, term_idx: int, batch: HeteroData
     ) -> torch.Tensor:
         """Extract gene states for a specific GO term using pre-computed indices.
-        
+
         This optimized version uses pre-computed row indices to avoid expensive
         linear searches through the entire go_gene_strata_state tensor.
         """
         batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
-        
+
         # Early exit for terms with no genes
         if self.term_num_genes[term_idx] == 0:
             return torch.zeros(batch_size, 1, device=device)
-        
+
         # Get pre-computed indices for this term (move to device if needed)
         row_indices = self.term_row_indices[term_idx].to(device)
         num_genes = self.term_num_genes[term_idx]
-        
+
         go_gene_state = batch["gene_ontology"].go_gene_strata_state
         ptr = batch["gene_ontology"].go_gene_strata_state_ptr
-        
+
         # Use ptr to determine rows per sample (should match self.rows_per_sample)
         rows_per_sample = int(ptr[1] - ptr[0])
-        
+
         # Reshape: [total_rows, 4] -> [batch_size, rows_per_sample, 4]
         go_gene_state_batched = go_gene_state.view(batch_size, rows_per_sample, 4)
-        
+
         # Use pre-computed indices to extract gene states directly
         # Since the structure is the same for each batch sample, we can use the same indices
         gene_states_batch = []
-        
+
         for i in range(batch_size):
             # Use pre-computed indices to extract rows for this term directly
             # No need for mask comparison - just index directly!
             sample_data = go_gene_state_batched[i]  # [rows_per_sample, 4]
             term_rows = sample_data[row_indices]  # [num_genes_for_term, 4]
-            gene_states = term_rows[:, 3].float()  # Extract states (column 3) and convert to float
+            gene_states = term_rows[
+                :, 3
+            ].float()  # Extract states (column 3) and convert to float
             gene_states_batch.append(gene_states)
-        
+
         # Stack into batch tensor - no need for padding since all have same number of genes
         return torch.stack(gene_states_batch)  # [batch_size, num_genes_for_term]
 
-    def forward(self, cell_graph: HeteroData, batch: HeteroData) -> Tuple[torch.Tensor, Dict[str, Any]]:
+    def forward(
+        self, cell_graph: HeteroData, batch: HeteroData
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Forward pass through DCell hierarchy.
-        
+
         Args:
             cell_graph: Cell graph (not used by DCell, included for compatibility with trainer)
             batch: The batch data containing gene states and GO information
         """
         # DCell doesn't use cell_graph in forward pass, it was used during initialization
         # The trainer expects this signature for consistency across models
-        
+
         batch_size = batch["gene"].batch.max() + 1
         device = batch["gene"].x.device
 
@@ -347,7 +356,7 @@ class DCell(nn.Module):
         self,
         term_idx: int,
         batch: HeteroData,
-        term_activations: Dict[int, torch.Tensor],
+        term_activations: dict[int, torch.Tensor],
     ) -> torch.Tensor:
         """Prepare input for a specific GO term."""
         batch_size = batch["gene"].batch.max() + 1
@@ -404,10 +413,10 @@ def main(cfg: DictConfig):
     """
     Main function to test the DCell model with overfitting on a batch
     """
-    from torchcell.scratch.load_batch_005 import load_sample_data_batch
-    from torchcell.losses.dcell import DCellLoss
     import torch.optim as optim
-    from datetime import datetime
+
+    from torchcell.losses.dcell import DCellLoss
+    from torchcell.scratch.load_batch_005 import load_sample_data_batch
 
     load_dotenv()
 
@@ -426,11 +435,20 @@ def main(cfg: DictConfig):
 
     plot_dir = osp.join(ASSET_IMAGES_DIR, f"dcell_training_{timestamp()}")
     os.makedirs(plot_dir, exist_ok=True)
-    
-    def save_intermediate_plot(epoch, all_losses, primary_losses, auxiliary_losses, weighted_auxiliary_losses, learning_rates, model, batch):
+
+    def save_intermediate_plot(
+        epoch,
+        all_losses,
+        primary_losses,
+        auxiliary_losses,
+        weighted_auxiliary_losses,
+        learning_rates,
+        model,
+        batch,
+    ):
         """Save intermediate training plot every print interval."""
         plt.figure(figsize=(12, 8))
-        
+
         # Loss curves
         plt.subplot(2, 3, 1)
         plt.plot(range(1, epoch + 2), all_losses, "b-", label="Total Loss")
@@ -440,34 +458,41 @@ def main(cfg: DictConfig):
         plt.grid(True)
         plt.legend()
         plt.yscale("log")
-        
+
         # Loss components
         plt.subplot(2, 3, 2)
         plt.plot(range(1, epoch + 2), primary_losses, "r-", label="Primary Loss")
         plt.plot(range(1, epoch + 2), auxiliary_losses, "g-", label="Auxiliary Loss")
-        plt.plot(range(1, epoch + 2), weighted_auxiliary_losses, "orange", label="Weighted Auxiliary Loss")
+        plt.plot(
+            range(1, epoch + 2),
+            weighted_auxiliary_losses,
+            "orange",
+            label="Weighted Auxiliary Loss",
+        )
         plt.xlabel("Epoch")
         plt.ylabel("Loss Value")
         plt.title("Loss Components")
         plt.grid(True)
         plt.legend()
         plt.yscale("log")
-        
+
         # Get current model predictions for correlation plot
         model.eval()
         with torch.no_grad():
             current_predictions, current_outputs = model(batch)
             true_scores = batch["gene"].phenotype_values
-            
+
             # Convert to numpy for plotting
             true_np = true_scores.cpu().numpy()
             pred_np = current_predictions.cpu().numpy()
-            
+
             # Calculate correlation
-            correlation = np.corrcoef(true_np, pred_np)[0, 1] if len(true_np) > 1 else 0.0
+            correlation = (
+                np.corrcoef(true_np, pred_np)[0, 1] if len(true_np) > 1 else 0.0
+            )
             mse = np.mean((pred_np - true_np) ** 2)
         model.train()  # Back to training mode
-        
+
         # Correlation
         plt.subplot(2, 3, 3)
         plt.scatter(true_np, pred_np, alpha=0.7)
@@ -478,7 +503,7 @@ def main(cfg: DictConfig):
         plt.ylabel("Predicted Values")
         plt.title(f"Correlation (r={correlation:.4f})")
         plt.grid(True)
-        
+
         # Error distribution
         plt.subplot(2, 3, 4)
         errors = pred_np - true_np
@@ -487,7 +512,7 @@ def main(cfg: DictConfig):
         plt.ylabel("Frequency")
         plt.title(f"Error Distribution (MSE={mse:.6f})")
         plt.grid(True)
-        
+
         # Learning rate evolution
         plt.subplot(2, 3, 5)
         plt.plot(range(1, epoch + 2), learning_rates, "purple")
@@ -496,7 +521,7 @@ def main(cfg: DictConfig):
         plt.title("Learning Rate Schedule")
         plt.grid(True)
         plt.yscale("log")
-        
+
         # Subsystem analysis
         plt.subplot(2, 3, 6)
         linear_outputs = current_outputs.get("linear_outputs", {})
@@ -504,7 +529,7 @@ def main(cfg: DictConfig):
         for k, v in linear_outputs.items():
             if k != "GO:ROOT":
                 subsystem_activities[k] = v.abs().mean().item()
-        
+
         if subsystem_activities:
             subsystem_activations = list(subsystem_activities.values())
             plt.hist(
@@ -516,19 +541,23 @@ def main(cfg: DictConfig):
             plt.ylabel("Number of Subsystems")
             plt.title("Subsystem Activation Distribution")
             plt.grid(True)
-        
+
         plt.tight_layout()
-        plt.savefig(osp.join(plot_dir, f"dcell_epoch_{epoch+1:04d}_{timestamp()}.png"), dpi=150, bbox_inches='tight')
+        plt.savefig(
+            osp.join(plot_dir, f"dcell_epoch_{epoch + 1:04d}_{timestamp()}.png"),
+            dpi=150,
+            bbox_inches="tight",
+        )
         plt.close()  # Close to free memory
 
     # Load sample data - modified for DCell with GO ontology
     print("Loading sample data with GO ontology...")
 
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch(
-        batch_size=cfg.data_module.batch_size, 
-        num_workers=cfg.data_module.num_workers, 
-        config="dcell", 
-        is_dense=False
+        batch_size=cfg.data_module.batch_size,
+        num_workers=cfg.data_module.num_workers,
+        config="dcell",
+        is_dense=False,
     )
 
     # Move data to device
@@ -604,7 +633,7 @@ def main(cfg: DictConfig):
     print("Training DCell to overfit on batch...")
     for epoch in range(epochs):
         epoch_start_time = time.time()
-        
+
         model.train()
         optimizer.zero_grad()
 
@@ -657,20 +686,29 @@ def main(cfg: DictConfig):
         # Print stats every epoch
         current_batch_size = batch["gene"].batch.max().item() + 1
         print(
-            f"Epoch {epoch+1}/{epochs}, "
+            f"Epoch {epoch + 1}/{epochs}, "
             f"Total Loss: {total_loss.item():.6f}, "
             f"Primary Loss: {primary_loss.item():.6f}, "
             f"Aux Loss: {auxiliary_loss.item():.6f}, "
             f"Weighted Aux Loss: {weighted_auxiliary_loss.item():.6f}, "
             f"LR: {optimizer.param_groups[0]['lr']:.2e}, "
             f"Time: {epoch_time:.2f}s, "
-            f"Time/instance: {epoch_time/current_batch_size:.4f}s"
+            f"Time/instance: {epoch_time / current_batch_size:.4f}s"
             f"{gpu_memory_str}"
         )
-        
+
         # Save intermediate plot at intervals
         if (epoch + 1) % plot_interval == 0 or epoch == epochs - 1:
-            save_intermediate_plot(epoch, all_losses, primary_losses, auxiliary_losses, weighted_auxiliary_losses, learning_rates, model, batch)
+            save_intermediate_plot(
+                epoch,
+                all_losses,
+                primary_losses,
+                auxiliary_losses,
+                weighted_auxiliary_losses,
+                learning_rates,
+                model,
+                batch,
+            )
 
     # Final evaluation
     model.eval()
@@ -793,5 +831,6 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
     import multiprocessing as mp
+
     mp.set_start_method("spawn", force=True)
     main()

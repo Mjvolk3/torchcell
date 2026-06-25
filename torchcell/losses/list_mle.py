@@ -9,7 +9,7 @@ import torch.nn as nn
 
 class ListMLELoss(nn.Module):
     def __init__(self):
-        super(ListMLELoss, self).__init__()
+        super().__init__()
 
     def forward(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
         """

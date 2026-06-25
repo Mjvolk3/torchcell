@@ -15,6 +15,7 @@ Implements the generalized virtual cell architecture:
 
 import os
 import os.path as osp
+
 import hydra
 import numpy as np
 import torch
@@ -22,7 +23,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
 from torch_geometric.data import HeteroData
-from typing import Dict, Optional, Tuple
 
 
 class GraphRegularizedTransformerLayer(nn.Module):
@@ -33,20 +33,15 @@ class GraphRegularizedTransformerLayer(nn.Module):
     for graph regularization loss.
     """
 
-    def __init__(
-        self,
-        hidden_dim: int,
-        num_heads: int,
-        dropout: float = 0.1,
-    ):
+    def __init__(self, hidden_dim: int, num_heads: int, dropout: float = 0.1):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_heads = num_heads
         self.head_dim = hidden_dim // num_heads
 
-        assert (
-            hidden_dim % num_heads == 0
-        ), f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        assert hidden_dim % num_heads == 0, (
+            f"hidden_dim {hidden_dim} must be divisible by num_heads {num_heads}"
+        )
 
         # Projections for Q, K, V
         self.q_proj = nn.Linear(hidden_dim, hidden_dim)
@@ -69,7 +64,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
     def forward(
         self, x: torch.Tensor, return_attention: bool = False
-    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
         Forward pass with manual attention computation.
 
@@ -116,7 +111,7 @@ class GraphRegularizedTransformerLayer(nn.Module):
 
         # Reshape back: [batch, seq_len, hidden_dim]
         attn_output = (
-            attn_output.transpose(1, 2)  
+            attn_output.transpose(1, 2)
             .contiguous()
             .view(batch_size, seq_len, hidden_dim)
         )
@@ -146,9 +141,9 @@ class HyperSAGNN(nn.Module):
         self.num_heads = num_heads
         self.head_dim = hidden_channels // num_heads
 
-        assert (
-            hidden_channels % num_heads == 0
-        ), f"hidden_channels {hidden_channels} must be divisible by num_heads {num_heads}"
+        assert hidden_channels % num_heads == 0, (
+            f"hidden_channels {hidden_channels} must be divisible by num_heads {num_heads}"
+        )
 
         # Static embedding layer
         self.static_embedding = nn.Sequential(
@@ -400,11 +395,7 @@ class PerturbationHead(nn.Module):
     Implements Type II Virtual Instrument: H_genes_pert → y_GI
     """
 
-    def __init__(
-        self,
-        hidden_dim: int,
-        dropout: float = 0.1,
-    ):
+    def __init__(self, hidden_dim: int, dropout: float = 0.1):
         super().__init__()
         self.hidden_dim = hidden_dim
 
@@ -449,7 +440,9 @@ class PerturbationHead(nn.Module):
                 z_S_list.append(h_pert_b.mean(dim=0))  # [d]
             else:
                 # No perturbation
-                z_S_list.append(torch.zeros(self.hidden_dim, device=H_genes_pert.device))
+                z_S_list.append(
+                    torch.zeros(self.hidden_dim, device=H_genes_pert.device)
+                )
 
         z_S = torch.stack(z_S_list, dim=0)  # [batch_size, d]
 
@@ -481,12 +474,12 @@ class CellGraphTransformer(nn.Module):
         num_transformer_layers: int,
         num_attention_heads: int,
         cell_graph: HeteroData,
-        graph_regularization_config: Optional[Dict] = None,
-        perturbation_head_config: Optional[Dict] = None,
+        graph_regularization_config: dict | None = None,
+        perturbation_head_config: dict | None = None,
         dropout: float = 0.1,
         graph_reg_lambda: float = 0.0,  # Loss lambda for graph regularization
-        node_embeddings: Optional[Dict] = None,  # Pre-computed embeddings
-        learnable_embedding_config: Optional[Dict] = None,  # Learnable config
+        node_embeddings: dict | None = None,  # Pre-computed embeddings
+        learnable_embedding_config: dict | None = None,  # Learnable config
     ):
         super().__init__()
         self.gene_num = gene_num
@@ -532,7 +525,11 @@ class CellGraphTransformer(nn.Module):
 
         # Create preprocessor if input_dim != hidden_channels
         if total_input_dim > 0 and total_input_dim != hidden_channels:
-            preprocessor_config = learnable_embedding_config.get("preprocessor", {}) if learnable_embedding_config else {}
+            preprocessor_config = (
+                learnable_embedding_config.get("preprocessor", {})
+                if learnable_embedding_config
+                else {}
+            )
             num_layers = preprocessor_config.get("num_layers", 2)
             dropout_rate = preprocessor_config.get("dropout", dropout)
 
@@ -542,7 +539,11 @@ class CellGraphTransformer(nn.Module):
 
             for i in range(num_layers):
                 # Linear layer
-                next_dim = hidden_channels if i == num_layers - 1 else (total_input_dim + hidden_channels) // 2
+                next_dim = (
+                    hidden_channels
+                    if i == num_layers - 1
+                    else (total_input_dim + hidden_channels) // 2
+                )
                 layers.append(nn.Linear(current_dim, next_dim))
 
                 # LayerNorm
@@ -603,13 +604,12 @@ class CellGraphTransformer(nn.Module):
 
         # Perturbation readout head (Type II Virtual Instrument)
         self.perturbation_head = PerturbationHead(
-            hidden_dim=hidden_channels,
-            dropout=pert_head_config.get("dropout", dropout),
+            hidden_dim=hidden_channels, dropout=pert_head_config.get("dropout", dropout)
         )
 
     def _normalize_adjacency_matrices(
         self, cell_graph: HeteroData
-    ) -> Dict[str, torch.Tensor]:
+    ) -> dict[str, torch.Tensor]:
         """
         Normalize adjacency matrices row-wise: A_tilde[i,:] = A[i,:] / (degree[i] + eps).
 
@@ -679,7 +679,9 @@ class CellGraphTransformer(nn.Module):
             # Get normalized adjacency from dict
             if graph_name not in self.adjacency_matrices:
                 continue
-            A_tilde = self.adjacency_matrices[graph_name].to(attention_weights.device)  # [N, N]
+            A_tilde = self.adjacency_matrices[graph_name].to(
+                attention_weights.device
+            )  # [N, N]
 
             # Sample rows (for efficiency)
             if self.row_sampling_rate < 1.0:
@@ -706,7 +708,9 @@ class CellGraphTransformer(nn.Module):
             # Compute KL divergence row-wise: KL(A_tilde[i,:] || alpha[i,:])
             # KL = Σ A_tilde[i,j] * log(A_tilde[i,j] / alpha[i,j])
             kl_loss = F.kl_div(
-                (alpha[:, sample_idx, :] + 1e-8).log(),  # log predictions with epsilon for numerical stability
+                (
+                    alpha[:, sample_idx, :] + 1e-8
+                ).log(),  # log predictions with epsilon for numerical stability
                 A_tilde[sample_idx, :]
                 .unsqueeze(0)
                 .expand(batch_size, -1, -1),  # targets
@@ -722,13 +726,15 @@ class CellGraphTransformer(nn.Module):
             for g in self.adjacency_matrices.keys()
         )
         if total_edges > 0:
-            total_loss = total_loss * self.graph_reg_lambda / (total_edges / self.gene_num)
+            total_loss = (
+                total_loss * self.graph_reg_lambda / (total_edges / self.gene_num)
+            )
 
         return total_loss
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData, return_attention: bool = False
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """
         Forward pass of Equivariant Cell Graph Transformer.
 
@@ -742,7 +748,11 @@ class CellGraphTransformer(nn.Module):
             representations: Dict with embeddings, attention weights (if requested), losses, and H_genes_pert
         """
         # Get device from learnable embedding or CLS token
-        device = self.gene_embedding.weight.device if self.gene_embedding is not None else self.cls_token.device
+        device = (
+            self.gene_embedding.weight.device
+            if self.gene_embedding is not None
+            else self.cls_token.device
+        )
         N = self.gene_num
 
         # 1. Create gene embeddings for all genes
@@ -758,23 +768,31 @@ class CellGraphTransformer(nn.Module):
         if self.node_embeddings is not None and len(self.node_embeddings) > 0:
             # Extract pre-computed embeddings from cell_graph node attributes
             # They should be concatenated in cell_graph["gene"].x
-            H_genes_precomputed = cell_graph["gene"].x.to(device)  # [N, precomputed_dim]
+            H_genes_precomputed = cell_graph["gene"].x.to(
+                device
+            )  # [N, precomputed_dim]
         else:
             H_genes_precomputed = None
 
         # Combine embeddings
         if H_genes_learnable is not None and H_genes_precomputed is not None:
-            H_genes_combined = torch.cat([H_genes_learnable, H_genes_precomputed], dim=-1)
+            H_genes_combined = torch.cat(
+                [H_genes_learnable, H_genes_precomputed], dim=-1
+            )
         elif H_genes_learnable is not None:
             H_genes_combined = H_genes_learnable
         elif H_genes_precomputed is not None:
             H_genes_combined = H_genes_precomputed
         else:
-            raise ValueError("No gene embeddings available (neither learnable nor pre-computed)")
+            raise ValueError(
+                "No gene embeddings available (neither learnable nor pre-computed)"
+            )
 
         # Apply preprocessor if needed
         if self.embedding_preprocessor is not None:
-            gene_embs = self.embedding_preprocessor(H_genes_combined)  # [N, hidden_channels]
+            gene_embs = self.embedding_preprocessor(
+                H_genes_combined
+            )  # [N, hidden_channels]
         else:
             gene_embs = H_genes_combined  # [N, hidden_channels]
 
@@ -795,7 +813,7 @@ class CellGraphTransformer(nn.Module):
             # CRITICAL FIX: Only compute attention when actually needed
             # - During training: need for graph_reg_loss (if graph_reg_lambda > 0)
             # - During validation with return_attention=True: need for diagnostics
-            need_attention_for_graph_reg = (self.graph_reg_lambda > 0.0)
+            need_attention_for_graph_reg = self.graph_reg_lambda > 0.0
             should_return_attention = need_attention_for_graph_reg or return_attention
 
             H, attention_weights = layer(H, return_attention=should_return_attention)
@@ -853,7 +871,7 @@ class CellGraphTransformer(nn.Module):
         }
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Count parameters in each component."""
 
         def count_params(module: nn.Module) -> int:
@@ -907,13 +925,12 @@ def main(cfg: DictConfig) -> None:
     """Main training function for Equivariant Cell Graph Transformer."""
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
-    from torchcell.timestamp import timestamp
-    from torchcell.scratch.load_batch_006_perturbation import (
-        load_perturbation_batch,
-    )
-    from torchcell.losses.logcosh import LogCoshLoss
-    from scipy.stats import gaussian_kde
     from scipy import stats
+    from scipy.stats import gaussian_kde
+
+    from torchcell.losses.logcosh import LogCoshLoss
+    from torchcell.scratch.load_batch_006_perturbation import load_perturbation_batch
+    from torchcell.timestamp import timestamp
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
@@ -947,7 +964,7 @@ def main(cfg: DictConfig) -> None:
     print("=" * 80)
 
     # Extract gene-gene edge types from cell_graph
-    print(f"\nCell graph edge types:")
+    print("\nCell graph edge types:")
     for edge_type in cell_graph.edge_types:
         src, rel, dst = edge_type
         if src == "gene" and dst == "gene":
@@ -984,27 +1001,37 @@ def main(cfg: DictConfig) -> None:
 
         print(f"\nWildtype gene embeddings: {H_genes.shape}")
         print(f"Perturbed gene embeddings: {H_genes_pert.shape}")
-        print(f"Equivariance preserved: per-gene structure maintained")
+        print("Equivariance preserved: per-gene structure maintained")
 
         # Check that perturbations actually change the embeddings
         batch_size = H_genes_pert.shape[0]
-        print(f"\nPerturbation Effects (first 3 samples):")
+        print("\nPerturbation Effects (first 3 samples):")
         for b in range(min(3, batch_size)):
             mask = batch["gene"].perturbation_indices_batch == b
             pert_idx = batch["gene"].perturbation_indices[mask]
 
             if len(pert_idx) > 0:
                 # Change in perturbed genes
-                pert_change = (H_genes_pert[b, pert_idx] - H_genes[pert_idx]).norm(dim=-1).mean()
+                pert_change = (
+                    (H_genes_pert[b, pert_idx] - H_genes[pert_idx]).norm(dim=-1).mean()
+                )
 
                 # Change in non-perturbed genes (from cross-attention context)
                 all_idx = torch.arange(H_genes.shape[0], device=H_genes.device)
                 non_pert_mask = ~torch.isin(all_idx, pert_idx)
-                non_pert_change = (H_genes_pert[b, non_pert_mask] - H_genes[non_pert_mask]).norm(dim=-1).mean()
+                non_pert_change = (
+                    (H_genes_pert[b, non_pert_mask] - H_genes[non_pert_mask])
+                    .norm(dim=-1)
+                    .mean()
+                )
 
                 print(f"  Sample {b}:")
-                print(f"    Perturbed genes ({len(pert_idx)}): Δ = {pert_change.item():.4f}")
-                print(f"    Non-perturbed genes: Δ = {non_pert_change.item():.4f} (context effect)")
+                print(
+                    f"    Perturbed genes ({len(pert_idx)}): Δ = {pert_change.item():.4f}"
+                )
+                print(
+                    f"    Non-perturbed genes: Δ = {non_pert_change.item():.4f} (context effect)"
+                )
     model.train()
 
     # Setup loss and optimizer
@@ -1046,7 +1073,9 @@ def main(cfg: DictConfig) -> None:
     y = batch["gene"].phenotype_values.to(device)
 
     # Setup directory for plots
-    plot_dir = osp.join(ASSET_IMAGES_DIR, f"equivariant_cell_graph_transformer_{timestamp()}")
+    plot_dir = osp.join(
+        ASSET_IMAGES_DIR, f"equivariant_cell_graph_transformer_{timestamp()}"
+    )
     os.makedirs(plot_dir, exist_ok=True)
 
     def save_intermediate_plot(
@@ -1113,13 +1142,7 @@ def main(cfg: DictConfig) -> None:
 
         # ROW 1 cont: Correlations
         plt.subplot(3, 4, 4)
-        plt.plot(
-            range(1, epoch + 2),
-            correlations,
-            "g-",
-            label="Pearson",
-            linewidth=2,
-        )
+        plt.plot(range(1, epoch + 2), correlations, "g-", label="Pearson", linewidth=2)
         if spearman_correlations:
             plt.plot(
                 range(1, epoch + 2),
@@ -1230,7 +1253,9 @@ def main(cfg: DictConfig) -> None:
                 x_range = np.linspace(
                     true_np[valid_mask].min(), true_np[valid_mask].max(), 200
                 )
-                plt.plot(x_range, kde_true(x_range), "b-", linewidth=2, label="True KDE")
+                plt.plot(
+                    x_range, kde_true(x_range), "b-", linewidth=2, label="True KDE"
+                )
                 plt.plot(
                     x_range, kde_pred(x_range), "r-", linewidth=2, label="Pred KDE"
                 )
@@ -1295,9 +1320,7 @@ def main(cfg: DictConfig) -> None:
             weight_decay = cfg.regression_task.optimizer.weight_decay
             l2_penalty = [norm * weight_decay for norm in l2_norms]
 
-            plt.plot(
-                epochs_range, pred_losses, "b-", label="Pred Loss", linewidth=2
-            )
+            plt.plot(epochs_range, pred_losses, "b-", label="Pred Loss", linewidth=2)
             plt.plot(
                 epochs_range,
                 graph_reg_losses,
@@ -1328,7 +1351,9 @@ def main(cfg: DictConfig) -> None:
         plt.axvline(x=0, color="r", linestyle="--", linewidth=2)
         plt.xlabel("Prediction Error")
         plt.ylabel("Frequency")
-        plt.title(f"Error Distribution (μ={np.mean(errors):.4f}, σ={np.std(errors):.4f})")
+        plt.title(
+            f"Error Distribution (μ={np.mean(errors):.4f}, σ={np.std(errors):.4f})"
+        )
         plt.grid(True, alpha=0.3)
 
         # Smoothness evolution (oversmoothing diagnostic)
@@ -1382,7 +1407,7 @@ def main(cfg: DictConfig) -> None:
 
         plt.tight_layout()
         plt.savefig(
-            osp.join(plot_dir, f"training_epoch_{epoch+1:04d}.png"),
+            osp.join(plot_dir, f"training_epoch_{epoch + 1:04d}.png"),
             dpi=150,
             bbox_inches="tight",
         )

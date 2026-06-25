@@ -3,12 +3,11 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/models/diffusion_decoder
 # Test file: tests/torchcell/models/test_diffusion_decoder.py
 
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import numpy as np
-from typing import Optional, Tuple, Dict
-import math
 
 
 class SinusoidalTimeEmbedding(nn.Module):
@@ -199,10 +198,9 @@ class DiffusionDecoder(nn.Module):
         self.parameterization = parameterization
 
         # Validate parameterization
-        assert parameterization in [
-            "x0",
-            "eps",
-        ], f"Unknown parameterization: {parameterization}"
+        assert parameterization in ["x0", "eps"], (
+            f"Unknown parameterization: {parameterization}"
+        )
 
         # Project graph embeddings to hidden dimension
         self.context_proj = nn.Linear(input_dim, hidden_dim)
@@ -274,8 +272,8 @@ class DiffusionDecoder(nn.Module):
         return torch.clip(betas, 0.0001, 0.9999)
 
     def forward_diffusion(
-        self, x_0: torch.Tensor, t: torch.Tensor, noise: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        self, x_0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor | None = None
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """Add noise to data for training.
 
         Args:
@@ -292,8 +290,8 @@ class DiffusionDecoder(nn.Module):
 
         # Pure reconstruction mode: bypass noise when t==0
         # This allows the model to learn pure denoising/reconstruction
-        t_is_zero = (t == 0)
-        
+        t_is_zero = t == 0
+
         sqrt_alphas_cumprod_t = self.sqrt_alphas_cumprod[t]
         sqrt_one_minus_alphas_cumprod_t = self.sqrt_one_minus_alphas_cumprod[t]
 
@@ -303,7 +301,7 @@ class DiffusionDecoder(nn.Module):
 
         # Standard diffusion formula
         x_t = sqrt_alphas_cumprod_t * x_0 + sqrt_one_minus_alphas_cumprod_t * noise
-        
+
         # Override with pure x_0 when t==0 (no noise added)
         if t_is_zero.any():
             x_t = torch.where(t_is_zero.view(-1, 1), x_0, x_t)
@@ -361,9 +359,9 @@ class DiffusionDecoder(nn.Module):
     def sample(
         self,
         context: torch.Tensor,
-        num_samples: Optional[int] = None,
-        device: Optional[torch.device] = None,
-        sampling_steps: Optional[int] = None,
+        num_samples: int | None = None,
+        device: torch.device | None = None,
+        sampling_steps: int | None = None,
     ) -> torch.Tensor:
         """Sample from the diffusion model using DDIM-style sampling.
 
@@ -436,8 +434,11 @@ class DiffusionDecoder(nn.Module):
         return x
 
     def loss(
-        self, x_0: torch.Tensor, context: torch.Tensor, predict_x0: bool = True,
-        t_mode: str = "random"
+        self,
+        x_0: torch.Tensor,
+        context: torch.Tensor,
+        predict_x0: bool = True,
+        t_mode: str = "random",
     ) -> torch.Tensor:
         """Compute diffusion loss using x0-prediction or noise prediction.
 

@@ -5,15 +5,15 @@
 
 
 import math
-from typing import Dict, Optional, Tuple, Any
+from typing import Any
+
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.distributed as dist
+import torch.nn as nn
 
 from torchcell.losses.multi_dim_nan_tolerant import (
-    WeightedMSELoss,
     WeightedDistLoss,
+    WeightedMSELoss,
     WeightedSupCRCell,
 )
 
@@ -75,7 +75,7 @@ class BufferedWeightedDistLoss(nn.Module):
         self,
         buffer_size: int = 256,
         bandwidth: float = 2.0,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         min_samples: int = 64,
     ):
         super().__init__()
@@ -83,10 +83,7 @@ class BufferedWeightedDistLoss(nn.Module):
         self.min_samples = min_samples
 
         # Initialize base dist loss
-        self.base_dist_loss = WeightedDistLoss(
-            bandwidth=bandwidth,
-            weights=weights,
-        )
+        self.base_dist_loss = WeightedDistLoss(bandwidth=bandwidth, weights=weights)
 
         # Circular buffer for predictions and targets
         # For single phenotype (gene interaction), num_dims should be 1
@@ -125,7 +122,7 @@ class BufferedWeightedDistLoss(nn.Module):
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
 
-    def get_buffer_samples(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_buffer_samples(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Get all valid samples from buffer."""
         if self.buffer_full:
             return self.pred_buffer, self.target_buffer
@@ -137,10 +134,10 @@ class BufferedWeightedDistLoss(nn.Module):
         self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        all_predictions: Optional[torch.Tensor] = None,
-        all_targets: Optional[torch.Tensor] = None,
+        all_predictions: torch.Tensor | None = None,
+        all_targets: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute distribution loss with buffer support.
 
@@ -216,7 +213,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         buffer_size: int = 256,
         embedding_dim: int = 128,
         temperature: float = 0.1,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         min_samples: int = 32,
     ):
         super().__init__()
@@ -266,7 +263,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
 
-    def get_buffer_samples(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_buffer_samples(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Get all valid samples from buffer."""
         if self.buffer_full:
             return self.embedding_buffer, self.label_buffer
@@ -278,11 +275,11 @@ class BufferedWeightedSupCRCell(nn.Module):
         self,
         embeddings: torch.Tensor,
         labels: torch.Tensor,
-        all_embeddings: Optional[torch.Tensor] = None,
-        all_labels: Optional[torch.Tensor] = None,
+        all_embeddings: torch.Tensor | None = None,
+        all_labels: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
-        temperature: Optional[float] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        temperature: float | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute SupCR loss with buffer support.
 
@@ -366,15 +363,15 @@ class MleDistSupCR(nn.Module):
         gather_interval: int = 1,
         # Adaptive weighting
         use_adaptive_weighting: bool = True,
-        warmup_epochs: Optional[int] = None,  # If None, set to max_epochs * 0.1
-        stable_epoch: Optional[int] = None,  # If None, set to max_epochs * 0.5
+        warmup_epochs: int | None = None,  # If None, set to max_epochs * 0.1
+        stable_epoch: int | None = None,  # If None, set to max_epochs * 0.5
         # Temperature scheduling
         use_temp_scheduling: bool = True,
         init_temperature: float = 1.0,
         final_temperature: float = 0.1,
         temp_schedule: str = "exponential",
         # Other parameters
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         max_epochs: int = 1000,
     ):
         super().__init__()
@@ -410,10 +407,7 @@ class MleDistSupCR(nn.Module):
                 min_samples=min_samples_for_supcr,
             )
         else:
-            self.dist_loss = WeightedDistLoss(
-                bandwidth=dist_bandwidth,
-                weights=weights,
-            )
+            self.dist_loss = WeightedDistLoss(bandwidth=dist_bandwidth, weights=weights)
             self.supcr_loss = WeightedSupCRCell(
                 temperature=supcr_temperature, weights=weights
             )
@@ -455,8 +449,8 @@ class MleDistSupCR(nn.Module):
         predictions: torch.Tensor,
         targets: torch.Tensor,
         z_P: torch.Tensor,
-        epoch: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        epoch: int | None = None,
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """
         Forward pass computing composite loss.
 
@@ -523,11 +517,7 @@ class MleDistSupCR(nn.Module):
             mse_val = torch.tensor(0.0, device=device)
             mse_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
             loss_dict.update(
-                {
-                    "mse_loss": 0.0,
-                    "mse_dim_losses": mse_dims,
-                    "weighted_mse": 0.0,
-                }
+                {"mse_loss": 0.0, "mse_dim_losses": mse_dims, "weighted_mse": 0.0}
             )
 
         # Compute distribution loss if lambda > 0
@@ -553,18 +543,19 @@ class MleDistSupCR(nn.Module):
             dist_val = torch.tensor(0.0, device=device)
             dist_dims = torch.zeros(2, device=device)  # Assuming 2 dimensions
             loss_dict.update(
-                {
-                    "dist_loss": 0.0,
-                    "dist_dim_losses": dist_dims,
-                    "weighted_dist": 0.0,
-                }
+                {"dist_loss": 0.0, "dist_dim_losses": dist_dims, "weighted_dist": 0.0}
             )
 
         # Compute SupCR loss if lambda > 0
         if self.lambda_supcr > 0:
             if self.use_buffer:
                 supcr_val, supcr_dims = self.supcr_loss(
-                    z_P, targets, all_embeddings, all_targets, buffer_weight, temperature
+                    z_P,
+                    targets,
+                    all_embeddings,
+                    all_targets,
+                    buffer_weight,
+                    temperature,
                 )
             else:
                 supcr_val, supcr_dims = self.supcr_loss(z_P, targets)

@@ -1,41 +1,35 @@
 import torch
 import torch.nn as nn
-from torch.nn.attention.flex_attention import flex_attention, create_block_mask
-from torch_geometric.utils import to_dense_adj
-import matplotlib.pyplot as plt
-from torch_geometric.datasets import StochasticBlockModelDataset
-from scipy.sparse.csgraph import reverse_cuthill_mckee
-from scipy.sparse import csr_matrix
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 from torch_geometric.data import HeteroData
-from typing import Dict, List, Optional, Tuple, Union, Set
-from torch_scatter import scatter
 
 
 def load_sample_data_batch():
     import os
     import os.path as osp
+
     from dotenv import load_dotenv
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.datamodules import CellDataModule
+    from tqdm import tqdm
+
+    from torchcell.data import (
+        GenotypeAggregator,
+        MeanExperimentDeduplicator,
+        Neo4jCellDataset,
+    )
+    from torchcell.data.neo4j_cell import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
+    from torchcell.datamodules import CellDataModule
+    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
 
     # from torchcell.datasets.fungal_up_down_transformer import (
     #     FungalUpDownTransformerDataset,
     # )
     from torchcell.datasets import CodonFrequencyDataset
-    from torchcell.data import MeanExperimentDeduplicator
-    from torchcell.data import GenotypeAggregator
-    from torchcell.datamodules.perturbation_subset import PerturbationSubsetDataModule
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-    from torchcell.data import Neo4jCellDataset
-    from torchcell.data.neo4j_cell import SubgraphRepresentation
-    from tqdm import tqdm
+    from torchcell.graph import SCerevisiaeGraph
     from torchcell.metabolism.yeast_GEM import YeastGEM
+    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
@@ -73,7 +67,7 @@ def load_sample_data_batch():
             genome=genome,
         )
 
-    with open("experiments/003-fit-int/queries/001-small-build.cql", "r") as f:
+    with open("experiments/003-fit-int/queries/001-small-build.cql") as f:
         query = f.read()
     dataset_root = osp.join(
         DATA_ROOT, "data/torchcell/experiments/003-fit-int/001-small-build"
@@ -358,7 +352,7 @@ class StoichiometricMAB(AttentionBlock):
         return output
 
 
-def group(xs: List[torch.Tensor], aggr: Optional[str]) -> Optional[torch.Tensor]:
+def group(xs: list[torch.Tensor], aggr: str | None) -> torch.Tensor | None:
     """Aggregation function similar to the one in HeteroConv"""
     if len(xs) == 0:
         return None
@@ -397,9 +391,9 @@ class CellGraphHeteroNSA(nn.Module):
 
     def __init__(
         self,
-        node_counts: Dict[str, int],
+        node_counts: dict[str, int],
         hidden_dim: int,
-        pattern: List[str],
+        pattern: list[str],
         num_heads: int = 8,
         aggr: str = "sum",
     ):
@@ -754,7 +748,7 @@ class CellGraphHeteroNSA(nn.Module):
             print(f"Processing block {block_idx}: {block.block_type}")
             block_type = block.block_type
             content = block.get_content()
-            
+
             if block_type == "SAB":
                 # Self-attention for each node type
                 for node_type, sab in content.items():
@@ -844,9 +838,9 @@ class CellGraphNSAModel(nn.Module):
 
     def __init__(
         self,
-        node_counts: Dict[str, int],
+        node_counts: dict[str, int],
         hidden_dim: int,
-        pattern: List[str],
+        pattern: list[str],
         num_heads: int = 8,
         output_dim: int = 1,
     ):
@@ -930,16 +924,16 @@ class CellGraphNSAModel(nn.Module):
 def main():
     # Import necessary libraries for flex_attention if running on CUDA
     try:
-        from torch.nn.attention.flex_attention import flex_attention, create_block_mask
+        from torch.nn.attention.flex_attention import create_block_mask, flex_attention
 
         flex_attention_available = True
     except ImportError:
         print("FlexAttention not available, will use manual CPU implementation")
         flex_attention_available = False
 
-    import torch.optim as optim
-    from tqdm import tqdm
     import time
+
+    import torch.optim as optim
 
     print("Loading sample data batch...")
     dataset, batch, input_channels, max_num_nodes = load_sample_data_batch()

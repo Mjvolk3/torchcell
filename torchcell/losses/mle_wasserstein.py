@@ -6,16 +6,14 @@
 
 
 import math
-from typing import Dict, Optional, Tuple, Any
-import torch
-import torch.nn as nn
-import torch.distributed as dist
+from typing import Any
 
+import torch
+import torch.distributed as dist
+import torch.nn as nn
 from geomloss import SamplesLoss
-from torchcell.losses.multi_dim_nan_tolerant import (
-    WeightedMSELoss,
-    WeightedSupCRCell,
-)
+
+from torchcell.losses.multi_dim_nan_tolerant import WeightedMSELoss, WeightedSupCRCell
 
 
 class AdaptiveWeighting:
@@ -76,7 +74,7 @@ class WeightedWassersteinLoss(nn.Module):
         blur: float = 0.05,
         p: float = 2,
         scaling: float = 0.9,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
     ):
         """
         Initialize Weighted Wasserstein Loss.
@@ -108,7 +106,7 @@ class WeightedWassersteinLoss(nn.Module):
 
     def forward(
         self, predictions: torch.Tensor, targets: torch.Tensor
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute weighted Wasserstein distance.
 
@@ -132,8 +130,8 @@ class WeightedWassersteinLoss(nn.Module):
             dim_valid = valid_mask[:, dim]
             if dim_valid.sum() > 1:  # Need at least 2 samples
                 # Extract valid predictions and targets for this dimension
-                pred_dim = predictions[dim_valid, dim:dim+1]  # Keep 2D shape
-                targ_dim = targets[dim_valid, dim:dim+1]
+                pred_dim = predictions[dim_valid, dim : dim + 1]  # Keep 2D shape
+                targ_dim = targets[dim_valid, dim : dim + 1]
 
                 # Compute Wasserstein distance for this dimension
                 w_dist = self.wasserstein(pred_dim, targ_dim)
@@ -164,7 +162,7 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         blur: float = 0.05,
         p: float = 2,
         scaling: float = 0.9,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         min_samples: int = 64,
     ):
         super().__init__()
@@ -173,10 +171,7 @@ class BufferedWeightedWassersteinLoss(nn.Module):
 
         # Initialize base Wasserstein loss
         self.base_wasserstein_loss = WeightedWassersteinLoss(
-            blur=blur,
-            p=p,
-            scaling=scaling,
-            weights=weights,
+            blur=blur, p=p, scaling=scaling, weights=weights
         )
 
         # Circular buffer for predictions and targets
@@ -214,7 +209,7 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
 
-    def get_buffer_samples(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_buffer_samples(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Get all valid samples from buffer."""
         if self.buffer_full:
             return self.pred_buffer, self.target_buffer
@@ -226,10 +221,10 @@ class BufferedWeightedWassersteinLoss(nn.Module):
         self,
         predictions: torch.Tensor,
         targets: torch.Tensor,
-        all_predictions: Optional[torch.Tensor] = None,
-        all_targets: Optional[torch.Tensor] = None,
+        all_predictions: torch.Tensor | None = None,
+        all_targets: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute Wasserstein loss with buffer support.
 
@@ -300,7 +295,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         buffer_size: int = 256,
         embedding_dim: int = 128,
         temperature: float = 0.1,
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         min_samples: int = 32,
     ):
         super().__init__()
@@ -348,7 +343,7 @@ class BufferedWeightedSupCRCell(nn.Module):
         if self.total_samples[0] >= self.buffer_size:
             self.buffer_full[0] = True
 
-    def get_buffer_samples(self) -> Tuple[torch.Tensor, torch.Tensor]:
+    def get_buffer_samples(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Get all valid samples from buffer."""
         if self.buffer_full:
             return self.embedding_buffer, self.label_buffer
@@ -360,11 +355,11 @@ class BufferedWeightedSupCRCell(nn.Module):
         self,
         embeddings: torch.Tensor,
         labels: torch.Tensor,
-        all_embeddings: Optional[torch.Tensor] = None,
-        all_labels: Optional[torch.Tensor] = None,
+        all_embeddings: torch.Tensor | None = None,
+        all_labels: torch.Tensor | None = None,
         buffer_weight: float = 1.0,
-        temperature: Optional[float] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+        temperature: float | None = None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
         """
         Compute SupCR loss with buffer support.
 
@@ -444,15 +439,15 @@ class MleWassSupCR(nn.Module):
         gather_interval: int = 1,
         # Adaptive weighting
         use_adaptive_weighting: bool = True,
-        warmup_epochs: Optional[int] = None,
-        stable_epoch: Optional[int] = None,
+        warmup_epochs: int | None = None,
+        stable_epoch: int | None = None,
         # Temperature scheduling
         use_temp_scheduling: bool = True,
         init_temperature: float = 1.0,
         final_temperature: float = 0.1,
         temp_schedule: str = "exponential",
         # Other parameters
-        weights: Optional[torch.Tensor] = None,
+        weights: torch.Tensor | None = None,
         max_epochs: int = 1000,
     ):
         super().__init__()
@@ -536,8 +531,8 @@ class MleWassSupCR(nn.Module):
         predictions: torch.Tensor,
         targets: torch.Tensor,
         z_P: torch.Tensor,
-        epoch: Optional[int] = None,
-    ) -> Tuple[torch.Tensor, Dict[str, Any]]:
+        epoch: int | None = None,
+    ) -> tuple[torch.Tensor, dict[str, Any]]:
         """
         Forward pass computing composite loss.
 
@@ -603,11 +598,7 @@ class MleWassSupCR(nn.Module):
             mse_val = torch.tensor(0.0, device=device)
             mse_dims = torch.zeros(2, device=device)
             loss_dict.update(
-                {
-                    "mse_loss": 0.0,
-                    "mse_dim_losses": mse_dims,
-                    "weighted_mse": 0.0,
-                }
+                {"mse_loss": 0.0, "mse_dim_losses": mse_dims, "weighted_mse": 0.0}
             )
 
         # Compute Wasserstein loss if lambda > 0
@@ -645,7 +636,12 @@ class MleWassSupCR(nn.Module):
         if self.lambda_supcr > 0:
             if self.use_buffer:
                 supcr_val, supcr_dims = self.supcr_loss(
-                    z_P, targets, all_embeddings, all_targets, buffer_weight, temperature
+                    z_P,
+                    targets,
+                    all_embeddings,
+                    all_targets,
+                    buffer_weight,
+                    temperature,
                 )
             else:
                 supcr_val, supcr_dims = self.supcr_loss(z_P, targets)

@@ -3,25 +3,22 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/kuzmin2018_adapter.py
 # Test file: tests/torchcell/adapters/test_kuzmin2018_adapter.py
 
-from tqdm import tqdm
-import hashlib
-import json
-from biocypher import BioCypher
-from biocypher._create import BioCypherEdge, BioCypherNode
-from biocypher._logger import get_logger
 import logging
-from typing import Set
+import os.path as osp
+
+import yaml
+from biocypher._logger import get_logger
+from omegaconf import OmegaConf
+
+from biocypher import BioCypher
+from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datasets.scerevisiae.kuzmin2018 import (
-    SmfKuzmin2018Dataset,
     DmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
     DmiKuzmin2018Dataset,
+    SmfKuzmin2018Dataset,
+    TmfKuzmin2018Dataset,
     TmiKuzmin2018Dataset,
 )
-from torchcell.adapters.cell_adapter import CellAdapter
-import yaml
-from omegaconf import OmegaConf, DictConfig
-import os.path as osp
 
 # logging
 # Get the biocypher logger
@@ -47,7 +44,7 @@ class SmfKuzmin2018Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -81,7 +78,7 @@ class DmfKuzmin2018Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -115,7 +112,7 @@ class TmfKuzmin2018Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -148,7 +145,7 @@ class DmiKuzmin2018Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -179,7 +176,7 @@ class TmiKuzmin2018Adapter(CellAdapter):
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
-        with open(config_path, "r") as file:
+        with open(config_path) as file:
             yaml_config = yaml.safe_load(file)
 
         config = OmegaConf.create(yaml_config)
@@ -196,12 +193,13 @@ class TmiKuzmin2018Adapter(CellAdapter):
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    from datetime import datetime
+    import math
+    import multiprocessing as mp
     import os
     import os.path as osp
-    import multiprocessing as mp
-    import math
+    from datetime import datetime
+
+    from dotenv import load_dotenv
 
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

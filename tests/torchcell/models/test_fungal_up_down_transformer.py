@@ -2,8 +2,7 @@
 # [[tests.torchcell.models.test_fungal_up_down_transformer]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/models/test_fungal_up_down_transformer.py
 
-import os.path as osp
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 import torch

@@ -3,7 +3,6 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/losses/dcell.py
 # Test file: torchcell/losses/test_dcell.py
 
-import torch
 import torch.nn as nn
 
 

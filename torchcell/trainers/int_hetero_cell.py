@@ -1,23 +1,21 @@
+import logging
+
 import lightning as L
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import wandb
-import numpy as np
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-import matplotlib.pyplot as plt
-from typing import Optional
-import logging
-from torchcell.viz.visual_graph_degen import VisGraphDegen
-from torchcell.viz import genetic_interaction_score
-from torchcell.viz.visual_regression import Visualization
-from torchcell.timestamp import timestamp
 from torch_geometric.data import HeteroData
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
+
 from torchcell.losses.logcosh import LogCoshLoss
-from torchcell.losses.diffusion_loss import DiffusionLoss
 from torchcell.losses.mle_dist_supcr import MleDistSupCR
 from torchcell.losses.mle_wasserstein import MleWassSupCR
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
+from torchcell.viz import genetic_interaction_score
+from torchcell.viz.visual_graph_degen import VisGraphDegen
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -35,9 +33,9 @@ class RegressionTask(L.LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        inverse_transform: Optional[nn.Module] = None,
+        inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
@@ -145,7 +143,10 @@ class RegressionTask(L.LightningModule):
                 batch_device = next(self.model.parameters()).device
 
             # Ensure cell_graph is on correct device
-            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+            if (
+                not hasattr(self, "_cell_graph_device")
+                or self._cell_graph_device != batch_device
+            ):
                 self.cell_graph = self.cell_graph.to(batch_device)
                 self._cell_graph_device = batch_device
 
@@ -158,8 +159,18 @@ class RegressionTask(L.LightningModule):
 
             # Log minimal metrics
             batch_size = self._get_batch_size(batch)
-            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
-            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+            self.log(
+                f"{stage}/dataloader_profile_loss",
+                loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.log(
+                f"{stage}/dataloader_profile_batch_size",
+                float(batch_size),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
 
             return loss, None, None
 
@@ -436,7 +447,9 @@ class RegressionTask(L.LightningModule):
                     self.val_samples["true_values"].append(
                         gene_interaction_orig[idx].detach()
                     )
-                    self.val_samples["predictions"].append(inv_predictions[idx].detach())
+                    self.val_samples["predictions"].append(
+                        inv_predictions[idx].detach()
+                    )
                     if z_p is not None:
                         if "latents" not in self.val_samples:
                             self.val_samples["latents"] = {}
@@ -825,9 +838,9 @@ class DiffusionRegressionTask(L.LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        inverse_transform: Optional[nn.Module] = None,
+        inverse_transform: nn.Module | None = None,
         execution_mode: str = "training",  # "training" or "dataloader_profiling"
     ):
         super().__init__()
@@ -941,7 +954,10 @@ class DiffusionRegressionTask(L.LightningModule):
                 batch_device = next(self.model.parameters()).device
 
             # Ensure cell_graph is on correct device
-            if not hasattr(self, "_cell_graph_device") or self._cell_graph_device != batch_device:
+            if (
+                not hasattr(self, "_cell_graph_device")
+                or self._cell_graph_device != batch_device
+            ):
                 self.cell_graph = self.cell_graph.to(batch_device)
                 self._cell_graph_device = batch_device
 
@@ -954,8 +970,18 @@ class DiffusionRegressionTask(L.LightningModule):
 
             # Log minimal metrics
             batch_size = self._get_batch_size(batch)
-            self.log(f"{stage}/dataloader_profile_loss", loss, batch_size=batch_size, sync_dist=True)
-            self.log(f"{stage}/dataloader_profile_batch_size", float(batch_size), batch_size=batch_size, sync_dist=True)
+            self.log(
+                f"{stage}/dataloader_profile_loss",
+                loss,
+                batch_size=batch_size,
+                sync_dist=True,
+            )
+            self.log(
+                f"{stage}/dataloader_profile_batch_size",
+                float(batch_size),
+                batch_size=batch_size,
+                sync_dist=True,
+            )
 
             return loss, None, None
 
@@ -1166,7 +1192,9 @@ class DiffusionRegressionTask(L.LightningModule):
                     self.val_samples["true_values"].append(
                         gene_interaction_orig[idx].detach()
                     )
-                    self.val_samples["predictions"].append(inv_predictions[idx].detach())
+                    self.val_samples["predictions"].append(
+                        inv_predictions[idx].detach()
+                    )
                     if z_p is not None:
                         if "latents" not in self.val_samples:
                             self.val_samples["latents"] = {}
@@ -1434,7 +1462,9 @@ class DiffusionRegressionTask(L.LightningModule):
     def on_train_epoch_start(self):
         # Update gradient accumulation steps based on current epoch
         if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(self.hparams.grad_accumulation_schedule.keys()):
+            for epoch_threshold in sorted(
+                self.hparams.grad_accumulation_schedule.keys()
+            ):
                 epoch_threshold_int = (
                     int(epoch_threshold)
                     if isinstance(epoch_threshold, str)

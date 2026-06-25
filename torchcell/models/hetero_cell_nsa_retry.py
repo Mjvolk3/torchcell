@@ -1,15 +1,16 @@
-from omegaconf import DictConfig
 import os
 import os.path as osp
+from typing import Any
+
 import hydra
 import torch
 import torch.nn as nn
-from torch_geometric.data import HeteroData, Batch
-from typing import Dict, Optional, Any, Tuple, List, Set
-
-from torchcell.nn.hetero_nsa import HeteroNSA
-from torchcell.models.act import act_register
+from omegaconf import DictConfig
+from torch_geometric.data import Batch, HeteroData
 from torch_geometric.nn.aggr.attention import AttentionalAggregation
+
+from torchcell.models.act import act_register
+from torchcell.nn.hetero_nsa import HeteroNSA
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:
@@ -41,7 +42,7 @@ class AttentionalGraphAggregation(nn.Module):
         )
 
     def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: Optional[int] = None
+        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
     ) -> torch.Tensor:
         return self.aggregator(x, index=index, dim_size=dim_size)
 
@@ -92,13 +93,13 @@ class HeteroCellNSA(nn.Module):
         metabolite_num: int,
         hidden_channels: int,
         out_channels: int,
-        attention_pattern: List[str] = ["M", "S"],
+        attention_pattern: list[str] = ["M", "S"],
         num_heads: int = 8,
         dropout: float = 0.1,
         norm: str = "layer",
         activation: str = "relu",
-        prediction_head_config: Optional[Dict[str, Any]] = None,
-        graph_names: Optional[List[str]] = None,
+        prediction_head_config: dict[str, Any] | None = None,
+        graph_names: list[str] | None = None,
     ):
         super().__init__()
         self.hidden_channels = hidden_channels
@@ -139,10 +140,10 @@ class HeteroCellNSA(nn.Module):
         )
 
         # Define node and edge types for the heterogeneous graph
-        node_types: Set[str] = {"gene", "reaction", "metabolite"}
+        node_types: set[str] = {"gene", "reaction", "metabolite"}
 
         # Dynamically construct edge types based on graph names
-        edge_types: Set[Tuple[str, str, str]] = set()
+        edge_types: set[tuple[str, str, str]] = set()
 
         # Add gene-gene edges for each graph name
         for graph_name in self.graph_names:
@@ -198,7 +199,7 @@ class HeteroCellNSA(nn.Module):
         num_layers: int,
         dropout: float,
         activation: str,
-        norm: Optional[str] = None,
+        norm: str | None = None,
     ) -> nn.Module:
         """Build a multi-layer prediction head for final outputs."""
         if num_layers == 0:
@@ -221,21 +222,22 @@ class HeteroCellNSA(nn.Module):
     def forward_single(self, data: HeteroData | Batch) -> torch.Tensor:
         """Process a single graph or batch of graphs through the model."""
         device = self.gene_embedding.weight.device
-        
+
         # Check if we're handling a batch
         is_batch = isinstance(data, Batch) or hasattr(data["gene"], "batch")
-        
+
         # Initialize node features
         if is_batch:
             # For batched data, we need to carefully handle the node indices
             batch_size = (
-                len(data["gene"].ptr) - 1 if hasattr(data["gene"], "ptr") 
+                len(data["gene"].ptr) - 1
+                if hasattr(data["gene"], "ptr")
                 else int(data["gene"].batch.max()) + 1
             )
-            
+
             # Create consistent embeddings for all node types
             x_dict = {}
-            
+
             # Process gene nodes
             gene_idx = torch.arange(self.gene_num, device=device)
             gene_emb = self.gene_embedding(gene_idx)
@@ -243,83 +245,94 @@ class HeteroCellNSA(nn.Module):
             gene_emb_exp = gene_emb.unsqueeze(0).expand(batch_size, -1, -1)
             # Reshape to [batch_size * gene_num, hidden_dim]
             gene_emb_flat = gene_emb_exp.reshape(-1, self.hidden_channels)
-            
+
             # Handle gene perturbation mask if available
-            if hasattr(data["gene"], "pert_mask") and torch.is_tensor(data["gene"].pert_mask):
+            if hasattr(data["gene"], "pert_mask") and torch.is_tensor(
+                data["gene"].pert_mask
+            ):
                 # Only keep non-perturbed gene nodes
                 x_dict["gene"] = gene_emb_flat[~data["gene"].pert_mask]
             else:
                 # Use all gene embeddings
-                x_dict["gene"] = gene_emb_flat[:data["gene"].num_nodes]
-            
+                x_dict["gene"] = gene_emb_flat[: data["gene"].num_nodes]
+
             # Apply preprocessor to gene features
             x_dict["gene"] = self.preprocessor(x_dict["gene"])
-            
+
             # Similar approach for reaction nodes
             reaction_idx = torch.arange(self.reaction_num, device=device)
             reaction_emb = self.reaction_embedding(reaction_idx)
             reaction_emb_exp = reaction_emb.unsqueeze(0).expand(batch_size, -1, -1)
             reaction_emb_flat = reaction_emb_exp.reshape(-1, self.hidden_channels)
-            
-            if hasattr(data["reaction"], "pert_mask") and torch.is_tensor(data["reaction"].pert_mask):
+
+            if hasattr(data["reaction"], "pert_mask") and torch.is_tensor(
+                data["reaction"].pert_mask
+            ):
                 x_dict["reaction"] = reaction_emb_flat[~data["reaction"].pert_mask]
             else:
-                x_dict["reaction"] = reaction_emb_flat[:data["reaction"].num_nodes]
-            
+                x_dict["reaction"] = reaction_emb_flat[: data["reaction"].num_nodes]
+
             # And for metabolite nodes
             metabolite_idx = torch.arange(self.metabolite_num, device=device)
             metabolite_emb = self.metabolite_embedding(metabolite_idx)
             metabolite_emb_exp = metabolite_emb.unsqueeze(0).expand(batch_size, -1, -1)
             metabolite_emb_flat = metabolite_emb_exp.reshape(-1, self.hidden_channels)
-            
-            if hasattr(data["metabolite"], "pert_mask") and torch.is_tensor(data["metabolite"].pert_mask):
-                x_dict["metabolite"] = metabolite_emb_flat[~data["metabolite"].pert_mask]
+
+            if hasattr(data["metabolite"], "pert_mask") and torch.is_tensor(
+                data["metabolite"].pert_mask
+            ):
+                x_dict["metabolite"] = metabolite_emb_flat[
+                    ~data["metabolite"].pert_mask
+                ]
             else:
-                x_dict["metabolite"] = metabolite_emb_flat[:data["metabolite"].num_nodes]
+                x_dict["metabolite"] = metabolite_emb_flat[
+                    : data["metabolite"].num_nodes
+                ]
         else:
             # For a single graph, use direct indexing with the full embeddings
             gene_count = min(data["gene"].num_nodes, self.gene_num)
             reaction_count = min(data["reaction"].num_nodes, self.reaction_num)
             metabolite_count = min(data["metabolite"].num_nodes, self.metabolite_num)
-            
+
             gene_idx = torch.arange(gene_count, device=device)
             reaction_idx = torch.arange(reaction_count, device=device)
             metabolite_idx = torch.arange(metabolite_count, device=device)
-            
+
             x_dict = {
                 "gene": self.preprocessor(self.gene_embedding(gene_idx)),
                 "reaction": self.reaction_embedding(reaction_idx),
                 "metabolite": self.metabolite_embedding(metabolite_idx),
             }
-        
+
         # Prepare batch assignment information for NSA layer
         batch_idx = {}
         if is_batch:
             for node_type in ["gene", "reaction", "metabolite"]:
                 if hasattr(data[node_type], "batch"):
                     batch_idx[node_type] = data[node_type].batch
-        
+
         # Process through NSA layer with proper error handling
         try:
             new_x = self.nsa_layer(x_dict, data, batch_idx)
-            
+
             # Apply layer norm and residual connection
             for node_type in new_x:
                 if node_type in x_dict:
                     new_x[node_type] = self.layer_norms[node_type](
                         new_x[node_type] + x_dict[node_type]
                     )
-                    
+
             return new_x["gene"]
         except Exception as e:
             print(f"Error in NSA layer: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
     def forward(
         self, cell_graph: HeteroData, batch: HeteroData | Batch
-    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+    ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         """Forward pass comparing reference cell with perturbed cell."""
         # Process the reference (wildtype) graph
         z_w = self.forward_single(cell_graph)
@@ -366,7 +379,7 @@ class HeteroCellNSA(nn.Module):
 
         # Force predictions to be exactly [batch_size, 1]
         predictions = predictions.view(batch_size, -1)
-        
+
         # Only gene interaction prediction
         gene_interaction = predictions
 
@@ -381,7 +394,7 @@ class HeteroCellNSA(nn.Module):
         }
 
     @property
-    def num_parameters(self) -> Dict[str, int]:
+    def num_parameters(self) -> dict[str, int]:
         """Count the number of parameters in each component of the model."""
 
         def count_params(module: nn.Module) -> int:
@@ -409,15 +422,18 @@ class HeteroCellNSA(nn.Module):
 def main(cfg: DictConfig) -> None:
     import matplotlib.pyplot as plt
     from dotenv import load_dotenv
+
     from torchcell.losses.isomorphic_cell_loss import ICLoss
-    from torchcell.timestamp import timestamp
     from torchcell.scratch.load_batch_005 import load_sample_data_batch
+    from torchcell.timestamp import timestamp
+
     # Visualization functions need update for single target
     # from torchcell.scratch.cell_batch_overfit_visualization import (
     #     plot_embeddings,
     #     plot_correlations,
     # )
     from torchcell.transforms.hetero_to_dense_mask import HeteroToDenseMask
+
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
     device = torch.device(
@@ -436,17 +452,13 @@ def main(cfg: DictConfig) -> None:
     )
 
     # Get the cell_graph from the dataset
-    
+
     dense_transform = HeteroToDenseMask(
-        {
-            "gene": 6607,
-            "reaction": 7122,
-            "metabolite": 2806,
-        }
+        {"gene": 6607, "reaction": 7122, "metabolite": 2806}
     )
     dataset.transform = dense_transform
     cell_graph = dense_transform(dataset.cell_graph)
-    
+
     # Verify cell_graph has the necessary dense mask attributes
     for edge_type in cell_graph.edge_types:
         src, rel, dst = edge_type
@@ -488,11 +500,11 @@ def main(cfg: DictConfig) -> None:
 
     # Print dimensions for verification
     print("\nVerifying data dimensions:")
-    print(f"Cell graph dimensions:")
+    print("Cell graph dimensions:")
     for node_type in cell_graph.node_types:
         print(f"  {node_type}: {cell_graph[node_type].num_nodes} nodes")
 
-    print(f"Batch dimensions:")
+    print("Batch dimensions:")
     for node_type in batch.node_types:
         print(f"  {node_type}: {batch[node_type].num_nodes} nodes")
 
@@ -538,7 +550,7 @@ def main(cfg: DictConfig) -> None:
     # Training target - gene interaction in COO format
     # The phenotype_values contains the gene interaction scores
     y = batch["gene"].phenotype_values
-    
+
     # Set up loss function - only single weight for gene interaction
     if cfg.regression_task.is_weighted_phenotype_loss:
         weights = torch.ones(1).to(device)
@@ -579,7 +591,9 @@ def main(cfg: DictConfig) -> None:
             predictions, representations = model(cell_graph, batch)
             # Reshape y and predictions for loss calculation
             y_reshaped = y.unsqueeze(1) if y.dim() == 1 else y
-            loss, loss_components = criterion(predictions, y_reshaped, representations["z_p"])
+            loss, loss_components = criterion(
+                predictions, y_reshaped, representations["z_p"]
+            )
 
             if epoch % 10 == 0 or epoch == num_epochs - 1:
                 print(f"\nEpoch {epoch + 1}/{num_epochs}")
@@ -590,10 +604,10 @@ def main(cfg: DictConfig) -> None:
                 pass
                 if device.type == "cuda":
                     print(
-                        f"GPU memory allocated: {torch.cuda.memory_allocated(device)/1024**2:.2f} MB"
+                        f"GPU memory allocated: {torch.cuda.memory_allocated(device) / 1024**2:.2f} MB"
                     )
                     print(
-                        f"GPU memory reserved: {torch.cuda.memory_reserved(device)/1024**2:.2f} MB"
+                        f"GPU memory reserved: {torch.cuda.memory_reserved(device) / 1024**2:.2f} MB"
                     )
 
             losses.append(loss.item())

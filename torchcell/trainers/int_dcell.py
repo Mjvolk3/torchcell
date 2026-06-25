@@ -5,22 +5,20 @@
 
 
 import logging
+
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torch.nn as nn
 import wandb
 from lightning import LightningModule
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch_geometric.data import HeteroData
-from torchmetrics import MetricCollection, MeanSquaredError, PearsonCorrCoef
-from typing import Dict, Optional, Tuple, Union, List
+from torchmetrics import MeanSquaredError, MetricCollection, PearsonCorrCoef
 
 from torchcell.losses.dcell import DCellLoss
-from torchcell.timestamp import timestamp
 from torchcell.viz import genetic_interaction_score
-from torchcell.viz.visual_regression import Visualization
 from torchcell.viz.visual_graph_degen import VisGraphDegen
+from torchcell.viz.visual_regression import Visualization
 
 log = logging.getLogger(__name__)
 
@@ -38,10 +36,10 @@ class RegressionTask(LightningModule):
         plot_sample_ceiling: int = 1000,
         plot_every_n_epochs: int = 10,
         loss_func: nn.Module = None,
-        grad_accumulation_schedule: Optional[dict[int, int]] = None,
+        grad_accumulation_schedule: dict[int, int] | None = None,
         device: str = "cuda",
-        forward_transform: Optional[nn.Module] = None,
-        inverse_transform: Optional[nn.Module] = None,
+        forward_transform: nn.Module | None = None,
+        inverse_transform: nn.Module | None = None,
     ):
         super().__init__()
         self.save_hyperparameters(ignore=["model", "loss_func"])
@@ -281,7 +279,9 @@ class RegressionTask(LightningModule):
                     self.train_samples["true_values"].append(
                         gene_interaction_orig.detach().float()
                     )
-                    self.train_samples["predictions"].append(inv_predictions.detach().float())
+                    self.train_samples["predictions"].append(
+                        inv_predictions.detach().float()
+                    )
                     # Collect subsystem outputs if available
                     if subsystem_outputs:
                         if "latents" not in self.train_samples:
@@ -298,7 +298,9 @@ class RegressionTask(LightningModule):
             and (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0
         ):
             # Only collect validation samples on epochs we'll plot
-            self.val_samples["true_values"].append(gene_interaction_orig.detach().float())
+            self.val_samples["true_values"].append(
+                gene_interaction_orig.detach().float()
+            )
             self.val_samples["predictions"].append(inv_predictions.detach().float())
             # Collect subsystem outputs if available
             if subsystem_outputs:
@@ -306,14 +308,16 @@ class RegressionTask(LightningModule):
                     self.val_samples["latents"] = {}
                 if "subsystem_outputs" not in self.val_samples["latents"]:
                     self.val_samples["latents"]["subsystem_outputs"] = []
-                # Select just the final layer or a representative subset  
+                # Select just the final layer or a representative subset
                 if "root" in subsystem_outputs:
                     self.val_samples["latents"]["subsystem_outputs"].append(
                         subsystem_outputs["root"].detach().float()
                     )
         elif stage == "test":
             # For test, always collect samples (no epoch check since test runs once)
-            self.test_samples["true_values"].append(gene_interaction_orig.detach().float())
+            self.test_samples["true_values"].append(
+                gene_interaction_orig.detach().float()
+            )
             self.test_samples["predictions"].append(inv_predictions.detach().float())
             # Collect subsystem outputs if available
             if subsystem_outputs:
@@ -384,7 +388,7 @@ class RegressionTask(LightningModule):
 
         true_values = torch.cat(samples["true_values"], dim=0)
         predictions = torch.cat(samples["predictions"], dim=0)
-        
+
         # Process latents if they exist
         latents = {}
         if "latents" in samples and samples["latents"]:
@@ -431,7 +435,7 @@ class RegressionTask(LightningModule):
             None,
             stage=stage,
         )
-        
+
         # Log oversmoothing metrics on latent spaces if available
         if "subsystem_outputs" in latents:
             smoothness = VisGraphDegen.compute_smoothness(latents["subsystem_outputs"])
@@ -478,7 +482,7 @@ class RegressionTask(LightningModule):
         # Clear sample containers at the start of epochs where we'll collect samples
         if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
-    
+
     def on_test_epoch_start(self):
         # Always clear sample containers for test (test runs only once)
         self.test_samples = {"true_values": [], "predictions": [], "latents": {}}
@@ -505,7 +509,7 @@ class RegressionTask(LightningModule):
             self._plot_samples(self.val_samples, "val_sample")
             # Reset the sample containers
             self.val_samples = {"true_values": [], "predictions": [], "latents": {}}
-    
+
     def on_test_epoch_end(self):
         # Log test metrics
         computed_metrics = self._compute_metrics_safely(self.test_metrics)
@@ -514,7 +518,9 @@ class RegressionTask(LightningModule):
         self.test_metrics.reset()
 
         # Compute and log transformed metrics
-        transformed_metrics = self._compute_metrics_safely(self.test_transformed_metrics)
+        transformed_metrics = self._compute_metrics_safely(
+            self.test_transformed_metrics
+        )
         for name, value in transformed_metrics.items():
             self.log(name, value, sync_dist=True)
         self.test_transformed_metrics.reset()
@@ -540,7 +546,7 @@ class RegressionTask(LightningModule):
             cell_graph_device = self.cell_graph.to(self.device)
 
             # Create a minimal dummy batch for initialization
-            from torch_geometric.data import HeteroData, Data
+            from torch_geometric.data import Data, HeteroData
 
             dummy_batch = HeteroData()
             dummy_batch["gene"] = Data()
@@ -550,16 +556,20 @@ class RegressionTask(LightningModule):
             # Use .x to set node features (this is standard in PyG)
             dummy_batch["gene"].x = torch.zeros(1, 1, device=self.device)
             dummy_batch["gene_ontology"].x = torch.zeros(1, 1, device=self.device)
-            
+
             # Add batch information for gene nodes (required for DCellOpt)
-            dummy_batch["gene"].batch = torch.zeros(1, dtype=torch.long, device=self.device)
-            
+            dummy_batch["gene"].batch = torch.zeros(
+                1, dtype=torch.long, device=self.device
+            )
+
             # Add critical fields for DCellOpt model
             # The model pre-computes indices expecting the full dataset structure
             # Use the actual go_gene_strata_state structure from cell_graph
             if hasattr(cell_graph_device["gene_ontology"], "go_gene_strata_state"):
                 # Clone the structure but zero out the states (column 3)
-                dummy_state = cell_graph_device["gene_ontology"].go_gene_strata_state.clone()
+                dummy_state = cell_graph_device[
+                    "gene_ontology"
+                ].go_gene_strata_state.clone()
                 dummy_state[:, 3] = 0  # Zero out all states for dummy batch
                 dummy_batch["gene_ontology"].go_gene_strata_state = dummy_state
                 # Set pointer to indicate one sample with full structure
@@ -569,22 +579,26 @@ class RegressionTask(LightningModule):
             else:
                 # Fallback for models that don't use go_gene_strata_state
                 # Create a minimal dummy state
-                dummy_state = torch.tensor([[0, 0, 0, 0]], dtype=torch.long, device=self.device)
+                dummy_state = torch.tensor(
+                    [[0, 0, 0, 0]], dtype=torch.long, device=self.device
+                )
                 dummy_batch["gene_ontology"].go_gene_strata_state = dummy_state
                 dummy_batch["gene_ontology"].go_gene_strata_state_ptr = torch.tensor(
                     [0, 1], dtype=torch.long, device=self.device
                 )
-            
+
             # Add mutant_state for backward compatibility with original DCell
             dummy_batch["gene_ontology"].mutant_state = torch.zeros(
                 1, 3, device=self.device
             )
-            
+
             # Add phenotype values for loss calculation
             dummy_batch["gene"].phenotype_values = torch.zeros(1, device=self.device)
-            
+
             # Add perturbation indices
-            dummy_batch["gene"].perturbation_indices = torch.zeros(1, dtype=torch.long, device=self.device)
+            dummy_batch["gene"].perturbation_indices = torch.zeros(
+                1, dtype=torch.long, device=self.device
+            )
 
             # Add basic batch info
             dummy_batch.num_graphs = 1

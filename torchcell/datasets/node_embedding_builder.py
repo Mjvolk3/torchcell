@@ -2,23 +2,25 @@
 """Node embedding builder utility for creating embedding datasets based on configuration."""
 
 import os.path as osp
-from typing import Dict, List, Optional, Any
+from typing import Any
+
+from torchcell.datasets.codon_frequency import CodonFrequencyDataset
+from torchcell.datasets.codon_language_model import CalmDataset
+from torchcell.datasets.esm2 import Esm2Dataset
+from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
+from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
+
 # Import from sibling submodules directly, not the package __init__, to avoid a
 # circular import that surfaces once imports are alphabetically sorted.
 from torchcell.datasets.one_hot_gene import OneHotGeneDataset
-from torchcell.datasets.codon_frequency import CodonFrequencyDataset
-from torchcell.datasets.codon_language_model import CalmDataset
-from torchcell.datasets.fungal_up_down_transformer import FungalUpDownTransformerDataset
-from torchcell.datasets.nucleotide_transformer import NucleotideTransformerDataset
 from torchcell.datasets.protT5 import ProtT5Dataset
-from torchcell.datasets.esm2 import Esm2Dataset
-from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
 from torchcell.datasets.random_embedding import RandomEmbeddingDataset
+from torchcell.datasets.sgd_gene_graph import GraphEmbeddingDataset
 
 
 class NodeEmbeddingBuilder:
     """Builder class for creating node embedding datasets based on configuration."""
-    
+
     # Mapping of embedding names to their dataset classes and configurations
     EMBEDDING_CONFIGS = {
         # One-hot gene embedding
@@ -169,71 +171,71 @@ class NodeEmbeddingBuilder:
             "model_name": "random_1",
         },
     }
-    
+
     @classmethod
     def build(
         cls,
-        embedding_names: List[str],
+        embedding_names: list[str],
         data_root: str,
         genome: Any,
-        graph: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+        graph: Any | None = None,
+    ) -> dict[str, Any]:
         """
         Build node embeddings based on configuration.
-        
+
         Args:
             embedding_names: List of embedding names to create
             data_root: Root data directory path
             genome: SCerevisiaeGenome instance
             graph: SCerevisiaeGraph instance (required for graph embeddings)
-            
+
         Returns:
             Dictionary mapping embedding names to dataset instances
-            
+
         Raises:
             ValueError: If an unknown embedding name is provided or required dependencies are missing
         """
         node_embeddings = {}
-        
+
         for embedding_name in embedding_names:
             if embedding_name == "learnable":
                 # Skip learnable embeddings as they are handled differently
                 continue
-                
+
             if embedding_name not in cls.EMBEDDING_CONFIGS:
                 raise ValueError(
                     f"Unknown embedding name: {embedding_name}. "
                     f"Available embeddings: {list(cls.EMBEDDING_CONFIGS.keys())}"
                 )
-            
+
             config = cls.EMBEDDING_CONFIGS[embedding_name]
             dataset_class = config["class"]
             root_path = osp.join(data_root, config["root_path"])
-            
+
             # Check dependencies
             if config.get("requires_graph") and graph is None:
                 raise ValueError(
                     f"Embedding '{embedding_name}' requires a graph instance, but none was provided"
                 )
-            
+
             # Build kwargs for dataset initialization
             kwargs = {"root": root_path}
-            
+
             if config.get("requires_genome"):
                 kwargs["genome"] = genome
-                
+
             if config.get("requires_graph"):
                 kwargs["graph"] = graph.G_gene
-                
+
             if config.get("model_name"):
                 kwargs["model_name"] = config["model_name"]
-            
+
             # Create the dataset
             node_embeddings[embedding_name] = dataset_class(**kwargs)
-        
+
         return node_embeddings
-    
+
     @classmethod
-    def check_learnable_embedding(cls, embedding_names: List[str]) -> bool:
+    def check_learnable_embedding(cls, embedding_names: list[str]) -> bool:
         """Check if learnable embedding is requested."""
         return "learnable" in embedding_names

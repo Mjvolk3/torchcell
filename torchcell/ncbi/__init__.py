@@ -1,2 +1,2 @@
 # torchcell/ncbi/__init__.py
-from .sgd import *
+from .sgd import *  # noqa: F403

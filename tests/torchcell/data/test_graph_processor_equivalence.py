@@ -350,9 +350,6 @@ def test_incidence_vs_subgraph_processors():
     if len(dataset) == 0:
         pytest.skip("Empty dataset")
 
-    # Get the cell_graph (same for all samples)
-    cell_graph = dataset.cell_graph
-
     # Get sample data (phenotype_info and experiment data)
     # We need to extract the relevant info from dataset[0]
     # For now, let's just verify we can instantiate both processors

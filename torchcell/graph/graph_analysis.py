@@ -6,9 +6,17 @@ from datetime import datetime
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import plotly.graph_objects as go
 from matplotlib.patches import Patch
 
 import torchcell
+from torchcell.graph.graph import (
+    SCerevisiaeGraph,
+    filter_by_contained_genes,
+    filter_by_date,
+    filter_go_IGI,
+    filter_redundant_terms,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 log = logging.getLogger(__name__)
@@ -293,9 +301,6 @@ def go_gaf_investigation():
     for gene_name in genome.gene_set:
         G.add_node(gene_name, annotations=[])
 
-    # Define your filters here
-    synonym_filter = {"Synonym": genome.gene_set}
-
     # Function to check if a record matches the given filters
     def record_has(rec, filters):
         for field, values in filters.items():
@@ -320,10 +325,6 @@ def go_gaf_investigation():
     graph.G_go
     print()
     compare_go_terms(graph.G_raw, G)
-
-
-import networkx as nx
-import plotly.graph_objects as go
 
 
 def plotly_go_graph(G):

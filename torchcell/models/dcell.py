@@ -236,7 +236,6 @@ class DCell(nn.Module):
 
         # Get pre-computed indices for this term (move to device if needed)
         row_indices = self.term_row_indices[term_idx].to(device)
-        num_genes = self.term_num_genes[term_idx]
 
         go_gene_state = batch["gene_ontology"].go_gene_strata_state
         ptr = batch["gene_ontology"].go_gene_strata_state_ptr
@@ -275,9 +274,6 @@ class DCell(nn.Module):
         """
         # DCell doesn't use cell_graph in forward pass, it was used during initialization
         # The trainer expects this signature for consistency across models
-
-        batch_size = batch["gene"].batch.max() + 1
-        device = batch["gene"].x.device
 
         # Store term activations and linear outputs
         term_activations = {}
@@ -359,8 +355,6 @@ class DCell(nn.Module):
         term_activations: dict[int, torch.Tensor],
     ) -> torch.Tensor:
         """Prepare input for a specific GO term."""
-        batch_size = batch["gene"].batch.max() + 1
-        device = batch["gene"].x.device
         inputs = []
 
         # Add inputs from child subsystems (children are processed first due to leaves->root order)

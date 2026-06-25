@@ -301,8 +301,6 @@ def test_bipartite_graph_directionality(yeast_gem):
 
     # Test reversible reactions
     for reaction_id in reversible:
-        reaction = yeast_gem.model.reactions.get_by_id(reaction_id)
-
         # Get forward and reverse nodes
         fwd_nodes = [
             n

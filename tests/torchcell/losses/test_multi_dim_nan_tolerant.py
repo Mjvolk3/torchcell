@@ -224,8 +224,8 @@ def test_global_statistics_tracking():
     assert loss_fn.global_max[0].item() == 2.5
     assert loss_fn.global_min[1].item() == 1.5
     assert loss_fn.global_max[1].item() == 3.5
-    assert loss_fn.stats_initialized[0] == True
-    assert loss_fn.stats_initialized[1] == True
+    assert loss_fn.stats_initialized[0]
+    assert loss_fn.stats_initialized[1]
 
     # Second batch with wider range - should expand global range
     y_pred2 = torch.tensor([[0.0, 5.0], [4.0, 6.0]])

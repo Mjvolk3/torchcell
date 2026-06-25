@@ -1795,7 +1795,7 @@ def main(cfg: DictConfig) -> None:
                         # Check for NaN and replace with 0
                         if np.isnan(current_corr):
                             current_corr = 0.0
-                    except:
+                    except Exception:
                         current_corr = 0.0
             else:
                 current_corr = 0.0
@@ -2330,7 +2330,7 @@ def main(cfg: DictConfig) -> None:
                         ax.yaxis.set_major_locator(
                             plt.MaxNLocator(nbins=5, prune="both")
                         )
-                    except:
+                    except Exception:
                         plt.text(
                             0.5,
                             0.5,
@@ -2677,7 +2677,7 @@ def main(cfg: DictConfig) -> None:
                             correlation = corr_matrix[0, 1]
                             if np.isnan(correlation):
                                 correlation = 0.0
-                        except:
+                        except Exception:
                             correlation = 0.0
 
                         try:
@@ -2687,7 +2687,7 @@ def main(cfg: DictConfig) -> None:
                             )
                             if np.isnan(spearman_corr):
                                 spearman_corr = 0.0
-                        except:
+                        except Exception:
                             spearman_corr = 0.0
 
                     mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
@@ -2806,7 +2806,7 @@ def main(cfg: DictConfig) -> None:
                                 updated_correlation = corr_matrix[0, 1]
                                 if np.isnan(updated_correlation):
                                     updated_correlation = 0.0
-                            except:
+                            except Exception:
                                 updated_correlation = 0.0
 
                             try:
@@ -2815,7 +2815,7 @@ def main(cfg: DictConfig) -> None:
                                 )
                                 if np.isnan(updated_spearman):
                                     updated_spearman = 0.0
-                            except:
+                            except Exception:
                                 updated_spearman = 0.0
                         # Update the last values in the lists
                         correlations[-1] = updated_correlation
@@ -2887,7 +2887,7 @@ def main(cfg: DictConfig) -> None:
                     final_correlation = corr_matrix[0, 1]
                     if np.isnan(final_correlation):
                         final_correlation = 0.0
-                except:
+                except Exception:
                     final_correlation = 0.0
 
                 try:
@@ -2896,7 +2896,7 @@ def main(cfg: DictConfig) -> None:
                     )
                     if np.isnan(final_spearman):
                         final_spearman = 0.0
-                except:
+                except Exception:
                     final_spearman = 0.0
             final_mse = np.mean((pred_np[valid_mask] - target_np[valid_mask]) ** 2)
             final_mae = np.mean(np.abs(pred_np[valid_mask] - target_np[valid_mask]))

@@ -229,7 +229,7 @@ class HeteroGnnPool(nn.Module):
                 layers[-4] = (
                     layers[-4]
                     if prev_out is None
-                    else (lambda x, l=layers[-4], p=prev_out: l(x) + p)
+                    else (lambda x, layer=layers[-4], p=prev_out: layer(x) + p)
                 )
 
         # Final layer

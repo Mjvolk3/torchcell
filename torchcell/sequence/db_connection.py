@@ -7,7 +7,7 @@
 import os.path as osp
 import threading
 from collections.abc import Iterator
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Protocol
 
 from gffutils import FeatureDB
 
@@ -49,10 +49,7 @@ class DatabaseProtocol(Protocol):
         ...
 
 
-T = TypeVar("T", bound=DatabaseProtocol)
-
-
-class DatabaseConnectionManager(Generic[T]):
+class DatabaseConnectionManager[T: DatabaseProtocol]:
     """
     Manages database connections for multiprocessing scenarios.
 

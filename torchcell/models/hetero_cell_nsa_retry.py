@@ -581,8 +581,6 @@ def main(cfg: DictConfig) -> None:
 
     # Initial visualization - skip for now since visualization expects 2D
     # TODO: Update visualization functions for single target
-    embedding_fixed_axes = None
-    correlation_fixed_axes = None
 
     # Training loop
     try:

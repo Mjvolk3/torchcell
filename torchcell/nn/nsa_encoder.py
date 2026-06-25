@@ -3,10 +3,13 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/nn/nsa_encoder
 # Test file: tests/torchcell/nn/test_nsa_encoder.py
 
-from typing import Literal, Union
+from typing import TYPE_CHECKING, Literal, Union
 
 import torch
 import torch.nn as nn
+
+if TYPE_CHECKING:
+    from torch_geometric.data import HeteroData
 
 from torchcell.nn.masked_attention_block import NodeSelfAttention
 

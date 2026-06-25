@@ -346,7 +346,6 @@ class EquivariantPerturbationTransform(nn.Module):
         """
         batch_size = int(batch_assignment.max().item()) + 1
         N, d = H_genes.shape
-        device = H_genes.device
 
         H_genes_pert_list = []
 
@@ -934,7 +933,6 @@ def main(cfg: DictConfig) -> None:
 
     load_dotenv()
     ASSET_IMAGES_DIR = os.getenv("ASSET_IMAGES_DIR")
-    DATA_ROOT = os.getenv("DATA_ROOT")
 
     device = torch.device(
         "cuda"
@@ -1098,7 +1096,7 @@ def main(cfg: DictConfig) -> None:
         y,
     ):
         """Save intermediate training plot every print interval."""
-        fig = plt.figure(figsize=(20, 12))
+        plt.figure(figsize=(20, 12))
 
         # ROW 1: Total Loss, Prediction Loss, Graph Reg Loss
         plt.subplot(3, 4, 1)
@@ -1203,7 +1201,7 @@ def main(cfg: DictConfig) -> None:
                         current_corr = corr_matrix[0, 1]
                         if np.isnan(current_corr):
                             current_corr = 0.0
-                    except:
+                    except Exception:
                         current_corr = 0.0
             else:
                 current_corr = 0.0
@@ -1259,7 +1257,7 @@ def main(cfg: DictConfig) -> None:
                 plt.plot(
                     x_range, kde_pred(x_range), "r-", linewidth=2, label="Pred KDE"
                 )
-            except:
+            except Exception:
                 pass
 
         plt.xlabel("Gene Interaction Score")
@@ -1472,7 +1470,7 @@ def main(cfg: DictConfig) -> None:
                         corr = np.corrcoef(pred_np[valid_mask], y_np[valid_mask])[0, 1]
                         if np.isnan(corr):
                             corr = 0.0
-                    except:
+                    except Exception:
                         corr = 0.0
 
                     try:
@@ -1481,7 +1479,7 @@ def main(cfg: DictConfig) -> None:
                         )
                         if np.isnan(spearman_corr):
                             spearman_corr = 0.0
-                    except:
+                    except Exception:
                         spearman_corr = 0.0
 
                 # Error metrics

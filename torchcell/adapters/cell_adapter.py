@@ -205,8 +205,7 @@ class CellAdapter:
                 for chunk in data_chunks
             ]
             for future in futures:
-                for data in future.result():
-                    yield data
+                yield from future.result()
 
     def data_chunker(data_creation_logic):
         @wraps(data_creation_logic)

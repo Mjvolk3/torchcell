@@ -364,10 +364,6 @@ class DCellOpt(nn.Module):
         row_indices = row_indices_padded[:num_genes]  # Only take valid indices
 
         go_gene_state = batch["gene_ontology"].go_gene_strata_state
-        ptr = batch["gene_ontology"].go_gene_strata_state_ptr
-
-        # OPTIMIZATION: Handle variable rows_per_sample more robustly
-        rows_per_sample = ptr[1] - ptr[0]
 
         # Use reshape instead of view to handle dynamic shapes better
         go_gene_state_batched = go_gene_state.reshape(batch_size, -1, 4)
@@ -496,7 +492,6 @@ class DCellOpt(nn.Module):
         if len(stratum_terms) == 0:
             return
 
-        batch_size = all_activations.size(0)
         device = all_activations.device
 
         # Prepare all inputs first (memory coalescing)

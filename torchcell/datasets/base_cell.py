@@ -40,8 +40,7 @@ class BaseQuery:
     def get_data(self):
         with self.driver.session() as session:
             result = session.run(self.query)
-            for record in result:
-                yield record
+            yield from result
         self.driver.close()
 
 

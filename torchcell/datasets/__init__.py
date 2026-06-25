@@ -9,41 +9,41 @@
 
 # scerevisiae datasets
 # other datasets
-from .codon_frequency import CodonFrequencyDataset
-from .codon_language_model import CalmDataset
-from .dataset_registry import dataset_registry
-from .esm2 import Esm2Dataset
-from .fungal_up_down_transformer import FungalUpDownTransformerDataset
-from .node_embedding_builder import NodeEmbeddingBuilder
-from .nucleotide_transformer import NucleotideTransformerDataset
-from .one_hot_gene import OneHotGeneDataset
-from .protT5 import ProtT5Dataset
-from .random_embedding import RandomEmbeddingDataset
-from .scerevisiae.costanzo2016 import (
-    DmfCostanzo2016Dataset,
-    DmiCostanzo2016Dataset,
-    SmfCostanzo2016Dataset,
+from .codon_frequency import CodonFrequencyDataset as CodonFrequencyDataset
+from .codon_language_model import CalmDataset as CalmDataset
+from .dataset_registry import dataset_registry as dataset_registry
+from .esm2 import Esm2Dataset as Esm2Dataset
+from .fungal_up_down_transformer import (
+    FungalUpDownTransformerDataset as FungalUpDownTransformerDataset,
 )
-from .scerevisiae.kuzmin2018 import (
-    DmfKuzmin2018Dataset,
-    DmiKuzmin2018Dataset,
-    SmfKuzmin2018Dataset,
-    TmfKuzmin2018Dataset,
-    TmiKuzmin2018Dataset,
+from .node_embedding_builder import NodeEmbeddingBuilder as NodeEmbeddingBuilder
+from .nucleotide_transformer import (
+    NucleotideTransformerDataset as NucleotideTransformerDataset,
 )
-from .scerevisiae.kuzmin2020 import (
-    DmfKuzmin2020Dataset,
-    DmiKuzmin2020Dataset,
-    SmfKuzmin2020Dataset,
-    TmfKuzmin2020Dataset,
-    TmiKuzmin2020Dataset,
-)
-from .scerevisiae.sgd import GeneEssentialitySgdDataset
+from .one_hot_gene import OneHotGeneDataset as OneHotGeneDataset
+from .protT5 import ProtT5Dataset as ProtT5Dataset
+from .random_embedding import RandomEmbeddingDataset as RandomEmbeddingDataset
+from .scerevisiae.costanzo2016 import DmfCostanzo2016Dataset as DmfCostanzo2016Dataset
+from .scerevisiae.costanzo2016 import DmiCostanzo2016Dataset as DmiCostanzo2016Dataset
+from .scerevisiae.costanzo2016 import SmfCostanzo2016Dataset as SmfCostanzo2016Dataset
+from .scerevisiae.kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
+from .scerevisiae.kuzmin2018 import DmiKuzmin2018Dataset as DmiKuzmin2018Dataset
+from .scerevisiae.kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
+from .scerevisiae.kuzmin2018 import TmfKuzmin2018Dataset as TmfKuzmin2018Dataset
+from .scerevisiae.kuzmin2018 import TmiKuzmin2018Dataset as TmiKuzmin2018Dataset
+from .scerevisiae.kuzmin2020 import DmfKuzmin2020Dataset as DmfKuzmin2020Dataset
+from .scerevisiae.kuzmin2020 import DmiKuzmin2020Dataset as DmiKuzmin2020Dataset
+from .scerevisiae.kuzmin2020 import SmfKuzmin2020Dataset as SmfKuzmin2020Dataset
+from .scerevisiae.kuzmin2020 import TmfKuzmin2020Dataset as TmfKuzmin2020Dataset
+from .scerevisiae.kuzmin2020 import TmiKuzmin2020Dataset as TmiKuzmin2020Dataset
+from .scerevisiae.sgd import GeneEssentialitySgdDataset as GeneEssentialitySgdDataset
 from .scerevisiae.synth_leth_db import (
-    SynthLethalityYeastSynthLethDbDataset,
-    SynthRescueYeastSynthLethDbDataset,
+    SynthLethalityYeastSynthLethDbDataset as SynthLethalityYeastSynthLethDbDataset,
 )
-from .sgd_gene_graph import GraphEmbeddingDataset
+from .scerevisiae.synth_leth_db import (
+    SynthRescueYeastSynthLethDbDataset as SynthRescueYeastSynthLethDbDataset,
+)
+from .sgd_gene_graph import GraphEmbeddingDataset as GraphEmbeddingDataset
 
 embedding_datasets = [
     "NucleotideTransformerDataset",

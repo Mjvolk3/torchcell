@@ -617,7 +617,6 @@ class CellGraphHeteroNSA(nn.Module):
             if hasattr(data["gene"], "batch"):
                 # Handle batched data
                 gene_batch = data["gene"].batch
-                reaction_batch = data["reaction"].batch
 
                 # Assuming the hyperedge indices match the batching
                 for b in range(batch_size):
@@ -687,9 +686,6 @@ class CellGraphHeteroNSA(nn.Module):
 
             if hasattr(data["metabolite"], "batch"):
                 # Handle batched data
-                metabolite_batch = data["metabolite"].batch
-                reaction_batch = data["reaction"].batch
-
                 # Assuming the hyperedge indices match the batching
                 for b in range(batch_size):
                     metab_start, metab_end = node_ranges["metabolite"][b]
@@ -922,15 +918,6 @@ class CellGraphNSAModel(nn.Module):
 
 
 def main():
-    # Import necessary libraries for flex_attention if running on CUDA
-    try:
-        from torch.nn.attention.flex_attention import create_block_mask, flex_attention
-
-        flex_attention_available = True
-    except ImportError:
-        print("FlexAttention not available, will use manual CPU implementation")
-        flex_attention_available = False
-
     import time
 
     import torch.optim as optim

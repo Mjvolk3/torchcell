@@ -232,7 +232,6 @@ class SingleSAGPool(nn.Module):
 
         # Get initial graph size and node indices
         unique_batch = torch.unique(batch)
-        batch_size = len(unique_batch)
         initial_nodes = torch.tensor(
             [torch.sum(batch == b).item() for b in unique_batch]
         )

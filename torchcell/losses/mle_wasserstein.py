@@ -550,7 +550,6 @@ class MleWassSupCR(nn.Module):
             self.current_epoch[0] = epoch
 
         device = predictions.device
-        batch_size = predictions.size(0)
 
         # Initialize loss components
         total_loss = torch.tensor(0.0, device=device)

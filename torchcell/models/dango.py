@@ -908,7 +908,7 @@ def main(cfg: DictConfig):
 
             # Plot final correlation
             plt.subplot(3, 2, 2)
-            scatter = plt.scatter(true_np, pred_np, alpha=0.7)
+            plt.scatter(true_np, pred_np, alpha=0.7)
             min_val = min(true_np.min(), pred_np.min())
             max_val = max(true_np.max(), pred_np.max())
             plt.plot([min_val, max_val], [min_val, max_val], "r--")

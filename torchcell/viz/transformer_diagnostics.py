@@ -126,21 +126,23 @@ class TransformerDiagnostics:
         layer_indices = sorted(attention_stats.keys())
 
         # Extract existing metrics
-        entropies = [attention_stats[l]["entropy"] for l in layer_indices]
-        effective_ranks = [attention_stats[l]["effective_rank"] for l in layer_indices]
-        top5s = [attention_stats[l]["top5"] for l in layer_indices]
-        top10s = [attention_stats[l]["top10"] for l in layer_indices]
-        top50s = [attention_stats[l]["top50"] for l in layer_indices]
+        entropies = [attention_stats[layer]["entropy"] for layer in layer_indices]
+        effective_ranks = [
+            attention_stats[layer]["effective_rank"] for layer in layer_indices
+        ]
+        top5s = [attention_stats[layer]["top5"] for layer in layer_indices]
+        top10s = [attention_stats[layer]["top10"] for layer in layer_indices]
+        top50s = [attention_stats[layer]["top50"] for layer in layer_indices]
 
         # Extract NEW metrics
         max_row_weights = [
-            attention_stats[l].get("max_row_weight", 0.0) for l in layer_indices
+            attention_stats[layer].get("max_row_weight", 0.0) for layer in layer_indices
         ]
         col_entropies = [
-            attention_stats[l].get("col_entropy", 0.0) for l in layer_indices
+            attention_stats[layer].get("col_entropy", 0.0) for layer in layer_indices
         ]
         max_col_sums = [
-            attention_stats[l].get("max_col_sum", 0.0) for l in layer_indices
+            attention_stats[layer].get("max_col_sum", 0.0) for layer in layer_indices
         ]
 
         # Create grid layout: 3 rows × 2 columns - always 6 subplots
@@ -313,12 +315,12 @@ class TransformerDiagnostics:
 
         # Combined legend
         lines = line1 + line2
-        labels = [l.get_label() for l in lines]
+        labels = [line.get_label() for line in lines]
         ax5.legend(lines, labels, loc="best")
 
         # Subplot 6: Residual Update Ratio (Layer Health)
         if residual_ratios:
-            ratios = [residual_ratios.get(l, 0.0) for l in layer_indices]
+            ratios = [residual_ratios.get(layer, 0.0) for layer in layer_indices]
         else:
             ratios = [0.0] * len(layer_indices)
 

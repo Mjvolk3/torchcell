@@ -4,11 +4,15 @@
 # Test file: tests/torchcell/transforms/test_coo_regression_to_classification.py
 
 from abc import ABC
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
+
+if TYPE_CHECKING:
+    from torchcell.data.neo4j_cell import Neo4jCellDataset
 
 
 class COOLabelNormalizationTransform(BaseTransform):
@@ -436,9 +440,6 @@ class COOLabelBinningTransform(BaseTransform):
         phenotype_values = data["gene"].phenotype_values
         if phenotype_values.dim() == 0:
             phenotype_values = phenotype_values.unsqueeze(0)
-            is_scalar = True
-        else:
-            is_scalar = False
 
         # We need to handle the binning differently for COO format
         # Since binning changes the dimensionality, we'll need to reorganize the data
@@ -538,9 +539,6 @@ class COOLabelBinningTransform(BaseTransform):
         phenotype_values = data["gene"].phenotype_values
         if phenotype_values.dim() == 0:
             phenotype_values = phenotype_values.unsqueeze(0)
-            is_scalar = True
-        else:
-            is_scalar = False
 
         # Group by original phenotype (before binning)
         phenotype_groups = {}

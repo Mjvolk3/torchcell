@@ -206,12 +206,6 @@ class ScmdOhya2005Dataset(ExperimentDataset):
     ) -> pd.DataFrame:
         """Preprocess raw CalMorph data with mutant and wildtype dataframes."""
         # The mutant data has "ORF" column, wildtype has "NAME" column
-        # Get morphology column names (all columns except strain info)
-        info_columns = ["ORF"]  # Column name in mutant data
-        morphology_columns = [
-            col for col in df_mutant.columns if col not in info_columns
-        ]
-
         # Process mutant data
         df_mutant["strain_type"] = "mutant"
 

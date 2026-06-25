@@ -30,7 +30,7 @@ def measure_query_time(connection_args: dict) -> float:
     )
     driver.db_connect()
     start_time = time.time()
-    result = driver.query("RETURN 1", db_name=connection_args["db_name"])
+    _result = driver.query("RETURN 1", db_name=connection_args["db_name"])
     query_time = time.time() - start_time
     driver.close()
     return query_time

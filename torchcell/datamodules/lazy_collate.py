@@ -136,7 +136,6 @@ def lazy_collate_hetero(data_list: list[HeteroData]) -> HeteroData:
     # Batch node types: concatenate features and create batch vectors
     for node_type in data_list[0].node_types:
         # Concatenate node features
-        node_features = []
         batch_vectors = []
         num_nodes_list = []
 

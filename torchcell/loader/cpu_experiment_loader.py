@@ -5,7 +5,7 @@
 
 
 from collections.abc import Iterable
-from multiprocessing import Process, Queue
+from multiprocessing import Process
 from queue import Queue
 from threading import Thread
 

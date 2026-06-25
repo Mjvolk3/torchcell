@@ -27,7 +27,6 @@ from .schema import (
     KanMxDeletionPerturbation,
     MeanDeletionPerturbation,
     Media,
-    ModelStrict,
     NatMxDeletionPerturbation,
     Phenotype,
     PhenotypeType,
@@ -46,9 +45,11 @@ from .schema import (
 
 # from .gene_essentiality_to_fitness_conversion import GeneEssentialityToFitnessConverter
 
-core_models = ["ModelStrict", "ModelStrictArbitrary"]
-
-schema_classes = [
+__all__ = [
+    # core_models
+    "ModelStrict",
+    "ModelStrictArbitrary",
+    # schema_classes
     "Environment",
     "Genotype",
     "Phenotype",
@@ -82,13 +83,11 @@ schema_classes = [
     "ExperimentType",
     "ExperimentReferenceType",
     "Publication",
+    # conversion
+    "ConversionEntry",
+    "ConversionMap",
+    "Converter",
+    # maps
+    "EXPERIMENT_TYPE_MAP",
+    "EXPERIMENT_REFERENCE_TYPE_MAP",
 ]
-
-conversion = ["ConversionEntry", "ConversionMap", "Converter"]
-
-# converters = ["GeneEssentialityToFitnessConverter"]
-
-maps = ["EXPERIMENT_TYPE_MAP", "EXPERIMENT_REFERENCE_TYPE_MAP"]
-
-# __all__ = core_models + schema_classes + conversion + converters
-__all__ = core_models + schema_classes + conversion

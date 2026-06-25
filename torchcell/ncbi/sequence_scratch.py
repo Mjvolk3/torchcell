@@ -45,7 +45,7 @@ print(gff_data.head())
 # print(gene_list)
 
 #####3
-import gffutils
+import gffutils  # noqa: E402  (scratch script: import follows module-level setup code)
 
 # specify the path to your .fna file
 path_to_gff = "data/ncbi/s_cerevisiae/ncbi_dataset/data/GCF_000146045.2/genomic.gff"

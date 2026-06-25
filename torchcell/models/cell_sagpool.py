@@ -153,7 +153,6 @@ class SingleSAGPool(nn.Module):
 
         # Get initial graph size and node indices
         unique_batch = torch.unique(batch)
-        batch_size = len(unique_batch)
         initial_nodes = torch.tensor(
             [torch.sum(batch == b).item() for b in unique_batch]
         )
@@ -193,11 +192,6 @@ class SingleSAGPool(nn.Module):
                 [torch.sum(batch == b).item() for b in unique_batch]
             )
             pool_sizes.append(nodes_after_pool)
-
-            # Print node selection information
-            for b in range(batch_size):
-                batch_mask = batch == b
-                batch_nodes = selected_nodes[batch_mask]
 
             # Make intermediate prediction
             pooled_features = global_mean_pool(x, batch)
@@ -268,29 +262,6 @@ class CellSAGPool(nn.Module):
             act_register[activation],
             nn.Linear(target_dim * 2, target_dim),
         )
-
-    @property
-    def num_parameters(self) -> dict:
-        """Count parameters in all submodules."""
-        # First, get parameters from one of the models to calculate per_model
-        sample_model = next(iter(self.graph_models.values()))
-        per_model = sum(p.numel() for p in sample_model.parameters())
-
-        # Calculate total parameters for all graph models
-        model_params = sum(
-            sum(p.numel() for p in model.parameters())
-            for model in self.graph_models.values()
-        )
-
-        # Calculate parameters in the combination layer
-        combination_params = sum(p.numel() for p in self.final_combination.parameters())
-
-        return {
-            "per_model": per_model,
-            "all_models": model_params,
-            "combination_layer": combination_params,
-            "total": model_params + combination_params,
-        }
 
     def forward(self, x, edge_indices: dict[str, torch.Tensor], batch):
         if set(edge_indices.keys()) != set(self.graph_names):

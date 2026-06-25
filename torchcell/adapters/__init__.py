@@ -1,28 +1,24 @@
-from .cell_adapter import CellAdapter
-from .costanzo2016_adapter import (
-    DmfCostanzo2016Adapter,
-    DmiCostanzo2016Adapter,
-    SmfCostanzo2016Adapter,
-)
-from .kuzmin2018_adapter import (
-    DmfKuzmin2018Adapter,
-    DmiKuzmin2018Adapter,
-    SmfKuzmin2018Adapter,
-    TmfKuzmin2018Adapter,
-    TmiKuzmin2018Adapter,
-)
-from .kuzmin2020_adapter import (
-    DmfKuzmin2020Adapter,
-    DmiKuzmin2020Adapter,
-    SmfKuzmin2020Adapter,
-    TmfKuzmin2020Adapter,
-    TmiKuzmin2020Adapter,
-)
-from .ohya2005_adapter import ScmdOhya2005Adapter
-from .sgd_adapter import GeneEssentialitySgdAdapter
+from .cell_adapter import CellAdapter as CellAdapter
+from .costanzo2016_adapter import DmfCostanzo2016Adapter as DmfCostanzo2016Adapter
+from .costanzo2016_adapter import DmiCostanzo2016Adapter as DmiCostanzo2016Adapter
+from .costanzo2016_adapter import SmfCostanzo2016Adapter as SmfCostanzo2016Adapter
+from .kuzmin2018_adapter import DmfKuzmin2018Adapter as DmfKuzmin2018Adapter
+from .kuzmin2018_adapter import DmiKuzmin2018Adapter as DmiKuzmin2018Adapter
+from .kuzmin2018_adapter import SmfKuzmin2018Adapter as SmfKuzmin2018Adapter
+from .kuzmin2018_adapter import TmfKuzmin2018Adapter as TmfKuzmin2018Adapter
+from .kuzmin2018_adapter import TmiKuzmin2018Adapter as TmiKuzmin2018Adapter
+from .kuzmin2020_adapter import DmfKuzmin2020Adapter as DmfKuzmin2020Adapter
+from .kuzmin2020_adapter import DmiKuzmin2020Adapter as DmiKuzmin2020Adapter
+from .kuzmin2020_adapter import SmfKuzmin2020Adapter as SmfKuzmin2020Adapter
+from .kuzmin2020_adapter import TmfKuzmin2020Adapter as TmfKuzmin2020Adapter
+from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
+from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
+from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
 from .synth_leth_db_adapter import (
-    SynthLethalityYeastSynthLethDbAdapter,
-    SynthRescueYeastSynthLethDbAdapter,
+    SynthLethalityYeastSynthLethDbAdapter as SynthLethalityYeastSynthLethDbAdapter,
+)
+from .synth_leth_db_adapter import (
+    SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
 )
 
 cell_adapters = ["CellAdapter"]

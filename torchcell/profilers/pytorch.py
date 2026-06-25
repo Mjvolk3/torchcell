@@ -17,9 +17,10 @@ import inspect
 import logging
 import os
 from collections.abc import Callable
+from contextlib import AbstractContextManager
 from functools import lru_cache, partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ContextManager, Union, override
+from typing import TYPE_CHECKING, Any, override
 
 import torch
 from lightning.fabric.accelerators.cuda import is_cuda_available
@@ -39,11 +40,11 @@ if TYPE_CHECKING:
 log = logging.getLogger(__name__)
 warning_cache = WarningCache()
 
-_PROFILER = Union[
-    torch.profiler.profile,
-    torch.autograd.profiler.profile,
-    torch.autograd.profiler.emit_nvtx,
-]
+_PROFILER = (
+    torch.profiler.profile
+    | torch.autograd.profiler.profile
+    | torch.autograd.profiler.emit_nvtx
+)
 _KINETO_AVAILABLE = torch.profiler.kineto_available()
 
 
@@ -324,7 +325,7 @@ class PyTorchProfiler(Profiler):
             None  # set by ProfilerConnector
         )
         self._register: RegisterRecordFunction | None = None
-        self._parent_profiler: ContextManager | None = None
+        self._parent_profiler: AbstractContextManager | None = None
         self._recording_map: dict[str, record_function] = {}
         self._start_action_name: str | None = None
         self._schedule: ScheduleWrapper | None = None

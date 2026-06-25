@@ -4,9 +4,4 @@ from .cpu_experiment_loader import (
     # CpuDataModule
 )
 
-loaders = ["CpuExperimentLoader", "CpuExperimentLoaderMultiprocessing"]
-
-# data_modules = ["CpuDataModule"]
-
-# __all__ = loaders + data_modules
-__all__ = loaders
+__all__ = ["CpuExperimentLoader", "CpuExperimentLoaderMultiprocessing"]

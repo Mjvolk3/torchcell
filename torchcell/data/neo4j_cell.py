@@ -979,6 +979,7 @@ def main_incidence():
     from dotenv import load_dotenv
 
     from torchcell.data import GenotypeAggregator, MeanExperimentDeduplicator
+    from torchcell.data.graph_processor import SubgraphRepresentation
     from torchcell.datamodels.fitness_composite_conversion import (
         CompositeFitnessConverter,
     )
@@ -1662,7 +1663,7 @@ def main_transform_categorical_dense():
 
     # Apply transforms to dataset
     forward_transform = Compose([normalize_transform, binning_transform])
-    inverse_transform = InverseCompose(forward_transform)
+    _inverse_transform = InverseCompose(forward_transform)
 
     # I want to be able to do this
     dataset.transform = forward_transform

@@ -553,12 +553,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     "strain": strain,
                 }
 
-                # Select appropriate WT reference and CV based on strain
-                if strain == "BY4741":
-                    refpool_cv = self.wt_cv_BY4741
-                elif strain == "BY4742":
-                    refpool_cv = self.wt_cv_BY4742
-                else:
+                # Validate strain (CV-scaled std no longer used; SE computed from replicates)
+                if strain not in ("BY4741", "BY4742"):
                     log.error(f"Unknown strain {strain} for {gene_name}")
                     continue
 
@@ -581,7 +577,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     sample_info,
                     replicate_expressions,  # Pass replicate-level data (List[float] per gene)
                     deletion_refpool,  # Use actual refpool from deletion samples (already averaged)
-                    cv_scaled_std,  # Use CV-scaled std instead of original
                 )
 
                 # Skip if experiment creation failed (returns None when log2 ratios can't be calculated)
@@ -710,12 +705,8 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 "strain": strain,
             }
 
-            # Select appropriate WT reference and CV based on strain
-            if strain == "BY4741":
-                refpool_cv = wt_cv_BY4741
-            elif strain == "BY4742":
-                refpool_cv = wt_cv_BY4742
-            else:
+            # Validate strain (CV-scaled std no longer used; SE computed from replicates)
+            if strain not in ("BY4741", "BY4742"):
                 continue
 
             # Extract refpool from deletion samples' Cy3 channel
@@ -1819,13 +1810,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             if not gsm_list:
                 continue
 
-            # Get strain to select appropriate refpool reference
+            # Validate strain (refpool reference no longer needed; Cy5/Cy3 validated directly)
             strain = systematic_to_strain.get(gene_name)
-            if strain == "BY4741":
-                refpool_ref = self.wt_expression_BY4741
-            elif strain == "BY4742":
-                refpool_ref = self.wt_expression_BY4742
-            else:
+            if strain not in ("BY4741", "BY4742"):
                 continue
 
             # Get first GSM for this gene

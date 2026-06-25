@@ -498,7 +498,7 @@ def node_reprs_to_data(
     Gt = from_networkx(G)
     data = []
     for name in attr_included_names:
-        if type(Gt[name]) != list:
+        if not isinstance(Gt[name], list):
             data.append(Gt[name].numpy())
         else:
             data.append(Gt[name])
@@ -537,7 +537,6 @@ def node_reprs_to_data(
     categorical_names_input = list(
         set(categorical_names).intersection(set(attr_data_names))
     )
-    attr_one_hot = df[categorical_names_input].to_numpy()
     ###
 
     if (enc == "ordinal") or (enc == "lookup"):
@@ -893,7 +892,7 @@ def main():
     # print(data_ppi)
     # data_ggi = nx_attr_to_torch(graph="gene_interactions", enc="lookup", emb_dim=2)
     # print(data_ggi)
-    data_yeastmine_node = nx_attr_to_torch(
+    _data_yeastmine_node = nx_attr_to_torch(
         graph="yeastmine_node", enc="lookup", emb_dim=2
     )
     ############

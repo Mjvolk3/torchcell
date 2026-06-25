@@ -672,11 +672,9 @@ class COOLabelBinningTransform(BaseTransform):
                         # Ordinal: Count the positive thresholds
                         # First sort by bin index to ensure proper order
                         sort_idx = torch.argsort(label_bin_indices)
-                        sorted_bin_indices = label_bin_indices[sort_idx].long()
                         sorted_values = label_values[sort_idx]
 
                         # Count thresholds
-                        num_thresholds = len(sorted_values)
                         crossings = sum(v > 0.5 for v in sorted_values)
 
                         # Sample from appropriate bin

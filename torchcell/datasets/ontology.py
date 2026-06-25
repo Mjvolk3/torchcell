@@ -3,6 +3,7 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ontology.py
 # Test file: torchcell/datasets/test_ontology.py
 
+from neo4j import GraphDatabase
 from owlready2 import ObjectProperty, Thing, get_ontology
 
 # Create a new ontology
@@ -10,7 +11,6 @@ from owlready2 import ObjectProperty, Thing, get_ontology
 onto = get_ontology(
     "https://raw.githubusercontent.com/Mjvolk3/torchcell/main/torchcell.rdf"
 )
-from neo4j import GraphDatabase
 
 
 # Define the top-level Experiment class
@@ -191,8 +191,8 @@ def main():
     dextrose = Dextrose()
 
     # Create an instance of YEPD and link its components
-    YEPD = YEPD()
-    YEPD.composed_of = [yeast_extract, peptone, dextrose]
+    yepd = YEPD()
+    yepd.composed_of = [yeast_extract, peptone, dextrose]
 
     onto.save(file="torchcell.rdf", format="rdfxml")
 

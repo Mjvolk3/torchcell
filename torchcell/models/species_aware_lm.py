@@ -87,7 +87,8 @@ def main():
     target_layer = (8,)  # what hidden layers to use for embedding
 
     #
-    tok_func = lambda x: tok_func_species(x, proxy_species, seq_col)
+    def tok_func(x):
+        return tok_func_species(x, proxy_species, seq_col)
 
     # I want a function that would all me to run embed(genome[gene].window_three_prime(300, include_stop_codon=True, allow_undersize=True).seq) and it would return the embedded vector
 

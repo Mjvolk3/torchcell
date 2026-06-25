@@ -27,7 +27,9 @@ if not DATA_ROOT:
         "DATA_ROOT environment variable is not set. Please set it in your .env file."
     )
 
-from torchcell.graph.validation.locus_related.locus import validate_data
+from torchcell.graph.validation.locus_related.locus import (  # noqa: E402  (import follows load_dotenv/DATA_ROOT check)
+    validate_data,
+)
 
 log = logging.getLogger(__name__)
 

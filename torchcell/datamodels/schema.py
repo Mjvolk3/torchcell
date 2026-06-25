@@ -5,7 +5,6 @@
 
 import math
 import re
-from typing import Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
@@ -174,21 +173,21 @@ class MeanDeletionPerturbation(DeletionPerturbation, ModelStrict):
     )
 
 
-SgaPerturbationType = Union[
-    SgaKanMxDeletionPerturbation,
-    SgaNatMxDeletionPerturbation,
-    SgaDampPerturbation,
-    SgaTsAllelePerturbation,
-    SgaSuppressorAllelePerturbation,
-    SgaAllelePerturbation,
-]
+SgaPerturbationType = (
+    SgaKanMxDeletionPerturbation
+    | SgaNatMxDeletionPerturbation
+    | SgaDampPerturbation
+    | SgaTsAllelePerturbation
+    | SgaSuppressorAllelePerturbation
+    | SgaAllelePerturbation
+)
 
-GenePerturbationType = Union[
-    SgaPerturbationType,
-    MeanDeletionPerturbation,
-    KanMxDeletionPerturbation,
-    NatMxDeletionPerturbation,
-]
+GenePerturbationType = (
+    SgaPerturbationType
+    | MeanDeletionPerturbation
+    | KanMxDeletionPerturbation
+    | NatMxDeletionPerturbation
+)
 
 
 class Genotype(ModelStrict):
@@ -894,38 +893,38 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     phenotype: MicroarrayExpressionPhenotype
 
 
-PhenotypeType = Union[
-    Phenotype,
-    FitnessPhenotype,
-    GeneInteractionPhenotype,
-    GeneEssentialityPhenotype,
-    SyntheticLethalityPhenotype,
-    SyntheticRescuePhenotype,
-    CalMorphPhenotype,
-    MicroarrayExpressionPhenotype,
-]
+PhenotypeType = (
+    Phenotype
+    | FitnessPhenotype
+    | GeneInteractionPhenotype
+    | GeneEssentialityPhenotype
+    | SyntheticLethalityPhenotype
+    | SyntheticRescuePhenotype
+    | CalMorphPhenotype
+    | MicroarrayExpressionPhenotype
+)
 
-ExperimentType = Union[
-    Experiment,
-    FitnessExperiment,
-    GeneInteractionExperiment,
-    GeneEssentialityExperiment,
-    SyntheticLethalityExperiment,
-    SyntheticRescueExperiment,
-    CalMorphExperiment,
-    MicroarrayExpressionExperiment,
-]
+ExperimentType = (
+    Experiment
+    | FitnessExperiment
+    | GeneInteractionExperiment
+    | GeneEssentialityExperiment
+    | SyntheticLethalityExperiment
+    | SyntheticRescueExperiment
+    | CalMorphExperiment
+    | MicroarrayExpressionExperiment
+)
 
-ExperimentReferenceType = Union[
-    ExperimentReference,
-    FitnessExperimentReference,
-    GeneInteractionExperimentReference,
-    GeneEssentialityExperimentReference,
-    SyntheticLethalityExperimentReference,
-    SyntheticRescueExperimentReference,
-    CalMorphExperimentReference,
-    MicroarrayExpressionExperimentReference,
-]
+ExperimentReferenceType = (
+    ExperimentReference
+    | FitnessExperimentReference
+    | GeneInteractionExperimentReference
+    | GeneEssentialityExperimentReference
+    | SyntheticLethalityExperimentReference
+    | SyntheticRescueExperimentReference
+    | CalMorphExperimentReference
+    | MicroarrayExpressionExperimentReference
+)
 
 
 EXPERIMENT_TYPE_MAP = {

@@ -167,11 +167,10 @@ def test_invalid_pattern():
     """Test that invalid pattern raises appropriate errors."""
     node_types = {"gene", "reaction"}
     edge_types = {("gene", "interaction", "gene")}
-    input_dims = {"gene": 32, "reaction": 32}
 
     # Create a Hetero NSA module directly for testing
     with pytest.raises(ValueError, match="Invalid block type"):
-        hetero_nsa = HeteroNSA(
+        HeteroNSA(
             hidden_dim=64,
             node_types=node_types,
             edge_types=edge_types,
@@ -182,7 +181,7 @@ def test_invalid_pattern():
 
     # Also test empty pattern
     with pytest.raises(ValueError, match="Pattern list cannot be empty"):
-        hetero_nsa = HeteroNSA(
+        HeteroNSA(
             hidden_dim=64,
             node_types=node_types,
             edge_types=edge_types,
@@ -277,7 +276,6 @@ def test_hetero_nsa_with_dense_data(dense_sample_data, monkeypatch):
     )
 
     # Create input features
-    batch_size = 2
     hidden_dim = 64
     device = torch.device("cpu")
 

@@ -360,7 +360,6 @@ class RegressionTask(L.LightningModule):
         num_gene_interactions = [len(i) for i in batch["gene"]["ids_pert"]]
 
         predictions, representations = self(batch)
-        batch_size = predictions.size(0)
 
         # Use transformed values for loss computation
         fitness_vals = batch["gene"].fitness.view(-1, 1)
@@ -368,18 +367,11 @@ class RegressionTask(L.LightningModule):
         targets = torch.cat([fitness_vals, gene_interaction_vals], dim=1)
 
         # Get original values for metrics and visualization
-        fitness_orig = (
-            batch["gene"].fitness_original.view(-1, 1)
-            if "fitness_original" in batch["gene"]
-            else fitness_vals
-        )
         gene_interaction_orig = (
             batch["gene"].gene_interaction_original.view(-1, 1)
             if "gene_interaction_original" in batch["gene"]
             else gene_interaction_vals
         )
-        orig_targets = torch.cat([fitness_orig, gene_interaction_orig], dim=1)
-
         loss, loss_dict = self.loss_func(predictions, targets, representations["z_p"])
 
         epsilon_true = gene_interaction_orig

@@ -23,7 +23,7 @@ def measure_query_time(uri, username, password, database):
     driver = GraphDatabase.driver(uri, auth=(username, password))
     session = driver.session(database=database)
     start_time = time.time()
-    result = session.run("RETURN 1")
+    _result = session.run("RETURN 1")
     query_time = time.time() - start_time
     session.close()
     driver.close()

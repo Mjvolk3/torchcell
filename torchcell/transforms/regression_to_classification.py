@@ -5,11 +5,15 @@
 
 import copy
 from abc import ABC
+from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
+
+if TYPE_CHECKING:
+    from torchcell.data.neo4j_cell import Neo4jCellDataset
 
 ### Normalize
 

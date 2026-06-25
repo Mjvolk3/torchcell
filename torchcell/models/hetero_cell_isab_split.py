@@ -777,11 +777,8 @@ def plot_embeddings(
     import matplotlib.pyplot as plt
     import numpy as np
 
-    from torchcell.timestamp import timestamp
-
     # Create save directory if it doesn't exist
     os.makedirs(save_dir, exist_ok=True)
-    current_timestamp = timestamp()
 
     # Add epoch to filename if provided
     epoch_str = f"_epoch{epoch:03d}" if epoch is not None else ""

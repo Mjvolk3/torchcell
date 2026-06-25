@@ -3,6 +3,8 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/trainers/regression_deep_set_transformer.py
 # Test file: torchcell/trainers/test_regression_deep_set_transformer.py
 
+import os.path as osp
+
 import lightning as L
 import matplotlib.pyplot as plt
 import torch

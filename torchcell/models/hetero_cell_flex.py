@@ -100,73 +100,6 @@ class GraphMaskedAttention(nn.Module):
         return output.squeeze(0)
 
 
-def get_norm_layer(channels: int, norm: str) -> nn.Module:
-    if norm == "layer":
-        return nn.LayerNorm(channels)
-    elif norm == "batch":
-        return nn.BatchNorm1d(channels)
-    else:
-        raise ValueError(f"Unsupported norm type: {norm}")
-
-
-###############################################################################
-# Attentional Aggregation Wrapper
-###############################################################################
-class AttentionalGraphAggregation(nn.Module):
-    def __init__(self, in_channels: int, out_channels: int, dropout: float = 0.1):
-        super().__init__()
-        self.gate_nn = nn.Sequential(
-            nn.Linear(in_channels, in_channels // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(in_channels // 2, 1),
-        )
-        self.transform_nn = nn.Sequential(
-            nn.Linear(in_channels, out_channels), nn.ReLU(), nn.Dropout(dropout)
-        )
-        self.aggregator = AttentionalAggregation(
-            gate_nn=self.gate_nn, nn=self.transform_nn
-        )
-
-    def forward(
-        self, x: torch.Tensor, index: torch.Tensor, dim_size: int | None = None
-    ) -> torch.Tensor:
-        return self.aggregator(x, index=index, dim_size=dim_size)
-
-
-###############################################################################
-# PreProcessor: applies a simple MLP with global norm, activation, dropout.
-###############################################################################
-class PreProcessor(nn.Module):
-    def __init__(
-        self,
-        in_channels: int,
-        hidden_channels: int,
-        num_layers: int = 2,
-        dropout: float = 0.1,
-        norm: str = "layer",
-        activation: str = "relu",
-    ):
-        super().__init__()
-        # Get the activation class type
-        act_fn = type(act_register[activation])
-        norm_layer = get_norm_layer(hidden_channels, norm)
-        layers = []
-
-        layers.append(nn.Linear(in_channels, hidden_channels))
-        layers.append(norm_layer)
-        layers.append(act_fn())  # Create new instance
-        layers.append(nn.Dropout(dropout))
-
-        for _ in range(num_layers - 1):
-            layers.append(nn.Linear(hidden_channels, hidden_channels))
-            layers.append(norm_layer)
-            layers.append(act_fn())  # Create new instance
-            layers.append(nn.Dropout(dropout))
-
-        self.mlp = nn.Sequential(*layers)
-
-
 ###############################################################################
 # Combiner: MLP to combine two representations.
 ###############################################################################
@@ -200,9 +133,6 @@ class Combiner(nn.Module):
 ###############################################################################
 # New Model: HeteroCell
 ###############################################################################
-
-import torch
-import torch.nn as nn
 
 
 def get_norm_layer(channels: int, norm: str) -> nn.Module:

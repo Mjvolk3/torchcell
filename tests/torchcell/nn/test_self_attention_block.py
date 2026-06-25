@@ -310,7 +310,7 @@ def test_gpu_flex_attention_error_propagation():
 
         # Forward pass should propagate the error, not fall back
         with pytest.raises(RuntimeError) as excinfo:
-            output = sab(x)
+            sab(x)
 
         # Check error message
         assert "Simulated FlexAttention error" in str(excinfo.value)

@@ -1,5 +1,5 @@
-from .dcell import DCellLoss
-from .list_mle import ListMLELoss
+from .dcell import DCellLoss as DCellLoss
+from .list_mle import ListMLELoss as ListMLELoss
 
 standard_losses = ["ListMLELoss"]
 

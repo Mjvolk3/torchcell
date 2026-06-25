@@ -227,7 +227,7 @@ def profile_batch_loading(dataset, batch_size=32, num_samples=100):
 
         # Time GPU transfer
         transfer_start = time.time()
-        batch_gpu = batch.to(device)
+        _batch_gpu = batch.to(device)
         transfer_time = (time.time() - transfer_start) * 1000
 
         total_time = batch_create_time + transfer_time
@@ -292,7 +292,7 @@ def main():
     dataset = profile_dataset_creation()
 
     # Profile single sample loading
-    sample = profile_single_sample_loading(dataset)
+    _sample = profile_single_sample_loading(dataset)
 
     # Profile batch loading
     batch_stats = profile_batch_loading(dataset, batch_size=32, num_samples=1000)

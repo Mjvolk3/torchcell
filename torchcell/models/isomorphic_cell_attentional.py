@@ -30,6 +30,7 @@ from torch_geometric.typing import EdgeType
 from torch_geometric.utils import sort_edge_index
 
 from torchcell.models.act import act_register
+from torchcell.nn.aggr.set_transformer import SetTransformerAggregation
 from torchcell.nn.stoichiometric_hypergraph_conv import StoichHypergraphConv
 
 
@@ -359,7 +360,7 @@ class HeteroGnn(nn.Module):
                 layers[-4] = (
                     layers[-4]
                     if prev_out is None
-                    else (lambda x, l=layers[-4], p=prev_out: l(x) + p)
+                    else (lambda x, layer=layers[-4], p=prev_out: layer(x) + p)
                 )
 
         # Final layer

@@ -1459,29 +1459,6 @@ class DiffusionRegressionTask(L.LightningModule):
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
 
-    def on_train_epoch_start(self):
-        # Update gradient accumulation steps based on current epoch
-        if self.hparams.grad_accumulation_schedule is not None:
-            for epoch_threshold in sorted(
-                self.hparams.grad_accumulation_schedule.keys()
-            ):
-                epoch_threshold_int = (
-                    int(epoch_threshold)
-                    if isinstance(epoch_threshold, str)
-                    else epoch_threshold
-                )
-                if self.current_epoch >= epoch_threshold_int:
-                    self.current_accumulation_steps = (
-                        self.hparams.grad_accumulation_schedule[epoch_threshold]
-                    )
-            print(
-                f"Epoch {self.current_epoch}: Using gradient accumulation steps = {self.current_accumulation_steps}"
-            )
-
-        # Clear sample containers at the start of epochs where we'll collect samples
-        if (self.current_epoch + 1) % self.hparams.plot_every_n_epochs == 0:
-            self.train_samples = {"true_values": [], "predictions": [], "latents": {}}
-
     def on_validation_epoch_end(self):
         # Log validation metrics
         computed_metrics = self._compute_metrics_safely(self.val_metrics)

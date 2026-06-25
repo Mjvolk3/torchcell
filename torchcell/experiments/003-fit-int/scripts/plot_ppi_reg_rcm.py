@@ -89,7 +89,6 @@ def load_dataset():
 def calculate_graph_statistics(edge_index, num_nodes, is_directed=False, name=""):
     """Calculate graph statistics focusing on PyG representations."""
     print(f"Calculating statistics for {name} network...")
-    start_time = time.time()
 
     # PyG representation stats
     stats = {}

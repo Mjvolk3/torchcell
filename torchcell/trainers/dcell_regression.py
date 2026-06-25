@@ -216,7 +216,9 @@ class DCellRegressionTask(L.LightningModule):
         if self.target == "fitness":
             fig = fitness.box_plot(self.true_values, self.predictions)
         elif self.target == "genetic_interaction_score":
-            fig = genetic_interaction_score.box_plot(true_values, predictions)
+            fig = genetic_interaction_score.box_plot(
+                self.true_values, self.predictions
+            )
         wandb.log({"binned_values_box_plot": wandb.Image(fig)})
         plt.close(fig)
         # Clear the stored values for the next epoch

@@ -226,7 +226,6 @@ class TestEdgeProcessing:
 
         # For each reaction, connect all genes that participate in it
         for r_idx in range(edge_index.size(1)):
-            gene = edge_index[0, r_idx]
             # For GPR edges, we can use the hyperedge to find genes that share reactions
             genes_in_reaction = edge_index[0, edge_index[1, :] == edge_index[1, r_idx]]
             for g1 in genes_in_reaction:
@@ -253,7 +252,6 @@ class TestEdgeProcessing:
 
         # For each gene, connect all reactions that it participates in
         for g_idx in range(edge_index.size(1)):
-            reaction = edge_index[1, g_idx]
             # For GPR edges, we can find reactions that share genes
             reactions_with_gene = edge_index[
                 1, edge_index[0, :] == edge_index[0, g_idx]
@@ -285,7 +283,6 @@ class TestEdgeProcessing:
 
         # Get edge index and attributes
         edge_index = dataset.cell_graph[edge_type].edge_index
-        stoichiometry = dataset.cell_graph[edge_type].stoichiometry
 
         # Find reactions and metabolites that appear in the first few edges
         unique_reactions = edge_index[0, :1000].unique()

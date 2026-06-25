@@ -33,7 +33,7 @@ class LmdbDatasetReader:
             max_dbs=20,
         )
         # Open the default database
-        with self.env.begin(write=False) as txn:
+        with self.env.begin(write=False) as _txn:
             self.db = self.env.open_db(
                 None, create=False
             )  # None refers to the default database

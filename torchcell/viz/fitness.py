@@ -16,9 +16,6 @@ def box_plot(true_values, predictions) -> plt.Figure:
     if isinstance(predictions, torch.Tensor):
         predictions = predictions.cpu().float().numpy()
 
-    # Calculate percentage of NaN predictions
-    nan_percentage = np.isnan(predictions).mean() * 100
-
     mask = ~np.isnan(true_values) & ~np.isnan(predictions)
     true_values = true_values[mask]
     predictions = predictions[mask]
@@ -243,7 +240,7 @@ def generate_simulated_data_with_nan(n_samples=10000):
 
 def main():
     true_values, predictions = generate_simulated_data_with_nan()
-    fig = box_plot(true_values, predictions)
+    _fig = box_plot(true_values, predictions)
     plt.show()
 
 

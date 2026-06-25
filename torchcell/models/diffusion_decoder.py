@@ -480,11 +480,11 @@ class DiffusionDecoder(nn.Module):
 
         # Validate parameterization consistency
         if self.parameterization == "x0":
-            assert predict_x0 == True, "x0 parameterization requires predict_x0=True"
+            assert predict_x0 is True, "x0 parameterization requires predict_x0=True"
             # x0-prediction loss (better for gene expression data)
             loss = F.mse_loss(pred, x_0)
         elif self.parameterization == "eps":
-            assert predict_x0 == False, "eps parameterization requires predict_x0=False"
+            assert predict_x0 is False, "eps parameterization requires predict_x0=False"
             # Standard noise prediction loss
             # Use actual_noise which is 0 when t==0
             loss = F.mse_loss(pred, actual_noise)

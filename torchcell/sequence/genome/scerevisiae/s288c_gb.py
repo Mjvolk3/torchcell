@@ -130,7 +130,7 @@ def main():
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    genome = SCerevisiaeGenome(
+    _genome = SCerevisiaeGenome(
         data_root=osp.join(DATA_ROOT, "data/scerevisiae/genome/S288C")
     )
     pass

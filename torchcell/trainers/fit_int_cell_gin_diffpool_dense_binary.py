@@ -381,10 +381,6 @@ class RegressionTask(L.LightningModule):
         if self.trainer.sanity_checking:
             return
 
-        # Convert lists to tensors just for logging artifact
-        true_values = torch.cat(self.true_values, dim=0)
-        predictions = torch.cat(self.predictions, dim=0)
-
         # Clear the stored values for the next epoch
         self.true_values = []
         self.predictions = []
@@ -420,7 +416,6 @@ class RegressionTask(L.LightningModule):
             # Prepare a table with columns for the range, mean, and standard deviation
             wandb_table = wandb.Table(columns=["Range", "Mean", "StdDev"])
 
-            dim_true = true_values[:, dim]
             dim_pred = predictions[:, dim]
 
             # Calculate mean and std for each bin and add to the table

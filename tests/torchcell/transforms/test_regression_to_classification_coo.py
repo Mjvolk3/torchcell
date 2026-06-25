@@ -609,7 +609,6 @@ class TestCOOOrdinalBinning:
             sample_values = binned["gene"]["phenotype_values"][sample_mask]
 
             # The bit indices are encoded in the type indices
-            base_type = binned["gene"]["phenotype_type_indices"][sample_mask] // 1000
             bit_indices = binned["gene"]["phenotype_type_indices"][sample_mask] % 1000
 
             # Sort by bit index

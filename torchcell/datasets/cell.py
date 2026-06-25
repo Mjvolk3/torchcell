@@ -14,7 +14,7 @@ import networkx as nx
 import numpy as np
 import torch
 from pydantic import field_validator
-from torch_geometric.data import Data, InMemoryDataset
+from torch_geometric.data import Data, Dataset, InMemoryDataset
 from torch_geometric.utils import add_self_loops, from_networkx, k_hop_subgraph
 from tqdm import tqdm
 

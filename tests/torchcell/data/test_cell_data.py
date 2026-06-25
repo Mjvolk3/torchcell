@@ -56,12 +56,6 @@ def test_stoichiometric_matrix_equivalence():
     print(f"COBRApy S matrix shape: {cobra_S.shape}")
     print(f"Our S matrix shape: {our_S.shape}")
 
-    # Get row and column sums to compare overall patterns
-    cobra_row_sums = np.abs(cobra_S).sum(axis=1)
-    our_row_sums = np.abs(our_S).sum(axis=1)
-    cobra_col_sums = np.abs(cobra_S).sum(axis=0)
-    our_col_sums = np.abs(our_S).sum(axis=0)
-
     # Count non-zeros in each row and column
     cobra_row_nnz = np.array([np.count_nonzero(row) for row in cobra_S])
     our_row_nnz = np.array([np.count_nonzero(row) for row in our_S])
@@ -309,7 +303,6 @@ def test_stoichiometric_matrix_exact_equivalence():
     print("\nIdentifying unique column patterns...")
     unique_columns = {}
     reversed_pairs = 0
-    column_indices = {}  # Track indices for each unique pattern
 
     # Create a fingerprint for a column (for normal + reversed detection)
     def column_fingerprint(col):

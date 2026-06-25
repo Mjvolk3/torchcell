@@ -324,7 +324,9 @@ class GatDiffPool(nn.Module):
 
                 # Post-pooling GAT layers (for all but the last DiffPool layer)
                 if k < len(self.diffpool_layers[i]) - 1:
-                    for l, gat_layer in enumerate(self.post_pool_gat_layers[i][k]):
+                    for layer_idx, gat_layer in enumerate(
+                        self.post_pool_gat_layers[i][k]
+                    ):
                         x_pool_flat = x_pool.view(-1, x_pool.size(-1))
                         adj_pool_flat = adj_pool.view(-1, adj_pool.size(-1))
                         edge_index_pool = adj_pool_flat.nonzero().t()
@@ -332,7 +334,7 @@ class GatDiffPool(nn.Module):
                             x_pool_flat, edge_index_pool, return_attention_weights=True
                         )
                         if self.post_pool_gat_norm_layers is not None:
-                            norm_layer = self.post_pool_gat_norm_layers[i][k][l]
+                            norm_layer = self.post_pool_gat_norm_layers[i][k][layer_idx]
                             if isinstance(
                                 norm_layer, (GraphNorm, PairNorm, MeanSubtractionNorm)
                             ):

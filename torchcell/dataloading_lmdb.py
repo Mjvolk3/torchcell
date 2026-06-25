@@ -1,4 +1,3 @@
-import logging
 import os
 import os.path as osp
 
@@ -12,7 +11,6 @@ from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 def main():
-    log = logging.getLogger(__name__)
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 

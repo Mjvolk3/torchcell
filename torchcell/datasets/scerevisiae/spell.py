@@ -1127,10 +1127,10 @@ def main():
     print(f"{'=' * 70}\n")
 
     # Export condition metadata to CSV for analysis
-    df_conditions = export_condition_metadata(all_data)
+    export_condition_metadata(all_data)
 
     # Check condition metadata quality
-    metadata_stats = check_condition_metadata_quality(all_data)
+    check_condition_metadata_quality(all_data)
 
     # Plot histograms for 3 genes across ALL loaded studies and datasets
     genes_of_interest = ["YDL025C", "YJL166W", "YMR027W"]

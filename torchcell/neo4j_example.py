@@ -158,7 +158,6 @@ def fetch_data_instance(uri, username, password):
 
         for record in result:
             # Assuming we're interested in the first record only for this example
-            di_node = record["di"]
             genotype_nodes = record["genotypes"]
             phenotype_node = record["p"]
             environment_node = record["e"]

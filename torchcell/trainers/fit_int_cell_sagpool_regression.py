@@ -372,7 +372,6 @@ class RegressionTask(L.LightningModule):
             # Prepare a table with columns for the range, mean, and standard deviation
             wandb_table = wandb.Table(columns=["Range", "Mean", "StdDev"])
 
-            dim_true = true_values[:, dim]
             dim_pred = predictions[:, dim]
 
             # Calculate mean and std for each bin and add to the table

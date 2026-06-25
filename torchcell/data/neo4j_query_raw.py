@@ -170,8 +170,7 @@ class Neo4jQueryRaw:
             log.info("Running query...")
             result = session.run(self.query, **self.cypher_kwargs)
             log.info("Query executed, about to process results...")
-            for record in result:
-                yield record
+            yield from result
         log.info("All records processed.")
         driver.close()
 
@@ -193,8 +192,6 @@ class Neo4jQueryRaw:
             txn.put(key, value)
 
     def process(self):
-        log_batch_size = int(1e10)
-
         log.info("Processing data...")
         i = -1
         for i, record in tqdm(enumerate(self.fetch_data())):

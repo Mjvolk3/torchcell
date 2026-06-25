@@ -241,7 +241,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         samples_df = pd.DataFrame(samples_data)
         samples_df = samples_df.drop("gsm_object", axis=1)
         # Filter to only include single mutant samples
-        single_mutant_df = samples_df[samples_df["is_single_mutant"] == True]
+        single_mutant_df = samples_df[samples_df["is_single_mutant"]]
         single_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         log.info(
             f"Saved {len(single_mutant_df)} single mutant samples to preprocess data.csv"
@@ -994,7 +994,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         samples_df = pd.DataFrame(samples_data)
         samples_df = samples_df.drop("gsm_object", axis=1)
         # Filter to only include double mutant samples
-        double_mutant_df = samples_df[samples_df["is_double_mutant"] == True]
+        double_mutant_df = samples_df[samples_df["is_double_mutant"]]
         double_mutant_df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
         log.info(
             f"Saved {len(double_mutant_df)} double mutant samples to preprocess data.csv"
@@ -1513,34 +1513,17 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                 if hasattr(gsm, "metadata")
                 else ""
             )
-            source_ch2 = (
-                gsm.metadata.get("source_name_ch2", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
-            label_ch1 = (
-                gsm.metadata.get("label_ch1", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
-            label_ch2 = (
-                gsm.metadata.get("label_ch2", [""])[0]
-                if hasattr(gsm, "metadata")
-                else ""
-            )
 
             # Determine which dye (Cy5/Cy3) corresponds to which sample (mutant/refpool)
             # Ch1 = Cy5, Ch2 = Cy3 (based on GEO data structure)
             if "refpool" in source_ch1.lower():
                 # Cy5 = refpool, Cy3 = mutant
                 mutant_channel = "Cy3"
-                refpool_channel = "Cy5"
                 # VALUE is log2(Cy5/Cy3) = log2(refpool/mutant), so negate it
                 ratio_sign = -1
             else:
                 # Cy5 = mutant, Cy3 = refpool
                 mutant_channel = "Cy5"
-                refpool_channel = "Cy3"
                 # VALUE is log2(Cy5/Cy3) = log2(mutant/refpool), correct sign
                 ratio_sign = 1
 

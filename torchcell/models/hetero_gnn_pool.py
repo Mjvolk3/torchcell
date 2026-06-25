@@ -239,7 +239,7 @@ class HeteroGnnPool(nn.Module):
                 layers[-4] = (
                     layers[-4]
                     if prev_out is None
-                    else (lambda x, l=layers[-4], p=prev_out: l(x) + p)
+                    else (lambda x, layer=layers[-4], p=prev_out: layer(x) + p)
                 )
 
         # Final layer
@@ -616,18 +616,6 @@ def main():
 
     # Load sample data
     batch, max_num_nodes = load_sample_data_batch()
-
-    # Prepare input dictionaries
-    x_dict = {"gene": batch["gene"].x}
-    edge_index_dict = {
-        ("gene", "physical_interaction", "gene"): batch[
-            "gene", "physical_interaction", "gene"
-        ].edge_index,
-        ("gene", "regulatory_interaction", "gene"): batch[
-            "gene", "regulatory_interaction", "gene"
-        ].edge_index,
-    }
-    batch_dict = {"gene": batch["gene"].batch}
 
     # Target values
     y = torch.stack([batch["gene"].fitness, batch["gene"].gene_interaction], dim=1)

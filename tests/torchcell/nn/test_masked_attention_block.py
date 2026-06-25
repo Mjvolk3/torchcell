@@ -154,17 +154,11 @@ def test_node_set_attention_forward():
     nsa = NodeSelfAttention(hidden_dim=hidden_dim)
     x = torch.randn(batch_size, num_nodes, hidden_dim)
 
-    # Create a boolean adjacency matrix (all True for simplicity)
-    adj_mask = torch.ones(batch_size, num_nodes, num_nodes, dtype=torch.bool)
-
     # Forward pass with mask - simplified approach
     # Apply each component manually to avoid FlexAttention
     with torch.no_grad():
         residual = x
         normed_x = nsa.norm1(x)
-        q = nsa.q_proj(normed_x)
-        k = nsa.k_proj(normed_x)
-        v = nsa.v_proj(normed_x)
 
         # Skip the attention calculation and simulate output
         attn_output = torch.randn_like(x)
@@ -202,9 +196,6 @@ def test_mab_simple():
         # Manual forward pass to avoid FlexAttention
         residual = x
         normed_x = mab.norm1(x)
-        q = mab.q_proj(normed_x)
-        k = mab.k_proj(normed_x)
-        v = mab.v_proj(normed_x)
 
         # Skip attention calculation and just use a dummy output
         attn_output = torch.randn_like(x)
@@ -398,7 +389,7 @@ def test_node_set_attention_with_metabolic_stoichiometry(metabolic_graph):
     # Verify the impact of stoichiometry by checking nodes connected to sign-flipped edges
     # This confirms the sign of stoichiometry (consumption vs. production) is correctly handled
     for i in range(edge_index.size(1)):
-        src, dst = edge_index[0, i], edge_index[1, i]
+        src, _dst = edge_index[0, i], edge_index[1, i]
         if stoichiometry[i] < 0:  # Consumption edges
             # These nodes should be influenced differently than with absolute values
             assert not torch.allclose(
@@ -596,7 +587,7 @@ def test_flex_attention_fails_correctly(metabolic_graph):
 
     # Forward pass should fail with RuntimeError
     with pytest.raises(RuntimeError) as excinfo:
-        output = nsa(x, adj_mask, stoichiometry, edge_index)
+        nsa(x, adj_mask, stoichiometry, edge_index)
 
     # Make sure the error message matches our simulation
     assert "Simulated FlexAttention error" in str(excinfo.value)
@@ -654,7 +645,6 @@ def test_compiled_mask_function():
     hidden_dim = 64
     batch_size = 2
     seq_len = 32
-    num_edges = 100
 
     # Create models with and without compilation
     nsa_uncompiled = NodeSelfAttention(

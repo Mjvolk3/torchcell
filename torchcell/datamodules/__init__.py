@@ -6,12 +6,10 @@ from .cell import (
     IndexSplit,
 )
 
-data_module = ["CellDataModule"]
-data_module_data_models = [
+__all__ = [
+    "CellDataModule",
     "IndexSplit",
     "DatasetSplit",
     "DataModuleIndex",
     "DataModuleIndexDetails",
 ]
-
-__all__ = data_module + data_module_data_models

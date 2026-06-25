@@ -65,9 +65,12 @@ class SimpleLinearRegressionTask(L.LightningModule):
         if loss == "mse":
             self.loss = nn.MSELoss()
         elif loss == "weighted_mse":
-            mean_value = kwargs.get("fitness_mean_value")
-            penalty = kwargs.get("penalty", 1.0)
-            self.loss = WeightedMSELoss(mean_value=mean_value, penalty=penalty)
+            # WeightedMSELoss moved to torchcell.losses.multi_dim_nan_tolerant with a
+            # new per-dimension `weights=` API (was mean_value=/penalty=); this branch
+            # needs deliberate migration to that signature before use.
+            raise NotImplementedError(
+                "weighted_mse loss needs migration to WeightedMSELoss(weights=...)"
+            )
         elif loss == "mae":
             self.loss = nn.L1Loss()
         else:

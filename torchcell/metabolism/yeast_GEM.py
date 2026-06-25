@@ -446,7 +446,7 @@ def plot_reaction_map(
     # Create subhypergraph with properties
     H_sub = hnx.Hypergraph(edges_dict, edge_properties=edge_properties)
 
-    fig = plt.figure(figsize=(15, 10))
+    plt.figure(figsize=(15, 10))
     ax = plt.gca()
 
     # Function to determine color based on direction
@@ -558,7 +558,7 @@ def plot_full_network(yeast_gem: YeastGEM, output_path: str = "full_network.png"
     print(f"Number of reversible reactions: {n_reversible}")
 
     # Create visualization
-    fig = plt.figure(figsize=(40, 40))
+    plt.figure(figsize=(40, 40))
     ax = plt.gca()
 
     # Draw hypergraph with minimal decoration

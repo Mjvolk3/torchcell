@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from scipy.stats import gaussian_kde
 
 
 class SupCR(nn.Module):
@@ -610,11 +611,6 @@ class NaNTolerantQuantileLoss(nn.Module):
 #         weighted_loss = (dim_losses * weights).sum() / weight_sum
 
 #         return weighted_loss, dim_losses
-
-
-import torch
-import torch.nn as nn
-from scipy.stats import gaussian_kde
 
 
 def isotonic_l2_pav(y, weights=None):

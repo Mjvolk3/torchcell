@@ -8,6 +8,7 @@ import json
 import os
 import os.path as osp
 import random
+from typing import Any
 
 import lightning as L
 import torch
@@ -31,7 +32,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
 
     def __init__(
         self,
-        cell_data_module,
+        cell_data_module: Any,  # dynamic CellDataModule duck-typed by index attrs
         size: int,
         batch_size: int = 32,
         num_workers: int = 0,
@@ -42,11 +43,11 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         seed: int = 42,
         dense: bool = False,
         gene_subsets: dict[str, GeneSet] | None = None,
-        follow_batch: list | None = None,
+        follow_batch: list[str] | None = None,
         train_shuffle: bool = True,
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
-    ):
+    ) -> None:
         """Configure subset size, loader options, and the cache directory."""
         super().__init__()
         self.cell_data_module = cell_data_module
@@ -93,7 +94,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self._index = None
         self._index_details = None
 
-    def _set_size(self, size: int):
+    def _set_size(self, size: int) -> None:
         # Determine maximum possible subset size.
         if self.gene_subset is not None:
             valid = set()
@@ -126,7 +127,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             self._load_or_compute_index()
         return self._index_details
 
-    def _load_or_compute_index(self):
+    def _load_or_compute_index(self) -> None:
         index_file = osp.join(
             self.subset_dir,
             f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
@@ -147,7 +148,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             self._create_subset()
             self._save_index()
 
-    def _create_subset(self):
+    def _create_subset(self) -> None:
         tqdm.write("Starting _create_subset()")
         cell_index_details = self.cell_data_module.index_details
         cell_index = self.cell_data_module.index
@@ -179,7 +180,9 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                     valid_indices.update(dataset.is_any_perturbed_gene_index[gene])
             tqdm.write(f"Total valid indices: {len(valid_indices)}")
 
-        selected_indices = {split: [] for split in ["train", "val", "test"]}
+        selected_indices: dict[str, list[int]] = {
+            split: [] for split in ["train", "val", "test"]
+        }
         for split in ["train", "val", "test"]:
             tqdm.write(f"Processing split: {split}")
             pert_count_index = getattr(
@@ -300,7 +303,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             f"Selected {total_selected} samples, which exceeds the requested {self.size}"
         )
 
-    def _create_index_details(self):
+    def _create_index_details(self) -> None:
         cell_index_details = self.cell_data_module.index_details
         methods = cell_index_details.methods
         self._index_details = DataModuleIndexDetails(
@@ -334,7 +337,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
                 setattr(dataset_split, method, split_data)
         return dataset_split
 
-    def _save_index(self):
+    def _save_index(self) -> None:
         index_path = osp.join(
             self.subset_dir,
             f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
@@ -348,7 +351,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         with open(details_path, "w") as f:
             json.dump(self._index_details.model_dump(), f, indent=2)
 
-    def _cached_files_exist(self):
+    def _cached_files_exist(self) -> bool:
         index_file = osp.join(
             self.subset_dir,
             f"index_{format_scientific_notation(self.size)}_seed_{self.seed}.json",
@@ -359,7 +362,7 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         )
         return osp.exists(index_file) and osp.exists(details_file)
 
-    def setup(self, stage: str | None = None):
+    def setup(self, stage: str | None = None) -> None:
         """Build train/val/test subset datasets from the computed index."""
         print("Setting up PerturbationSubsetDataModule...")
         if (
@@ -374,7 +377,12 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
         self.test_dataset = Subset(self.dataset, self.index.test)
         print("Setup complete.")
 
-    def _get_dataloader(self, dataset, shuffle=False, batch_size=None):
+    def _get_dataloader(
+        self,
+        dataset: Any,  # dynamic dataset/Subset passed through to the loaders
+        shuffle: bool = False,
+        batch_size: int | None = None,
+    ) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         # Use provided batch_size or fall back to self.batch_size
         if batch_size is None:
             batch_size = self.batch_size
@@ -416,23 +424,25 @@ class PerturbationSubsetDataModule(L.LightningDataModule):
             return PrefetchLoader(loader, device=device)
         return loader
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         """Return the training dataloader over the subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         """Return the validation dataloader over the subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         """Return the test dataloader over the subset."""
         return self._get_dataloader(self.test_dataset)
 
-    def all_dataloader(self):
+    def all_dataloader(self) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         """Return a dataloader over the full underlying dataset."""
         return self._get_dataloader(self.dataset)
 
-    def test_cell_module_dataloader(self):
+    def test_cell_module_dataloader(
+        self,
+    ) -> DataLoader | DensePaddingDataLoader | PrefetchLoader:
         """Return a dataloader over the parent cell module's test split."""
         return self._get_dataloader(
             Subset(self.dataset, self.cell_data_module.index.test)

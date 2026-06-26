@@ -10,6 +10,7 @@ import os
 import os.path as osp
 import random
 from collections import defaultdict
+from typing import Any
 
 import lightning as L
 import pandas as pd
@@ -31,7 +32,7 @@ class IndexSplit(ModelStrict):
 
     @model_validator(mode="before")
     @classmethod
-    def check_sorted_indices(cls, values):
+    def check_sorted_indices(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Validate that the indices list is sorted in ascending order."""
         indices = values.get("indices")
         if indices and not all(
@@ -40,7 +41,7 @@ class IndexSplit(ModelStrict):
             raise ValueError("Indices must be sorted in ascending order")
         return values
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a truncated representation showing the first few indices."""
         max_indices = 3
         indices_str = (
@@ -66,10 +67,12 @@ class DataModuleIndexDetails(ModelStrict):
     val: DatasetSplit
     test: DatasetSplit
 
-    def df_summary(self):
+    def df_summary(self) -> pd.DataFrame:
         """Return a DataFrame summarizing counts and ratios per split and index key."""
-        data = defaultdict(lambda: defaultdict(int))
-        totals = defaultdict(int)
+        data: defaultdict[tuple[str, Any], defaultdict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
+        totals: defaultdict[tuple[str, Any], int] = defaultdict(int)
 
         for split in ["train", "val", "test"]:
             split_data = getattr(self, split)
@@ -117,7 +120,7 @@ class DataModuleIndexDetails(ModelStrict):
 
         return df
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the summary DataFrame rendered as a string."""
         df = self.df_summary()
         if df.empty:
@@ -134,7 +137,9 @@ class DataModuleIndex(ModelStrict):
 
     @model_validator(mode="before")
     @classmethod
-    def check_sorted_and_unique_indices(cls, values):
+    def check_sorted_and_unique_indices(
+        cls, values: dict[str, Any]
+    ) -> dict[str, Any]:
         """Validate each split is sorted and the splits do not overlap."""
         for split in ["train", "val", "test"]:
             indices = values.get(split, [])
@@ -149,7 +154,7 @@ class DataModuleIndex(ModelStrict):
 
         return values
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Return a truncated representation of the train/val/test indices."""
         max_indices = 3
         train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
@@ -157,7 +162,7 @@ class DataModuleIndex(ModelStrict):
         test_str_index = f"[{', '.join(map(str, self.test[:max_indices]))}{', ...' if len(self.test) > max_indices else ''}]"
         return f"DataModuleIndex(train={train_str_index}, val={val_str_index}, test={test_str_index})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return a truncated representation with per-split index counts."""
         max_indices = 3
         train_str_index = f"[{', '.join(map(str, self.train[:max_indices]))}{', ...' if len(self.train) > max_indices else ''}]"
@@ -213,7 +218,7 @@ class CellDataModule(L.LightningDataModule):
 
     def __init__(
         self,
-        dataset,
+        dataset: Any,  # dynamic cell dataset duck-typed by split-index attrs
         cache_dir: str = "cache",
         batch_size: int = 32,
         random_seed: int = 42,
@@ -223,11 +228,11 @@ class CellDataModule(L.LightningDataModule):
         prefetch_factor: int = 2,
         persistent_workers: bool = True,
         split_indices: str | list[str] | None = None,
-        follow_batch: list | None = None,
+        follow_batch: list[str] | None = None,
         train_shuffle: bool = True,
         collate_fn: object | None = None,
         val_batch_size: int | None = None,
-    ):
+    ) -> None:
         """Store dataloader/split configuration and compute the split indices."""
         super().__init__()
         self.dataset = dataset
@@ -278,7 +283,7 @@ class CellDataModule(L.LightningDataModule):
             self._load_or_compute_index()
         return self._index_details
 
-    def _load_or_compute_index(self):
+    def _load_or_compute_index(self) -> None:
         os.makedirs(self.cache_dir, exist_ok=True)
         index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
         details_file = osp.join(
@@ -300,12 +305,12 @@ class CellDataModule(L.LightningDataModule):
         else:
             self._compute_and_save_index(index_file, details_file)
 
-    def _compute_and_save_index(self, index_file, details_file):
+    def _compute_and_save_index(self, index_file: str, details_file: str) -> None:
         log.info("Generating detailed index...")
         random.seed(self.random_seed)
 
         all_indices = set(range(len(self.dataset)))
-        split_data = {
+        split_data: dict[str, defaultdict[str, set[int]]] = {
             "train": defaultdict(set),
             "val": defaultdict(set),
             "test": defaultdict(set),
@@ -410,14 +415,14 @@ class CellDataModule(L.LightningDataModule):
         with open(details_file, "w") as f:
             json.dump(self._index_details.model_dump(), f, indent=2)
 
-    def _cached_files_exist(self):
+    def _cached_files_exist(self) -> bool:
         index_file = osp.join(self.cache_dir, f"index_seed_{self.random_seed}.json")
         details_file = osp.join(
             self.cache_dir, f"index_details_seed_{self.random_seed}.json"
         )
         return osp.exists(index_file) and osp.exists(details_file)
 
-    def setup(self, stage=None):
+    def setup(self, stage: str | None = None) -> None:
         """Build train/val/test Subset datasets from the computed split indices."""
         train_index = self.index.train
         val_index = self.index.val
@@ -427,7 +432,12 @@ class CellDataModule(L.LightningDataModule):
         self.val_dataset = torch.utils.data.Subset(self.dataset, val_index)
         self.test_dataset = torch.utils.data.Subset(self.dataset, test_index)
 
-    def _get_dataloader(self, dataset, shuffle=False, batch_size=None):
+    def _get_dataloader(
+        self,
+        dataset: Any,  # dynamic dataset/Subset passed through to the loaders
+        shuffle: bool = False,
+        batch_size: int | None = None,
+    ) -> DataLoader | PrefetchLoader:
         # Use provided batch_size or fall back to self.batch_size
         if batch_size is None:
             batch_size = self.batch_size
@@ -456,19 +466,19 @@ class CellDataModule(L.LightningDataModule):
             return PrefetchLoader(loader, device=device)
         return loader
 
-    def train_dataloader(self):
+    def train_dataloader(self) -> DataLoader | PrefetchLoader:
         """Return a dataloader over the training subset."""
         return self._get_dataloader(self.train_dataset, shuffle=self.train_shuffle)
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> DataLoader | PrefetchLoader:
         """Return a dataloader over the validation subset."""
         return self._get_dataloader(self.val_dataset, batch_size=self.val_batch_size)
 
-    def test_dataloader(self):
+    def test_dataloader(self) -> DataLoader | PrefetchLoader:
         """Return a dataloader over the test subset."""
         return self._get_dataloader(self.test_dataset)
 
-    def all_dataloader(self):
+    def all_dataloader(self) -> DataLoader | PrefetchLoader:
         """Return a dataloader over the entire dataset."""
         return self._get_dataloader(self.dataset)
 
